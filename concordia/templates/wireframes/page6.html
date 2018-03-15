@@ -1,0 +1,166 @@
+{% extends "wireframes/base.html" %}
+{% block head %}
+    <style type="text/css" media="screen">
+        
+        .content {
+            width: 1024px;
+            height: 1084px;
+            background-image: url("/wireframes/images/6.png");
+        }
+        .hover {
+            width: 100px;
+            height: 100px;
+            background-color: red;
+        }
+        ul {
+            list-style: none;
+            position: relative;
+            margin: 0;
+            left: 193px;
+            top: 763px;
+        }
+        ul li {
+            float: left;
+            width: 180px;
+            height: 180px;
+            margin-right: 8px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+        textarea {
+            position: absolute;
+            border: 1px solid #cbc6c6;
+            box-sizing: border-box;
+            font-family: arial;
+            font-size: 14px;
+            padding: 20px;
+        }
+        #transcription {
+            left: 476px;
+            top: 363px;
+            width: 508px;
+            height: 286px;
+        }
+        #transcription2 {
+            left: 476px;
+            top: 692px;
+            width: 508px;
+            height: 142px;
+        }
+        /* simple */
+        .flip-container {
+            -webkit-perspective: 1000;
+            -moz-perspective: 1000;
+            -ms-perspective: 1000;
+            perspective: 1000;
+
+            -ms-transform: perspective(1000px);
+            -moz-transform: perspective(1000px);
+                -moz-transform-style: preserve-3d; 
+                -ms-transform-style: preserve-3d; 
+
+            position: relative;
+        }
+        /* START: Accommodating for IE */
+        .flip-container:hover .back, .flip-container.hover .back {
+            -webkit-transform: rotateY(0deg);
+            -moz-transform: rotateY(0deg);
+            -o-transform: rotateY(0deg);
+            -ms-transform: rotateY(0deg);
+            transform: rotateY(0deg);
+        }
+        .flip-container:hover .front, .flip-container.hover .front {
+            -webkit-transform: rotateY(180deg);
+            -moz-transform: rotateY(180deg);
+            -o-transform: rotateY(180deg);
+            transform: rotateY(180deg);
+        }
+        /* END: Accommodating for IE */
+        .flip-container, .front, .back {
+            width: 180px;
+            height: 180px;
+            box-sizing: border-box;
+        }
+
+        .flipper {
+            -webkit-transition: 0.6s;
+            -webkit-transform-style: preserve-3d;
+            -ms-transition: 0.6s;
+
+            -moz-transition: 0.6s;
+            -moz-transform: perspective(1000px);
+            -moz-transform-style: preserve-3d;
+            -ms-transform-style: preserve-3d;
+
+            transition: 0.6s;
+            transform-style: preserve-3d;
+
+            position: relative;
+        }
+
+        .front, .back {
+            -webkit-backface-visibility: hidden;
+            -moz-backface-visibility: hidden;
+            -ms-backface-visibility: hidden;
+            backface-visibility: hidden;
+
+            -webkit-transition: 0.6s;
+            -webkit-transform-style: preserve-3d;
+            -webkit-transform: rotateY(0deg);
+
+            -moz-transition: 0.6s;
+            -moz-transform-style: preserve-3d;
+            -moz-transform: rotateY(0deg);
+
+            -o-transition: 0.6s;
+            -o-transform-style: preserve-3d;
+            -o-transform: rotateY(0deg);
+
+            -ms-transition: 0.6s;
+            -ms-transform-style: preserve-3d;
+            -ms-transform: rotateY(0deg);
+
+            transition: 0.6s;
+            transform-style: preserve-3d;
+            transform: rotateY(0deg);
+
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .front {
+            -webkit-transform: rotateY(0deg);
+            -ms-transform: rotateY(0deg);
+            background-image: url("/wireframes/images/7.png");
+            z-index: 2;
+            border: 1px solid #ccc;
+            
+        }
+
+        .back {
+            background-image: url("/wireframes/images/7_back.png");
+            -webkit-transform: rotateY(-180deg);
+            -moz-transform: rotateY(-180deg);
+            -o-transform: rotateY(-180deg);
+            -ms-transform: rotateY(-180deg);
+            transform: rotateY(-180deg);
+            border: 1px solid #ccc;
+        }
+    </style>
+{% endblock head %}
+{% block main_content %}
+    <ul>    
+        <li class="flip-container" ontouchstart="this.classList.toggle('hover');">
+                <div class="flipper">
+                    <div class="front">
+                    
+                    </div>
+                    <div class="back">
+                    <a href="page8.html" id="link0" style="top:95px; left:30px; width:90px; height:51px;"></a>
+                    </div>
+                </div>
+        </li>
+    </ul>       
+    <a href="page6.html"></a>
+{% endblock main_content %}

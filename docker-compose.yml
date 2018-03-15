@@ -1,0 +1,22 @@
+version: '3.3'
+
+services:
+  db:
+    image: postgres
+    ports:
+      - 54321:5432
+    volumes:
+      - concordia_db_volume:/var/lib/postgresl/data/
+  app:
+    build: .
+    command: python3 manage.py migrate --noinput
+    command: python3 manage.py runserver 0:80
+    depends_on:
+      - db
+    volumes:
+      - .:/app
+    ports:
+      - 8001:80
+
+volumes:
+  concordia_db_volume:
