@@ -11,3 +11,4 @@ Setup and Deploy
     $ cd concordia
     $ docker-compose up
 
+Browse to `0.0.0.0:8001 <http://0.0.0.0:8001/>`_
