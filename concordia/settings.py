@@ -9,6 +9,7 @@ DEBUG = True
 LANGUAGE_CODE = 'en-us'
 ROOT_URLCONF = 'concordia.urls'
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'super-secret-key')
+STATIC_ROOT = 'static'
 STATIC_URL = '/static/'
 TIME_ZONE = 'UTC'
 USE_I18N = True
@@ -33,7 +34,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    'concordia.experiments.wireframes',
+    'concordia.experiments.transcribr',
+    'django_extensions',
 ]
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

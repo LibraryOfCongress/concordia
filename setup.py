@@ -1,25 +1,29 @@
 #!/usr/bin/env python
 from setuptools import setup, find_packages
 
-version=__import__('concordia').get_version()
+VERSION = __import__('concordia').get_version()
+INSTALL_REQUIREMENTS = ['Django<2.1']
+SCRIPTS = ['manage.py']
+DESCRIPTION = 'Transcription crowdsourcing'
+CLASSIFIERS = '''\
+Environment :: Web Environment
+Framework :: Django
+Programming Language :: Python
+Programming Language :: Python :: 3.6
+'''.splitlines()
 
 with open('README.rst', 'r') as f:
-    long_description = f.read()
+    LONG_DESCRIPTION = f.read()
 
 
 setup(
     name='concordia',
-    version=version,
-    description='Transcription crowdsourcing',
-    long_description=long_description,
+    version=VERSION,
+    description=DESCRIPTION,
+    long_description=LONG_DESCRIPTION,
     packages=find_packages(),
     include_package_data=True,
-    scripts=['manage.py'],
-    install_requires=['Django<2.1', 'Pillow', 'psycopg2'],
-    classifiers=[
-        'Environment :: Web Environment',
-        'Framework :: Django',
-        'Programming Language :: Python',
-        'Programming Language :: Python :: 3.6',
-    ],
+    scripts=SCRIPTS,
+    install_requires=INSTALL_REQUIREMENTS,
+    classifiers=CLASSIFIERS,
 )
