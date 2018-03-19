@@ -1,1 +1,7 @@
-{{ form.as_p }}
+{% extends "base.html" %}
+{% block main_content %}
+    <table class="table">
+        {{ form }}        
+    </table>
+
+{% endblock main_content %}

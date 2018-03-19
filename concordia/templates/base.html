@@ -1,12 +1,21 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en">{% load staticfiles %}
 <head>
     <meta charset="UTF-8">
-    <title>Untitled</title>
+    <title>{% block title %}Untitled{% endblock title %}</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
 </head>
 <body>
-    {% block main_content %}
-        
-    {% endblock main_content %}
+    <header class="container">
+        <nav>
+            <a href="{% url 'login' %}">Login</a> |
+            <a href="{% url 'registration_register' %}">Register</a>
+        </nav>    
+    </header>
+    <main class="container">
+    <h1><a href="/">Concordia</a></h1>
+    {% block main_content %}{% endblock main_content %}    
+    </main>
+    <footer class="container"></footer>
 </body>
 </html>
