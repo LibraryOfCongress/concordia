@@ -1,8 +1,6 @@
 import os
-from django.shortcuts import render
-from django.conf import settings
-from django.urls import re_path, include
-from django.views.generic import RedirectView, TemplateView
+from django.urls import re_path
+from django.views.generic import RedirectView
 from django.conf.urls.static import static
 
 from . import views
