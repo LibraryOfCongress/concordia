@@ -1,0 +1,4 @@
+{{ activation_key }}
+{{ expiration_days }}
+{{ user }}
+{{ site }}

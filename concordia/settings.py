@@ -1,4 +1,6 @@
 import os
+from config import config
+
 
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(PROJECT_DIR)
@@ -8,7 +10,7 @@ AUTH_PASSWORD_VALIDATORS = []
 DEBUG = True
 LANGUAGE_CODE = 'en-us'
 ROOT_URLCONF = 'concordia.urls'
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'super-secret-key')
+SECRET_KEY = config('DJANGO', 'SECRET_KEY', 'super-secret-key')
 STATIC_ROOT = 'static'
 STATIC_URL = '/static/'
 TIME_ZONE = 'UTC'
@@ -19,11 +21,12 @@ WSGI_APPLICATION = 'concordia.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': os.environ.get('DJANGO_DB_NAME', 'postgres'),
-        'USER': 'postgres',
-        'HOST': os.environ.get('DJANGO_DB_HOST', 'db'),
-        'PORT': os.environ.get('DJANGO_DB_PORT', 5432),
+        'ENGINE': config('DJANGO', 'DB_ENGINE', 'django.db.backends.postgresql_psycopg2'),
+        'NAME': config('DJANGO', 'DB_NAME', 'postgres'),
+        'USER': config('DJANGO', 'DB_USER', 'postgres'),
+        'PASSWORD': config('DJANGO', 'DB_PASSWORD', ''),
+        'HOST': config('DJANGO', 'DB_HOST', 'db'),
+        'PORT': config('DJANGO', 'DB_PORT', 5432),
     }
 }
 
@@ -38,6 +41,7 @@ INSTALLED_APPS = [
     'concordia.experiments.wireframes',
     'concordia.experiments.transcribr',
     'django_extensions',
+    'registration'
 ]
 
 
@@ -64,3 +68,10 @@ TEMPLATES = [{
         ],
     },
 }]
+
+################################################################################
+# Django-specific settings above
+################################################################################
+
+ACCOUNT_ACTIVATION_DAYS = 7
+

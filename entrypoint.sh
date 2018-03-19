@@ -1,4 +1,4 @@
-python manage.py migrate
-python manage.py collectstatic --clear --noinput -v0
-
-gunicorn -c gunicorn.conf dashboard.wsgi:application
+manage.py migrate
+manage.py collectstatic --clear --noinput -v0
+manage.py runserver 0:80
+# gunicorn -c gunicorn.conf concordia.wsgi:application

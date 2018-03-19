@@ -1,2 +1,6 @@
+Django<2.1
+psycopg2
 psycopg2-binary
 Pillow
+-e git+https://github.com/ubernostrum/django-registration.git#egg=registration
+gunicorn

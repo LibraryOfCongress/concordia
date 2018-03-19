@@ -9,7 +9,6 @@ services:
       - concordia_db_volume:/var/lib/postgresl/data/
   app:
     build: .
-    command: python3 manage.py runserver 0:80
     depends_on:
       - db
     volumes:

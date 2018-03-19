@@ -1,4 +1,5 @@
 -r base.pip
+invoke
 django_extensions
 pytest
 pytest-cov
