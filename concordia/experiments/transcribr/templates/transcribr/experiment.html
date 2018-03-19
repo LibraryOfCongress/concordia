@@ -1,4 +1,15 @@
-{% extends "transcribr/base.html" %}
+{% extends "transcribr/base.html" %} {% load staticfiles %}
 {% block main_content %}
-    <h2>Transcription</h2>
+    <div class="container">
+        <h2>Transcription</h2>
+        <div class="row">
+            <div class="col-6" style="overflow-x:scroll;">
+                <img style="" src="{% static "transcribr/image.png" %}" alt="Alt">
+            </div>
+            <div class="col-6">
+                <textarea class="w-100" name="tx" id="tx" rows="40"></textarea>
+            </div>
+        </div>    
+    </div>
+    
 {% endblock main_content %}
