@@ -1,0 +1,7 @@
+-r base.pip
+django_extensions
+pytest
+pytest-cov
+pytest-django
+pytest-html
+pycodestyle

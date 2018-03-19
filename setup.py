@@ -15,7 +15,7 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     scripts=['manage.py'],
-    install_requires=['Django<2.1', 'Pillow', 'psycopg2'],
+    install_requires=['Django<2.1'],
     classifiers=[
         'Environment :: Web Environment',
         'Framework :: Django',
