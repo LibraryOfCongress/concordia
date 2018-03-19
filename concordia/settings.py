@@ -8,7 +8,11 @@ BASE_DIR = os.path.dirname(PROJECT_DIR)
 ALLOWED_HOSTS = ['*']
 AUTH_PASSWORD_VALIDATORS = []
 DEBUG = True
+EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
+EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'emails')
 LANGUAGE_CODE = 'en-us'
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
 ROOT_URLCONF = 'concordia.urls'
 SECRET_KEY = config('DJANGO', 'SECRET_KEY', 'super-secret-key')
 STATIC_ROOT = 'static'
@@ -41,7 +45,6 @@ INSTALLED_APPS = [
     'concordia.experiments.wireframes',
     'concordia.experiments.transcribr',
     'django_extensions',
-    'registration'
 ]
 
 

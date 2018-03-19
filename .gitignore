@@ -17,8 +17,9 @@ artifacts/
 docs/build
 env.ini
 .venv
-temp
-logs/*
 *.sqlite3
 /static/
 concordia.egg-info/
+/temp/
+/emails/
+/logs/*
