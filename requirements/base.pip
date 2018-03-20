@@ -4,3 +4,5 @@ psycopg2-binary
 Pillow
 -e git+https://github.com/ubernostrum/django-registration.git#egg=registration
 gunicorn
+boto3
+requests

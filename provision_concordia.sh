@@ -11,4 +11,4 @@ mkdir concordia
 cd concordia
 virtualenv ENV
 source ENV/bin/activate
-pip install Django
+pip install -r requirements/devel.pip
