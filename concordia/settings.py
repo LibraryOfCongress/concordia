@@ -25,6 +25,11 @@ USE_L10N = True
 USE_TZ = True
 WSGI_APPLICATION = 'concordia.wsgi.application'
 
+ADMIN_SITE = {
+    'site_header': config('DJANGO', 'ADMIN_SITE_HEADER', 'Concordia Admin'),
+    'site_title': config('DJANGO', 'ADMIN_SITE_TITLE', 'Concordia'),
+}
+
 DATABASES = {
     'default': {
         'ENGINE': config('DJANGO', 'DB_ENGINE', 'django.db.backends.postgresql_psycopg2'),
