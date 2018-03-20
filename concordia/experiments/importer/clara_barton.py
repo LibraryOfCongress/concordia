@@ -12,24 +12,25 @@ JPEG_MIME_TYPE = "image/jpeg"
 collection_data = {}
 
 
-def write_image_file(image, filename):
+def write_image_file(image, filename, identifier, image_number):
     # Request the image and write it to filename
     image_response = requests.get(image, stream=True)
     with open(filename, 'wb') as fd:
         for chunk in image_response.iter_content(chunk_size=100000):
             fd.write(chunk)
 
-    # TODO: check the size of the downloaded file to make sure it matches
-    # TODO: what was provided by the API
-
-    # If the image was successfully downloaded, upload it to the S3 bucket
+    # If the image successfully verifies with Pillow, upload it to the S3 bucket
     try:
         image_file = Image.open(filename)
         image_file.verify()
+
+        # TODO: check image width and height and verify that it matches the expected sizes
+
         s3 = boto3.client('s3')
         s3.upload_file(filename, s3_bucket_name, filename)
     except IOError:
         print("An exception occurred attempting to verify {0}".format(filename))
+        # TODO: clean up the bad file and retry download
 
 
 def get_item_images(item_id, item_url, path):
@@ -37,18 +38,21 @@ def get_item_images(item_id, item_url, path):
     params = {"fo": "json"}
     item_call = requests.get(item_url, params)
     item_result = item_call.json()
-    image_files = item_result.get("resources")[0]
-
+    image_resources = item_result.get("resources")[0]
+    image_files = image_resources.get("files")
     # save the number of files / assets for this item
+
     collection_data[item_id]["size"] = len(image_files)
     collection_data[item_id]["item_url"] = item_url
-    collection_data[item_id]["image_sizes"] = []
-    collection_data[item_id]["image_urls"] = []
+    collection_data[item_id]["image_sizes"] = {}
+    collection_data[item_id]["image_urls"] = {}
 
     counter = 0
     # Loop through all images in this item and save them all to the folder
-    for item_image in image_files.get("files"):
+    for item_image in image_files:
         greatest_width = 0
+        jpeg_image_url = ""
+        asset_height = 0
 
         # Don't assume the biggest jpeg is any particular index in the list
         # Instead, search the list for the image with the jpeg mime type
@@ -58,15 +62,17 @@ def get_item_images(item_id, item_url, path):
                 if asset_file.get("width") > greatest_width:
                     greatest_width = asset_file.get("width")
                     jpeg_image_url = asset_file.get("url")
-                    asset_size = asset_file.get("size")
+                    asset_height = asset_file.get("height")
 
-        collection_data[item_id]["image_urls"].append(jpeg_image_url)
-        collection_data[item_id]["image_sizes"].append(asset_size)
+        collection_data[item_id]["image_urls"][counter] = jpeg_image_url
+        collection_data[item_id]["image_sizes"][counter] = {}
+        collection_data[item_id]["image_sizes"][counter]["width"] = greatest_width
+        collection_data[item_id]["image_sizes"][counter]["height"] = asset_height
 
         # create a filename that's the image number
         filename = "{0}.jpg".format(counter)
         filename = os.path.join(path, filename)
-        write_image_file(jpeg_image_url, filename)
+        write_image_file(jpeg_image_url, filename, item_id, counter)
         counter = counter + 1
 
 
@@ -101,16 +107,17 @@ def get_and_save_images(results_url, path):
                     collection_data[identifier]["size"] = 1
                     collection_data[identifier]["item_url"] = result.get("id")
                     collection_data[identifier]["image_urls"][0] = image
-                    collection_data[identifier]["image_sizes"][0] = result.get("size")
+                    collection_data[identifier]["image_sizes"][0] = {}
+                    collection_data[identifier]["image_sizes"][0]["width"] = result.get("width")
+                    collection_data[identifier]["image_sizes"][0]["height"] = result.get("height")
 
                     # Create a filename that's the identifier portion of the item URL
                     filename = "{0}.jpg".format(identifier)
                     filename = os.path.join(path, filename)
                     if not os.path.exists(path):
                         os.makedirs(path)
-                    write_image_file(image, filename)
+                    write_image_file(image, filename, identifier, 0)
 
-                    # TODO: check that the file saved is the same size provided by the API
                 else:
                     # Multiple images / assets / files belong to this item
                     # Create an item ID folder and save all the files
@@ -119,7 +126,13 @@ def get_and_save_images(results_url, path):
                         os.makedirs(destination_folder)
                     get_item_images(identifier, result.get("id"), destination_folder)
 
-                    # TODO: check whether the folder contains the number of items it should
+                    # check whether the folder contains the number of items it should
+                    if collection_data[identifier]["size"] != len(os.listdir(destination_folder)):
+                        print("Should have {0} images for item {1} but instead have {2} images".format(
+                            collection_data[identifier]["size"],
+                            identifier,
+                            len(os.listdir(destination_folder))
+                        ))
 
     # Recurse through the next page
     if data["pagination"]["next"] is not None:
