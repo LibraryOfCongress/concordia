@@ -3,10 +3,13 @@ version: '3.3'
 services:
   db:
     image: postgres
+    environment:
+      POSTGRES_PASSWORD: concordia
+      POSTGRES_USER: concordia
     ports:
       - 54321:5432
     volumes:
-      - concordia_db_volume:/var/lib/postgresl/data/
+      - db_volume:/var/lib/postgresl/data/
   app:
     build: .
     depends_on:
@@ -17,4 +20,4 @@ services:
       - 8001:80
 
 volumes:
-  concordia_db_volume:
+  db_volume:

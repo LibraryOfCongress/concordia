@@ -1,0 +1,14 @@
+{% extends "transcribr/base.html" %}
+{% block main_content %}
+<div class="container">
+    <h2>Collections</h2>
+    {% if collections %}
+    <ul>{% for c in collections %}
+        <li>
+            <a href="{{ c.get_absolute_url }}"><strong>{{ c }}</strong></a><br>
+            <p>{{ c.description }}</p>
+        </li>{% endfor %}
+    </ul>
+    {% endif %}
+</div>
+{% endblock main_content %}

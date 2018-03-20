@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Login{% endblock title %}
 {% block main_content %}
+<div class="container">
     <h2>Login</h2>
     {% if form.errors %}
     <p>Please fix the errors below:</p>
@@ -11,4 +12,5 @@
             <input class="btn btn-primary" type="submit" value="Login">
         </p>    
     </form>
+</div>
 {% endblock main_content %}

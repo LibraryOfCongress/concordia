@@ -1,12 +1,14 @@
 import os
-from config import config
+from config import Config
 
+config = Config(os.getenv('CONCORDIA_ENV', 'env.ini'))
 
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(PROJECT_DIR)
 
 ALLOWED_HOSTS = ['*']
 AUTH_PASSWORD_VALIDATORS = []
+AUTH_USER_MODEL = 'transcribr.TranscribrUser'
 DEBUG = True
 EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
 EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'emails')
@@ -26,9 +28,9 @@ WSGI_APPLICATION = 'concordia.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': config('DJANGO', 'DB_ENGINE', 'django.db.backends.postgresql_psycopg2'),
-        'NAME': config('DJANGO', 'DB_NAME', 'postgres'),
-        'USER': config('DJANGO', 'DB_USER', 'postgres'),
-        'PASSWORD': config('DJANGO', 'DB_PASSWORD', ''),
+        'NAME': config('DJANGO', 'DB_NAME', 'concordia'),
+        'USER': config('DJANGO', 'DB_USER', 'concordia'),
+        'PASSWORD': config('DJANGO', 'DB_PASSWORD', 'concordia'),
         'HOST': config('DJANGO', 'DB_HOST', 'db'),
         'PORT': config('DJANGO', 'DB_PORT', 5432),
     }

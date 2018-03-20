@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block main_content %}
+<div class="container">
+    <h2>Settings</h2>
+    <dl>
+        <dt>User name</dt>
+        <dd>{{ user.username }}</dd>
+        <dt>Email</dt>
+        <dd>{{ user.email }}</dd>
+        <dt>Joined</dt>
+        <dd>{{ user.date_joined }}</dd>
+    </dl>
+</div>
+{% endblock main_content %}

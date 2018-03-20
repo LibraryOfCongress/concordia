@@ -78,6 +78,7 @@ def transform(value, cast):
 class Config:
 
     def __init__(self, filename='env.ini'):
+        filename = filename or 'env.ini'
         self.filename = find_file(filename)
         self._config_opts = {}
         self.csvlist = csv_factory()
@@ -157,4 +158,3 @@ class Config:
         return self.get(section, option, default=default, cast=cast)
 
 
-config = Config()
