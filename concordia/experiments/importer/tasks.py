@@ -14,6 +14,11 @@ concordia (ENV)$ python ./manage.py shell
 
 
 @shared_task
-def downloader():
+def download():
     importer = Importer()
     importer.main()
+
+
+@shared_task
+def add(x, y):
+    return x + y

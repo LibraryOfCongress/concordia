@@ -20,7 +20,7 @@ class Importer:
     collection_data = {}
 
     def __init__(self):
-        logging.basicConfig(filename='importer.log', level=logging.DEBUG)
+        logging.basicConfig(filename='importer.log', level=logging.INFO)
 
         config = configparser.ConfigParser()
         config.read(sys.argv[1])
