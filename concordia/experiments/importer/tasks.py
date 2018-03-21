@@ -13,7 +13,7 @@ Usage:
 
 concordia (ENV)$ celery -A concordia worker -l info
 concordia (ENV)$ python ./manage.py shell
->>> from concordia.experiments.importer.tasks import download, check_completeness, re_download
+>>> from concordia.experiments.importer.tasks import download, check_completeness
 >>> res = download.delay() # Kicks off the download process
 >>> res.get() # Won't return until download is complete - takes hours / days
 >>> res = check_completeness.delay()

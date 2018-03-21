@@ -15,8 +15,8 @@ Setup and Deploy
 Browse to `0.0.0.0:8001 <http://0.0.0.0:8001/>`_
 
 
-Devlop
-------
+Develop
+-------
 
 You may wish to run the Django development server on your local host instead of
 within a Docker container. It is easy to set up a Python virtual environment to
@@ -39,3 +39,4 @@ Instead of doing ``docker-compose up`` as above, instead do::
     $ pip install -r requirements/devel.pip
     $ manage.py migrate
     $ manage.py runserver
+
