@@ -80,18 +80,15 @@ class Importer:
             self.logger.info("Item {0} has the expected number of {1} images".format(item_id, actual_image_count))
             return True
 
-    def write_image_file(self, image, filename, identifier, image_number):
-        # Request the image and write it to filename
-        self.logger.info("Requesting {0}".format(image))
-        image_response = requests.get(image, stream=True)
-        with open(filename, 'wb') as fd:
-            for chunk in image_response.iter_content(chunk_size=self.IMAGE_CHUNK_SIZE):
-                fd.write(chunk)
-                self.logger.debug("Writing another {0} size chunk".format(self.IMAGE_CHUNK_SIZE))
+    @staticmethod
+    def check_item_image_exists(filename):
+        # Check whether filename exists
+        if os.path.exists(filename):
+            return True
+        else:
+            return False
 
-        self.logger.info("Finished writing the image file {0}".format(filename))
-
-        # If the image successfully verifies with Pillow, upload it to the S3 bucket
+    def verify_item_image(self, filename, identifier, image_number):
         try:
             image_file = Image.open(filename)
             actual_width, actual_height = image_file.size
@@ -116,17 +113,41 @@ class Importer:
             if actual_width != expected_width:
                 self.logger.error(
                     "Expected width of {0} but actual image width is {1}".format(expected_width, actual_width))
+                return False
 
             if actual_height != expected_height:
                 self.logger.error("Expected height of {0} but actual image height is {1}".format(expected_height,
                                                                                                  actual_height))
-
-            s3 = boto3.client('s3')
-            s3.upload_file(filename, self.s3_bucket_name, filename)
-            self.logger.info("Uploaded {0} to {1}".format(filename, self.s3_bucket_name))
-
+                return False
         except IOError:
             self.logger.error("An exception occurred attempting to verify {0}".format(filename))
+            return False
+
+        return True
+
+    def write_image_file(self, image, filename, identifier, image_number):
+        # Check if we already have this image on disk
+        if not self.check_item_image_exists(filename):
+            # Request the image and write it to filename
+            self.logger.info("Requesting {0}".format(image))
+            image_response = requests.get(image, stream=True)
+            with open(filename, 'wb') as fd:
+                for chunk in image_response.iter_content(chunk_size=self.IMAGE_CHUNK_SIZE):
+                    fd.write(chunk)
+                    self.logger.debug("Writing another {0} size chunk".format(self.IMAGE_CHUNK_SIZE))
+
+            self.logger.info("Finished writing the image file {0}".format(filename))
+
+        # If the image successfully verifies, upload it to the S3 bucket
+        if self.verify_item_image(filename, identifier, image_number):
+            s3 = boto3.client('s3')
+            # TODO: If the s3 bucket doesn't exist yet, try to create it
+            # TODO: Check whether the file is intact on S3 (fixity matches the local verified file)
+            # TODO: If the file is intact on S3, skip the upload step (for re-tries)
+            # TODO: Queue the S3 uploads so they can occur asynchronously (simultaneously with loc.gov downloads)
+            s3.upload_file(filename, self.s3_bucket_name, filename)
+            self.logger.info("Uploaded {0} to {1}".format(filename, self.s3_bucket_name))
+        else:
             os.remove(filename)
             self.logger.info("Removed {0}".format(filename))
 
@@ -162,7 +183,6 @@ class Importer:
             for asset_file in item_image:
                 if asset_file.get("mimetype") == self.MIME_TYPE:
                     if asset_file.get("width") > greatest_width:
-                        self.logger.debug("")
                         greatest_width = asset_file.get("width")
                         jpeg_image_url = asset_file.get("url")
                         asset_height = asset_file.get("height")

@@ -36,9 +36,3 @@ def download():
 def check_completeness():
     importer = Importer()
     importer.check_completeness()
-
-
-@shared_task
-def re_download():
-    importer = Importer()
-    importer.re_download()
