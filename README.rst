@@ -49,7 +49,7 @@ Instead of doing ``docker-compose up`` as above, instead do the following::
 
     $ docker-compose up -d db
 
-We'll keep our database in it's container for convenience.
+This will keep our database in its container for convenience.
 
 Next, set up a Python virtual environment::
 
@@ -60,6 +60,6 @@ Next, set up a Python virtual environment::
 
 Finally, run migrations and launch the development server::
 
-    $ manage.py migrate
-    $ manage.py runserver
+    $ ./manage.py migrate
+    $ ./manage.py runserver
 
