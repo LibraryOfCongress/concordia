@@ -3,4 +3,5 @@ psycopg2
 psycopg2-binary
 Pillow
 gunicorn
+djangorestframework
 vendor/django-registration.zip

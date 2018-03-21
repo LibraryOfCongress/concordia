@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.contrib import admin
 from django.urls import re_path, include
+from django.conf.urls.static import static
 from django.views.generic import TemplateView
 
 from . import views
@@ -25,5 +26,10 @@ urlpatterns = [
     re_path(r'^transcribe/', include('concordia.experiments.transcribr.urls')),
 
     re_path(r'^admin/', admin.site.urls),
-
 ]
+
+urlpatterns += static(
+    settings.STATIC_URL,
+    document_root=settings.STATIC_ROOT,
+    show_indexes=True
+)

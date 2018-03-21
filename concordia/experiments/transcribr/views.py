@@ -26,3 +26,10 @@ class TranscribrCollectionView(TemplateView):
 
 class TranscribrAssetView(TemplateView):
     template_name = 'transcribr/asset.html'
+
+    def get_context_data(self, **kws):
+        asset = Asset.objects.get(id=self.args[1])
+        return dict(
+            super().get_context_data(**kws),
+            asset=asset
+        )

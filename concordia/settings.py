@@ -19,6 +19,7 @@ ROOT_URLCONF = 'concordia.urls'
 SECRET_KEY = config('DJANGO', 'SECRET_KEY', 'super-secret-key')
 STATIC_ROOT = 'static'
 STATIC_URL = '/static/'
+STATICFILES_DIRS = [os.path.join(PROJECT_DIR, 'static')]
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_L10N = True
