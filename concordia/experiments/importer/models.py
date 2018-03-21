@@ -7,6 +7,7 @@ from PIL import Image
 import logging
 from config import config
 
+
 class Importer:
     base_url = ''
     item_count = 0
@@ -17,7 +18,7 @@ class Importer:
     collection_data = {}
 
     def __init__(self):
-        logging.basicConfig(filename='importer.log', level=logging.INFO)
+        self.logger = logging.getLogger(__name__)
 
         self.base_url = config('IMPORTER', 'BASE_URL')
         self.item_count = config('IMPORTER', 'ITEM_COUNT')
@@ -33,7 +34,7 @@ class Importer:
         actual_item_count = os.listdir(self.images_folder)
 
         if actual_item_count != self.item_count:
-            logging.error("Expected item count {0} but actual item count of {1} is {2}".format(
+            self.logger.error("Expected item count {0} but actual item count of {1} is {2}".format(
                 self.item_count,
                 self.images_folder,
                 actual_item_count
@@ -58,17 +59,17 @@ class Importer:
             expected_height = self.collection_data[identifier]["image_sizes"][image_number]["height"]
 
             if actual_width != expected_width:
-                logging.error(
+                self.logger.error(
                     "Expected width of {0} but actual image width is {1}".format(expected_width, actual_width))
 
             if actual_height != expected_height:
-                logging.error("Expected height of {0} but actual image height is {1}".format(expected_height,
-                                                                                             actual_height))
+                self.logger.error("Expected height of {0} but actual image height is {1}".format(expected_height,
+                                                                                                 actual_height))
 
             s3 = boto3.client('s3')
             s3.upload_file(filename, self.s3_bucket_name, filename)
         except IOError:
-            logging.error("An exception occurred attempting to verify {0}".format(filename))
+            self.logger.error("An exception occurred attempting to verify {0}".format(filename))
             # TODO: clean up the bad file and retry download
 
     def get_item_images(self, item_id, item_url, path):
@@ -143,7 +144,7 @@ class Importer:
 
                     # check whether the folder contains the number of items it should
                     if self.collection_data[identifier]["size"] != len(os.listdir(destination_folder)):
-                        logging.error("Should have {0} images for item {1} but instead have {2} images".format(
+                        self.logger.error("Should have {0} images for item {1} but instead have {2} images".format(
                             self.collection_data[identifier]["size"],
                             identifier,
                             len(os.listdir(destination_folder))
@@ -152,5 +153,5 @@ class Importer:
         # Recurse through the next page
         if data["pagination"]["next"] is not None:
             next_url = data["pagination"]["next"]
-            logging.info("getting next page: {0}".format(next_url))
+            self.logger.info("getting next page: {0}".format(next_url))
             self.get_and_save_images(next_url, path)
