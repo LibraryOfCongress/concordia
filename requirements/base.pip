@@ -6,3 +6,4 @@ Pillow
 gunicorn
 boto3
 requests
+celery

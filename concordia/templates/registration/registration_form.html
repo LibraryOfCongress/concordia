@@ -1,7 +1,13 @@
 {% extends "base.html" %}
+{% block title %}Account Registration{% endblock title %}
 {% block main_content %}
-    <table class="table">
-        {{ form }}        
-    </table>
-
+    <h2>Registration</h2>
+    <form method="post">{% csrf_token %}
+        <table class="table">
+            {{ form }}
+            <tr>
+                <td colspan="2"><input class="btn btn-primary" type="submit" value="Register"></td>
+            </tr>      
+        </table>
+    </form>
 {% endblock main_content %}

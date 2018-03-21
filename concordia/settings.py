@@ -1,14 +1,17 @@
 import os
 from config import config
 
-
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(PROJECT_DIR)
 
 ALLOWED_HOSTS = ['*']
 AUTH_PASSWORD_VALIDATORS = []
 DEBUG = True
+EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
+EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'emails')
 LANGUAGE_CODE = 'en-us'
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
 ROOT_URLCONF = 'concordia.urls'
 SECRET_KEY = config('DJANGO', 'SECRET_KEY', 'super-secret-key')
 STATIC_ROOT = 'static'
@@ -40,8 +43,8 @@ INSTALLED_APPS = [
 
     'concordia.experiments.wireframes',
     'concordia.experiments.transcribr',
+    'concordia.experiments.importer',
     'django_extensions',
-    'registration'
 ]
 
 
@@ -68,6 +71,32 @@ TEMPLATES = [{
         ],
     },
 }]
+
+# Celery settings
+CELERY_BROKER_URL = 'pyamqp://guest@localhost//'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_RESULT_BACKEND = 'rpc://'
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_IMPORTS = ('concordia.experiments.importer.tasks',)
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'concordia-debug.log',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}
 
 ################################################################################
 # Django-specific settings above

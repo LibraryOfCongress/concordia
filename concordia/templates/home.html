@@ -1,6 +1,10 @@
-{% extends "base.html" %} 
+{% extends "base.html" %}
+{% block title %}Home{% endblock title %}
 {% block main_content %}
-    <ul>
-        <li><a href="/wireframes/">Wireframes</a></li>
-    </ul>
+    <div class="container">
+        <ul>
+            <li><a href="/wireframes/">Wireframes</a></li>
+            <li><a href="{% url 'transcribr:transcribe' %}">Transcribe</a></li>
+        </ul>
+    </div>
 {% endblock main_content %}
