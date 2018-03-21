@@ -3,13 +3,13 @@ import os
 from urllib.parse import urlparse
 import boto3
 from PIL import Image
+import configparser
+import sys
+import logging
 
-base_url = 'https://www.loc.gov/collections/clara-barton-papers'
-images_folder = 'clara-barton-papers'
-s3_bucket_name = 'clara-barton-papers'
-item_count = 933
-JPEG_MIME_TYPE = "image/jpeg"
-collection_data = {}
+"""
+Usage: python concordia/experiments/importer/importer.py clara_barton.ini
+"""
 
 
 def write_image_file(image, filename, identifier, image_number):
@@ -22,14 +22,24 @@ def write_image_file(image, filename, identifier, image_number):
     # If the image successfully verifies with Pillow, upload it to the S3 bucket
     try:
         image_file = Image.open(filename)
+        actual_width, actual_height = image_file.size
         image_file.verify()
+        image_file.close()
 
-        # TODO: check image width and height and verify that it matches the expected sizes
+        # check image width and height and verify that it matches the expected sizes
+        expected_width = collection_data[identifier]["image_sizes"][image_number]["width"]
+        expected_height = collection_data[identifier]["image_sizes"][image_number]["height"]
+
+        if actual_width != expected_width:
+            logging.error("Expected width of {0} but actual image width is {1}".format(expected_width, actual_width))
+
+        if actual_height != expected_height:
+            logging.error("Expected height of {0} but actual image height is {1}".format(expected_height, actual_height))
 
         s3 = boto3.client('s3')
         s3.upload_file(filename, s3_bucket_name, filename)
     except IOError:
-        print("An exception occurred attempting to verify {0}".format(filename))
+        logging.error("An exception occurred attempting to verify {0}".format(filename))
         # TODO: clean up the bad file and retry download
 
 
@@ -98,51 +108,53 @@ def get_and_save_images(results_url, path):
 
                 collection_data[identifier] = {}
 
-                # If hassegments is false, then there is only one image for this item
-                if not result.get("hassegments") or result.get("hassegments") is False:
-                    # TODO: make sure the widest JPEG available is the one being downloaded
-                    # TODO: for these single-image items
-                    image = "https:" + result.get("image_url")[-1]
+                # Create an item ID folder and save all the files - whether one or many
+                destination_folder = os.path.join(path, identifier)
+                if not os.path.exists(destination_folder):
+                    os.makedirs(destination_folder)
+                get_item_images(identifier, result.get("id"), destination_folder)
 
-                    collection_data[identifier]["size"] = 1
-                    collection_data[identifier]["item_url"] = result.get("id")
-                    collection_data[identifier]["image_urls"][0] = image
-                    collection_data[identifier]["image_sizes"][0] = {}
-                    collection_data[identifier]["image_sizes"][0]["width"] = result.get("width")
-                    collection_data[identifier]["image_sizes"][0]["height"] = result.get("height")
-
-                    # Create a filename that's the identifier portion of the item URL
-                    filename = "{0}.jpg".format(identifier)
-                    filename = os.path.join(path, filename)
-                    if not os.path.exists(path):
-                        os.makedirs(path)
-                    write_image_file(image, filename, identifier, 0)
-
-                else:
-                    # Multiple images / assets / files belong to this item
-                    # Create an item ID folder and save all the files
-                    destination_folder = os.path.join(path, identifier)
-                    if not os.path.exists(destination_folder):
-                        os.makedirs(destination_folder)
-                    get_item_images(identifier, result.get("id"), destination_folder)
-
-                    # check whether the folder contains the number of items it should
-                    if collection_data[identifier]["size"] != len(os.listdir(destination_folder)):
-                        print("Should have {0} images for item {1} but instead have {2} images".format(
-                            collection_data[identifier]["size"],
-                            identifier,
-                            len(os.listdir(destination_folder))
-                        ))
+                # check whether the folder contains the number of items it should
+                if collection_data[identifier]["size"] != len(os.listdir(destination_folder)):
+                    logging.error("Should have {0} images for item {1} but instead have {2} images".format(
+                        collection_data[identifier]["size"],
+                        identifier,
+                        len(os.listdir(destination_folder))
+                    ))
 
     # Recurse through the next page
     if data["pagination"]["next"] is not None:
         next_url = data["pagination"]["next"]
-        print("getting next page: {0}".format(next_url))
+        logging.info("getting next page: {0}".format(next_url))
         get_and_save_images(next_url, path)
 
 
-get_and_save_images(base_url, images_folder)
+if __name__ == "__main__":
 
-# TODO: check that the total number of items - both folders and single-image items in the main folder -
-# TODO: matches the expected number of total items configured at the top
-# TODO: Save collection_data somewhere so we know which URLs were used to retrieve these images?
+    logging.basicConfig(filename='importer.log', level=logging.DEBUG)
+
+    config = configparser.ConfigParser()
+    config.read(sys.argv[1])
+
+    base_url = config['Collection']['base_url']
+    item_count = config['Collection']['item_count']
+    images_folder = config['Collection']['images_folder']
+    s3_bucket_name = config['Collection']['s3_bucket_name']
+
+    JPEG_MIME_TYPE = "image/jpeg"
+    collection_data = {}
+
+    get_and_save_images(base_url, images_folder)
+
+    # check that the total number of items - both folders and single-image items in the main folder -
+    # matches the expected number of total items configured at the top
+    actual_item_count = os.listdir(images_folder)
+
+    if actual_item_count != item_count:
+        logging.error("Expected item count {0} but actual item count of {1} is {2}".format(
+            item_count,
+            images_folder,
+            actual_item_count
+        ))
+
+    # TODO: Save collection_data somewhere so we know which URLs were used to retrieve these images?
