@@ -1,8 +1,11 @@
 import os
 from config import Config
 
+<<<<<<< HEAD
 config = Config(os.getenv('CONCORDIA_ENV', 'env.ini'))
 
+=======
+>>>>>>> feature/import_collection
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(PROJECT_DIR)
 
@@ -52,6 +55,7 @@ INSTALLED_APPS = [
 
     'concordia.experiments.wireframes',
     'concordia.experiments.transcribr',
+    'concordia.experiments.importer',
     'django_extensions',
 ]
 
@@ -79,6 +83,32 @@ TEMPLATES = [{
         ],
     },
 }]
+
+# Celery settings
+CELERY_BROKER_URL = 'pyamqp://guest@localhost//'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_RESULT_BACKEND = 'rpc://'
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_IMPORTS = ('concordia.experiments.importer.tasks',)
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'concordia-debug.log',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}
 
 ################################################################################
 # Django-specific settings above
