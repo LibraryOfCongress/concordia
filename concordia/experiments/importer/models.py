@@ -1,14 +1,11 @@
 from __future__ import absolute_import, unicode_literals
-from django.db import models
 import requests
 import os
 from urllib.parse import urlparse
 import boto3
 from PIL import Image
 import logging
-import configparser
-import sys
-
+from config import config
 
 class Importer:
     base_url = ''
@@ -22,13 +19,10 @@ class Importer:
     def __init__(self):
         logging.basicConfig(filename='importer.log', level=logging.INFO)
 
-        config = configparser.ConfigParser()
-        config.read(sys.argv[1])
-
-        self.base_url = config['Collection']['base_url']
-        self.item_count = config['Collection']['item_count']
-        self.images_folder = config['Collection']['images_folder']
-        self.s3_bucket_name = config['Collection']['s3_bucket_name']
+        self.base_url = config('IMPORTER', 'BASE_URL')
+        self.item_count = config('IMPORTER', 'ITEM_COUNT')
+        self.images_folder = config('IMPORTER', 'IMAGES_FOLDER')
+        self.s3_bucket_name = config('IMPORTER', 'S3_BUCKET_NAME')
 
     def main(self):
 
