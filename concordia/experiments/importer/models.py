@@ -140,16 +140,30 @@ class Importer:
 
         # If the image successfully verifies, upload it to the S3 bucket
         if self.verify_item_image(filename, identifier, image_number):
-            s3 = boto3.client('s3')
-            # TODO: If the s3 bucket doesn't exist yet, try to create it
-            # TODO: Check whether the file is intact on S3 (fixity matches the local verified file)
-            # TODO: If the file is intact on S3, skip the upload step (for re-tries)
-            # TODO: Queue the S3 uploads so they can occur asynchronously (simultaneously with loc.gov downloads)
-            s3.upload_file(filename, self.s3_bucket_name, filename)
-            self.logger.info("Uploaded {0} to {1}".format(filename, self.s3_bucket_name))
+            image_stats = os.stat(filename)
+            size_on_disk = image_stats.st_size
+            if not self.check_image_file_on_s3(filename, size_on_disk):
+                s3 = boto3.client('s3')
+                # TODO: If the s3 bucket doesn't exist yet, try to create it
+                # TODO: Queue the S3 uploads so they can occur asynchronously (simultaneously with loc.gov downloads)
+                s3.upload_file(filename, self.s3_bucket_name, filename)
+                self.logger.info("Uploaded {0} to {1}".format(filename, self.s3_bucket_name))
+            else:
+                self.logger.info("File {0} with size {1} already exists in s3 bucket".format(
+                    filename,
+                    size_on_disk
+                ))
         else:
             os.remove(filename)
             self.logger.info("Removed {0}".format(filename))
+
+    def check_image_file_on_s3(self, filename, expected_size):
+        s3 = boto3.resource('s3')
+        object_summary = s3.ObjectSummary(self.s3_bucket_name, filename)
+        if object_summary.size == expected_size:
+            return True
+        else:
+            return False
 
     @staticmethod
     def get_item_image_files(item_url):

@@ -18,7 +18,7 @@ concordia (ENV)$ python ./manage.py shell
 >>> res.get() # Won't return until download is complete - takes hours / days
 >>> res = check_completeness.delay()
 >>> while(res.get()==False)
-...    res2 = re_download.delay()
+...    res2 = download.delay()
 ...    res2.get()
 ...    res = check_completeness.delay()
 >>>
