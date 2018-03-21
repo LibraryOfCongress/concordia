@@ -1,6 +1,11 @@
 version: '3.3'
 
 services:
+  rabbit:
+    hostname: rabbit
+    image: rabbitmq:latest
+    ports:
+      - 5673:5672
   db:
     image: postgres
     ports:
@@ -11,8 +16,11 @@ services:
     build: .
     depends_on:
       - db
+      - rabbit
     volumes:
       - .:/app
+    links:
+      - rabbit
     ports:
       - 8001:80
 

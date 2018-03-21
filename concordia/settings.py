@@ -73,7 +73,7 @@ TEMPLATES = [{
 }]
 
 # Celery settings
-CELERY_BROKER_URL = 'pyamqp://guest@localhost//'
+CELERY_BROKER_URL = 'pyamqp://rabbit@rabbit//'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_RESULT_BACKEND = 'rpc://'
 CELERY_TASK_SERIALIZER = 'json'

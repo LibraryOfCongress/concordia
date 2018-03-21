@@ -2,8 +2,8 @@ Django<2.1
 psycopg2
 psycopg2-binary
 Pillow
--e git+https://github.com/ubernostrum/django-registration.git#egg=registration
+-e git+https://github.com/ubernostrum/django-registration.git#egg=django-registration
 gunicorn
 boto3
 requests
-celery
+Celery
