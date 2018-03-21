@@ -1,18 +1,13 @@
+from __future__ import absolute_import, unicode_literals
+from django.db import models
 import requests
 import os
 from urllib.parse import urlparse
 import boto3
 from PIL import Image
+import logging
 import configparser
 import sys
-import logging
-
-"""
-Usage: 
-
-concordia (ENV)$ python concordia/experiments/importer/importer.py clara_barton.ini
-
-"""
 
 
 class Importer:
@@ -35,7 +30,6 @@ class Importer:
         self.images_folder = config['Collection']['images_folder']
         self.s3_bucket_name = config['Collection']['s3_bucket_name']
 
-    @importer_app.task
     def main(self):
 
         self.get_and_save_images(self.base_url, self.images_folder)
@@ -51,7 +45,6 @@ class Importer:
                 actual_item_count
             ))
 
-    @importer_app.task
     def write_image_file(self, image, filename, identifier, image_number):
         # Request the image and write it to filename
         image_response = requests.get(image, stream=True)
@@ -167,8 +160,3 @@ class Importer:
             next_url = data["pagination"]["next"]
             logging.info("getting next page: {0}".format(next_url))
             self.get_and_save_images(next_url, path)
-
-
-if __name__ == "__main__":
-    importer = Importer()
-    importer.main()
