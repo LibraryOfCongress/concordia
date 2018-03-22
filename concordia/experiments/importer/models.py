@@ -20,7 +20,7 @@ class Importer:
     MIME_TYPE = "image/jpeg"
     COLLECTION_PAGINATION = 25
     IMAGE_CHUNK_SIZE = 100000
-    ITEM_URL_FORMAT = "https://www.loc.gov/item/{0}"
+    ITEM_URL_FORMAT = "https://dev.loc.gov/item/{0}"
 
     # Ephemeral data
     collection_data = {}
@@ -130,8 +130,9 @@ class Importer:
         # Check if we already have this image on disk
         if not self.check_item_image_exists(filename):
             # Request the image and write it to filename
-            self.logger.info("Requesting {0}".format(image))
-            image_response = requests.get(image, stream=True)
+
+            self.logger.info("Requesting {0}".format(image.replace("tile.loc.gov","tile-dev.loc.gov")))
+            image_response = requests.get(image.replace("tile.loc.gov","tile-dev.loc.gov"), stream=True)
             with open(filename, 'wb') as fd:
                 for chunk in image_response.iter_content(chunk_size=self.IMAGE_CHUNK_SIZE):
                     fd.write(chunk)

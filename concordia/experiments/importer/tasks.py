@@ -8,6 +8,7 @@ Pre-requisites:
  * AWS S3 bucket created and keys in ~/.aws/credentials
  * Configuration in env.ini "importer" section
  * RabbitMQ server running on localhost
+ * http access to tile-dev.loc.gov and dev.loc.gov
 
 Usage:
 
