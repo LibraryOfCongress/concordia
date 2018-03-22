@@ -1,17 +1,16 @@
 import os
+import sys
 from config import Config
 
-<<<<<<< HEAD
 config = Config(os.getenv('CONCORDIA_ENV', 'env.ini'))
 
-=======
->>>>>>> feature/import_collection
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(PROJECT_DIR)
 
+sys.path.append(PROJECT_DIR)
 ALLOWED_HOSTS = ['*']
 AUTH_PASSWORD_VALIDATORS = []
-AUTH_USER_MODEL = 'transcribr.TranscribrUser'
+#AUTH_USER_MODEL = 'transcribr.TranscribrUser'
 DEBUG = True
 EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
 EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'emails')
@@ -53,11 +52,14 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    'concordia.experiments.wireframes',
-    'concordia.experiments.transcribr',
+    'rest_framework',
+    'transcribr',
     'concordia.experiments.importer',
-    'django_extensions',
+    'concordia.experiments.wireframes',
 ]
+
+if DEBUG:
+    INSTALLED_APPS += ['django_extensions',]
 
 
 MIDDLEWARE = [
@@ -84,12 +86,6 @@ TEMPLATES = [{
     },
 }]
 
-# Celery settings
-CELERY_BROKER_URL = 'pyamqp://guest@localhost//'
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_RESULT_BACKEND = 'rpc://'
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_IMPORTS = ('concordia.experiments.importer.tasks',)
 
 LOGGING = {
     'version': 1,
@@ -115,4 +111,16 @@ LOGGING = {
 ################################################################################
 
 ACCOUNT_ACTIVATION_DAYS = 7
+
+# Celery settings
+CELERY_BROKER_URL = 'pyamqp://guest@localhost//'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_RESULT_BACKEND = 'rpc://'
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_IMPORTS = ('concordia.experiments.importer.tasks',)
+
+
+TRANSCRIBR = dict(
+    netloc=config('TRANSCRIBR', 'NETLOC', 'http://0.0.0.0:80'),
+)
 

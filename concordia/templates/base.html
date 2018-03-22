@@ -10,7 +10,7 @@
     <header class="container">
         <nav class="font-weight-light">
             <a href="/"><strong>Concordia</strong></a> |
-            <a href="{% url 'transcribr:transcribe' %}">Transcribe</a> |
+            <a href="{% url 'transcriptions:transcribe' %}">Transcribe</a> |
             {% if user.is_authenticated %}
             <a href="{% url 'user-profile' %}">{{ user }}</a> &bull;
             {% if user.is_superuser %}

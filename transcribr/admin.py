@@ -2,10 +2,6 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from .models import *
 
-@admin.register(TranscribrUser)
-class TranscribrUserAdmin(UserAdmin):
-    pass
-
 
 @admin.register(Collection)
 class CollectionAdmin(admin.ModelAdmin):

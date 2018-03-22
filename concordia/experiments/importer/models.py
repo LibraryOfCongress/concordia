@@ -5,8 +5,9 @@ from urllib.parse import urlparse
 import boto3
 from PIL import Image
 import logging
-from config import config
+from config import Config
 
+config = Config(os.getenv('CONCORDIA_ENV', 'env.ini'))
 
 class Importer:
     base_url = ''

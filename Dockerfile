@@ -6,7 +6,8 @@ ENV PYTHONUNBUFFERED 1
 RUN apt-get update && apt-get install -y \
     git curl \
     python3 python3-dev python3-pip \
-    libtiff-dev libjpeg-dev libopenjp2-7-dev libwebp-dev zlib1g-dev
+    libtiff-dev libjpeg-dev libopenjp2-7-dev libwebp-dev zlib1g-dev \
+    graphviz
 
 COPY requirements /requirements
 COPY vendor /vendor

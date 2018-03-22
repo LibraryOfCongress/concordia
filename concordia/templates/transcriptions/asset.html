@@ -1,4 +1,4 @@
-{% extends "transcribr/base.html" %} {% load staticfiles %}
+{% extends "transcriptions/base.html" %} {% load staticfiles %}
 {% block title %}{{ asset.title }}{% endblock title %}
 {% block head_content %}
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
@@ -25,7 +25,8 @@
 {% block main_content %}
     <div class="container">
         <h2>{{ asset.title }}</h2>
-        <p><a href="{{ asset.collection.get_absolute_url }}"><i>{{ asset.collection }} Collection</i></a></p>
+        <p><a href="{% url 'transcriptions:collection' asset.collection.slug %}">
+            <i>{{ asset.collection.title }} Collection</i></a></p>
         <p>{{ asset.description }}</p>
         <div class="row">
             <div class="col-6"></div>
@@ -48,7 +49,7 @@
                             prefixUrl: '{% static "vendor/openseadragon/images/" %}',
                             tileSources: {
                                 type: 'image',
-                                url: '{% static asset.url %}'
+                                url: '{% static asset.media_url %}'
                             }
                         });
                     </script>

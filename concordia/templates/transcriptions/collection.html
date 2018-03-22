@@ -1,4 +1,4 @@
-{% extends "transcribr/base.html" %} {% load staticfiles %}
+{% extends "transcriptions/base.html" %} {% load staticfiles %}
 {% block main_content %}
 <div class="container">
     <h2>{{ collection }}</h2>
@@ -8,12 +8,13 @@
     <div class="row">
     {% for a in collection.asset_set.all %}
         <div class="col-3">
-            <div class="card">
-                <img class="card-img-top" src="{% static a.url %}" alt="alt text">
+            <div class="card mb-4">
+                <img class="card-img-top" src="{% static a.media_url %}" alt="alt text">
                 <div class="card-body">
                     <h5 class="card-title">{{ a.title }}</h5>
                     <p class="card-text">{{ a.description }}</p>
-                    <a href="{{ a.get_absolute_url }}" class="btn btn-primary">Transcribe</a>
+                    <a href="{% url 'transcriptions:asset' collection.slug a.slug %}"
+                        class="btn btn-primary">Transcribe</a>
                 </div>
             </div>
         </div>

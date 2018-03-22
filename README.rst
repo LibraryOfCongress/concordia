@@ -63,3 +63,13 @@ Finally, run migrations and launch the development server::
     $ ./manage.py migrate
     $ ./manage.py runserver
 
+
+Misc
+----
+
+To generate a model graph, do::
+
+    $ docker-compose up -d app
+    $ docker-compose exec app bash
+    # manage.py graph_models transcribr > tx.dot
+    # dot -Tsvg tx.dot -o tx.svg
