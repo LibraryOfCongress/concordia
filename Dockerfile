@@ -10,8 +10,9 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 COPY . .
-RUN pip3 install -e .
 RUN pip3 install -r requirements/devel.pip
+RUN pip3 install -e .
+
 
 EXPOSE 80
 ENTRYPOINT [ "/bin/bash", "entrypoint.sh" ]

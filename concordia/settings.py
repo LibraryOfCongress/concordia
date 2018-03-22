@@ -73,11 +73,13 @@ TEMPLATES = [{
 }]
 
 # Celery settings
-CELERY_BROKER_URL = 'pyamqp://guest@localhost//'
+CELERY_BROKER_URL = config('CELERY', 'BROKER_URL', 'pyamqp://rabbit@rabbit//')
+CELERY_RESULT_BACKEND = config('CELERY', 'RESULT_BACKEND', 'rpc://')
+
 CELERY_ACCEPT_CONTENT = ['json']
-CELERY_RESULT_BACKEND = 'rpc://'
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_IMPORTS = ('concordia.experiments.importer.tasks',)
+
 
 LOGGING = {
     'version': 1,
