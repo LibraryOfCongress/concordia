@@ -3,6 +3,7 @@ import requests
 import os
 from urllib.parse import urlparse
 import boto3
+import botocore
 from PIL import Image
 import logging
 from config import config
@@ -110,12 +111,12 @@ class Importer:
                 expected_height
             ))
 
-            if actual_width != expected_width:
+            if actual_width != expected_width and abs(actual_width-expected_width) > 1:
                 self.logger.error(
                     "Expected width of {0} but actual image width is {1}".format(expected_width, actual_width))
                 return False
 
-            if actual_height != expected_height:
+            if actual_height != expected_height and abs(actual_width-expected_width) > 1:
                 self.logger.error("Expected height of {0} but actual image height is {1}".format(expected_height,
                                                                                                  actual_height))
                 return False
@@ -159,10 +160,13 @@ class Importer:
 
     def check_image_file_on_s3(self, filename, expected_size):
         s3 = boto3.resource('s3')
-        object_summary = s3.ObjectSummary(self.s3_bucket_name, filename)
-        if object_summary.size == expected_size:
-            return True
-        else:
+        try:
+            object_summary = s3.ObjectSummary(self.s3_bucket_name, filename)
+            if object_summary.size == expected_size:
+                return True
+            else:
+                return False
+        except botocore.exceptions.ClientError:
             return False
 
     @staticmethod

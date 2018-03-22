@@ -5,7 +5,8 @@ services:
     hostname: rabbit
     image: rabbitmq:latest
     ports:
-      - 5673:5672
+      - 5672:5672
+      - 15672:15672
   db:
     image: postgres
     ports:
