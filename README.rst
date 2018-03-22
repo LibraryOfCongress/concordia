@@ -73,3 +73,4 @@ To generate a model graph, do::
     $ docker-compose exec app bash
     # manage.py graph_models transcribr > tx.dot
     # dot -Tsvg tx.dot -o tx.svg
+

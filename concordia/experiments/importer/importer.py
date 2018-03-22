@@ -37,7 +37,6 @@ class Importer:
         self.images_folder = config['Collection']['images_folder']
         self.s3_bucket_name = config['Collection']['s3_bucket_name']
 
-    @importer_app.task
     def main(self):
 
         self.get_and_save_images(self.base_url, self.images_folder)
@@ -53,7 +52,6 @@ class Importer:
                 actual_item_count
             ))
 
-    @importer_app.task
     def write_image_file(self, image, filename, identifier, image_number):
         # Request the image and write it to filename
         image_response = requests.get(image, stream=True)
