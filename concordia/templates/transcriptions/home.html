@@ -2,8 +2,8 @@
 {% block main_content %}
 <div class="container">
     <h2>Collections</h2>
-    {% if collections %}
-    <ul>{% for c in collections %}
+    {% if response.results %}
+    <ul>{% for c in response.results %}
         <li>
             <a href="{% url 'transcriptions:collection' c.slug %}"><strong>{{ c.title }}</strong></a><br>
             <p>{{ c.description }}</p>

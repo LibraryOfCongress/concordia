@@ -1,8 +1,7 @@
 import os
 import sys
-from config import Config
+from config import config
 
-config = Config(os.getenv('CONCORDIA_ENV', 'env.ini'))
 
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(PROJECT_DIR)
@@ -10,7 +9,6 @@ BASE_DIR = os.path.dirname(PROJECT_DIR)
 sys.path.append(PROJECT_DIR)
 ALLOWED_HOSTS = ['*']
 AUTH_PASSWORD_VALIDATORS = []
-#AUTH_USER_MODEL = 'transcribr.TranscribrUser'
 DEBUG = True
 EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
 EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'emails')
@@ -22,6 +20,7 @@ SECRET_KEY = config('DJANGO', 'SECRET_KEY', 'super-secret-key')
 STATIC_ROOT = 'static'
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [os.path.join(PROJECT_DIR, 'static')]
+TEMPLATE_DEBUG = False
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_L10N = True
@@ -98,16 +97,41 @@ CELERY_IMPORTS = ('concordia.experiments.importer.tasks',)
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
-    'handlers': {
-        'file': {
-            'level': 'DEBUG',
-            'class': 'logging.FileHandler',
-            'filename': 'concordia-debug.log',
+    'formatters': {
+        'long': {
+            'format': '[{asctime} {levelname} {name}:{lineno}] {message}',
+            'datefmt': '%Y-%m-%dT%H:%M:%S',
+            'style': '{'
         },
+        'short': {
+            'format': '[{levelname} {name}] {message}',
+            'datefmt': '%Y-%m-%dT%H:%M:%S',
+            'style': '{'
+        },
+    },
+    'handlers': {
+        'stream': {
+            'class': 'logging.StreamHandler',
+            'level': 'INFO',
+            'formatter': 'long',
+        },
+        'null': {
+            'level': 'DEBUG',
+            'class': 'logging.NullHandler',
+        },
+        'file': {
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'level': 'DEBUG',
+            'formatter': 'long',
+            'filename': 'logs/concordia.log',
+            'when': 'H',
+            'interval': 3,
+            'backupCount': 16
+        }
     },
     'loggers': {
         'django': {
-            'handlers': ['file'],
+            'handlers': ['file', 'stream'],
             'level': 'DEBUG',
             'propagate': True,
         },
@@ -123,3 +147,7 @@ TRANSCRIBR = dict(
     netloc=config('TRANSCRIBR', 'NETLOC', 'http://0.0.0.0:80'),
 )
 
+REST_FRAMEWORK = {
+    'PAGE_SIZE': config('DJRF', 'PAGE_SIZE', 10, int),
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+}

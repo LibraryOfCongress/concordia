@@ -1,4 +1,7 @@
+from logging import getLogger
 from django.db import models
+
+logger = getLogger(__name__)
 
 
 class Status:

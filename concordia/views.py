@@ -1,3 +1,4 @@
+from logging import getLogger
 import requests
 from django.conf import settings
 from django.views.generic import TemplateView
@@ -7,14 +8,19 @@ from registration.backends.simple.views import RegistrationView
 from .forms import ConcordiaUserForm
 from transcribr.models import Asset, Collection
 
+logger = getLogger(__name__)
 
 def transcribr_api(relative_path):
     abs_path = '{}/api/v1/{}'.format(
         settings.TRANSCRIBR['netloc'],
         relative_path
     )
-    return requests.get(abs_path).json()
 
+    logger.debug('Calling API path {}'.format(abs_path))
+    data = requests.get(abs_path).json()
+
+    logger.debug('Received {}'.format(data))
+    return data
 
 class ConcordiaRegistrationView(RegistrationView):
     form_class = ConcordiaUserForm
@@ -33,10 +39,10 @@ class TranscribrView(TemplateView):
     template_name = 'transcriptions/home.html'
 
     def get_context_data(self, **kws):
-        collections = transcribr_api('collections/')
+        response = transcribr_api('collections/')
         return dict(
             super().get_context_data(**kws),
-            collections=collections
+            response=response
         )
 
 

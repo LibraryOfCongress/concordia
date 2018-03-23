@@ -1,4 +1,5 @@
 from django.db import migrations
+from django.contrib.auth.hashers import make_password
 
 
 def populate_samples(apps, schema_editor):
@@ -56,6 +57,8 @@ def populate_samples(apps, schema_editor):
         password='password',
         email='user@example.com'
     )
+    user = User(username='user', email='user@example.com')
+    user.password = make_password('password')
     user.save()
 
     uatc = UserAssetTagCollection.objects.create(asset=asset_a, user_id=user.id)

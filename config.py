@@ -158,3 +158,4 @@ class Config:
         return self.get(section, option, default=default, cast=cast)
 
 
+config = Config(os.getenv('CONCORDIA_ENV', 'env.ini'))
