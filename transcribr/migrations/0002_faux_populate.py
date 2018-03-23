@@ -7,7 +7,7 @@ def populate_samples(apps, schema_editor):
     Subcollection = apps.get_model('transcribr', 'Subcollection')
     Tag = apps.get_model('transcribr', 'Tag')
     UserAssetTagCollection = apps.get_model('transcribr', 'UserAssetTagCollection')
-    Transcription = apps.get_model('transcribr', 'Trascription')
+    Transcription = apps.get_model('transcribr', 'Transcription')
     Collection = apps.get_model('transcribr', 'Collection')
 
     coll = Collection.objects.create(
@@ -27,7 +27,7 @@ def populate_samples(apps, schema_editor):
             title='CB Asset {}'.format(i),
             slug='cb-asset-{}'.format(i),
             description='CB Asset {} description'.format(i),
-            media_url='transcribr/image.png',
+            media_url='transcribr/mss119730001/{0}.jpg'.format(i),
             media_type='IMG',
             collection=coll,
             subcollection=subcollection,
@@ -39,7 +39,7 @@ def populate_samples(apps, schema_editor):
             title='CB Asset {}'.format(i),
             slug='cb-asset-{}'.format(i),
             description='CB Asset {} description'.format(i),
-            media_url='transcribr/image.png',
+            media_url='transcribr/mss119730001/{0}.jpg'.format(i),
             media_type='IMG',
             collection=coll,
             sequence=1
@@ -56,7 +56,6 @@ def populate_samples(apps, schema_editor):
         password='password',
         email='user@example.com'
     )
-    user.set_password('password')
     user.save()
 
     uatc = UserAssetTagCollection.objects.create(asset=asset_a, user_id=user.id)
@@ -64,7 +63,9 @@ def populate_samples(apps, schema_editor):
     Transcription.objects.create(
         asset=asset_a,
         user_id=user.id,
-        text='Lorem ipsum dolor sit amet, consectetur adipisicing elit. Recusandae tempore ratione explicabo numquam voluptates labore perspiciatis minima, in dolor maiores vitae dolorum, nobis rerum voluptatem cupiditate libero officiis tenetur soluta!',
+        text='Lorem ipsum dolor sit amet, consectetur adipisicing elit. Recusandae tempore ratione'
+             ' explicabo numquam voluptates labore perspiciatis minima, in dolor maiores vitae dolorum, '
+             'nobis rerum voluptatem cupiditate libero officiis tenetur soluta!',
         status='25',        
     )
 

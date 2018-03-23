@@ -8,7 +8,6 @@ from .forms import ConcordiaUserForm
 from transcribr.models import Asset, Collection
 
 
-
 def transcribr_api(relative_path):
     abs_path = '{}/api/v1/{}'.format(
         settings.TRANSCRIBR['netloc'],
@@ -34,7 +33,7 @@ class TranscribrView(TemplateView):
     template_name = 'transcriptions/home.html'
 
     def get_context_data(self, **kws):
-        collections = transcribr_api('collections/').json()
+        collections = transcribr_api('collections/')
         return dict(
             super().get_context_data(**kws),
             collections=collections

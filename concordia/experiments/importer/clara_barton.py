@@ -4,6 +4,8 @@ from urllib.parse import urlparse
 import boto3
 from PIL import Image
 
+""" DEPRECATED - see tasks.py for latest celery stuff """
+
 base_url = 'https://www.loc.gov/collections/clara-barton-papers'
 images_folder = 'clara-barton-papers'
 s3_bucket_name = 'clara-barton-papers'

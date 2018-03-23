@@ -10,6 +10,7 @@ from config import Config
 
 config = Config(os.getenv('CONCORDIA_ENV', 'env.ini'))
 
+
 class Importer:
     # Config loaded from Django settings
     base_url = ''
