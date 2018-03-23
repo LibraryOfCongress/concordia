@@ -1,6 +1,7 @@
 FROM ubuntu:18.04
 
 ENV PYTHONUNBUFFERED 1
+ENV PYTHONPATH=/app
 
 # Pillow/Imaging: https://pillow.readthedocs.io/en/latest/installation.html#external-libraries
 RUN apt-get update && apt-get install -y \
@@ -15,8 +16,8 @@ RUN pip3 install -r /requirements/devel.pip
 
 WORKDIR /app
 COPY . .
-RUN pip3 install -r requirements/devel.pip
-RUN pip3 install -e .
+RUN pip3 install --no-cache-dir -e transcribr
+RUN pip3 install --no-cache-dir -e .
 
 EXPOSE 80
-ENTRYPOINT [ "/bin/bash", "entrypoint.sh" ]
+CMD [ "/bin/bash", "entrypoint.sh" ]

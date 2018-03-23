@@ -19,7 +19,7 @@ env.ini
 .venv
 *.sqlite3
 /static/
-concordia.egg-info/
+*.egg-info/
 /temp/
 /emails/
 /logs/*

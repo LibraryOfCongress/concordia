@@ -23,8 +23,8 @@ class UserAssetTagCollectionAdmin(admin.ModelAdmin):
     pass
 
 
-@admin.register(Trascription)
-class TrascriptionAdmin(admin.ModelAdmin):
+@admin.register(Transcription)
+class TranscriptionAdmin(admin.ModelAdmin):
     pass
 
 

@@ -24,10 +24,12 @@ def remove_directories(ctx, *dirpaths):
 @task
 def clean(ctx):
     ctx.run('find . -type d -name __pycache__ | xargs rm -rf')
-    remove_directories(ctx, '.cache', '{}.egg-info'.format(PROJECT_NAME))
-    ctx.run('rm {}'.format(' '.join([
-        'logs/*.log',
-    ])))
+    ctx.run('find . -type d -name *.egg-info | xargs rm -rf')
+    ctx.run('rm -f logs/*.log')
+    remove_directories(
+        ctx,
+        '.cache',
+    )
 
 
 @task
@@ -36,6 +38,8 @@ def dumpenv(ctx):
     Dump an INI template file of all decoupled config settings with defaults
     '''
     setup_django()
+    from concordia.experiments.importer.models import Importer
     from config import config
+    Importer()
     config.dumps()
     ctx.run('cat {}'.format('env.ini_template'), pty=True)

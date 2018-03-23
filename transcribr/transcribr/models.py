@@ -1,22 +1,24 @@
+from logging import getLogger
 from django.db import models
-from django.urls import reverse
-from django.conf import settings
+
+logger = getLogger(__name__)
+
 
 class Status:
-    PCT_0    = '0'
-    PCT_25   = '25'
-    PCT_50   = '50'
-    PCT_75   = '75'
-    PCT_100  = '100'
+    PCT_0 = '0'
+    PCT_25 = '25'
+    PCT_50 = '50'
+    PCT_75 = '75'
+    PCT_100 = '100'
     COMPLETE = 'DONE'
 
     DEFAULT = PCT_0
     CHOICES = (
-        (PCT_0,    '0%'),
-        (PCT_25,   '25%'),
-        (PCT_50,   '50%'),
-        (PCT_75,   '75%'),
-        (PCT_100,  '100%'),
+        (PCT_0, '0%'),
+        (PCT_25, '25%'),
+        (PCT_50, '50%'),
+        (PCT_75, '75%'),
+        (PCT_100, '100%'),
         (COMPLETE, 'Complete'),
     )
 
@@ -109,7 +111,7 @@ class UserAssetTagCollection(models.Model):
         return '{} - {}'.format(self.asset, self.user_id)
 
 
-class Trascription(models.Model):
+class Transcription(models.Model):
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
     parent = models.ForeignKey('self', blank=True, null=True, on_delete=models.SET_NULL)
     user_id = models.PositiveIntegerField(db_index=True)

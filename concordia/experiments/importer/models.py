@@ -6,9 +6,8 @@ import boto3
 import botocore
 from PIL import Image
 import logging
-from config import Config
+from config import config
 
-config = Config(os.getenv('CONCORDIA_ENV', 'env.ini'))
 
 class Importer:
     # Config loaded from Django settings
