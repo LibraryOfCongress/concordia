@@ -52,11 +52,6 @@ def populate_samples(apps, schema_editor):
         tag = Tag.objects.create(name=txt, value=txt)
         tags.append(tag)
 
-    user = User.objects.create(
-        username='user',
-        password='password',
-        email='user@example.com'
-    )
     user = User(username='user', email='user@example.com')
     user.password = make_password('password')
     user.save()
