@@ -53,7 +53,7 @@ INSTALLED_APPS = [
 
     'rest_framework',
     'transcribr',
-    'concordia.experiments.importer',
+    'importer',
     'concordia.experiments.wireframes',
 ]
 
@@ -85,14 +85,14 @@ TEMPLATES = [{
     },
 }]
 
+
 # Celery settings
 CELERY_BROKER_URL = config('CELERY', 'BROKER_URL', 'pyamqp://rabbit@rabbit//')
 CELERY_RESULT_BACKEND = config('CELERY', 'RESULT_BACKEND', 'rpc://')
 
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
-CELERY_IMPORTS = ('concordia.experiments.importer.tasks',)
-
+CELERY_IMPORTS = ('importer.importer.tasks',)
 
 LOGGING = {
     'version': 1,
@@ -136,18 +136,22 @@ LOGGING = {
             'propagate': True,
         },
     },
+
 }
+
 
 ################################################################################
 # Django-specific settings above
 ################################################################################
 
 ACCOUNT_ACTIVATION_DAYS = 7
+
 REGISTRATION_URLS = config(
     'DJANGO',
     'REGISTRATION_URLS',
     'registration.backends.simple.urls'
 )
+
 
 REST_FRAMEWORK = {
     'PAGE_SIZE': config('DJRF', 'PAGE_SIZE', 10, int),

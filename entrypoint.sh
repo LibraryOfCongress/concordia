@@ -1,3 +1,6 @@
+mkdir -p /app/logs
+touch /app/logs/concordia.log
+
 echo Running migrations
 ./manage.py migrate
 

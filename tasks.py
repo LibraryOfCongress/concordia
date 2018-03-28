@@ -46,7 +46,7 @@ def dumpenv(ctx):
     Dump an INI template file of all decoupled config settings with defaults
     '''
     setup_django()
-    from concordia.experiments.importer.models import Importer
+    from importer.importer.models import Importer
     from config import config
     Importer()
     config.dumps()

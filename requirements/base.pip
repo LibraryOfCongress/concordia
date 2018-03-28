@@ -5,9 +5,7 @@ Pillow
 gunicorn
 djangorestframework
 vendor/django-registration.zip
-boto3
-requests
-celery
 Markdown
 coreapi
 coreapi
+-r importer.pip

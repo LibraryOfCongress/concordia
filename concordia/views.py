@@ -4,7 +4,6 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
-
 from registration.backends.simple.views import RegistrationView
 from .forms import ConcordiaUserForm
 from transcribr.models import Asset, Collection, Transcription
