@@ -43,3 +43,20 @@ def dumpenv(ctx):
     Importer()
     config.dumps()
     ctx.run('cat {}'.format('env.ini_template'), pty=True)
+
+
+@task
+def docs(ctx,):
+    '''
+    Generate documentation
+    '''
+    from sphinx import cmdline
+    setup_django()
+    ctx.run('sphinx-apidoc -f -o docs/modules/concordia concordia', pty=True)
+    ctx.run('sphinx-apidoc -f -o docs/modules/transcribr transcribr', pty=True)
+    ctx.run(
+        'sphinx-build -b html -d docs/_build/doctrees'
+        'docs/'
+        'docs/_build/html',
+        pty=True
+    )

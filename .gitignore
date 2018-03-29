@@ -24,3 +24,5 @@ env.ini
 /emails/
 /logs/*
 env-dev.ini
+docs/_build
+docs/modules
