@@ -1,6 +1,15 @@
 from logging import getLogger
 from django.db import models
 
+USE_POSTGRES = True
+if USE_POSTGRES:
+    from django.contrib.postgres.fields import JSONField
+    metadata_default = dict
+else:
+    JSONField = models.TextField()
+    metadata_default = lambda: ''
+
+
 logger = getLogger(__name__)
 
 
@@ -41,6 +50,7 @@ class Collection(models.Model):
     description = models.TextField(blank=True)
     start_date = models.DateTimeField(null=True, blank=True)
     end_date = models.DateTimeField(null=True, blank=True)
+    metadata = JSONField(default=metadata_default)
     status = models.CharField(
         max_length=4,
         choices=Status.CHOICES,
@@ -56,6 +66,7 @@ class Subcollection(models.Model):
     slug = models.SlugField(max_length=50)
     category = models.CharField(max_length=12, blank=True)
     collection = models.ForeignKey(Collection, on_delete=models.CASCADE)
+    metadata = JSONField(default=metadata_default)
     status = models.CharField(
         max_length=4,
         choices=Status.CHOICES,
@@ -79,6 +90,7 @@ class Asset(models.Model):
     collection = models.ForeignKey(Collection, on_delete=models.CASCADE)
     subcollection = models.ForeignKey(Subcollection, on_delete=models.CASCADE, blank=True, null=True)
     sequence = models.PositiveIntegerField(default=1)
+    metadata = JSONField(default=metadata_default)
     status = models.CharField(
         max_length=4,
         choices=Status.CHOICES,

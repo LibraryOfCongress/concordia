@@ -9,6 +9,13 @@ from . import views
 for key, value in getattr(settings, 'ADMIN_SITE', {}).items():
     setattr(admin.site, key, value)
 
+REGISTRATION_URLS = getattr(
+    settings,
+    'REGISTRATION_URLS',
+    'registration.backends.simple.urls'
+)
+
+
 tx_urlpatterns = ([
     re_path(r'^$', views.TranscribrView.as_view(), name='transcribe'),
     re_path(
@@ -33,9 +40,8 @@ urlpatterns = [
         name='registration_register',
     ),
     re_path(r'^account/profile/$', views.AccountProfileView.as_view(), name='user-profile'),
-    # re_path(r'^account/', include('registration.backends.hmac.urls')),
-    re_path(r'^account/', include('registration.backends.simple.urls')),
-
+    re_path(r'^account/', include(REGISTRATION_URLS)),
+    re_path(r'^experiments/(.+)/$', views.ExperimentsView.as_view(), name='experiments'),
     re_path(r'^wireframes/', include('concordia.experiments.wireframes.urls')),
 
     re_path(r'^admin/', admin.site.urls),

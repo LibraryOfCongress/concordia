@@ -123,7 +123,7 @@ LOGGING = {
             'class': 'logging.handlers.TimedRotatingFileHandler',
             'level': 'DEBUG',
             'formatter': 'long',
-            'filename': 'logs/concordia.log',
+            'filename': '{}/logs/concordia.log'.format(BASE_DIR),
             'when': 'H',
             'interval': 3,
             'backupCount': 16
@@ -143,11 +143,17 @@ LOGGING = {
 ################################################################################
 
 ACCOUNT_ACTIVATION_DAYS = 7
-TRANSCRIBR = dict(
-    netloc=config('TRANSCRIBR', 'NETLOC', 'http://0.0.0.0:80'),
+REGISTRATION_URLS = config(
+    'DJANGO',
+    'REGISTRATION_URLS',
+    'registration.backends.simple.urls'
 )
 
 REST_FRAMEWORK = {
     'PAGE_SIZE': config('DJRF', 'PAGE_SIZE', 10, int),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
 }
+
+TRANSCRIBR = dict(
+    netloc=config('TRANSCRIBR', 'NETLOC', 'http://0.0.0.0:80'),
+)

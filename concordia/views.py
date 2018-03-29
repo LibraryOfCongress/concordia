@@ -66,3 +66,9 @@ class TranscribrAssetView(TemplateView):
             super().get_context_data(**kws),
             asset=asset
         )
+
+
+class ExperimentsView(TemplateView):
+
+    def get_template_names(self):
+        return ['experiments/{}.html'.format(self.args[0])]
