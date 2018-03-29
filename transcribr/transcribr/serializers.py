@@ -2,11 +2,7 @@ from rest_framework import serializers
 from . import models
 
 
-class CollectionListSerializer(serializers.HyperlinkedModelSerializer):
-    url = serializers.HyperlinkedIdentityField(
-        view_name='collection-detail',
-        lookup_field='slug'
-    )
+class CollectionListSerializer(serializers.ModelSerializer):
     asset_count = serializers.IntegerField(
         source='asset_set.count', 
         read_only=True
@@ -14,7 +10,7 @@ class CollectionListSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = models.Collection
         fields = (
-            'url',
+            'id',
             'slug',
             'title',
             'description',
@@ -25,13 +21,23 @@ class CollectionListSerializer(serializers.HyperlinkedModelSerializer):
         )
 
 
+class CollectionDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Collection
+        fields = (
+            'id',
+            'slug',
+            'title',
+            'description',
+            'start_date',
+            'end_date',
+            'status',
+        )
+
+
 class AssetSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Asset
 
 
-class CollectionSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = models.Collection
