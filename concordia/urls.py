@@ -28,6 +28,11 @@ tx_urlpatterns = ([
         views.TranscribrAssetView.as_view(),
         name='asset'
     ),
+    re_path(
+        r'transcription/(\d+)/$',
+        views.TranscriptionView.as_view(),
+        name='transcription'
+    )
 ], 'transcriptions')
 
 urlpatterns = [
@@ -43,6 +48,11 @@ urlpatterns = [
     re_path(r'^account/', include(REGISTRATION_URLS)),
     re_path(r'^experiments/(.+)/$', views.ExperimentsView.as_view(), name='experiments'),
     re_path(r'^wireframes/', include('concordia.experiments.wireframes.urls')),
+
+    re_path(r'^privacy-policy/$', views.ToDoView.as_view(), name='privacy-policy'),
+    re_path(r'^cookie-policy/$', views.ToDoView.as_view(), name='cookie-policy'),
+    re_path(r'^faq/$', views.ToDoView.as_view(), name='faq'),
+    re_path(r'^legal/$', views.ToDoView.as_view(), name='legal'),
 
     re_path(r'^admin/', admin.site.urls),
 ]

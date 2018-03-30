@@ -1,14 +1,20 @@
 {% extends "base.html" %}
 {% block main_content %}
 <div class="container">
-    <h2>Settings</h2>
-    <dl>
-        <dt>User name</dt>
-        <dd>{{ user.username }}</dd>
-        <dt>Email</dt>
-        <dd>{{ user.email }}</dd>
-        <dt>Joined</dt>
-        <dd>{{ user.date_joined }}</dd>
-    </dl>
+    <h2>Welcome, {{ user.username }}</h2>
+    <p class="font-weight-light">
+        Email: {{ user.email }} &middot; Joined: {{ user.date_joined }}
+    </p>
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Your Transcriptions</h5>
+            <ul>{% for tx in transcriptions %}
+                <li><a href="{% url 'transcriptions:transcription' tx.id %}">{{ tx }}</a></li>
+                {% empty %}
+                <li>No transcriptions</li>
+                {% endfor %}
+            </ul>
+      </div>
+    </div>
 </div>
 {% endblock main_content %}

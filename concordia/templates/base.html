@@ -3,13 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <title>{% block title %}Untitled{% endblock title %}</title>
+    <link rel="shortcut icon" href="{% static "img/favicon.ico" %}">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     {% block head_content %}{% endblock head_content %}
 </head>
 <body>
     <header class="container">
         <nav class="font-weight-light">
-            <a href="/"><strong>Concordia</strong></a> |
+            <img style="width:96px" src="{% static "img/loc.svg" %}">
+            <a href="/">
+                <strong>Concordia</strong>
+            </a> |
             <a href="{% url 'transcriptions:transcribe' %}">Transcribe</a> |
             {% if user.is_authenticated %}
             <a href="{% url 'user-profile' %}">{{ user }}</a> &bull;
@@ -30,6 +34,11 @@
     <hr>
     <footer class="container text-center font-weight-light">
         <a href="{% url 'about' %}">About</a> &middot;
+        <a href="{% url 'faq' %}">FAQs</a> &middot;
+        <a href="{% url 'legal' %}">Legal</a> &middot;
+        <a href="{% url 'privacy-policy' %}">Privacy Policy</a> &middot;
+        <a href="{% url 'cookie-policy' %}">Cookie Policy</a> &middot;
+        <a href="https://loc.gov">LoC.gov</a>
     </footer>
 </body>
 </html>

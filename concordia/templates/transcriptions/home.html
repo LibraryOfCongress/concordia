@@ -1,14 +1,24 @@
 {% extends "transcriptions/base.html" %}
-{% block main_content %}
+{% block main_content %} {% load staticfiles %}
 <div class="container">
     <h2>Collections</h2>
     {% if response.results %}
-    <ul>{% for c in response.results %}
-        <li>
-            <a href="{% url 'transcriptions:collection' c.slug %}"><strong>{{ c.title }}</strong></a><br>
-            <p>{{ c.description }}</p>
-        </li>{% endfor %}
-    </ul>
+        <div class="row"> {% for c in response.results %}
+        <div class="col-3">
+            <div class="card mb-4">
+                <img class="card-img-top" src="/static/transcribr/mss119730001/1.jpg" alt="alt text">
+                <div class="card-body">
+                    <h5 class="card-title">{{ c.title }}</h5>
+                    <p class="card-text">{{ c.description }}</p>
+                    <p class="text-center">
+                        <a href="{% url 'transcriptions:collection' c.slug %}"
+                            class="btn btn-primary">View</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+    </div>
     {% endif %}
 </div>
 {% endblock main_content %}
