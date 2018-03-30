@@ -1,4 +1,12 @@
 {% extends "transcriptions/base.html" %} {% load staticfiles %}
+{% block head_content %}
+    <style>
+        .card-img-top {
+            width: inherit;
+            height: 250px;
+        }
+    </style>
+{% endblock head_content %}
 {% block main_content %}
 <div class="container">
     <h2>{{ collection }}</h2>
