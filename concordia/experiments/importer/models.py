@@ -9,7 +9,6 @@ import logging
 from config import config
 
 
-
 class Importer:
     # Config loaded from Django settings
     base_url = ''
@@ -132,8 +131,8 @@ class Importer:
         if not self.check_item_image_exists(filename):
             # Request the image and write it to filename
 
-            self.logger.info("Requesting {0}".format(image.replace("tile.loc.gov","tile-dev.loc.gov")))
-            image_response = requests.get(image.replace("tile.loc.gov","tile-dev.loc.gov"), stream=True)
+            self.logger.info("Requesting {0}".format(image.replace("tile.loc.gov", "tile-dev.loc.gov")))
+            image_response = requests.get(image.replace("tile.loc.gov", "tile-dev.loc.gov"), stream=True)
             with open(filename, 'wb') as fd:
                 for chunk in image_response.iter_content(chunk_size=self.IMAGE_CHUNK_SIZE):
                     fd.write(chunk)

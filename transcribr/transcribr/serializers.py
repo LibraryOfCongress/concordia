@@ -4,9 +4,10 @@ from . import models
 
 class CollectionListSerializer(serializers.ModelSerializer):
     asset_count = serializers.IntegerField(
-        source='asset_set.count', 
+        source='asset_set.count',
         read_only=True
     )
+
     class Meta:
         model = models.Collection
         fields = (
@@ -39,5 +40,3 @@ class AssetSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Asset
-
-

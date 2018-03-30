@@ -40,7 +40,8 @@ urlpatterns = [
     re_path(r'^about/$', TemplateView.as_view(template_name='about.html'), name='about'),
     re_path(r'^transcribe/', include(tx_urlpatterns, namespace='transcriptions')),
     re_path(r'^api/v1/', include('transcribr.urls')),
-    re_path(r'^account/register/$',
+    re_path(
+        r'^account/register/$',
         views.ConcordiaRegistrationView.as_view(),
         name='registration_register',
     ),

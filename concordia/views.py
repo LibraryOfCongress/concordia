@@ -11,6 +11,7 @@ from transcribr.models import Asset, Collection, Transcription
 
 logger = getLogger(__name__)
 
+
 def transcribr_api(relative_path):
     abs_path = '{}/api/v1/{}'.format(
         settings.TRANSCRIBR['netloc'],
@@ -87,7 +88,7 @@ class TranscriptionView(TemplateView):
 class ToDoView(TemplateView):
     template_name = 'todo.html'
 
-    
+
 class ExperimentsView(TemplateView):
 
     def get_template_names(self):

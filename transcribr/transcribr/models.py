@@ -7,8 +7,9 @@ if USE_POSTGRES:
     metadata_default = dict
 else:
     JSONField = models.TextField()
-    metadata_default = lambda: ''
 
+    def metadata_default():
+        return ''
 
 logger = getLogger(__name__)
 

@@ -33,6 +33,14 @@ def clean(ctx):
 
 
 @task
+def check(ctx):
+    '''
+    Run PEP8 checks
+    '''
+    ctx.run('pycodestyle transcribr/transcribr concordia')
+
+
+@task
 def dumpenv(ctx):
     '''
     Dump an INI template file of all decoupled config settings with defaults

@@ -6,8 +6,9 @@ from registration.forms import RegistrationForm
 User = get_user_model()
 logger = getLogger(__name__)
 
+
 class ConcordiaUserForm(RegistrationForm):
-    
+
     class Meta:
         model = User
         fields = ['username', 'email']

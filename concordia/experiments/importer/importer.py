@@ -10,7 +10,7 @@ import logging
 """
 DEPRECATED - use celery tasks in this same module
 
-Usage: 
+Usage:
 
 concordia (ENV)$ python concordia/experiments/importer/importer.py clara_barton.ini
 
