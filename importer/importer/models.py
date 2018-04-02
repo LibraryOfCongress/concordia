@@ -15,12 +15,13 @@ class Importer:
     item_count = 0
     images_folder = ''
     s3_bucket_name = ''
+    use_dev_server = True
 
     # Constants
     MIME_TYPE = "image/jpeg"
     COLLECTION_PAGINATION = 25
     IMAGE_CHUNK_SIZE = 100000
-    ITEM_URL_FORMAT = "https://dev.loc.gov/item/{0}"
+    ITEM_URL_FORMAT = "https://www.loc.gov/item/{0}"
 
     # Ephemeral data
     collection_data = {}
@@ -32,6 +33,10 @@ class Importer:
         self.item_count = config('IMPORTER', 'ITEM_COUNT')
         self.images_folder = config('IMPORTER', 'IMAGES_FOLDER')
         self.s3_bucket_name = config('IMPORTER', 'S3_BUCKET_NAME')
+        self.use_dev_server = config('IMPORTER', 'USE_DEV_SERVER')
+
+        if self.use_dev_server:
+            self.ITEM_URL_FORMAT = self.ITEM_URL_FORMAT.replace("www.loc.gov", "dev.loc.gov")
 
     def main(self):
 
@@ -130,9 +135,12 @@ class Importer:
         # Check if we already have this image on disk
         if not self.check_item_image_exists(filename):
             # Request the image and write it to filename
-
-            self.logger.info("Requesting {0}".format(image.replace("tile.loc.gov", "tile-dev.loc.gov")))
-            image_response = requests.get(image.replace("tile.loc.gov", "tile-dev.loc.gov"), stream=True)
+            if self.use_dev_server:
+                image_url = image.replace("tile.loc.gov", "tile-dev.loc.gov")
+            else:
+                image_url = image
+            self.logger.info("Requesting {0}".format(image_url))
+            image_response = requests.get(image_url, stream=True)
             with open(filename, 'wb') as fd:
                 for chunk in image_response.iter_content(chunk_size=self.IMAGE_CHUNK_SIZE):
                     fd.write(chunk)
@@ -142,9 +150,9 @@ class Importer:
 
         # If the image successfully verifies, upload it to the S3 bucket
         if self.verify_item_image(filename, identifier, image_number):
-            image_stats = os.stat(filename)
-            size_on_disk = image_stats.st_size
             if self.s3_bucket_name:
+                image_stats = os.stat(filename)
+                size_on_disk = image_stats.st_size
                 if not self.check_image_file_on_s3(filename, size_on_disk):
                     s3 = boto3.client('s3')
                     # TODO: If the s3 bucket doesn't exist yet, try to create it
@@ -164,14 +172,17 @@ class Importer:
             self.logger.info("Removed {0}".format(filename))
 
     def check_image_file_on_s3(self, filename, expected_size):
-        s3 = boto3.resource('s3')
-        try:
-            object_summary = s3.ObjectSummary(self.s3_bucket_name, filename)
-            if object_summary.size == expected_size:
-                return True
-            else:
+        if self.s3_bucket_name:
+            s3 = boto3.resource('s3')
+            try:
+                object_summary = s3.ObjectSummary(self.s3_bucket_name, filename)
+                if object_summary.size == expected_size:
+                    return True
+                else:
+                    return False
+            except botocore.exceptions.ClientError:
                 return False
-        except botocore.exceptions.ClientError:
+        else:
             return False
 
     @staticmethod

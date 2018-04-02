@@ -5,22 +5,24 @@ This is a Django app which uses celery to download images from a collection on l
 It also uploads those images to an S3 bucket.
 
 Pre-requisites:
-- AWS S3 bucket created and keys in ~/.aws/credentials
+- AWS S3 bucket created and keys in ~/.aws/credentials (if uploading to S3 bucket)
 - Configuration in env.ini "importer" and "celery" sections
 - RabbitMQ server running on localhost or in docker container
 - http access to tile-dev.loc.gov and dev.loc.gov
 
-Usage:
+
+Usage
+-----
+
 ::
-concordia (ENV)$ celery -A importer.importer worker -l info
-concordia (ENV)$ python ./manage.py shell
->>> from importer.importer.tasks import download, check_completeness
->>> res = download.delay() # Kicks off the download process
->>> res.get() # Won't return until download is complete - takes hours / days
->>> res = check_completeness.delay()
->>> while(res.get()==False)
-...    res2 = download.delay()
-...    res2.get()
-...    res = check_completeness.delay()
+Rosemarys-MacBook-Pro:concordia rstorey$ docker exec -it concordia_importer_1 bash
+root@62e3ebef4de2:/app# python3 ./manage.py shell
+Python 3.6.5rc1 (default, Mar 14 2018, 06:54:23)
+[GCC 7.3.0] on linux
+Type "help", "copyright", "credits" or "license" for more information.
+(InteractiveConsole)
+>>> from importer.importer.tasks import download
+>>> result=download.delay()
 >>>
 ::
+
