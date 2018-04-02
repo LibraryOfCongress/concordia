@@ -39,9 +39,16 @@ class Importer:
             self.ITEM_URL_FORMAT = self.ITEM_URL_FORMAT.replace("www.loc.gov", "dev.loc.gov")
 
     def main(self):
-
         self.get_and_save_images(self.base_url)
         self.check_total_item_count()
+
+    def download_collection(self, collection_url, item_count):
+        self.base_url = collection_url
+        self.item_count = item_count
+        self.main()
+
+    def download_item(self, item_identifier):
+        self.get_item_images(item_identifier)
 
     def check_completeness(self):
         # Checks for total number of items and number of images per item
@@ -57,9 +64,15 @@ class Importer:
         else:
             return False
 
+    def check_collection_completeness(self, collection_url, item_count):
+        self.base_url = collection_url
+        self.item_count = item_count
+
+        self.check_completeness()
+
     def check_total_item_count(self):
         # Check that the total number of items matches the expected configured number of total items
-        actual_item_count = os.listdir(self.images_folder)
+        actual_item_count = len(os.listdir(self.images_folder))
 
         if actual_item_count != self.item_count:
             self.logger.error("Expected item count {0} but actual item count of {1} is {2}".format(
@@ -98,19 +111,19 @@ class Importer:
         try:
             image_file = Image.open(filename)
             actual_width, actual_height = image_file.size
-            self.logger.info("Actual width and height of {0} are {1} and {2} respectively".format(
+            self.logger.debug("Actual width and height of {0} are {1} and {2} respectively".format(
                 filename,
                 actual_width,
                 actual_height
             ))
 
             image_file.verify()
-            self.logger.info("Completed verification of {0}".format(filename))
+            self.logger.debug("Completed verification of {0}".format(filename))
 
             # check image width and height and verify that it matches the expected sizes
             expected_width = self.collection_data[identifier]["image_sizes"][image_number]["width"]
             expected_height = self.collection_data[identifier]["image_sizes"][image_number]["height"]
-            self.logger.info("Expected width and height of {0} are {1} and {2} respectively".format(
+            self.logger.debug("Expected width and height of {0} are {1} and {2} respectively".format(
                 filename,
                 expected_width,
                 expected_height
@@ -165,7 +178,7 @@ class Importer:
                         size_on_disk
                     ))
             else:
-                self.logger.info("Skipping S3 upload since bucket name is not configured")
+                self.logger.debug("Skipping S3 upload since bucket name is not configured")
 
         else:
             os.remove(filename)
@@ -195,7 +208,17 @@ class Importer:
         image_files = image_resources.get("files")
         return image_files
 
-    def get_item_images(self, item_id, item_url, path):
+    def get_item_images(self, item_id):
+
+        self.collection_data[item_id] = {}
+
+        # Create an item ID folder and save all the files for the item
+        destination_path = os.path.join(self.images_folder, item_id)
+        if not os.path.exists(destination_path):
+            os.makedirs(destination_path)
+
+        item_url = self.ITEM_URL_FORMAT.format(item_id)
+
         image_files = self.get_item_image_files(item_url)
         # save the number of files / assets for this item
         self.logger.info("Item {0} has {1} images".format(item_id, len(image_files)))
@@ -228,9 +251,18 @@ class Importer:
 
             # create a filename that's the image number
             filename = "{0}.jpg".format(counter)
-            filename = os.path.join(path, filename)
+            filename = os.path.join(destination_path, filename)
             self.write_image_file(jpeg_image_url, filename, item_id, counter)
             counter = counter + 1
+
+        # check whether the folder contains the number of items it should
+        actual_item_count = len(os.listdir(destination_path))
+        if self.collection_data[item_id]["size"] != actual_item_count:
+            self.logger.error("Should have {0} images for item {1} but instead have {2} images".format(
+                self.collection_data[item_id]["size"],
+                item_id,
+                actual_item_count
+            ))
 
     def get_and_save_images(self, results_url):
         """
@@ -252,23 +284,7 @@ class Importer:
                 if result.get("image_url") and result.get("id"):
                     identifier = urlparse(result["id"])[2].rstrip('/')
                     identifier = identifier.split('/')[-1]
-
-                    self.collection_data[identifier] = {}
-
-                    # Create an item ID folder and save all the files for the item
-                    destination_folder = os.path.join(self.images_folder, identifier)
-                    if not os.path.exists(destination_folder):
-                        os.makedirs(destination_folder)
-                    self.get_item_images(identifier, result.get("id"), destination_folder)
-
-                    # check whether the folder contains the number of items it should
-                    actual_item_count = len(os.listdir(destination_folder))
-                    if self.collection_data[identifier]["size"] != actual_item_count:
-                        self.logger.error("Should have {0} images for item {1} but instead have {2} images".format(
-                            self.collection_data[identifier]["size"],
-                            identifier,
-                            actual_item_count
-                        ))
+                    self.get_item_images(identifier)
 
         # Recurse through the next page
         if data["pagination"]["next"] is not None:
