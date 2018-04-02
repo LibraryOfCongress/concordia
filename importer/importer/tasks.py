@@ -1,5 +1,5 @@
 from __future__ import absolute_import, unicode_literals
-from celery import shared_task
+from celery import shared_task, group
 from importer.importer.models import Importer
 import requests
 from urllib.parse import urlparse
@@ -46,7 +46,9 @@ def get_and_save_images(results_url):
     params = {"fo": "json", "c": 25, "at": "results,pagination"}
     call = requests.get(results_url, params=params)
     data = call.json()
+    task_signatures = []
     results = data['results']
+
     for result in results:
         # Don't try to get images from the collection-level result or web page results
         if "collection" not in result.get("original_format") \
@@ -56,7 +58,9 @@ def get_and_save_images(results_url):
             if result.get("image_url") and result.get("id"):
                 identifier = urlparse(result["id"])[2].rstrip('/')
                 identifier = identifier.split('/')[-1]
-                download_item.delay(identifier)
+                task_signatures.append(download_item.s(identifier))
+
+    group(task_signatures).apply_async()
 
     # Recurse through the next page
     if data["pagination"]["next"] is not None:

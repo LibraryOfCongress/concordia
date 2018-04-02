@@ -71,10 +71,10 @@ class Importer:
         self.check_completeness()
 
     def check_total_item_count(self):
-        # Check that the total number of items matches the expected configured number of total items
+        # Check that the total number of items matches the expected number of total items
         actual_item_count = len(os.listdir(self.images_folder))
 
-        if actual_item_count != self.item_count:
+        if actual_item_count < self.item_count:
             self.logger.error("Expected item count {0} but actual item count of {1} is {2}".format(
                 self.item_count,
                 self.images_folder,
