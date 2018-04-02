@@ -144,17 +144,21 @@ class Importer:
         if self.verify_item_image(filename, identifier, image_number):
             image_stats = os.stat(filename)
             size_on_disk = image_stats.st_size
-            if not self.check_image_file_on_s3(filename, size_on_disk):
-                s3 = boto3.client('s3')
-                # TODO: If the s3 bucket doesn't exist yet, try to create it
-                # TODO: Queue the S3 uploads so they can occur asynchronously (simultaneously with loc.gov downloads)
-                s3.upload_file(filename, self.s3_bucket_name, filename)
-                self.logger.info("Uploaded {0} to {1}".format(filename, self.s3_bucket_name))
+            if self.s3_bucket_name:
+                if not self.check_image_file_on_s3(filename, size_on_disk):
+                    s3 = boto3.client('s3')
+                    # TODO: If the s3 bucket doesn't exist yet, try to create it
+                    # TODO: Queue the S3 uploads so they can occur asynchronously
+                    s3.upload_file(filename, self.s3_bucket_name, filename)
+                    self.logger.info("Uploaded {0} to {1}".format(filename, self.s3_bucket_name))
+                else:
+                    self.logger.info("File {0} with size {1} already exists in s3 bucket".format(
+                        filename,
+                        size_on_disk
+                    ))
             else:
-                self.logger.info("File {0} with size {1} already exists in s3 bucket".format(
-                    filename,
-                    size_on_disk
-                ))
+                self.logger.info("Skipping S3 upload since bucket name is not configured")
+
         else:
             os.remove(filename)
             self.logger.info("Removed {0}".format(filename))
