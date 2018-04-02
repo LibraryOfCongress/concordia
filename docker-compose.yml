@@ -20,13 +20,21 @@ services:
     build: .
     depends_on:
       - db
-      - rabbit
     volumes:
       - .:/app
+      - images_volume:/concordia_images
     links:
       - rabbit
     ports:
       - 8001:80
-
+  importer:
+    build:
+       context: .
+       dockerfile: importer/Dockerfile
+    depends_on:
+      - rabbit
+    volumes:
+      - images_volume:/concordia_images
 volumes:
   db_volume:
+  images_volume:

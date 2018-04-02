@@ -8,4 +8,5 @@ vendor/django-registration.zip
 Markdown
 coreapi
 coreapi
+celery
 -r importer.pip
