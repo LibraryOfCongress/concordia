@@ -15,7 +15,6 @@ class Importer:
     item_count = 0
     images_folder = ''
     s3_bucket_name = ''
-    use_dev_server = True
 
     # Constants
     MIME_TYPE = "image/jpeg"
@@ -33,10 +32,6 @@ class Importer:
         self.item_count = config('IMPORTER', 'ITEM_COUNT')
         self.images_folder = config('IMPORTER', 'IMAGES_FOLDER')
         self.s3_bucket_name = config('IMPORTER', 'S3_BUCKET_NAME')
-        self.use_dev_server = config('IMPORTER', 'USE_DEV_SERVER')
-
-        if self.use_dev_server:
-            self.ITEM_URL_FORMAT = self.ITEM_URL_FORMAT.replace("www.loc.gov", "dev.loc.gov")
 
     def main(self):
         self.get_and_save_images(self.base_url)
@@ -148,10 +143,7 @@ class Importer:
         # Check if we already have this image on disk
         if not self.check_item_image_exists(filename):
             # Request the image and write it to filename
-            if self.use_dev_server:
-                image_url = image.replace("tile.loc.gov", "tile-dev.loc.gov")
-            else:
-                image_url = image
+            image_url = image
             self.logger.info("Requesting {0}".format(image_url))
             image_response = requests.get(image_url, stream=True)
             with open(filename, 'wb') as fd:

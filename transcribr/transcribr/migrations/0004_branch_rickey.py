@@ -33,7 +33,7 @@ def populate_samples(apps, schema_editor):
 
             for i in range(0, image_count):
                 asset = Asset.objects.create(
-                    title='{0} {1}'.format(item_path, i),
+                    title='{0}'.format(item_path, i),
                     slug='{0}-{1}'.format(item_path, i),
                     description='',
                     media_url='transcribr/{0}/{1}.jpg'.format(item_path, i),

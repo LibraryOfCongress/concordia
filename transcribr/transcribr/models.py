@@ -76,6 +76,7 @@ class Subcollection(models.Model):
 
     class Meta:
         unique_together = (("slug", "collection"),)
+        ordering = ['title']
 
 
 class Asset(models.Model):
@@ -100,6 +101,7 @@ class Asset(models.Model):
 
     class Meta:
         unique_together = (("slug", "collection"),)
+        ordering = ['title', 'sequence']
 
     def __str__(self):
         return self.title

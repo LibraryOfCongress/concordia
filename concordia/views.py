@@ -7,9 +7,11 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from registration.backends.simple.views import RegistrationView
 from .forms import ConcordiaUserForm
 from transcribr.models import Asset, Collection, Transcription
+from django.core.paginator import Paginator
 
 logger = getLogger(__name__)
 
+ASSETS_PER_PAGE = 36
 
 def transcribr_api(relative_path):
     abs_path = '{}/api/v1/{}'.format(
@@ -53,9 +55,20 @@ class TranscribrCollectionView(TemplateView):
 
     def get_context_data(self, **kws):
         collection = Collection.objects.get(slug=self.args[0])
+        asset_list = collection.asset_set.all()
+        paginator = Paginator(asset_list, ASSETS_PER_PAGE)
+
+        if not self.request.GET.get('page'):
+            page = 1
+        else:
+            page = self.request.GET.get('page')
+
+        assets = paginator.get_page(page)
+
         return dict(
             super().get_context_data(**kws),
-            collection=collection
+            collection=collection,
+            assets=assets
         )
 
 

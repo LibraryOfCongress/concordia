@@ -14,12 +14,13 @@
         {{ collection.description }}
     </p>
     <div class="row">
-    {% for a in collection.asset_set.all %}
+    {% for a in assets %}
         <div class="col-3">
             <div class="card mb-4">
-                <img class="card-img-top" src="{% static a.media_url %}" alt="alt text">
+                <a href="{% url 'transcriptions:asset' collection.slug a.slug %}">
+<img class="card-img-top" src="{% static a.media_url %}" alt="{% a.slug %}"></a>
                 <div class="card-body">
-                    <h5 class="card-title">{{ a.title }}</h5>
+                    <h5 class="card-title">{{ a.title }}-{{ a.sequence }}</h5>
                     <p class="card-text">{{ a.description }}</p>
                     <a href="{% url 'transcriptions:asset' collection.slug a.slug %}"
                         class="btn btn-primary">Transcribe</a>
@@ -29,4 +30,22 @@
     {% endfor %}
     </div>
 </div>
+<div class="pagination">
+    <span class="step-links">
+        {% if assets.has_previous %}
+            <a href="?page=1">&laquo; first</a>
+            <a href="?page={{ assets.previous_page_number }}">previous</a>
+        {% endif %}
+
+        <span class="current">
+            Page {{ assets.number }} of {{ assets.paginator.num_pages }}.
+        </span>
+
+        {% if assets.has_next %}
+            <a href="?page={{ assets.next_page_number }}">next</a>
+            <a href="?page={{ assets.paginator.num_pages }}">last &raquo;</a>
+        {% endif %}
+    </span>
+</div>
+
 {% endblock main_content %}

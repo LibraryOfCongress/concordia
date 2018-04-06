@@ -1,4 +1,4 @@
-version: '3.3'
+version: '2'
 
 services:
   rabbit:
@@ -26,7 +26,7 @@ services:
     links:
       - rabbit
     ports:
-      - 8001:80
+      - 80:80
   importer:
     build:
        context: .
