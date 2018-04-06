@@ -48,7 +48,6 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('transcribr', '0001_initial'),
-        ('transcribr', '0002_faux_populate'),
         ('transcribr', '0003_clara_barton'),
     ]
 

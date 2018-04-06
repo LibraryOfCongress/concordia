@@ -47,7 +47,6 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('transcribr', '0001_initial'),
-        ('transcribr', '0002_faux_populate'),
     ]
 
     operations = [migrations.RunPython(populate_samples)]
