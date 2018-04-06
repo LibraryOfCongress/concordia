@@ -2,7 +2,7 @@ from django.db import migrations
 import os
 
 images_location = "/concordia_images"
-item_prefix = "mss11973"
+item_prefix = "mss3782"
 
 def populate_samples(apps, schema_editor):
     Asset = apps.get_model('transcribr', 'Asset')
@@ -10,9 +10,9 @@ def populate_samples(apps, schema_editor):
     Collection = apps.get_model('transcribr', 'Collection')
 
     coll = Collection.objects.create(
-        title='Clara Barton Diaries and Journals',
-        slug='clara-barton-diaries',
-        description='Clara Barton Papers: Diaries and Journals : 1849 to 1911',
+        title='Branch Rickey Papers',
+        slug='branch-rickey-papers',
+        description='Branch Rickey Papers',
     )
 
     for item_path in os.listdir(images_location):
@@ -43,6 +43,7 @@ class Migration(migrations.Migration):
     dependencies = [
         ('transcribr', '0001_initial'),
         ('transcribr', '0002_faux_populate'),
+        ('transcribr', '0003_clara_barton'),
     ]
 
     operations = [migrations.RunPython(populate_samples)]
