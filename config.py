@@ -84,7 +84,7 @@ class Config:
         self.csvlist = csv_factory()
         self.csvtuple = csv_factory(post_process=tuple)
         self.parser = ConfigParser(interpolation=ExtendedInterpolation())
-        with open(self.filename) as fobj:
+        with open(str(self.filename)) as fobj:
             self.parser.readfp(fobj)
 
     def has_option(self, section, option):

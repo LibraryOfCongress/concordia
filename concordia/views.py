@@ -6,7 +6,7 @@ from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from registration.backends.simple.views import RegistrationView
 from .forms import ConcordiaUserForm
-from transcribr.models import Asset, Collection, Transcription
+from transcribr.transcribr.models import Asset, Collection, Transcription
 
 logger = getLogger(__name__)
 
@@ -16,7 +16,6 @@ def transcribr_api(relative_path):
         settings.TRANSCRIBR['netloc'],
         relative_path
     )
-
     logger.debug('Calling API path {}'.format(abs_path))
     data = requests.get(abs_path).json()
 
