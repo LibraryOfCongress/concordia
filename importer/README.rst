@@ -32,3 +32,14 @@ To count the files and check disk usage in /concordia_images after download is c
  >>> find /concordia_images -type f | wc -l
  >>> df -kh
 
+
+Integration
+------------
+
+After the images have been downloaded in the docker environment:
+
+ 1. Copy the images from the docker volume to the running docker app container.
+   >>> ubuntu@ip-172-31-94-65:~/concordia$ sudo docker exec -it concordia_app_1 bash
+   >>> root@6eca4f3cd16d:/app# cp -R /concordia_images/mss* transcribr/transcribr/static/transcribr/
+ 2. Run the migrations in the docker app to load Clara Barton Diaries and Branch Rickey collections to concordia.
+   >>> root@6eca4f3cd16d:/app# python3 ./manage.py migrate

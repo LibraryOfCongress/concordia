@@ -1,6 +1,11 @@
 from django.db import migrations
 import os
 
+## After running the importer, copy the images that were downloaded from the docker volume
+## to the static files folder in the docker app container.
+## ubuntu@ip-172-31-94-65:~/concordia$ sudo docker exec -it concordia_app_1 bash
+## root@6eca4f3cd16d:/app# cp -R /concordia_images/mss* transcribr/transcribr/static/transcribr/
+
 images_location = "/concordia_images"
 item_prefix = "mss11973"
 
