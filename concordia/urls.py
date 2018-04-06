@@ -39,7 +39,7 @@ urlpatterns = [
     re_path(r'^$', TemplateView.as_view(template_name='home.html')),
     re_path(r'^about/$', TemplateView.as_view(template_name='about.html'), name='about'),
     re_path(r'^transcribe/', include(tx_urlpatterns, namespace='transcriptions')),
-    re_path(r'^api/v1/', include('transcribr.transcribr.urls')),
+    re_path(r'^api/v1/', include('transcribr.urls')),
 
     re_path(
         r'^account/register/$',

@@ -160,5 +160,5 @@ REST_FRAMEWORK = {
 }
 
 TRANSCRIBR = dict(
-    netloc=config('TRANSCRIBR', 'NETLOC', 'http://0.0.0.0:8000'),
+    netloc=config('TRANSCRIBR', 'NETLOC', 'http://0.0.0.0:80'),
 )

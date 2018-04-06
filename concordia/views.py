@@ -6,7 +6,7 @@ from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from registration.backends.simple.views import RegistrationView
 from .forms import ConcordiaUserForm
-from transcribr.transcribr.models import Asset, Collection, Transcription
+from transcribr.models import Asset, Collection, Transcription
 
 logger = getLogger(__name__)
 
