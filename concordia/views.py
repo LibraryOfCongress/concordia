@@ -8,6 +8,8 @@ from registration.backends.simple.views import RegistrationView
 from .forms import ConcordiaUserForm
 from transcribr.models import Asset, Collection, Transcription
 from django.core.paginator import Paginator
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 
 logger = getLogger(__name__)
 
@@ -71,17 +73,25 @@ class TranscribrCollectionView(TemplateView):
             assets=assets
         )
 
-
+@method_decorator(csrf_exempt, name='dispatch')
 class TranscribrAssetView(TemplateView):
     template_name = 'transcriptions/asset.html'
 
+    def post(self, request, *args, **kwargs):
+        context = self.get_context_data()
+        Transcription.objects.create(asset=context['asset'], text=request.POST['tx'], user_id=1)
+
+        return super(TemplateView, self).render_to_response(context)
+
     def get_context_data(self, **kws):
         asset = Asset.objects.get(collection__slug=self.args[0], slug=self.args[1])
+        transcription = Transcription.objects.latest('created_on')
+
         return dict(
             super().get_context_data(**kws),
-            asset=asset
+            asset=asset,
+            transcription=transcription
         )
-
 
 class TranscriptionView(TemplateView):
     template_name = 'transcriptions/transcription.html'
