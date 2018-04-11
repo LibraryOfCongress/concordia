@@ -18,7 +18,7 @@
         <div class="col-3">
             <div class="card mb-4">
                 <a href="{% url 'transcriptions:asset' collection.slug a.slug %}">
-<img class="card-img-top" src="{% static a.media_url %}" alt="{% a.slug %}"></a>
+<img class="card-img-top" src="{% static a.media_url %}" alt="{ a.slug }"></a>
                 <div class="card-body">
                     <h5 class="card-title">{{ a.title }}-{{ a.sequence }}</h5>
                     <p class="card-text">{{ a.description }}</p>
