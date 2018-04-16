@@ -10,10 +10,13 @@ from transcribr.models import Asset, Collection, Transcription
 from django.core.paginator import Paginator
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
+from django.urls import reverse
+from django.shortcuts import redirect
 
 logger = getLogger(__name__)
 
 ASSETS_PER_PAGE = 36
+
 
 def transcribr_api(relative_path):
     abs_path = '{}/api/v1/{}'.format(
@@ -34,10 +37,23 @@ class ConcordiaRegistrationView(RegistrationView):
 class AccountProfileView(LoginRequiredMixin, TemplateView):
     template_name = 'profile.html'
 
+    def post(self, *args, **kwargs):
+        form = ConcordiaUserForm(self.request.POST)
+        if form.is_valid():
+            obj = form.save(commit=False)
+            obj.id = self.request.user.id
+            if not self.request.POST['password1'] and not self.request.POST['password2']:
+                obj.password = self.request.user.password
+            obj.save()
+        return redirect(reverse('user-profile'))
+
     def get_context_data(self, **kws):
+        data = {'username': self.request.user.username, 'email': self.request.user.email}
         return super().get_context_data(**dict(
             kws,
-            transcriptions=Transcription.objects.filter(user_id=self.request.user.id)
+            transcriptions=Transcription.objects.filter(user_id=self.request.user.id),
+
+            form=ConcordiaUserForm(initial=data)
         ))
 
 
@@ -84,7 +100,10 @@ class TranscribrAssetView(TemplateView):
         return super(TemplateView, self).render_to_response(context)
 
     def get_context_data(self, **kws):
-        asset = Asset.objects.get(collection__slug=self.args[0], slug=self.args[1])
+        try:
+            asset = Asset.objects.get(collection__slug=self.args[0], slug=self.args[1])
+        except transcribr.models.DoesNotExist:
+            asset = None
         transcription = Transcription.objects.latest('created_on')
 
         return dict(
