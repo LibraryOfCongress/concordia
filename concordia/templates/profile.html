@@ -7,6 +7,14 @@
 <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/js/bootstrap.min.js"></script>
 <script src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
 <style type="text/css">
+    .profile_edit{
+      color: #a3a3a3;
+      cursor: pointer;
+      font-size: 21px;
+    }
+    .profile_edit:hover{
+      color: #23527c;
+    }
    body{
    background: #ccc;
    }
@@ -14,34 +22,55 @@
    margin:20px auto; /* center the page */
    width:80em;
    }
+   .inut-group input{
+     border: 0;
+   }
+
+   .remove_button_css:focus,
+   .remove_button_css:hover {
+    color: #23527c;
+    text-decoration: underline;
+    }
 </style>
 <div class="container bootstrap snippet well" >
    <div class="row">
-      <div class="col-sm-10">
-         <h3>Account Settings</h3>
+      <div class="col-sm-5">
+         <h3>Account Settings - <span id='toggle_edit_section' class='profile_edit'>edit</span></h3>
       </div>
+
    </div>
    <div class="row">
       <div class="container">
+         <form class="form-horizontal" action="/account/profile/" method="POST" enctype="multipart/form-data">{% csrf_token %}
          <div class="col-sm-3">
-
             <div class="span6">
                <div class="area">
-                  <img src="http://placehold.it/320x200" alt="ALT NAME" class="img-circle">
+                  <img src="{% if form.myfile.value %}/media/{{form.myfile.value}}{% else %}http://placehold.it/320x200 {% endif %}" alt="ALT NAME" class="img-circle">
                   <label class="btn btn-file m-top-5" style="color: #4286f4">
-                  Change profile image <input type="file" style="display: none;">
+                  Change profile image <input type="file" style="display: none;" id="myfile" name="myfile">
                   </label>
                </div>
             </div>
          </div>
          <div class="col-sm-9">
-         <form class="form-horizontal" action="/account/profile/" method="POST">{% csrf_token %}
+
+
+         <div class="form-group">
+                  <label class="col-md-2" for="Name (Full name)">Name</label>
+                  <div class="col-md-4">
+
+                     <div class="input-group">
+                        <input id="{{form.first_name.id_for_label}}" name="{{form.first_name.html_name}}" type="text" value="{{form.first_name.value}}" class="form-control-plaintext" readonly="readonly">
+                     </div>
+                  </div>
+               </div>
+
 
                <div class="form-group">
                   <label class="col-md-2" for="Name (Full name)">Username</label>
                   <div class="col-md-4">
                      <div class="input-group">
-                        <input id="{{form.username.id_for_label}}" name="{{form.username.html_name}}" value="{{form.username.value}}" type="text" class="form-control">
+                        <input id="{{form.username.id_for_label}}" name="{{form.username.html_name}}" value="{{form.username.value}}" type="text" class="form-control-plaintext" readonly="readonly">
                      </div>
                   </div>
                </div>
@@ -49,7 +78,7 @@
                   <label class="col-md-2" for="email">Email</label>
                   <div class="col-md-4">
                      <div class="input-group">
-                        <input id="{{form.email.id_for_label}}" name="{{form.email.html_name}}" type="text" value="{{ form.email.value }}" class="form-control">
+                        <input id="{{form.email.id_for_label}}" name="{{form.email.html_name}}" type="text" value="{{ form.email.value }}" class="form-control-plaintext" readonly="readonly">
                      </div>
                   </div>
                </div>
@@ -79,10 +108,12 @@
 
 
                <div class="form-group">
-                  <div class="col-md-2 col-md-offset-2">
+                  <div class="col-md-4 col-md-offset-2">
                      <div class="input-group">
-                        <button class="btn change-password text-uppercase" id="toggle_password_section"> change password</button>
-                     </div>
+                         <div class="col-md-10">
+                           <button class="btn change-password text-uppercase" id="toggle_password_section"> change password</button>
+                         </div>
+                    </div>
                   </div>
                </div>
               <script>
@@ -97,19 +128,32 @@
     }
 })
 
+    document.getElementById('toggle_edit_section').onclick = function() {
+        $('.form-control-plaintext').addClass('form-control').removeClass('form-control-plaintext')
+        $('.edit .d-none').removeClass('d-none')
+        document.getElementById('id_first_name').removeAttribute('readonly');
+	document.getElementById('id_username').removeAttribute('readonly');
+	document.getElementById('id_email').removeAttribute('readonly');
+
+    };
+
+    $('#myfile').change(function(){
+      $('.edit .d-none').removeClass('d-none')
+    });
+
                </script>
 
 
 
                <div class="form-group">
                   <div class="col-md-4 col-md-offset-2">
-                     <div class="input-group">
+                     <div class="input-group edit">
                         <div class="row">
                            <div class="col-md-10">
-                              <a href="#" class="btn btn-primary pull-left text-uppercase">Cancel</a>
+                              <a href="{{request.path}}" class="d-none btn btn-primary pull-left text-uppercase">Cancel</a>
                            </div>
                            <div class="col-md-2">
-                              <button type="submit" class="btn btn-primary pull-right text-uppercase">Save</button>
+                              <button type="submit" class="d-none btn btn-primary pull-right text-uppercase">Save</button>
                            </div>
                         </div>
                      </div>
@@ -139,5 +183,8 @@
    .m-top-5{
       margin-top: 5px;
    }
+
+}
 </style>
+
 {% endblock main_content %}

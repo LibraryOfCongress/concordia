@@ -12,6 +12,9 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.urls import reverse
 from django.shortcuts import redirect
+from .models import UserProfile
+from django.contrib.auth.models import User
+from django.shortcuts import get_object_or_404
 
 logger = getLogger(__name__)
 
@@ -38,17 +41,32 @@ class AccountProfileView(LoginRequiredMixin, TemplateView):
     template_name = 'profile.html'
 
     def post(self, *args, **kwargs):
-        form = ConcordiaUserForm(self.request.POST)
+        context = self.get_context_data()
+        instance = get_object_or_404(User, pk=self.request.user.id)
+        form = ConcordiaUserForm(self.request.POST, self.request.FILES, instance=instance)
         if form.is_valid():
-            obj = form.save(commit=False)
+            obj = form.save(commit=True)
             obj.id = self.request.user.id
             if not self.request.POST['password1'] and not self.request.POST['password2']:
                 obj.password = self.request.user.password
             obj.save()
+            if 'myfile' in self.request.FILES:
+                myfile = self.request.FILES['myfile']
+                profile, created = UserProfile.objects.update_or_create(user=obj, defaults={'myfile': myfile})
         return redirect(reverse('user-profile'))
 
     def get_context_data(self, **kws):
-        data = {'username': self.request.user.username, 'email': self.request.user.email}
+        last_name = self.request.user.last_name
+        if last_name:
+            last_name = " " + last_name
+        else:
+            last_name = ''
+
+        data = {'username': self.request.user.username, 'email': self.request.user.email,
+                'first_name': self.request.user.first_name + last_name}
+        profile = UserProfile.objects.filter(user=self.request.user)
+        if profile:
+            data['myfile'] = profile[0].myfile
         return super().get_context_data(**dict(
             kws,
             transcriptions=Transcription.objects.filter(user_id=self.request.user.id),
@@ -90,6 +108,7 @@ class TranscribrCollectionView(TemplateView):
         )
 
 @method_decorator(csrf_exempt, name='dispatch')
+
 class TranscribrAssetView(TemplateView):
     template_name = 'transcriptions/asset.html'
 
