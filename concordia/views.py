@@ -4,22 +4,20 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.shortcuts import render_to_response,render, redirect
 from registration.backends.simple.views import RegistrationView
 from .forms import ConcordiaUserForm
-from transcribr.models import Asset, Collection, Transcription
+from .models import UserProfile
+from transcribr.transcribr.models import Asset, Collection, Transcription, UserAssetTagCollection
 from django.core.paginator import Paginator
 from django.views.decorators.csrf import csrf_exempt
-from django.utils.decorators import method_decorator
 from django.urls import reverse
-from django.shortcuts import redirect
-from .models import UserProfile
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
 
 logger = getLogger(__name__)
 
 ASSETS_PER_PAGE = 36
-
 
 def transcribr_api(relative_path):
     abs_path = '{}/api/v1/{}'.format(
@@ -38,8 +36,10 @@ class ConcordiaRegistrationView(RegistrationView):
 
 
 class AccountProfileView(LoginRequiredMixin, TemplateView):
-    template_name = 'profile.html'
 
+    
+    template_name = 'profile.html'
+    
     def post(self, *args, **kwargs):
         context = self.get_context_data()
         instance = get_object_or_404(User, pk=self.request.user.id)
@@ -48,11 +48,11 @@ class AccountProfileView(LoginRequiredMixin, TemplateView):
             obj = form.save(commit=True)
             obj.id = self.request.user.id
             if not self.request.POST['password1'] and not self.request.POST['password2']:
-                obj.password = self.request.user.password
+              obj.password=self.request.user.password
             obj.save()
             if 'myfile' in self.request.FILES:
-                myfile = self.request.FILES['myfile']
-                profile, created = UserProfile.objects.update_or_create(user=obj, defaults={'myfile': myfile})
+              myfile = self.request.FILES['myfile']
+              profile, created = UserProfile.objects.update_or_create(user=obj, defaults={'myfile':myfile})
         return redirect(reverse('user-profile'))
 
     def get_context_data(self, **kws):
@@ -60,20 +60,18 @@ class AccountProfileView(LoginRequiredMixin, TemplateView):
         if last_name:
             last_name = " " + last_name
         else:
-            last_name = ''
-
-        data = {'username': self.request.user.username, 'email': self.request.user.email,
-                'first_name': self.request.user.first_name + last_name}
+            last_name=''
+            
+        data = {'username': self.request.user.username, 'email':self.request.user.email, 'first_name':self.request.user.first_name + last_name}
         profile = UserProfile.objects.filter(user=self.request.user)
         if profile:
             data['myfile'] = profile[0].myfile
         return super().get_context_data(**dict(
             kws,
             transcriptions=Transcription.objects.filter(user_id=self.request.user.id),
-
-            form=ConcordiaUserForm(initial=data)
+            
+            form = ConcordiaUserForm(initial=data)
         ))
-
 
 class TranscribrView(TemplateView):
     template_name = 'transcriptions/home.html'
@@ -107,29 +105,39 @@ class TranscribrCollectionView(TemplateView):
             assets=assets
         )
 
-@method_decorator(csrf_exempt, name='dispatch')
 
 class TranscribrAssetView(TemplateView):
     template_name = 'transcriptions/asset.html'
 
-    def post(self, request, *args, **kwargs):
-        context = self.get_context_data()
-        Transcription.objects.create(asset=context['asset'], text=request.POST['tx'], user_id=1)
-
-        return super(TemplateView, self).render_to_response(context)
-
     def get_context_data(self, **kws):
-        try:
-            asset = Asset.objects.get(collection__slug=self.args[0], slug=self.args[1])
-        except transcribr.models.DoesNotExist:
-            asset = None
-        transcription = Transcription.objects.latest('created_on')
+   
+        asset = Asset.objects.get(collection__slug=self.args[0], slug=self.args[1])
+        
+        transcription = Transcription.objects.filter(asset=asset, user_id=self.request.user.id)
+        if transcription:
+          transcription = transcription[0]
+        tags = UserAssetTagCollection.objects.filter(asset=asset, user_id=self.request.user.id)
+        if tags:
+          tags = tags[0] 
 
         return dict(
             super().get_context_data(**kws),
             asset=asset,
-            transcription=transcription
+            transcription=transcription,
+            tags=tags
         )
+
+    def post(self, *args, **kwargs):
+        context = self.get_context_data()
+        asset = Asset.objects.get(collection__slug=self.args[0], slug=self.args[1])
+        if 'tx' in self.request.POST:
+          tx = self.request.POST.get('tx')
+          status = self.request.POST.get('status', '25')
+          Transcription.objects.update_or_create(asset=asset,
+                                                 user_id=self.request.user.id,
+                                                 defaults={'text':tx, 'status':status})
+        return redirect(self.request.path)
+
 
 class TranscriptionView(TemplateView):
     template_name = 'transcriptions/transcription.html'

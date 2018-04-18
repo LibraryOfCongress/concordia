@@ -57,17 +57,32 @@
             </div>
             <div class="col-6">
                 <form method="post">
+                    {% csrf_token %}
                     <div class="tab-content" id="nav-tabContent">
                         <div class="tab-pane fade show active" id="nav-tx" role="tabpanel" aria-labelledby="nav-tx-tab">
-                            <textarea class="w-100" name="tx" id="tx" placeholder="Transcription"></textarea>        
+                            <textarea class="w-100" name="tx" id="tx" placeholder="Transcription">{{transcription.text}}</textarea>        
                         </div>
-                        <div class="tab-pane fade" id="nav-tags" role="tabpanel" aria-labelledby="nav-tag-tab"></div>
+                        <div class="tab-pane fade" id="nav-tags" role="tabpanel" aria-labelledby="nav-tag-tab">
+                        
+                        <div class="card text-center w-100" style="height: 100%;">
+                          <div class="card-header">
+                            <span class="badge badge-primary">diary</span>
+                            <span class="badge badge-secondary">public</span>
+                            <span class="badge badge-success">helena</span>
+                            <span class="badge badge-danger">journal</span>
+                            <span class="badge badge-warning">moscow</span>
+                          </div>
+                          <div class="card-body" style="height: 51%;padding: 0px;">
+                            <textarea class="w-100" name="tags" placeholder="Tags">{% if tags %}{{tags.tags}}{% endif %}</textarea>
+                          </div>
+                        </div>
+                        </div>
                         <div class="tab-pane fade" id="nav-disc" role="tabpanel" aria-labelledby="nav-disc-tab"></div>
                     </div>
                     
                     <p>
                         <label for="status_id">Transcription Status:</label>
-                        <select name="" id="status_id">
+                        <select name="status" id="status_id">
                             <option value="0">0%</option>
                             <option value="25">25%</option>
                             <option value="50">50%</option>
@@ -80,4 +95,9 @@
             </div>  
         </div>    
     </div>
+    <script>
+    {% if transcription.status %}
+    $("#status_id").val({{transcription.status}});
+    {% endif %}
+    </script>
 {% endblock main_content %}
