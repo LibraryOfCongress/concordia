@@ -8,7 +8,7 @@ from django.shortcuts import render_to_response,render, redirect
 from registration.backends.simple.views import RegistrationView
 from .forms import ConcordiaUserForm
 from .models import UserProfile
-from transcribr.transcribr.models import Asset, Collection, Transcription, UserAssetTagCollection
+from transcribr.models import Asset, Collection, Transcription, UserAssetTagCollection
 from django.core.paginator import Paginator
 from django.views.decorators.csrf import csrf_exempt
 from django.urls import reverse
