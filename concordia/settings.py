@@ -19,8 +19,8 @@ ROOT_URLCONF = 'concordia.urls'
 SECRET_KEY = config('DJANGO', 'SECRET_KEY', 'super-secret-key')
 STATIC_ROOT = 'static'
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [os.path.join(PROJECT_DIR, 'static'),\
- os.path.join('/'.join(PROJECT_DIR.split('/')[:-1]), 'transcribr/transcribr/static')]
+STATICFILES_DIRS = [os.path.join(PROJECT_DIR, 'static'),
+                    os.path.join('/'.join(PROJECT_DIR.split('/')[:-1]), 'transcribr/transcribr/static')]
 TEMPLATE_DEBUG = False
 TIME_ZONE = 'UTC'
 USE_I18N = True
@@ -163,7 +163,3 @@ REST_FRAMEWORK = {
 TRANSCRIBR = dict(
      netloc=config('TRANSCRIBR', 'NETLOC', 'http://0.0.0.0:8000'),
 )
-
-#TRANSCRIBR = dict(
-#    netloc='http://0.0.0.0:8000'
-#)
