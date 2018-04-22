@@ -6,7 +6,7 @@ from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import render_to_response,render, redirect
 from registration.backends.simple.views import RegistrationView
-from .forms import ConcordiaUserForm
+from .forms import ConcordiaUserForm, ConcordiaUserEditForm
 from .models import UserProfile
 from transcribr.transcribr.models import Asset, Collection, Transcription, UserAssetTagCollection
 from django.core.paginator import Paginator
@@ -43,7 +43,8 @@ class AccountProfileView(LoginRequiredMixin, TemplateView):
     def post(self, *args, **kwargs):
         context = self.get_context_data()
         instance = get_object_or_404(User, pk=self.request.user.id)
-        form = ConcordiaUserForm(self.request.POST, self.request.FILES, instance=instance)
+        form = ConcordiaUserEditForm(self.request.POST, self.request.FILES, instance=instance)
+        import pdb; pdb.set_trace()
         if form.is_valid():
             obj = form.save(commit=True)
             obj.id = self.request.user.id
@@ -70,7 +71,7 @@ class AccountProfileView(LoginRequiredMixin, TemplateView):
             kws,
             transcriptions=Transcription.objects.filter(user_id=self.request.user.id),
             
-            form = ConcordiaUserForm(initial=data)
+            form = ConcordiaUserEditForm(initial=data)
         ))
 
 class TranscribrView(TemplateView):

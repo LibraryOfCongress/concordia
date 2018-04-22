@@ -79,8 +79,8 @@
                         </div>
                         <div class="tab-pane fade" id="nav-disc" role="tabpanel" aria-labelledby="nav-disc-tab"></div>
                     </div>
-                    
-                    <p>
+                    {% if request.user.is_authenticated %}
+                    <p >
                         <label for="status_id">Transcription Status:</label>
                         <select name="status" id="status_id">
                             <option value="0">0%</option>
@@ -91,13 +91,14 @@
                         </select>
                         <input type="submit" class="btn btn-primary" value="Save">
                     </p>
+                    {% endif %}
                 </form>
             </div>  
         </div>    
     </div>
     <script>
     {% if transcription.status %}
-    $("#status_id").val({{transcription.status}});
+      $("#status_id").val({{transcription.status}});
     {% endif %}
     </script>
 {% endblock main_content %}
