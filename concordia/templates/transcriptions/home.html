@@ -10,9 +10,6 @@
                     <h5 class="card-title">{{ c.title }}</h5>
                     <p class="card-text">{{ c.description }}</p>
                     <p class="text-center">
-                        {% if request.user.is_staff %}
-                            <a href="#" class="btn btn-info">ADD</a>
-                        {% endif %}
                         <a href="{% url 'transcriptions:collection' c.slug %}"
                             class="btn btn-primary">View</a>
                         {% if request.user.is_staff %}
@@ -25,9 +22,11 @@
     {% endfor %}
     {% if request.user.is_staff %}
         <div class="col-3">
-            <div class="card mb-4">
+            <div class="card mb-4" style="height:169px">
                 <div class="card-body text-center">
-                    <a href="#"> <img style="width: 65%;" class="col-12 card-img-top img-responsive" src="{% static 'transcribr/plus.png' %}"> </a>
+                  <div style="margin-top:45px">
+                    <a href="#"><span class="align-middle">Add new Collection</span></a>
+                    </div>
                 </div>
             </div>
         </div>

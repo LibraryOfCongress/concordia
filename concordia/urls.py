@@ -5,6 +5,7 @@ from django.conf.urls.static import static
 from django.views.generic import TemplateView
 
 from . import views
+from faq.views import FAQView
 
 for key, value in getattr(settings, 'ADMIN_SITE', {}).items():
     setattr(admin.site, key, value)
@@ -39,7 +40,7 @@ urlpatterns = [
     re_path(r'^$', TemplateView.as_view(template_name='home.html')),
     re_path(r'^about/$', TemplateView.as_view(template_name='about.html'), name='about'),
     re_path(r'^transcribe/', include(tx_urlpatterns, namespace='transcriptions')),
-    re_path(r'^api/v1/', include('transcribr.urls')),
+    re_path(r'^api/v1/', include('transcribr.transcribr.urls')),
 
     re_path(
         r'^account/register/$',
@@ -51,10 +52,10 @@ urlpatterns = [
     re_path(r'^experiments/(.+)/$', views.ExperimentsView.as_view(), name='experiments'),
     re_path(r'^wireframes/', include('concordia.experiments.wireframes.urls')),
 
-    re_path(r'^privacy-policy/$', views.ToDoView.as_view(), name='privacy-policy'),
-    re_path(r'^cookie-policy/$', views.ToDoView.as_view(), name='cookie-policy'),
-    re_path(r'^faq/$', views.ToDoView.as_view(), name='faq'),
-    re_path(r'^legal/$', views.ToDoView.as_view(), name='legal'),
+    re_path(r'^privacy-policy/$', TemplateView.as_view(template_name='policy.html'), name='privacy-policy'),
+    re_path(r'^cookie-policy/$', TemplateView.as_view(template_name='policy.html'), name='cookie-policy'),
+    re_path(r'^faq/$', FAQView.as_view(), name='faq'),
+    re_path(r'^legal/$', TemplateView.as_view(template_name='legal.html'), name='legal'),
 
     re_path(r'^admin/', admin.site.urls),
 ]
@@ -64,3 +65,6 @@ urlpatterns += static(
     document_root=settings.STATIC_ROOT,
     show_indexes=True
 )
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

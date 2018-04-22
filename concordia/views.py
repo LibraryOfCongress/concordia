@@ -44,7 +44,6 @@ class AccountProfileView(LoginRequiredMixin, TemplateView):
         context = self.get_context_data()
         instance = get_object_or_404(User, pk=self.request.user.id)
         form = ConcordiaUserEditForm(self.request.POST, self.request.FILES, instance=instance)
-        import pdb; pdb.set_trace()
         if form.is_valid():
             obj = form.save(commit=True)
             obj.id = self.request.user.id

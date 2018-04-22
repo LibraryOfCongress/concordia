@@ -53,9 +53,10 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'rest_framework',
-    'transcribr',
+    'transcribr.transcribr',
     'importer',
     'concordia',
+    'faq',
     'concordia.experiments.wireframes',
 ]
 
@@ -167,3 +168,5 @@ REST_FRAMEWORK = {
 TRANSCRIBR = dict(
     netloc='http://0.0.0.0:8000'
 )
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

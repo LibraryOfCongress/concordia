@@ -26,3 +26,5 @@ env.ini
 env-dev.ini
 docs/_build
 docs/modules
+dist/
+profile_pics/
