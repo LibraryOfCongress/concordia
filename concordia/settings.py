@@ -19,8 +19,8 @@ ROOT_URLCONF = 'concordia.urls'
 SECRET_KEY = config('DJANGO', 'SECRET_KEY', 'super-secret-key')
 STATIC_ROOT = 'static'
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [os.path.join(PROJECT_DIR, 'static'),\
- os.path.join('/'.join(PROJECT_DIR.split('/')[:-1]), 'transcribr/transcribr/static')]
+STATICFILES_DIRS = [os.path.join(PROJECT_DIR, 'static'),
+                    os.path.join('/'.join(PROJECT_DIR.split('/')[:-1]), 'transcribr/transcribr/static')]
 TEMPLATE_DEBUG = False
 TIME_ZONE = 'UTC'
 USE_I18N = True
@@ -39,8 +39,8 @@ DATABASES = {
         'NAME': config('DJANGO', 'DB_NAME', 'concordia'),
         'USER': config('DJANGO', 'DB_USER', 'concordia'),
         'PASSWORD': config('DJANGO', 'DB_PASSWORD', 'concordia'),
-        'HOST': '0.0.0.0',  # config('DJANGO', 'DB_HOST', '127.0.0.1'),
-        'PORT': 5432  # config('DJANGO', 'DB_PORT', 5432),
+        'HOST': config('DJANGO', 'DB_HOST', 'db'),
+        'PORT': config('DJANGO', 'DB_PORT', 5432),
     }
 }
 
@@ -161,12 +161,8 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
 }
 
-# TRANSCRIBR = dict(
-#     netloc=config('TRANSCRIBR', 'NETLOC', 'http://0.0.0.0:8000'),
-# )
-
 TRANSCRIBR = dict(
-    netloc='http://0.0.0.0:8000'
+     netloc=config('TRANSCRIBR', 'NETLOC', 'http://0.0.0.0:8000'),
 )
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
