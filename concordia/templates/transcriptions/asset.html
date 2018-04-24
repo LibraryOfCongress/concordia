@@ -4,6 +4,7 @@
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <script src="https://www.jqueryscript.net/demo/Bootstrap-4-Tag-Input-Plugin-jQuery/tagsinput.js"></script>
     <script src="{% static "vendor/openseadragon/openseadragon.min.js" %}"></script>
     <style>
         .tab-pane, .asset-image {
@@ -20,6 +21,78 @@
             border: 1px solid #ccc;
         }
         .tab-content { margin-bottom: .5em; }
+        /*
+ * bootstrap-tagsinput v0.8.0
+ * 
+ */
+
+.bootstrap-tagsinput {
+  background-color: #fff;
+  border: 1px solid #ccc;
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+  display: inline-block;
+  padding: 4px 6px;
+  color: #555;
+  vertical-align: middle;
+  border-radius: 4px;
+  width: 100%;
+  line-height: 22px;
+  cursor: text;
+}
+.bootstrap-tagsinput input {
+  border: none;
+  box-shadow: none;
+  outline: none;
+  background-color: transparent;
+  padding: 0 6px;
+  margin: 0;
+  width: auto;
+  max-width: inherit;
+}
+.bootstrap-tagsinput.form-control input::-moz-placeholder {
+  color: #777;
+  opacity: 1;
+}
+.bootstrap-tagsinput.form-control input:-ms-input-placeholder {
+  color: #777;
+}
+.bootstrap-tagsinput.form-control input::-webkit-input-placeholder {
+  color: #777;
+}
+.bootstrap-tagsinput input:focus {
+  border: none;
+  box-shadow: none;
+}
+.bootstrap-tagsinput .badge {
+  margin-right: 2px;
+  color: white;
+  background-color:#0275d8;
+  padding:5px 8px;border-radius:3px;
+  border:1px solid #01649e
+}
+.bootstrap-tagsinput .badge [data-role="remove"] {
+  margin-left: 8px;
+  cursor: pointer;
+}
+.bootstrap-tagsinput .badge [data-role="remove"]:after {
+  content: "×";
+  padding: 0px 4px;
+  background-color:rgba(0, 0, 0, 0.1);
+  border-radius:50%;
+  font-size:13px
+}
+.bootstrap-tagsinput .badge [data-role="remove"]:hover:after {
+
+  background-color:rgba(0, 0, 0, 0.62);}
+.bootstrap-tagsinput .badge [data-role="remove"]:hover:active {
+  box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+}
+#nav-tags .bootstrap-tagsinput{
+  height:100%;
+}
+#nav-tags .badge{
+  margin-top: 5px;
+}
     </style>
 {% endblock head_content %}
 {% block main_content %}
@@ -63,19 +136,7 @@
                             <textarea class="w-100" name="tx" id="tx" placeholder="Transcription">{{transcription.text}}</textarea>        
                         </div>
                         <div class="tab-pane fade" id="nav-tags" role="tabpanel" aria-labelledby="nav-tag-tab">
-                        
-                        <div class="card text-center w-100" style="height: 100%;">
-                          <div class="card-header">
-                            <span class="badge badge-primary">diary</span>
-                            <span class="badge badge-secondary">public</span>
-                            <span class="badge badge-success">helena</span>
-                            <span class="badge badge-danger">journal</span>
-                            <span class="badge badge-warning">moscow</span>
-                          </div>
-                          <div class="card-body" style="height: 51%;padding: 0px;">
-                            <textarea class="w-100" name="tags" placeholder="Tags">{% if tags %}{{tags.tags}}{% endif %}</textarea>
-                          </div>
-                        </div>
+                          <input type="text" class="textarea w-100" id="tags"  name="tags" data-role="tagsinput" value="{%for tag in tags %}{{tag}},{% endfor %}">
                         </div>
                         <div class="tab-pane fade" id="nav-disc" role="tabpanel" aria-labelledby="nav-disc-tab"></div>
                     </div>
@@ -100,5 +161,11 @@
     {% if transcription.status %}
       $("#status_id").val({{transcription.status}});
     {% endif %}
+    {% if tags %}
+    $("#tags").val("
+    {%for tag in tags %}
+    {{tag}},
+    {% endfor %}
+    {% endif %}".replace(" "));
     </script>
 {% endblock main_content %}

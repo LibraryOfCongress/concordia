@@ -10,7 +10,7 @@ logger = getLogger(__name__)
 ROLE_CHOICES = (
     ('admin', ("Admin")),
     ('cm', ("Content Manager")),
-    ('staff', ("Staff"))
+    ('user', ("User"))
     )
 
 class ConcordiaUserForm(RegistrationForm):
@@ -29,7 +29,7 @@ class ConcordiaUserForm(RegistrationForm):
         instance = super(ConcordiaUserForm, self).save(commit=False)
         role_dict = {'admin': 'is_superuser',
                      'cm': 'is_staff',
-                     'staff':'is_active'}
+                     'user':'is_active'}
         if 'role' in self.data and self.data['role'] in role_dict :
             role = self.data['role']
             if role == 'admin':

@@ -20,6 +20,11 @@ REGISTRATION_URLS = getattr(
 tx_urlpatterns = ([
     re_path(r'^$', views.TranscribrView.as_view(), name='transcribe'),
     re_path(
+        r'^create/$',
+        TemplateView.as_view(template_name='transcriptions/create.html'),
+        name='create'
+    ),
+    re_path(
         r'^([^/]+)/$',
         views.TranscribrCollectionView.as_view(),
         name='collection'
@@ -34,6 +39,7 @@ tx_urlpatterns = ([
         views.TranscriptionView.as_view(),
         name='transcription'
     )
+    
 ], 'transcriptions')
 
 urlpatterns = [
@@ -56,6 +62,7 @@ urlpatterns = [
     re_path(r'^cookie-policy/$', TemplateView.as_view(template_name='policy.html'), name='cookie-policy'),
     re_path(r'^faq/$', FAQView.as_view(), name='faq'),
     re_path(r'^legal/$', TemplateView.as_view(template_name='legal.html'), name='legal'),
+    
 
     re_path(r'^admin/', admin.site.urls),
 ]

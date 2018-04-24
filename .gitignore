@@ -28,3 +28,4 @@ docs/_build
 docs/modules
 dist/
 profile_pics/
+vendor/

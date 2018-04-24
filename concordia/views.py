@@ -8,7 +8,7 @@ from django.shortcuts import render_to_response,render, redirect
 from registration.backends.simple.views import RegistrationView
 from .forms import ConcordiaUserForm, ConcordiaUserEditForm
 from .models import UserProfile
-from transcribr.models import Asset, Collection, Transcription, UserAssetTagCollection
+from transcribr.models import Asset, Collection, Transcription, UserAssetTagCollection, Tag
 from django.core.paginator import Paginator
 from django.views.decorators.csrf import csrf_exempt
 from django.urls import reverse
@@ -68,7 +68,7 @@ class AccountProfileView(LoginRequiredMixin, TemplateView):
             data['myfile'] = profile[0].myfile
         return super().get_context_data(**dict(
             kws,
-            transcriptions=Transcription.objects.filter(user_id=self.request.user.id),
+            transcriptions=Transcription.objects.filter(user_id=self.request.user.id).order_by('-updated_on'),
             
             form = ConcordiaUserEditForm(initial=data)
         ))
@@ -118,7 +118,7 @@ class TranscribrAssetView(TemplateView):
           transcription = transcription[0]
         tags = UserAssetTagCollection.objects.filter(asset=asset, user_id=self.request.user.id)
         if tags:
-          tags = tags[0] 
+          tags = tags[0].tags.all() 
 
         return dict(
             super().get_context_data(**kws),
@@ -136,6 +136,15 @@ class TranscribrAssetView(TemplateView):
           Transcription.objects.update_or_create(asset=asset,
                                                  user_id=self.request.user.id,
                                                  defaults={'text':tx, 'status':status})
+        if 'tags' in self.request.POST:
+          tags = self.request.POST.get('tags').split(',')
+          utags, status = UserAssetTagCollection.objects.get_or_create(asset=asset, user_id=self.request.user.id)
+          for tag in tags:
+            tag_ob, t_status = Tag.objects.get_or_create(name=tag, value=tag)
+            if tag_ob not in utags.tags.all():
+              utags.tags.add(tag_ob)
+            
+          
         return redirect(self.request.path)
 
 
