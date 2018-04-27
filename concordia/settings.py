@@ -130,6 +130,13 @@ LOGGING = {
             'when': 'H',
             'interval': 3,
             'backupCount': 16
+        },
+        'celery': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': '{}/logs/celery.log'.format(BASE_DIR),
+            'formatter': 'long',
+            'maxBytes': 1024 * 1024 * 100,  # 100 mb
         }
     },
     'loggers': {
@@ -137,6 +144,10 @@ LOGGING = {
             'handlers': ['file', 'stream'],
             'level': 'DEBUG',
             'propagate': True,
+        },
+        'celery': {
+            'handlers': ['celery', 'stream'],
+            'level': 'DEBUG',
         },
     },
 

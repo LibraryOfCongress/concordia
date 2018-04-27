@@ -2,9 +2,56 @@
 {% load staticfiles %}
 {% block title %}{% endblock title %}
 {% block head_content %}
+<style>
+.loader {
+  border: 16px solid #f3f3f3;
+  border-radius: 50%;
+  border-top: 16px solid #3498db;
+  width: 120px;
+  height: 120px;
+  -webkit-animation: spin 2s linear infinite; /* Safari */
+  animation: spin 2s linear infinite;
+}
+
+/* Safari */
+@-webkit-keyframes spin {
+  0% { -webkit-transform: rotate(0deg); }
+  100% { -webkit-transform: rotate(360deg); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+</style>
+
 {% endblock head_content %}
 {% block main_content %}
-<div class="container">
-  <h1> Welcome to the collection create page.</h1>
+<div id="loader" class="d-none text-center">
+	<div class="loader m-auto"></div>
+        <small class="form-text text-muted">Please wait..., we are creating collection for you.</small>
 </div>
+<div class="container">
+  <form method="POST" onsubmit="return handle_form_submission()">
+  {% csrf_token %}
+  <div class="form-group">
+    <label for="name">Name</label>
+    <input type="text" class="form-control" name="name" id="name" placeholder="Enter name">
+  </div>
+  <div class="form-group">
+    <label for="url">URL</label>
+    <input type="url" class="form-control" id="url" name="url">
+  </div>
+  
+  <button type="submit" class="btn btn-primary">Go</button>
+</form>
+</div>
+<script>
+function handle_form_submission()
+{
+  document.getElementById("loader").style.display = "block";
+  document.getElementById("container").style.display = "none";  
+  return false;
+}
+</script>
 {% endblock main_content %}

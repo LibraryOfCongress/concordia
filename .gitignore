@@ -29,3 +29,5 @@ docs/modules
 dist/
 profile_pics/
 vendor/
+mss*
+*.swp

@@ -1,3 +1,4 @@
+import os
 from logging import getLogger
 import requests
 from django.conf import settings
@@ -8,12 +9,14 @@ from django.shortcuts import render_to_response,render, redirect
 from registration.backends.simple.views import RegistrationView
 from .forms import ConcordiaUserForm, ConcordiaUserEditForm
 from .models import UserProfile
-from transcribr.models import Asset, Collection, Transcription, UserAssetTagCollection, Tag
+from transcribr.transcribr.models import Asset, Collection, Transcription, UserAssetTagCollection, Tag
 from django.core.paginator import Paginator
 from django.views.decorators.csrf import csrf_exempt
 from django.urls import reverse
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
+from importer.importer.tasks import download_async_collection, check_completeness
+from config import config
 
 logger = getLogger(__name__)
 
@@ -139,11 +142,14 @@ class TranscribrAssetView(TemplateView):
         if 'tags' in self.request.POST:
           tags = self.request.POST.get('tags').split(',')
           utags, status = UserAssetTagCollection.objects.get_or_create(asset=asset, user_id=self.request.user.id)
+          all_tag = utags.tags.all().values_list('name', flat=True)
+          all_tag_list = list(all_tag)
+          delete_tags = [i for i in all_tag_list if i not in tags]
+          utags.tags.filter(name__in = delete_tags).delete()
           for tag in tags:
             tag_ob, t_status = Tag.objects.get_or_create(name=tag, value=tag)
             if tag_ob not in utags.tags.all():
               utags.tags.add(tag_ob)
-            
           
         return redirect(self.request.path)
 
@@ -169,3 +175,55 @@ class ExperimentsView(TemplateView):
 
     def get_template_names(self):
         return ['experiments/{}.html'.format(self.args[0])]
+        
+class CollectionView(TemplateView):
+    template_name = 'transcriptions/create.html'
+    
+    def post(self, *args, **kwargs):
+        context = self.get_context_data()
+        name = self.request.POST.get('name')
+        url = self.request.POST.get('url')
+        #c = Collection.objects.create(title=name, slug=name.replace(" ","-"), description=name)
+        
+        result = download_async_collection.delay("https://www.loc.gov/collections/clara-barton-papers/?fa=partof:clara+barton+papers:++diaries+and+journals,+1849-1911")
+        result.ready()
+        result.get()
+        result2 = check_completeness.delay()
+        try:
+          result2.ready()
+          result2.get()
+        except Exception as e:
+            pass
+            
+        print ("lakshman---testfffff", result2.state)
+        if not result2.state == 'PENDING':
+          base_dir = config('IMPORTER', 'IMAGES_FOLDER')
+          base_dir = settings.BASE_DIR if not base_dir else base_dir 
+          print ("base_dir", base_dir)
+          collection_path  = settings.MEDIA_ROOT+"/"+name.replace(' ', '-')
+          os.makedirs(collection_path)
+          cmd = 'mv {0}/mss* {1}'.format(base_dir, collection_path)
+          os.system(cmd)
+          '''
+          for root, dirs, files in os.walk(base_dir): 
+            for filename in files:
+              filename = os.path.join(root, filename)
+              if "mss1197300" in filename:
+                print("dirs", os.path.join(dirs, filename))
+                print(os.path.join(root, filename))
+                collection_path  = settings.MEDIA_ROOT+"/"+name
+                os.makedirs(collection_path)
+                dest = filename.replace(base_dir, collection_path)
+                print ("dest", dest)
+                
+                import shutil
+                import pdb; pdb.set_trace()
+                shutil.move(filename, dest)
+                break
+          '''
+            
+        
+        return redirect(self.request.path)
+        
+
+    
