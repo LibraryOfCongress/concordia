@@ -1,0 +1,5 @@
+{{ user }}, you have {{ expiration_days }} days to activate your registration.
+
+http://{{ site }}{% url "registration_activate" activation_key %}
+
+

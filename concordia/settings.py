@@ -1,29 +1,58 @@
 import os
+import sys
+from config import config
+
 
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(PROJECT_DIR)
 
+sys.path.append(PROJECT_DIR)
 ALLOWED_HOSTS = ['*']
 AUTH_PASSWORD_VALIDATORS = []
 DEBUG = True
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+#EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'emails')
+# Host for sending e-mail.
+EMAIL_HOST = 'localhost'
+
+# Port for sending e-mail.
+EMAIL_PORT = 25
+
+# Optional SMTP authentication information for EMAIL_HOST.
+EMAIL_HOST_USER = ''
+EMAIL_HOST_PASSWORD = ''
+EMAIL_USE_TLS = False
+DEFAULT_FROM_EMAIL="no-reply@loc.gov"
+
 LANGUAGE_CODE = 'en-us'
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
 ROOT_URLCONF = 'concordia.urls'
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'super-secret-key')
+SECRET_KEY = config('DJANGO', 'SECRET_KEY', 'super-secret-key')
 STATIC_ROOT = 'static'
 STATIC_URL = '/static/'
+STATICFILES_DIRS = [os.path.join(PROJECT_DIR, 'static'),
+                    os.path.join('/'.join(PROJECT_DIR.split('/')[:-1]), 'transcribr/transcribr/static')]
+TEMPLATE_DEBUG = False
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 WSGI_APPLICATION = 'concordia.wsgi.application'
 
+ADMIN_SITE = {
+    'site_header': config('DJANGO', 'ADMIN_SITE_HEADER', 'Concordia Admin'),
+    'site_title': config('DJANGO', 'ADMIN_SITE_TITLE', 'Concordia'),
+}
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': os.environ.get('DJANGO_DB_NAME', 'postgres'),
-        'USER': 'postgres',
-        'HOST': os.environ.get('DJANGO_DB_HOST', 'db'),
-        'PORT': os.environ.get('DJANGO_DB_PORT', 5432),
+        'ENGINE': config('DJANGO', 'DB_ENGINE', 'django.db.backends.postgresql_psycopg2'),
+        'NAME': config('DJANGO', 'DB_NAME', 'concordia'),
+        'USER': config('DJANGO', 'DB_USER', 'concordia'),
+        'PASSWORD': config('DJANGO', 'DB_PASSWORD', 'concordia'),
+        'HOST': config('DJANGO', 'DB_HOST', 'db'),
+        'PORT': config('DJANGO', 'DB_PORT', 5432),
     }
 }
 
@@ -35,10 +64,16 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    'rest_framework',
+    'transcribr.transcribr',
+    'importer',
+    'concordia',
+    'faq',
     'concordia.experiments.wireframes',
-    'concordia.experiments.transcribr',
-    'django_extensions',
 ]
+
+if DEBUG:
+    INSTALLED_APPS += ['django_extensions', ]
 
 
 MIDDLEWARE = [
@@ -53,7 +88,7 @@ MIDDLEWARE = [
 
 TEMPLATES = [{
     'BACKEND': 'django.template.backends.django.DjangoTemplates',
-    'DIRS': [os.path.join(PROJECT_DIR, 'templates'),],
+    'DIRS': [os.path.join(PROJECT_DIR, 'templates'), ],
     'APP_DIRS': True,
     'OPTIONS': {
         'context_processors': [
@@ -61,6 +96,97 @@ TEMPLATES = [{
             'django.template.context_processors.request',
             'django.contrib.auth.context_processors.auth',
             'django.contrib.messages.context_processors.messages',
+            'django.template.context_processors.media',
         ],
     },
 }]
+
+
+# Celery settings
+CELERY_BROKER_URL = config('CELERY', 'BROKER_URL', 'pyamqp://rabbit@rabbit//')
+CELERY_RESULT_BACKEND = config('CELERY', 'RESULT_BACKEND', 'rpc://')
+
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_IMPORTS = ('importer.importer.tasks',)
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'long': {
+            'format': '[{asctime} {levelname} {name}:{lineno}] {message}',
+            'datefmt': '%Y-%m-%dT%H:%M:%S',
+            'style': '{'
+        },
+        'short': {
+            'format': '[{levelname} {name}] {message}',
+            'datefmt': '%Y-%m-%dT%H:%M:%S',
+            'style': '{'
+        },
+    },
+    'handlers': {
+        'stream': {
+            'class': 'logging.StreamHandler',
+            'level': 'INFO',
+            'formatter': 'long',
+        },
+        'null': {
+            'level': 'DEBUG',
+            'class': 'logging.NullHandler',
+        },
+        'file': {
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'level': 'DEBUG',
+            'formatter': 'long',
+            'filename': '{}/logs/concordia.log'.format(BASE_DIR),
+            'when': 'H',
+            'interval': 3,
+            'backupCount': 16
+        },
+        'celery': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': '{}/logs/celery.log'.format(BASE_DIR),
+            'formatter': 'long',
+            'maxBytes': 1024 * 1024 * 100,  # 100 mb
+        }
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file', 'stream'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'celery': {
+            'handlers': ['celery', 'stream'],
+            'level': 'DEBUG',
+        },
+    },
+
+}
+
+
+################################################################################
+# Django-specific settings above
+################################################################################
+
+ACCOUNT_ACTIVATION_DAYS = 7
+
+REGISTRATION_URLS = config(
+    'DJANGO',
+    'REGISTRATION_URLS',
+    'registration.backends.simple.urls'
+)
+
+
+REST_FRAMEWORK = {
+    'PAGE_SIZE': config('DJRF', 'PAGE_SIZE', 10, int),
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+}
+
+TRANSCRIBR = dict(
+     netloc=config('TRANSCRIBR', 'NETLOC', 'http://0.0.0.0:8000'),
+)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

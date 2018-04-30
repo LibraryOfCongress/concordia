@@ -1,2 +1,12 @@
+Django<2.1
+psycopg2
 psycopg2-binary
 Pillow
+gunicorn
+djangorestframework
+vendor/django-registration.zip
+Markdown
+coreapi
+coreapi
+celery
+-r importer.pip

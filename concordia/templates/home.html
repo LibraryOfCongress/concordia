@@ -1,7 +1,34 @@
-{% extends "base.html" %} 
+{% extends "base.html" %}
+{% block title %}Home{% endblock title %}
 {% block main_content %}
-    <h1>Concordia</h1>
-    <p>
-        <a href="/wireframes/">Wireframes</a>
-    </p>
+    <div class="container">
+        <div class="row">
+            <div class="col-9">
+                <h2>Enabling and Unleashing the Wisdom of the Crowd </h2>
+                <p>Welcome to the Library of Congress transcription and tagging site. </p>
+                <p>This is a place for volunteers to help make history, by making historical artifacts easier to read and searchable with metadata.  Digital archives at the Library contain hundreds of thousands of mixed media types—manuscripts, photographs, audio and video files, to name a few—more than Library staff alone can catalog in a timely fashion.  So, we're opening up the vaults and appealing to you to help by translating and typing text into forms by way of transcriptions, tags, and comments. </p>
+                <p>Through crowdsourcing efforts like this, the Library encourages volunteers to contribute time and effort towards the ultimate goal of transcribing and tagging a massive amount of original materials to make them searchable via metadata, ultimately allowing people to find specific information via search tools.  This effort also allows librarians and content managers to organize and make the material searchable and index-ready for web crawlers and other machine-learning agents.  </p>
+                <p>Please join us in preserving our Nation’s history by making records accessible, bit by bit, piece by piece, one precious artifact at a time.</p>
+                <p>
+                    Let’s get started.
+                    <a href="{% url 'transcriptions:transcribe' %}">Pick an image</a> and begin transcribing.
+                </p>
+            </div>
+            <div class="col-3">
+                <div class="card">
+                    <div class="card-header">Development</div>
+                    <div class="card-body">
+                        <p class="card-text">
+                            Quick links to development pages and experiments
+                        </p>
+                        <ul>
+                            <li><a href="{% url 'experiments' 'models' %}">Data Models</a></li>
+                            <li><a href="/wireframes/">Original Wireframes</a></li>
+                        </ul>
+                        
+                  </div>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock main_content %}

@@ -1,0 +1,37 @@
+{% extends "transcriptions/base.html" %}
+{% block main_content %} {% load staticfiles %}
+<div class="container">
+    <h2>Collections</h2>
+    {% if response.results %}
+        <div class="row"> {% for c in response.results %}
+        <div class="col-3">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">{{ c.title }}</h5>
+                    <p class="card-text">{{ c.description }}</p>
+                    <p class="text-center">
+                        <a href="{% url 'transcriptions:collection' c.slug %}"
+                            class="btn btn-primary">View</a>
+                        {% if request.user.is_staff %}
+                          <a href="#" class="btn btn-success">Export</a>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+    {% if request.user.is_staff %}
+        <div class="col-3">
+            <div class="card mb-4" style="height:169px">
+                <div class="card-body text-center">
+                  <div style="margin-top:45px">
+                    <a href="{% url 'transcriptions:create' %}"><span class="align-middle">Add new Collection</span></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock main_content %}

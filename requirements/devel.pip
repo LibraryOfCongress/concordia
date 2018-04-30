@@ -1,2 +1,8 @@
 -r base.pip
+invoke
 django_extensions
+pytest
+pytest-cov
+pytest-django
+pytest-html
+pycodestyle
