@@ -65,7 +65,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'rest_framework',
-    'transcribr.transcribr',
+    'transcribr',
     'importer',
     'concordia',
     'faq',
