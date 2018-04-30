@@ -3,7 +3,7 @@ from django.contrib import admin
 from django.urls import re_path, include
 from django.conf.urls.static import static
 from django.views.generic import TemplateView
-
+from django.contrib.auth import views as auth_views
 from . import views
 from faq.views import FAQView
 
@@ -46,7 +46,7 @@ urlpatterns = [
     re_path(r'^$', TemplateView.as_view(template_name='home.html')),
     re_path(r'^about/$', TemplateView.as_view(template_name='about.html'), name='about'),
     re_path(r'^transcribe/', include(tx_urlpatterns, namespace='transcriptions')),
-    re_path(r'^api/v1/', include('transcribr.transcribr.urls')),
+    re_path(r'^api/v1/', include('transcribr.urls')),
 
     re_path(
         r'^account/register/$',
@@ -67,6 +67,13 @@ urlpatterns = [
     re_path(r'^admin/', admin.site.urls),
 ]
 
+urlpatterns += [
+    re_path(r'^password_reset/$', auth_views.password_reset, name='password_reset'),
+    re_path(r'^password_reset/done/$', auth_views.password_reset_done, name='password_reset_done'),
+    re_path(r'^reset/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/$',
+        auth_views.password_reset_confirm, name='password_reset_confirm'),
+    re_path(r'^reset/done/$', auth_views.password_reset_complete, name='password_reset_complete'),
+]
 urlpatterns += static(
     settings.STATIC_URL,
     document_root=settings.STATIC_ROOT,

@@ -9,7 +9,7 @@ from django.shortcuts import render_to_response,render, redirect
 from registration.backends.simple.views import RegistrationView
 from .forms import ConcordiaUserForm, ConcordiaUserEditForm
 from .models import UserProfile
-from transcribr.transcribr.models import Asset, Collection, Transcription, UserAssetTagCollection, Tag
+from transcribr.models import Asset, Collection, Transcription, UserAssetTagCollection, Tag
 from django.core.paginator import Paginator
 from django.views.decorators.csrf import csrf_exempt
 from django.urls import reverse
@@ -20,7 +20,7 @@ from config import config
 
 logger = getLogger(__name__)
 
-ASSETS_PER_PAGE = 36
+ASSETS_PER_PAGE = 10
 
 def transcribr_api(relative_path):
     abs_path = '{}/api/v1/{}'.format(
@@ -92,7 +92,7 @@ class TranscribrCollectionView(TemplateView):
 
     def get_context_data(self, **kws):
         collection = Collection.objects.get(slug=self.args[0])
-        asset_list = collection.asset_set.all()
+        asset_list = collection.asset_set.all().order_by('id')
         paginator = Paginator(asset_list, ASSETS_PER_PAGE)
 
         if not self.request.GET.get('page'):
@@ -183,9 +183,9 @@ class CollectionView(TemplateView):
         context = self.get_context_data()
         name = self.request.POST.get('name')
         url = self.request.POST.get('url')
-        #c = Collection.objects.create(title=name, slug=name.replace(" ","-"), description=name)
+        c = Collection.objects.create(title=name, slug=name.replace(" ","-"), description=name)
         
-        result = download_async_collection.delay("https://www.loc.gov/collections/clara-barton-papers/?fa=partof:clara+barton+papers:++diaries+and+journals,+1849-1911")
+        result = download_async_collection.delay(url)
         result.ready()
         result.get()
         result2 = check_completeness.delay()
@@ -195,7 +195,6 @@ class CollectionView(TemplateView):
         except Exception as e:
             pass
             
-        print ("lakshman---testfffff", result2.state)
         if not result2.state == 'PENDING':
           base_dir = config('IMPORTER', 'IMAGES_FOLDER')
           base_dir = settings.BASE_DIR if not base_dir else base_dir 
@@ -204,26 +203,21 @@ class CollectionView(TemplateView):
           os.makedirs(collection_path)
           cmd = 'mv {0}/mss* {1}'.format(base_dir, collection_path)
           os.system(cmd)
-          '''
-          for root, dirs, files in os.walk(base_dir): 
+          count = 0
+          for root, dirs, files in os.walk(collection_path):
             for filename in files:
               filename = os.path.join(root, filename)
               if "mss1197300" in filename:
-                print("dirs", os.path.join(dirs, filename))
-                print(os.path.join(root, filename))
-                collection_path  = settings.MEDIA_ROOT+"/"+name
-                os.makedirs(collection_path)
-                dest = filename.replace(base_dir, collection_path)
-                print ("dest", dest)
-                
-                import shutil
-                import pdb; pdb.set_trace()
-                shutil.move(filename, dest)
-                break
-          '''
-            
-        
-        return redirect(self.request.path)
+                count +=1
+                title = '{0} asset {1}'.format(name, count)
+                media_url = os.path.join(root, filename).replace(settings.MEDIA_ROOT, '')
+                Asset.objects.create(title=title, 
+                                     slug=title.replace(" ", "-"),
+                                     description="{0} description".format(title),
+	                             media_url=media_url,
+                                     media_type = 'IMG',
+                                     collection=c)
+        return redirect('/transcribe/'+name.replace(" ","-"))
         
 
     

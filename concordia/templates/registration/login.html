@@ -8,6 +8,9 @@
     {% endif %}
     <form method="post" action="{% url 'login' %}">{% csrf_token %}
         {{ form.as_p }}
+        <p style="margin-left:114px;">
+	    <a href="{% url 'password_reset' %}">Forgot password?</a>
+	</p>
         <p>
             <input class="btn btn-primary" type="submit" value="Login">
         </p>    

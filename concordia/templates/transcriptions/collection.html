@@ -14,12 +14,12 @@
         {{ collection.description }}
     </p>
     <div class="row">
-    {% for a in collection.asset_set.all %}
+    {% for a in assets %}
 
         <div class="col-3">
             <div class="card mb-4">
                 <a href="{% url 'transcriptions:asset' collection.slug a.slug %}" class="text-center">
-                  <img class="col-12 card-img-top" src="{% static a.media_url %}" alt="{ a.slug }">
+                  <img class="col-12 card-img-top" src="{{ MEDIA_URL }}{{a.media_url }}" alt="{ a.slug }">
                 </a>
                 <div class="card-body">
                     <h5 class="card-title">{{ a.title }}-{{ a.sequence }}</h5>

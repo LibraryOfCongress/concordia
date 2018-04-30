@@ -10,8 +10,20 @@ sys.path.append(PROJECT_DIR)
 ALLOWED_HOSTS = ['*']
 AUTH_PASSWORD_VALIDATORS = []
 DEBUG = True
-EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
-EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'emails')
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+#EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'emails')
+# Host for sending e-mail.
+EMAIL_HOST = 'localhost'
+
+# Port for sending e-mail.
+EMAIL_PORT = 25
+
+# Optional SMTP authentication information for EMAIL_HOST.
+EMAIL_HOST_USER = ''
+EMAIL_HOST_PASSWORD = ''
+EMAIL_USE_TLS = False
+DEFAULT_FROM_EMAIL="no-reply@loc.gov"
+
 LANGUAGE_CODE = 'en-us'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
@@ -84,6 +96,7 @@ TEMPLATES = [{
             'django.template.context_processors.request',
             'django.contrib.auth.context_processors.auth',
             'django.contrib.messages.context_processors.messages',
+            'django.template.context_processors.media',
         ],
     },
 }]
