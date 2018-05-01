@@ -1,12 +1,21 @@
 from __future__ import absolute_import, unicode_literals
 import requests
 import os
+import sys
 from urllib.parse import urlparse
 import boto3
 import botocore
 from PIL import Image
 import logging
-from config import config
+
+PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(PROJECT_DIR)
+
+sys.path.append(BASE_DIR)
+
+sys.path.append(os.path.join(BASE_DIR, 'config'))
+from config import Config
+
 
 
 class Importer:
@@ -28,10 +37,10 @@ class Importer:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
 
-        self.base_url = config('IMPORTER', 'BASE_URL')
-        self.item_count = config('IMPORTER', 'ITEM_COUNT')
-        self.images_folder = config('IMPORTER', 'IMAGES_FOLDER')
-        self.s3_bucket_name = config('IMPORTER', 'S3_BUCKET_NAME')
+        self.base_url = Config.Get('importer')['BASE_URL']
+        self.item_count = Config.Get('importer')['ITEM_COUNT']
+        self.images_folder = Config.Get('importer')['IMAGES_FOLDER']
+        self.s3_bucket_name = Config.Get('importer')['S3_BUCKET_NAME']
 
     def main(self):
         self.get_and_save_images(self.base_url)

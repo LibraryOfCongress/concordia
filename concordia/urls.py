@@ -1,20 +1,28 @@
+
+import os
+import sys
+
 from django.conf import settings
 from django.contrib import admin
 from django.urls import re_path, include
 from django.conf.urls.static import static
 from django.views.generic import TemplateView
 from django.contrib.auth import views as auth_views
+
+
+PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(PROJECT_DIR)
+
+sys.path.append(BASE_DIR)
+
+sys.path.append(os.path.join(BASE_DIR, 'config'))
+from config import Config
+
 from . import views
 from faq.views import FAQView
 
 for key, value in getattr(settings, 'ADMIN_SITE', {}).items():
     setattr(admin.site, key, value)
-
-REGISTRATION_URLS = getattr(
-    settings,
-    'REGISTRATION_URLS',
-    'registration.backends.simple.urls'
-)
 
 
 tx_urlpatterns = ([
@@ -39,14 +47,14 @@ tx_urlpatterns = ([
         views.TranscriptionView.as_view(),
         name='transcription'
     )
-    
+
 ], 'transcriptions')
 
 urlpatterns = [
     re_path(r'^$', TemplateView.as_view(template_name='home.html')),
     re_path(r'^about/$', TemplateView.as_view(template_name='about.html'), name='about'),
     re_path(r'^transcribe/', include(tx_urlpatterns, namespace='transcriptions')),
-    re_path(r'^api/v1/', include('transcribr.urls')),
+    re_path(r'^api/v1/', include('transcribr.transcribr.urls')),
 
     re_path(
         r'^account/register/$',
@@ -54,7 +62,7 @@ urlpatterns = [
         name='registration_register',
     ),
     re_path(r'^account/profile/$', views.AccountProfileView.as_view(), name='user-profile'),
-    re_path(r'^account/', include(REGISTRATION_URLS)),
+    re_path(r'^account/', include(Config.Get('REGISTRATION_URLS'))),
     re_path(r'^experiments/(.+)/$', views.ExperimentsView.as_view(), name='experiments'),
     re_path(r'^wireframes/', include('concordia.experiments.wireframes.urls')),
 
@@ -62,7 +70,6 @@ urlpatterns = [
     re_path(r'^cookie-policy/$', TemplateView.as_view(template_name='policy.html'), name='cookie-policy'),
     re_path(r'^faq/$', FAQView.as_view(), name='faq'),
     re_path(r'^legal/$', TemplateView.as_view(template_name='legal.html'), name='legal'),
-    
 
     re_path(r'^admin/', admin.site.urls),
 ]
