@@ -1,5 +1,9 @@
+# TODO: use correct copyright header
 import os
 import sys
+
+# from . import utils
+# utils.import_Config()
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -14,8 +18,14 @@ from config import Config
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = Config.Get('django_secret_key')
 
+# Optional SMTP authentication information for EMAIL_HOST.
+EMAIL_HOST_USER = ''
+EMAIL_HOST_PASSWORD = ''
+EMAIL_USE_TLS = False
+DEFAULT_FROM_EMAIL="no-reply@loc.gov"
+
 ALLOWED_HOSTS = ['*'] # TODO: place this value in config.json
-print ('config mode:', Config.mode)
+
 if Config.mode == "production":
     DEBUG = False
     CSRF_COOKIE_SECURE = True
@@ -145,7 +155,14 @@ LOGGING = {
             'when': 'H',
             'interval': 3,
             'backupCount': 16
-        }
+        },
+        'celery': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': '{}/logs/celery.log'.format(BASE_DIR),
+            'formatter': 'long',
+            'maxBytes': 1024 * 1024 * 100,  # 100 mb
+         }
     },
     'loggers': {
         'django': {
@@ -153,6 +170,10 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': True,
         },
+        'celery': {
+            'handlers': ['celery', 'stream'],
+            'level': 'DEBUG',
+        }
     },
 
 }
@@ -164,20 +185,13 @@ LOGGING = {
 
 ACCOUNT_ACTIVATION_DAYS = 7
 
-# REGISTRATION_URLS = config(
-#     'DJANGO',
-#     'REGISTRATION_URLS',
-#     'registration.backends.simple.urls'
-# )
-
-
 REST_FRAMEWORK = {
     'PAGE_SIZE': Config.Get("djrf")["PAGE_SIZE"],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
 }
 
 TRANSCRIBR = dict(
-     netloc="http://0.0.0.0:8000",
+     netloc=Config.Get('transcribr')['NETLOC'],
 )
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

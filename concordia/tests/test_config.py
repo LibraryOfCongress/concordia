@@ -12,6 +12,7 @@ sys.path.append(os.path.join(scriptDir, "../../config"))
 
 
 from config import Config
+# TODO: use util to import Config
 
 
 class ConfigTest(unittest.TestCase):
@@ -19,23 +20,9 @@ class ConfigTest(unittest.TestCase):
     This is a standard python unit test, not a django TestCase. We don't want to run a django environment where a
     test_database is created.
     """
-    def setUpClass(cls):
-        with open("../../config/config-optional-override.json", "w") as override_file:
-            override_file.write('{"mode":"production"}')
 
     def setUp(self):
-        # save existing override value
-        with open("../../config/config-optional-override.json", "r") as override_file:
-            self.current_override_settings = override_file.read()
-
-    def tearDown(self):
-        # restore existing override settings
-        with open("../../config/config-optional-override.json", "w") as override_file:
-            override_file.write(self.current_override_settings)
-
-        # copy the default config.json
-        copyfile('../../config/config.json.default', '../../config/config.json')
-
+        pass
 
     def test_get_production(self):
         """
@@ -44,9 +31,8 @@ class ConfigTest(unittest.TestCase):
         """
 
         # Arrange
-        # make sure the config-optional-override.json value is set to "production"
-        with open("../../config/config-optional-override.json", "w") as override_file:
-            override_file.write('{"mode":"production"}')
+        # make sure the mode is set to "production"
+        Config.SetMode("production")
 
         # Act
         database_port = Config.Get("database")["port"]
@@ -83,9 +69,8 @@ class ConfigTest(unittest.TestCase):
         :return:
         """
         # Arrange
-        # make sure the config-optional-override.json value is set to "production"
-        with open("../../config/config-optional-override.json", "w") as override_file:
-            override_file.write('{"mode":"production"}')
+        # make sure the mode is set to "production"
+        Config.SetMode("production")
 
         # Act
         with self.assertRaises(LookupError) as context:
@@ -99,9 +84,10 @@ class ConfigTest(unittest.TestCase):
         Test getting the mode
         :return:
         """
-        # make sure the config-optional-override.json value is set to "production"
-        with open("../../config/config-optional-override.json", "w") as override_file:
-            override_file.write('{"mode":"production"}')
+
+        # Arrange
+        # make sure the mode is set to "production"
+        Config.SetMode("production")
 
         # Act
         mode = Config.GetOverrideMode()
@@ -116,9 +102,8 @@ class ConfigTest(unittest.TestCase):
         """
 
         # Arrange
-        # make sure the config-optional-override.json value is set to "production"
-        with open("../../config/config-optional-override.json", "w") as override_file:
-            override_file.write('{"mode":"production"}')
+        # make sure the mode is set to "production"
+        Config.SetMode("production")
 
         # Act
         Config.Set('foo', 'bar')
@@ -134,9 +119,8 @@ class ConfigTest(unittest.TestCase):
         """
 
         # Arrange
-        # make sure the config-optional-override.json value is set to "production"
-        with open("../../config/config-optional-override.json", "w") as override_file:
-            override_file.write('{"mode":"production"}')
+        # make sure the mode is set to "production"
+        Config.SetMode("mac")
 
         # Act
         port = Config.GetMode('logLevel', 'production')

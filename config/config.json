@@ -7,10 +7,11 @@
     "ADMIN_SITE_TITLE"     : "Concordia",
     "REGISTRATION_URLS"    : "registration.backends.simple.urls",
     "django_secret_key"    : "np*no_id-t8*if4*a(pz(n(rk5#(rlyn-41jvp5u%*ij&5u-3x",
+    "transcribr_urls"      : "transcribr.urls",
 
     "database"             : {
       "adapter"  : "django.db.backends.postgresql_psycopg2",
-      "host"     : "0.0.0.0",
+      "host"     : "db",
       "port"     : "5432",
       "name"     : "concordia",
       "username" : "concordia",
@@ -37,11 +38,49 @@
   "mac"             :
   {
     "logPath"              : "/var/log/django/concordia-web.log",
-    "logLevel"             : "INFO",
+    "logLevel"             : "DEBUG",
     "ADMIN_SITE_HEADER"    : "Concordia Admin",
     "ADMIN_SITE_TITLE"     : "Concordia",
     "REGISTRATION_URLS"    : "registration.backends.simple.urls",
     "django_secret_key"    : "np*no_id-t8*if4*a(pz(n(rk5#(rlyn-41jvp5u%*ij&5u-3x",
+    "transcribr_urls"      : "transcribr.transcribr.urls",
+
+    "database"             : {
+      "adapter"  : "django.db.backends.postgresql_psycopg2",
+      "host"     : "0.0.0.0",
+      "port"     : "54321",
+      "name"     : "concordia",
+      "username" : "concordia",
+      "password" : "concordia"
+    },
+    "celery"     : {
+      "BROKER_URL"         : "pyamqp://guest@rabbit",
+      "RESULT_BACKEND"     : "rpc://"
+
+    },
+    "transcribr" : {
+      "NETLOC"             : "http://0.0.0.0:80"
+    },
+    "djrf"       : {
+      "PAGE_SIZE"          : 10
+
+    },
+    "importer"   : {
+      "BASE_URL"       :   "",
+      "IMAGES_FOLDER"  :   "",
+      "ITEM_COUNT"     :   "",
+      "S3_BUCKET_NAME" :   ""
+    }
+  },
+  "unittest"             :
+  {
+    "logPath"              : "/var/log/django/concordia-web.log",
+    "logLevel"             : "DEBUG",
+    "ADMIN_SITE_HEADER"    : "Concordia Admin",
+    "ADMIN_SITE_TITLE"     : "Concordia",
+    "REGISTRATION_URLS"    : "registration.backends.simple.urls",
+    "django_secret_key"    : "np*no_id-t8*if4*a(pz(n(rk5#(rlyn-41jvp5u%*ij&5u-3x",
+    "transcribr_urls"      : "transcribr.transcribr.urls",
 
     "database"             : {
       "adapter"  : "django.db.backends.postgresql_psycopg2",
@@ -70,4 +109,5 @@
       "S3_BUCKET_NAME" :   ""
     }
   }
+
 }

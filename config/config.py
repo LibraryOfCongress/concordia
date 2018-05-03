@@ -38,7 +38,7 @@ class Config():
                         found = True
                         break
                 if not found:
-                    raise Exception("missing " + cls.config_file_name)
+                    raise FileNotFoundError("missing " + cls.config_file_name)
 
         # if mode override file present, read the mode and set mode
         for path in [cls.config_mode_override_file_name, os.path.join(cls.script_dir, cls.config_mode_override_file_name), os.path.join(os.getcwd(), cls.config_mode_override_file_name)]:
@@ -57,7 +57,7 @@ class Config():
         Accessor method to read value of the name param
 
         :param name: key to use to lookup value
-        :throws: Exception when key not found in config.json
+        :throws: LookupError when key not found in config.json
         :return: value from config.json based on key
         """
         if not cls.doc:
@@ -75,8 +75,7 @@ class Config():
         :param name: key to use to lookup value
         :param mode: mode value to use for lookup
         :return: value from config.json based on key
-        :throws: Exception when key not found in config.json
-        :return: value from config.json based on key
+        :throws: LookupError when key not found in config.json
         """
         if not cls.doc: cls.init()
         if name not in cls.doc[mode]:

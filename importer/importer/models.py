@@ -15,6 +15,7 @@ sys.path.append(BASE_DIR)
 
 sys.path.append(os.path.join(BASE_DIR, 'config'))
 from config import Config
+# TODO: use util to import Config
 
 
 

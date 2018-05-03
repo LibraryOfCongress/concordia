@@ -10,7 +10,6 @@ from django.shortcuts import render_to_response,render, redirect
 from registration.backends.simple.views import RegistrationView
 from .forms import ConcordiaUserForm, ConcordiaUserEditForm
 from .models import UserProfile
-from transcribr.transcribr.models import Asset, Collection, Transcription, UserAssetTagCollection, Tag
 from django.core.paginator import Paginator
 from django.views.decorators.csrf import csrf_exempt
 from django.urls import reverse
@@ -25,6 +24,20 @@ sys.path.append(BASE_DIR)
 
 sys.path.append(os.path.join(BASE_DIR, 'config'))
 from config import Config
+
+# test for existance of transcribr or transcribr.transcribr
+try:
+    from transcribr.models import Asset, Collection, Transcription, UserAssetTagCollection, Tag
+    transcribr_model_found = True
+except Exception as e:
+    transcribr_model_found = False
+
+if not transcribr_model_found:
+    try:
+        from transcribr.transcribr.models import Asset, Collection, Transcription, UserAssetTagCollection, Tag
+    except Exception as e:
+        pass
+
 
 logger = getLogger(__name__)
 

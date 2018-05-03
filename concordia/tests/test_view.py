@@ -1,10 +1,19 @@
+# TODO: Add correct copyright header
+
 from django.test import TestCase
-from django.test import Client
 
 
 class ViewTest1(TestCase):
+    """
+    This is a simple django TestCase that can be used to prove the django test environment is properly configured.
+
+    It doesn't test any component of the concordia project.
+    """
     def setUp(self):
-        print("In setup")
+        """
+        setUp is called before the execution of each test below
+        :return:
+        """
         pass
 
     def test_addition(self):
@@ -14,8 +23,6 @@ class ViewTest1(TestCase):
 
         # Act
         sum = x + y
-
-        print("Sum", sum)
 
         # Assert
         self.assertEqual(sum, 3)
@@ -28,8 +35,6 @@ class ViewTest1(TestCase):
         # Act
         sum = x + y
 
-        print("Sum", sum)
-
         # Assert
         self.assertEqual(sum, 6)
 
@@ -41,8 +46,6 @@ class ViewTest1(TestCase):
 
         # Act
         sum = x + y
-
-        print("Sum", sum)
 
         # Assert
         self.assertEqual(sum, 7)
