@@ -36,7 +36,9 @@ else:
 sys.path.append(PROJECT_DIR)
 AUTH_PASSWORD_VALIDATORS = []
 EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
-EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'emails')
+# EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'emails')
+EMAIL_HOST = 'localhost'
+EMAIL_PORT = 25
 LANGUAGE_CODE = 'en-us'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
@@ -109,6 +111,7 @@ TEMPLATES = [{
             'django.template.context_processors.request',
             'django.contrib.auth.context_processors.auth',
             'django.contrib.messages.context_processors.messages',
+            'django.template.context_processors.media',
         ],
     },
 }]
@@ -162,7 +165,7 @@ LOGGING = {
             'filename': '{}/logs/celery.log'.format(BASE_DIR),
             'formatter': 'long',
             'maxBytes': 1024 * 1024 * 100,  # 100 mb
-         }
+        }
     },
     'loggers': {
         'django': {
