@@ -39,20 +39,6 @@ def check(ctx):
     '''
     ctx.run('pycodestyle transcribr/transcribr concordia')
 
-
-@task
-def dumpenv(ctx):
-    '''
-    Dump an INI template file of all decoupled config settings with defaults
-    '''
-    setup_django()
-    from importer.importer.models import Importer
-    from config import config
-    Importer()
-    config.dumps()
-    ctx.run('cat {}'.format('env.ini_template'), pty=True)
-
-
 @task
 def docs(ctx,):
     '''
