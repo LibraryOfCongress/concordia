@@ -31,3 +31,5 @@ profile_pics/
 vendor/
 mss*
 *.swp
+config-optional-override.json
+env/
