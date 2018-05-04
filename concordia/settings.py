@@ -1,22 +1,22 @@
+# TODO: use correct copyright header
 import os
 import sys
-from config import config
 
+# from . import utils
+# utils.import_Config()
 
+# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(PROJECT_DIR)
 
-sys.path.append(PROJECT_DIR)
-ALLOWED_HOSTS = ['*']
-AUTH_PASSWORD_VALIDATORS = []
-DEBUG = True
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-#EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'emails')
-# Host for sending e-mail.
-EMAIL_HOST = 'localhost'
+sys.path.append(BASE_DIR)
 
-# Port for sending e-mail.
-EMAIL_PORT = 25
+sys.path.append(os.path.join(BASE_DIR, 'config'))
+
+from config import Config
+
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = Config.Get('django_secret_key')
 
 # Optional SMTP authentication information for EMAIL_HOST.
 EMAIL_HOST_USER = ''
@@ -24,11 +24,25 @@ EMAIL_HOST_PASSWORD = ''
 EMAIL_USE_TLS = False
 DEFAULT_FROM_EMAIL="no-reply@loc.gov"
 
+ALLOWED_HOSTS = ['*'] # TODO: place this value in config.json
+
+if Config.mode == "production":
+    DEBUG = False
+    CSRF_COOKIE_SECURE = True
+else:
+    DEBUG = True
+    CSRF_COOKIE_SECURE = False
+
+sys.path.append(PROJECT_DIR)
+AUTH_PASSWORD_VALIDATORS = []
+EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
+# EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'emails')
+EMAIL_HOST = 'localhost'
+EMAIL_PORT = 25
 LANGUAGE_CODE = 'en-us'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 ROOT_URLCONF = 'concordia.urls'
-SECRET_KEY = config('DJANGO', 'SECRET_KEY', 'super-secret-key')
 STATIC_ROOT = 'static'
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [os.path.join(PROJECT_DIR, 'static'),
@@ -41,20 +55,21 @@ USE_TZ = True
 WSGI_APPLICATION = 'concordia.wsgi.application'
 
 ADMIN_SITE = {
-    'site_header': config('DJANGO', 'ADMIN_SITE_HEADER', 'Concordia Admin'),
-    'site_title': config('DJANGO', 'ADMIN_SITE_TITLE', 'Concordia'),
+    'site_header': Config.Get('ADMIN_SITE_HEADER'),
+    'site_title': Config.Get('ADMIN_SITE_TITLE'),
 }
 
 DATABASES = {
     'default': {
-        'ENGINE': config('DJANGO', 'DB_ENGINE', 'django.db.backends.postgresql_psycopg2'),
-        'NAME': config('DJANGO', 'DB_NAME', 'concordia'),
-        'USER': config('DJANGO', 'DB_USER', 'concordia'),
-        'PASSWORD': config('DJANGO', 'DB_PASSWORD', 'concordia'),
-        'HOST': config('DJANGO', 'DB_HOST', 'db'),
-        'PORT': config('DJANGO', 'DB_PORT', 5432),
+        'ENGINE':   Config.Get("database")["adapter"],
+        'NAME':     Config.Get("database")["name"],
+        'USER':     Config.Get("database")["username"],
+        'PASSWORD': Config.Get("database")["password"],
+        'HOST':     Config.Get("database")["host"],
+        'PORT':     Config.Get("database")["port"]
     }
 }
+
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -103,8 +118,8 @@ TEMPLATES = [{
 
 
 # Celery settings
-CELERY_BROKER_URL = config('CELERY', 'BROKER_URL', 'pyamqp://rabbit@rabbit//')
-CELERY_RESULT_BACKEND = config('CELERY', 'RESULT_BACKEND', 'rpc://')
+CELERY_BROKER_URL = Config.Get('celery')['BROKER_URL']
+CELERY_RESULT_BACKEND = Config.Get('celery')['RESULT_BACKEND']
 
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
@@ -161,7 +176,7 @@ LOGGING = {
         'celery': {
             'handlers': ['celery', 'stream'],
             'level': 'DEBUG',
-        },
+        }
     },
 
 }
@@ -173,20 +188,13 @@ LOGGING = {
 
 ACCOUNT_ACTIVATION_DAYS = 7
 
-REGISTRATION_URLS = config(
-    'DJANGO',
-    'REGISTRATION_URLS',
-    'registration.backends.simple.urls'
-)
-
-
 REST_FRAMEWORK = {
-    'PAGE_SIZE': config('DJRF', 'PAGE_SIZE', 10, int),
+    'PAGE_SIZE': Config.Get("djrf")["PAGE_SIZE"],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
 }
 
 TRANSCRIBR = dict(
-     netloc=config('TRANSCRIBR', 'NETLOC', 'http://0.0.0.0:8000'),
+     netloc=Config.Get('transcribr')['NETLOC'],
 )
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
