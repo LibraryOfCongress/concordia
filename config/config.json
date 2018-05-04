@@ -59,7 +59,7 @@
 
     },
     "transcribr" : {
-      "NETLOC"             : "http://0.0.0.0:80"
+      "NETLOC"             : "http://0.0.0.0:8000"
     },
     "djrf"       : {
       "PAGE_SIZE"          : 10
@@ -96,7 +96,7 @@
 
     },
     "transcribr" : {
-      "NETLOC"             : "http://0.0.0.0:80"
+      "NETLOC"             : "http://0.0.0.0:8000"
     },
     "djrf"       : {
       "PAGE_SIZE"          : 10
