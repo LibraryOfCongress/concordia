@@ -30,6 +30,16 @@ tx_urlpatterns = ([
         name='collection'
     ),
     re_path(
+        r'export/([^/]+)/$',
+        views.ExportCollectionView.as_view(),
+        name='export collection'
+    ),
+    re_path(
+        r'delete/([^/]+)/$',
+        views.DeleteCollectionView.as_view(),
+        name='delete collection'
+    ),
+    re_path(
         r'^([^/]+)/asset/([^/]+)/$',
         views.TranscribrAssetView.as_view(),
         name='asset'
