@@ -8,8 +8,8 @@ from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import render_to_response,render, redirect
 from registration.backends.simple.views import RegistrationView
-from .forms import ConcordiaUserForm, ConcordiaUserEditForm
-from .models import UserProfile
+from concordia.forms import ConcordiaUserForm, ConcordiaUserEditForm
+from concordia.models import UserProfile
 from django.core.paginator import Paginator
 from django.views.decorators.csrf import csrf_exempt
 from django.urls import reverse
@@ -25,7 +25,7 @@ sys.path.append(BASE_DIR)
 sys.path.append(os.path.join(BASE_DIR, 'config'))
 from config import Config
 
-# test for existance of transcribr or transcribr.transcribr
+# test for existence of transcribr or transcribr.transcribr
 try:
     from transcribr.models import Asset, Collection, Transcription, UserAssetTagCollection, Tag
     transcribr_model_found = True
@@ -45,7 +45,7 @@ ASSETS_PER_PAGE = 10
 
 def transcribr_api(relative_path):
     abs_path = '{}/api/v1/{}'.format(
-        settings.TRANSCRIBR['netloc'],
+        Config.Get('transcribr')['NETLOC'],
         relative_path
     )
     logger.debug('Calling API path {}'.format(abs_path))
@@ -63,7 +63,7 @@ class AccountProfileView(LoginRequiredMixin, TemplateView):
 
 
     template_name = 'profile.html'
-    
+
     def post(self, *args, **kwargs):
         context = self.get_context_data()
         instance = get_object_or_404(User, pk=self.request.user.id)
@@ -96,6 +96,7 @@ class AccountProfileView(LoginRequiredMixin, TemplateView):
             
             form = ConcordiaUserEditForm(initial=data)
         ))
+
 
 class TranscribrView(TemplateView):
     template_name = 'transcriptions/home.html'
