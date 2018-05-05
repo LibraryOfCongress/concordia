@@ -7,6 +7,7 @@ from .models import *
 class CollectionAdmin(admin.ModelAdmin):
     # todo: replace description & metadata with truncated values
     list_display = (
+        'id',
         'title',
         'slug',
         'description',
@@ -15,6 +16,7 @@ class CollectionAdmin(admin.ModelAdmin):
         'metadata',
         'status',
     )
+    list_display_links = ('id','title','slug')
 
 
 @admin.register(Asset)
