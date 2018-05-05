@@ -5,7 +5,16 @@ from .models import *
 
 @admin.register(Collection)
 class CollectionAdmin(admin.ModelAdmin):
-    pass
+    # todo: replace description & metadata with truncated values
+    list_display = (
+        'title',
+        'slug',
+        'description',
+        'start_date',
+        'end_date',
+        'metadata',
+        'status',
+    )
 
 
 @admin.register(Asset)
