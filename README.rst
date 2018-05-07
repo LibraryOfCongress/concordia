@@ -2,6 +2,12 @@
 concordia
 =========
 
+=========
+Notes:
+=========
+Basic requirements include Python 3.6.4
+and docker
+
 
 Basic Setup and Deploy
 ======================
