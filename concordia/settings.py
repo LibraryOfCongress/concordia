@@ -81,12 +81,16 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'rest_framework',
-    'transcribr',
     'importer',
     'concordia',
     'faq',
     'concordia.experiments.wireframes',
 ]
+
+if Config.mode == "production":
+    INSTALLED_APPS += ['transcribr']
+else:
+    INSTALLED_APPS += ['transcribr.transcribr']
 
 if DEBUG:
     INSTALLED_APPS += ['django_extensions', ]
