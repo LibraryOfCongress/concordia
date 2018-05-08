@@ -219,8 +219,8 @@ class CollectionView(TemplateView):
             pass
 
         if result2 and not result2.state == 'PENDING':
-          base_dir = config('IMPORTER', 'IMAGES_FOLDER')
-          base_dir = settings.BASE_DIR if not base_dir else base_dir
+          #base_dir = Config('IMPORTER', 'IMAGES_FOLDER')
+          base_dir = settings.BASE_DIR #if not base_dir else base_dir
           print ("base_dir", base_dir)
           collection_path  = settings.MEDIA_ROOT+"/"+name.replace(' ', '-')
           os.system('rm -rf {0}'.format(collection_path))
