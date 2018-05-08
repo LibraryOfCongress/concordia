@@ -33,6 +33,15 @@
 </div>
 <div class="container" id='container' >
   <form method="POST" onsubmit="return handle_form_submission()">
+  {% if error %}
+    <div class="alert alert-danger alert-dismissible fade show" id="close" role="alert">
+      <button type="button" class="close" onclick="hide_box()" data-dismiss="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+      <strong>Error!</strong> Please provide valid URL, Unable to download images from the given URL.
+    </div>
+  {% endif %}
+
   {% csrf_token %}
   <div class="form-group">
     <label for="name">Name</label>
@@ -51,6 +60,9 @@ function handle_form_submission()
 {
   document.getElementById("loader").style.display = "block";
   document.getElementById("container").style.display = "none";  
+}
+function hide_box(){
+   document.getElementById("close").style.display = "none";
 }
 </script>
 {% endblock main_content %}

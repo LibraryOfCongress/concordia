@@ -207,41 +207,43 @@ class CollectionView(TemplateView):
         context = self.get_context_data()
         name = self.request.POST.get('name')
         url = self.request.POST.get('url')
-        c = Collection.objects.create(title=name, slug=name.replace(" ","-"), description=name)
-
-        result = download_async_collection.delay(url)
-        result.ready()
-        result.get()
-        result2 = check_completeness.delay()
+        result2 = None
         try:
+          result = download_async_collection.delay(url)
+          result.ready()
+          result.get()
+          result2 = check_completeness.delay()
           result2.ready()
           result2.get()
         except Exception as e:
             pass
 
-        if not result2.state == 'PENDING':
-          base_dir = Config.Get("importer")["BASE_URL"]
-          base_dir = settings.BASE_DIR if base_dir == "" else base_dir
+        if result2 and not result2.state == 'PENDING':
+          base_dir = config('IMPORTER', 'IMAGES_FOLDER')
+          base_dir = settings.BASE_DIR if not base_dir else base_dir
           print ("base_dir", base_dir)
           collection_path  = settings.MEDIA_ROOT+"/"+name.replace(' ', '-')
+          os.system('rm -rf {0}'.format(collection_path))
           os.makedirs(collection_path)
           cmd = 'mv {0}/mss* {1}'.format(base_dir, collection_path)
-          os.system(cmd)
-          count = 0
-          for root, dirs, files in os.walk(collection_path):
-            for filename in files:
-              filename = os.path.join(root, filename)
-              if "mss1197300" in filename:
-                count +=1
-                title = '{0} asset {1}'.format(name, count)
-                media_url = os.path.join(root, filename).replace(settings.MEDIA_ROOT, '')
-                Asset.objects.create(title=title,
-                                     slug=title.replace(" ", "-"),
-                                     description="{0} description".format(title),
-	                             media_url=media_url,
-                                     media_type = 'IMG',
-                                     collection=c)
-        return redirect('/transcribe/'+name.replace(" ","-"))
+          if os.WEXITSTATUS(os.system(cmd)) == 0:
+            c = Collection.objects.create(title=name, slug=name.replace(" ","-"), description=name)
+            count = 0
+            for root, dirs, files in os.walk(collection_path):
+              for filename in files:
+                filename = os.path.join(root, filename)
+                if "mss" in filename:
+                  count +=1
+                  title = '{0} asset {1}'.format(name, count)
+                  media_url = os.path.join(root, filename).replace(settings.MEDIA_ROOT, '')
+                  Asset.objects.create(title=title,
+                                       slug=title.replace(" ", "-"),
+                                       description="{0} description".format(title),
+                                       media_url=media_url,
+                                       media_type = 'IMG',
+                                       collection=c)
+            return redirect('/transcribe/'+name.replace(" ","-"))
+        return render(self.request, self.template_name, {'error': 'yes'})
 
 class ExportCollectionView(TemplateView):
     template_name = 'transcriptions/collection.html'
@@ -276,5 +278,6 @@ class DeleteCollectionView(TemplateView):
         collection = Collection.objects.get(slug=self.args[0])
         asset_list = collection.asset_set.all().delete()
         collection.delete()
+        os.system('rm -rf {0}'.format(settings.MEDIA_ROOT+"/"+ collection.slug))
         return redirect('/transcribe/')
 
