@@ -10,10 +10,13 @@
                     <h5 class="card-title">{{ c.title }}</h5>
                     <p class="card-text">{{ c.description }}</p>
                     <p class="text-center">
+                        {% if request.user.is_staff %}
+                          <a href="{% url 'transcriptions:delete collection' c.slug %}" class="btn btn-danger">Delete</a>
+                        {% endif %}
                         <a href="{% url 'transcriptions:collection' c.slug %}"
                             class="btn btn-primary">View</a>
                         {% if request.user.is_staff %}
-                          <a href="#" class="btn btn-success">Export</a>
+                          <a href="{% url 'transcriptions:export collection' c.slug %}" class="btn btn-success">Export</a>
                         {% endif %}
                     </p>
                 </div>

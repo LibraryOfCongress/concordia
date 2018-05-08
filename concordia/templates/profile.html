@@ -123,8 +123,11 @@
     e.preventDefault()
     if($(".password-section").css('display') == 'none'){
       $(".password-section").show();
+      $(this).hide();
+      $('.edit .d-none').removeClass('d-none')
     } else {
       $(".password-section").hide();
+      $('.edit .d-none').removeClass('d-none')
     }
 })
 
