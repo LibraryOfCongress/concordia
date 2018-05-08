@@ -222,7 +222,6 @@ class CollectionView(TemplateView):
         if result2 and not result2.state == 'PENDING':
 
             base_dir = settings.BASE_DIR
-            print ("base_dir", base_dir)
             collection_path  = settings.MEDIA_ROOT+"/"+name.replace(' ', '-')
             os.system('rm -rf {0}'.format(collection_path))
             os.makedirs(collection_path)
@@ -248,6 +247,10 @@ class CollectionView(TemplateView):
 
 
 class ExportCollectionView(TemplateView):
+    """
+    Exports the transcription and tags to csv file
+
+    """
     template_name = 'transcriptions/collection.html'
 
     def get(self, request, *args, **kwargs):
@@ -276,6 +279,11 @@ class ExportCollectionView(TemplateView):
 
 
 class DeleteCollectionView(TemplateView):
+
+    """
+    deletes the collection
+
+    """
 
     def get(self, request, *args, **kwargs):
         collection = Collection.objects.get(slug=self.args[0])
