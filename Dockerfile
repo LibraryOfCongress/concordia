@@ -10,9 +10,9 @@ RUN apt-get update && apt-get install -y \
     libtiff-dev libjpeg-dev libopenjp2-7-dev libwebp-dev zlib1g-dev \
     graphviz
 
-COPY requirements /requirements
+COPY requirements.txt ./
 COPY vendor /vendor
-RUN pip3 install -r /requirements/devel.pip
+RUN pip3 install -r requirements.txt
 
 WORKDIR /app
 COPY . .
