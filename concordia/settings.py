@@ -87,7 +87,7 @@ INSTALLED_APPS = [
     'concordia.experiments.wireframes',
 ]
 
-if Config.mode == "production":
+if Config.mode == 'production':
     INSTALLED_APPS += ['transcribr']
 else:
     INSTALLED_APPS += ['transcribr.transcribr']
