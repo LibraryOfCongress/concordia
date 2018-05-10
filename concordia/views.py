@@ -42,7 +42,7 @@ if not transcribr_model_found:
 
 logger = getLogger(__name__)
 
-ASSETS_PER_PAGE = 10
+ASSETS_PER_PAGE = 36
 
 
 def transcribr_api(relative_path):
@@ -116,7 +116,7 @@ class TranscribrCollectionView(TemplateView):
 
     def get_context_data(self, **kws):
         collection = Collection.objects.get(slug=self.args[0])
-        asset_list = collection.asset_set.all().order_by('id')
+        asset_list = collection.asset_set.all().order_by('title')
         paginator = Paginator(asset_list, ASSETS_PER_PAGE)
 
         if not self.request.GET.get('page'):
@@ -222,17 +222,18 @@ class CollectionView(TemplateView):
         if result2 and not result2.state == 'PENDING':
 
             base_dir = settings.BASE_DIR
-            collection_path  = settings.MEDIA_ROOT+"/"+name.replace(' ', '-')
+            collection_path = settings.MEDIA_ROOT+"/transcribr/"+name.replace(' ', '-')
             os.system('rm -rf {0}'.format(collection_path))
             os.makedirs(collection_path)
-            cmd = 'mv {0}/mss* {1}'.format(base_dir, collection_path)
+            cmd = 'cp -r {0}/mss* {1}'.format('/concordia_images', collection_path)
             if os.WEXITSTATUS(os.system(cmd)) == 0:
+                os.system('rm -rf {0}'.format('/concordia_images/mss*'))
                 c = Collection.objects.create(title=name, slug=name.replace(" ","-"), description=name)
                 count = 0
                 for root, dirs, files in os.walk(collection_path):
                     for filename in files:
                         filename = os.path.join(root, filename)
-                        if "mss" in filename:
+                        if True:
                             count += 1
                             title = '{0} asset {1}'.format(name, count)
                             media_url = os.path.join(root, filename).replace(settings.MEDIA_ROOT, '')
@@ -255,7 +256,7 @@ class ExportCollectionView(TemplateView):
 
     def get(self, request, *args, **kwargs):
         collection = Collection.objects.get(slug=self.args[0])
-        asset_list = collection.asset_set.all().order_by('id')
+        asset_list = collection.asset_set.all().order_by('title')
         # Create the HttpResponse object with the appropriate CSV header.
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="{0}.csv"'.format(collection.slug)
@@ -289,6 +290,6 @@ class DeleteCollectionView(TemplateView):
         collection = Collection.objects.get(slug=self.args[0])
         collection.asset_set.all().delete()
         collection.delete()
-        os.system('rm -rf {0}'.format(settings.MEDIA_ROOT+"/" + collection.slug))
+        os.system('rm -rf {0}'.format(settings.MEDIA_ROOT+"/transcribr/"+ collection.slug))
         return redirect('/transcribe/')
 
