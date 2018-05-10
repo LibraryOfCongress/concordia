@@ -249,5 +249,116 @@ class ViewTest_Concordia(TestCase):
         # Act
         response = self.client.get('/transcribe/')
 
-        print(response)
+        # Assert
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, template_name='transcriptions/home.html')
+
+    def test_TranscribrCollectionView_get(self):
+        """
+        Test GET on route /transcribe/<slug-value> (collection)
+        :return:
+        """
+
+        # Arrange
+
+        # add an item to Collection
+        self.collection = Collection(title='TextCollection',
+                                     slug='test-slug2',
+                                     description='Collection Description',
+                                     metadata={"key":"val1"},
+                                     status=Status.PCT_0)
+        self.collection.save()
+
+        # Act
+        response = self.client.get('/transcribe/test-slug2/')
+
+        # Assert
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, template_name='transcriptions/collection.html')
+
+    def test_TranscribrCollectionView_get_page2(self):
+        """
+        Test GET on route /transcribe/<slug-value>/ (collection) on page 2
+        :return:
+        """
+
+        # Arrange
+
+        # add an item to Collection
+        self.collection = Collection(title='TextCollection',
+                                     slug='test-slug2',
+                                     description='Collection Description',
+                                     metadata={"key":"val1"},
+                                     status=Status.PCT_0)
+        self.collection.save()
+
+        # Act
+        response = self.client.get('/transcribe/test-slug2/', {'page': 2})
+
+        # Assert
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, template_name='transcriptions/collection.html')
+
+    def test_ExportCollectionView_get(self):
+        """
+        Test GET route /transcribe/export/<slug-value>/ (collection)
+        :return:
+        """
+
+        # Arrange
+        self.asset = Asset(title='TestAsset',
+                           slug='test-slug2',
+                           description='Asset Description',
+                           media_url='http://www.foo.com/1/2/3',
+                           media_type=MediaType.IMAGE,
+                           collection=self.collection,
+                           metadata={"key": "val2"},
+                           status=Status.PCT_0)
+        self.asset.save()
+
+        # Act
+        response = self.client.get('/transcribe/export/test-slug2/')
+
+        # Assert
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(str(response.content),
+                         "b'Collection,Title,Description,MediaUrl,Transcription,Tags\\r\\nTextCollection,TestAsset,Asset Description,http://www.foo.com/1/2/3,,\\r\\n\'")
+
+    def test_DeleteCollection_get(self):
+        """
+        Test GET route /transcribe/delete/<slug-value>/ (collection)
+        :return:
+        """
+
+        # Arrange
+        # add an item to Collection
+        self.collection = Collection(title='TextCollection',
+                                     slug='test-slug2',
+                                     description='Collection Description',
+                                     metadata={"key":"val1"},
+                                     status=Status.PCT_0)
+        self.collection.save()
+
+        self.asset = Asset(title='TestAsset',
+                           slug='test-slug2',
+                           description='Asset Description',
+                           media_url='http://www.foo.com/1/2/3',
+                           media_type=MediaType.IMAGE,
+                           collection=self.collection,
+                           metadata={"key": "val2"},
+                           status=Status.PCT_0)
+        self.asset.save()
+
+        # Act
+        response = self.client.get('/transcribe/delete/test-slug2')
+
+        # Assert
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, '/transcribe/')
+
+        # verify the collection is not in db
+        collection2 = Collection.objects.all()
+        self.assertEqual(len(collection2), 0)
+
+
 
