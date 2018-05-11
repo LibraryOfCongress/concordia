@@ -6,35 +6,61 @@
     <title>{% block title %}Untitled{% endblock title %}</title>
     <link rel="shortcut icon" href="{% static "img/favicon.ico" %}">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4" crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,600,700|Roboto+Slab" rel="stylesheet">
     <link rel="stylesheet" href="{% static "css/base.css" %}">
     {% block head_content %}{% endblock head_content %}
 </head>
 <body>
-    <header class="container">
-        <nav class="font-weight-light">
-            <img style="width:96px" src="{% static "img/loc.svg" %}">
-            <a href="/">
-                <strong>Concordia</strong>
-            </a> |
-            <a href="{% url 'transcriptions:transcribe' %}">Transcribe</a> |
-            {% if user.is_authenticated %}
-            <a href="{% url 'user-profile' %}">{{ user }}</a> &bull;
-            {% if user.is_superuser %}
-            <a href="{% url 'admin:index' %}">Admin</a> &bull;
-            {% endif %}
-            <a href="{% url 'logout' %}">Logout</a>
-            {% else %}
-            <a href="{% url 'login' %}">Login</a> |
-            <a href="{% url 'registration_register' %}">Register</a>
-            {% endif %}
-        </nav>
+    <header>
+      <nav class="navbar navbar-expand-lg flex-column flex-md-row navbar-offwhite bg-offwhite">
+        <div class="d-flex navbar-brand">
+          <a class="mr-1 my-auto" href="#"><img src="{% static "img/loc.svg" %}"></a>
+          <span class="vl mx-2 my-auto"></span>
+          <a class="align-middle" href="#"><h1>citizen historian</h1></a>
+        </div>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExample05" aria-controls="navbarsExample05" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarsExample05">
+        <ul class="navbar-nav ml-auto">
+          <li class="nav-item active">
+            <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'transcriptions:transcribe' %}">Transcribe</a>
+          </li>
+          {% if user.is_authenticated %}
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="http://example.com" id="dropdown05" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Account</a>
+            <div class="dropdown-menu" aria-labelledby="dropdown05">
+              <a class="dropdown-item" href="{% url 'user-profile' %}">{{ user }} profile</a>
+              {% if user.is_superuser %}
+              <a class="nav-link" href="{% url 'admin:index' %}">Admin pages</a>
+              <a class="dropdown-item" href="{% url 'logout' %}">Logout</a>
+            </div>
+          </li>
+          {% endif %}
+          {% else %}
+          <li class="nav-item">
+            <a class="nav-link " href="{% url 'login' %}">Login</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link " href="{% url 'registration_register' %}">Register</a>
+          </li>
+          {% endif %}
+        </ul>
+        <!-- hidden search form in case we need it later -->
+        <!-- <form class="form-inline my-2 my-md-0">
+          <input class="form-control" type="text" placeholder="Search">
+        </form> -->
+      </div>
+    </nav>
     </header>
-    <hr>
-    <main>
+    <main class="bg-main">
         {% block main_content %}{% endblock main_content %}
     </main>
-    <hr>
-    <footer class="container text-center font-weight-light">
+    <footer class="container text-center font-weight-light bg-footer">
         <a href="{% url 'about' %}">About</a> &middot;
         <a href="{% url 'faq' %}">FAQs</a> &middot;
         <a href="{% url 'legal' %}">Legal</a> &middot;
