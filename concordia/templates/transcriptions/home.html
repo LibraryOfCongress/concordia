@@ -2,8 +2,9 @@
 {% block main_content %} {% load staticfiles %}
 <div class="container">
     <h2>Collections</h2>
+    <div class="row">
     {% if response.results %}
-        <div class="row"> {% for c in response.results %}
+        {% for c in response.results %}
         <div class="col-3">
             <div class="card mb-4">
                 <div class="card-body">
@@ -22,7 +23,8 @@
                 </div>
             </div>
         </div>
-    {% endfor %}
+        {% endfor %}
+    {% endif %}
     {% if request.user.is_staff %}
         <div class="col-3">
             <div class="card mb-4" style="height:169px">
@@ -35,6 +37,5 @@
         </div>
     {% endif %}
     </div>
-    {% endif %}
 </div>
 {% endblock main_content %}

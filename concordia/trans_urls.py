@@ -3,7 +3,7 @@ from rest_framework import routers
 from rest_framework.schemas import get_schema_view
 from rest_framework.documentation import include_docs_urls
 
-from . import views
+from . import trans_views as views
 
 api_title = 'Transcribr API'
 api_description = 'A Web API for transcribing and tagging LoC collections.'

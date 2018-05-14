@@ -26,19 +26,7 @@ sys.path.append(BASE_DIR)
 sys.path.append(os.path.join(BASE_DIR, 'config'))
 from config import Config
 
-# test for existence of transcribr or transcribr.transcribr
-try:
-    from transcribr.models import Asset, Collection, Transcription, UserAssetTagCollection, Tag
-    transcribr_model_found = True
-except Exception as e:
-    transcribr_model_found = False
-
-if not transcribr_model_found:
-    try:
-        from transcribr.transcribr.models import Asset, Collection, Transcription, UserAssetTagCollection, Tag
-    except Exception as e:
-        pass
-
+from .models import Asset, Collection, Transcription, UserAssetTagCollection, Tag
 
 logger = getLogger(__name__)
 
@@ -116,7 +104,7 @@ class TranscribrCollectionView(TemplateView):
 
     def get_context_data(self, **kws):
         collection = Collection.objects.get(slug=self.args[0])
-        asset_list = collection.asset_set.all().order_by('title')
+        asset_list = collection.asset_set.all().order_by('title', 'sequence')
         paginator = Paginator(asset_list, ASSETS_PER_PAGE)
 
         if not self.request.GET.get('page'):
@@ -232,17 +220,17 @@ class CollectionView(TemplateView):
                 count = 0
                 for root, dirs, files in os.walk(collection_path):
                     for filename in files:
-                        filename = os.path.join(root, filename)
-                        if True:
-                            count += 1
-                            title = '{0} asset {1}'.format(name, count)
-                            media_url = os.path.join(root, filename).replace(settings.MEDIA_ROOT, '')
-                            Asset.objects.create(title=title,
-                                                 slug=title.replace(" ", "-"),
-                                                 description="{0} description".format(title),
-                                                 media_url=media_url,
-                                                 media_type='IMG',
-                                                 collection=c)
+                        file_path = os.path.join(root, filename)
+                        title = file_path.replace(collection_path+'/', '').split('/')[0]
+                        media_url = file_path.replace(settings.MEDIA_ROOT, '')
+                        sequence = filename.replace('.jpg','')
+                        Asset.objects.create(title=title,
+                                             slug=title+sequence,
+                                             description="{0} description".format(title),
+                                             media_url=media_url,
+                                             media_type='IMG',
+                                             sequence=int(sequence),
+                                             collection=c)
                 return redirect('/transcribe/'+name.replace(" ","-"))
             return render(self.request, self.template_name, {'error': 'yes'})
 
@@ -256,7 +244,7 @@ class ExportCollectionView(TemplateView):
 
     def get(self, request, *args, **kwargs):
         collection = Collection.objects.get(slug=self.args[0])
-        asset_list = collection.asset_set.all().order_by('title')
+        asset_list = collection.asset_set.all().order_by('title', 'sequence')
         # Create the HttpResponse object with the appropriate CSV header.
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="{0}.csv"'.format(collection.slug)
