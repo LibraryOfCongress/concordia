@@ -13,6 +13,7 @@ celery
 Pillow
 invoke
 django_extensions
+django-machina
 pytest
 pytest-cov
 pytest-django
