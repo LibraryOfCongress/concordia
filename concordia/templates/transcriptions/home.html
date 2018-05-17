@@ -20,6 +20,11 @@
                           <a href="{% url 'transcriptions:export collection' c.slug %}" class="btn btn-success">Export</a>
                         {% endif %}
                     </p>
+                    <p>
+                        {% if request.user.is_staff %}
+                          <a href="{% url 'transcriptions:report collection' c.slug %}">Report</a>
+                        {% endif %}
+                    </p>
                 </div>
             </div>
         </div>

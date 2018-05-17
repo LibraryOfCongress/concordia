@@ -16,6 +16,8 @@ from django.core.paginator import Paginator
 from django.urls import reverse
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
+from django.db.models import Q
+from django.db.models import Count, Sum
 from importer.importer.tasks import download_async_collection, check_completeness
 
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -151,6 +153,8 @@ class TranscribrAssetView(TemplateView):
             Transcription.objects.update_or_create(asset=asset,
                                                    user_id=self.request.user.id,
                                                    defaults={'text': tx, 'status': status})
+            asset.status = status
+            asset.save()
         if 'tags' in self.request.POST:
             tags = self.request.POST.get('tags').split(',')
             utags, status = UserAssetTagCollection.objects.get_or_create(asset=asset, user_id=self.request.user.id)
@@ -281,3 +285,28 @@ class DeleteCollectionView(TemplateView):
         os.system('rm -rf {0}'.format(settings.MEDIA_ROOT+"/transcribr/"+ collection.slug))
         return redirect('/transcribe/')
 
+class ReportCollectionView(TemplateView):
+
+    """
+    Report the collection
+
+    """
+    template_name = 'transcriptions/report.html'
+    def get(self, request, *args, **kwargs):
+        collection = Collection.objects.get(slug=self.args[0])
+        collection.asset_set.all()
+        projects = collection.asset_set.values('title').annotate(total=Count('title'),
+                                                                 in_progress=Count('status', filter=Q(status__in = ['25', '75', '50'])),
+                                                                 complete=Count('status', filter=Q(status='100')),
+                                                                 tags=Count('userassettagcollection__tags', distinct=True),
+                                                                 contributors=Count('transcription__user_id', distinct=True),
+                                                                 not_started=Count('status', filter=Q(status='0'))).order_by('title')
+        paginator = Paginator(projects, ASSETS_PER_PAGE)
+
+        if not self.request.GET.get('page'):
+            page = 1
+        else:
+            page = self.request.GET.get('page')
+
+        projects = paginator.get_page(page)
+        return render(self.request, self.template_name, locals())

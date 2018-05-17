@@ -225,11 +225,5 @@
     {% if transcription.status %}
       $("#status_id").val({{transcription.status}});
     {% endif %}
-    {% if tags %}
-    $("#tags").val("
-    {%for tag in tags %}
-    {{tag}},
-    {% endfor %}
-    {% endif %}".replace(" "));
     </script>
 {% endblock main_content %}
