@@ -30,7 +30,7 @@
     },
     "importer"   : {
       "BASE_URL"       :   "",
-      "IMAGES_FOLDER"  :   "",
+      "IMAGES_FOLDER"  :   "/app/",
       "ITEM_COUNT"     :   "",
       "S3_BUCKET_NAME" :   ""
     }
@@ -104,7 +104,7 @@
     },
     "importer"   : {
       "BASE_URL"       :   "",
-      "IMAGES_FOLDER"  :   "",
+      "IMAGES_FOLDER"  :   "/app/",
       "ITEM_COUNT"     :   "",
       "S3_BUCKET_NAME" :   ""
     }

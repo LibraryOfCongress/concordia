@@ -9,6 +9,8 @@ from django.conf.urls.static import static
 from django.views.generic import TemplateView
 from django.contrib.auth import views as auth_views
 
+from machina.app import board
+
 from . import views
 from faq.views import FAQView
 
@@ -81,7 +83,10 @@ urlpatterns = [
     re_path(r'^faq/$', FAQView.as_view(), name='faq'),
     re_path(r'^legal/$', TemplateView.as_view(template_name='legal.html'), name='legal'),
 
-    re_path(r'^admin/', admin.site.urls)
+    re_path(r'^admin/', admin.site.urls),
+
+    # Apps
+    re_path(r'^forum/', include(board.urls))
 ]
 
 urlpatterns += [
