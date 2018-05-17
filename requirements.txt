@@ -14,6 +14,8 @@ Pillow
 invoke
 django_extensions
 django-machina
+django-haystack
+Whoosh
 pytest
 pytest-cov
 pytest-django
