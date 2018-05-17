@@ -2,8 +2,9 @@
 import os
 import sys
 
-# from . import utils
-# utils.import_Config()
+from machina import get_apps as get_machina_apps
+from machina import MACHINA_MAIN_TEMPLATE_DIR
+from machina import MACHINA_MAIN_STATIC_DIR
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -46,7 +47,7 @@ LOGOUT_REDIRECT_URL = '/'
 ROOT_URLCONF = 'concordia.urls'
 STATIC_ROOT = 'static'
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [os.path.join(PROJECT_DIR, 'static'),]
+STATICFILES_DIRS = [os.path.join(PROJECT_DIR, 'static'), MACHINA_MAIN_STATIC_DIR]
 TEMPLATE_DEBUG = False
 TIME_ZONE = 'UTC'
 USE_I18N = True
@@ -84,7 +85,11 @@ INSTALLED_APPS = [
     'concordia',
     'faq',
     'concordia.experiments.wireframes',
-]
+ # Machina related apps:
+    'mptt',
+    'haystack',
+    'widget_tweaks',
+] + get_machina_apps()
 
 if DEBUG:
     INSTALLED_APPS += ['django_extensions', ]
@@ -98,12 +103,14 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # Machina
+    'machina.apps.forum_permission.middleware.ForumPermissionMiddleware',
 ]
 
 TEMPLATES = [{
     'BACKEND': 'django.template.backends.django.DjangoTemplates',
-    'DIRS': [os.path.join(PROJECT_DIR, 'templates'), ],
-    'APP_DIRS': True,
+    'DIRS': [os.path.join(PROJECT_DIR, 'templates'), MACHINA_MAIN_TEMPLATE_DIR],
+#    'APP_DIRS': True,
     'OPTIONS': {
         'context_processors': [
             'django.template.context_processors.debug',
@@ -111,10 +118,32 @@ TEMPLATES = [{
             'django.contrib.auth.context_processors.auth',
             'django.contrib.messages.context_processors.messages',
             'django.template.context_processors.media',
+            # Machina
+            'machina.core.context_processors.metadata',
         ],
+            'loaders': [
+                'django.template.loaders.filesystem.Loader',
+                'django.template.loaders.app_directories.Loader',
+            ]
     },
 }]
 
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    },
+    'machina_attachments': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': '/tmp',
+    },
+}
+
+HAYSTACK_CONNECTIONS = {
+    'default': {
+        'ENGINE': 'haystack.backends.whoosh_backend.WhooshEngine',
+        'PATH': os.path.join(os.path.dirname(__file__), 'whoosh_index'),
+    },
+}
 
 # Celery settings
 CELERY_BROKER_URL = Config.Get('celery')['BROKER_URL']
