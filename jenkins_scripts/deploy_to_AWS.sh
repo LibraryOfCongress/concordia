@@ -17,13 +17,13 @@ expect "$ "
 
 sleep 10
 
-send -- "docker rm $(docker kill $(docker ps -aq))\r"
+send -- "/usr/bin/docker rm $(/usr/bin/docker kill $(/usr/bin/docker ps -aq))\r"
 expect "$ "
 
-send -- "docker rmi -f $(docker images -q)\r"
+send -- "/usr/bin/docker rmi -f $(/usr/bin/docker images -q)\r"
 expect "$ "
 
-send -- "docker container prune\r"
+send -- "/usr/bin/docker container prune\r"
 expect "$ "
 
 send -- "/usr/bin/sudo nohup docker-compose up &\n"
