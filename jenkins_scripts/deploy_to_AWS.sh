@@ -12,8 +12,6 @@ expect "$ "
 send -- "./AWS_deploy.sh\r"
 expect "$ "
 
-sleep 410
-
 send -- "/usr/bin/sudo /usr/bin/docker exec -it concordia_app_1 bash -c \"./migrate_and_user.sh && exit\"\r"
 expect "$ "
 
