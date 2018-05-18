@@ -46,7 +46,8 @@ LOGOUT_REDIRECT_URL = '/'
 ROOT_URLCONF = 'concordia.urls'
 STATIC_ROOT = 'static'
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [os.path.join(PROJECT_DIR, 'static'),]
+STATICFILES_DIRS = [os.path.join(PROJECT_DIR, 'static'),
+                    os.path.join('/'.join(PROJECT_DIR.split('/')[:-1]), 'transcribr/transcribr/static')]
 TEMPLATE_DEBUG = False
 TIME_ZONE = 'UTC'
 USE_I18N = True
@@ -86,8 +87,14 @@ INSTALLED_APPS = [
     'concordia.experiments.wireframes',
 ]
 
+# if Config.mode == "production":
+#     INSTALLED_APPS += ['transcribr']
+# else:
+#     INSTALLED_APPS += ['transcribr.transcribr']
+
 if DEBUG:
     INSTALLED_APPS += ['django_extensions', ]
+    INSTALLED_APPS += ['kombu.transport', ]
 
 
 MIDDLEWARE = [
@@ -117,7 +124,11 @@ TEMPLATES = [{
 
 
 # Celery settings
-CELERY_BROKER_URL = Config.Get('celery')['BROKER_URL']
+if Config.mode == "production":
+    CELERY_BROKER_URL = Config.Get('celery')['BROKER_URL']
+else:
+    CELERY_BROKER_URL = 'amqp://'
+
 CELERY_RESULT_BACKEND = Config.Get('celery')['RESULT_BACKEND']
 
 CELERY_ACCEPT_CONTENT = ['json']

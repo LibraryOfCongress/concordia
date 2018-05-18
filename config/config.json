@@ -30,7 +30,7 @@
     },
     "importer"   : {
       "BASE_URL"       :   "",
-      "IMAGES_FOLDER"  :   "/app/",
+      "IMAGES_FOLDER"  :   "/concordia_images/",
       "ITEM_COUNT"     :   "",
       "S3_BUCKET_NAME" :   ""
     }
@@ -67,7 +67,7 @@
     },
     "importer"   : {
       "BASE_URL"       :   "",
-      "IMAGES_FOLDER"  :   "",
+      "IMAGES_FOLDER"  :   "/concordia_images/",
       "ITEM_COUNT"     :   "",
       "S3_BUCKET_NAME" :   ""
     }
@@ -104,7 +104,7 @@
     },
     "importer"   : {
       "BASE_URL"       :   "",
-      "IMAGES_FOLDER"  :   "",
+      "IMAGES_FOLDER"  :   "/concordia_images/",
       "ITEM_COUNT"     :   "",
       "S3_BUCKET_NAME" :   ""
     }
