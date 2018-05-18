@@ -46,8 +46,7 @@ LOGOUT_REDIRECT_URL = '/'
 ROOT_URLCONF = 'concordia.urls'
 STATIC_ROOT = 'static'
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [os.path.join(PROJECT_DIR, 'static'),
-                    os.path.join('/'.join(PROJECT_DIR.split('/')[:-1]), 'transcribr/transcribr/static')]
+STATICFILES_DIRS = [os.path.join(PROJECT_DIR, 'static'),]
 TEMPLATE_DEBUG = False
 TIME_ZONE = 'UTC'
 USE_I18N = True
@@ -86,11 +85,6 @@ INSTALLED_APPS = [
     'faq',
     'concordia.experiments.wireframes',
 ]
-
-if Config.mode == 'production':
-    INSTALLED_APPS += ['transcribr']
-else:
-    INSTALLED_APPS += ['transcribr.transcribr']
 
 if DEBUG:
     INSTALLED_APPS += ['django_extensions', ]

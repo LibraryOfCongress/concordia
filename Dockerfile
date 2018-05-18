@@ -16,7 +16,7 @@ RUN pip3 install -r requirements.txt
 
 WORKDIR /app
 COPY . .
-RUN pip3 install --no-cache-dir -e transcribr
+# RUN pip3 install --no-cache-dir -e transcribr
 RUN pip3 install --no-cache-dir -e .
 
 EXPOSE 80
