@@ -12,7 +12,7 @@ sleep 30
 
 /usr/bin/sudo nohup docker-compose up &
 
-#sleep 240
+sleep 300
 
-#sudo docker exec --name ubuntu_bash -it concordia_app_1 bash -c "./migrate_and_user.sh && exit"
+sudo docker exec -it concordia_app_1 bash -c "./migrate_and_user.sh && exit"
 
