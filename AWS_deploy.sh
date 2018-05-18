@@ -14,5 +14,5 @@ sleep 30
 
 sleep 400
 
-sudo docker exec -it concordia_app_1 bash -c "./migrate_and_user.sh && exit"
+/usr/bin/sudo /usr/bin/docker exec -it concordia_app_1 bash -c "./migrate_and_user.sh && exit"
 
