@@ -30,7 +30,22 @@ h3 {
 
 h4 {
   font-family: "Open Sans", sans-serif;
-  font-size: 1.45rem;
+  font-size: 1.25rem;
+  line-height: 125%;
+  font-weight: normal;
+  color: rgba(51,51,51,1);
+}
+
+h5 {
+  font-family: "Open Sans", sans-serif;
+  font-size: 1.125rem;
+  line-height: 125%;
+  font-weight: normal;
+}
+
+h6 {
+  font-family: "Open Sans", sans-serif;
+  font-size: 0.875rem;
   line-height: 125%;
   font-weight: normal;
   color: rgba(51,51,51,1);
@@ -43,12 +58,35 @@ h4 {
 
 }
 
+.p-latestblog {
+  font-size: .875rem;
+}
+
+.font-weight-bolder {
+  font-weight: 600;
+}
+
 .offwhite-text {
   color: rgba(250,250,250,1); /* #FAFAFA */
 }
 
+.blue-text {
+  color: rgba(0,97,142,1); /* #00618E */
+}
+blue {
+  color: rgba(0,97,142,1); /* #00618E */
+}
+
+.gray-text {
+  color : rgba(51,51,51,1); /* #333333 */
+}
+
 .bg-offwhite {
   background-color: rgba(250,250,250,1); /* #FAFAFA */
+}
+
+.bg-lightest-gray {
+  background-color: rgba(245,245,245,1); /* #F5F5F5 */
 }
 
 .bg-main {
@@ -56,7 +94,7 @@ h4 {
 }
 
 .bg-footer {
-  background-color: rgba(238,238,238,1);
+  background-color: rgba(238,238,238,1); /* #EEEEEE */
 }
 
 .bg-card-title {
@@ -173,6 +211,66 @@ h4 {
   margin-left: 1rem;
 }
 
+.padding-default, .pxy-default {
+  padding: 2rem;
+}
+
+.px-default {
+  padding-right: 2rem;
+  padding-left: 2rem;
+}
+
+.py-default {
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+}
+
+.padding-top-default, .pt-default {
+  padding-top: 2rem;
+}
+
+.padding-right-default, .pr-default {
+  padding-right: 2rem;
+}
+
+.padding-bottom-default, .pb-default {
+  padding-bottom: 2rem;
+}
+
+.padding-left-default, .pl-default {
+  padding-left: 2rem;
+}
+
+.padding-half, .pxy-half {
+  padding: 1rem;
+}
+
+.px-half {
+  padding-right: 1rem;
+  padding-left: 1rem;
+}
+
+.py-half {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+.padding-top-half, .pt-half {
+  padding-top: 1rem;
+}
+
+.padding-right-half, .pr-half {
+  padding-right: 1rem;
+}
+
+.padding-bottom-half, .pb-half {
+  padding-bottom: 1rem;
+}
+
+.padding-left-half, .pl-half {
+  padding-left: 1rem;
+}
+
 .col, .col-1, .col-10, .col-11, .col-12, .col-2, .col-3, .col-4, .col-5, .col-6, .col-7, .col-8, .col-9, .col-auto, .col-lg, .col-lg-1, .col-lg-10, .col-lg-11, .col-lg-12, .col-lg-2, .col-lg-3, .col-lg-4, .col-lg-5, .col-lg-6, .col-lg-7, .col-lg-8, .col-lg-9, .col-lg-auto, .col-md, .col-md-1, .col-md-10, .col-md-11, .col-md-12, .col-md-2, .col-md-3, .col-md-4, .col-md-5, .col-md-6, .col-md-7, .col-md-8, .col-md-9, .col-md-auto, .col-sm, .col-sm-1, .col-sm-10, .col-sm-11, .col-sm-12, .col-sm-2, .col-sm-3, .col-sm-4, .col-sm-5, .col-sm-6, .col-sm-7, .col-sm-8, .col-sm-9, .col-sm-auto, .col-xl, .col-xl-1, .col-xl-10, .col-xl-11, .col-xl-12, .col-xl-2, .col-xl-3, .col-xl-4, .col-xl-5, .col-xl-6, .col-xl-7, .col-xl-8, .col-xl-9, .col-xl-auto {
   padding-right: 0;
   padding-left: 0;
@@ -202,6 +300,10 @@ h4 {
   color: rgba(250,250,250,1);
 }
 
+.card-body {
+  padding: 1rem .5rem;
+}
+
 .card-img-overlay {
   left: 0;
   right: 0;
@@ -219,4 +321,24 @@ h4 {
 
 .round-corners-bottom {
   border-radius: 0 0 .5rem .5rem;
+}
+
+.latestblog-imgmask {
+  /* width: 12.5rem; */
+  width: 100%;
+  height: 12.5rem;
+  border-radius: .25rem;
+  overflow: hidden;
+  box-shadow: 0 0 4px rgba(51,51,51,.7);
+}
+
+.img-latestblog {
+  max-width: 100%;
+  width: 100%;
+  height: auto;
+  overflow: hidden;
+}
+
+.shadow-regular {
+  box-shadow: 0 0 .25rem rgba(51,51,51,.8);
 }
