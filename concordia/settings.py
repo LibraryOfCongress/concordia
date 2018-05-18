@@ -28,10 +28,10 @@ DEFAULT_FROM_EMAIL="no-reply@loc.gov"
 ALLOWED_HOSTS = ['*'] # TODO: place this value in config.json
 
 if Config.mode == "production":
-    # TODO: production we can not have DEBUG = True
     DEBUG = True
-    # TODO: For final deployment to production, when we are running https, uncomment this next line
-    #    CSRF_COOKIE_SECURE = True
+# TODO: For final deployment to production, when we are running https, uncomment this next line
+# TODO: peodcution can not have DEBUG = True
+#    CSRF_COOKIE_SECURE = True
 else:
     DEBUG = True
     CSRF_COOKIE_SECURE = False
