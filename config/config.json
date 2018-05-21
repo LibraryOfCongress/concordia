@@ -104,7 +104,11 @@
     },
     "importer"   : {
       "BASE_URL"       :   "",
+<<<<<<< HEAD
       "IMAGES_FOLDER"  :   "/concordia_images/",
+=======
+      "IMAGES_FOLDER"  :   "/app/",
+>>>>>>> Added django-machina forum app to concordia
       "ITEM_COUNT"     :   "",
       "S3_BUCKET_NAME" :   ""
     }
