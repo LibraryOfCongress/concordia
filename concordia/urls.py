@@ -12,6 +12,10 @@ from django.views.static import serve
 
 from machina.app import board
 
+from machina.app import board
+
+from machina.app import board
+
 from . import views
 from . import trans_urls
 from faq.views import FAQView
