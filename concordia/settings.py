@@ -47,9 +47,13 @@ LOGOUT_REDIRECT_URL = '/'
 ROOT_URLCONF = 'concordia.urls'
 STATIC_ROOT = 'static'
 STATIC_URL = '/static/'
+<<<<<<< HEAD
 STATICFILES_DIRS = [os.path.join(PROJECT_DIR, 'static'),
                     os.path.join('/'.join(PROJECT_DIR.split('/')[:-1]), 'transcribr/transcribr/static'),
                     MACHINA_MAIN_STATIC_DIR]
+=======
+STATICFILES_DIRS = [os.path.join(PROJECT_DIR, 'static'), MACHINA_MAIN_STATIC_DIR]
+>>>>>>> Added django-machina forum app to concordia
 TEMPLATE_DEBUG = False
 TIME_ZONE = 'UTC'
 USE_I18N = True
@@ -92,11 +96,14 @@ INSTALLED_APPS = [
     'haystack',
     'widget_tweaks',
 ] + get_machina_apps()
+<<<<<<< HEAD
 
 # if Config.mode == "production":
 #     INSTALLED_APPS += ['transcribr']
 # else:
 #     INSTALLED_APPS += ['transcribr.transcribr']
+=======
+>>>>>>> Added django-machina forum app to concordia
 
 if DEBUG:
     INSTALLED_APPS += ['django_extensions', ]
