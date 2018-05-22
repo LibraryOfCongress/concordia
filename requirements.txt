@@ -1,4 +1,4 @@
-Django<2.1
+Django>=2,<2.1
 psycopg2
 psycopg2-binary
 Pillow
