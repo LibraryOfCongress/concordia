@@ -1,36 +1,36 @@
 {% extends "transcriptions/base.html" %}
 {% block main_content %} {% load staticfiles %}
-<div class="container">
-    <h2>Collections</h2>
-    <div class="row">
-    {% if response.results %}
+<div class="container-fluid py-default">
+  <div class="row">
+    <div class="col-md-10 mx-auto bg-offwhite rounded">
+      <h3 class="mt-half ml-half">Collections</h3>
+      {% if response.results %}
         {% for c in response.results %}
         <div class="col-3">
             <div class="card mb-4">
-                <div class="card-body">
-                    <h5 class="card-title">{{ c.title }}</h5>
-                    <p class="card-text">{{ c.description }}</p>
-                    <p class="text-center">
-                        {% if request.user.is_staff %}
-                          <a href="{% url 'transcriptions:delete collection' c.slug %}" class="btn btn-danger">Delete</a>
-                        {% endif %}
-                        <a href="{% url 'transcriptions:collection' c.slug %}"
-                            class="btn btn-primary">View</a>
-                        {% if request.user.is_staff %}
-                          <a href="{% url 'transcriptions:export collection' c.slug %}" class="btn btn-success">Export</a>
-                        {% endif %}
-                    </p>
-                    <p>
-                        {% if request.user.is_staff %}
-                          <a href="{% url 'transcriptions:report collection' c.slug %}">Report</a>
-                        {% endif %}
-                    </p>
-                </div>
+              <div class="card-body">
+                <h5 class="card-title">{{ c.title }}</h5>
+                <p class="card-text">{{ c.description }}</p>
+                <p class="text-center">
+                  {% if request.user.is_staff %}
+                    <a href="{% url 'transcriptions:delete collection' c.slug %}" class="btn btn-danger">Delete</a>
+                  {% endif %}
+                  <a href="{% url 'transcriptions:collection' c.slug %}" class="btn btn-primary">View</a>
+                  {% if request.user.is_staff %}
+                    <a href="{% url 'transcriptions:export collection' c.slug %}" class="btn btn-success">Export</a>
+                  {% endif %}
+                </p>
+                <p>
+                  {% if request.user.is_staff %}
+                    <a href="{% url 'transcriptions:report collection' c.slug %}">Report</a>
+                  {% endif %}
+                </p>
+              </div>
             </div>
-        </div>
-        {% endfor %}
-    {% endif %}
-    {% if request.user.is_staff %}
+          </div>
+          {% endfor %}
+        {% endif %}
+        {% if request.user.is_staff %}
         <div class="col-3">
             <div class="card mb-4" style="height:169px">
                 <div class="card-body text-center">
