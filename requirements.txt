@@ -18,3 +18,4 @@ pytest-cov
 pytest-django
 pytest-html
 pycodestyle
+confusable-homoglyphs>=3.1.1
