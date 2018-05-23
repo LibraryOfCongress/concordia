@@ -5,7 +5,6 @@ import sys
 import tempfile
 
 from django.test import Client, TestCase
-from django.contrib.auth.hashers import make_password
 
 from unittest.mock import Mock, patch
 
@@ -19,8 +18,7 @@ from PIL import Image
 
 from config import Config
 
-from concordia.models import User, UserProfile
-from transcribr.transcribr.models import Transcription, Asset, MediaType, Collection, Status
+from concordia.models import User, UserProfile, Transcription, Asset, MediaType, Collection, Status
 import views
 
 class ViewTest_Concordia(TestCase):
@@ -306,6 +304,14 @@ class ViewTest_Concordia(TestCase):
         """
 
         # Arrange
+
+        self.collection = Collection(title='TextCollection',
+                                     slug='slug2',
+                                     description='Collection Description',
+                                     metadata={"key":"val1"},
+                                     status=Status.PCT_0)
+        self.collection.save()
+
         self.asset = Asset(title='TestAsset',
                            slug='test-slug2',
                            description='Asset Description',
@@ -317,7 +323,7 @@ class ViewTest_Concordia(TestCase):
         self.asset.save()
 
         # Act
-        response = self.client.get('/transcribe/export/test-slug2/')
+        response = self.client.get('/transcribe/export/slug2/')
 
         # Assert
         self.assertEqual(response.status_code, 200)
@@ -350,11 +356,10 @@ class ViewTest_Concordia(TestCase):
         self.asset.save()
 
         # Act
-        response = self.client.get('/transcribe/delete/test-slug2')
+        response = self.client.get('/transcribe/delete/test-slug2', follow=True)
 
         # Assert
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, '/transcribe/')
+        self.assertEqual(response.status_code, 200)
 
         # verify the collection is not in db
         collection2 = Collection.objects.all()
