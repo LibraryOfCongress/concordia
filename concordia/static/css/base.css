@@ -81,6 +81,11 @@ blue {
   color : rgba(51,51,51,1); /* #333333 */
 }
 
+a.gray-text:hover {
+  color: rgba(0,97,142,1); /* #00618E */
+  text-decoration: none;
+}
+
 .bg-offwhite {
   background-color: rgba(250,250,250,1); /* #FAFAFA */
 }
@@ -294,7 +299,7 @@ blue {
   color: rgba(250,250,250,1);
 }
 
-.btn-default-alt {
+.btn-dark {
   background-color: rgba(51,51,51,1);
   border-color: rgba(51,51,51,1);
   color: rgba(250,250,250,1);
