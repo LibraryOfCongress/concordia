@@ -1,11 +1,11 @@
 {% extends "transcriptions/base.html" %} {% load staticfiles %}
 {% block head_content %}
-    <style>
+    <!-- <style>
         .card-img-top {
             width: inherit;
             height: 250px;
         }
-    </style>
+    </style> -->
 {% endblock head_content %}
 {% block main_content %}
 <div class="container">
@@ -14,22 +14,18 @@
         {{ collection.description }}
     </p>
     <div class="row">
-    {% for a in assets %}
-
-        <div class="col-3">
-            <div class="card mb-4">
-                <a href="{% url 'transcriptions:asset' collection.slug a.slug %}" class="text-center">
-                  <img class="col-12 card-img-top" src="{{ MEDIA_URL }}{{a.media_url }}" alt="{ a.slug }">
-                </a>
-                <div class="card-body">
-                    <h5 class="card-title">{{ a.title }}-{{ a.sequence }}</h5>
-                    <p class="card-text">{{ a.description }}</p>
-                    <a href="{% url 'transcriptions:asset' collection.slug a.slug %}"
-                        class="btn btn-primary">Transcribe</a>
-                </div>
-            </div>
+      {% for a in assets %}
+        <div class=" col-3 card mb-4">
+          <a href="{% url 'transcriptions:asset' collection.slug a.slug %}" class="text-center">
+            <img class="col-12 card-img-top" src="{{ MEDIA_URL }}{{a.media_url }}" alt="{ a.slug }">
+          </a>
+          <div class="card-body">
+            <h5 class="card-title">{{ a.title }}-{{ a.sequence }}</h5>
+            <p class="card-text">{{ a.description }}</p>
+            <a href="{% url 'transcriptions:asset' collection.slug a.slug %}" class="btn btn-primary">Transcribe</a>
+          </div>
         </div>
-    {% endfor %}
+      {% endfor %}
     </div>
 </div>
 <div class="pagination">

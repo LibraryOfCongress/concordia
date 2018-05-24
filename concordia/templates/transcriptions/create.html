@@ -1,39 +1,15 @@
 {% extends "transcriptions/base.html" %}
 {% load staticfiles %}
 {% block title %}{% endblock title %}
-{% block head_content %}
-<style>
-.loader {
-  border: 16px solid #f3f3f3;
-  border-radius: 50%;
-  border-top: 16px solid #3498db;
-  width: 120px;
-  height: 120px;
-  -webkit-animation: spin 2s linear infinite; /* Safari */
-  animation: spin 2s linear infinite;
-}
-
-/* Safari */
-@-webkit-keyframes spin {
-  0% { -webkit-transform: rotate(0deg); }
-  100% { -webkit-transform: rotate(360deg); }
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-</style>
-
-{% endblock head_content %}
+{% block head_content %}{% endblock head_content %}
 {% block main_content %}
 <div class="container-fluid py-default" id='container'>
   <div class="row">
     <div class="col-md-10 mx-auto bg-offwhite rounded">
       <h3 class="mt-half ml-half">Import a New Collection</h3>
-      <div id="loader" class="text-center" style="display:none">
-      	<div class="loader m-auto"></div>
-              <small class="form-text text-muted">Please wait..., we are creating collection for you.</small>
+      <div class="text-center d-none loading">
+      	<div class="loading-pulse mx-auto"></div>
+              <small class="form-text offwhite-text">Creating the collection for you.</small>
       </div>
       <form class="mx-default my-default" method="POST" onsubmit="return handle_form_submission()">
       {% if error %}
@@ -41,7 +17,7 @@
           <button type="button" class="close" onclick="hide_box()" data-dismiss="alert" aria-label="Close">
             <span aria-hidden="true">&times;</span>
           </button>
-          <strong>Error!</strong> Please provide valid URL, Unable to download images from the given URL.
+          <strong>Sorry!</strong> We're having some trouble accessing that URL. Is it accessible? You want to double check if you entered it correctly?
         </div>
       {% endif %}
 
@@ -65,8 +41,8 @@
 <script>
 function handle_form_submission()
 {
-  document.getElementById("loader").style.display = "block";
-  document.getElementById("container").style.display = "none";
+  $(".loading").removeClass("d-none");
+  // document.getElementById("container").style.display = "none";
 }
 function hide_box(){
    document.getElementById("close").style.display = "none";
