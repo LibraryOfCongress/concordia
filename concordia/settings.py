@@ -47,7 +47,7 @@ ROOT_URLCONF = 'concordia.urls'
 STATIC_ROOT = 'static'
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [os.path.join(PROJECT_DIR, 'static'),
-                    os.path.join('/'.join(PROJECT_DIR.split('/')[:-1]), 'transcribr/transcribr/static')]
+                    os.path.join('/'.join(PROJECT_DIR.split('/')[:-1]), 'concordia/static')]
 TEMPLATE_DEBUG = False
 TIME_ZONE = 'UTC'
 USE_I18N = True
@@ -88,9 +88,9 @@ INSTALLED_APPS = [
 ]
 
 # if Config.mode == "production":
-#     INSTALLED_APPS += ['transcribr']
+#     INSTALLED_APPS += ['concordia']
 # else:
-#     INSTALLED_APPS += ['transcribr.transcribr']
+#     INSTALLED_APPS += ['concordia.concordia']
 
 if DEBUG:
     INSTALLED_APPS += ['django_extensions', ]
@@ -203,8 +203,8 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
 }
 
-TRANSCRIBR = dict(
-     netloc=Config.Get('transcribr')['NETLOC'],
+CONCORDIA = dict(
+     netloc=Config.Get('concordia')['NETLOC'],
 )
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

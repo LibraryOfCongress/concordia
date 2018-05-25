@@ -28,7 +28,7 @@ for key, value in getattr(settings, 'ADMIN_SITE', {}).items():
 
 
 tx_urlpatterns = ([
-    re_path(r'^$', views.TranscribrView.as_view(), name='transcribe'),
+    re_path(r'^$', views.ConcordiaView.as_view(), name='transcribe'),
     re_path(
         r'^create/$',
         views.CollectionView.as_view(),
@@ -36,7 +36,7 @@ tx_urlpatterns = ([
     ),
     re_path(
         r'^([^/]+)/$',
-        views.TranscribrCollectionView.as_view(),
+        views.ConcordiaCollectionView.as_view(),
         name='collection'
     ),
     re_path(
@@ -56,7 +56,7 @@ tx_urlpatterns = ([
     ),
     re_path(
         r'^([^/]+)/asset/([^/]+)/$',
-        views.TranscribrAssetView.as_view(),
+        views.ConcordiaAssetView.as_view(),
         name='asset'
     ),
     re_path(

@@ -7,7 +7,6 @@
     "ADMIN_SITE_TITLE"     : "Concordia",
     "REGISTRATION_URLS"    : "registration.backends.simple.urls",
     "django_secret_key"    : "np*no_id-t8*if4*a(pz(n(rk5#(rlyn-41jvp5u%*ij&5u-3x",
-    "transcribr_urls"      : "transcribr.urls",
 
     "database"             : {
       "adapter"  : "django.db.backends.postgresql_psycopg2",
@@ -22,7 +21,7 @@
       "RESULT_BACKEND"     : "rpc://"
 
     },
-    "transcribr" : {
+    "concordia" : {
       "NETLOC"             : "http://0.0.0.0:80"
     },
     "djrf"       : {
@@ -43,7 +42,6 @@
     "ADMIN_SITE_TITLE"     : "Concordia",
     "REGISTRATION_URLS"    : "registration.backends.simple.urls",
     "django_secret_key"    : "np*no_id-t8*if4*a(pz(n(rk5#(rlyn-41jvp5u%*ij&5u-3x",
-    "transcribr_urls"      : "transcribr.transcribr.urls",
 
     "database"             : {
       "adapter"  : "django.db.backends.postgresql_psycopg2",
@@ -58,7 +56,7 @@
       "RESULT_BACKEND"     : "rpc://"
 
     },
-    "transcribr" : {
+    "concordia" : {
       "NETLOC"             : "http://0.0.0.0:8000"
     },
     "djrf"       : {
@@ -80,7 +78,6 @@
     "ADMIN_SITE_TITLE"     : "Concordia",
     "REGISTRATION_URLS"    : "registration.backends.simple.urls",
     "django_secret_key"    : "np*no_id-t8*if4*a(pz(n(rk5#(rlyn-41jvp5u%*ij&5u-3x",
-    "transcribr_urls"      : "transcribr.transcribr.urls",
 
     "database"             : {
       "adapter"  : "django.db.backends.postgresql_psycopg2",
@@ -95,7 +92,7 @@
       "RESULT_BACKEND"     : "rpc://"
 
     },
-    "transcribr" : {
+    "concordia" : {
       "NETLOC"             : "http://0.0.0.0:8000"
     },
     "djrf"       : {
