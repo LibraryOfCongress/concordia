@@ -13,17 +13,18 @@
                     <p class="card-text">{{ c.description }}</p>
                     <p class="text-center">
                         {% if request.user.is_staff %}
-                          <a href="{% url 'transcriptions:delete collection' c.slug %}" class="btn btn-danger">Delete</a>
+                            <a href="{% url 'transcriptions:delete collection' c.slug %}" class="btn btn-danger">Delete</a>
                         {% endif %}
                         <a href="{% url 'transcriptions:collection' c.slug %}"
                             class="btn btn-primary">View</a>
                         {% if request.user.is_staff %}
-                          <a href="{% url 'transcriptions:export collection' c.slug %}" class="btn btn-success">Export</a>
+                            <a href="{% url 'transcriptions:exportCSV collection' c.slug %}" class="btn btn-success">Export to CSV</a>
+                            <a href="{% url 'transcriptions:exportBagit collection' c.slug %}" class="btn btn-success">Export to Bagit</a>
                         {% endif %}
                     </p>
                     <p>
                         {% if request.user.is_staff %}
-                          <a href="{% url 'transcriptions:report collection' c.slug %}">Report</a>
+                            <a href="{% url 'transcriptions:report collection' c.slug %}">Report</a>
                         {% endif %}
                     </p>
                 </div>
@@ -35,8 +36,8 @@
         <div class="col-3">
             <div class="card mb-4" style="height:169px">
                 <div class="card-body text-center">
-                  <div style="margin-top:45px">
-                    <a href="{% url 'transcriptions:create' %}"><span class="align-middle">Add new Collection</span></a>
+                    <div style="margin-top:45px">
+                        <a href="{% url 'transcriptions:create' %}"><span class="align-middle">Add new Collection</span></a>
                     </div>
                 </div>
             </div>

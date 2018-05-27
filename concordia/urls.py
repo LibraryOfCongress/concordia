@@ -41,9 +41,14 @@ tx_urlpatterns = ([
         name='collection'
     ),
     re_path(
-        r'export/([^/]+)/$',
+        r'exportCSV/([^/]+)/$',
         exporter_views.ExportCollectionToCSV.as_view(),
-        name='export collection'
+        name='exportCSV collection'
+    ),
+    re_path(
+        r'exportBagit/([^/]+)/$',
+        exporter_views.ExportCollectionToBagit.as_view(),
+        name='exportBagit collection'
     ),
     re_path(
         r'delete/([^/]+)/$',
