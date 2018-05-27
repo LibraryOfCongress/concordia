@@ -11,6 +11,7 @@ from django.contrib.auth import views as auth_views
 from django.views.static import serve
 
 from . import views
+from exporter import views as exporter_views
 from . import trans_urls
 from faq.views import FAQView
 
@@ -41,7 +42,7 @@ tx_urlpatterns = ([
     ),
     re_path(
         r'export/([^/]+)/$',
-        views.ExportCollectionView.as_view(),
+        exporter_views.ExportCollectionView.as_view(),
         name='export collection'
     ),
     re_path(
