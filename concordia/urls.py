@@ -42,7 +42,7 @@ tx_urlpatterns = ([
     ),
     re_path(
         r'export/([^/]+)/$',
-        exporter_views.ExportCollectionView.as_view(),
+        exporter_views.ExportCollectionToCSV.as_view(),
         name='export collection'
     ),
     re_path(

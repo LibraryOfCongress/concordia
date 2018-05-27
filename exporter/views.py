@@ -4,7 +4,7 @@ from django.views.generic import TemplateView
 from concordia.models import Asset, Collection, Transcription, UserAssetTagCollection, Tag
 
 
-class ExportCollectionView(TemplateView):
+class ExportCollectionToCSV(TemplateView):
     """
     Exports the transcription and tags to csv file
 
