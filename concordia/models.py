@@ -90,6 +90,7 @@ class Asset(models.Model):
     slug = models.SlugField(max_length=100)
     description = models.TextField(blank=True)
     media_url = models.URLField(max_length=255)
+    media_url_text = models.CharField(max_length=255)
     media_type = models.CharField(
         max_length=4,
         choices=MediaType.CHOICES,
