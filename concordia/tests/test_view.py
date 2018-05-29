@@ -5,7 +5,6 @@ import sys
 import tempfile
 
 from django.test import Client, TestCase
-from django.contrib.auth.hashers import make_password
 
 from unittest.mock import Mock, patch
 
@@ -19,8 +18,7 @@ from PIL import Image
 
 from config import Config
 
-from concordia.models import User, UserProfile
-from transcribr.transcribr.models import Transcription, Asset, MediaType, Collection, Status
+from concordia.models import User, UserProfile, Transcription, Asset, MediaType, Collection, Status
 import views
 
 class ViewTest_Concordia(TestCase):
@@ -52,7 +50,7 @@ class ViewTest_Concordia(TestCase):
 
         login = self.client.login(username='tester', password='top_secret')
 
-    def test_transcribr_api(self):
+    def test_concordia_api(self):
         """
         Test the tracribr_api. Provide a mock of requests
         :return:
@@ -65,13 +63,13 @@ class ViewTest_Concordia(TestCase):
         with patch('views.requests') as mock_requests:
             mock_requests.get.return_value = mock_response = Mock()
             mock_response.status_code = 200
-            mock_response.json.return_value = {'transcribr_data': 'abc123456'}
+            mock_response.json.return_value = {'concordia_data': 'abc123456'}
 
             # Act
-            results = views.transcribr_api('relative_path')
+            results = views.concordia_api('relative_path')
 
             # Assert
-            self.assertEqual(results['transcribr_data'], 'abc123456')
+            self.assertEqual(results['concordia_data'], 'abc123456')
 
     def test_AccountProfileView_get(self):
         """
@@ -236,7 +234,7 @@ class ViewTest_Concordia(TestCase):
             self.assertEqual(len(profile), existing_userprofile_count+1)
 
     @patch('concordia.views.requests')
-    def test_TranscribrView(self, mock_requests):
+    def test_concordiaView(self, mock_requests):
         """
         Test the GET method for route /transcribe
         :return:
@@ -244,7 +242,7 @@ class ViewTest_Concordia(TestCase):
         # Arrange
 
         mock_requests.get.return_value.status_code = 200
-        mock_requests.get.return_value.json.return_value = {'transcribr_data': 'abc123456'}
+        mock_requests.get.return_value.json.return_value = {'concordia_data': 'abc123456'}
 
         # Act
         response = self.client.get('/transcribe/')
@@ -253,7 +251,7 @@ class ViewTest_Concordia(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, template_name='transcriptions/home.html')
 
-    def test_TranscribrCollectionView_get(self):
+    def test_concordiaCollectionView_get(self):
         """
         Test GET on route /transcribe/<slug-value> (collection)
         :return:
@@ -276,7 +274,7 @@ class ViewTest_Concordia(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, template_name='transcriptions/collection.html')
 
-    def test_TranscribrCollectionView_get_page2(self):
+    def test_concordiaCollectionView_get_page2(self):
         """
         Test GET on route /transcribe/<slug-value>/ (collection) on page 2
         :return:
@@ -306,6 +304,14 @@ class ViewTest_Concordia(TestCase):
         """
 
         # Arrange
+
+        self.collection = Collection(title='TextCollection',
+                                     slug='slug2',
+                                     description='Collection Description',
+                                     metadata={"key":"val1"},
+                                     status=Status.PCT_0)
+        self.collection.save()
+
         self.asset = Asset(title='TestAsset',
                            slug='test-slug2',
                            description='Asset Description',
@@ -317,7 +323,7 @@ class ViewTest_Concordia(TestCase):
         self.asset.save()
 
         # Act
-        response = self.client.get('/transcribe/export/test-slug2/')
+        response = self.client.get('/transcribe/export/slug2/')
 
         # Assert
         self.assertEqual(response.status_code, 200)
@@ -350,11 +356,10 @@ class ViewTest_Concordia(TestCase):
         self.asset.save()
 
         # Act
-        response = self.client.get('/transcribe/delete/test-slug2')
+        response = self.client.get('/transcribe/delete/test-slug2', follow=True)
 
         # Assert
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, '/transcribe/')
+        self.assertEqual(response.status_code, 200)
 
         # verify the collection is not in db
         collection2 = Collection.objects.all()

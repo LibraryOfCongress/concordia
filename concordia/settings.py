@@ -2,8 +2,9 @@
 import os
 import sys
 
-# from . import utils
-# utils.import_Config()
+from machina import get_apps as get_machina_apps
+from machina import MACHINA_MAIN_TEMPLATE_DIR
+from machina import MACHINA_MAIN_STATIC_DIR
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -27,9 +28,10 @@ DEFAULT_FROM_EMAIL="no-reply@loc.gov"
 ALLOWED_HOSTS = ['*'] # TODO: place this value in config.json
 
 if Config.mode == "production":
+    # TODO: production we can not have DEBUG = True
     DEBUG = True
-# TODO: For final deployment to production, when we are running https, uncomment this next line
-#    CSRF_COOKIE_SECURE = True
+    # TODO: For final deployment to production, when we are running https, uncomment this next line
+    #    CSRF_COOKIE_SECURE = True
 else:
     DEBUG = True
     CSRF_COOKIE_SECURE = False
@@ -47,7 +49,8 @@ ROOT_URLCONF = 'concordia.urls'
 STATIC_ROOT = 'static'
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [os.path.join(PROJECT_DIR, 'static'),
-                    os.path.join('/'.join(PROJECT_DIR.split('/')[:-1]), 'transcribr/transcribr/static')]
+                    os.path.join('/'.join(PROJECT_DIR.split('/')[:-1]), 'concordia/static')]
+STATICFILES_DIRS = [os.path.join(PROJECT_DIR, 'static'), MACHINA_MAIN_STATIC_DIR]
 TEMPLATE_DEBUG = False
 TIME_ZONE = 'UTC'
 USE_I18N = True
@@ -88,12 +91,12 @@ INSTALLED_APPS = [
     'importer',
 
     'concordia.experiments.wireframes',
-]
+ # Machina related apps:
+    'mptt',
+    'haystack',
+    'widget_tweaks',
+] + get_machina_apps()
 
-# if Config.mode == "production":
-#     INSTALLED_APPS += ['transcribr']
-# else:
-#     INSTALLED_APPS += ['transcribr.transcribr']
 
 if DEBUG:
     INSTALLED_APPS += ['django_extensions', ]
@@ -108,12 +111,14 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # Machina
+    'machina.apps.forum_permission.middleware.ForumPermissionMiddleware',
 ]
 
 TEMPLATES = [{
     'BACKEND': 'django.template.backends.django.DjangoTemplates',
-    'DIRS': [os.path.join(PROJECT_DIR, 'templates'), ],
-    'APP_DIRS': True,
+    'DIRS': [os.path.join(PROJECT_DIR, 'templates'), MACHINA_MAIN_TEMPLATE_DIR],
+#    'APP_DIRS': True,
     'OPTIONS': {
         'context_processors': [
             'django.template.context_processors.debug',
@@ -121,10 +126,32 @@ TEMPLATES = [{
             'django.contrib.auth.context_processors.auth',
             'django.contrib.messages.context_processors.messages',
             'django.template.context_processors.media',
+            # Machina
+            'machina.core.context_processors.metadata',
         ],
+            'loaders': [
+                'django.template.loaders.filesystem.Loader',
+                'django.template.loaders.app_directories.Loader',
+            ]
     },
 }]
 
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    },
+    'machina_attachments': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': '/tmp',
+    },
+}
+
+HAYSTACK_CONNECTIONS = {
+    'default': {
+        'ENGINE': 'haystack.backends.whoosh_backend.WhooshEngine',
+        'PATH': os.path.join(os.path.dirname(__file__), 'whoosh_index'),
+    },
+}
 
 # Celery settings
 if Config.mode == "production":
@@ -206,8 +233,8 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
 }
 
-TRANSCRIBR = dict(
-     netloc=Config.Get('transcribr')['NETLOC'],
+CONCORDIA = dict(
+     netloc=Config.Get('concordia')['NETLOC'],
 )
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

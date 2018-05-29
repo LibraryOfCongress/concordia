@@ -2,34 +2,31 @@
 concordia
 =========
 
-=========
-Notes:
-=========
-Basic requirements include Python 3.6.4
-and docker
+=============
+Prerequisites
+=============
+Docker
 
 
-Basic Setup and Deploy
-======================
+Running Concordia
+=================
 
 ::
 
-    $ git clone https://bitbucket.org/rohgupta/concordia.git
+    $ git clone https://github.com/LibraryOfCongress/concordia.git
     $ cd concordia
-    $ virtualenv env
-    $ source env/bin/activate
-    $ pip install -r requirements.txt
     $ docker-compose up
 
 Browse to `localhost <http://localhost>`_
 
 
-Development
-===========
+Development Environment
+=======================
 
-You may wish to run the Django development server on your local host instead of
+You may wish to run the Django development server on your localhost instead of
 within a Docker container. It is easy to set up a Python virtual environment to
 work in.
+
 
 Configuration
 -------------
@@ -42,6 +39,7 @@ Serve
 Instead of doing ``docker-compose up`` as above, instead do the following::
 
     $ docker-compose up -d db
+    $ docker-compose up -d rabbit
 
 This will keep our database in its container for convenience.
 
@@ -49,7 +47,7 @@ Next, set up a Python virtual environment::
 
     $ python3 -m venv env
     $ source env/bin/activate
-    $ pip install -r requirements.txt
+    $ pip install -r requirements_devel.txt
 
 Edit, or create the config/config-optional-override.json and set the file content to: {"mode":"mac"}
 
@@ -67,7 +65,8 @@ To generate a model graph, do::
 
     $ docker-compose up -d app
     $ docker-compose exec app bash
-    # manage.py graph_models transcribr > tx.dot
+    # cd concordia/static/img
+    # python3 ./manage.py graph_models concordia > tx.dot
     # dot -Tsvg tx.dot -o tx.svg
 
 
