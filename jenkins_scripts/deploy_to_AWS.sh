@@ -9,15 +9,12 @@ expect "$ "
 send -- "cd projects/concordia\r"
 expect "$ "
 
-send -- "/usr/bin/git pull origin > git_pull_results\r"
+send -- "./AWS_deploy.sh\r"
 expect "$ "
 
-send -- "/usr/bin/sudo pkill docker-compose\r"
-expect "$ "
+sleep 660
 
-sleep 10
-
-send -- "/usr/bin/sudo nohup docker-compose up &\n"
+send -- "/usr/bin/sudo /usr/bin/docker exec -it concordia_app_1 bash -c \"./migrate_and_user.sh && exit\"\r"
 expect "$ "
 
 sleep 5

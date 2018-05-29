@@ -39,8 +39,8 @@ class Importer:
         self.logger = logging.getLogger(__name__)
 
         self.base_url = Config.Get('importer')['BASE_URL']
-        self.item_count = Config.Get('importer')['ITEM_COUNT']
-        self.images_folder = Config.Get('importer')['IMAGES_FOLDER']
+        self.item_count = 10 #Config.Get('importer')['ITEM_COUNT']
+        self.images_folder = '/concordia_images' #Config.Get('importer')['IMAGES_FOLDER']
         self.s3_bucket_name = Config.Get('importer')['S3_BUCKET_NAME']
 
     def main(self):

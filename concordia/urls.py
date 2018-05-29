@@ -8,8 +8,16 @@ from django.urls import re_path, include
 from django.conf.urls.static import static
 from django.views.generic import TemplateView
 from django.contrib.auth import views as auth_views
+from django.views.static import serve
+
+from machina.app import board
+
+from machina.app import board
+
+from machina.app import board
 
 from . import views
+from . import trans_urls
 from faq.views import FAQView
 
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -48,6 +56,11 @@ tx_urlpatterns = ([
         name='delete collection'
     ),
     re_path(
+        r'report/([^/]+)/$',
+        views.ReportCollectionView.as_view(),
+        name='report collection'
+    ),
+    re_path(
         r'^([^/]+)/asset/([^/]+)/$',
         views.TranscribrAssetView.as_view(),
         name='asset'
@@ -64,7 +77,7 @@ urlpatterns = [
     re_path(r'^$', TemplateView.as_view(template_name='home.html')),
     re_path(r'^about/$', TemplateView.as_view(template_name='about.html'), name='about'),
     re_path(r'^transcribe/', include(tx_urlpatterns, namespace='transcriptions')),
-    re_path(r'^api/v1/', include(Config.Get('transcribr_urls'))),
+    re_path(r'^api/v1/', include(trans_urls)),
 
     re_path(
         r'^account/register/$',
@@ -81,7 +94,10 @@ urlpatterns = [
     re_path(r'^faq/$', FAQView.as_view(), name='faq'),
     re_path(r'^legal/$', TemplateView.as_view(template_name='legal.html'), name='legal'),
 
-    re_path(r'^admin/', admin.site.urls)
+    re_path(r'^admin/', admin.site.urls),
+
+    # Apps
+    re_path(r'^forum/', include(board.urls))
 ]
 
 urlpatterns += [
@@ -91,11 +107,15 @@ urlpatterns += [
         auth_views.password_reset_confirm, name='password_reset_confirm'),
     re_path(r'^reset/done/$', auth_views.password_reset_complete, name='password_reset_complete'),
 ]
-urlpatterns += static(
-    settings.STATIC_URL,
-    document_root=settings.STATIC_ROOT,
-    show_indexes=True
-)
 
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+urlpatterns += [
+        re_path(r'^static/(?P<path>.*)$', serve, {
+            'document_root': settings.STATIC_ROOT,
+        }),
+]
+
+urlpatterns += [
+        re_path(r'^media/(?P<path>.*)$', serve, {
+            'document_root': settings.MEDIA_ROOT,
+        }),
+]

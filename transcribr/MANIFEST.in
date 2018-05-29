@@ -1,4 +1,0 @@
-include README.rst
-include MANIFEST.in
-recursive-include transcribr *
-recursive-include tests *.py

@@ -16,6 +16,8 @@ from django.core.paginator import Paginator
 from django.urls import reverse
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
+from django.db.models import Q
+from django.db.models import Count, Sum
 from importer.importer.tasks import download_async_collection, check_completeness
 
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -26,23 +28,11 @@ sys.path.append(BASE_DIR)
 sys.path.append(os.path.join(BASE_DIR, 'config'))
 from config import Config
 
-# test for existence of transcribr or transcribr.transcribr
-try:
-    from transcribr.models import Asset, Collection, Transcription, UserAssetTagCollection, Tag
-    transcribr_model_found = True
-except Exception as e:
-    transcribr_model_found = False
-
-if not transcribr_model_found:
-    try:
-        from transcribr.transcribr.models import Asset, Collection, Transcription, UserAssetTagCollection, Tag
-    except Exception as e:
-        pass
-
+from concordia.models import Asset, Collection, Transcription, UserAssetTagCollection, Tag
 
 logger = getLogger(__name__)
 
-ASSETS_PER_PAGE = 10
+ASSETS_PER_PAGE = 36
 
 
 def transcribr_api(relative_path):
@@ -62,7 +52,6 @@ class ConcordiaRegistrationView(RegistrationView):
 
 
 class AccountProfileView(LoginRequiredMixin, TemplateView):
-
     template_name = 'profile.html'
 
     def post(self, *args, **kwargs):
@@ -73,11 +62,11 @@ class AccountProfileView(LoginRequiredMixin, TemplateView):
             obj = form.save(commit=True)
             obj.id = self.request.user.id
             if not self.request.POST['password1'] and not self.request.POST['password2']:
-                obj.password=self.request.user.password
+                obj.password = self.request.user.password
             obj.save()
             if 'myfile' in self.request.FILES:
                 myfile = self.request.FILES['myfile']
-                profile, created = UserProfile.objects.update_or_create(user=obj, defaults={'myfile':myfile})
+                profile, created = UserProfile.objects.update_or_create(user=obj, defaults={'myfile': myfile})
         return redirect(reverse('user-profile'))
 
     def get_context_data(self, **kws):
@@ -86,17 +75,17 @@ class AccountProfileView(LoginRequiredMixin, TemplateView):
             last_name = " " + last_name
         else:
             last_name = ''
-            
-        data = {'username': self.request.user.username, 'email':self.request.user.email,
-                'first_name':self.request.user.first_name + last_name}
+
+        data = {'username': self.request.user.username, 'email': self.request.user.email,
+                'first_name': self.request.user.first_name + last_name}
         profile = UserProfile.objects.filter(user=self.request.user)
         if profile:
             data['myfile'] = profile[0].myfile
         return super().get_context_data(**dict(
             kws,
             transcriptions=Transcription.objects.filter(user_id=self.request.user.id).order_by('-updated_on'),
-            
-            form = ConcordiaUserEditForm(initial=data)
+
+            form=ConcordiaUserEditForm(initial=data)
         ))
 
 
@@ -116,7 +105,7 @@ class TranscribrCollectionView(TemplateView):
 
     def get_context_data(self, **kws):
         collection = Collection.objects.get(slug=self.args[0])
-        asset_list = collection.asset_set.all().order_by('id')
+        asset_list = collection.asset_set.all().order_by('title', 'sequence')
         paginator = Paginator(asset_list, ASSETS_PER_PAGE)
 
         if not self.request.GET.get('page'):
@@ -137,9 +126,9 @@ class TranscribrAssetView(TemplateView):
     template_name = 'transcriptions/asset.html'
 
     def get_context_data(self, **kws):
-   
+
         asset = Asset.objects.get(collection__slug=self.args[0], slug=self.args[1])
-        
+
         transcription = Transcription.objects.filter(asset=asset, user_id=self.request.user.id)
         if transcription:
             transcription = transcription[0]
@@ -163,13 +152,15 @@ class TranscribrAssetView(TemplateView):
             Transcription.objects.update_or_create(asset=asset,
                                                    user_id=self.request.user.id,
                                                    defaults={'text': tx, 'status': status})
+            asset.status = status
+            asset.save()
         if 'tags' in self.request.POST:
             tags = self.request.POST.get('tags').split(',')
             utags, status = UserAssetTagCollection.objects.get_or_create(asset=asset, user_id=self.request.user.id)
             all_tag = utags.tags.all().values_list('name', flat=True)
             all_tag_list = list(all_tag)
             delete_tags = [i for i in all_tag_list if i not in tags]
-            utags.tags.filter(name__in = delete_tags).delete()
+            utags.tags.filter(name__in=delete_tags).delete()
             for tag in tags:
                 tag_ob, t_status = Tag.objects.get_or_create(name=tag, value=tag)
                 if tag_ob not in utags.tags.all():
@@ -222,28 +213,30 @@ class CollectionView(TemplateView):
         if result2 and not result2.state == 'PENDING':
 
             base_dir = settings.BASE_DIR
-            collection_path  = settings.MEDIA_ROOT+"/"+name.replace(' ', '-')
+            collection_path = settings.MEDIA_ROOT + "/transcribr/" + name.replace(' ', '-')
             os.system('rm -rf {0}'.format(collection_path))
             os.makedirs(collection_path)
-            cmd = 'mv {0}/mss* {1}'.format(base_dir, collection_path)
+            cmd = 'cp -r {0}/* {1}'.format('/concordia_images', collection_path)
             if os.WEXITSTATUS(os.system(cmd)) == 0:
-                c = Collection.objects.create(title=name, slug=name.replace(" ","-"), description=name)
-                count = 0
-                for root, dirs, files in os.walk(collection_path):
-                    for filename in files:
-                        filename = os.path.join(root, filename)
-                        if "mss" in filename:
-                            count += 1
-                            title = '{0} asset {1}'.format(name, count)
-                            media_url = os.path.join(root, filename).replace(settings.MEDIA_ROOT, '')
-                            Asset.objects.create(title=title,
-                                                 slug=title.replace(" ", "-"),
-                                                 description="{0} description".format(title),
-                                                 media_url=media_url,
-                                                 media_type='IMG',
-                                                 collection=c)
-                return redirect('/transcribe/'+name.replace(" ","-"))
-            return render(self.request, self.template_name, {'error': 'yes'})
+                os.system('rm -rf {0}'.format('/concordia_images/*'))
+            c = Collection.objects.create(title=name, slug=name.replace(" ", "-"), description=name)
+            count = 0
+            for root, dirs, files in os.walk(collection_path):
+                for filename in files:
+                    filename = os.path.join(root, filename)
+                    if True:
+                        count += 1
+                        title = '{0} asset {1}'.format(name, count)
+                        media_url = os.path.join(root, filename).replace(settings.MEDIA_ROOT, '')
+                        Asset.objects.create(title=title,
+                                             slug=title.replace(" ", "-"),
+                                             description="{0} description".format(title),
+                                             media_url=media_url,
+                                             media_type='IMG',
+                                             collection=c)
+            # os.system('rm -rf {0}'.format('/concordia_images/*'))
+            return redirect('/transcribe/' + name.replace(" ", "-"))
+        return render(self.request, self.template_name, {'error': 'yes'})
 
 
 class ExportCollectionView(TemplateView):
@@ -255,7 +248,7 @@ class ExportCollectionView(TemplateView):
 
     def get(self, request, *args, **kwargs):
         collection = Collection.objects.get(slug=self.args[0])
-        asset_list = collection.asset_set.all().order_by('id')
+        asset_list = collection.asset_set.all().order_by('title', 'sequence')
         # Create the HttpResponse object with the appropriate CSV header.
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="{0}.csv"'.format(collection.slug)
@@ -274,21 +267,52 @@ class ExportCollectionView(TemplateView):
             else:
                 tags = ""
             row = [collection.title] + [getattr(asset, i) for i in field_names] + [transcription, tags]
-            writer.writerow(row) 
+            writer.writerow(row)
         return response
 
 
 class DeleteCollectionView(TemplateView):
-
     """
     deletes the collection
 
     """
 
     def get(self, request, *args, **kwargs):
+        print("Deleting:", self.args[0])
         collection = Collection.objects.get(slug=self.args[0])
         collection.asset_set.all().delete()
         collection.delete()
-        os.system('rm -rf {0}'.format(settings.MEDIA_ROOT+"/" + collection.slug))
+        os.system('rm -rf {0}'.format(settings.MEDIA_ROOT + "/transcribr/" + collection.slug))
         return redirect('/transcribe/')
 
+
+class ReportCollectionView(TemplateView):
+    """
+    Report the collection
+
+    """
+    template_name = 'transcriptions/report.html'
+
+    def get(self, request, *args, **kwargs):
+        collection = Collection.objects.get(slug=self.args[0])
+        collection.asset_set.all()
+        projects = collection.asset_set.values('title').annotate(total=Count('title'),
+                                                                 in_progress=Count('status', filter=Q(
+                                                                     status__in=['25', '75', '50'])),
+                                                                 complete=Count('status', filter=Q(status='100')),
+                                                                 tags=Count('userassettagcollection__tags',
+                                                                            distinct=True),
+                                                                 contributors=Count('transcription__user_id',
+                                                                                    distinct=True),
+                                                                 not_started=Count('status',
+                                                                                   filter=Q(status='0'))).order_by(
+            'title')
+        paginator = Paginator(projects, ASSETS_PER_PAGE)
+
+        if not self.request.GET.get('page'):
+            page = 1
+        else:
+            page = self.request.GET.get('page')
+
+        projects = paginator.get_page(page)
+        return render(self.request, self.template_name, locals())
