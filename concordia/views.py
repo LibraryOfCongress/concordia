@@ -35,9 +35,9 @@ logger = getLogger(__name__)
 ASSETS_PER_PAGE = 36
 
 
-def transcribr_api(relative_path):
+def concordia_api(relative_path):
     abs_path = '{}/api/v1/{}'.format(
-        Config.Get('transcribr')['NETLOC'],
+        Config.Get('concordia')['NETLOC'],
         relative_path
     )
     logger.debug('Calling API path {}'.format(abs_path))
@@ -89,18 +89,18 @@ class AccountProfileView(LoginRequiredMixin, TemplateView):
         ))
 
 
-class TranscribrView(TemplateView):
+class ConcordiaView(TemplateView):
     template_name = 'transcriptions/home.html'
 
     def get_context_data(self, **kws):
-        response = transcribr_api('collections/')
+        response = concordia_api('collections/')
         return dict(
             super().get_context_data(**kws),
             response=response
         )
 
 
-class TranscribrCollectionView(TemplateView):
+class ConcordiaCollectionView(TemplateView):
     template_name = 'transcriptions/collection.html'
 
     def get_context_data(self, **kws):
@@ -122,7 +122,7 @@ class TranscribrCollectionView(TemplateView):
         )
 
 
-class TranscribrAssetView(TemplateView):
+class ConcordiaAssetView(TemplateView):
     template_name = 'transcriptions/asset.html'
 
     def get_context_data(self, **kws):
@@ -213,7 +213,7 @@ class CollectionView(TemplateView):
         if result2 and not result2.state == 'PENDING':
 
             base_dir = settings.BASE_DIR
-            collection_path = settings.MEDIA_ROOT + "/transcribr/" + name.replace(' ', '-')
+            collection_path = settings.MEDIA_ROOT + "/concordia/" + name.replace(' ', '-')
             os.system('rm -rf {0}'.format(collection_path))
             os.makedirs(collection_path)
             cmd = 'cp -r {0}/* {1}'.format('/concordia_images', collection_path)
@@ -282,7 +282,7 @@ class DeleteCollectionView(TemplateView):
         collection = Collection.objects.get(slug=self.args[0])
         collection.asset_set.all().delete()
         collection.delete()
-        os.system('rm -rf {0}'.format(settings.MEDIA_ROOT + "/transcribr/" + collection.slug))
+        os.system('rm -rf {0}'.format(settings.MEDIA_ROOT + "/concordia/" + collection.slug))
         return redirect('/transcribe/')
 
 

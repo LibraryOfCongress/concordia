@@ -48,6 +48,8 @@ LOGOUT_REDIRECT_URL = '/'
 ROOT_URLCONF = 'concordia.urls'
 STATIC_ROOT = 'static'
 STATIC_URL = '/static/'
+STATICFILES_DIRS = [os.path.join(PROJECT_DIR, 'static'),
+                    os.path.join('/'.join(PROJECT_DIR.split('/')[:-1]), 'concordia/static')]
 STATICFILES_DIRS = [os.path.join(PROJECT_DIR, 'static'), MACHINA_MAIN_STATIC_DIR]
 TEMPLATE_DEBUG = False
 TIME_ZONE = 'UTC'
@@ -91,6 +93,7 @@ INSTALLED_APPS = [
     'haystack',
     'widget_tweaks',
 ] + get_machina_apps()
+
 
 if DEBUG:
     INSTALLED_APPS += ['django_extensions', ]
@@ -227,8 +230,8 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
 }
 
-TRANSCRIBR = dict(
-     netloc=Config.Get('transcribr')['NETLOC'],
+CONCORDIA = dict(
+     netloc=Config.Get('concordia')['NETLOC'],
 )
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
