@@ -84,9 +84,12 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'rest_framework',
-    'importer',
+
     'concordia',
+    'exporter',
     'faq',
+    'importer',
+
     'concordia.experiments.wireframes',
  # Machina related apps:
     'mptt',
