@@ -12,9 +12,9 @@
             <div class="col-3">
 
               <div class="card shadow-regular">
-                <img class="card-img" src="{{ MEDIA_URL }}{{a.media_url }}">
-                <div class="card-img-overlay bg-card-title">
-                  <h5 class="card-title align-text-bottom offwhite-text w-100">{{ c.title }}</h5>
+                <!-- <img class="card-img-top" src="{{ MEDIA_URL }}{{a.media_url }}"> -->
+                <div class="card-body bg-offwhite">
+                  <h5 class="card-title align-text-middle w-100">{{ c.title }}</h5>
                   <h6 class="card-text">{{ c.description }}</h6>
                   <p class="text-center">
                     {% if request.user.is_staff %}

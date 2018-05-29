@@ -398,7 +398,7 @@ a.gray-text:hover {
   display: block;
   height: 1rem;
   width: .375rem;
-  background: rgba(0,97,142,.3);
+  background: rgba(0,97,142,.4);
   top: 50%;
   -webkit-transform: translateY(-50%);
           transform: translateY(-50%);
