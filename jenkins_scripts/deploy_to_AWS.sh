@@ -19,5 +19,8 @@ expect "$ "
 
 sleep 5 
 
+send -- "rm ./migrate_and_user.sh\r"
+expect "$ "
+
 send -- "exit\r"
 
