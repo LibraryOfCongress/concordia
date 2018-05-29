@@ -10,7 +10,14 @@ from django.views.generic import TemplateView
 from django.contrib.auth import views as auth_views
 from django.views.static import serve
 
+from machina.app import board
+
+from machina.app import board
+
+from machina.app import board
+
 from . import views
+from exporter import views as exporter_views
 from . import trans_urls
 from faq.views import FAQView
 
@@ -28,7 +35,7 @@ for key, value in getattr(settings, 'ADMIN_SITE', {}).items():
 
 
 tx_urlpatterns = ([
-    re_path(r'^$', views.TranscribrView.as_view(), name='transcribe'),
+    re_path(r'^$', views.ConcordiaView.as_view(), name='transcribe'),
     re_path(
         r'^create/$',
         views.CollectionView.as_view(),
@@ -36,13 +43,18 @@ tx_urlpatterns = ([
     ),
     re_path(
         r'^([^/]+)/$',
-        views.TranscribrCollectionView.as_view(),
+        views.ConcordiaCollectionView.as_view(),
         name='collection'
     ),
     re_path(
-        r'export/([^/]+)/$',
-        views.ExportCollectionView.as_view(),
-        name='export collection'
+        r'exportCSV/([^/]+)/$',
+        exporter_views.ExportCollectionToCSV.as_view(),
+        name='exportCSV collection'
+    ),
+    re_path(
+        r'exportBagit/([^/]+)/$',
+        exporter_views.ExportCollectionToBagit.as_view(),
+        name='exportBagit collection'
     ),
     re_path(
         r'delete/([^/]+)/$',
@@ -56,7 +68,7 @@ tx_urlpatterns = ([
     ),
     re_path(
         r'^([^/]+)/asset/([^/]+)/$',
-        views.TranscribrAssetView.as_view(),
+        views.ConcordiaAssetView.as_view(),
         name='asset'
     ),
     re_path(
@@ -88,7 +100,10 @@ urlpatterns = [
     re_path(r'^faq/$', FAQView.as_view(), name='faq'),
     re_path(r'^legal/$', TemplateView.as_view(template_name='legal.html'), name='legal'),
 
-    re_path(r'^admin/', admin.site.urls)
+    re_path(r'^admin/', admin.site.urls),
+
+    # Apps
+    re_path(r'^forum/', include(board.urls))
 ]
 
 urlpatterns += [

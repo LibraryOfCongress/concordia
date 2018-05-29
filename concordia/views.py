@@ -28,16 +28,16 @@ sys.path.append(BASE_DIR)
 sys.path.append(os.path.join(BASE_DIR, 'config'))
 from config import Config
 
-from .models import Asset, Collection, Transcription, UserAssetTagCollection, Tag
+from concordia.models import Asset, Collection, Transcription, UserAssetTagCollection, Tag
 
 logger = getLogger(__name__)
 
 ASSETS_PER_PAGE = 36
 
 
-def transcribr_api(relative_path):
+def concordia_api(relative_path):
     abs_path = '{}/api/v1/{}'.format(
-        Config.Get('transcribr')['NETLOC'],
+        Config.Get('concordia')['NETLOC'],
         relative_path
     )
     logger.debug('Calling API path {}'.format(abs_path))
@@ -89,18 +89,18 @@ class AccountProfileView(LoginRequiredMixin, TemplateView):
         ))
 
 
-class TranscribrView(TemplateView):
+class ConcordiaView(TemplateView):
     template_name = 'transcriptions/home.html'
 
     def get_context_data(self, **kws):
-        response = transcribr_api('collections/')
+        response = concordia_api('collections/')
         return dict(
             super().get_context_data(**kws),
             response=response
         )
 
 
-class TranscribrCollectionView(TemplateView):
+class ConcordiaCollectionView(TemplateView):
     template_name = 'transcriptions/collection.html'
 
     def get_context_data(self, **kws):
@@ -122,7 +122,7 @@ class TranscribrCollectionView(TemplateView):
         )
 
 
-class TranscribrAssetView(TemplateView):
+class ConcordiaAssetView(TemplateView):
     template_name = 'transcriptions/asset.html'
 
     def get_context_data(self, **kws):
@@ -213,7 +213,7 @@ class CollectionView(TemplateView):
         if result2 and not result2.state == 'PENDING':
 
             base_dir = settings.BASE_DIR
-            collection_path = settings.MEDIA_ROOT + "/transcribr/" + name.replace(' ', '-')
+            collection_path = settings.MEDIA_ROOT + "/concordia/" + name.replace(' ', '-')
             os.system('rm -rf {0}'.format(collection_path))
             os.makedirs(collection_path)
             cmd = 'cp -r {0}/* {1}'.format('/concordia_images', collection_path)
@@ -239,38 +239,6 @@ class CollectionView(TemplateView):
         return render(self.request, self.template_name, {'error': 'yes'})
 
 
-class ExportCollectionView(TemplateView):
-    """
-    Exports the transcription and tags to csv file
-
-    """
-    template_name = 'transcriptions/collection.html'
-
-    def get(self, request, *args, **kwargs):
-        collection = Collection.objects.get(slug=self.args[0])
-        asset_list = collection.asset_set.all().order_by('title', 'sequence')
-        # Create the HttpResponse object with the appropriate CSV header.
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="{0}.csv"'.format(collection.slug)
-        field_names = ['title', 'description', 'media_url']
-        writer = csv.writer(response)
-        writer.writerow(['Collection', 'Title', 'Description', 'MediaUrl', 'Transcription', 'Tags'])
-        for asset in asset_list:
-            transcription = Transcription.objects.filter(asset=asset, user_id=self.request.user.id)
-            if transcription:
-                transcription = transcription[0].text
-            else:
-                transcription = ""
-            tags = UserAssetTagCollection.objects.filter(asset=asset, user_id=self.request.user.id)
-            if tags:
-                tags = list(tags[0].tags.all().values_list('name', flat=True))
-            else:
-                tags = ""
-            row = [collection.title] + [getattr(asset, i) for i in field_names] + [transcription, tags]
-            writer.writerow(row)
-        return response
-
-
 class DeleteCollectionView(TemplateView):
     """
     deletes the collection
@@ -278,10 +246,11 @@ class DeleteCollectionView(TemplateView):
     """
 
     def get(self, request, *args, **kwargs):
+        print("Deleting:", self.args[0])
         collection = Collection.objects.get(slug=self.args[0])
         collection.asset_set.all().delete()
         collection.delete()
-        os.system('rm -rf {0}'.format(settings.MEDIA_ROOT + "/transcribr/" + collection.slug))
+        os.system('rm -rf {0}'.format(settings.MEDIA_ROOT + "/concordia/" + collection.slug))
         return redirect('/transcribe/')
 
 

@@ -40,6 +40,6 @@ After the images have been downloaded in the docker environment:
 
  1. Copy the images from the docker volume to the running docker app container.
    >>> ubuntu@ip-172-31-94-65:~/concordia$ sudo docker exec -it concordia_app_1 bash
-   >>> root@6eca4f3cd16d:/app# cp -R /concordia_images/mss* transcribr/transcribr/static/transcribr/
+   >>> root@6eca4f3cd16d:/app# cp -R /concordia_images/mss* concordia/static/img/
  2. Run the migrations in the docker app to load Clara Barton Diaries and Branch Rickey collections to concordia.
    >>> root@6eca4f3cd16d:/app# python3 ./manage.py migrate

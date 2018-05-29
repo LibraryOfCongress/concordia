@@ -5,8 +5,8 @@ from rest_framework.documentation import include_docs_urls
 
 from . import trans_views as views
 
-api_title = 'Transcribr API'
-api_description = 'A Web API for transcribing and tagging LoC collections.'
+api_title = 'Concordia API'
+api_description = 'A Web API for transcribing and tagging collections.'
 schema_view = get_schema_view(title=api_title)
 
 
