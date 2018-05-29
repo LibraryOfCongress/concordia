@@ -29,7 +29,7 @@
     },
     "importer"   : {
       "BASE_URL"       :   "",
-      "IMAGES_FOLDER"  :   "/concordia_images/",
+      "IMAGES_FOLDER"  :   "/app/",
       "ITEM_COUNT"     :   "",
       "S3_BUCKET_NAME" :   ""
     }

@@ -1,4 +1,4 @@
-Django>=2,<2.1
+Django<2.1
 psycopg2
 psycopg2-binary
 Pillow
@@ -9,4 +9,7 @@ vendor/django-registration.zip
 Markdown
 coreapi
 confusable-homoglyphs>=3.1.1
+django-machina
+django-haystack
+Whoosh
 -r requirements_importer.txt

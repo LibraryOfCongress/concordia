@@ -28,7 +28,7 @@ sys.path.append(BASE_DIR)
 sys.path.append(os.path.join(BASE_DIR, 'config'))
 from config import Config
 
-from .models import Asset, Collection, Transcription, UserAssetTagCollection, Tag
+from concordia.models import Asset, Collection, Transcription, UserAssetTagCollection, Tag
 
 logger = getLogger(__name__)
 
@@ -278,6 +278,7 @@ class DeleteCollectionView(TemplateView):
     """
 
     def get(self, request, *args, **kwargs):
+        print("Deleting:", self.args[0])
         collection = Collection.objects.get(slug=self.args[0])
         collection.asset_set.all().delete()
         collection.delete()
