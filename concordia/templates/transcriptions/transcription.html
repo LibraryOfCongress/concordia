@@ -22,12 +22,7 @@
     <div class="container-fluid">
       <div class="row">
         <div class="col-12">
-          <h6 class="blue-text"><a href="{% url 'transcriptions:collection' asset.collection.slug %}">{{ asset.collection.title }}</a>{{ asset.title }}</h6>
-          <!-- <h2>{{ asset.title }}</h2>
-          <p><a href="{% url 'transcriptions:collection' asset.collection.slug %}">
-              <i>{{ asset.collection.title }}</i></a></p> -->
-          <!-- <p>{{ asset.description }}</p>
-          <p>Transcription by {{ transcription_user }}</p> -->
+          <h6 class="offwhite-text"><a class="blue-text" href="{% url 'transcriptions:collection' asset.collection.slug %}">{{ asset.collection.title }} ></a>{{ asset.title }}</h6>
             <div class="col-12">
                 <div id="asset-image" class="asset-image">
                     <script>

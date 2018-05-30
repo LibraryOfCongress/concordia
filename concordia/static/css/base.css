@@ -426,3 +426,10 @@ a.gray-text:hover {
     background: rgba(0,97,142,1);
   }
 }
+
+#contribute-box {
+  position: absolute;
+  right: 1rem;
+  bottom: 0;
+  cursor: move;
+}

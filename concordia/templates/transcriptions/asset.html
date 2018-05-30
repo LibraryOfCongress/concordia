@@ -1,11 +1,6 @@
 {% extends "transcriptions/base.html" %} {% load staticfiles %}
 {% block title %}{{ asset.title }}{% endblock title %}
 {% block head_content %}
-    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
-    <script src="https://www.jqueryscript.net/demo/Bootstrap-4-Tag-Input-Plugin-jQuery/tagsinput.js"></script>
-    <script src="{% static "vendor/openseadragon/openseadragon.min.js" %}"></script>
     <style>
         .tab-pane, .asset-image {
             height: 600px;
@@ -15,7 +10,6 @@
             background-color: #eee;
             border: 1px solid #ccc;
         }
-        #nav-tab { margin-bottom: .5em; }
         .tab-pane textarea {
             height: 100%;
             border: 1px solid #ccc;
@@ -120,11 +114,10 @@
                 </script>
             </div>
         </div>
-        </div>
 
-            <div class="col-6 offset-md-6">
+            <div class="col-6 col-md-5 col-lg-6 bg-offwhite shadow-regular" id="contribute-box">
               <nav>
-                  <div class="nav nav-pills" id="nav-tab" role="tablist">
+                  <div class="nav nav-pills" id="contribute-box-tabs" role="tablist">
                       <a class="nav-item nav-link active" id="nav-tx-tab" data-toggle="tab" href="#nav-tx" role="tab" aria-controls="nav-tx" aria-selected="true">Transcription</a>
                       <a class="nav-item nav-link" id="nav-tags-tab" data-toggle="tab" href="#nav-tags" role="tab" aria-controls="nav-tags" aria-selected="false">Tags</a>
                       <a class="nav-item nav-link" id="nav-disc-tab" data-toggle="tab" href="#nav-disc" role="tab" aria-controls="nav-disc" aria-selected="false">Discussion</a>
@@ -220,10 +213,14 @@
                     {% endif %}
                 </form>
             </div>
+          </div>
     </div>
     <script>
     {% if transcription.status %}
       $("#status_id").val({{transcription.status}});
     {% endif %}
     </script>
+    <script src="https://www.jqueryscript.net/demo/Bootstrap-4-Tag-Input-Plugin-jQuery/tagsinput.js"></script>
+    <script src="{% static "vendor/openseadragon/openseadragon.min.js" %}"></script>
+    <script src="{% static "contribute.js" %}"></script>
 {% endblock main_content %}
