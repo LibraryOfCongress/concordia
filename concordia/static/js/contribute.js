@@ -1,3 +1,14 @@
+window.onload = function() {
+  OpenSeadragon({
+      id: 'asset-image',
+      prefixUrl: '{% static "vendor/openseadragon/images/" %}',
+      tileSources: {
+          type: 'image',
+          url: '{{ MEDIA_URL }}{{asset.media_url }}'
+      }
+  })
+};
+
 //Make the DIV element draggagle:
 dragElement(document.getElementById(("contribute-box")));
 
