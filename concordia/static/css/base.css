@@ -438,7 +438,7 @@ a.gray-text:hover {
 }
 
 .contribute-box {
-  height: calc( 50% );
+  height: calc( 50vh );
   position: absolute;
   right: 0;
   bottom: 0;
@@ -446,9 +446,14 @@ a.gray-text:hover {
   z-index: 2;
 }
 
+.tab-content {
+  height: calc( 50vh - ( 56px + 38px ) );
+  overflow-y: scroll;
+}
+
 /* CONTRIBUTE PAGE INLINED STYLES */
 .asset-image {
-    height: calc( 100% - 97px );
+    height: calc( 100vh - 97px );
 
 }
 .asset-image {
@@ -458,8 +463,6 @@ a.gray-text:hover {
 .tab-pane textarea {
     height: 100%;
     border: 1px solid #ccc;
-}
-.tab-content { margin-bottom: .5em;
 }
 /*
 * bootstrap-tagsinput v0.8.0

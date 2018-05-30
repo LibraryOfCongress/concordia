@@ -1,12 +1,5 @@
 $( document ).ready(function() {
-  OpenSeadragon({
-      id: 'asset-image',
-      prefixUrl: '../../{% static "vendor/openseadragon/images/" %}',
-      tileSources: {
-          type: 'image',
-          url: '../../{{ MEDIA_URL }}{{asset.media_url }}'
-      }
-  });
+
 });
 
 //Make the DIV element draggagle:
@@ -40,6 +33,7 @@ function dragElement(elmnt) {
     pos3 = e.clientX;
     pos4 = e.clientY;
     // set the element's new position:
+    // Need if statemements to keep on screen
     elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
     elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
   }
