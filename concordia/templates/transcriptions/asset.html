@@ -4,7 +4,7 @@
 {% block main_content %}
     <div class="container-fluid">
       <div class="row">
-        <div class="col-12 d-flex align-items-middle py-1">
+        <div class="col-12 d-flex align-items-middle py-1 bg-darkest-gray">
           <h6 class="offwhite-text pl-default mb-0"><a class="offwhite-text" href="{% url 'transcriptions:collection' asset.collection.slug %}">{{ asset.collection.title }}</a>  >  {{ asset.title }}</h6>
           <!-- <h2>{{ asset.title }}</h2>
           <p><a href="{% url 'transcriptions:collection' asset.collection.slug %}">
@@ -13,11 +13,11 @@
         </div>
         <!-- <div class="col-6"></div> -->
         <div class="col-12">
-            <div id="asset-image" class="asset-image">
+            <div id="asset-image" class="asset-image bg-offwhite">
             </div>
         </div>
 
-            <div class="col-6 col-md-5 col-lg-6 bg-offwhite shadow-regular rounded contribute-box" id="contribute-box">
+            <div class="col-6 col-md-5 col-lg-6 bg-darkest-gray shadow-regular rounded contribute-box" id="contribute-box">
               <nav class="px-half py-2">
                   <div class="nav nav-pills" id="contribute-box-tabs" role="tablist">
                       <a class="nav-item nav-link active" id="nav-tx-tab" data-toggle="tab" href="#nav-tx" role="tab" aria-controls="nav-tx" aria-selected="true">Transcription</a>
@@ -29,7 +29,7 @@
                     {% csrf_token %}
                     <div class="tab-content" id="nav-tabContent">
                         <div class="tab-pane fade show active" id="nav-tx" role="tabpanel" aria-labelledby="nav-tx-tab">
-                            <textarea class="w-100" name="tx" id="tx" placeholder="Transcription">{{transcription.text}}</textarea>
+                            <textarea class="w-100" name="tx" id="tx" placeholder="Go ahead, start typing. You got this!">{{transcription.text}}</textarea>
                         </div>
                         <div class="tab-pane fade" id="nav-tags" role="tabpanel" aria-labelledby="nav-tag-tab">
                           <input type="text" class="textarea w-100" id="tags"  name="tags" data-role="tagsinput" value="{%for tag in tags %}{{tag}},{% endfor %}">
@@ -101,7 +101,7 @@
 
                     </div>
                     {% if request.user.is_authenticated %}
-                    <p >
+                    <div class="mb-half">
                         <label for="status_id">Transcription Status:</label>
                         <select name="status" id="status_id">
                             <option value="0">0%</option>
@@ -111,7 +111,7 @@
                             <option value="100">100%</option>
                         </select>
                         <input type="submit" class="btn btn-primary" value="Save">
-                    </p>
+                    </div>
                     {% endif %}
                 </form>
             </div>

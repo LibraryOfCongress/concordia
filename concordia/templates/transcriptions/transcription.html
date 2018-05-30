@@ -4,7 +4,7 @@
 {% block main_content %} {% with transcription.asset as asset %}
     <div class="container-fluid">
       <div class="row">
-        <div class="col-12 d-flex align-items-middle py-1">
+        <div class="col-12 d-flex align-items-middle py-1 bg-darkest-gray">
           <h6 class="offwhite-text pl-default mb-0"><a class="offwhite-text " href="{% url 'transcriptions:collection' asset.collection.slug %}">{{ asset.collection.title }} ></a>{{ asset.title }}</h6>
             <div class="col-12">
                 <div id="asset-image" class="asset-image">
