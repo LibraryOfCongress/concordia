@@ -437,7 +437,8 @@ a.gray-text:hover {
   }
 }
 
-#contribute-box {
+.contribute-box {
+  height: calc( 50% );
   position: absolute;
   right: 0;
   bottom: 0;
@@ -446,8 +447,8 @@ a.gray-text:hover {
 }
 
 /* CONTRIBUTE PAGE INLINED STYLES */
-.tab-pane, .asset-image {
-    height: 600px;
+.asset-image {
+    height: calc( 100% - 97px );
 
 }
 .asset-image {
@@ -458,7 +459,8 @@ a.gray-text:hover {
     height: 100%;
     border: 1px solid #ccc;
 }
-.tab-content { margin-bottom: .5em; }
+.tab-content { margin-bottom: .5em;
+}
 /*
 * bootstrap-tagsinput v0.8.0
 *
