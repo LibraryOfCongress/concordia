@@ -81,6 +81,16 @@ blue {
   color : rgba(51,51,51,1); /* #333333 */
 }
 
+a.offwhite-text {
+  color: rgba(250,250,250,1); /* #FAFAFA */
+  text-decoration: underline;
+}
+
+a.offwhite-text:hover {
+  color: rgba(0,97,142,.7); /* #00618E */
+  text-decoration: underline;
+}
+
 a.gray-text:hover {
   color: rgba(0,97,142,1); /* #00618E */
   text-decoration: none;

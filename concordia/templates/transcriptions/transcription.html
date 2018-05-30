@@ -21,11 +21,11 @@
 {% block main_content %} {% with transcription.asset as asset %}
     <div class="container-fluid">
       <div class="row">
-        <div class="col-12">
-          <h6 class="offwhite-text"><a class="blue-text" href="{% url 'transcriptions:collection' asset.collection.slug %}">{{ asset.collection.title }} ></a>{{ asset.title }}</h6>
+        <div class="col-12 d-flex align-items-middle py-1">
+          <h6 class="offwhite-text pl-default mb-0"><a class="offwhite-text " href="{% url 'transcriptions:collection' asset.collection.slug %}">{{ asset.collection.title }} ></a>{{ asset.title }}</h6>
             <div class="col-12">
                 <div id="asset-image" class="asset-image">
-                    <script>
+                    <!-- <script>
                         OpenSeadragon({
                             id: 'asset-image',
                             prefixUrl: '{% static "vendor/openseadragon/images/" %}',
@@ -34,7 +34,7 @@
                                 url: '{% static asset.media_url %}'
                             }
                         });
-                    </script>
+                    </script> -->
                 </div>
             </div>
               <div class="col-6">
@@ -71,4 +71,5 @@
     </div>
 {% endwith %}
 <script src="{% static "vendor/openseadragon/openseadragon.min.js" %}"></script>
+<script src="{% static "js/contribute.js" %}"></script>
 {% endblock main_content %}
