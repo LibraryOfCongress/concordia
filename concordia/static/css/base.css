@@ -446,7 +446,7 @@ a.gray-text:hover {
   z-index: 2;
 }
 
-.tab-content {
+.tab-content, .tab-pane {
   height: calc( 50vh - ( 56px + 38px ) );
   overflow-y: scroll;
 }
