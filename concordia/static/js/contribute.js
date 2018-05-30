@@ -1,10 +1,10 @@
 $( document ).ready(function() {
   OpenSeadragon({
       id: 'asset-image',
-      prefixUrl: '{% static "vendor/openseadragon/images/" %}',
+      prefixUrl: '../../{% static "vendor/openseadragon/images/" %}',
       tileSources: {
           type: 'image',
-          url: '{{ MEDIA_URL }}{{asset.media_url }}'
+          url: '../../{{ MEDIA_URL }}{{asset.media_url }}'
       }
   });
 });
