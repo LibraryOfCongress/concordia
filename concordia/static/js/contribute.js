@@ -44,3 +44,9 @@ function dragElement(elmnt) {
     document.onmousemove = null;
   }
 }
+
+$('#contribute-percent a').click(function(e) {
+var target = e;
+var val = e.closest('li').val();
+$('#status_id').value(val);
+});
