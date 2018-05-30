@@ -1,6 +1,10 @@
 {% extends "transcriptions/base.html" %} {% load staticfiles %}
 {% block title %}{{ asset.title }}{% endblock title %}
-{% block head_content %}{% endblock head_content %}
+{% block head_content %}
+<script src="https://www.jqueryscript.net/demo/Bootstrap-4-Tag-Input-Plugin-jQuery/tagsinput.js"></script>
+<script src="{% static "vendor/openseadragon/openseadragon.min.js" %}"></script>
+<script src="{% static "js/contribute.js" %}"></script>
+{% endblock head_content %}
 {% block main_content %}
     <div class="container-fluid">
       <div class="row">
@@ -132,7 +136,4 @@
       $("#status_id").val({{transcription.status}});
     {% endif %}
     </script>
-    <script src="https://www.jqueryscript.net/demo/Bootstrap-4-Tag-Input-Plugin-jQuery/tagsinput.js"></script>
-    <script src="{% static "vendor/openseadragon/openseadragon.min.js" %}"></script>
-    <script src="{% static "js/contribute.js" %}"></script>
 {% endblock main_content %}
