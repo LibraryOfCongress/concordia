@@ -18,7 +18,7 @@
         </div>
 
             <div class="col-6 col-md-5 col-lg-6 bg-darkest-gray shadow-regular rounded contribute-box" id="contribute-box">
-              <nav class="px-half py-2">
+              <nav class="px-half py-1">
                   <div class="nav nav-pills" id="contribute-box-tabs" role="tablist">
                       <a class="nav-item nav-link active" id="nav-tx-tab" data-toggle="tab" href="#nav-tx" role="tab" aria-controls="nav-tx" aria-selected="true">Transcription</a>
                       <a class="nav-item nav-link" id="nav-tags-tab" data-toggle="tab" href="#nav-tags" role="tab" aria-controls="nav-tags" aria-selected="false">Tags</a>
@@ -101,7 +101,7 @@
 
                     </div>
                     {% if request.user.is_authenticated %}
-                    <div class="mb-half">
+                    <div class="my-2">
                         <label for="status_id">Transcription Status:</label>
                         <select name="status" id="status_id">
                             <option value="0">0%</option>
@@ -111,6 +111,21 @@
                             <option value="100">100%</option>
                         </select>
                         <input type="submit" class="btn btn-primary" value="Save">
+                    </div>
+
+                    <div class="btn-group dropup">
+                      <button type="submit" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Save
+                      </button>
+                      <div class="dropdown-menu">
+                        <select name="status" id="status_id">
+                            <option value="0">0%</option>
+                            <option value="25">25%</option>
+                            <option value="50">50%</option>
+                            <option value="75">75%</option>
+                            <option value="100">100%</option>
+                        </select>
+                      </div>
                     </div>
                     {% endif %}
                 </form>

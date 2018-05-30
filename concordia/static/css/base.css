@@ -230,6 +230,36 @@ a.gray-text:hover {
   margin-left: 1rem;
 }
 
+.margin-quarter, .mxy-quarter {
+  margin: .5rem;
+}
+
+.mx-quarter {
+  margin-right: .5rem;
+  margin-left: .5rem;
+}
+
+.my-quarter {
+  margin-top: .5rem;
+  margin-bottom: .5rem;
+}
+
+.margin-top-quarter, .mt-quarter {
+  margin-top: .5rem;
+}
+
+.margin-right-quarter, .mr-quarter {
+  margin-right: .5rem;
+}
+
+.margin-bottom-quarter, .mb-quarter {
+  margin-bottom: .5rem;
+}
+
+.margin-left-quarter, .ml-quarter {
+  margin-left: .5rem;
+}
+
 .padding-default, .pxy-default {
   padding: 2rem;
 }
@@ -288,6 +318,36 @@ a.gray-text:hover {
 
 .padding-left-half, .pl-half {
   padding-left: 1rem;
+}
+
+.padding-quarter, .pxy-quarter {
+  padding: .5rem;
+}
+
+.px-quarter {
+  padding-right: .5rem;
+  padding-left: .5rem;
+}
+
+.py-quarter {
+  padding-top: .5rem;
+  padding-bottom: .5rem;
+}
+
+.padding-top-quarter, .pt-quarter {
+  padding-top: .5rem;
+}
+
+.padding-right-quarter, .pr-quarter {
+  padding-right: .5rem;
+}
+
+.padding-bottom-quarter, .pb-quarter {
+  padding-bottom: .5rem;
+}
+
+.padding-left-quarter, .pl-quarter {
+  padding-left: .5rem;
 }
 
 .col, .col-1, .col-10, .col-11, .col-12, .col-2, .col-3, .col-4, .col-5, .col-6, .col-7, .col-8, .col-9, .col-auto, .col-lg, .col-lg-1, .col-lg-10, .col-lg-11, .col-lg-12, .col-lg-2, .col-lg-3, .col-lg-4, .col-lg-5, .col-lg-6, .col-lg-7, .col-lg-8, .col-lg-9, .col-lg-auto, .col-md, .col-md-1, .col-md-10, .col-md-11, .col-md-12, .col-md-2, .col-md-3, .col-md-4, .col-md-5, .col-md-6, .col-md-7, .col-md-8, .col-md-9, .col-md-auto, .col-sm, .col-sm-1, .col-sm-10, .col-sm-11, .col-sm-12, .col-sm-2, .col-sm-3, .col-sm-4, .col-sm-5, .col-sm-6, .col-sm-7, .col-sm-8, .col-sm-9, .col-sm-auto, .col-xl, .col-xl-1, .col-xl-10, .col-xl-11, .col-xl-12, .col-xl-2, .col-xl-3, .col-xl-4, .col-xl-5, .col-xl-6, .col-xl-7, .col-xl-8, .col-xl-9, .col-xl-auto {
@@ -459,6 +519,7 @@ a.gray-text:hover {
 .nav-pills .nav-link.active {
   color: rgba(250,250,250,1);
   background-color: rgba(0,97,142,1);
+  text-decoration: none;
 }
 
 .tab-content, .tab-pane {
