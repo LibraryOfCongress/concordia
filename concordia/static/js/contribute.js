@@ -7,7 +7,7 @@ $( document ).ready(function() {
           url: '{{ MEDIA_URL }}{{asset.media_url }}'
       }
   });
-};
+});
 
 //Make the DIV element draggagle:
 dragElement(document.getElementById(("contribute-box")));

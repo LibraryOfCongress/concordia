@@ -1,103 +1,15 @@
 {% extends "transcriptions/base.html" %} {% load staticfiles %}
 {% block title %}{{ asset.title }}{% endblock title %}
-{% block head_content %}
-    <style>
-        .tab-pane, .asset-image {
-            height: 600px;
-
-        }
-        .asset-image {
-            background-color: #eee;
-            border: 1px solid #ccc;
-        }
-        .tab-pane textarea {
-            height: 100%;
-            border: 1px solid #ccc;
-        }
-        .tab-content { margin-bottom: .5em; }
-        /*
- * bootstrap-tagsinput v0.8.0
- *
- */
-
-.bootstrap-tagsinput {
-  background-color: #fff;
-  border: 1px solid #ccc;
-  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
-  display: inline-block;
-  padding: 4px 6px;
-  color: #555;
-  vertical-align: middle;
-  border-radius: 4px;
-  width: 100%;
-  line-height: 22px;
-  cursor: text;
-}
-.bootstrap-tagsinput input {
-  border: none;
-  box-shadow: none;
-  outline: none;
-  background-color: transparent;
-  padding: 0 6px;
-  margin: 0;
-  width: auto;
-  max-width: inherit;
-}
-.bootstrap-tagsinput.form-control input::-moz-placeholder {
-  color: #777;
-  opacity: 1;
-}
-.bootstrap-tagsinput.form-control input:-ms-input-placeholder {
-  color: #777;
-}
-.bootstrap-tagsinput.form-control input::-webkit-input-placeholder {
-  color: #777;
-}
-.bootstrap-tagsinput input:focus {
-  border: none;
-  box-shadow: none;
-}
-.bootstrap-tagsinput .badge {
-  margin-right: 2px;
-  color: white;
-  background-color:#0275d8;
-  padding:5px 8px;border-radius:3px;
-  border:1px solid #01649e
-}
-.bootstrap-tagsinput .badge [data-role="remove"] {
-  margin-left: 8px;
-  cursor: pointer;
-}
-.bootstrap-tagsinput .badge [data-role="remove"]:after {
-  content: "×";
-  padding: 0px 4px;
-  background-color:rgba(0, 0, 0, 0.1);
-  border-radius:50%;
-  font-size:13px
-}
-.bootstrap-tagsinput .badge [data-role="remove"]:hover:after {
-
-  background-color:rgba(0, 0, 0, 0.62);}
-.bootstrap-tagsinput .badge [data-role="remove"]:hover:active {
-  box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
-}
-#nav-tags .bootstrap-tagsinput{
-  height:100%;
-}
-#nav-tags .badge{
-  margin-top: 5px;
-}
-    </style>
-{% endblock head_content %}
+{% block head_content %}{% endblock head_content %}
 {% block main_content %}
     <div class="container-fluid">
       <div class="row">
         <div class="col-12">
-
-          <h2>{{ asset.title }}</h2>
+          <h6 class="offwhite-text"><a class="blue-text" href="{% url 'transcriptions:collection' asset.collection.slug %}">{{ asset.collection.title }} ></a>{{ asset.title }}</h6>
+          <!-- <h2>{{ asset.title }}</h2>
           <p><a href="{% url 'transcriptions:collection' asset.collection.slug %}">
               <i>{{ asset.collection.title }} Collection</i></a></p>
-          <p>{{ asset.description }}</p>
+          <p>{{ asset.description }}</p> -->
         </div>
         <!-- <div class="col-6"></div> -->
         <div class="col-12">
@@ -115,8 +27,8 @@
             </div>
         </div>
 
-            <div class="col-6 col-md-5 col-lg-6 bg-offwhite shadow-regular" id="contribute-box">
-              <nav>
+            <div class="col-6 col-md-5 col-lg-6 bg-offwhite shadow-regular rounded" id="contribute-box">
+              <nav class="px-half py-2">
                   <div class="nav nav-pills" id="contribute-box-tabs" role="tablist">
                       <a class="nav-item nav-link active" id="nav-tx-tab" data-toggle="tab" href="#nav-tx" role="tab" aria-controls="nav-tx" aria-selected="true">Transcription</a>
                       <a class="nav-item nav-link" id="nav-tags-tab" data-toggle="tab" href="#nav-tags" role="tab" aria-controls="nav-tags" aria-selected="false">Tags</a>
