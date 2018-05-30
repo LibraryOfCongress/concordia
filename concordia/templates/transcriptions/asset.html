@@ -9,7 +9,7 @@
     <style>
         .tab-pane, .asset-image {
             height: 600px;
-            
+
         }
         .asset-image {
             background-color: #eee;
@@ -23,7 +23,7 @@
         .tab-content { margin-bottom: .5em; }
         /*
  * bootstrap-tagsinput v0.8.0
- * 
+ *
  */
 
 .bootstrap-tagsinput {
@@ -96,44 +96,45 @@
     </style>
 {% endblock head_content %}
 {% block main_content %}
-    <div class="container">
-        <h2>{{ asset.title }}</h2>
-        <p><a href="{% url 'transcriptions:collection' asset.collection.slug %}">
-            <i>{{ asset.collection.title }} Collection</i></a></p>
-        <p>{{ asset.description }}</p>
-        <div class="row">
-            <div class="col-6"></div>
-            <div class="col-6">
-                <nav>
-                    <div class="nav nav-pills" id="nav-tab" role="tablist">
-                        <a class="nav-item nav-link active" id="nav-tx-tab" data-toggle="tab" href="#nav-tx" role="tab" aria-controls="nav-tx" aria-selected="true">Transcription</a>
-                        <a class="nav-item nav-link" id="nav-tags-tab" data-toggle="tab" href="#nav-tags" role="tab" aria-controls="nav-tags" aria-selected="false">Tags</a>
-                        <a class="nav-item nav-link" id="nav-disc-tab" data-toggle="tab" href="#nav-disc" role="tab" aria-controls="nav-disc" aria-selected="false">Discussion</a>
-                    </div>
-                </nav>
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-12">
+
+          <h2>{{ asset.title }}</h2>
+          <p><a href="{% url 'transcriptions:collection' asset.collection.slug %}">
+              <i>{{ asset.collection.title }} Collection</i></a></p>
+          <p>{{ asset.description }}</p>
+        </div>
+        <!-- <div class="col-6"></div> -->
+        <div class="col-12">
+            <div id="asset-image" class="asset-image">
+                <script>
+                    OpenSeadragon({
+                        id: 'asset-image',
+                        prefixUrl: '{% static "vendor/openseadragon/images/" %}',
+                        tileSources: {
+                            type: 'image',
+                            url: '{{ MEDIA_URL }}{{asset.media_url }}'
+                        }
+                    });
+                </script>
             </div>
         </div>
-        <div class="row">
-            <div class="col-6">
-                <div id="asset-image" class="asset-image">
-                    <script>
-                        OpenSeadragon({
-                            id: 'asset-image',
-                            prefixUrl: '{% static "vendor/openseadragon/images/" %}',
-                            tileSources: {
-                                type: 'image',
-                                url: '{{ MEDIA_URL }}{{asset.media_url }}'
-                            }
-                        });
-                    </script>
-                </div>
-            </div>
-            <div class="col-6">
+        </div>
+
+            <div class="col-6 offset-md-6">
+              <nav>
+                  <div class="nav nav-pills" id="nav-tab" role="tablist">
+                      <a class="nav-item nav-link active" id="nav-tx-tab" data-toggle="tab" href="#nav-tx" role="tab" aria-controls="nav-tx" aria-selected="true">Transcription</a>
+                      <a class="nav-item nav-link" id="nav-tags-tab" data-toggle="tab" href="#nav-tags" role="tab" aria-controls="nav-tags" aria-selected="false">Tags</a>
+                      <a class="nav-item nav-link" id="nav-disc-tab" data-toggle="tab" href="#nav-disc" role="tab" aria-controls="nav-disc" aria-selected="false">Discussion</a>
+                  </div>
+                </nav>
                 <form method="post">
                     {% csrf_token %}
                     <div class="tab-content" id="nav-tabContent">
                         <div class="tab-pane fade show active" id="nav-tx" role="tabpanel" aria-labelledby="nav-tx-tab">
-                            <textarea class="w-100" name="tx" id="tx" placeholder="Transcription">{{transcription.text}}</textarea>        
+                            <textarea class="w-100" name="tx" id="tx" placeholder="Transcription">{{transcription.text}}</textarea>
                         </div>
                         <div class="tab-pane fade" id="nav-tags" role="tabpanel" aria-labelledby="nav-tag-tab">
                           <input type="text" class="textarea w-100" id="tags"  name="tags" data-role="tagsinput" value="{%for tag in tags %}{{tag}},{% endfor %}">
@@ -150,13 +151,13 @@
                                             <h6 class="small comment-meta"><a href="#">admin</a> Today, 2:38</h6>
                                             <div class="comment-body">
                                                 <p>
-                                                    Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod 
+                                                    Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
                                                     <br>
                                                     <a href="" class="text-right small"><i class="ion-reply"></i> Reply</a>
                                                 </p>
                                             </div>
                                         </div>
-                                        
+
                                         <!-- reply is indented -->
                                         <div class="comment-reply col-md-11 offset-md-1 col-sm-10 offset-sm-2">
                                             <div class="row">
@@ -200,7 +201,7 @@
                                     </div>
 
                                 </div>
-                            </div> 
+                            </div>
                         </div>
 
                     </div>
@@ -218,8 +219,7 @@
                     </p>
                     {% endif %}
                 </form>
-            </div>  
-        </div>    
+            </div>
     </div>
     <script>
     {% if transcription.status %}
