@@ -47,6 +47,6 @@ function dragElement(elmnt) {
 
 $('#contribute-percent a').click(function(e) {
 var target = e;
-var val = target.closest('li').val();
+var val = target.val();
 $('#status_id').attr('value',val);
 });
