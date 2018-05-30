@@ -1,10 +1,6 @@
 {% extends "transcriptions/base.html" %} {% load staticfiles %}
 {% block title %}{{ asset.title }}{% endblock title %}
-{% block head_content %}
-<script src="https://www.jqueryscript.net/demo/Bootstrap-4-Tag-Input-Plugin-jQuery/tagsinput.js"></script>
-<script src="{% static "vendor/openseadragon/openseadragon.min.js" %}"></script>
-<script src="{% static "js/contribute.js" %}"></script>
-{% endblock head_content %}
+{% block head_content %}{% endblock head_content %}
 {% block main_content %}
     <div class="container-fluid">
       <div class="row">
@@ -18,16 +14,6 @@
         <!-- <div class="col-6"></div> -->
         <div class="col-12">
             <div id="asset-image" class="asset-image">
-                <script>
-                    OpenSeadragon({
-                        id: 'asset-image',
-                        prefixUrl: '{% static "vendor/openseadragon/images/" %}',
-                        tileSources: {
-                            type: 'image',
-                            url: '{{ MEDIA_URL }}{{asset.media_url }}'
-                        }
-                    });
-                </script>
             </div>
         </div>
 
@@ -131,9 +117,26 @@
             </div>
           </div>
     </div>
-    <script>
-    {% if transcription.status %}
-      $("#status_id").val({{transcription.status}});
-    {% endif %}
-    </script>
+
 {% endblock main_content %}
+
+{% block body_scripts %}
+<script src="https://www.jqueryscript.net/demo/Bootstrap-4-Tag-Input-Plugin-jQuery/tagsinput.js"></script>
+<script src="{% static "vendor/openseadragon/openseadragon.min.js" %}"></script>
+<script src="{% static "js/contribute.js" %}"></script>
+<script>
+    OpenSeadragon({
+        id: 'asset-image',
+        prefixUrl: '{% static "vendor/openseadragon/images/" %}',
+        tileSources: {
+            type: 'image',
+            url: '{{ MEDIA_URL }}{{asset.media_url }}'
+        }
+    });
+</script>
+<script>
+{% if transcription.status %}
+  $("#status_id").val({{transcription.status}});
+{% endif %}
+</script>
+{% endblock body_scripts %}

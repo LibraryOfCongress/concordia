@@ -1,23 +1,6 @@
 {% extends "transcriptions/base.html" %} {% load staticfiles %}
 {% block title %}{{ transcription.asset.title }}{% endblock title %}
-{% block head_content %}
-    <style>
-        .tab-pane, .asset-image {
-            height: 600px;
-
-        }
-        .asset-image {
-            background-color: #eee;
-            border: 1px solid #ccc;
-        }
-        #nav-tab { margin-bottom: .5em; }
-        .tab-pane textarea {
-            height: 100%;
-            border: 1px solid #ccc;
-        }
-        .tab-content { margin-bottom: .5em; }
-    </style>
-{% endblock head_content %}
+{% block head_content %}{% endblock head_content %}
 {% block main_content %} {% with transcription.asset as asset %}
     <div class="container-fluid">
       <div class="row">
@@ -70,6 +53,9 @@
       </div>
     </div>
 {% endwith %}
+{% endblock main_content %}
+
+{% block body_scripts %}
 <script src="{% static "vendor/openseadragon/openseadragon.min.js" %}"></script>
 <script src="{% static "js/contribute.js" %}"></script>
-{% endblock main_content %}
+{% endblock body_scripts %}
