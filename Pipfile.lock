@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "77ce5ac4a64cc765604d3c6d58ffcba473294c34cefa74e81d8f7d96d9f77800"
+            "sha256": "f3d1b5914a43d6d06eb9e1ed6e85a8b02cee3a87c2b4ef9b0fa98dcbb5cc8f64"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -400,6 +400,13 @@
         }
     },
     "develop": {
+        "appdirs": {
+            "hashes": [
+                "sha256:9e5896d1372858f8dd3344faf4e5014d21849c756c8d5701f78f8a103b372d92",
+                "sha256:d8b24664561d0d34ddfaec54636d502d7cea6e29c3eaf68f3df6180863e2166e"
+            ],
+            "version": "==1.4.3"
+        },
         "atomicwrites": {
             "hashes": [
                 "sha256:240831ea22da9ab882b551b31d4225591e5e447a68c5e188db5b89ca1d487585",
@@ -413,6 +420,21 @@
                 "sha256:e0d0eb91441a3b53dab4d9b743eafc1ac44476296a2053b6ca3af0b139faf87b"
             ],
             "version": "==18.1.0"
+        },
+        "black": {
+            "hashes": [
+                "sha256:c956857a831e508e75f0dc754b86982bad98d95c96aae39c20749209b3958ad7",
+                "sha256:fa8d4b58aeb454443d4ef02c9daa615cd9a241f0cbe5f2b38b5965209d26dd1c"
+            ],
+            "index": "pypi",
+            "version": "==18.5b1"
+        },
+        "click": {
+            "hashes": [
+                "sha256:29f99fc6125fbc931b758dc053b3114e55c77a6e4c6c3a2674a2dc986016381d",
+                "sha256:f15516df478d5a56180fbf80e68f206010e6d160fc39fa508b65e035fd75130b"
+            ],
+            "version": "==6.7"
         },
         "coverage": {
             "hashes": [
