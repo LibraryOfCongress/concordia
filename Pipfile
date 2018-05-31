@@ -20,6 +20,7 @@ Pillow = "*"
 Markdown = "*"
 confusable_homoglyphs = ">=3.1.1"
 Whoosh = "*"
+bagit = "1.6.0b3"
 
 [dev-packages]
 invoke = "*"
