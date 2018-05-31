@@ -17,6 +17,7 @@ from machina.app import board
 from machina.app import board
 
 from . import views
+from exporter import views as exporter_views
 from . import trans_urls
 from faq.views import FAQView
 
@@ -46,9 +47,14 @@ tx_urlpatterns = ([
         name='collection'
     ),
     re_path(
-        r'export/([^/]+)/$',
-        views.ExportCollectionView.as_view(),
-        name='export collection'
+        r'exportCSV/([^/]+)/$',
+        exporter_views.ExportCollectionToCSV.as_view(),
+        name='exportCSV collection'
+    ),
+    re_path(
+        r'exportBagit/([^/]+)/$',
+        exporter_views.ExportCollectionToBagit.as_view(),
+        name='exportBagit collection'
     ),
     re_path(
         r'delete/([^/]+)/$',
