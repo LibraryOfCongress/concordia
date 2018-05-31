@@ -10,15 +10,16 @@ RUN apt-get update -qy && apt-get install -qy \
 
 RUN locale-gen en_US.UTF-8
 
-COPY requirements.txt ./
-COPY requirements_devel.txt ./
-COPY requirements_importer.txt ./
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONPATH /app
 ENV LANG en_US.UTF-8
 ENV LC_ALL en_US.UTF-8
+
+RUN pip3 install pipenv
+
+COPY Pipfile* ./
 COPY vendor /vendor
-RUN pip3 install -r requirements_devel.txt
+RUN pipenv install --system
 
 WORKDIR /app
 COPY . .
