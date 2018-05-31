@@ -151,7 +151,7 @@ class Importer:
                                    'actual_height': actual_height})
                 return False
         except IOError:
-            self.logger.error("An exception occurred attempting to verify %s", filename)
+            self.logger.error("An exception occurred attempting to verify %s", filename, exc_info=True)
             return False
 
         return True
