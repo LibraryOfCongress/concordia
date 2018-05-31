@@ -45,8 +45,8 @@ function dragElement(elmnt) {
   }
 }
 
-$('#contribute-percent.dropdown-item').click(function(e) {
+document.getElementById('#contribute-percent.dropdown-item').click(function(e) {
 var target = e;
 var val = target.val();
-$('#status_id').attr('value',val);
+document.getElementById('#status_id').attr('value',val);
 });
