@@ -17,12 +17,8 @@ ENV LC_ALL en_US.UTF-8
 
 RUN pip3 install pipenv
 
-COPY Pipfile* ./
-COPY vendor /vendor
-RUN pipenv install --system
-
 WORKDIR /app
-COPY . .
-RUN pip3 install --no-cache-dir -e .
+COPY . /app
+RUN pipenv install --system --dev --deploy
 
 CMD [ "/bin/bash", "importer/entrypoint.sh" ]
