@@ -40,10 +40,10 @@ def concordia_api(relative_path):
         Config.Get('concordia')['NETLOC'],
         relative_path
     )
-    logger.debug('Calling API path {}'.format(abs_path))
+    logger.debug('Calling API path %s', abs_path)
     data = requests.get(abs_path).json()
 
-    logger.debug('Received {}'.format(data))
+    logger.debug('Received %s', data)
     return data
 
 
