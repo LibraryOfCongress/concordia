@@ -9,7 +9,7 @@ name = "pypi"
 gunicorn = "*"
 djangorestframework = "*"
 celery = "*"
-"7b96e2b" = {file = "file:///Users/cadams/Projects/concordia/vendor/django-registration.zip"}
+"7b96e2b" = {file = "vendor/django-registration.zip"}
 coreapi = "*"
 django-machina = "*"
 django-haystack = "*"
