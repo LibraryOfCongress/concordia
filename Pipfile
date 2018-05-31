@@ -29,6 +29,7 @@ pytest-cov = "*"
 pytest-django = "*"
 pytest-html = "*"
 pycodestyle = "*"
+black = "*"
 
 [requires]
 python_version = "3.6"
