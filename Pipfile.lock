@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "f63ddaefec830793e01bb6bfef32d34d2598e9672428a22e025818826f8798cb"
+            "sha256": "7d0a33443e1c7ecc6f0c5af66fe04a24e91db5135ddbf1a365af0d65c6ebb1e7"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -17,7 +17,7 @@
     },
     "default": {
         "7b96e2b": {
-            "file": "file:///Users/cadams/Projects/concordia/vendor/django-registration.zip"
+            "file": "vendor/django-registration.zip"
         },
         "amqp": {
             "hashes": [
