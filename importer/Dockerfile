@@ -1,8 +1,5 @@
 FROM ubuntu:18.04
 
-ENV PYTHONUNBUFFERED 1
-ENV PYTHONPATH=/app
-
 # Pillow/Imaging: https://pillow.readthedocs.io/en/latest/installation.html#external-libraries
 RUN apt-get update -qy && apt-get install -qy \
     git curl \
@@ -16,6 +13,8 @@ RUN locale-gen en_US.UTF-8
 COPY requirements.txt ./
 COPY requirements_devel.txt ./
 COPY requirements_importer.txt ./
+ENV PYTHONUNBUFFERED 1
+ENV PYTHONPATH /app
 ENV LANG en_US.UTF-8
 ENV LC_ALL en_US.UTF-8
 COPY vendor /vendor
