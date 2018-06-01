@@ -1,7 +1,3 @@
-
-import os
-import sys
-
 from django.conf import settings
 from django.contrib import admin
 from django.urls import re_path, include
@@ -20,15 +16,6 @@ from . import views
 from exporter import views as exporter_views
 from . import trans_urls
 from faq.views import FAQView
-
-PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
-BASE_DIR = os.path.dirname(PROJECT_DIR)
-
-sys.path.append(BASE_DIR)
-
-sys.path.append(os.path.join(BASE_DIR, 'config'))
-from config import Config
-# TODO: use util to import Config
 
 for key, value in getattr(settings, 'ADMIN_SITE', {}).items():
     setattr(admin.site, key, value)
@@ -91,7 +78,7 @@ urlpatterns = [
         name='registration_register',
     ),
     re_path(r'^account/profile/$', views.AccountProfileView.as_view(), name='user-profile'),
-    re_path(r'^account/', include(Config.Get('REGISTRATION_URLS'))),
+    re_path(r'^account/', include('registration.backends.simple.urls')),
     re_path(r'^experiments/(.+)/$', views.ExperimentsView.as_view(), name='experiments'),
     re_path(r'^wireframes/', include('concordia.experiments.wireframes.urls')),
 

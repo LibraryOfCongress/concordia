@@ -14,7 +14,3 @@ python manage.py test concordia.tests.test_view.ViewTest1.test_addition  - runs 
 
 Regarding django TestCases, since these tests create a test database, the docker container with the db must be running.
 This is run as "docker-compose up db"
-
-config.json
-
-To run the tests, set the config-optional-override.json mode value to "unittest"
