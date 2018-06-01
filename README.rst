@@ -15,6 +15,7 @@ Running Concordia
 
     $ git clone https://github.com/LibraryOfCongress/concordia.git
     $ cd concordia
+    $ cp env.ini_template env.ini
     $ docker-compose up
 
 Browse to `localhost <http://localhost>`_
@@ -36,6 +37,7 @@ Instead of doing ``docker-compose up`` as above, instead do the following::
 
     $ docker-compose up -d db
     $ docker-compose up -d rabbit
+    $ cp env-devel.ini_template env.ini
 
 This will keep our database in its container for convenience.
 
