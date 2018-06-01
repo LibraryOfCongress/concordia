@@ -9,7 +9,7 @@ ADMIN_SITE_TITLE = Concordia
 DB_ENGINE = django.db.backends.postgresql_psycopg2
 
 # ENV var: DJANGO_DB_HOST
-DB_HOST = db
+DB_HOST = localhost
 
 # ENV var: DJANGO_DB_NAME
 DB_NAME = concordia
