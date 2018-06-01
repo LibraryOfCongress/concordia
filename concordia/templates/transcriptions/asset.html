@@ -122,9 +122,7 @@
                             prefixUrl: '{% static "vendor/openseadragon/images/" %}',
                             tileSources: {
                                 type: 'image',
-                                url: '{{ MEDIA_URL }}{{ asset.media_url_text }}'
-                                {# TODO: Temp work around to account for test data with externaly hosted images #}
-                                {#url: '{{ MEDIA_URL }}{{ asset.media_url }}'#}
+                                url: '{{ MEDIA_URL }}{{ asset.media_url }}'
                             }
                         });
                     </script>
