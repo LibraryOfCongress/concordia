@@ -1,3 +1,5 @@
+#!/bin/bash
+
 mkdir -p /app/logs
 touch /app/logs/concordia.log
 
