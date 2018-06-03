@@ -67,8 +67,8 @@ class ExportCollectionToBagit(TemplateView):
             asset_folder = '%s/%s' % (collection_folder, asset.slug)
             # Create asset folders
             os.mkdir(asset_folder)
-            src_folder = asset_folder.replace('exporter', 'transcribr')
-            src_name = asset.media_url_text.rsplit('/')[-1]
+            src_folder = asset_folder.replace('exporter', 'concordia')
+            src_name = asset.media_url.rsplit('/')[-1]
             src = '%s/%s' % (src_folder, src_name)
             dest = '%s/%s' % (asset_folder, src_name)
             print(src)
