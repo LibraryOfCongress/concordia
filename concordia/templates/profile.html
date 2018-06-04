@@ -1,8 +1,5 @@
 {% extends "base.html" %}
 {% block main_content %}
-{{ form.errors }}
-{{ form.non_field_errors }}
-
 <link href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
 <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/js/bootstrap.min.js"></script>
 <script src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
@@ -42,6 +39,7 @@
    <div class="row">
       <div class="container">
          <form class="form-horizontal" action="/account/profile/" method="POST" enctype="multipart/form-data">{% csrf_token %}
+         <span>{{ form.non_field_errors }}</span>
          <div class="col-sm-3">
             <div class="span6">
                <div class="area">
@@ -71,6 +69,7 @@
                   <div class="col-md-4">
                      <div class="input-group">
                         <input id="{{form.username.id_for_label}}" name="{{form.username.html_name}}" value="{{form.username.value}}" type="text" class="form-control-plaintext" readonly="readonly">
+                         <span>{{ form.username.errors }}</span>
                      </div>
                   </div>
                </div>
@@ -116,38 +115,6 @@
                     </div>
                   </div>
                </div> 
-              <script> 
-      $(".password-section").hide();        
-   $("#toggle_password_section").click(function(e){
-      
-    e.preventDefault()
-    if($(".password-section").css('display') == 'none'){
-      $(".password-section").show();
-      $(this).hide();
-      $('.edit .d-none').removeClass('d-none')
-    } else {
-      $(".password-section").hide();
-      $('.edit .d-none').removeClass('d-none')
-    }
-})
-
-    document.getElementById('toggle_edit_section').onclick = function() {
-        $('.form-control-plaintext').addClass('form-control').removeClass('form-control-plaintext')
-        $('.edit .d-none').removeClass('d-none')
-        document.getElementById('id_first_name').removeAttribute('readonly');
-	document.getElementById('id_username').removeAttribute('readonly');
-	document.getElementById('id_email').removeAttribute('readonly');
-	
-    };
-    
-    $('#myfile').change(function(){
-      $('.edit .d-none').removeClass('d-none')
-    });
-              
-               </script>
-               
-
-               
                <div class="form-group">
                   <div class="col-md-4 col-md-offset-2">
                      <div class="input-group edit">
@@ -204,7 +171,38 @@
       margin-top: 5px;
    }
 
-}
 </style>
+              <script>
+      $(".password-section").hide();
+   $("#toggle_password_section").click(function(e){
+
+    e.preventDefault()
+    if($(".password-section").css('display') == 'none'){
+      $(".password-section").show();
+      $(this).hide();
+      $('.edit .d-none').removeClass('d-none')
+    } else {
+      $(".password-section").hide();
+      $('.edit .d-none').removeClass('d-none')
+    }
+})
+
+    document.getElementById('toggle_edit_section').onclick = function() {
+        $('.form-control-plaintext').addClass('form-control').removeClass('form-control-plaintext')
+        $('.edit .d-none').removeClass('d-none')
+        document.getElementById('id_first_name').removeAttribute('readonly');
+        document.getElementById('id_username').removeAttribute('readonly');
+        document.getElementById('id_email').removeAttribute('readonly');
+
+    };
+
+    $('#myfile').change(function(){
+      $('.edit .d-none').removeClass('d-none')
+    });
+    {% if form.errors %}
+      $("#toggle_edit_section").click()
+    {% endif %}
+
+               </script>
 
 {% endblock main_content %}

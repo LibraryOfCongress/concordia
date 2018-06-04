@@ -29,7 +29,7 @@ ALLOWED_HOSTS = ['*'] # TODO: place this value in config.json
 
 if Config.mode == "production":
     # TODO: production we can not have DEBUG = True
-    DEBUG = True
+    DEBUG = False
     # TODO: For final deployment to production, when we are running https, uncomment this next line
     #    CSRF_COOKIE_SECURE = True
 else:
@@ -240,3 +240,25 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 LOGIN_URL='/account/login/'
+
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {
+            'min_length': 8,
+        }
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    },
+    {
+        'NAME': 'concordia.validators.complexity'
+    }
+]
+

@@ -67,6 +67,8 @@ class AccountProfileView(LoginRequiredMixin, TemplateView):
             if 'myfile' in self.request.FILES:
                 myfile = self.request.FILES['myfile']
                 profile, created = UserProfile.objects.update_or_create(user=obj, defaults={'myfile': myfile})
+        else:
+            return render(self.request, self.template_name, locals())
         return redirect(reverse('user-profile'))
 
     def get_context_data(self, **kws):
@@ -235,6 +237,9 @@ class CollectionView(TemplateView):
                                              media_type='IMG',
                                              collection=c)
             # os.system('rm -rf {0}'.format('/concordia_images/*'))
+            c.is_active=1
+            c.save()
+
             return redirect('/transcribe/' + name.replace(" ", "-"))
         return render(self.request, self.template_name, {'error': 'yes'})
 
