@@ -59,20 +59,21 @@ class ExportCollectionToBagit(TemplateView):
 
         ## Create temp exporter folder structure for bagit
         collection_folder = '%s/exporter/%s' % (settings.MEDIA_ROOT, collection.slug)
-        print(collection_folder)
+
 
         # Create collection folder
         os.mkdir(collection_folder)
         for asset in asset_list:
             asset_folder = '%s/%s' % (collection_folder, asset.slug)
+
             # Create asset folders
             os.mkdir(asset_folder)
+
             src_folder = asset_folder.replace('exporter', 'concordia')
             src_name = asset.media_url.rsplit('/')[-1]
             src = '%s/%s' % (src_folder, src_name)
             dest = '%s/%s' % (asset_folder, src_name)
-            print(src)
-            print(dest)
+
             # Copy assest image file into asset folder
             copyfile(src, dest)
 
