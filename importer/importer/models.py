@@ -1,19 +1,21 @@
 from __future__ import absolute_import, unicode_literals
-import requests
+
+import logging
 import os
 import sys
 from urllib.parse import urlparse
+
 import boto3
 import botocore
+import requests
 from PIL import Image
-import logging
 
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(PROJECT_DIR)
 
 sys.path.append(BASE_DIR)
 
-sys.path.append(os.path.join(BASE_DIR, 'config'))
+sys.path.append(os.path.join(BASE_DIR, "config"))
 from config import Config
 
 
@@ -22,10 +24,10 @@ from config import Config
 
 class Importer:
     # Config loaded from Django settings
-    base_url = ''
+    base_url = ""
     item_count = 0
-    images_folder = ''
-    s3_bucket_name = ''
+    images_folder = ""
+    s3_bucket_name = ""
 
     # Constants
     MIME_TYPE = "image/jpeg"
@@ -39,10 +41,12 @@ class Importer:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
 
-        self.base_url = Config.Get('importer')['BASE_URL']
+        self.base_url = Config.Get("importer")["BASE_URL"]
         self.item_count = 10  # Config.Get('importer')['ITEM_COUNT']
-        self.images_folder = '/concordia_images'  # Config.Get('importer')['IMAGES_FOLDER']
-        self.s3_bucket_name = Config.Get('importer')['S3_BUCKET_NAME']
+        self.images_folder = (
+            "/concordia_images"
+        )  # Config.Get('importer')['IMAGES_FOLDER']
+        self.s3_bucket_name = Config.Get("importer")["S3_BUCKET_NAME"]
 
     def main(self):
         self.get_and_save_images(self.base_url)
@@ -81,12 +85,15 @@ class Importer:
         actual_item_count = len(os.listdir(self.images_folder))
 
         if actual_item_count < int(self.item_count):
-            self.logger.error("Expected item count %(item_count)d but actual item count of "
-                              "%(images_folder)s is %(actual_item_count)d",
-                              {'item_count': self.item_count,
-                               'images_folder': self.images_folder,
-                               'actual_item_count': actual_item_count}
-                              )
+            self.logger.error(
+                "Expected item count %(item_count)d but actual item count of "
+                "%(images_folder)s is %(actual_item_count)d",
+                {
+                    "item_count": self.item_count,
+                    "images_folder": self.images_folder,
+                    "actual_item_count": actual_item_count,
+                },
+            )
             return False
         else:
             return True
@@ -97,16 +104,21 @@ class Importer:
         expected_image_count = len(image_files)
         actual_image_count = len(os.listdir(os.path.join(self.images_folder, item_id)))
         if expected_image_count != actual_image_count:
-            self.logger.error("Item %(item_id)s is expected to have %(expected_image_count)d images "
-                              "but actually has %(actual_image_count)d images",
-                              {'item_id': item_id,
-                               'expected_image_count': expected_image_count,
-                               'actual_image_count': actual_image_count}
-                              )
+            self.logger.error(
+                "Item %(item_id)s is expected to have %(expected_image_count)d images "
+                "but actually has %(actual_image_count)d images",
+                {
+                    "item_id": item_id,
+                    "expected_image_count": expected_image_count,
+                    "actual_image_count": actual_image_count,
+                },
+            )
             return False
         else:
-            self.logger.info("Item %(item_id)s has the expected number of %(image_count)d images",
-                             {'item_id': item_id, 'image_count': actual_image_count})
+            self.logger.info(
+                "Item %(item_id)s has the expected number of %(image_count)d images",
+                {"item_id": item_id, "image_count": actual_image_count},
+            )
             return True
 
     @staticmethod
@@ -121,37 +133,53 @@ class Importer:
         try:
             image_file = Image.open(filename)
             actual_width, actual_height = image_file.size
-            self.logger.debug("Actual width and height of %(filename)s are %(width)d and %(height)d respectively",
-                              {'filename': filename,
-                               'width': actual_width,
-                               'height': actual_height
-                               })
+            self.logger.debug(
+                "Actual width and height of %(filename)s are %(width)d and %(height)d respectively",
+                {"filename": filename, "width": actual_width, "height": actual_height},
+            )
 
             image_file.verify()
             self.logger.debug("Completed verification of %s", filename)
 
             # check image width and height and verify that it matches the expected sizes
-            expected_width = self.collection_data[identifier]["image_sizes"][image_number]["width"]
-            expected_height = self.collection_data[identifier]["image_sizes"][image_number]["height"]
-            self.logger.debug("Expected width and height of %(filename)s are %(width)d and %(height)d respectively",
-                              {
-                                  'filename': filename,
-                                  'width': expected_width,
-                                  'height': expected_height
-                              })
+            expected_width = self.collection_data[identifier]["image_sizes"][
+                image_number
+            ]["width"]
+            expected_height = self.collection_data[identifier]["image_sizes"][
+                image_number
+            ]["height"]
+            self.logger.debug(
+                "Expected width and height of %(filename)s are %(width)d and %(height)d respectively",
+                {
+                    "filename": filename,
+                    "width": expected_width,
+                    "height": expected_height,
+                },
+            )
 
-            if actual_width != expected_width and abs(actual_width - expected_width) > 1:
-                self.logger.error("Expected width of %(width)d but actual image width is %(actual_width)d",
-                    {'width': expected_width, 'actual_width': actual_width})
+            if (
+                actual_width != expected_width
+                and abs(actual_width - expected_width) > 1
+            ):
+                self.logger.error(
+                    "Expected width of %(width)d but actual image width is %(actual_width)d",
+                    {"width": expected_width, "actual_width": actual_width},
+                )
                 return False
 
-            if actual_height != expected_height and abs(actual_width - expected_width) > 1:
-                self.logger.error("Expected height of %(height)d but actual image height is %(actual_height)d",
-                                  {'height': expected_height,
-                                   'actual_height': actual_height})
+            if (
+                actual_height != expected_height
+                and abs(actual_width - expected_width) > 1
+            ):
+                self.logger.error(
+                    "Expected height of %(height)d but actual image height is %(actual_height)d",
+                    {"height": expected_height, "actual_height": actual_height},
+                )
                 return False
         except IOError:
-            self.logger.error("An exception occurred attempting to verify %s", filename, exc_info=True)
+            self.logger.error(
+                "An exception occurred attempting to verify %s", filename, exc_info=True
+            )
             return False
 
         return True
@@ -163,10 +191,14 @@ class Importer:
             image_url = image
             self.logger.info("Requesting %s", image_url)
             image_response = requests.get(image_url, stream=True)
-            with open(filename, 'wb') as fd:
-                for chunk in image_response.iter_content(chunk_size=self.IMAGE_CHUNK_SIZE):
+            with open(filename, "wb") as fd:
+                for chunk in image_response.iter_content(
+                    chunk_size=self.IMAGE_CHUNK_SIZE
+                ):
                     fd.write(chunk)
-                    self.logger.debug("Writing another %d size chunk", self.IMAGE_CHUNK_SIZE)
+                    self.logger.debug(
+                        "Writing another %d size chunk", self.IMAGE_CHUNK_SIZE
+                    )
 
             self.logger.info("Finished writing the image file %s", filename)
 
@@ -176,19 +208,23 @@ class Importer:
                 image_stats = os.stat(filename)
                 size_on_disk = image_stats.st_size
                 if not self.check_image_file_on_s3(filename, size_on_disk):
-                    s3 = boto3.client('s3')
+                    s3 = boto3.client("s3")
                     # TODO: If the s3 bucket doesn't exist yet, try to create it
                     # TODO: Queue the S3 uploads so they can occur asynchronously
                     s3.upload_file(filename, self.s3_bucket_name, filename)
-                    self.logger.info("Uploaded %(filename)s to %(bucket_name)s",
-                                     {'filename': filename, 'bucket_name': self.s3_bucket_name})
+                    self.logger.info(
+                        "Uploaded %(filename)s to %(bucket_name)s",
+                        {"filename": filename, "bucket_name": self.s3_bucket_name},
+                    )
                 else:
-                    self.logger.info("File %(filename)s with size %(size_on_disk)d already exists in s3 bucket",
-                                     {'filename': filename,
-                                      'size_on_disk': size_on_disk}
-                                     )
+                    self.logger.info(
+                        "File %(filename)s with size %(size_on_disk)d already exists in s3 bucket",
+                        {"filename": filename, "size_on_disk": size_on_disk},
+                    )
             else:
-                self.logger.debug("Skipping S3 upload since bucket name is not configured")
+                self.logger.debug(
+                    "Skipping S3 upload since bucket name is not configured"
+                )
 
         else:
             os.remove(filename)
@@ -196,7 +232,7 @@ class Importer:
 
     def check_image_file_on_s3(self, filename, expected_size):
         if self.s3_bucket_name:
-            s3 = boto3.resource('s3')
+            s3 = boto3.resource("s3")
             try:
                 object_summary = s3.ObjectSummary(self.s3_bucket_name, filename)
                 if object_summary.size == expected_size:
@@ -231,8 +267,10 @@ class Importer:
 
         image_files = self.get_item_image_files(item_url)
         # save the number of files / assets for this item
-        self.logger.info("Item %(item_id)s has %(image_count)d images",
-                         {'item_id': item_id, 'image_count': len(image_files)})
+        self.logger.info(
+            "Item %(item_id)s has %(image_count)d images",
+            {"item_id": item_id, "image_count": len(image_files)},
+        )
         self.collection_data[item_id]["size"] = len(image_files)
         self.collection_data[item_id]["item_url"] = item_url
         self.collection_data[item_id]["image_sizes"] = {}
@@ -257,8 +295,12 @@ class Importer:
 
             self.collection_data[item_id]["image_urls"][counter] = jpeg_image_url
             self.collection_data[item_id]["image_sizes"][counter] = {}
-            self.collection_data[item_id]["image_sizes"][counter]["width"] = greatest_width
-            self.collection_data[item_id]["image_sizes"][counter]["height"] = asset_height
+            self.collection_data[item_id]["image_sizes"][counter][
+                "width"
+            ] = greatest_width
+            self.collection_data[item_id]["image_sizes"][counter][
+                "height"
+            ] = asset_height
 
             # create a filename that's the image number
             filename = "{0}.jpg".format(counter)
@@ -269,13 +311,15 @@ class Importer:
         # check whether the folder contains the number of items it should
         actual_item_count = len(os.listdir(destination_path))
         if self.collection_data[item_id]["size"] != actual_item_count:
-            self.logger.error("Should have %(expected_count)d images for item %(item_id)s but "
-                              "instead have %(actual_count)d images",
-                              {'expected_count': self.collection_data[item_id]["size"],
-                               'item_id': item_id,
-                               'actual_count': actual_item_count
-                               }
-                              )
+            self.logger.error(
+                "Should have %(expected_count)d images for item %(item_id)s but "
+                "instead have %(actual_count)d images",
+                {
+                    "expected_count": self.collection_data[item_id]["size"],
+                    "item_id": item_id,
+                    "actual_count": actual_item_count,
+                },
+            )
 
     def get_and_save_images(self, results_url):
         """
@@ -284,19 +328,24 @@ class Importer:
 
         Page through the collection result set
         """
-        params = {"fo": "json", "c": self.COLLECTION_PAGINATION, "at": "results,pagination"}
+        params = {
+            "fo": "json",
+            "c": self.COLLECTION_PAGINATION,
+            "at": "results,pagination",
+        }
         call = requests.get(results_url, params=params)
         data = call.json()
-        results = data['results']
+        results = data["results"]
         for result in results:
             # Don't try to get images from the collection-level result or web page results
-            if "collection" not in result.get("original_format") \
-                    and "web page" not in result.get("original_format"):
+            if "collection" not in result.get(
+                "original_format"
+            ) and "web page" not in result.get("original_format"):
 
                 # All results should have an ID and an image_url
                 if result.get("image_url") and result.get("id"):
-                    identifier = urlparse(result["id"])[2].rstrip('/')
-                    identifier = identifier.split('/')[-1]
+                    identifier = urlparse(result["id"])[2].rstrip("/")
+                    identifier = identifier.split("/")[-1]
                     self.get_item_images(identifier)
 
         # Recurse through the next page

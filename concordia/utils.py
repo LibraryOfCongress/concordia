@@ -1,7 +1,8 @@
 # TODO: include standard copyright header
 
-import sys
 import os
+import sys
+
 
 def import_Config(path=None):
     PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -9,5 +10,5 @@ def import_Config(path=None):
 
     sys.path.append(BASE_DIR)
 
-    sys.path.append(os.path.join(BASE_DIR, 'config'))
+    sys.path.append(os.path.join(BASE_DIR, "config"))
     from config import Config

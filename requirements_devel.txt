@@ -6,3 +6,5 @@ pytest-cov
 pytest-django
 pytest-html
 pycodestyle
+black
+isort
