@@ -12,19 +12,21 @@ from . import models
 logger = getLogger(__name__)
 
 
-@api_view(['GET'])
+@api_view(["GET"])
 def api_root(request, format=None):
-    return Response({
-        'collections': reverse('collection-list', request=request, format=format),
-        # 'collection': reverse('collection-detail', request=request, format=format),
-    })
+    return Response(
+        {
+            "collections": reverse("collection-list", request=request, format=format),
+            # 'collection': reverse('collection-detail', request=request, format=format),
+        }
+    )
 
 
 class CollectionList(viewsets.ModelViewSet):
-    queryset = models.Collection.objects.order_by('title')
+    queryset = models.Collection.objects.order_by("title")
     serializer_class = serializers.CollectionListSerializer
 
 
 class CollectionDetail(viewsets.ModelViewSet):
-    queryset = models.Collection.objects.order_by('title')
+    queryset = models.Collection.objects.order_by("title")
     serializer_class = serializers.CollectionDetailSerializer

@@ -12,6 +12,7 @@ sys.path.append(os.path.join(scriptDir, "../../config"))
 
 
 from config import Config
+
 # TODO: use util to import Config
 
 
@@ -38,7 +39,7 @@ class ConfigTest(unittest.TestCase):
         database_port = Config.Get("database")["port"]
 
         # Assert
-        self.assertEqual(database_port, '5432')
+        self.assertEqual(database_port, "5432")
 
     def xtest_get_alternate_file_path(self):
         """
@@ -49,8 +50,7 @@ class ConfigTest(unittest.TestCase):
         # Arrange
 
         # save exisitng config.json
-        copyfile('../../config/config.json.default', 'config.jsonTMP')
-
+        copyfile("../../config/config.json.default", "config.jsonTMP")
 
         # Create alternate config.json
         with open("config-alternate.json", "w") as alternate_file:
@@ -58,10 +58,10 @@ class ConfigTest(unittest.TestCase):
 
         # Act
         Config.init("config-alternate.json")
-        log_level = Config.Get('logLevel')
+        log_level = Config.Get("logLevel")
 
         # Assert
-        self.assertEqual(log_level, 'ALTERNATE')
+        self.assertEqual(log_level, "ALTERNATE")
 
     def test_get_bad_lookup(self):
         """
@@ -77,7 +77,7 @@ class ConfigTest(unittest.TestCase):
             database_port = Config.Get("blah")
 
         # Asset
-        self.assertTrue('Missing config key blah' in context.exception.args)
+        self.assertTrue("Missing config key blah" in context.exception.args)
 
     def test_get_mode(self):
         """
@@ -93,7 +93,7 @@ class ConfigTest(unittest.TestCase):
         mode = Config.GetOverrideMode()
 
         # Assert
-        self.assertEqual(mode, 'production')
+        self.assertEqual(mode, "production")
 
     def test_set_value(self):
         """
@@ -106,11 +106,11 @@ class ConfigTest(unittest.TestCase):
         Config.SetMode("production")
 
         # Act
-        Config.Set('foo', 'bar')
-        foo_value = Config.Get('foo')
+        Config.Set("foo", "bar")
+        foo_value = Config.Get("foo")
 
         # Assert
-        self.assertEqual(foo_value, 'bar')
+        self.assertEqual(foo_value, "bar")
 
     def test_get_with_mode(self):
         """
@@ -123,7 +123,7 @@ class ConfigTest(unittest.TestCase):
         Config.SetMode("mac")
 
         # Act
-        port = Config.GetMode('logLevel', 'production')
+        port = Config.GetMode("logLevel", "production")
 
         # Assert
-        self.assertEqual(port, 'INFO')
+        self.assertEqual(port, "INFO")

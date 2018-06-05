@@ -7,104 +7,249 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('concordia', '0001_initial'),
-    ]
+    dependencies = [("concordia", "0001_initial")]
 
     operations = [
         migrations.CreateModel(
-            name='Asset',
+            name="Asset",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('title', models.CharField(max_length=100)),
-                ('slug', models.SlugField(max_length=100)),
-                ('description', models.TextField(blank=True)),
-                ('media_url', models.URLField(max_length=255)),
-                ('media_type', models.CharField(choices=[('IMG', 'Image'), ('AUD', 'Audio'), ('VID', 'Video')], db_index=True, max_length=4)),
-                ('sequence', models.PositiveIntegerField(default=1)),
-                ('metadata', django.contrib.postgres.fields.jsonb.JSONField(default=dict)),
-                ('status', models.CharField(choices=[('0', '0%'), ('25', '25%'), ('50', '50%'), ('75', '75%'), ('100', '100%'), ('DONE', 'Complete')], default='0', max_length=4)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("title", models.CharField(max_length=100)),
+                ("slug", models.SlugField(max_length=100)),
+                ("description", models.TextField(blank=True)),
+                ("media_url", models.URLField(max_length=255)),
+                (
+                    "media_type",
+                    models.CharField(
+                        choices=[("IMG", "Image"), ("AUD", "Audio"), ("VID", "Video")],
+                        db_index=True,
+                        max_length=4,
+                    ),
+                ),
+                ("sequence", models.PositiveIntegerField(default=1)),
+                (
+                    "metadata",
+                    django.contrib.postgres.fields.jsonb.JSONField(default=dict),
+                ),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("0", "0%"),
+                            ("25", "25%"),
+                            ("50", "50%"),
+                            ("75", "75%"),
+                            ("100", "100%"),
+                            ("DONE", "Complete"),
+                        ],
+                        default="0",
+                        max_length=4,
+                    ),
+                ),
             ],
-            options={
-                'ordering': ['title', 'sequence'],
-            },
+            options={"ordering": ["title", "sequence"]},
         ),
         migrations.CreateModel(
-            name='Collection',
+            name="Collection",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('title', models.CharField(max_length=50)),
-                ('slug', models.SlugField(unique=True)),
-                ('description', models.TextField(blank=True)),
-                ('start_date', models.DateTimeField(blank=True, null=True)),
-                ('end_date', models.DateTimeField(blank=True, null=True)),
-                ('metadata', django.contrib.postgres.fields.jsonb.JSONField(default=dict)),
-                ('status', models.CharField(choices=[('0', '0%'), ('25', '25%'), ('50', '50%'), ('75', '75%'), ('100', '100%'), ('DONE', 'Complete')], default='0', max_length=4)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("title", models.CharField(max_length=50)),
+                ("slug", models.SlugField(unique=True)),
+                ("description", models.TextField(blank=True)),
+                ("start_date", models.DateTimeField(blank=True, null=True)),
+                ("end_date", models.DateTimeField(blank=True, null=True)),
+                (
+                    "metadata",
+                    django.contrib.postgres.fields.jsonb.JSONField(default=dict),
+                ),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("0", "0%"),
+                            ("25", "25%"),
+                            ("50", "50%"),
+                            ("75", "75%"),
+                            ("100", "100%"),
+                            ("DONE", "Complete"),
+                        ],
+                        default="0",
+                        max_length=4,
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='Subcollection',
+            name="Subcollection",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('title', models.CharField(max_length=50)),
-                ('slug', models.SlugField()),
-                ('category', models.CharField(blank=True, max_length=12)),
-                ('metadata', django.contrib.postgres.fields.jsonb.JSONField(default=dict)),
-                ('status', models.CharField(choices=[('0', '0%'), ('25', '25%'), ('50', '50%'), ('75', '75%'), ('100', '100%'), ('DONE', 'Complete')], default='0', max_length=4)),
-                ('collection', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='concordia.Collection')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("title", models.CharField(max_length=50)),
+                ("slug", models.SlugField()),
+                ("category", models.CharField(blank=True, max_length=12)),
+                (
+                    "metadata",
+                    django.contrib.postgres.fields.jsonb.JSONField(default=dict),
+                ),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("0", "0%"),
+                            ("25", "25%"),
+                            ("50", "50%"),
+                            ("75", "75%"),
+                            ("100", "100%"),
+                            ("DONE", "Complete"),
+                        ],
+                        default="0",
+                        max_length=4,
+                    ),
+                ),
+                (
+                    "collection",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="concordia.Collection",
+                    ),
+                ),
             ],
-            options={
-                'ordering': ['title'],
-            },
+            options={"ordering": ["title"]},
         ),
         migrations.CreateModel(
-            name='Tag',
+            name="Tag",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=50, unique=True)),
-                ('value', models.CharField(max_length=50, unique=True)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=50, unique=True)),
+                ("value", models.CharField(max_length=50, unique=True)),
             ],
         ),
         migrations.CreateModel(
-            name='Transcription',
+            name="Transcription",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('user_id', models.PositiveIntegerField(db_index=True)),
-                ('text', models.TextField(blank=True)),
-                ('status', models.CharField(choices=[('0', '0%'), ('25', '25%'), ('50', '50%'), ('75', '75%'), ('100', '100%'), ('DONE', 'Complete')], default='0', max_length=4)),
-                ('created_on', models.DateTimeField(auto_now_add=True)),
-                ('updated_on', models.DateTimeField(auto_now=True)),
-                ('asset', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='concordia.Asset')),
-                ('parent', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='concordia.Transcription')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("user_id", models.PositiveIntegerField(db_index=True)),
+                ("text", models.TextField(blank=True)),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("0", "0%"),
+                            ("25", "25%"),
+                            ("50", "50%"),
+                            ("75", "75%"),
+                            ("100", "100%"),
+                            ("DONE", "Complete"),
+                        ],
+                        default="0",
+                        max_length=4,
+                    ),
+                ),
+                ("created_on", models.DateTimeField(auto_now_add=True)),
+                ("updated_on", models.DateTimeField(auto_now=True)),
+                (
+                    "asset",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="concordia.Asset",
+                    ),
+                ),
+                (
+                    "parent",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to="concordia.Transcription",
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='UserAssetTagCollection',
+            name="UserAssetTagCollection",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('user_id', models.PositiveIntegerField(db_index=True)),
-                ('created_on', models.DateTimeField(auto_now_add=True)),
-                ('updated_on', models.DateTimeField(auto_now=True)),
-                ('asset', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='concordia.Asset')),
-                ('tags', models.ManyToManyField(blank=True, to='concordia.Tag')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("user_id", models.PositiveIntegerField(db_index=True)),
+                ("created_on", models.DateTimeField(auto_now_add=True)),
+                ("updated_on", models.DateTimeField(auto_now=True)),
+                (
+                    "asset",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="concordia.Asset",
+                    ),
+                ),
+                ("tags", models.ManyToManyField(blank=True, to="concordia.Tag")),
             ],
         ),
         migrations.AddField(
-            model_name='asset',
-            name='collection',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='concordia.Collection'),
+            model_name="asset",
+            name="collection",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, to="concordia.Collection"
+            ),
         ),
         migrations.AddField(
-            model_name='asset',
-            name='subcollection',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, to='concordia.Subcollection'),
+            model_name="asset",
+            name="subcollection",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                to="concordia.Subcollection",
+            ),
         ),
         migrations.AlterUniqueTogether(
-            name='subcollection',
-            unique_together={('slug', 'collection')},
+            name="subcollection", unique_together={("slug", "collection")}
         ),
         migrations.AlterUniqueTogether(
-            name='asset',
-            unique_together={('slug', 'collection')},
+            name="asset", unique_together={("slug", "collection")}
         ),
     ]
