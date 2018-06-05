@@ -1,7 +1,7 @@
 # TODO: include standard copyright header
 
-import sys
 import os
+import sys
 
 
 def import_Config(path=None):

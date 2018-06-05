@@ -1,13 +1,12 @@
 from logging import getLogger
-from django.db.models import Count
 
+from django.db.models import Count
 from rest_framework import viewsets
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 
-from . import serializers
-from . import models
+from . import models, serializers
 
 logger = getLogger(__name__)
 

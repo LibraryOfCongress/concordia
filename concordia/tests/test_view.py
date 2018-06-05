@@ -3,10 +3,14 @@
 import os
 import sys
 import tempfile
-
-from django.test import Client, TestCase
-
 from unittest.mock import Mock, patch
+
+import views
+from django.test import Client, TestCase
+from PIL import Image
+
+from concordia.models import (Asset, Collection, MediaType, Status,
+                              Transcription, User, UserProfile)
 
 PACKAGE_PARENT = ".."
 SCRIPT_DIR = os.path.dirname(
@@ -16,20 +20,9 @@ sys.path.append(os.path.normpath(os.path.join(SCRIPT_DIR, PACKAGE_PARENT)))
 sys.path.append(os.path.join(SCRIPT_DIR, "../"))
 sys.path.append(os.path.join(SCRIPT_DIR, "../../config"))
 
-from PIL import Image
 
 from config import Config
 
-from concordia.models import (
-    User,
-    UserProfile,
-    Transcription,
-    Asset,
-    MediaType,
-    Collection,
-    Status,
-)
-import views
 
 
 class ViewTest_Concordia(TestCase):

@@ -1,13 +1,10 @@
 import csv
+
 from django.http import HttpResponse
 from django.views.generic import TemplateView
-from concordia.models import (
-    Asset,
-    Collection,
-    Transcription,
-    UserAssetTagCollection,
-    Tag,
-)
+
+from concordia.models import (Asset, Collection, Tag, Transcription,
+                              UserAssetTagCollection)
 
 
 class ExportCollectionToCSV(TemplateView):
