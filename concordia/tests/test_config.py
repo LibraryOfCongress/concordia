@@ -1,9 +1,7 @@
 # TODO: Add copyright header
 import os
 import sys
-
 import unittest
-
 from shutil import copyfile
 
 scriptDir = os.path.dirname(os.path.realpath(__file__))

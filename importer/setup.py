@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 VERSION = __import__("importer").get_version()
 INSTALL_REQUIREMENTS = ["boto3", "celery", "requests", "Django<2.1", "Pillow"]

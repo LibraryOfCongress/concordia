@@ -1,6 +1,7 @@
-import csv, os, shutil
-
 import bagit
+import csv
+import os
+import shutil
 
 from django.conf import settings
 from django.http import HttpResponse

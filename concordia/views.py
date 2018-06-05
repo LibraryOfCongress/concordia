@@ -1,24 +1,26 @@
+import csv
 import os
 import sys
-import csv
-from django.http import HttpResponse
 from logging import getLogger
+
 import requests
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.shortcuts import render, redirect
-from registration.backends.simple.views import RegistrationView
-from concordia.forms import ConcordiaUserForm, ConcordiaUserEditForm
-from concordia.models import UserProfile
-from django.core.paginator import Paginator
-from django.urls import reverse
 from django.contrib.auth.models import User
-from django.shortcuts import get_object_or_404
-from django.db.models import Q
-from django.db.models import Count, Sum
-from importer.importer.tasks import download_async_collection, check_completeness
+from django.core.paginator import Paginator
+from django.db.models import Count, Q, Sum
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
+from django.views.generic import TemplateView
+from registration.backends.simple.views import RegistrationView
+
+from concordia.forms import ConcordiaUserEditForm, ConcordiaUserForm
+from concordia.models import (Asset, Collection, Tag, Transcription,
+                              UserAssetTagCollection, UserProfile)
+from importer.importer.tasks import (check_completeness,
+                                     download_async_collection)
 
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(PROJECT_DIR)
@@ -28,13 +30,6 @@ sys.path.append(BASE_DIR)
 sys.path.append(os.path.join(BASE_DIR, "config"))
 from config import Config
 
-from concordia.models import (
-    Asset,
-    Collection,
-    Transcription,
-    UserAssetTagCollection,
-    Tag,
-)
 
 logger = getLogger(__name__)
 

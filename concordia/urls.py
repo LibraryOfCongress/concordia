@@ -3,23 +3,18 @@ import os
 import sys
 
 from django.conf import settings
-from django.contrib import admin
-from django.urls import re_path, include
 from django.conf.urls.static import static
-from django.views.generic import TemplateView
+from django.contrib import admin
 from django.contrib.auth import views as auth_views
+from django.urls import include, re_path
+from django.views.generic import TemplateView
 from django.views.static import serve
-
 from machina.app import board
 
-from machina.app import board
-
-from machina.app import board
-
-from . import views
 from exporter import views as exporter_views
-from . import trans_urls
 from faq.views import FAQView
+
+from . import trans_urls, views
 
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(PROJECT_DIR)

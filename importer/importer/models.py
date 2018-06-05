@@ -1,12 +1,14 @@
 from __future__ import absolute_import, unicode_literals
-import requests
+
+import logging
 import os
 import sys
 from urllib.parse import urlparse
+
 import boto3
 import botocore
+import requests
 from PIL import Image
-import logging
 
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(PROJECT_DIR)
