@@ -19,4 +19,8 @@ pytest-django
 pytest-html
 pycodestyle
 confusable-homoglyphs>=3.1.1
+django-machina
+django-haystack
+Whoosh
 bagit
+-r requirements_importer.txt
