@@ -17,11 +17,15 @@
                         {% endif %}
                         <a href="{% url 'transcriptions:collection' c.slug %}"
                             class="btn btn-primary">View</a>
-                        {% if request.user.is_staff %}
-                            <a href="{% url 'transcriptions:exportCSV collection' c.slug %}" class="btn btn-success">Export to CSV</a>
-                            <a href="{% url 'transcriptions:exportBagit collection' c.slug %}" class="btn btn-success">Export to Bagit</a>
-                        {% endif %}
                     </p>
+                    {% if request.user.is_staff %}
+                        <p class="text-center">
+                            <a href="{% url 'transcriptions:exportCSV collection' c.slug %}" class="btn btn-success">Export to CSV</a>
+                        </p>
+                        <p class="text-center">
+                            <a href="{% url 'transcriptions:exportBagit collection' c.slug %}" class="btn btn-success">Export to Bagit</a>
+                        </p>
+                    {% endif %}
                     <p>
                         {% if request.user.is_staff %}
                             <a href="{% url 'transcriptions:report collection' c.slug %}">Report</a>
