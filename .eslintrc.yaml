@@ -1,0 +1,14 @@
+root: true
+extends: eslint:recommended
+plugins:
+    - prettier
+rules:
+    indent:
+        # https://eslint.org/docs/4.0.0/rules/indent
+        # Match defaults & Crockford but enable indentation for switch statement cases:
+        - 2
+        - 4
+        - SwitchCase: 1
+env:
+    browser: true
+    es6: true
