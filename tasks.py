@@ -37,7 +37,7 @@ def check(ctx):
     '''
     Run PEP8 checks
     '''
-    ctx.run('pycodestyle transcribr/transcribr concordia')
+    ctx.run('pycodestyle concordia/concordia concordia')
 
 @task
 def docs(ctx,):
@@ -47,7 +47,7 @@ def docs(ctx,):
     from sphinx import cmdline
     setup_django()
     ctx.run('sphinx-apidoc -f -o docs/modules/concordia concordia', pty=True)
-    ctx.run('sphinx-apidoc -f -o docs/modules/transcribr transcribr', pty=True)
+    ctx.run('sphinx-apidoc -f -o docs/modules/concordia concordia', pty=True)
     ctx.run(
         'sphinx-build -b html -d docs/_build/doctrees'
         'docs/'

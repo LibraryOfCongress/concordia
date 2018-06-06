@@ -17,7 +17,10 @@ sleep 660
 send -- "/usr/bin/sudo /usr/bin/docker exec -it concordia_app_1 bash -c \"./migrate_and_user.sh && exit\"\r"
 expect "$ "
 
-sleep 5 
+sleep 5
+
+send -- "rm ./migrate_and_user.sh\r"
+expect "$ "
 
 send -- "exit\r"
 

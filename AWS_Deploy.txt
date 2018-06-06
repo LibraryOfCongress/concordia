@@ -1,0 +1,47 @@
+How to deploy to AWS
+
+1. Login to AWS.
+2. Create a news EC2 instance
+3. Launch instance, select Ubuntu 16.04
+4. Select t2.medium (4 gig memory)
+5. Config details, Continue
+6. Add Storage, 32 Gig
+7. Add Tags, continue
+8. Configure Security Group
+    Type: All Traffic
+    Source: Anywhere
+9. Review and Launch
+
+Create a new key pair or use existing key pair
+
+10. Launch instance
+11. On launch page, change name of instance
+12. Select instance, Connect
+    Select ssh command, copy into terminal, connect to server
+
+13. cd ubuntu
+14. mkdir projects
+15. git clone git@bitbucket.org:rohgupta/concordia.git
+16. cd concordia
+17. git checkout <branch_name>
+18. sudo apt install docker.io (won't work)
+19. sudo apt-get update
+20. sudo apt install docker.io
+21. sudo apt install docker-compose
+22. sudo docker-compose up
+23. web page now available, but not functional
+23. terminal, login again
+24. cd concordia
+25. sudo docker exec -it concordia_app_1 bash
+26. manage.py migrate
+27. manage.py createsuperuser (admin, admin)
+28. exit (out of root)
+29. cd config
+30. vi config.json
+    "importer":"IMAGES_FOLDER" : "/app/"
+
+31. Browse url login as admin
+32. add new collection (watch in celery as images come in)
+
+33. Setup postgresql
+
