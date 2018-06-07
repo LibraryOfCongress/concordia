@@ -57,7 +57,12 @@ class ExportCollectionToBagit(TemplateView):
         collection = Collection.objects.get(slug=self.args[0])
         asset_list = collection.asset_set.all().order_by('title', 'sequence')
 
-        ## Create temp exporter folder structure for bagit
+        # Make sure export folder exists
+        export_folder = '%s/exporter' % (settings.MEDIA_ROOT)
+        if not os.path.exists(export_folder):
+            os.makedirs(export_folder)
+
+        # Create temp exporter folder structure for bagit
         collection_folder = '%s/exporter/%s' % (settings.MEDIA_ROOT, collection.slug)
 
 
