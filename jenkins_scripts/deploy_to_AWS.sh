@@ -2,7 +2,7 @@
 
 set timeout 60
 
-spawn ssh -i "/var/lib/jenkins/.ssh/aws.pem" ubuntu@ec2-18-191-56-17.us-east-2.compute.amazonaws.com
+spawn ssh -i "/var/lib/jenkins/.ssh/CHC_Test.pem" ubuntu@18.221.19.253
 
 expect "$ "
 
@@ -18,9 +18,6 @@ send -- "/usr/bin/sudo /usr/bin/docker exec -it concordia_app_1 bash -c \"./migr
 expect "$ "
 
 sleep 5
-
-send -- "rm ./migrate_and_user.sh\r"
-expect "$ "
 
 send -- "exit\r"
 
