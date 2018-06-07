@@ -3,14 +3,13 @@
 <div class="container-fluid py-default">
   <div class="row">
     <div class="col-md-10 mx-auto bg-offwhite rounded">
-      <h3 class="mt-half ml-half">Collections</h3>
+      <h3 class="mt-half ml-half mb-default">Collections</h3>
       <div class="row">
-        <div class="col-12 mx-half">
+        <div class="d-flex flex-wrap col-12 mb-default justify-content-around">
           {% if response.results %}
             {% for c in response.results %}
 
-            <div class="col-3">
-
+            <div class="col-12 col-md-4 col-lg-3 mb-default">
               <div class="card shadow-regular">
                 <!-- <img class="card-img-top" src="{{ MEDIA_URL }}{{a.media_url }}"> -->
                 <div class="card-body bg-offwhite">

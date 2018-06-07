@@ -13,17 +13,17 @@
 </head>
 <body>
   <header>
-    <nav class="navbar navbar-expand-lg flex-column flex-md-row navbar-offwhite bg-offwhite">
+    <nav class="navbar navbar-expand-lg flex-md-row navbar-offwhite bg-offwhite justify-content-between">
       <div class="d-flex navbar-brand">
         <a class="mr-1 my-auto" href="#"><img src="{% static "img/loc.svg" %}"></a>
         <span class="vl mx-2 my-auto"></span>
-        <h1><a class="gray-text align-middle" href="#">citizen historian</a></h1>
+        <h1><a class="gray-text align-middle d-none d-md-inline" href="#">citizen historian</a><a class="gray-text align-middle d-md-none" href="#">chc</a></h1>
       </div>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExample05" aria-controls="navbarsExample05" aria-expanded="false" aria-label="Toggle navigation">
+    <button class="navbar-toggler navbar-light" type="button" data-toggle="collapse" data-target="#nav-menu" aria-controls="nav-menu" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
 
-    <div class="collapse navbar-collapse" id="navbarsExample05">
+    <div class="collapse navbar-collapse text-center" id="nav-menu">
       <ul class="navbar-nav ml-auto">
         <li class="nav-item active">
           <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
@@ -33,8 +33,8 @@
         </li>
         {% if user.is_authenticated %}
         <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="http://example.com" id="dropdown05" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Account</a>
-          <div class="dropdown-menu" aria-labelledby="dropdown05">
+          <a class="nav-link dropdown-toggle" href="http://example.com" id="nav-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Account</a>
+          <div class="dropdown-menu" aria-labelledby="nav-dropdown">
             <a class="dropdown-item" href="{% url 'user-profile' %}">{{ user }} profile</a>
             {% if user.is_superuser %}
             <a class="nav-link" href="{% url 'admin:index' %}">Admin pages</a>
@@ -88,7 +88,6 @@
       </div>
     </div>
   </footer>
-
   <!-- JS -->
   <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js" integrity="sha384-cs/chFZiN24E4KMATLdqdvsezGxaGsi4hLGOzlXwp5UZB1LY//20VyM2taTB4QvJ" crossorigin="anonymous"></script>

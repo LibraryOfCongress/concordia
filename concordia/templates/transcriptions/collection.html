@@ -1,49 +1,50 @@
 {% extends "transcriptions/base.html" %} {% load staticfiles %}
 {% block head_content %}
-    <!-- <style>
-        .card-img-top {
-            width: inherit;
-            height: 250px;
-        }
-    </style> -->
+    
 {% endblock head_content %}
 {% block main_content %}
-<div class="container">
-    <h2>{{ collection }}</h2>
-    <p>
-        {{ collection.description }}
-    </p>
+<div class="container-fluid py-default">
     <div class="row">
-      {% for a in assets %}
-        <div class=" col-3 card mb-4">
-          <a href="{% url 'transcriptions:asset' collection.slug a.slug %}" class="text-center">
-            <img class="col-12 card-img-top" src="{{ MEDIA_URL }}{{a.media_url }}" alt="{ a.slug }">
-          </a>
-          <div class="card-body">
-            <h5 class="card-title">{{ a.title }}-{{ a.sequence }}</h5>
-            <p class="card-text">{{ a.description }}</p>
-            <a href="{% url 'transcriptions:asset' collection.slug a.slug %}" class="btn btn-primary">Transcribe</a>
-          </div>
+        <div class="col-md-10 mx-auto bg-offwhite rounded">
+            <h3 class="mt-half ml-half mb-default">{{ collection }}</h3>
+            <p class="mt-half ml-default mb-default">{{ collection.description }}</p>
+            <div class="row">
+                <div class="d-flex flex-wrap col-12 mb-default justify-content-around">
+                    {% for a in assets %}
+                    <div class="col-12 col-md-4 col-lg-3 mb-default card">
+                        <a href="{% url 'transcriptions:asset' collection.slug a.slug %}" class="text-center">
+                            <img class="col-12 card-img-top" src="{{ MEDIA_URL }}{{a.media_url }}" alt="{ a.slug }">
+                        </a>
+                        <div class="card-body">
+                            <h5 class="card-title">{{ a.title }}-{{ a.sequence }}</h5>
+                            <p class="card-text">{{ a.description }}</p>
+                            <div class="d-flex justify-content-center">
+                                <a href="{% url 'transcriptions:asset' collection.slug a.slug %}" class="btn btn-primary">Transcribe</a>
+                            </div>
+                            
+                        </div>
+                    </div>
+                {% endfor %}
+                </div>
+            </div>
         </div>
-      {% endfor %}
+        <div class="pagination">
+            <span class="step-links">
+                {% if assets.has_previous %}
+                    <a href="?page=1">&laquo; first</a>
+                    <a href="?page={{ assets.previous_page_number }}">previous</a>
+                {% endif %}
+
+                <span class="current">
+                    Page {{ assets.number }} of {{ assets.paginator.num_pages }}.
+                </span>
+
+                {% if assets.has_next %}
+                    <a href="?page={{ assets.next_page_number }}">next</a>
+                    <a href="?page={{ assets.paginator.num_pages }}">last &raquo;</a>
+                {% endif %}
+            </span>
+        </div>
     </div>
 </div>
-<div class="pagination">
-    <span class="step-links">
-        {% if assets.has_previous %}
-            <a href="?page=1">&laquo; first</a>
-            <a href="?page={{ assets.previous_page_number }}">previous</a>
-        {% endif %}
-
-        <span class="current">
-            Page {{ assets.number }} of {{ assets.paginator.num_pages }}.
-        </span>
-
-        {% if assets.has_next %}
-            <a href="?page={{ assets.next_page_number }}">next</a>
-            <a href="?page={{ assets.paginator.num_pages }}">last &raquo;</a>
-        {% endif %}
-    </span>
-</div>
-
 {% endblock main_content %}
