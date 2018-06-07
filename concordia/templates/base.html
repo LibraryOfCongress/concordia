@@ -32,12 +32,12 @@
           <a class="nav-link" href="{% url 'transcriptions:transcribe' %}">Transcribe</a>
         </li>
         {% if user.is_authenticated %}
-        <li class="nav-item dropdown">
+        <li class="nav-item dropdown nav-dropdown">
           <a class="nav-link dropdown-toggle" href="http://example.com" id="nav-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Account</a>
           <div class="dropdown-menu" aria-labelledby="nav-dropdown">
             <a class="dropdown-item" href="{% url 'user-profile' %}">{{ user }} profile</a>
             {% if user.is_superuser %}
-            <a class="nav-link" href="{% url 'admin:index' %}">Admin pages</a>
+            <a class="dropdown-item" href="{% url 'admin:index' %}">Admin pages</a>
             <a class="dropdown-item" href="{% url 'logout' %}">Logout</a>
           </div>
         </li>

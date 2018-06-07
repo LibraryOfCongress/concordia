@@ -3,50 +3,41 @@
 <div class="container-fluid py-default">
   <div class="row">
     <div class="col-md-10 mx-auto bg-offwhite rounded">
-      <h3 class="mt-half ml-half mb-default">Collections</h3>
+      <h3 class="mt-default ml-half mb-default">Collections</h3>
       <div class="row">
         <div class="d-flex flex-wrap col-12 mb-default justify-content-around">
           {% if response.results %}
-            {% for c in response.results %}
-
-            <div class="col-12 col-md-4 col-lg-3 mb-default">
-              <div class="card shadow-regular">
-                <!-- <img class="card-img-top" src="{{ MEDIA_URL }}{{a.media_url }}"> -->
-                <div class="card-body bg-offwhite">
-                  <h5 class="card-title align-text-middle w-100">{{ c.title }}</h5>
-                  <h6 class="card-text">{{ c.description }}</h6>
-                  <p class="text-center">
-                    {% if request.user.is_staff %}
-                      <a href="{% url 'transcriptions:delete collection' c.slug %}" class="btn btn-danger">Delete</a>
-                    {% endif %}
-                    <a href="{% url 'transcriptions:collection' c.slug %}" class="btn btn-primary">View</a>
-                    {% if request.user.is_staff %}
-                      <a href="{% url 'transcriptions:export collection' c.slug %}" class="btn btn-success">Export</a>
-                    {% endif %}
-                  </p>
-                  <p>
-                    {% if request.user.is_staff %}
-                      <a href="{% url 'transcriptions:report collection' c.slug %}">Report</a>
-                    {% endif %}
-                  </p>
-                </div>
+          {% for c in response.results %}
+          <div class="col-12 col-md-4 col-lg-3 mb-default mx-quarter card shadow-regular bg-lightest-gray">
+            <div class="card-body bg-offwhite">
+              <h5 class="card-title align-text-middle w-100">{{ c.title }}</h5>
+              <h6 class="card-text mb-half">{{ c.description }}</h6>
+              <div class="col-md-8 mx-auto text-center">
+                <a href="{% url 'transcriptions:collection' c.slug %}" class="btn btn-primary col mb-quarter">View</a>
+                {% if request.user.is_staff %}
+                  <a href="{% url 'transcriptions:delete collection' c.slug %}" class="btn btn-danger col mb-quarter">Delete</a>
+                {% endif %}
+                {% if request.user.is_staff %}
+                  <a href="{% url 'transcriptions:export collection' c.slug %}" class="btn btn-success col">Export</a>
+                  <a href="{% url 'transcriptions:report collection' c.slug %}" class="mt-half">Report</a>
+                {% endif %}
               </div>
             </div>
-            {% endfor %}
           </div>
+          {% endfor %}
+          {% endif %}
+          {% if request.user.is_staff %}
+          <div class="col-12 col-md-4 col-lg-3 mb-default card shadow-regular bg-lightest-gray">
+            <div class="d-flex card-body align-items-center justify-content-center">
+              <div>
+                <a href="{% url 'transcriptions:create' %}"><span>Add new Collection</span></a>
+                </div>
+            </div>
+          </div>
+          {% endif %}
         </div>
-      {% endif %}
-      {% if request.user.is_staff %}
-      <div class="col-3">
-          <div class="card mb-4" style="height:169px">
-              <div class="card-body text-center">
-                <div style="margin-top:45px">
-                  <a href="{% url 'transcriptions:create' %}"><span class="align-middle">Add new Collection</span></a>
-                  </div>
-              </div>
-          </div>
       </div>
-      {% endif %}
     </div>
+  </div>
 </div>
 {% endblock main_content %}

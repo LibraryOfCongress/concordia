@@ -38,7 +38,7 @@ h4 {
 
 h5 {
   font-family: "Open Sans", sans-serif;
-  font-size: 1.125rem;
+  font-size: 1rem;
   line-height: 125%;
   font-weight: normal;
 }
@@ -81,6 +81,10 @@ blue {
   color : rgba(51,51,51,1); /* #333333 */
 }
 
+a.blue-text:hover {
+  color: rgba(0,35,71,1); /* #002347 */
+  text-decoration: underline;
+}
 a.offwhite-text {
   color: rgba(250,250,250,1); /* #FAFAFA */
   text-decoration: underline;
@@ -130,6 +134,10 @@ a.gray-text:hover {
   padding-right: 0;
 }
 
+input {
+  color: rgba(51,51,51,.7); /* #333333 */
+}
+
 .py-default {
   padding-top: 2rem;
   padding-bottom: 2rem;
@@ -152,6 +160,11 @@ a.gray-text:hover {
 .navbar-offwhite .navbar-nav .nav-link {
   font-family: "Open Sans", sans-serif;
   color: rgba(51,51,51,1);
+}
+
+.nav-dropdown .dropdown-menu {
+  top: 3.375rem;
+  left: -4rem;
 }
 
 .img-header {
@@ -364,6 +377,12 @@ a.gray-text:hover {
 .btn-primary {
   background-color: rgba(0,97,142,1);
   border-color: rgba(0,97,142,1);
+  color: rgba(250,250,250,1);
+}
+
+.btn-primary:hover {
+  background-color: rgba(0,35,71,1); /* #002347 */
+  border-color: rgba(0,35,71,1); /* #002347 */
   color: rgba(250,250,250,1);
 }
 
