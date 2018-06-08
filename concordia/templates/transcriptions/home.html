@@ -17,7 +17,8 @@
                 <a href="{% url 'transcriptions:collection' c.slug %}" class="btn btn-primary col mb-quarter">View</a>
                 {% if request.user.is_staff %}
                   <a href="{% url 'transcriptions:delete collection' c.slug %}" class="btn btn-danger col mb-quarter">Delete</a>
-                  <a href="{% url 'transcriptions:export collection' c.slug %}" class="btn btn-success col">Export</a>
+                  <a href="{% url 'transcriptions:exportCSV collection' c.slug %}" class="btn btn-success col">Export to csv</a>
+                  <a href="{% url 'transcriptions:exportBagit collection' c.slug %}" class="btn btn-success col">Export to Bagit</a>
                   <a href="{% url 'transcriptions:report collection' c.slug %}" class="mt-half">Report</a>
                 {% endif %}
               </div>
