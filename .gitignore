@@ -13,6 +13,7 @@ artifacts/
 /.*
 !.gitignore
 !.dockerignore
+!.editorconfig
 .DS_Store
 docs/build
 .venv
