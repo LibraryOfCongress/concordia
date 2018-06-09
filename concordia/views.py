@@ -1,9 +1,9 @@
 import os
-import sys
 import csv
 from django.http import HttpResponse
 from logging import getLogger
 import requests
+from config import config
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.views.generic import TemplateView
@@ -19,15 +19,6 @@ from django.shortcuts import get_object_or_404
 from django.db.models import Q
 from django.db.models import Count, Sum
 from importer.importer.tasks import download_async_collection, check_completeness
-
-PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
-BASE_DIR = os.path.dirname(PROJECT_DIR)
-
-sys.path.append(BASE_DIR)
-
-sys.path.append(os.path.join(BASE_DIR, 'config'))
-from config import Config
-
 from concordia.models import Asset, Collection, Transcription, UserAssetTagCollection, Tag
 
 logger = getLogger(__name__)
@@ -37,7 +28,7 @@ ASSETS_PER_PAGE = 36
 
 def concordia_api(relative_path):
     abs_path = '{}/api/v1/{}'.format(
-        Config.Get('concordia')['NETLOC'],
+        config('CONCORDIA', 'NETLOC'),
         relative_path
     )
     logger.debug('Calling API path %s', abs_path)

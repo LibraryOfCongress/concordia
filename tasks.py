@@ -4,6 +4,7 @@ from invoke import task
 
 PROJECT_NAME = 'concordia'
 
+
 def setup_django(simple_logging=True):
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "{}.settings".format(PROJECT_NAME))
     import django
