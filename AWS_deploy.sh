@@ -10,8 +10,8 @@ sleep 30
 
 /usr/bin/sudo /usr/bin/docker container prune -f
 
+/usr/bin/sudo nohup docker-compose build
 /usr/bin/sudo nohup docker-compose up &
 
-sleep 400
-
+sleep 60
 

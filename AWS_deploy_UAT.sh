@@ -6,6 +6,7 @@ set -x
 
 sleep 30
 
+/usr/bin/sudo nohup docker-compose build
 /usr/bin/sudo nohup docker-compose up &
 
-sleep 400
+sleep 60
