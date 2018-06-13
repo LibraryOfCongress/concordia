@@ -1,6 +1,6 @@
 #!/usr/bin/expect
 
-set timeout 60
+set timeout -1
 
 spawn ssh -i "/var/lib/jenkins/.ssh/Artemis_UAT.pem" ubuntu@13.58.196.90
 
