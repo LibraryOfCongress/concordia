@@ -1,6 +1,6 @@
 #!/usr/bin/expect
 
-set timeout 60
+set timeout -1
 
 spawn ssh -i "/var/lib/jenkins/.ssh/CHC_Test.pem" ubuntu@18.221.19.253
 
