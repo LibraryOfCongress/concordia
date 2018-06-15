@@ -83,11 +83,13 @@
                                     </div>
                                 </div>
                                 <!-- /comment -->
+                                {% if user.is_authenticated %}
                                 <div class="row pt-2">
                                     <div class="col-12">
                                         <a href="" class="btn btn-sm btn-primary">Comment</a>
                                     </div>
                                 </div>
+                                {% endif %}
 
                             </div>
                         </div>
