@@ -92,6 +92,13 @@ services:
     command:
       - '-config.file=/alertmanager.yml'
 
+  elk:
+    image: sebp/elk
+    ports:
+      - "5601:5601"
+      - "9200:9200"
+      - "5044:5044"
+
 volumes:
   db_volume:
   images_volume:
