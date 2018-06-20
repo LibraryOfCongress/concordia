@@ -221,26 +221,23 @@ class CollectionView(TemplateView):
             cmd = 'cp -r {0}/* {1}'.format('/concordia_images', collection_path)
             if os.WEXITSTATUS(os.system(cmd)) == 0:
                 os.system('rm -rf {0}'.format('/concordia_images/*'))
-            c = Collection.objects.create(title=name, slug=name.replace(" ", "-"), description=name)
-            count = 0
-            for root, dirs, files in os.walk(collection_path):
-                for filename in files:
-                    filename = os.path.join(root, filename)
-                    if True:
-                        count += 1
-                        title = '{0} asset {1}'.format(name, count)
-                        media_url = os.path.join(root, filename).replace(settings.MEDIA_ROOT, '')
+                c = Collection.objects.create(title=name, slug=name.replace(" ", "-"), description=name)
+                for root, dirs, files in os.walk(collection_path):
+                    for filename in files:
+                        file_path = os.path.join(root, filename)
+                        title = file_path.replace(collection_path + '/', '').split('/')[0]
+                        media_url = file_path.replace(settings.MEDIA_ROOT, '')
+                        sequence = filename.replace('.jpg', '')
                         Asset.objects.create(title=title,
-                                             slug=title.replace(" ", "-"),
+                                             slug=title + sequence,
                                              description="{0} description".format(title),
                                              media_url=media_url,
                                              media_type='IMG',
+                                             sequence=int(sequence),
                                              collection=c)
-            # os.system('rm -rf {0}'.format('/concordia_images/*'))
-            c.is_active=1
-            c.save()
-
-            return redirect('/transcribe/' + name.replace(" ", "-"))
+                c.is_active = 1
+                c.save()
+                return redirect('/transcribe/' + name.replace(" ", "-"))
         return render(self.request, self.template_name, {'error': 'yes'})
 
 
