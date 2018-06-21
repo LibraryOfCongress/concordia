@@ -42,11 +42,11 @@ Next, set up a Python virtual environment::
 
     $ python3 -m venv env
     $ source env/bin/activate
-    $ export DJANGO_SETTINGS_MODULE = "concordia.settings_devel"
     $ pip install -r requirements_devel.txt
 
-Finally, run migrations and launch the development server::
+Finally, configure the Django settings, run migrations and launch the development server::
 
+    $ export DJANGO_SETTINGS_MODULE = "concordia.settings_dev"
     $ ./manage.py migrate
     $ ./manage.py runserver
 

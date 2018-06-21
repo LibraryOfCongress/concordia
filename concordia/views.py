@@ -29,7 +29,7 @@ ASSETS_PER_PAGE = 36
 
 
 def concordia_api(relative_path):
-    abs_path = "{}/api/v1/{}".format(settings["CONCORDIA"]["NETLOC"], relative_path)
+    abs_path = "{}/api/v1/{}".format(settings.CONCORDIA["netloc"], relative_path)
     logger.debug("Calling API path %s", abs_path)
     data = requests.get(abs_path).json()
 

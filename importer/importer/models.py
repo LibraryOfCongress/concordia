@@ -31,12 +31,12 @@ class Importer:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
 
-        self.base_url = settings["IMPORTER"]["BASE_URL"]
-        self.item_count = settings["IMPORTER"]["ITEM_COUNT"]
+        self.base_url = settings.IMPORTER["BASE_URL"]
+        self.item_count = settings.IMPORTER["ITEM_COUNT"]
         self.images_folder = (
-            settings["IMPORTER"]["IMAGES_FOLDER"]
+            settings.IMPORTER["IMAGES_FOLDER"]
         )
-        self.s3_bucket_name = settings["IMPORTER"]["S3_BUCKET_NAME"]
+        self.s3_bucket_name = settings.IMPORTER["S3_BUCKET_NAME"]
 
     def main(self):
         self.get_and_save_images(self.base_url)

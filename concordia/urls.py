@@ -77,7 +77,7 @@ urlpatterns = [
     re_path(
         r"^account/profile/$", views.AccountProfileView.as_view(), name="user-profile"
     ),
-    re_path(r"^account/", include(settings["REGISTRATION_URLS"])),
+    re_path(r"^account/", include(settings.REGISTRATION_URLS)),
     re_path(
         r"^experiments/(.+)/$", views.ExperimentsView.as_view(), name="experiments"
     ),
