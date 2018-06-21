@@ -1,4 +1,4 @@
-from settings_template import *
+from .settings_template import *
 
 LOGGING["handlers"]["stream"]["level"] = "DEBUG"
 LOGGING["handlers"]["file"]["level"] = "DEBUG"
