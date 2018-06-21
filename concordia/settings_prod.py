@@ -1,5 +1,5 @@
 from .settings_template import *
- 
+
 LOGGING["handlers"]["stream"]["level"] = "INFO"
 LOGGING["handlers"]["file"]["level"] = "INFO"
 LOGGING["handlers"]["file"]["filename"] = "./logs/concordia-web.log"
@@ -14,9 +14,9 @@ DJANGO_SECRET_KEY = "changeme"
 # CSRF_COOKIE_SECURE = True
 
 IMPORTER = {
-    "BASE_URL"       :   "",
-    # /concordia_images is a docker volume shared by importer and concordia    
-    "IMAGES_FOLDER"  :   "/concordia_images/",
-    "ITEM_COUNT"     :   "",
-    "S3_BUCKET_NAME" :   ""
+    "BASE_URL": "",
+    # /concordia_images is a docker volume shared by importer and concordia
+    "IMAGES_FOLDER": "/concordia_images/",
+    "ITEM_COUNT": "",
+    "S3_BUCKET_NAME": "",
 }

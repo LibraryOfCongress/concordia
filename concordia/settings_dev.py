@@ -21,15 +21,15 @@ DATABASES = {
     }
 }
 
-ALLOWED_HOSTS = ["127.0.0.1","0.0.0.0"]
+ALLOWED_HOSTS = ["127.0.0.1", "0.0.0.0"]
 
 CELERY_BROKER_URL = "amqp://"
- 
+
 CONCORDIA = {"netloc": "http://0.0.0.0:8000"}
- 
+
 IMPORTER = {
-    "BASE_URL"       :   "",
-    "IMAGES_FOLDER"  :   "/tmp/concordia_images/",
-    "ITEM_COUNT"     :   "",
-    "S3_BUCKET_NAME" :   ""
+    "BASE_URL": "",
+    "IMAGES_FOLDER": "/tmp/concordia_images/",
+    "ITEM_COUNT": "",
+    "S3_BUCKET_NAME": "",
 }

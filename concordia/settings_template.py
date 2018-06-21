@@ -47,10 +47,7 @@ USE_L10N = True
 USE_TZ = True
 WSGI_APPLICATION = "concordia.wsgi.application"
 
-ADMIN_SITE = {
-    "site_header": "Concordia Admin",
-    "site_title": "Concordia",
-}
+ADMIN_SITE = {"site_header": "Concordia Admin", "site_title": "Concordia"}
 
 DATABASES = {
     "default": {
@@ -209,27 +206,19 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 
-LOGIN_URL = '/account/login/'
+LOGIN_URL = "/account/login/"
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-        'OPTIONS': {
-            'min_length': 8,
-        }
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "OPTIONS": {"min_length": 8},
     },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
-    {
-        'NAME': 'concordia.validators.complexity'
-    }
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+    {"NAME": "concordia.validators.complexity"},
 ]
 
 REGISTRATION_URLS = "registration.backends.simple.urls"

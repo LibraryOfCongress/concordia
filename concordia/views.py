@@ -17,10 +17,15 @@ from django.views.generic import TemplateView
 from registration.backends.simple.views import RegistrationView
 
 from concordia.forms import ConcordiaUserEditForm, ConcordiaUserForm
-from concordia.models import (Asset, Collection, Tag, Transcription,
-                              UserAssetTagCollection, UserProfile)
-from importer.importer.tasks import (check_completeness,
-                                     download_async_collection)
+from concordia.models import (
+    Asset,
+    Collection,
+    Tag,
+    Transcription,
+    UserAssetTagCollection,
+    UserProfile,
+)
+from importer.importer.tasks import check_completeness, download_async_collection
 
 
 logger = getLogger(__name__)
@@ -60,12 +65,14 @@ class AccountProfileView(LoginRequiredMixin, TemplateView):
                 obj.password = self.request.user.password
             obj.save()
 
-            if 'myfile' in self.request.FILES:
-                myfile = self.request.FILES['myfile']
-                profile, created = UserProfile.objects.update_or_create(user=obj, defaults={'myfile': myfile})
+            if "myfile" in self.request.FILES:
+                myfile = self.request.FILES["myfile"]
+                profile, created = UserProfile.objects.update_or_create(
+                    user=obj, defaults={"myfile": myfile}
+                )
         else:
             return render(self.request, self.template_name, locals())
-        return redirect(reverse('user-profile'))
+        return redirect(reverse("user-profile"))
 
     def get_context_data(self, **kws):
         last_name = self.request.user.last_name
@@ -249,11 +256,11 @@ class CollectionView(TemplateView):
                             collection=c,
                         )
             # os.system('rm -rf {0}'.format('/concordia_images/*'))
-            c.is_active=1
+            c.is_active = 1
             c.save()
 
-            return redirect('/transcribe/' + name.replace(" ", "-"))
-        return render(self.request, self.template_name, {'error': 'yes'})
+            return redirect("/transcribe/" + name.replace(" ", "-"))
+        return render(self.request, self.template_name, {"error": "yes"})
 
 
 class DeleteCollectionView(TemplateView):
