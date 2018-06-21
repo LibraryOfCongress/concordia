@@ -45,8 +45,8 @@ This will keep our database in its container for convenience.
 
 Next, set up a Python virtual environment::
 
-    $ python3 -m venv env
-    $ source env/bin/activate
+    $ python3 -m venv .venv
+    $ source .venv/bin/activate
     $ pip install -r requirements_devel.txt
 
 Edit, or create the config/config-optional-override.json and set the file content to: {"mode":"mac"}
@@ -57,6 +57,28 @@ Finally, run migrations and launch the development server::
     $ ./manage.py migrate
     $ ./manage.py runserver
 
+
+Code Quality
+------------
+
+Install black <https://pypi.org/project/black/> and integrate it with your editor of choice.
+Run flake8 <http://flake8.pycqa.org/en/latest/> to ensure you don't increase the warning count or introduce errors with your commits.
+This project uses EditorConfig <https://editorconfig.org> for code consistency.
+
+Django projects should extend the standard Django settings model for project configuration. Django projects should also make use of the Django test framework for unit tests.
+
+setup.cfg contains configuration for pycodestyle, isort <https://pypi.org/project/isort/> and flake8.
+
+Unify – modifies strings to use consistent quote style
+https://pypi.org/project/unify/
+
+The virtual env directory should be named .venv and it's preferred to use Pipenv to manage the virtual environment.
+
+If your editor is properly configured, these manual steps shouldn't be necessary to run before committing to git:
+
+    $ black .
+    $ isort .
+    $ unify .
 
 Misc
 ----
