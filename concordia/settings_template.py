@@ -9,31 +9,19 @@ from machina import get_apps as get_machina_apps
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(PROJECT_DIR)
 
-sys.path.append(BASE_DIR)
-
-sys.path.append(os.path.join(BASE_DIR, "config"))
-
-from config import Config
-
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = Config.Get("django_secret_key")
+SECRET_KEY = "django-secret-key"
 
 # Optional SMTP authentication information for EMAIL_HOST.
 EMAIL_HOST_USER = ""
 EMAIL_HOST_PASSWORD = ""
 EMAIL_USE_TLS = False
-DEFAULT_FROM_EMAIL = "no-reply@loc.gov"
+DEFAULT_FROM_EMAIL = "noreply@loc.gov"
 
-ALLOWED_HOSTS = ["*"]  # TODO: place this value in config.json
+ALLOWED_HOSTS = ["*"]
 
-if Config.mode == "production":
-    # TODO: production we can not have DEBUG = True
-    DEBUG = False
-    # TODO: For final deployment to production, when we are running https, uncomment this next line
-    #    CSRF_COOKIE_SECURE = True
-else:
-    DEBUG = True
-    CSRF_COOKIE_SECURE = False
+DEBUG = False
+CSRF_COOKIE_SECURE = False
 
 sys.path.append(PROJECT_DIR)
 AUTH_PASSWORD_VALIDATORS = []
@@ -60,18 +48,18 @@ USE_TZ = True
 WSGI_APPLICATION = "concordia.wsgi.application"
 
 ADMIN_SITE = {
-    "site_header": Config.Get("ADMIN_SITE_HEADER"),
-    "site_title": Config.Get("ADMIN_SITE_TITLE"),
+    "site_header": "Concordia Admin",
+    "site_title": "Concordia",
 }
 
 DATABASES = {
     "default": {
-        "ENGINE": Config.Get("database")["adapter"],
-        "NAME": Config.Get("database")["name"],
-        "USER": Config.Get("database")["username"],
-        "PASSWORD": Config.Get("database")["password"],
-        "HOST": Config.Get("database")["host"],
-        "PORT": Config.Get("database")["port"],
+        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "NAME": "concordia",
+        "USER": "concordia",
+        "PASSWORD": "concordia",
+        "HOST": "db",
+        "PORT": "5432",
     }
 }
 
@@ -152,12 +140,8 @@ HAYSTACK_CONNECTIONS = {
 }
 
 # Celery settings
-if Config.mode == "production":
-    CELERY_BROKER_URL = Config.Get("celery")["BROKER_URL"]
-else:
-    CELERY_BROKER_URL = "amqp://"
-
-CELERY_RESULT_BACKEND = Config.Get("celery")["RESULT_BACKEND"]
+CELERY_BROKER_URL = "pyamqp://guest@rabbit"
+CELERY_RESULT_BACKEND = "rpc://"
 
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
@@ -216,11 +200,11 @@ LOGGING = {
 ACCOUNT_ACTIVATION_DAYS = 7
 
 REST_FRAMEWORK = {
-    "PAGE_SIZE": Config.Get("djrf")["PAGE_SIZE"],
+    "PAGE_SIZE": 10,
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
 }
 
-CONCORDIA = dict(netloc=Config.Get("concordia")["NETLOC"])
+CONCORDIA = dict(netloc="http://0.0.0.0:80")
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
@@ -248,3 +232,4 @@ AUTH_PASSWORD_VALIDATORS = [
     }
 ]
 
+REGISTRATION_URLS = "registration.backends.simple.urls"

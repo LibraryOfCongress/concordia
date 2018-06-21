@@ -16,15 +16,6 @@ from faq.views import FAQView
 
 from . import trans_urls, views
 
-PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
-BASE_DIR = os.path.dirname(PROJECT_DIR)
-
-sys.path.append(BASE_DIR)
-
-sys.path.append(os.path.join(BASE_DIR, "config"))
-from config import Config
-
-# TODO: use util to import Config
 
 for key, value in getattr(settings, "ADMIN_SITE", {}).items():
     setattr(admin.site, key, value)
@@ -86,7 +77,7 @@ urlpatterns = [
     re_path(
         r"^account/profile/$", views.AccountProfileView.as_view(), name="user-profile"
     ),
-    re_path(r"^account/", include(Config.Get("REGISTRATION_URLS"))),
+    re_path(r"^account/", include(settings["REGISTRATION_URLS"])),
     re_path(
         r"^experiments/(.+)/$", views.ExperimentsView.as_view(), name="experiments"
     ),

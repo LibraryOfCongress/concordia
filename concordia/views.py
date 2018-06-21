@@ -22,14 +22,6 @@ from concordia.models import (Asset, Collection, Tag, Transcription,
 from importer.importer.tasks import (check_completeness,
                                      download_async_collection)
 
-PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
-BASE_DIR = os.path.dirname(PROJECT_DIR)
-
-sys.path.append(BASE_DIR)
-
-sys.path.append(os.path.join(BASE_DIR, "config"))
-from config import Config
-
 
 logger = getLogger(__name__)
 
@@ -37,7 +29,7 @@ ASSETS_PER_PAGE = 36
 
 
 def concordia_api(relative_path):
-    abs_path = "{}/api/v1/{}".format(Config.Get("concordia")["NETLOC"], relative_path)
+    abs_path = "{}/api/v1/{}".format(settings["CONCORDIA"]["NETLOC"], relative_path)
     logger.debug("Calling API path %s", abs_path)
     data = requests.get(abs_path).json()
 
