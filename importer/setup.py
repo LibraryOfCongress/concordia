@@ -4,15 +4,13 @@ from setuptools import find_packages, setup
 VERSION = __import__("importer").get_version()
 INSTALL_REQUIREMENTS = ["boto3", "celery", "requests", "Django<2.1", "Pillow"]
 DESCRIPTION = "Download collections of images from loc.gov"
-CLASSIFIERS = (
-    """\
+CLASSIFIERS = """\
 Environment :: Web Environment
 Framework :: Django :: 2.0
 Development Status :: 2 - Pre-Alpha
 Programming Language :: Python
 Programming Language :: Python :: 3.6
 """.splitlines()
-)
 
 with open("README.rst", "r") as f:
     LONG_DESCRIPTION = f.read()
