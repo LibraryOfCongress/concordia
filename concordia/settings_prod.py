@@ -2,9 +2,9 @@ from .settings_template import *
  
 LOGGING["handlers"]["stream"]["level"] = "INFO"
 LOGGING["handlers"]["file"]["level"] = "INFO"
-LOGGING["handlers"]["file"]["filename"] = "/var/log/django/concordia-web.log"
+LOGGING["handlers"]["file"]["filename"] = "./logs/concordia-web.log"
 LOGGING["handlers"]["celery"]["level"] = "INFO"
-LOGGING["handlers"]["celery"]["filename"] = "/var/log/django/concordia-celery.log"
+LOGGING["handlers"]["celery"]["filename"] = "./logs/concordia-celery.log"
 LOGGING["loggers"]["django"]["level"] = "INFO"
 LOGGING["loggers"]["celery"]["level"] = "INFO"
 
