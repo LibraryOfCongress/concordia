@@ -8,22 +8,12 @@ from urllib.parse import urlparse
 import boto3
 import botocore
 import requests
+from django.conf import settings
 from PIL import Image
-
-PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
-BASE_DIR = os.path.dirname(PROJECT_DIR)
-
-sys.path.append(BASE_DIR)
-
-sys.path.append(os.path.join(BASE_DIR, "config"))
-from config import Config
-
-
-# TODO: use util to import Config
 
 
 class Importer:
-    # Config loaded from Django settings
+    # config loaded from Django settings
     base_url = ""
     item_count = 0
     images_folder = ""
@@ -41,12 +31,10 @@ class Importer:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
 
-        self.base_url = Config.Get("importer")["BASE_URL"]
-        self.item_count = 10  # Config.Get('importer')['ITEM_COUNT']
-        self.images_folder = (
-            "/concordia_images"
-        )  # Config.Get('importer')['IMAGES_FOLDER']
-        self.s3_bucket_name = Config.Get("importer")["S3_BUCKET_NAME"]
+        self.base_url = settings.IMPORTER["BASE_URL"]
+        self.item_count = settings.IMPORTER["ITEM_COUNT"]
+        self.images_folder = settings.IMPORTER["IMAGES_FOLDER"]
+        self.s3_bucket_name = settings.IMPORTER["S3_BUCKET_NAME"]
 
     def main(self):
         self.get_and_save_images(self.base_url)

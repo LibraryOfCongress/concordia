@@ -22,7 +22,7 @@ def api_root(request, format=None):
 
 
 class CollectionList(viewsets.ModelViewSet):
-    queryset = models.Collection.objects.filter(is_active=1).order_by('title')
+    queryset = models.Collection.objects.filter(is_active=1).order_by("title")
     serializer_class = serializers.CollectionListSerializer
 
 

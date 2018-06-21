@@ -12,18 +12,6 @@ from PIL import Image
 from concordia.models import (Asset, Collection, MediaType, Status,
                               Transcription, User, UserProfile)
 
-PACKAGE_PARENT = ".."
-SCRIPT_DIR = os.path.dirname(
-    os.path.realpath(os.path.join(os.getcwd(), os.path.expanduser(__file__)))
-)
-sys.path.append(os.path.normpath(os.path.join(SCRIPT_DIR, PACKAGE_PARENT)))
-sys.path.append(os.path.join(SCRIPT_DIR, "../"))
-sys.path.append(os.path.join(SCRIPT_DIR, "../../config"))
-
-
-from config import Config
-
-
 
 class ViewTest_Concordia(TestCase):
     """
@@ -37,9 +25,6 @@ class ViewTest_Concordia(TestCase):
         setUp is called before the execution of each test below
         :return:
         """
-
-        # make sure the config-optional-override.json mode is "unittest"
-        self.assertEqual(Config.GetOverrideMode(), "unittest")
 
         self.client = Client()
 
