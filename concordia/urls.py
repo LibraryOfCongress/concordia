@@ -16,7 +16,6 @@ from faq.views import FAQView
 
 from . import trans_urls, views
 
-
 for key, value in getattr(settings, "ADMIN_SITE", {}).items():
     setattr(admin.site, key, value)
 

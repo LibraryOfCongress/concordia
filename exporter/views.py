@@ -1,19 +1,15 @@
-import bagit
 import csv
 import os
 import shutil
+from shutil import copyfile
 
+import bagit
 from django.conf import settings
 from django.http import HttpResponse
 from django.views.generic import TemplateView
-from shutil import copyfile
-from concordia.models import (
-    Asset,
-    Collection,
-    Transcription,
-    UserAssetTagCollection,
-    Tag,
-)
+
+from concordia.models import (Asset, Collection, Tag, Transcription,
+                              UserAssetTagCollection)
 
 
 class ExportCollectionToCSV(TemplateView):

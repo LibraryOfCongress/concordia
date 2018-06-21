@@ -17,16 +17,10 @@ from django.views.generic import TemplateView
 from registration.backends.simple.views import RegistrationView
 
 from concordia.forms import ConcordiaUserEditForm, ConcordiaUserForm
-from concordia.models import (
-    Asset,
-    Collection,
-    Tag,
-    Transcription,
-    UserAssetTagCollection,
-    UserProfile,
-)
-from importer.importer.tasks import check_completeness, download_async_collection
-
+from concordia.models import (Asset, Collection, Tag, Transcription,
+                              UserAssetTagCollection, UserProfile)
+from importer.importer.tasks import (check_completeness,
+                                     download_async_collection)
 
 logger = getLogger(__name__)
 

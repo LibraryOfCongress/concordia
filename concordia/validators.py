@@ -3,7 +3,6 @@ import re
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 
-
 PASSWORD_COMPLEXITY = {  # You can omit any or all of these for no limit for that particular set
     "UPPER": 1,  # Uppercase
     "LOWER": 1,  # Lowercase
