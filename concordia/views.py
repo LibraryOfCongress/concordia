@@ -22,22 +22,13 @@ from concordia.models import (Asset, Collection, Tag, Transcription,
 from importer.importer.tasks import (check_completeness,
                                      download_async_collection)
 
-PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
-BASE_DIR = os.path.dirname(PROJECT_DIR)
-
-sys.path.append(BASE_DIR)
-
-sys.path.append(os.path.join(BASE_DIR, "config"))
-from config import Config
-
-
 logger = getLogger(__name__)
 
 ASSETS_PER_PAGE = 36
 
 
 def concordia_api(relative_path):
-    abs_path = "{}/api/v1/{}".format(Config.Get("concordia")["NETLOC"], relative_path)
+    abs_path = "{}/api/v1/{}".format(settings.CONCORDIA["netloc"], relative_path)
     logger.debug("Calling API path %s", abs_path)
     data = requests.get(abs_path).json()
 
@@ -68,12 +59,14 @@ class AccountProfileView(LoginRequiredMixin, TemplateView):
                 obj.password = self.request.user.password
             obj.save()
 
-            if 'myfile' in self.request.FILES:
-                myfile = self.request.FILES['myfile']
-                profile, created = UserProfile.objects.update_or_create(user=obj, defaults={'myfile': myfile})
+            if "myfile" in self.request.FILES:
+                myfile = self.request.FILES["myfile"]
+                profile, created = UserProfile.objects.update_or_create(
+                    user=obj, defaults={"myfile": myfile}
+                )
         else:
             return render(self.request, self.template_name, locals())
-        return redirect(reverse('user-profile'))
+        return redirect(reverse("user-profile"))
 
     def get_context_data(self, **kws):
         last_name = self.request.user.last_name
@@ -257,11 +250,11 @@ class CollectionView(TemplateView):
                             collection=c,
                         )
             # os.system('rm -rf {0}'.format('/concordia_images/*'))
-            c.is_active=1
+            c.is_active = 1
             c.save()
 
-            return redirect('/transcribe/' + name.replace(" ", "-"))
-        return render(self.request, self.template_name, {'error': 'yes'})
+            return redirect("/transcribe/" + name.replace(" ", "-"))
+        return render(self.request, self.template_name, {"error": "yes"})
 
 
 class DeleteCollectionView(TemplateView):

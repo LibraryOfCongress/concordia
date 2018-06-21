@@ -2,6 +2,7 @@ FROM ubuntu:18.04
 
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONPATH=/app
+ENV DJANGO_SETTINGS_MODULE=concordia.settings_prod
 
 # Pillow/Imaging: https://pillow.readthedocs.io/en/latest/installation.html#external-libraries
 RUN apt-get update && apt-get install -y \
