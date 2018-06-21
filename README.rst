@@ -77,8 +77,8 @@ The virtual env directory should be named .venv and it's preferred to use Pipenv
 If your editor is properly configured, these manual steps shouldn't be necessary to run before committing to git:
 
     $ black .
-    $ isort .
-    $ unify .
+    $ isort --recursive .
+    $ unify --in-place *.py && unify --in-place **/*.py
 
 Misc
 ----
