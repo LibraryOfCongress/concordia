@@ -54,7 +54,7 @@ ADMIN_SITE = {
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "ENGINE": "django.db.backends.postgresql",
         "NAME": "concordia",
         "USER": "concordia",
         "PASSWORD": "concordia",
@@ -204,7 +204,7 @@ REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
 }
 
-CONCORDIA = dict(netloc="http://0.0.0.0:80")
+CONCORDIA = {"netloc": "http://0.0.0.0:80"}
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 

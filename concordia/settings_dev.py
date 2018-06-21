@@ -12,7 +12,7 @@ DEBUG = True
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "ENGINE": "django.db.backends.postgresql",
         "NAME": "concordia",
         "USER": "concordia",
         "PASSWORD": "concordia",
@@ -25,9 +25,8 @@ ALLOWED_HOSTS = ["127.0.0.1","0.0.0.0"]
 
 CELERY_BROKER_URL = "amqp://"
  
-CONCORDIA = dict(netloc="http://0.0.0.0:8000") 
+CONCORDIA = {"netloc": "http://0.0.0.0:8000"}
  
-
 IMPORTER = {
     "BASE_URL"       :   "",
     "IMAGES_FOLDER"  :   "/tmp/concordia_images/",

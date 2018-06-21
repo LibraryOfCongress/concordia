@@ -12,7 +12,7 @@ DEBUG = True
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "ENGINE": "django.db.backends.postgresql",
         "NAME": "concordia",
         "USER": "concordia",
         "PASSWORD": "concordia",
@@ -23,7 +23,7 @@ DATABASES = {
 
 ALLOWED_HOSTS = ["127.0.0.1","0.0.0.0"]
 
-CONCORDIA = dict(netloc="http://0.0.0.0:8000")
+CONCORDIA = {"netloc": "http://0.0.0.0:8000"}
 
 IMPORTER = {
     "BASE_URL"       :   "",
