@@ -30,7 +30,7 @@ CONCORDIA = dict(netloc="http://0.0.0.0:8000")
 
 IMPORTER = {
     "BASE_URL"       :   "",
-    "IMAGES_FOLDER"  :   "/concordia_images/",
+    "IMAGES_FOLDER"  :   "/tmp/concordia_images/",
     "ITEM_COUNT"     :   "",
     "S3_BUCKET_NAME" :   ""
 }

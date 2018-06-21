@@ -8,8 +8,8 @@ from urllib.parse import urlparse
 import boto3
 import botocore
 import requests
-from PIL import Image
 from django.conf import settings
+from PIL import Image
 
 
 class Importer:

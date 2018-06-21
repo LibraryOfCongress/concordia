@@ -8,14 +8,15 @@ LOGGING["handlers"]["celery"]["filename"] = "./logs/concordia-celery.log"
 LOGGING["loggers"]["django"]["level"] = "INFO"
 LOGGING["loggers"]["celery"]["level"] = "INFO"
 
-DJANGO_SECRET_KEY = "np*no_id-t8*if4*a(pz(n(rk5#(rlyn-41jvp5u%*ij&5u-3x"
+DJANGO_SECRET_KEY = "changeme"
 
 # TODO: For final deployment to production, when we are running https, uncomment this next line
 # CSRF_COOKIE_SECURE = True
 
 IMPORTER = {
     "BASE_URL"       :   "",
-    "IMAGES_FOLDER"  :   "/app/",
+    # /concordia_images is a docker volume shared by importer and concordia    
+    "IMAGES_FOLDER"  :   "/concordia_images/",
     "ITEM_COUNT"     :   "",
     "S3_BUCKET_NAME" :   ""
 }
