@@ -74,7 +74,8 @@ https://pypi.org/project/unify/
 
 The virtual env directory should be named .venv and it's preferred to use Pipenv to manage the virtual environment.
 
-If your editor is properly configured, these manual steps shouldn't be necessary to run before committing to git:
+Configure your editor to run black, isort, and unify on each file at save time. 
+If you can't modify your editor, here is how to run the code quality tools manually:
 
     $ black .
     $ isort --recursive .
