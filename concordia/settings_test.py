@@ -21,7 +21,7 @@ DATABASES = {
     }
 }
 
-ALLOWED_HOSTS = ["127.0.0.1"]
+ALLOWED_HOSTS = ["127.0.0.1","0.0.0.0"]
 
 CONCORDIA = dict(netloc="http://0.0.0.0:8000")
 
