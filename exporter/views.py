@@ -64,12 +64,10 @@ class ExportCollectionToCSV(TemplateView):
 
 class ExportCollectionToBagit(TemplateView):
     """
-    Creates temp directory structure for source data.  Moves source image
-    file into temp directory, builds export.csv with meta, transcription,
-    and tag data.  Executes bagit.py to turn temp directory into bagit
+    Creates temp directory structure for source data.  Moves mock image
+    file into temp directory, Executes bagit.py to turn temp directory into bagit
     strucutre.  Builds and exports bagit structure as zip.  Removes all
     temporary directories and files.
-
     """
 
     template_name = "transcriptions/collection.html"
