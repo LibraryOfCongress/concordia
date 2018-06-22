@@ -220,7 +220,7 @@ class CollectionView(TemplateView):
             collection_path = os.path.join(settings.MEDIA_ROOT, "concordia", slug)
             shutil.rmtree(collection_path)
             os.makedirs(collection_path)
-            if shutil.copytree('/concordia_images', collection_path)
+            if shutil.copytree('/concordia_images', collection_path):
                 shutil.rmtree('/concordia_images/')
                 c = Collection.objects.create(title=name, slug=slug, description=name)
                 for root, dirs, files in os.walk(collection_path):
