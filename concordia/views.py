@@ -1,6 +1,7 @@
 import os
 import sys
 import csv
+import shutil
 from django.http import HttpResponse
 from logging import getLogger
 import requests
@@ -215,29 +216,29 @@ class CollectionView(TemplateView):
         if result2 and not result2.state == 'PENDING':
 
             base_dir = settings.BASE_DIR
-            collection_path = settings.MEDIA_ROOT + "/concordia/" + name.replace(' ', '-')
-            os.system('rm -rf {0}'.format(collection_path))
+            slug = name.replace(' ', '-')
+            collection_path = os.path.join(settings.MEDIA_ROOT, "concordia", slug)
+            shutil.rmtree(collection_path)
             os.makedirs(collection_path)
-            cmd = 'cp -r {0}/* {1}'.format('/concordia_images', collection_path)
-            if os.WEXITSTATUS(os.system(cmd)) == 0:
-                os.system('rm -rf {0}'.format('/concordia_images/*'))
-                c = Collection.objects.create(title=name, slug=name.replace(" ", "-"), description=name)
+            if shutil.copytree('/concordia_images', collection_path)
+                shutil.rmtree('/concordia_images/')
+                c = Collection.objects.create(title=name, slug=slug, description=name)
                 for root, dirs, files in os.walk(collection_path):
                     for filename in files:
                         file_path = os.path.join(root, filename)
                         title = file_path.replace(collection_path + '/', '').split('/')[0]
                         media_url = file_path.replace(settings.MEDIA_ROOT, '')
-                        sequence = filename.replace('.jpg', '')
+                        sequence = int(os.path.splitext(filename)[0])
                         Asset.objects.create(title=title,
                                              slug=title + sequence,
                                              description="{0} description".format(title),
                                              media_url=media_url,
                                              media_type='IMG',
-                                             sequence=int(sequence),
+                                             sequence=sequence,
                                              collection=c)
                 c.is_active = 1
                 c.save()
-                return redirect('/transcribe/' + name.replace(" ", "-"))
+                return redirect(reverse('collection', args=[slug]))
         return render(self.request, self.template_name, {'error': 'yes'})
 
 

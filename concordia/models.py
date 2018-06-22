@@ -8,8 +8,7 @@ class UserProfile(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     myfile = models.FileField(upload_to='profile_pics/')
 
-USE_POSTGRES = settings.USE_POSTGRES
-if USE_POSTGRES:
+if settings.USE_POSTGRES:
     from django.contrib.postgres.fields import JSONField
     metadata_default = dict
 else:

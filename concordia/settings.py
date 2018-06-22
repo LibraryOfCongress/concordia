@@ -262,4 +262,4 @@ AUTH_PASSWORD_VALIDATORS = [
     }
 ]
 
-USE_POSTGRES = True if 'postgresql_psycopg2' in Config.Get("database")["adapter"] else False
+USE_POSTGRES = 'postgres' in Config.Get("database")["adapter"]
