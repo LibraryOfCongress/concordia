@@ -541,9 +541,8 @@ input {
   text-decoration: none;
 }
 
-.tab-content, .tab-pane, .tab-pane input {
-  color: rgba(51,51,51,1);
-  height: calc( 50vh - ( 3.5rem + 3.375rem ) );
+.tab-content, .tab-pane {
+  height: calc( 33.3vh - ( 3.5rem + 3.375rem ) );
   overflow-y: scroll;
 }
 
@@ -561,6 +560,11 @@ input {
 
 .tab-pane textarea::-webkit-input-placeholder, .tab-pane textarea::-moz-placeholder, .tab-pane textarea:-ms-input-placeholder, .tab-pane textarea:-moz-placeholder {
   color: rgba(102,102,102,1);
+}
+
+.tab-pane input {
+  color: rgba(51,51,51,1);
+  height: calc( 50vh - ( 3.5rem + 3.375rem ) );
 }
 
 #tab-discussion {

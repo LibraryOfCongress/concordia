@@ -97,7 +97,7 @@
                   </div>
                 {% if request.user.is_authenticated %}
                 <div class="my-quarter mx-half">
-                  <label for="status_id">Transcription Status:</label>
+                  <label id="status-id-label" for="status_id">Transcription Status:</label>
                     <select name="status" id="status_id">
                         <option value="0">0%</option>
                         <option value="25">25%</option>
@@ -128,6 +128,7 @@
         }
     });
 </script>
+<script src="{% static "js/contribute.js" %}"></script>
 <script>
 {% if transcription.status %}
   $("#status_id").val({{transcription.status}});
