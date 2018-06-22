@@ -1,7 +1,9 @@
 FROM ubuntu:18.04
 
+ENV DEBIAN_FRONTEND="noninteractive"
+
 # Pillow/Imaging: https://pillow.readthedocs.io/en/latest/installation.html#external-libraries
-RUN apt-get update -qy && apt-get install -qy \
+RUN apt-get update -qy && apt-get install -o Dpkg::Options::='--force-confnew' -qy \
     git curl \
     python3 python3-dev python3-pip \
     libtiff-dev libjpeg-dev libopenjp2-7-dev libwebp-dev zlib1g-dev \
