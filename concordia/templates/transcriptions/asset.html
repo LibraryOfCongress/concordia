@@ -7,11 +7,11 @@
     <div class="col-12 d-flex align-items-middle py-1 bg-darkest-gray">
       <h6 class="offwhite-text pl-default mb-0"><a class="offwhite-text" href="{% url 'transcriptions:collection' asset.collection.slug %}">{{ asset.collection.title }}</a>  >  {{ asset.title }}</h6>
     </div>
-    <div class="col-12">
+    <div class="col-8 col-md-9">
       <div id="asset-image" class="asset-image bg-offwhite">
         </div>
     </div>
-    <div class="col-6 col-lg-4 bg-darkest-gray shadow-regular rounded contribute-box" id="contribute-box">
+    <div class="col-4 col-md-3 bg-darkest-gray shadow-regular rounded contribute-box" id="contribute-box">
           <nav class="px-half py-1">
             <div class="nav nav-pills" id="nav-pill-contribute-box" role="tablist">
                   <a class="nav-item nav-link active" id="nav-pill-transcription" data-toggle="tab" href="#tab-transcription" role="tab" aria-controls="tab-transcription" aria-selected="true">Transcription</a>
@@ -118,7 +118,6 @@
 {% block body_scripts %}
 <script src="https://www.jqueryscript.net/demo/Bootstrap-4-Tag-Input-Plugin-jQuery/tagsinput.js"></script>
 <script src="{% static "vendor/openseadragon/openseadragon.min.js" %}"></script>
-<script src="{% static "js/contribute.js" %}"></script>
 <script>
     OpenSeadragon({
         id: 'asset-image',
