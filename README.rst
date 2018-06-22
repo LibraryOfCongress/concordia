@@ -38,11 +38,12 @@ Instead of doing ``docker-compose up`` as above, instead do the following::
 
 This will keep the database in its container for convenience.
 
-Next, set up a Python virtual environment::
+Next, set up a Python virtual environment, install pipenv <https://docs.pipenv.org/>, and other Python prerequisites::
 
     $ python3 -m venv env
     $ source env/bin/activate
-    $ pip install -r requirements_devel.txt
+    $ pip3 install pipenv
+    $ pipenv install --system --dev --deploy
 
 Finally, configure the Django settings, run migrations, and launch the development server::
 
