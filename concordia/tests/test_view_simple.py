@@ -9,6 +9,7 @@ class ViewTest1(TestCase):
 
     It doesn't test any component of the concordia project.
     """
+
     def setUp(self):
         """
         setUp is called before the execution of each test below
@@ -38,7 +39,6 @@ class ViewTest1(TestCase):
         # Assert
         self.assertEqual(sum, 6)
 
-
     def test_addition3(self):
         # Arrange
         x = 5
@@ -49,6 +49,3 @@ class ViewTest1(TestCase):
 
         # Assert
         self.assertEqual(sum, 7)
-
-
-
