@@ -11,17 +11,18 @@ RUN apt-get update -qy && apt-get install -o Dpkg::Options::='--force-confnew' -
     locales
 
 RUN locale-gen en_US.UTF-8
+ENV LC_ALL=en_US.UTF-8
+ENV LANG=en_US.UTF-8
+ENV LANGUAGE=en_US.UTF-8
 
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONPATH /app
 ENV DJANGO_SETTINGS_MODULE=concordia.settings_prod
-ENV LANG en_US.UTF-8
-ENV LC_ALL en_US.UTF-8
 
 RUN pip3 install pipenv
 
 WORKDIR /app
 COPY . /app
-RUN pipenv install --system --dev --deploy
+RUN pipenv install --system --dev
 
 CMD [ "/bin/bash", "importer/entrypoint.sh" ]
