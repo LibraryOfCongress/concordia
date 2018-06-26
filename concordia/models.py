@@ -1,7 +1,11 @@
+import os
+import shutil
+
 from logging import getLogger
 from django.db import models
 from django.contrib.auth.models import User
 from django.conf import settings
+from importer.importer.tasks import download_async_collection, check_completeness
 
 
 class UserProfile(models.Model):
@@ -67,6 +71,40 @@ class Collection(models.Model):
 
     def __str__(self):
         return self.title
+
+    def copy_images_to_collection(self, url, collection_path):
+        result2 = None
+        try:
+            result = download_async_collection.delay(url)
+            result.ready()
+            result.get()
+            result2 = check_completeness.delay()
+            result2.ready()
+            result2.get()
+        except Exception as e:
+            print(e)
+            pass
+
+        if result2 and not result2.state == 'PENDING':
+            shutil.rmtree(collection_path)
+            os.makedirs(collection_path)
+            if shutil.copytree('/concordia_images', collection_path):
+                shutil.rmtree('/concordia_images/')
+
+    def create_assets_from_filesystem(self, collection_path):
+        for root, dirs, files in os.walk(collection_path):
+            for filename in files:
+                file_path = os.path.join(root, filename)
+                title = file_path.replace(collection_path + '/', '').split('/')[0]
+                media_url = file_path.replace(settings.MEDIA_ROOT, '')
+                sequence = int(os.path.splitext(filename)[0])
+                Asset.objects.create(title=title,
+                                     slug="{0}{1}".format(title, sequence),
+                                     description="{0} description".format(title),
+                                     media_url=media_url,
+                                     media_type='IMG',
+                                     sequence=sequence,
+                                     collection=self)
 
 
 class Subcollection(models.Model):

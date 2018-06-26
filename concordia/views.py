@@ -17,9 +17,9 @@ from django.core.paginator import Paginator
 from django.urls import reverse
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
+from django.db import transaction
 from django.db.models import Q
 from django.db.models import Count, Sum
-from importer.importer.tasks import download_async_collection, check_completeness
 
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(PROJECT_DIR)
@@ -198,47 +198,21 @@ class ExperimentsView(TemplateView):
 class CollectionView(TemplateView):
     template_name = 'transcriptions/create.html'
 
+    @transaction.non_atomic_requests
     def post(self, *args, **kwargs):
         context = self.get_context_data()
         name = self.request.POST.get('name')
         url = self.request.POST.get('url')
-        result2 = None
-        try:
-            result = download_async_collection.delay(url)
-            result.ready()
-            result.get()
-            result2 = check_completeness.delay()
-            result2.ready()
-            result2.get()
-        except Exception as e:
-            pass
-
-        if result2 and not result2.state == 'PENDING':
-
-            base_dir = settings.BASE_DIR
-            slug = name.replace(' ', '-')
-            collection_path = os.path.join(settings.MEDIA_ROOT, "concordia", slug)
-            shutil.rmtree(collection_path)
-            os.makedirs(collection_path)
-            if shutil.copytree('/concordia_images', collection_path):
-                shutil.rmtree('/concordia_images/')
-                c = Collection.objects.create(title=name, slug=slug, description=name)
-                for root, dirs, files in os.walk(collection_path):
-                    for filename in files:
-                        file_path = os.path.join(root, filename)
-                        title = file_path.replace(collection_path + '/', '').split('/')[0]
-                        media_url = file_path.replace(settings.MEDIA_ROOT, '')
-                        sequence = int(os.path.splitext(filename)[0])
-                        Asset.objects.create(title=title,
-                                             slug=title + sequence,
-                                             description="{0} description".format(title),
-                                             media_url=media_url,
-                                             media_type='IMG',
-                                             sequence=sequence,
-                                             collection=c)
-                c.is_active = 1
-                c.save()
-                return redirect(reverse('collection', args=[slug]))
+        slug = name.replace(' ', '-')
+        collection_path = os.path.join(settings.MEDIA_ROOT, "concordia", slug)
+        c = Collection.objects.create(title=name, slug=slug, description=name)
+        c.copy_images_to_collection(url, collection_path)
+        c.create_assets_from_filesystem(collection_path)
+        c.is_active=1
+        c.save()
+        if c:
+            return redirect(reverse('transcriptions:collection', args=[slug],
+                                    current_app=self.request.resolver_match.namespace))
         return render(self.request, self.template_name, {'error': 'yes'})
 
 
