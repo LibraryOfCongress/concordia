@@ -24,7 +24,7 @@ RUN pip3 install pipenv
 COPY vendor /vendor
 WORKDIR /app
 COPY . /app
-RUN pipenv install --system --dev --deploy
+RUN pipenv install --system --dev
 
 EXPOSE 80
 CMD [ "/bin/bash", "entrypoint.sh" ]
