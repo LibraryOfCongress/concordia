@@ -88,7 +88,7 @@ class Collection(models.Model):
         if result2 and not result2.state == 'PENDING':
             if os.path.isdir(collection_path):
                 shutil.rmtree(collection_path)
-            shutil.copytree('/concordia_images', collection_path):
+            shutil.copytree('/concordia_images', collection_path)
             shutil.rmtree('/concordia_images/')
 
     def create_assets_from_filesystem(self, collection_path):
