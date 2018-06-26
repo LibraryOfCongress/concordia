@@ -96,8 +96,8 @@
                     </div>
                   </div>
                 {% if request.user.is_authenticated %}
-                <div class="my-quarter mx-half">
-                  <label id="status-id-label" for="status_id">Transcription Status:</label>
+                <div class="my-quarter d-flex justify-content-around align-items-center">
+                  <label id="status-id-label" for="status_id">Status:</label>
                     <select name="status" id="status_id">
                         <option value="0">0%</option>
                         <option value="25">25%</option>
@@ -105,7 +105,7 @@
                         <option value="75">75%</option>
                         <option value="100">100%</option>
                     </select>
-                    <input type="submit" class="btn btn-primary" value="Save">
+                    <input type="submit" class="btn btn-primary float-right" value="Save">
                   </div>
                   {% endif %}
                 </form>
