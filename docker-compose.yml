@@ -1,4 +1,4 @@
-version: '2'
+version: '3.5'
 
 services:
   rabbit:
@@ -9,14 +9,20 @@ services:
       - 15672:15672
   db:
     image: postgres
+    env_file: ./.env
     environment:
-      POSTGRES_PASSWORD: concordia
+      POSTGRES_PASSWORD: ${POSTGRESQL_PW}
       POSTGRES_USER: concordia
     ports:
       - 54321:5432
     volumes:
+      - ./postgresql:/docker-entrypoint-initdb.d
       - db_volume:/var/lib/postgresl/data/
+    environment:
+        - POSTGRES_MULTIPLE_DATABASES=concordia,sentry
+
   app:
+    env_file: ./.env
     build: .
     depends_on:
       - db
@@ -65,9 +71,12 @@ services:
       - 9100:9100
 
   grafana:
+    env_file: ./.env
     restart: always
     image: grafana/grafana:latest
     container_name: concordia_grafana
+    secrets: 
+      - grafana_secret
     volumes:
       - grafana_data:/var/lib/grafana
       - ./grafana/datasources:/etc/grafana/datasources
@@ -78,9 +87,8 @@ services:
     ports:
       - 3000:3000
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=MYPASSWORT
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PW}
       - GF_USERS_ALLOW_SIGN_UP=false
-      - GF_SERVER_DOMAIN=myrul.com
       - GF_SMTP_ENABLED=true
       - GF_SMTP_HOST=smtp.gmail.com:587
       - GF_SMTP_USER=myadrress@gmail.com
@@ -98,6 +106,10 @@ services:
       - "5601:5601"
       - "9200:9200"
       - "5044:5044"
+
+secrets:
+  grafana_secret:
+    file: ./.grafana_secret.txt
 
 volumes:
   db_volume:
