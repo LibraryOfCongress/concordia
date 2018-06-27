@@ -1,12 +1,6 @@
 version: '3.5'
 
 services:
-  rabbit:
-    hostname: rabbit
-    image: rabbitmq:latest
-    ports:
-      - 5672:5672
-      - 15672:15672
   db:
     image: postgres
     env_file: ./.env
@@ -20,12 +14,20 @@ services:
       - db_volume:/var/lib/postgresl/data/
     environment:
         - POSTGRES_MULTIPLE_DATABASES=concordia,sentry
-
+  
+  rabbit:
+    hostname: rabbit
+    image: rabbitmq:latest
+    ports:
+      - 5672:5672
+      - 15672:15672
+  
   app:
     env_file: ./.env
     build: .
     depends_on:
       - db
+      - rabbit
     volumes:
       - .:/app
       - images_volume:/concordia_images
@@ -33,6 +35,7 @@ services:
       - rabbit
     ports:
       - 80:80
+  
   importer:
     build:
        context: .
@@ -75,8 +78,6 @@ services:
     restart: always
     image: grafana/grafana:latest
     container_name: concordia_grafana
-    secrets: 
-      - grafana_secret
     volumes:
       - grafana_data:/var/lib/grafana
       - ./grafana/datasources:/etc/grafana/datasources
@@ -106,10 +107,6 @@ services:
       - "5601:5601"
       - "9200:9200"
       - "5044:5044"
-
-secrets:
-  grafana_secret:
-    file: ./.grafana_secret.txt
 
 volumes:
   db_volume:

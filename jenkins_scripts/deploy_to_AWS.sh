@@ -9,7 +9,7 @@ expect "$ "
 send -- "cd projects/concordia\r"
 expect "$ "
 
-send -- "./elk/increase_max_map_count.sh\r"
+send -- "/usr/bin/sudo ./elk/increase_max_map_count.sh\r"
 expect "$ "
 
 send -- "./AWS_deploy.sh\r"
