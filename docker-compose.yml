@@ -82,7 +82,6 @@ services:
       - ./grafana/datasources:/etc/grafana/datasources
       - ./grafana/dashboards:/etc/grafana/dashboards
       - ./grafana/setup.sh:/setup.sh
-      - ./grafana/setup_user.sh:/setup_user.sh
     expose:
       - 3000
     ports:

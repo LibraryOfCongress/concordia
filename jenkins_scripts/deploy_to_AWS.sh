@@ -17,7 +17,7 @@ sleep 200
 send -- "/usr/bin/sudo /usr/bin/docker exec -it concordia_app_1 bash -c \"./migrate_and_user.sh && exit\"\r"
 expect "$ "
 
-send -- "/usr/bin/sudo /usr/bin/docker exec -it concordia_grafana bash -c \"./setup_user.sh && exit\"\r"
+send -- "/usr/bin/sudo /usr/bin/docker exec -it concordia_grafana bash -c \"./setup.sh/grafana_post_run.sh && exit\"\r"
 expect "$ "
 
 sleep 5
