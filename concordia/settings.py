@@ -262,3 +262,4 @@ AUTH_PASSWORD_VALIDATORS = [
     }
 ]
 
+USE_POSTGRES = 'postgres' in Config.Get("database")["adapter"]

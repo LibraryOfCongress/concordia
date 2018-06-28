@@ -1,0 +1,40 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+"psycopg2" = "*"
+"psycopg2-binary" = "*"
+gunicorn = "*"
+djangorestframework = "*"
+celery = "*"
+"7b96e2b" = {file = "file:///app/vendor/django-registration.zip"}
+coreapi = "*"
+django-machina = "*"
+django-haystack = "*"
+"boto3" = "*"
+requests = "*"
+Django = "<2.1,>=2"
+Pillow = "*"
+Markdown = "*"
+confusable_homoglyphs = ">=3.1.1"
+Whoosh = "*"
+bagit = "*"
+
+[dev-packages]
+invoke = "*"
+django-extensions = "*"
+pytest = "*"
+pytest-cov = "*"
+pytest-django = "*"
+pytest-html = "*"
+pycodestyle = "*"
+black = "*"
+isort = "*"
+
+[requires]
+python_version = "3.6"
+
+[pipenv]
+allow_prereleases = true

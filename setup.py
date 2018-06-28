@@ -1,23 +1,23 @@
 #!/usr/bin/env python
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
-VERSION = __import__('concordia').get_version()
-INSTALL_REQUIREMENTS = ['Django<2.1']
-SCRIPTS = ['manage.py']
-DESCRIPTION = 'Transcription crowdsourcing'
-CLASSIFIERS = '''\
+VERSION = __import__("concordia").get_version()
+INSTALL_REQUIREMENTS = ["Django<2.1"]
+SCRIPTS = ["manage.py"]
+DESCRIPTION = "Transcription crowdsourcing"
+CLASSIFIERS = """\
 Environment :: Web Environment
 Framework :: Django
 Programming Language :: Python
 Programming Language :: Python :: 3.6
-'''.splitlines()
+""".splitlines()
 
-with open('README.rst', 'r') as f:
+with open("README.rst", "r") as f:
     LONG_DESCRIPTION = f.read()
 
 
 setup(
-    name='concordia',
+    name="concordia",
     version=VERSION,
     description=DESCRIPTION,
     long_description=LONG_DESCRIPTION,
