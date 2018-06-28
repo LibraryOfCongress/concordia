@@ -13,8 +13,8 @@
                 <div class="d-flex flex-wrap col-12 justify-content-around">
                     {% for a in assets %}
                     <div class="col-12 col-md-4 col-lg-3 mx-quarter mb-default card bg-lightest-gray shadow-regular">
-                        <img class="card-img" src="{{ MEDIA_URL }}{{a.media_url }}" alt="{ a.slug }">
-                        <div class="card-img-overlay">
+                        <a href="{% url 'transcriptions:asset' collection.slug a.slug %}"><img class="card-img card-img-collection" src="{{ MEDIA_URL }}{{a.media_url }}" alt="{ a.slug }"></a>
+                        <div class="card-img-overlay collection-image">
                             <div class="d-flex justify-content-center col-9 col-md-8 mx-auto">
                                 <a href="{% url 'transcriptions:asset' collection.slug a.slug %}" class="btn btn-primary btn-lg w-100">Transcribe</a>
                             </div>
@@ -22,7 +22,7 @@
                                 <a href="{% url 'transcriptions:asset' collection.slug a.slug %}#tab-tag" class="btn btn-primary btn-lg w-100">Tag</a>
                             </div>
                         </div>
-                        <a href="{% url 'transcriptions:asset' collection.slug a.slug %}"><h6 class="text-center blue-text my-half">{{ a.slug }}</h6></a>
+                        <a href="{% url 'transcriptions:asset' collection.slug a.slug %}"><h6 class="text-center blue-text my-half collection-image-link">{{ a.slug }}</h6></a>
                     </div>
                     {% endfor %}
                 </div>
