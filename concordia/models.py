@@ -12,7 +12,8 @@ class UserProfile(models.Model):
     myfile = models.FileField(upload_to="profile_pics/")
 
 
-if settings.USE_POSTGRES:
+USE_POSTGRES = True
+if USE_POSTGRES:
     from django.contrib.postgres.fields import JSONField
 
     metadata_default = dict
