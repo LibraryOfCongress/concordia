@@ -1,40 +1,39 @@
-import csv
+
 import os
 import sys
-import shutil
-from django.http import HttpResponse
 from logging import getLogger
+
 import requests
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
+from django.core.paginator import Paginator
+from django.db import transaction
+from django.db.models import Count, Q
+from django.shortcuts import get_object_or_404
+from django.shortcutsimport import redirect, render
+from django.urls import reverse
 from django.views.generic import TemplateView
 from registration.backends.simple.views import RegistrationView
-from django.core.paginator import Paginator
-from django.db.models import Count, Q, Sum
-from django.http import HttpResponse
-from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse
-from django.contrib.auth.models import User
-from django.shortcuts import get_object_or_404
-from django.db import transaction
-from django.db.models import Q
-from django.db.models import Count, Sum
+
+from concordia.forms import ConcordiaUserEditForm, ConcordiaUserForm
+from concordia.models import (
+    Asset,
+    Collection,
+    Tag,
+    Transcription,
+    UserAssetTagCollection,
+    UserProfile,
+)
 
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(PROJECT_DIR)
 
 sys.path.append(BASE_DIR)
 
-sys.path.append(os.path.join(BASE_DIR, 'config'))
-from config import Config
+sys.path.append(os.path.join(BASE_DIR, "config"))
 
-from concordia.forms import ConcordiaUserEditForm, ConcordiaUserForm
-from concordia.models import (Asset, Collection, Tag, Transcription,
-                              UserAssetTagCollection, UserProfile)
-from importer.importer.tasks import (check_completeness,
-                                     download_async_collection)
 
 logger = getLogger(__name__)
 
@@ -162,7 +161,7 @@ class ConcordiaAssetView(TemplateView):
         )
 
     def post(self, *args, **kwargs):
-        context = self.get_context_data()
+        self.get_context_data()
         asset = Asset.objects.get(collection__slug=self.args[0], slug=self.args[1])
         if "tx" in self.request.POST:
             tx = self.request.POST.get("tx")
@@ -218,20 +217,25 @@ class CollectionView(TemplateView):
 
     @transaction.non_atomic_requests
     def post(self, *args, **kwargs):
-        context = self.get_context_data()
-        name = self.request.POST.get('name')
-        url = self.request.POST.get('url')
-        slug = name.replace(' ', '-')
+        self.get_context_data()
+        name = self.request.POST.get("name")
+        url = self.request.POST.get("url")
+        slug = name.replace(" ", "-")
         collection_path = os.path.join(settings.MEDIA_ROOT, "concordia", slug)
         c = Collection.objects.create(title=name, slug=slug, description=name)
         c.copy_images_to_collection(url, collection_path)
         c.create_assets_from_filesystem(collection_path)
-        c.is_active=1
+        c.is_active = 1
         c.save()
         if c:
-            return redirect(reverse('transcriptions:collection', args=[slug],
-                                    current_app=self.request.resolver_match.namespace))
-        return render(self.request, self.template_name, {'error': 'yes'})
+            return redirect(
+                reverse(
+                    "transcriptions:collection",
+                    args=[slug],
+                    current_app=self.request.resolver_match.namespace,
+                )
+            )
+        return render(self.request, self.template_name, {"error": "yes"})
 
 
 class DeleteCollectionView(TemplateView):
