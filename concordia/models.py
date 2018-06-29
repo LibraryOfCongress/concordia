@@ -76,9 +76,9 @@ class Collection(models.Model):
         if result and not result.state == "PENDING":
             if os.path.isdir(collection_path):
                 shutil.rmtree(collection_path)
-            shutil.copytree("/concordia_images", collection_path)
-            for the_dir in os.listdir("/concordia_images"):
-                shutil.rmtree(os.path.join("/concordia_images", the_dir))
+            shutil.copytree(settings.IMPORTER["IMAGES_FOLDER"], collection_path)
+            for the_dir in os.listdir(settings.IMPORTER["IMAGES_FOLDER"]):
+                shutil.rmtree(os.path.join(settings.IMPORTER["IMAGES_FOLDER"], the_dir))
 
     def create_assets_from_filesystem(self, collection_path):
         for root, dirs, files in os.walk(collection_path):
