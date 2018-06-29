@@ -193,7 +193,7 @@ class Importer:
                             "Writing another %d size chunk", self.IMAGE_CHUNK_SIZE
                         )
             except Exception as e:
-                self.logger.error('File not found: %s', filename)
+                self.logger.error("File not found: %s", filename)
             self.logger.info("Finished writing the image file %s", filename)
 
         # If the image successfully verifies, upload it to the S3 bucket
@@ -225,7 +225,9 @@ class Importer:
                 os.remove(filename)
                 self.logger.info("Removed %s", filename)
             except Exception as e:
-                self.logger.error('unable to remove since, file not found: %s', filename)
+                self.logger.error(
+                    "unable to remove since, file not found: %s", filename
+                )
 
     def check_image_file_on_s3(self, filename, expected_size):
         if self.s3_bucket_name:
@@ -319,8 +321,9 @@ class Importer:
                     },
                 )
         except Exception as e:
-            self.logger.error('unable to count the number of files: %s', destination_path)
-
+            self.logger.error(
+                "unable to count the number of files: %s", destination_path
+            )
 
     def get_and_save_images(self, results_url):
         """
@@ -354,4 +357,3 @@ class Importer:
             next_url = data["pagination"]["next"]
             self.logger.info("Getting next page: %s", next_url)
             self.get_and_save_images(next_url)
-
