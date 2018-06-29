@@ -2,7 +2,6 @@ from __future__ import absolute_import, unicode_literals
 
 import logging
 import os
-import sys
 from urllib.parse import urlparse
 
 import boto3
@@ -169,6 +168,11 @@ class Importer:
                 "An exception occurred attempting to verify %s", filename, exc_info=True
             )
             return False
+        except Exception as e:
+            self.logger.error(
+                "An exception occurred attempting to verify %s", e, exc_info=True
+            )
+            return False
 
         return True
 
@@ -179,15 +183,17 @@ class Importer:
             image_url = image
             self.logger.info("Requesting %s", image_url)
             image_response = requests.get(image_url, stream=True)
-            with open(filename, "wb") as fd:
-                for chunk in image_response.iter_content(
-                    chunk_size=self.IMAGE_CHUNK_SIZE
-                ):
-                    fd.write(chunk)
-                    self.logger.debug(
-                        "Writing another %d size chunk", self.IMAGE_CHUNK_SIZE
-                    )
-
+            try:
+                with open(filename, "wb") as fd:
+                    for chunk in image_response.iter_content(
+                        chunk_size=self.IMAGE_CHUNK_SIZE
+                    ):
+                        fd.write(chunk)
+                        self.logger.debug(
+                            "Writing another %d size chunk", self.IMAGE_CHUNK_SIZE
+                        )
+            except Exception as e:
+                self.logger.error('File not found: %s', filename)
             self.logger.info("Finished writing the image file %s", filename)
 
         # If the image successfully verifies, upload it to the S3 bucket
@@ -215,8 +221,11 @@ class Importer:
                 )
 
         else:
-            os.remove(filename)
-            self.logger.info("Removed %s", filename)
+            try:
+                os.remove(filename)
+                self.logger.info("Removed %s", filename)
+            except Exception as e:
+                self.logger.error('unable to remove since, file not found: %s', filename)
 
     def check_image_file_on_s3(self, filename, expected_size):
         if self.s3_bucket_name:
@@ -297,17 +306,21 @@ class Importer:
             counter = counter + 1
 
         # check whether the folder contains the number of items it should
-        actual_item_count = len(os.listdir(destination_path))
-        if self.collection_data[item_id]["size"] != actual_item_count:
-            self.logger.error(
-                "Should have %(expected_count)d images for item %(item_id)s but "
-                "instead have %(actual_count)d images",
-                {
-                    "expected_count": self.collection_data[item_id]["size"],
-                    "item_id": item_id,
-                    "actual_count": actual_item_count,
-                },
-            )
+        try:
+            actual_item_count = len(os.listdir(destination_path))
+            if self.collection_data[item_id]["size"] != actual_item_count:
+                self.logger.error(
+                    "Should have %(expected_count)d images for item %(item_id)s but "
+                    "instead have %(actual_count)d images",
+                    {
+                        "expected_count": self.collection_data[item_id]["size"],
+                        "item_id": item_id,
+                        "actual_count": actual_item_count,
+                    },
+                )
+        except Exception as e:
+            self.logger.error('unable to count the number of files: %s', destination_path)
+
 
     def get_and_save_images(self, results_url):
         """
@@ -341,3 +354,4 @@ class Importer:
             next_url = data["pagination"]["next"]
             self.logger.info("Getting next page: %s", next_url)
             self.get_and_save_images(next_url)
+
