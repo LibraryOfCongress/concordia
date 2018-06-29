@@ -4,26 +4,17 @@ from logging import getLogger
 
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.contrib.postgres.fields import JSONField
 from django.db import models
 
-from importer.importer.tasks import check_completeness, download_async_collection
+from importer.importer.tasks import download_async_collection
+
+metadata_default = dict
 
 
 class UserProfile(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     myfile = models.FileField(upload_to="profile_pics/")
-
-
-USE_POSTGRES = True
-if USE_POSTGRES:
-    from django.contrib.postgres.fields import JSONField
-
-    metadata_default = dict
-else:
-    JSONField = models.TextField()
-
-    def metadata_default():
-        return ""
 
 
 logger = getLogger(__name__)
@@ -72,19 +63,17 @@ class Collection(models.Model):
         return self.title
 
     def copy_images_to_collection(self, url, collection_path):
-        result2 = None
+        result = None
         try:
             result = download_async_collection.delay(url)
             result.ready()
             result.get()
-            result2 = check_completeness.delay()
-            result2.ready()
-            result2.get()
+
         except Exception as e:
-            print(e)
+            logger.error("Unable to copy images to collection: %s", e, exc_info=True)
             pass
 
-        if result2 and not result2.state == "PENDING":
+        if result and not result.state == "PENDING":
             if os.path.isdir(collection_path):
                 shutil.rmtree(collection_path)
             shutil.copytree("/concordia_images", collection_path)

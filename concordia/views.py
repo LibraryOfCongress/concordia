@@ -1,6 +1,5 @@
 
 import os
-import sys
 from logging import getLogger
 
 import requests
@@ -11,8 +10,7 @@ from django.contrib.auth.models import User
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Count, Q
-from django.shortcuts import get_object_or_404
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.generic import TemplateView
 from registration.backends.simple.views import RegistrationView
@@ -27,12 +25,12 @@ from concordia.models import (
     UserProfile,
 )
 
-PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
-BASE_DIR = os.path.dirname(PROJECT_DIR)
+# ROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
+# BASE_DIR = os.path.dirname(PROJECT_DIR)
 
-sys.path.append(BASE_DIR)
+# sys.path.append(BASE_DIR)
 
-sys.path.append(os.path.join(BASE_DIR, "config"))
+# sys.path.append(os.path.join(BASE_DIR, "config"))
 
 
 logger = getLogger(__name__)
