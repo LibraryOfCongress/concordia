@@ -8,7 +8,6 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator
-from django.db import transaction
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -16,22 +15,8 @@ from django.views.generic import TemplateView
 from registration.backends.simple.views import RegistrationView
 
 from concordia.forms import ConcordiaUserEditForm, ConcordiaUserForm
-from concordia.models import (
-    Asset,
-    Collection,
-    Tag,
-    Transcription,
-    UserAssetTagCollection,
-    UserProfile,
-)
-
-# ROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
-# BASE_DIR = os.path.dirname(PROJECT_DIR)
-
-# sys.path.append(BASE_DIR)
-
-# sys.path.append(os.path.join(BASE_DIR, "config"))
-
+from concordia.models import (Asset, Collection, Tag, Transcription,
+                              UserAssetTagCollection, UserProfile)
 
 logger = getLogger(__name__)
 
@@ -213,7 +198,6 @@ class ExperimentsView(TemplateView):
 class CollectionView(TemplateView):
     template_name = "transcriptions/create.html"
 
-    @transaction.non_atomic_requests
     def post(self, *args, **kwargs):
         self.get_context_data()
         name = self.request.POST.get("name")
