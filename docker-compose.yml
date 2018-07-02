@@ -43,6 +43,8 @@ services:
       # The concordia app needs to wait for the db to completely start. Use docker-compose-wait
       # as defined at https://github.com/ufoscout/docker-compose-wait
       WAIT_HOSTS: db:5432
+    depends_on:
+      - db
     volumes:
       - .:/app
       - images_volume:/concordia_images
@@ -50,8 +52,6 @@ services:
       - rabbit
     ports:
       - 80:80
-    depends_on:
-      - db
   
   importer:
     build:
