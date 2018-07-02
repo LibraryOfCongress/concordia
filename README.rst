@@ -14,7 +14,9 @@ Passwords
 This project stores passwords in a file named .env. This file resides in the root directory of the concordia app and 
 it is not included in the source code respository.
 
-This file contains three values which are:
+You must be create this file in the concordia root directory.
+
+This file contains three values, which are:
 ::    
 
     GRAFANA_ADMIN_PW=<grafana_admin_password_here>
@@ -34,7 +36,7 @@ The value for GRAFANA_ADMIN_PW is used to login to grafana using the admin user.
 Setting the passwords in this file is the only location where user passwords are defined. All access to these passwords
 is through the .env file. 
 
-An example of a .env file is in the top lvel source directory, it is called "example_env_file".
+An example of a .env file is in the top level source directory, it is called "example_env_file".
 
 Running Concordia
 =================
