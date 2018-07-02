@@ -7,11 +7,11 @@
     <div class="col-12 d-flex align-items-middle py-1 bg-darkest-gray">
       <h6 class="offwhite-text pl-default mb-0"><a class="offwhite-text" href="{% url 'transcriptions:collection' asset.collection.slug %}">{{ asset.collection.title }}</a>  >  {{ asset.title }}</h6>
     </div>
-    <div class="col-12">
+    <div class="col-8 col-md-9">
       <div id="asset-image" class="asset-image bg-offwhite">
         </div>
     </div>
-    <div class="col-6 col-lg-4 bg-darkest-gray shadow-regular rounded contribute-box" id="contribute-box">
+    <div class="col-4 col-md-3 bg-darkest-gray shadow-regular rounded contribute-box" id="contribute-box">
           <nav class="px-half py-1">
             <div class="nav nav-pills" id="nav-pill-contribute-box" role="tablist">
                   <a class="nav-item nav-link active" id="nav-pill-transcription" data-toggle="tab" href="#tab-transcription" role="tab" aria-controls="tab-transcription" aria-selected="true">Transcription</a>
@@ -83,19 +83,21 @@
                                     </div>
                                 </div>
                                 <!-- /comment -->
+                                {% if user.is_authenticated %}
                                 <div class="row pt-2">
                                     <div class="col-12">
                                         <a href="" class="btn btn-sm btn-primary">Comment</a>
                                     </div>
                                 </div>
+                                {% endif %}
 
                             </div>
                         </div>
                     </div>
                   </div>
                 {% if request.user.is_authenticated %}
-                <div class="my-quarter mx-half">
-                  <label for="status_id">Transcription Status:</label>
+                <div class="my-quarter d-flex justify-content-around align-items-center">
+                  <label id="status-id-label" for="status_id">Status:</label>
                     <select name="status" id="status_id">
                         <option value="0">0%</option>
                         <option value="25">25%</option>
@@ -103,7 +105,7 @@
                         <option value="75">75%</option>
                         <option value="100">100%</option>
                     </select>
-                    <input type="submit" class="btn btn-primary" value="Save">
+                    <input type="submit" class="btn btn-primary float-right" value="Save">
                   </div>
                   {% endif %}
                 </form>
@@ -116,7 +118,6 @@
 {% block body_scripts %}
 <script src="https://www.jqueryscript.net/demo/Bootstrap-4-Tag-Input-Plugin-jQuery/tagsinput.js"></script>
 <script src="{% static "vendor/openseadragon/openseadragon.min.js" %}"></script>
-<script src="{% static "js/contribute.js" %}"></script>
 <script>
     OpenSeadragon({
         id: 'asset-image',

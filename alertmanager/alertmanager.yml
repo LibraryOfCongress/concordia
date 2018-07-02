@@ -1,0 +1,10 @@
+# alertmanager.yml
+route:
+    receiver: 'slack'
+receivers:
+    - name: 'slack'
+      slack_configs:
+          - send_resolved: true
+            username: 'Prometheus'
+            channel: '#concordia-alerts'
+            api_url: 'https://hooks.slack.com/services/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'

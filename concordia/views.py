@@ -1,6 +1,5 @@
-import csv
+
 import os
-import sys
 from logging import getLogger
 
 import requests
@@ -9,8 +8,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator
-from django.db.models import Count, Q, Sum
-from django.http import HttpResponse
+from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.generic import TemplateView
@@ -19,8 +17,6 @@ from registration.backends.simple.views import RegistrationView
 from concordia.forms import ConcordiaUserEditForm, ConcordiaUserForm
 from concordia.models import (Asset, Collection, Tag, Transcription,
                               UserAssetTagCollection, UserProfile)
-from importer.importer.tasks import (check_completeness,
-                                     download_async_collection)
 
 logger = getLogger(__name__)
 
@@ -148,7 +144,7 @@ class ConcordiaAssetView(TemplateView):
         )
 
     def post(self, *args, **kwargs):
-        context = self.get_context_data()
+        self.get_context_data()
         asset = Asset.objects.get(collection__slug=self.args[0], slug=self.args[1])
         if "tx" in self.request.POST:
             tx = self.request.POST.get("tx")
@@ -203,57 +199,24 @@ class CollectionView(TemplateView):
     template_name = "transcriptions/create.html"
 
     def post(self, *args, **kwargs):
-        context = self.get_context_data()
+        self.get_context_data()
         name = self.request.POST.get("name")
         url = self.request.POST.get("url")
-        result2 = None
-        try:
-            result = download_async_collection.delay(url)
-            result.ready()
-            result.get()
-            result2 = check_completeness.delay()
-            result2.ready()
-            result2.get()
-        except Exception as e:
-            pass
-
-        if result2 and not result2.state == "PENDING":
-
-            base_dir = settings.BASE_DIR
-            collection_path = (
-                settings.MEDIA_ROOT + "/concordia/" + name.replace(" ", "-")
+        slug = name.replace(" ", "-")
+        collection_path = os.path.join(settings.MEDIA_ROOT, "concordia", slug)
+        c = Collection.objects.create(title=name, slug=slug, description=name)
+        c.copy_images_to_collection(url, collection_path)
+        c.create_assets_from_filesystem(collection_path)
+        c.is_active = 1
+        c.save()
+        if c:
+            return redirect(
+                reverse(
+                    "transcriptions:collection",
+                    args=[slug],
+                    current_app=self.request.resolver_match.namespace,
+                )
             )
-            os.system("rm -rf {0}".format(collection_path))
-            os.makedirs(collection_path)
-            cmd = "cp -r {0}/* {1}".format("/concordia_images", collection_path)
-            if os.WEXITSTATUS(os.system(cmd)) == 0:
-                os.system("rm -rf {0}".format("/concordia_images/*"))
-            c = Collection.objects.create(
-                title=name, slug=name.replace(" ", "-"), description=name
-            )
-            count = 0
-            for root, dirs, files in os.walk(collection_path):
-                for filename in files:
-                    filename = os.path.join(root, filename)
-                    if True:
-                        count += 1
-                        title = "{0} asset {1}".format(name, count)
-                        media_url = os.path.join(root, filename).replace(
-                            settings.MEDIA_ROOT, ""
-                        )
-                        Asset.objects.create(
-                            title=title,
-                            slug=title.replace(" ", "-"),
-                            description="{0} description".format(title),
-                            media_url=media_url,
-                            media_type="IMG",
-                            collection=c,
-                        )
-            # os.system('rm -rf {0}'.format('/concordia_images/*'))
-            c.is_active = 1
-            c.save()
-
-            return redirect("/transcribe/" + name.replace(" ", "-"))
         return render(self.request, self.template_name, {"error": "yes"})
 
 
