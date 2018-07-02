@@ -28,11 +28,6 @@ services:
       - db_volume:/var/lib/postgresl/data/
     environment:
         - POSTGRES_MULTIPLE_DATABASES=concordia,sentry
-    #healthcheck:
-      #test: ["CMD-SHELL", "pg_isready -U postgres"]
-      #interval: 10s
-      #timeout: 5s
-      #retries: 5
   
   rabbit:
     hostname: rabbit
@@ -45,7 +40,7 @@ services:
     env_file: ./.env
     build: .
     environment:
-      # The concordia app needs to wait for the to completely start. Use docker-compose-wait
+      # The concordia app needs to wait for the db to completely start. Use docker-compose-wait
       # as defined at https://github.com/ufoscout/docker-compose-wait
       WAIT_HOSTS: db:5432
     volumes:
@@ -119,9 +114,10 @@ services:
       - GF_SMTP_FROM_ADDRESS=myaddress@gmail.com
 
   alertmanager:
+    image: prom/alertmanager:latest
     build: ./alertmanager
     command:
-      - '-config.file=/alertmanager.yml'
+      - '--config.file=/alertmanager.yml'
 
   elk:
     image: sebp/elk
