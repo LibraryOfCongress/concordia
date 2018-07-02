@@ -15,9 +15,10 @@ This project stores passwords in a file named .env. This file resides in the roo
 it is not included in the source code respository.
 
 This file contains three values which are:
-GRAFANA_ADMIN_PW=<grafana_admin_password_here>
-CONCORDIA_ADMIN_PW=<concordia_admin_password_here>
-POSTGRESQL_PW=<postgresql_concordia_user_password_here>
+    
+    GRAFANA_ADMIN_PW=<grafana_admin_password_here>
+    CONCORDIA_ADMIN_PW=<concordia_admin_password_here>
+    POSTGRESQL_PW=<postgresql_concordia_user_password_here>
 
 Replace each <.._password_here> above with your actual password.
 
