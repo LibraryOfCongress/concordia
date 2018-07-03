@@ -35,6 +35,9 @@ class ViewTest_Exporter(TestCase):
         :return:
         """
 
+        # make sure the config-optional-override.json mode is "unittest"
+        # self.assertEqual(Config.GetOverrideMode(), 'unittest')
+
         self.client = Client()
 
     def login_user(self):
