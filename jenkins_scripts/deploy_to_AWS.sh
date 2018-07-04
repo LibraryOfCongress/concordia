@@ -9,12 +9,18 @@ expect "$ "
 send -- "cd projects/concordia\r"
 expect "$ "
 
+send -- "/usr/bin/sudo ./elk/increase_max_map_count.sh\r"
+expect "$ "
+
 send -- "./AWS_deploy.sh\r"
 expect "$ "
 
 sleep 200
 
 send -- "/usr/bin/sudo /usr/bin/docker exec -it concordia_app_1 bash -c \"./migrate_and_user.sh && exit\"\r"
+expect "$ "
+
+send -- "/usr/bin/sudo /usr/bin/docker exec -it concordia_grafana bash -c \"./setup.sh/grafana_post_run.sh && exit\"\r"
 expect "$ "
 
 sleep 5

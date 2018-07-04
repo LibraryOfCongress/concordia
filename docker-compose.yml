@@ -1,23 +1,48 @@
-version: '2'
+### Before running any Compose services, make sure you have an .env file 
+# inside your current folder and that it has been populated with the following content:
+#   GRAFANA_ADMIN_PW=<grafana-admin-pw>
+#   CONCORDIA_ADMIN_PW=<concordia-admin-pw>
+#   POSTGRESQL_PW=<postgres-pw>
 
+### Start Docker containers with the following command :
+  #  sudo docker-compose up 
+
+### Create django admin user and assign the grafana admin password.
+#  with docker-compose running, in a separate terminal window, enter the following commands:
+#  
+#  sudo docker exec -it concordia_app_1 bash -c "./migrate_and_user.sh"
+#  sudo docker exec -it concordia_grafana bash -c "./setup.sh/grafana_post_run.sh"
+
+version: '3.6'
 services:
+  db:
+    image: postgres
+    env_file: ./.env
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRESQL_PW}
+      POSTGRES_USER: concordia
+    ports:
+      - 54321:5432
+    volumes:
+      - ./postgresql:/docker-entrypoint-initdb.d
+      - db_volume:/var/lib/postgresl/data/
+    environment:
+        - POSTGRES_MULTIPLE_DATABASES=concordia,sentry
+  
   rabbit:
     hostname: rabbit
     image: rabbitmq:latest
     ports:
       - 5672:5672
       - 15672:15672
-  db:
-    image: postgres
-    environment:
-      POSTGRES_PASSWORD: concordia
-      POSTGRES_USER: concordia
-    ports:
-      - 54321:5432
-    volumes:
-      - db_volume:/var/lib/postgresl/data/
+  
   app:
+    env_file: ./.env
     build: .
+    environment:
+      # The concordia app needs to wait for the db to completely start. Use docker-compose-wait
+      # as defined at https://github.com/ufoscout/docker-compose-wait
+      WAIT_HOSTS: db:5432
     depends_on:
       - db
     volumes:
@@ -27,6 +52,7 @@ services:
       - rabbit
     ports:
       - 80:80
+  
   importer:
     build:
        context: .
@@ -65,6 +91,7 @@ services:
       - 9100:9100
 
   grafana:
+    env_file: ./.env
     restart: always
     image: grafana/grafana:latest
     container_name: concordia_grafana
@@ -78,9 +105,8 @@ services:
     ports:
       - 3000:3000
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=MYPASSWORT
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PW}
       - GF_USERS_ALLOW_SIGN_UP=false
-      - GF_SERVER_DOMAIN=myrul.com
       - GF_SMTP_ENABLED=true
       - GF_SMTP_HOST=smtp.gmail.com:587
       - GF_SMTP_USER=myadrress@gmail.com
@@ -88,9 +114,10 @@ services:
       - GF_SMTP_FROM_ADDRESS=myaddress@gmail.com
 
   alertmanager:
+    image: prom/alertmanager:latest
     build: ./alertmanager
     command:
-      - '-config.file=/alertmanager.yml'
+      - '--config.file=/alertmanager.yml'
 
   elk:
     image: sebp/elk
