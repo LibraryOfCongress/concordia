@@ -78,6 +78,7 @@ INSTALLED_APPS = [
     "mptt",
     "haystack",
     "widget_tweaks",
+    "django_prometheus_metrics",
 ] + get_machina_apps()
 
 
@@ -87,6 +88,7 @@ if DEBUG:
 
 
 MIDDLEWARE = [
+    "django_prometheus_metrics.middleware.PrometheusBeforeMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
