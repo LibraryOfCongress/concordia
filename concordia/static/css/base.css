@@ -13,6 +13,8 @@
   --bg-card-title: rgba(51,51,51,0.7); /* #333333 */
   --bg-loading: rgba(51,51,51,.5); /* #333333 */
   --shadow-color: rgba(51,51,51,.8); /* #333333 */
+  --height-main: calc( 100vh - 4.506875rem );
+  --height-contribute-input: calc( 40vh - ( 3.5rem + 3.375rem ) );
 }
 
 body {
@@ -99,11 +101,11 @@ blue {
 }
 
 a.blue-text:hover {
-  color: var(--primary-color-hover); /* #002347 */
+  color: var(--primary-color-hover);
   text-decoration: underline;
 }
 a.offwhite-text {
-  color: var(--text-color-offwhite); /* #FAFAFA */
+  color: var(--text-color-offwhite);
   text-decoration: underline;
 }
 
@@ -113,32 +115,32 @@ a.offwhite-text:hover {
 }
 
 a.gray-text:hover {
-  color: var(--primary-color); /* #00618E */
+  color: var(--primary-color);
   text-decoration: none;
 }
 
 .bg-offwhite {
-    background-color: var(--bg-offwhite); /* #FAFAFA */
+    background-color: var(--bg-offwhite);
 }
 
 .bg-lightest-gray {
-    background-color: var(--bg-lightest-gray); /* #F5F5F5 */
+    background-color: var(--bg-lightest-gray);
 }
 
 .bg-darkest-gray {
-  background-color: var(--bg-darkest-gray); /* #333333 */
+  background-color: var(--bg-darkest-gray);
 }
 
 .bg-main {
-    background-color: var(--bg-darkest-gray); /* #666666 */
+    background-color: var(--bg-darkest-gray);
 }
 
 .bg-footer {
-    background-color: var(--bg-footer); /* #EEEEEE */
+    background-color: var(--bg-footer);
 }
 
 .bg-card-title {
-    background-color: var(--bg-card-title); /* #333333 */
+    background-color: var(--bg-card-title);
 }
 
 .row {
@@ -152,12 +154,13 @@ a.gray-text:hover {
 }
 
 main {
-  min-height: calc(100vh - 4.5rem);
+  min-height: var(--height-main);
   background-color: var(--bg-main);
 }
 
 input {
-  color: var(--text-color-primary); /* #333333 */
+  color: var(--text-color-primary);
+  background-color: var(--bg-offwhite);
 }
 
 .py-default {
@@ -191,7 +194,7 @@ input {
 
 .img-header {
 
-  background-color: rgba(51,51,51,.35); /* #333333 */
+  background-color: rgba(51,51,51,.35);
   background-image: url("../img/volunteer-header-one-crop.jpg");
   background-blend-mode:overlay;
   background-size: cover, 100% auto;
@@ -419,8 +422,8 @@ input {
 }
 
 .btn-primary:hover {
-  background-color: var(--primary-color-hover); /* #002347 */
-  border-color: var(--primary-color-hover); /* #002347 */
+  background-color: var(--primary-color-hover);
+  border-color: var(--primary-color-hover);
   color: var(--text-color-offwhite);
 }
 
@@ -582,7 +585,7 @@ input {
 }
 
 .tab-content, .tab-pane {
-  height: calc( 40vh - ( 3.5rem + 3.375rem ) );
+  height: var(--height-contribute-input);
   overflow-y: scroll;
 }
 
@@ -599,7 +602,7 @@ input {
 
 .tab-pane input {
   color: var(--text-color-primary);
-  height: calc( 40vh - ( 3.5rem + 3.375rem ) );
+  height: var(--height-contribute-input);
   width: 100%;
 }
 
@@ -626,7 +629,7 @@ padding: .5rem;
 color: rgba(61,61,61,1);
 vertical-align: middle;
 border-radius: .25rem;
-max-height: calc( 40vh - ( 3.5rem + 3.375rem ) );
+max-height: var(--height-contribute-input);
 width: 100%;
 line-height: 1.375rem;
 cursor: text;
@@ -687,18 +690,33 @@ background-color:rgba(0, 0, 0, 0.62);
 box-shadow: inset 0 .1875rem .3125rem rgba(0, 0, 0, 0.125);
 }
 
-/* #nav-tags .bootstrap-tagsinput{
-height:100%;
-} */
 #nav-tags .badge {
 margin-top: .3125rem;
 }
 
-/* Registration styling */
-.form-register input {
+/* Registration and login styling */
+.container-registration {
+  --height-difference: calc( var(--height-main) -  28.9375rem );
+  margin-top: calc( var(--height-difference) / 2 );
+  margin-bottom: calc( var(--height-difference) / 2 );
+}
 
+.container-login {
+  --height-difference: calc( var(--height-main) -  21.1875rem );
+  margin-top: calc( var(--height-difference) / 2 );
+  margin-bottom: calc( var(--height-difference) / 2 );
+}
+
+.form-register input[type=password], .form-register input[type=text], .form-register input[type=email], .form-login input[type=password], .form-login input[type=text] {
+  min-width: 50%;
+  /*float: right;*/
+  border-radius: .25rem;
 }
 
 .form-register label {
   padding-right: .5rem;
+}
+
+.form-register .helptext {
+  display: none;
 }
