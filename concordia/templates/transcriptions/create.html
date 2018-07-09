@@ -12,7 +12,7 @@
        <div class="loading-pulse mx-auto"></div>
               <h6 class="form-text offwhite-text">Creating the collection for you</h6>
       </div>
-      <form class="mx-default my-default" method="POST" onsubmit="return handle_form_submission()">
+{#      <form class="mx-default my-default" method="POST" onsubmit="return handle_form_submission()">#}
       {% if error %}
         <div class="alert alert-danger alert-dismissible fade show" id="close" role="alert">
           <button type="button" class="close" onclick="hide_box()" data-dismiss="alert" aria-label="Close">
@@ -32,11 +32,13 @@
         <input type="url" class="form-control" id="url" name="url" required>
       </div>
       <div class="d-flex col-lg-6 col-md-8 mx-auto justify-content-between pt-half">
-        <button type="submit" class="btn btn-primary mr-auto">Create</button>
+        <button type="submit" class="btn btn-primary mr-auto" id="create_btn">Create</button>
         <a href="/transcribe" role="button" class="btn btn-dark">Cancel</a>
     </div>
-      </form>
+{#      </form>#}
     </div>
+      <input type="hidden" id="task_id">
+  <input type="hidden" id="collection_slug">
   </div>
 </div>
 <script>
@@ -50,11 +52,13 @@ function hide_box(){
 }
 
 function write_save_collection_assets(task_id){
+    console.log("writing colletion items")
    $.ajax({
-        url: "/check_and_save_collection_assets/"+task_id+"/",
+        url: "/check_and_save_collection_assets/"+task_id,
         type: 'GET',
         success: function(data, textStatus, jqXHR) {
             console.log("success resp: ", data);
+            window.location.href = "http://127.0.0.1/transcribe/"+$("#collection_slug").val();
         }
     }).fail(function(jqXHR, textStatus, errorThrown) {
         if(jqXHR.status == 0 || jqXHR == 302) {
@@ -67,14 +71,20 @@ function write_save_collection_assets(task_id){
 }
 
 function get_task_status(task_id){
+    console.log("status task getting");
     $.ajax({
-        url: "/get_task_status/"+task_id+"/",
+        url: "/get_task_status/"+task_id,
         type: 'GET',
         success: function(data, textStatus, jqXHR) {
             console.log("success resp: ", data);
+            var gts = setTimeout(get_task_status($("#task_id").val()), 60000);
             if(data == 'SUCCESS'){
                 write_save_collection_assets(task_id);
+                clearInterval(gts);
             }
+            console.log("ddd ", gts);
+            clearInterval(gts);
+
         }
     }).fail(function(jqXHR, textStatus, errorThrown) {
         if(jqXHR.status == 0 || jqXHR == 302) {
@@ -86,7 +96,10 @@ function get_task_status(task_id){
 }
 
 $("#create_btn").click(function(){
+    console.log("btn clicked");
     $(".loading").removeClass("d-none");
+    $("#task_id").val("");
+    $("#collection_slug").val("");
     <!--$.post("/transcribe/create/", {"name": $("#name").val(), "url": $("#url").val()}, function(data, status){-->
         <!--alert("Data: " + data + "\nStatus: " + status);-->
     <!--});-->
@@ -94,10 +107,13 @@ $("#create_btn").click(function(){
     $.ajax({
         url: "/create_collection/",
         type: 'post',
-        data: {"name": $("#name").val(), "url": $("#url").val()},
+        data: {"name": $("#name").val(), "url": $("#url").val(), 'csrfmiddlewaretoken': $("input[name=csrfmiddlewaretoken]").val()},
         success: function(data, textStatus, jqXHR) {
             console.log("success resp: ", data);
-            setTimeout(get_task_status(data['task_id']), 5000);
+            $("#task_id").val(data['task_id']);
+            $("#collection_slug").val(data['collection_slug']);
+            var gts = setTimeout(get_task_status(data['task_id']), 10000);
+            console.log("gts: ", gts);
         }
     }).fail(function(jqXHR, textStatus, errorThrown) {
         if(jqXHR.status == 0 || jqXHR == 302) {
@@ -107,5 +123,8 @@ $("#create_btn").click(function(){
         }
     });
 })
+
+get_task_status($("#task_id").val());
+
 </script>
 {% endblock main_content %}
