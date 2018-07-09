@@ -3,6 +3,7 @@ import requests
 from celery import shared_task, task
 import os
 from django.conf import settings
+from importer_app.models import CollectionTaskDetails, CollectionItemAssetCount
 
 
 def get_request_data(url, params=None):
@@ -18,7 +19,7 @@ def get_collection_pages(collection_url):
     return total_collection_pages
 
 
-def get_collection_item_ids(collection_url):
+def get_collection_item_ids(collection_name, collection_url):
     collection_item_ids = []
     total_pages_count = get_collection_pages(collection_url)
     for page_num in range(1, total_pages_count + 1):
@@ -29,10 +30,18 @@ def get_collection_item_ids(collection_url):
                 "original_format") and "web page" not in pr.get("original_format"):
                 collection_item_url = pr.get('id')
                 collection_item_ids.append(collection_item_url.split("/")[-2])
+
+    try:
+        ctd = CollectionTaskDetails.objects.get(collection_slug=collection_name)
+        ctd.collection_page_count = total_pages_count
+        ctd.collection_item_count = len(collection_item_ids)
+        ctd.save()
+    except Exception as e:
+        print("********************get_collection_item_ids*******************************", e)
     return collection_item_ids
 
 
-def get_collection_item_asset_urls(item_id):
+def get_collection_item_asset_urls(collection_name, item_id):
     collection_item_asset_urls = []
     item_url = 'https://www.loc.gov/item/{0}/'.format(item_id)
     collection_item_resp = get_request_data(item_url, {"fo": "json"})
@@ -42,6 +51,23 @@ def get_collection_item_asset_urls(item_id):
         for item_file in item_files:
             if item_file.get('mimetype') == 'image/jpeg':
                 collection_item_asset_urls.append(item_file.get('url'))
+
+    try:
+        ctd = CollectionTaskDetails.objects.get(collection_slug=collection_name)
+
+        ctd.collection_asset_count = ctd.collection_asset_count + len(collection_item_asset_urls)
+        ctd.save()
+
+        ciac_details = {'collection_slug': ctd.collection_slug,
+                        'collection_item_identifier': item_id,
+                        'collection_item_asset_count': len(collection_item_asset_urls)}
+        ciac = CollectionItemAssetCount.objects.create(**ciac_details)
+        ciac.save()
+    except CollectionTaskDetails.DoesNotExist as e:
+        print("**************collection_item_asset_urls***************", e)
+    except Exception as e1:
+        print("**************collection_item_asset_urlso1***************", e1)
+
     return collection_item_asset_urls
 
 
@@ -60,9 +86,9 @@ def download_write_collection_item_asset(image_url, asset_local_path):
 
 @task
 def download_write_collection_item_assets(collection_name, collection_url):
-    collection_item_ids = get_collection_item_ids(collection_url)
+    collection_item_ids = get_collection_item_ids(collection_name, collection_url)
     for cii in collection_item_ids:
-        collection_item_asset_urls = get_collection_item_asset_urls(cii)
+        collection_item_asset_urls = get_collection_item_asset_urls(collection_name, cii)
         item_local_path = os.path.join(settings.IMPORTER['IMAGES_FOLDER'], collection_name, cii)
 
         try:
