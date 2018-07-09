@@ -2,14 +2,23 @@
 
 import tempfile
 from unittest.mock import Mock, patch
-import requests
+
 
 from django.test import Client, TestCase
 from PIL import Image
 
 import views
-from concordia.models import (Asset, Collection, MediaType, Status, Tag,
-                              Transcription, User, UserProfile, UserAssetTagCollection)
+from concordia.models import (
+    Asset,
+    Collection,
+    MediaType,
+    Status,
+    Tag,
+    Transcription,
+    User,
+    UserProfile,
+    UserAssetTagCollection,
+)
 
 
 class ViewTest_Concordia(TestCase):
@@ -428,28 +437,29 @@ class ViewTest_Concordia(TestCase):
 
         # add a Transcription object
         self.transcription = Transcription(
-            asset=self.asset, user_id=self.user.id, text="Test transcription 1", status=Status.PCT_0
+            asset=self.asset,
+            user_id=self.user.id,
+            text="Test transcription 1",
+            status=Status.PCT_0,
         )
         self.transcription.save()
 
-        tag_name = 'Test tag 1'
+        tag_name = "Test tag 1"
 
         # Act
-        response = self.client.post("/transcribe/Collection1/asset/Asset1/",
-                                    {
-                                        "tx": "First Test Transcription",
-                                        "tags": tag_name,
-                                        "status": "0"
-                                    }
-                                    )
+        response = self.client.post(
+            "/transcribe/Collection1/asset/Asset1/",
+            {"tx": "First Test Transcription", "tags": tag_name, "status": "0"},
+        )
 
         # Assert
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, "/transcribe/Collection1/asset/Asset1/")
 
         # Verify the new transcription and tag are in the db
-        transcription = Transcription.objects.filter(text="First Test Transcription",
-                                                     asset=self.asset)
+        transcription = Transcription.objects.filter(
+            text="First Test Transcription", asset=self.asset
+        )
         self.assertEqual(len(transcription), 1)
 
         tags = UserAssetTagCollection.objects.filter(
@@ -460,4 +470,3 @@ class ViewTest_Concordia(TestCase):
 
         self.assertEqual(len(tags), 1)
         self.assertEqual(separate_tags[0].name, tag_name)
-
