@@ -78,6 +78,7 @@ INSTALLED_APPS = [
     "mptt",
     "haystack",
     "widget_tweaks",
+    "importer_app",
 ] + get_machina_apps()
 
 
