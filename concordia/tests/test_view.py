@@ -1,16 +1,15 @@
 # TODO: Add correct copyright header
 
-import os
-import sys
 import tempfile
 from unittest.mock import Mock, patch
+import requests
 
-import views
 from django.test import Client, TestCase
 from PIL import Image
 
-from concordia.models import (Asset, Collection, MediaType, Status,
-                              Transcription, User, UserProfile)
+import views
+from concordia.models import (Asset, Collection, MediaType, Status, Tag,
+                              Transcription, User, UserProfile, UserAssetTagCollection)
 
 
 class ViewTest_Concordia(TestCase):
@@ -155,8 +154,7 @@ class ViewTest_Concordia(TestCase):
         response = self.client.post("/account/profile/", {"first_name": "Jimmy"})
 
         # Assert
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, "/account/profile/")
+        self.assertEqual(response.status_code, 200)
 
         # Verify the User was not changed
         updated_user = User.objects.get(id=self.user.id)
@@ -179,8 +177,8 @@ class ViewTest_Concordia(TestCase):
                 "first_name": "Jimmy",
                 "email": "tester@foo.com",
                 "username": "tester",
-                "password1": "abc",
-                "password2": "abc",
+                "password1": "aBc12345!",
+                "password2": "aBc12345!",
             },
         )
 
@@ -194,7 +192,7 @@ class ViewTest_Concordia(TestCase):
 
         # logout and login with new password
         logout = self.client.logout()
-        login2 = self.client.login(username="tester", password="abc")
+        login2 = self.client.login(username="tester", password="aBc12345!")
 
         self.assertTrue(login2)
 
@@ -342,7 +340,7 @@ class ViewTest_Concordia(TestCase):
         self.asset.save()
 
         # Act
-        response = self.client.get("/transcribe/export/slug2/")
+        response = self.client.get("/transcribe/exportCSV/slug2/")
 
         # Assert
         self.assertEqual(response.status_code, 200)
@@ -351,13 +349,19 @@ class ViewTest_Concordia(TestCase):
             "b'Collection,Title,Description,MediaUrl,Transcription,Tags\\r\\nTextCollection,TestAsset,Asset Description,http://www.foo.com/1/2/3,,\\r\\n'",
         )
 
-    def test_DeleteCollection_get(self):
+    @patch("concordia.views.requests")
+    def test_DeleteCollection_get(self, mock_requests):
         """
         Test GET route /transcribe/delete/<slug-value>/ (collection)
         :return:
         """
 
         # Arrange
+        mock_requests.get.return_value.status_code = 200
+        mock_requests.get.return_value.json.return_value = {
+            "concordia_data": "abc123456"
+        }
+
         # add an item to Collection
         self.collection = Collection(
             title="TextCollection",
@@ -381,6 +385,7 @@ class ViewTest_Concordia(TestCase):
         self.asset.save()
 
         # Act
+
         response = self.client.get("/transcribe/delete/test-slug2", follow=True)
 
         # Assert
@@ -389,3 +394,70 @@ class ViewTest_Concordia(TestCase):
         # verify the collection is not in db
         collection2 = Collection.objects.all()
         self.assertEqual(len(collection2), 0)
+
+    def test_ConcordiaAssetView_post(self):
+        """
+        This unit test test the POST route /transcribe/<collection>/asset/<Asset_name>/
+        :return:
+        """
+        # Arrange
+        self.login_user()
+
+        # create a collection
+        self.collection = Collection(
+            title="TestCollection",
+            slug="Collection1",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.PCT_0,
+        )
+        self.collection.save()
+
+        # create an Asset
+        self.asset = Asset(
+            title="TestAsset",
+            slug="Asset1",
+            description="Asset Description",
+            media_url="http://www.foo.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            collection=self.collection,
+            metadata={"key": "val2"},
+            status=Status.PCT_0,
+        )
+        self.asset.save()
+
+        # add a Transcription object
+        self.transcription = Transcription(
+            asset=self.asset, user_id=self.user.id, text="Test transcription 1", status=Status.PCT_0
+        )
+        self.transcription.save()
+
+        tag_name = 'Test tag 1'
+
+        # Act
+        response = self.client.post("/transcribe/Collection1/asset/Asset1/",
+                                    {
+                                        "tx": "First Test Transcription",
+                                        "tags": tag_name,
+                                        "status": "0"
+                                    }
+                                    )
+
+        # Assert
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, "/transcribe/Collection1/asset/Asset1/")
+
+        # Verify the new transcription and tag are in the db
+        transcription = Transcription.objects.filter(text="First Test Transcription",
+                                                     asset=self.asset)
+        self.assertEqual(len(transcription), 1)
+
+        tags = UserAssetTagCollection.objects.filter(
+            asset=self.asset, user_id=self.user.id
+        )
+        if tags:
+            separate_tags = tags[0].tags.all()
+
+        self.assertEqual(len(tags), 1)
+        self.assertEqual(separate_tags[0].name, tag_name)
+

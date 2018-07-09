@@ -125,11 +125,12 @@ class ConcordiaAssetView(TemplateView):
 
         asset = Asset.objects.get(collection__slug=self.args[0], slug=self.args[1])
 
-        transcription = Transcription.objects.filter(
-            asset=asset, user_id=self.request.user.id
-        )
+        # Get all transcriptions, they are no longer tied to a specific user
+        transcription = Transcription.objects.filter(asset=asset)
         if transcription:
             transcription = transcription[0]
+
+        # Get all tags, they are no longer tied to a specific user
         tags = UserAssetTagCollection.objects.filter(
             asset=asset, user_id=self.request.user.id
         )
