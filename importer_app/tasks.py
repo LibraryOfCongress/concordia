@@ -74,7 +74,7 @@ def get_collection_item_asset_urls(collection_name, item_id):
     return collection_item_asset_urls
 
 
-def download_write_collection_item_asset(image_url, asset_local_path):
+def download_write_collection_item_asset(image_url, asset_local_path, retry_count=1):
     image_response = requests.get(image_url, stream=True)
 
     with open(asset_local_path, "wb") as fd:
@@ -84,7 +84,9 @@ def download_write_collection_item_asset(image_url, asset_local_path):
             return True
         except Exception as e:
             print(e)
-            return False
+            if retry_count >= 3:
+                return False
+            download_write_collection_item_assets(image_url, asset_local_path, retry_count=retry_count+1)
 
 
 @task

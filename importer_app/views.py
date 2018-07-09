@@ -1,4 +1,5 @@
 import os
+import shutil
 from logging import getLogger
 from celery.result import AsyncResult
 
@@ -86,7 +87,6 @@ def save_collection_item_assets(collection):
                 sequence=sequence,
                 collection=collection,
             )
-            import shutil
 
             try:
                 item_path = "/".join(os.path.join(settings.MEDIA_ROOT, media_url).split("/")[:-1])
@@ -108,6 +108,8 @@ def check_and_save_collection_assets(request, task_id):
                 collection.save()
 
                 save_collection_item_assets(collection)
+
+                shutil.rmtree(os.path.join(settings.IMPORTER['IMAGES_FOLDER'], ctd.collection_slug))
 
                 return redirect(
                     reverse(

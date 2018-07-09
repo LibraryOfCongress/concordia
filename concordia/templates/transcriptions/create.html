@@ -3,12 +3,13 @@
 {% block title %}{% endblock title %}
 {% block head_content %}{% endblock head_content %}
 {% block main_content %}
+<script src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
 <div class="container-fluid py-default" id='container'>
   <div class="row">
     <div class="col-md-10 mx-auto bg-offwhite rounded">
       <h3 class="mt-half ml-half">Import a New Collection</h3>
       <div class="text-center d-none loading">
-      	<div class="loading-pulse mx-auto"></div>
+       <div class="loading-pulse mx-auto"></div>
               <h6 class="form-text offwhite-text">Creating the collection for you</h6>
       </div>
       <form class="mx-default my-default" method="POST" onsubmit="return handle_form_submission()">
@@ -47,5 +48,64 @@ function handle_form_submission()
 function hide_box(){
    document.getElementById("close").style.display = "none";
 }
+
+function write_save_collection_assets(task_id){
+   $.ajax({
+        url: "/check_and_save_collection_assets/"+task_id+"/",
+        type: 'GET',
+        success: function(data, textStatus, jqXHR) {
+            console.log("success resp: ", data);
+        }
+    }).fail(function(jqXHR, textStatus, errorThrown) {
+        if(jqXHR.status == 0 || jqXHR == 302) {
+            console.log('Your session has ended due to inactivity after 10 minutes.\nPlease refresh this page, or close this window and log back in to system.');
+        } else {
+            console.log('Unknown error returned while saving' + (typeof errorThrown == 'string' && errorThrown.trim().length > 0 ? ':\n' + errorThrown : ''));
+        }
+    });
+
+}
+
+function get_task_status(task_id){
+    $.ajax({
+        url: "/get_task_status/"+task_id+"/",
+        type: 'GET',
+        success: function(data, textStatus, jqXHR) {
+            console.log("success resp: ", data);
+            if(data == 'SUCCESS'){
+                write_save_collection_assets(task_id);
+            }
+        }
+    }).fail(function(jqXHR, textStatus, errorThrown) {
+        if(jqXHR.status == 0 || jqXHR == 302) {
+            console.log('Your session has ended due to inactivity after 10 minutes.\nPlease refresh this page, or close this window and log back in to system.');
+        } else {
+            console.log('Unknown error returned while saving' + (typeof errorThrown == 'string' && errorThrown.trim().length > 0 ? ':\n' + errorThrown : ''));
+        }
+    });
+}
+
+$("#create_btn").click(function(){
+    $(".loading").removeClass("d-none");
+    <!--$.post("/transcribe/create/", {"name": $("#name").val(), "url": $("#url").val()}, function(data, status){-->
+        <!--alert("Data: " + data + "\nStatus: " + status);-->
+    <!--});-->
+
+    $.ajax({
+        url: "/create_collection/",
+        type: 'post',
+        data: {"name": $("#name").val(), "url": $("#url").val()},
+        success: function(data, textStatus, jqXHR) {
+            console.log("success resp: ", data);
+            setTimeout(get_task_status(data['task_id']), 5000);
+        }
+    }).fail(function(jqXHR, textStatus, errorThrown) {
+        if(jqXHR.status == 0 || jqXHR == 302) {
+            console.log('Your session has ended due to inactivity after 10 minutes.\nPlease refresh this page, or close this window and log back in to system.');
+        } else {
+            console.log('Unknown error returned while saving' + (typeof errorThrown == 'string' && errorThrown.trim().length > 0 ? ':\n' + errorThrown : ''));
+        }
+    });
+})
 </script>
 {% endblock main_content %}
