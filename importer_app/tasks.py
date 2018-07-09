@@ -1,10 +1,13 @@
 
 import requests
+from logging import getLogger
 from celery import shared_task, task
 import os
 from django.conf import settings
 from importer_app.models import CollectionTaskDetails, CollectionItemAssetCount
 
+
+logger = getLogger(__name__)
 
 def get_request_data(url, params=None):
     response = requests.get(url, params=params)
@@ -37,7 +40,7 @@ def get_collection_item_ids(collection_name, collection_url):
         ctd.collection_item_count = len(collection_item_ids)
         ctd.save()
     except Exception as e:
-        print("********************get_collection_item_ids*******************************", e)
+        logger.error("error while creating entries into Collection Task Details models: %s " % e)
     return collection_item_ids
 
 
@@ -64,9 +67,9 @@ def get_collection_item_asset_urls(collection_name, item_id):
         ciac = CollectionItemAssetCount.objects.create(**ciac_details)
         ciac.save()
     except CollectionTaskDetails.DoesNotExist as e:
-        print("**************collection_item_asset_urls***************", e)
+        logger.error("error while creating entries into Collection Task Details models: %s " % e)
     except Exception as e1:
-        print("**************collection_item_asset_urlso1***************", e1)
+        logger.error("error while creating entries into CollectionItemAssetCount models: %s " % e1)
 
     return collection_item_asset_urls
 

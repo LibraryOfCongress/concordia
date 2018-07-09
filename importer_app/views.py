@@ -1,4 +1,5 @@
 import os
+from logging import getLogger
 from celery.result import AsyncResult
 
 from django.conf import settings
@@ -15,6 +16,8 @@ from importer_app.tasks import download_write_collection_item_assets
 from importer_app.models import CollectionTaskDetails, CollectionItemAssetCount
 
 from concordia.models import Collection, Asset
+
+logger = getLogger(__name__)
 
 
 class CreateCollectionView(generics.CreateAPIView):
@@ -89,10 +92,9 @@ def save_collection_item_assets(collection):
                 item_path = "/".join(os.path.join(settings.MEDIA_ROOT, media_url).split("/")[:-1])
                 os.makedirs(item_path)
             except Exception as e:
-                print(e)
+                logger.error("Error/warning while creating dir path: %s" % e)
 
             shutil.move(file_path, os.path.join(settings.MEDIA_ROOT, media_url))
-
 
 
 @api_view(['GET'])
@@ -117,6 +119,5 @@ def check_and_save_collection_assets(request, task_id):
             else:
                 return Response({'message': 'Creating a collection: %s is failed since assets are not completely downloaded'%ctd.collection_name}, status=status.HTTP_404_NOT_FOUND)
         except CollectionTaskDetails.DoesNotExist as e:
-            print("*"*100)
-            print(e)
+            logger.error("Requested Collection Details are not found with task id : %s" % task_id)
             return Response({'message': "Requested Collection Does not exists"})
