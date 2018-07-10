@@ -13,6 +13,7 @@ from machina.app import board
 
 from exporter import views as exporter_views
 from faq.views import FAQView
+from django.conf.urls import url, include
 
 from . import trans_urls, views
 
@@ -125,4 +126,8 @@ urlpatterns += [
 
 urlpatterns += [
     re_path(r"^media/(?P<path>.*)$", serve, {"document_root": settings.MEDIA_ROOT})
+]
+
+urlpatterns += [
+    url('', include('django_prometheus_metrics.urls')),
 ]

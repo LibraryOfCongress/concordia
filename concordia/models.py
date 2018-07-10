@@ -6,13 +6,14 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import JSONField
 from django.db import models
+from django_prometheus_metrics.models import MetricsModelMixin
 
 from importer.importer.tasks import download_async_collection
 
 metadata_default = dict
 
 
-class UserProfile(models.Model):
+class UserProfile(MetricsModelMixin("userprofile"), models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     myfile = models.FileField(upload_to="profile_pics/")
 
@@ -47,7 +48,7 @@ class MediaType:
     CHOICES = ((IMAGE, "Image"), (AUDIO, "Audio"), (VIDEO, "Video"))
 
 
-class Collection(models.Model):
+class Collection(MetricsModelMixin("collection"), models.Model):
     title = models.CharField(max_length=50)
     slug = models.SlugField(max_length=50, unique=True)
     description = models.TextField(blank=True)

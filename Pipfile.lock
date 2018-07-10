@@ -137,6 +137,13 @@
             ],
             "version": "==0.9.0"
         },
+        "django-prometheus-metrics": {
+            "hashes": [
+                "sha256:e91c4ff65278ed5f504e19134213a30ac76f349e739d17a06cf6affcfa31b882"
+            ],
+            "index": "pypi",
+            "version": "==0.0.1"
+        },
         "django-widget-tweaks": {
             "hashes": [
                 "sha256:a31c8a2b88af98dba6471db4722a416d1c643c87efecf9a7f17f983a2a553632",
@@ -256,7 +263,14 @@
                 "sha256:f8b3d413c5a8f84b12cd4c5df1d8e211777c9852c6be3ee9c094b626644d3eab"
             ],
             "index": "pypi",
+            "markers": "python_version != '3.2.*' and python_version != '3.0.*' and python_version != '3.1.*' and python_version >= '2.7' and python_version != '3.3.*'",
             "version": "==5.2.0"
+        },
+        "prometheus-client": {
+            "hashes": [
+                "sha256:d96472e43bb49b10ec748b59014af122048ff7c5c2528994683e4783250865e4"
+            ],
+            "version": "==0.2.0"
         },
         "psycopg2": {
             "hashes": [
@@ -374,6 +388,7 @@
                 "sha256:a68ac5e15e76e7e5dd2b8f94007233e01effe3e50e8daddf69acfd81cb686baf",
                 "sha256:b5725a0bd4ba422ab0e66e89e030c806576753ea3ee08554382c14e685d117b5"
             ],
+            "markers": "python_version != '3.2.*' and python_version >= '2.6' and python_version != '3.0.*' and python_version < '4' and python_version != '3.1.*' and python_version != '3.3.*'",
             "version": "==1.23"
         },
         "vine": {
@@ -506,6 +521,7 @@
                 "sha256:3fd59af7435864e1a243790d322d763925431213b6b8529c6ca71081ace3bbf7",
                 "sha256:e31fb2767eb657cbde86c454f02e99cb846d3cd9d61b318525140214fdc0e98e"
             ],
+            "markers": "python_version != '3.1.*' and python_version >= '2.7' and python_version != '3.3.*' and python_version != '3.0.*' and python_version != '3.2.*'",
             "version": "==1.5.4"
         },
         "pycodestyle": {
