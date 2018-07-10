@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "ef5013596cde0e937a9c3eaeb4ace7bb6fb3c9cf4465a57cad29466b8b61a817"
+            "sha256": "f47224eb0c7fe76eb2b1ec0d2ea333207e3999fbeb19c5da4ec432df0f7366df"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -16,8 +16,8 @@
         ]
     },
     "default": {
-        "7b96e2b": {
-            "file": "file:///app/vendor/django-registration.zip"
+        "5c736a0": {
+            "path": "./vendor/django-registration.zip"
         },
         "amqp": {
             "hashes": [
@@ -470,7 +470,7 @@
                 "sha256:c9fa8fbda281b1ddf25b8fa7ccf0564198a86c9da8a413111fcadd510a98a232",
                 "sha256:ccdf1bd8fd848690fb3d5153d0c54c41169e59804acb9652664f5f669fe25c11"
             ],
-            "markers": "python_version != '3.3.*' and python_version != '3.2.*' and python_version != '3.1.*' and python_version < '4' and python_version != '3.0.*' and python_version >= '2.7'",
+            "markers": "python_version != '3.0.*' and python_version != '3.2.*' and python_version != '3.1.*' and python_version < '4' and python_version >= '2.7' and python_version != '3.3.*'",
             "version": "==5.0a1"
         },
         "django-extensions": {
@@ -513,7 +513,7 @@
                 "sha256:d345c8fe681115900d6da8d048ba67c25df42973bda370783cd58826442dcd7c",
                 "sha256:e160a7fcf25762bb60efc7e171d4497ff1d8d2d75a3d0df7a21b76821ecbf5c5"
             ],
-            "markers": "python_version != '3.3.*' and python_version != '3.2.*' and python_version != '3.1.*' and python_version != '3.0.*' and python_version >= '2.7'",
+            "markers": "python_version != '3.0.*' and python_version != '3.2.*' and python_version != '3.1.*' and python_version >= '2.7' and python_version != '3.3.*'",
             "version": "==0.6.0"
         },
         "py": {

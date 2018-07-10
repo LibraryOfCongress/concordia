@@ -129,3 +129,23 @@ To generate a model graph, do::
     # cd concordia/static/img
     # python3 ./manage.py graph_models concordia > tx.dot
     # dot -Tsvg tx.dot -o tx.svg
+
+
+Python Dependencies
+-------------------
+
+Python dependencies are managed using pipenv <https://docs.pipenv.org/>.
+
+If you want to add a new Python package requirement to the application environment, 
+it must be added to the Pipfile and the Pipfile.lock file. This can be done with the command:
+
+    $ pipenv install <package>
+
+
+If you manually add package names to Pipfile, then you need to update the Pipfile.lock file:
+
+    $ pipenv lock
+
+
+Both the Pipfile and the Pipfile.lock file must be committed to the source code repository.
+
