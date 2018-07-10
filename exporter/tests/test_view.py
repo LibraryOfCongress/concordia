@@ -151,7 +151,3 @@ class ViewTest_Exporter(TestCase):
             shutil.rmtree(collection_folder)
         except:
             pass
-<<<<<<< HEAD
-=======
-
->>>>>>> specify collection & asset folder
