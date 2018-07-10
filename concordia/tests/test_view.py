@@ -9,8 +9,8 @@ import views
 from django.test import Client, TestCase
 from PIL import Image
 
-from concordia.models import (Asset, Collection, MediaType, Status,
-                              Transcription, User, UserProfile)
+from concordia.models import (Asset, Collection, MediaType, Status, Transcription, User,
+                              UserProfile)
 
 
 class ViewTest_Concordia(TestCase):
