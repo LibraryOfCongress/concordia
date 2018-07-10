@@ -11,14 +11,14 @@ Docker
 Passwords
 =============
 
+
 This project stores passwords in a file named .env. This file resides in the root directory of 
-the concordia app and 
-it is not included in the source code respository.
+the concordia app and it is not included in the source code respository.
 
 You must create this file in the concordia root directory.
 
 This file contains three values, which are:
-::    
+::
 
     GRAFANA_ADMIN_PW=<grafana_admin_password_here>
     CONCORDIA_ADMIN_PW=<concordia_admin_password_here>
@@ -80,12 +80,12 @@ Python prerequisites::
     $ python3 -m venv .venv
     $ source .venv/bin/activate
     $ pip3 install pipenv
-    $ pipenv install --system --dev --deploy
+    $ pipenv install --dev
 
 
 Finally, configure the Django settings, run migrations, and launch the development server::
 
-    $ export DJANGO_SETTINGS_MODULE = "concordia.settings_dev"
+    $ export DJANGO_SETTINGS_MODULE="concordia.settings_dev"
     $ ./manage.py migrate
     $ ./manage.py runserver
 
@@ -107,7 +107,9 @@ flake8.
 The virtual env directory should be named .venv and it's preferred to use Pipenv to manage the 
 virtual environment.
 
+
 Configure your editor to run black and isort on each file at save time. 
+
 If you can't modify your editor, here is how to run the code quality tools manually::
 
     $ black .
