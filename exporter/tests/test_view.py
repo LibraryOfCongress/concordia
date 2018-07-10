@@ -3,6 +3,7 @@
 import csv
 import io
 import os
+import shutil
 import sys
 import zipfile
 
@@ -93,17 +94,17 @@ class ViewTest_Exporter(TestCase):
         build_folder = "%s/concordia" % (settings.MEDIA_ROOT)
         if not os.path.exists(build_folder):
             os.makedirs(build_folder)
-        build_folder += "/foocollection"
-        if not os.path.exists(build_folder):
-            os.makedirs(build_folder)
-        build_folder += "/testasset"
-        if not os.path.exists(build_folder):
-            os.makedirs(build_folder)
+        collection_folder = build_folder + "/foocollection"
+        if not os.path.exists(collection_folder):
+            os.makedirs(collection_folder)
+        asset_folder = collection_folder +"/testasset"
+        if not os.path.exists(asset_folder):
+            os.makedirs(asset_folder)
 
-        source_dir = build_folder
+        source_dir = asset_folder
 
         # create source asset file
-        with open(source_dir + "/3", "w+") as csv_file:
+        with open(source_dir + "/asset.jpg", "w+") as csv_file:
             writer = csv.writer(csv_file)
             writer.writerow(
                 [
@@ -144,3 +145,10 @@ class ViewTest_Exporter(TestCase):
         finally:
             zipped_file.close()
             f.close()
+
+        # Clean up temp folders
+        try:
+            shutil.rmtree(collection_folder)
+        except:
+            pass
+
