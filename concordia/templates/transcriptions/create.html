@@ -58,7 +58,7 @@ function write_save_collection_assets(task_id){
         type: 'GET',
         success: function(data, textStatus, jqXHR) {
             console.log("success resp: ", data);
-            window.location.href = "http://127.0.0.1/transcribe/"+$("#collection_slug").val();
+            window.location.href = "http://127.0.0.1:8000/transcribe/"+$("#collection_slug").val();
         }
     }).fail(function(jqXHR, textStatus, errorThrown) {
         if(jqXHR.status == 0 || jqXHR == 302) {
@@ -111,7 +111,7 @@ $("#create_btn").click(function(){
         success: function(data, textStatus, jqXHR) {
             console.log("success resp: ", data);
             $("#task_id").val(data['task_id']);
-            $("#collection_slug").val(data['collection_slug']);
+            $("#collection_slug").val(data['name']);
             var gts = setTimeout(get_task_status(data['task_id']), 10000);
             console.log("gts: ", gts);
         }
