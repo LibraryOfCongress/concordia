@@ -74,7 +74,7 @@ Next, set up a Python virtual environment, install pipenv <https://docs.pipenv.o
     $ python3 -m venv .venv
     $ source .venv/bin/activate
     $ pip3 install pipenv
-    $ pipenv install --system --dev --deploy
+    $ pipenv install --dev
 
 
 Finally, configure the Django settings, run migrations, and launch the development server::
