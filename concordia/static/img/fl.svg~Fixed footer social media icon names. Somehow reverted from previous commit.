@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="32px" height="16px" viewBox="0 0 32 16" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 50.2 (55047) - http://www.bohemiancoding.com/sketch -->
+    <title>flickr</title>
+    <desc>Created with Sketch.</desc>
+    <defs></defs>
+    <g id="Home---card-design" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Volunteer-home-v3-card-full-page---Desktop-HD" transform="translate(-704.000000, -3450.000000)" fill-rule="nonzero">
+            <g id="footer" transform="translate(0.000000, 3204.000000)">
+                <g id="social-connect" transform="translate(659.000000, 16.000000)">
+                    <g id="social-icons" transform="translate(45.000000, 39.000000)">
+                        <g id="flickr" transform="translate(0.000000, 191.000000)">
+                            <circle id="Oval" fill="#333333" cx="24.4081543" cy="7.61123967" r="7.56363636"></circle>
+                            <circle id="Oval" fill="#00618E" cx="7.56363636" cy="7.61123967" r="7.56363636"></circle>
+                        </g>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>
