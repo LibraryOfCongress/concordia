@@ -11,13 +11,13 @@ Docker
 Passwords
 =============
 
-This project stores passwords in a file named .env. This file resides in the root directory of the concordia app and 
+This project stores passwords in a file named .env. This file resides in the root directory of the concordia app and
 it is not included in the source code respository.
 
 You must be create this file in the concordia root directory.
 
 This file contains three values, which are:
-::    
+::
 
     GRAFANA_ADMIN_PW=<grafana_admin_password_here>
     CONCORDIA_ADMIN_PW=<concordia_admin_password_here>
@@ -29,12 +29,12 @@ The script to create the concordia admin user uses the value matching CONCORDIA_
 
 The postgresql concordia database is accessed using the username concordia and the password specified by POSTGRESQL_PW.
 The django concordia app uses the POSTGRESQL_PW value to connect to the concordia database running in the db docker
-container. 
+container.
 
 The value for GRAFANA_ADMIN_PW is used to login to grafana using the admin user.
 
 Setting the passwords in this file is the only location where user passwords are defined. All access to these passwords
-is through the .env file. 
+is through the .env file.
 
 An example of a .env file is in the top level source directory, it is called "example_env_file".
 
@@ -79,7 +79,7 @@ Next, set up a Python virtual environment, install pipenv <https://docs.pipenv.o
 
 Finally, configure the Django settings, run migrations, and launch the development server::
 
-    $ export DJANGO_SETTINGS_MODULE = "concordia.settings_dev"
+    $ export DJANGO_SETTINGS_MODULE="concordia.settings_dev"
     $ ./manage.py migrate
     $ ./manage.py runserver
 
@@ -100,7 +100,7 @@ https://pypi.org/project/unify/
 
 The virtual env directory should be named .venv and it's preferred to use Pipenv to manage the virtual environment.
 
-Configure your editor to run black, isort, and unify on each file at save time. 
+Configure your editor to run black, isort, and unify on each file at save time.
 If you can't modify your editor, here is how to run the code quality tools manually::
 
     $ black .
