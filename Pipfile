@@ -9,7 +9,6 @@ name = "pypi"
 gunicorn = "*"
 djangorestframework = "*"
 celery = "*"
-"7b96e2b" = {file = "file:///app/vendor/django-registration.zip"}
 coreapi = "*"
 django-machina = "*"
 django-haystack = "*"
@@ -21,6 +20,8 @@ Markdown = "*"
 confusable_homoglyphs = ">=3.1.1"
 Whoosh = "*"
 bagit = "*"
+"5c736a0" = {path = "./vendor/django-registration.zip"}
+django-prometheus-metrics = "*"
 
 [dev-packages]
 invoke = "*"
