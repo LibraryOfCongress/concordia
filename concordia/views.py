@@ -9,7 +9,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator
 from django.db.models import Count, Q
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import Http404, get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.generic import TemplateView
 from registration.backends.simple.views import RegistrationView
@@ -108,7 +108,10 @@ class ConcordiaCollectionView(TemplateView):
     template_name = "transcriptions/collection.html"
 
     def get_context_data(self, **kws):
-        collection = Collection.objects.get(slug=self.args[0])
+        try:
+            collection = Collection.objects.get(slug=self.args[0])
+        except Collection.DoesNotExist:
+            raise Http404
         asset_list = collection.asset_set.all().order_by("title", "sequence")
         paginator = Paginator(asset_list, ASSETS_PER_PAGE)
 
