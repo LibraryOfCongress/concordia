@@ -1,6 +1,6 @@
 <!DOCTYPE html>
-<html lang="en">{% load staticfiles %}
-
+<html lang="en">
+{% load staticfiles %}
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -9,10 +9,11 @@
     <!-- Stylesheets -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4" crossorigin="anonymous">
     <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,600,700|Roboto+Slab" rel="stylesheet">
-    <link rel="stylesheet" href="{% static "css/base.css" %}"> {% block head_content %}{% endblock head_content %}
+    <link rel="stylesheet" href="{% static "css/base.css" %}">
+    {% block head_content %}{% endblock head_content %}
 </head>
-
 <body>
+<<<<<<< HEAD
     <header>
         <nav class="navbar navbar-expand-lg flex-md-row navbar-offwhite bg-offwhite justify-content-between">
             <div class="d-flex navbar-brand">
@@ -98,5 +99,191 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js" integrity="sha384-uefMccjFJAIv6A+rW+L4AHf99KvxDjWSu1z9VI8SKNVmz4sk7buKt/6v9KI65qnm" crossorigin="anonymous"></script>
     <script src="{% static "js/base.js" %}"></script>
     {% block body_scripts %}{% endblock body_scripts %}
+=======
+  <header>
+    <nav class="navbar navbar-expand-lg flex-md-row navbar-offwhite bg-offwhite justify-content-between">
+      <div class="d-flex navbar-brand">
+        <a class="mr-1 my-auto" href="#"><img src="{% static "img/loc.svg" %}"></a>
+        <span class="vl mx-2 my-auto"></span>
+        {% if request.path == '/' %}
+        <h1><a class="gray-text align-middle d-none d-md-inline" href="#">citizen historian</a><a class="gray-text align-middle d-md-none" href="#">chc</a></h1>
+        {% else %}
+        <h1><a class="gray-text align-middle d-none d-md-inline" href="/">citizen historian</a><a class="gray-text align-middle d-md-none" href="/">chc</a></h1>
+        {% endif %}
+      </div>
+    <button class="navbar-toggler navbar-light" type="button" data-toggle="collapse" data-target="#nav-menu" aria-controls="nav-menu" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse text-center" id="nav-menu">
+      <ul class="navbar-nav ml-auto">
+        {% if request.path == '/' %}
+        <li class="nav-item active">
+          <a class="nav-link" href="#">Home<span class="sr-only">(current)</span></a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'transcriptions:transcribe' %}">Transcribe</a>
+        </li>
+            {% if user.is_authenticated %}
+            <li class="nav-item dropdown nav-dropdown">
+              <a class="nav-link dropdown-toggle" href="http://example.com" id="nav-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Account</a>
+              <div class="dropdown-menu" aria-labelledby="nav-dropdown">
+                <a class="dropdown-item" href="{% url 'user-profile' %}">{{ user }} profile</a>
+                {% if user.is_superuser %}
+                <a class="dropdown-item" href="{% url 'admin:index' %}">Admin pages</a>
+                {% endif %}
+                <a class="dropdown-item" href="{% url 'logout' %}">Logout</a>
+              </div>
+            </li>
+            {% else %}
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'login' %}">Login</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'registration_register' %}">Register</a>
+            </li>
+            {% endif %}
+
+        {% elif '/login/' in request.path %}
+        <li class="nav-item">
+          <a class="nav-link" href="/">Home</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'transcriptions:transcribe' %}">Transcribe</a>
+        </li>
+        <li class="nav-item active">
+          <a class="nav-link" href="#">Login<span class="sr-only">(current)</span></a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'registration_register' %}">Register</a>
+        </li>
+
+        {% elif '/register/' in request.path %}
+        <li class="nav-item">
+          <a class="nav-link" href="/">Home</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'transcriptions:transcribe' %}">Transcribe</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'login' %}">Login</a>
+        </li>
+        <li class="nav-item active">
+          <a class="nav-link" href="#">Register<span class="sr-only">(current)</span></a>
+        </li>
+
+        {% elif request.path == '/transcribe/' %}
+        <li class="nav-item">
+          <a class="nav-link" href="/">Home</a>
+        </li>
+        <li class="nav-item active">
+          <a class="nav-link" href="#">Transcribe<span class="sr-only">(current)</span></a>
+        </li>
+            {% if user.is_authenticated %}
+            <li class="nav-item dropdown nav-dropdown">
+              <a class="nav-link dropdown-toggle" href="http://example.com" id="nav-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Account</a>
+              <div class="dropdown-menu" aria-labelledby="nav-dropdown">
+                <a class="dropdown-item" href="{% url 'user-profile' %}">{{ user }} profile</a>
+                {% if user.is_superuser %}
+                <a class="dropdown-item" href="{% url 'admin:index' %}">Admin pages</a>
+                {% endif %}
+                <a class="dropdown-item" href="{% url 'logout' %}">Logout</a>
+              </div>
+            </li>
+            {% else %}
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'login' %}">Login</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'registration_register' %}">Register</a>
+            </li>
+            {% endif %}
+
+        {% elif '/transcribe/' in request.path %}
+        <li class="nav-item">
+          <a class="nav-link" href="/">Home</a>
+        </li>
+        <li class="nav-item active">
+          <a class="nav-link" href="{% url 'transcriptions:transcribe' %}">Transcribe<span class="sr-only">(current)</span></a>
+        </li>
+            {% if user.is_authenticated %}
+            <li class="nav-item dropdown nav-dropdown">
+              <a class="nav-link dropdown-toggle" href="http://example.com" id="nav-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Account</a>
+              <div class="dropdown-menu" aria-labelledby="nav-dropdown">
+                <a class="dropdown-item" href="{% url 'user-profile' %}">{{ user }} profile</a>
+                {% if user.is_superuser %}
+                <a class="dropdown-item" href="{% url 'admin:index' %}">Admin pages</a>
+                {% endif %}
+                <a class="dropdown-item" href="{% url 'logout' %}">Logout</a>
+              </div>
+            </li>
+            {% else %}
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'login' %}">Login</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'registration_register' %}">Register</a>
+            </li>
+            {% endif %}
+
+        {% else %}
+        <li class="nav-item">
+          <a class="nav-link" href="/">Home</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'transcriptions:transcribe' %}">Transcribe</a>
+        </li>
+        <li class="nav-item dropdown nav-dropdown active">
+          <a class="nav-link dropdown-toggle" href="http://example.com" id="nav-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Account</a>
+          <div class="dropdown-menu" aria-labelledby="nav-dropdown">
+            <a class="dropdown-item" href="{% url 'user-profile' %}">{{ user }} profile<span class="sr-only">(current)</span></a>
+            {% if user.is_superuser %}
+            <a class="dropdown-item" href="{% url 'admin:index' %}">Admin pages</a>
+            {% endif %}
+            <a class="dropdown-item" href="{% url 'logout' %}">Logout</a>
+          </div>
+        </li>
+        {% endif %}
+      </ul>
+    </div>
+  </nav>
+  </header>
+  <main>
+    {% block main_content %}{% endblock main_content %}
+  </main>
+  <footer class="container-fluid text-center font-weight-light bg-footer py-default">
+    <div class="row">
+      <div class="col justify-content-center text-center ml-auto">
+        <a class="blue-text" href="/">HOME</a><br />
+        <a class="blue-text" href="#">COLLECTIONS</a><br />
+        <a class="blue-text" href="{% url 'about' %}">ABOUT</a><br />
+        <a class="blue-text" href="{% url 'faq' %}">FAQ</a><br />
+        <a class="blue-text" href="{% url 'legal' %}">LEGAL</a><br />
+        <a class="blue-text" href="{% url 'privacy-policy' %}">PRIVACY POLICY</a><br />
+        <a class="blue-text" href="{% url 'cookie-policy' %}">COOKIE POLICY</a><br />
+        <a class="blue-text" href="https://loc.gov">LoC.GOV</a>
+      </div>
+      <div class="col-md-4 justify-content-center">
+        <p class="mb-half">Connect with us</p>
+        <a href="/"><img class="mb-half" src="{% static "img/f.svg" %}"></a><br />
+        <a href="/"><img class="mb-half" src="{% static "img/t.svg" %}"></a><br />
+        <a href="/"><img class="mb-half" src="{% static "img/yt.svg" %}"></a><br />
+        <a href="/"><img src="{% static "img/fl.svg" %}"></a>
+      </div>
+      <div class="col-md-4 justify-content-start text-center">
+        <p class="mb-regular">Statistics</p>
+        <p class="mb-regular">4,120 artifacts transcribed</p>
+        <p class="mb-regular">2,257 transcriptions in progress</p>
+        <p>1,179 contributions need review</p>
+      </div>
+    </div>
+  </footer>
+  <!-- JS -->
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js" integrity="sha384-cs/chFZiN24E4KMATLdqdvsezGxaGsi4hLGOzlXwp5UZB1LY//20VyM2taTB4QvJ" crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/js/bootstrap.min.js" integrity="sha384-uefMccjFJAIv6A+rW+L4AHf99KvxDjWSu1z9VI8SKNVmz4sk7buKt/6v9KI65qnm" crossorigin="anonymous"></script>
+  <script src="{% static "js/base.js" %}"></script>
+  {% block body_scripts %}{% endblock body_scripts %}
+>>>>>>> cameron-chc-265-fix-navigation-menu
 </body>
 </html>
