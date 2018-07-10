@@ -76,7 +76,7 @@ class ViewTest_Exporter(TestCase):
             title="TestAsset",
             slug="testasset",
             description="Asset Description",
-            media_url="http://www.foo.com/1/2/3",
+            media_url="/concordia/foocollection/testasset/asset.jpg",
             media_type=MediaType.IMAGE,
             collection=self.collection,
             metadata={"key": "val2"},
@@ -140,7 +140,7 @@ class ViewTest_Exporter(TestCase):
 
             self.assertEqual(
                 str(csv_file),
-                "b'Collection,Title,Description,MediaUrl,Transcription,Tags\\r\\nFooCollection,TestAsset,Asset Description,http://www.foo.com/1/2/3,,\\r\\n'",  # noqa
+                "b'Collection,Title,Description,MediaUrl,Transcription,Tags\\r\\nFooCollection,TestAsset,Asset Description,/concordia/foocollection/testasset/asset.jpg,,\\r\\n'",  # noqa
             )
         finally:
             zipped_file.close()
