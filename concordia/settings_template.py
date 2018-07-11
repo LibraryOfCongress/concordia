@@ -143,7 +143,7 @@ CELERY_RESULT_BACKEND = "rpc://"
 
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
-CELERY_IMPORTS = ("importer.importer.tasks",)
+CELERY_IMPORTS = ("importer_app.tasks", )
 
 LOGGING = {
     "version": 1,
