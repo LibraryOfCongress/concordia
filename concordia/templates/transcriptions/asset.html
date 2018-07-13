@@ -23,10 +23,11 @@
                 {% csrf_token %}
                 <div class="tab-content" id="nav-tabContent">
                     <div class="tab-pane fade show active rounded" id="tab-transcription" role="tabpanel" aria-labelledby="nav-pill-transcription">
-                        <textarea class="w-100" name="tx" id="transcription-input" placeholder="Go ahead, start typing. You got this!">{{transcription.text}}</textarea>
+                        <!-- <label class="sr-only" for="transcription-input">Transcription input</label> -->
+                        <textarea class="w-100" name="tx" id="transcription-input" placeholder="Go ahead, start typing. You got this!" aria-label="Transcription input">{{transcription.text}}</textarea>
                     </div>
                     <div class="tab-pane fade rounded" id="tab-tag" role="tabpanel" aria-labelledby="nav-pill-tag">
-                      <input type="text" class="textarea w-100" id="tag-input"  name="tags" data-role="tagsinput" value="{%for tag in tags %}{{tag}},{% endfor %}">
+                      <input type="text" class="textarea w-100" id="tag-input"  name="tags" data-role="tagsinput" value="{%for tag in tags %}{{tag}},{% endfor %}" aria-label="Tag input">
                     </div>
                     <div class="tab-pane fade pxy-quarter rounded" id="tab-discussion" role="tabpanel" aria-labelledby="nav-pill-discussion">
                         <div class="row">
@@ -98,14 +99,14 @@
                 {% if request.user.is_authenticated %}
                 <div class="my-quarter d-flex justify-content-around align-items-center">
                   <label id="status-id-label" for="status_id">Status:</label>
-                    <select name="status" id="status_id">
+                    <select name="status" id="status_id" aria-labelledby="status-id-label">
                         <option value="0">0%</option>
                         <option value="25">25%</option>
                         <option value="50">50%</option>
                         <option value="75">75%</option>
                         <option value="100">100%</option>
                     </select>
-                    <input type="submit" class="btn btn-primary float-right" value="Save">
+                    <input type="submit" class="btn btn-primary float-right" name="save" value="Save">
                   </div>
                   {% endif %}
                 </form>
