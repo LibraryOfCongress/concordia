@@ -139,7 +139,7 @@ class ExportCollectionToBagit(TemplateView):
                 writer.writerow(row)
 
         # Turn Strucutre into bagit format
-        bag = bagit.make_bag(collection_folder, {"Contact-Name": request.user.username})
+        bagit.make_bag(collection_folder, {"Contact-Name": request.user.username})
 
         # Build .zipfile of bagit formatted Collection Folder
         archive_name = collection_folder
@@ -156,11 +156,11 @@ class ExportCollectionToBagit(TemplateView):
         # Clean up temp folders & zipfile once exported
         try:
             shutil.rmtree(collection_folder)
-        except:
+        except Exception as e:
             pass
         try:
             os.remove("%s.zip" % collection_folder)
-        except:
+        except Exception as e:
             pass
 
         return response

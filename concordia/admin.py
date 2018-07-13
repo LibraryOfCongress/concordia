@@ -1,7 +1,7 @@
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin
 
-from .models import *
+from .models import (Asset, Collection, Subcollection, Tag, Transcription,
+                     UserAssetTagCollection)
 
 
 @admin.register(Collection)

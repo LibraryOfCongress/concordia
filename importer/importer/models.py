@@ -68,7 +68,8 @@ class Importer:
         self.check_completeness()
 
     def check_total_item_count(self):
-        # Check that the total number of items matches the expected number of total items
+        # Check that the total number of items
+        # matches the expected number of total items
         actual_item_count = len(os.listdir(self.images_folder))
 
         if actual_item_count < int(self.item_count):
@@ -121,7 +122,8 @@ class Importer:
             image_file = Image.open(filename)
             actual_width, actual_height = image_file.size
             self.logger.debug(
-                "Actual width and height of %(filename)s are %(width)d and %(height)d respectively",
+                "Actual width and height of %(filename)s "
+                "are %(width)d and %(height)d respectively",
                 {"filename": filename, "width": actual_width, "height": actual_height},
             )
 
@@ -136,7 +138,8 @@ class Importer:
                 image_number
             ]["height"]
             self.logger.debug(
-                "Expected width and height of %(filename)s are %(width)d and %(height)d respectively",
+                "Expected width and height of %(filename)s "
+                "are %(width)d and %(height)d respectively",
                 {
                     "filename": filename,
                     "width": expected_width,
@@ -149,7 +152,8 @@ class Importer:
                 and abs(actual_width - expected_width) > 1
             ):
                 self.logger.error(
-                    "Expected width of %(width)d but actual image width is %(actual_width)d",
+                    "Expected width of %(width)d but actual "
+                    "image width is %(actual_width)d",
                     {"width": expected_width, "actual_width": actual_width},
                 )
                 return False
@@ -159,7 +163,8 @@ class Importer:
                 and abs(actual_width - expected_width) > 1
             ):
                 self.logger.error(
-                    "Expected height of %(height)d but actual image height is %(actual_height)d",
+                    "Expected height of %(height)d but actual "
+                    "image height is %(actual_height)d",
                     {"height": expected_height, "actual_height": actual_height},
                 )
                 return False
@@ -212,7 +217,8 @@ class Importer:
                     )
                 else:
                     self.logger.info(
-                        "File %(filename)s with size %(size_on_disk)d already exists in s3 bucket",
+                        "File %(filename)s with size %(size_on_disk)d "
+                        "already exists in s3 bucket",
                         {"filename": filename, "size_on_disk": size_on_disk},
                     )
             else:
@@ -341,7 +347,8 @@ class Importer:
         data = call.json()
         results = data["results"]
         for result in results:
-            # Don't try to get images from the collection-level result or web page results
+            # Don't try to get images from the
+            # collection-level result or web page results
             if "collection" not in result.get(
                 "original_format"
             ) and "web page" not in result.get("original_format"):
