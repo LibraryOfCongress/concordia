@@ -85,7 +85,8 @@ class ExportCollectionToBagit(TemplateView):
             os.mkdir(collection_folder)
 
         for asset in asset_list:
-            asset_folder = "%s/%s" % (collection_folder, asset.slug)
+            asset_folder_name = asset.media_url.rsplit("/")[-2]
+            asset_folder = "%s/%s" % (collection_folder, asset_folder_name)
 
             # Create asset folders (media/exporter/<collection>/<asset>
             if not os.path.exists(asset_folder):
