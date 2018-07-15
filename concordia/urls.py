@@ -130,7 +130,7 @@ urlpatterns += [
         r"^get_task_status/(?P<task_id>[a-zA-Z0-9-]+)$", get_task_status, name="get_task_status",
     ),
     re_path(
-        r"^check_and_save_collection_assets/(?P<task_id>[a-zA-Z0-9-]+)$",
+        r"^check_and_save_collection_assets/(?P<task_id>[a-zA-Z0-9-]+)/(?P<item_id>[a-zA-Z0-9-]+)$",
         check_and_save_collection_assets,
         name="check_and_save_collection_assets",
     ),

@@ -37,8 +37,9 @@
     </div>
 {#      </form>#}
     </div>
-      <input type="hidden" id="task_id">
-  <input type="hidden" id="collection_slug">
+        <input type="hidden" id="task_id">
+        <input type="hidden" id="collection_slug">
+        <input type="hidden" id="item_id">
   </div>
 </div>
 <script>
@@ -52,12 +53,10 @@ function hide_box(){
 }
 
 function write_save_collection_assets(task_id){
-    console.log("writing colletion items")
    $.ajax({
-        url: "/check_and_save_collection_assets/"+task_id,
+        url: "/check_and_save_collection_assets/"+task_id+"/"+$("#item_id").val(),
         type: 'GET',
         success: function(data, textStatus, jqXHR) {
-            console.log("success resp: ", data);
             window.location.href = "http://127.0.0.1:8000/transcribe/"+$("#collection_slug").val();
         }
     }).fail(function(jqXHR, textStatus, errorThrown) {
@@ -71,18 +70,15 @@ function write_save_collection_assets(task_id){
 }
 
 function get_task_status(task_id){
-    console.log("status task getting");
     $.ajax({
         url: "/get_task_status/"+task_id,
         type: 'GET',
         success: function(data, textStatus, jqXHR) {
-            console.log("success resp: ", data);
             var gts = setTimeout(get_task_status($("#task_id").val()), 60000);
             if(data == 'SUCCESS'){
                 write_save_collection_assets(task_id);
                 clearInterval(gts);
             }
-            console.log("ddd ", gts);
             clearInterval(gts);
 
         }
@@ -96,24 +92,27 @@ function get_task_status(task_id){
 }
 
 $("#create_btn").click(function(){
-    console.log("btn clicked");
     $(".loading").removeClass("d-none");
-    $("#task_id").val("");
-    $("#collection_slug").val("");
-    <!--$.post("/transcribe/create/", {"name": $("#name").val(), "url": $("#url").val()}, function(data, status){-->
-        <!--alert("Data: " + data + "\nStatus: " + status);-->
-    <!--});-->
+    $("#task_id, #collection_slug, #item_id").val("");
+    var name = $("#name").val();
+    var url = $("#url").val();
+    var create_type = '';
+    if(url.indexOf('/item/')){
+        create_type = "item";
+        $("#item_id").val(get_item_id_from_item_url(url));
+    }else{
+        create_type = "collections";
+        $("#item_id").val("");
+    }
 
     $.ajax({
-        url: "/create_collection/",
+        url: api_url,
         type: 'post',
-        data: {"name": $("#name").val(), "url": $("#url").val(), 'csrfmiddlewaretoken': $("input[name=csrfmiddlewaretoken]").val()},
+        data: {"name": name, "url": url, "create_type": create_type,'csrfmiddlewaretoken': $("input[name=csrfmiddlewaretoken]").val()},
         success: function(data, textStatus, jqXHR) {
-            console.log("success resp: ", data);
             $("#task_id").val(data['task_id']);
             $("#collection_slug").val(data['name']);
-            var gts = setTimeout(get_task_status(data['task_id']), 10000);
-            console.log("gts: ", gts);
+            var gts = setTimeout(get_task_status(data['task_id']), 60000);
         }
     }).fail(function(jqXHR, textStatus, errorThrown) {
         if(jqXHR.status == 0 || jqXHR == 302) {
@@ -123,6 +122,18 @@ $("#create_btn").click(function(){
         }
     });
 })
+
+function get_item_id_from_item_url(item_url){
+    var item_id = '';
+    var item_splits = item_url.split("/")
+    if(item_url.endsWith("/")){
+        item_id = item_splits[item_splits.length - 2]
+    }
+    else{
+        item_id = item_splits[item_splits.length - 1]
+    }
+    return item_id;
+}
 
 get_task_status($("#task_id").val());
 

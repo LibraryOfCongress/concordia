@@ -9,6 +9,7 @@ from importer_app.models import CollectionTaskDetails, CollectionItemAssetCount
 
 logger = getLogger(__name__)
 
+
 def get_request_data(url, params=None):
     response = requests.get(url, params=params)
     if response.status_code != 200:
@@ -91,18 +92,83 @@ def download_write_collection_item_asset(image_url, asset_local_path, retry_coun
 
 @task
 def download_write_collection_item_assets(collection_name, collection_url):
+    """
+    It will downloads all images from loc.gov site and saves into local directory as per collection and items.
+    :param collection_name: collection for requested item url
+    :param collection_url: collection url path
+    :return: nothing, will downloads the files and saves to a directory
+    """
     collection_item_ids = get_collection_item_ids(collection_name, collection_url)
     for cii in collection_item_ids:
         collection_item_asset_urls = get_collection_item_asset_urls(collection_name, cii)
-        item_local_path = os.path.join(settings.IMPORTER['IMAGES_FOLDER'], collection_name, cii)
+        get_save_item_assets(collection_name, cii, collection_item_asset_urls)
 
-        try:
-            os.makedirs(item_local_path)
-        except Exception as e:
-            print(e)
 
-        for idx, ciau in enumerate(collection_item_asset_urls):
+@task
+def download_write_item_assets(collection_name, item_url):
+    """
+    It will downloads all images from loc.gov site and saves into local directory as per item level directory.
+    :param collection_name: collection for requested item url
+    :param item_url: item url path
+    :return: nothing, will downloads the files and saves to a directory
+    """
+    item_asset_urls = []
+    item_response = get_request_data(item_url, {"fo": "json"})
+    item_id = get_item_id_from_item_url(item_url)
+    item_resources = item_response.get('resources', [])
+    for ir in item_resources:
+        item_files = ir.get('files', [])[0]
+        for item_file in item_files:
+            if item_file.get('mimetype') == 'image/jpeg':
+                item_asset_urls.append(item_file.get('url'))
 
-            asset_local_path = os.path.join(item_local_path, '{0}.jpg'.format(str(idx)))
+    try:
+        ctd = CollectionTaskDetails.objects.get(collection_slug=collection_name)
+        ciac_details = {'collection_slug': ctd.collection_slug,
+                        'collection_item_identifier': item_id,
+                        'collection_item_asset_count': len(item_asset_urls)}
+        ciac = CollectionItemAssetCount.objects.create(**ciac_details)
+        ciac.save()
+    except CollectionTaskDetails.DoesNotExist as e:
+        logger.error("error while creating entries into Collection Task Details models: %s " % e)
+    except Exception as e1:
+        logger.error("error while creating entries into CollectionItemAssetCount models: %s " % e1)
 
-            download_write_collection_item_asset(ciau, asset_local_path)
+    get_save_item_assets(collection_name, item_id, item_asset_urls)
+
+
+def get_save_item_assets(collection_name, item_id, item_asset_urls):
+    """
+    creates a item directory if it already does not exists, and iterates asset urls list then download each asset
+    and saves to local in item directory
+    :param collection_name: collection_name
+    :param item_id: item id of the collection
+    :param item_asset_urls: list of item asset urls
+    :return: nothing, it will download the assets to local path
+    """
+
+    item_local_path = os.path.join(settings.IMPORTER['IMAGES_FOLDER'], collection_name, item_id)
+
+    try:
+        os.makedirs(item_local_path)
+    except Exception as e:
+        print(e)
+
+    for idx, ciau in enumerate(item_asset_urls):
+        asset_local_path = os.path.join(item_local_path, '{0}.jpg'.format(str(idx)))
+
+        download_write_collection_item_asset(ciau, asset_local_path)
+
+
+def get_item_id_from_item_url(item_url):
+    """
+    extracts item id from the item url and returns it
+    :param item_url: item url
+    :return: item id
+    """
+    if item_url.endswith('/'):
+        item_id = item_url.split("/")[-2]
+    else:
+        item_id = item_url.split("/")[-1]
+
+    return item_id
