@@ -35,9 +35,6 @@ class ViewTest_Exporter(TestCase):
         :return:
         """
 
-        # make sure the config-optional-override.json mode is "unittest"
-        # self.assertEqual(Config.GetOverrideMode(), 'unittest')
-
         self.client = Client()
 
     def login_user(self):
@@ -49,8 +46,6 @@ class ViewTest_Exporter(TestCase):
         self.user = User.objects.create(username="tester", email="tester@foo.com")
         self.user.set_password("top_secret")
         self.user.save()
-
-        # login = self.client.login(username="tester", password="top_secret")
 
     def test_ExportCollectionToBagit_get(self):
         """
@@ -101,10 +96,8 @@ class ViewTest_Exporter(TestCase):
         if not os.path.exists(asset_folder):
             os.makedirs(asset_folder)
 
-        source_dir = asset_folder
-
         # create source asset file
-        with open(source_dir + "/asset.jpg", "w+") as csv_file:
+        with open(asset_folder + "/asset.jpg", "w+") as csv_file:
             writer = csv.writer(csv_file)
             writer.writerow(
                 [
