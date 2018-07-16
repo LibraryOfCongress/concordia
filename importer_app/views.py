@@ -64,7 +64,7 @@ def check_collection_completeness(ctd, item_id=''):
     if item_id:
         item_local_path = os.path.join(collection_local_path, item_id)
         item_downloaded_asset_count = sum([len(files) for path, dirs, files in os.walk(item_local_path)])
-        ciac = CollectionItemAssetCount.object.get_object_or_404(collection_slug=ctd.collection_slug, collection_item_identifier=item_id)
+        ciac = CollectionItemAssetCount.objects.get(collection_slug=ctd.collection_slug, collection_item_identifier=item_id)
         if ciac.collection_item_asset_count == item_downloaded_asset_count:
             return True
         else:

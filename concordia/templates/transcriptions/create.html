@@ -106,7 +106,7 @@ $("#create_btn").click(function(){
     }
 
     $.ajax({
-        url: api_url,
+        url: '/create_collection/',
         type: 'post',
         data: {"name": name, "url": url, "create_type": create_type,'csrfmiddlewaretoken': $("input[name=csrfmiddlewaretoken]").val()},
         success: function(data, textStatus, jqXHR) {
