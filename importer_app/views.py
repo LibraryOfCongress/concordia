@@ -34,9 +34,9 @@ class CreateCollectionView(generics.CreateAPIView):
         create_type = serializer.data.get('create_type')
         collection_details = {'collection_name': name, "collection_slug": slugify(name)}
         if 'collections' in create_type:
-            download_task = download_write_collection_item_assets.delay(name, url)
+            download_task = download_write_collection_item_assets.delay(slugify(name), url)
         elif 'item' in create_type:
-            download_task = download_write_item_assets.delay(name, url)
+            download_task = download_write_item_assets.delay(slugify(name), url)
         collection_details['collection_task_id'] = download_task.task_id
         ctd = CollectionTaskDetails.objects.create(**collection_details)
         ctd.save()
@@ -60,7 +60,8 @@ def get_task_status(request, task_id):
 
 
 def check_collection_completeness(ctd, item_id=''):
-    collection_local_path = os.path.join(settings.IMPORTER['IMAGES_FOLDER'], ctd.collection_name)
+    print("item_id: ", item_id)
+    collection_local_path = os.path.join(settings.IMPORTER['IMAGES_FOLDER'], ctd.collection_slug)
     if item_id:
         item_local_path = os.path.join(collection_local_path, item_id)
         item_downloaded_asset_count = sum([len(files) for path, dirs, files in os.walk(item_local_path)])
@@ -116,12 +117,13 @@ def save_collection_item_assets(collection, the_path):
 def check_and_save_collection_assets(request, task_id, item_id):
     if request.method == 'GET':
         try:
+            print('casca get item_id: ', item_id)
             ctd = CollectionTaskDetails.objects.get(collection_task_id=task_id)
 
             if item_id:
                 check_and_save_item_completeness(request, ctd, item_id)
-
-            check_and_save_collection_completeness(request, ctd)
+            else:
+                check_and_save_collection_completeness(request, ctd)
 
         except CollectionTaskDetails.DoesNotExist as e:
             logger.error("Requested Collection Details are not found with task id : %s" % task_id)
@@ -154,6 +156,7 @@ def check_and_save_collection_completeness(request, ctd):
 
 
 def check_and_save_item_completeness(request, ctd, item_id):
+    print('casicople, itemid:', item_id)
     if check_collection_completeness(ctd, item_id):
         try:
             collection = Collection.objects.get(slug=ctd.collection_slug)

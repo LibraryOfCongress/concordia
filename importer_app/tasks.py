@@ -117,10 +117,14 @@ def download_write_item_assets(collection_name, item_url):
     item_id = get_item_id_from_item_url(item_url)
     item_resources = item_response.get('resources', [])
     for ir in item_resources:
-        item_files = ir.get('files', [])[0]
+        item_files = ir.get('files', [])
+        print("item_files: ", item_files, type(item_files), len(item_files))
         for item_file in item_files:
-            if item_file.get('mimetype') == 'image/jpeg':
-                item_asset_urls.append(item_file.get('url'))
+            print("item_file: ", item_file)
+            for itf in item_file:
+                print("itf:", itf, type(itf))
+                if itf.get('mimetype') == 'image/jpeg':
+                    item_asset_urls.append(itf.get('url'))
 
     try:
         ctd = CollectionTaskDetails.objects.get(collection_slug=collection_name)
@@ -172,3 +176,5 @@ def get_item_id_from_item_url(item_url):
         item_id = item_url.split("/")[-1]
 
     return item_id
+
+#download_write_item_assets("rosa-parker", "https://www.loc.gov/item/mss859430021")
