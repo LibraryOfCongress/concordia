@@ -3,22 +3,12 @@
 import tempfile
 from unittest.mock import Mock, patch
 
-
+import views
 from django.test import Client, TestCase
 from PIL import Image
 
-import views
-from concordia.models import (
-    Asset,
-    Collection,
-    MediaType,
-    Status,
-    Tag,
-    Transcription,
-    User,
-    UserProfile,
-    UserAssetTagCollection,
-)
+from concordia.models import (Asset, Collection, MediaType, Status, Transcription, User,
+                              UserAssetTagCollection, UserProfile)
 
 
 class ViewTest_Concordia(TestCase):
@@ -46,7 +36,7 @@ class ViewTest_Concordia(TestCase):
         self.user.set_password("top_secret")
         self.user.save()
 
-        login = self.client.login(username="tester", password="top_secret")
+        self.client.login(username="tester", password="top_secret")
 
     def test_concordia_api(self):
         """
@@ -56,7 +46,7 @@ class ViewTest_Concordia(TestCase):
 
         # Arrange
 
-        relative_path = Mock()
+        Mock()
 
         with patch("views.requests") as mock_requests:
             mock_requests.get.return_value = mock_response = Mock()
@@ -151,7 +141,8 @@ class ViewTest_Concordia(TestCase):
 
     def test_AccountProfileView_post_invalid_form(self):
         """
-        This unit test tests the post entry for the route account/profile but submits an invalid form
+        This unit test tests the post entry for the route
+        account/profile but submits an invalid form
         :param self:
         :return:
         """
@@ -171,7 +162,8 @@ class ViewTest_Concordia(TestCase):
 
     def test_AccountProfileView_post_new_password(self):
         """
-        This unit test test the post entry for the route account/profile with new password
+        This unit test test the post entry for the
+        route account/profile with new password
         :param self:
         :return:
         """
@@ -200,14 +192,15 @@ class ViewTest_Concordia(TestCase):
         self.assertEqual(updated_user.first_name, "Jimmy")
 
         # logout and login with new password
-        logout = self.client.logout()
+        self.client.logout()
         login2 = self.client.login(username="tester", password="aBc12345!")
 
         self.assertTrue(login2)
 
     def test_AccountProfileView_post_with_image(self):
         """
-        This unit test tests the post entry for the route account/profile with new image file
+        This unit test tests the post entry for the
+        route account/profile with new image file
         :param self:
         :return:
         """
@@ -355,7 +348,9 @@ class ViewTest_Concordia(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             str(response.content),
-            "b'Collection,Title,Description,MediaUrl,Transcription,Tags\\r\\nTextCollection,TestAsset,Asset Description,http://www.foo.com/1/2/3,,\\r\\n'",
+            "b'Collection,Title,Description,MediaUrl,Transcription,Tags\\r\\n"
+            "TextCollection,TestAsset,Asset Description,"
+            "http://www.foo.com/1/2/3,,\\r\\n'",
         )
 
     @patch("concordia.views.requests")

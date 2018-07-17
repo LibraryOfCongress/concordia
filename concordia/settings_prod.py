@@ -10,7 +10,8 @@ LOGGING["loggers"]["celery"]["level"] = "INFO"
 
 DJANGO_SECRET_KEY = "changeme"
 
-# TODO: For final deployment to production, when we are running https, uncomment this next line
+# TODO: For final deployment to production,
+# when we are running https, uncomment this next line
 # CSRF_COOKIE_SECURE = True
 
 IMPORTER = {

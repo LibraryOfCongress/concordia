@@ -10,8 +10,7 @@ import zipfile
 from django.conf import settings
 from django.test import Client, TestCase
 
-from concordia.models import (Asset, Collection, MediaType, Status,
-                              Transcription, User)
+from concordia.models import Asset, Collection, MediaType, Status, Transcription, User
 
 PACKAGE_PARENT = ".."
 SCRIPT_DIR = os.path.dirname(
@@ -146,5 +145,5 @@ class ViewTest_Exporter(TestCase):
         # Clean up temp folders
         try:
             shutil.rmtree(collection_folder)
-        except:
+        except Exception as e:
             pass
