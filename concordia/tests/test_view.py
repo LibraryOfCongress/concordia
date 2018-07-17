@@ -1,6 +1,7 @@
 # TODO: Add correct copyright header
 
 import tempfile
+from test.support import EnvironmentVarGuard
 from unittest.mock import Mock, patch
 
 import views
@@ -205,6 +206,8 @@ class ViewTest_Concordia(TestCase):
         # Arrange
         self.login_user()
 
+        pw = "!Abc12345"
+
         existing_userprofile_count = UserProfile.objects.all().count()
 
         # Act
@@ -218,11 +221,10 @@ class ViewTest_Concordia(TestCase):
                 "/account/profile/",
                 {
                     "myfile": fp,
-                    "first_name": "Jimmy",
                     "email": "tester@foo.com",
                     "username": "tester",
-                    "password1": "",
-                    "password2": "",
+                    "password1": pw,
+                    "password2": pw,
                 },
             )
 
@@ -269,7 +271,7 @@ class ViewTest_Concordia(TestCase):
             slug="test-slug2",
             description="Collection Description",
             metadata={"key": "val1"},
-            status=Status.PCT_0,
+            status=Status.EDIT,
         )
         self.collection.save()
 
@@ -296,7 +298,7 @@ class ViewTest_Concordia(TestCase):
             slug="test-slug2",
             description="Collection Description",
             metadata={"key": "val1"},
-            status=Status.PCT_0,
+            status=Status.EDIT,
         )
         self.collection.save()
 
@@ -322,7 +324,7 @@ class ViewTest_Concordia(TestCase):
             slug="slug2",
             description="Collection Description",
             metadata={"key": "val1"},
-            status=Status.PCT_0,
+            status=Status.EDIT,
         )
         self.collection.save()
 
@@ -334,7 +336,7 @@ class ViewTest_Concordia(TestCase):
             media_type=MediaType.IMAGE,
             collection=self.collection,
             metadata={"key": "val2"},
-            status=Status.PCT_0,
+            status=Status.EDIT,
         )
         self.asset.save()
 
@@ -369,7 +371,7 @@ class ViewTest_Concordia(TestCase):
             slug="test-slug2",
             description="Collection Description",
             metadata={"key": "val1"},
-            status=Status.PCT_0,
+            status=Status.EDIT,
         )
         self.collection.save()
 
@@ -381,7 +383,7 @@ class ViewTest_Concordia(TestCase):
             media_type=MediaType.IMAGE,
             collection=self.collection,
             metadata={"key": "val2"},
-            status=Status.PCT_0,
+            status=Status.EDIT,
         )
         self.asset.save()
 
@@ -410,7 +412,7 @@ class ViewTest_Concordia(TestCase):
             slug="Collection1",
             description="Collection Description",
             metadata={"key": "val1"},
-            status=Status.PCT_0,
+            status=Status.EDIT,
         )
         self.collection.save()
 
@@ -423,7 +425,7 @@ class ViewTest_Concordia(TestCase):
             media_type=MediaType.IMAGE,
             collection=self.collection,
             metadata={"key": "val2"},
-            status=Status.PCT_0,
+            status=Status.EDIT,
         )
         self.asset.save()
 
@@ -432,7 +434,7 @@ class ViewTest_Concordia(TestCase):
             asset=self.asset,
             user_id=self.user.id,
             text="Test transcription 1",
-            status=Status.PCT_0,
+            status=Status.EDIT,
         )
         self.transcription.save()
 
@@ -441,7 +443,7 @@ class ViewTest_Concordia(TestCase):
         # Act
         response = self.client.post(
             "/transcribe/Collection1/asset/Asset1/",
-            {"tx": "First Test Transcription", "tags": tag_name, "status": "0"},
+            {"tx": "First Test Transcription", "tags": tag_name, "action": "Save"},
         )
 
         # Assert
