@@ -15,14 +15,8 @@ from django.views.generic import TemplateView
 from registration.backends.simple.views import RegistrationView
 
 from concordia.forms import ConcordiaUserEditForm, ConcordiaUserForm
-from concordia.models import (
-    Asset,
-    Collection,
-    Tag,
-    Transcription,
-    UserAssetTagCollection,
-    UserProfile,
-)
+from concordia.models import (Asset, Collection, Status, Tag, Transcription,
+                              UserAssetTagCollection, UserProfile)
 
 logger = getLogger(__name__)
 
@@ -36,6 +30,23 @@ def concordia_api(relative_path):
 
     logger.debug("Received %s", data)
     return data
+
+
+def get_anonymous_user():
+    """
+    Get the user called "anonymous" if it exist. Create the user if it doesn't exist
+
+    This is the default concordia user if someone is working on the site without logging in first.
+    :return: User id
+    """
+    anon_user = User.objects.filter(username="anonymous").first()
+    if anon_user is None:
+        anon_user = User.objects.create_user(
+            username="anonymous",
+            email="anonymous@anonymous.com",
+            password="concanonymous",
+        )
+    return anon_user.id
 
 
 class ConcordiaRegistrationView(RegistrationView):
@@ -130,19 +141,22 @@ class ConcordiaCollectionView(TemplateView):
 class ConcordiaAssetView(TemplateView):
     template_name = "transcriptions/asset.html"
 
+    state_dictionary = {
+        "Save": Status.EDIT,
+        "Submit for Review": Status.SUBMITTED,
+        "Mark Completed": Status.COMPLETED,
+    }
+
     def get_context_data(self, **kws):
 
         asset = Asset.objects.get(collection__slug=self.args[0], slug=self.args[1])
 
         # Get all transcriptions, they are no longer tied to a specific user
-        transcription = Transcription.objects.filter(asset=asset)
-        if transcription:
-            transcription = transcription[0]
+        transcription = Transcription.objects.filter(asset=asset).last()
 
         # Get all tags, they are no longer tied to a specific user
-        tags = UserAssetTagCollection.objects.filter(
-            asset=asset, user_id=self.request.user.id
-        )
+        tags = UserAssetTagCollection.objects.filter(asset=asset)
+
         if tags:
             tags = tags[0].tags.all()
 
@@ -158,15 +172,19 @@ class ConcordiaAssetView(TemplateView):
         asset = Asset.objects.get(collection__slug=self.args[0], slug=self.args[1])
         if "tx" in self.request.POST:
             tx = self.request.POST.get("tx")
-            status = self.request.POST.get("status", "25")
-            Transcription.objects.update_or_create(
+            status = self.state_dictionary[self.request.POST.get("action")]
+            # Save all transcriptions, we will need this reports
+            Transcription.objects.create(
                 asset=asset,
-                user_id=self.request.user.id,
-                defaults={"text": tx, "status": status},
+                user_id=self.request.user.id
+                if self.request.user.id is not None
+                else get_anonymous_user(),
+                text=tx,
+                status=status,
             )
             asset.status = status
             asset.save()
-        if "tags" in self.request.POST:
+        if "tags" in self.request.POST and len(self.request.POST.get("tags")) > 0:
             tags = self.request.POST.get("tags").split(",")
             utags, status = UserAssetTagCollection.objects.get_or_create(
                 asset=asset, user_id=self.request.user.id

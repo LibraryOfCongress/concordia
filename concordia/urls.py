@@ -3,6 +3,7 @@ import os
 import sys
 
 from django.conf import settings
+from django.conf.urls import include, url
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
@@ -13,7 +14,6 @@ from machina.app import board
 
 from exporter import views as exporter_views
 from faq.views import FAQView
-from django.conf.urls import url, include
 
 from . import trans_urls, views
 
@@ -128,6 +128,4 @@ urlpatterns += [
     re_path(r"^media/(?P<path>.*)$", serve, {"document_root": settings.MEDIA_ROOT})
 ]
 
-urlpatterns += [
-    url('', include('django_prometheus_metrics.urls')),
-]
+urlpatterns += [url("", include("django_prometheus_metrics.urls"))]

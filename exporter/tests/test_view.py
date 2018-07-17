@@ -10,8 +10,7 @@ import zipfile
 from django.conf import settings
 from django.test import Client, TestCase
 
-from concordia.models import (Asset, Collection, MediaType, Status,
-                              Transcription, User)
+from concordia.models import Asset, Collection, MediaType, Status, Transcription, User
 
 PACKAGE_PARENT = ".."
 SCRIPT_DIR = os.path.dirname(
@@ -97,7 +96,7 @@ class ViewTest_Exporter(TestCase):
         collection_folder = build_folder + "/foocollection"
         if not os.path.exists(collection_folder):
             os.makedirs(collection_folder)
-        asset_folder = collection_folder +"/testasset"
+        asset_folder = collection_folder + "/testasset"
         if not os.path.exists(asset_folder):
             os.makedirs(asset_folder)
 
