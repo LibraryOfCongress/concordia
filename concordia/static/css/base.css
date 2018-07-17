@@ -421,6 +421,10 @@ input {
     color: var(--text-color-offwhite);
 }
 
+.btn-primary-fixed-width {
+   width: 200px;
+}
+
 .btn-primary:hover {
   background-color: var(--primary-color-hover);
   border-color: var(--primary-color-hover);

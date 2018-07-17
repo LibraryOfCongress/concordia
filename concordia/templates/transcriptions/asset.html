@@ -2,142 +2,227 @@
 {% block title %}{{ asset.title }}{% endblock title %}
 {% block head_content %}{% endblock head_content %}
 {% block main_content %}
-<div class="container-fluid">
-  <div class="row">
-    <div class="col-12 d-flex align-items-middle py-1 bg-darkest-gray">
-      <h6 class="offwhite-text pl-default mb-0"><a class="offwhite-text" href="{% url 'transcriptions:collection' asset.collection.slug %}">{{ asset.collection.title }}</a>  >  {{ asset.title }}</h6>
-    </div>
-    <div class="col-8 col-md-9">
-      <div id="asset-image" class="asset-image bg-offwhite">
-        </div>
-    </div>
-    <div class="col-4 col-md-3 bg-darkest-gray shadow-regular rounded contribute-box" id="contribute-box">
-          <nav class="px-half py-1">
-            <div class="nav nav-pills" id="nav-pill-contribute-box" role="tablist">
-                  <a class="nav-item nav-link active" id="nav-pill-transcription" data-toggle="tab" href="#tab-transcription" role="tab" aria-controls="tab-transcription" aria-selected="true">Transcription</a>
-                  <a class="nav-item nav-link" id="nav-pill-tag" data-toggle="tab" href="#tab-tag" role="tab" aria-controls="tab-tag" aria-selected="false">Tags</a>
-                  <a class="nav-item nav-link" id="nav-pill-discussion" data-toggle="tab" href="#tab-discussion" role="tab" aria-controls="tab-discussion" aria-selected="false">Discussion</a>
-              </div>
-            </nav>
-            <form class="mx-half" id="contribute-form" method="post">
-                {% csrf_token %}
-                <div class="tab-content" id="nav-tabContent">
-                    <div class="tab-pane fade show active rounded" id="tab-transcription" role="tabpanel" aria-labelledby="nav-pill-transcription">
-                        <textarea class="w-100" name="tx" id="transcription-input" placeholder="Go ahead, start typing. You got this!">{{transcription.text}}</textarea>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12 d-flex align-items-middle py-1 bg-darkest-gray">
+                <h6 class="offwhite-text pl-default mb-0"><a class="offwhite-text"
+                                                             href="{% url 'transcriptions:collection' asset.collection.slug %}">{{ asset.collection.title }}</a>
+                    > {{ asset.title }}</h6>
+            </div>
+            <div class="col-8 col-md-9">
+                <div id="asset-image" class="asset-image bg-offwhite">
+                </div>
+            </div>
+            <div class="col-4 col-md-3 bg-darkest-gray shadow-regular rounded contribute-box" id="contribute-box">
+                <nav class="px-half py-1">
+                    <div class="nav nav-pills" id="nav-pill-contribute-box" role="tablist">
+                        <a class="nav-item nav-link active" id="nav-pill-transcription" data-toggle="tab"
+                           href="#tab-transcription" role="tab" aria-controls="tab-transcription"
+                           aria-selected="true" onclick="return show_buttons()">Transcription</a>
+                        <a class="nav-item nav-link" id="nav-pill-tag" data-toggle="tab" href="#tab-tag" role="tab"
+                           aria-controls="tab-tag" aria-selected="false" onclick="return hide_buttons()">Tags</a>
+                        <a class="nav-item nav-link" id="nav-pill-discussion" data-toggle="tab" href="#tab-discussion"
+                           role="tab" aria-controls="tab-discussion" aria-selected="false"
+                           onclick="return hide_buttons()">Discussion</a>
                     </div>
-                    <div class="tab-pane fade rounded" id="tab-tag" role="tabpanel" aria-labelledby="nav-pill-tag">
-                      <input type="text" class="textarea w-100" id="tag-input"  name="tags" data-role="tagsinput" value="{%for tag in tags %}{{tag}},{% endfor %}">
-                    </div>
-                    <div class="tab-pane fade pxy-quarter rounded" id="tab-discussion" role="tabpanel" aria-labelledby="nav-pill-discussion">
-                        <div class="row">
-                            <div class="comments col-md-9" id="comments">
-                                <!-- individual comment -->
-                                <div class="comment mb-2 row">
-                                    <div class="comment-avatar col-md-1 col-sm-2 text-center pr-1">
-                                        <a href=""><img class="mx-auto rounded-circle img-fluid" src="http://demos.themes.guide/bodeo/assets/images/users/m103.jpg" alt="avatar"></a>
-                                    </div>
-                                    <div class="comment-content col-md-11 col-sm-10">
-                                        <h6 class="small comment-meta"><a href="#">admin</a> Today, 2:38</h6>
-                                        <div class="comment-body">
-                                            <p>
-                                                Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
-                                                <br>
-                                                <a href="" class="text-right small"><i class="ion-reply"></i> Reply</a>
-                                            </p>
-                                        </div>
-                                    </div>
+                </nav>
+                <form class="mx-half" id="contribute-form" method="post">
+                    {% csrf_token %}
+                    <div class="tab-content" id="teset percent">
+                        status:
+                        {{ transcription.status }}
 
-                                    <!-- reply is indented -->
-                                    <div class="comment-reply col-md-11 offset-md-1 col-sm-10 offset-sm-2">
-                                        <div class="row">
-                                            <div class="comment-avatar col-md-1 col-sm-2 text-center pr-1">
-                                                <a href=""><img class="mx-auto rounded-circle img-fluid" src="http://demos.themes.guide/bodeo/assets/images/users/m101.jpg" alt="avatar"></a>
+
+                    </div>
+                    <div class="tab-content" id="nav-tabContent">
+                        <div class="tab-pane fade show active rounded" id="tab-transcription" role="tabpanel"
+                             aria-labelledby="nav-pill-transcription">
+                            <textarea class="w-100" name="tx" id="transcription-input"
+                                      placeholder="Go ahead, start typing. You got this!">{{ transcription.text }}</textarea>
+                        </div>
+                        <div class="tab-pane fade rounded" id="tab-tag" role="tabpanel" aria-labelledby="nav-pill-tag">
+                            <input type="text" class="textarea w-100" id="tag-input" name="tags" data-role="tagsinput"
+                                   value="{% for tag in tags %}{{ tag }},{% endfor %}">
+                        </div>
+                        <div class="tab-pane fade pxy-quarter rounded" id="tab-discussion" role="tabpanel"
+                             aria-labelledby="nav-pill-discussion">
+                            <div class="row">
+                                <div class="comments col-md-9" id="comments">
+                                    <!-- individual comment -->
+                                    <div class="comment mb-2 row">
+                                        <div class="comment-avatar col-md-1 col-sm-2 text-center pr-1">
+                                            <a href=""><img class="mx-auto rounded-circle img-fluid"
+                                                            src="http://demos.themes.guide/bodeo/assets/images/users/m103.jpg"
+                                                            alt="avatar"></a>
+                                        </div>
+                                        <div class="comment-content col-md-11 col-sm-10">
+                                            <h6 class="small comment-meta"><a href="#">admin</a> Today, 2:38</h6>
+                                            <div class="comment-body">
+                                                <p>
+                                                    Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do
+                                                    eiusmod
+                                                    <br>
+                                                    <a href="" class="text-right small"><i class="ion-reply"></i> Reply</a>
+                                                </p>
                                             </div>
-                                            <div class="comment-content col-md-11 col-sm-10 col-12">
-                                                <h6 class="small comment-meta"><a href="#">phildownney</a> Today, 12:31</h6>
-                                                <div class="comment-body">
-                                                    <p>Really?? Consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-                                                        <br>
-                                                        <a href="" class="text-right small"><i class="ion-reply"></i> Reply</a>
-                                                    </p>
+                                        </div>
+
+                                        <!-- reply is indented -->
+                                        <div class="comment-reply col-md-11 offset-md-1 col-sm-10 offset-sm-2">
+                                            <div class="row">
+                                                <div class="comment-avatar col-md-1 col-sm-2 text-center pr-1">
+                                                    <a href=""><img class="mx-auto rounded-circle img-fluid"
+                                                                    src="http://demos.themes.guide/bodeo/assets/images/users/m101.jpg"
+                                                                    alt="avatar"></a>
+                                                </div>
+                                                <div class="comment-content col-md-11 col-sm-10 col-12">
+                                                    <h6 class="small comment-meta"><a href="#">phildownney</a> Today,
+                                                        12:31</h6>
+                                                    <div class="comment-body">
+                                                        <p>Really?? Consectetur adipisicing elit, sed do eiusmod tempor
+                                                            incididunt ut labore et dolore magna aliqua.
+                                                            <br>
+                                                            <a href="" class="text-right small"><i
+                                                                class="ion-reply"></i> Reply</a>
+                                                        </p>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                   </div>
-                                   <!-- /reply is indented -->
-                                </div>
-                                <!-- /comment -->
-                                <!-- comment -->
-                                <div class="comment mb-2 row">
-                                    <div class="comment-avatar col-md-1 col-sm-2 text-center pr-1">
-                                        <a href=""><img class="mx-auto rounded-circle img-fluid" src="http://demos.themes.guide/bodeo/assets/images/users/w102.jpg" alt="avatar"></a>
+                                        <!-- /reply is indented -->
                                     </div>
-                                    <div class="comment-content col-md-11 col-sm-10">
-                                        <h6 class="small comment-meta"><a href="#">maslarino</a> Yesterday, 5:03 PM</h6>
-                                        <div class="comment-body">
-                                            <p>Sit amet, consectetur adipisicing elit, sed do eiusmod tempor.
-                                                <br>
-                                                <a href="" class="text-right small"><i class="ion-reply"></i> Reply</a>
-                                            </p>
+                                    <!-- /comment -->
+                                    <!-- comment -->
+                                    <div class="comment mb-2 row">
+                                        <div class="comment-avatar col-md-1 col-sm-2 text-center pr-1">
+                                            <a href=""><img class="mx-auto rounded-circle img-fluid"
+                                                            src="http://demos.themes.guide/bodeo/assets/images/users/w102.jpg"
+                                                            alt="avatar"></a>
+                                        </div>
+                                        <div class="comment-content col-md-11 col-sm-10">
+                                            <h6 class="small comment-meta"><a href="#">maslarino</a> Yesterday, 5:03 PM
+                                            </h6>
+                                            <div class="comment-body">
+                                                <p>Sit amet, consectetur adipisicing elit, sed do eiusmod tempor.
+                                                    <br>
+                                                    <a href="" class="text-right small"><i class="ion-reply"></i> Reply</a>
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <!-- /comment -->
-                                {% if user.is_authenticated %}
-                                <div class="row pt-2">
-                                    <div class="col-12">
-                                        <a href="" class="btn btn-sm btn-primary">Comment</a>
-                                    </div>
-                                </div>
-                                {% endif %}
+                                    <!-- /comment -->
+                                    {% if user.is_authenticated %}
+                                        <div class="row pt-2">
+                                            <div class="col-12">
+                                                <a href="" class="btn btn-sm btn-primary">Comment</a>
+                                            </div>
+                                        </div>
+                                    {% endif %}
 
+                                </div>
                             </div>
                         </div>
                     </div>
-                  </div>
-                {% if request.user.is_authenticated %}
-                <div class="my-quarter d-flex justify-content-around align-items-center">
-                  <label id="status-id-label" for="status_id">Status:</label>
-                    <select name="status" id="status_id">
-                        <option value="0">0%</option>
-                        <option value="25">25%</option>
-                        <option value="50">50%</option>
-                        <option value="75">75%</option>
-                        <option value="100">100%</option>
-                    </select>
-                    <input type="submit" class="btn btn-primary float-right" value="Save">
-                  </div>
-                  {% endif %}
+                    <div class="my-quarter d-flex justify-content-around align-items-center">
+                        <table>
+                            <tr>
+                                <td>
+                                    <input id="save_button" name="action" type="submit"
+                                           class="btn btn-primary btn-primary-fixed-width float-left" value="Save">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <input id="review_button" name="action" type="submit"
+                                           class="btn btn-primary btn-primary-fixed-width float-left"
+                                           value="Submit for Review">
+                                </td>
+                            </tr>
+
+                            {% if user.is_authenticated %}
+                            <tr>
+                                <td>
+                                    <input id="complete_button" name="action" type="submit"
+                                           class="btn btn-primary btn-primary-fixed-width float-left"
+                                           value="Mark Completed">
+                                </td>
+                            </tr>
+                            {% endif %}
+                        </table>
+                    </div>
                 </form>
-              </div>
+                <div style="color:whitesmoke">
+                    <h5 style="display: inline">Current State:&nbsp;</h5>
+                    <h5 id="transcription_state" name="transcription_state" style="display: inline">State value</h5>
+                </div>
             </div>
-          </div>
+        </div>
+    </div>
 
 {% endblock main_content %}
 
 {% block body_scripts %}
-<script src="https://www.jqueryscript.net/demo/Bootstrap-4-Tag-Input-Plugin-jQuery/tagsinput.js"></script>
-<script src="{% static "vendor/openseadragon/openseadragon.min.js" %}"></script>
-<script>
-    OpenSeadragon({
-        id: 'asset-image',
-        prefixUrl: '{% static "vendor/openseadragon/images/" %}',
-        tileSources: {
-            type: 'image',
-            url: '{{ MEDIA_URL }}{{asset.media_url }}'
-        }
-    });
-</script>
-<script>
-{% if transcription.status %}
-  $("#status_id").val({{transcription.status}});
-  $("#transcription-percent").children('li').each(function(i) {
-    if( $(this).val() == {{transcription.status}} ) {
-      $(this).children('a').addClass('active');
-    } else {
-      $(this).children('a').removeClass('active');
+    <script src="https://www.jqueryscript.net/demo/Bootstrap-4-Tag-Input-Plugin-jQuery/tagsinput.js"></script>
+    <script src="{% static "vendor/openseadragon/openseadragon.min.js" %}"></script>
+    <script>
+        OpenSeadragon({
+            id: 'asset-image',
+            prefixUrl: '{% static "vendor/openseadragon/images/" %}',
+            tileSources: {
+                type: 'image',
+                url: '{{ MEDIA_URL }}{{asset.media_url }}'
+            }
+        });
+    </script>
+    <script type="text/javascript">
+    function hide_buttons() {
+        $("#review_button").hide();
+        $("#complete_button").hide();
+        {% if not user.is_authenticated %}
+           $("#save_button").hide();
+        {% endif %}
+        return true;
     }
-  })
-{% endif %}
-</script>
+    function show_buttons() {
+        $("#save_button").show();
+        $("#review_button").show();
+        $("#complete_button").hide();
+
+        $("#transcription-input").attr('disabled', false);
+
+        {% if not user.is_authenticated and transcription.status != 'Edit' %}
+            $("#save_button").hide();
+            $("#review_button").hide();
+            $("#transcription-input").attr('disabled', true);
+        {% else %}
+            {% if transcription.status == 'Submitted' %}
+                $("#review_button").hide();
+                $("#complete_button").show();
+            {% elif transcription.status == 'Completed' %}
+                $("#save_button").show();
+                $("#review_button").hide();
+            {% endif %}
+        {% endif %}
+
+        return true;
+    }
+    </script>
+    <script>
+        {% if transcription.status %}
+            switch ("{{ transcription.status }}") {
+                case 'Edit':
+                    $("#transcription_state").text("Transcription is open for Edit");
+                    break;
+                case 'Submitted':
+                    $("#transcription_state").text("Transcription is submitted for Review");
+                    break;
+                case 'Completed':
+                    $("#transcription_state").text("Transcription is Complete");
+
+            }
+        {% else %}
+            $("#transcription_state").text("Transcription is open for Edit");
+        {% endif %}
+        show_buttons();
+    </script>
 {% endblock body_scripts %}
