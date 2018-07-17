@@ -34,9 +34,6 @@ class ViewTest_Exporter(TestCase):
         :return:
         """
 
-        # make sure the config-optional-override.json mode is "unittest"
-        # self.assertEqual(Config.GetOverrideMode(), 'unittest')
-
         self.client = Client()
 
     def login_user(self):
@@ -49,13 +46,16 @@ class ViewTest_Exporter(TestCase):
         self.user.set_password("top_secret")
         self.user.save()
 
-        # login = self.client.login(username="tester", password="top_secret")
-
     def test_ExportCollectionToBagit_get(self):
         """
         Test the http GET on route /transcribe/exportBagit/<collectionname>/
         :return:
         """
+
+        media_url_str = "/concordia/foocollection/testasset/asset.jpg"
+        collection_name_str = "foocollection"
+        asset_folder_name_str = "testasset"
+        asset_name_str = "asset.jpg"
 
         # Arrange
         self.login_user()
@@ -63,7 +63,7 @@ class ViewTest_Exporter(TestCase):
         # create a collection
         self.collection = Collection(
             title="FooCollection",
-            slug="foocollection",
+            slug=collection_name_str,
             description="Collection Description",
             metadata={"key": "val1"},
             status=Status.PCT_0,
@@ -73,9 +73,9 @@ class ViewTest_Exporter(TestCase):
         # create an Asset
         self.asset = Asset(
             title="TestAsset",
-            slug="testasset",
+            slug=asset_folder_name_str,
             description="Asset Description",
-            media_url="/concordia/foocollection/testasset/asset.jpg",
+            media_url=media_url_str,
             media_type=MediaType.IMAGE,
             collection=self.collection,
             metadata={"key": "val2"},
@@ -90,20 +90,18 @@ class ViewTest_Exporter(TestCase):
         self.transcription.save()
 
         # Make sure correct folders structure exists
-        build_folder = "%s/concordia" % (settings.MEDIA_ROOT)
+        build_folder = "{0}/concordia".format(settings.MEDIA_ROOT)
         if not os.path.exists(build_folder):
             os.makedirs(build_folder)
-        collection_folder = build_folder + "/foocollection"
+        collection_folder = "{0}/{1}".format(build_folder,collection_name_str)
         if not os.path.exists(collection_folder):
             os.makedirs(collection_folder)
-        asset_folder = collection_folder + "/testasset"
-        if not os.path.exists(asset_folder):
-            os.makedirs(asset_folder)
-
-        source_dir = asset_folder
+        source_dir = "{0}/{1}".format(collection_folder,asset_folder_name_str)
+        if not os.path.exists(source_dir):
+            os.makedirs(source_dir)
 
         # create source asset file
-        with open(source_dir + "/asset.jpg", "w+") as csv_file:
+        with open("{0}/{1}".format(source_dir,asset_name_str), "w+") as csv_file:
             writer = csv.writer(csv_file)
             writer.writerow(
                 [
@@ -136,10 +134,9 @@ class ViewTest_Exporter(TestCase):
             self.assertIn("data/testasset/export.csv", zipped_file.namelist())
 
             csv_file = zipped_file.read("data/testasset/export.csv")
-
             self.assertEqual(
                 str(csv_file),
-                "b'Collection,Title,Description,MediaUrl,Transcription,Tags\\r\\nFooCollection,TestAsset,Asset Description,/concordia/foocollection/testasset/asset.jpg,,\\r\\n'",  # noqa
+                "b'Collection,Title,Description,MediaUrl,Transcription,Tags\\r\\nFooCollection,TestAsset,Asset Description,{0},,\\r\\n'".format(media_url_str),  # noqa
             )
         finally:
             zipped_file.close()
