@@ -57,7 +57,8 @@ function write_save_collection_assets(task_id){
         url: "/check_and_save_collection_assets/"+task_id+"/"+$("#item_id").val(),
         type: 'GET',
         success: function(data, textStatus, jqXHR) {
-            window.location.href = "http://0.0.0.0:80/transcribe/"+$("#collection_slug").val().toLowerCase();
+            console.log("response: ", data);
+            window.location.href = "/transcribe/"+$("#collection_slug").val().toLowerCase()+"/";
         }
     }).fail(function(jqXHR, textStatus, errorThrown) {
         if(jqXHR.status == 0 || jqXHR == 302) {

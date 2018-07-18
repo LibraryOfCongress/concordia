@@ -7,6 +7,7 @@ from django.conf import settings
 from django.urls import reverse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.defaultfilters import slugify
+from django.http import HttpResponse, HttpResponseRedirect
 
 from rest_framework import generics
 from rest_framework import status
@@ -122,9 +123,12 @@ def check_and_save_collection_assets(request, task_id, item_id=""):
             ctd = CollectionTaskDetails.objects.get(collection_task_id=task_id)
 
             if item_id:
-                check_and_save_item_completeness(request, ctd, item_id)
+                if check_and_save_item_completeness(request, ctd, item_id):
+                    #return HttpResponseRedirect(reverse('transcriptions:collection', args=(ctd.collection_slug,)))
+                    return redirect(reverse("transcriptions:collection",args=[ctd.collection_slug], current_app=request.resolver_match.namespace,))
             else:
-                check_and_save_collection_completeness(request, ctd)
+                if check_and_save_collection_completeness(request, ctd):
+                    return redirect(reverse("transcriptions:collection",args=[ctd.collection_slug], current_app=request.resolver_match.namespace,))
 
         except CollectionTaskDetails.DoesNotExist as e:
             logger.error("Requested Collection Details are not found with task id : %s" % task_id)
@@ -143,13 +147,14 @@ def check_and_save_collection_completeness(request, ctd):
 
         shutil.rmtree(os.path.join(settings.IMPORTER['IMAGES_FOLDER'], ctd.collection_slug))
 
-        return redirect(
-            reverse(
-                "transcriptions:collection",
-                args=[ctd.collection_slug],
-                current_app=request.resolver_match.namespace,
-            )
-        )
+        #return redirect(
+        #    reverse(
+        #        "transcriptions:collection",
+        #        args=[ctd.collection_slug],
+        #        current_app=request.resolver_match.namespace,
+        #    )
+        #)
+        return True
     else:
         return Response({
                             'message': 'Creating a collection: %s is failed since assets are not completely downloaded' % ctd.collection_name},
@@ -170,14 +175,18 @@ def check_and_save_item_completeness(request, ctd, item_id):
 
         save_collection_item_assets(collection, item_local_path)
         shutil.rmtree(os.path.join(settings.IMPORTER['IMAGES_FOLDER'], ctd.collection_slug))
+        print("*"*100)
+        print("requesting for redicerct to collection view", ctd.collection_slug)
 
-        return redirect(
-            reverse(
-                "transcriptions:collection",
-                args=[ctd.collection_slug],
-                current_app=request.resolver_match.namespace,
-            )
-        )
+        #return redirect(
+        #    reverse(
+        #        "transcriptions:collection",
+        #        args=[ctd.collection_slug],
+        #        current_app=request.resolver_match.namespace,
+        #    )
+        #)
+        #return HttpResponseRedirect(reverse('transcriptions:collection', args=(ctd.collection_slug,)))
+        return True
     else:
         return Response({
             'message': 'Creating a collection: %s is failed since assets are not completely downloaded' % ctd.collection_name},
