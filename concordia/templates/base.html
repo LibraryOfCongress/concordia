@@ -16,7 +16,7 @@
   <header>
     <nav class="navbar navbar-expand-lg flex-md-row navbar-offwhite bg-offwhite justify-content-between">
       <div class="d-flex navbar-brand">
-        <a class="mr-1 my-auto" href="#"><img src="{% static "img/loc.svg" %}"></a>
+        <a class="mr-1 my-auto" href="#"><img src="{% static "img/loc.svg" %}" alt="Library of Congress logo"></a>
         <span class="vl mx-2 my-auto"></span>
         {% if request.path == '/' %}
         <h1><a class="gray-text align-middle d-none d-md-inline" href="#">citizen historian</a><a class="gray-text align-middle d-md-none" href="#">chc</a></h1>
@@ -35,7 +35,7 @@
           <a class="nav-link" href="#">Home<span class="sr-only">(current)</span></a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="{% url 'transcriptions:transcribe' %}">Transcribe</a>
+          <a class="nav-link" href="{% url 'transcriptions:transcribe' %}">Collections</a>
         </li>
             {% if user.is_authenticated %}
             <li class="nav-item dropdown nav-dropdown">
@@ -62,7 +62,7 @@
           <a class="nav-link" href="/">Home</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="{% url 'transcriptions:transcribe' %}">Transcribe</a>
+          <a class="nav-link" href="{% url 'transcriptions:transcribe' %}">Collections</a>
         </li>
         <li class="nav-item active">
           <a class="nav-link" href="#">Login<span class="sr-only">(current)</span></a>
@@ -76,7 +76,7 @@
           <a class="nav-link" href="/">Home</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="{% url 'transcriptions:transcribe' %}">Transcribe</a>
+          <a class="nav-link" href="{% url 'transcriptions:transcribe' %}">Collections</a>
         </li>
         <li class="nav-item">
           <a class="nav-link" href="{% url 'login' %}">Login</a>
@@ -144,7 +144,7 @@
           <a class="nav-link" href="/">Home</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="{% url 'transcriptions:transcribe' %}">Transcribe</a>
+          <a class="nav-link" href="{% url 'transcriptions:transcribe' %}">Collections</a>
         </li>
         <li class="nav-item dropdown nav-dropdown active">
           <a class="nav-link dropdown-toggle" href="http://example.com" id="nav-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Account</a>
@@ -178,13 +178,13 @@
       </div>
       <div class="col-md-4 justify-content-center">
         <p class="mb-half">Connect with us</p>
-        <a href="https://www.facebook.com/libraryofcongress/" target="_blank"><img class="mb-half" src="{% static "img/f.svg" %}"></a>
+        <a href="https://www.facebook.com/libraryofcongress/" target="_blank"><img class="mb-half" src="{% static "img/f.svg" %}" alt="link to Library of Congress Facebook page"></a>
         <br />
-        <a href="https://twitter.com/librarycongress" target="_blank"><img class="mb-half" src="{% static "img/t.svg" %}"></a>
+        <a href="https://twitter.com/librarycongress" target="_blank"><img class="mb-half" src="{% static "img/t.svg" %}" alt="link to Library of Congress Twitter page"></a>
         <br />
-        <a href="https://www.youtube.com/channel/UCbObxjfi3W9YKnDS0PgadNA" target="_blank"><img class="mb-half" src="{% static "img/yt.svg" %}"></a>
+        <a href="https://www.youtube.com/channel/UCbObxjfi3W9YKnDS0PgadNA" target="_blank"><img class="mb-half" src="{% static "img/yt.svg" %}" alt="link to Library of Congress YouTube page"></a>
         <br />
-        <a href="https://www.flickr.com/photos/library_of_congress/" target="_blank"><img src="{% static "img/fl.svg" %}"></a>
+        <a href="https://www.flickr.com/photos/library_of_congress/" target="_blank"><img src="{% static "img/fl.svg" %}" alt="link to Library of Congress Flickr page"></a>
       </div>
       <div class="col-md-4 justify-content-start text-center">
         <p class="mb-regular">Statistics</p>
