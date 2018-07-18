@@ -1,7 +1,7 @@
 # How We Work
 ## Principles
 
-##### Our basic principles are those familiar to anybody who has contributed to a prominent open source project, or deployed code in a modern software environment:
+Our basic principles are those familiar to anybody who has contributed to a prominent open source project, or deployed code in a modern software environment:
 
 - We produce open source software, created and maintained in repositories where it may be inspected by the public who places their trust in it and copied for use by other agencies or institutions.
 - We adhere to the basic practices of agile software development, using the Scrum development framework.
