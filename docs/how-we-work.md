@@ -52,12 +52,12 @@ So that we can work more efficiently and be confident in the quality of the work
 
 Acceptance of work happens through the sprint as work is completed. The procedure is as follows:
 - Development team completes work - See "for for delivering a user story to the product team" in Definition of Done above
-- Development team creates pull request to staging - See Pull Request Process
+- Development team creates pull request to Artemis `master` - See Pull Request Process
 - The product team has verified the functionality against acceptance criteria in a deployed instance for a feature level pull request
 - Code review takes place - See Code Review Process
-- Pull request merged to staging DHSS code reviewer
+- Pull request merged to Artemis `master` 
 - User testing happens - See "for product team to accept the user story and ship it" in Definition of Done above, and Testing Strategy
-- Product team creates pull request to master
+- Product team creates pull request to LOC `master` after each sprint
 - Library's technical lead merges pull request to master
 
 ## Processes
