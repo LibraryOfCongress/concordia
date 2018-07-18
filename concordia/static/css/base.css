@@ -100,6 +100,12 @@ blue {
     color: var(--text-color-primary);
 }
 
+.contribute-breadcrumb {
+    font-family: 'Open Sans', sans-serif;
+    font-size: 0.875rem;
+    color: var(--text-color-offwhite);
+}
+
 a.blue-text:hover {
   color: var(--primary-color-hover);
   text-decoration: underline;
