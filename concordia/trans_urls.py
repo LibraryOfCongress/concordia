@@ -1,5 +1,4 @@
-from django.urls import include, re_path
-from rest_framework import routers
+from django.urls import re_path
 from rest_framework.documentation import include_docs_urls
 from rest_framework.schemas import get_schema_view
 

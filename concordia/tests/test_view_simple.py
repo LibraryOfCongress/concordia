@@ -5,7 +5,9 @@ from django.test import TestCase
 
 class ViewTest1(TestCase):
     """
-    This is a simple django TestCase that can be used to prove the django test environment is properly configured.
+    This is a simple django TestCase that
+     can be used to prove the django test
+      environment is properly configured.
 
     It doesn't test any component of the concordia project.
     """
