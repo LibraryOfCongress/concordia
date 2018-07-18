@@ -599,7 +599,7 @@ input {
   text-decoration: none;
 }
 
-.tab-content, .tab-pane {
+#nav-tabContent, .tab-pane {
   height: var(--height-contribute-input);
   overflow-y: scroll;
 }
