@@ -161,16 +161,23 @@ class ConcordiaAssetView(TemplateView):
         transcription = Transcription.objects.filter(asset=asset).last()
 
         # Get all tags, they are no longer tied to a specific user
-        tags = UserAssetTagCollection.objects.filter(asset=asset)
+        db_tags = UserAssetTagCollection.objects.filter(asset=asset)
 
-        if tags:
-            tags = tags[0].tags.all()
+        tags = all_tags = None
+        if db_tags:
+            for tags_in_db in db_tags:
+                if tags is None:
+                    tags = tags_in_db.tags.all()
+                    all_tags = tags
+                else:
+                    pass
+                    all_tags = (tags | tags_in_db.tags.all()).distinct()  # merge the querysets
 
         return dict(
             super().get_context_data(**kws),
             asset=asset,
             transcription=transcription,
-            tags=tags,
+            tags=all_tags,
         )
 
     def post(self, *args, **kwargs):
