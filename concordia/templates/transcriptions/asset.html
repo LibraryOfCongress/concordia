@@ -5,15 +5,13 @@
     <div class="container-fluid">
         <div class="row">
             <div class="col-12 d-flex align-items-middle py-1 bg-darkest-gray">
-                <h6 class="offwhite-text pl-default mb-0"><a class="offwhite-text"
-                                                             href="{% url 'transcriptions:collection' asset.collection.slug %}">{{ asset.collection.title }}</a>
-                    > {{ asset.title }}</h6>
+                <h2 class="contribute-breadcrumb pl-default mb-0"><a class="offwhite-text" href="{% url 'transcriptions:collection' asset.collection.slug %}"> Go back to {{ asset.collection.title }}</a>  >  {{ asset.title }}</h2>
             </div>
-            <div class="col-8 col-md-9">
+            <div class="col-7 col-md-8">
                 <div id="asset-image" class="asset-image bg-offwhite">
                 </div>
             </div>
-            <div class="col-4 col-md-3 bg-darkest-gray shadow-regular rounded contribute-box" id="contribute-box">
+            <div class="col-5 col-md-4 bg-darkest-gray shadow-regular rounded contribute-box" id="contribute-box">
                 <nav class="px-half py-1">
                     <div class="nav nav-pills" id="nav-pill-contribute-box" role="tablist">
                         <a class="nav-item nav-link active" id="nav-pill-transcription" data-toggle="tab"
@@ -28,21 +26,17 @@
                 </nav>
                 <form class="mx-half" id="contribute-form" method="post">
                     {% csrf_token %}
-                    <div class="tab-content" id="teset percent">
+                    <div class="tab-content" id="test percent">
                         status:
                         {{ transcription.status }}
 
-
                     </div>
                     <div class="tab-content" id="nav-tabContent">
-                        <div class="tab-pane fade show active rounded" id="tab-transcription" role="tabpanel"
-                             aria-labelledby="nav-pill-transcription">
-                            <textarea class="w-100" name="tx" id="transcription-input"
-                                      placeholder="Go ahead, start typing. You got this!">{{ transcription.text }}</textarea>
+                        <div class="tab-pane fade show active rounded" id="tab-transcription" role="tabpanel" aria-labelledby="nav-pill-transcription">
+                            <textarea class="w-100" name="tx" id="transcription-input" placeholder="Go ahead, start typing. You got this!" aria-label="Transcription input">{{transcription.text}}</textarea>
                         </div>
                         <div class="tab-pane fade rounded" id="tab-tag" role="tabpanel" aria-labelledby="nav-pill-tag">
-                            <input type="text" class="textarea w-100" id="tag-input" name="tags" data-role="tagsinput"
-                                   value="{% for tag in tags %}{{ tag }},{% endfor %}">
+                            <input type="text" class="textarea w-100" id="tag-input" name="tags" data-role="tagsinput" value="{%for tag in tags %}{{tag}},{% endfor %}" aria-label="Tag input">
                         </div>
                         <div class="tab-pane fade pxy-quarter rounded" id="tab-discussion" role="tabpanel"
                              aria-labelledby="nav-pill-discussion">
@@ -50,64 +44,53 @@
                                 <div class="comments col-md-9" id="comments">
                                     <!-- individual comment -->
                                     <div class="comment mb-2 row">
-                                        <div class="comment-avatar col-md-1 col-sm-2 text-center pr-1">
-                                            <a href=""><img class="mx-auto rounded-circle img-fluid"
-                                                            src="http://demos.themes.guide/bodeo/assets/images/users/m103.jpg"
-                                                            alt="avatar"></a>
-                                        </div>
-                                        <div class="comment-content col-md-11 col-sm-10">
-                                            <h6 class="small comment-meta"><a href="#">admin</a> Today, 2:38</h6>
-                                            <div class="comment-body">
-                                                <p>
-                                                    Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do
-                                                    eiusmod
-                                                    <br>
-                                                    <a href="" class="text-right small"><i class="ion-reply"></i> Reply</a>
-                                                </p>
-                                            </div>
-                                        </div>
-
-                                        <!-- reply is indented -->
-                                        <div class="comment-reply col-md-11 offset-md-1 col-sm-10 offset-sm-2">
-                                            <div class="row">
-                                                <div class="comment-avatar col-md-1 col-sm-2 text-center pr-1">
-                                                    <a href=""><img class="mx-auto rounded-circle img-fluid"
-                                                                    src="http://demos.themes.guide/bodeo/assets/images/users/m101.jpg"
-                                                                    alt="avatar"></a>
-                                                </div>
-                                                <div class="comment-content col-md-11 col-sm-10 col-12">
-                                                    <h6 class="small comment-meta"><a href="#">phildownney</a> Today,
-                                                        12:31</h6>
-                                                    <div class="comment-body">
-                                                        <p>Really?? Consectetur adipisicing elit, sed do eiusmod tempor
-                                                            incididunt ut labore et dolore magna aliqua.
-                                                            <br>
-                                                            <a href="" class="text-right small"><i
-                                                                class="ion-reply"></i> Reply</a>
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <!-- /reply is indented -->
+                                    <div class="comment-avatar col-md-1 col-sm-2 text-center pr-1">
+                                        <a href=""><img class="mx-auto rounded-circle img-fluid" src="http://demos.themes.guide/bodeo/assets/images/users/m103.jpg" alt="admin's avatar"></a>
                                     </div>
-                                    <!-- /comment -->
-                                    <!-- comment -->
-                                    <div class="comment mb-2 row">
-                                        <div class="comment-avatar col-md-1 col-sm-2 text-center pr-1">
-                                            <a href=""><img class="mx-auto rounded-circle img-fluid"
-                                                            src="http://demos.themes.guide/bodeo/assets/images/users/w102.jpg"
-                                                            alt="avatar"></a>
+                                    <div class="comment-content col-md-11 col-sm-10">
+                                        <h6 class="small comment-meta"><a href="#" class="blue-text">admin</a> Today, 2:38</h6>
+                                        <div class="comment-body">
+                                            <p>
+                                                Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
+                                                <br>
+                                                <a href="" class="text-right small"><i class="ion-reply"></i> Reply</a>
+                                            </p>
                                         </div>
-                                        <div class="comment-content col-md-11 col-sm-10">
-                                            <h6 class="small comment-meta"><a href="#">maslarino</a> Yesterday, 5:03 PM
-                                            </h6>
-                                            <div class="comment-body">
-                                                <p>Sit amet, consectetur adipisicing elit, sed do eiusmod tempor.
-                                                    <br>
-                                                    <a href="" class="text-right small"><i class="ion-reply"></i> Reply</a>
-                                                </p>
+                                    </div>
+
+                                    <!-- reply is indented -->
+                                    <div class="comment-reply col-md-11 offset-md-1 col-sm-10 offset-sm-2">
+                                        <div class="row">
+                                            <div class="comment-avatar col-md-1 col-sm-2 text-center pr-1">
+                                                <a href=""><img class="mx-auto rounded-circle img-fluid" src="http://demos.themes.guide/bodeo/assets/images/users/m101.jpg" alt="phildowney's avatar"></a>
                                             </div>
+                                            <div class="comment-content col-md-11 col-sm-10 col-12">
+                                                <h6 class="small comment-meta"><a href="#" class="blue-text">phildownney</a> Today, 12:31</h6>
+                                                <div class="comment-body">
+                                                    <p>Really?? Consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+                                                        <br>
+                                                        <a href="" class="text-right small"><i class="ion-reply"></i> Reply</a>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                   </div>
+                                   <!-- /reply is indented -->
+                                </div>
+                                <!-- /comment -->
+                                <!-- comment -->
+                                <div class="comment mb-2 row">
+                                    <div class="comment-avatar col-md-1 col-sm-2 text-center pr-1">
+                                        <a href=""><img class="mx-auto rounded-circle img-fluid" src="http://demos.themes.guide/bodeo/assets/images/users/w102.jpg" alt="maslarino's avatar"></a>
+                                    </div>
+                                    <div class="comment-content col-md-11 col-sm-10">
+                                        <h6 class="small comment-meta"><a href="#" class="blue-text">maslarino</a> Yesterday, 5:03 PM</h6>
+                                        <div class="comment-body">
+                                            <p>Sit amet, consectetur adipisicing elit, sed do eiusmod tempor.
+                                                <br>
+                                                <a href="" class="text-right small"><i class="ion-reply"></i> Reply</a>
+                                            </p>
+                                        </div>
                                         </div>
                                     </div>
                                     <!-- /comment -->
@@ -123,6 +106,7 @@
                             </div>
                         </div>
                     </div>
+
                     <div class="my-quarter d-flex justify-content-around align-items-center">
                         <table>
                             <tr>
@@ -162,6 +146,7 @@
 {% endblock main_content %}
 
 {% block body_scripts %}
+    <script src="{% static "js/contribute.js" %}"></script>
     <script src="https://www.jqueryscript.net/demo/Bootstrap-4-Tag-Input-Plugin-jQuery/tagsinput.js"></script>
     <script src="{% static "vendor/openseadragon/openseadragon.min.js" %}"></script>
     <script>
