@@ -69,9 +69,11 @@ def get_collection_item_asset_urls(collection_name, item_id):
     item_resources = collection_item_resp.get('resources', [])
     for ir in item_resources:
         item_files = ir.get('files', [])[0]
+        similar_img_urls = []
         for item_file in item_files:
             if item_file.get('mimetype') == 'image/jpeg':
-                collection_item_asset_urls.append(item_file.get('url'))
+                similar_img_urls.append(item_file.get('url'))
+        collection_item_asset_urls.append(similar_img_urls[-1])
 
     try:
         ctd = CollectionTaskDetails.objects.get(collection_slug=collection_name)
@@ -139,10 +141,12 @@ def download_write_item_assets(collection_name, item_url):
         print("item_files: ", item_files, type(item_files), len(item_files))
         for item_file in item_files:
             print("item_file: ", item_file)
+            similar_img_urls = []
             for itf in item_file:
                 print("itf:", itf, type(itf))
                 if itf.get('mimetype') == 'image/jpeg':
-                    item_asset_urls.append(itf.get('url'))
+                    similar_img_urls.append(itf.get("url"))
+            item_asset_urls.append(similar_img_urls[-1])
 
     try:
         ctd = CollectionTaskDetails.objects.get(collection_slug=collection_name)
