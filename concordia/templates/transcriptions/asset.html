@@ -193,7 +193,10 @@
 
         $("#transcription-input").attr('disabled', false);
 
-        {% if not user.is_authenticated and transcription.status != 'Edit' %}
+        {% if not user.is_authenticated and not transcription.status %}
+            $("#save_button").show();
+            $("#review_button").show();
+        {% elif not user.is_authenticated and transcription.status != 'Edit'%}
             $("#save_button").hide();
             $("#review_button").hide();
             $("#transcription-input").attr('disabled', true);
