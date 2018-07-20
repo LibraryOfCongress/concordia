@@ -3,7 +3,7 @@ import requests
 from logging import getLogger
 from celery import shared_task, task
 import os
-from django.conf import settings
+from importer.config import IMPORTER
 from importer.models import CollectionTaskDetails, CollectionItemAssetCount
 
 
@@ -173,7 +173,7 @@ def get_save_item_assets(collection_name, item_id, item_asset_urls):
     :return: nothing, it will download the assets to local path
     """
 
-    item_local_path = os.path.join(settings.IMPORTER['IMAGES_FOLDER'], collection_name, item_id)
+    item_local_path = os.path.join(IMPORTER['IMAGES_FOLDER'], collection_name, item_id)
 
     try:
         os.makedirs(item_local_path)

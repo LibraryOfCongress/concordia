@@ -3,11 +3,11 @@ import shutil
 from logging import getLogger
 from celery.result import AsyncResult
 
-from django.conf import settings
+from importer.config import IMPORTER
 from django.urls import reverse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.defaultfilters import slugify
-from django.http import HttpResponse, HttpResponseRedirect
+from django.conf import settings
 
 from rest_framework import generics
 from rest_framework import status
@@ -17,6 +17,7 @@ from rest_framework.decorators import api_view
 from importer.serializer import CreateCollection
 from importer.tasks import download_write_collection_item_assets, download_write_item_assets, get_item_id_from_item_url
 from importer.models import CollectionTaskDetails, CollectionItemAssetCount
+from importer.config import IMPORTER
 
 from concordia.models import Collection, Asset
 
@@ -63,7 +64,7 @@ def get_task_status(request, task_id):
 
 def check_collection_completeness(ctd, item_id=''):
     print("item_id: ", item_id)
-    collection_local_path = os.path.join(settings.IMPORTER['IMAGES_FOLDER'], ctd.collection_slug)
+    collection_local_path = os.path.join(IMPORTER['IMAGES_FOLDER'], ctd.collection_slug)
     if item_id:
         item_local_path = os.path.join(collection_local_path, item_id)
         item_downloaded_asset_count = sum([len(files) for path, dirs, files in os.walk(item_local_path)])
@@ -89,12 +90,12 @@ def check_collection_completeness(ctd, item_id=''):
 
 
 def save_collection_item_assets(collection, the_path):
-    collection_local_path = os.path.join(settings.IMPORTER['IMAGES_FOLDER'], collection.slug)
+    collection_local_path = os.path.join(IMPORTER['IMAGES_FOLDER'], collection.slug)
     for root, dirs, files in os.walk(the_path):
         for filename in files:
             file_path = os.path.join(root, filename)
             title = file_path.replace(collection_local_path + "/", "").split("/")[0]
-            media_url = file_path.replace(settings.IMPORTER['IMAGES_FOLDER'], "")
+            media_url = file_path.replace(IMPORTER['IMAGES_FOLDER'], "")
             sequence = int(os.path.splitext(filename)[0])
             Asset.objects.create(
                 title=title,
@@ -124,7 +125,6 @@ def check_and_save_collection_assets(request, task_id, item_id=""):
 
             if item_id:
                 if check_and_save_item_completeness(request, ctd, item_id):
-                    #return HttpResponseRedirect(reverse('transcriptions:collection', args=(ctd.collection_slug,)))
                     return redirect(reverse("transcriptions:collection",args=[ctd.collection_slug], current_app=request.resolver_match.namespace,))
             else:
                 if check_and_save_collection_completeness(request, ctd):
@@ -141,19 +141,13 @@ def check_and_save_collection_completeness(request, ctd):
                                                description=ctd.collection_name, is_active=True)
         collection.save()
 
-        collection_local_path = os.path.join(settings.IMPORTER['IMAGES_FOLDER'], collection.slug)
+        collection_local_path = os.path.join(IMPORTER['IMAGES_FOLDER'], collection.slug)
 
         save_collection_item_assets(collection, collection_local_path)
 
-        shutil.rmtree(os.path.join(settings.IMPORTER['IMAGES_FOLDER'], ctd.collection_slug))
+        shutil.rmtree(os.path.join(IMPORTER['IMAGES_FOLDER'], ctd.collection_slug))
 
-        #return redirect(
-        #    reverse(
-        #        "transcriptions:collection",
-        #        args=[ctd.collection_slug],
-        #        current_app=request.resolver_match.namespace,
-        #    )
-        #)
+
         return True
     else:
         return Response({
@@ -171,21 +165,14 @@ def check_and_save_item_completeness(request, ctd, item_id):
                                                    description=ctd.collection_name, is_active=True)
             collection.save()
 
-        item_local_path = os.path.join(settings.IMPORTER['IMAGES_FOLDER'], collection.slug, item_id)
+        item_local_path = os.path.join(IMPORTER['IMAGES_FOLDER'], collection.slug, item_id)
 
         save_collection_item_assets(collection, item_local_path)
-        shutil.rmtree(os.path.join(settings.IMPORTER['IMAGES_FOLDER'], ctd.collection_slug))
+        shutil.rmtree(os.path.join(IMPORTER['IMAGES_FOLDER'], ctd.collection_slug))
         print("*"*100)
         print("requesting for redicerct to collection view", ctd.collection_slug)
 
-        #return redirect(
-        #    reverse(
-        #        "transcriptions:collection",
-        #        args=[ctd.collection_slug],
-        #        current_app=request.resolver_match.namespace,
-        #    )
-        #)
-        #return HttpResponseRedirect(reverse('transcriptions:collection', args=(ctd.collection_slug,)))
+
         return True
     else:
         return Response({
