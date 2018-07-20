@@ -12,6 +12,13 @@
        <div class="loading-pulse mx-auto"></div>
               <h6 class="form-text offwhite-text">Creating the collection for you</h6>
       </div>
+        <div class="alert alert-danger alert-dismissible fade show" id="close_error" role="alert">
+          <button type="button" class="close" onclick="hide_box()" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <strong id="error_msg"></strong>
+        </div>
+
 {#      <form class="mx-default my-default" method="POST" onsubmit="return handle_form_submission()">#}
       {% if error %}
         <div class="alert alert-danger alert-dismissible fade show" id="close" role="alert">
@@ -43,6 +50,7 @@
   </div>
 </div>
 <script>
+$("#close_error").hide();
 function handle_form_submission()
 {
   $(".loading").removeClass("d-none");
@@ -53,18 +61,23 @@ function hide_box(){
 }
 
 function write_save_collection_assets(task_id){
+   $("#close_error").hide();
    $.ajax({
         url: "/check_and_save_collection_assets/"+task_id+"/"+$("#item_id").val(),
         type: 'GET',
         success: function(data, textStatus, jqXHR) {
             console.log("response: ", data);
-            window.location.href = "/transcribe/"+$("#collection_slug").val().toLowerCase()+"/";
+            var slug = $("#collection_slug").val().toLowerCase().replace(/ +/g,'-');
+            window.location.href = "/transcribe/"+slug+"/";
         }
     }).fail(function(jqXHR, textStatus, errorThrown) {
         if(jqXHR.status == 0 || jqXHR == 302) {
             console.log('Your session has ended due to inactivity after 10 minutes.\nPlease refresh this page, or close this window and log back in to system.');
         } else {
             console.log('Unknown error returned while saving' + (typeof errorThrown == 'string' && errorThrown.trim().length > 0 ? ':\n' + errorThrown : ''));
+         $("#error_msg").html("Sorry..!! There is some error for creating collection...");
+        $(".loading").addClass("d-none");
+        $("#close_error").show();
         }
     });
 
@@ -94,6 +107,7 @@ function get_task_status(task_id){
 
 $("#create_btn").click(function(){
     $(".loading").removeClass("d-none");
+    $("#close_error").hide();
     $("#task_id, #collection_slug, #item_id").val("");
     var name = $("#name").val();
     var url = $("#url").val();
@@ -121,6 +135,9 @@ $("#create_btn").click(function(){
         } else {
             console.log('Unknown error returned while saving' + (typeof errorThrown == 'string' && errorThrown.trim().length > 0 ? ':\n' + errorThrown : ''));
         }
+        $("#error_msg").html("Sorry..!! There is some error for creating collection...");
+        $(".loading").addClass("d-none");
+        $("#close_error").show();
     });
 })
 
