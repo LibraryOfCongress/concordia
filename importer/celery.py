@@ -4,7 +4,7 @@ import os
 
 from celery import Celery
 
-app = Celery("importer_app")
+app = Celery("importer")
 
 # Using a string here means the worker doesn't have to serialize
 # the configuration object to child processes.

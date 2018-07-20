@@ -1,7 +1,7 @@
 
 from django.urls import re_path
 
-from importer_app import views
+from importer import views
 
 
 urlpatterns = [

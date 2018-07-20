@@ -4,7 +4,7 @@ from logging import getLogger
 from celery import shared_task, task
 import os
 from django.conf import settings
-from importer_app.models import CollectionTaskDetails, CollectionItemAssetCount
+from importer.models import CollectionTaskDetails, CollectionItemAssetCount
 
 
 logger = getLogger(__name__)

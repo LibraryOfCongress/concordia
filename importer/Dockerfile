@@ -25,4 +25,4 @@ WORKDIR /app
 COPY . /app
 RUN pipenv install --system --dev
 
-CMD [ "/bin/bash", "importer_app/entrypoint.sh" ]
+CMD [ "/bin/bash", "importer/entrypoint.sh" ]

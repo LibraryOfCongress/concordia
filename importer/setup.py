@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from setuptools import find_packages, setup
 
-VERSION = __import__("importer_app").get_version()
+VERSION = __import__("importer").get_version()
 INSTALL_REQUIREMENTS = ["boto3", "celery", "requests", "Django<2.1", "Pillow"]
 DESCRIPTION = "Download collections of images from loc.gov"
 CLASSIFIERS = """\
@@ -17,7 +17,7 @@ with open("README.rst", "r") as f:
 
 
 setup(
-    name="importer_app",
+    name="importer",
     version=VERSION,
     description=DESCRIPTION,
     long_description=LONG_DESCRIPTION,

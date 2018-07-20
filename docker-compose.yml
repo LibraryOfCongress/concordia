@@ -56,7 +56,7 @@ services:
   importer:
     build:
        context: .
-       dockerfile: importer_app/Dockerfile
+       dockerfile: importer/Dockerfile
     depends_on:
       - rabbit
     volumes:

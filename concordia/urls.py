@@ -17,7 +17,7 @@ from django.conf.urls import url, include
 
 from . import trans_urls, views
 
-from importer_app.views import CreateCollectionView, get_task_status, check_and_save_collection_assets
+from importer.views import CreateCollectionView, get_task_status, check_and_save_collection_assets
 
 for key, value in getattr(settings, "ADMIN_SITE", {}).items():
     setattr(admin.site, key, value)

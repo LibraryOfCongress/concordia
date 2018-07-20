@@ -14,9 +14,9 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 
-from importer_app.serializer import CreateCollection
-from importer_app.tasks import download_write_collection_item_assets, download_write_item_assets, get_item_id_from_item_url
-from importer_app.models import CollectionTaskDetails, CollectionItemAssetCount
+from importer.serializer import CreateCollection
+from importer.tasks import download_write_collection_item_assets, download_write_item_assets, get_item_id_from_item_url
+from importer.models import CollectionTaskDetails, CollectionItemAssetCount
 
 from concordia.models import Collection, Asset
 

@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from importer_app.models import CollectionTaskDetails, CollectionItemAssetCount
+from importer.models import CollectionTaskDetails, CollectionItemAssetCount
 
 @admin.register(CollectionTaskDetails)
 class CollectionTaskDetailsAdmin(admin.ModelAdmin):

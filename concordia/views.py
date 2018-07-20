@@ -24,7 +24,7 @@ from concordia.models import (
     UserProfile,
 )
 
-from importer_app.views import CreateCollectionView, get_task_status
+from importer.views import CreateCollectionView, get_task_status
 
 logger = getLogger(__name__)
 
@@ -217,9 +217,9 @@ class CollectionView(TemplateView):
         slug = name.replace(" ", "-")
 
         view = CreateCollectionView.as_view()
-        importer_app_resp = view(self.request, *args, **kwargs)
+        importer_resp = view(self.request, *args, **kwargs)
 
-        return render(self.request, self.template_name, importer_app_resp.data)
+        return render(self.request, self.template_name, importer_resp.data)
 
         # return view(self.request, *args, **kwargs)
         # collection_path = os.path.join(settings.MEDIA_ROOT, "concordia", slug)

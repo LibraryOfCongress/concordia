@@ -79,7 +79,6 @@ INSTALLED_APPS = [
     "haystack",
     "widget_tweaks",
     "django_prometheus_metrics",
-    "importer_app",
 ] + get_machina_apps()
 
 
@@ -145,7 +144,7 @@ CELERY_RESULT_BACKEND = "rpc://"
 
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
-CELERY_IMPORTS = ("importer_app.tasks", )
+CELERY_IMPORTS = ("importer.tasks", )
 
 LOGGING = {
     "version": 1,
