@@ -88,12 +88,13 @@ function get_task_status(task_id){
         url: "/get_task_status/"+task_id,
         type: 'GET',
         success: function(data, textStatus, jqXHR) {
+            console.log("gts: ", gts);
             var gts = setTimeout(get_task_status($("#task_id").val()), 60000);
             if(data == 'SUCCESS'){
                 write_save_collection_assets(task_id);
                 clearInterval(gts);
             }
-            clearInterval(gts);
+            <!--clearInterval(gts);-->
 
         }
     }).fail(function(jqXHR, textStatus, errorThrown) {
@@ -129,13 +130,18 @@ $("#create_btn").click(function(){
             $("#collection_slug").val(data['name']);
             var gts = setTimeout(get_task_status(data['task_id']), 60000);
         }
-    }).fail(function(jqXHR, textStatus, errorThrown) {
+    }).fail(function(data, jqXHR, textStatus, errorThrown) {
+        console.log("data: ", data);
         if(jqXHR.status == 0 || jqXHR == 302) {
-            console.log('Your session has ended due to inactivity after 10 minutes.\nPlease refresh this page, or close this window and log back in to system.');
+            $("#error_msg").html("Sorry..!! There is some error for creating collection...");
         } else {
-            console.log('Unknown error returned while saving' + (typeof errorThrown == 'string' && errorThrown.trim().length > 0 ? ':\n' + errorThrown : ''));
+            if(data.responseJSON.message){
+                 $("#error_msg").html(data.responseJSON.message);
+	    }
+	    else{
+ 		$("#error_msg").html("Sorry..!! There is some error for creating collection...");
+            }
         }
-        $("#error_msg").html("Sorry..!! There is some error for creating collection...");
         $(".loading").addClass("d-none");
         $("#close_error").show();
     });
@@ -157,3 +163,4 @@ get_task_status($("#task_id").val());
 
 </script>
 {% endblock main_content %}
+

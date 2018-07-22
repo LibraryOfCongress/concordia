@@ -35,16 +35,28 @@ class CreateCollectionView(generics.CreateAPIView):
         url = serializer.data.get('url')
         create_type = serializer.data.get('create_type')
         collection_details = {'collection_name': name, "collection_slug": slugify(name)}
+        data = serializer.data
         if 'collections' in create_type:
-            download_task = download_write_collection_item_assets.delay(slugify(name), url)
+            try:
+                ctd = CollectionTaskDetails.objects.get(collection_slug=slugify(name))
+                return Response({'message':'collection %s already exists' % slugify(name)}, status=status.HTTP_400_BAD_REQUEST)
+            except CollectionTaskDetails.DoesNotExist:
+                download_task = download_write_collection_item_assets.delay(slugify(name), url)
+                collection_details['collection_task_id'] = download_task.task_id
+                ctd = CollectionTaskDetails.objects.create(**collection_details)
+                ctd.save()
+                data['task_id'] = download_task.task_id
         elif 'item' in create_type:
             download_task = download_write_item_assets.delay(slugify(name), url)
-        collection_details['collection_task_id'] = download_task.task_id
-        print("collecction_details: ", collection_details)
-        ctd = CollectionTaskDetails.objects.create(**collection_details)
-        ctd.save()
-        data = serializer.data
-        data['task_id'] = download_task.task_id
+            try:
+                ctd = CollectionTaskDetails.objects.get(collection_slug=slugify(name))
+                ctd.collection_task_id = download_task.task_id
+                ctd.save()
+            except CollectionTaskDetails.DoesNotExist:
+                collection_details['collection_task_id'] = download_task.task_id
+                ctd = CollectionTaskDetails.objects.create(**collection_details)
+                ctd.save()
+            data['task_id'] = download_task.task_id
         data['item_id'] = get_item_id_from_item_url(url)
 
         headers = self.get_success_headers(data)
@@ -178,3 +190,4 @@ def check_and_save_item_completeness(request, ctd, item_id):
         return Response({
             'message': 'Creating a collection: %s is failed since assets are not completely downloaded' % ctd.collection_name},
             status=status.HTTP_404_NOT_FOUND)
+

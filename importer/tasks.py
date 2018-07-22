@@ -1,8 +1,8 @@
-
 import requests
 from logging import getLogger
-from celery import shared_task, task
+from celery import task
 import os
+from rest_framework.response import Response
 from importer.config import IMPORTER
 from importer.models import CollectionTaskDetails, CollectionItemAssetCount
 
@@ -10,10 +10,10 @@ from importer.models import CollectionTaskDetails, CollectionItemAssetCount
 logger = getLogger(__name__)
 
 
-def get_request_data(url, params=None):
+def get_request_data(url, params=None, retry_count=1):
     response = requests.get(url, params=params)
     if response.status_code != 200:
-        return False
+        return get_request_data(url, params, retry_count+1)
     return response.json()
 
 
@@ -22,7 +22,7 @@ def get_collection_pages(collection_url):
     params = dict(list(collection_params.items()) + list({'fo': 'json'}.items()))
     resp = get_request_data(collection_url, params)
     total_collection_pages = resp.get('pagination', {}).get('total', 0)
-    print("total_collection_pages: ", total_collection_pages)
+    logger.info("total_collection_pages: %s for collection url : %s" % (total_collection_pages, collection_url))
     return total_collection_pages
 
 
@@ -39,17 +39,18 @@ def get_collection_params(collection_url):
 def get_collection_item_ids(collection_name, collection_url):
     collection_item_ids = []
     total_pages_count = get_collection_pages(collection_url)
-    #collection_url, collection_params = get_collection_params(collection_url)
     for page_num in range(1, total_pages_count + 1):
-        #params = dict(list(collection_params.items()) + list({"fo": "json", "at": "results"}.items()))
         resp = get_request_data(collection_url+'&fo=json')
-        page_results = resp.get('results')
+        page_results = resp.get('results', [])
         print("page results: ", page_results)
-        for pr in page_results:
-            if pr.get('id') and pr.get('image_url') and "collection" not in pr.get(
-                "original_format") and "web page" not in pr.get("original_format"):
-                collection_item_url = pr.get('id')
-                collection_item_ids.append(collection_item_url.split("/")[-2])
+        if page_results:
+            for pr in page_results:
+                if pr.get('id') and pr.get('image_url') and "collection" not in pr.get(
+                    "original_format") and "web page" not in pr.get("original_format"):
+                    collection_item_url = pr.get('id')
+                    collection_item_ids.append(collection_item_url.split("/")[-2])
+        else:
+            return Response({'message': 'No page results found for collection : "%s" from loc API' % collection_url})
 
     try:
         ctd = CollectionTaskDetails.objects.get(collection_slug=collection_name)
@@ -58,6 +59,7 @@ def get_collection_item_ids(collection_name, collection_url):
         ctd.save()
     except Exception as e:
         logger.error("error while creating entries into Collection Task Details models: %s " % e)
+        return Response({'message': 'Unable to create item entries for collection : %s' % collection_name})
     print("collection_item_ids: ", collection_item_ids)
     return collection_item_ids
 
@@ -68,12 +70,13 @@ def get_collection_item_asset_urls(collection_name, item_id):
     collection_item_resp = get_request_data(item_url, {"fo": "json"})
     item_resources = collection_item_resp.get('resources', [])
     for ir in item_resources:
-        item_files = ir.get('files', [])[0]
-        similar_img_urls = []
+        item_files = ir.get('files', [])
         for item_file in item_files:
-            if item_file.get('mimetype') == 'image/jpeg':
-                similar_img_urls.append(item_file.get('url'))
-        collection_item_asset_urls.append(similar_img_urls[-1])
+            similar_img_urls = []
+            for itf in item_file:
+                if itf.get('mimetype') == 'image/jpeg':
+                    similar_img_urls.append(itf.get('url'))
+            collection_item_asset_urls.append(similar_img_urls[-1])
 
     try:
         ctd = CollectionTaskDetails.objects.get(collection_slug=collection_name)
@@ -103,7 +106,7 @@ def download_write_collection_item_asset(image_url, asset_local_path, retry_coun
                 fd.write(chunk)
             return True
         except Exception as e:
-            print(e)
+            logger.error("Error while writing the file to disk : %s " % e)
             if retry_count >= 3:
                 return False
             download_write_collection_item_assets(image_url, asset_local_path, retry_count=retry_count+1)
@@ -178,7 +181,7 @@ def get_save_item_assets(collection_name, item_id, item_asset_urls):
     try:
         os.makedirs(item_local_path)
     except Exception as e:
-        print(e)
+        pass
 
     for idx, ciau in enumerate(item_asset_urls):
         asset_local_path = os.path.join(item_local_path, '{0}.jpg'.format(str(idx)))
@@ -199,4 +202,3 @@ def get_item_id_from_item_url(item_url):
 
     return item_id
 
-#download_write_item_assets("rosa-parker", "https://www.loc.gov/item/mss859430021")
