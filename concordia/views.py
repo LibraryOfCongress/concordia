@@ -4,20 +4,29 @@ from logging import getLogger
 
 import requests
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
+from django.core.mail import send_mail
 from django.core.paginator import Paginator
 from django.db.models import Count, Q
 from django.shortcuts import Http404, get_object_or_404, redirect, render
+from django.template import loader
 from django.urls import reverse
-from django.views.generic import TemplateView
+from django.views.generic import FormView, TemplateView
 from registration.backends.simple.views import RegistrationView
 
-from concordia.forms import ConcordiaUserEditForm, ConcordiaUserForm
+
+from concordia.forms import (
+    ConcordiaUserEditForm, 
+    ConcordiaUserForm, 
+    ConcordiaContactUsForm
+)
 from concordia.models import (Asset, Collection, Status, Tag, Transcription,
                               UserAssetTagCollection, UserProfile)
 from importer.views import CreateCollectionView, get_task_status
+
 
 logger = getLogger(__name__)
 
@@ -226,6 +235,32 @@ class TranscriptionView(TemplateView):
 
 class ToDoView(TemplateView):
     template_name = "todo.html"
+    
+
+class ContactUsView(FormView):
+    template_name = "contact.html"
+    form_class = ConcordiaContactUsForm
+    success_url = '.'
+    
+    def post(self, *args, **kwargs):
+        email = self.request.POST.get("email")
+        subject = self.request.POST.get("subject")
+        link = self.request.POST.get("link")
+        story = self.request.POST.get("story")
+    
+        t = loader.get_template('emails/contact_us_email.txt')
+        send_mail(subject, t.render({
+                'from_email': email,
+                'subject': subject,
+                'link': link,
+                'story': story
+              }),
+              getattr(settings, 'CONTACT_FROM_EMAIL', 'noreply@locgov.com'),
+              [email, ], fail_silently=True)
+
+        messages.success(self.request, 'Your contact message has been sent...')
+        
+        return redirect('contact')
 
 
 class ExperimentsView(TemplateView):

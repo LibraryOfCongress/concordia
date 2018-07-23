@@ -1,0 +1,8 @@
+Hello:
+
+  We got an email from {{ from_email }}:
+   
+  Subject: {{ subject }}
+  Link:  {{ link }}
+  Story: 
+    {{ story }}

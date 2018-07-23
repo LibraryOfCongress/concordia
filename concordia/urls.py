@@ -66,7 +66,7 @@ urlpatterns = [
         r"^about/$", TemplateView.as_view(template_name="about.html"), name="about"
     ),
     re_path(
-        r"^contact/$", TemplateView.as_view(template_name="contact.html"),
+        r"^contact/$", views.ContactUsView.as_view(),
         name="contact"
     ),
     re_path(r"^transcribe/", include(tx_urlpatterns, namespace="transcriptions")),
