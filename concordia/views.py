@@ -256,7 +256,8 @@ class ContactUsView(FormView):
                 'story': story
               }),
               getattr(settings, 'CONTACT_FROM_EMAIL', 'noreply@locgov.com'),
-              [email, ], fail_silently=True)
+              [getattr(settings, 'CONTACT_TO_EMAIL', 'ekam@loc.gov'), ], 
+              fail_silently=True)
 
         messages.success(self.request, 'Your contact message has been sent...')
         
