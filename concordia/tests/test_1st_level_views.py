@@ -27,3 +27,22 @@ class ViewTest_1st_level(TestCase):
         # Assert:
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'contact.html')
+    
+    
+    def test_contact_us_get(self):
+        # Arrange
+        post_data = {
+            "email": "nobody@example.com" ,
+            "subject": "problem",
+            "link": "www.loc.gov/nowhere",
+            "story": "Houston, we got a problem"
+        }
+
+        # Act
+        response = self.client.post(reverse("contact"), 
+                                    post_data)
+        
+        # Assert:
+        # redirected to contact us page.
+        self.assertEqual(response.status_code, 302)
+
