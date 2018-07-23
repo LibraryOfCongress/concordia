@@ -18,7 +18,7 @@
                 <h1 class="mt-half mb-quarter text-center">Contact Us</h1>
                 <form method="post" action="{% url 'contact' %}" id="contact-form" class="col-10 mx-auto form-contact">
                     {% csrf_token %}
-                    {{ form.non_field_errors }} {{ form.source.errors }} {{ form.source }} 
+                    {{ form.non_field_errors }}
                     {% if form.errors %}
                     <p class="text-center">Please fix the errors below:</p>
                     {% endif %}
