@@ -5,34 +5,32 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('importer', '0001_initial'),
-    ]
+    dependencies = [("importer", "0001_initial")]
 
     operations = [
         migrations.AlterField(
-            model_name='collectionitemassetcount',
-            name='collection_item_asset_count',
+            model_name="collectionitemassetcount",
+            name="collection_item_asset_count",
             field=models.IntegerField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name='collectiontaskdetails',
-            name='collection_asset_count',
+            model_name="collectiontaskdetails",
+            name="collection_asset_count",
             field=models.IntegerField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name='collectiontaskdetails',
-            name='collection_item_count',
+            model_name="collectiontaskdetails",
+            name="collection_item_count",
             field=models.IntegerField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name='collectiontaskdetails',
-            name='collection_page_count',
+            model_name="collectiontaskdetails",
+            name="collection_page_count",
             field=models.IntegerField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name='collectiontaskdetails',
-            name='collection_task_id',
+            model_name="collectiontaskdetails",
+            name="collection_task_id",
             field=models.CharField(blank=True, max_length=100, null=True),
         ),
     ]

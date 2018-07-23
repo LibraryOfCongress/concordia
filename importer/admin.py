@@ -1,6 +1,7 @@
 from django.contrib import admin
 
-from importer.models import CollectionTaskDetails, CollectionItemAssetCount
+from importer.models import CollectionItemAssetCount, CollectionTaskDetails
+
 
 @admin.register(CollectionTaskDetails)
 class CollectionTaskDetailsAdmin(admin.ModelAdmin):
@@ -15,6 +16,7 @@ class CollectionTaskDetailsAdmin(admin.ModelAdmin):
         "collection_item_count",
     )
     # list_display_links = ("collection_name")
+
 
 @admin.register(CollectionItemAssetCount)
 class CollectionTaskDetailsAdmin(admin.ModelAdmin):

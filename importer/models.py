@@ -7,7 +7,7 @@ class CollectionTaskDetails(models.Model):
     collection_page_count = models.IntegerField(null=True, blank=True, default=0)
     collection_item_count = models.IntegerField(null=True, blank=True, default=0)
     collection_asset_count = models.IntegerField(null=True, blank=True, default=0)
-    collection_task_id = models.CharField(max_length=100,null=True, blank=True)
+    collection_task_id = models.CharField(max_length=100, null=True, blank=True)
 
 
 class CollectionItemAssetCount(models.Model):

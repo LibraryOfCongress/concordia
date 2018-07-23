@@ -7,29 +7,44 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='CollectionItemAssetCount',
+            name="CollectionItemAssetCount",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('collection_slug', models.SlugField()),
-                ('collection_item_identifier', models.CharField(max_length=50)),
-                ('collection_item_asset_count', models.IntegerField()),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("collection_slug", models.SlugField()),
+                ("collection_item_identifier", models.CharField(max_length=50)),
+                ("collection_item_asset_count", models.IntegerField()),
             ],
         ),
         migrations.CreateModel(
-            name='CollectionTaskDetails',
+            name="CollectionTaskDetails",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('collection_name', models.CharField(max_length=50)),
-                ('collection_slug', models.SlugField(unique=True)),
-                ('collection_page_count', models.IntegerField()),
-                ('collection_item_count', models.IntegerField()),
-                ('collection_asset_count', models.IntegerField()),
-                ('collection_task_id', models.CharField(max_length=100)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("collection_name", models.CharField(max_length=50)),
+                ("collection_slug", models.SlugField(unique=True)),
+                ("collection_page_count", models.IntegerField()),
+                ("collection_item_count", models.IntegerField()),
+                ("collection_asset_count", models.IntegerField()),
+                ("collection_task_id", models.CharField(max_length=100)),
             ],
         ),
     ]

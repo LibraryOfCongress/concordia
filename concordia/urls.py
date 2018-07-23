@@ -3,6 +3,7 @@ import os
 import sys
 
 from django.conf import settings
+from django.conf.urls import include, url
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
@@ -13,11 +14,10 @@ from machina.app import board
 
 from exporter import views as exporter_views
 from faq.views import FAQView
-from django.conf.urls import url, include
+from importer.views import (CreateCollectionView, check_and_save_collection_assets,
+                            get_task_status)
 
 from . import trans_urls, views
-
-from importer.views import CreateCollectionView, get_task_status, check_and_save_collection_assets
 
 for key, value in getattr(settings, "ADMIN_SITE", {}).items():
     setattr(admin.site, key, value)
@@ -124,11 +124,14 @@ urlpatterns += [
 
 urlpatterns += [
     re_path(
-        r"^create_collection/$", CreateCollectionView.as_view(), name="create_collection",
-
+        r"^create_collection/$",
+        CreateCollectionView.as_view(),
+        name="create_collection",
     ),
     re_path(
-        r"^get_task_status/(?P<task_id>[a-zA-Z0-9-]+)$", get_task_status, name="get_task_status",
+        r"^get_task_status/(?P<task_id>[a-zA-Z0-9-]+)$",
+        get_task_status,
+        name="get_task_status",
     ),
     re_path(
         r"^check_and_save_collection_assets/(?P<task_id>[a-zA-Z0-9-]+)/(?P<item_id>[a-zA-Z0-9-]+)$",
@@ -150,6 +153,4 @@ urlpatterns += [
     re_path(r"^media/(?P<path>.*)$", serve, {"document_root": settings.MEDIA_ROOT})
 ]
 
-urlpatterns += [
-    url('', include('django_prometheus_metrics.urls')),
-]
+urlpatterns += [url("", include("django_prometheus_metrics.urls"))]
