@@ -20,21 +20,15 @@ logger = getLogger(__name__)
 
 
 class Status:
-    PCT_0 = "0"
-    PCT_25 = "25"
-    PCT_50 = "50"
-    PCT_75 = "75"
-    PCT_100 = "100"
-    COMPLETE = "DONE"
+    EDIT = "Edit"
+    SUBMITTED = "Submitted"
+    COMPLETED = "Completed"
 
-    DEFAULT = PCT_0
+    DEFAULT = EDIT
     CHOICES = (
-        (PCT_0, "0%"),
-        (PCT_25, "25%"),
-        (PCT_50, "50%"),
-        (PCT_75, "75%"),
-        (PCT_100, "100%"),
-        (COMPLETE, "Complete"),
+        (EDIT, "Open for Edit"),
+        (SUBMITTED, "Submitted for Review"),
+        (COMPLETED, "Transcription Completed"),
     )
 
 
@@ -55,7 +49,7 @@ class Collection(MetricsModelMixin("collection"), models.Model):
     metadata = JSONField(default=metadata_default)
     is_active = models.BooleanField(default=False)
     status = models.CharField(
-        max_length=4, choices=Status.CHOICES, default=Status.DEFAULT
+        max_length=10, choices=Status.CHOICES, default=Status.DEFAULT
     )
 
     def __str__(self):
@@ -104,7 +98,7 @@ class Subcollection(models.Model):
     collection = models.ForeignKey(Collection, on_delete=models.CASCADE)
     metadata = JSONField(default=metadata_default)
     status = models.CharField(
-        max_length=4, choices=Status.CHOICES, default=Status.DEFAULT
+        max_length=10, choices=Status.CHOICES, default=Status.DEFAULT
     )
 
     class Meta:
@@ -127,7 +121,7 @@ class Asset(models.Model):
     sequence = models.PositiveIntegerField(default=1)
     metadata = JSONField(default=metadata_default)
     status = models.CharField(
-        max_length=4, choices=Status.CHOICES, default=Status.DEFAULT
+        max_length=10, choices=Status.CHOICES, default=Status.DEFAULT
     )
 
     class Meta:
@@ -163,7 +157,7 @@ class Transcription(models.Model):
     user_id = models.PositiveIntegerField(db_index=True)
     text = models.TextField(blank=True)
     status = models.CharField(
-        max_length=4, choices=Status.CHOICES, default=Status.DEFAULT
+        max_length=10, choices=Status.CHOICES, default=Status.DEFAULT
     )
     created_on = models.DateTimeField(auto_now_add=True)
     updated_on = models.DateTimeField(auto_now=True)

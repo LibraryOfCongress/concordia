@@ -210,10 +210,12 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 LOGIN_URL = "/account/login/"
 
+PASSWORD_VALIDATOR = (
+    "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
+)
+
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
-    },
+    {"NAME": PASSWORD_VALIDATOR},
     {
         "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
         "OPTIONS": {"min_length": 8},
