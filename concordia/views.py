@@ -15,14 +15,9 @@ from django.views.generic import TemplateView
 from registration.backends.simple.views import RegistrationView
 
 from concordia.forms import ConcordiaUserEditForm, ConcordiaUserForm
-from concordia.models import (
-    Asset,
-    Collection,
-   Status, Tag,
-    Transcription,
-    UserAssetTagCollection,
-    UserProfile
-)
+from concordia.models import (Asset, Collection, Status, Tag, Transcription,
+                              UserAssetTagCollection, UserProfile)
+from importer.views import CreateCollectionView, get_task_status
 
 logger = getLogger(__name__)
 
@@ -171,7 +166,9 @@ class ConcordiaAssetView(TemplateView):
                     all_tags = tags
                 else:
                     pass
-                    all_tags = (tags | tags_in_db.tags.all()).distinct()  # merge the querysets
+                    all_tags = (
+                        tags | tags_in_db.tags.all()
+                    ).distinct()  # merge the querysets
 
         return dict(
             super().get_context_data(**kws),
@@ -244,21 +241,11 @@ class CollectionView(TemplateView):
         name = self.request.POST.get("name")
         url = self.request.POST.get("url")
         slug = name.replace(" ", "-")
-        collection_path = os.path.join(settings.MEDIA_ROOT, "concordia", slug)
-        c = Collection.objects.create(title=name, slug=slug, description=name)
-        c.copy_images_to_collection(url, collection_path)
-        c.create_assets_from_filesystem(collection_path)
-        c.is_active = 1
-        c.save()
-        if c:
-            return redirect(
-                reverse(
-                    "transcriptions:collection",
-                    args=[slug],
-                    current_app=self.request.resolver_match.namespace,
-                )
-            )
-        return render(self.request, self.template_name, {"error": "yes"})
+
+        view = CreateCollectionView.as_view()
+        importer_resp = view(self.request, *args, **kwargs)
+
+        return render(self.request, self.template_name, importer_resp.data)
 
 
 class DeleteCollectionView(TemplateView):
