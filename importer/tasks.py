@@ -46,7 +46,7 @@ def get_collection_item_ids(collection_name, collection_url):
     for page_num in range(1, total_pages_count + 1):
         resp = get_request_data(collection_url + "&fo=json")
         page_results = resp.get("results", [])
-        print("page results: ", page_results)
+        logger.info("get_collection_item_ids for page results: ", page_results)
         if page_results:
             for pr in page_results:
                 if (
@@ -80,7 +80,9 @@ def get_collection_item_ids(collection_name, collection_url):
                 % collection_name
             }
         )
-    print("collection_item_ids: ", collection_item_ids)
+    logger.info(
+        "get_collection_item_ids for collection_item_ids: ", collection_item_ids
+    )
     return collection_item_ids
 
 
@@ -153,7 +155,6 @@ def download_write_collection_item_assets(collection_name, collection_url):
     """
     collection_item_ids = get_collection_item_ids(collection_name, collection_url)
     for cii in collection_item_ids:
-        print("getting item id and assets list: ", cii)
         collection_item_asset_urls = get_collection_item_asset_urls(
             collection_name, cii
         )
@@ -174,12 +175,10 @@ def download_write_item_assets(collection_name, item_url):
     item_resources = item_response.get("resources", [])
     for ir in item_resources:
         item_files = ir.get("files", [])
-        print("item_files: ", item_files, type(item_files), len(item_files))
         for item_file in item_files:
-            print("item_file: ", item_file)
             similar_img_urls = []
             for itf in item_file:
-                print("itf:", itf, type(itf))
+                logger.info("download_write_item_assets for itf:", itf, type(itf))
                 if itf.get("mimetype") == "image/jpeg":
                     similar_img_urls.append(itf.get("url"))
             item_asset_urls.append(similar_img_urls[-1])

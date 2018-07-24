@@ -76,7 +76,7 @@ def get_task_status(request, task_id):
 
 
 def check_collection_completeness(ctd, item_id=""):
-    print("item_id: ", item_id)
+    logger.info("check_collection_completeness for item_id: ", item_id)
     collection_local_path = os.path.join(
         settings.IMPORTER["IMAGES_FOLDER"], ctd.collection_slug
     )
@@ -151,7 +151,7 @@ def save_collection_item_assets(collection, the_path):
 def check_and_save_collection_assets(request, task_id, item_id=""):
     if request.method == "GET":
         try:
-            print("casca get item_id: ", item_id)
+            logger.info("check_and_save_collection_assets for item_id: ", item_id)
             ctd = CollectionTaskDetails.objects.get(collection_task_id=task_id)
 
             if item_id:
@@ -212,7 +212,7 @@ def check_and_save_collection_completeness(request, ctd):
 
 
 def check_and_save_item_completeness(request, ctd, item_id):
-    print("casicople, itemid:", item_id)
+    logger.info("check_and_save_item_completeness for itemid:", item_id)
     if check_collection_completeness(ctd, item_id):
         try:
             collection = Collection.objects.get(slug=ctd.collection_slug)
@@ -233,8 +233,7 @@ def check_and_save_item_completeness(request, ctd, item_id):
         shutil.rmtree(
             os.path.join(settings.IMPORTER["IMAGES_FOLDER"], ctd.collection_slug)
         )
-        print("*" * 100)
-        print("requesting for redicerct to collection view", ctd.collection_slug)
+        logger.info("requesting for redirect to collection view", ctd.collection_slug)
 
         return True
     else:
