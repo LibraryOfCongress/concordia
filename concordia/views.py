@@ -214,23 +214,6 @@ class CollectionView(TemplateView):
 
         return render(self.request, self.template_name, importer_resp.data)
 
-        # return view(self.request, *args, **kwargs)
-        # collection_path = os.path.join(settings.MEDIA_ROOT, "concordia", slug)
-        # c = Collection.objects.create(title=name, slug=slug, description=name)
-        # c.copy_images_to_collection(url, collection_path)
-        # c.create_assets_from_filesystem(collection_path)
-        # c.is_active = 1
-        # c.save()
-        # if c:
-        #     return redirect(
-        #         reverse(
-        #             "transcriptions:collection",
-        #             args=[slug],
-        #             current_app=self.request.resolver_match.namespace,
-        #         )
-        #     )
-        # return render(self.request, self.template_name, {"error": "yes"})
-
 
 class DeleteCollectionView(TemplateView):
     """
