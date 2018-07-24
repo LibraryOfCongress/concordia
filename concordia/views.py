@@ -15,17 +15,9 @@ from django.views.generic import TemplateView
 from registration.backends.simple.views import RegistrationView
 
 from concordia.forms import ConcordiaUserEditForm, ConcordiaUserForm
-from concordia.models import (Asset, Collection, Tag, Transcription,
+from concordia.models import (Asset, Collection, Status, Tag, Transcription,
                               UserAssetTagCollection, UserProfile)
 from importer.views import CreateCollectionView, get_task_status
-from concordia.models import (
-    Asset,
-    Collection,
-   Status, Tag,
-    Transcription,
-    UserAssetTagCollection,
-    UserProfile
-)
 
 logger = getLogger(__name__)
 
@@ -174,7 +166,9 @@ class ConcordiaAssetView(TemplateView):
                     all_tags = tags
                 else:
                     pass
-                    all_tags = (tags | tags_in_db.tags.all()).distinct()  # merge the querysets
+                    all_tags = (
+                        tags | tags_in_db.tags.all()
+                    ).distinct()  # merge the querysets
 
         return dict(
             super().get_context_data(**kws),
