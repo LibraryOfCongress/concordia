@@ -24,7 +24,12 @@ RUN pip3 install pipenv
 COPY vendor /vendor
 WORKDIR /app
 COPY . /app
-RUN pipenv install --system --dev
+RUN pipenv install --system --dev --deploy
 
 EXPOSE 80
-CMD [ "/bin/bash", "entrypoint.sh" ]
+# CMD [ "/bin/bash", "entrypoint.sh" ]
+## Add the wait script to the image
+ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.2.1/wait /wait
+RUN chmod +x /wait
+
+CMD /wait && /bin/bash entrypoint.sh

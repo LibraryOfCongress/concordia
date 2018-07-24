@@ -1,12 +1,9 @@
 
-import os
-import sys
-
 from django.conf import settings
-from django.conf.urls.static import static
+from django.conf.urls import include, url
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
-from django.urls import include, re_path
+from django.urls import re_path
 from django.views.generic import TemplateView
 from django.views.static import serve
 from machina.app import board
@@ -126,3 +123,5 @@ urlpatterns += [
 urlpatterns += [
     re_path(r"^media/(?P<path>.*)$", serve, {"document_root": settings.MEDIA_ROOT})
 ]
+
+urlpatterns += [url("", include("django_prometheus_metrics.urls"))]

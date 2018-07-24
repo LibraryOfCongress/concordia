@@ -3,13 +3,15 @@ import re
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 
-PASSWORD_COMPLEXITY = {  # You can omit any or all of these for no limit for that particular set
+PASSWORD_COMPLEXITY = {
+    # You can omit any or all of these for no limit for that particular set
     "UPPER": 1,  # Uppercase
     "LOWER": 1,  # Lowercase
     "LETTERS": 1,  # Either uppercase or lowercase letters
     "DIGITS": 1,  # Digits
     "SPECIAL": 1,  # Not alphanumeric, space or punctuation character
-    "WORDS": 1,  # Words (alphanumeric sequences separated by a whitespace or punctuation character)
+    # Words (alphanumeric sequences separated by a whitespace or punctuation character)
+    "WORDS": 1,
 }
 
 

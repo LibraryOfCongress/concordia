@@ -45,7 +45,6 @@ def docs(ctx,):
     """
     Generate documentation
     """
-    from sphinx import cmdline
 
     setup_django()
     ctx.run("sphinx-apidoc -f -o docs/modules/concordia concordia", pty=True)

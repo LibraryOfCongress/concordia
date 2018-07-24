@@ -9,14 +9,20 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator
 from django.db.models import Count, Q
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import Http404, get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.generic import TemplateView
 from registration.backends.simple.views import RegistrationView
 
 from concordia.forms import ConcordiaUserEditForm, ConcordiaUserForm
-from concordia.models import (Asset, Collection, Tag, Transcription,
-                              UserAssetTagCollection, UserProfile)
+from concordia.models import (
+    Asset,
+    Collection,
+   Status, Tag,
+    Transcription,
+    UserAssetTagCollection,
+    UserProfile
+)
 
 logger = getLogger(__name__)
 
@@ -30,6 +36,23 @@ def concordia_api(relative_path):
 
     logger.debug("Received %s", data)
     return data
+
+
+def get_anonymous_user():
+    """
+    Get the user called "anonymous" if it exist. Create the user if it doesn't exist
+
+    This is the default concordia user if someone is working on the site without logging in first.
+    :return: User id
+    """
+    anon_user = User.objects.filter(username="anonymous").first()
+    if anon_user is None:
+        anon_user = User.objects.create_user(
+            username="anonymous",
+            email="anonymous@anonymous.com",
+            password="concanonymous",
+        )
+    return anon_user.id
 
 
 class ConcordiaRegistrationView(RegistrationView):
@@ -102,7 +125,10 @@ class ConcordiaCollectionView(TemplateView):
     template_name = "transcriptions/collection.html"
 
     def get_context_data(self, **kws):
-        collection = Collection.objects.get(slug=self.args[0])
+        try:
+            collection = Collection.objects.get(slug=self.args[0])
+        except Collection.DoesNotExist:
+            raise Http404
         asset_list = collection.asset_set.all().order_by("title", "sequence")
         paginator = Paginator(asset_list, ASSETS_PER_PAGE)
 
@@ -121,26 +147,37 @@ class ConcordiaCollectionView(TemplateView):
 class ConcordiaAssetView(TemplateView):
     template_name = "transcriptions/asset.html"
 
+    state_dictionary = {
+        "Save": Status.EDIT,
+        "Submit for Review": Status.SUBMITTED,
+        "Mark Completed": Status.COMPLETED,
+    }
+
     def get_context_data(self, **kws):
 
         asset = Asset.objects.get(collection__slug=self.args[0], slug=self.args[1])
 
-        transcription = Transcription.objects.filter(
-            asset=asset, user_id=self.request.user.id
-        )
-        if transcription:
-            transcription = transcription[0]
-        tags = UserAssetTagCollection.objects.filter(
-            asset=asset, user_id=self.request.user.id
-        )
-        if tags:
-            tags = tags[0].tags.all()
+        # Get all transcriptions, they are no longer tied to a specific user
+        transcription = Transcription.objects.filter(asset=asset).last()
+
+        # Get all tags, they are no longer tied to a specific user
+        db_tags = UserAssetTagCollection.objects.filter(asset=asset)
+
+        tags = all_tags = None
+        if db_tags:
+            for tags_in_db in db_tags:
+                if tags is None:
+                    tags = tags_in_db.tags.all()
+                    all_tags = tags
+                else:
+                    pass
+                    all_tags = (tags | tags_in_db.tags.all()).distinct()  # merge the querysets
 
         return dict(
             super().get_context_data(**kws),
             asset=asset,
             transcription=transcription,
-            tags=tags,
+            tags=all_tags,
         )
 
     def post(self, *args, **kwargs):
@@ -148,15 +185,19 @@ class ConcordiaAssetView(TemplateView):
         asset = Asset.objects.get(collection__slug=self.args[0], slug=self.args[1])
         if "tx" in self.request.POST:
             tx = self.request.POST.get("tx")
-            status = self.request.POST.get("status", "25")
-            Transcription.objects.update_or_create(
+            status = self.state_dictionary[self.request.POST.get("action")]
+            # Save all transcriptions, we will need this reports
+            Transcription.objects.create(
                 asset=asset,
-                user_id=self.request.user.id,
-                defaults={"text": tx, "status": status},
+                user_id=self.request.user.id
+                if self.request.user.id is not None
+                else get_anonymous_user(),
+                text=tx,
+                status=status,
             )
             asset.status = status
             asset.save()
-        if "tags" in self.request.POST:
+        if "tags" in self.request.POST and len(self.request.POST.get("tags")) > 0:
             tags = self.request.POST.get("tags").split(",")
             utags, status = UserAssetTagCollection.objects.get_or_create(
                 asset=asset, user_id=self.request.user.id

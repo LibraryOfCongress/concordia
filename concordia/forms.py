@@ -1,7 +1,6 @@
 from logging import getLogger
 
 from django import forms
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from registration.forms import RegistrationForm
 
@@ -11,21 +10,38 @@ ROLE_CHOICES = (("admin", ("Admin")), ("cm", ("Content Manager")), ("user", ("Us
 
 
 class ConcordiaUserForm(RegistrationForm):
+    username = forms.CharField(
+        label="Username",
+        required=True,
+        widget=forms.TextInput(
+            attrs={"class": "form-control", "placeholder": "Username"}
+        ),
+    )
+    email = forms.CharField(
+        label="Email",
+        required=True,
+        widget=forms.EmailInput(
+            attrs={"class": "form-control", "placeholder": "Email"}
+        ),
+    )
     password1 = forms.CharField(
-        label="Password", required=False, widget=forms.PasswordInput()
+        label="Password",
+        required=True,
+        widget=forms.PasswordInput(
+            attrs={"class": "form-control", "placeholder": "Password"}
+        ),
     )
     password2 = forms.CharField(
-        label="Password confirmation", required=False, widget=forms.PasswordInput()
-    )
-    first_name = forms.CharField(max_length=15, label="First name", required=False)
-    last_name = forms.CharField(max_length=15, label="Last name", required=False)
-    role = forms.CharField(
-        label="Role", widget=forms.RadioSelect(choices=ROLE_CHOICES), required=False
+        label="Confirm",
+        required=True,
+        widget=forms.PasswordInput(
+            attrs={"class": "form-control", "placeholder": "Confirm"}
+        ),
     )
 
     class Meta:
         model = User
-        fields = ["username", "email", "first_name", "last_name"]
+        fields = ["username", "email"]
 
     def save(self, commit=True):
         instance = super(ConcordiaUserForm, self).save(commit=False)

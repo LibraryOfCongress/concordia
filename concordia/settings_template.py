@@ -2,8 +2,8 @@
 import os
 import sys
 
-from machina import get_apps as get_machina_apps
 from machina import MACHINA_MAIN_STATIC_DIR, MACHINA_MAIN_TEMPLATE_DIR
+from machina import get_apps as get_machina_apps
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -54,7 +54,7 @@ DATABASES = {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": "concordia",
         "USER": "concordia",
-        "PASSWORD": "concordia",
+        "PASSWORD": "$(POSTGRESQL_PW)",
         "HOST": "db",
         "PORT": "5432",
     }
@@ -78,6 +78,7 @@ INSTALLED_APPS = [
     "mptt",
     "haystack",
     "widget_tweaks",
+    "django_prometheus_metrics",
 ] + get_machina_apps()
 
 
@@ -87,6 +88,7 @@ if DEBUG:
 
 
 MIDDLEWARE = [
+    "django_prometheus_metrics.middleware.PrometheusBeforeMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -208,10 +210,12 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 LOGIN_URL = "/account/login/"
 
+PASSWORD_VALIDATOR = (
+    "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
+)
+
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
-    },
+    {"NAME": PASSWORD_VALIDATOR},
     {
         "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
         "OPTIONS": {"min_length": 8},

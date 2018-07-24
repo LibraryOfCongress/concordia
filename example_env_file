@@ -1,0 +1,3 @@
+GRAFANA_ADMIN_PW=<grafana_admin_password_here>
+CONCORDIA_ADMIN_PW=<concordia_admin_password_here>
+POSTGRESQL_PW=<postgresql_concordia_user_password_here>

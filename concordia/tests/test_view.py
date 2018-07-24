@@ -1,16 +1,15 @@
 # TODO: Add correct copyright header
 
-import os
-import sys
 import tempfile
+from test.support import EnvironmentVarGuard
 from unittest.mock import Mock, patch
 
 import views
 from django.test import Client, TestCase
 from PIL import Image
 
-from concordia.models import (Asset, Collection, MediaType, Status,
-                              Transcription, User, UserProfile)
+from concordia.models import (Asset, Collection, MediaType, Status, Tag, Transcription,
+                              User, UserAssetTagCollection, UserProfile)
 
 
 class ViewTest_Concordia(TestCase):
@@ -25,7 +24,6 @@ class ViewTest_Concordia(TestCase):
         setUp is called before the execution of each test below
         :return:
         """
-
         self.client = Client()
 
     def login_user(self):
@@ -38,7 +36,7 @@ class ViewTest_Concordia(TestCase):
         self.user.set_password("top_secret")
         self.user.save()
 
-        login = self.client.login(username="tester", password="top_secret")
+        self.client.login(username="tester", password="top_secret")
 
     def test_concordia_api(self):
         """
@@ -47,8 +45,6 @@ class ViewTest_Concordia(TestCase):
         """
 
         # Arrange
-
-        relative_path = Mock()
 
         with patch("views.requests") as mock_requests:
             mock_requests.get.return_value = mock_response = Mock()
@@ -77,7 +73,7 @@ class ViewTest_Concordia(TestCase):
             slug="www.foo.com/slug2",
             description="Collection Description",
             metadata={"key": "val1"},
-            status=Status.PCT_0,
+            status=Status.EDIT,
         )
         self.collection.save()
 
@@ -90,13 +86,13 @@ class ViewTest_Concordia(TestCase):
             media_type=MediaType.IMAGE,
             collection=self.collection,
             metadata={"key": "val2"},
-            status=Status.PCT_0,
+            status=Status.EDIT,
         )
         self.asset.save()
 
         # add a Transcription object
         self.transcription = Transcription(
-            asset=self.asset, user_id=self.user.id, status=Status.PCT_0
+            asset=self.asset, user_id=self.user.id, status=Status.EDIT
         )
         self.transcription.save()
 
@@ -118,6 +114,8 @@ class ViewTest_Concordia(TestCase):
         :return:
         """
 
+        test_email = "test2@foo.com"
+
         # Arrange
         self.login_user()
 
@@ -125,11 +123,10 @@ class ViewTest_Concordia(TestCase):
         response = self.client.post(
             "/account/profile/",
             {
-                "first_name": "Jimmy",
-                "email": "tester@foo.com",
+                "email": test_email,
                 "username": "tester",
-                "password1": "",
-                "password2": "",
+                "password1": "!Abc12345",
+                "password2": "!Abc12345",
             },
         )
 
@@ -138,8 +135,8 @@ class ViewTest_Concordia(TestCase):
         self.assertEqual(response.url, "/account/profile/")
 
         # Verify the User was correctly updated
-        updated_user = User.objects.get(id=self.user.id)
-        self.assertEqual(updated_user.first_name, "Jimmy")
+        updated_user = User.objects.get(email=test_email)
+        self.assertEqual(updated_user.email, test_email)
 
     def test_AccountProfileView_post_invalid_form(self):
         """
@@ -155,8 +152,7 @@ class ViewTest_Concordia(TestCase):
         response = self.client.post("/account/profile/", {"first_name": "Jimmy"})
 
         # Assert
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, "/account/profile/")
+        self.assertEqual(response.status_code, 200)
 
         # Verify the User was not changed
         updated_user = User.objects.get(id=self.user.id)
@@ -164,7 +160,7 @@ class ViewTest_Concordia(TestCase):
 
     def test_AccountProfileView_post_new_password(self):
         """
-        This unit test test the post entry for the route account/profile with new password
+        This unit test tests the post entry for the route account/profile with new password
         :param self:
         :return:
         """
@@ -172,15 +168,16 @@ class ViewTest_Concordia(TestCase):
         # Arrange
         self.login_user()
 
+        test_email = "tester@foo.com"
+
         # Act
         response = self.client.post(
             "/account/profile/",
             {
-                "first_name": "Jimmy",
-                "email": "tester@foo.com",
+                "email": test_email,
                 "username": "tester",
-                "password1": "abc",
-                "password2": "abc",
+                "password1": "aBc12345!",
+                "password2": "aBc12345!",
             },
         )
 
@@ -189,24 +186,27 @@ class ViewTest_Concordia(TestCase):
         self.assertEqual(response.url, "/account/profile/")
 
         # Verify the User was correctly updated
-        updated_user = User.objects.get(id=self.user.id)
-        self.assertEqual(updated_user.first_name, "Jimmy")
+        updated_user = User.objects.get(email=test_email)
+        self.assertEqual(updated_user.email, test_email)
 
         # logout and login with new password
-        logout = self.client.logout()
-        login2 = self.client.login(username="tester", password="abc")
+        self.client.logout()
+        login2 = self.client.login(username="tester", password="aBc12345!")
 
         self.assertTrue(login2)
 
     def test_AccountProfileView_post_with_image(self):
         """
-        This unit test tests the post entry for the route account/profile with new image file
+        This unit test tests the post entry for the
+        route account/profile with new image file
         :param self:
         :return:
         """
 
         # Arrange
         self.login_user()
+
+        pw = "!Abc12345"
 
         existing_userprofile_count = UserProfile.objects.all().count()
 
@@ -221,11 +221,10 @@ class ViewTest_Concordia(TestCase):
                 "/account/profile/",
                 {
                     "myfile": fp,
-                    "first_name": "Jimmy",
                     "email": "tester@foo.com",
                     "username": "tester",
-                    "password1": "",
-                    "password2": "",
+                    "password1": pw,
+                    "password2": pw,
                 },
             )
 
@@ -272,7 +271,7 @@ class ViewTest_Concordia(TestCase):
             slug="test-slug2",
             description="Collection Description",
             metadata={"key": "val1"},
-            status=Status.PCT_0,
+            status=Status.EDIT,
         )
         self.collection.save()
 
@@ -299,7 +298,7 @@ class ViewTest_Concordia(TestCase):
             slug="test-slug2",
             description="Collection Description",
             metadata={"key": "val1"},
-            status=Status.PCT_0,
+            status=Status.EDIT,
         )
         self.collection.save()
 
@@ -325,7 +324,7 @@ class ViewTest_Concordia(TestCase):
             slug="slug2",
             description="Collection Description",
             metadata={"key": "val1"},
-            status=Status.PCT_0,
+            status=Status.EDIT,
         )
         self.collection.save()
 
@@ -337,34 +336,42 @@ class ViewTest_Concordia(TestCase):
             media_type=MediaType.IMAGE,
             collection=self.collection,
             metadata={"key": "val2"},
-            status=Status.PCT_0,
+            status=Status.EDIT,
         )
         self.asset.save()
 
         # Act
-        response = self.client.get("/transcribe/export/slug2/")
+        response = self.client.get("/transcribe/exportCSV/slug2/")
 
         # Assert
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             str(response.content),
-            "b'Collection,Title,Description,MediaUrl,Transcription,Tags\\r\\nTextCollection,TestAsset,Asset Description,http://www.foo.com/1/2/3,,\\r\\n'",
+            "b'Collection,Title,Description,MediaUrl,Transcription,Tags\\r\\n"
+            "TextCollection,TestAsset,Asset Description,"
+            "http://www.foo.com/1/2/3,,\\r\\n'",
         )
 
-    def test_DeleteCollection_get(self):
+    @patch("concordia.views.requests")
+    def test_DeleteCollection_get(self, mock_requests):
         """
         Test GET route /transcribe/delete/<slug-value>/ (collection)
         :return:
         """
 
         # Arrange
+        mock_requests.get.return_value.status_code = 200
+        mock_requests.get.return_value.json.return_value = {
+            "concordia_data": "abc123456"
+        }
+
         # add an item to Collection
         self.collection = Collection(
             title="TextCollection",
             slug="test-slug2",
             description="Collection Description",
             metadata={"key": "val1"},
-            status=Status.PCT_0,
+            status=Status.EDIT,
         )
         self.collection.save()
 
@@ -376,11 +383,12 @@ class ViewTest_Concordia(TestCase):
             media_type=MediaType.IMAGE,
             collection=self.collection,
             metadata={"key": "val2"},
-            status=Status.PCT_0,
+            status=Status.EDIT,
         )
         self.asset.save()
 
         # Act
+
         response = self.client.get("/transcribe/delete/test-slug2", follow=True)
 
         # Assert
@@ -389,3 +397,70 @@ class ViewTest_Concordia(TestCase):
         # verify the collection is not in db
         collection2 = Collection.objects.all()
         self.assertEqual(len(collection2), 0)
+
+    def test_ConcordiaAssetView_post(self):
+        """
+        This unit test test the POST route /transcribe/<collection>/asset/<Asset_name>/
+        :return:
+        """
+        # Arrange
+        self.login_user()
+
+        # create a collection
+        self.collection = Collection(
+            title="TestCollection",
+            slug="Collection1",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection.save()
+
+        # create an Asset
+        self.asset = Asset(
+            title="TestAsset",
+            slug="Asset1",
+            description="Asset Description",
+            media_url="http://www.foo.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            collection=self.collection,
+            metadata={"key": "val2"},
+            status=Status.EDIT,
+        )
+        self.asset.save()
+
+        # add a Transcription object
+        self.transcription = Transcription(
+            asset=self.asset,
+            user_id=self.user.id,
+            text="Test transcription 1",
+            status=Status.EDIT,
+        )
+        self.transcription.save()
+
+        tag_name = "Test tag 1"
+
+        # Act
+        response = self.client.post(
+            "/transcribe/Collection1/asset/Asset1/",
+            {"tx": "First Test Transcription", "tags": tag_name, "action": "Save"},
+        )
+
+        # Assert
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, "/transcribe/Collection1/asset/Asset1/")
+
+        # Verify the new transcription and tag are in the db
+        transcription = Transcription.objects.filter(
+            text="First Test Transcription", asset=self.asset
+        )
+        self.assertEqual(len(transcription), 1)
+
+        tags = UserAssetTagCollection.objects.filter(
+            asset=self.asset, user_id=self.user.id
+        )
+        if tags:
+            separate_tags = tags[0].tags.all()
+
+        self.assertEqual(len(tags), 1)
+        self.assertEqual(separate_tags[0].name, tag_name)

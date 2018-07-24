@@ -8,8 +8,7 @@ from django.conf import settings
 from django.http import HttpResponse
 from django.views.generic import TemplateView
 
-from concordia.models import (Asset, Collection, Tag, Transcription,
-                              UserAssetTagCollection)
+from concordia.models import Collection, Transcription, UserAssetTagCollection
 
 
 class ExportCollectionToCSV(TemplateView):
@@ -73,21 +72,25 @@ class ExportCollectionToBagit(TemplateView):
         collection = Collection.objects.get(slug=self.args[0])
         asset_list = collection.asset_set.all().order_by("title", "sequence")
 
-        # Make sure export folder exists
+        # Make sure export folder exists (media/exporter)
         export_folder = "%s/exporter" % (settings.MEDIA_ROOT)
         if not os.path.exists(export_folder):
             os.makedirs(export_folder)
 
-        # Create temp exporter folder structure for bagit
+        # Create temp exporter folder structure in media for bagit
         collection_folder = "%s/exporter/%s" % (settings.MEDIA_ROOT, collection.slug)
 
-        # Create collection folder
-        os.mkdir(collection_folder)
-        for asset in asset_list:
-            asset_folder = "%s/%s" % (collection_folder, asset.slug)
+        # Create collection folder (media/exporter/<collection>)
+        if not os.path.exists(collection_folder):
+            os.mkdir(collection_folder)
 
-            # Create asset folders
-            os.mkdir(asset_folder)
+        for asset in asset_list:
+            asset_folder_name = asset.media_url.rsplit("/")[-2]
+            asset_folder = "%s/%s" % (collection_folder, asset_folder_name)
+
+            # Create asset folders (media/exporter/<collection>/<asset>
+            if not os.path.exists(asset_folder):
+                os.mkdir(asset_folder)
 
             src_folder = asset_folder.replace("exporter", "concordia")
             src_name = asset.media_url.rsplit("/")[-1]
@@ -137,7 +140,7 @@ class ExportCollectionToBagit(TemplateView):
                 writer.writerow(row)
 
         # Turn Strucutre into bagit format
-        bag = bagit.make_bag(collection_folder, {"Contact-Name": request.user.username})
+        bagit.make_bag(collection_folder, {"Contact-Name": request.user.username})
 
         # Build .zipfile of bagit formatted Collection Folder
         archive_name = collection_folder
@@ -154,11 +157,11 @@ class ExportCollectionToBagit(TemplateView):
         # Clean up temp folders & zipfile once exported
         try:
             shutil.rmtree(collection_folder)
-        except:
+        except Exception as e:
             pass
         try:
             os.remove("%s.zip" % collection_folder)
-        except:
+        except Exception as e:
             pass
 
         return response
