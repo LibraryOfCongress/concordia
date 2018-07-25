@@ -503,3 +503,72 @@ class ViewTest_Concordia(TestCase):
 
         self.assertEqual(len(tags), 1)
         self.assertEqual(separate_tags[0].name, tag_name)
+
+    def test_ConcordiaAssetView_post_anonymous(self):
+        """
+        This unit test test the POST route /transcribe/<collection>/asset/<Asset_name>/
+        for an anonymous user. This user should not be able to tag
+        :return:
+        """
+        # Arrange
+
+        # create a collection
+        self.collection = Collection(
+            title="TestCollection",
+            slug="Collection1",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection.save()
+
+        # create an Asset
+        self.asset = Asset(
+            title="TestAsset",
+            slug="Asset1",
+            description="Asset Description",
+            media_url="http://www.foo.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            collection=self.collection,
+            metadata={"key": "val2"},
+            status=Status.EDIT,
+        )
+        self.asset.save()
+
+        # create anonymous user
+        anon_user = User.objects.create(username="anonymous", email="tester@foo.com")
+        anon_user.set_password("blah_anonymous!")
+        anon_user.save()
+
+        # add a Transcription object
+        self.transcription = Transcription(
+            asset=self.asset,
+            user_id=anon_user.id,
+            text="Test transcription 1",
+            status=Status.EDIT,
+        )
+        self.transcription.save()
+
+        tag_name = "Test tag 1"
+
+        # Act
+        response = self.client.post(
+            "/transcribe/Collection1/asset/Asset1/",
+            {"tx": "First Test Transcription", "tags": tag_name, "action": "Save"},
+        )
+
+        # Assert
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, "/transcribe/Collection1/asset/Asset1/")
+
+        # Verify the new transcription and tag are in the db
+        transcription = Transcription.objects.filter(
+            text="First Test Transcription", asset=self.asset
+        )
+        self.assertEqual(len(transcription), 1)
+
+        tags = UserAssetTagCollection.objects.filter(
+            asset=self.asset, user_id=anon_user.id
+        )
+
+        self.assertEqual(len(tags), 0)
