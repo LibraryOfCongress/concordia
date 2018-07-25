@@ -12,6 +12,7 @@ from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
 from django.db.models import Count, Q
+from django.http import HttpResponseRedirect
 from django.shortcuts import Http404, get_object_or_404, redirect, render
 from django.template import loader
 from django.urls import reverse
@@ -89,7 +90,7 @@ class AccountProfileView(LoginRequiredMixin, TemplateView):
                     user=obj, defaults={"myfile": myfile}
                 )
         else:
-            return render(self.request, self.template_name, locals())
+            return HttpResponseRedirect("/account/profile/")
         return redirect(reverse("user-profile"))
 
     def get_context_data(self, **kws):
@@ -107,12 +108,18 @@ class AccountProfileView(LoginRequiredMixin, TemplateView):
         profile = UserProfile.objects.filter(user=self.request.user)
         if profile:
             data["myfile"] = profile[0].myfile
+
+        transcriptions = \
+            Transcription.objects.filter(user_id=self.request.user.id).order_by("-updated_on")
+
+        for t in transcriptions:
+            collection = Collection.objects.get(id=t.asset.collection.id)
+            t.collection_name = collection.slug
+
         return super().get_context_data(
             **dict(
                 kws,
-                transcriptions=Transcription.objects.filter(
-                    user_id=self.request.user.id
-                ).order_by("-updated_on"),
+                transcriptions=transcriptions,
                 form=ConcordiaUserEditForm(initial=data),
             )
         )
