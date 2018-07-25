@@ -38,6 +38,45 @@ class ViewTest_Concordia(TestCase):
 
         self.client.login(username="tester", password="top_secret")
 
+    def test_get_anonymous_user(self):
+        """
+        Test getting the anonymous user. Test the naonymous user does exist, the call
+        get_anonymous_user, make anonymous is created
+        :return:
+        """
+
+        # Arrange
+        anon_user1 = User.objects.filter(username="anonymous").first()
+
+        # Act
+        anon_user_id = views.get_anonymous_user()
+        anon_user_from_db = User.objects.filter(username="anonymous").first()
+
+        # Assert
+        self.assertEqual(anon_user1, None)
+        self.assertEqual(anon_user_id, anon_user_from_db.id)
+
+    def test_get_anonymous_user_already_exists(self):
+        """
+        Test getting the anonymous user when it already exists.
+        :return:
+        """
+
+        # Arrange
+        anon_user = User.objects.create_user(
+            username="anonymous",
+            email="anonymous@anonymous.com",
+            password="concanonymous",
+        )
+
+        # Act
+        anon_user_id = views.get_anonymous_user()
+
+        # Assert
+        self.assertEqual(anon_user_id, anon_user.id)
+
+
+
     def test_concordia_api(self):
         """
         Test the tracribr_api. Provide a mock of requests
@@ -152,7 +191,7 @@ class ViewTest_Concordia(TestCase):
         response = self.client.post("/account/profile/", {"first_name": "Jimmy"})
 
         # Assert
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 302)
 
         # Verify the User was not changed
         updated_user = User.objects.get(id=self.user.id)
