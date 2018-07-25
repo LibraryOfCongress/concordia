@@ -255,7 +255,7 @@ class ContactUsView(FormView):
                 'link': link,
                 'story': story
               }),
-              getattr(settings, 'CONTACT_FROM_EMAIL', 'noreply@locgov.com'),
+              getattr(settings, 'CONTACT_FROM_EMAIL', 'noreply@loc.gov'),
               [getattr(settings, 'CONTACT_TO_EMAIL', 'ekam@loc.gov'), ], 
               fail_silently=True)
 
