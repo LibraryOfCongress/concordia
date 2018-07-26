@@ -196,7 +196,6 @@ class ConcordiaAssetView(TemplateView):
 
     def post(self, *args, **kwargs):
         self.get_context_data()
-        authenticated_user = self.request.user.is_authenticated
         asset = Asset.objects.get(collection__slug=self.args[0], slug=self.args[1])
         if "tx" in self.request.POST:
             tx = self.request.POST.get("tx")
@@ -212,7 +211,7 @@ class ConcordiaAssetView(TemplateView):
             )
             asset.status = status
             asset.save()
-        if "tags" in self.request.POST and len(self.request.POST.get("tags")) > 0 and authenticated_user == True:
+        if "tags" in self.request.POST and self.request.user.is_authenticated == True:
             tags = self.request.POST.get("tags").split(",")
             utags, status = UserAssetTagCollection.objects.get_or_create(
                 asset=asset, user_id=self.request.user.id
