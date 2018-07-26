@@ -258,7 +258,7 @@ class ContactUsView(FormView):
                 'story': story
               }),
               getattr(settings, 'DEFAULT_FROM_EMAIL'),
-              [getattr(settings, 'DEFAULT_FROM_EMAIL'), ], 
+              [getattr(settings, 'DEFAULT_TO_EMAIL'), ], 
               fail_silently=True)
 
         messages.success(self.request, 'Your contact message has been sent...')
