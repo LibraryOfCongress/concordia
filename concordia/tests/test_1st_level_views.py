@@ -29,11 +29,12 @@ class ViewTest_1st_level(TestCase):
         self.assertTemplateUsed(response, 'contact.html')
     
     
-    def test_contact_us_get(self):
+    def test_contact_us_post(self):
         # Arrange
         post_data = {
             "email": "nobody@example.com" ,
-            "subject": "problem",
+            "subject": "Problem found",
+            "category": "Something is not working",
             "link": "www.loc.gov/nowhere",
             "story": "Houston, we got a problem"
         }

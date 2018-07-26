@@ -3,6 +3,7 @@ Hello:
   We got an email from {{ from_email }}:
    
   Subject: {{ subject }}
+  Category: {{ category }}
   Link:  {{ link }}
   Story: 
     {{ story }}

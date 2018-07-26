@@ -245,6 +245,7 @@ class ContactUsView(FormView):
     def post(self, *args, **kwargs):
         email = self.request.POST.get("email")
         subject = self.request.POST.get("subject")
+        category = self.request.POST.get("category")
         link = self.request.POST.get("link")
         story = self.request.POST.get("story")
     
@@ -252,11 +253,12 @@ class ContactUsView(FormView):
         send_mail(subject, t.render({
                 'from_email': email,
                 'subject': subject,
+                'category': category,
                 'link': link,
                 'story': story
               }),
-              getattr(settings, 'CONTACT_FROM_EMAIL', 'noreply@loc.gov'),
-              [getattr(settings, 'CONTACT_TO_EMAIL', 'ekam@loc.gov'), ], 
+              getattr(settings, 'DEFAULT_FROM_EMAIL'),
+              [getattr(settings, 'DEFAULT_FROM_EMAIL'), ], 
               fail_silently=True)
 
         messages.success(self.request, 'Your contact message has been sent...')

@@ -71,12 +71,20 @@ class ConcordiaContactUsForm(forms.Form):
     
     subject = forms.CharField(
         label="Subject",
+        required=False,
+        widget=forms.TextInput(
+            attrs={"class": "col-sm-8 form-control"}
+        ),
+    )
+    
+    category = forms.CharField(
+        label="Subject",
         required=True,
         widget=forms.Select(
             choices=(
-                ('bug', 'Bug'),
-                ('collection', 'Collection - Ask Librarian'),
-                ('problem', 'Problem on the page - vandalism, issue about image, etc')
+                ('General', 'General'),
+                ('Collection', 'Question about collection'),
+                ('Problem', 'Something is not working')
             ),
             attrs={"class": "col-sm-8 form-control"}
         ),
