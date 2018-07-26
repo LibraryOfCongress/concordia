@@ -96,6 +96,22 @@ class ViewTest_Concordia(TestCase):
             # Assert
             self.assertEqual(results["concordia_data"], "abc123456")
 
+    def test_login_with_email(self):
+        """
+        Test the login is successful with email
+        :return:
+        """
+        # Arrange
+        user = User.objects.create(username="etester", email="etester@foo.com")
+        user.set_password("top_secret")
+        user.save()
+
+        # Act
+        user = self.client.login(username="etester@foo.com", password="top_secret")
+
+        # Assert
+        self.assertTrue(user)
+
     def test_AccountProfileView_get(self):
         """
         Test the http GET on route account/profile

@@ -225,4 +225,6 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "concordia.validators.complexity"},
 ]
 
+AUTHENTICATION_BACKENDS = ['concordia.email_username_backend.EmailOrUsernameModelBackend']
+
 REGISTRATION_URLS = "registration.backends.simple.urls"
