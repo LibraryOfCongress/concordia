@@ -1,4 +1,5 @@
 
+import html
 import os
 from logging import getLogger
 
@@ -243,11 +244,11 @@ class ContactUsView(FormView):
     success_url = '.'
     
     def post(self, *args, **kwargs):
-        email = self.request.POST.get("email")
-        subject = self.request.POST.get("subject")
-        category = self.request.POST.get("category")
-        link = self.request.POST.get("link")
-        story = self.request.POST.get("story")
+        email = html.escape(self.request.POST.get("email") or "")
+        subject = html.escape(self.request.POST.get("subject") or "")
+        category = html.escape(self.request.POST.get("category") or "")
+        link = html.escape(self.request.POST.get("link") or "")
+        story = html.escape(self.request.POST.get("story") or "")
     
         t = loader.get_template('emails/contact_us_email.txt')
         send_mail(subject, t.render({
