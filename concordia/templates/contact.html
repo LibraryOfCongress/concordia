@@ -1,7 +1,13 @@
 {% extends "base.html" %}
-{% block main_content %}
 {% block title %}{% endblock title %}
-{% block head_content %}{% endblock head_content %}
+{% block head_content %}
+<style>
+#contact-form .form-group input,#contact-form .form-group textarea {
+  padding: .375rem .75rem;
+}
+</style>
+{% endblock head_content %}
+{% block main_content %}
 <div class="container-fluid py-default">
     {% if messages %}
     {% for message in messages %}
