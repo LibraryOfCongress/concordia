@@ -1,6 +1,12 @@
 {% extends "transcriptions/base.html" %} {% load staticfiles %}
 {% block title %}{{ asset.title }}{% endblock title %}
-{% block head_content %}{% endblock head_content %}
+{% block head_content %}
+<style>
+input#id_captcha_1 {
+  padding: .375rem .75rem;
+}
+</style>
+{% endblock head_content %}
 {% block main_content %}
     <div class="container-fluid">
         <div class="row">
@@ -115,6 +121,15 @@
                                            class="btn btn-primary btn-primary-fixed-width float-left" value="Save">
                                 </td>
                             </tr>
+
+                            {% if user.is_anonymous %}
+                            <tr id="captcha_tr" style="display: none;">
+                                <td>
+                                    {{ captcha_form.captcha }}
+                                </td>
+                            </tr>
+                            {% endif %}
+
                             <tr>
                                 <td>
                                     <input id="review_button" name="action" type="submit"
@@ -234,4 +249,33 @@
         {% endif %}
         show_buttons();
     </script>
+    
+    </script>
+    {% if user.is_anonymous %}
+    <script>
+    
+        $(document).ready(function(){
+            $("#save_button").click(function(e){
+            	   if($("#captcha_tr").is(":hidden")) {
+	               e.preventDefault();
+	               $(this).removeClass("btn-primary");
+	               $(this).prop("disabled",true);                   
+	               $("#captcha_tr").show();   
+            	   }
+            });
+            
+            $("input#id_captcha_1").keypress(function(e){
+            	   $("#save_button").addClass("btn-primary");
+            	   $("#save_button").prop("disabled",false);
+            });
+            
+            $(".js-captcha-refresh").click(function(e){
+                $.getJSON("{% url 'captcha-refresh' %}", function (result) {
+                       $('.captcha').attr('src', result['image_url']);
+                       $('#id_captcha_0').val(result['key'])
+                });            
+            })
+        })
+    </script>
+    {% endif %}
 {% endblock body_scripts %}

@@ -1,5 +1,6 @@
 from logging import getLogger
 
+from captcha.fields import CaptchaField
 from django import forms
 from django.contrib.auth import get_user_model
 from registration.forms import RegistrationForm
@@ -37,6 +38,9 @@ class ConcordiaUserForm(RegistrationForm):
         widget=forms.PasswordInput(
             attrs={"class": "form-control", "placeholder": "Confirm"}
         ),
+    )
+    
+    captcha = CaptchaField(
     )
 
     class Meta:
@@ -105,3 +109,8 @@ class ConcordiaContactUsForm(forms.Form):
             attrs={"class": "col-sm-8 form-control"}
         ),
     )
+
+
+class CaptchaEmbedForm(forms.Form):
+    captcha = CaptchaField()
+
