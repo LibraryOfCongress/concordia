@@ -1,7 +1,11 @@
 {
     "_meta": {
         "hash": {
+<<<<<<< HEAD
             "sha256": "3eb86b6e2604f3083a68082713024b11fbb812b63800be4b54ca37f63c2a8e90"
+=======
+            "sha256": "788caf5401cf08fae4d6c390848409d9bd30f70b6456a09ec1781c8c7a23088f"
+>>>>>>> Add python-dotenv to requirements, read .env from settings, add AWS Key info
         },
         "pipfile-spec": 6,
         "requires": {
@@ -364,6 +368,14 @@
             ],
             "markers": "python_version >= '2.7'",
             "version": "==2.7.3"
+        },
+        "python-dotenv": {
+            "hashes": [
+                "sha256:4965ed170bf51c347a89820e8050655e9c25db3837db6602e906b6d850fad85c",
+                "sha256:509736185257111613009974e666568a1b031b028b61b500ef1ab4ee780089d5"
+            ],
+            "index": "pypi",
+            "version": "==0.8.2"
         },
         "pytz": {
             "hashes": [
