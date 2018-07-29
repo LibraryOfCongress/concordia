@@ -162,3 +162,7 @@ urlpatterns += [
 ]
 
 urlpatterns += [url("", include("django_prometheus_metrics.urls"))]
+
+urlpatterns += [
+    url(r'^captcha/', include('captcha.urls')),
+]

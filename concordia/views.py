@@ -6,6 +6,7 @@ import os
 from logging import getLogger
 
 import requests
+from captcha.fields import CaptchaField
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model
@@ -26,6 +27,7 @@ from registration.backends.simple.views import RegistrationView
 
 
 from concordia.forms import (
+    CaptchaEmbedForm,
     ConcordiaUserEditForm,
     ConcordiaUserForm,
     ConcordiaContactUsForm
@@ -223,6 +225,8 @@ class ConcordiaAssetView(TemplateView):
                     all_tags = (
                         tags | tags_in_db.tags.all()
                     ).distinct()  # merge the querysets
+        
+        captcha_form = CaptchaEmbedForm()
 
         same_page_count_for_this_user = PageInUse.objects.filter(page_url=in_use_url, user=current_user_id).count()
 
@@ -250,9 +254,11 @@ class ConcordiaAssetView(TemplateView):
             asset=asset,
             transcription=transcription,
             tags=all_tags,
+            captcha_form=captcha_form
         )
 
     def post(self, *args, **kwargs):
+<<<<<<< HEAD
         """
         Handle POST from trancribe page for individual asset
         :param args:
@@ -260,7 +266,15 @@ class ConcordiaAssetView(TemplateView):
         :return: redirect back to same page
         """
         self.get_context_data()
+=======
+        ctx = self.get_context_data()
+>>>>>>> Add captcha implementation using django-simple-captcha
         asset = Asset.objects.get(collection__slug=self.args[0], slug=self.args[1])
+        if self.request.user.is_anonymous:
+            captcha_form = CaptchaEmbedForm(self.request.POST)
+            if not captcha_form.is_valid():
+                logger.info("Invalid captcha response")
+                return redirect(self.request.path) 
         if "tx" in self.request.POST:
             tx = self.request.POST.get("tx")
             status = self.state_dictionary[self.request.POST.get("action")]
