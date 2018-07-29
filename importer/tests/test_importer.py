@@ -21,17 +21,7 @@ class CreateCollectionViewTest(TestCase):
         Settng up the required input data for test cases
         :return:
         """
-        self.valid_item_input = {
-            'name': 'Rosa-Parks-Papers',
-            'url': 'https://www.loc.gov/item/mss859430021',
-            'create_type': 'item'
-        }
 
-        self.valid_collection_input = {
-            'name': 'digital-collection',
-            'url': 'https://www.loc.gov/collections/?fa=partof:law+library+of+congress',
-            'create_type': 'item'
-        }
         self.client = Client()
 
     def test_create_item_collection(self):
@@ -39,12 +29,21 @@ class CreateCollectionViewTest(TestCase):
         Create collection by giving item url
         :return:
         """
-        client = Client()
-        response = client.post(
+        # Arrange
+        self.valid_item_input = {
+            'name': 'Rosa-Parks-Papers',
+            'url': 'https://www.loc.gov/item/mss859430021',
+            'create_type': 'item'
+        }
+
+        # Act
+        response = self.client.post(
             reverse('create_collection'),
             data=json.dumps(self.valid_item_input),
             content_type='application/json'
         )
+
+        #Assert
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_create_collection(self):
@@ -52,34 +51,6 @@ class CreateCollectionViewTest(TestCase):
         Create a collection by giving a collection url
         :return:
         """
-        client = Client()
-        response = client.post(
-            reverse('create_collection'),
-            data=json.dumps(self.valid_collection_input),
-            content_type='application/json'
-        )
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
-    def test_create_invalid_collection(self):
-        """
-        Create a collection by giving invalid collection url
-        :return:
-        """
-        client = Client()
-        response = client.post(
-            reverse('create_collection'),
-            data=json.dumps('https://www.loc.gov/collectionsdd/?fa=partof:law+library+of+congress'),
-            content_type='application/json'
-        )
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-    def test_create_valid_collection1(self):
-        """
-        This unit test tests the post entry for the route account/profile but submits an invalid form
-        :param self:
-        :return:
-        """
-        import pdb; pdb.set_trace()
         # Arrange
         self.valid_collection_input = {
             'name': 'digital-collection',
@@ -93,6 +64,25 @@ class CreateCollectionViewTest(TestCase):
         # Assert
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
+    def test_create_invalid_collection(self):
+        """
+        Create a collection by giving invalid collection url
+        :return:
+        """
+
+        # Arrange
+        self.invalid_collection_data = json.dumps('https://www.loc.gov/collectionsdd/?fa=partof:law+library+of+congress')
+
+        #Act
+        response = self.client.post(
+            reverse('create_collection'),
+            data=self.invalid_collection_data,
+            content_type='application/json'
+        )
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
 
 class ImporterTasksTest(TestCase):
     """
@@ -102,35 +92,27 @@ class ImporterTasksTest(TestCase):
 
     def setUp(self):
         """
-        Setting up the required test data input for importer tasks testcaes
+        Setting up the required test data input for importer tasks test cases
         :return:
         """
-        self.valid_test_data = {
-            'name': 'Rosa-Parks-Papers',
-            'url': 'https://www.loc.gov/item/mss859430021?fo=json',
-            'create_type': 'item',
-        }
-
-        self.valid_collection_test_data = {
-            'name': 'Rosa-Parks-Papers',
-            'url': 'https://www.loc.gov/collections/branch-rickey-papers/?fa=partof:branch+rickey+papers:+baseball+file,+1906-1971',
-            'create_type': 'item',
-            'no_of_pages': 1
-        }
-
-        self.invalid_collection_test_data = {
-            'name': 'Rosa-Parks-Papers',
-            'url': 'https://www.loc.gov/item/mss859430021?fo=json',
-            'create_type': 'item',
-            'no_of_pages': 0
-        }
 
     def test_get_request_data(self):
         """
         Testing request urls of loc.gov api calls
         :return:
         """
+
+        # Arrange
+        self.valid_test_data = {
+            'name': 'Rosa-Parks-Papers',
+            'url': 'https://www.loc.gov/item/mss859430021?fo=json',
+            'create_type': 'item',
+        }
+
+        # Act
         response = get_request_data(self.valid_test_data['url'])
+
+        # Assert
         self.assertEqual(dict, type(response))
         self.assertIn('https://www.loc.gov/resource/mss85943' , response['resources'][0]['url'])
 
@@ -139,7 +121,18 @@ class ImporterTasksTest(TestCase):
         Testing no of pages available in given a collection url
         :return:
         """
+        # Arrange
+        self.valid_collection_test_data = {
+            'name': 'Rosa-Parks-Papers',
+            'url': 'https://www.loc.gov/collections/branch-rickey-papers/?fa=partof:branch+rickey+papers:+baseball+file,+1906-1971',
+            'create_type': 'item',
+            'no_of_pages': 1
+        }
+
+        # Act
         response = get_collection_pages(self.valid_collection_test_data['url'])
+
+        # Assert
         self.assertEqual(int, type(response))
         self.assertEqual(response, self.valid_collection_test_data['no_of_pages'])
 
@@ -148,7 +141,18 @@ class ImporterTasksTest(TestCase):
         Testing no of pages available in given a invalid collection url
         :return:
         """
+        # Arrange
+        self.invalid_collection_test_data = {
+            'name': 'Rosa-Parks-Papers',
+            'url': 'https://www.loc.gov/item/mss859430021?fo=json',
+            'create_type': 'item',
+            'no_of_pages': 0
+        }
+
+        # Act
         response = get_collection_pages(self.invalid_collection_test_data['url'])
+
+        # Asser
         self.assertEqual(int, type(response))
         self.assertEqual(response, self.invalid_collection_test_data['no_of_pages'])
 
@@ -157,7 +161,19 @@ class ImporterTasksTest(TestCase):
         Testing params of given collection url
         :return:
         """
+        # Arrange
+        self.invalid_collection_test_data = {
+            'name': 'Rosa-Parks-Papers',
+            'url': 'https://www.loc.gov/item/mss859430021?fo=json',
+            'create_type': 'item',
+            'no_of_pages': 0
+        }
+
+        # Act
+
         curl, cparams = get_collection_params(self.invalid_collection_test_data['url'])
+
+        # Assert
         self.assertEqual(curl, self.invalid_collection_test_data['url'])
         self.assertEqual(cparams, {})
 
@@ -166,8 +182,13 @@ class ImporterTasksTest(TestCase):
         Testing params of given invalid collection url
         :return:
         """
+        # Arrange
         test_url = 'https://www.loc.gov/collections/branch-rickey-papers/?fa=partof:branch+rickey+papers:+baseball+file,+1906-1971'
+
+        # Act
         curl, cparams = get_collection_params(test_url)
+
+        # Assert
         self.assertEqual(curl, test_url.split("?fa")[0])
         self.assertIn('partof', cparams.get('fa'))
 
@@ -176,9 +197,14 @@ class ImporterTasksTest(TestCase):
         Testing no of collection item ids available in given collection url
         :return:
         """
+        # Arrange
         test_url = 'https://www.loc.gov/collections/branch-rickey-papers/?fa=partof:branch+rickey+papers:+baseball+file,+1906-1971'
         name = 'branch-rickey-papers'
+
+        # Act
         response = get_collection_item_ids(name, test_url)
+
+        # Assert
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.status_text, 'OK')
         self.assertEqual(response.data, {"message": "Unable to create item entries for collection : branch-rickey-papers"})
@@ -188,10 +214,17 @@ class ImporterTasksTest(TestCase):
         Testing no of collection item ids available in given invalid colllection url
         :return:
         """
+        # Arrange
         test_url = 'https://www.loc.gov/collections/ibbbranch-rickey-papers/?fa=partof:branch+rickey+papers:+baseball+file,+1906-1971'
         name = 'branch-rickey-papers'
+
+        # Act
         response = get_collection_item_ids(name, test_url)
+
+        # Arrange
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.status_text, 'OK')
         self.assertEqual(response.data, {"message": 'No page results found for collection : "https://www.loc.gov/collections/ibbbranch-rickey-papers/?fa=partof:branch+rickey+papers:+baseball+file,+1906-1971" from loc API'})
+
+
 
