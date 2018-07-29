@@ -15,6 +15,8 @@ class CollectionAdmin(admin.ModelAdmin):
         "start_date",
         "end_date",
         "metadata",
+        "is_active",
+        "s3_storage",
         "status",
     )
     list_display_links = ("id", "title", "slug")

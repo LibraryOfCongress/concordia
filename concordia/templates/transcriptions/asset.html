@@ -154,12 +154,17 @@
     <script src="https://www.jqueryscript.net/demo/Bootstrap-4-Tag-Input-Plugin-jQuery/tagsinput.js"></script>
     <script src="{% static "vendor/openseadragon/openseadragon.min.js" %}"></script>
     <script>
+        {% if asset.collection.s3_storage %}
+            var asset_url = '{{ asset.media_url }}';
+        {% else %}
+            var asset_url = '{{ MEDIA_URL }}{{ asset.media_url }}';
+        {% endif %}
         OpenSeadragon({
             id: 'asset-image',
             prefixUrl: '{% static "vendor/openseadragon/images/" %}',
             tileSources: {
                 type: 'image',
-                url: '{{ MEDIA_URL }}{{asset.media_url }}'
+                url: asset_url
             }
         });
     </script>
