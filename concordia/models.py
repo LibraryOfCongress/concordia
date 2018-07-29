@@ -8,10 +8,9 @@ from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django_prometheus_metrics.models import MetricsModelMixin
 
-from importer.importer.tasks import download_async_collection
-
 metadata_default = dict
 
+User._meta.get_field('email').__dict__['_unique'] = True
 
 class UserProfile(MetricsModelMixin("userprofile"), models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -50,6 +49,7 @@ class Collection(MetricsModelMixin("collection"), models.Model):
     end_date = models.DateTimeField(null=True, blank=True)
     metadata = JSONField(default=metadata_default)
     is_active = models.BooleanField(default=False)
+    s3_storage = models.BooleanField(default=False)
     status = models.CharField(
         max_length=10, choices=Status.CHOICES, default=Status.DEFAULT
     )

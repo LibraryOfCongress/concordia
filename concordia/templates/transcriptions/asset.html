@@ -135,9 +135,13 @@
                         </table>
                     </div>
                 </form>
-                <div style="color:whitesmoke">
+                <div style="color:whitesmoke" id="transcription_state_div">
                     <h5 style="display: inline">Current State:&nbsp;</h5>
                     <h5 id="transcription_state" name="transcription_state" style="display: inline">State value</h5>
+                </div>
+                <div style="color:whitesmoke">
+                    <h5 id="register_or_login_reminder" style="display: inline">Only registered users can tag.
+                        <a href="/account/register/">Register</a> or <a href="/account/login">Login</a></h5>
                 </div>
             </div>
         </div>
@@ -150,20 +154,37 @@
     <script src="https://www.jqueryscript.net/demo/Bootstrap-4-Tag-Input-Plugin-jQuery/tagsinput.js"></script>
     <script src="{% static "vendor/openseadragon/openseadragon.min.js" %}"></script>
     <script>
+        {% if asset.collection.s3_storage %}
+            var asset_url = '{{ asset.media_url }}';
+        {% else %}
+            var asset_url = '{{ MEDIA_URL }}{{ asset.media_url }}';
+        {% endif %}
         OpenSeadragon({
             id: 'asset-image',
             prefixUrl: '{% static "vendor/openseadragon/images/" %}',
             tileSources: {
                 type: 'image',
-                url: '{{ MEDIA_URL }}{{asset.media_url }}'
+                url: asset_url
             }
         });
     </script>
     <script type="text/javascript">
+
+    $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+        var target = $(e.target).attr("href") // activated tab
+        if (target == "#tab-tag") {
+            hide_buttons("tags");
+        }
+    });
+
     function hide_buttons(tab_name) {
         $("#review_button").hide();
         $("#complete_button").hide();
+        $("#register_or_login_reminder").hide();
+
         {% if not user.is_authenticated %}
+            $("#register_or_login_reminder").show();
+
             $("#save_button").hide();
             if (tab_name == 'tags') {
                 $("#tag-input").attr('disabled', true);
@@ -175,6 +196,8 @@
         $("#save_button").show();
         $("#review_button").show();
         $("#complete_button").hide();
+
+        $("#register_or_login_reminder").hide();
 
         $("#transcription-input").attr('disabled', false);
 

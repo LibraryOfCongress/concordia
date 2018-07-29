@@ -144,7 +144,7 @@ CELERY_RESULT_BACKEND = "rpc://"
 
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
-CELERY_IMPORTS = ("importer.importer.tasks",)
+CELERY_IMPORTS = ("importer.tasks",)
 
 LOGGING = {
     "version": 1,
@@ -224,5 +224,7 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
     {"NAME": "concordia.validators.complexity"},
 ]
+
+AUTHENTICATION_BACKENDS = ['concordia.email_username_backend.EmailOrUsernameModelBackend']
 
 REGISTRATION_URLS = "registration.backends.simple.urls"
