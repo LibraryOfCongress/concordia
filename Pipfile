@@ -23,6 +23,7 @@ bagit = "*"
 "5c736a0" = {path = "./vendor/django-registration.zip"}
 django-prometheus-metrics = "*"
 django-widget-tweaks = "*"
+python-dotenv = "*"
 
 [dev-packages]
 invoke = "*"
