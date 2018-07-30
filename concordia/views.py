@@ -206,7 +206,7 @@ class ConcordiaAssetView(TemplateView):
             captcha_form = CaptchaEmbedForm(self.request.POST)
             if not captcha_form.is_valid():
                 logger.info("Invalid captcha response")
-                return redirect(self.request.path) 
+                return self.get(self.request, *args, **kwargs)
         if "tx" in self.request.POST:
             tx = self.request.POST.get("tx")
             status = self.state_dictionary[self.request.POST.get("action")]
