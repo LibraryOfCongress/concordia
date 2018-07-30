@@ -22,6 +22,9 @@ class ComplexityValidator(object):
     def __init__(self):
         self.complexities = PASSWORD_COMPLEXITY
 
+    def get_help_text(self):
+        return _("Your password fails to meet our complexity requirements.")
+
     def validate(self, value, user=None):
         if self.complexities is None:
             return
