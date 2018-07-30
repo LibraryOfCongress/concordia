@@ -38,6 +38,45 @@ class ViewTest_Concordia(TestCase):
 
         self.client.login(username="tester", password="top_secret")
 
+    def test_get_anonymous_user(self):
+        """
+        Test getting the anonymous user. Test the naonymous user does exist, the call
+        get_anonymous_user, make anonymous is created
+        :return:
+        """
+
+        # Arrange
+        anon_user1 = User.objects.filter(username="anonymous").first()
+
+        # Act
+        anon_user_id = views.get_anonymous_user()
+        anon_user_from_db = User.objects.filter(username="anonymous").first()
+
+        # Assert
+        self.assertEqual(anon_user1, None)
+        self.assertEqual(anon_user_id, anon_user_from_db.id)
+
+    def test_get_anonymous_user_already_exists(self):
+        """
+        Test getting the anonymous user when it already exists.
+        :return:
+        """
+
+        # Arrange
+        anon_user = User.objects.create_user(
+            username="anonymous",
+            email="anonymous@anonymous.com",
+            password="concanonymous",
+        )
+
+        # Act
+        anon_user_id = views.get_anonymous_user()
+
+        # Assert
+        self.assertEqual(anon_user_id, anon_user.id)
+
+
+
     def test_concordia_api(self):
         """
         Test the tracribr_api. Provide a mock of requests
@@ -56,6 +95,22 @@ class ViewTest_Concordia(TestCase):
 
             # Assert
             self.assertEqual(results["concordia_data"], "abc123456")
+
+    def test_login_with_email(self):
+        """
+        Test the login is successful with email
+        :return:
+        """
+        # Arrange
+        user = User.objects.create(username="etester", email="etester@foo.com")
+        user.set_password("top_secret")
+        user.save()
+
+        # Act
+        user = self.client.login(username="etester@foo.com", password="top_secret")
+
+        # Assert
+        self.assertTrue(user)
 
     def test_AccountProfileView_get(self):
         """
@@ -152,7 +207,7 @@ class ViewTest_Concordia(TestCase):
         response = self.client.post("/account/profile/", {"first_name": "Jimmy"})
 
         # Assert
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 302)
 
         # Verify the User was not changed
         updated_user = User.objects.get(id=self.user.id)
@@ -464,3 +519,72 @@ class ViewTest_Concordia(TestCase):
 
         self.assertEqual(len(tags), 1)
         self.assertEqual(separate_tags[0].name, tag_name)
+
+    def test_ConcordiaAssetView_post_anonymous(self):
+        """
+        This unit test test the POST route /transcribe/<collection>/asset/<Asset_name>/
+        for an anonymous user. This user should not be able to tag
+        :return:
+        """
+        # Arrange
+
+        # create a collection
+        self.collection = Collection(
+            title="TestCollection",
+            slug="Collection1",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection.save()
+
+        # create an Asset
+        self.asset = Asset(
+            title="TestAsset",
+            slug="Asset1",
+            description="Asset Description",
+            media_url="http://www.foo.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            collection=self.collection,
+            metadata={"key": "val2"},
+            status=Status.EDIT,
+        )
+        self.asset.save()
+
+        # create anonymous user
+        anon_user = User.objects.create(username="anonymous", email="tester@foo.com")
+        anon_user.set_password("blah_anonymous!")
+        anon_user.save()
+
+        # add a Transcription object
+        self.transcription = Transcription(
+            asset=self.asset,
+            user_id=anon_user.id,
+            text="Test transcription 1",
+            status=Status.EDIT,
+        )
+        self.transcription.save()
+
+        tag_name = "Test tag 1"
+
+        # Act
+        response = self.client.post(
+            "/transcribe/Collection1/asset/Asset1/",
+            {"tx": "First Test Transcription", "tags": tag_name, "action": "Save"},
+        )
+
+        # Assert
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, "/transcribe/Collection1/asset/Asset1/")
+
+        # Verify the new transcription and tag are in the db
+        transcription = Transcription.objects.filter(
+            text="First Test Transcription", asset=self.asset
+        )
+        self.assertEqual(len(transcription), 1)
+
+        tags = UserAssetTagCollection.objects.filter(
+            asset=self.asset, user_id=anon_user.id
+        )
+
+        self.assertEqual(len(tags), 0)
