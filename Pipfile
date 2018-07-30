@@ -22,6 +22,7 @@ Whoosh = "*"
 bagit = "*"
 "5c736a0" = {path = "./vendor/django-registration.zip"}
 django-prometheus-metrics = "*"
+django-widget-tweaks = "*"
 
 [dev-packages]
 invoke = "*"
