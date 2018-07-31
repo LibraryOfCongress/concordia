@@ -1,4 +1,6 @@
 
+from datetime import datetime, timedelta
+import json
 import os
 from logging import getLogger
 
@@ -9,16 +11,20 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator
 from django.db.models import Count, Q
+from django.http import HttpResponseRedirect
 from django.shortcuts import Http404, get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.generic import TemplateView
+from rest_framework.test import APIRequestFactory
 from registration.backends.simple.views import RegistrationView
+
 
 from concordia.forms import ConcordiaUserEditForm, ConcordiaUserForm
 from concordia.models import (Asset, Collection, Status, Tag, Transcription,
-                              UserAssetTagCollection, UserProfile)
-from importer.views import CreateCollectionView, get_task_status
+                              UserAssetTagCollection, UserProfile, PageInUse)
 
+from importer.views import CreateCollectionView
+from concordia.views_ws import PageInUseCreate, PageInUsePut
 logger = getLogger(__name__)
 
 ASSETS_PER_PAGE = 36
@@ -33,11 +39,13 @@ def concordia_api(relative_path):
     return data
 
 
-def get_anonymous_user():
+def get_anonymous_user(user_id=True):
     """
     Get the user called "anonymous" if it exist. Create the user if it doesn't exist
 
     This is the default concordia user if someone is working on the site without logging in first.
+    :parameter: user_id Booloean defaults to True, if true returns user is, otherwise return user
+
     :return: User id
     """
     anon_user = User.objects.filter(username="anonymous").first()
@@ -47,7 +55,10 @@ def get_anonymous_user():
             email="anonymous@anonymous.com",
             password="concanonymous",
         )
-    return anon_user.id
+    if user_id:
+        return anon_user.id
+    else:
+        return anon_user
 
 
 class ConcordiaRegistrationView(RegistrationView):
@@ -140,6 +151,9 @@ class ConcordiaCollectionView(TemplateView):
 
 
 class ConcordiaAssetView(TemplateView):
+    """
+    Class to handle GET ansd POST requests on route /transcribe/<collection>/asset/<asset>
+    """
     template_name = "transcriptions/asset.html"
 
     state_dictionary = {
@@ -148,9 +162,33 @@ class ConcordiaAssetView(TemplateView):
         "Mark Completed": Status.COMPLETED,
     }
 
+    def check_page_in_use(self, url, user):
+        """
+        Check the page in use for the asset, return true if in use within the last 5 minutes, otherwise false
+        :param url: url to test if in use
+        :param user: user id
+        :return: True or False
+        """
+        time_threshold = datetime.now() - timedelta(minutes=5)
+        page_in_use_count = PageInUse.objects.filter(page_url=url,
+                                                     updated_on__gt=time_threshold).exclude(user=user).count()
+
+        if page_in_use_count > 0:
+            return True
+        else:
+            return False
+
     def get_context_data(self, **kws):
+        """
+        Handle the GET request
+        :param kws:
+        :return: dictionary of items used in the template
+        """
 
         asset = Asset.objects.get(collection__slug=self.args[0], slug=self.args[1])
+        in_use_url = "/transcribe/%s/asset/%s" % (asset.collection.slug, asset.slug)
+        current_user_id = self.request.user.id if self.request.user.id is not None else get_anonymous_user()
+        page_in_use = self.check_page_in_use(in_use_url, current_user_id)
 
         # Get all transcriptions, they are no longer tied to a specific user
         transcription = Transcription.objects.filter(asset=asset).last()
@@ -170,14 +208,41 @@ class ConcordiaAssetView(TemplateView):
                         tags | tags_in_db.tags.all()
                     ).distinct()  # merge the querysets
 
+        same_page_count_for_this_user = PageInUse.objects.filter(page_url=in_use_url, user=current_user_id).count()
+
+        page_dict = {"page_url": in_use_url,
+                     "user": current_user_id}
+
+        if page_in_use is False and same_page_count_for_this_user == 0:
+            # add this page as being in use by this user
+            # call the web service which will use the serializer to insert the value.
+            # this takes care of deleting old entries in PageInUse table
+
+            factory = APIRequestFactory()
+            request = factory.post("/ws/page_in_use%s/" % (in_use_url,), page_dict)
+            request.session = self.request.session
+
+            PageInUseCreate.as_view()(request)
+        elif same_page_count_for_this_user == 1:
+            # update the PageInUse
+            obj, created = PageInUse.objects.update_or_create(
+                page_url=in_use_url, user=current_user_id)
+
         return dict(
             super().get_context_data(**kws),
+            page_in_use=page_in_use,
             asset=asset,
             transcription=transcription,
             tags=all_tags,
         )
 
     def post(self, *args, **kwargs):
+        """
+        Handle POST from trancribe page for individual asset
+        :param args:
+        :param kwargs:
+        :return: redirect back to same page
+        """
         self.get_context_data()
         asset = Asset.objects.get(collection__slug=self.args[0], slug=self.args[1])
         if "tx" in self.request.POST:
@@ -209,6 +274,29 @@ class ConcordiaAssetView(TemplateView):
                     utags.tags.add(tag_ob)
 
         return redirect(self.request.path)
+
+
+class ConcordiaAlternateAssetView(ConcordiaAssetView):
+    """
+    Class to handle when user opts to work on an alternate asset because another user is already working
+    on the original page
+    """
+
+    def get(self, request, *args, **kwargs):
+        """
+        handle the GET request from the AJAX call in the template when user opts to work on alternate page
+        :param kws:
+        :return:
+        """
+
+        collection_slug = args[0]
+        asset_slug = args[1]
+        collection = Collection.objects.filter(slug=collection_slug)
+
+        # select a random asset in this collection
+        asset = Asset.objects.filter(collection=collection[0]).exclude(slug=asset_slug).order_by('?').first()
+
+        return HttpResponseRedirect('/transcribe/%s/asset/%s/' % (collection_slug, asset.slug))
 
 
 class TranscriptionView(TemplateView):

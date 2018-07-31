@@ -67,13 +67,9 @@ class PageInUsePut(generics.UpdateAPIView):
     lookup_field = 'page_url'
 
     def get_queryset(self):
-        return PageInUse.objects.all().filter(page_url=self.kwargs['page_url'])
+        if 'page_url' in self.kwargs:
+            return PageInUse.objects.all().filter(page_url=self.kwargs['page_url'])
+        elif 'page_url' in self.request.data:
+            return PageInUse.objects.all().filter(page_url=self.request.data['page_url'])
 
-    # def update(self, request, *args, **kwargs):
-    #     instance = self.get_object()
-    #     instance.page_url = request.data.get("page_url")
-    #     instance.save()
-    #     serializer = self.get_serializer(instance)
-    #     serializer.is_valid(raise_exception=True)
-    #     self.perform_update(serializer)
-    #     return super(PageInUsePut, self).update(request, *args, **kwargs)
+

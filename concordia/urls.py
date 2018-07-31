@@ -52,6 +52,11 @@ tx_urlpatterns = (
             name="asset",
         ),
         re_path(
+            r"^([^/]+)/alternateasset/([^/]+)/$",
+            views.ConcordiaAlternateAssetView.as_view(),
+            name="asset",
+        ),
+        re_path(
             r"transcription/(\d+)/$",
             views.TranscriptionView.as_view(),
             name="transcription",

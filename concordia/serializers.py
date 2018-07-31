@@ -50,10 +50,6 @@ class PageInUseSerializer(serializers.ModelSerializer):
         # On every insertion, delete any entries not updated in the last 5 minutes
         from datetime import datetime, timedelta
 
-        all_pages = models.PageInUse.objects.all()
-        for p in all_pages:
-            print(p.page_url, p.created_on, p.updated_on)
-
         time_threshold = datetime.now() - timedelta(minutes=5)
         old_page_entries = models.PageInUse.objects.filter(updated_on__lt=time_threshold)
         for old_page in old_page_entries:

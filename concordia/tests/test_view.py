@@ -9,7 +9,7 @@ from django.test import Client, TestCase
 from PIL import Image
 
 from concordia.models import (Asset, Collection, MediaType, Status, Tag, Transcription,
-                              User, UserAssetTagCollection, UserProfile)
+                              User, UserAssetTagCollection, UserProfile, PageInUse)
 
 
 class ViewTest_Concordia(TestCase):
@@ -464,3 +464,154 @@ class ViewTest_Concordia(TestCase):
 
         self.assertEqual(len(tags), 1)
         self.assertEqual(separate_tags[0].name, tag_name)
+
+    def test_page_in_use_same_user(self):
+        """
+        Test the ConcordiaAssetView page_in_view returns False when PageInUse entry exists for same user
+        :return:
+        """
+        # Arrange
+        self.login_user()
+
+
+
+        # Add values to database
+        self.collection = Collection(
+            title="TestCollection",
+            slug="TestCollection",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection.save()
+
+        # create an Asset
+        self.asset = Asset(
+            title="TestAsset",
+            slug="TestAsset",
+            description="Asset Description",
+            media_url="http://www.foo.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            collection=self.collection,
+            metadata={"key": "val2"},
+            status=Status.EDIT,
+        )
+        self.asset.save()
+
+        in_use_url = "/transcribe/%s/asset/%s/" % (self.asset.collection.slug, self.asset.slug)
+
+        PageInUse.objects.create(
+            page_url=in_use_url,
+            user=self.user)
+
+        # Act
+        concordia_asset_view = views.ConcordiaAssetView()
+
+        results = concordia_asset_view.check_page_in_use(in_use_url, self.user)
+
+        # Assert
+        self.assertEqual(results, False)
+
+    def test_page_in_use_different_user(self):
+        """
+        Test the ConcordiaAssetView page_in_view returns True when PageInUse entry exists with different user
+        :return:
+        """
+        # Arrange
+        self.login_user()
+
+        user2 = User.objects.create(username="tester2", email="tester2@foo.com")
+        user2.set_password("top_secret2")
+        user2.save()
+
+        # Add values to database
+        self.collection = Collection(
+            title="TestCollection",
+            slug="TestCollection",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection.save()
+
+        # create an Asset
+        self.asset = Asset(
+            title="TestAsset",
+            slug="TestAsset",
+            description="Asset Description",
+            media_url="http://www.foo.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            collection=self.collection,
+            metadata={"key": "val2"},
+            status=Status.EDIT,
+        )
+        self.asset.save()
+
+        in_use_url = "/transcribe/%s/asset/%s/" % (self.asset.collection.slug, self.asset.slug)
+
+        PageInUse.objects.create(
+            page_url=in_use_url,
+            user=user2)
+
+        # Act
+        concordia_asset_view = views.ConcordiaAssetView()
+
+        results = concordia_asset_view.check_page_in_use(in_use_url, self.user)
+
+        # Assert
+        self.assertEqual(results, True)
+
+    def test_redirect_when_same_page_in_use(self):
+        """
+        Test the GET route for /transcribe/<collection>/alternateasset/<Asset_name>/
+        :return:
+        """
+        # Arrange
+        self.login_user()
+
+        # create a collection
+        self.collection = Collection(
+            title="TestCollection",
+            slug="Collection1",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection.save()
+
+        # create 2 Assets
+        self.asset = Asset(
+            title="TestAsset",
+            slug="Asset1",
+            description="Asset Description",
+            media_url="http://www.foo.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            collection=self.collection,
+            metadata={"key": "val2"},
+            status=Status.EDIT,
+        )
+        self.asset.save()
+
+        self.asset2 = Asset(
+            title="TestAsset2",
+            slug="Asset2",
+            description="Asset Description",
+            media_url="http://www.foo.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            collection=self.collection,
+            metadata={"key": "val2"},
+            status=Status.EDIT,
+        )
+        self.asset2.save()
+
+        # Act
+        response = self.client.get("/transcribe/Collection1/alternateasset/Asset1/")
+
+        # Assert
+        self.assertEqual(response.status_code, 302)
+
+        # only 2 assets in collection, this response should be for the other asset
+        self.assertEqual(response.url, "/transcribe/Collection1/asset/Asset2/")
+
+
+

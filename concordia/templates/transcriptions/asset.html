@@ -138,6 +138,10 @@
                 <div style="color:whitesmoke">
                     <h5 style="display: inline">Current State:&nbsp;</h5>
                     <h5 id="transcription_state" name="transcription_state" style="display: inline">State value</h5>
+
+
+                        in use: {{ page_in_use}}
+
                 </div>
             </div>
         </div>
@@ -159,6 +163,23 @@
             }
         });
     </script>
+    <script type="text/javascript">
+        function showalert(){
+            var optsel = confirm("This transcription is being worked on by another user.\nYou may lose your work.\nDo you want to work on another page in this collection?");
+            if (optsel == true){
+                alert("You clicked OK!");
+              }
+            else{
+                alert("You clicked Cancel!");
+            }
+        }
+
+       $("document").ready( function () {
+           {% if page_in_use %}
+               showalert();
+           {% endif %}
+    });
+</script>
     <script type="text/javascript">
     function hide_buttons(tab_name) {
         $("#review_button").hide();
