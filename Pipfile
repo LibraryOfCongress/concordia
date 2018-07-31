@@ -28,7 +28,7 @@ django-simple-captcha = "*"
 [dev-packages]
 invoke = "*"
 django-extensions = "*"
-pytest = "*"
+pytest = "==3.6.4"
 pytest-cov = "*"
 pytest-django = "*"
 pytest-html = "*"
