@@ -13,7 +13,7 @@ from faq.views import FAQView
 from importer.views import (CreateCollectionView, check_and_save_collection_assets,
                             get_task_status)
 
-from . import trans_urls, views
+from . import trans_urls, views, views_ws
 
 for key, value in getattr(settings, "ADMIN_SITE", {}).items():
     setattr(admin.site, key, value)
@@ -97,6 +97,12 @@ urlpatterns = [
     re_path(r"^admin/", admin.site.urls),
     # Apps
     re_path(r"^forum/", include(board.urls)),
+
+    # Web Services
+    # Form views
+    re_path(r'^ws/page_in_use/(?P<page_url>(.*?))/$', views_ws.PageInUseGet.as_view()),
+    re_path(r'^ws/page_in_use_update/(?P<page_url>(.*?))/$', views_ws.PageInUsePut.as_view()),
+    re_path(r'^ws/page_in_use/$', views_ws.PageInUseCreate.as_view()),
 ]
 
 urlpatterns += [
