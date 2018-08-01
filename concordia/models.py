@@ -8,10 +8,9 @@ from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django_prometheus_metrics.models import MetricsModelMixin
 
-from importer.importer.tasks import download_async_collection
-
 metadata_default = dict
 
+User._meta.get_field('email').__dict__['_unique'] = True
 
 class UserProfile(MetricsModelMixin("userprofile"), models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)

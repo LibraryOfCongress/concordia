@@ -3,13 +3,15 @@ from django.conf import settings
 from django.conf.urls import include, url
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
-from django.urls import re_path
+from django.urls import include, re_path
 from django.views.generic import TemplateView
 from django.views.static import serve
 from machina.app import board
 
 from exporter import views as exporter_views
 from faq.views import FAQView
+from importer.views import (CreateCollectionView, check_and_save_collection_assets,
+                            get_task_status)
 
 from . import trans_urls, views
 
@@ -62,6 +64,10 @@ urlpatterns = [
     re_path(r"^$", TemplateView.as_view(template_name="home.html")),
     re_path(
         r"^about/$", TemplateView.as_view(template_name="about.html"), name="about"
+    ),
+    re_path(
+        r"^contact/$", views.ContactUsView.as_view(),
+        name="contact"
     ),
     re_path(r"^transcribe/", include(tx_urlpatterns, namespace="transcriptions")),
     re_path(r"^api/v1/", include(trans_urls)),
@@ -117,6 +123,29 @@ urlpatterns += [
 ]
 
 urlpatterns += [
+    re_path(
+        r"^create_collection/$",
+        CreateCollectionView.as_view(),
+        name="create_collection",
+    ),
+    re_path(
+        r"^get_task_status/(?P<task_id>[a-zA-Z0-9-]+)$",
+        get_task_status,
+        name="get_task_status",
+    ),
+    re_path(
+        r"^check_and_save_collection_assets/(?P<task_id>[a-zA-Z0-9-]+)/(?P<item_id>[a-zA-Z0-9-]+)$",
+        check_and_save_collection_assets,
+        name="check_and_save_collection_assets",
+    ),
+    re_path(
+        r"^check_and_save_collection_assets/(?P<task_id>[a-zA-Z0-9-]+)/$",
+        check_and_save_collection_assets,
+        name="check_and_save_collection_assets",
+    ),
+]
+
+urlpatterns += [
     re_path(r"^static/(?P<path>.*)$", serve, {"document_root": settings.STATIC_ROOT})
 ]
 
@@ -125,3 +154,7 @@ urlpatterns += [
 ]
 
 urlpatterns += [url("", include("django_prometheus_metrics.urls"))]
+
+urlpatterns += [
+    url(r'^captcha/', include('captcha.urls')),
+]

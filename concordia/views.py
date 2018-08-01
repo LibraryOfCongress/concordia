@@ -1,28 +1,36 @@
 
+import html
 import os
 from logging import getLogger
 
 import requests
+from captcha.fields import CaptchaField
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
+from django.core.mail import send_mail
 from django.core.paginator import Paginator
 from django.db.models import Count, Q
+from django.http import HttpResponseRedirect
 from django.shortcuts import Http404, get_object_or_404, redirect, render
+from django.template import loader
 from django.urls import reverse
-from django.views.generic import TemplateView
+from django.views.generic import FormView, TemplateView
 from registration.backends.simple.views import RegistrationView
 
-from concordia.forms import ConcordiaUserEditForm, ConcordiaUserForm
-from concordia.models import (
-    Asset,
-    Collection,
-   Status, Tag,
-    Transcription,
-    UserAssetTagCollection,
-    UserProfile
+
+from concordia.forms import (
+    CaptchaEmbedForm,
+    ConcordiaUserEditForm, 
+    ConcordiaUserForm, 
+    ConcordiaContactUsForm
 )
+from concordia.models import (Asset, Collection, Status, Tag, Transcription,
+                              UserAssetTagCollection, UserProfile)
+from importer.views import CreateCollectionView, get_task_status
+
 
 logger = getLogger(__name__)
 
@@ -84,7 +92,7 @@ class AccountProfileView(LoginRequiredMixin, TemplateView):
                     user=obj, defaults={"myfile": myfile}
                 )
         else:
-            return render(self.request, self.template_name, locals())
+            return HttpResponseRedirect("/account/profile/")
         return redirect(reverse("user-profile"))
 
     def get_context_data(self, **kws):
@@ -102,12 +110,18 @@ class AccountProfileView(LoginRequiredMixin, TemplateView):
         profile = UserProfile.objects.filter(user=self.request.user)
         if profile:
             data["myfile"] = profile[0].myfile
+
+        transcriptions = \
+            Transcription.objects.filter(user_id=self.request.user.id).order_by("-updated_on")
+
+        for t in transcriptions:
+            collection = Collection.objects.get(id=t.asset.collection.id)
+            t.collection_name = collection.slug
+
         return super().get_context_data(
             **dict(
                 kws,
-                transcriptions=Transcription.objects.filter(
-                    user_id=self.request.user.id
-                ).order_by("-updated_on"),
+                transcriptions=transcriptions,
                 form=ConcordiaUserEditForm(initial=data),
             )
         )
@@ -171,18 +185,28 @@ class ConcordiaAssetView(TemplateView):
                     all_tags = tags
                 else:
                     pass
-                    all_tags = (tags | tags_in_db.tags.all()).distinct()  # merge the querysets
+                    all_tags = (
+                        tags | tags_in_db.tags.all()
+                    ).distinct()  # merge the querysets
+        
+        captcha_form = CaptchaEmbedForm()
 
         return dict(
             super().get_context_data(**kws),
             asset=asset,
             transcription=transcription,
             tags=all_tags,
+            captcha_form=captcha_form
         )
 
     def post(self, *args, **kwargs):
-        self.get_context_data()
+        ctx = self.get_context_data()
         asset = Asset.objects.get(collection__slug=self.args[0], slug=self.args[1])
+        if self.request.user.is_anonymous:
+            captcha_form = CaptchaEmbedForm(self.request.POST)
+            if not captcha_form.is_valid():
+                logger.info("Invalid captcha response")
+                return self.get(self.request, *args, **kwargs)
         if "tx" in self.request.POST:
             tx = self.request.POST.get("tx")
             status = self.state_dictionary[self.request.POST.get("action")]
@@ -197,7 +221,7 @@ class ConcordiaAssetView(TemplateView):
             )
             asset.status = status
             asset.save()
-        if "tags" in self.request.POST and len(self.request.POST.get("tags")) > 0:
+        if "tags" in self.request.POST and self.request.user.is_authenticated == True:
             tags = self.request.POST.get("tags").split(",")
             utags, status = UserAssetTagCollection.objects.get_or_create(
                 asset=asset, user_id=self.request.user.id
@@ -229,6 +253,35 @@ class TranscriptionView(TemplateView):
 
 class ToDoView(TemplateView):
     template_name = "todo.html"
+    
+
+class ContactUsView(FormView):
+    template_name = "contact.html"
+    form_class = ConcordiaContactUsForm
+    success_url = '.'
+    
+    def post(self, *args, **kwargs):
+        email = html.escape(self.request.POST.get("email") or "")
+        subject = html.escape(self.request.POST.get("subject") or "")
+        category = html.escape(self.request.POST.get("category") or "")
+        link = html.escape(self.request.POST.get("link") or "")
+        story = html.escape(self.request.POST.get("story") or "")
+    
+        t = loader.get_template('emails/contact_us_email.txt')
+        send_mail(subject, t.render({
+                'from_email': email,
+                'subject': subject,
+                'category': category,
+                'link': link,
+                'story': story
+              }),
+              getattr(settings, 'DEFAULT_FROM_EMAIL'),
+              [getattr(settings, 'DEFAULT_TO_EMAIL'), ], 
+              fail_silently=True)
+
+        messages.success(self.request, 'Your contact message has been sent...')
+        
+        return redirect('contact')
 
 
 class ExperimentsView(TemplateView):
@@ -244,21 +297,11 @@ class CollectionView(TemplateView):
         name = self.request.POST.get("name")
         url = self.request.POST.get("url")
         slug = name.replace(" ", "-")
-        collection_path = os.path.join(settings.MEDIA_ROOT, "concordia", slug)
-        c = Collection.objects.create(title=name, slug=slug, description=name)
-        c.copy_images_to_collection(url, collection_path)
-        c.create_assets_from_filesystem(collection_path)
-        c.is_active = 1
-        c.save()
-        if c:
-            return redirect(
-                reverse(
-                    "transcriptions:collection",
-                    args=[slug],
-                    current_app=self.request.resolver_match.namespace,
-                )
-            )
-        return render(self.request, self.template_name, {"error": "yes"})
+
+        view = CreateCollectionView.as_view()
+        importer_resp = view(self.request, *args, **kwargs)
+
+        return render(self.request, self.template_name, importer_resp.data)
 
 
 class DeleteCollectionView(TemplateView):

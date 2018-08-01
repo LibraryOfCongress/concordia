@@ -3,15 +3,23 @@
 {% block title %}Citizen Historian Create a Collection{% endblock title %}
 {% block head_content %}{% endblock head_content %}
 {% block main_content %}
+<script src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
 <div class="container-fluid py-default" id='container'>
   <div class="row">
     <div class="col-md-10 mx-auto bg-offwhite rounded">
       <h3 class="mt-half ml-half">Import a New Collection</h3>
       <div class="text-center d-none loading">
-      	<div class="loading-pulse mx-auto"></div>
+       <div class="loading-pulse mx-auto"></div>
               <h6 class="form-text offwhite-text">Creating the collection for you</h6>
       </div>
-      <form class="mx-default my-default" method="POST" onsubmit="return handle_form_submission()">
+        <div class="alert alert-danger alert-dismissible fade show" id="close_error" role="alert">
+          <button type="button" class="close" onclick="hide_box()" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <strong id="error_msg"></strong>
+        </div>
+
+{#      <form class="mx-default my-default" method="POST" onsubmit="return handle_form_submission()">#}
       {% if error %}
         <div class="alert alert-danger alert-dismissible fade show" id="close" role="alert">
           <button type="button" class="close" onclick="hide_box()" data-dismiss="alert" aria-label="Close">
@@ -31,14 +39,18 @@
         <input type="url" class="form-control" id="url" name="url" required>
       </div>
       <div class="d-flex col-lg-6 col-md-8 mx-auto justify-content-between pt-half">
-        <button type="submit" class="btn btn-primary mr-auto">Create</button>
+        <button type="submit" class="btn btn-primary mr-auto" id="create_btn">Create</button>
         <a href="/transcribe" role="button" class="btn btn-dark">Cancel</a>
     </div>
-      </form>
+{#      </form>#}
     </div>
+        <input type="hidden" id="task_id">
+        <input type="hidden" id="collection_slug">
+        <input type="hidden" id="item_id">
   </div>
 </div>
 <script>
+$("#close_error").hide();
 function handle_form_submission()
 {
   $(".loading").removeClass("d-none");
@@ -47,5 +59,108 @@ function handle_form_submission()
 function hide_box(){
    document.getElementById("close").style.display = "none";
 }
+
+function write_save_collection_assets(task_id){
+   $("#close_error").hide();
+   $.ajax({
+        url: "/check_and_save_collection_assets/"+task_id+"/"+$("#item_id").val(),
+        type: 'GET',
+        success: function(data, textStatus, jqXHR) {
+            console.log("response: ", data);
+            var slug = $("#collection_slug").val().toLowerCase().replace(/ +/g,'-');
+            window.location.href = "/transcribe/"+slug+"/";
+        }
+    }).fail(function(jqXHR, textStatus, errorThrown) {
+        if(jqXHR.status == 0 || jqXHR == 302) {
+            console.log('Your session has ended due to inactivity after 10 minutes.\nPlease refresh this page, or close this window and log back in to system.');
+        } else {
+            console.log('Unknown error returned while saving' + (typeof errorThrown == 'string' && errorThrown.trim().length > 0 ? ':\n' + errorThrown : ''));
+         $("#error_msg").html("Sorry..!! There is some error for creating collection...");
+        $(".loading").addClass("d-none");
+        $("#close_error").show();
+        }
+    });
+
+}
+
+function get_task_status(task_id){
+    $.ajax({
+        url: "/get_task_status/"+task_id,
+        type: 'GET',
+        success: function(data, textStatus, jqXHR) {
+            console.log("gts: ", gts);
+            var gts = setTimeout(get_task_status($("#task_id").val()), 60000);
+            if(data == 'SUCCESS'){
+                write_save_collection_assets(task_id);
+                clearInterval(gts);
+            }
+            <!--clearInterval(gts);-->
+
+        }
+    }).fail(function(jqXHR, textStatus, errorThrown) {
+        if(jqXHR.status == 0 || jqXHR == 302) {
+            console.log('Your session has ended due to inactivity after 10 minutes.\nPlease refresh this page, or close this window and log back in to system.');
+        } else {
+            console.log('Unknown error returned while saving' + (typeof errorThrown == 'string' && errorThrown.trim().length > 0 ? ':\n' + errorThrown : ''));
+        }
+    });
+}
+
+$("#create_btn").click(function(){
+    $(".loading").removeClass("d-none");
+    $("#close_error").hide();
+    $("#task_id, #collection_slug, #item_id").val("");
+    var name = $("#name").val();
+    var url = $("#url").val();
+    var create_type = '';
+    if(url.indexOf('/item/')>=0){
+        create_type = "item";
+        $("#item_id").val(get_item_id_from_item_url(url));
+    }else{
+        create_type = "collections";
+        $("#item_id").val("");
+    }
+
+    $.ajax({
+        url: '/create_collection/',
+        type: 'post',
+        data: {"name": name, "url": url, "create_type": create_type,'csrfmiddlewaretoken': $("input[name=csrfmiddlewaretoken]").val()},
+        success: function(data, textStatus, jqXHR) {
+            $("#task_id").val(data['task_id']);
+            $("#collection_slug").val(data['name']);
+            var gts = setTimeout(get_task_status(data['task_id']), 60000);
+        }
+    }).fail(function(data, jqXHR, textStatus, errorThrown) {
+        console.log("data: ", data);
+        if(jqXHR.status == 0 || jqXHR == 302) {
+            $("#error_msg").html("Sorry..!! There is some error for creating collection...");
+        } else {
+            if(data.responseJSON.message){
+                 $("#error_msg").html(data.responseJSON.message);
+	    }
+	    else{
+ 		$("#error_msg").html("Sorry..!! There is some error for creating collection...");
+            }
+        }
+        $(".loading").addClass("d-none");
+        $("#close_error").show();
+    });
+})
+
+function get_item_id_from_item_url(item_url){
+    var item_id = '';
+    var item_splits = item_url.split("/")
+    if(item_url.endsWith("/")){
+        item_id = item_splits[item_splits.length - 2]
+    }
+    else{
+        item_id = item_splits[item_splits.length - 1]
+    }
+    return item_id;
+}
+
+get_task_status($("#task_id").val());
+
 </script>
 {% endblock main_content %}
+

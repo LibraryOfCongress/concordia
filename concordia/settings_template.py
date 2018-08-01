@@ -74,6 +74,7 @@ INSTALLED_APPS = [
     "faq",
     "importer",
     "concordia.experiments.wireframes",
+    "captcha",
     # Machina related apps:
     "mptt",
     "haystack",
@@ -144,7 +145,7 @@ CELERY_RESULT_BACKEND = "rpc://"
 
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
-CELERY_IMPORTS = ("importer.importer.tasks",)
+CELERY_IMPORTS = ("importer.tasks",)
 
 LOGGING = {
     "version": 1,
@@ -225,4 +226,10 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "concordia.validators.complexity"},
 ]
 
+AUTHENTICATION_BACKENDS = ['concordia.email_username_backend.EmailOrUsernameModelBackend']
+
 REGISTRATION_URLS = "registration.backends.simple.urls"
+
+CAPTCHA_CHALLENGE_FUNCT = 'captcha.helpers.math_challenge'
+CAPTCHA_FIELD_TEMPLATE = 'captcha/field.html'
+CAPTCHA_TEXT_FIELD_TEMPLATE = 'captcha/text_field.html'
