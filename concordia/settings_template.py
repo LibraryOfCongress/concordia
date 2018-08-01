@@ -146,6 +146,15 @@ CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_IMPORTS = ("importer.tasks",)
 
+CELERY_BROKER_HEARTBEAT = 0
+CELERY_BROKER_TRANSPORT_OPTIONS = {
+  "confirm_publish": True,
+  "max_retries": 3,
+  "interval_start": 0,
+  "interval_step": 0.2,
+  "interval_max": 0.5
+}
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
