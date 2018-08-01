@@ -7,6 +7,7 @@ from django.contrib.auth.models import User
 from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django_prometheus_metrics.models import MetricsModelMixin
+from django.utils import timezone
 
 metadata_default = dict
 
@@ -105,6 +106,45 @@ class Subcollection(models.Model):
     class Meta:
         unique_together = (("slug", "collection"),)
         ordering = ["title"]
+
+
+class PageInUse(models.Model):
+    page_url = models.CharField(max_length=256)
+    user = models.ForeignKey(User, models.DO_NOTHING)
+    created_on = models.DateTimeField(editable=False)
+    updated_on = models.DateTimeField()
+
+    def save(self, *args, **kwargs):
+        """
+        On save, update timestamps. Allows assignment of created_on and updated_on timestamp used in testing
+        :param args:
+        :param kwargs:
+        :return:
+        """
+        # if not self.id and not self.created_on:
+        #     self.created_on = timezone.now()
+        #
+        # self.updated_on = timezone.now()
+        # return super(PageInUse, self).save(*args, **kwargs)
+
+    def save(self, force_insert=False, *args, **kwargs):
+        updated = False
+        if self.pk and not force_insert:
+            updated = self.custom_update()
+        if not updated:
+            self.custom_insert()
+        return super(PageInUse, self).save(*args, **kwargs)
+
+    def custom_update(self):
+        self.updated_on = timezone.now()
+        return True
+
+    def custom_insert(self):
+        self.created_on = timezone.now()
+        if not self.updated_on:
+            self.updated_on = timezone.now()
+
+
 
 
 class Asset(models.Model):

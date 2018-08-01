@@ -210,6 +210,10 @@ ACCOUNT_ACTIVATION_DAYS = 7
 REST_FRAMEWORK = {
     "PAGE_SIZE": 10,
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework.authentication.BasicAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+    )
 }
 
 CONCORDIA = {"netloc": "http://0.0.0.0:80"}
