@@ -59,7 +59,7 @@ class CreateCollectionView(generics.CreateAPIView):
                 ctd = CollectionTaskDetails.objects.create(**collection_details)
                 ctd.save()
             data["task_id"] = download_task.task_id
-        data["item_id"] = get_item_id_from_item_url(url)
+            data["item_id"] = get_item_id_from_item_url(url)
 
         headers = self.get_success_headers(data)
 
