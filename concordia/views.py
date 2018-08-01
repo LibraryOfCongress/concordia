@@ -11,10 +11,10 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator
 from django.db.models import Count, Q
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import Http404, get_object_or_404, redirect, render
 from django.urls import reverse
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, View
 from rest_framework.test import APIRequestFactory
 from registration.backends.simple.views import RegistrationView
 
@@ -44,9 +44,9 @@ def get_anonymous_user(user_id=True):
     Get the user called "anonymous" if it exist. Create the user if it doesn't exist
 
     This is the default concordia user if someone is working on the site without logging in first.
-    :parameter: user_id Booloean defaults to True, if true returns user is, otherwise return user
+    :parameter: user_id Boolean defaults to True, if true returns user id, otherwise return user object
 
-    :return: User id
+    :return: User id or User
     """
     anon_user = User.objects.filter(username="anonymous").first()
     if anon_user is None:
@@ -186,7 +186,7 @@ class ConcordiaAssetView(TemplateView):
         """
 
         asset = Asset.objects.get(collection__slug=self.args[0], slug=self.args[1])
-        in_use_url = "/transcribe/%s/asset/%s" % (asset.collection.slug, asset.slug)
+        in_use_url = "/transcribe/%s/asset/%s/" % (asset.collection.slug, asset.slug)
         current_user_id = self.request.user.id if self.request.user.id is not None else get_anonymous_user()
         page_in_use = self.check_page_in_use(in_use_url, current_user_id)
 
@@ -276,27 +276,86 @@ class ConcordiaAssetView(TemplateView):
         return redirect(self.request.path)
 
 
-class ConcordiaAlternateAssetView(ConcordiaAssetView):
+class ConcordiaAlternateAssetView(View):
     """
     Class to handle when user opts to work on an alternate asset because another user is already working
     on the original page
     """
 
-    def get(self, request, *args, **kwargs):
+    def post(self, *args, **kwargs):
         """
-        handle the GET request from the AJAX call in the template when user opts to work on alternate page
-        :param kws:
-        :return:
+        handle the POST request from the AJAX call in the template when user opts to work on alternate page
+        :param request:
+        :param args:
+        :param kwargs:
+        :return: alternate url the client will use to redirect to
         """
 
-        collection_slug = args[0]
-        asset_slug = args[1]
-        collection = Collection.objects.filter(slug=collection_slug)
+        if self.request.is_ajax():
+            json_dict = json.loads(self.request.body)
+            collection_slug = json_dict['collection']
+            asset_slug = json_dict['asset']
+        else:
+            collection_slug = self.request.POST.get('collection', None)
+            asset_slug = self.request.POST.get('asset', None)
 
-        # select a random asset in this collection
-        asset = Asset.objects.filter(collection=collection[0]).exclude(slug=asset_slug).order_by('?').first()
+        if collection_slug and asset_slug:
+            collection = Collection.objects.filter(slug=collection_slug)
 
-        return HttpResponseRedirect('/transcribe/%s/asset/%s/' % (collection_slug, asset.slug))
+            # select a random asset in this collection that has status of EDIT
+            asset = Asset.objects.filter(collection=collection[0],
+                                         status=Status.EDIT).exclude(slug=asset_slug).order_by('?').first()
+
+            return HttpResponse('/transcribe/%s/asset/%s/' % (collection_slug, asset.slug))
+
+
+class ConcordiaPageInUse(View):
+    """
+    Class to handle AJAX calls from the transcription page
+    """
+
+    def post(self, *args, **kwargs):
+        """
+        handle the post request from the periodic AJAX call from the transcription page
+        The primary purpose is to update the entry in PageInUse
+        :param args:
+        :param kwargs:
+        :return: "ok"
+        """
+
+        if self.request.is_ajax():
+            json_dict = json.loads(self.request.body)
+            user = json_dict['user']
+            page_url = json_dict['page_url']
+        else:
+            user = self.request.POST.get('user', None)
+            page_url = self.request.POST.get('page_url', None)
+
+        if user == "AnonymousUser":
+            user = "anonymous"
+
+        if user and page_url:
+            user_obj = User.objects.filter(username=user).first()
+
+            # update the PageInUse
+            obj, created = PageInUse.objects.update_or_create(
+                page_url=page_url, user=user_obj)
+
+            if created:
+                # delete any other PageInUse with same url
+                pages_in_use = PageInUse.objects.filter(page_url=page_url).exclude(user=user_obj)
+                for page in pages_in_use:
+                    page.delete()
+
+        # delete any pages not updated in the last 15 minutes
+        from datetime import datetime, timedelta
+
+        time_threshold = datetime.now() - timedelta(minutes=15)
+        old_page_entries = PageInUse.objects.filter(updated_on__lt=time_threshold)
+        for old_page in old_page_entries:
+            old_page.delete()
+
+        return HttpResponse("ok")
 
 
 class TranscriptionView(TemplateView):

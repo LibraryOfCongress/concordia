@@ -23,6 +23,8 @@ tx_urlpatterns = (
     [
         re_path(r"^$", views.ConcordiaView.as_view(), name="transcribe"),
         re_path(r"^create/$", views.CollectionView.as_view(), name="create"),
+        re_path(r"^pageinuse/$", views.ConcordiaPageInUse.as_view(), name="page in use"),
+        re_path(r"^alternateasset/$", views.ConcordiaAlternateAssetView.as_view(), name="alternate asset"),
         re_path(
             r"^([^/]+)/$", views.ConcordiaCollectionView.as_view(), name="collection"
         ),
@@ -49,11 +51,6 @@ tx_urlpatterns = (
         re_path(
             r"^([^/]+)/asset/([^/]+)/$",
             views.ConcordiaAssetView.as_view(),
-            name="asset",
-        ),
-        re_path(
-            r"^([^/]+)/alternateasset/([^/]+)/$",
-            views.ConcordiaAlternateAssetView.as_view(),
             name="asset",
         ),
         re_path(

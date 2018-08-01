@@ -1,7 +1,7 @@
 # TODO: Add correct copyright header
 
 import tempfile
-from test.support import EnvironmentVarGuard
+import time
 from unittest.mock import Mock, patch
 
 import views
@@ -465,6 +465,72 @@ class ViewTest_Concordia(TestCase):
         self.assertEqual(len(tags), 1)
         self.assertEqual(separate_tags[0].name, tag_name)
 
+    def test_ConcordiaAssetView_get(self):
+        """
+        This unit test test the GET route /transcribe/<collection>/asset/<Asset_name>/
+        with already in use. Verify the updated_on time is updated on PageInUse
+        :return:
+        """
+        # Arrange
+        self.login_user()
+
+        # create a collection
+        self.collection = Collection(
+            title="TestCollection",
+            slug="Collection1",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection.save()
+
+        # create an Asset
+        asset_slug = "Asset1"
+        self.asset = Asset(
+            title="TestAsset",
+            slug=asset_slug,
+            description="Asset Description",
+            media_url="http://www.foo.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            collection=self.collection,
+            metadata={"key": "val2"},
+            status=Status.EDIT,
+        )
+        self.asset.save()
+
+        # add a Transcription object
+        self.transcription = Transcription(
+            asset=self.asset,
+            user_id=self.user.id,
+            text="Test transcription 1",
+            status=Status.EDIT,
+        )
+        self.transcription.save()
+
+        url = "/transcribe/Collection1/asset/Asset1/"
+
+        # Act
+        response = self.client.get(url)
+
+        # Assert
+        self.assertEqual(response.status_code, 200)
+
+        # get PageInUse value
+        page_in_use = PageInUse.objects.get(page_url=url)
+
+        # sleep so update time can be tested against original time
+        time.sleep(2)
+
+        # Act
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+        # get PageInUse value
+        page_in_use2 = PageInUse.objects.get(page_url=url)
+        self.assertNotEqual(page_in_use.updated_on, page_in_use2.updated_on)
+        self.assertEqual(page_in_use.created_on, page_in_use2.created_on)
+
+
     def test_page_in_use_same_user(self):
         """
         Test the ConcordiaAssetView page_in_view returns False when PageInUse entry exists for same user
@@ -605,13 +671,119 @@ class ViewTest_Concordia(TestCase):
         self.asset2.save()
 
         # Act
-        response = self.client.get("/transcribe/Collection1/alternateasset/Asset1/")
+        response = self.client.post("/transcribe/alternateasset/",
+                                    {
+                                        "collection": self.collection.slug,
+                                        "asset": self.asset.slug
+                                    }
+                                    )
 
         # Assert
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 200)
 
         # only 2 assets in collection, this response should be for the other asset
-        self.assertEqual(response.url, "/transcribe/Collection1/asset/Asset2/")
+        self.assertEqual(str(response.content, 'utf-8'), "/transcribe/Collection1/asset/Asset2/")
 
+    def test_pageinuse_post(self):
+        """
+        Test the POST method on /transcribe/pageinuse/ route
 
+        test that matching PageInUse entries with same page_url are deleted
+        test that old entries in PageInUse table are removed
+        :return:
+        """
 
+        # Arrange
+        self.login_user()
+        url = "foo.com/bar"
+
+        user2 = User.objects.create(username="tester2", email="tester2@foo.com")
+        user2.set_password("top_secret")
+        user2.save()
+
+        page1 = PageInUse(
+            page_url=url,
+            user=user2
+        )
+        page1.save()
+
+        from datetime import datetime, timedelta
+
+        time_threshold = datetime.now() - timedelta(minutes=20)
+
+        # add two entries with old timestamps
+        page2 = PageInUse(
+            page_url="foo.com/blah",
+            user=self.user,
+            created_on=time_threshold,
+            updated_on=time_threshold)
+        page2.save()
+
+        page3 = PageInUse(
+            page_url="bar.com/blah",
+            user=self.user,
+            created_on=time_threshold,
+            updated_on=time_threshold)
+        page3.save()
+
+        # Act
+        response = self.client.post(
+            "/transcribe/pageinuse/",
+            {"page_url": url, "user": self.user},
+        )
+
+        # Assert
+        self.assertEqual(response.status_code, 200)
+
+        pages = PageInUse.objects.all()
+        self.assertEqual(len(pages), 1)
+        self.assertNotEqual(page1.created_on, pages[0].created_on)
+
+    def test_pageinuse_multiple_same_entries_in_pageinuse_post(self):
+        """
+        Test the POST method on /transcribe/pageinuse/ route
+        Create an additional entry in PageInUse, verify 1 different entry in PageInUse after call
+        :return:
+        """
+
+        # Arrange
+        self.login_user()
+
+        # Act
+        response = self.client.post(
+            "/transcribe/pageinuse/",
+            {"page_url": "foo.com/bar", "user": self.user},
+        )
+
+        # Assert
+        self.assertEqual(response.status_code, 200)
+
+    def test_get_anonymous_user(self):
+        """
+        Test retrieving the anonymous user
+        :return:
+        """
+
+        # Arrange
+        anon_id = views.get_anonymous_user()
+
+        # Act
+        anon_user = User.objects.get(id=anon_id)
+
+        # Assert
+        self.assertEqual(anon_user.id, anon_id)
+
+    def test_get_anonymous_user_obj(self):
+        """
+        Test retrieving the anonymous user object
+        :return:
+        """
+
+        # Arrange
+        anon_obj = views.get_anonymous_user(False)
+
+        # Act
+        anon_user = User.objects.get(username=anon_obj.username)
+
+        # Assert
+        self.assertEqual(anon_user.id, anon_obj.id)
