@@ -225,7 +225,7 @@ class ConcordiaAssetView(TemplateView):
                     all_tags = (
                         tags | tags_in_db.tags.all()
                     ).distinct()  # merge the querysets
-        
+
         captcha_form = CaptchaEmbedForm()
 
         same_page_count_for_this_user = PageInUse.objects.filter(page_url=in_use_url, user=current_user_id).count()
@@ -258,7 +258,6 @@ class ConcordiaAssetView(TemplateView):
         )
 
     def post(self, *args, **kwargs):
-<<<<<<< HEAD
         """
         Handle POST from trancribe page for individual asset
         :param args:
@@ -266,9 +265,6 @@ class ConcordiaAssetView(TemplateView):
         :return: redirect back to same page
         """
         self.get_context_data()
-=======
-        ctx = self.get_context_data()
->>>>>>> Add captcha implementation using django-simple-captcha
         asset = Asset.objects.get(collection__slug=self.args[0], slug=self.args[1])
         if self.request.user.is_anonymous:
             captcha_form = CaptchaEmbedForm(self.request.POST)

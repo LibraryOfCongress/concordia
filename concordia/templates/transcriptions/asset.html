@@ -332,8 +332,7 @@ input#id_captcha_1 {
         {% endif %}
         show_buttons();
     </script>
-    
-    </script>
+
     {% if user.is_anonymous %}
     <script>
     
@@ -343,13 +342,11 @@ input#id_captcha_1 {
 	               e.preventDefault();
 	               $(this).removeClass("btn-primary");
 	               $(this).prop("disabled",true);                   
-	               $("#captcha_tr").show();   
+	               $("#captcha_tr").show();  
+	               $("input#id_captcha_1").after($('<span class="input-group-btn">' +
+	            		      '<input class="btn .btn-primary" type="submit" name="action" value="Save">Enter</input>' + 
+	            		      '</span>'));
             	   }
-            });
-            
-            $("input#id_captcha_1").keypress(function(e){
-            	   $("#save_button").addClass("btn-primary");
-            	   $("#save_button").prop("disabled",false);
             });
             
             $(".js-captcha-refresh").click(function(e){

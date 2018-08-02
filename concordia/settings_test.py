@@ -7,6 +7,11 @@ LOGGING["handlers"]["celery"]["level"] = "DEBUG"
 LOGGING["handlers"]["celery"]["filename"] = "./logs/concordia-celery.log"
 LOGGING["loggers"]["django"]["level"] = "DEBUG"
 LOGGING["loggers"]["celery"]["level"] = "DEBUG"
+LOGGING["django.db.backends"] = {
+    'handlers': ['null'],  # Quiet by default!
+    'propagate': False,
+    'level': 'DEBUG',
+},
 
 DEBUG = True
 
