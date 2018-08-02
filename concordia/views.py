@@ -1,25 +1,35 @@
 
 from datetime import datetime, timedelta
 import json
+import html
 import os
 from logging import getLogger
 
 import requests
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
+from django.core.mail import send_mail
 from django.core.paginator import Paginator
 from django.db.models import Count, Q
+from django.http import HttpResponseRedirect
 from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import Http404, get_object_or_404, redirect, render
+from django.template import loader
 from django.urls import reverse
+from django.views.generic import FormView, TemplateView
 from django.views.generic import TemplateView, View
 from rest_framework.test import APIRequestFactory
 from registration.backends.simple.views import RegistrationView
 
 
-from concordia.forms import ConcordiaUserEditForm, ConcordiaUserForm
+from concordia.forms import (
+    ConcordiaUserEditForm,
+    ConcordiaUserForm,
+    ConcordiaContactUsForm
+)
 from concordia.models import (Asset, Collection, Status, Tag, Transcription,
                               UserAssetTagCollection, UserProfile, PageInUse)
 
@@ -90,7 +100,7 @@ class AccountProfileView(LoginRequiredMixin, TemplateView):
                     user=obj, defaults={"myfile": myfile}
                 )
         else:
-            return render(self.request, self.template_name, locals())
+            return HttpResponseRedirect("/account/profile/")
         return redirect(reverse("user-profile"))
 
     def get_context_data(self, **kws):
@@ -108,12 +118,18 @@ class AccountProfileView(LoginRequiredMixin, TemplateView):
         profile = UserProfile.objects.filter(user=self.request.user)
         if profile:
             data["myfile"] = profile[0].myfile
+
+        transcriptions = \
+            Transcription.objects.filter(user_id=self.request.user.id).order_by("-updated_on")
+
+        for t in transcriptions:
+            collection = Collection.objects.get(id=t.asset.collection.id)
+            t.collection_name = collection.slug
+
         return super().get_context_data(
             **dict(
                 kws,
-                transcriptions=Transcription.objects.filter(
-                    user_id=self.request.user.id
-                ).order_by("-updated_on"),
+                transcriptions=transcriptions,
                 form=ConcordiaUserEditForm(initial=data),
             )
         )
@@ -259,7 +275,7 @@ class ConcordiaAssetView(TemplateView):
             )
             asset.status = status
             asset.save()
-        if "tags" in self.request.POST and len(self.request.POST.get("tags")) > 0:
+        if "tags" in self.request.POST and self.request.user.is_authenticated == True:
             tags = self.request.POST.get("tags").split(",")
             utags, status = UserAssetTagCollection.objects.get_or_create(
                 asset=asset, user_id=self.request.user.id
@@ -373,6 +389,35 @@ class TranscriptionView(TemplateView):
 
 class ToDoView(TemplateView):
     template_name = "todo.html"
+
+
+class ContactUsView(FormView):
+    template_name = "contact.html"
+    form_class = ConcordiaContactUsForm
+    success_url = '.'
+
+    def post(self, *args, **kwargs):
+        email = html.escape(self.request.POST.get("email") or "")
+        subject = html.escape(self.request.POST.get("subject") or "")
+        category = html.escape(self.request.POST.get("category") or "")
+        link = html.escape(self.request.POST.get("link") or "")
+        story = html.escape(self.request.POST.get("story") or "")
+
+        t = loader.get_template('emails/contact_us_email.txt')
+        send_mail(subject, t.render({
+                'from_email': email,
+                'subject': subject,
+                'category': category,
+                'link': link,
+                'story': story
+              }),
+              getattr(settings, 'DEFAULT_FROM_EMAIL'),
+              [getattr(settings, 'DEFAULT_TO_EMAIL'), ],
+              fail_silently=True)
+
+        messages.success(self.request, 'Your contact message has been sent...')
+
+        return redirect('contact')
 
 
 class ExperimentsView(TemplateView):
