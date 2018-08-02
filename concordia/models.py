@@ -11,6 +11,7 @@ from django.utils import timezone
 
 metadata_default = dict
 
+User._meta.get_field('email').__dict__['_unique'] = True
 
 class UserProfile(MetricsModelMixin("userprofile"), models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
