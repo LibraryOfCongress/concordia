@@ -117,7 +117,7 @@
           <a class="nav-link" href="/">Home</a>
         </li>
         <li class="nav-item active">
-          <a class="nav-link" href="{% url 'transcriptions:transcribe' %}">Transcribe<span class="sr-only">(current)</span></a>
+          <a class="nav-link" href="{% url 'transcriptions:transcribe' %}">Collections<span class="sr-only">(current)</span></a>
         </li>
             {% if user.is_authenticated %}
             <li class="nav-item dropdown nav-dropdown">
@@ -170,6 +170,7 @@
         <a class="blue-text" href="/">HOME</a><br />
         <a class="blue-text" href="#">COLLECTIONS</a><br />
         <a class="blue-text" href="{% url 'about' %}">ABOUT</a><br />
+        <a class="blue-text" href="{% url 'contact' %}">CONTACT US</a><br />
         <a class="blue-text" href="{% url 'faq' %}">FAQ</a><br />
         <a class="blue-text" href="{% url 'legal' %}">LEGAL</a><br />
         <a class="blue-text" href="https://loc.gov">LoC.GOV</a>

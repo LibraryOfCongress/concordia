@@ -122,13 +122,16 @@ body {
 <div class="container well">
     <h3>My Contributions</h3> {% if transcriptions %}
     <table class="table">
+        <tr>
+            <td>Collection</td>
+            <td>Asset Name</td>
+            <td>Date</td>
+        </tr>
         {% for t in transcriptions %}
         <tr>
-            <td></td>
-            <td><a href="#">{{t.asset.title}}</a></td>
-            <td>Transcription</td>
-            <td><a href="#">Share</a></td>
-            <td><a href="#">Visit the forum thread</a></td>
+            <td>{{t.collection_name}}</td>
+            <td><a href="/transcribe/{{t.collection_name}}/asset/{{t.asset.slug}}">{{t.asset.slug}}</a></td>
+            <td>{{ t.updated_on|date:'Y-m-d H:i' }}</td>
         </tr>
         {% endfor %} {% endif %}
     </table>

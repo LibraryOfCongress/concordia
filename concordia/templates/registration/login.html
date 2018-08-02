@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load widget_tweaks %}
 {% block title %}Citizen Historian Login{% endblock title %}
 {% block main_content %}
 <div class="container-fluid">
@@ -11,11 +12,11 @@
                 {% endif %}
                 <div class="form-group form-row justify-content-center">
                     <label class="sr-only" for="id_username">Username</label>
-                    {{ form.username }}
+                    {% render_field form.username placeholder="username or email address" %}
                 </div>
                 <div class="form-group form-row justify-content-center">
                     <label class="sr-only" for="id_password">Password</label>
-                    {{ form.password }}
+                    {% render_field form.password placeholder="password" %}
                 </div>
                 <div class="d-flex col mx-auto justify-content-center pt-half">
                     <a href="{% url 'password_reset' %}" class="text-center blue-text">Forgot my password</a>

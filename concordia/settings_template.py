@@ -144,7 +144,16 @@ CELERY_RESULT_BACKEND = "rpc://"
 
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
-CELERY_IMPORTS = ("importer.importer.tasks",)
+CELERY_IMPORTS = ("importer.tasks",)
+
+CELERY_BROKER_HEARTBEAT = 0
+CELERY_BROKER_TRANSPORT_OPTIONS = {
+  "confirm_publish": True,
+  "max_retries": 3,
+  "interval_start": 0,
+  "interval_step": 0.2,
+  "interval_max": 0.5
+}
 
 LOGGING = {
     "version": 1,
@@ -201,6 +210,10 @@ ACCOUNT_ACTIVATION_DAYS = 7
 REST_FRAMEWORK = {
     "PAGE_SIZE": 10,
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework.authentication.BasicAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+    )
 }
 
 CONCORDIA = {"netloc": "http://0.0.0.0:80"}
@@ -224,5 +237,7 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
     {"NAME": "concordia.validators.complexity"},
 ]
+
+AUTHENTICATION_BACKENDS = ['concordia.email_username_backend.EmailOrUsernameModelBackend']
 
 REGISTRATION_URLS = "registration.backends.simple.urls"

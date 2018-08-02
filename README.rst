@@ -17,14 +17,20 @@ the concordia app and it is not included in the source code respository.
 
 You must create this file in the concordia root directory.
 
-This file contains three values, which are:
+This file contains seven values, which are:
 ::
 
     GRAFANA_ADMIN_PW=<grafana_admin_password_here>
     CONCORDIA_ADMIN_PW=<concordia_admin_password_here>
     POSTGRESQL_PW=<postgresql_concordia_user_password_here>
+    EMAIL_HOST=<your_smtp_email_host_here>
+    EMAIL_HOST_USER=<your_smtp_email_host_user_here>
+    EMAIL_HOST_PASSWORD=<your_smtp_email_host_password_here>
+    DEFAULT_FROM_EMAIL=<your_email_from_address_here>
 
 Replace each <.._password_here> above with your actual password.
+Add values for EMAIL_HOST,EMAIL_HOST_USER,EMAIL_HOST_PASSWORD,DEFAULT_FROM_EMAIL if you want
+a functioning email capability.
 
 The script to create the concordia admin user uses the value matching CONCORDIA_ADMIN_PW as 
 the "admin" user password.

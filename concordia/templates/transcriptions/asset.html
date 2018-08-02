@@ -135,9 +135,13 @@
                         </table>
                     </div>
                 </form>
-                <div style="color:whitesmoke">
+                <div style="color:whitesmoke" id="transcription_state_div">
                     <h5 style="display: inline">Current State:&nbsp;</h5>
                     <h5 id="transcription_state" name="transcription_state" style="display: inline">State value</h5>
+                </div>
+                <div style="color:whitesmoke">
+                    <h5 id="register_or_login_reminder" style="display: inline">Only registered users can tag.
+                        <a href="/account/register/">Register</a> or <a href="/account/login">Login</a></h5>
                 </div>
             </div>
         </div>
@@ -147,6 +151,7 @@
 
 {% block body_scripts %}
     <script src="{% static "js/contribute.js" %}"></script>
+    <script src="{% static "js/jquery.cookie.js" %}"></script>
     <script src="https://www.jqueryscript.net/demo/Bootstrap-4-Tag-Input-Plugin-jQuery/tagsinput.js"></script>
     <script src="{% static "vendor/openseadragon/openseadragon.min.js" %}"></script>
     <script>
@@ -160,10 +165,99 @@
         });
     </script>
     <script type="text/javascript">
+        var csrftoken = $.cookie('csrftoken');
+
+        function csrfSafeMethod(method) {
+            // these HTTP methods do not require CSRF protection
+            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+        }
+
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                }
+            }
+        });
+
+        function checkin_page_in_use() {
+            $.ajax({
+                url : "/transcribe/pageinuse/",
+                type: "post",
+                data: JSON.stringify({ 'page_url' : window.location.pathname,
+                    'user': '{{ user }}' }),
+                processData: false,
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                success: function(data, textStatus, jqXHR)
+                {
+                   $.noop(); // alert('POST success!');//data - response from server
+                },
+                error: function (jqXHR, textStatus, errorThrown)
+                {
+                   $.noop(); // alert('POST failed!');//data - response from server
+
+                }
+            });
+            setTimeout(checkin_page_in_use, 30000);
+
+        }
+
+        function showalert(){
+            var optsel = confirm("This transcription is being worked on by another user.\nYou may lose your work.\nDo you want to work on another page in this collection?");
+            if (optsel == true) {
+                $.ajax({
+                    url: "/transcribe/alternateasset/",
+                    type: "post",
+                    data: JSON.stringify({
+                        'collection': '{{ asset.collection.slug }}',
+                        'asset': '{{ asset.slug }}'
+                    }),
+                    processData: false,
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    success: function (data, textStatus, jqXHR) {
+                        // switch to new page
+                        window.location = data;
+                    },
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        $.noop();
+                    }
+                });
+            }
+            else{
+                $.noop();
+            }
+        }
+
+       $("document").ready( function () {
+           setTimeout(checkin_page_in_use, 5000);
+           {% if page_in_use %}
+               showalert();
+           {% endif %}
+       });
+</script>
+    <script type="text/javascript">
+
+    $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+        var target = $(e.target).attr("href") // activated tab
+        if (target == "#tab-tag") {
+            hide_buttons("tags");
+        }
+    });
+
     function hide_buttons(tab_name) {
         $("#review_button").hide();
         $("#complete_button").hide();
+        $("#register_or_login_reminder").hide();
+
         {% if not user.is_authenticated %}
+            $("#register_or_login_reminder").show();
+
             $("#save_button").hide();
             if (tab_name == 'tags') {
                 $("#tag-input").attr('disabled', true);
@@ -175,6 +269,8 @@
         $("#save_button").show();
         $("#review_button").show();
         $("#complete_button").hide();
+
+        $("#register_or_login_reminder").hide();
 
         $("#transcription-input").attr('disabled', false);
 
