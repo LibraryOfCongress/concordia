@@ -6,6 +6,7 @@ import time
 from unittest.mock import Mock, patch
 
 import views
+from captcha.models import CaptchaStore
 from django.test import Client, TestCase
 from django.test.utils import override_settings
 from PIL import Image
@@ -455,52 +456,6 @@ class ViewTest_Concordia(TestCase):
         collection2 = Collection.objects.all()
         self.assertEqual(len(collection2), 0)
 
-    @patch("concordia.views.requests")
-    def test_DeleteCollection_get(self, mock_requests):
-        """
-        Test GET route /transcribe/delete/<slug-value>/ (collection)
-        :return:
-        """
-
-        # Arrange
-        mock_requests.get.return_value.status_code = 200
-        mock_requests.get.return_value.json.return_value = {
-            "concordia_data": "abc123456"
-        }
-
-        # add an item to Collection
-        self.collection = Collection(
-            title="TextCollection",
-            slug="test-slug2",
-            description="Collection Description",
-            metadata={"key": "val1"},
-            status=Status.EDIT,
-        )
-        self.collection.save()
-
-        self.asset = Asset(
-            title="TestAsset",
-            slug="test-slug2",
-            description="Asset Description",
-            media_url="http://www.foo.com/1/2/3",
-            media_type=MediaType.IMAGE,
-            collection=self.collection,
-            metadata={"key": "val2"},
-            status=Status.EDIT,
-        )
-        self.asset.save()
-
-        # Act
-
-        response = self.client.get("/transcribe/delete/test-slug2", follow=True)
-
-        # Assert
-        self.assertEqual(response.status_code, 200)
-
-        # verify the collection is not in db
-        collection2 = Collection.objects.all()
-        self.assertEqual(len(collection2), 0)
-
     def test_ConcordiaAssetView_post(self):
         """
         This unit test test the POST route /transcribe/<collection>/asset/<Asset_name>/
@@ -568,7 +523,6 @@ class ViewTest_Concordia(TestCase):
         self.assertEqual(len(tags), 1)
         self.assertEqual(separate_tags[0].name, tag_name)
 
-    @override_settings(CAPTCHA_TEST_MODE=True)
     def test_ConcordiaAssetView_post_anonymous_happy_path(self):
         """
         This unit test test the POST route /transcribe/<collection>/asset/<Asset_name>/
@@ -621,34 +575,33 @@ class ViewTest_Concordia(TestCase):
             "/transcribe/Collection1/asset/Asset1/")
         self.assertEqual(response.status_code, 200)
         hash_ = re.findall(r'value="([0-9a-f]+)"', str(response.content))[0]
+        captcha_response = CaptchaStore.objects.get(hashkey=hash_).response
 
         response = self.client.post(
             "/transcribe/Collection1/asset/Asset1/",
-            {"tx": "First Test Transcription",
+            {"tx": "First Test Transcription 1",
              "tags": tag_name,
              "action": "Save",
              "captcha_0": hash_,
-             "captcha_1": "PASSED"},
+             "captcha_1": captcha_response},
         )
 
         # Assert
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, "/transcribe/Collection1/asset/Asset1/")
 
-        # Verify the new transcription and tag are in the db
+        # Verify the new transcription in the db
         transcription = Transcription.objects.filter(
-            text="First Test Transcription", asset=self.asset
+            text="First Test Transcription 1", asset=self.asset
         )
         self.assertEqual(len(transcription), 1)
 
         tags = UserAssetTagCollection.objects.filter(
-            asset=self.asset, user_id=self.user.id
+            asset=self.asset, user_id=anon_user.id
         )
-        if tags:
-            separate_tags = tags[0].tags.all()
 
-        self.assertEqual(len(tags), 1)
-        self.assertEqual(separate_tags[0].name, tag_name)
+        # Tag is not in db,  as anonymous user can't tag
+        self.assertEqual(len(tags), 0)
 
     def test_ConcordiaAssetView_post_anonymous_invalid_captcha(self):
         """
@@ -699,6 +652,7 @@ class ViewTest_Concordia(TestCase):
         tag_name = "Test tag 1"
 
         # Act
+        # post as anonymous user without captcha data
         response = self.client.post(
             "/transcribe/Collection1/asset/Asset1/",
             {"tx": "First Test Transcription", "tags": tag_name, "action": "Save"},
@@ -707,17 +661,11 @@ class ViewTest_Concordia(TestCase):
         # Assert
         self.assertEqual(response.status_code, 200)
 
-        # Verify the new transcription and tag are in the db
+        # Verify the new transcription are not in db
         transcription = Transcription.objects.filter(
             text="First Test Transcription", asset=self.asset
         )
         self.assertEqual(len(transcription), 0)
-
-        tags = UserAssetTagCollection.objects.filter(
-            asset=self.asset, user_id=anon_user.id
-        )
-
-        self.assertEqual(len(tags), 0)
 
     def test_ConcordiaAssetView_get(self):
         """
