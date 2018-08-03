@@ -50,6 +50,7 @@ class Collection(MetricsModelMixin("collection"), models.Model):
     end_date = models.DateTimeField(null=True, blank=True)
     metadata = JSONField(default=metadata_default)
     is_active = models.BooleanField(default=False)
+    s3_storage = models.BooleanField(default=False)
     status = models.CharField(
         max_length=10, choices=Status.CHOICES, default=Status.DEFAULT
     )
