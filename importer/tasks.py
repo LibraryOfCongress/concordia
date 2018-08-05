@@ -14,7 +14,11 @@ logger = getLogger(__name__)
 def get_request_data(url, params=None, retry_count=1):
     response = requests.get(url, params=params)
     if response.status_code != 200:
-        return get_request_data(url, params, retry_count + 1)
+        if retry_count <= 3:
+            return get_request_data(url, params, retry_count + 1)
+        else:
+            logger.error("This url: %s is giving error: %s - %s" % (url, response.status_code, response.reason))
+            return {}
     return response.json()
 
 
@@ -44,27 +48,25 @@ def get_collection_item_ids(collection_name, collection_url):
     collection_item_ids = []
     total_pages_count = get_collection_pages(collection_url)
     for page_num in range(1, total_pages_count + 1):
-        resp = get_request_data(collection_url + "&fo=json")
+        resp = get_request_data(collection_url, params={"fo": "json", "sp": str(page_num)})
         page_results = resp.get("results", [])
         logger.info("get_collection_item_ids for page results: ", page_results)
-        if page_results:
-            for pr in page_results:
-                if (
-                    pr.get("id")
-                    and pr.get("image_url")
-                    and "collection" not in pr.get("original_format")
-                    and "web page" not in pr.get("original_format")
-                ):
-                    collection_item_url = pr.get("id")
-                    collection_item_ids.append(collection_item_url.split("/")[-2])
-        else:
-            return Response(
-                {
-                    "message": 'No page results found for collection : "%s" from loc API'
-                    % collection_url
-                }
-            )
-
+        for pr in page_results:
+            if (
+                pr.get("id")
+                and pr.get("image_url")
+                and "collection" not in pr.get("original_format")
+                and "web page" not in pr.get("original_format")
+            ):
+                collection_item_url = pr.get("id")
+                collection_item_ids.append(collection_item_url.split("/")[-2])
+    if not collection_item_ids:
+        return Response(
+            {
+                "message": 'No page results found for collection : "%s" from loc API'
+                % collection_url
+            }
+        )
     try:
         ctd = CollectionTaskDetails.objects.get(collection_slug=collection_name)
         ctd.collection_page_count = total_pages_count
@@ -98,8 +100,8 @@ def get_collection_item_asset_urls(collection_name, item_id):
             for itf in item_file:
                 if itf.get("mimetype") == "image/jpeg":
                     similar_img_urls.append(itf.get("url"))
-            collection_item_asset_urls.append(similar_img_urls[-1])
-
+            if similar_img_urls:
+                collection_item_asset_urls.append(similar_img_urls[-1])
     try:
         ctd = CollectionTaskDetails.objects.get(collection_slug=collection_name)
 
@@ -140,7 +142,7 @@ def download_write_collection_item_asset(image_url, asset_local_path, retry_coun
             logger.error("Error while writing the file to disk : %s " % e)
             if retry_count >= 3:
                 return False
-            download_write_collection_item_assets(
+            download_write_collection_item_asset(
                 image_url, asset_local_path, retry_count=retry_count + 1
             )
 
