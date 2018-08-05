@@ -44,6 +44,11 @@ tx_urlpatterns = (
             name="delete collection",
         ),
         re_path(
+            r"^([^/]+)/delete/asset/([^/]+)/$",
+            views.DeleteAssetView.as_view(),
+            name="delete_asset",
+        ),
+        re_path(
             r"report/([^/]+)/$",
             views.ReportCollectionView.as_view(),
             name="report collection",
