@@ -1,6 +1,8 @@
 GRAFANA_ADMIN_PW=<grafana_admin_password_here>
 CONCORDIA_ADMIN_PW=<concordia_admin_password_here>
 POSTGRESQL_PW=<postgresql_concordia_user_password_here>
+SENTRY_PW=<sentry_password_here>
+SENTRY_SECRET_KEY=<sentry_secret_key_here>
 EMAIL_HOST=<your_smtp_email_host_here>
 EMAIL_HOST_USER=<your_smtp_email_host_user_here>
 EMAIL_HOST_PASSWORD=<your_smtp_email_host_password_here>
