@@ -183,7 +183,8 @@ def download_write_item_assets(collection_name, item_url):
                 logger.info("download_write_item_assets for itf:", itf, type(itf))
                 if itf.get("mimetype") == "image/jpeg":
                     similar_img_urls.append(itf.get("url"))
-            item_asset_urls.append(similar_img_urls[-1])
+            if similar_img_urls:
+                item_asset_urls.append(similar_img_urls[-1])
 
     try:
         ctd = CollectionTaskDetails.objects.get(collection_slug=collection_name)

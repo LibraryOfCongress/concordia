@@ -272,3 +272,32 @@ class GetCollectionItemAssetURLsTest(TestCase):
 
         # Assert
         self.assertListEqual(response, ['http://tile.loc.gov/image-services/iiif/service:mss:mss37820:mss37820-052:08:0001/full/pct:100/0/default.jpg'])
+
+
+class GetItemIdFromItemURLTest(TestCase):
+
+    def test_get_item_id_from_item_url_with_slash(self):
+        """
+        Testing get item id from item url if ends with /
+        """
+        # Arrange
+        url = 'https://www.loc.gov/item/mss859430021/'
+
+        # Act
+        resp = get_item_id_from_item_url(url)
+
+        # Assert
+        self.assertEqual(resp, 'mss859430021')
+
+    def test_get_item_id_from_item_url_without_slash(self):
+        """
+        Testing get item id from item url if ends without /
+        """
+        # Arrange
+        url = 'https://www.loc.gov/item/mss859430021'
+
+        # Act
+        resp = get_item_id_from_item_url(url)
+
+        # Assert
+        self.assertEqual(resp, 'mss859430021')
