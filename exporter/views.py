@@ -117,6 +117,7 @@ class ExportCollectionToBagit(TemplateView):
         csv_dest = "%s/export.csv" % asset_folder
         with open(csv_dest, "w") as csv_file:
             writer = csv.writer(csv_file)
+            # Column Title Row
             writer.writerow(
                 [
                     "Collection",
@@ -129,30 +130,33 @@ class ExportCollectionToBagit(TemplateView):
             )
 
             field_names = ["title", "description", "media_url"]
-            transcription = Transcription.objects.filter(
-                asset=asset, user_id=self.request.user.id
-            )
-            if transcription:
-                transcription = transcription[0].text
-            else:
-                transcription = ""
 
-            tags = UserAssetTagCollection.objects.filter(
-                asset=asset, user_id=self.request.user.id
-            )
-            if tags:
-                tags = list(tags[0].tags.all().values_list("name", flat=True))
-            else:
-                tags = ""
+            for asset in asset_list:
+                transcription = Transcription.objects.filter(
+                    asset=asset, user_id=self.request.user.id
+                )
+                if transcription:
+                    transcription = transcription[0].text
+                else:
+                    transcription = ""
 
-            row = (
-                [collection.title]
-                + [getattr(asset, i) for i in field_names]
-                + [transcription, tags]
-            )
-            writer.writerow(row)
+                tags = UserAssetTagCollection.objects.filter(
+                    asset=asset, user_id=self.request.user.id
+                )
+                if tags:
+                    tags = list(tags[0].tags.all().values_list("name", flat=True))
+                else:
+                    tags = ""
 
-        # Turn Strucutre into bagit format
+                row = (
+                    [collection.title]
+                    + [getattr(asset, i) for i in field_names]
+                    + [transcription, tags]
+                )
+                # Row for each asset
+                writer.writerow(row)
+
+        # Turn Structure into bagit format
         bagit.make_bag(collection_folder, {"Contact-Name": request.user.username})
 
         # Build .zipfile of bagit formatted Collection Folder
