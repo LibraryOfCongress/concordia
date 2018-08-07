@@ -52,7 +52,7 @@ class ViewTest_Exporter(TestCase):
         :return:
         """
 
-        media_url_str = "/concordia/foocollection/testasset/asset.jpg"
+        media_url_str = "/foocollection/testasset/asset.jpg"
         collection_name_str = "foocollection"
         asset_folder_name_str = "testasset"
         asset_name_str = "asset.jpg"
@@ -66,7 +66,9 @@ class ViewTest_Exporter(TestCase):
             slug=collection_name_str,
             description="Collection Description",
             metadata={"key": "val1"},
-            status=Status.PCT_0,
+            is_active=True,
+            s3_storage=False,
+            status=Status.EDIT
         )
         self.collection.save()
 
@@ -78,22 +80,20 @@ class ViewTest_Exporter(TestCase):
             media_url=media_url_str,
             media_type=MediaType.IMAGE,
             collection=self.collection,
+            sequence=0,
             metadata={"key": "val2"},
-            status=Status.PCT_0,
+            status=Status.EDIT
         )
         self.asset.save()
 
         # add a Transcription object
         self.transcription = Transcription(
-            asset=self.asset, user_id=self.user.id, status=Status.PCT_0, text="Sample"
+            asset=self.asset, user_id=self.user.id, status=Status.EDIT, text="Sample"
         )
         self.transcription.save()
 
         # Make sure correct folders structure exists
-        build_folder = "{0}/concordia".format(settings.MEDIA_ROOT)
-        if not os.path.exists(build_folder):
-            os.makedirs(build_folder)
-        collection_folder = "{0}/{1}".format(build_folder,collection_name_str)
+        collection_folder = "{0}/{1}".format(settings.MEDIA_ROOT,collection_name_str)
         if not os.path.exists(collection_folder):
             os.makedirs(collection_folder)
         source_dir = "{0}/{1}".format(collection_folder,asset_folder_name_str)
