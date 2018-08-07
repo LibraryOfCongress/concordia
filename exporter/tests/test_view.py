@@ -1,4 +1,3 @@
-import boto3
 import csv
 import io
 import os
@@ -6,6 +5,7 @@ import shutil
 import sys
 import zipfile
 
+import boto3
 from django.conf import settings
 from django.test import Client, TestCase
 
@@ -67,7 +67,7 @@ class ViewTest_Exporter(TestCase):
             metadata={"key": "val1"},
             is_active=True,
             s3_storage=False,
-            status=Status.EDIT
+            status=Status.EDIT,
         )
         self.collection.save()
 
@@ -81,7 +81,7 @@ class ViewTest_Exporter(TestCase):
             collection=self.collection,
             sequence=0,
             metadata={"key": "val2"},
-            status=Status.EDIT
+            status=Status.EDIT,
         )
         self.asset.save()
 
@@ -92,15 +92,15 @@ class ViewTest_Exporter(TestCase):
         self.transcription.save()
 
         # Make sure correct folders structure exists
-        collection_folder = "{0}/{1}".format(settings.MEDIA_ROOT,collection_name_str)
+        collection_folder = "{0}/{1}".format(settings.MEDIA_ROOT, collection_name_str)
         if not os.path.exists(collection_folder):
             os.makedirs(collection_folder)
-        source_dir = "{0}/{1}".format(collection_folder,asset_folder_name_str)
+        source_dir = "{0}/{1}".format(collection_folder, asset_folder_name_str)
         if not os.path.exists(source_dir):
             os.makedirs(source_dir)
 
         # create source asset file
-        with open("{0}/{1}".format(source_dir,asset_name_str), "w+") as csv_file:
+        with open("{0}/{1}".format(source_dir, asset_name_str), "w+") as csv_file:
             writer = csv.writer(csv_file)
             writer.writerow(
                 [
@@ -135,7 +135,9 @@ class ViewTest_Exporter(TestCase):
             csv_file = zipped_file.read("data/testasset/export.csv")
             self.assertEqual(
                 str(csv_file),
-                "b'Collection,Title,Description,MediaUrl,Transcription,Tags\\r\\nFooCollection,TestAsset,Asset Description,{0},,\\r\\n'".format(media_url_str),  # noqa
+                "b'Collection,Title,Description,MediaUrl,Transcription,Tags\\r\\nFooCollection,TestAsset,Asset Description,{0},,\\r\\n'".format(
+                    media_url_str
+                ),  # noqa
             )
         finally:
             zipped_file.close()
