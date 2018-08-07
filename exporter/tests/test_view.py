@@ -151,6 +151,9 @@ class ViewTest_Exporter(TestCase):
 
 
 class AWS_S3_ConnectionTest(TestCase):
+    """
+    This class contains the test for the AWS S3 Connection
+    """
     def test_connection(self):
         connection = boto3.client(
             "s3",
