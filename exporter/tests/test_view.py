@@ -1,5 +1,4 @@
-# TODO: Add correct copyright header
-
+import boto3
 import csv
 import io
 import os
@@ -147,3 +146,13 @@ class ViewTest_Exporter(TestCase):
             shutil.rmtree(collection_folder)
         except Exception as e:
             pass
+
+
+class AWS_S3_ConnectionTest(TestCase):
+    def test_connection(self):
+        connection = boto3.client(
+            "s3",
+            aws_access_key_id=settings.AWS_S3["AWS_ACCESS_KEY_ID"],
+            aws_secret_access_key=settings.AWS_S3["AWS_SECRET_ACCESS_KEY"],
+        )
+        self.assertIsNotNone(connection)
