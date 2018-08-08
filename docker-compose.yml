@@ -1,16 +1,22 @@
-### Before running any Compose services, make sure you have an .env file 
+### Before running any Compose services, make sure you have an .env file
 # inside your current folder and that it has been populated with the following content:
 #   GRAFANA_ADMIN_PW=<grafana-admin-pw>
 #   CONCORDIA_ADMIN_PW=<concordia-admin-pw>
 #   POSTGRESQL_PW=<postgres-pw>
+#   SENTRY_PW=<sentry_password_here>
+#   SENTRY_SECRET_KEY=<sentry_secret_key_here>
+#   EMAIL_HOST=<your_smtp_email_host_here>
+#   EMAIL_HOST_USER=<your_smtp_email_host_user_here>
+#   EMAIL_HOST_PASSWORD=<your_smtp_email_host_password_here>
+#   DEFAULT_FROM_EMAIL=<your_email_from_address_here>
+
 
 ### Start Docker containers with the following command :
-  #  sudo docker-compose up 
+#  sudo make up
 
-### Create django admin user and assign the grafana admin password.
+### Create grafana user and assign the grafana admin password.
 #  with docker-compose running, in a separate terminal window, enter the following commands:
-#  
-#  sudo docker exec -it concordia_app_1 bash -c "./migrate_and_user.sh"
+#
 #  sudo docker exec -it concordia_grafana bash -c "./setup.sh/grafana_post_run.sh"
 
 version: '3.6'
@@ -28,14 +34,14 @@ services:
       - db_volume:/var/lib/postgresl/data/
     environment:
         - POSTGRES_MULTIPLE_DATABASES=concordia,sentry
-  
+
   rabbit:
     hostname: rabbit
     image: rabbitmq:latest
     ports:
       - 5672:5672
       - 15672:15672
-  
+
   app:
     env_file: ./.env
     build: .
@@ -52,7 +58,7 @@ services:
       - rabbit
     ports:
       - 80:80
-  
+
   importer:
     build:
        context: .
@@ -126,8 +132,64 @@ services:
       - "9200:9200"
       - "5044:5044"
 
+  sentry:
+    env_file: ./.env
+    image: sentry:9
+    restart: unless-stopped
+    ports:
+     - 9000:9000
+    environment:
+      - SENTRY_SECRET_KEY=${SENTRY_SECRET_KEY}
+      - SENTRY_REDIS_HOST=sentry_redis
+      - SENTRY_POSTGRES_HOST=db
+      - SENTRY_DB_USER=sentry
+      - SENTRY_DB_PASSWORD=${POSTGRESQL_PW}
+
+  cron:
+    env_file: ./.env
+    image: sentry:9
+    restart: unless-stopped
+    environment:
+      - SENTRY_SECRET_KEY=${SENTRY_SECRET_KEY}
+      - SENTRY_REDIS_HOST=sentry_redis
+      - SENTRY_POSTGRES_HOST=db
+      - SENTRY_DB_USER=sentry
+      - SENTRY_DB_PASSWORD=${POSTGRESQL_PW}
+    command: run cron
+
+  worker:
+    env_file: ./.env
+    image: sentry:9
+    restart: unless-stopped
+    environment:
+      - SENTRY_SECRET_KEY=${SENTRY_SECRET_KEY}
+      - SENTRY_REDIS_HOST=sentry_redis
+      - SENTRY_POSTGRES_HOST=db
+      - SENTRY_DB_USER=sentry
+      - SENTRY_DB_PASSWORD=${POSTGRESQL_PW}
+    command: run worker
+
+  sentry_redis:
+    image: redis:4.0-alpine
+    restart: unless-stopped
+
+  wait_sentry_redis:
+    image: "waisbrot/wait"
+    environment:
+      TARGETS: sentry_redis:6379
+
+  wait_sentry_postgres:
+    image: "waisbrot/wait"
+    environment:
+      TARGETS: db:5432
+
 volumes:
   db_volume:
   images_volume:
   grafana_data: {}
   prometheus_data: {}
+
+networks:
+  default:
+    external:
+      name: sentry

@@ -1,15 +1,18 @@
 # TODO: Add correct copyright header
 
+import re
 import tempfile
-from test.support import EnvironmentVarGuard
+import time
 from unittest.mock import Mock, patch
 
 import views
+from captcha.models import CaptchaStore
 from django.test import Client, TestCase
+from django.test.utils import override_settings
 from PIL import Image
 
 from concordia.models import (Asset, Collection, MediaType, Status, Tag, Transcription,
-                              User, UserAssetTagCollection, UserProfile)
+                              User, UserAssetTagCollection, UserProfile, PageInUse)
 
 
 class ViewTest_Concordia(TestCase):
@@ -38,6 +41,45 @@ class ViewTest_Concordia(TestCase):
 
         self.client.login(username="tester", password="top_secret")
 
+    def test_get_anonymous_user(self):
+        """
+        Test getting the anonymous user. Test the naonymous user does exist, the call
+        get_anonymous_user, make anonymous is created
+        :return:
+        """
+
+        # Arrange
+        anon_user1 = User.objects.filter(username="anonymous").first()
+
+        # Act
+        anon_user_id = views.get_anonymous_user()
+        anon_user_from_db = User.objects.filter(username="anonymous").first()
+
+        # Assert
+        self.assertEqual(anon_user1, None)
+        self.assertEqual(anon_user_id, anon_user_from_db.id)
+
+    def test_get_anonymous_user_already_exists(self):
+        """
+        Test getting the anonymous user when it already exists.
+        :return:
+        """
+
+        # Arrange
+        anon_user = User.objects.create_user(
+            username="anonymous",
+            email="anonymous@anonymous.com",
+            password="concanonymous",
+        )
+
+        # Act
+        anon_user_id = views.get_anonymous_user()
+
+        # Assert
+        self.assertEqual(anon_user_id, anon_user.id)
+
+
+
     def test_concordia_api(self):
         """
         Test the tracribr_api. Provide a mock of requests
@@ -56,6 +98,22 @@ class ViewTest_Concordia(TestCase):
 
             # Assert
             self.assertEqual(results["concordia_data"], "abc123456")
+
+    def test_login_with_email(self):
+        """
+        Test the login is successful with email
+        :return:
+        """
+        # Arrange
+        user = User.objects.create(username="etester", email="etester@foo.com")
+        user.set_password("top_secret")
+        user.save()
+
+        # Act
+        user = self.client.login(username="etester@foo.com", password="top_secret")
+
+        # Assert
+        self.assertTrue(user)
 
     def test_AccountProfileView_get(self):
         """
@@ -152,7 +210,7 @@ class ViewTest_Concordia(TestCase):
         response = self.client.post("/account/profile/", {"first_name": "Jimmy"})
 
         # Assert
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 302)
 
         # Verify the User was not changed
         updated_user = User.objects.get(id=self.user.id)
@@ -464,3 +522,470 @@ class ViewTest_Concordia(TestCase):
 
         self.assertEqual(len(tags), 1)
         self.assertEqual(separate_tags[0].name, tag_name)
+
+    def test_ConcordiaAssetView_post_anonymous_happy_path(self):
+        """
+        This unit test test the POST route /transcribe/<collection>/asset/<Asset_name>/
+        for an anonymous user. This user should not be able to tag
+        :return:
+        """
+        # Arrange
+
+        # create a collection
+        self.collection = Collection(
+            title="TestCollection",
+            slug="Collection1",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection.save()
+
+        # create an Asset
+        self.asset = Asset(
+            title="TestAsset",
+            slug="Asset1",
+            description="Asset Description",
+            media_url="http://www.foo.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            collection=self.collection,
+            metadata={"key": "val2"},
+            status=Status.EDIT,
+        )
+        self.asset.save()
+
+        # create anonymous user
+        anon_user = User.objects.create(username="anonymous", email="tester@foo.com")
+        anon_user.set_password("blah_anonymous!")
+        anon_user.save()
+
+        # add a Transcription object
+        self.transcription = Transcription(
+            asset=self.asset,
+            user_id=anon_user.id,
+            text="Test transcription 1",
+            status=Status.EDIT,
+        )
+        self.transcription.save()
+
+        tag_name = "Test tag 1"
+
+        # Act
+        response = self.client.get(
+            "/transcribe/Collection1/asset/Asset1/")
+        self.assertEqual(response.status_code, 200)
+        hash_ = re.findall(r'value="([0-9a-f]+)"', str(response.content))[0]
+        captcha_response = CaptchaStore.objects.get(hashkey=hash_).response
+
+        response = self.client.post(
+            "/transcribe/Collection1/asset/Asset1/",
+            {"tx": "First Test Transcription 1",
+             "tags": tag_name,
+             "action": "Save",
+             "captcha_0": hash_,
+             "captcha_1": captcha_response},
+        )
+
+        # Assert
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, "/transcribe/Collection1/asset/Asset1/")
+
+        # Verify the new transcription in the db
+        transcription = Transcription.objects.filter(
+            text="First Test Transcription 1", asset=self.asset
+        )
+        self.assertEqual(len(transcription), 1)
+
+        tags = UserAssetTagCollection.objects.filter(
+            asset=self.asset, user_id=anon_user.id
+        )
+
+        # Tag is not in db,  as anonymous user can't tag
+        self.assertEqual(len(tags), 0)
+
+    def test_ConcordiaAssetView_post_anonymous_invalid_captcha(self):
+        """
+        This unit test test the POST route /transcribe/<collection>/asset/<Asset_name>/
+        for an anonymous user with missing captcha. This user should not be able to tag
+        also
+        :return:
+        """
+        # Arrange
+
+        # create a collection
+        self.collection = Collection(
+            title="TestCollection",
+            slug="Collection1",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection.save()
+
+        # create an Asset
+        self.asset = Asset(
+            title="TestAsset",
+            slug="Asset1",
+            description="Asset Description",
+            media_url="http://www.foo.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            collection=self.collection,
+            metadata={"key": "val2"},
+            status=Status.EDIT,
+        )
+        self.asset.save()
+
+        # create anonymous user
+        anon_user = User.objects.create(username="anonymous", email="tester@foo.com")
+        anon_user.set_password("blah_anonymous!")
+        anon_user.save()
+
+        # add a Transcription object
+        self.transcription = Transcription(
+            asset=self.asset,
+            user_id=anon_user.id,
+            text="Test transcription 1",
+            status=Status.EDIT,
+        )
+        self.transcription.save()
+
+        tag_name = "Test tag 1"
+
+        # Act
+        # post as anonymous user without captcha data
+        response = self.client.post(
+            "/transcribe/Collection1/asset/Asset1/",
+            {"tx": "First Test Transcription", "tags": tag_name, "action": "Save"},
+        )
+
+        # Assert
+        self.assertEqual(response.status_code, 200)
+
+        # Verify the new transcription are not in db
+        transcription = Transcription.objects.filter(
+            text="First Test Transcription", asset=self.asset
+        )
+        self.assertEqual(len(transcription), 0)
+
+    def test_ConcordiaAssetView_get(self):
+        """
+        This unit test test the GET route /transcribe/<collection>/asset/<Asset_name>/
+        with already in use. Verify the updated_on time is updated on PageInUse
+        :return:
+        """
+        # Arrange
+        self.login_user()
+
+        # create a collection
+        self.collection = Collection(
+            title="TestCollection",
+            slug="Collection1",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection.save()
+
+        # create an Asset
+        asset_slug = "Asset1"
+        self.asset = Asset(
+            title="TestAsset",
+            slug=asset_slug,
+            description="Asset Description",
+            media_url="http://www.foo.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            collection=self.collection,
+            metadata={"key": "val2"},
+            status=Status.EDIT,
+        )
+        self.asset.save()
+
+        # add a Transcription object
+        self.transcription = Transcription(
+            asset=self.asset,
+            user_id=self.user.id,
+            text="Test transcription 1",
+            status=Status.EDIT,
+        )
+        self.transcription.save()
+
+        url = "/transcribe/Collection1/asset/Asset1/"
+
+        # Act
+        response = self.client.get(url)
+
+        # Assert
+        self.assertEqual(response.status_code, 200)
+
+        # get PageInUse value
+        page_in_use = PageInUse.objects.get(page_url=url)
+
+        # sleep so update time can be tested against original time
+        time.sleep(2)
+
+        # Act
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+
+        # get PageInUse value
+        page_in_use2 = PageInUse.objects.get(page_url=url)
+        self.assertNotEqual(page_in_use.updated_on, page_in_use2.updated_on)
+        self.assertEqual(page_in_use.created_on, page_in_use2.created_on)
+
+
+    def test_page_in_use_same_user(self):
+        """
+        Test the ConcordiaAssetView page_in_view returns False when PageInUse entry exists for same user
+        :return:
+        """
+        # Arrange
+        self.login_user()
+
+
+
+        # Add values to database
+        self.collection = Collection(
+            title="TestCollection",
+            slug="TestCollection",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection.save()
+
+        # create an Asset
+        self.asset = Asset(
+            title="TestAsset",
+            slug="TestAsset",
+            description="Asset Description",
+            media_url="http://www.foo.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            collection=self.collection,
+            metadata={"key": "val2"},
+            status=Status.EDIT,
+        )
+        self.asset.save()
+
+        in_use_url = "/transcribe/%s/asset/%s/" % (self.asset.collection.slug, self.asset.slug)
+
+        PageInUse.objects.create(
+            page_url=in_use_url,
+            user=self.user)
+
+        # Act
+        concordia_asset_view = views.ConcordiaAssetView()
+
+        results = concordia_asset_view.check_page_in_use(in_use_url, self.user)
+
+        # Assert
+        self.assertEqual(results, False)
+
+    def test_page_in_use_different_user(self):
+        """
+        Test the ConcordiaAssetView page_in_view returns True when PageInUse entry exists with different user
+        :return:
+        """
+        # Arrange
+        self.login_user()
+
+        user2 = User.objects.create(username="tester2", email="tester2@foo.com")
+        user2.set_password("top_secret2")
+        user2.save()
+
+        # Add values to database
+        self.collection = Collection(
+            title="TestCollection",
+            slug="TestCollection",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection.save()
+
+        # create an Asset
+        self.asset = Asset(
+            title="TestAsset",
+            slug="TestAsset",
+            description="Asset Description",
+            media_url="http://www.foo.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            collection=self.collection,
+            metadata={"key": "val2"},
+            status=Status.EDIT,
+        )
+        self.asset.save()
+
+        in_use_url = "/transcribe/%s/asset/%s/" % (self.asset.collection.slug, self.asset.slug)
+
+        PageInUse.objects.create(
+            page_url=in_use_url,
+            user=user2)
+
+        # Act
+        concordia_asset_view = views.ConcordiaAssetView()
+
+        results = concordia_asset_view.check_page_in_use(in_use_url, self.user)
+
+        # Assert
+        self.assertEqual(results, True)
+
+    def test_redirect_when_same_page_in_use(self):
+        """
+        Test the GET route for /transcribe/<collection>/alternateasset/<Asset_name>/
+        :return:
+        """
+        # Arrange
+        self.login_user()
+
+        # create a collection
+        self.collection = Collection(
+            title="TestCollection",
+            slug="Collection1",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection.save()
+
+        # create 2 Assets
+        self.asset = Asset(
+            title="TestAsset",
+            slug="Asset1",
+            description="Asset Description",
+            media_url="http://www.foo.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            collection=self.collection,
+            metadata={"key": "val2"},
+            status=Status.EDIT,
+        )
+        self.asset.save()
+
+        self.asset2 = Asset(
+            title="TestAsset2",
+            slug="Asset2",
+            description="Asset Description",
+            media_url="http://www.foo.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            collection=self.collection,
+            metadata={"key": "val2"},
+            status=Status.EDIT,
+        )
+        self.asset2.save()
+
+        # Act
+        response = self.client.post("/transcribe/alternateasset/",
+                                    {
+                                        "collection": self.collection.slug,
+                                        "asset": self.asset.slug
+                                    }
+                                    )
+
+        # Assert
+        self.assertEqual(response.status_code, 200)
+
+        # only 2 assets in collection, this response should be for the other asset
+        self.assertEqual(str(response.content, 'utf-8'), "/transcribe/Collection1/asset/Asset2/")
+
+    def test_pageinuse_post(self):
+        """
+        Test the POST method on /transcribe/pageinuse/ route
+
+        test that matching PageInUse entries with same page_url are deleted
+        test that old entries in PageInUse table are removed
+        :return:
+        """
+
+        # Arrange
+        self.login_user()
+        url = "foo.com/bar"
+
+        user2 = User.objects.create(username="tester2", email="tester2@foo.com")
+        user2.set_password("top_secret")
+        user2.save()
+
+        page1 = PageInUse(
+            page_url=url,
+            user=user2
+        )
+        page1.save()
+
+        from datetime import datetime, timedelta
+
+        time_threshold = datetime.now() - timedelta(minutes=20)
+
+        # add two entries with old timestamps
+        page2 = PageInUse(
+            page_url="foo.com/blah",
+            user=self.user,
+            created_on=time_threshold,
+            updated_on=time_threshold)
+        page2.save()
+
+        page3 = PageInUse(
+            page_url="bar.com/blah",
+            user=self.user,
+            created_on=time_threshold,
+            updated_on=time_threshold)
+        page3.save()
+
+        # Act
+        response = self.client.post(
+            "/transcribe/pageinuse/",
+            {"page_url": url, "user": self.user},
+        )
+
+        # Assert
+        self.assertEqual(response.status_code, 200)
+
+        pages = PageInUse.objects.all()
+        self.assertEqual(len(pages), 1)
+        self.assertNotEqual(page1.created_on, pages[0].created_on)
+
+    def test_pageinuse_multiple_same_entries_in_pageinuse_post(self):
+        """
+        Test the POST method on /transcribe/pageinuse/ route
+        Create an additional entry in PageInUse, verify 1 different entry in PageInUse after call
+        :return:
+        """
+
+        # Arrange
+        self.login_user()
+
+        # Act
+        response = self.client.post(
+            "/transcribe/pageinuse/",
+            {"page_url": "foo.com/bar", "user": self.user},
+        )
+
+        # Assert
+        self.assertEqual(response.status_code, 200)
+
+    def test_get_anonymous_user(self):
+        """
+        Test retrieving the anonymous user
+        :return:
+        """
+
+        # Arrange
+        anon_id = views.get_anonymous_user()
+
+        # Act
+        anon_user = User.objects.get(id=anon_id)
+
+        # Assert
+        self.assertEqual(anon_user.id, anon_id)
+
+    def test_get_anonymous_user_obj(self):
+        """
+        Test retrieving the anonymous user object
+        :return:
+        """
+
+        # Arrange
+        anon_obj = views.get_anonymous_user(False)
+
+        # Act
+        anon_user = User.objects.get(username=anon_obj.username)
+
+        # Assert
+        self.assertEqual(anon_user.id, anon_obj.id)

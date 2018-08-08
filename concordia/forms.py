@@ -1,5 +1,6 @@
 from logging import getLogger
 
+from captcha.fields import CaptchaField
 from django import forms
 from django.contrib.auth import get_user_model
 from registration.forms import RegistrationForm
@@ -38,6 +39,9 @@ class ConcordiaUserForm(RegistrationForm):
             attrs={"class": "form-control", "placeholder": "Confirm"}
         ),
     )
+    
+    captcha = CaptchaField(
+    )
 
     class Meta:
         model = User
@@ -58,3 +62,55 @@ class ConcordiaUserForm(RegistrationForm):
 
 class ConcordiaUserEditForm(ConcordiaUserForm):
     myfile = forms.FileField(required=False)
+
+
+class ConcordiaContactUsForm(forms.Form):
+    email = forms.CharField(
+        label="Email Address",
+        required=True,
+        widget=forms.EmailInput(
+            attrs={"class": "col-sm-8 form-control"}
+        ),
+    )
+    
+    subject = forms.CharField(
+        label="Subject",
+        required=False,
+        widget=forms.TextInput(
+            attrs={"class": "col-sm-8 form-control"}
+        ),
+    )
+    
+    category = forms.CharField(
+        label="Subject",
+        required=True,
+        widget=forms.Select(
+            choices=(
+                ('General', 'General'),
+                ('Collection', 'Question about collection'),
+                ('Problem', 'Something is not working')
+            ),
+            attrs={"class": "col-sm-8 form-control"}
+        ),
+    )
+    
+    link = forms.CharField(
+        label="Link",
+        required=False,
+        widget=forms.TextInput(
+            attrs={"class": "col-sm-8 form-control"}
+        ),
+    )
+    
+    story = forms.CharField(
+        label="Tell us your story",
+        required=True,
+        widget=forms.Textarea(
+            attrs={"class": "col-sm-8 form-control"}
+        ),
+    )
+
+
+class CaptchaEmbedForm(forms.Form):
+    captcha = CaptchaField()
+

@@ -16,6 +16,11 @@ if [ -n "$POSTGRES_MULTIPLE_DATABASES" ]; then
 	echo "Multiple database creation requested: $POSTGRES_MULTIPLE_DATABASES"
 	for db in $(echo $POSTGRES_MULTIPLE_DATABASES | tr ',' ' '); do
 		create_user_and_database $db
+        if [ $db = "sentry" ]
+        then
+           echo "  Giving sentry superuser powers!!"
+           psql -v ON_ERROR_STOP=1 --username postgres  -c "ALTER ROLE sentry superuser;"
+        fi
 	done
 	echo "Multiple databases created"
 fi
