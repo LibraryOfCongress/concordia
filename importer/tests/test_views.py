@@ -56,7 +56,9 @@ class CreateCollectionViewTests(APITestCase):
 
         # Assert that the request-response cycle completed successfully.
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(response.data.get('message'), "collection %s already exists" % slugify(self.data.get('name')))
+        self.assertEqual(response.data.get('message'),
+                         "collection %s already exists"
+                         % slugify(self.data.get('name')))
 
     @patch('importer.views.download_write_collection_item_assets.delay')
     def test_create_collection(self, mock_download_func):
@@ -78,7 +80,7 @@ class CreateCollectionViewTests(APITestCase):
     @patch('importer.views.download_write_item_assets.delay')
     def test_create_item_with_db_entry(self, mock_download_func):
         """
-        Create item with bad request.
+        Create collection item with CollectionTaskDetails db entry.
         """
         # Arrange
         self.collection[ "collection_task_id"] = "123"
@@ -97,7 +99,7 @@ class CreateCollectionViewTests(APITestCase):
     @patch('importer.views.download_write_item_assets.delay')
     def test_create_item_without_db_entry(self, mock_download_func):
         """
-        Create item with bad request.
+        Create collection item without CollectionTaskDetails db entry.
         """
         # Arrange
         mock_resp_instance = CeleryMockResponse('1234')
