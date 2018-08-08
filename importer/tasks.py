@@ -17,7 +17,10 @@ def get_request_data(url, params=None, retry_count=1):
         if retry_count <= 3:
             return get_request_data(url, params, retry_count + 1)
         else:
-            logger.error("This url: %s is giving error: %s - %s" % (url, response.status_code, response.reason))
+            logger.error(
+                "This url: %s is giving error: %s - %s"
+                % (url, response.status_code, response.reason)
+            )
             return {}
     return response.json()
 
@@ -48,7 +51,9 @@ def get_collection_item_ids(collection_name, collection_url):
     collection_item_ids = []
     total_pages_count = get_collection_pages(collection_url)
     for page_num in range(1, total_pages_count + 1):
-        resp = get_request_data(collection_url, params={"fo": "json", "sp": str(page_num)})
+        resp = get_request_data(
+            collection_url, params={"fo": "json", "sp": str(page_num)}
+        )
         page_results = resp.get("results", [])
         logger.info("get_collection_item_ids for page results: ", page_results)
         for pr in page_results:

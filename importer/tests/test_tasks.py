@@ -5,9 +5,9 @@ from unittest.mock import patch
 from django.template.defaultfilters import slugify
 from django.test import TestCase
 
+from importer.models import *
 from importer.tasks import *
 from importer.tests import mock_data
-from importer.models import *
 
 
 class MockResponse:
@@ -25,15 +25,14 @@ class MockResponse:
 
 
 class GETRequestDataTest(TestCase):
-
     def setUp(self):
         """
         Setting up the required test data input for importer tasks test cases
         :return:
         """
-        self.url = 'https://www.loc.gov/item/mss859430021?fo=json'
+        self.url = "https://www.loc.gov/item/mss859430021?fo=json"
 
-    @patch('importer.tasks.requests.get')  # Mock 'requests' module 'get' method.
+    @patch("importer.tasks.requests.get")  # Mock 'requests' module 'get' method.
     def test_get_request_data(self, mock_get):
         """get data on direct hit"""
 
@@ -49,7 +48,7 @@ class GETRequestDataTest(TestCase):
         self.assertEqual(mock_resp_instance.status_code, 200)
         self.assertEqual(response, mock_resp_instance.json())
 
-    @patch('importer.tasks.requests.get')  # Mock 'requests' module 'get' method.
+    @patch("importer.tasks.requests.get")  # Mock 'requests' module 'get' method.
     def test_get_request_data_retry_once(self, mock_get):
         """get data on first retry"""
 
@@ -67,14 +66,19 @@ class GETRequestDataTest(TestCase):
         self.assertEqual(mock_resp_instance_successs.status_code, 200)
         self.assertEqual(response, mock_resp_instance_successs.json())
 
-    @patch('importer.tasks.requests.get')  # Mock 'requests' module 'get' method.
+    @patch("importer.tasks.requests.get")  # Mock 'requests' module 'get' method.
     def test_get_request_data_retry_more(self, mock_get):
         """Always failing then 3 retry returning empty with logger error"""
 
         # Arrange
         # Construct our mock response object, giving it relevant expected behaviours
         mock_resp_instance_fail = MockResponse({"msg": "bad request"}, 400)
-        mock_get.side_effect = [mock_resp_instance_fail, mock_resp_instance_fail, mock_resp_instance_fail, mock_resp_instance_fail]
+        mock_get.side_effect = [
+            mock_resp_instance_fail,
+            mock_resp_instance_fail,
+            mock_resp_instance_fail,
+            mock_resp_instance_fail,
+        ]
 
         # Act
         response = get_request_data(self.url)
@@ -85,13 +89,12 @@ class GETRequestDataTest(TestCase):
 
 
 class GetCollectionParamsTest(TestCase):
-
     def test_get_collection_params_without_fa(self):
         """
         Testing params of given collection url
         """
         # Arrange
-        url = 'https://www.loc.gov/item/mss859430021?fo=json'
+        url = "https://www.loc.gov/item/mss859430021?fo=json"
 
         # Act
         curl, cparams = get_collection_params(url)
@@ -105,32 +108,33 @@ class GetCollectionParamsTest(TestCase):
         Testing params of given invalid collection url
         """
         # Arrange
-        test_url = 'https://www.loc.gov/collections/branch-rickey-papers/?fa=partof:branch+rickey+papers:+baseball+file,+1906-1971'
+        test_url = "https://www.loc.gov/collections/branch-rickey-papers/?fa=partof:branch+rickey+papers:+baseball+file,+1906-1971"
 
         # Act
         curl, cparams = get_collection_params(test_url)
 
         # Assert
         self.assertEqual(curl, test_url.split("?fa")[0])
-        self.assertEqual(cparams.get('fa'), "partof:branch+rickey+papers:+baseball+file,+1906-1971")
+        self.assertEqual(
+            cparams.get("fa"), "partof:branch+rickey+papers:+baseball+file,+1906-1971"
+        )
 
 
 class GetCollectionPagesTest(TestCase):
-
     def setUp(self):
         """
         Setting up the required test data input for importer tasks test cases
         """
-        self.url = 'https://www.loc.gov/collections/branch-rickey-papers/?fa=partof:branch+rickey+papers:+baseball+file,+1906-1971'
+        self.url = "https://www.loc.gov/collections/branch-rickey-papers/?fa=partof:branch+rickey+papers:+baseball+file,+1906-1971"
 
-    @patch('importer.tasks.requests.get')  # Mock 'requests' module 'get' method.
+    @patch("importer.tasks.requests.get")  # Mock 'requests' module 'get' method.
     def test_get_collection_pages(self, mock_get):
         """
         get collection pages successfully with pages info
         """
         # Arrange
         # Construct our mock response object, giving it relevant expected behaviours
-        mock_resp_instance = MockResponse({"pagination": {"total":10}}, 200)
+        mock_resp_instance = MockResponse({"pagination": {"total": 10}}, 200)
         mock_get.return_value = mock_resp_instance
 
         # Act
@@ -140,7 +144,7 @@ class GetCollectionPagesTest(TestCase):
         self.assertEqual(mock_resp_instance.status_code, 200)
         self.assertEqual(response, 10)
 
-    @patch('importer.tasks.requests.get')  # Mock 'requests' module 'get' method.
+    @patch("importer.tasks.requests.get")  # Mock 'requests' module 'get' method.
     def test_get_collection_sucess_no_pages(self, mock_get):
         """
         get collection pages successfully with no pages info
@@ -160,23 +164,26 @@ class GetCollectionPagesTest(TestCase):
 
 
 class GetCollectionItemidsTest(TestCase):
-
     def setUp(self):
         """
         Setting up the required test data input for importer tasks test cases
         """
-        self.url = 'https://www.loc.gov/collections/branch-rickey-papers/?fa=partof:branch+rickey+papers:+baseball+file,+1906-1971'
-        self.name = 'branch-rickey-papers'
+        self.url = "https://www.loc.gov/collections/branch-rickey-papers/?fa=partof:branch+rickey+papers:+baseball+file,+1906-1971"
+        self.name = "branch-rickey-papers"
 
-    @patch('importer.tasks.requests.get')  # Mock 'requests' module 'get' method.
+    @patch("importer.tasks.requests.get")  # Mock 'requests' module 'get' method.
     def test_get_collection_item_ids(self, mock_get):
         """
         Testing no of collection item ids available in given collection url
         """
         # Arrange
-        collection = {"collection_name": self.name, "collection_slug": slugify(self.name), "collection_task_id": "123"}
+        collection = {
+            "collection_name": self.name,
+            "collection_slug": slugify(self.name),
+            "collection_task_id": "123",
+        }
         CollectionTaskDetails.objects.create(**collection)
-        mock_resp_pages = MockResponse({"pagination": {"total":2}}, 200)
+        mock_resp_pages = MockResponse({"pagination": {"total": 2}}, 200)
         mock_page1_result = MockResponse(mock_data.ITEM_IDS_DATA, 200)
         mock_page2_result = MockResponse({}, 200)
         mock_get.side_effect = [mock_resp_pages, mock_page1_result, mock_page2_result]
@@ -187,17 +194,17 @@ class GetCollectionItemidsTest(TestCase):
         ctd = CollectionTaskDetails.objects.get(collection_slug=self.name)
 
         # Assert
-        self.assertEqual(ctd.collection_page_count,2)
-        self.assertEqual(ctd.collection_item_count,1)
-        self.assertListEqual(response,['mss37820001'])
+        self.assertEqual(ctd.collection_page_count, 2)
+        self.assertEqual(ctd.collection_item_count, 1)
+        self.assertListEqual(response, ["mss37820001"])
 
-    @patch('importer.tasks.requests.get')  # Mock 'requests' module 'get' method.
+    @patch("importer.tasks.requests.get")  # Mock 'requests' module 'get' method.
     def test_get_collection_item_ids_no_ids(self, mock_get):
         """
         Testing no of collection item ids not availabel collection url
         """
         # Arrange
-        mock_resp_pages = MockResponse({"pagination": {"total":2}}, 200)
+        mock_resp_pages = MockResponse({"pagination": {"total": 2}}, 200)
         mock_page1_result = MockResponse({}, 200)
         mock_page2_result = MockResponse({}, 200)
         mock_get.side_effect = [mock_resp_pages, mock_page1_result, mock_page2_result]
@@ -206,15 +213,21 @@ class GetCollectionItemidsTest(TestCase):
         response = get_collection_item_ids(self.name, self.url)
 
         # Arrange
-        self.assertEqual(response.data, {"message": 'No page results found for collection : "%s" from loc API' % self.url})
+        self.assertEqual(
+            response.data,
+            {
+                "message": 'No page results found for collection : "%s" from loc API'
+                % self.url
+            },
+        )
 
-    @patch('importer.tasks.requests.get')  # Mock 'requests' module 'get' method.
+    @patch("importer.tasks.requests.get")  # Mock 'requests' module 'get' method.
     def test_get_collection_item_ids_no_db_entry(self, mock_get):
         """
         Testing no of collection item ids with out collectiontsakdetails db entry collection url
         """
         # Arrange
-        mock_resp_pages = MockResponse({"pagination": {"total":2}}, 200)
+        mock_resp_pages = MockResponse({"pagination": {"total": 2}}, 200)
         mock_page1_result = MockResponse(mock_data.ITEM_IDS_DATA, 200)
         mock_page2_result = MockResponse({}, 200)
         mock_get.side_effect = [mock_resp_pages, mock_page1_result, mock_page2_result]
@@ -223,25 +236,34 @@ class GetCollectionItemidsTest(TestCase):
         response = get_collection_item_ids(self.name, self.url)
 
         # Arrange
-        self.assertEqual(response.data, {"message": "Unable to create item entries for collection : %s" % self.name})
+        self.assertEqual(
+            response.data,
+            {
+                "message": "Unable to create item entries for collection : %s"
+                % self.name
+            },
+        )
 
 
 class GetCollectionItemAssetURLsTest(TestCase):
-
     def setUp(self):
         """
         Setting up the required test data input for importer tasks test cases
         """
-        self.name = 'branch-rickey-papers'
-        self.item_id= 'mss37820001'
+        self.name = "branch-rickey-papers"
+        self.item_id = "mss37820001"
 
-    @patch('importer.tasks.requests.get')  # Mock 'requests' module 'get' method.
+    @patch("importer.tasks.requests.get")  # Mock 'requests' module 'get' method.
     def test_get_collection_asset_urls(self, mock_get):
         """
         Testing no of collection item asset urls available in given item id
         """
         # Arrange
-        collection = {"collection_name": self.name, "collection_slug": slugify(self.name), "collection_task_id": "123"}
+        collection = {
+            "collection_name": self.name,
+            "collection_slug": slugify(self.name),
+            "collection_task_id": "123",
+        }
         CollectionTaskDetails.objects.create(**collection)
         mock_resp = MockResponse(mock_data.COLLECTION_ITEM_URLS_DATA, 200)
         mock_get.return_value = mock_resp
@@ -250,15 +272,20 @@ class GetCollectionItemAssetURLsTest(TestCase):
         response = get_collection_item_asset_urls(self.name, self.item_id)
 
         ctd = CollectionTaskDetails.objects.get(collection_slug=self.name)
-        ciac = CollectionItemAssetCount.objects.get(collection_slug = ctd.collection_slug)
+        ciac = CollectionItemAssetCount.objects.get(collection_slug=ctd.collection_slug)
 
         # Assert
         self.assertEqual(ciac.collection_item_asset_count, 1)
         self.assertEqual(ciac.collection_item_identifier, self.item_id)
         self.assertEqual(ctd.collection_asset_count, 1)
-        self.assertListEqual(response, ['http://tile.loc.gov/image-services/iiif/service:mss:mss37820:mss37820-052:08:0001/full/pct:100/0/default.jpg'])
+        self.assertListEqual(
+            response,
+            [
+                "http://tile.loc.gov/image-services/iiif/service:mss:mss37820:mss37820-052:08:0001/full/pct:100/0/default.jpg"
+            ],
+        )
 
-    @patch('importer.tasks.requests.get')  # Mock 'requests' module 'get' method.
+    @patch("importer.tasks.requests.get")  # Mock 'requests' module 'get' method.
     def test_get_collection_asset_urls_no_db_entry(self, mock_get):
         """
         Testing no of collection item asset urls available in given item id wiht no db entry in CollectionTaskDetails
@@ -271,33 +298,37 @@ class GetCollectionItemAssetURLsTest(TestCase):
         response = get_collection_item_asset_urls(self.name, self.item_id)
 
         # Assert
-        self.assertListEqual(response, ['http://tile.loc.gov/image-services/iiif/service:mss:mss37820:mss37820-052:08:0001/full/pct:100/0/default.jpg'])
+        self.assertListEqual(
+            response,
+            [
+                "http://tile.loc.gov/image-services/iiif/service:mss:mss37820:mss37820-052:08:0001/full/pct:100/0/default.jpg"
+            ],
+        )
 
 
 class GetItemIdFromItemURLTest(TestCase):
-
     def test_get_item_id_from_item_url_with_slash(self):
         """
         Testing get item id from item url if ends with /
         """
         # Arrange
-        url = 'https://www.loc.gov/item/mss859430021/'
+        url = "https://www.loc.gov/item/mss859430021/"
 
         # Act
         resp = get_item_id_from_item_url(url)
 
         # Assert
-        self.assertEqual(resp, 'mss859430021')
+        self.assertEqual(resp, "mss859430021")
 
     def test_get_item_id_from_item_url_without_slash(self):
         """
         Testing get item id from item url if ends without /
         """
         # Arrange
-        url = 'https://www.loc.gov/item/mss859430021'
+        url = "https://www.loc.gov/item/mss859430021"
 
         # Act
         resp = get_item_id_from_item_url(url)
 
         # Assert
-        self.assertEqual(resp, 'mss859430021')
+        self.assertEqual(resp, "mss859430021")
