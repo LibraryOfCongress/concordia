@@ -331,20 +331,18 @@ input#id_captcha_1 {
                 switch ("{{ transcription.status }}") {
                     case 'Edit':
                         $("#transcription_state").text("Transcription is open for Edit");
-                        setTimeout( function() { $('#show_message').html('<div class="alert alert-success"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a><strong>Success!</strong> We did the thing!</div>') }, 3000 )
+                        $('#show_message').html('<div class="alert alert-success fade" role="alert"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a><strong>Success!</strong> Your edits have been saved.</div>').delay(3000).alert('close');
                         break;
                     case 'Submitted':
                         $("#transcription_state").text("Transcription is submitted for Review");
-                        setTimeout( function() { $('#show_message').html('<div class="alert alert-success"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a><strong>Success!</strong> We did the other thing!</div>') }, 3000 )
+                        $('#show_message').html('<div class="alert alert-success fade" role="alert"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a><strong>Success!</strong> The transcription is ready for review.</div>').delay(3000).alert('close');
 
                         break;
                     case 'Completed':
                         $("#transcription_state").text("Transcription is Complete");
-                        setTimeout( function() { $('#show_message').html('<div class="alert alert-success"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a><strong>Success!</strong> We did the last thing!</div>') }, 3000 )
+                        $('#show_message').html('<div class="alert alert-success fade" role="alert"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a><strong>Success!</strong> The transcription is now complete.</div>').delay(3000).alert('close');
 
                 }
-            {% else %}
-                $("#transcription_state").text("Transcription is open for Edit");
             {% endif %}
         } else {
             {% if transcription.status %}
