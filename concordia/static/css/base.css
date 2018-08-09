@@ -13,6 +13,7 @@
   --bg-card-title: rgba(51,51,51,0.7); /* #333333 */
   --bg-loading: rgba(51,51,51,.5); /* #333333 */
   --shadow-color: rgba(51,51,51,.8); /* #333333 */
+  --height-top-nav: 4.506875rem;
   --height-main: calc( 100vh - 4.506875rem );
   --height-contribute-input: calc( 50vh - ( 3.5rem + 3.375rem ) );
 }
@@ -571,7 +572,8 @@ input {
 .alert-contribute {
     display: block;
     position: absolute;
-    top: 0;
+    top: var(--height-top-nav);
+    z-index: 100;
 }
 
 .asset-image {
