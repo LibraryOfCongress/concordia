@@ -331,16 +331,16 @@ input#id_captcha_1 {
                 switch ("{{ transcription.status }}") {
                     case 'Edit':
                         $("#transcription_state").text("Transcription is open for Edit");
-                        $('#show_message').html('<div class="alert alert-success fade" role="alert"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a><strong>Success!</strong> Your edits have been saved.</div>').delay(3000).alert('close');
+                        $('#show_message').html('<div class="alert alert-success fade show" role="alert"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a><strong>Success!</strong> Your edits have been saved.</div>').delay(3000).alert('close');
                         break;
                     case 'Submitted':
                         $("#transcription_state").text("Transcription is submitted for Review");
-                        $('#show_message').html('<div class="alert alert-success fade" role="alert"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a><strong>Success!</strong> The transcription is ready for review.</div>').delay(3000).alert('close');
+                        $('#show_message').html('<div class="alert alert-success fade show" role="alert"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a><strong>Success!</strong> The transcription is ready for review.</div>').delay(3000).alert('close');
 
                         break;
                     case 'Completed':
                         $("#transcription_state").text("Transcription is Complete");
-                        $('#show_message').html('<div class="alert alert-success fade" role="alert"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a><strong>Success!</strong> The transcription is now complete.</div>').delay(3000).alert('close');
+                        $('#show_message').html('<div class="alert alert-success fade show" role="alert"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a><strong>Success!</strong> The transcription is now complete.</div>').delay(3000).alert('close');
 
                 }
             {% endif %}
