@@ -37,6 +37,9 @@ input#id_captcha_1 {
                         {{ transcription.status }}
 
                     </div>
+                    <div id="show_message">
+
+                    </div>
                     <div class="tab-content" id="nav-tabContent">
                         <div class="tab-pane fade show active rounded" id="tab-transcription" role="tabpanel" aria-labelledby="nav-pill-transcription">
                             <textarea class="w-100" name="tx" id="transcription-input" placeholder="Go ahead, start typing. You got this!" aria-label="Transcription input">{{transcription.text}}</textarea>
@@ -321,21 +324,45 @@ input#id_captcha_1 {
     }
     </script>
     <script>
-        {% if transcription.status %}
-            switch ("{{ transcription.status }}") {
-                case 'Edit':
-                    $("#transcription_state").text("Transcription is open for Edit");
-                    break;
-                case 'Submitted':
-                    $("#transcription_state").text("Transcription is submitted for Review");
-                    break;
-                case 'Completed':
-                    $("#transcription_state").text("Transcription is Complete");
+        var show_message = sessionStorage.getItem('show_message');
+        if( show_message = 'true' ) {
+            sessionStorage.setItem('show_message', 'false');
+            {% if transcription.status %}
+                switch ("{{ transcription.status }}") {
+                    case 'Edit':
+                        $("#transcription_state").text("Transcription is open for Edit");
+                        setTimeout( function() { $('#show_message').html('<div class="alert alert-success"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a><strong>Success!</strong> We did the thing!</div>') }, 3000 )
+                        break;
+                    case 'Submitted':
+                        $("#transcription_state").text("Transcription is submitted for Review");
+                        setTimeout( function() { $('#show_message').html('<div class="alert alert-success"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a><strong>Success!</strong> We did the other thing!</div>') }, 3000 )
 
-            }
-        {% else %}
-            $("#transcription_state").text("Transcription is open for Edit");
-        {% endif %}
+                        break;
+                    case 'Completed':
+                        $("#transcription_state").text("Transcription is Complete");
+                        setTimeout( function() { $('#show_message').html('<div class="alert alert-success"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a><strong>Success!</strong> We did the last thing!</div>') }, 3000 )
+
+                }
+            {% else %}
+                $("#transcription_state").text("Transcription is open for Edit");
+            {% endif %}
+        } else {
+            {% if transcription.status %}
+                switch ("{{ transcription.status }}") {
+                    case 'Edit':
+                        $("#transcription_state").text("Transcription is open for Edit");
+                        break;
+                    case 'Submitted':
+                        $("#transcription_state").text("Transcription is submitted for Review");
+                        break;
+                    case 'Completed':
+                        $("#transcription_state").text("Transcription is Complete");
+
+                }
+            {% else %}
+                $("#transcription_state").text("Transcription is open for Edit");
+            {% endif %}
+        }
         show_buttons();
     </script>
 
