@@ -497,15 +497,9 @@ class DeleteAssetView(TemplateView):
     def get(self, request, *args, **kwargs):
         print("Deleting:", self.args[0])
         collection = Collection.objects.get(slug=self.args[0])
-        # collection.asset_set.all().delete()
-        # collection.delete()
         asset = Asset.objects.get(slug=self.args[1], collection=collection)
         asset.status = Status.INACTIVE
         asset.save()
-        # asset.delete()
-        # os.system(
-        #     "rm -rf {0}".format(settings.MEDIA_ROOT + asset.media_url)
-        # )
         return redirect("/transcribe/" + self.args[0] + "/")
 
 

@@ -34,7 +34,7 @@ class Status:
         (EDIT, "Open for Edit"),
         (SUBMITTED, "Submitted for Review"),
         (COMPLETED, "Transcription Completed"),
-        (INACTIVE, "In Active"),
+        (INACTIVE, "Inactive"),
         (ACTIVE, "Active"),
     )
 
