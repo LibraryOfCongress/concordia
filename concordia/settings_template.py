@@ -258,4 +258,3 @@ AWS_S3 = {
     "AWS_SECRET_ACCESS_KEY": os.getenv("AWS_SECRET_ACCESS_KEY"),
     "S3_COLLECTION_BUCKET": "chc-collections"
 }
-
