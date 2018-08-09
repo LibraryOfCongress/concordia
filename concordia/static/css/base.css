@@ -568,6 +568,12 @@ input {
 
 /* Contribute page CSS */
 
+.alert-contribute {
+    display: block;
+    position: absolute;
+    top: 0;
+}
+
 .asset-image {
   height: calc( 100vh - 6.0625rem );
   border: 1px solid var(--bg-lightest-gray);

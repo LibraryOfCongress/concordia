@@ -10,6 +10,9 @@ input#id_captcha_1 {
 {% block main_content %}
     <div class="container-fluid">
         <div class="row">
+            <div id="show_message">
+
+            </div>
             <div class="col-12 d-flex align-items-middle py-1 bg-darkest-gray">
                 <h2 class="contribute-breadcrumb pl-default mb-0"><a class="offwhite-text" href="{% url 'transcriptions:collection' asset.collection.slug %}"> Go back to {{ asset.collection.title }}</a>  >  {{ asset.title }}</h2>
             </div>
@@ -32,12 +35,9 @@ input#id_captcha_1 {
                 </nav>
                 <form class="mx-half" id="contribute-form" method="post">
                     {% csrf_token %}
-                    <div class="tab-content" id="test percent">
+                    <div class="tab-content d-none" id="test percent">
                         status:
                         {{ transcription.status }}
-
-                    </div>
-                    <div id="show_message">
 
                     </div>
                     <div class="tab-content" id="nav-tabContent">
@@ -331,16 +331,16 @@ input#id_captcha_1 {
                 switch ("{{ transcription.status }}") {
                     case 'Edit':
                         $("#transcription_state").text("Transcription is open for Edit");
-                        $('#show_message').html('<div class="alert alert-success fade show" role="alert"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a><strong>Success!</strong> Your edits have been saved.</div>').delay(3000).alert('close');
+                        $('#show_message').html('<div class="col-8 mx-auto alert alert-success alert-contribute fade show" role="alert"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a><strong>Success!</strong> Your edits have been saved.</div>').delay(3000).hide();
                         break;
                     case 'Submitted':
                         $("#transcription_state").text("Transcription is submitted for Review");
-                        $('#show_message').html('<div class="alert alert-success fade show" role="alert"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a><strong>Success!</strong> The transcription is ready for review.</div>').delay(3000).alert('close');
+                        $('#show_message').html('<div class="col-8 mx-auto alert alert-success alert-contribute fade show" role="alert"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a><strong>Success!</strong> The transcription is ready for review.</div>').delay(3000).hide();
 
                         break;
                     case 'Completed':
                         $("#transcription_state").text("Transcription is Complete");
-                        $('#show_message').html('<div class="alert alert-success fade show" role="alert"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a><strong>Success!</strong> The transcription is now complete.</div>').delay(3000).alert('close');
+                        $('#show_message').html('<div class="col-8 mx-auto alert alert-success alert-contribute fade show" role="alert"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a><strong>Success!</strong> The transcription is now complete.</div>').delay(3000).hide();
 
                 }
             {% endif %}
