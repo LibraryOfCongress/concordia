@@ -153,7 +153,10 @@ class ConcordiaCollectionView(TemplateView):
             collection = Collection.objects.get(slug=self.args[0])
         except Collection.DoesNotExist:
             raise Http404
-        asset_list = collection.asset_set.all().order_by("title", "sequence")
+        asset_list = Asset.objects.filter(
+            collection=collection,
+            status__in=[Status.EDIT, Status.SUBMITTED, Status.COMPLETED, Status.ACTIVE],
+        ).order_by("title", "sequence")
         paginator = Paginator(asset_list, ASSETS_PER_PAGE)
 
         if not self.request.GET.get("page"):
