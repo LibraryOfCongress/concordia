@@ -178,7 +178,14 @@ input#id_captcha_1 {
     <script src="{% static "js/jquery.cookie.js" %}"></script>
     <script src="https://www.jqueryscript.net/demo/Bootstrap-4-Tag-Input-Plugin-jQuery/tagsinput.js"></script>
     <script src="{% static "vendor/openseadragon/openseadragon.min.js" %}"></script>
-    <script>
+    <script type="text/javascript">
+        var csrftoken = $.cookie('csrftoken');
+
+        function csrfSafeMethod(method) {
+            // these HTTP methods do not require CSRF protection
+            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+        }
+
         {% if asset.collection.s3_storage %}
             var asset_url = '{{ asset.media_url }}';
         {% else %}
@@ -192,14 +199,6 @@ input#id_captcha_1 {
                 url: asset_url
             }
         });
-    </script>
-    <script type="text/javascript">
-        var csrftoken = $.cookie('csrftoken');
-
-        function csrfSafeMethod(method) {
-            // these HTTP methods do not require CSRF protection
-            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
-        }
 
         $.ajaxSetup({
             beforeSend: function(xhr, settings) {
@@ -263,140 +262,125 @@ input#id_captcha_1 {
             }
         }
 
-       $("document").ready( function () {
-           setTimeout(checkin_page_in_use, 5000);
-           {% if page_in_use %}
-               showalert();
-           {% endif %}
-       });
-</script>
-    <script type="text/javascript">
+        function hide_buttons(tab_name) {
+            $("#review_button, #complete_button, #register_or_login_reminder").hide();
 
-    $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
-        var target = $(e.target).attr("href") // activated tab
-        if (target == "#tab-tag") {
-            hide_buttons("tags");
+            {% if not user.is_authenticated %}
+                $("#register_or_login_reminder").show();
+
+                $("#save_button").hide();
+                if (tab_name == 'tags') {
+                    $("#tag-input").attr('disabled', true);
+                }
+            {% endif %}
+            return true;
         }
-    });
+        function show_buttons() {
+            $("#save_button, #review_button").show();
+            $("#complete_button, #register_or_login_reminder").hide();
 
-    function hide_buttons(tab_name) {
-        $("#review_button").hide();
-        $("#complete_button").hide();
-        $("#register_or_login_reminder").hide();
+            $("#transcription-input").attr('disabled', false);
 
-        {% if not user.is_authenticated %}
-            $("#register_or_login_reminder").show();
-
-            $("#save_button").hide();
-            if (tab_name == 'tags') {
-                $("#tag-input").attr('disabled', true);
-            }
-        {% endif %}
-        return true;
-    }
-    function show_buttons() {
-        $("#save_button").show();
-        $("#review_button").show();
-        $("#complete_button").hide();
-
-        $("#register_or_login_reminder").hide();
-
-        $("#transcription-input").attr('disabled', false);
-
-        {% if not user.is_authenticated and not transcription.status %}
-            $("#save_button").show();
-            $("#review_button").show();
-        {% elif not user.is_authenticated and transcription.status != 'Edit'%}
-            $("#save_button").hide();
-            $("#review_button").hide();
-            $("#transcription-input").attr('disabled', true);
-        {% else %}
-            {% if transcription.status == 'Submitted' %}
-                $("#review_button").hide();
-                $("#complete_button").show();
-            {% elif transcription.status == 'Completed' %}
-                $("#save_button").show();
-                $("#review_button").hide();
-            {% endif %}
-        {% endif %}
-
-        return true;
-    }
-    </script>
-    <script>
-        var show_message = sessionStorage.getItem('show_message');
-        if( show_message = 'true' ) {
-            sessionStorage.setItem('show_message', 'false');
-            {% if transcription.status %}
-                switch ("{{ transcription.status }}") {
-                    case 'Edit':
-                        $("#transcription_state").text("Transcription is open for Edit");
-                        $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute fade show" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> Your edits have been saved.</div>');
-                        setTimeout(function() {
-                            $('.alert-contribute').fadeOut(500);
-                        }, 3000);
-                        break;
-                    case 'Submitted':
-                        $("#transcription_state").text("Transcription is submitted for Review");
-                        $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute fade show" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> The transcription is ready for review.</div>');
-                        setTimeout(function() {
-                            $('.alert-contribute').fadeOut(500);
-                        }, 3000);
-
-                        break;
-                    case 'Completed':
-                        $("#transcription_state").text("Transcription is Complete");
-                        $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute fade show" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> The transcription is now complete.</div>');
-                        setTimeout(function() {
-                            $('.alert-contribute').fadeOut(500);
-                        }, 3000);
-
-                }
-            {% endif %}
-        } else {
-            {% if transcription.status %}
-                switch ("{{ transcription.status }}") {
-                    case 'Edit':
-                        $("#transcription_state").text("Transcription is open for Edit");
-                        break;
-                    case 'Submitted':
-                        $("#transcription_state").text("Transcription is submitted for Review");
-                        break;
-                    case 'Completed':
-                        $("#transcription_state").text("Transcription is Complete");
-
-                }
+            {% if not user.is_authenticated and not transcription.status %}
+                $("#save_button, #review_button").show();
+            {% elif not user.is_authenticated and transcription.status != 'Edit'%}
+                $("#save_button, #review_button").hide();
+                $("#transcription-input").attr('disabled', true);
             {% else %}
-                $("#transcription_state").text("Transcription is open for Edit");
+                {% if transcription.status == 'Submitted' %}
+                    $("#review_button").hide();
+                    $("#complete_button").show();
+                {% elif transcription.status == 'Completed' %}
+                    $("#save_button").show();
+                    $("#review_button").hide();
+                {% endif %}
             {% endif %}
+
+            return true;
         }
-        show_buttons();
-    </script>
 
-    {% if user.is_anonymous %}
-    <script>
+        $("document").ready( function () {
+            setTimeout(checkin_page_in_use, 5000);
+            {% if page_in_use %}
+                showalert();
+            {% endif %}
 
-        $(document).ready(function(){
-            $("#save_button").click(function(e){
-            	   if($("#captcha_tr").is(":hidden")) {
-	               e.preventDefault();
-	               $(this).removeClass("btn-primary");
-	               $(this).prop("disabled",true);
-	               $("#captcha_tr").show();
-	               $("input#id_captcha_1").after($('<span class="input-group-btn">' +
-	            		      '<button class="btn .btn-primary" type="submit" name="action" value="Save">Enter</button>' +
-	            		      '</span>'));
-            	   }
+            var show_message = sessionStorage.getItem('show_message');
+            if( show_message = 'true' ) {
+                sessionStorage.setItem('show_message', 'false');
+                {% if transcription.status %}
+                    switch ("{{ transcription.status }}") {
+                        case 'Edit':
+                            $("#transcription_state").text("Transcription is open for Edit");
+                            $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> Your contribution has been saved.</div>');
+                            setTimeout(function() {
+                                $('.alert-contribute').fadeOut(500);
+                            }, 3000);
+                            break;
+                        case 'Submitted':
+                            $("#transcription_state").text("Transcription is submitted for Review");
+                            $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> The transcription is ready for review.</div>');
+                            setTimeout(function() {
+                                $('.alert-contribute').fadeOut(500);
+                            }, 3000);
+
+                            break;
+                        case 'Completed':
+                            $("#transcription_state").text("Transcription is Complete");
+                            $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> The transcription is now complete.</div>');
+                            setTimeout(function() {
+                                $('.alert-contribute').fadeOut(500);
+                            }, 3000);
+
+                    }
+                {% else %}
+                    $("#transcription_state").text("Transcription is open for Edit");
+                {% endif %}
+            } else {
+                {% if transcription.status %}
+                    switch ("{{ transcription.status }}") {
+                        case 'Edit':
+                            $("#transcription_state").text("Transcription is open for Edit");
+                            break;
+                        case 'Submitted':
+                            $("#transcription_state").text("Transcription is submitted for Review");
+                            break;
+                        case 'Completed':
+                            $("#transcription_state").text("Transcription is Complete");
+
+                    }
+                {% else %}
+                    $("#transcription_state").text("Transcription is open for Edit");
+                {% endif %}
+            }
+            show_buttons();
+
+            $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+                var target = $(e.target).attr("href") // activated tab
+                if (target == "#tab-tag") {
+                    hide_buttons("tags");
+                }
             });
 
-            $(".js-captcha-refresh").click(function(e){
-            	    e.preventDefault();
-                $.getJSON("{% url 'captcha-refresh' %}", function (result) {
-                       $('.captcha').attr('src', result['image_url']);
-                       $('#id_captcha_0').val(result['key'])
-                });
-            })
-        })
+            {% if user.is_anonymous %}
+                $("#save_button").click(function(e){
+                    if($("#captcha_tr").is(":hidden")) {
+                        e.preventDefault();
+                       $(this).removeClass("btn-primary");
+                       $(this).prop("disabled",true);
+                       $("#captcha_tr").show();
+                       $("input#id_captcha_1").after($('<span class="input-group-btn">' + '<button class="btn btn-primary" type="submit" name="action" value="Save">Enter</button>' + '</span>'));
+                   }
+               });
+
+                $(".js-captcha-refresh").click(function(e){
+                    e.preventDefault();
+                    $.getJSON("{% url 'captcha-refresh' %}", function (result) {
+                        $('.captcha').attr('src', result['image_url']);
+                        $('#id_captcha_0').val(result['key']);
+                    });
+                })
+            {% endif %}
+        });
     </script>
-    {% endif %}
 {% endblock body_scripts %}
