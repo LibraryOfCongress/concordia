@@ -25,12 +25,16 @@ class Status:
     EDIT = "Edit"
     SUBMITTED = "Submitted"
     COMPLETED = "Completed"
+    INACTIVE = "Inactive"
+    ACTIVE = "Active"
 
     DEFAULT = EDIT
     CHOICES = (
         (EDIT, "Open for Edit"),
         (SUBMITTED, "Submitted for Review"),
         (COMPLETED, "Transcription Completed"),
+        (INACTIVE, "In Active"),
+        (ACTIVE, "Active"),
     )
 
 
