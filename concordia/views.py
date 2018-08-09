@@ -485,7 +485,7 @@ class DeleteAssetView(TemplateView):
         # os.system(
         #     "rm -rf {0}".format(settings.MEDIA_ROOT + asset.media_url)
         # )
-        return redirect("/transcribe/"+self.args[1]+"/")
+        return redirect("/transcribe/" + self.args[0] + "/")
 
 
 class ReportCollectionView(TemplateView):
