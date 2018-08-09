@@ -35,11 +35,11 @@ input#id_captcha_1 {
                 </nav>
                 <form class="mx-half" id="contribute-form" method="post">
                     {% csrf_token %}
-                    <div class="tab-content d-none" id="test percent">
+                   <!--  <div class="tab-content d-none" id="test-percent">
                         status:
                         {{ transcription.status }}
 
-                    </div>
+                    </div> -->
                     <div class="tab-content" id="nav-tabContent">
                         <div class="tab-pane fade show active rounded" id="tab-transcription" role="tabpanel" aria-labelledby="nav-pill-transcription">
                             <textarea class="w-100" name="tx" id="transcription-input" placeholder="Go ahead, start typing. You got this!" aria-label="Transcription input">{{transcription.text}}</textarea>
@@ -160,7 +160,7 @@ input#id_captcha_1 {
                     </div>
                 </form>
                 <div style="color:whitesmoke" id="transcription_state_div">
-                    <h5 style="display: inline">Current State: {{ transcription.status }}</h5>
+                    <h5 class="offwhite-text d-inline" id="transcription_state" name="transcription_state">Current State: {{ transcription.status }}</h5>
                     <!-- <h5 id="transcription_state" name="transcription_state" style="display: inline">State value</h5> -->
                 </div>
                 <div style="color:whitesmoke">
@@ -333,14 +333,14 @@ input#id_captcha_1 {
                         $("#transcription_state").text("Transcription is open for Edit");
                         $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute fade show" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> Your edits have been saved.</div>');
                         setTimeout(function() {
-                            $('.alert-contribute').hide();
+                            $('.alert-contribute').fadeOut(500);
                         }, 3000);
                         break;
                     case 'Submitted':
                         $("#transcription_state").text("Transcription is submitted for Review");
                         $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute fade show" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> The transcription is ready for review.</div>');
                         setTimeout(function() {
-                            $('.alert-contribute').hide();
+                            $('.alert-contribute').fadeOut(500);
                         }, 3000);
 
                         break;
@@ -348,7 +348,7 @@ input#id_captcha_1 {
                         $("#transcription_state").text("Transcription is Complete");
                         $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute fade show" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> The transcription is now complete.</div>');
                         setTimeout(function() {
-                            $('.alert-contribute').hide();
+                            $('.alert-contribute').fadeOut(500);
                         }, 3000);
 
                 }

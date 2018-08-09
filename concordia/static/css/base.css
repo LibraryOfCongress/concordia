@@ -581,6 +581,10 @@ input {
   border: 1px solid var(--bg-lightest-gray);
 }
 
+#test-percent {
+    height: 0;
+}
+
 .contribute-box {
   height: calc( 100vh - 6.0625rem );
 }
