@@ -13,7 +13,7 @@ from faq.views import FAQView
 from importer.views import (CreateCollectionView, check_and_save_collection_assets,
                             get_task_status)
 
-from . import trans_urls, views
+from . import trans_urls, views, views_ws
 
 for key, value in getattr(settings, "ADMIN_SITE", {}).items():
     setattr(admin.site, key, value)
@@ -23,6 +23,8 @@ tx_urlpatterns = (
     [
         re_path(r"^$", views.ConcordiaView.as_view(), name="transcribe"),
         re_path(r"^create/$", views.CollectionView.as_view(), name="create"),
+        re_path(r"^pageinuse/$", views.ConcordiaPageInUse.as_view(), name="page in use"),
+        re_path(r"^alternateasset/$", views.ConcordiaAlternateAssetView.as_view(), name="alternate asset"),
         re_path(
             r"^([^/]+)/$", views.ConcordiaCollectionView.as_view(), name="collection"
         ),
@@ -101,6 +103,12 @@ urlpatterns = [
     re_path(r"^admin/", admin.site.urls),
     # Apps
     re_path(r"^forum/", include(board.urls)),
+
+    # Web Services
+    # Form views
+    re_path(r'^ws/page_in_use/(?P<page_url>(.*?))/$', views_ws.PageInUseGet.as_view()),
+    re_path(r'^ws/page_in_use_update/(?P<page_url>(.*?))/$', views_ws.PageInUsePut.as_view()),
+    re_path(r'^ws/page_in_use/$', views_ws.PageInUseCreate.as_view()),
 ]
 
 urlpatterns += [
@@ -154,3 +162,7 @@ urlpatterns += [
 ]
 
 urlpatterns += [url("", include("django_prometheus_metrics.urls"))]
+
+urlpatterns += [
+    url(r'^captcha/', include('captcha.urls')),
+]

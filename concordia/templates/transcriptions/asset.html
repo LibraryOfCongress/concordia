@@ -1,6 +1,12 @@
 {% extends "transcriptions/base.html" %} {% load staticfiles %}
 {% block title %}{{ asset.title }}{% endblock title %}
-{% block head_content %}{% endblock head_content %}
+{% block head_content %}
+<style>
+input#id_captcha_1 {
+  padding: .375rem .75rem;
+}
+</style>
+{% endblock head_content %}
 {% block main_content %}
     <div class="container-fluid">
         <div class="row">
@@ -115,6 +121,15 @@
                                            class="btn btn-primary btn-primary-fixed-width float-left" value="Save">
                                 </td>
                             </tr>
+
+                            {% if user.is_anonymous %}
+                            <tr id="captcha_tr" style="display: none;">
+                                <td>
+                                    {{ captcha_form.captcha }}
+                                </td>
+                            </tr>
+                            {% endif %}
+
                             <tr>
                                 <td>
                                     <input id="review_button" name="action" type="submit"
@@ -122,7 +137,13 @@
                                            value="Submit for Review">
                                 </td>
                             </tr>
-
+                            <tr>
+                                <td>
+                                    <input id="contact_button" name="action" type="submit"
+                                           class="btn btn-primary btn-primary-fixed-width float-left"
+                                           value="Contact Manager">
+                                </td>
+                            </tr>
                             {% if user.is_authenticated %}
                             <tr>
                                 <td>
@@ -151,6 +172,7 @@
 
 {% block body_scripts %}
     <script src="{% static "js/contribute.js" %}"></script>
+    <script src="{% static "js/jquery.cookie.js" %}"></script>
     <script src="https://www.jqueryscript.net/demo/Bootstrap-4-Tag-Input-Plugin-jQuery/tagsinput.js"></script>
     <script src="{% static "vendor/openseadragon/openseadragon.min.js" %}"></script>
     <script>
@@ -168,6 +190,83 @@
             }
         });
     </script>
+    <script type="text/javascript">
+        var csrftoken = $.cookie('csrftoken');
+
+        function csrfSafeMethod(method) {
+            // these HTTP methods do not require CSRF protection
+            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+        }
+
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                }
+            }
+        });
+
+        function checkin_page_in_use() {
+            $.ajax({
+                url : "/transcribe/pageinuse/",
+                type: "post",
+                data: JSON.stringify({ 'page_url' : window.location.pathname,
+                    'user': '{{ user }}' }),
+                processData: false,
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                success: function(data, textStatus, jqXHR)
+                {
+                   $.noop(); // alert('POST success!');//data - response from server
+                },
+                error: function (jqXHR, textStatus, errorThrown)
+                {
+                   $.noop(); // alert('POST failed!');//data - response from server
+
+                }
+            });
+            setTimeout(checkin_page_in_use, 30000);
+
+        }
+
+        function showalert(){
+            var optsel = confirm("This transcription is being worked on by another user.\nYou may lose your work.\nDo you want to work on another page in this collection?");
+            if (optsel == true) {
+                $.ajax({
+                    url: "/transcribe/alternateasset/",
+                    type: "post",
+                    data: JSON.stringify({
+                        'collection': '{{ asset.collection.slug }}',
+                        'asset': '{{ asset.slug }}'
+                    }),
+                    processData: false,
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    success: function (data, textStatus, jqXHR) {
+                        // switch to new page
+                        window.location = data;
+                    },
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        $.noop();
+                    }
+                });
+            }
+            else{
+                $.noop();
+            }
+        }
+
+       $("document").ready( function () {
+           setTimeout(checkin_page_in_use, 5000);
+           {% if page_in_use %}
+               showalert();
+           {% endif %}
+       });
+</script>
     <script type="text/javascript">
 
     $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
@@ -239,4 +338,31 @@
         {% endif %}
         show_buttons();
     </script>
+
+    {% if user.is_anonymous %}
+    <script>
+
+        $(document).ready(function(){
+            $("#save_button").click(function(e){
+            	   if($("#captcha_tr").is(":hidden")) {
+	               e.preventDefault();
+	               $(this).removeClass("btn-primary");
+	               $(this).prop("disabled",true);
+	               $("#captcha_tr").show();
+	               $("input#id_captcha_1").after($('<span class="input-group-btn">' +
+	            		      '<button class="btn .btn-primary" type="submit" name="action" value="Save">Enter</button>' +
+	            		      '</span>'));
+            	   }
+            });
+
+            $(".js-captcha-refresh").click(function(e){
+            	    e.preventDefault();
+                $.getJSON("{% url 'captcha-refresh' %}", function (result) {
+                       $('.captcha').attr('src', result['image_url']);
+                       $('#id_captcha_0').val(result['key'])
+                });
+            })
+        })
+    </script>
+    {% endif %}
 {% endblock body_scripts %}

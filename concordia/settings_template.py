@@ -80,6 +80,7 @@ INSTALLED_APPS = [
     "faq",
     "importer",
     "concordia.experiments.wireframes",
+    "captcha",
     # Machina related apps:
     "mptt",
     "haystack",
@@ -152,6 +153,15 @@ CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_IMPORTS = ("importer.tasks",)
 
+CELERY_BROKER_HEARTBEAT = 0
+CELERY_BROKER_TRANSPORT_OPTIONS = {
+  "confirm_publish": True,
+  "max_retries": 3,
+  "interval_start": 0,
+  "interval_step": 0.2,
+  "interval_max": 0.5
+}
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -207,6 +217,10 @@ ACCOUNT_ACTIVATION_DAYS = 7
 REST_FRAMEWORK = {
     "PAGE_SIZE": 10,
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework.authentication.BasicAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+    )
 }
 
 CONCORDIA = {"netloc": "http://0.0.0.0:80"}
@@ -234,6 +248,10 @@ AUTH_PASSWORD_VALIDATORS = [
 AUTHENTICATION_BACKENDS = ['concordia.email_username_backend.EmailOrUsernameModelBackend']
 
 REGISTRATION_URLS = "registration.backends.simple.urls"
+
+CAPTCHA_CHALLENGE_FUNCT = 'captcha.helpers.random_char_challenge'
+CAPTCHA_FIELD_TEMPLATE = 'captcha/field.html'
+CAPTCHA_TEXT_FIELD_TEMPLATE = 'captcha/text_field.html'
 
 AWS_S3 = {
     "AWS_ACCESS_KEY_ID": os.getenv("AWS_ACCESS_KEY_ID"),

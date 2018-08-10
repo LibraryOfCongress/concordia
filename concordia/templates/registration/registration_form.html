@@ -1,5 +1,12 @@
 {% extends "base.html" %}
 {% block title %}Citizen Historian Registration{% endblock title %}
+{% block head_content %}
+<style>
+input#id_captcha_1 {
+  padding: .375rem .75rem;
+}
+</style>
+{% endblock head_content %}
 {% block main_content %}
 <div class="container-fluid">
     <div class="row">
@@ -51,6 +58,15 @@
                     <label class="sr-only" for="id_password2">Confirm password</label>
                     {{ form.password2 }}
                 </div>
+                <div class="form-group">
+                    {% if form.captcha.errors %}
+                        <div class="text-danger">
+                            {% for error in form.captcha.errors %}{{ error }} {% endfor %}
+                        </div>
+                    {% endif %}
+                    <label class="sr-only" for="id_password2">Captcha</label>
+                    {{ form.captcha }}
+                </div>
                 <div class="d-flex col mx-auto justify-content-center pt-half">
                     <a href="{% url 'login' %}" class="text-center blue-text">I already have an account</a>
                 </div>
@@ -62,3 +78,17 @@
     </div>
 </div>
 {% endblock main_content %}
+
+{% block body_scripts %}
+<script>
+	$(document).ready(function(){
+	    $(".js-captcha-refresh").click(function(e){
+	    	     e.preventDefault();
+		    	 $.getJSON("{% url 'captcha-refresh' %}", function (result) {
+		    	        $('.captcha').attr('src', result['image_url']);
+		    	        $('#id_captcha_0').val(result['key'])
+		    	    });	           
+	    })
+	})
+</script>
+{% endblock body_scripts %}
