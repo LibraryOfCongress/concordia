@@ -1,4 +1,3 @@
-
 from datetime import datetime, timedelta
 import json
 import html
@@ -54,10 +53,8 @@ def concordia_api(relative_path):
 def get_anonymous_user(user_id=True):
     """
     Get the user called "anonymous" if it exist. Create the user if it doesn't exist
-
     This is the default concordia user if someone is working on the site without logging in first.
     :parameter: user_id Boolean defaults to True, if true returns user id, otherwise return user object
-
     :return: User id or User
     """
     anon_user = User.objects.filter(username="anonymous").first()
@@ -196,6 +193,14 @@ class ConcordiaAssetView(TemplateView):
         else:
             return False
 
+    def set_hide_discussion(self):
+        # Flag for hiding the discussion content
+        discussion_hide = True
+        if discussion_hide:
+            return True
+        else:
+            return False
+
     def get_context_data(self, **kws):
         """
         Handle the GET request
@@ -207,6 +212,7 @@ class ConcordiaAssetView(TemplateView):
         in_use_url = "/transcribe/%s/asset/%s/" % (asset.collection.slug, asset.slug)
         current_user_id = self.request.user.id if self.request.user.id is not None else get_anonymous_user()
         page_in_use = self.check_page_in_use(in_use_url, current_user_id)
+        discussion_hide = self.set_hide_discussion()
 
         # Get all transcriptions, they are no longer tied to a specific user
         transcription = Transcription.objects.filter(asset=asset).last()
@@ -254,7 +260,8 @@ class ConcordiaAssetView(TemplateView):
             asset=asset,
             transcription=transcription,
             tags=all_tags,
-            captcha_form=captcha_form
+            captcha_form=captcha_form,
+            discussion_hide=discussion_hide
         )
 
     def post(self, *args, **kwargs):
@@ -473,7 +480,6 @@ class CollectionView(TemplateView):
 class DeleteCollectionView(TemplateView):
     """
     deletes the collection
-
     """
 
     def get(self, request, *args, **kwargs):
@@ -490,7 +496,6 @@ class DeleteCollectionView(TemplateView):
 class ReportCollectionView(TemplateView):
     """
     Report the collection
-
     """
 
     template_name = "transcriptions/report.html"

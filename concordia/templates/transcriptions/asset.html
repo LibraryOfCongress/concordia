@@ -25,9 +25,9 @@ input#id_captcha_1 {
                            aria-selected="true" onclick="return show_buttons()">Transcription</a>
                         <a class="nav-item nav-link" id="nav-pill-tag" data-toggle="tab" href="#tab-tag" role="tab"
                            aria-controls="tab-tag" aria-selected="false" onclick="return hide_buttons('tags')">Tags</a>
-                        <a class="nav-item nav-link" id="nav-pill-discussion" data-toggle="tab" href="#tab-discussion"
-                           role="tab" aria-controls="tab-discussion" aria-selected="false"
-                           onclick="return hide_buttons('discussion')">Discussion</a>
+                        {% if not discussion_hide %}
+                            <a class="nav-item nav-link" id="nav-pill-discussion" data-toggle="tab" href="#tab-discussion" role="tab" aria-controls="tab-discussion" aria-selected="false" onclick="return hide_buttons('discussion')">Discussion</a>
+                        {% endif %}
                     </div>
                 </nav>
                 <form class="mx-half" id="contribute-form" method="post">
@@ -44,73 +44,75 @@ input#id_captcha_1 {
                         <div class="tab-pane fade rounded" id="tab-tag" role="tabpanel" aria-labelledby="nav-pill-tag">
                             <input type="text" class="textarea w-100" id="tag-input" name="tags" data-role="tagsinput" value="{%for tag in tags %}{{tag}},{% endfor %}" aria-label="Tag input">
                         </div>
-                        <div class="tab-pane fade pxy-quarter rounded" id="tab-discussion" role="tabpanel"
-                             aria-labelledby="nav-pill-discussion">
-                            <div class="row">
-                                <div class="comments col-md-9" id="comments">
-                                    <!-- individual comment -->
-                                    <div class="comment mb-2 row">
-                                    <div class="comment-avatar col-md-1 col-sm-2 text-center pr-1">
-                                        <a href=""><img class="mx-auto rounded-circle img-fluid" src="http://demos.themes.guide/bodeo/assets/images/users/m103.jpg" alt="admin's avatar"></a>
-                                    </div>
-                                    <div class="comment-content col-md-11 col-sm-10">
-                                        <h6 class="small comment-meta"><a href="#" class="blue-text">admin</a> Today, 2:38</h6>
-                                        <div class="comment-body">
-                                            <p>
-                                                Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
-                                                <br>
-                                                <a href="" class="text-right small"><i class="ion-reply"></i> Reply</a>
-                                            </p>
+                        {% if not discussion_hide %}
+                            <div class="tab-pane fade pxy-quarter rounded" id="tab-discussion" role="tabpanel"
+                                 aria-labelledby="nav-pill-discussion">
+                                <div class="row">
+                                    <div class="comments col-md-9" id="comments">
+                                        <!-- individual comment -->
+                                        <div class="comment mb-2 row">
+                                        <div class="comment-avatar col-md-1 col-sm-2 text-center pr-1">
+                                            <a href=""><img class="mx-auto rounded-circle img-fluid" src="http://demos.themes.guide/bodeo/assets/images/users/m103.jpg" alt="admin's avatar"></a>
                                         </div>
-                                    </div>
-
-                                    <!-- reply is indented -->
-                                    <div class="comment-reply col-md-11 offset-md-1 col-sm-10 offset-sm-2">
-                                        <div class="row">
-                                            <div class="comment-avatar col-md-1 col-sm-2 text-center pr-1">
-                                                <a href=""><img class="mx-auto rounded-circle img-fluid" src="http://demos.themes.guide/bodeo/assets/images/users/m101.jpg" alt="phildowney's avatar"></a>
+                                        <div class="comment-content col-md-11 col-sm-10">
+                                            <h6 class="small comment-meta"><a href="#" class="blue-text">admin</a> Today, 2:38</h6>
+                                            <div class="comment-body">
+                                                <p>
+                                                    Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
+                                                    <br>
+                                                    <a href="" class="text-right small"><i class="ion-reply"></i> Reply</a>
+                                                </p>
                                             </div>
-                                            <div class="comment-content col-md-11 col-sm-10 col-12">
-                                                <h6 class="small comment-meta"><a href="#" class="blue-text">phildownney</a> Today, 12:31</h6>
-                                                <div class="comment-body">
-                                                    <p>Really?? Consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-                                                        <br>
-                                                        <a href="" class="text-right small"><i class="ion-reply"></i> Reply</a>
-                                                    </p>
+                                        </div>
+
+                                        <!-- reply is indented -->
+                                        <div class="comment-reply col-md-11 offset-md-1 col-sm-10 offset-sm-2">
+                                            <div class="row">
+                                                <div class="comment-avatar col-md-1 col-sm-2 text-center pr-1">
+                                                    <a href=""><img class="mx-auto rounded-circle img-fluid" src="http://demos.themes.guide/bodeo/assets/images/users/m101.jpg" alt="phildowney's avatar"></a>
+                                                </div>
+                                                <div class="comment-content col-md-11 col-sm-10 col-12">
+                                                    <h6 class="small comment-meta"><a href="#" class="blue-text">phildownney</a> Today, 12:31</h6>
+                                                    <div class="comment-body">
+                                                        <p>Really?? Consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+                                                            <br>
+                                                            <a href="" class="text-right small"><i class="ion-reply"></i> Reply</a>
+                                                        </p>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                   </div>
-                                   <!-- /reply is indented -->
-                                </div>
-                                <!-- /comment -->
-                                <!-- comment -->
-                                <div class="comment mb-2 row">
-                                    <div class="comment-avatar col-md-1 col-sm-2 text-center pr-1">
-                                        <a href=""><img class="mx-auto rounded-circle img-fluid" src="http://demos.themes.guide/bodeo/assets/images/users/w102.jpg" alt="maslarino's avatar"></a>
-                                    </div>
-                                    <div class="comment-content col-md-11 col-sm-10">
-                                        <h6 class="small comment-meta"><a href="#" class="blue-text">maslarino</a> Yesterday, 5:03 PM</h6>
-                                        <div class="comment-body">
-                                            <p>Sit amet, consectetur adipisicing elit, sed do eiusmod tempor.
-                                                <br>
-                                                <a href="" class="text-right small"><i class="ion-reply"></i> Reply</a>
-                                            </p>
-                                        </div>
-                                        </div>
+                                       </div>
+                                       <!-- /reply is indented -->
                                     </div>
                                     <!-- /comment -->
-                                    {% if user.is_authenticated %}
-                                        <div class="row pt-2">
-                                            <div class="col-12">
-                                                <a href="" class="btn btn-sm btn-primary">Comment</a>
+                                    <!-- comment -->
+                                    <div class="comment mb-2 row">
+                                        <div class="comment-avatar col-md-1 col-sm-2 text-center pr-1">
+                                            <a href=""><img class="mx-auto rounded-circle img-fluid" src="http://demos.themes.guide/bodeo/assets/images/users/w102.jpg" alt="maslarino's avatar"></a>
+                                        </div>
+                                        <div class="comment-content col-md-11 col-sm-10">
+                                            <h6 class="small comment-meta"><a href="#" class="blue-text">maslarino</a> Yesterday, 5:03 PM</h6>
+                                            <div class="comment-body">
+                                                <p>Sit amet, consectetur adipisicing elit, sed do eiusmod tempor.
+                                                    <br>
+                                                    <a href="" class="text-right small"><i class="ion-reply"></i> Reply</a>
+                                                </p>
+                                            </div>
                                             </div>
                                         </div>
-                                    {% endif %}
+                                        <!-- /comment -->
+                                        {% if user.is_authenticated %}
+                                            <div class="row pt-2">
+                                                <div class="col-12">
+                                                    <a href="" class="btn btn-sm btn-primary">Comment</a>
+                                                </div>
+                                            </div>
+                                        {% endif %}
 
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        {% endif %}
                     </div>
 
                     <div class="my-quarter d-flex justify-content-around align-items-center">
@@ -192,12 +194,10 @@ input#id_captcha_1 {
     </script>
     <script type="text/javascript">
         var csrftoken = $.cookie('csrftoken');
-
         function csrfSafeMethod(method) {
             // these HTTP methods do not require CSRF protection
             return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
         }
-
         $.ajaxSetup({
             beforeSend: function(xhr, settings) {
                 if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
@@ -205,7 +205,6 @@ input#id_captcha_1 {
                 }
             }
         });
-
         function checkin_page_in_use() {
             $.ajax({
                 url : "/transcribe/pageinuse/",
@@ -224,13 +223,10 @@ input#id_captcha_1 {
                 error: function (jqXHR, textStatus, errorThrown)
                 {
                    $.noop(); // alert('POST failed!');//data - response from server
-
                 }
             });
             setTimeout(checkin_page_in_use, 30000);
-
         }
-
         function showalert(){
             var optsel = confirm("This transcription is being worked on by another user.\nYou may lose your work.\nDo you want to work on another page in this collection?");
             if (optsel == true) {
@@ -259,7 +255,6 @@ input#id_captcha_1 {
                 $.noop();
             }
         }
-
        $("document").ready( function () {
            setTimeout(checkin_page_in_use, 5000);
            {% if page_in_use %}
@@ -268,22 +263,18 @@ input#id_captcha_1 {
        });
 </script>
     <script type="text/javascript">
-
     $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
         var target = $(e.target).attr("href") // activated tab
         if (target == "#tab-tag") {
             hide_buttons("tags");
         }
     });
-
     function hide_buttons(tab_name) {
         $("#review_button").hide();
         $("#complete_button").hide();
         $("#register_or_login_reminder").hide();
-
         {% if not user.is_authenticated %}
             $("#register_or_login_reminder").show();
-
             $("#save_button").hide();
             if (tab_name == 'tags') {
                 $("#tag-input").attr('disabled', true);
@@ -295,11 +286,8 @@ input#id_captcha_1 {
         $("#save_button").show();
         $("#review_button").show();
         $("#complete_button").hide();
-
         $("#register_or_login_reminder").hide();
-
         $("#transcription-input").attr('disabled', false);
-
         {% if not user.is_authenticated and not transcription.status %}
             $("#save_button").show();
             $("#review_button").show();
@@ -316,7 +304,6 @@ input#id_captcha_1 {
                 $("#review_button").hide();
             {% endif %}
         {% endif %}
-
         return true;
     }
     </script>
@@ -331,7 +318,6 @@ input#id_captcha_1 {
                     break;
                 case 'Completed':
                     $("#transcription_state").text("Transcription is Complete");
-
             }
         {% else %}
             $("#transcription_state").text("Transcription is open for Edit");
@@ -341,22 +327,20 @@ input#id_captcha_1 {
 
     {% if user.is_anonymous %}
     <script>
-
         $(document).ready(function(){
             $("#save_button").click(function(e){
-            	   if($("#captcha_tr").is(":hidden")) {
-	               e.preventDefault();
-	               $(this).removeClass("btn-primary");
-	               $(this).prop("disabled",true);
-	               $("#captcha_tr").show();
-	               $("input#id_captcha_1").after($('<span class="input-group-btn">' +
-	            		      '<button class="btn .btn-primary" type="submit" name="action" value="Save">Enter</button>' +
-	            		      '</span>'));
-            	   }
+                   if($("#captcha_tr").is(":hidden")) {
+                   e.preventDefault();
+                   $(this).removeClass("btn-primary");
+                   $(this).prop("disabled",true);
+                   $("#captcha_tr").show();
+                   $("input#id_captcha_1").after($('<span class="input-group-btn">' +
+                              '<button class="btn .btn-primary" type="submit" name="action" value="Save">Enter</button>' +
+                              '</span>'));
+                   }
             });
-
             $(".js-captcha-refresh").click(function(e){
-            	    e.preventDefault();
+                    e.preventDefault();
                 $.getJSON("{% url 'captcha-refresh' %}", function (result) {
                        $('.captcha').attr('src', result['image_url']);
                        $('#id_captcha_0').val(result['key'])
