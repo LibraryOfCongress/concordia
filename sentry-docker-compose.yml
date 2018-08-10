@@ -1,0 +1,85 @@
+### Before running any Compose services, make sure you have an .env file
+# inside your current folder and that it has been populated with the following content:
+
+#   POSTGRESQL_PW=<postgres-pw>
+#   SENTRY_PW=<sentry_password_here>
+#   SENTRY_SECRET_KEY=<sentry_secret_key_here>
+
+
+### Start Docker containers with the following command :
+#  sudo make up
+
+version: '3.6'
+services:
+  db:
+    image: postgres
+    env_file: ./.env
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRESQL_PW}
+      POSTGRES_USER: concordia
+    ports:
+      - 54321:5432
+    volumes:
+      - ./postgresql:/docker-entrypoint-initdb.d
+      - db_volume:/var/lib/postgresl/data/
+    environment:
+        - POSTGRES_MULTIPLE_DATABASES=sentry,concordia
+
+  sentry:
+    env_file: ./.env
+    image: sentry:9
+    restart: unless-stopped
+    ports:
+     - 9000:9000
+    environment:
+      - SENTRY_SECRET_KEY=${SENTRY_SECRET_KEY}
+      - SENTRY_REDIS_HOST=sentry_redis
+      - SENTRY_POSTGRES_HOST=db
+      - SENTRY_DB_USER=sentry
+      - SENTRY_DB_PASSWORD=${POSTGRESQL_PW}
+
+  cron:
+    env_file: ./.env
+    image: sentry:9
+    restart: unless-stopped
+    environment:
+      - SENTRY_SECRET_KEY=${SENTRY_SECRET_KEY}
+      - SENTRY_REDIS_HOST=sentry_redis
+      - SENTRY_POSTGRES_HOST=db
+      - SENTRY_DB_USER=sentry
+      - SENTRY_DB_PASSWORD=${POSTGRESQL_PW}
+    command: run cron
+
+  worker:
+    env_file: ./.env
+    image: sentry:9
+    restart: unless-stopped
+    environment:
+      - SENTRY_SECRET_KEY=${SENTRY_SECRET_KEY}
+      - SENTRY_REDIS_HOST=sentry_redis
+      - SENTRY_POSTGRES_HOST=db
+      - SENTRY_DB_USER=sentry
+      - SENTRY_DB_PASSWORD=${POSTGRESQL_PW}
+    command: run worker
+
+  sentry_redis:
+    image: redis:4.0-alpine
+    restart: unless-stopped
+
+  wait_sentry_redis:
+    image: "waisbrot/wait"
+    environment:
+      TARGETS: sentry_redis:6379
+
+  wait_sentry_postgres:
+    image: "waisbrot/wait"
+    environment:
+      TARGETS: db:5432
+
+volumes:
+  db_volume:
+
+networks:
+  default:
+    external:
+      name: sentry
