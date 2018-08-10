@@ -116,17 +116,3 @@ class TranscriptionSerializer(serializers.HyperlinkedModelSerializer):
             "status",
             "updated_on"
         )
-
-
-class TagSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.Tag
-        fields = ("name", "value")
-
-
-class UserAssetTagSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.UserAssetTagCollection
-        fields = (
-            "asset", "user_id", "tags"
-            )
