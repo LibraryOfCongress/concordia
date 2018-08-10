@@ -20,24 +20,7 @@ class CollectionListSerializer(serializers.ModelSerializer):
         )
 
 
-class AssetSetForCollectionSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = models.Asset
-        fields = (
-            "title",
-            "slug",
-            "description",
-            "media_url",
-            "media_type",
-            "sequence",
-            "metadata",
-            "status",
-        )
-
-
-class CollectionDetailSerializer(serializers.HyperlinkedModelSerializer):
-    assets = AssetSetForCollectionSerializer(source='asset_set', many=True)
-
+class CollectionDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Collection
         fields = (
@@ -45,17 +28,13 @@ class CollectionDetailSerializer(serializers.HyperlinkedModelSerializer):
             "slug",
             "title",
             "description",
-            "s3_storage",
             "start_date",
             "end_date",
             "status",
-            "assets"
         )
 
 
-class AssetSerializer(serializers.HyperlinkedModelSerializer):
-    collection = CollectionDetailSerializer()
-
+class AssetSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Asset
         fields = (
@@ -98,34 +77,16 @@ class PageInUseSerializer(serializers.ModelSerializer):
         model = models.PageInUse
         fields = (
             "page_url",
-            "user",
-            "updated_on"
+            "user"
         )
 
 
-class TranscriptionSerializer(serializers.HyperlinkedModelSerializer):
-    asset = AssetSerializer()
-
+class TranscriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Transcription
         fields = (
             "asset",
             "user_id",
             "text",
-            "status",
-            "updated_on"
+            "status"
         )
-
-
-class TagSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.Tag
-        fields = ("name", "value")
-
-
-class UserAssetTagSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.UserAssetTagCollection
-        fields = (
-            "asset", "user_id", "tags"
-            )
