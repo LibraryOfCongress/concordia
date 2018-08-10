@@ -601,7 +601,10 @@ input {
 
 #nav-tabContent, .tab-pane {
   height: var(--height-contribute-input);
-  overflow-y: scroll;
+}
+
+#nav-tabContent {
+    overflow-y: hidden;
 }
 
 .tab-pane textarea {
@@ -609,6 +612,7 @@ input {
   height: 100%;
   border: 1px solid var(--bg-lightest-gray);
   resize: none;
+  overflow-y: auto;
 }
 
 .tab-pane textarea::-webkit-input-placeholder, .tab-pane textarea::-moz-placeholder, .tab-pane textarea:-ms-input-placeholder, .tab-pane textarea:-moz-placeholder {
@@ -619,6 +623,7 @@ input {
   color: var(--text-color-primary);
   height: var(--height-contribute-input);
   width: 100%;
+  overflow-y: auto;
 }
 
 #tab-discussion {
