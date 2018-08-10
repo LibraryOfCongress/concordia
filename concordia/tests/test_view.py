@@ -172,7 +172,7 @@ class ViewTest_Concordia(TestCase):
         :return:
         """
 
-        test_email = "test2@foo.com"
+        test_email = "tester@foo.com"
 
         # Arrange
         self.login_user()

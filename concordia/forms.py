@@ -40,8 +40,8 @@ class ConcordiaUserForm(RegistrationForm):
         ),
     )
     
-    captcha = CaptchaField(
-    )
+    # captcha = CaptchaField(
+    # )
 
     class Meta:
         model = User
