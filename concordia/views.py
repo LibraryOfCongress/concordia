@@ -490,12 +490,12 @@ class DeleteCollectionView(TemplateView):
 
 class DeleteAssetView(TemplateView):
     """
-    deletes the asset
-
+    Hides an asset with status inactive. Hided assets does not display in
+    asset viiew. After hiding an asset, page redirects to collection view.
     """
 
     def get(self, request, *args, **kwargs):
-        print("Deleting:", self.args[0])
+        
         collection = Collection.objects.get(slug=self.args[0])
         asset = Asset.objects.get(slug=self.args[1], collection=collection)
         asset.status = Status.INACTIVE
