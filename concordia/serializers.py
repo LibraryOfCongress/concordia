@@ -91,17 +91,3 @@ class TranscriptionSerializer(serializers.ModelSerializer):
             "text",
             "status"
         )
-
-
-class TagSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.Tag
-        fields = ("name", "value")
-
-
-class UserAssetTagSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.UserAssetTagCollection
-        fields = (
-            "asset", "user_id", "tags"
-            )
