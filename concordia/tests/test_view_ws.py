@@ -4,10 +4,11 @@ from datetime import datetime, timedelta
 import json
 import time
 from django.test import Client, TestCase
+from django.utils.encoding import force_text
 from rest_framework import status
 
 from concordia.models import PageInUse, User, Collection, Status, Asset, MediaType, \
-    Transcription
+    Transcription, Tag, UserAssetTagCollection
 
 
 class ViewWSTest_Concordia(TestCase):
@@ -201,6 +202,41 @@ class ViewWSTest_Concordia(TestCase):
             {"page_url": "bar.com/blah", "user": self.user.id }
         )
 
+    def test_PageInUseUser_get(self):
+        """
+        This unit test tests the get entry for the route ws/page_in_use_user/user/url/
+        :param self:
+        :return:
+        """
+
+        # Arrange
+        self.login_user()
+
+        # create second user
+        self.user2 = User.objects.create(username="bar", email="tester2@foo.com")
+        self.user2.set_password("top_secret")
+        self.user2.save()
+
+        test_page_url = "foo.com/blah"
+        # Add two values to database
+        PageInUse.objects.create(
+            page_url=test_page_url,
+            user=self.user)
+
+        PageInUse.objects.create(
+            page_url="bar.com/blah",
+            user=self.user2)
+
+        # Act
+        response = self.client.get("/ws/page_in_use_user/%s/%s/" % (self.user.id, test_page_url))
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertJSONEqual(
+            str(response.content, encoding='utf8'),
+            {"page_url": test_page_url, "user": self.user.id }
+        )
+
     def test_PageInUse_put(self):
         """
         This unit test tests the update of an existing PageInUse using PUT on route ws/page_in_use/url
@@ -354,6 +390,179 @@ class ViewWSTest_Concordia(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(json_resp['results']), 2)
 
+    def test_get_assets_by_collection_and_slug(self):
+        """
+        Test getting an asset by collection and slug
+        :return:
+        """
+
+        # Arrange
+        self.login_user()
+
+        # create 2 collections
+        self.collection = Collection(
+            title="TextCollection",
+            slug="slug1",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection.save()
+
+        self.collection2 = Collection(
+            title="TextCollection2",
+            slug="slug2",
+            description="Collection2 Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection2.save()
+
+        # Add 2 assets to collection2, 1 asset to collection1
+        self.asset = Asset(
+            title="TestAsset",
+            slug="Asset1",
+            description="Asset Description",
+            media_url="http://www.foo.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            collection=self.collection2,
+            metadata={"key": "val2"},
+            status=Status.EDIT,
+        )
+        self.asset.save()
+
+        self.asset2 = Asset(
+            title="TestAsset2",
+            slug="Asset2",
+            description="Asset Description",
+            media_url="http://www.foo.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            collection=self.collection2,
+            metadata={"key": "val2"},
+            status=Status.EDIT,
+        )
+        self.asset2.save()
+
+        self.asset3 = Asset(
+            title="TestAsset3",
+            slug="Asset3",
+            description="Asset Description",
+            media_url="http://www.foo.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            collection=self.collection,
+            metadata={"key": "val2"},
+            status=Status.EDIT,
+        )
+        self.asset3.save()
+
+        # Act
+        response = self.client.get("/ws/asset_by_slug/slug1/Asset3/")
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertJSONEqual(
+            force_text(response.content),
+            {
+                "title": "TestAsset3",
+                "slug": "Asset3",
+                "description": "Asset Description",
+                "media_url": "http://www.foo.com/1/2/3",
+                "media_type": MediaType.IMAGE,
+                "collection": self.collection.id,
+                "sequence": 1,
+                "metadata": {"key": "val2"},
+                "subcollection": None,
+                "status": Status.EDIT,
+            }
+        )
+
+    def test_get_assets_by_collection_and_slug_no_match(self):
+        """
+        Test getting an asset by collection and slug using a slug that doesn't exist
+        :return:
+        """
+
+        # Arrange
+        self.login_user()
+
+        # create 2 collections
+        self.collection = Collection(
+            title="TextCollection",
+            slug="slug1",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection.save()
+
+        self.collection2 = Collection(
+            title="TextCollection2",
+            slug="slug2",
+            description="Collection2 Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection2.save()
+
+        # Add 2 assets to collection2, 1 asset to collection1
+        self.asset = Asset(
+            title="TestAsset",
+            slug="Asset1",
+            description="Asset Description",
+            media_url="http://www.foo.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            collection=self.collection2,
+            metadata={"key": "val2"},
+            status=Status.EDIT,
+        )
+        self.asset.save()
+
+        self.asset2 = Asset(
+            title="TestAsset2",
+            slug="Asset2",
+            description="Asset Description",
+            media_url="http://www.foo.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            collection=self.collection2,
+            metadata={"key": "val2"},
+            status=Status.EDIT,
+        )
+        self.asset2.save()
+
+        self.asset3 = Asset(
+            title="TestAsset3",
+            slug="Asset3",
+            description="Asset Description",
+            media_url="http://www.foo.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            collection=self.collection,
+            metadata={"key": "val2"},
+            status=Status.EDIT,
+        )
+        self.asset3.save()
+
+        # Act
+        response = self.client.get("/ws/asset_by_slug/slugxxx/Asset3xxx/")
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertJSONEqual(
+            force_text(response.content),
+            {
+                "title": "",
+                "slug": "",
+                "description": "",
+                "media_url": "",
+                "media_type": None,
+                "collection": None,
+                "sequence": None,
+                "metadata": None,
+                "subcollection": None,
+                "status": None,
+            }
+        )
+
+
     def test_PageInUse_filter_get(self):
         """
         Test the route ws/page_in_use_filter/user/page_url/
@@ -493,4 +702,255 @@ class ViewWSTest_Concordia(TestCase):
         # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(json_resp["text"], t2_text)
+
+    def test_Transcriptions_create_post(self):
+        """
+        Test creating a transcription. route ws/transcription_create/
+        :return:
+        """
+        # Arrange
+        self.login_user()
+
+        # create a collection
+        self.collection = Collection(
+            title="TextCollection",
+            slug="www.foo.com/slug2",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection.save()
+
+        # create Assets
+        self.asset = Asset(
+            title="TestAsset",
+            slug="www.foo.com/slug1",
+            description="Asset Description",
+            media_url="http://www.foo.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            collection=self.collection,
+            metadata={"key": "val2"},
+            status=Status.EDIT,
+        )
+        self.asset.save()
+
+        # Act
+        response = self.client.post(
+            "/ws/transcription_create/",
+            {
+                "asset": self.asset.id,
+                "user_id": self.user.id,
+                "status": Status.EDIT,
+                "text": "T1"
+
+            },
+        )
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        # Get all Transcriptions for the asset
+        transcriptions_count = Transcription.objects.filter(asset=self.asset).count()
+        self.assertEqual(transcriptions_count, 1)
+
+        # Add Another transcription
+        response = self.client.post(
+            "/ws/transcription_create/",
+            {
+                "asset": self.asset.id,
+                "user_id": self.user.id,
+                "status": Status.EDIT,
+                "text": "T2"
+
+            },
+        )
+
+        # Get all Transcriptions for the asset, should be another one
+        transcriptions_count = Transcription.objects.filter(asset=self.asset).count()
+        self.assertEqual(transcriptions_count, 2)
+
+    def test_Tag_create_post(self):
+        """
+        Test creating a tag. route ws/tag_create/
+        :return:
+        """
+        # Arrange
+        self.login_user()
+
+        # create a collection
+        self.collection = Collection(
+            title="TextCollection",
+            slug="www.foo.com/slug2",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection.save()
+
+        # create Assets
+        self.asset = Asset(
+            title="TestAsset",
+            slug="www.foo.com/slug1",
+            description="Asset Description",
+            media_url="http://www.foo.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            collection=self.collection,
+            metadata={"key": "val2"},
+            status=Status.EDIT,
+        )
+        self.asset.save()
+
+        # Act
+        response = self.client.post(
+            "/ws/tag_create/",
+            {
+                "collection": self.collection.slug,
+                "asset": self.asset.slug,
+                "user_id": self.user.id,
+                "name": "T1",
+                "value": "T1"
+            },
+        )
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_Tag_create_with_an_existing_tag_post(self):
+        """
+        Test creating a tag, adding to an asset that already has a tag. route ws/tag_create/
+        :return:
+        """
+        # Arrange
+        self.login_user()
+
+        # create a collection
+        self.collection = Collection(
+            title="TextCollection",
+            slug="www.foo.com/slug2",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection.save()
+
+        # create Assets
+        self.asset = Asset(
+            title="TestAsset",
+            slug="www.foo.com/slug1",
+            description="Asset Description",
+            media_url="http://www.foo.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            collection=self.collection,
+            metadata={"key": "val2"},
+            status=Status.EDIT,
+        )
+        self.asset.save()
+
+        # Act
+        response = self.client.post(
+            "/ws/tag_create/",
+            {
+                "collection": self.collection.slug,
+                "asset": self.asset.slug,
+                "user_id": self.user.id,
+                "name": "T1",
+                "value": "T1"
+            },
+        )
+
+        response = self.client.post(
+            "/ws/tag_create/",
+            {
+                "collection": self.collection.slug,
+                "asset": self.asset.slug,
+                "user_id": self.user.id,
+                "name": "T2",
+                "value": "T3"
+            },
+        )
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_GetTags_get(self):
+        """
+        Test getting the tags for an asset, route /ws/tags/<asset>
+        :return:
+        """
+
+        # Arrange
+        self.login_user()
+
+        # create a second user
+        username = "tester2"
+        self.user2 = User.objects.create(username=username, email="tester2@foo.com")
+        self.user2.set_password("top_secret")
+        self.user2.save()
+
+        # create a collection
+        self.collection = Collection(
+            title="TextCollection",
+            slug="www.foo.com/slug2",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection.save()
+
+        # create Assets
+        self.asset = Asset(
+            title="TestAsset",
+            slug="www.foo.com/slug1",
+            description="Asset Description",
+            media_url="http://www.foo.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            collection=self.collection,
+            metadata={"key": "val2"},
+            status=Status.EDIT,
+        )
+        self.asset.save()
+
+        self.tag1 = Tag(
+            name="Tag1",
+            value="Tag1"
+        )
+        self.tag1.save()
+
+        self.tag2 = Tag(
+            name="Tag2",
+            value="Tag2"
+        )
+        self.tag2.save()
+
+        self.tag3 = Tag(
+            name="Tag3",
+            value="Tag3"
+        )
+        self.tag3.save()
+
+        # Save for User1
+        self.asset_tag_collection = UserAssetTagCollection(
+            asset=self.asset,
+            user_id=self.user.id
+        )
+        self.asset_tag_collection.save()
+        self.asset_tag_collection.tags.add(self.tag1, self.tag2)
+
+        # Save for User2
+        self.asset_tag_collection2 = UserAssetTagCollection(
+            asset=self.asset,
+            user_id=self.user2.id
+        )
+        self.asset_tag_collection2.save()
+        self.asset_tag_collection2.tags.add(self.tag3)
+
+        # Act
+        response = self.client.get("/ws/tags/%s/" % self.asset.id)
+
+        json_resp = json.loads(response.content)
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(json_resp["results"]), 3)
+
 
