@@ -1,5 +1,6 @@
 # TODO: Add correct copyright header
 
+import logging
 import re
 import tempfile
 import time
@@ -14,6 +15,7 @@ from PIL import Image
 from concordia.models import (Asset, Collection, MediaType, Status, Tag, Transcription,
                               User, UserAssetTagCollection, UserProfile, PageInUse)
 
+logging.disable(logging.CRITICAL)
 
 class ViewTest_Concordia(TestCase):
     """
