@@ -5,11 +5,13 @@ import json
 import time
 from django.test import Client, TestCase
 from django.utils.encoding import force_text
+import logging
 from rest_framework import status
 
 from concordia.models import PageInUse, User, Collection, Status, Asset, MediaType, \
     Transcription, Tag, UserAssetTagCollection
 
+logging.disable(logging.CRITICAL)
 
 class ViewWSTest_Concordia(TestCase):
     """
