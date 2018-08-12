@@ -10,12 +10,12 @@ class CreateCollection(serializers.Serializer):
     name = serializers.CharField()
     url = serializers.URLField()
     project = serializers.CharField()
+    create_type = serializers.CharField(required=False)
 
     def validate(self, data):
         """
         Check that the collection and project exist or not.
         """
-
         create_type = urlsplit(data['url']).path.split('/')[1]
         create_types = ["collections", 'item']
         if create_type not in create_types:

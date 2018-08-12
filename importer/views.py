@@ -23,7 +23,9 @@ logger = getLogger(__name__)
 class CreateCollectionView(generics.CreateAPIView):
     serializer_class = CreateCollection
 
-    def perform_create(self, serializer):
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
         data = serializer.data
         name = data.get("name")
         project = data.get("project")
@@ -31,7 +33,7 @@ class CreateCollectionView(generics.CreateAPIView):
         create_type = data.get("create_type")
         collection_details = {"collection_name": name, "collection_slug": slugify(name),
                               "subcollection_name": project, "subcollection_slug": slugify(project)}
-
+       
         if create_type == "collections":
 
             download_task = download_write_collection_item_assets.delay(slugify(name), slugify(project), url)
@@ -53,8 +55,8 @@ class CreateCollectionView(generics.CreateAPIView):
             data["task_id"] = download_task.task_id
             data["item_id"] = item_id
 
-        return Response(data, status=status.HTTP_202_ACCEPTED)
-
+        headers = self.get_success_headers(data)
+        return Response(data, status=status.HTTP_202_ACCEPTED, headers=headers)
 
 @api_view(["GET"])
 def get_task_status(request, task_id):

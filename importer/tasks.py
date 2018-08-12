@@ -29,7 +29,7 @@ def get_item_id_from_item_url(item_url):
     return item_id
 
 
-def get_request_data(url, params=None, timeout=5, json_resp=True, **kwargs):
+def get_request_data(url, params=None, timeout=120, json_resp=True, **kwargs):
     """
     :param url: give any get url
     :param params: parameters tho above url as dict
@@ -181,6 +181,7 @@ def download_write_collection_item_assets(collection_name, project, collection_u
 
 @task
 def download_write_item_assets(collection_name, project, item_id):
+
     """
     It will downloads all images from loc.gov site and saves into local directory as per item level directory.
     :param collection_name: collection for requested item url
@@ -197,6 +198,6 @@ def download_write_item_assets(collection_name, project, item_id):
     ctd.collection_item_count += 1
     ctd.collection_asset_count += len(item_asset_urls)
     ctd.save()
-    ciac = CollectionItemAssetCount.objects.get_or_create(collection_task=ctd, collection_item_identifier=item_id)
+    ciac, created = CollectionItemAssetCount.objects.get_or_create(collection_task=ctd, collection_item_identifier=item_id)
     ciac.collection_item_asset_count = len(item_asset_urls)
     ciac.save()

@@ -131,7 +131,7 @@ $("#create_btn").click(function(){
         $.ajax({
             url: '/create_collection/',
             type: 'post',
-            data: {"name": name, "url": url, "project_name": project_name,'csrfmiddlewaretoken': $("input[name=csrfmiddlewaretoken]").val()},
+            data: {"name": name, "url": url, "project": project_name,'csrfmiddlewaretoken': $("input[name=csrfmiddlewaretoken]").val()},
             success: function(data, textStatus, jqXHR) {
                 $("#task_id").val(data['task_id']);
                 $("#collection_slug").val(data['name']);
