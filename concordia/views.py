@@ -40,6 +40,7 @@ from concordia.views_ws import PageInUseCreate, PageInUsePut
 logger = getLogger(__name__)
 
 ASSETS_PER_PAGE = 36
+PROJECTS_PER_PAGE = 36
 
 
 def concordia_api(relative_path):
@@ -143,6 +144,29 @@ class ConcordiaView(TemplateView):
     def get_context_data(self, **kws):
         response = concordia_api("collections/")
         return dict(super().get_context_data(**kws), response=response)
+
+
+class ConcordiaProjectView(TemplateView):
+    template_name = "transcriptions/project.html"
+
+    def get_context_data(self, **kws):
+        try:
+            collection = Collection.objects.get(slug=self.args[0])
+        except Collection.DoesNotExist:
+            raise Http404
+        project_list = collection.subcollection_set.all().order_by("title")
+        paginator = Paginator(project_list, PROJECTS_PER_PAGE)
+
+        if not self.request.GET.get("page"):
+            page = 1
+        else:
+            page = self.request.GET.get("page")
+
+        projects = paginator.get_page(page)
+
+        return dict(
+            super().get_context_data(**kws), collection=collection, projects=projects
+        )
 
 
 class ConcordiaCollectionView(TemplateView):

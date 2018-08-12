@@ -26,7 +26,9 @@ tx_urlpatterns = (
         re_path(r"^pageinuse/$", views.ConcordiaPageInUse.as_view(), name="page in use"),
         re_path(r"^alternateasset/$", views.ConcordiaAlternateAssetView.as_view(), name="alternate asset"),
         re_path(
-            r"^([^/]+)/$", views.ConcordiaCollectionView.as_view(), name="collection"
+            r"^([^/]+)/$", views.ConcordiaProjectView.as_view(), name="project"),
+        re_path(
+            r"^([^/]+)/([^/]+)/$", views.ConcordiaCollectionView.as_view(), name="collection"
         ),
         re_path(
             r"exportCSV/([^/]+)/$",
