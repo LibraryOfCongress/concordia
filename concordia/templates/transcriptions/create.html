@@ -135,6 +135,7 @@ $("#create_btn").click(function(){
             success: function(data, textStatus, jqXHR) {
                 $("#task_id").val(data['task_id']);
                 $("#collection_slug").val(data['name']);
+                $("#item_id").val(data['item_id']);
                 var gts = setTimeout(get_task_status(data['task_id']), 60000);
             }
         }).fail(function(data, jqXHR, textStatus, errorThrown) {
