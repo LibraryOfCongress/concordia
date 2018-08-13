@@ -95,6 +95,7 @@ class ExportCollectionToBagit(TemplateView):
 
             src_folder = asset_folder.replace("exporter/", "")
             src_name = asset.media_url.rsplit("/")[-1]
+            src_root = src_name.rsplit(".")[0]
             dest = "%s/%s" % (asset_folder, src_name)
             if collection.s3_storage:
                 s3 = boto3.client(
@@ -113,48 +114,20 @@ class ExportCollectionToBagit(TemplateView):
                 # Copy asset image from local storage into temp asset folder
                 copyfile(src, dest)
 
-        # Build export.csv with asset meta data, transcription & tag info
-        csv_dest = "%s/export.csv" % asset_folder
-        with open(csv_dest, "w") as csv_file:
-            writer = csv.writer(csv_file)
-            # Column Title Row
-            writer.writerow(
-                [
-                    "Collection",
-                    "Title",
-                    "Description",
-                    "MediaUrl",
-                    "Transcription",
-                    "Tags",
-                ]
+            # Get transcription data
+            transcription = Transcription.objects.filter(
+                asset=asset, user_id=self.request.user.id
             )
+            if transcription:
+                transcription = transcription[0].text
+            else:
+                transcription = ""
 
-            field_names = ["title", "description", "media_url"]
-
-            for asset in asset_list:
-                transcription = Transcription.objects.filter(
-                    asset=asset, user_id=self.request.user.id
-                )
-                if transcription:
-                    transcription = transcription[0].text
-                else:
-                    transcription = ""
-
-                tags = UserAssetTagCollection.objects.filter(
-                    asset=asset, user_id=self.request.user.id
-                )
-                if tags:
-                    tags = list(tags[0].tags.all().values_list("name", flat=True))
-                else:
-                    tags = ""
-
-                row = (
-                    [collection.title]
-                    + [getattr(asset, i) for i in field_names]
-                    + [transcription, tags]
-                )
-                # Row for each asset
-                writer.writerow(row)
+            # Build transcription output text file
+            tran_output_path = "{0}/{1}.txt".format(asset_folder, src_root)
+            tran_out_file = open(tran_output_path, "w")
+            tran_out_file.write(transcription)
+            tran_out_file.close()
 
         # Turn Structure into bagit format
         bagit.make_bag(collection_folder, {"Contact-Name": request.user.username})
