@@ -4,6 +4,7 @@ import shutil
 from shutil import copyfile
 
 import bagit
+import boto3
 from django.conf import settings
 from django.http import HttpResponse
 from django.views.generic import TemplateView
@@ -58,11 +59,11 @@ class ExportCollectionToCSV(TemplateView):
 
 class ExportCollectionToBagit(TemplateView):
     """
-    Creates temp directory structure for source data.  Moves source image
-    file into temp directory, builds export.csv with meta, transcription,
-    and tag data.  Executes bagit.py to turn temp directory into bagit
-    strucutre.  Builds and exports bagit structure as zip.  Removes all
-    temporary directories and files.
+    Creates temp directory structure for source data.  Copies source image
+    file from S3 or local storage into temp directory, builds export.csv
+    with meta, transcription, and tag data.  Executes bagit.py to turn temp
+    directory into bagit strucutre.  Builds and exports bagit structure as
+    zip.  Removes all temporary directories and files.
 
     """
 
@@ -92,30 +93,45 @@ class ExportCollectionToBagit(TemplateView):
             if not os.path.exists(asset_folder):
                 os.mkdir(asset_folder)
 
-            src_folder = asset_folder.replace("exporter", "concordia")
+            src_folder = asset_folder.replace("exporter/", "")
             src_name = asset.media_url.rsplit("/")[-1]
-            src = "%s/%s" % (src_folder, src_name)
             dest = "%s/%s" % (asset_folder, src_name)
-
-            # Copy assest image file into asset folder
-            copyfile(src, dest)
-
-            # Build export.csv with asset meta data, transcription & tag info
-            csv_dest = "%s/export.csv" % asset_folder
-            with open(csv_dest, "w") as csv_file:
-                writer = csv.writer(csv_file)
-                writer.writerow(
-                    [
-                        "Collection",
-                        "Title",
-                        "Description",
-                        "MediaUrl",
-                        "Transcription",
-                        "Tags",
-                    ]
+            if collection.s3_storage:
+                s3 = boto3.client(
+                    "s3",
+                    aws_access_key_id=settings.AWS_S3["AWS_ACCESS_KEY_ID"],
+                    aws_secret_access_key=settings.AWS_S3["AWS_SECRET_ACCESS_KEY"],
                 )
+                bucket_name = settings.AWS_S3["S3_COLLECTION_BUCKET"]
+                s3_path = "{0}/{1}/{2}".format(
+                    collection.slug, asset_folder_name, src_name
+                )
+                # Copy asset image from S3 into temp asset folder
+                s3.download_file(bucket_name, s3_path, dest)
+            else:
+                src = "%s/%s" % (src_folder, src_name)
+                # Copy asset image from local storage into temp asset folder
+                copyfile(src, dest)
 
-                field_names = ["title", "description", "media_url"]
+        # Build export.csv with asset meta data, transcription & tag info
+        csv_dest = "%s/export.csv" % asset_folder
+        with open(csv_dest, "w") as csv_file:
+            writer = csv.writer(csv_file)
+            # Column Title Row
+            writer.writerow(
+                [
+                    "Collection",
+                    "Title",
+                    "Description",
+                    "MediaUrl",
+                    "Transcription",
+                    "Tags",
+                ]
+            )
+
+            field_names = ["title", "description", "media_url"]
+
+            for asset in asset_list:
                 transcription = Transcription.objects.filter(
                     asset=asset, user_id=self.request.user.id
                 )
@@ -137,9 +153,10 @@ class ExportCollectionToBagit(TemplateView):
                     + [getattr(asset, i) for i in field_names]
                     + [transcription, tags]
                 )
+                # Row for each asset
                 writer.writerow(row)
 
-        # Turn Strucutre into bagit format
+        # Turn Structure into bagit format
         bagit.make_bag(collection_folder, {"Contact-Name": request.user.username})
 
         # Build .zipfile of bagit formatted Collection Folder
