@@ -1,5 +1,6 @@
 # TODO: Add correct copyright header
 
+import logging
 import re
 import tempfile
 import time
@@ -14,6 +15,7 @@ from PIL import Image
 from concordia.models import (Asset, Collection, MediaType, Status, Tag, Transcription,
                               User, UserAssetTagCollection, UserProfile, PageInUse)
 
+logging.disable(logging.CRITICAL)
 
 class ViewTest_Concordia(TestCase):
     """
@@ -172,7 +174,7 @@ class ViewTest_Concordia(TestCase):
         :return:
         """
 
-        test_email = "test2@foo.com"
+        test_email = "tester@foo.com"
 
         # Arrange
         self.login_user()
