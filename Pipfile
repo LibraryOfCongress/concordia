@@ -24,6 +24,7 @@ bagit = "*"
 django-prometheus-metrics = "*"
 django-widget-tweaks = "*"
 django-simple-captcha = "*"
+python-dotenv = "*"
 
 [dev-packages]
 invoke = "*"
