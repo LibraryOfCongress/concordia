@@ -274,8 +274,8 @@ Resources:
       Statistic: Average
       Threshold: '80.0'
       AlarmActions:
-      - Ref: scalingIncreaseGroupSize
       - arn:aws:sns:us-east-1:351149051428:rstorey-concordia-dev
+      - Ref: scalingIncreaseGroupSize
       Dimensions:
       - Name: AutoScalingGroupName
         Value: rstorey-concordia-dev2
@@ -296,7 +296,7 @@ Resources:
       Dimensions:
       - Name: AutoScalingGroupName
         Value: rstorey-concordia-dev2
-  acl1:
+  acl4:
     Type: AWS::EC2::NetworkAclEntry
     Properties:
       CidrBlock: 0.0.0.0/0
@@ -306,7 +306,7 @@ Resources:
       RuleNumber: '100'
       NetworkAclId:
         Ref: acl05b5ca253d6c159bc
-  acl2:
+  acl5:
     Type: AWS::EC2::NetworkAclEntry
     Properties:
       CidrBlock: 140.147.236.152/32
@@ -315,79 +315,136 @@ Resources:
       RuleNumber: '10'
       NetworkAclId:
         Ref: acl05b5ca253d6c159bc
-  acl3:
+  acl6:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      CidrBlock: 140.147.236.214/32
+      Protocol: "-1"
+      RuleAction: deny
+      RuleNumber: '11'
+      NetworkAclId:
+        Ref: acl05b5ca253d6c159bc
+  acl7:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      CidrBlock: 140.147.0.0/16
+      Protocol: '6'
+      RuleAction: allow
+      RuleNumber: '100'
+      PortRange:
+        From: '22'
+        To: '22'
+      NetworkAclId:
+        Ref: acl05b5ca253d6c159bc
+  acl8:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      CidrBlock: 0.0.0.0/0
+      Protocol: '6'
+      RuleAction: allow
+      RuleNumber: '110'
+      PortRange:
+        From: '1024'
+        To: '65535'
+      NetworkAclId:
+        Ref: acl05b5ca253d6c159bc
+  acl9:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      CidrBlock: 0.0.0.0/0
+      Protocol: '6'
+      RuleAction: allow
+      RuleNumber: '200'
+      PortRange:
+        From: '80'
+        To: '80'
+      NetworkAclId:
+        Ref: acl05b5ca253d6c159bc
+  acl10:
+    Type: AWS::EC2::NetworkAclEntry
+    Properties:
+      CidrBlock: 0.0.0.0/0
+      Protocol: '6'
+      RuleAction: allow
+      RuleNumber: '210'
+      PortRange:
+        From: '443'
+        To: '443'
+      NetworkAclId:
+        Ref: acl05b5ca253d6c159bc
+  acl11:
     Type: AWS::EC2::NetworkAclEntry
     Properties:
       CidrBlock: 0.0.0.0/0
       Protocol: "-1"
       RuleAction: allow
-      RuleNumber: '100'
+      RuleNumber: '300'
       NetworkAclId:
         Ref: acl05b5ca253d6c159bc
-  subnetacl1:
+  subnetacl5:
     Type: AWS::EC2::SubnetNetworkAclAssociation
     Properties:
       NetworkAclId:
         Ref: acl05b5ca253d6c159bc
       SubnetId:
         Ref: subnet038b68c5e6cedba8e
-  subnetacl2:
+  subnetacl6:
     Type: AWS::EC2::SubnetNetworkAclAssociation
     Properties:
       NetworkAclId:
         Ref: acl05b5ca253d6c159bc
       SubnetId:
         Ref: subnet05a05f01aa7133128
-  subnetacl3:
+  subnetacl7:
     Type: AWS::EC2::SubnetNetworkAclAssociation
     Properties:
       NetworkAclId:
         Ref: acl05b5ca253d6c159bc
       SubnetId:
         Ref: subnet096f46b2b396c4bde
-  subnetacl4:
+  subnetacl8:
     Type: AWS::EC2::SubnetNetworkAclAssociation
     Properties:
       NetworkAclId:
         Ref: acl05b5ca253d6c159bc
       SubnetId:
         Ref: subnet095748204cf0ea5ab
-  gw1:
+  gw2:
     Type: AWS::EC2::VPCGatewayAttachment
     Properties:
       VpcId:
         Ref: vpc0ca0aaf8357f808b6
       InternetGatewayId:
         Ref: igw05eed2d6a55714cd8
-  subnetroute1:
+  subnetroute6:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       RouteTableId:
         Ref: rtb071e75c6461ff0583
       SubnetId:
         Ref: subnet095748204cf0ea5ab
-  subnetroute2:
+  subnetroute7:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       RouteTableId:
         Ref: rtb0fdc2e511323123ee
       SubnetId:
         Ref: subnet096f46b2b396c4bde
-  subnetroute4:
+  subnetroute9:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       RouteTableId:
         Ref: rtb0357e3963c45b2501
       SubnetId:
         Ref: subnet038b68c5e6cedba8e
-  subnetroute5:
+  subnetroute10:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       RouteTableId:
         Ref: rtb016fc69bb1cdce566
       SubnetId:
         Ref: subnet05a05f01aa7133128
-  route1:
+  route5:
     Type: AWS::EC2::Route
     Properties:
       DestinationCidrBlock: 0.0.0.0/0
@@ -395,14 +452,14 @@ Resources:
         Ref: rtb071e75c6461ff0583
       GatewayId:
         Ref: igw05eed2d6a55714cd8
-    DependsOn: gw1
-  route2:
+    DependsOn: gw2
+  route6:
     Type: AWS::EC2::Route
     Properties:
       DestinationCidrBlock: 0.0.0.0/0
       RouteTableId:
         Ref: rtb0fdc2e511323123ee
-  route3:
+  route7:
     Type: AWS::EC2::Route
     Properties:
       DestinationCidrBlock: 0.0.0.0/0
@@ -410,21 +467,21 @@ Resources:
         Ref: rtb0357e3963c45b2501
       GatewayId:
         Ref: igw05eed2d6a55714cd8
-    DependsOn: gw1
-  route4:
+    DependsOn: gw2
+  route8:
     Type: AWS::EC2::Route
     Properties:
       DestinationCidrBlock: 0.0.0.0/0
       RouteTableId:
         Ref: rtb016fc69bb1cdce566
-  dchpassoc1:
+  dchpassoc2:
     Type: AWS::EC2::VPCDHCPOptionsAssociation
     Properties:
       VpcId:
         Ref: vpc0ca0aaf8357f808b6
       DhcpOptionsId:
         Ref: dopt68479110
-  ingress1:
+  ingress10:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
       GroupId:
@@ -435,7 +492,7 @@ Resources:
       SourceSecurityGroupId:
         Ref: sgdefault
       SourceSecurityGroupOwnerId: '351149051428'
-  ingress2:
+  ingress11:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
       GroupId:
@@ -444,7 +501,7 @@ Resources:
       FromPort: '5432'
       ToPort: '5432'
       CidrIp: 10.0.2.0/24
-  ingress3:
+  ingress12:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
       GroupId:
@@ -453,7 +510,7 @@ Resources:
       FromPort: '80'
       ToPort: '80'
       CidrIp: 140.147.0.0/16
-  ingress4:
+  ingress13:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
       GroupId:
@@ -462,7 +519,7 @@ Resources:
       FromPort: '22'
       ToPort: '22'
       CidrIp: 140.147.0.0/16
-  ingress5:
+  ingress14:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
       GroupId:
@@ -471,7 +528,7 @@ Resources:
       FromPort: '443'
       ToPort: '443'
       CidrIp: 140.147.0.0/16
-  ingress6:
+  ingress15:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
       GroupId:
@@ -480,7 +537,7 @@ Resources:
       FromPort: '80'
       ToPort: '80'
       CidrIp: 140.147.0.0/16
-  ingress7:
+  ingress16:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
       GroupId:
@@ -489,7 +546,7 @@ Resources:
       SourceSecurityGroupId:
         Ref: sgdefault
       SourceSecurityGroupOwnerId: '351149051428'
-  ingress8:
+  ingress17:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
       GroupId:
@@ -498,7 +555,7 @@ Resources:
       FromPort: '22'
       ToPort: '22'
       CidrIp: 140.147.0.0/16
-  ingress9:
+  ingress18:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
       GroupId:
@@ -507,25 +564,25 @@ Resources:
       FromPort: '443'
       ToPort: '443'
       CidrIp: 140.147.0.0/16
-  egress1:
+  egress4:
     Type: AWS::EC2::SecurityGroupEgress
     Properties:
       GroupId:
         Ref: sgrdslaunchwizard
       IpProtocol: "-1"
       CidrIp: 0.0.0.0/0
-  egress2:
+  egress5:
     Type: AWS::EC2::SecurityGroupEgress
     Properties:
       GroupId:
         Ref: sgrstoreyconcordiadev
       IpProtocol: "-1"
       CidrIp: 0.0.0.0/0
-  egress3:
+  egress6:
     Type: AWS::EC2::SecurityGroupEgress
     Properties:
       GroupId:
         Ref: sgdefault
       IpProtocol: "-1"
       CidrIp: 0.0.0.0/0
-Description: crowd.loc.gov
+Description: Concordia
