@@ -13,16 +13,35 @@ Parameters:
         Type: AWS::EC2::VPC::Id
         Description: Choose which VPC the security groups should be deployed to
 
+    PublicSubnet1:
+        Description: A reference to the public subnet in the 1st Availability Zone
+        Type: AWS::EC2::Subnet
+
+    PublicSubnet2: 
+        Description: A reference to the public subnet in the 2nd Availability Zone
+        Type: AWS::EC2::Subnet
+
+    PrivateSubnet1:
+        Description: A reference to the private subnet in the 1st Availability Zone
+        Type: AWS::EC2::Subnet
+
+    PrivateSubnet2: 
+        Description: A reference to the private subnet in the 2nd Availability Zone
+        Type: AWS::EC2::Subnet
+
 Resources:
 
     NetworkAcl:
         Type: AWS::EC2::NetworkAcl
         Properties:
         VpcId:
-            Ref: !Ref VPC
+            Ref: VPC
         Tags:
         - Key: Name
             Value: !Ref EnvironmentName
+
+    # TODO: Update these ACLs to the latest OCIO standard ones
+    # NOTE: These rules are for dev / test / stage only
 
     acl4:
         Type: AWS::EC2::NetworkAclEntry
@@ -33,7 +52,7 @@ Resources:
         RuleAction: allow
         RuleNumber: '100'
         NetworkAclId:
-            Ref: acl05b5ca253d6c159bc
+            Ref: NetworkAcl
     acl5:
         Type: AWS::EC2::NetworkAclEntry
         Properties:
@@ -42,7 +61,7 @@ Resources:
         RuleAction: deny
         RuleNumber: '10'
         NetworkAclId:
-            Ref: acl05b5ca253d6c159bc
+            Ref: NetworkAcl
     acl6:
         Type: AWS::EC2::NetworkAclEntry
         Properties:
@@ -51,7 +70,7 @@ Resources:
         RuleAction: deny
         RuleNumber: '11'
         NetworkAclId:
-            Ref: acl05b5ca253d6c159bc
+            Ref: NetworkAcl
     acl7:
         Type: AWS::EC2::NetworkAclEntry
         Properties:
@@ -63,7 +82,7 @@ Resources:
             From: '22'
             To: '22'
         NetworkAclId:
-            Ref: acl05b5ca253d6c159bc
+            Ref: NetworkAcl
     acl8:
         Type: AWS::EC2::NetworkAclEntry
         Properties:
@@ -75,7 +94,7 @@ Resources:
             From: '1024'
             To: '65535'
         NetworkAclId:
-            Ref: acl05b5ca253d6c159bc
+            Ref: NetworkAcl
     acl9:
         Type: AWS::EC2::NetworkAclEntry
         Properties:
@@ -87,7 +106,7 @@ Resources:
             From: '80'
             To: '80'
         NetworkAclId:
-            Ref: acl05b5ca253d6c159bc
+            Ref: NetworkAcl
     acl10:
         Type: AWS::EC2::NetworkAclEntry
         Properties:
@@ -99,7 +118,7 @@ Resources:
             From: '443'
             To: '443'
         NetworkAclId:
-            Ref: acl05b5ca253d6c159bc
+            Ref: NetworkAcl
     acl11:
         Type: AWS::EC2::NetworkAclEntry
         Properties:
@@ -108,34 +127,34 @@ Resources:
         RuleAction: allow
         RuleNumber: '300'
         NetworkAclId:
-            Ref: acl05b5ca253d6c159bc
+            Ref: NetworkAcl
 
 
     subnetacl5:
       Type: AWS::EC2::SubnetNetworkAclAssociation
       Properties:
         NetworkAclId:
-          Ref: acl05b5ca253d6c159bc
+          Ref: NetworkAcl
         SubnetId:
-          Ref: subnet038b68c5e6cedba8e
+          Ref: PrivateSubnet1
     subnetacl6:
       Type: AWS::EC2::SubnetNetworkAclAssociation
       Properties:
         NetworkAclId:
-          Ref: acl05b5ca253d6c159bc
+          Ref: NetworkAcl
         SubnetId:
-          Ref: subnet05a05f01aa7133128
+          Ref: PrivateSubnet2
     subnetacl7:
       Type: AWS::EC2::SubnetNetworkAclAssociation
       Properties:
         NetworkAclId:
-          Ref: acl05b5ca253d6c159bc
+          Ref: NetworkAcl
         SubnetId:
-          Ref: subnet096f46b2b396c4bde
+          Ref: PublicSubnet1
     subnetacl8:
       Type: AWS::EC2::SubnetNetworkAclAssociation
       Properties:
         NetworkAclId:
-          Ref: acl05b5ca253d6c159bc
+          Ref: NetworkAcl
         SubnetId:
-          Ref: subnet095748204cf0ea5ab            
+          Ref: PublicSubnet2            
