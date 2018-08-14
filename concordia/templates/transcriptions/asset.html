@@ -115,7 +115,7 @@ input#id_captcha_1 {
                         <table>
                             <tr>
                                 <td>
-                                    <input id="save_button" name="action" type="submit"
+                                    <input id="save-button" name="action" type="submit"
                                            class="btn btn-primary btn-primary-fixed-width float-left" value="Save">
                                 </td>
                             </tr>
@@ -130,14 +130,14 @@ input#id_captcha_1 {
 
                             <tr>
                                 <td>
-                                    <input id="review_button" name="action" type="submit"
+                                    <input id="review-button" name="action" type="submit"
                                            class="btn btn-primary btn-primary-fixed-width float-left"
                                            value="Submit for Review">
                                 </td>
                             </tr>
                             <tr>
                                 <td>
-                                    <input id="contact_button" name="action" type="submit"
+                                    <input id="contact-button" name="action" type="submit"
                                            class="btn btn-primary btn-primary-fixed-width float-left"
                                            value="Contact Manager">
                                 </td>
@@ -145,7 +145,7 @@ input#id_captcha_1 {
                             {% if user.is_authenticated %}
                             <tr>
                                 <td>
-                                    <input id="complete_button" name="action" type="submit"
+                                    <input id="complete-button" name="action" type="submit"
                                            class="btn btn-primary btn-primary-fixed-width float-left"
                                            value="Mark Completed">
                                 </td>
@@ -154,11 +154,11 @@ input#id_captcha_1 {
                         </table>
                     </div>
                 </form>
-                <div id="transcription_state_div">
-                    <h5 class="offwhite-text d-inline" id="transcription_state" name="transcription_state">Current State: {{ transcription.status }}</h5>
+                <div id="transcription-state_div">
+                    <h5 class="offwhite-text d-inline" id="transcription-state" name="transcription-state">Current State: {{ transcription.status }}</h5>
                 </div>
                 <div>
-                    <h5 class="offwhite-text d-inline" id="register_or_login_reminder">Only registered users can tag.
+                    <h5 class="offwhite-text d-inline" id="register-login-reminder">Only registered users can tag.
                         <a class="blue-text" href="/account/register/">Register</a> or <a class="blue-text" href="/account/login">Login</a></h5>
                 </div>
             </div>
@@ -257,12 +257,12 @@ input#id_captcha_1 {
         }
 
         function hide_buttons(tab_name) {
-            $("#review_button, #complete_button, #register_or_login_reminder").hide();
+            $("#review-button, #complete-button, #register-login-reminder").hide();
 
             {% if not user.is_authenticated %}
-                $("#register_or_login_reminder").show();
+                $("#register-login-reminder").show();
 
-                $("#save_button").hide();
+                $("#save-button").hide();
                 if (tab_name == 'tags') {
                     $("#tag-input").attr('disabled', true);
                 }
@@ -270,23 +270,23 @@ input#id_captcha_1 {
             return true;
         }
         function show_buttons() {
-            $("#save_button, #review_button").show();
-            $("#complete_button, #register_or_login_reminder").hide();
+            $("#save-button, #review-button").show();
+            $("#complete-button, #register-login-reminder").hide();
 
             $("#transcription-input").attr('disabled', false);
 
             {% if not user.is_authenticated and not transcription.status %}
-                $("#save_button, #review_button").show();
+                $("#save-button, #review-button").show();
             {% elif not user.is_authenticated and transcription.status != 'Edit'%}
-                $("#save_button, #review_button").hide();
+                $("#save-button, #review-button").hide();
                 $("#transcription-input").attr('disabled', true);
             {% else %}
                 {% if transcription.status == 'Submitted' %}
-                    $("#review_button").hide();
-                    $("#complete_button").show();
+                    $("#review-button").hide();
+                    $("#complete-button").show();
                 {% elif transcription.status == 'Completed' %}
-                    $("#save_button").show();
-                    $("#review_button").hide();
+                    $("#save-button").show();
+                    $("#review-button").hide();
                 {% endif %}
             {% endif %}
 
@@ -305,14 +305,14 @@ input#id_captcha_1 {
                 {% if transcription.status %}
                     switch ("{{ transcription.status }}") {
                         case 'Edit':
-                            $("#transcription_state").text("Transcription is open for Edit");
+                            $("#transcription-state").text("Transcription is open for Edit");
                             $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> Your contribution has been saved.</div>');
                             setTimeout(function() {
                                 $('.alert-contribute').fadeOut(500);
                             }, 3000);
                             break;
                         case 'Submitted':
-                            $("#transcription_state").text("Transcription is submitted for Review");
+                            $("#transcription-state").text("Transcription is submitted for Review");
                             $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> The transcription is ready for review.</div>');
                             setTimeout(function() {
                                 $('.alert-contribute').fadeOut(500);
@@ -320,7 +320,7 @@ input#id_captcha_1 {
 
                             break;
                         case 'Completed':
-                            $("#transcription_state").text("Transcription is Complete");
+                            $("#transcription-state").text("Transcription is Complete");
                             $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> The transcription is now complete.</div>');
                             setTimeout(function() {
                                 $('.alert-contribute').fadeOut(500);
@@ -328,23 +328,23 @@ input#id_captcha_1 {
 
                     }
                 {% else %}
-                    $("#transcription_state").text("Transcription is open for Edit");
+                    $("#transcription-state").text("Transcription is open for Edit");
                 {% endif %}
             } else {
                 {% if transcription.status %}
                     switch ("{{ transcription.status }}") {
                         case 'Edit':
-                            $("#transcription_state").text("Transcription is open for Edit");
+                            $("#transcription-state").text("Transcription is open for Edit");
                             break;
                         case 'Submitted':
-                            $("#transcription_state").text("Transcription is submitted for Review");
+                            $("#transcription-state").text("Transcription is submitted for Review");
                             break;
                         case 'Completed':
-                            $("#transcription_state").text("Transcription is Complete");
+                            $("#transcription-state").text("Transcription is Complete");
 
                     }
                 {% else %}
-                    $("#transcription_state").text("Transcription is open for Edit");
+                    $("#transcription-state").text("Transcription is open for Edit");
                 {% endif %}
             }
             show_buttons();
@@ -357,7 +357,7 @@ input#id_captcha_1 {
             });
 
             {% if user.is_anonymous %}
-                $("#save_button").click(function(e){
+                $("#save-button").click(function(e){
                     if($("#captcha_tr").is(":hidden")) {
                         e.preventDefault();
                        $(this).removeClass("btn-primary");
