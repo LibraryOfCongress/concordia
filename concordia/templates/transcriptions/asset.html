@@ -170,7 +170,7 @@ input#id_captcha_1 {
 
 
     <!-- The Instruction Modal -->
-	<div id="instructionModal" style='display:none'>
+	<div id="instructionModal" style="display:none; margin-left: 10px; margin-right: 10px;">
         <p>Lorem ipsum dolor sit amet, consectetur
            adipiscing elit, sed do eiusmod tempor incididunt ut
            labore et dolore magna aliqua. Ut enim ad minim
@@ -229,14 +229,15 @@ input#id_captcha_1 {
             $(instructionButton.element).parent().parent().css("width", "100%");
             $(instructionButton.element).parent().parent().css("display", "block");
             
+            $("div#instruction_content").empty().css('background-color', '#dee2e6');
             $("div#instruction_content").empty().append($('#instructionModal'));
             
             $( "div#instruction_button" ).click(function() {
 	            	  if ( $( "div#instructionModal" ).is( ":hidden" ) ) {
-	            		  $( "div#instructionModal" ).show( "slow" );
+	            		  $( "div#instructionModal" ).show();
 	            	  } else {
 	            		  console.log("Here")
-	            		  $( "div#instructionModal" ).hide("slow");
+	            		  $( "div#instructionModal" ).hide();
 	            	  }
             	});
           });
