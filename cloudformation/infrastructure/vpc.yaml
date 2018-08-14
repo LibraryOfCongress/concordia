@@ -41,7 +41,9 @@ Resources:
         Type: AWS::EC2::VPC
         Properties:
             CidrBlock: !Ref VpcCIDR
+            InstanceTenancy: default
             EnableDnsHostnames: true
+            EnableDnsSupport: true
             Tags: 
                 - Key: Name 
                   Value: !Ref EnvironmentName
@@ -197,6 +199,20 @@ Resources:
         Properties:
             RouteTableId: !Ref PrivateRouteTable2
             SubnetId: !Ref PrivateSubnet2
+
+    DHCPOptions:
+        Type: AWS::EC2::DHCPOptions
+        Properties:
+        DomainName: ec2.internal
+        DomainNameServers:
+        - AmazonProvidedDNS
+    dchpassoc2:
+        Type: AWS::EC2::VPCDHCPOptionsAssociation
+        Properties:
+        VpcId:
+            Ref: vpc0ca0aaf8357f808b6
+        DhcpOptionsId:
+            Ref: dopt68479110    
 
 Outputs: 
 

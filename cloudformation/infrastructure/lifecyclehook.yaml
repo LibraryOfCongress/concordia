@@ -143,3 +143,125 @@ Resources:
         - Arn
       Runtime: python3.6
       Timeout: 10
+  asgrstoreyconcordiapublicdev2Copy:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      AvailabilityZones:
+      - us-east-1b
+      - us-east-1d
+      Cooldown: '300'
+      DesiredCapacity: '2'
+      HealthCheckGracePeriod: '300'
+      HealthCheckType: EC2
+      MaxSize: '5'
+      MinSize: '2'
+      VPCZoneIdentifier:
+      - Ref: subnet038b68c5e6cedba8e
+      - Ref: subnet095748204cf0ea5ab
+      NotificationConfigurations:
+      - TopicARN: arn:aws:sns:us-east-1:351149051428:rstorey-concordia-dev
+        NotificationTypes:
+        - autoscaling:EC2_INSTANCE_LAUNCH
+        - autoscaling:EC2_INSTANCE_LAUNCH_ERROR
+        - autoscaling:EC2_INSTANCE_TERMINATE
+        - autoscaling:EC2_INSTANCE_TERMINATE_ERROR
+      Tags:
+      - Key: Owner
+        Value: rstorey
+        PropagateAtLaunch: true
+      - Key: Project
+        Value: Concordia
+        PropagateAtLaunch: true
+      TerminationPolicies:
+      - Default
+
+
+      topicrstoreyconcordiadev:
+        Type: AWS::SNS::Topic
+        Properties:
+          DisplayName: rstorey-concordia-dev
+          Subscription:
+          - Endpoint: rstorey@loc.gov
+            Protocol: email
+      snspolicyrstoreyconcordiadev:
+        Type: AWS::SNS::TopicPolicy
+        Properties:
+          Topics:
+          - Ref: topicrstoreyconcordiadev
+          PolicyDocument:
+            Version: '2008-10-17'
+            Id: __default_policy_ID
+            Statement:
+            - Sid: __default_statement_ID
+              Effect: Allow
+              Principal:
+                AWS: "*"
+              Action:
+              - SNS:GetTopicAttributes
+              - SNS:SetTopicAttributes
+              - SNS:AddPermission
+              - SNS:RemovePermission
+              - SNS:DeleteTopic
+              - SNS:Subscribe
+              - SNS:ListSubscriptionsByTopic
+              - SNS:Publish
+              - SNS:Receive
+              Resource:
+                Ref: topicrstoreyconcordiadev
+              Condition:
+                StringEquals:
+                  AWS:SourceOwner: '351149051428'
+      scalingDecreaseGroupSize:
+        Type: AWS::AutoScaling::ScalingPolicy
+        Properties:
+          AdjustmentType: ChangeInCapacity
+          PolicyType: StepScaling
+          StepAdjustments:
+          - ScalingAdjustment: -1
+            MetricIntervalUpperBound: 0
+          AutoScalingGroupName:
+            Ref: asgrstoreyconcordiapublicdev2Copy
+      scalingIncreaseGroupSize:
+        Type: AWS::AutoScaling::ScalingPolicy
+        Properties:
+          AdjustmentType: ChangeInCapacity
+          PolicyType: StepScaling
+          StepAdjustments:
+          - ScalingAdjustment: 1
+            MetricIntervalLowerBound: 0
+          AutoScalingGroupName:
+            Ref: asgrstoreyconcordiapublicdev2Copy
+      alarmawsec2rstoreyconcordiadev2CPUUtilization:
+        Type: AWS::CloudWatch::Alarm
+        Properties:
+          ActionsEnabled: 'true'
+          ComparisonOperator: GreaterThanOrEqualToThreshold
+          EvaluationPeriods: '1'
+          MetricName: CPUUtilization
+          Namespace: AWS/EC2
+          Period: '300'
+          Statistic: Average
+          Threshold: '80.0'
+          AlarmActions:
+          - arn:aws:sns:us-east-1:351149051428:rstorey-concordia-dev
+          - Ref: scalingIncreaseGroupSize
+          Dimensions:
+          - Name: AutoScalingGroupName
+            Value: rstorey-concordia-dev2
+      alarmawsec2rstoreyconcordiadev2lowCPUUtilization:
+        Type: AWS::CloudWatch::Alarm
+        Properties:
+          ActionsEnabled: 'true'
+          ComparisonOperator: LessThanOrEqualToThreshold
+          EvaluationPeriods: '1'
+          MetricName: CPUUtilization
+          Namespace: AWS/EC2
+          Period: '300'
+          Statistic: Average
+          Threshold: '30.0'
+          AlarmActions:
+          - arn:aws:sns:us-east-1:351149051428:rstorey-concordia-dev
+          - Ref: scalingDecreaseGroupSize
+          Dimensions:
+          - Name: AutoScalingGroupName
+            Value: rstorey-concordia-dev2
