@@ -154,7 +154,7 @@ input#id_captcha_1 {
                         </table>
                     </div>
                 </form>
-                <div id="transcription-state_div">
+                <div id="transcription-state-div">
                     <h5 class="offwhite-text d-inline" id="transcription-state" name="transcription-state">Current State: {{ transcription.status }}</h5>
                 </div>
                 <div>
@@ -257,10 +257,13 @@ input#id_captcha_1 {
         }
 
         function hide_buttons(tab_name) {
-            $("#review-button, #complete-button, #register-login-reminder").hide();
+            $("#review-button, #complete-button").hide();
+            $("#register-login-reminder").removeClass('d-inline');
+            $("#register-login-reminder").addClass('d-none');
 
             {% if not user.is_authenticated %}
-                $("#register-login-reminder").show();
+                $("#register-login-reminder").removeClass('d-none');
+                $("#register-login-reminder").addClass('d-inline');
 
                 $("#save-button").hide();
                 if (tab_name == 'tags') {
@@ -271,7 +274,9 @@ input#id_captcha_1 {
         }
         function show_buttons() {
             $("#save-button, #review-button").show();
-            $("#complete-button, #register-login-reminder").hide();
+            $("#complete-button").hide();
+            $("#register-login-reminder").removeClass('d-inline');
+            $("#register-login-reminder").addClass('d-none');
 
             $("#transcription-input").attr('disabled', false);
 
@@ -358,10 +363,11 @@ input#id_captcha_1 {
 
             {% if user.is_anonymous %}
                 $("#save-button").click(function(e){
-                    if($("#captcha_tr").is(":hidden")) {
+                    if($("#captcha_tr").hasClass('d-none')) {
                         e.preventDefault();
                        $(this).removeClass("btn-primary");
                        $(this).prop("disabled",true);
+                       $("#captcha_tr").removeClass('d-none');
                        $("#captcha_tr").show();
                        $("input#id_captcha_1").after($('<span class="input-group-btn">' + '<button class="btn btn-primary" type="submit" name="action" value="Save">Enter</button>' + '</span>'));
                    }
