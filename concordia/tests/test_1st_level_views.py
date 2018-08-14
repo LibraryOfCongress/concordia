@@ -17,22 +17,35 @@ class ViewTest_1st_level(TestCase):
         :return:
         """
         self.client = Client()
-    
+
     def test_contact_us_get(self):
         # Arrange
 
         # Act
         response = self.client.get(reverse("contact"))
-        
+
         # Assert:
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'contact.html')
-    
-    
+
+    def test_contact_us_get_pre_populate(self):
+        # Arrange
+        test_http_referrer = 'http://foo/bar'
+
+        # Act
+        response = self.client.get(reverse("contact")+"?pre_populate=true",
+                                   HTTP_REFERER=test_http_referrer)
+
+        # Assert:
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'contact.html')
+        # Assert Link has been populated
+        self.assertTrue(test_http_referrer, response.content)
+
     def test_contact_us_post(self):
         # Arrange
         post_data = {
-            "email": "nobody@example.com" ,
+            "email": "nobody@example.com",
             "subject": "Problem found",
             "category": "Something is not working",
             "link": "www.loc.gov/nowhere",
@@ -40,9 +53,9 @@ class ViewTest_1st_level(TestCase):
         }
 
         # Act
-        response = self.client.post(reverse("contact"), 
+        response = self.client.post(reverse("contact"),
                                     post_data)
-        
+
         # Assert:
         # redirected to contact us page.
         self.assertEqual(response.status_code, 302)

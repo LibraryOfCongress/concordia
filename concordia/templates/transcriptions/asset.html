@@ -137,7 +137,13 @@ input#id_captcha_1 {
                                            value="Submit for Review">
                                 </td>
                             </tr>
-
+                            <tr>
+                                <td>
+                                    <input id="contact_button" name="action" type="submit"
+                                           class="btn btn-primary btn-primary-fixed-width float-left"
+                                           value="Contact Manager">
+                                </td>
+                            </tr>
                             {% if user.is_authenticated %}
                             <tr>
                                 <td>
@@ -335,26 +341,26 @@ input#id_captcha_1 {
 
     {% if user.is_anonymous %}
     <script>
-    
+
         $(document).ready(function(){
             $("#save_button").click(function(e){
             	   if($("#captcha_tr").is(":hidden")) {
 	               e.preventDefault();
 	               $(this).removeClass("btn-primary");
-	               $(this).prop("disabled",true);                   
-	               $("#captcha_tr").show();  
+	               $(this).prop("disabled",true);
+	               $("#captcha_tr").show();
 	               $("input#id_captcha_1").after($('<span class="input-group-btn">' +
-	            		      '<button class="btn .btn-primary" type="submit" name="action" value="Save">Enter</button>' + 
+	            		      '<button class="btn .btn-primary" type="submit" name="action" value="Save">Enter</button>' +
 	            		      '</span>'));
             	   }
             });
-            
+
             $(".js-captcha-refresh").click(function(e){
             	    e.preventDefault();
                 $.getJSON("{% url 'captcha-refresh' %}", function (result) {
                        $('.captcha').attr('src', result['image_url']);
                        $('#id_captcha_0').val(result['key'])
-                });            
+                });
             })
         })
     </script>
