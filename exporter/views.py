@@ -67,6 +67,7 @@ class ExportCollectionToBagit(TemplateView):
 
     """
 
+    include_images = True
     template_name = "transcriptions/collection.html"
 
     def get(self, request, *args, **kwargs):
@@ -86,33 +87,35 @@ class ExportCollectionToBagit(TemplateView):
             os.mkdir(collection_folder)
 
         for asset in asset_list:
-            asset_folder_name = asset.media_url.rsplit("/")[-2]
-            asset_folder = "%s/%s" % (collection_folder, asset_folder_name)
+            item_folder_name = asset.media_url.rsplit("/")[-2]
+            item_folder = "%s/%s" % (collection_folder, item_folder_name)
 
             # Create asset folders (media/exporter/<collection>/<asset>
-            if not os.path.exists(asset_folder):
-                os.mkdir(asset_folder)
+            if not os.path.exists(item_folder):
+                os.mkdir(item_folder)
 
-            src_folder = asset_folder.replace("exporter/", "")
+            src_folder = item_folder.replace("exporter/", "")
             src_name = asset.media_url.rsplit("/")[-1]
             src_root = src_name.rsplit(".")[0]
-            dest = "%s/%s" % (asset_folder, src_name)
-            if collection.s3_storage:
-                s3 = boto3.client(
-                    "s3",
-                    aws_access_key_id=settings.AWS_S3["AWS_ACCESS_KEY_ID"],
-                    aws_secret_access_key=settings.AWS_S3["AWS_SECRET_ACCESS_KEY"],
-                )
-                bucket_name = settings.AWS_S3["S3_COLLECTION_BUCKET"]
-                s3_path = "{0}/{1}/{2}".format(
-                    collection.slug, asset_folder_name, src_name
-                )
-                # Copy asset image from S3 into temp asset folder
-                s3.download_file(bucket_name, s3_path, dest)
-            else:
-                src = "%s/%s" % (src_folder, src_name)
-                # Copy asset image from local storage into temp asset folder
-                copyfile(src, dest)
+            dest = "%s/%s" % (item_folder, src_name)
+
+            if self.include_images:
+                if collection.s3_storage:
+                    s3 = boto3.client(
+                        "s3",
+                        aws_access_key_id=settings.AWS_S3["AWS_ACCESS_KEY_ID"],
+                        aws_secret_access_key=settings.AWS_S3["AWS_SECRET_ACCESS_KEY"],
+                    )
+                    bucket_name = settings.AWS_S3["S3_COLLECTION_BUCKET"]
+                    s3_path = "{0}/{1}/{2}".format(
+                        collection.slug, item_folder_name, src_name
+                    )
+                    # Copy asset image from S3 into temp asset folder
+                    s3.download_file(bucket_name, s3_path, dest)
+                else:
+                    src = "%s/%s" % (src_folder, src_name)
+                    # Copy asset image from local storage into temp asset folder
+                    copyfile(src, dest)
 
             # Get transcription data
             transcription = Transcription.objects.filter(
@@ -124,7 +127,7 @@ class ExportCollectionToBagit(TemplateView):
                 transcription = ""
 
             # Build transcription output text file
-            tran_output_path = "{0}/{1}.txt".format(asset_folder, src_root)
+            tran_output_path = "{0}/{1}.txt".format(item_folder, src_root)
             tran_out_file = open(tran_output_path, "w")
             tran_out_file.write(transcription)
             tran_out_file.close()
