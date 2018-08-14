@@ -10,14 +10,26 @@ Parameters:
         Type: AWS::EC2::VPC::Id
         Description: Choose which VPC the security groups should be deployed to
 
+    DatabaseSecurityGroup:
+        Description: Sets the security group to use for RDS database access
+        Type: AWS::EC2::SecurityGroup::Id
+
+    PrivateSubnet1:
+        Description: A reference to the private subnet in the 1st Availability Zone
+        Type: AWS::EC2::Subnet
+
+    PrivateSubnet2: 
+        Description: A reference to the private subnet in the 2nd Availability Zone
+        Type: AWS::EC2::Subnet
+
 Resources:
   dbsubnetdefaultvpc0ca0aaf8357f808b6:
     Type: AWS::RDS::DBSubnetGroup
     Properties:
       DBSubnetGroupDescription: Created from the RDS Management Console
       SubnetIds:
-      - Ref: !Ref PrivateSubnet1
-      - Ref: !Ref PrivateSubnet2
+      - Ref: PrivateSubnet1
+      - Ref: PrivateSubnet2
 
   rdsconcordia:
     Type: AWS::RDS::DBInstance
@@ -40,7 +52,7 @@ Resources:
       DBSubnetGroupName:
         Ref: dbsubnetdefaultvpc0ca0aaf8357f808b6
       VPCSecurityGroups:
-      - Ref: sgdefault
+      - Ref: DatabaseSecurityGroup
       Tags:
       - Key: workload-type
         Value: other

@@ -33,6 +33,18 @@ Resources:
                 PrivateSubnet1CIDR: 10.0.3.0/21
                 PrivateSubnet2CIDR: 10.0.4.0/21
 
+    NetworkACL:
+        Type: AWS::CloudFormation::Stack
+        Properties:
+            TemplateURL: !Join [ "https://s3.amazonaws.com/", [!Ref S3BucketName, "/infrastructure/network-acl.yaml"]]
+            Parameters: 
+                EnvironmentName: !Ref AWS::StackName
+                VPC: !GetAtt VPC.Outputs.VPC
+                PublicSubnet1: !GetAttr VPC.Outputs.PublicSubnet1
+                PublicSubnet2: !GetAttr VPC.Outputs.PublicSubnet2
+                PrivateSubnet1: !GetAttr VPC.Outputs.PrivateSubnet1
+                PrivateSubnet2: !GetAttr VPC.Outputs.PrivateSubnet2
+
     SecurityGroups:
         Type: AWS::CloudFormation::Stack
         Properties:
@@ -40,6 +52,17 @@ Resources:
             Parameters: 
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
+
+    RDS:
+        Type: AWS::CloudFormation::Stack
+        Properties:
+            TemplateURL: !Join [ "https://s3.amazonaws.com/", [!Ref S3BucketName, "/infrastructure/rds.yaml"]]
+            Parameters:
+                EnvironmentName: !Ref AWS::StackName
+                VPC: !GetAttr VPC.Outputs.VPC
+                DatabaseSecurityGroup: !GetAttr SecurityGroups.Outputs.DatabaseSecurityGroup
+                PrivateSubnet1: !GetAttr VPC.Outputs.PrivateSubnet1
+                PrivateSubnet2: !GetAttr VPC.Outputs.PrivateSubnet2
 
     ALB:
         Type: AWS::CloudFormation::Stack
@@ -57,8 +80,6 @@ Resources:
             TemplateURL: !Join [ "https://s3.amazonaws.com/", [!Ref S3BucketName, "/infrastructure/ecs-cluster.yaml"]]
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
-                InstanceType: t2.large
-                ClusterSize: 4
                 VPC: !GetAtt VPC.Outputs.VPC
                 SecurityGroup: !GetAtt SecurityGroups.Outputs.ECSHostSecurityGroup
                 Subnets: !GetAtt VPC.Outputs.PrivateSubnets

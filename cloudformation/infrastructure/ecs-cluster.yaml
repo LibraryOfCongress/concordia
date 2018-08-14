@@ -11,12 +11,22 @@ Parameters:
     InstanceType:
         Description: Which instance type should we use to build the ECS cluster?
         Type: String
-        Default: c4.large
+        Default: c5.large
 
-    ClusterSize:
+    ClusterSizeDesired:
         Description: How many ECS hosts do you want to initially deploy?
         Type: Number
-        Default: 4
+        Default: 2
+
+    ClusterSizeMin:
+        Description: How many ECS hosts do you want to deploy at a minimum?
+        Type: Number
+        Default: 2
+
+    ClusterSizeMax:
+        Description: How many ECS hosts do you want to deploy at a maximum?
+        Type: Number
+        Default: 5
 
     VPC:
         Description: Choose which VPC this ECS cluster should be deployed to
@@ -87,9 +97,10 @@ Resources:
         Properties:
             VPCZoneIdentifier: !Ref Subnets
             LaunchConfigurationName: !Ref ECSLaunchConfiguration
-            MinSize: !Ref ClusterSize
-            MaxSize: !Ref ClusterSize
-            DesiredCapacity: !Ref ClusterSize
+            MinSize: !Ref ClusterSizeMin
+            MaxSize: !Ref ClusterSizeMax
+            DesiredCapacity: !Ref ClusterSizeDesired
+
             Tags:
                 - Key: Name
                   Value: !Sub ${EnvironmentName} ECS host
@@ -110,6 +121,8 @@ Resources:
                   - ScheduledActions
                 WaitOnResourceSignals: true
 
+
+    # TODO: Update this launch configuration for our own docker hosts
     ECSLaunchConfiguration:
         Type: AWS::AutoScaling::LaunchConfiguration
         Properties:

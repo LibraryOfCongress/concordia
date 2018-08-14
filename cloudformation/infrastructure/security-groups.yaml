@@ -41,142 +41,24 @@ Resources:
             GroupDescription: Access to the load balancer that sits in front of ECS
             SecurityGroupIngress:
                 # Allow access from anywhere to our ECS services
-                - CidrIp: 0.0.0.0/0
-                  IpProtocol: -1
+                - CidrIp: 140.147.0.0/16
+                  IpProtocol: tcp
+                  FromPort: 80
+                  ToPort: 80                  
             Tags: 
                 - Key: Name
                   Value: !Sub ${EnvironmentName}-LoadBalancers
-    sgrdslaunchwizard:
+
+    DatabaseSecurityGroup:
         Type: AWS::EC2::SecurityGroup
         Properties:
-        GroupDescription: 'Created from the RDS Management Console: 2018/08/03 18:06:59'
-        VpcId:
-            Ref: vpc0ca0aaf8357f808b6
-        Tags:
-        - Key: Name
-            Value: rstorey-concordia-dev-rds
-    sgrstoreyconcordiadev:
-        Type: AWS::EC2::SecurityGroup
-        Properties:
-        GroupDescription: rstorey-concordia-dev
-        VpcId: vpc-309b7a4b
-        Tags:
-        - Key: Name
-            Value: rstorey-concordia-dev
-    sgdefault:
-        Type: AWS::EC2::SecurityGroup
-        Properties:
-        GroupDescription: default VPC security group
-        VpcId:
-            Ref: vpc0ca0aaf8357f808b6
-        Tags:
-        - Key: Name
-            Value: rstorey-concordia-vpc-default
- 
-    ingress10:
-        Type: AWS::EC2::SecurityGroupIngress
-        Properties:
-        GroupId:
-            Ref: sgrdslaunchwizard
-        IpProtocol: tcp
-        FromPort: '5432'
-        ToPort: '5432'
-        SourceSecurityGroupId:
-            Ref: sgdefault
-        SourceSecurityGroupOwnerId: '351149051428'
-    ingress11:
-        Type: AWS::EC2::SecurityGroupIngress
-        Properties:
-        GroupId:
-            Ref: sgrdslaunchwizard
-        IpProtocol: tcp
-        FromPort: '5432'
-        ToPort: '5432'
-        CidrIp: 10.0.2.0/24
-    ingress12:
-        Type: AWS::EC2::SecurityGroupIngress
-        Properties:
-        GroupId:
-            Ref: sgrstoreyconcordiadev
-        IpProtocol: tcp
-        FromPort: '80'
-        ToPort: '80'
-        CidrIp: 140.147.0.0/16
-    ingress13:
-        Type: AWS::EC2::SecurityGroupIngress
-        Properties:
-        GroupId:
-            Ref: sgrstoreyconcordiadev
-        IpProtocol: tcp
-        FromPort: '22'
-        ToPort: '22'
-        CidrIp: 140.147.0.0/16
-    ingress14:
-        Type: AWS::EC2::SecurityGroupIngress
-        Properties:
-        GroupId:
-            Ref: sgrstoreyconcordiadev
-        IpProtocol: tcp
-        FromPort: '443'
-        ToPort: '443'
-        CidrIp: 140.147.0.0/16
-    ingress15:
-        Type: AWS::EC2::SecurityGroupIngress
-        Properties:
-        GroupId:
-            Ref: sgdefault
-        IpProtocol: tcp
-        FromPort: '80'
-        ToPort: '80'
-        CidrIp: 140.147.0.0/16
-    ingress16:
-        Type: AWS::EC2::SecurityGroupIngress
-        Properties:
-        GroupId:
-            Ref: sgdefault
-        IpProtocol: "-1"
-        SourceSecurityGroupId:
-            Ref: sgdefault
-        SourceSecurityGroupOwnerId: '351149051428'
-    ingress17:
-        Type: AWS::EC2::SecurityGroupIngress
-        Properties:
-        GroupId:
-            Ref: sgdefault
-        IpProtocol: tcp
-        FromPort: '22'
-        ToPort: '22'
-        CidrIp: 140.147.0.0/16
-    ingress18:
-        Type: AWS::EC2::SecurityGroupIngress
-        Properties:
-        GroupId:
-            Ref: sgdefault
-        IpProtocol: tcp
-        FromPort: '443'
-        ToPort: '443'
-        CidrIp: 140.147.0.0/16
-    egress4:
-        Type: AWS::EC2::SecurityGroupEgress
-        Properties:
-        GroupId:
-            Ref: sgrdslaunchwizard
-        IpProtocol: "-1"
-        CidrIp: 0.0.0.0/0
-    egress5:
-        Type: AWS::EC2::SecurityGroupEgress
-        Properties:
-        GroupId:
-            Ref: sgrstoreyconcordiadev
-        IpProtocol: "-1"
-        CidrIp: 0.0.0.0/0
-    egress6:
-        Type: AWS::EC2::SecurityGroupEgress
-        Properties:
-        GroupId:
-            Ref: sgdefault
-        IpProtocol: "-1"
-        CidrIp: 0.0.0.0/0
+            VpcId: !Ref VPC
+            GroupDescription: Access to the RDS Postgres database
+            SecurityGroupIngress:
+                - SourceSecurityGroupId: !Ref ECSHostSecurityGroup
+                  IpProtocol: tcp
+                  FromPort: 5432
+                  ToPort: 5432
 
 Outputs:
 
@@ -187,4 +69,8 @@ Outputs:
     LoadBalancerSecurityGroup:
         Description: A reference to the security group for load balancers
         Value: !Ref LoadBalancerSecurityGroup
+
+    DatabaseSecurityGroup:
+        Description: A reference to the security group for RDS
+        Value: !Ref DatabaseSecurityGroup
 
