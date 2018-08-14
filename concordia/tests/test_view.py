@@ -458,6 +458,66 @@ class ViewTest_Concordia(TestCase):
         collection2 = Collection.objects.all()
         self.assertEqual(len(collection2), 0)
 
+    @patch("concordia.views.requests")
+    def test_DeleteAsset_get(self, mock_requests):
+        """
+        Test GET route /transcribe/delete/asset/<slug-value>/ (asset)
+        :return:
+        """
+
+        # Arrange
+        mock_requests.get.return_value.status_code = 200
+        mock_requests.get.return_value.json.return_value = {
+            "concordia_data": "abc123456"
+        }
+
+        # add an item to Collection
+        self.collection = Collection(
+            title="TextCollection",
+            slug="test-collection-slug",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection.save()
+
+        self.asset = Asset(
+            title="TestAsset",
+            slug="test-asset-slug",
+            description="Asset Description",
+            media_url="http://www.foo.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            collection=self.collection,
+            metadata={"key": "val2"},
+            status=Status.EDIT,
+        )
+        self.asset.save()
+
+        self.asset = Asset(
+            title="TestAsset1",
+            slug="test-asset-slug1",
+            description="Asset Description1",
+            media_url="http://www.foo1.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            collection=self.collection,
+			metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.asset.save()
+
+        # Act
+
+        response = self.client.get("/transcribe/test-collection-slug/delete/asset/test-asset-slug1/", follow=True)
+
+        # Assert
+        self.assertEqual(response.status_code, 200)
+
+        collection2 = Collection.objects.get(slug="test-collection-slug")
+        all_assets = Asset.objects.filter(collection=collection2)
+        hided_assets = Asset.objects.filter(collection=collection2, status=Status.INACTIVE)
+        self.assertEqual(len(all_assets), 2)
+        self.assertEqual(len(hided_assets), 1)
+
     def test_ConcordiaAssetView_post(self):
         """
         This unit test test the POST route /transcribe/<collection>/asset/<Asset_name>/
