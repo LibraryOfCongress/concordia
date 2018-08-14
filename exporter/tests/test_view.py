@@ -130,15 +130,8 @@ class ViewTest_Exporter(TestCase):
             # self.assertIsNone(zipped_file.testzip())
             self.assertIn("bagit.txt", zipped_file.namelist())
             self.assertIn("bag-info.txt", zipped_file.namelist())
-            self.assertIn("data/testasset/export.csv", zipped_file.namelist())
+            self.assertIn("data/testasset/asset.txt", zipped_file.namelist())
 
-            csv_file = zipped_file.read("data/testasset/export.csv")
-            self.assertEqual(
-                str(csv_file),
-                "b'Collection,Title,Description,MediaUrl,Transcription,Tags\\r\\nFooCollection,TestAsset,Asset Description,{0},,\\r\\n'".format(
-                    media_url_str
-                ),  # noqa
-            )
         finally:
             zipped_file.close()
             f.close()
