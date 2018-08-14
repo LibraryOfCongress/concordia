@@ -351,6 +351,8 @@ input#id_captcha_1 {
                 {% else %}
                     $("#transcription-state").text("Transcription is open for Edit");
                 {% endif %}
+                sessionStorage.setItem('show_message', 'false');
+
             }
             show_buttons();
 
