@@ -20,7 +20,24 @@ class CollectionListSerializer(serializers.ModelSerializer):
         )
 
 
-class CollectionDetailSerializer(serializers.ModelSerializer):
+class AssetSetForCollectionSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = models.Asset
+        fields = (
+            "title",
+            "slug",
+            "description",
+            "media_url",
+            "media_type",
+            "sequence",
+            "metadata",
+            "status",
+        )
+
+
+class CollectionDetailSerializer(serializers.HyperlinkedModelSerializer):
+    assets = AssetSetForCollectionSerializer(source='asset_set', many=True)
+
     class Meta:
         model = models.Collection
         fields = (
@@ -28,13 +45,17 @@ class CollectionDetailSerializer(serializers.ModelSerializer):
             "slug",
             "title",
             "description",
+            "s3_storage",
             "start_date",
             "end_date",
             "status",
+            "assets"
         )
 
 
-class AssetSerializer(serializers.ModelSerializer):
+class AssetSerializer(serializers.HyperlinkedModelSerializer):
+    collection = CollectionDetailSerializer()
+
     class Meta:
         model = models.Asset
         fields = (
@@ -77,18 +98,22 @@ class PageInUseSerializer(serializers.ModelSerializer):
         model = models.PageInUse
         fields = (
             "page_url",
-            "user"
+            "user",
+            "updated_on"
         )
 
 
-class TranscriptionSerializer(serializers.ModelSerializer):
+class TranscriptionSerializer(serializers.HyperlinkedModelSerializer):
+    asset = AssetSerializer()
+
     class Meta:
         model = models.Transcription
         fields = (
             "asset",
             "user_id",
             "text",
-            "status"
+            "status",
+            "updated_on"
         )
 
 

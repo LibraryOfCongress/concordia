@@ -13,6 +13,7 @@ from concordia.models import PageInUse, User, Collection, Status, Asset, MediaTy
 
 logging.disable(logging.CRITICAL)
 
+
 class ViewWSTest_Concordia(TestCase):
     """
     This class contains the unit tests for the view_ws in the concordia app.
@@ -318,6 +319,49 @@ class ViewWSTest_Concordia(TestCase):
              'title': 'TextCollection2'}
         )
 
+    def test_Collection_by_id_get(self):
+        """
+        Test getting a Collection object by id
+        :return:
+        """
+        # Arrange
+        self.login_user()
+
+        # create 2 collections
+        self.collection = Collection(
+            title="TextCollection",
+            slug="slug1",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection.save()
+
+        self.collection2 = Collection(
+            title="TextCollection2",
+            slug="slug2",
+            description="Collection2 Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection2.save()
+
+        # Act
+        response = self.client.get("/ws/collection_by_id/%s/" % self.collection2.id)
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertJSONEqual(
+            str(response.content, encoding='utf8'),
+            {'description': 'Collection2 Description',
+             'end_date': None,
+             'id': self.collection2.id,
+             'slug': 'slug2',
+             'start_date': None,
+             'status': Status.EDIT,
+             'title': 'TextCollection2'}
+        )
+
     def test_get_assets_by_collection(self):
         """
         Test getting a list of assets by collection
@@ -470,7 +514,13 @@ class ViewWSTest_Concordia(TestCase):
                 "description": "Asset Description",
                 "media_url": "http://www.foo.com/1/2/3",
                 "media_type": MediaType.IMAGE,
-                "collection": self.collection.id,
+                "collection": {"description": "Collection Description",
+                               "end_date": None,
+                               "id": self.collection.id,
+                               "slug": "slug1",
+                               "start_date": None,
+                               "status": Status.EDIT,
+                               "title": "TextCollection"},
                 "sequence": 1,
                 "metadata": {"key": "val2"},
                 "subcollection": None,
@@ -556,7 +606,12 @@ class ViewWSTest_Concordia(TestCase):
                 "description": "",
                 "media_url": "",
                 "media_type": None,
-                "collection": None,
+                "collection": {"description": "",
+                               "end_date": None,
+                               "slug": "",
+                               "start_date": None,
+                               "status": None,
+                               "title": ""},
                 "sequence": None,
                 "metadata": None,
                 "subcollection": None,
@@ -704,6 +759,102 @@ class ViewWSTest_Concordia(TestCase):
         # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(json_resp["text"], t2_text)
+
+    def test_Transcriptions_by_user(self):
+        """
+        Test getting the user's transcriptions. route ws/transcription_by_user/<userid>/
+        :return:
+        """
+
+        # Arrange
+        self.login_user()
+
+        # create a second user
+        username = "tester2"
+        self.user2 = User.objects.create(username=username, email="tester2@foo.com")
+        self.user2.set_password("top_secret")
+        self.user2.save()
+
+        # create a collection
+        self.collection = Collection(
+            title="TextCollection",
+            slug="www.foo.com/slug2",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection.save()
+
+        # create Assets
+        self.asset = Asset(
+            title="TestAsset",
+            slug="www.foo.com/slug1",
+            description="Asset Description",
+            media_url="http://www.foo.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            collection=self.collection,
+            metadata={"key": "val2"},
+            status=Status.EDIT,
+        )
+        self.asset.save()
+
+        self.asset2 = Asset(
+            title="TestAsset2",
+            slug="www.foo.com/slug2",
+            description="Asset Description",
+            media_url="http://www.foo.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            collection=self.collection,
+            metadata={"key": "val2"},
+            status=Status.EDIT,
+        )
+        self.asset2.save()
+
+        # add Transcription objects
+        t1_text = "T1"
+        self.transcription = Transcription(
+            asset=self.asset,
+            user_id=self.user.id,
+            status=Status.EDIT,
+            text=t1_text
+        )
+        self.transcription.save()
+
+        t2_text = "T2"
+
+        self.transcription2 = Transcription(
+            asset=self.asset,
+            user_id=self.user2.id,
+            status=Status.EDIT,
+            text=t2_text
+        )
+        self.transcription2.save()
+
+        t3_text = "T3"
+
+        self.transcription3 = Transcription(
+            asset=self.asset,
+            user_id=self.user.id,
+            status=Status.EDIT,
+            text=t3_text
+        )
+        self.transcription3.save()
+
+        # Act
+
+        response = self.client.get("/ws/transcription_by_user/%s/" % self.user.id)
+
+        json_resp = json.loads(response.content)
+        transcriptions_array = []
+        for trans in json_resp["results"]:
+            transcriptions_array.append(trans["text"])
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(json_resp["count"], 2)
+        self.assertTrue("T3" in transcriptions_array)
+        self.assertTrue("T1" in transcriptions_array)
+        self.assertFalse("T2" in transcriptions_array)
 
     def test_Transcriptions_create_post(self):
         """
