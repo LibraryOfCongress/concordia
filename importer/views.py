@@ -218,7 +218,7 @@ def check_and_save_collection_assets(request, task_id, item_id=None):
             if check_and_save_item_completeness(ciac, item_id):
                 return redirect(
                     reverse(
-                        "transcriptions:collection",
+                        "transcriptions:project",
                         args=[
                             ciac.collection_task.collection_slug,
                             ciac.collection_task.subcollection_slug,
@@ -239,7 +239,7 @@ def check_and_save_collection_assets(request, task_id, item_id=None):
                 return redirect(
                     reverse(
                         "transcriptions:project",
-                        args=[ctd.collection_slug],
+                        args=[ctd.collection_slug, ctd.subcollection_slug],
                         current_app=request.resolver_match.namespace,
                     )
                 )
