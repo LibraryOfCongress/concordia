@@ -23,6 +23,7 @@ from django.urls import reverse
 from django.views.generic import FormView, TemplateView
 from django.views.generic import TemplateView, View
 from rest_framework.test import APIRequestFactory
+from rest_framework import generics
 from registration.backends.simple.views import RegistrationView
 
 
@@ -543,3 +544,21 @@ class ReportCollectionView(TemplateView):
 
         projects = paginator.get_page(page)
         return render(self.request, self.template_name, locals())
+
+
+
+class FilterCollections(generics.ListAPIView):
+    def get_queryset(self):
+        name_query = self.request.query_params.get('name')
+        if name_query:
+            queryset = Collection.objects.filter(slug__contains=name_query).values_list('slug',flat=True)
+        else:
+            queryset = Collection.objects.all().values_list('slug', flat=True)
+        return queryset
+
+    def list(self, request):
+        queryset = self.get_queryset()
+        from django.http import JsonResponse
+        return JsonResponse(list(queryset), safe=False)
+
+

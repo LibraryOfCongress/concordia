@@ -64,6 +64,7 @@ tx_urlpatterns = (
     "transcriptions",
 )
 
+
 urlpatterns = [
     re_path(r"^$", TemplateView.as_view(template_name="home.html")),
     re_path(
@@ -153,6 +154,11 @@ urlpatterns += [
         check_and_save_collection_assets,
         name="check_and_save_collection_assets",
     ),
+    re_path(
+        r"^filter/collections/$",
+        views.FilterCollections.as_view(),
+        name="filter_collections",
+    ),
 ]
 
 urlpatterns += [
@@ -168,3 +174,4 @@ urlpatterns += [url("", include("django_prometheus_metrics.urls"))]
 urlpatterns += [
     url(r'^captcha/', include('captcha.urls')),
 ]
+

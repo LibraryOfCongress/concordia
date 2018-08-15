@@ -9,7 +9,6 @@ from django.conf import settings
 
 from celery import task
 
-
 from importer.models import CollectionItemAssetCount, CollectionTaskDetails
 
 logger = getLogger(__name__)
@@ -156,11 +155,13 @@ def download_write_collection_item_assets(collection_name, project, collection_u
     total_pages = get_collection_pages(collection_url)
     collection_item_ids = get_collection_item_ids(collection_url, total_pages)
     items_asset_count_dict = defaultdict(int)
+    items_assets = {}
 
     for cii in collection_item_ids:
         collection_item_asset_urls = get_collection_item_asset_urls(cii)
         items_asset_count_dict[cii] = len(collection_item_asset_urls)
-        get_save_item_assets(collection_name, project, cii, collection_item_asset_urls)
+        items_assets[cii] = collection_item_asset_urls
+        #get_save_item_assets(collection_name, project, cii, collection_item_asset_urls)
 
     ctd, created = CollectionTaskDetails.objects.get_or_create(collection_slug=slugify(collection_name),
                                                                subcollection_slug=slugify(project),
@@ -178,6 +179,11 @@ def download_write_collection_item_assets(collection_name, project, collection_u
         ))
     CollectionItemAssetCount.objects.bulk_create(ciac_details)
 
+    for cii in collection_item_ids:
+        #collection_item_asset_urls = get_collection_item_asset_urls(cii)
+        #items_asset_count_dict[cii] = len(collection_item_asset_urls)
+        get_save_item_assets(collection_name, project, cii, items_assets[cii])
+
 
 @task
 def download_write_item_assets(collection_name, project, item_id):
@@ -189,7 +195,6 @@ def download_write_item_assets(collection_name, project, item_id):
     :return: nothing, will downloads the files and saves to a directory
     """
     item_asset_urls = get_collection_item_asset_urls(item_id)
-    get_save_item_assets(collection_name, project, item_id, item_asset_urls)
 
     ctd, created = CollectionTaskDetails.objects.get_or_create(collection_slug=slugify(collection_name),
                                                                subcollection_slug=slugify(project),
@@ -201,3 +206,15 @@ def download_write_item_assets(collection_name, project, item_id):
     ciac, created = CollectionItemAssetCount.objects.get_or_create(collection_task=ctd, collection_item_identifier=item_id)
     ciac.collection_item_asset_count = len(item_asset_urls)
     ciac.save()
+
+    item_local_path = os.path.join(
+        settings.IMPORTER["IMAGES_FOLDER"], collection_name, project, item_id
+    )
+
+    try:
+        os.makedirs(item_local_path)
+    except Exception as e:
+        pass
+    for idx, ciau in enumerate(item_asset_urls):
+        asset_local_path = os.path.join(item_local_path, "{0}.jpg".format(str(idx)))
+        download_write_collection_item_asset(ciau, asset_local_path)

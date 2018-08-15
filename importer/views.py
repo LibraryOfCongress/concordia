@@ -64,8 +64,43 @@ def get_task_status(request, task_id):
     if request.method == "GET":
         celery_task_result = AsyncResult(task_id)
         task_state = celery_task_result.state
-        return Response(task_state)
 
+        try:
+            ciac = CollectionItemAssetCount.objects.get(item_task_id=task_id)
+            project_local_path = os.path.join(
+                settings.IMPORTER["IMAGES_FOLDER"], ciac.collection_task.collection_slug,
+                ciac.collection_task.subcollection_slug
+            )
+            item_downloaded_asset_count = sum(
+                [len(files) for path, dirs, files in
+                 os.walk(os.path.join(project_local_path, ciac.collection_item_identifier))]
+            )
+            if item_downloaded_asset_count <= ciac.collection_item_asset_count:
+                progress =  '%s of %s processed' % (item_downloaded_asset_count, ciac.collection_item_asset_count)
+            else:
+                progress = ''
+            return Response({'state': task_state, 'progress': progress})
+        except CollectionItemAssetCount.DoesNotExist:
+            try:
+                ctd = CollectionTaskDetails.objects.get(collection_task_id=task_id)
+                project_local_path = os.path.join(
+                   settings.IMPORTER["IMAGES_FOLDER"], ctd.collection_slug,
+                    ctd.subcollection_slug
+                )
+                collection_downloaded_asset_count = sum(
+                    [len(files) for path, dirs, files in os.walk(project_local_path)]
+                )
+                if collection_downloaded_asset_count <= ctd.collection_asset_count:
+                    progress = '%s of %s processed' % (collection_downloaded_asset_count, ctd.collection_asset_count)
+                else:
+                    progress = ''
+                return Response({'state': task_state, 'progress': progress})
+            except CollectionTaskDetails.DoesNotExist:
+                return Response({"message": "Requested task id Does not exists collection progress"}, status.HTTP_404_NOT_FOUND)
+            # return Response({"message": "Requested task id Does not exists for item progress"},
+            #                 status.HTTP_404_NOT_FOUND)
+
+        #return Response(task_state)
 
 def check_completeness(ciac, item_id=None):
 
@@ -85,6 +120,7 @@ def check_completeness(ciac, item_id=None):
         collection_downloaded_item_count = len(collection_items)
         collection_downloaded_asset_count = sum(
             [len(files) for path, dirs, files in os.walk(project_local_path)]
+
         )
         if (collection_downloaded_asset_count == ciac.collection_task.collection_asset_count) and (
             collection_downloaded_item_count == ciac.collection_task.collection_item_count):

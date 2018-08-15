@@ -1,16 +1,84 @@
 {% extends "transcriptions/base.html" %}
 {% load staticfiles %}
 {% block title %}Citizen Historian Create a Collection{% endblock title %}
-{% block head_content %}{% endblock head_content %}
+{% block head_content %}
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font: 16px Arial;  
+}
+
+.autocomplete {
+  /*the container must be positioned relative:*/
+  position: relative;
+  display: inline-block;
+}
+
+input {
+  border: 1px solid transparent;
+  background-color: #f1f1f1;
+  padding: 10px;
+  font-size: 16px;
+}
+
+input[type=text] {
+  background-color: #f1f1f1;
+  width: 100%;
+}
+
+input[type=submit] {
+  background-color: DodgerBlue;
+  color: #fff;
+  cursor: pointer;
+}
+
+.autocomplete-items {
+  position: absolute;
+  border: 1px solid #d4d4d4;
+  border-bottom: none;
+  border-top: none;
+  z-index: 99;
+  /*position the autocomplete items to be the same width as the container:*/
+  top: 100%;
+  left: 0;
+  right: 0;
+}
+
+.autocomplete-items div {
+  padding: 10px;
+  cursor: pointer;
+  background-color: #fff; 
+  border-bottom: 1px solid #d4d4d4; 
+}
+
+.autocomplete-items div:hover {
+  /*when hovering an item:*/
+  background-color: #e9e9e9; 
+}
+
+.autocomplete-active {
+  /*when navigating through the items using the arrow keys:*/
+  background-color: DodgerBlue !important; 
+  color: #ffffff; 
+}
+</style>
+
+{% endblock head_content %}
 {% block main_content %}
-<script src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
+<link href="http://code.jquery.com/ui/1.10.2/themes/smoothness/jquery-ui.css" rel="Stylesheet"></link>
+<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 <div class="container-fluid py-default" id='container'>
   <div class="row">
     <div class="col-md-10 mx-auto bg-offwhite rounded">
       <h3 class="mt-half ml-half">Import a New Collection</h3>
       <div class="text-center d-none loading">
        <div class="loading-pulse mx-auto"></div>
-              <h6 class="form-text offwhite-text">Creating the collection for you</h6>
+              <h6 class="form-text offwhite-text">Creating the collection for you...<span id="progress"></span>
+              </h6>
       </div>
         <div class="alert alert-danger alert-dismissible fade show" id="close_error" role="alert">
           <button type="button" class="close" onclick="hide_box()" data-dismiss="alert" aria-label="Close">
@@ -97,11 +165,15 @@ function get_task_status(task_id){
         success: function(data, textStatus, jqXHR) {
             console.log("gts: ", gts);
             var gts = setTimeout(get_task_status($("#task_id").val()), 60000);
-            if(data == 'SUCCESS'){
+            if(data['progress']){
+                $("#progress").html(data['progress']);
+            }
+
+            if(data['state'] == 'SUCCESS'){
                 write_save_collection_assets(task_id);
+                $("#progress").html("");
                 clearInterval(gts);
             }
-            <!--clearInterval(gts);-->
 
         }
     }).fail(function(jqXHR, textStatus, errorThrown) {
@@ -119,20 +191,14 @@ $("#create_btn").click(function(){
     var name = $("#name").val();
     var project_name = $("#project-name").val();
     var url = $("#url").val();
-    <!--var create_type = '';-->
-    <!--if(url.indexOf('/item/')>=0){-->
-        <!--create_type = "item";-->
-        <!--$("#item_id").val(get_item_id_from_item_url(url));-->
-    <!--}else{-->
-        <!--create_type = "collections";-->
-        <!--$("#item_id").val("");-->
-    <!--}-->
+    
     if(name && project_name && url){
         $.ajax({
             url: '/create_collection/',
             type: 'post',
             data: {"name": name, "url": url, "project": project_name,'csrfmiddlewaretoken': $("input[name=csrfmiddlewaretoken]").val()},
             success: function(data, textStatus, jqXHR) {
+                $(".loading").removeClass("d-none");
                 $("#task_id").val(data['task_id']);
                 $("#collection_slug").val(data['name']);
                 $("#item_id").val(data['item_id']);
@@ -150,7 +216,6 @@ $("#create_btn").click(function(){
             $("#error_msg").html("Sorry..!! There is some error for creating collection...");
                 }
             }
-            $(".loading").addClass("d-none");
             $("#close_error").show();
         });
     }
@@ -173,6 +238,14 @@ function get_item_id_from_item_url(item_url){
 }
 
 get_task_status($("#task_id").val());
+
+
+$(function(){
+    $( "#name" ).autocomplete({
+        source: '/filter/collections',
+        minLength: 1,
+    });
+});
 
 </script>
 {% endblock main_content %}
