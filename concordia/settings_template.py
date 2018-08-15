@@ -223,7 +223,7 @@ REST_FRAMEWORK = {
     )
 }
 
-CONCORDIA = {"netloc": "http://0.0.0.0:80"}
+CONCORDIA = {"netloc": "http://0:80"}
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
