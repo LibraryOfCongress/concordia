@@ -193,14 +193,6 @@ class ConcordiaAssetView(TemplateView):
         else:
             return False
 
-    def set_hide_discussion(self):
-        # Flag for hiding the discussion content
-        discussion_hide = True
-        if discussion_hide:
-            return True
-        else:
-            return False
-
     def get_context_data(self, **kws):
         """
         Handle the GET request
@@ -212,7 +204,8 @@ class ConcordiaAssetView(TemplateView):
         in_use_url = "/transcribe/%s/asset/%s/" % (asset.collection.slug, asset.slug)
         current_user_id = self.request.user.id if self.request.user.id is not None else get_anonymous_user()
         page_in_use = self.check_page_in_use(in_use_url, current_user_id)
-        discussion_hide = self.set_hide_discussion()
+        # TODO: in the future, this is from a settings file value
+        discussion_hide = True
 
         # Get all transcriptions, they are no longer tied to a specific user
         transcription = Transcription.objects.filter(asset=asset).last()
