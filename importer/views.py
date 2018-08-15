@@ -148,6 +148,10 @@ def check_completeness(ciac, item_id=None):
         )
         if ciac.collection_item_asset_count == item_downloaded_asset_count:
             return True
+        else:
+            shutil.rmtree(item_local_path)
+            CollectionTaskDetails.objects.get(collection_slug=ciac.collection_task.collection_slug).delete()
+            return False
 
     else:
         collection_items = os.listdir(project_local_path)
@@ -163,6 +167,10 @@ def check_completeness(ciac, item_id=None):
             == ciac.collection_task.collection_item_count
         ):
             return True
+        else:
+            shutil.rmtree(project_local_path)
+            CollectionTaskDetails.objects.get(collection_slug=ciac.collection_task.collection_slug).delete()
+            return False
     return False
 
 
