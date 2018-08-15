@@ -7,10 +7,6 @@
   box-sizing: border-box;
 }
 
-body {
-  font: 16px Arial;  
-}
-
 .autocomplete {
   /*the container must be positioned relative:*/
   position: relative;
@@ -50,26 +46,24 @@ input[type=submit] {
 .autocomplete-items div {
   padding: 10px;
   cursor: pointer;
-  background-color: #fff; 
-  border-bottom: 1px solid #d4d4d4; 
+  background-color: #fff;
+  border-bottom: 1px solid #d4d4d4;
 }
 
 .autocomplete-items div:hover {
   /*when hovering an item:*/
-  background-color: #e9e9e9; 
+  background-color: #e9e9e9;
 }
 
 .autocomplete-active {
   /*when navigating through the items using the arrow keys:*/
-  background-color: DodgerBlue !important; 
-  color: #ffffff; 
+  background-color: DodgerBlue !important;
+  color: #ffffff;
 }
 </style>
 
 {% endblock head_content %}
 {% block main_content %}
-<link href="http://code.jquery.com/ui/1.10.2/themes/smoothness/jquery-ui.css" rel="Stylesheet"></link>
-<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 <div class="container-fluid py-default" id='container'>
   <div class="row">
@@ -199,7 +193,7 @@ $("#create_btn").click(function(){
     var name = $("#name").val();
     var project_name = $("#project-name").val();
     var url = $("#url").val();
-    
+
     if(name && project_name && url){
         $.ajax({
             url: '/create_collection/',
