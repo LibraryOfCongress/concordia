@@ -31,11 +31,11 @@ tx_urlpatterns = (
             views.ConcordiaAlternateAssetView.as_view(),
             name="alternate asset",
         ),
-        re_path(r"^([^/]+)/$", views.ConcordiaCollectionView.as_view(), name="Collection"),
+        re_path(r"^([^/]+)/$", views.ConcordiaCollectionView.as_view(), name="collection"),
         re_path(
             r"^([^/]+)/([^/]+)/$",
             views.ConcordiaProjectView.as_view(),
-            name="Project",
+            name="project",
         ),
         re_path(
             r"exportCSV/([^/]+)/$",
