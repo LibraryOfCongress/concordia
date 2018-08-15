@@ -119,9 +119,10 @@ def download_write_collection_item_asset(image_url, asset_local_path):
         try:
             for chunk in image_response.iter_content(chunk_size=100000):
                 fd.write(chunk)
+            return True
         except Exception as e:
             logger.error("Error while writing the file to disk : %s " % str(e))
-    return
+    return False
 
 
 def get_save_item_assets(collection_name, project, item_id, item_asset_urls):
