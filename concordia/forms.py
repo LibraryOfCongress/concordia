@@ -39,9 +39,9 @@ class ConcordiaUserForm(RegistrationForm):
             attrs={"class": "form-control", "placeholder": "Confirm"}
         ),
     )
-
-    captcha = CaptchaField(
-    )
+    
+    # captcha = CaptchaField(
+    # )
 
     class Meta:
         model = User
