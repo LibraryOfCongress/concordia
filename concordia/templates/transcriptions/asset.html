@@ -306,7 +306,7 @@ input#id_captcha_1 {
 
             var show_message = sessionStorage.getItem('show_message');
 
-            if( show_message = 'true' ) {
+            if( show_message === 'true' ) {
                 {% if transcription.status %}
                     switch ("{{ transcription.status }}") {
                         case 'Edit':
