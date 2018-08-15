@@ -31,32 +31,44 @@ class CreateCollectionView(generics.CreateAPIView):
         project = data.get("project")
         url = data.get("url")
         create_type = data.get("create_type")
-        collection_details = {"collection_name": name, "collection_slug": slugify(name),
-                              "subcollection_name": project, "subcollection_slug": slugify(project)}
-       
+        collection_details = {
+            "collection_name": name,
+            "collection_slug": slugify(name),
+            "subcollection_name": project,
+            "subcollection_slug": slugify(project),
+        }
+
         if create_type == "collections":
 
-            download_task = download_write_collection_item_assets.delay(slugify(name), slugify(project), url)
+            download_task = download_write_collection_item_assets.delay(
+                slugify(name), slugify(project), url
+            )
             collection_details["collection_task_id"] = download_task.task_id
             CollectionTaskDetails.objects.create(**collection_details)
             data["task_id"] = download_task.task_id
 
         elif create_type == "item":
             item_id = get_item_id_from_item_url(url)
-            download_task = download_write_item_assets.delay(slugify(name), slugify(project), item_id)
-            ctd, created = CollectionTaskDetails.objects.get_or_create(collection_slug=slugify(name),
-                                                                  subcollection_slug=slugify(project),
-                                                                  defaults={"collection_name": name,
-                                                                            "subcollection_name": project})
-            CollectionItemAssetCount.objects.create(collection_task=ctd,
-                                                    collection_item_identifier=item_id,
-                                                    item_task_id=download_task.task_id)
+            download_task = download_write_item_assets.delay(
+                slugify(name), slugify(project), item_id
+            )
+            ctd, created = CollectionTaskDetails.objects.get_or_create(
+                collection_slug=slugify(name),
+                subcollection_slug=slugify(project),
+                defaults={"collection_name": name, "subcollection_name": project},
+            )
+            CollectionItemAssetCount.objects.create(
+                collection_task=ctd,
+                collection_item_identifier=item_id,
+                item_task_id=download_task.task_id,
+            )
 
             data["task_id"] = download_task.task_id
             data["item_id"] = item_id
 
         headers = self.get_success_headers(data)
         return Response(data, status=status.HTTP_202_ACCEPTED, headers=headers)
+
 
 @api_view(["GET"])
 def get_task_status(request, task_id):
@@ -68,44 +80,66 @@ def get_task_status(request, task_id):
         try:
             ciac = CollectionItemAssetCount.objects.get(item_task_id=task_id)
             project_local_path = os.path.join(
-                settings.IMPORTER["IMAGES_FOLDER"], ciac.collection_task.collection_slug,
-                ciac.collection_task.subcollection_slug
+                settings.IMPORTER["IMAGES_FOLDER"],
+                ciac.collection_task.collection_slug,
+                ciac.collection_task.subcollection_slug,
             )
             item_downloaded_asset_count = sum(
-                [len(files) for path, dirs, files in
-                 os.walk(os.path.join(project_local_path, ciac.collection_item_identifier))]
+                [
+                    len(files)
+                    for path, dirs, files in os.walk(
+                        os.path.join(
+                            project_local_path, ciac.collection_item_identifier
+                        )
+                    )
+                ]
             )
             if item_downloaded_asset_count <= ciac.collection_item_asset_count:
-                progress =  '%s of %s processed' % (item_downloaded_asset_count, ciac.collection_item_asset_count)
+                progress = "%s of %s processed" % (
+                    item_downloaded_asset_count,
+                    ciac.collection_item_asset_count,
+                )
             else:
-                progress = ''
-            return Response({'state': task_state, 'progress': progress})
+                progress = ""
+            return Response({"state": task_state, "progress": progress})
         except CollectionItemAssetCount.DoesNotExist:
             try:
                 ctd = CollectionTaskDetails.objects.get(collection_task_id=task_id)
                 project_local_path = os.path.join(
-                   settings.IMPORTER["IMAGES_FOLDER"], ctd.collection_slug,
-                    ctd.subcollection_slug
+                    settings.IMPORTER["IMAGES_FOLDER"],
+                    ctd.collection_slug,
+                    ctd.subcollection_slug,
                 )
                 collection_downloaded_asset_count = sum(
                     [len(files) for path, dirs, files in os.walk(project_local_path)]
                 )
                 if collection_downloaded_asset_count <= ctd.collection_asset_count:
-                    progress = '%s of %s processed' % (collection_downloaded_asset_count, ctd.collection_asset_count)
+                    progress = "%s of %s processed" % (
+                        collection_downloaded_asset_count,
+                        ctd.collection_asset_count,
+                    )
                 else:
-                    progress = ''
-                return Response({'state': task_state, 'progress': progress})
+                    progress = ""
+                return Response({"state": task_state, "progress": progress})
             except CollectionTaskDetails.DoesNotExist:
-                return Response({"message": "Requested task id Does not exists collection progress"}, status.HTTP_404_NOT_FOUND)
+                return Response(
+                    {
+                        "message": "Requested task id Does not exists collection progress"
+                    },
+                    status.HTTP_404_NOT_FOUND,
+                )
             # return Response({"message": "Requested task id Does not exists for item progress"},
             #                 status.HTTP_404_NOT_FOUND)
 
-        #return Response(task_state)
+        # return Response(task_state)
+
 
 def check_completeness(ciac, item_id=None):
 
     project_local_path = os.path.join(
-        settings.IMPORTER["IMAGES_FOLDER"], ciac.collection_task.collection_slug, ciac.collection_task.subcollection_slug
+        settings.IMPORTER["IMAGES_FOLDER"],
+        ciac.collection_task.collection_slug,
+        ciac.collection_task.subcollection_slug,
     )
     if item_id:
         item_local_path = os.path.join(project_local_path, item_id)
@@ -120,11 +154,15 @@ def check_completeness(ciac, item_id=None):
         collection_downloaded_item_count = len(collection_items)
         collection_downloaded_asset_count = sum(
             [len(files) for path, dirs, files in os.walk(project_local_path)]
-
         )
-        if (collection_downloaded_asset_count == ciac.collection_task.collection_asset_count) and (
-            collection_downloaded_item_count == ciac.collection_task.collection_item_count):
-                return True
+        if (
+            collection_downloaded_asset_count
+            == ciac.collection_task.collection_asset_count
+        ) and (
+            collection_downloaded_item_count
+            == ciac.collection_task.collection_item_count
+        ):
+            return True
     return False
 
 
@@ -147,7 +185,7 @@ def save_collection_item_assets(subcollection, the_path, item_id=None):
                 media_type="IMG",
                 sequence=sequence,
                 collection=subcollection.collection,
-                subcollection=subcollection
+                subcollection=subcollection,
             )
 
             try:
@@ -169,14 +207,22 @@ def check_and_save_collection_assets(request, task_id, item_id=None):
 
         if item_id:
             try:
-                ciac = CollectionItemAssetCount.objects.get(item_task_id=task_id, collection_item_identifier=item_id)
+                ciac = CollectionItemAssetCount.objects.get(
+                    item_task_id=task_id, collection_item_identifier=item_id
+                )
             except CollectionItemAssetCount.DoesNotExist:
-                return Response({"message": "Requested Collection Does not exists"}, status.HTTP_404_NOT_FOUND)
+                return Response(
+                    {"message": "Requested Collection Does not exists"},
+                    status.HTTP_404_NOT_FOUND,
+                )
             if check_and_save_item_completeness(ciac, item_id):
                 return redirect(
                     reverse(
                         "transcriptions:collection",
-                        args=[ciac.collection_task.collection_slug, ciac.collection_task.subcollection_slug],
+                        args=[
+                            ciac.collection_task.collection_slug,
+                            ciac.collection_task.subcollection_slug,
+                        ],
                         current_app=request.resolver_match.namespace,
                     )
                 )
@@ -185,7 +231,10 @@ def check_and_save_collection_assets(request, task_id, item_id=None):
                 ctd = CollectionTaskDetails.objects.get(collection_task_id=task_id)
                 ciac = CollectionItemAssetCount.objects.filter(collection_task=ctd)[0]
             except CollectionTaskDetails.DoesNotExist:
-                return Response({"message": "Requested Collection Does not exists"}, status.HTTP_404_NOT_FOUND)
+                return Response(
+                    {"message": "Requested Collection Does not exists"},
+                    status.HTTP_404_NOT_FOUND,
+                )
             if check_and_save_collection_completeness(ciac):
                 return redirect(
                     reverse(
@@ -205,26 +254,38 @@ def check_and_save_collection_assets(request, task_id, item_id=None):
 def check_and_save_collection_completeness(ciac):
     if check_completeness(ciac):
         try:
-            subcollection = Subcollection.objects.get(collection__slug=ciac.collection_task.collection_slug,
-                                                   slug=ciac.collection_task.subcollection_slug)
+            subcollection = Subcollection.objects.get(
+                collection__slug=ciac.collection_task.collection_slug,
+                slug=ciac.collection_task.subcollection_slug,
+            )
         except Subcollection.DoesNotExist:
-            collection = Collection.objects.create(title=ciac.collection_task.collection_name,
-                                                   slug=ciac.collection_task.collection_slug,
-                                                   description=ciac.collection_task.collection_name,
-                                                   is_active=True)
+            collection = Collection.objects.create(
+                title=ciac.collection_task.collection_name,
+                slug=ciac.collection_task.collection_slug,
+                description=ciac.collection_task.collection_name,
+                is_active=True,
+            )
 
-            subcollection = Subcollection.objects.create(title=ciac.collection_task.subcollection_name,
-                                         collection=collection,
-                                         slug=ciac.collection_task.subcollection_slug)
+            subcollection = Subcollection.objects.create(
+                title=ciac.collection_task.subcollection_name,
+                collection=collection,
+                slug=ciac.collection_task.subcollection_slug,
+            )
 
         project_local_path = os.path.join(
-            settings.IMPORTER["IMAGES_FOLDER"], subcollection.collection.slug, subcollection.slug
+            settings.IMPORTER["IMAGES_FOLDER"],
+            subcollection.collection.slug,
+            subcollection.slug,
         )
 
         save_collection_item_assets(subcollection, project_local_path)
 
         shutil.rmtree(
-            os.path.join(settings.IMPORTER["IMAGES_FOLDER"], subcollection.collection.slug, subcollection.slug)
+            os.path.join(
+                settings.IMPORTER["IMAGES_FOLDER"],
+                subcollection.collection.slug,
+                subcollection.slug,
+            )
         )
 
         return True
@@ -236,24 +297,37 @@ def check_and_save_item_completeness(ciac, item_id):
 
     if check_completeness(ciac, item_id):
         try:
-            subcollection = Subcollection.objects.get(collection__slug=ciac.collection_task.collection_slug,
-                                                   slug=ciac.collection_task.subcollection_slug)
+            subcollection = Subcollection.objects.get(
+                collection__slug=ciac.collection_task.collection_slug,
+                slug=ciac.collection_task.subcollection_slug,
+            )
         except Subcollection.DoesNotExist:
-            collection = Collection.objects.create(title=ciac.collection_task.collection_name,
-                                                   slug=ciac.collection_task.collection_slug,
-                                                   description=ciac.collection_task.collection_name,
-                                                   is_active=True)
+            collection = Collection.objects.create(
+                title=ciac.collection_task.collection_name,
+                slug=ciac.collection_task.collection_slug,
+                description=ciac.collection_task.collection_name,
+                is_active=True,
+            )
 
-            subcollection = Subcollection.objects.create(title=ciac.collection_task.subcollection_name,
-                                         collection=collection,
-                                         slug=ciac.collection_task.subcollection_slug)
+            subcollection = Subcollection.objects.create(
+                title=ciac.collection_task.subcollection_name,
+                collection=collection,
+                slug=ciac.collection_task.subcollection_slug,
+            )
         item_local_path = os.path.join(
-            settings.IMPORTER["IMAGES_FOLDER"], subcollection.collection.slug, subcollection.slug, item_id
+            settings.IMPORTER["IMAGES_FOLDER"],
+            subcollection.collection.slug,
+            subcollection.slug,
+            item_id,
         )
 
         save_collection_item_assets(subcollection, item_local_path, item_id)
         shutil.rmtree(
-            os.path.join(settings.IMPORTER["IMAGES_FOLDER"], subcollection.collection.slug, subcollection.slug)
+            os.path.join(
+                settings.IMPORTER["IMAGES_FOLDER"],
+                subcollection.collection.slug,
+                subcollection.slug,
+            )
         )
         return True
 

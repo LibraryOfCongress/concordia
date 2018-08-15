@@ -21,7 +21,7 @@ DATABASES = {
     }
 }
 
-ALLOWED_HOSTS = ["127.0.0.1", "0.0.0.0","*"]
+ALLOWED_HOSTS = ["127.0.0.1", "0.0.0.0", "*"]
 
 CELERY_BROKER_URL = "amqp://"
 
@@ -34,7 +34,7 @@ IMPORTER = {
     "S3_BUCKET_NAME": "",
 }
 
-EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
-EMAIL_FILE_PATH = '/tmp/concordia-messages' # change this to a proper location
+EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
+EMAIL_FILE_PATH = "/tmp/concordia-messages"  # change this to a proper location
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "")
 DEFAULT_TO_EMAIL = DEFAULT_FROM_EMAIL

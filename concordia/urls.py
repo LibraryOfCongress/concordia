@@ -23,12 +23,19 @@ tx_urlpatterns = (
     [
         re_path(r"^$", views.ConcordiaView.as_view(), name="transcribe"),
         re_path(r"^create/$", views.CollectionView.as_view(), name="create"),
-        re_path(r"^pageinuse/$", views.ConcordiaPageInUse.as_view(), name="page in use"),
-        re_path(r"^alternateasset/$", views.ConcordiaAlternateAssetView.as_view(), name="alternate asset"),
         re_path(
-            r"^([^/]+)/$", views.ConcordiaProjectView.as_view(), name="project"),
+            r"^pageinuse/$", views.ConcordiaPageInUse.as_view(), name="page in use"
+        ),
         re_path(
-            r"^([^/]+)/([^/]+)/$", views.ConcordiaCollectionView.as_view(), name="collection"
+            r"^alternateasset/$",
+            views.ConcordiaAlternateAssetView.as_view(),
+            name="alternate asset",
+        ),
+        re_path(r"^([^/]+)/$", views.ConcordiaProjectView.as_view(), name="project"),
+        re_path(
+            r"^([^/]+)/([^/]+)/$",
+            views.ConcordiaCollectionView.as_view(),
+            name="collection",
         ),
         re_path(
             r"exportCSV/([^/]+)/$",
@@ -70,10 +77,7 @@ urlpatterns = [
     re_path(
         r"^about/$", TemplateView.as_view(template_name="about.html"), name="about"
     ),
-    re_path(
-        r"^contact/$", views.ContactUsView.as_view(),
-        name="contact"
-    ),
+    re_path(r"^contact/$", views.ContactUsView.as_view(), name="contact"),
     re_path(r"^transcribe/", include(tx_urlpatterns, namespace="transcriptions")),
     re_path(r"^api/v1/", include(trans_urls)),
     re_path(
@@ -106,12 +110,13 @@ urlpatterns = [
     re_path(r"^admin/", admin.site.urls),
     # Apps
     re_path(r"^forum/", include(board.urls)),
-
     # Web Services
     # Form views
-    re_path(r'^ws/page_in_use/(?P<page_url>(.*?))/$', views_ws.PageInUseGet.as_view()),
-    re_path(r'^ws/page_in_use_update/(?P<page_url>(.*?))/$', views_ws.PageInUsePut.as_view()),
-    re_path(r'^ws/page_in_use/$', views_ws.PageInUseCreate.as_view()),
+    re_path(r"^ws/page_in_use/(?P<page_url>(.*?))/$", views_ws.PageInUseGet.as_view()),
+    re_path(
+        r"^ws/page_in_use_update/(?P<page_url>(.*?))/$", views_ws.PageInUsePut.as_view()
+    ),
+    re_path(r"^ws/page_in_use/$", views_ws.PageInUseCreate.as_view()),
 ]
 
 urlpatterns += [
@@ -171,7 +176,4 @@ urlpatterns += [
 
 urlpatterns += [url("", include("django_prometheus_metrics.urls"))]
 
-urlpatterns += [
-    url(r'^captcha/', include('captcha.urls')),
-]
-
+urlpatterns += [url(r"^captcha/", include("captcha.urls"))]

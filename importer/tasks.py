@@ -1,13 +1,11 @@
 import os
-from logging import getLogger
 from collections import defaultdict
+from logging import getLogger
 
 import requests
-
-from django.template.defaultfilters import slugify
-from django.conf import settings
-
 from celery import task
+from django.conf import settings
+from django.template.defaultfilters import slugify
 
 from importer.models import CollectionItemAssetCount, CollectionTaskDetails
 
@@ -53,9 +51,12 @@ def get_collection_pages(collection_url):
     :param collection_url:
     :return: int total no of pages
     """
-    resp = get_request_data(collection_url, params={'fo': 'json', 'at': 'pagination'})
+    resp = get_request_data(collection_url, params={"fo": "json", "at": "pagination"})
     total_pages = resp.get("pagination", {}).get("total", 0)
-    logger.info("total_collection_pages: %s for collection url : %s" % (total_pages, collection_url))
+    logger.info(
+        "total_collection_pages: %s for collection url : %s"
+        % (total_pages, collection_url)
+    )
     return total_pages
 
 
@@ -67,11 +68,15 @@ def get_collection_item_ids(collection_url, total_pages):
     """
     collection_item_ids = []
     for page_num in range(1, total_pages + 1):
-        resp = get_request_data(collection_url, params={'fo': 'json', 'at': 'results'})
+        resp = get_request_data(collection_url, params={"fo": "json", "at": "results"})
         page_results = resp.get("results", [])
         for pr in page_results:
-            if pr.get("id") and pr.get("image_url") and "collection" not in pr.get("original_format") \
-                    and "web page" not in pr.get("original_format"):
+            if (
+                pr.get("id")
+                and pr.get("image_url")
+                and "collection" not in pr.get("original_format")
+                and "web page" not in pr.get("original_format")
+            ):
                 collection_item_url = pr.get("id")
                 collection_item_ids.append(collection_item_url.split("/")[-2])
     if not collection_item_ids:
@@ -161,27 +166,30 @@ def download_write_collection_item_assets(collection_name, project, collection_u
         collection_item_asset_urls = get_collection_item_asset_urls(cii)
         items_asset_count_dict[cii] = len(collection_item_asset_urls)
         items_assets[cii] = collection_item_asset_urls
-        #get_save_item_assets(collection_name, project, cii, collection_item_asset_urls)
+        # get_save_item_assets(collection_name, project, cii, collection_item_asset_urls)
 
-    ctd, created = CollectionTaskDetails.objects.get_or_create(collection_slug=slugify(collection_name),
-                                                               subcollection_slug=slugify(project),
-                                                               defaults={"collection_name": collection_name,
-                                                                         "subcollection_name": project})
+    ctd, created = CollectionTaskDetails.objects.get_or_create(
+        collection_slug=slugify(collection_name),
+        subcollection_slug=slugify(project),
+        defaults={"collection_name": collection_name, "subcollection_name": project},
+    )
     ctd.collection_item_count = len(collection_item_ids)
     ctd.collection_asset_count = sum(items_asset_count_dict.values())
     ctd.save()
     ciac_details = []
     for key, value in items_asset_count_dict.items():
-        ciac_details.append(CollectionItemAssetCount(
-                collection_task = ctd,
-                collection_item_identifier = key,
-                collection_item_asset_count = value
-        ))
+        ciac_details.append(
+            CollectionItemAssetCount(
+                collection_task=ctd,
+                collection_item_identifier=key,
+                collection_item_asset_count=value,
+            )
+        )
     CollectionItemAssetCount.objects.bulk_create(ciac_details)
 
     for cii in collection_item_ids:
-        #collection_item_asset_urls = get_collection_item_asset_urls(cii)
-        #items_asset_count_dict[cii] = len(collection_item_asset_urls)
+        # collection_item_asset_urls = get_collection_item_asset_urls(cii)
+        # items_asset_count_dict[cii] = len(collection_item_asset_urls)
         get_save_item_assets(collection_name, project, cii, items_assets[cii])
 
 
@@ -196,14 +204,17 @@ def download_write_item_assets(collection_name, project, item_id):
     """
     item_asset_urls = get_collection_item_asset_urls(item_id)
 
-    ctd, created = CollectionTaskDetails.objects.get_or_create(collection_slug=slugify(collection_name),
-                                                               subcollection_slug=slugify(project),
-                                                               defaults={"collection_name": collection_name,
-                                                                         "subcollection_name": project})
+    ctd, created = CollectionTaskDetails.objects.get_or_create(
+        collection_slug=slugify(collection_name),
+        subcollection_slug=slugify(project),
+        defaults={"collection_name": collection_name, "subcollection_name": project},
+    )
     ctd.collection_item_count += 1
     ctd.collection_asset_count += len(item_asset_urls)
     ctd.save()
-    ciac, created = CollectionItemAssetCount.objects.get_or_create(collection_task=ctd, collection_item_identifier=item_id)
+    ciac, created = CollectionItemAssetCount.objects.get_or_create(
+        collection_task=ctd, collection_item_identifier=item_id
+    )
     ciac.collection_item_asset_count = len(item_asset_urls)
     ciac.save()
 

@@ -23,7 +23,4 @@ class CollectionItemAssetCountAdmin(admin.ModelAdmin):
     # todo: replace text with truncated value
     # todo: add foreignKey link for asset, parent, & user_id
     pass
-    list_display = (
-        "collection_item_identifier",
-        "collection_item_asset_count",
-    )
+    list_display = ("collection_item_identifier", "collection_item_asset_count")
