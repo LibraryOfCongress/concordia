@@ -3,6 +3,8 @@ from datetime import datetime, timedelta
 import json
 import html
 import os
+from requests import Request, Session
+
 from logging import getLogger
 
 import requests
@@ -23,6 +25,7 @@ from django.urls import reverse
 from django.views.generic import FormView, TemplateView
 from django.views.generic import TemplateView, View
 from rest_framework.test import APIRequestFactory
+from rest_framework import status
 from registration.backends.simple.views import RegistrationView
 
 
@@ -121,17 +124,31 @@ class AccountProfileView(LoginRequiredMixin, TemplateView):
         if profile:
             data["myfile"] = profile[0].myfile
 
-        transcriptions = \
-            Transcription.objects.filter(user_id=self.request.user.id).order_by("-updated_on")
+        s = Session()
+        req = Request('GET', "%s://%s/ws/transcription_by_user/%s/" %
+                      (self.request.scheme, self.request.get_host(), self.request.user.id))
+        prepped = s.prepare_request(req)
 
-        for t in transcriptions:
-            collection = Collection.objects.get(id=t.asset.collection.id)
-            t.collection_name = collection.slug
+        resp = s.send(prepped)
 
+        response = requests.get("%s://%s/ws/transcription_by_user/%s/" %
+                                (self.request.scheme, self.request.get_host(), self.request.user.id),
+                                cookies=self.request.COOKIES)
+
+        transcription_json_val = json.loads(response.content.decode("utf-8"))
+
+        for trans in transcription_json_val["results"]:
+            collection_response = requests.get("%s://%s/ws/collection_by_id/%s/" %
+                                               (self.request.scheme, self.request.get_host(),
+                                                trans["asset"]["collection"]["id"]),
+                                               cookies=self.request.COOKIES)
+            trans["collection_name"] = json.loads(collection_response.content.decode("utf-8"))["slug"]
+            trans["updated_on"] = datetime.strptime(trans["updated_on"], "%Y-%m-%dT%H:%M:%S.%fZ")
+            
         return super().get_context_data(
             **dict(
                 kws,
-                transcriptions=transcriptions,
+                transcriptions=transcription_json_val["results"],
                 form=ConcordiaUserEditForm(initial=data),
             )
         )
@@ -149,12 +166,14 @@ class ConcordiaCollectionView(TemplateView):
     template_name = "transcriptions/collection.html"
 
     def get_context_data(self, **kws):
-        try:
-            collection = Collection.objects.get(slug=self.args[0])
-        except Collection.DoesNotExist:
-            raise Http404
-        asset_list = collection.asset_set.all().order_by("title", "sequence")
-        paginator = Paginator(asset_list, ASSETS_PER_PAGE)
+
+        response = requests.get("%s://%s/ws/collection/%s/" %
+                                (self.request.scheme, self.request.get_host(), self.args[0]),
+                                cookies=self.request.COOKIES)
+        collection_json_val = json.loads(response.content.decode("utf-8"))
+        asset_sorted_list = sorted(collection_json_val["assets"], key=lambda k: (k['slug']))
+
+        paginator = Paginator(asset_sorted_list, ASSETS_PER_PAGE)
 
         if not self.request.GET.get("page"):
             page = 1
@@ -164,7 +183,7 @@ class ConcordiaCollectionView(TemplateView):
         assets = paginator.get_page(page)
 
         return dict(
-            super().get_context_data(**kws), collection=collection, assets=assets
+            super().get_context_data(**kws), collection=collection_json_val, assets=assets
         )
 
 
@@ -184,14 +203,15 @@ class ConcordiaAssetView(TemplateView):
         """
         Check the page in use for the asset, return true if in use within the last 5 minutes, otherwise false
         :param url: url to test if in use
-        :param user: user id
+        :param user: user object
         :return: True or False
         """
-        time_threshold = datetime.now() - timedelta(minutes=5)
-        page_in_use_count = PageInUse.objects.filter(page_url=url,
-                                                     updated_on__gt=time_threshold).exclude(user=user).count()
+        response = requests.get("%s://%s/ws/page_in_use_filter/%s/%s/" %
+                                (self.request.scheme, self.request.get_host(), user, url),
+                                cookies=self.request.COOKIES)
+        json_val = json.loads(response.content.decode("utf-8"))
 
-        if page_in_use_count > 0:
+        if json_val["count"] > 0:
             return True
         else:
             return False
@@ -206,10 +226,15 @@ class ConcordiaAssetView(TemplateView):
         asset = Asset.objects.get(collection__slug=self.args[0], slug=self.args[1])
         in_use_url = "/transcribe/%s/asset/%s/" % (asset.collection.slug, asset.slug)
         current_user_id = self.request.user.id if self.request.user.id is not None else get_anonymous_user()
-        page_in_use = self.check_page_in_use(in_use_url, current_user_id)
+        page_in_use = self.check_page_in_use(in_use_url, self.request.user)
 
         # Get all transcriptions, they are no longer tied to a specific user
         transcription = Transcription.objects.filter(asset=asset).last()
+
+        response = requests.get("%s://%s/ws/transcription/%s/" %
+                                (self.request.scheme, self.request.get_host(), asset.id),
+                                cookies=self.request.COOKIES)
+        transcription_json = json.loads(response.content.decode("utf-8"))
 
         # Get all tags, they are no longer tied to a specific user
         db_tags = UserAssetTagCollection.objects.filter(asset=asset)
@@ -225,6 +250,15 @@ class ConcordiaAssetView(TemplateView):
                     all_tags = (
                         tags | tags_in_db.tags.all()
                     ).distinct()  # merge the querysets
+
+        response = requests.get("%s://%s/ws/tags/%s/" %
+                                (self.request.scheme, self.request.get_host(), asset.id),
+                                cookies=self.request.COOKIES)
+        if response.status_code == status.HTTP_200_OK:
+            json_tags = json.loads(response.content.decode("utf-8"))
+        else:
+            json_tags = {}
+
 
         captcha_form = CaptchaEmbedForm()
 
@@ -252,8 +286,8 @@ class ConcordiaAssetView(TemplateView):
             super().get_context_data(**kws),
             page_in_use=page_in_use,
             asset=asset,
-            transcription=transcription,
-            tags=all_tags,
+            transcription=transcription_json,
+            tags=json_tags["results"],
             captcha_form=captcha_form
         )
 

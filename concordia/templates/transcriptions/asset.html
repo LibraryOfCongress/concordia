@@ -42,7 +42,7 @@ input#id_captcha_1 {
                             <textarea class="w-100" name="tx" id="transcription-input" placeholder="Go ahead, start typing. You got this!" aria-label="Transcription input">{{transcription.text}}</textarea>
                         </div>
                         <div class="tab-pane fade rounded" id="tab-tag" role="tabpanel" aria-labelledby="nav-pill-tag">
-                            <input type="text" class="textarea w-100" id="tag-input" name="tags" data-role="tagsinput" value="{%for tag in tags %}{{tag}},{% endfor %}" aria-label="Tag input">
+                            <input type="text" class="textarea w-100" id="tag-input" name="tags" data-role="tagsinput" value="{%for tag in tags %}{{tag.value}},{% endfor %}" aria-label="Tag input">
                         </div>
                         <div class="tab-pane fade pxy-quarter rounded" id="tab-discussion" role="tabpanel"
                              aria-labelledby="nav-pill-discussion">

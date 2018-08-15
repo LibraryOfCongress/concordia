@@ -5,11 +5,11 @@ from django.shortcuts import get_object_or_404
 
 from django.http import QueryDict
 
-from rest_framework import generics, exceptions
+from rest_framework import generics, exceptions, status
 from rest_framework.authentication import BasicAuthentication
 from rest_framework.response import Response
 
-from .models import PageInUse, User, Collection, Asset, Transcription, Tag, UserAssetTagCollection
+from .models import PageInUse, User, Collection, Asset, Transcription, Tag, UserAssetTagCollection, Status
 from .serializers import PageInUseSerializer, CollectionDetailSerializer, AssetSerializer, \
     TranscriptionSerializer, UserAssetTagSerializer, TagSerializer
 
@@ -83,13 +83,24 @@ class PageInUsePut(generics.UpdateAPIView):
 
 class CollectionGet(generics.RetrieveAPIView):
     """
-    GET: Retrieve an existing Collection
+    GET: Retrieve an existing Collection by slug value
     """
     model = Collection
     authentication_classes = (ConcordiaAPIAuth,)
     serializer_class = CollectionDetailSerializer
     queryset = Collection.objects.all()
     lookup_field = 'slug'
+
+
+class CollectionGetById(generics.RetrieveAPIView):
+    """
+    GET: Retrieve an existing Collection by id
+    """
+    model = Collection
+    authentication_classes = (ConcordiaAPIAuth,)
+    serializer_class = CollectionDetailSerializer
+    queryset = Collection.objects.all()
+    lookup_field = 'id'
 
 
 class CollectionAssetsGet(generics.RetrieveAPIView):
@@ -148,8 +159,9 @@ class PageInUseFilteredGet(generics.ListAPIView):
         by users other than the user arg
         """
         time_threshold = datetime.now() - timedelta(minutes=5)
-        return PageInUse.objects.filter(page_url=self.kwargs['page_url'],
+        page = PageInUse.objects.filter(page_url=self.kwargs['page_url'],
                                         updated_on__gt=time_threshold).exclude(user__username=self.kwargs['user'])
+        return page
 
 
 class TranscriptionLastGet(generics.RetrieveAPIView):
@@ -171,6 +183,25 @@ class TranscriptionLastGet(generics.RetrieveAPIView):
         return obj
 
 
+class TranscriptionByUser(generics.ListAPIView):
+    """
+    GET: Get the transcriptions for a user id
+    """
+    model = Transcription
+    authentication_classes = (ConcordiaAPIAuth,)
+    serializer_class = TranscriptionSerializer
+    queryset = Transcription.objects.all()
+    lookup_field = 'user'
+
+    def get_queryset(self):
+        """
+        Return the user's transcriptions
+        :return: Transcription object
+        """
+        return Transcription.objects.filter(user_id=self.kwargs['user']).order_by("-updated_on")
+
+
+
 class TranscriptionCreate(generics.CreateAPIView):
     """
     POST: Create a new Transcription
@@ -179,6 +210,28 @@ class TranscriptionCreate(generics.CreateAPIView):
     authentication_classes = (ConcordiaAPIAuth,)
     serializer_class = TranscriptionSerializer
     queryset = Transcription.objects.all()
+
+    def post(self, request, *args, **kwargs):
+        if type(request.data) == QueryDict:
+            # when using APIFactory to submit post, data must be converted from QueryDict
+            request_data = request.data.dict()
+        else:
+            request_data = request.data
+
+        asset = get_object_or_404(Asset, id=request_data["asset"])
+
+        transcription = Transcription.objects.create(
+             asset=asset,
+             user_id=request_data["user_id"],
+             text=request_data["text"],
+             status=Status.EDIT
+        )
+
+        serializer = TranscriptionSerializer(data=request_data)
+        if serializer.is_valid():
+            pass
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
 
 
 class UserAssetTagsGet(generics.ListAPIView):
