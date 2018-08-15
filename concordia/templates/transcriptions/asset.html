@@ -305,9 +305,8 @@ input#id_captcha_1 {
             {% endif %}
 
             var show_message = sessionStorage.getItem('show_message');
+
             if( show_message = 'true' ) {
-                sessionStorage.setItem('show_message', 'false');
-                show_message = sessionStorage.getItem('show_message');
                 {% if transcription.status %}
                     switch ("{{ transcription.status }}") {
                         case 'Edit':
@@ -336,6 +335,9 @@ input#id_captcha_1 {
                 {% else %}
                     $("#transcription-state").text("Transcription is open for Edit");
                 {% endif %}
+
+                sessionStorage.setItem('show_message', 'false');
+                show_message = sessionStorage.getItem('show_message');
             } else {
                 {% if transcription.status %}
                     switch ("{{ transcription.status }}") {
@@ -352,6 +354,7 @@ input#id_captcha_1 {
                 {% else %}
                     $("#transcription-state").text("Transcription is open for Edit");
                 {% endif %}
+
                 sessionStorage.setItem('show_message', 'false');
                 show_message = sessionStorage.getItem('show_message');
 

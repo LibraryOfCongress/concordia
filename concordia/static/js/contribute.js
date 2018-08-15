@@ -3,6 +3,8 @@ $( document ).ready(function() {
     $( '#nav-pill-tag' ).tab( 'show' );
   }
 
+  sessionStorage.setItem('show_message', 'false');
+
   $( 'input[type="submit"]' ).click(function() {
     sessionStorage.setItem('show_message', 'true');
     });
