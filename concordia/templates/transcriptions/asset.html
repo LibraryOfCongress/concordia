@@ -376,11 +376,21 @@ input#id_captcha_1 {
                 $("#save-button").click(function(e){
                     if($("#captcha_tr").hasClass('d-none')) {
                         e.preventDefault();
+                        $(this).removeClass("btn-primary");
+                        $(this).prop("disabled",true);
+                        $("#captcha_tr").removeClass('d-none');
+                        $("#captcha_tr").show();
+                        $("input#id_captcha_1").after($('<span class="input-group-btn">' + '<button class="btn btn-secondary" type="submit" name="action" value="Save">Enter</button>' + '</span>'));
+                    }
+                });
+                $("#review-button").click(function(e){
+                    if($("#captcha_tr").hasClass('d-none')) {
+                        e.preventDefault();
                        $(this).removeClass("btn-primary");
                        $(this).prop("disabled",true);
                        $("#captcha_tr").removeClass('d-none');
                        $("#captcha_tr").show();
-                       $("input#id_captcha_1").after($('<span class="input-group-btn">' + '<button class="btn btn-primary" type="submit" name="action" value="Save">Enter</button>' + '</span>'));
+                       $("input#id_captcha_1").after($('<span class="input-group-btn">' + '<button class="btn btn-secondary" type="submit" name="action" value="Submit for Review">Enter</button>' + '</span>'));
                    }
                });
 
