@@ -1,4 +1,4 @@
---
+---
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >
 
@@ -40,10 +40,10 @@ Resources:
             Parameters: 
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
-                PublicSubnet1: !GetAttr VPC.Outputs.PublicSubnet1
-                PublicSubnet2: !GetAttr VPC.Outputs.PublicSubnet2
-                PrivateSubnet1: !GetAttr VPC.Outputs.PrivateSubnet1
-                PrivateSubnet2: !GetAttr VPC.Outputs.PrivateSubnet2
+                PublicSubnet1: !GetAtt VPC.Outputs.PublicSubnet1
+                PublicSubnet2: !GetAtt VPC.Outputs.PublicSubnet2
+                PrivateSubnet1: !GetAtt VPC.Outputs.PrivateSubnet1
+                PrivateSubnet2: !GetAtt VPC.Outputs.PrivateSubnet2
 
     SecurityGroups:
         Type: AWS::CloudFormation::Stack
@@ -59,10 +59,10 @@ Resources:
             TemplateURL: !Join [ "https://s3.amazonaws.com/", [!Ref S3BucketName, "/infrastructure/rds.yaml"]]
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
-                VPC: !GetAttr VPC.Outputs.VPC
-                DatabaseSecurityGroup: !GetAttr SecurityGroups.Outputs.DatabaseSecurityGroup
-                PrivateSubnet1: !GetAttr VPC.Outputs.PrivateSubnet1
-                PrivateSubnet2: !GetAttr VPC.Outputs.PrivateSubnet2
+                VPC: !GetAtt VPC.Outputs.VPC
+                DatabaseSecurityGroup: !GetAtt SecurityGroups.Outputs.DatabaseSecurityGroup
+                PrivateSubnet1: !GetAtt VPC.Outputs.PrivateSubnet1
+                PrivateSubnet2: !GetAtt VPC.Outputs.PrivateSubnet2
 
     ALB:
         Type: AWS::CloudFormation::Stack
