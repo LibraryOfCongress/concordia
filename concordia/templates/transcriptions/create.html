@@ -143,7 +143,15 @@ function write_save_collection_assets(task_id){
         success: function(data, textStatus, jqXHR) {
             console.log("response: ", data);
             var slug = $("#collection_slug").val().toLowerCase().replace(/ +/g,'-');
-            window.location.href = "/transcribe/"+slug+"/";
+            var projslug = $("#project-name").val().toLowerCase().replace(/ +/g,'-');
+            if($("#item_id").val()){
+                var rurl = "/transcribe/"+slug+"/"+projslug+"/";
+            }
+            else{
+                var rurl = "/transcribe/"+slug+"/";
+            }
+
+            window.location.href = rurl;
         }
     }).fail(function(jqXHR, textStatus, errorThrown) {
         if(jqXHR.status == 0 || jqXHR == 302) {
