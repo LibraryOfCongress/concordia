@@ -59,6 +59,7 @@ class AssetSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = models.Asset
         fields = (
+            "id",
             "title",
             "slug",
             "description",

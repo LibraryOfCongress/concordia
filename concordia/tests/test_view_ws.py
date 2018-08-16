@@ -59,6 +59,7 @@ class ViewWSTest_Concordia(TestCase):
             {
                 "page_url": "transcribe/American-Jerusalem/asset/mamcol.0930/",
                 "user": self.user.id,
+                "updated_on": datetime.now()
             },
         )
 
@@ -91,23 +92,18 @@ class ViewWSTest_Concordia(TestCase):
             updated_on=time_threshold)
         page2.save()
 
-        pages_in_use = PageInUse.objects.all()
-        for p in pages_in_use:
-            print(p.page_url, p.created_on, p.updated_on)
-
         # Act
         response = self.client.post(
             "/ws/page_in_use/",
             {
                 "page_url": "transcribe/American-Jerusalem/asset/mamcol.0930/",
                 "user": self.user.id,
+                "updated_on": datetime.now()
             },
         )
 
         # Assert
         self.assert_post_successful(response)
-
-
 
     def test_PageInUse_nologin_post(self):
         """
@@ -158,6 +154,7 @@ class ViewWSTest_Concordia(TestCase):
             {
                 "page_url": "transcribe/American-Jerusalem/asset/mamcol.0930/",
                 "user": self.user.id,
+                "updated_on": datetime.now()
             },
         )
 
@@ -191,7 +188,7 @@ class ViewWSTest_Concordia(TestCase):
             page_url="foo.com/blah",
             user=self.user)
 
-        PageInUse.objects.create(
+        page_in_use = PageInUse.objects.create(
             page_url="bar.com/blah",
             user=self.user)
 
@@ -202,7 +199,9 @@ class ViewWSTest_Concordia(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertJSONEqual(
             str(response.content, encoding='utf8'),
-            {"page_url": "bar.com/blah", "user": self.user.id }
+            {"page_url": "bar.com/blah", "user": self.user.id,
+             "updated_on": page_in_use.updated_on.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+             }
         )
 
     def test_PageInUseUser_get(self):
@@ -222,7 +221,7 @@ class ViewWSTest_Concordia(TestCase):
 
         test_page_url = "foo.com/blah"
         # Add two values to database
-        PageInUse.objects.create(
+        page_in_use = PageInUse.objects.create(
             page_url=test_page_url,
             user=self.user)
 
@@ -237,7 +236,8 @@ class ViewWSTest_Concordia(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertJSONEqual(
             str(response.content, encoding='utf8'),
-            {"page_url": test_page_url, "user": self.user.id }
+            {"page_url": test_page_url, "user": self.user.id,
+             "updated_on":  page_in_use.updated_on.strftime("%Y-%m-%dT%H:%M:%S.%fZ")}
         )
 
     def test_PageInUse_put(self):
@@ -256,10 +256,10 @@ class ViewWSTest_Concordia(TestCase):
 
         min_update_time = page.created_on + timedelta(seconds=2)
 
-        change_page_in_use = {"page_url": "foo.com/blah", "user": self.user.id}
-
         # sleep so update time can be tested against original time
         time.sleep(2)
+
+        change_page_in_use = {"page_url": "foo.com/blah", "user": self.user.id}
 
         # Act
         response = self.client.put(
@@ -316,7 +316,9 @@ class ViewWSTest_Concordia(TestCase):
              'slug': 'slug2',
              'start_date': None,
              'status': Status.EDIT,
-             'title': 'TextCollection2'}
+             's3_storage': False,
+             'title': 'TextCollection2',
+             'assets': []}
         )
 
     def test_Collection_by_id_get(self):
@@ -359,7 +361,9 @@ class ViewWSTest_Concordia(TestCase):
              'slug': 'slug2',
              'start_date': None,
              'status': Status.EDIT,
-             'title': 'TextCollection2'}
+             's3_storage': False,
+             'title': 'TextCollection2',
+             'assets': []}
         )
 
     def test_get_assets_by_collection(self):
@@ -444,6 +448,7 @@ class ViewWSTest_Concordia(TestCase):
 
         # Arrange
         self.login_user()
+        self.maxDiff = None
 
         # create 2 collections
         self.collection = Collection(
@@ -501,32 +506,27 @@ class ViewWSTest_Concordia(TestCase):
         )
         self.asset3.save()
 
+        expected_response = {"id": self.asset3.id, "title": "TestAsset3", "slug": "Asset3",
+                             "description": "Asset Description",
+                             "media_url": "http://www.foo.com/1/2/3", "media_type": "IMG",
+                             "collection": {"id": self.collection.id, "slug": "slug1", "title": "TextCollection",
+                                            "description": "Collection Description",
+                                            "s3_storage": False, "start_date": None, "end_date": None, "status": "Edit",
+                                            "assets": [
+                                                {"title": "TestAsset3", "slug": "Asset3",
+                                                 "description": "Asset Description",
+                                                 "media_url": "http://www.foo.com/1/2/3", "media_type": "IMG",
+                                                 "sequence": 1,
+                                                 "metadata": {"key": "val2"}, "status": "Edit"}]},
+                             "subcollection": None, "sequence": 1,
+                             "metadata": {"key": "val2"}, "status": "Edit"}
+
         # Act
         response = self.client.get("/ws/asset_by_slug/slug1/Asset3/")
 
         # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertJSONEqual(
-            force_text(response.content),
-            {
-                "title": "TestAsset3",
-                "slug": "Asset3",
-                "description": "Asset Description",
-                "media_url": "http://www.foo.com/1/2/3",
-                "media_type": MediaType.IMAGE,
-                "collection": {"description": "Collection Description",
-                               "end_date": None,
-                               "id": self.collection.id,
-                               "slug": "slug1",
-                               "start_date": None,
-                               "status": Status.EDIT,
-                               "title": "TextCollection"},
-                "sequence": 1,
-                "metadata": {"key": "val2"},
-                "subcollection": None,
-                "status": Status.EDIT,
-            }
-        )
+        self.assertJSONEqual(force_text(response.content), expected_response)
 
     def test_get_assets_by_collection_and_slug_no_match(self):
         """
@@ -608,9 +608,11 @@ class ViewWSTest_Concordia(TestCase):
                 "media_type": None,
                 "collection": {"description": "",
                                "end_date": None,
+                               "s3_storage": False,
                                "slug": "",
                                "start_date": None,
                                "status": None,
+                               "assets": [],
                                "title": ""},
                 "sequence": None,
                 "metadata": None,
@@ -967,6 +969,70 @@ class ViewWSTest_Concordia(TestCase):
 
         # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_Tag_delete(self):
+        """
+        Test deleting a tag. route ws/tag_/
+        :return:
+        """
+        # Arrange
+        self.login_user()
+
+        # create a collection
+        self.collection = Collection(
+            title="TextCollection",
+            slug="collectionslug",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection.save()
+
+        # create Assets
+        self.asset = Asset(
+            title="TestAsset",
+            slug="assetslug1",
+            description="Asset Description",
+            media_url="http://www.foo.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            collection=self.collection,
+            metadata={"key": "val2"},
+            status=Status.EDIT,
+        )
+        self.asset.save()
+
+        self.tag1 = Tag(
+            name="Tag1",
+            value="Tag1"
+        )
+        self.tag1.save()
+
+        self.tag2 = Tag(
+            name="Tag2",
+            value="Tag2"
+        )
+        self.tag2.save()
+
+        # Save for User1
+        self.asset_tag_collection = UserAssetTagCollection(
+            asset=self.asset,
+            user_id=self.user.id
+        )
+        self.asset_tag_collection.save()
+        self.asset_tag_collection.tags.add(self.tag1, self.tag2)
+
+        # Act
+        url = "/ws/tag_delete/%s/%s/%s/%s/" % (self.collection.slug, self.asset.slug, "Tag1", self.user.id)
+        response = self.client.delete(url,
+                                      follow=True)
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # verify only 1 tag in db
+        remaining_tags = Tag.objects.all()
+        self.assertEqual(len(remaining_tags), 1)
+
 
     def test_Tag_create_with_an_existing_tag_post(self):
         """

@@ -222,50 +222,39 @@ class ConcordiaAssetView(TemplateView):
         :param kws:
         :return: dictionary of items used in the template
         """
+        response = requests.get("%s://%s/ws/asset_by_slug/%s/%s/" %
+                                (self.request.scheme, self.request.get_host(), self.args[0], self.args[1]),
+                                cookies=self.request.COOKIES)
+        asset_json = json.loads(response.content.decode("utf-8"))
 
-        asset = Asset.objects.get(collection__slug=self.args[0], slug=self.args[1])
-        in_use_url = "/transcribe/%s/asset/%s/" % (asset.collection.slug, asset.slug)
+        # asset = Asset.objects.get(collection__slug=self.args[0], slug=self.args[1])
+        in_use_url = "/transcribe/%s/asset/%s/" % (asset_json["collection"]["slug"], asset_json["slug"])
         current_user_id = self.request.user.id if self.request.user.id is not None else get_anonymous_user()
         page_in_use = self.check_page_in_use(in_use_url, self.request.user)
 
         # Get all transcriptions, they are no longer tied to a specific user
-        transcription = Transcription.objects.filter(asset=asset).last()
+        # transcription = Transcription.objects.filter(asset=asset).last()
 
         response = requests.get("%s://%s/ws/transcription/%s/" %
-                                (self.request.scheme, self.request.get_host(), asset.id),
+                                (self.request.scheme, self.request.get_host(), asset_json["id"]),
                                 cookies=self.request.COOKIES)
         transcription_json = json.loads(response.content.decode("utf-8"))
 
-        # Get all tags, they are no longer tied to a specific user
-        db_tags = UserAssetTagCollection.objects.filter(asset=asset)
-
-        tags = all_tags = None
-        if db_tags:
-            for tags_in_db in db_tags:
-                if tags is None:
-                    tags = tags_in_db.tags.all()
-                    all_tags = tags
-                else:
-                    pass
-                    all_tags = (
-                        tags | tags_in_db.tags.all()
-                    ).distinct()  # merge the querysets
-
         response = requests.get("%s://%s/ws/tags/%s/" %
-                                (self.request.scheme, self.request.get_host(), asset.id),
+                                (self.request.scheme, self.request.get_host(), asset_json["id"]),
                                 cookies=self.request.COOKIES)
         if response.status_code == status.HTTP_200_OK:
             json_tags = json.loads(response.content.decode("utf-8"))
         else:
             json_tags = {}
 
-
         captcha_form = CaptchaEmbedForm()
 
         same_page_count_for_this_user = PageInUse.objects.filter(page_url=in_use_url, user=current_user_id).count()
 
         page_dict = {"page_url": in_use_url,
-                     "user": current_user_id}
+                     "user": current_user_id,
+                     "updated_on": datetime.now()}
 
         if page_in_use is False and same_page_count_for_this_user == 0:
             # add this page as being in use by this user
@@ -285,7 +274,7 @@ class ConcordiaAssetView(TemplateView):
         return dict(
             super().get_context_data(**kws),
             page_in_use=page_in_use,
-            asset=asset,
+            asset=asset_json,
             transcription=transcription_json,
             tags=json_tags["results"],
             captcha_form=captcha_form
@@ -299,7 +288,11 @@ class ConcordiaAssetView(TemplateView):
         :return: redirect back to same page
         """
         self.get_context_data()
-        asset = Asset.objects.get(collection__slug=self.args[0], slug=self.args[1])
+        response = requests.get("%s://%s/ws/asset_by_slug/%s/%s/" %
+                                (self.request.scheme, self.request.get_host(), self.args[0], self.args[1]),
+                                cookies=self.request.COOKIES)
+        asset_json = json.loads(response.content.decode("utf-8"))
+
         if self.request.user.is_anonymous:
             captcha_form = CaptchaEmbedForm(self.request.POST)
             if not captcha_form.is_valid():
@@ -307,31 +300,59 @@ class ConcordiaAssetView(TemplateView):
                 return self.get(self.request, *args, **kwargs)
         if "tx" in self.request.POST:
             tx = self.request.POST.get("tx")
-            status = self.state_dictionary[self.request.POST.get("action")]
-            # Save all transcriptions, we will need this reports
-            Transcription.objects.create(
-                asset=asset,
-                user_id=self.request.user.id
-                if self.request.user.id is not None
-                else get_anonymous_user(),
-                text=tx,
-                status=status,
-            )
-            asset.status = status
-            asset.save()
+            tx_status = self.state_dictionary[self.request.POST.get("action")]
+            requests.post("%s://%s/ws/transcription_create/" %
+                          (self.request.scheme, self.request.get_host()),
+                          data={"asset": asset_json["id"],
+                                "user_id": self.request.user.id
+                                if self.request.user.id is not None
+                                else get_anonymous_user(),
+                                "status": tx_status,
+                                "text": tx
+                                },
+                          cookies=self.request.COOKIES)
+
         if "tags" in self.request.POST and self.request.user.is_authenticated == True:
             tags = self.request.POST.get("tags").split(",")
-            utags, status = UserAssetTagCollection.objects.get_or_create(
-                asset=asset, user_id=self.request.user.id
-            )
-            all_tag = utags.tags.all().values_list("name", flat=True)
-            all_tag_list = list(all_tag)
-            delete_tags = [i for i in all_tag_list if i not in tags]
-            utags.tags.filter(name__in=delete_tags).delete()
+            # get existing tags
+            response = requests.get("%s://%s/ws/tags/%s/" %
+                                    (self.request.scheme, self.request.get_host(), asset_json["id"]),
+                                    cookies=self.request.COOKIES)
+            existing_tags_json_val = json.loads(response.content.decode("utf-8"))
+            existing_tags_list = []
+            for tag_dict in existing_tags_json_val["results"]:
+                existing_tags_list.append(tag_dict["value"])
+
             for tag in tags:
-                tag_ob, t_status = Tag.objects.get_or_create(name=tag, value=tag)
-                if tag_ob not in utags.tags.all():
-                    utags.tags.add(tag_ob)
+                response = requests.post("%s://%s/ws/tag_create/" %
+                                         (self.request.scheme, self.request.get_host()),
+                                         data={
+                                             "collection": asset_json["collection"]["slug"],
+                                             "asset": asset_json["slug"],
+                                             "user_id": self.request.user.id
+                                             if self.request.user.id is not None
+                                             else get_anonymous_user(),
+                                             "name": tag,
+                                             "value": tag
+                                         },
+                                         cookies=self.request.COOKIES)
+                tag_json = json.loads(response.content.decode("utf-8"))
+
+           # for delete_tag in [tag for tag in existing_tags_list if tag not in tags]:
+
+            i = 0
+
+            # utags, tag_status = UserAssetTagCollection.objects.get_or_create(
+            #     asset=asset_json["id"], user_id=self.request.user.id
+            # )
+            # all_tag = utags.tags.all().values_list("name", flat=True)
+            # all_tag_list = list(all_tag)
+            # delete_tags = [i for i in all_tag_list if i not in tags]
+            # utags.tags.filter(name__in=delete_tags).delete()
+            # for tag in tags:
+            #     tag_ob, t_status = Tag.objects.get_or_create(name=tag, value=tag)
+            #     if tag_ob not in utags.tags.all():
+            #         utags.tags.add(tag_ob)
 
         return redirect(self.request.path)
 

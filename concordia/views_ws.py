@@ -39,6 +39,20 @@ class PageInUseCreate(generics.CreateAPIView):
     queryset = PageInUse.objects.all()
     serializer_class = PageInUseSerializer
 
+    # def post(self, request, *args, **kwargs):
+    #     if type(request.data) == QueryDict:
+    #         # when using APIFactory to submit post, data must be converted from QueryDict
+    #         request_data = request.data.dict()
+    #     else:
+    #         request_data = request.data
+    #
+    #     serializer = PageInUseSerializer(data=request_data)
+    #     if serializer.is_valid():
+    #         pass
+    #     return Response(serializer.data)
+    #
+
+
 
 class PageInUseGet(generics.RetrieveUpdateAPIView):
     """
@@ -79,6 +93,23 @@ class PageInUsePut(generics.UpdateAPIView):
     serializer_class = PageInUseSerializer
     queryset = PageInUse.objects.all()
     lookup_field = 'page_url'
+
+    def put(self, request, *args, **kwargs):
+        if type(request.data) == QueryDict:
+            # when using APIFactory to submit post, data must be converted from QueryDict
+            request_data = request.data.dict()
+        else:
+            request_data = request.data
+
+        request_data["updated_on"] = datetime.now()
+        page_in_use = PageInUse.objects.get(page_url=request_data["page_url"], user_id=request_data["user"])
+        page_in_use.updated_on = datetime.now()
+        page_in_use.save()
+
+        serializer = PageInUseSerializer(data=request_data)
+        if serializer.is_valid():
+            pass
+        return Response(serializer.data)
 
 
 class CollectionGet(generics.RetrieveAPIView):
@@ -201,7 +232,6 @@ class TranscriptionByUser(generics.ListAPIView):
         return Transcription.objects.filter(user_id=self.kwargs['user']).order_by("-updated_on")
 
 
-
 class TranscriptionCreate(generics.CreateAPIView):
     """
     POST: Create a new Transcription
@@ -288,6 +318,28 @@ class TagCreate(generics.ListCreateAPIView):
             utags.tags.add(tag_ob)
 
         serializer = TagSerializer(data=request_data)
+        if serializer.is_valid():
+            pass
+        return Response(serializer.data)
+
+
+class TagDelete(generics.DestroyAPIView):
+    """
+    DELETE: delete a tag
+    """
+    model = UserAssetTagCollection
+    authentication_classes = (ConcordiaAPIAuth,)
+    serializer_class = UserAssetTagSerializer
+    queryset = UserAssetTagCollection.objects.all()
+
+    def delete(self, request, *args, **kwargs):
+        asset = Asset.objects.get(collection__slug=kwargs["collection"], slug=kwargs["asset"])
+
+        user_asset_collection = get_object_or_404(UserAssetTagCollection, asset=asset, user_id=kwargs["user_id"])
+
+        user_asset_collection.tags.filter(name=kwargs["name"]).delete()
+
+        serializer = UserAssetTagSerializer(data=kwargs)
         if serializer.is_valid():
             pass
         return Response(serializer.data)
