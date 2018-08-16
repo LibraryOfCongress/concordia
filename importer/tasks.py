@@ -219,14 +219,4 @@ def download_write_item_assets(collection_name, project, item_id):
     ciac.collection_item_asset_count = len(item_asset_urls)
     ciac.save()
 
-    item_local_path = os.path.join(
-        settings.IMPORTER["IMAGES_FOLDER"], collection_name, project, item_id
-    )
-
-    try:
-        os.makedirs(item_local_path)
-    except Exception as e:
-        pass
-    for idx, ciau in enumerate(item_asset_urls):
-        asset_local_path = os.path.join(item_local_path, "{0}.jpg".format(str(idx)))
-        download_write_collection_item_asset(ciau, asset_local_path)
+    get_save_item_assets(collection_name, project, item_id, item_asset_urls)

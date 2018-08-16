@@ -3,9 +3,9 @@ from django.db import models
 
 class CollectionTaskDetails(models.Model):
     collection_name = models.CharField(max_length=50)
-    collection_slug = models.SlugField(max_length=50, unique=True)
+    collection_slug = models.SlugField(max_length=50)
     subcollection_name = models.CharField(max_length=250)
-    subcollection_slug = models.SlugField(max_length=250, unique=True)
+    subcollection_slug = models.SlugField(max_length=250)
     # collection_page_count = models.IntegerField(null=True, blank=True, default=0)
     collection_item_count = models.IntegerField(null=True, blank=True, default=0)
     collection_asset_count = models.IntegerField(null=True, blank=True, default=0)

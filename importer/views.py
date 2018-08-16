@@ -267,7 +267,7 @@ def check_and_save_collection_completeness(ciac):
                 slug=ciac.collection_task.subcollection_slug,
             )
         except Subcollection.DoesNotExist:
-            collection = Collection.objects.create(
+            collection, created = Collection.objects.get_or_create(
                 title=ciac.collection_task.collection_name,
                 slug=ciac.collection_task.collection_slug,
                 description=ciac.collection_task.collection_name,
@@ -310,7 +310,7 @@ def check_and_save_item_completeness(ciac, item_id):
                 slug=ciac.collection_task.subcollection_slug,
             )
         except Subcollection.DoesNotExist:
-            collection = Collection.objects.create(
+            collection, created = Collection.objects.get_or_create(
                 title=ciac.collection_task.collection_name,
                 slug=ciac.collection_task.collection_slug,
                 description=ciac.collection_task.collection_name,
