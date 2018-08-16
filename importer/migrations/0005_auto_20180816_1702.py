@@ -5,19 +5,17 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('importer', '0004_auto_20180812_1007'),
-    ]
+    dependencies = [("importer", "0004_auto_20180812_1007")]
 
     operations = [
         migrations.AlterField(
-            model_name='collectiontaskdetails',
-            name='collection_slug',
+            model_name="collectiontaskdetails",
+            name="collection_slug",
             field=models.SlugField(),
         ),
         migrations.AlterField(
-            model_name='collectiontaskdetails',
-            name='subcollection_slug',
+            model_name="collectiontaskdetails",
+            name="subcollection_slug",
             field=models.SlugField(max_length=250),
         ),
     ]

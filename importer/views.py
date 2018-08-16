@@ -150,7 +150,9 @@ def check_completeness(ciac, item_id=None):
             return True
         else:
             shutil.rmtree(item_local_path)
-            CollectionTaskDetails.objects.get(collection_slug=ciac.collection_task.collection_slug).delete()
+            CollectionTaskDetails.objects.get(
+                collection_slug=ciac.collection_task.collection_slug
+            ).delete()
             return False
 
     else:
@@ -169,7 +171,9 @@ def check_completeness(ciac, item_id=None):
             return True
         else:
             shutil.rmtree(project_local_path)
-            CollectionTaskDetails.objects.get(collection_slug=ciac.collection_task.collection_slug).delete()
+            CollectionTaskDetails.objects.get(
+                collection_slug=ciac.collection_task.collection_slug
+            ).delete()
             return False
     return False
 

@@ -28,7 +28,6 @@ class MockAsyncResult:
         self.state = state
 
 
-
 class CreateCollectionViewTests(APITestCase):
     def setUp(self):
         """
@@ -39,12 +38,12 @@ class CreateCollectionViewTests(APITestCase):
         self.data = {
             "name": "branch-rickey-papers",
             "url": "https://www.loc.gov/collections/branch-rickey-papers/?fa=partof:branch+rickey+papers:+baseball+file,+1906-1971",
-            "project": "brp"
+            "project": "brp",
         }
         self.item_data = {
             "name": "branch-rickey-papers",
             "url": "https://www.loc.gov/item/mss859430021",
-            "project": "brp"
+            "project": "brp",
         }
         self.collection = {
             "collection_name": self.data.get("name"),
@@ -76,7 +75,7 @@ class CreateCollectionViewTests(APITestCase):
         data = {
             "name": "branch-rickey-papers",
             "url": "https://www.loc.gov/abc/mss859430021",
-            "project": "brp"
+            "project": "brp",
         }
 
         # Act
@@ -151,5 +150,3 @@ class CreateCollectionViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
         self.assertEqual(response.data.get("task_id"), "1234")
         self.assertEqual(response.data.get("item_id"), "mss859430021")
-
-
