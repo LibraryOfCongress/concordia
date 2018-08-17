@@ -118,11 +118,11 @@ class ExportCollectionToBagit(TemplateView):
                     copyfile(src, dest)
 
             # Get transcription data
-            transcription = Transcription.objects.filter(
+            transcription_obj = Transcription.objects.filter(
                 asset=asset, user_id=self.request.user.id
             )
-            if transcription:
-                transcription = transcription[0].text
+            if transcription_obj:
+                transcription = transcription_obj[0].text
             else:
                 transcription = ""
 
