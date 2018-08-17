@@ -193,7 +193,7 @@ input#id_captcha_1 {
 {% block body_scripts %}
     <script src="{% static "js/contribute.js" %}"></script>
     <script src="{% static "js/jquery.cookie.js" %}"></script>
-    <script src="https://www.jqueryscript.net/demo/Bootstrap-4-Tag-Input-Plugin-jQuery/tagsinput.js"></script>
+    <!-- <script src="https://www.jqueryscript.net/demo/Bootstrap-4-Tag-Input-Plugin-jQuery/tagsinput.js"></script> -->
     <script src="{% static "vendor/openseadragon/openseadragon.min.js" %}"></script>
     <script type="text/javascript">
         var csrftoken = $.cookie('csrftoken');
@@ -220,7 +220,7 @@ input#id_captcha_1 {
                 pinchRotate: true
             }
         });
-         
+
         viewer.addHandler('open', function() {
             var instructionButton = new OpenSeadragon.Button({
                 onClick: function(e){
@@ -231,17 +231,17 @@ input#id_captcha_1 {
             $(instructionButton.element).empty().append("<div><div id='instruction_content'></div><div id='instruction_button' class='btn btn-primary' style='display:block'>+Instructions</div></div>");
 
             viewer.addControl(instructionButton.element, { anchor: OpenSeadragon.ControlAnchor.BOTTOM_LEFT });
-            
+
             $(instructionButton.element).css("width", "100%");
             $(instructionButton.element).css("display", "block");
             $(instructionButton.element).parent().css("width", "100%");
             $(instructionButton.element).parent().css("display", "block");
             $(instructionButton.element).parent().parent().css("width", "100%");
             $(instructionButton.element).parent().parent().css("display", "block");
-            
+
             $("div#instruction_content").empty().css('background-color', '#dee2e6');
             $("div#instruction_content").empty().append($('#instructionModal'));
-            
+
             $( "div#instruction_button" ).click(function() {
 	            	  if ( $( "div#instructionModal" ).is( ":hidden" ) ) {
 	            		  $( "div#instructionModal" ).show();
