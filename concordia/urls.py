@@ -33,11 +33,6 @@ tx_urlpatterns = (
         ),
         re_path(r"^([^/]+)/$", views.ConcordiaProjectView.as_view(), name="collection"),
         re_path(
-            r"^([^/]+)/([^/]+)/$",
-            views.ConcordiaCollectionView.as_view(),
-            name="project",
-        ),
-        re_path(
             r"exportCSV/([^/]+)/$",
             exporter_views.ExportCollectionToCSV.as_view(),
             name="exportCSV collection",
@@ -66,6 +61,9 @@ tx_urlpatterns = (
             r"transcription/(\d+)/$",
             views.TranscriptionView.as_view(),
             name="transcription",
+        ),
+        re_path(
+            r"^([^/]+)/([^/]+)/$", views.ConcordiaCollectionView.as_view(), name="collection"
         ),
     ],
     "transcriptions",
