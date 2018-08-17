@@ -1143,3 +1143,83 @@ class ViewTest_Concordia(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(
             response, template_name="transcriptions/collection.html")
+
+    def test_FilterCollections_get(self):
+        """Test list of filer collection get API"""
+
+        #Arrange
+        self.collection = Collection(
+            title="TextCollection",
+            slug="slug1",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection.save()
+
+
+        self.collection = Collection(
+            title="Text Collection",
+            slug="slug2",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection.save()
+
+        # Act
+        response = self.client.get("/filter/collections/")
+
+        # Assert
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()), 2)
+        self.assertEqual(response.json()[0], 'slug1')
+        self.assertEqual(response.json()[1], 'slug2')
+
+
+    def test_FilterCollectionsWithParams_get(self):
+        """Test list of filer collection get API"""
+
+        #Arrange
+        self.collection = Collection(
+            title="TextCollection",
+            slug="slug1",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection.save()
+
+
+        self.collection = Collection(
+            title="Text Collection",
+            slug="slug2",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection.save()
+
+        # Act
+        response = self.client.get("/filter/collections/?name=sl")
+
+        # Assert
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()), 2)
+        self.assertEqual(response.json()[0], 'slug1')
+        self.assertEqual(response.json()[1], 'slug2')
+
+
+    def test_FilterCollectionsEmpty_get(self):
+        """Test list of filer collection get API"""
+
+        #Arrange, to test empty filter collections. No need of arranging data
+
+        # Act
+        response = self.client.get("/filter/collections/")
+
+        # Assert
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()), 0)
+
+
