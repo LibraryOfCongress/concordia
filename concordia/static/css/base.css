@@ -613,7 +613,8 @@ input {
 }
 
 #nav-tabContent, .tab-pane {
-  height: var(--height-contribute-input);
+  min-height: var(--height-contribute-input);
+  height: 100%;
 }
 
 #nav-tabContent {
