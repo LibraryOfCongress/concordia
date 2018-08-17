@@ -62,7 +62,7 @@ $( document ).ready(function() {
     this.inputSize = Math.max(1, this.placeholderText.length);
 
     this.$container = $('<div class="tag-input bg-offwhite shadow-regular contribute-box pxy-half rounded"></div>');
-    this.$input = $('<input type="text" class="bg-offwhite px-quarter" placeholder="' + this.placeholderText + '"/>').appendTo(this.$container);
+    this.$input = $('<input type="text" class="bg-offwhite px-quarter rounded typeahead" placeholder="' + this.placeholderText + '"/>').appendTo(this.$container);
 
     this.$element.before(this.$container);
 
@@ -149,7 +149,7 @@ $( document ).ready(function() {
 
       // add a tag element
 
-      var $tag = $('<span class="badge ' + htmlEncode(tagClass) + (itemTitle !== null ? ('" title="' + itemTitle) : '') + '">' + htmlEncode(itemText) + '<span data-role="remove"></span></span>');
+      var $tag = $('<span class="pxy-quarter ' + htmlEncode(tagClass) + (itemTitle !== null ? ('" title="' + itemTitle) : '') + '">' + htmlEncode(itemText) + '<span data-role="remove"></span></span>');
       $tag.data('item', item);
       self.findInputWrapper().before($tag);
       $tag.after(' ');
@@ -497,10 +497,10 @@ $( document ).ready(function() {
          }
 
          // Reset internal input's size
-         var textLength = $input.val().length,
-            wordSpace = Math.ceil(textLength / 5),
-            size = textLength + wordSpace + 1;
-         $input.attr('size', Math.max(this.inputSize, size));
+         // var textLength = $input.val().length,
+         //    wordSpace = Math.ceil(textLength / 5),
+         //    size = textLength + wordSpace + 1;
+         // $input.attr('size', Math.max(this.inputSize, size));
       }, self));
 
       // Remove icon clicked
