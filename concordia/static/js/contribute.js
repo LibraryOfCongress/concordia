@@ -62,7 +62,7 @@ $( document ).ready(function() {
     this.inputSize = Math.max(1, this.placeholderText.length);
 
     this.$container = $('<div class="tag-input bg-offwhite shadow-regular contribute-box pxy-half rounded"></div>');
-    this.$input = $('<input type="text" class="bg-offwhite px-quarter rounded typeahead" placeholder="' + this.placeholderText + '"/>').appendTo(this.$container);
+    this.$input = $('<input type="text" class="bg-offwhite px-quarter shadow-regular rounded typeahead" placeholder="' + this.placeholderText + '"/>').appendTo(this.$container);
 
     this.$element.before(this.$container);
 
