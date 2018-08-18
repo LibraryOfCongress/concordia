@@ -570,7 +570,9 @@ input {
     }
 }
 
-/* Contribute page CSS */
+/*
+* Contribute page CSS
+*/
 
 .alert-contribute {
     display: block;
@@ -644,15 +646,9 @@ input {
 }
 
 .tab-pane textarea::-webkit-input-placeholder, .tab-pane textarea::-moz-placeholder, .tab-pane textarea:-ms-input-placeholder, .tab-pane textarea:-moz-placeholder {
-    color: var(--text-placeholder);
+    color: #666666;
     opacity: 1;
 }
-
-/*.tab-pane input {
-    color: var(--text-color-primary);
-    width: 100%;
-    overflow-y: auto;
-}*/
 
 #status-id-label {
     color: var(--text-color-offwhite);
@@ -661,12 +657,11 @@ input {
 
 /*
 * tag-input
-*
 */
 
 .tag-input {
     border: 1px solid var(--bg-lightest-gray);
-    max-height: var(--height-contribute-input);
+    height: var(--height-contribute-input);
     width: 100%;
     line-height: 1.375rem;
 }
@@ -676,23 +671,19 @@ input {
     position: absolute;
     top: var(--top-value-tags-input);
     border: 1px solid var(--bg-lightest-gray);
-    margin-left: -1rem;
+    margin-left: -.5rem;
     width: calc( 100% - 2rem );
     height: 2.375rem;
     cursor: text;
 }
 .tag-input.form-control input::-moz-placeholder, .tag-input.form-control input:-ms-input-placeholder, .tag-input.form-control input::-webkit-input-placeholder {
-    color: var(--text-placeholder);
+    color: #666666;
     opacity: 1;
 }
 
 .tag-input .badge {
-    margin-right: .125rem;
     color: var(--text-color-offwhite);
     background-color: var(--primary-color);
-    /*padding: .3125rem .5rem;*/
-    border-radius: 3px;
-    border: 0px solid transparent;
     box-shadow: 0 0 .125rem var(--shadow-color);
 }
 
@@ -702,7 +693,7 @@ input {
 }
 
 .tag-input .badge [data-role="remove"]:after {
-    content: "×";
+    content: "X";
     padding: 0 .25rem;
     background-color: var(--primary-color-hover);
     border-radius: 50%;
@@ -710,18 +701,21 @@ input {
 }
 
 .tag-input .badge [data-role="remove"]:hover:after {
-    background-color:rgba(0, 0, 0, 0.62);
+    background-color: rgba(0,0,0,0.6);
 }
 
 .tag-input .badge [data-role="remove"]:hover:active {
-    box-shadow: inset 0 .1875rem .3125rem rgba(0, 0, 0, 0.125);
+    box-shadow: inset 0 .1875rem .3125rem rgba(0,0,0,0.125);
 }
 
 #nav-tags .badge {
     margin-top: .3125rem;
 }
 
-/* Registration and login styling */
+/*
+* Registration and login styling
+*/
+
 .container-registration {
     --height-difference: calc( var(--height-main) - 28.9375rem );
     margin-top: calc( var(--height-difference) / 2 );
