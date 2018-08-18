@@ -16,7 +16,7 @@
     --height-top-nav: 4.506875rem;
     --height-main: calc( 100vh - 4.506875rem );
     --height-transcription-input: calc( 50vh - ( 3.5rem + 3.375rem ) );
-    --height-tags-input: calc( 50vh - ( 3.5rem + 3.375rem ) + 2.625rem );
+    --height-tags-input: calc( 50vh - ( 3.5rem + 3.375rem ) + 3.125rem );
 }
 
 body {
