@@ -16,7 +16,7 @@
     --height-top-nav: 4.506875rem;
     --height-main: calc( 100vh - 4.506875rem );
     --height-transcription-input: calc( 50vh - ( 3.5rem + 3.375rem ) );
-    --height-tags-input: calc( 50vh - ( 3.5rem + 3.375rem ) + 3.125rem );
+    --height-tags-input: calc( 50vh - ( 3.5rem + 3.375rem ) + 3.625rem );
 }
 
 body {
@@ -676,6 +676,7 @@ input {
     margin-right: -1rem;
     margin-top: var(--height-transcription-input);
     width: calc( 100% + 2rem );
+    height: 2.375rem;
     cursor: text;
 }
 .tag-input.form-control input::-moz-placeholder, .tag-input.form-control input:-ms-input-placeholder, .tag-input.form-control input::-webkit-input-placeholder {

@@ -6,6 +6,7 @@ $( document ).ready(function() {
   $( 'input[type="submit"]' ).click(function() {
     sessionStorage.setItem('show_message', 'true');
     });
+  var topMargin = $('.tag-input input').attr('margin-top');
 });
 
 /*
@@ -470,8 +471,7 @@ $( document ).ready(function() {
         var textLength = $input.val().length,
             wordSpace = Math.ceil(textLength / 5),
             size = textLength + wordSpace + 1;
-        var topMargin = Math.max(this.$container.inputSize, size);
-        $input.attr('margin-top', ( ( 8 - topMargin ) / 16 ) + 'rem' );
+        $input.attr('margin-top', ( topMargin - (size / 16 ) + 'rem' );
       }, self));
 
       self.$container.on('keypress', 'input', $.proxy(function(event) {
@@ -501,8 +501,7 @@ $( document ).ready(function() {
          var textLength = $input.val().length,
             wordSpace = Math.ceil(textLength / 5),
             size = textLength + wordSpace + 1;
-        var topMargin = Math.max(this.$container.inputSize, size);
-        $input.attr('margin-top', ( ( 8 - topMargin ) / 16 ) + 'rem' );
+        $input.attr('margin-top', ( topMargin - (size / 16 ) + 'rem' );
       }, self));
 
       // Remove icon clicked
