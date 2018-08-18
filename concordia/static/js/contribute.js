@@ -5,9 +5,16 @@ $( document ).ready(function() {
 
   $( 'input[type="submit"]' ).click(function() {
     sessionStorage.setItem('show_message', 'true');
-    });
-  var topMargin = $('.tag-input input').attr('margin-top');
+    });;
+
+  window.topMargin = $('.tag-input input').attr('margin-top');
 });
+
+$(window).resize(resetTopMargin);
+
+function resetTopMargin(){
+    window.topMargin = $('.tag-input input').attr('margin-top');
+}
 
 /*
  * tagsinput
@@ -471,7 +478,7 @@ $( document ).ready(function() {
         var textLength = $input.val().length,
             wordSpace = Math.ceil(textLength / 5),
             size = textLength + wordSpace + 1;
-        $input.attr('margin-top', ( topMargin - (size / 16 ) + 'rem' ));
+        $input.attr('margin-top', ( window.topMargin - (size / 16 ) + 'rem' ));
       }, self));
 
       self.$container.on('keypress', 'input', $.proxy(function(event) {
@@ -501,7 +508,7 @@ $( document ).ready(function() {
          var textLength = $input.val().length,
             wordSpace = Math.ceil(textLength / 5),
             size = textLength + wordSpace + 1;
-        $input.attr('margin-top', ( topMargin - (size / 16 ) + 'rem' ));
+        $input.attr('margin-top', ( window.topMargin - (size / 16 ) + 'rem' ));
       }, self));
 
       // Remove icon clicked
