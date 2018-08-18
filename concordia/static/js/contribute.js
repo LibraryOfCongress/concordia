@@ -123,7 +123,7 @@ $( document ).ready(function() {
           tagClass = self.options.tagClass(item),
           itemTitle = self.options.itemTitle(item);
 
-      // Ignore items allready added
+      // Ignore items already added
       var existing = $.grep(self.itemsArray, function(item) { return self.options.itemValue(item) === itemValue; } )[0];
       if (existing && !self.options.allowDuplicates) {
         // Invoke onTagExists
@@ -466,11 +466,11 @@ $( document ).ready(function() {
              // ignore
          }
 
-        // Reset internal input's size
-        // var textLength = $input.val().length,
-        //     wordSpace = Math.ceil(textLength / 5),
-        //     size = textLength + wordSpace + 1;
-        // $input.attr('size', Math.max(this.inputSize, size));
+        // Reset input's top margin
+        var textLength = $input.val().length,
+            wordSpace = Math.ceil(textLength / 5),
+            size = textLength + wordSpace + 1;
+        $input.attr('margin-top', (8 - Math.max(this.$container.inputSize, size) ) / 16 + 'rem' );
       }, self));
 
       self.$container.on('keypress', 'input', $.proxy(function(event) {
@@ -496,11 +496,11 @@ $( document ).ready(function() {
             }
          }
 
-         // Reset internal input's size
-         // var textLength = $input.val().length,
-         //    wordSpace = Math.ceil(textLength / 5),
-         //    size = textLength + wordSpace + 1;
-         // $input.attr('size', Math.max(this.inputSize, size));
+         // Reset  input's top margin
+         var textLength = $input.val().length,
+            wordSpace = Math.ceil(textLength / 5),
+            size = textLength + wordSpace + 1;
+         $input.attr('margin-top', (8 - Math.max(this.$container.inputSize, size) ) / 16 + 'rem' );
       }, self));
 
       // Remove icon clicked
