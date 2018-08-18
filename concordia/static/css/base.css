@@ -5,6 +5,7 @@
     --text-color-primary: rgba(51,51,51,1); /* #333333 */
     --text-color-offwhite: rgba(250,250,250,1); /* #FAFAFA */
     --text-nav-current: rgba(51,51,51,.7); /* #333333 */
+    --text-placeholder: rgba(102,102,102,1); /* #666666 */
     --bg-offwhite: rgba(250,250,250,1); /* #FAFAFA */
     --bg-lightest-gray: rgba(245,245,245,1); /* #F5F5F5 */
     --bg-darkest-gray: rgba(51,51,51,1); /* #333333 */
@@ -15,8 +16,9 @@
     --shadow-color: rgba(51,51,51,.8); /* #333333 */
     --height-top-nav: 4.506875rem;
     --height-main: calc( 100vh - 4.506875rem );
-    --height-transcription-input: calc( 50vh - ( 3.5rem + 3.375rem ) );
-    --height-tags-input: calc( 50vh - ( 3.5rem + 3.375rem ) + 3.625rem );
+    --height-contribute-input: calc( 50vh - ( 3.5rem + 3.375rem ) );
+    --height-tags-input: calc( 50vh - 3.375rem );
+    --top-value-tags-input: calc( 50vh - 3rem );
 }
 
 body {
@@ -613,7 +615,7 @@ input {
 }
 
 #nav-tabContent, .tab-pane {
-    min-height: var(--height-transcription-input);
+    min-height: var(--height-contribute-input);
 }
 
 #nav-tabContent {
@@ -635,14 +637,14 @@ input {
 .tab-pane textarea {
     color: var(--text-color-primary);
     background-color: var(--bg-offwhite);
-    height: var(--height-transcription-input);
+    height: var(--height-contribute-input);
     border: 1px solid var(--bg-lightest-gray);
     resize: none;
     overflow-y: auto;
 }
 
 .tab-pane textarea::-webkit-input-placeholder, .tab-pane textarea::-moz-placeholder, .tab-pane textarea:-ms-input-placeholder, .tab-pane textarea:-moz-placeholder {
-    color: rgba(102,102,102,1);
+    color: var(--text-placeholder);
     opacity: 1;
 }
 
@@ -664,23 +666,23 @@ input {
 
 .tag-input {
     border: 1px solid var(--bg-lightest-gray);
-    max-height: var(--height-transcription-input);
+    max-height: var(--height-contribute-input);
     width: 100%;
     line-height: 1.375rem;
 }
 
 .tag-input input {
     display: block;
+    position: absolute;
+    top: var(--top-value-tags-input);
     border: 1px solid var(--bg-lightest-gray);
     margin-left: -1rem;
-    margin-right: -1rem;
-    margin-top: var(--height-transcription-input);
-    width: calc( 100% + 2rem );
+    width: calc( 100% - 2rem );
     height: 2.375rem;
     cursor: text;
 }
 .tag-input.form-control input::-moz-placeholder, .tag-input.form-control input:-ms-input-placeholder, .tag-input.form-control input::-webkit-input-placeholder {
-    color: #777;
+    color: var(--text-placeholder);
     opacity: 1;
 }
 

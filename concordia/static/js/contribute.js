@@ -1,20 +1,13 @@
 $( document ).ready(function() {
   if ( window.location.href.indexOf( "#tab-tag" ) > -1 ) {
     $( '#nav-pill-tag' ).tab( 'show' );
+    $( '.tag-input input').focus();
   }
 
   $( 'input[type="submit"]' ).click(function() {
     sessionStorage.setItem('show_message', 'true');
     });;
-
-  window.topMargin = $('.tag-input input').attr('margin-top');
 });
-
-$(window).resize(resetTopMargin);
-
-function resetTopMargin(){
-    window.topMargin = $('.tag-input input').attr('margin-top');
-}
 
 /*
  * tagsinput
@@ -25,7 +18,7 @@ function resetTopMargin(){
 
   var defaultOptions = {
     tagClass: function(item) {
-      return 'badge badge-info';
+      return 'badge badge-info mb-quarter';
     },
     focusClass: 'focus',
     itemValue: function(item) {
@@ -69,7 +62,7 @@ function resetTopMargin(){
     this.placeholderText = element.hasAttribute('placeholder') ? this.$element.attr('placeholder') : '';
     this.inputSize = Math.max(1, this.placeholderText.length);
 
-    this.$container = $('<div class="tag-input bg-offwhite shadow-regular contribute-box pxy-half rounded"></div>');
+    this.$container = $('<div class="tag-input bg-offwhite shadow-regular pxy-half rounded"></div>');
     this.$input = $('<input type="text" class="bg-offwhite px-quarter shadow-regular rounded typeahead" placeholder="' + this.placeholderText + '"/>').appendTo(this.$container);
 
     this.$element.before(this.$container);
@@ -185,7 +178,7 @@ function resetTopMargin(){
 
       // If using typeahead, once the tag has been added, clear the typeahead value so it does not stick around in the input.
       if ($('.typeahead, .twitter-typeahead', self.$container).length) {
-        self.$input.typeahead('val', '');
+        self.$input.val('');
       }
 
       if (this.isInit) {
@@ -474,11 +467,6 @@ function resetTopMargin(){
              // ignore
          }
 
-        // Reset input's top margin
-        var textLength = $input.val().length,
-            wordSpace = Math.ceil(textLength / 5),
-            size = textLength + wordSpace + 1;
-        $input.attr('margin-top', ( window.topMargin - (size / 16 ) + 'rem' ));
       }, self));
 
       self.$container.on('keypress', 'input', $.proxy(function(event) {
@@ -504,11 +492,6 @@ function resetTopMargin(){
             }
          }
 
-         // Reset  input's top margin
-         var textLength = $input.val().length,
-            wordSpace = Math.ceil(textLength / 5),
-            size = textLength + wordSpace + 1;
-        $input.attr('margin-top', ( window.topMargin - (size / 16 ) + 'rem' ));
       }, self));
 
       // Remove icon clicked
