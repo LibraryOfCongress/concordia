@@ -1,7 +1,7 @@
 $( document ).ready(function() {
   if ( window.location.href.indexOf( "#tab-tag" ) > -1 ) {
     $( '#nav-pill-tag' ).tab( 'show' );
-    $( '.tag-input input').focus();
+    $( '#tag-input').focus();
   }
 
   $( 'input[type="submit"]' ).click(function() {
@@ -149,7 +149,7 @@ $( document ).ready(function() {
       self.itemsArray.push(item);
 
       // add a tag element
-      var $tag = $('<span class="pxy-quarter ' + htmlEncode(tagClass) + (itemTitle !== null ? ('" title="' + itemTitle) : '') + '">' + htmlEncode(itemText) + '<span data-role="remove"></span></span>');
+      var $tag = $('<span class="pxy-quarter ' + htmlEncode(tagClass) + (itemTitle !== null ? ('" title="' + itemTitle) : '') + '">' + htmlEncode(itemText) + '<span class="ml-quarter" data-role="remove">&times</span></span>');
       $tag.data('item', item);
       self.findInputWrapper().before($tag);
       $tag.after(' ');

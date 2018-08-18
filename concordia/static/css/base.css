@@ -671,7 +671,7 @@ input {
     position: absolute;
     top: var(--top-value-tags-input);
     border: 1px solid var(--bg-lightest-gray);
-    margin-left: -.5rem;
+    margin-left: -.5625rem;
     width: calc( 100% - 2rem );
     height: 2.375rem;
     cursor: text;
@@ -688,19 +688,13 @@ input {
 }
 
 .tag-input .badge [data-role="remove"] {
-    margin-left: 8px;
-    cursor: pointer;
-}
-
-.tag-input .badge [data-role="remove"]:after {
-    content: "X";
     padding: 0 .25rem;
     background-color: var(--primary-color-hover);
     border-radius: 50%;
-    font-size: .88;
+    cursor: pointer;
 }
 
-.tag-input .badge [data-role="remove"]:hover:after {
+.tag-input .badge [data-role="remove"]:hover {
     background-color: rgba(0,0,0,0.6);
 }
 

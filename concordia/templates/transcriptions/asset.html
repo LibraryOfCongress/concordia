@@ -370,14 +370,14 @@ input#id_captcha_1 {
                     switch ("{{ transcription.status }}") {
                         case 'Edit':
                             $("#transcription-state").text("Transcription is open for Edit");
-                            $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> Your contribution has been saved.</div>');
+                            $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute py-half fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> Your contribution has been saved.</div>');
                             setTimeout(function() {
                                 $('.alert-contribute').fadeOut(500);
                             }, 3000);
                             break;
                         case 'Submitted':
                             $("#transcription-state").text("Transcription is submitted for Review");
-                            $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> The transcription is ready for review.</div>');
+                            $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute py-half fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> The transcription is ready for review.</div>');
                             setTimeout(function() {
                                 $('.alert-contribute').fadeOut(500);
                             }, 3000);
@@ -385,7 +385,7 @@ input#id_captcha_1 {
                             break;
                         case 'Completed':
                             $("#transcription-state").text("Transcription is Complete");
-                            $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> The transcription is now complete.</div>');
+                            $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute py-half fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> The transcription is now complete.</div>');
                             setTimeout(function() {
                                 $('.alert-contribute').fadeOut(500);
                             }, 3000);
