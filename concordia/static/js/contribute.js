@@ -471,7 +471,7 @@ $( document ).ready(function() {
         var textLength = $input.val().length,
             wordSpace = Math.ceil(textLength / 5),
             size = textLength + wordSpace + 1;
-        $input.attr('margin-top', ( topMargin - (size / 16 ) + 'rem' );
+        $input.attr('margin-top', ( topMargin - (size / 16 ) + 'rem' ));
       }, self));
 
       self.$container.on('keypress', 'input', $.proxy(function(event) {
@@ -501,7 +501,7 @@ $( document ).ready(function() {
          var textLength = $input.val().length,
             wordSpace = Math.ceil(textLength / 5),
             size = textLength + wordSpace + 1;
-        $input.attr('margin-top', ( topMargin - (size / 16 ) + 'rem' );
+        $input.attr('margin-top', ( topMargin - (size / 16 ) + 'rem' ));
       }, self));
 
       // Remove icon clicked
