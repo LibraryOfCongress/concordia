@@ -92,12 +92,6 @@ h6 {
     color: var(--text-color-primary);
 }
 
-.header-text {
-    font-weight: normal;
-    color: var(--text-color-offwhite);
-    text-align: center;
-}
-
 .p-latestblog {
     font-size: 0.875rem;
 }
