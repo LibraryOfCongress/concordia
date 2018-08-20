@@ -6,12 +6,13 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import JSONField
 from django.db import models
-from django_prometheus_metrics.models import MetricsModelMixin
 from django.utils import timezone
+from django_prometheus_metrics.models import MetricsModelMixin
 
 metadata_default = dict
 
-User._meta.get_field('email').__dict__['_unique'] = True
+User._meta.get_field("email").__dict__["_unique"] = True
+
 
 class UserProfile(MetricsModelMixin("userprofile"), models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -122,11 +123,6 @@ class PageInUse(models.Model):
         :param kwargs:
         :return:
         """
-        # if not self.id and not self.created_on:
-        #     self.created_on = timezone.now()
-        #
-        # self.updated_on = timezone.now()
-        # return super(PageInUse, self).save(*args, **kwargs)
 
     def save(self, force_insert=False, *args, **kwargs):
         updated = False
@@ -144,8 +140,6 @@ class PageInUse(models.Model):
         self.created_on = timezone.now()
         if not self.updated_on:
             self.updated_on = timezone.now()
-
-
 
 
 class Asset(models.Model):

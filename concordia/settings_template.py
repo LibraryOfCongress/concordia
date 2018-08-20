@@ -149,11 +149,11 @@ CELERY_IMPORTS = ("importer.tasks",)
 
 CELERY_BROKER_HEARTBEAT = 0
 CELERY_BROKER_TRANSPORT_OPTIONS = {
-  "confirm_publish": True,
-  "max_retries": 3,
-  "interval_start": 0,
-  "interval_step": 0.2,
-  "interval_max": 0.5
+    "confirm_publish": True,
+    "max_retries": 3,
+    "interval_start": 0,
+    "interval_step": 0.2,
+    "interval_max": 0.5,
 }
 
 LOGGING = {
@@ -214,7 +214,7 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework.authentication.BasicAuthentication",
         "rest_framework.authentication.SessionAuthentication",
-    )
+    ),
 }
 
 CONCORDIA = {"netloc": "http://0.0.0.0:80"}
@@ -239,10 +239,12 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "concordia.validators.complexity"},
 ]
 
-AUTHENTICATION_BACKENDS = ['concordia.email_username_backend.EmailOrUsernameModelBackend']
+AUTHENTICATION_BACKENDS = [
+    "concordia.email_username_backend.EmailOrUsernameModelBackend"
+]
 
 REGISTRATION_URLS = "registration.backends.simple.urls"
 
-CAPTCHA_CHALLENGE_FUNCT = 'captcha.helpers.random_char_challenge'
-CAPTCHA_FIELD_TEMPLATE = 'captcha/field.html'
-CAPTCHA_TEXT_FIELD_TEMPLATE = 'captcha/text_field.html'
+CAPTCHA_CHALLENGE_FUNCT = "captcha.helpers.random_char_challenge"
+CAPTCHA_FIELD_TEMPLATE = "captcha/field.html"
+CAPTCHA_TEXT_FIELD_TEMPLATE = "captcha/text_field.html"

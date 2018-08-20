@@ -17,33 +17,30 @@ class ViewTest_1st_level(TestCase):
         :return:
         """
         self.client = Client()
-    
+
     def test_contact_us_get(self):
         # Arrange
 
         # Act
         response = self.client.get(reverse("contact"))
-        
+
         # Assert:
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'contact.html')
-    
-    
+        self.assertTemplateUsed(response, "contact.html")
+
     def test_contact_us_post(self):
         # Arrange
         post_data = {
-            "email": "nobody@example.com" ,
+            "email": "nobody@example.com",
             "subject": "Problem found",
             "category": "Something is not working",
             "link": "www.loc.gov/nowhere",
-            "story": "Houston, we got a problem"
+            "story": "Houston, we got a problem",
         }
 
         # Act
-        response = self.client.post(reverse("contact"), 
-                                    post_data)
-        
+        response = self.client.post(reverse("contact"), post_data)
+
         # Assert:
         # redirected to contact us page.
         self.assertEqual(response.status_code, 302)
-

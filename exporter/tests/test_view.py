@@ -93,15 +93,15 @@ class ViewTest_Exporter(TestCase):
         build_folder = "{0}/concordia".format(settings.MEDIA_ROOT)
         if not os.path.exists(build_folder):
             os.makedirs(build_folder)
-        collection_folder = "{0}/{1}".format(build_folder,collection_name_str)
+        collection_folder = "{0}/{1}".format(build_folder, collection_name_str)
         if not os.path.exists(collection_folder):
             os.makedirs(collection_folder)
-        source_dir = "{0}/{1}".format(collection_folder,asset_folder_name_str)
+        source_dir = "{0}/{1}".format(collection_folder, asset_folder_name_str)
         if not os.path.exists(source_dir):
             os.makedirs(source_dir)
 
         # create source asset file
-        with open("{0}/{1}".format(source_dir,asset_name_str), "w+") as csv_file:
+        with open("{0}/{1}".format(source_dir, asset_name_str), "w+") as csv_file:
             writer = csv.writer(csv_file)
             writer.writerow(
                 [
@@ -136,7 +136,9 @@ class ViewTest_Exporter(TestCase):
             csv_file = zipped_file.read("data/testasset/export.csv")
             self.assertEqual(
                 str(csv_file),
-                "b'Collection,Title,Description,MediaUrl,Transcription,Tags\\r\\nFooCollection,TestAsset,Asset Description,{0},,\\r\\n'".format(media_url_str),  # noqa
+                "b'Collection,Title,Description,MediaUrl,Transcription,Tags\\r\\nFooCollection,TestAsset,Asset Description,{0},,\\r\\n'".format(
+                    media_url_str
+                ),  # noqa
             )
         finally:
             zipped_file.close()

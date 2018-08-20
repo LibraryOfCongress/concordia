@@ -36,7 +36,7 @@ class AssetSetForCollectionSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class CollectionDetailSerializer(serializers.HyperlinkedModelSerializer):
-    assets = AssetSetForCollectionSerializer(source='asset_set', many=True)
+    assets = AssetSetForCollectionSerializer(source="asset_set", many=True)
 
     class Meta:
         model = models.Collection
@@ -49,7 +49,7 @@ class CollectionDetailSerializer(serializers.HyperlinkedModelSerializer):
             "start_date",
             "end_date",
             "status",
-            "assets"
+            "assets",
         )
 
 
@@ -76,8 +76,7 @@ class AssetSerializer(serializers.HyperlinkedModelSerializer):
 class PageInUseSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         page_in_use = models.PageInUse(
-            page_url=validated_data["page_url"],
-            user=validated_data["user"]
+            page_url=validated_data["page_url"], user=validated_data["user"]
         )
         page_in_use.save()
 
@@ -85,7 +84,9 @@ class PageInUseSerializer(serializers.ModelSerializer):
         from datetime import datetime, timedelta
 
         time_threshold = datetime.now() - timedelta(minutes=5)
-        old_page_entries = models.PageInUse.objects.filter(updated_on__lt=time_threshold)
+        old_page_entries = models.PageInUse.objects.filter(
+            updated_on__lt=time_threshold
+        )
         for old_page in old_page_entries:
             old_page.delete()
 
@@ -97,11 +98,7 @@ class PageInUseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.PageInUse
-        fields = (
-            "page_url",
-            "user",
-            "updated_on"
-        )
+        fields = ("page_url", "user", "updated_on")
 
 
 class TranscriptionSerializer(serializers.HyperlinkedModelSerializer):
@@ -109,13 +106,7 @@ class TranscriptionSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = models.Transcription
-        fields = (
-            "asset",
-            "user_id",
-            "text",
-            "status",
-            "updated_on"
-        )
+        fields = ("asset", "user_id", "text", "status", "updated_on")
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -127,6 +118,4 @@ class TagSerializer(serializers.ModelSerializer):
 class UserAssetTagSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.UserAssetTagCollection
-        fields = (
-            "asset", "user_id", "tags"
-            )
+        fields = ("asset", "user_id", "tags")

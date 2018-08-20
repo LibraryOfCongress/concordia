@@ -1,15 +1,16 @@
 # TODO: Add correct copyright header
 
-from datetime import datetime, timedelta
 import json
+import logging
 import time
+from datetime import datetime, timedelta
+
 from django.test import Client, TestCase
 from django.utils.encoding import force_text
-import logging
 from rest_framework import status
 
-from concordia.models import PageInUse, User, Collection, Status, Asset, MediaType, \
-    Transcription, Tag, UserAssetTagCollection
+from concordia.models import (Asset, Collection, MediaType, PageInUse, Status, Tag,
+                              Transcription, User, UserAssetTagCollection)
 
 logging.disable(logging.CRITICAL)
 
@@ -41,7 +42,7 @@ class ViewWSTest_Concordia(TestCase):
         self.client.login(username="tester", password="top_secret")
 
         # create a session cookie
-        self.client.session['foo'] = 123  # HACK: needed for django Client
+        self.client.session["foo"] = 123  # HACK: needed for django Client
 
     def test_PageInUse_post(self):
         """
@@ -59,7 +60,7 @@ class ViewWSTest_Concordia(TestCase):
             {
                 "page_url": "transcribe/American-Jerusalem/asset/mamcol.0930/",
                 "user": self.user.id,
-                "updated_on": datetime.now()
+                "updated_on": datetime.now(),
             },
         )
 
@@ -82,14 +83,16 @@ class ViewWSTest_Concordia(TestCase):
             page_url="foo.com/blah",
             user=self.user,
             created_on=time_threshold,
-            updated_on=time_threshold)
+            updated_on=time_threshold,
+        )
         page1.save()
 
         page2 = PageInUse(
             page_url="bar.com/blah",
             user=self.user,
             created_on=time_threshold,
-            updated_on=time_threshold)
+            updated_on=time_threshold,
+        )
         page2.save()
 
         # Act
@@ -98,7 +101,7 @@ class ViewWSTest_Concordia(TestCase):
             {
                 "page_url": "transcribe/American-Jerusalem/asset/mamcol.0930/",
                 "user": self.user.id,
-                "updated_on": datetime.now()
+                "updated_on": datetime.now(),
             },
         )
 
@@ -154,7 +157,7 @@ class ViewWSTest_Concordia(TestCase):
             {
                 "page_url": "transcribe/American-Jerusalem/asset/mamcol.0930/",
                 "user": self.user.id,
-                "updated_on": datetime.now()
+                "updated_on": datetime.now(),
             },
         )
 
@@ -184,13 +187,9 @@ class ViewWSTest_Concordia(TestCase):
         self.login_user()
 
         # Add two values to database
-        PageInUse.objects.create(
-            page_url="foo.com/blah",
-            user=self.user)
+        PageInUse.objects.create(page_url="foo.com/blah", user=self.user)
 
-        page_in_use = PageInUse.objects.create(
-            page_url="bar.com/blah",
-            user=self.user)
+        page_in_use = PageInUse.objects.create(page_url="bar.com/blah", user=self.user)
 
         # Act
         response = self.client.get("/ws/page_in_use/bar.com/blah/")
@@ -198,10 +197,12 @@ class ViewWSTest_Concordia(TestCase):
         # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertJSONEqual(
-            str(response.content, encoding='utf8'),
-            {"page_url": "bar.com/blah", "user": self.user.id,
-             "updated_on": page_in_use.updated_on.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-             }
+            str(response.content, encoding="utf8"),
+            {
+                "page_url": "bar.com/blah",
+                "user": self.user.id,
+                "updated_on": page_in_use.updated_on.strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
+            },
         )
 
     def test_PageInUseUser_get(self):
@@ -221,23 +222,24 @@ class ViewWSTest_Concordia(TestCase):
 
         test_page_url = "foo.com/blah"
         # Add two values to database
-        page_in_use = PageInUse.objects.create(
-            page_url=test_page_url,
-            user=self.user)
+        page_in_use = PageInUse.objects.create(page_url=test_page_url, user=self.user)
 
-        PageInUse.objects.create(
-            page_url="bar.com/blah",
-            user=self.user2)
+        PageInUse.objects.create(page_url="bar.com/blah", user=self.user2)
 
         # Act
-        response = self.client.get("/ws/page_in_use_user/%s/%s/" % (self.user.id, test_page_url))
+        response = self.client.get(
+            "/ws/page_in_use_user/%s/%s/" % (self.user.id, test_page_url)
+        )
 
         # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertJSONEqual(
-            str(response.content, encoding='utf8'),
-            {"page_url": test_page_url, "user": self.user.id,
-             "updated_on":  page_in_use.updated_on.strftime("%Y-%m-%dT%H:%M:%S.%fZ")}
+            str(response.content, encoding="utf8"),
+            {
+                "page_url": test_page_url,
+                "user": self.user.id,
+                "updated_on": page_in_use.updated_on.strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
+            },
         )
 
     def test_PageInUse_put(self):
@@ -249,9 +251,7 @@ class ViewWSTest_Concordia(TestCase):
         self.login_user()
 
         # Add a value to database
-        page = PageInUse(
-            page_url="foo.com/blah",
-            user=self.user)
+        page = PageInUse(page_url="foo.com/blah", user=self.user)
         page.save()
 
         min_update_time = page.created_on + timedelta(seconds=2)
@@ -265,7 +265,7 @@ class ViewWSTest_Concordia(TestCase):
         response = self.client.put(
             "/ws/page_in_use_update/foo.com/blah/",
             data=json.dumps(change_page_in_use),
-            content_type='application/json'
+            content_type="application/json",
         )
 
         # Assert
@@ -309,16 +309,18 @@ class ViewWSTest_Concordia(TestCase):
         # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertJSONEqual(
-            str(response.content, encoding='utf8'),
-            {'description': 'Collection2 Description',
-             'end_date': None,
-             'id': self.collection2.id,
-             'slug': 'slug2',
-             'start_date': None,
-             'status': Status.EDIT,
-             's3_storage': False,
-             'title': 'TextCollection2',
-             'assets': []}
+            str(response.content, encoding="utf8"),
+            {
+                "description": "Collection2 Description",
+                "end_date": None,
+                "id": self.collection2.id,
+                "slug": "slug2",
+                "start_date": None,
+                "status": Status.EDIT,
+                "s3_storage": False,
+                "title": "TextCollection2",
+                "assets": [],
+            },
         )
 
     def test_Collection_by_id_get(self):
@@ -354,16 +356,18 @@ class ViewWSTest_Concordia(TestCase):
         # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertJSONEqual(
-            str(response.content, encoding='utf8'),
-            {'description': 'Collection2 Description',
-             'end_date': None,
-             'id': self.collection2.id,
-             'slug': 'slug2',
-             'start_date': None,
-             'status': Status.EDIT,
-             's3_storage': False,
-             'title': 'TextCollection2',
-             'assets': []}
+            str(response.content, encoding="utf8"),
+            {
+                "description": "Collection2 Description",
+                "end_date": None,
+                "id": self.collection2.id,
+                "slug": "slug2",
+                "start_date": None,
+                "status": Status.EDIT,
+                "s3_storage": False,
+                "title": "TextCollection2",
+                "assets": [],
+            },
         )
 
     def test_get_assets_by_collection(self):
@@ -438,7 +442,7 @@ class ViewWSTest_Concordia(TestCase):
 
         # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(json_resp['results']), 2)
+        self.assertEqual(len(json_resp["results"]), 2)
 
     def test_get_assets_by_collection_and_slug(self):
         """
@@ -506,20 +510,40 @@ class ViewWSTest_Concordia(TestCase):
         )
         self.asset3.save()
 
-        expected_response = {"id": self.asset3.id, "title": "TestAsset3", "slug": "Asset3",
-                             "description": "Asset Description",
-                             "media_url": "http://www.foo.com/1/2/3", "media_type": "IMG",
-                             "collection": {"id": self.collection.id, "slug": "slug1", "title": "TextCollection",
-                                            "description": "Collection Description",
-                                            "s3_storage": False, "start_date": None, "end_date": None, "status": "Edit",
-                                            "assets": [
-                                                {"title": "TestAsset3", "slug": "Asset3",
-                                                 "description": "Asset Description",
-                                                 "media_url": "http://www.foo.com/1/2/3", "media_type": "IMG",
-                                                 "sequence": 1,
-                                                 "metadata": {"key": "val2"}, "status": "Edit"}]},
-                             "subcollection": None, "sequence": 1,
-                             "metadata": {"key": "val2"}, "status": "Edit"}
+        expected_response = {
+            "id": self.asset3.id,
+            "title": "TestAsset3",
+            "slug": "Asset3",
+            "description": "Asset Description",
+            "media_url": "http://www.foo.com/1/2/3",
+            "media_type": "IMG",
+            "collection": {
+                "id": self.collection.id,
+                "slug": "slug1",
+                "title": "TextCollection",
+                "description": "Collection Description",
+                "s3_storage": False,
+                "start_date": None,
+                "end_date": None,
+                "status": "Edit",
+                "assets": [
+                    {
+                        "title": "TestAsset3",
+                        "slug": "Asset3",
+                        "description": "Asset Description",
+                        "media_url": "http://www.foo.com/1/2/3",
+                        "media_type": "IMG",
+                        "sequence": 1,
+                        "metadata": {"key": "val2"},
+                        "status": "Edit",
+                    }
+                ],
+            },
+            "subcollection": None,
+            "sequence": 1,
+            "metadata": {"key": "val2"},
+            "status": "Edit",
+        }
 
         # Act
         response = self.client.get("/ws/asset_by_slug/slug1/Asset3/")
@@ -606,21 +630,22 @@ class ViewWSTest_Concordia(TestCase):
                 "description": "",
                 "media_url": "",
                 "media_type": None,
-                "collection": {"description": "",
-                               "end_date": None,
-                               "s3_storage": False,
-                               "slug": "",
-                               "start_date": None,
-                               "status": None,
-                               "assets": [],
-                               "title": ""},
+                "collection": {
+                    "description": "",
+                    "end_date": None,
+                    "s3_storage": False,
+                    "slug": "",
+                    "start_date": None,
+                    "status": None,
+                    "assets": [],
+                    "title": "",
+                },
                 "sequence": None,
                 "metadata": None,
                 "subcollection": None,
                 "status": None,
-            }
+            },
         )
-
 
     def test_PageInUse_filter_get(self):
         """
@@ -640,22 +665,20 @@ class ViewWSTest_Concordia(TestCase):
         self.user2.save()
 
         # Add values to database
-        PageInUse.objects.create(
-            page_url="foo.com/blah",
-            user=self.user)
+        PageInUse.objects.create(page_url="foo.com/blah", user=self.user)
 
-        PageInUse.objects.create(
-            page_url=test_url,
-            user=self.user2)
+        PageInUse.objects.create(page_url=test_url, user=self.user2)
 
         # Act
-        response = self.client.get("/ws/page_in_use_filter/%s/%s/" % (self.user.username, test_url, ))
+        response = self.client.get(
+            "/ws/page_in_use_filter/%s/%s/" % (self.user.username, test_url)
+        )
 
         json_resp = json.loads(response.content)
 
         # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertTrue(len(json_resp['results']) > 0)
+        self.assertTrue(len(json_resp["results"]) > 0)
 
     def test_PageInUse_filter_no_pages_get(self):
         """
@@ -675,13 +698,15 @@ class ViewWSTest_Concordia(TestCase):
         self.user2.save()
 
         # Act
-        response = self.client.get("/ws/page_in_use_filter/%s/%s/" % (self.user.username, test_url, ))
+        response = self.client.get(
+            "/ws/page_in_use_filter/%s/%s/" % (self.user.username, test_url)
+        )
 
         json_resp = json.loads(response.content)
 
         # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(json_resp['results']), 0)
+        self.assertEqual(len(json_resp["results"]), 0)
 
     def test_Transcriptions_latest_get(self):
         """
@@ -735,20 +760,14 @@ class ViewWSTest_Concordia(TestCase):
 
         # add Transcription objects
         self.transcription = Transcription(
-            asset=self.asset,
-            user_id=self.user.id,
-            status=Status.EDIT,
-            text="T1"
+            asset=self.asset, user_id=self.user.id, status=Status.EDIT, text="T1"
         )
         self.transcription.save()
 
         t2_text = "T2"
 
         self.transcription2 = Transcription(
-            asset=self.asset,
-            user_id=self.user2.id,
-            status=Status.EDIT,
-            text=t2_text
+            asset=self.asset, user_id=self.user2.id, status=Status.EDIT, text=t2_text
         )
         self.transcription2.save()
 
@@ -815,30 +834,21 @@ class ViewWSTest_Concordia(TestCase):
         # add Transcription objects
         t1_text = "T1"
         self.transcription = Transcription(
-            asset=self.asset,
-            user_id=self.user.id,
-            status=Status.EDIT,
-            text=t1_text
+            asset=self.asset, user_id=self.user.id, status=Status.EDIT, text=t1_text
         )
         self.transcription.save()
 
         t2_text = "T2"
 
         self.transcription2 = Transcription(
-            asset=self.asset,
-            user_id=self.user2.id,
-            status=Status.EDIT,
-            text=t2_text
+            asset=self.asset, user_id=self.user2.id, status=Status.EDIT, text=t2_text
         )
         self.transcription2.save()
 
         t3_text = "T3"
 
         self.transcription3 = Transcription(
-            asset=self.asset,
-            user_id=self.user.id,
-            status=Status.EDIT,
-            text=t3_text
+            asset=self.asset, user_id=self.user.id, status=Status.EDIT, text=t3_text
         )
         self.transcription3.save()
 
@@ -896,8 +906,7 @@ class ViewWSTest_Concordia(TestCase):
                 "asset": self.asset.id,
                 "user_id": self.user.id,
                 "status": Status.EDIT,
-                "text": "T1"
-
+                "text": "T1",
             },
         )
 
@@ -915,8 +924,7 @@ class ViewWSTest_Concordia(TestCase):
                 "asset": self.asset.id,
                 "user_id": self.user.id,
                 "status": Status.EDIT,
-                "text": "T2"
-
+                "text": "T2",
             },
         )
 
@@ -963,7 +971,7 @@ class ViewWSTest_Concordia(TestCase):
                 "asset": self.asset.slug,
                 "user_id": self.user.id,
                 "name": "T1",
-                "value": "T1"
+                "value": "T1",
             },
         )
 
@@ -1001,30 +1009,27 @@ class ViewWSTest_Concordia(TestCase):
         )
         self.asset.save()
 
-        self.tag1 = Tag(
-            name="Tag1",
-            value="Tag1"
-        )
+        self.tag1 = Tag(name="Tag1", value="Tag1")
         self.tag1.save()
 
-        self.tag2 = Tag(
-            name="Tag2",
-            value="Tag2"
-        )
+        self.tag2 = Tag(name="Tag2", value="Tag2")
         self.tag2.save()
 
         # Save for User1
         self.asset_tag_collection = UserAssetTagCollection(
-            asset=self.asset,
-            user_id=self.user.id
+            asset=self.asset, user_id=self.user.id
         )
         self.asset_tag_collection.save()
         self.asset_tag_collection.tags.add(self.tag1, self.tag2)
 
         # Act
-        url = "/ws/tag_delete/%s/%s/%s/%s/" % (self.collection.slug, self.asset.slug, "Tag1", self.user.id)
-        response = self.client.delete(url,
-                                      follow=True)
+        url = "/ws/tag_delete/%s/%s/%s/%s/" % (
+            self.collection.slug,
+            self.asset.slug,
+            "Tag1",
+            self.user.id,
+        )
+        response = self.client.delete(url, follow=True)
 
         # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -1032,7 +1037,6 @@ class ViewWSTest_Concordia(TestCase):
         # verify only 1 tag in db
         remaining_tags = Tag.objects.all()
         self.assertEqual(len(remaining_tags), 1)
-
 
     def test_Tag_create_with_an_existing_tag_post(self):
         """
@@ -1073,7 +1077,7 @@ class ViewWSTest_Concordia(TestCase):
                 "asset": self.asset.slug,
                 "user_id": self.user.id,
                 "name": "T1",
-                "value": "T1"
+                "value": "T1",
             },
         )
 
@@ -1084,7 +1088,7 @@ class ViewWSTest_Concordia(TestCase):
                 "asset": self.asset.slug,
                 "user_id": self.user.id,
                 "name": "T2",
-                "value": "T3"
+                "value": "T3",
             },
         )
 
@@ -1129,36 +1133,25 @@ class ViewWSTest_Concordia(TestCase):
         )
         self.asset.save()
 
-        self.tag1 = Tag(
-            name="Tag1",
-            value="Tag1"
-        )
+        self.tag1 = Tag(name="Tag1", value="Tag1")
         self.tag1.save()
 
-        self.tag2 = Tag(
-            name="Tag2",
-            value="Tag2"
-        )
+        self.tag2 = Tag(name="Tag2", value="Tag2")
         self.tag2.save()
 
-        self.tag3 = Tag(
-            name="Tag3",
-            value="Tag3"
-        )
+        self.tag3 = Tag(name="Tag3", value="Tag3")
         self.tag3.save()
 
         # Save for User1
         self.asset_tag_collection = UserAssetTagCollection(
-            asset=self.asset,
-            user_id=self.user.id
+            asset=self.asset, user_id=self.user.id
         )
         self.asset_tag_collection.save()
         self.asset_tag_collection.tags.add(self.tag1, self.tag2)
 
         # Save for User2
         self.asset_tag_collection2 = UserAssetTagCollection(
-            asset=self.asset,
-            user_id=self.user2.id
+            asset=self.asset, user_id=self.user2.id
         )
         self.asset_tag_collection2.save()
         self.asset_tag_collection2.tags.add(self.tag3)
@@ -1218,5 +1211,3 @@ class ViewWSTest_Concordia(TestCase):
         # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(json_resp["results"]), 0)
-
-

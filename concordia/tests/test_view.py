@@ -2,18 +2,18 @@
 
 import logging
 import re
-import responses
 import tempfile
 import time
 from unittest.mock import Mock, patch
 
+import responses
 import views
 from captcha.models import CaptchaStore
 from django.test import Client, TestCase
 from PIL import Image
 
-from concordia.models import (Asset, Collection, MediaType, Status, Tag, Transcription,
-                              User, UserAssetTagCollection, UserProfile, PageInUse)
+from concordia.models import (Asset, Collection, MediaType, PageInUse, Status, Tag,
+                              Transcription, User, UserAssetTagCollection, UserProfile)
 
 logging.disable(logging.CRITICAL)
 
@@ -81,8 +81,6 @@ class ViewTest_Concordia(TestCase):
         # Assert
         self.assertEqual(anon_user_id, anon_user.id)
 
-
-
     def test_concordia_api(self):
         """
         Test the tracribr_api. Provide a mock of requests
@@ -130,7 +128,9 @@ class ViewTest_Concordia(TestCase):
         mock_requests.get.return_value.json.return_value = {
             "concordia_data": "abc123456"
         }
-        mock_requests.get.return_value.content = b'{"count":0,"next":null,"previous":null,"results":[]}'
+        mock_requests.get.return_value.content = (
+            b'{"count":0,"next":null,"previous":null,"results":[]}'
+        )
 
         self.login_user()
 
@@ -193,7 +193,9 @@ class ViewTest_Concordia(TestCase):
         mock_requests.get.return_value.json.return_value = {
             "concordia_data": "abc123456"
         }
-        mock_requests.get.return_value.content = b'{"count":0,"next":null,"previous":null,"results":[]}'
+        mock_requests.get.return_value.content = (
+            b'{"count":0,"next":null,"previous":null,"results":[]}'
+        )
 
         # Act
         response = self.client.post(
@@ -228,7 +230,9 @@ class ViewTest_Concordia(TestCase):
         mock_requests.get.return_value.json.return_value = {
             "concordia_data": "abc123456"
         }
-        mock_requests.get.return_value.content = b'{"count":0,"next":null,"previous":null,"results":[]}'
+        mock_requests.get.return_value.content = (
+            b'{"count":0,"next":null,"previous":null,"results":[]}'
+        )
 
         # Act
         response = self.client.post("/account/profile/", {"first_name": "Jimmy"})
@@ -254,7 +258,9 @@ class ViewTest_Concordia(TestCase):
         mock_requests.get.return_value.json.return_value = {
             "concordia_data": "abc123456"
         }
-        mock_requests.get.return_value.content = b'{"count":0,"next":null,"previous":null,"results":[]}'
+        mock_requests.get.return_value.content = (
+            b'{"count":0,"next":null,"previous":null,"results":[]}'
+        )
 
         test_email = "tester@foo.com"
 
@@ -298,7 +304,9 @@ class ViewTest_Concordia(TestCase):
         mock_requests.get.return_value.json.return_value = {
             "concordia_data": "abc123456"
         }
-        mock_requests.get.return_value.content = b'{"count":0,"next":null,"previous":null,"results":[]}'
+        mock_requests.get.return_value.content = (
+            b'{"count":0,"next":null,"previous":null,"results":[]}'
+        )
 
         pw = "!Abc12345"
 
@@ -372,19 +380,24 @@ class ViewTest_Concordia(TestCase):
 
         # mock REST requests
 
-        collection_json = {"id": self.collection.id,
-                           "slug": "test-slug2",
-                           "title": "TextCollection",
-                           "description": "Collection Description",
-                           "s3_storage": True,
-                           "start_date": None,
-                           "end_date": None,
-                           "status": Status.EDIT,
-                           "assets": []
-                           }
+        collection_json = {
+            "id": self.collection.id,
+            "slug": "test-slug2",
+            "title": "TextCollection",
+            "description": "Collection Description",
+            "s3_storage": True,
+            "start_date": None,
+            "end_date": None,
+            "status": Status.EDIT,
+            "assets": [],
+        }
 
-        responses.add(responses.GET, 'http://testserver/ws/collection/test-slug2/',
-                      json=collection_json, status=200)
+        responses.add(
+            responses.GET,
+            "http://testserver/ws/collection/test-slug2/",
+            json=collection_json,
+            status=200,
+        )
 
         # Act
         response = self.client.get("/transcribe/test-slug2/")
@@ -416,19 +429,24 @@ class ViewTest_Concordia(TestCase):
 
         # mock REST requests
 
-        collection_json = {"id": self.collection.id,
-                           "slug": "test-slug2",
-                           "title": "TextCollection",
-                           "description": "Collection Description",
-                           "s3_storage": True,
-                           "start_date": None,
-                           "end_date": None,
-                           "status": Status.EDIT,
-                           "assets": []
-                           }
+        collection_json = {
+            "id": self.collection.id,
+            "slug": "test-slug2",
+            "title": "TextCollection",
+            "description": "Collection Description",
+            "s3_storage": True,
+            "start_date": None,
+            "end_date": None,
+            "status": Status.EDIT,
+            "assets": [],
+        }
 
-        responses.add(responses.GET, 'http://testserver/ws/collection/test-slug2/',
-                      json=collection_json, status=200)
+        responses.add(
+            responses.GET,
+            "http://testserver/ws/collection/test-slug2/",
+            json=collection_json,
+            status=200,
+        )
 
         # Act
         response = self.client.get("/transcribe/test-slug2/", {"page": 2})
@@ -584,51 +602,70 @@ class ViewTest_Concordia(TestCase):
             "subcollection": None,
             "sequence": 1,
             "metadata": {"key": "val2"},
-            "status": Status.EDIT
+            "status": Status.EDIT,
         }
 
-        transcription_json = {"asset": {
-            "title": "",
-            "slug": "",
-            "description": "",
-            "media_url": "",
-            "media_type": None,
-            "collection": {
-                "slug": "",
+        transcription_json = {
+            "asset": {
                 "title": "",
+                "slug": "",
                 "description": "",
-                "s3_storage": False,
-                "start_date": None,
-                "end_date": None, "status": None,
-                "assets": []
+                "media_url": "",
+                "media_type": None,
+                "collection": {
+                    "slug": "",
+                    "title": "",
+                    "description": "",
+                    "s3_storage": False,
+                    "start_date": None,
+                    "end_date": None,
+                    "status": None,
+                    "assets": [],
+                },
+                "subcollection": None,
+                "sequence": None,
+                "metadata": None,
+                "status": None,
             },
-            "subcollection": None,
-            "sequence": None,
-            "metadata": None,
-            "status": None},
             "user_id": None,
             "text": "",
-            "status": None}
-
-        tag_json = {
-            "results": []
+            "status": None,
         }
 
-        responses.add(responses.GET,
-                      'http://testserver/ws/page_in_use_filter/tester//transcribe/Collection1/asset/Asset1//',
-                      json={"count": 0, "results": []}, status=200)
+        tag_json = {"results": []}
 
-        responses.add(responses.GET, 'http://testserver/ws/asset_by_slug/Collection1/Asset1/',
-                      json=asset_by_slug_response, status=200)
+        responses.add(
+            responses.GET,
+            "http://testserver/ws/page_in_use_filter/tester//transcribe/Collection1/asset/Asset1//",
+            json={"count": 0, "results": []},
+            status=200,
+        )
 
-        responses.add(responses.GET, 'http://testserver/ws/transcription/%s/' % (self.asset.id,),
-                      json=transcription_json, status=200)
+        responses.add(
+            responses.GET,
+            "http://testserver/ws/asset_by_slug/Collection1/Asset1/",
+            json=asset_by_slug_response,
+            status=200,
+        )
 
-        responses.add(responses.GET, 'http://testserver/ws/tags/%s/' % (self.asset.id,),
-                      json=tag_json, status=200)
+        responses.add(
+            responses.GET,
+            "http://testserver/ws/transcription/%s/" % (self.asset.id,),
+            json=transcription_json,
+            status=200,
+        )
 
-        responses.add(responses.POST, 'http://testserver/ws/transcription_create/', status=200)
-        responses.add(responses.POST, 'http://testserver/ws/tag_create/', status=200)
+        responses.add(
+            responses.GET,
+            "http://testserver/ws/tags/%s/" % (self.asset.id,),
+            json=tag_json,
+            status=200,
+        )
+
+        responses.add(
+            responses.POST, "http://testserver/ws/transcription_create/", status=200
+        )
+        responses.add(responses.POST, "http://testserver/ws/tag_create/", status=200)
 
         # Act
         response = self.client.post(
@@ -701,66 +738,86 @@ class ViewTest_Concordia(TestCase):
             "subcollection": None,
             "sequence": 1,
             "metadata": {"key": "val2"},
-            "status": Status.EDIT
+            "status": Status.EDIT,
         }
 
-        transcription_json = {"asset": {
-            "title": "",
-            "slug": "",
-            "description": "",
-            "media_url": "",
-            "media_type": None,
-            "collection": {
-                "slug": "",
+        transcription_json = {
+            "asset": {
                 "title": "",
+                "slug": "",
                 "description": "",
-                "s3_storage": False,
-                "start_date": None,
-                "end_date": None, "status": None,
-                "assets": []
+                "media_url": "",
+                "media_type": None,
+                "collection": {
+                    "slug": "",
+                    "title": "",
+                    "description": "",
+                    "s3_storage": False,
+                    "start_date": None,
+                    "end_date": None,
+                    "status": None,
+                    "assets": [],
+                },
+                "subcollection": None,
+                "sequence": None,
+                "metadata": None,
+                "status": None,
             },
-            "subcollection": None,
-            "sequence": None,
-            "metadata": None,
-            "status": None},
             "user_id": None,
             "text": "",
-            "status": None}
-
-        tag_json = {
-            "results": []
+            "status": None,
         }
 
-        responses.add(responses.GET,
-                      'http://testserver/ws/page_in_use_filter/AnonymousUser//transcribe/Collection1/asset/Asset1//',
-                      json={"count": 0, "results": []}, status=200)
+        tag_json = {"results": []}
 
-        responses.add(responses.GET, 'http://testserver/ws/asset_by_slug/Collection1/Asset1/',
-                      json=asset_by_slug_response, status=200)
+        responses.add(
+            responses.GET,
+            "http://testserver/ws/page_in_use_filter/AnonymousUser//transcribe/Collection1/asset/Asset1//",
+            json={"count": 0, "results": []},
+            status=200,
+        )
 
-        responses.add(responses.GET, 'http://testserver/ws/transcription/%s/' % (self.asset.id,),
-                      json=transcription_json, status=200)
+        responses.add(
+            responses.GET,
+            "http://testserver/ws/asset_by_slug/Collection1/Asset1/",
+            json=asset_by_slug_response,
+            status=200,
+        )
 
-        responses.add(responses.GET, 'http://testserver/ws/tags/%s/' % (self.asset.id,),
-                      json=tag_json, status=200)
+        responses.add(
+            responses.GET,
+            "http://testserver/ws/transcription/%s/" % (self.asset.id,),
+            json=transcription_json,
+            status=200,
+        )
 
-        responses.add(responses.POST, 'http://testserver/ws/transcription_create/', status=200)
-        responses.add(responses.POST, 'http://testserver/ws/tag_create/', status=200)
+        responses.add(
+            responses.GET,
+            "http://testserver/ws/tags/%s/" % (self.asset.id,),
+            json=tag_json,
+            status=200,
+        )
+
+        responses.add(
+            responses.POST, "http://testserver/ws/transcription_create/", status=200
+        )
+        responses.add(responses.POST, "http://testserver/ws/tag_create/", status=200)
 
         # Act
-        response = self.client.get(
-            "/transcribe/Collection1/asset/Asset1/")
+        response = self.client.get("/transcribe/Collection1/asset/Asset1/")
         self.assertEqual(response.status_code, 200)
         hash_ = re.findall(r'value="([0-9a-f]+)"', str(response.content))[0]
         captcha_response = CaptchaStore.objects.get(hashkey=hash_).response
 
         response = self.client.post(
             "/transcribe/Collection1/asset/Asset1/",
-            {"tx": "First Test Transcription 1",
-             "tags": tag_name,
-             "action": "Save",
-             "captcha_0": hash_,
-             "captcha_1": captcha_response},
+            {
+                "tx": "First Test Transcription 1",
+                "tags": tag_name,
+                "action": "Save",
+                "captcha_0": hash_,
+                "captcha_1": captcha_response,
+            },
         )
 
         # Assert
@@ -788,7 +845,7 @@ class ViewTest_Concordia(TestCase):
         self.collection.save()
 
         # create an Asset
-        asset_slug= "Asset1"
+        asset_slug = "Asset1"
         self.asset = Asset(
             title="TestAsset",
             slug=asset_slug,
@@ -827,51 +884,70 @@ class ViewTest_Concordia(TestCase):
             "subcollection": None,
             "sequence": 1,
             "metadata": {"key": "val2"},
-            "status": Status.EDIT
+            "status": Status.EDIT,
         }
 
-        transcription_json = {"asset": {
-            "title": "",
-            "slug": "",
-            "description": "",
-            "media_url": "",
-            "media_type": None,
-            "collection": {
-                "slug": "",
+        transcription_json = {
+            "asset": {
                 "title": "",
+                "slug": "",
                 "description": "",
-                "s3_storage": False,
-                "start_date": None,
-                "end_date": None, "status": None,
-                "assets": []
+                "media_url": "",
+                "media_type": None,
+                "collection": {
+                    "slug": "",
+                    "title": "",
+                    "description": "",
+                    "s3_storage": False,
+                    "start_date": None,
+                    "end_date": None,
+                    "status": None,
+                    "assets": [],
+                },
+                "subcollection": None,
+                "sequence": None,
+                "metadata": None,
+                "status": None,
             },
-            "subcollection": None,
-            "sequence": None,
-            "metadata": None,
-            "status": None},
             "user_id": None,
             "text": "",
-            "status": None}
-
-        tag_json = {
-            "results": []
+            "status": None,
         }
 
-        responses.add(responses.GET,
-                      'http://testserver/ws/page_in_use_filter/AnonymousUser//transcribe/Collection1/asset/Asset1//',
-                      json={"count": 0, "results": []}, status=200)
+        tag_json = {"results": []}
 
-        responses.add(responses.GET, 'http://testserver/ws/asset_by_slug/Collection1/Asset1/',
-                      json=asset_by_slug_response, status=200)
+        responses.add(
+            responses.GET,
+            "http://testserver/ws/page_in_use_filter/AnonymousUser//transcribe/Collection1/asset/Asset1//",
+            json={"count": 0, "results": []},
+            status=200,
+        )
 
-        responses.add(responses.GET, 'http://testserver/ws/transcription/%s/' % (self.asset.id,),
-                      json=transcription_json, status=200)
+        responses.add(
+            responses.GET,
+            "http://testserver/ws/asset_by_slug/Collection1/Asset1/",
+            json=asset_by_slug_response,
+            status=200,
+        )
 
-        responses.add(responses.GET, 'http://testserver/ws/tags/%s/' % (self.asset.id,),
-                      json=tag_json, status=200)
+        responses.add(
+            responses.GET,
+            "http://testserver/ws/transcription/%s/" % (self.asset.id,),
+            json=transcription_json,
+            status=200,
+        )
 
-        responses.add(responses.POST, 'http://testserver/ws/transcription_create/', status=200)
-        responses.add(responses.POST, 'http://testserver/ws/tag_create/', status=200)
+        responses.add(
+            responses.GET,
+            "http://testserver/ws/tags/%s/" % (self.asset.id,),
+            json=tag_json,
+            status=200,
+        )
+
+        responses.add(
+            responses.POST, "http://testserver/ws/transcription_create/", status=200
+        )
+        responses.add(responses.POST, "http://testserver/ws/tag_create/", status=200)
 
         tag_name = "Test tag 1"
 
@@ -884,7 +960,6 @@ class ViewTest_Concordia(TestCase):
 
         # Assert
         self.assertEqual(response.status_code, 200)
-
 
     @responses.activate
     def test_ConcordiaAssetView_get(self):
@@ -943,48 +1018,65 @@ class ViewTest_Concordia(TestCase):
             "subcollection": None,
             "sequence": 1,
             "metadata": {"key": "val2"},
-            "status": Status.EDIT
+            "status": Status.EDIT,
         }
 
-        transcription_json = {"asset": {
-            "title": "",
-            "slug": "",
-            "description": "",
-            "media_url": "",
-            "media_type": None,
-            "collection": {
-                "slug": "",
+        transcription_json = {
+            "asset": {
                 "title": "",
+                "slug": "",
                 "description": "",
-                "s3_storage": False,
-                "start_date": None,
-                "end_date": None, "status": None,
-                "assets": []
+                "media_url": "",
+                "media_type": None,
+                "collection": {
+                    "slug": "",
+                    "title": "",
+                    "description": "",
+                    "s3_storage": False,
+                    "start_date": None,
+                    "end_date": None,
+                    "status": None,
+                    "assets": [],
+                },
+                "subcollection": None,
+                "sequence": None,
+                "metadata": None,
+                "status": None,
             },
-            "subcollection": None,
-            "sequence": None,
-            "metadata": None,
-            "status": None},
             "user_id": None,
             "text": "",
-            "status": None}
-
-        tag_json = {
-            "results": []
+            "status": None,
         }
 
-        responses.add(responses.GET,
-                      'http://testserver/ws/page_in_use_filter/tester//transcribe/Collection1/asset/Asset1//',
-                      json={"count": 0, "results": []}, status=200)
+        tag_json = {"results": []}
 
-        responses.add(responses.GET, 'http://testserver/ws/asset_by_slug/Collection1/Asset1/',
-                      json=asset_by_slug_response, status=200)
+        responses.add(
+            responses.GET,
+            "http://testserver/ws/page_in_use_filter/tester//transcribe/Collection1/asset/Asset1//",
+            json={"count": 0, "results": []},
+            status=200,
+        )
 
-        responses.add(responses.GET, 'http://testserver/ws/transcription/%s/' % (self.asset.id,),
-                      json=transcription_json, status=200)
+        responses.add(
+            responses.GET,
+            "http://testserver/ws/asset_by_slug/Collection1/Asset1/",
+            json=asset_by_slug_response,
+            status=200,
+        )
 
-        responses.add(responses.GET, 'http://testserver/ws/tags/%s/' % (self.asset.id,),
-                      json=tag_json, status=200)
+        responses.add(
+            responses.GET,
+            "http://testserver/ws/transcription/%s/" % (self.asset.id,),
+            json=transcription_json,
+            status=200,
+        )
+
+        responses.add(
+            responses.GET,
+            "http://testserver/ws/tags/%s/" % (self.asset.id,),
+            json=tag_json,
+            status=200,
+        )
 
         url = "/transcribe/Collection1/asset/Asset1/"
 
@@ -1053,18 +1145,18 @@ class ViewTest_Concordia(TestCase):
         self.asset2.save()
 
         # Act
-        response = self.client.post("/transcribe/alternateasset/",
-                                    {
-                                        "collection": self.collection.slug,
-                                        "asset": self.asset.slug
-                                    }
-                                    )
+        response = self.client.post(
+            "/transcribe/alternateasset/",
+            {"collection": self.collection.slug, "asset": self.asset.slug},
+        )
 
         # Assert
         self.assertEqual(response.status_code, 200)
 
         # only 2 assets in collection, this response should be for the other asset
-        self.assertEqual(str(response.content, 'utf-8'), "/transcribe/Collection1/asset/Asset2/")
+        self.assertEqual(
+            str(response.content, "utf-8"), "/transcribe/Collection1/asset/Asset2/"
+        )
 
     def test_pageinuse_post(self):
         """
@@ -1083,10 +1175,7 @@ class ViewTest_Concordia(TestCase):
         user2.set_password("top_secret")
         user2.save()
 
-        page1 = PageInUse(
-            page_url=url,
-            user=user2
-        )
+        page1 = PageInUse(page_url=url, user=user2)
         page1.save()
 
         from datetime import datetime, timedelta
@@ -1098,20 +1187,21 @@ class ViewTest_Concordia(TestCase):
             page_url="foo.com/blah",
             user=self.user,
             created_on=time_threshold,
-            updated_on=time_threshold)
+            updated_on=time_threshold,
+        )
         page2.save()
 
         page3 = PageInUse(
             page_url="bar.com/blah",
             user=self.user,
             created_on=time_threshold,
-            updated_on=time_threshold)
+            updated_on=time_threshold,
+        )
         page3.save()
 
         # Act
         response = self.client.post(
-            "/transcribe/pageinuse/",
-            {"page_url": url, "user": self.user},
+            "/transcribe/pageinuse/", {"page_url": url, "user": self.user}
         )
 
         # Assert
@@ -1133,8 +1223,7 @@ class ViewTest_Concordia(TestCase):
 
         # Act
         response = self.client.post(
-            "/transcribe/pageinuse/",
-            {"page_url": "foo.com/bar", "user": self.user},
+            "/transcribe/pageinuse/", {"page_url": "foo.com/bar", "user": self.user}
         )
 
         # Assert
