@@ -1172,4 +1172,51 @@ class ViewWSTest_Concordia(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(json_resp["results"]), 3)
 
+    def test_GetTags_notags_get(self):
+        """
+        Test getting the tags for an asset when no tags exist, route /ws/tags/<asset>
+        :return:
+        """
+
+        # Arrange
+        self.login_user()
+
+        # create a second user
+        username = "tester2"
+        self.user2 = User.objects.create(username=username, email="tester2@foo.com")
+        self.user2.set_password("top_secret")
+        self.user2.save()
+
+        # create a collection
+        self.collection = Collection(
+            title="TextCollection",
+            slug="www.foo.com/slug2",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection.save()
+
+        # create Assets
+        self.asset = Asset(
+            title="TestAsset",
+            slug="www.foo.com/slug1",
+            description="Asset Description",
+            media_url="http://www.foo.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            collection=self.collection,
+            metadata={"key": "val2"},
+            status=Status.EDIT,
+        )
+        self.asset.save()
+
+        # Act
+        response = self.client.get("/ws/tags/%s/" % self.asset.id)
+
+        json_resp = json.loads(response.content)
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(json_resp["results"]), 0)
+
 

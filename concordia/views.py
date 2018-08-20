@@ -124,13 +124,6 @@ class AccountProfileView(LoginRequiredMixin, TemplateView):
         if profile:
             data["myfile"] = profile[0].myfile
 
-        s = Session()
-        req = Request('GET', "%s://%s/ws/transcription_by_user/%s/" %
-                      (self.request.scheme, self.request.get_host(), self.request.user.id))
-        prepped = s.prepare_request(req)
-
-        resp = s.send(prepped)
-
         response = requests.get("%s://%s/ws/transcription_by_user/%s/" %
                                 (self.request.scheme, self.request.get_host(), self.request.user.id),
                                 cookies=self.request.COOKIES)
@@ -336,23 +329,6 @@ class ConcordiaAssetView(TemplateView):
                                              "value": tag
                                          },
                                          cookies=self.request.COOKIES)
-                tag_json = json.loads(response.content.decode("utf-8"))
-
-           # for delete_tag in [tag for tag in existing_tags_list if tag not in tags]:
-
-            i = 0
-
-            # utags, tag_status = UserAssetTagCollection.objects.get_or_create(
-            #     asset=asset_json["id"], user_id=self.request.user.id
-            # )
-            # all_tag = utags.tags.all().values_list("name", flat=True)
-            # all_tag_list = list(all_tag)
-            # delete_tags = [i for i in all_tag_list if i not in tags]
-            # utags.tags.filter(name__in=delete_tags).delete()
-            # for tag in tags:
-            #     tag_ob, t_status = Tag.objects.get_or_create(name=tag, value=tag)
-            #     if tag_ob not in utags.tags.all():
-            #         utags.tags.add(tag_ob)
 
         return redirect(self.request.path)
 

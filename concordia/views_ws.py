@@ -288,7 +288,10 @@ class UserAssetTagsGet(generics.ListAPIView):
                         tags | tags_in_db.tags.all()
                     ).distinct()  # merge the querysets
 
-        return all_tags
+        if all_tags:
+            return all_tags
+        else:
+            return UserAssetTagCollection.objects.filter(asset__id=-1)
 
 
 class TagCreate(generics.ListCreateAPIView):
