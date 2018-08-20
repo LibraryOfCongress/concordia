@@ -63,7 +63,7 @@ tx_urlpatterns = (
             name="transcription",
         ),
         re_path(
-            r"^([^/]+)/([^/]+)/$", views.ConcordiaCollectionView.as_view(), name="collection"
+            r"^([^/]+)/([^/]+)/$", views.ConcordiaCollectionView.as_view(), name="project"
         ),
     ],
     "transcriptions",
@@ -150,7 +150,7 @@ urlpatterns += [
     re_path(
         r"^check_and_save_collection_assets/(?P<task_id>[a-zA-Z0-9-]+)/(?P<item_id>[a-zA-Z0-9-]+)$",
         check_and_save_collection_assets,
-        name="check_and_save_collection_assets",
+        name="check_and_save_collection_item_assets",
     ),
     re_path(
         r"^check_and_save_collection_assets/(?P<task_id>[a-zA-Z0-9-]+)/$",
