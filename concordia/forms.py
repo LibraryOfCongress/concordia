@@ -40,8 +40,8 @@ class ConcordiaUserForm(RegistrationForm):
         ),
     )
     
-    captcha = CaptchaField(
-    )
+    # captcha = CaptchaField(
+    # )
 
     class Meta:
         model = User
@@ -62,6 +62,7 @@ class ConcordiaUserForm(RegistrationForm):
 
 class ConcordiaUserEditForm(ConcordiaUserForm):
     myfile = forms.FileField(required=False)
+    captcha = CaptchaField(required=False)
 
 
 class ConcordiaContactUsForm(forms.Form):
@@ -72,7 +73,7 @@ class ConcordiaContactUsForm(forms.Form):
             attrs={"class": "col-sm-8 form-control"}
         ),
     )
-    
+
     subject = forms.CharField(
         label="Subject",
         required=False,

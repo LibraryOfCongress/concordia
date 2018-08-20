@@ -1,5 +1,3 @@
-# TODO: Add correct copyright header
-
 import csv
 import io
 import os
@@ -7,6 +5,7 @@ import shutil
 import sys
 import zipfile
 
+import boto3
 from django.conf import settings
 from django.test import Client, TestCase
 
@@ -52,56 +51,98 @@ class ViewTest_Exporter(TestCase):
         :return:
         """
 
-        media_url_str = "/concordia/foocollection/testasset/asset.jpg"
-        collection_name_str = "foocollection"
-        asset_folder_name_str = "testasset"
-        asset_name_str = "asset.jpg"
-
         # Arrange
         self.login_user()
 
-        # create a collection
-        self.collection = Collection(
-            title="FooCollection",
-            slug=collection_name_str,
+        ## Build test data for local storage collection ##
+        # Collection Info (local storage)
+        locstor_media_url_str = "/locstorcollection/testasset/asset.jpg"
+        locstor_collection_name_str = "locstorcollection"
+        locstor_asset_folder_name_str = "testasset"
+        locstor_asset_name_str = "asset.jpg"
+
+        # create a collection (local Storage)
+        self.collection1 = Collection(
+            title="LocStorCollection",
+            slug=locstor_collection_name_str,
             description="Collection Description",
             metadata={"key": "val1"},
-            status=Status.PCT_0,
+            is_active=True,
+            s3_storage=False,
+            status=Status.EDIT,
         )
-        self.collection.save()
+        self.collection1.save()
 
-        # create an Asset
-        self.asset = Asset(
+        # create an Asset (local Storage)
+        self.asset1 = Asset(
             title="TestAsset",
-            slug=asset_folder_name_str,
+            slug=locstor_asset_folder_name_str,
             description="Asset Description",
-            media_url=media_url_str,
+            media_url=locstor_media_url_str,
             media_type=MediaType.IMAGE,
-            collection=self.collection,
+            collection=self.collection1,
+            sequence=0,
             metadata={"key": "val2"},
-            status=Status.PCT_0,
+            status=Status.EDIT,
         )
-        self.asset.save()
+        self.asset1.save()
 
         # add a Transcription object
-        self.transcription = Transcription(
-            asset=self.asset, user_id=self.user.id, status=Status.PCT_0, text="Sample"
+        self.transcription1 = Transcription(
+            asset=self.asset1, user_id=self.user.id, status=Status.EDIT, text="Sample"
         )
-        self.transcription.save()
+        self.transcription1.save()
 
-        # Make sure correct folders structure exists
-        build_folder = "{0}/concordia".format(settings.MEDIA_ROOT)
-        if not os.path.exists(build_folder):
-            os.makedirs(build_folder)
-        collection_folder = "{0}/{1}".format(build_folder,collection_name_str)
+        ## Build test data for S3 Storage Collection ##
+        # Collection Info (S3 storage)
+        s3_media_url_str = "https://s3.us-east-2.amazonaws.com/chc-collections/test_s3/mss859430177/0.jpg"
+        s3_collection_name_str = "test_s3"
+        s3_asset_folder_name_str = "testasset"
+        s3_asset_name_str = "asset.jpg"
+
+        # create a collection (local Storage)
+        self.collection2 = Collection(
+            title="Test S3",
+            slug=s3_collection_name_str,
+            description="Collection Description",
+            metadata={"key": "val1"},
+            is_active=True,
+            s3_storage=True,
+            status=Status.EDIT,
+        )
+        self.collection2.save()
+
+        # create an Asset (local Storage)
+        self.asset2 = Asset(
+            title="TestAsset",
+            slug=s3_asset_folder_name_str,
+            description="Asset Description",
+            media_url=s3_media_url_str,
+            media_type=MediaType.IMAGE,
+            collection=self.collection2,
+            sequence=0,
+            metadata={"key": "val2"},
+            status=Status.EDIT,
+        )
+        self.asset2.save()
+
+        # add a Transcription object
+        self.transcription2 = Transcription(
+            asset=self.asset2, user_id=self.user.id, status=Status.EDIT, text="Sample"
+        )
+        self.transcription2.save()
+
+
+        # Make sure correct folders structure exists for Local Storage Collection
+        collection_folder = "{0}/{1}".format(settings.MEDIA_ROOT, locstor_collection_name_str)
         if not os.path.exists(collection_folder):
             os.makedirs(collection_folder)
-        source_dir = "{0}/{1}".format(collection_folder,asset_folder_name_str)
-        if not os.path.exists(source_dir):
-            os.makedirs(source_dir)
+        item_dir = "{0}/{1}".format(collection_folder, locstor_asset_folder_name_str)
+        if not os.path.exists(item_dir):
+            os.makedirs(item_dir)
 
-        # create source asset file
-        with open("{0}/{1}".format(source_dir,asset_name_str), "w+") as csv_file:
+        # create source asset file for Local Storage Collection
+        with open("{0}/{1}".format(item_dir, locstor_asset_name_str), "w+") as csv_file:
             writer = csv.writer(csv_file)
             writer.writerow(
                 [
@@ -114,15 +155,15 @@ class ViewTest_Exporter(TestCase):
                 ]
             )
 
-        # Act
-        response = self.client.get("/transcribe/exportBagit/foocollection/")
+        # Act (local storage collection)
+        response = self.client.get("/transcribe/exportBagit/locstorcollection/")
 
-        # Assert
+        # Assert for Local Storage Collection
 
         self.assertEqual(response.status_code, 200)
         self.assertEquals(
             response.get("Content-Disposition"),
-            "attachment; filename=foocollection.zip",
+            "attachment; filename=locstorcollection.zip",
         )
         try:
             f = io.BytesIO(response.content)
@@ -131,19 +172,53 @@ class ViewTest_Exporter(TestCase):
             # self.assertIsNone(zipped_file.testzip())
             self.assertIn("bagit.txt", zipped_file.namelist())
             self.assertIn("bag-info.txt", zipped_file.namelist())
-            self.assertIn("data/testasset/export.csv", zipped_file.namelist())
+            self.assertIn("data/testasset/asset.txt", zipped_file.namelist())
 
-            csv_file = zipped_file.read("data/testasset/export.csv")
-            self.assertEqual(
-                str(csv_file),
-                "b'Collection,Title,Description,MediaUrl,Transcription,Tags\\r\\nFooCollection,TestAsset,Asset Description,{0},,\\r\\n'".format(media_url_str),  # noqa
-            )
         finally:
             zipped_file.close()
             f.close()
+
+
+        # Act (s3 collection)
+        response2 = self.client.get("/transcribe/exportBagit/test_s3/")
+
+        # Assert for s3 Collection
+
+        self.assertEqual(response2.status_code, 200)
+        self.assertEquals(
+            response2.get("Content-Disposition"),
+            "attachment; filename=test_s3.zip",
+        )
+        try:
+            f = io.BytesIO(response2.content)
+            zipped_file = zipfile.ZipFile(f, "r")
+
+            self.assertIn("bagit.txt", zipped_file.namelist())
+            self.assertIn("bag-info.txt", zipped_file.namelist())
+            self.assertIn("data/mss859430177/0.txt", zipped_file.namelist())
+            self.assertIn("data/mss859430177/0.jpg", zipped_file.namelist())
+
+        finally:
+            zipped_file.close()
+            f.close()
+
 
         # Clean up temp folders
         try:
             shutil.rmtree(collection_folder)
         except Exception as e:
             pass
+
+
+class AWS_S3_ConnectionTest(TestCase):
+    """
+    This class contains the test for the AWS S3 Connection
+    """
+
+    def test_connection(self):
+        connection = boto3.client(
+            "s3",
+            aws_access_key_id=settings.AWS_S3["AWS_ACCESS_KEY_ID"],
+            aws_secret_access_key=settings.AWS_S3["AWS_SECRET_ACCESS_KEY"],
+        )
+        self.assertIsNotNone(connection)

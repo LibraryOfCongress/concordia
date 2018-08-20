@@ -37,6 +37,18 @@ class CollectionDetailSerializer(serializers.ModelSerializer):
 class AssetSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Asset
+        fields = (
+            "title",
+            "slug",
+            "description",
+            "media_url",
+            "media_type",
+            "collection",
+            "subcollection",
+            "sequence",
+            "metadata",
+            "status",
+        )
 
 
 class PageInUseSerializer(serializers.ModelSerializer):
@@ -67,3 +79,28 @@ class PageInUseSerializer(serializers.ModelSerializer):
             "page_url",
             "user"
         )
+
+
+class TranscriptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Transcription
+        fields = (
+            "asset",
+            "user_id",
+            "text",
+            "status"
+        )
+
+
+class TagSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Tag
+        fields = ("name", "value")
+
+
+class UserAssetTagSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.UserAssetTagCollection
+        fields = (
+            "asset", "user_id", "tags"
+            )

@@ -4,6 +4,7 @@ import shutil
 from shutil import copyfile
 
 import bagit
+import boto3
 from django.conf import settings
 from django.http import HttpResponse
 from django.views.generic import TemplateView
@@ -58,14 +59,15 @@ class ExportCollectionToCSV(TemplateView):
 
 class ExportCollectionToBagit(TemplateView):
     """
-    Creates temp directory structure for source data.  Moves source image
-    file into temp directory, builds export.csv with meta, transcription,
-    and tag data.  Executes bagit.py to turn temp directory into bagit
-    strucutre.  Builds and exports bagit structure as zip.  Removes all
-    temporary directories and files.
+    Creates temp directory structure for source data.  Copies source image
+    file from S3 or local storage into temp directory, builds export.csv
+    with meta, transcription, and tag data.  Executes bagit.py to turn temp
+    directory into bagit strucutre.  Builds and exports bagit structure as
+    zip.  Removes all temporary directories and files.
 
     """
 
+    include_images = True
     template_name = "transcriptions/collection.html"
 
     def get(self, request, *args, **kwargs):
@@ -85,61 +87,52 @@ class ExportCollectionToBagit(TemplateView):
             os.mkdir(collection_folder)
 
         for asset in asset_list:
-            asset_folder_name = asset.media_url.rsplit("/")[-2]
-            asset_folder = "%s/%s" % (collection_folder, asset_folder_name)
+            item_folder_name = asset.media_url.rsplit("/")[-2]
+            item_folder = "%s/%s" % (collection_folder, item_folder_name)
 
             # Create asset folders (media/exporter/<collection>/<asset>
-            if not os.path.exists(asset_folder):
-                os.mkdir(asset_folder)
+            if not os.path.exists(item_folder):
+                os.mkdir(item_folder)
 
-            src_folder = asset_folder.replace("exporter", "concordia")
+            src_folder = item_folder.replace("exporter/", "")
             src_name = asset.media_url.rsplit("/")[-1]
-            src = "%s/%s" % (src_folder, src_name)
-            dest = "%s/%s" % (asset_folder, src_name)
+            src_root = src_name.rsplit(".")[0]
+            dest = "%s/%s" % (item_folder, src_name)
 
-            # Copy assest image file into asset folder
-            copyfile(src, dest)
-
-            # Build export.csv with asset meta data, transcription & tag info
-            csv_dest = "%s/export.csv" % asset_folder
-            with open(csv_dest, "w") as csv_file:
-                writer = csv.writer(csv_file)
-                writer.writerow(
-                    [
-                        "Collection",
-                        "Title",
-                        "Description",
-                        "MediaUrl",
-                        "Transcription",
-                        "Tags",
-                    ]
-                )
-
-                field_names = ["title", "description", "media_url"]
-                transcription = Transcription.objects.filter(
-                    asset=asset, user_id=self.request.user.id
-                )
-                if transcription:
-                    transcription = transcription[0].text
+            if self.include_images:
+                if collection.s3_storage:
+                    s3 = boto3.client(
+                        "s3",
+                        aws_access_key_id=settings.AWS_S3["AWS_ACCESS_KEY_ID"],
+                        aws_secret_access_key=settings.AWS_S3["AWS_SECRET_ACCESS_KEY"],
+                    )
+                    bucket_name = settings.AWS_S3["S3_COLLECTION_BUCKET"]
+                    s3_path = "{0}/{1}/{2}".format(
+                        collection.slug, item_folder_name, src_name
+                    )
+                    # Copy asset image from S3 into temp asset folder
+                    s3.download_file(bucket_name, s3_path, dest)
                 else:
-                    transcription = ""
+                    src = "%s/%s" % (src_folder, src_name)
+                    # Copy asset image from local storage into temp asset folder
+                    copyfile(src, dest)
 
-                tags = UserAssetTagCollection.objects.filter(
-                    asset=asset, user_id=self.request.user.id
-                )
-                if tags:
-                    tags = list(tags[0].tags.all().values_list("name", flat=True))
-                else:
-                    tags = ""
+            # Get transcription data
+            transcription_obj = Transcription.objects.filter(
+                asset=asset, user_id=self.request.user.id
+            )
+            if transcription_obj:
+                transcription = transcription_obj[0].text
+            else:
+                transcription = ""
 
-                row = (
-                    [collection.title]
-                    + [getattr(asset, i) for i in field_names]
-                    + [transcription, tags]
-                )
-                writer.writerow(row)
+            # Build transcription output text file
+            tran_output_path = "{0}/{1}.txt".format(item_folder, src_root)
+            tran_out_file = open(tran_output_path, "w")
+            tran_out_file.write(transcription)
+            tran_out_file.close()
 
-        # Turn Strucutre into bagit format
+        # Turn Structure into bagit format
         bagit.make_bag(collection_folder, {"Contact-Name": request.user.username})
 
         # Build .zipfile of bagit formatted Collection Folder

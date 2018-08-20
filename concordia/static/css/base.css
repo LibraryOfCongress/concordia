@@ -13,6 +13,7 @@
   --bg-card-title: rgba(51,51,51,0.7); /* #333333 */
   --bg-loading: rgba(51,51,51,.5); /* #333333 */
   --shadow-color: rgba(51,51,51,.8); /* #333333 */
+  --height-top-nav: 4.506875rem;
   --height-main: calc( 100vh - 4.506875rem );
   --height-contribute-input: calc( 50vh - ( 3.5rem + 3.375rem ) );
 }
@@ -469,7 +470,7 @@ input {
     left: 0;
     right: 0;
     bottom: 0;
-    margin-top: 60%;
+    margin-top: 40%;
     padding: .5rem 1.25rem;
 }
 
@@ -568,9 +569,20 @@ input {
 
 /* Contribute page CSS */
 
+.alert-contribute {
+    display: block;
+    position: absolute;
+    top: var(--height-top-nav);
+    z-index: 100;
+}
+
 .asset-image {
   height: calc( 100vh - 6.0625rem );
   border: 1px solid var(--bg-lightest-gray);
+}
+
+#test-percent {
+    height: 0;
 }
 
 .contribute-box {
@@ -601,7 +613,10 @@ input {
 
 #nav-tabContent, .tab-pane {
   height: var(--height-contribute-input);
-  overflow-y: scroll;
+}
+
+#nav-tabContent {
+    overflow-y: hidden;
 }
 
 .tab-pane textarea {
@@ -609,6 +624,7 @@ input {
   height: 100%;
   border: 1px solid var(--bg-lightest-gray);
   resize: none;
+  overflow-y: auto;
 }
 
 .tab-pane textarea::-webkit-input-placeholder, .tab-pane textarea::-moz-placeholder, .tab-pane textarea:-ms-input-placeholder, .tab-pane textarea:-moz-placeholder {
@@ -619,6 +635,7 @@ input {
   color: var(--text-color-primary);
   height: var(--height-contribute-input);
   width: 100%;
+  overflow-y: auto;
 }
 
 #tab-discussion {
