@@ -8,6 +8,7 @@ from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
 from importer.models import *
+from importer.views import *
 
 
 class CeleryMockResponse:
@@ -378,3 +379,42 @@ class CheckAndSaveCollectionAssetsTests(APITestCase):
         # Assert that the request-response cycle completed successfully.
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(response.data.get('message'), "Creating a collection is failed since assets are not completely downloaded")
+
+    def test_check_and_save_collection_completeness(self):
+        """
+        Test check_and_save_collection_completeness
+        :return:
+        """
+
+        # Arrange
+
+        collection_task_detail = CollectionTaskDetails(
+            collection_name="collection name",
+            collection_slug="collection_slug",
+            subcollection_slug="",
+            collection_item_count=1,
+            collection_asset_count=1,
+            collection_task_id="task_id")
+
+        collection_task_detail.save()
+
+        collection_item_asset_count = CollectionItemAssetCount(
+            item_task_id="task_id",
+            collection_task=collection_task_detail,
+            collection_item_identifier="collection_item_identifer",
+            collection_item_asset_count=1)
+        collection_item_asset_count.save()
+
+        test_dir = '/tmp/concordia_images/collection_slug/'
+        if not os.path.exists(test_dir):
+            os.makedirs(test_dir)
+
+        # add a file to test_dir
+        with open(test_dir + '1', 'a') as the_file:
+            the_file.write('Hello\n')
+
+        # Act
+        result = check_and_save_collection_completeness(collection_item_asset_count)
+
+        # Assert
+        self.assertEqual(result, True)
