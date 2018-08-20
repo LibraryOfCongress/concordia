@@ -1,10 +1,17 @@
-![build-status](https://codebuild.eu-west-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiKzBuNjJCUFk2STRvbDZENXlMUFJOenF2V2EyQ3FMbEtuWDlQeVp6TWlxdXhNMGVOZGo5bG9jdTl1YU16RmZIVVNxa3VqTVg3V3drSnJxOUQwSmhqV2g0PSIsIml2UGFyYW1ldGVyU3BlYyI6IlJJRE4wZGJaS25LL0s0dzkiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master)
 
-# Deploying Microservices with Amazon ECS, AWS CloudFormation, and an Application Load Balancer
+# Note Regarding Concordia Usage
 
 This README, and set of CloudFormation templates, comes from the AWS sample templates at [ecs-refarch-cloudformation](https://s3.amazonaws.com/ecs-refarch-cloudformation/master.yaml).
 
 The sample templates have been modified and new templates have been added. Our CloudFormation templates are deployed from [rstorey-concordia-refarch](https://s3.amazonaws.com/rstorey-concordia-refarch/master.yaml).
+
+See https://docs.aws.amazon.com/AmazonECR/latest/userguide/ECR_GetStarted.html for how to get started with AWS ECR.
+
+
+![build-status](https://codebuild.eu-west-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiKzBuNjJCUFk2STRvbDZENXlMUFJOenF2V2EyQ3FMbEtuWDlQeVp6TWlxdXhNMGVOZGo5bG9jdTl1YU16RmZIVVNxa3VqTVg3V3drSnJxOUQwSmhqV2g0PSIsIml2UGFyYW1ldGVyU3BlYyI6IlJJRE4wZGJaS25LL0s0dzkiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master)
+
+# Deploying Microservices with Amazon ECS, AWS CloudFormation, and an Application Load Balancer
+
 
 This reference architecture provides a set of YAML templates for deploying microservices to [Amazon EC2 Container Service (Amazon ECS)](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html) with [AWS CloudFormation](https://aws.amazon.com/cloudformation/).
 
