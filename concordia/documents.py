@@ -1,6 +1,6 @@
 # documents.py
 
-from elasticsearch_dsl import DocType, Index
+from django_elasticsearch_dsl import DocType, Index
 from django.contrib.auth.models import User
 
 # Name of the Elasticsearch index
