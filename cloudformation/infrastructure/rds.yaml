@@ -16,11 +16,11 @@ Parameters:
 
     PrivateSubnet1:
         Description: A reference to the private subnet in the 1st Availability Zone
-        Type: AWS::EC2::Subnet
+        Type: AWS::EC2::Subnet::Id
 
     PrivateSubnet2: 
         Description: A reference to the private subnet in the 2nd Availability Zone
-        Type: AWS::EC2::Subnet
+        Type: AWS::EC2::Subnet::Id
 
 Resources:
   dbsubnetdefaultvpc0ca0aaf8357f808b6:

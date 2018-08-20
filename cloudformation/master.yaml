@@ -1,4 +1,4 @@
---
+---
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >
 
@@ -13,42 +13,40 @@ Description: >
     Finally, it deploys a pair of example ECS services from containers published in 
     Amazon EC2 Container Registry (Amazon ECR).
 
-Parameters:
 
-    S3BucketName:
-        Description: Name of the S3 bucket where cloudformation templates are sync'ed.
-        Type: String
 
 Resources:
 
     VPC:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: !Join [ "https://s3.amazonaws.com/", [!Ref S3BucketName, "/infrastructure/vpc.yaml"]]
+
+            TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/vpc.yaml"
             Parameters:
                 EnvironmentName:    !Ref AWS::StackName
-                VpcCIDR:            10.0.0.0/16
-                PublicSubnet1CIDR:  10.0.1.0/21
-                PublicSubnet2CIDR:  10.0.2.0/21
-                PrivateSubnet1CIDR: 10.0.3.0/21
-                PrivateSubnet2CIDR: 10.0.4.0/21
+                VpcCIDR:            10.192.0.0/16
+                PublicSubnet1CIDR:  10.192.10.0/24
+                PublicSubnet2CIDR:  10.192.11.0/24
+                PrivateSubnet1CIDR: 10.192.20.0/24
+                PrivateSubnet2CIDR: 10.192.21.0/24
+
 
     NetworkACL:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: !Join [ "https://s3.amazonaws.com/", [!Ref S3BucketName, "/infrastructure/network-acl.yaml"]]
+            TemplateURL:  "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/network-acl.yaml"
             Parameters: 
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
-                PublicSubnet1: !GetAttr VPC.Outputs.PublicSubnet1
-                PublicSubnet2: !GetAttr VPC.Outputs.PublicSubnet2
-                PrivateSubnet1: !GetAttr VPC.Outputs.PrivateSubnet1
-                PrivateSubnet2: !GetAttr VPC.Outputs.PrivateSubnet2
+                PublicSubnet1: !GetAtt VPC.Outputs.PublicSubnet1
+                PublicSubnet2: !GetAtt VPC.Outputs.PublicSubnet2
+                PrivateSubnet1: !GetAtt VPC.Outputs.PrivateSubnet1
+                PrivateSubnet2: !GetAtt VPC.Outputs.PrivateSubnet2
 
     SecurityGroups:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: !Join [ "https://s3.amazonaws.com/", [!Ref S3BucketName, "/infrastructure/security-groups.yaml"]]
+            TemplateURL:  "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/security-groups.yaml"
             Parameters: 
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
@@ -56,18 +54,18 @@ Resources:
     RDS:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: !Join [ "https://s3.amazonaws.com/", [!Ref S3BucketName, "/infrastructure/rds.yaml"]]
+            TemplateURL:  "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/rds.yaml"
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
-                VPC: !GetAttr VPC.Outputs.VPC
-                DatabaseSecurityGroup: !GetAttr SecurityGroups.Outputs.DatabaseSecurityGroup
-                PrivateSubnet1: !GetAttr VPC.Outputs.PrivateSubnet1
-                PrivateSubnet2: !GetAttr VPC.Outputs.PrivateSubnet2
+                VPC: !GetAtt VPC.Outputs.VPC
+                DatabaseSecurityGroup: !GetAtt SecurityGroups.Outputs.DatabaseSecurityGroup
+                PrivateSubnet1: !GetAtt VPC.Outputs.PrivateSubnet1
+                PrivateSubnet2: !GetAtt VPC.Outputs.PrivateSubnet2
 
     ALB:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: !Join [ "https://s3.amazonaws.com/", [!Ref S3BucketName, "/infrastructure/load-balancers.yaml"]]
+            TemplateURL:  "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/load-balancers.yaml"
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
@@ -77,7 +75,7 @@ Resources:
     ECS:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: !Join [ "https://s3.amazonaws.com/", [!Ref S3BucketName, "/infrastructure/ecs-cluster.yaml"]]
+            TemplateURL:  "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/ecs-cluster.yaml"
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
@@ -87,7 +85,7 @@ Resources:
     ProductService:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: !Join [ "https://s3.amazonaws.com/", [!Ref S3BucketName, "/services/product-service/service.yaml"]]
+            TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/services/product-service/service.yaml"
             Parameters:
                 VPC: !GetAtt VPC.Outputs.VPC
                 Cluster: !GetAtt ECS.Outputs.Cluster
@@ -98,7 +96,7 @@ Resources:
     WebsiteService:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: !Join [ "https://s3.amazonaws.com/", [!Ref S3BucketName, "/services/website-service/service.yaml"]]
+            TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/services/website-service/service.yaml" 
             Parameters:
                 VPC: !GetAtt VPC.Outputs.VPC
                 Cluster: !GetAtt ECS.Outputs.Cluster
@@ -111,7 +109,7 @@ Resources:
     LifecycleHook:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: !Join [ "https://s3.amazonaws.com/", [!Ref S3BucketName, "/infrastructure/lifecyclehook.yaml"]]
+            TemplateURL:  "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/lifecyclehook.yaml"
             Parameters:
                 Cluster: !GetAtt ECS.Outputs.Cluster
                 ECSAutoScalingGroupName: !GetAtt ECS.Outputs.ECSAutoScalingGroupName

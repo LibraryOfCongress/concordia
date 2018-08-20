@@ -2,6 +2,10 @@
 
 # Deploying Microservices with Amazon ECS, AWS CloudFormation, and an Application Load Balancer
 
+This README, and set of CloudFormation templates, comes from the AWS sample templates at [ecs-refarch-cloudformation](https://s3.amazonaws.com/ecs-refarch-cloudformation/master.yaml).
+
+The sample templates have been modified and new templates have been added. Our CloudFormation templates are deployed from [rstorey-concordia-refarch](https://s3.amazonaws.com/rstorey-concordia-refarch/master.yaml).
+
 This reference architecture provides a set of YAML templates for deploying microservices to [Amazon EC2 Container Service (Amazon ECS)](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html) with [AWS CloudFormation](https://aws.amazon.com/cloudformation/).
 
 You can launch this CloudFormation stack in your account:
@@ -248,5 +252,4 @@ Licensed under the Apache License, Version 2.0 (the "License"). You may not use 
 [http://aws.amazon.com/apache2.0/](http://aws.amazon.com/apache2.0/)
 
 or in the "license" file accompanying this file. This file is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
-
-
+​
