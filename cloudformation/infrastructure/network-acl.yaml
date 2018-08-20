@@ -38,7 +38,7 @@ Resources:
                 Ref: VPC
             Tags:
             - Key: Name
-            Value: !Ref EnvironmentName
+              Value: !Ref EnvironmentName
 
     # TODO: Update these ACLs to the latest OCIO standard ones
     # NOTE: These rules are for dev / test / stage only
