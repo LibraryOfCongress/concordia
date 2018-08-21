@@ -218,14 +218,10 @@
                     </ul>
                 </div>
                 {% if not user.is_authenticated %}
-                <ul>
-                    <li class="nav-item">
-                       <a class="nav-link d-none d-lg-block nav-link-login" href="{% url 'login' %}">Login</a>
-                    </li>
-                    <li class="nav-item">
-                      <a class="nav-link d-none d-lg-block nav-link-register" href="{% url 'registration_register' %}">Register</a>
-                    </li>
-                </ul>
+                <div class="nav-secondary">
+                    <a class="nav-link nav-secondary d-none d-lg-inline nav-link-login" href="{% url 'login' %}">Login</a>
+                    <a class="nav-link nav-secondary d-none d-lg-inline nav-link-register" href="{% url 'registration_register' %}">Register</a>
+                </div>
                 {% endif %}
             </nav>
         </div>

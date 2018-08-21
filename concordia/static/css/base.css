@@ -2,6 +2,7 @@
   --primary-color: rgba(252,76,2,1); /* #FC4C02 */
   --primary-color-hover: rgba(188,57,1,1); /* #BC3901 */
   --secondary-color: rgba(0,167,228,1); /* #00A7E4 */
+  --secondary-color-hover: rgba(0,35,71,1); /* #002347 */
   --text-color-primary: rgba(51,51,51,1); /* #333333 */
   --text-color-offwhite: rgba(250,250,250,1); /* #FAFAFA */
   --text-nav-current: rgba(252,76,2,1); /* #FC4C02 */
@@ -12,7 +13,7 @@
   --bg-main: rgba(102,102,102,1); /* #666666 */
   --bg-footer: rgba(238,238,238,1); /* #EEEEEE */
   --bg-divider: rgba(189,189,189,1); /* #BDBDBD */
-  --bg-card-title: rgba(51,51,51,0.7); /* #333333 */
+  --bg-card-title: rgba(51,51,51,.7); /* #333333 */
   --bg-loading: rgba(51,51,51,.5); /* #333333 */
   --shadow-color: rgba(51,51,51,.8); /* #333333 */
   --height-top-nav: 4.506875rem;
@@ -90,14 +91,14 @@ h5 {
 
 h6 {
     font-family: 'Open Sans', sans-serif;
-    font-size: 0.875rem;
+    font-size: .875rem;
     line-height: 125%;
     font-weight: bold;
     color: var(--text-color-primary);
 }
 
 .p-latestblog {
-    font-size: 0.875rem;
+    font-size: .875rem;
 }
 
 .font-weight-bolder {
@@ -146,10 +147,6 @@ a.gray-text:hover {
 }
 
 a.nav-secondary {
-    display: block;
-    position: absolute;
-    right: 4rem;
-    top: 1.5rem;
     font-family: 'Open Sans', sans-serif;
     font-weight: normal;
     font-size: .875rem;
@@ -158,9 +155,12 @@ a.nav-secondary {
 
 a.nav-secondary:hover {
     opacity: 70%;
+    text-decoration: none;
 }
 
 a.nav-secondary:first-of-type {
+    margin-right: .75rem;
+    padding-right: .75rem;
     border-right: solid .0675rem var(--bg-darkest-gray);
 }
 
@@ -215,7 +215,7 @@ p.hero-secondary.offwhite-text {
 .bg-home-contribute {
     background-color: var(--bg-darkest-gray); /* For browsers that do not support gradients */
     background-image: linear-gradient( rgba(250,250,250,.25), rgba(38,50,56,.25)),
-    background-image: linear-gradient( var(--bg-darkest-gray), var(--bg-darkest-gray));
+    linear-gradient( rgba(51,51,51,1), rgba(51,51,51,1));
 }
 
 .row {
@@ -254,6 +254,12 @@ input {
 .navbar-brand img {
     width: 10.625rem;
     height: auto;
+}
+
+.nav-secondary {
+    position: absolute;
+    right: 1.5rem;
+    top: 1.5rem;
 }
 
 /*
@@ -311,7 +317,7 @@ input {
 }
 
 .carousel-text {
-    background-color: rgba(250,250,250.95);
+    background-color: rgba(250,250,250,.95);
     z-index: 2;
     display: block;
     position: absolute;
@@ -553,10 +559,36 @@ input {
   color: var(--text-color-offwhite);
 }
 
+.btn-outline-primary {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.btn-outline-primary:hover {
+    border-color: var(--primary-color-hover);
+    color: var(--primary-color-hover);
+}
+
 .btn-secondary {
     background-color: var(--secondary-color);
     border-color: var(--secondary-color);
     color: var(--text-color-offwhite);
+}
+
+.btn-secondary:hover {
+    background-color: var(--secondary-color-hover);
+    border-color: var(--secondary-color-hover);
+    color: var(--text-color-offwhite);
+}
+
+.btn-outline-secondary {
+    border-color: var(--secondary-color);
+    color: var(--secondary-color);
+}
+
+.btn-outline-secondary:hover {
+    border-color: var(--secondary-color-hover);
+    color: var(--secondary-color-hover);
 }
 
 .btn-default {
@@ -572,7 +604,7 @@ input {
 }
 
 .card-body {
-    padding: 1rem 0.5rem;
+    padding: 1rem .5rem;
 }
 
 .card-img-collection {
@@ -590,11 +622,11 @@ input {
 }
 
 .card-title {
-    margin-bottom: 0.5rem;
+    margin-bottom: .5rem;
 }
 
 .round-corners-bottom {
-    border-radius: 0 0 0.5rem 0.5rem;
+    border-radius: 0 0 .5rem .5rem;
 }
 
 .latestblog-imgmask {
@@ -621,7 +653,7 @@ input {
 }
 
 .shadow-regular {
-    box-shadow: 0 0 0.25rem var(--shadow-color);
+    box-shadow: 0 0 .25rem var(--shadow-color);
 }
 
 .loading {
@@ -770,7 +802,7 @@ input {
 .bootstrap-tagsinput {
 background-color: var(--bg-offwhite);
 border: 0px solid #ccc;
-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
 display: inline-block;
 padding: .5rem;
 color: rgba(61,61,61,1);
@@ -830,11 +862,11 @@ font-size: .88;
 }
 
 .bootstrap-tagsinput .badge [data-role="remove"]:hover:after {
-background-color:rgba(0, 0, 0, 0.62);
+background-color:rgba(0, 0, 0, .62);
 }
 
 .bootstrap-tagsinput .badge [data-role="remove"]:hover:active {
-box-shadow: inset 0 .1875rem .3125rem rgba(0, 0, 0, 0.125);
+box-shadow: inset 0 .1875rem .3125rem rgba(0, 0, 0, .125);
 }
 
 #nav-tags .badge {
