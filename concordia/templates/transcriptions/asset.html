@@ -6,6 +6,15 @@ input#id_captcha_1 {
   padding: .375rem .75rem;
   margin-right: 5px
 }
+div#input_group_for_captcha {
+  margin-top: 5px
+}
+div#captcha_div{
+  margin: 10px;
+  padding: 5px;
+  background-color: #48352f4d;
+  border-style: double;
+}
 </style>
 {% endblock head_content %}
 {% block main_content %}
@@ -130,7 +139,7 @@ input#id_captcha_1 {
                             {% if user.is_anonymous %}
                             <tr class="d-none" id="captcha_tr">
                                 <td>
-                                   <div style="margin: 10px;padding: 5px;background-color: #48352f4d;border-style: double;">
+                                   <div id="captcha_div">
                                     {{ captcha_form.captcha }}
                                    </div>
                                 </td>
