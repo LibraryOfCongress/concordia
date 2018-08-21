@@ -55,10 +55,10 @@
                         </li>
                         {% else %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'login' %}">Login</a>
+                            <a class="nav-link d-block d-lg-none" href="{% url 'login' %}">Login</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'registration_register' %}">Register</a>
+                            <a class="nav-link d-block d-lg-none" href="{% url 'registration_register' %}">Register</a>
                         </li>
                         {% endif %} {% elif '/about/' in request.path %}
                         <li class="nav-item">
@@ -87,10 +87,10 @@
                         </li>
                         {% else %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'login' %}">Login</a>
+                            <a class="nav-link d-block d-lg-none" href="{% url 'login' %}">Login</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'registration_register' %}">Register</a>
+                            <a class="nav-link d-block d-lg-none" href="{% url 'registration_register' %}">Register</a>
                         </li>
                         {% endif %} {% elif '/login/' in request.path %}
                         <li class="nav-item">
@@ -109,10 +109,10 @@
                             <a class="nav-link" href="#">Blog</a>
                         </li>
                         <li class="nav-item active">
-                            <a class="nav-link" href="#">Login<span class="sr-only">(current)</span></a>
+                            <a class="nav-link d-block d-lg-none" href="#">Login<span class="sr-only">(current)</span></a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'registration_register' %}">Register</a>
+                            <a class="nav-link d-block d-lg-none" href="{% url 'registration_register' %}">Register</a>
                         </li>
                         {% elif '/register/' in request.path %}
                         <li class="nav-item">
@@ -131,10 +131,10 @@
                             <a class="nav-link" href="#">Blog</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'login' %}">Login</a>
+                            <a class="nav-link d-block d-lg-none" href="{% url 'login' %}">Login</a>
                         </li>
                         <li class="nav-item active">
-                            <a class="nav-link" href="#">Register<span class="sr-only">(current)</span></a>
+                            <a class="nav-link d-block d-lg-none" href="#">Register<span class="sr-only">(current)</span></a>
                         </li>
                         {% elif request.path == '/transcribe/' or '/transcribe/' in request.path %}
                         <li class="nav-item">
@@ -163,10 +163,10 @@
                         </li>
                         {% else %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'login' %}">Login</a>
+                            <a class="nav-link d-block d-lg-none" href="{% url 'login' %}">Login</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'registration_register' %}">Register</a>
+                            <a class="nav-link d-block d-lg-none" href="{% url 'registration_register' %}">Register</a>
                         </li>
                         {% endif %} {% elif '/faq/' in request.path %}
                         <li class="nav-item">
@@ -185,7 +185,7 @@
                             <a class="nav-link" href="#">Blog</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'login' %}">Login</a>
+                            <a class="nav-link d-block d-lg-none" href="{% url 'login' %}">Login</a>
                         </li>
                         <li class="nav-item active">
                             <a class="nav-link" href="#">Register</a>
@@ -217,6 +217,16 @@
                         {% endif %}
                     </ul>
                 </div>
+                {% if not user.is_authenticated %}
+                <ul>
+                    <li class="nav-item">
+                       <a class="nav-link d-none d-lg-block nav-link-login" href="{% url 'login' %}">Login</a>
+                    </li>
+                    <li class="nav-item">
+                      <a class="nav-link d-none d-lg-block nav-link-register" href="{% url 'registration_register' %}">Register</a>
+                    </li>
+                </ul>
+                {% endif %}
             </nav>
         </div>
     </header>
