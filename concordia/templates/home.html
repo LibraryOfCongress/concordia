@@ -4,21 +4,46 @@
 {% block main_content %}
     <div class="container-fluid">
       <div class="row">
-        <div class="col-12 overflow-hidden">
-          <div class="img-header text-center">
-            <div class="col-md-5 mx-auto padding-header">
-              <h1 class="header-text display-4">Make history</h1>
-              <a class="btn btn-secondary btn-lg mt-4" href="{% url 'transcriptions:transcribe' %}">GET STARTED!</a>
+        <div class="col-md-11 mx-md-auto overflow-hidden">
+            <div id="homepage-carousel" class="carousel slide" data-ride="carousel">
+                <div class="carousel-inner">
+                    <div class="carousel-item active">
+                        <img class="d-block w-100" src="{% static "img/rosa-parks.png" %}" alt="Rosa Parks carousel image">
+                    </div>
+                    <div class="carousel-item">
+                        <img class="d-block w-100" src="{% static "img/branch-rickey.png" %}" alt="Branch Rickey carousel image">
+                    </div>
+                </div>
+                <div class="carousel-text text-center">
+                    <div class="col-md-5 offset-md-1">
+                        <h1 class="header-text">Make history</h1>
+                        <a class="btn btn-primary btn-lg mt-4" href="{% url 'transcriptions:transcribe' %}">GET STARTED!</a>
+                    </div>
+                </div>
             </div>
-          </div>
         </div>
-        <div class="col-12 text-center">
-          <div class="bg-offwhite round-corners-bottom w-100">
-            <div class="col-lg-8 col-md-11 mx-auto py-half">
-              <h4 class="d-none d-md-block">Help us discover history by transcribing and tagging documents,<br />making these snapshots in time searchable and accessible for all.</h4>
-              <h4 class="d-md-none">Help us discover history by transcribing and tagging documents, making these snapshots in time searchable and accessible for all.</h4>
+        <div class="col-md-11">
+            <div class="col-md-7">
+                <h2>What is Citizen Historian?</h2>
+                <p class="hero-secondary">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec quis volutpat orci. Nulla semper vestibulum erat sed vulputate.</p>
+                <img src="{% static "img/laptop.svg" %}" alt="laptop showing site design">
+        </div>
+        <div class="col-md-5">
+            <div class="row">
+                <div class="col-12 text-center">
+                    <h3>Help make historical artifacts</h3>
+                    <img src="{% static "img/artifacts.svg" %}" alt="help make historical artifacts">
+                    <h4 class="">Easier to read</h4>
+                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec quis volutpat orci. Nulla semper vestibulum erat sed vulputate. Mauris leo eros, facilisis rhoncus nunc sed, pulvinar condimentum enim.</p>
+                </div>
             </div>
-          </div>
+            <div class="row">
+                <div class="col-12 text-center">
+                    <img src="{% static "img/magnifying-glass.svg" %}" alt="magnifying glass">
+                    <h4 class="">Searchable with metadata</h4>
+                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec quis volutpat orci. Nulla semper vestibulum erat sed vulputate. Mauris leo eros, facilisis rhoncus nunc sed, pulvinar condimentum enim.</p>
+                </div>
+            </div>
         </div>
       </div>
     </div>

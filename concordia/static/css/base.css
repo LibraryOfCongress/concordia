@@ -22,6 +22,8 @@ body {
     top: 0;
     left: 0;
     color: var(--bg-darkest-gray);
+    border-top: .25rem solid var(--primary-color);
+    background-color: var(--bg-offwhite);
 }
 
 h1 {
@@ -37,7 +39,7 @@ h1.header-text {
     font-family: 'Open Sans', sans-serif;
     font-size: 2.5rem;
     line-height: 125%;
-    font-weight: bold;
+    font-weight: normal;
     text-transform: uppercase;
     color: black;
 }
@@ -141,6 +143,20 @@ a.gray-text:hover {
   text-decoration: none;
 }
 
+p.hero-text {
+    font-family: 'Open Sans', sans-serif;
+    font-size: 1.5rem;
+    color: var(--text-color-primary);
+
+}
+
+p.hero-secondary {
+    font-family: 'Open Sans', sans-serif;
+    font-size: 1.125rem;
+    color: var(--text-color-primary);
+
+}
+
 .bg-offwhite {
     background-color: var(--bg-offwhite);
 }
@@ -175,6 +191,8 @@ a.gray-text:hover {
     padding-right: 0;
 }
 
+
+
 main {
   min-height: var(--height-main);
   background-color: var(--bg-main);
@@ -191,11 +209,12 @@ input {
 }
 
 .navbar-offwhite {
-  border-top: .25rem solid var(--primary-color);
+
 }
 
 .navbar-brand img {
-    height: 2.1875rem;
+    width: 10.625rem;
+    height: auto;
 }
 
 .navbar-brand .vl {
@@ -210,6 +229,7 @@ input {
 
 .navbar-offwhite .navbar-nav .nav-link {
   font-family: "Open Sans", sans-serif;
+  font-weight: bold;
   color: var(--text-color-primary);
 }
 
@@ -218,7 +238,7 @@ input {
   left: -4rem;
 }
 
-.img-header {
+/*.img-header {
 
   background-color: rgba(51,51,51,.35);
   background-image: url("../img/volunteer-header-one-crop.jpg");
@@ -228,6 +248,10 @@ input {
   height: 28.125rem;
   max-height: 28.125rem;
   background-attachment: scroll;
+}*/
+
+.carousel-text {
+    background-color: rgba(250,250,250.95);
 }
 
 .padding-header {
