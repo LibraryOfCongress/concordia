@@ -252,6 +252,11 @@ input {
   background-attachment: scroll;
 }*/
 
+.carousel {
+    max-height: 30rem;
+    overflow-y: hidden;
+}
+
 .carousel-text {
     background-color: rgba(250,250,250.95);
     z-index: 2;
@@ -262,7 +267,6 @@ input {
 }
 
 .carousel-item img {
-    max-height: 30rem;
     overflow-y: hidden;
     align-self: flex-end !important;
 }
