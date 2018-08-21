@@ -6,23 +6,23 @@
     <div class="row">
         <div class="col-8 col-md-6 col-lg-4 mx-auto bg-offwhite rounded shadow-regular container-login">
             <h2 class="mt-half mb-quarter text-center">citizen historian</h2>
-            <h3 class="mb-default text-center">login</h3>
+            <h3 class="mb-default text-center">Welcome back!</h3>
             <form method="post" action="{% url 'login' %}" id="login-form" class="col-10 mx-auto form-login">{% csrf_token %} {{ form.non_field_errors }} {{ form.source.errors }} {{ form.source }} {% if form.errors %}
                 <p class="text-center">Please fix the errors below:</p>
                 {% endif %}
                 <div class="form-group form-row justify-content-center">
                     <label class="sr-only" for="id_username">Username</label>
-                    {% render_field form.username placeholder="username or email address" %}
+                    {% render_field form.username placeholder="username or email" class="col-10 form-control" %}
                 </div>
                 <div class="form-group form-row justify-content-center">
                     <label class="sr-only" for="id_password">Password</label>
-                    {% render_field form.password placeholder="password" %}
+                    {% render_field form.password placeholder="password" class="col-10 form-control" %}
                 </div>
                 <div class="d-flex col mx-auto justify-content-center pt-half">
                     <a href="{% url 'password_reset' %}" class="text-center blue-text">Forgot my password</a>
                 </div>
                 <div class="d-flex mx-auto justify-content-center mb-default mt-half">
-                    <input class="btn btn-primary" type="submit" value="Login">
+                    <input class="btn btn-primary col-6" type="submit" value="Login">
                 </div>
             </form>
         </div>

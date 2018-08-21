@@ -1,4 +1,3 @@
-
 import html
 import json
 import os
@@ -47,10 +46,8 @@ def concordia_api(relative_path):
 def get_anonymous_user(user_id=True):
     """
     Get the user called "anonymous" if it exist. Create the user if it doesn't exist
-
     This is the default concordia user if someone is working on the site without logging in first.
     :parameter: user_id Boolean defaults to True, if true returns user id, otherwise return user object
-
     :return: User id or User
     """
     anon_user = User.objects.filter(username="anonymous").first()
@@ -212,6 +209,8 @@ class ConcordiaAssetView(TemplateView):
             else get_anonymous_user()
         )
         page_in_use = self.check_page_in_use(in_use_url, current_user_id)
+        # TODO: in the future, this is from a settings file value
+        discussion_hide = True
 
         # Get all transcriptions, they are no longer tied to a specific user
         transcription = Transcription.objects.filter(asset=asset).last()
@@ -262,6 +261,7 @@ class ConcordiaAssetView(TemplateView):
             transcription=transcription,
             tags=all_tags,
             captcha_form=captcha_form,
+            discussion_hide=discussion_hide
         )
 
     def post(self, *args, **kwargs):
@@ -494,7 +494,6 @@ class CollectionView(TemplateView):
 class DeleteCollectionView(TemplateView):
     """
     deletes the collection
-
     """
 
     def get(self, request, *args, **kwargs):
@@ -526,7 +525,6 @@ class DeleteAssetView(TemplateView):
 class ReportCollectionView(TemplateView):
     """
     Report the collection
-
     """
 
     template_name = "transcriptions/report.html"
