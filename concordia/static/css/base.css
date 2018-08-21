@@ -261,6 +261,12 @@ input {
     margin-left: 2.5rem;
 }
 
+.carousel-item img {
+    max-height: 30rem;
+    overflow-y: hidden;
+    align-self: flex-end !important;
+}
+
 .padding-header {
   padding-top: calc( ( 28.125rem - 9.1875rem ) / 2 ); /* vertically center text and button */
   padding-bottom: calc( ( 28.125rem - 9.1875rem ) / 2 );
