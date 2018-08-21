@@ -18,6 +18,19 @@ DJANGO_SECRET_KEY = "changeme"
 # when we are running https, uncomment this next line
 # CSRF_COOKIE_SECURE = True
 
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "concordia",
+        "USER": "concordia",
+        "PASSWORD": "changeme",
+        "HOST": os.getenv("POSTGRESQL_HOST"),
+        "PORT": "5432",
+    }
+}
+
+
+
 IMPORTER = {
     "BASE_URL": "",
     # /concordia_images is a docker volume shared by importer and concordia
