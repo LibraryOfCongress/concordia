@@ -255,6 +255,10 @@ input {
 
 .carousel-text {
     background-color: rgba(250,250,250.95);
+    z-index: 2;
+    display: block;
+    position: absolute;
+    top: 2rem;
 }
 
 .padding-header {
