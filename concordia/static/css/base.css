@@ -198,7 +198,6 @@ p.hero-secondary {
 
 main {
   min-height: var(--height-main);
-  background-color: var(--bg-main);
 }
 
 input {
@@ -221,8 +220,8 @@ input {
 }
 
 .navbar-brand .vl {
-    height: 2.1875rem;
-    background-color: var(--text-color-primary);
+    height: 6rem;
+    background-color: var(--bg-main);
     width: 0.0675rem;
 }
 
@@ -259,6 +258,7 @@ input {
     display: block;
     position: absolute;
     top: 2rem;
+    margin-left: 2.5rem;
 }
 
 .padding-header {
