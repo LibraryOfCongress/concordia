@@ -13,6 +13,11 @@ Description: >
     Finally, it deploys a pair of example ECS services from containers published in 
     Amazon EC2 Container Registry (Amazon ECR).
 
+Parameters:
+
+    MyDbPassword:
+        Description: Master database password to use for RDS
+        Type: String
 
 
 Resources:
@@ -58,6 +63,7 @@ Resources:
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
+                DbPassword: !Ref MyDbPassword
                 DatabaseSecurityGroup: !GetAtt SecurityGroups.Outputs.DatabaseSecurityGroup
                 PrivateSubnet1: !GetAtt VPC.Outputs.PrivateSubnet1
                 PrivateSubnet2: !GetAtt VPC.Outputs.PrivateSubnet2
@@ -90,6 +96,7 @@ Resources:
                 VPC: !GetAtt VPC.Outputs.VPC
                 Cluster: !GetAtt ECS.Outputs.Cluster
                 DesiredCount: 2
+                PostgresHost: !GetAtt RDS.Outputs.DatabaseHostName
                 Listener: !GetAtt ALB.Outputs.Listener
                 Path: /*
                 ECSServiceAutoScalingRoleARN: !GetAtt ECS.Outputs.ECSServiceAutoScalingRole
@@ -104,10 +111,6 @@ Resources:
 
 Outputs:
 
-    ProductServiceUrl: 
-        Description: The URL endpoint for the product service
-        Value: !Join [ "/", [ !GetAtt ALB.Outputs.LoadBalancerUrl, "products" ]]
-
     WebsiteServiceUrl: 
-        Description: The URL endpoint for the website service
+        Description: The URL endpoint for the concordia website service
         Value: !Join ["", [ !GetAtt ALB.Outputs.LoadBalancerUrl, "/" ]]

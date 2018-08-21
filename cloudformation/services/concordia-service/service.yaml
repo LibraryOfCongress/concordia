@@ -31,6 +31,11 @@ Parameters:
         Type: String
         Default: /
 
+    PostgresHost:
+        Description: The host name of the RDS database server
+        Type: String
+        Default: db
+
     ECSServiceAutoScalingRoleARN:
         Description: The ECS service auto scaling role ARN
         Type: String
@@ -60,6 +65,9 @@ Resources:
                   Essential: true
                   Image: 351149051428.dkr.ecr.us-east-2.amazonaws.com/concordia-loc:latest
                   Memory: 128
+                  Environment: 
+                    - Name: POSTGRESQL_HOST
+                      Value: !Ref PostgresHost
                   PortMappings:
                     - ContainerPort: 80
                   LogConfiguration:
@@ -220,3 +228,4 @@ Resources:
             ComparisonOperator: LessThanThreshold
             AlarmActions:
             - !Ref ServiceScaleInPolicy
+

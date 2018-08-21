@@ -55,7 +55,8 @@ services:
     environment:
       # The concordia app needs to wait for the db to completely start. Use docker-compose-wait
       # as defined at https://github.com/ufoscout/docker-compose-wait
-      WAIT_HOSTS: db:5432, elk:9200
+      WAIT_HOSTS: db:5432, elk:5601
+      POSTGRESQL_HOST: db
     depends_on:
       - db
       - elk
