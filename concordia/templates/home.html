@@ -4,18 +4,18 @@
         <div class="col-12 ">
             <div id="homepage-carousel" class="carousel slide" data-ride="carousel" data-interval="3000">
                 <div class="carousel-inner">
-                    <div class="carousel-item active">
-                        <img class="d-block w-100" src="{% static "img/rosa-parks.png" %}" alt="Rosa Parks carousel image">
+                    <div class="carousel-item text-right active">
+                        <img class="d-block" src="{% static "img/rosa-parks.png" %}" alt="Rosa Parks carousel image">
                     </div>
-                    <div class="carousel-item">
-                        <img class="d-block w-100" src="{% static "img/branch-rickey.png" %}" alt="Branch Rickey carousel image">
+                    <div class="carousel-item text-right">
+                        <img class="d-block" src="{% static "img/branch-rickey.png" %}" alt="Branch Rickey carousel image">
                     </div>
                 </div>
             </div>
             <div class="col-6 carousel-text text-center py-default">
                 <h1 class=" px-default">Make history</h1>
-                <p class="hero-text px-default">Help us discover history by transcribing and tagging documents, making these snapshots in time searchable and accessible for all.</p>
-                <a class="btn btn-primary btn-lg mt-4" href="{% url 'transcriptions:transcribe' %}">GET STARTED!</a>
+                <p class="hero-text px-default d-none d-md-block">Help us discover history by transcribing and tagging documents, making these snapshots in time searchable and accessible for all.</p>
+                <a class="btn btn-primary btn-lg my-4" href="{% url 'transcriptions:transcribe' %}">GET STARTED!</a>
             </div>
         </div>
     </div>
@@ -23,7 +23,7 @@
         <div class="col-12 col-md-7">
             <h2 class="px-default">What is Citizen Historian?</h2>
             <p class="hero-secondary px-default">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec quis volutpat orci. Nulla semper vestibulum erat sed vulputate.</p>
-            <img src="{% static "img/laptop.svg" %}" class="mx-auto d-block" alt="laptop showing site design">
+            <img src="{% static "img/laptop.svg" %}" class="mx-auto d-block img-fluid" alt="laptop showing site design">
         </div>
         <div class="col-12 col-md-5 text-center">
             <h3>Help make historical artifacts</h3>
@@ -58,24 +58,24 @@
             </div>
         </div>
     </div>
-    <div class="row mxy-default">
+    <div class="row my-default">
         <div class="col-12 mb-half">
             <h2 class="mt-default ml-default">Choose what to transcribe</h2>
-            <p class="hero-secondary px-default col-md-6">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec quis volutpat orci. Nulla semper vestibulum erat sed vulputate.</p>
+            <p class="hero-secondary ml-default px-default col-md-6">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec quis volutpat orci. Nulla semper vestibulum erat sed vulputate.</p>
         </div>
         <div class="d-flex flex-wrap col-12 justify-content-around">
             <div class="col-12 col-md-4 mb-default text-center">
-                <img class="img-home-contribute d-block mx-auto" src="{% static "img/rosa-parks-campaign.svg" %}" alt="Rosa Parks Papers">
+                <img class="img-home-contribute d-block mx-auto img-fluid" src="{% static "img/rosa-parks-campaign.svg" %}" alt="Rosa Parks Papers">
                 <h3 class="mt-half">Rosa Parks Papers</h3>
                 <a class="btn btn-outline-primary" href="#" role="button">Get Started!</a>
             </div>
             <div class="col-12 col-md-4 mb-default text-center border-left-home-contribute">
-                <img class="img-home-contribute d-block mx-auto" src="{% static "img/branch-rickey-campaign.svg" %}" alt="Branch Rickey Papers">
+                <img class="img-home-contribute d-block mx-auto img-fluid" src="{% static "img/branch-rickey-campaign.svg" %}" alt="Branch Rickey Papers">
                 <h3 class="mt-half">Branch Rickey Papers</h3>
                 <a class="btn btn-outline-primary" href="#" role="button">Get Started!</a>
             </div>
             <div class="col-12 col-md-4 mb-default text-center border-left-home-contribute">
-                <img class="img-home-contribute d-block mx-auto" src="{% static "img/clara-barton-campaign.svg" %}" alt="Clara Barton Papers">
+                <img class="img-home-contribute d-block mx-auto img-fluid" src="{% static "img/clara-barton-campaign.svg" %}" alt="Clara Barton Papers">
                 <h3 class="mt-half">Clara Barton Papers</h3>
                 <a class="btn btn-outline-primary" href="#" role="button">Get Started!</a>
             </div>
