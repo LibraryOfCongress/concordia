@@ -4,6 +4,8 @@ from unittest.mock import Mock, patch
 
 from django.template.defaultfilters import slugify
 from django.urls import reverse
+from django.conf import settings
+
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
@@ -391,7 +393,8 @@ class CheckAndSaveCollectionAssetsTests(APITestCase):
         collection_task_detail = CollectionTaskDetails(
             collection_name="collection name",
             collection_slug="collection_slug",
-            subcollection_slug="",
+            subcollection_name="subcollection name",
+            subcollection_slug="subcollection_slug",
             collection_item_count=1,
             collection_asset_count=1,
             collection_task_id="task_id")
@@ -405,7 +408,47 @@ class CheckAndSaveCollectionAssetsTests(APITestCase):
             collection_item_asset_count=1)
         collection_item_asset_count.save()
 
-        test_dir = '/tmp/concordia_images/collection_slug/'
+        test_dir = '/tmp/concordia_images/collection_slug/subcollection_slug/'
+        if not os.path.exists(test_dir):
+            os.makedirs(test_dir)
+
+        # add a file to test_dir
+        with open(test_dir + '1', 'a') as the_file:
+            the_file.write('Hello\n')
+
+        # Act
+        result = check_and_save_collection_completeness(collection_item_asset_count)
+        #shutil.rmtree(settings.MEDIA_ROOT) #if media folder wants to delete in test cases
+
+        # Assert
+        self.assertEqual(result, True)
+
+    def test_check_and_save_collection_completeness_false(self):
+        """
+        Test check_and_save_collection_completeness_false
+        :return:
+        """
+
+        # Arrange
+
+        collection_task_detail = CollectionTaskDetails(
+            collection_name="collection name",
+            collection_slug="collection_slug",
+            subcollection_name="subcollection name",
+            subcollection_slug="subcollection_slug",
+            collection_item_count=1,
+            collection_asset_count=2,
+            collection_task_id="task_id")
+
+        collection_task_detail.save()
+
+        collection_item_asset_count = CollectionItemAssetCount(
+            item_task_id="task_id",
+            collection_task=collection_task_detail,
+            collection_item_identifier="collection_item_identifer")
+        collection_item_asset_count.save()
+
+        test_dir = '/tmp/concordia_images/collection_slug/subcollection_slug/'
         if not os.path.exists(test_dir):
             os.makedirs(test_dir)
 
@@ -417,4 +460,80 @@ class CheckAndSaveCollectionAssetsTests(APITestCase):
         result = check_and_save_collection_completeness(collection_item_asset_count)
 
         # Assert
+        self.assertEqual(result, False)
+
+    def test_check_and_saveitem_completeness(self):
+        """
+        Test check_and_save_item_completeness
+        :return:
+        """
+
+        # Arrange
+
+        collection_task_detail = CollectionTaskDetails(
+            collection_name="collection name",
+            collection_slug="collection_slug",
+            subcollection_name="subcollection name",
+            subcollection_slug="subcollection_slug")
+
+        collection_task_detail.save()
+
+        collection_item_asset_count = CollectionItemAssetCount(
+            item_task_id="task_id",
+            collection_task=collection_task_detail,
+            collection_item_identifier="collection_item_identifer",
+            collection_item_asset_count=1)
+        collection_item_asset_count.save()
+
+        test_dir = '/tmp/concordia_images/collection_slug/subcollection_slug/collection_item_identifer/'
+        if not os.path.exists(test_dir):
+            os.makedirs(test_dir)
+
+        # add a file to test_dir
+        with open(test_dir + '1', 'a') as the_file:
+            the_file.write('Hello\n')
+
+        # Act
+        result = check_and_save_item_completeness(collection_item_asset_count, 'collection_item_identifer')
+        #shutil.rmtree(settings.MEDIA_ROOT) #if media folder wants to delete in test cases
+
+        # Assert
         self.assertEqual(result, True)
+
+    def test_check_and_saveitem_completeness_not_proper_write(self):
+        """
+        Test test_check_and_saveitem_completeness_not_proper_write
+        :return:
+        """
+
+        # Arrange
+
+        collection_task_detail = CollectionTaskDetails(
+            collection_name="collection name",
+            collection_slug="collection_slug",
+            subcollection_name="subcollection name",
+            subcollection_slug="subcollection_slug")
+
+        collection_task_detail.save()
+
+        collection_item_asset_count = CollectionItemAssetCount(
+            item_task_id="task_id",
+            collection_task=collection_task_detail,
+            collection_item_identifier="collection_item_identifer",
+            collection_item_asset_count=2)
+        collection_item_asset_count.save()
+
+        test_dir = '/tmp/concordia_images/collection_slug/subcollection_slug/collection_item_identifer/'
+        if not os.path.exists(test_dir):
+            os.makedirs(test_dir)
+
+        # add a file to test_dir
+        with open(test_dir + '1', 'a') as the_file:
+            the_file.write('Hello\n')
+
+        # Act
+        result = check_and_save_item_completeness(collection_item_asset_count, 'collection_item_identifer')
+
+        # Assert
+        self.assertEqual(result, False)
+
