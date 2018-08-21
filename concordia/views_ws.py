@@ -267,7 +267,7 @@ class TranscriptionCreate(generics.CreateAPIView):
             asset=asset,
             user_id=request_data["user_id"],
             text=request_data["text"],
-            status=Status.EDIT,
+            status=request_data["status"],
         )
 
         serializer = TranscriptionSerializer(data=request_data)
