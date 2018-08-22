@@ -73,11 +73,6 @@ Resources:
                   IpProtocol: tcp
                   FromPort: 22
                   ToPort: 22
-            SecurityGroupEgress:
-                - SourceSecurityGroupId: !Ref ECSHostSecurityGroup
-                  IpProtocol: tcp
-                  FromPort: 22
-                  ToPort: 22
             Tags:
                 - Key: Name
                   Value: !Sub ${EnvironmentName}-BastionHosts

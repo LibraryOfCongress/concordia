@@ -7,10 +7,71 @@ Parameters:
         Description: An environment name that will be prefixed to resource names
         Type: String
 
-    BastionHostsSecurityGroup:
+    BastionHostSecurityGroup:
         Description: The security group for bastion hosts
         Type: AWS::EC2::SecurityGroup::Id
     
     KeyPairName:
         Description: key pair (within this region) for ECS instances access
-        Type: String    
+        Type: String
+
+    PublicSubnet1:
+        Description: The ID of the public subnet in the first AZ
+        Type: AWS::EC2::Subnet::Id
+    
+    PublicSubnet2:
+        Description: The ID of the public subnet in the second AZ
+        Type: AWS::EC2::Subnet::Id
+
+Mappings:
+    AWSRegionToAMI:
+        us-east-2:
+            AMI: ami-0cf31d971a3ca20d6
+        us-east-1:
+            AMI: ami-04681a1dbd79675a5
+
+Resources:
+
+    Ec2Instance: 
+        Type: AWS::EC2::Instance
+        Properties: 
+            ImageId: 
+                Fn::FindInMap: 
+                - AWSRegionToAMI
+                - Ref: "AWS::Region"
+                - "AMI"
+            InstanceType: "t1.micro"
+            KeyName: 
+                Ref: KeyPairName
+            NetworkInterfaces: 
+                - AssociatePublicIpAddress: "true"
+                  DeviceIndex: "0"
+                  GroupSet: 
+                    - Ref: BastionHostSecurityGroup
+                  SubnetId: 
+                    Ref: PublicSubnet1
+            Tags:
+                - Key: Name
+                  Value: !Sub ${EnvironmentName}-BastionHost-1     
+
+    Ec2Instance: 
+        Type: AWS::EC2::Instance
+        Properties: 
+            ImageId: 
+                Fn::FindInMap: 
+                - AWSRegionToAMI
+                - Ref: "AWS::Region"
+                - "AMI"
+            InstanceType: "t1.micro"
+            KeyName: 
+                Ref: KeyPairName
+            NetworkInterfaces: 
+                - AssociatePublicIpAddress: "true"
+                  DeviceIndex: "0"
+                  GroupSet: 
+                    - Ref: BastionHostSecurityGroup
+                  SubnetId: 
+                    Ref: PublicSubnet2
+            Tags:
+                - Key: Name
+                  Value: !Sub ${EnvironmentName}-BastionHost-2

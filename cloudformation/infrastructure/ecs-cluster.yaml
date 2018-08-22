@@ -59,9 +59,9 @@ Mappings:
 
     AWSRegionToAMI:
         us-east-2:
-            AMI: ami-b86a5ddd
+            AMI: ami-028a9de0a7e353ed9
         us-east-1:
-            AMI: ami-a7a242da
+            AMI: ami-00129b193dc81bc31
         us-west-2:
             AMI: ami-92e06fea
         us-west-1:
