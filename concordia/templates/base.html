@@ -66,7 +66,7 @@
 
                     {% elif '/about/' in request.path %}
                         <li class="nav-item">
-                            <a class="nav-link" href="#">Home</a>
+                            <a class="nav-link" href="/">Home</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'transcriptions:transcribe' %}">Campaigns</a>
@@ -74,11 +74,13 @@
                         <li class="nav-item active">
                             <a class="nav-link" href="{% url 'about' %}">About<span class="sr-only">(current)</span></a>
                         </li>
+                        <!-- TODO: remove d-none when available! -->
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'faq' %}">FAQ</a>
+                            <a class="nav-link d-none" href="{% url 'faq' %}">FAQ</a>
                         </li>
+                        <!-- TODO: remove d-none when available! -->
                         <li class="nav-item">
-                            <a class="nav-link" href="#">Blog</a>
+                            <a class="nav-link d-none" href="#">Blog</a>
                         </li>
                         {% if user.is_authenticated %}
                             <li class="nav-item dropdown nav-dropdown">
@@ -108,11 +110,13 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'about' %}">About</a>
                         </li>
+                        <!-- TODO: remove d-none when available! -->
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'faq' %}">FAQ</a>
+                            <a class="nav-link d-none" href="{% url 'faq' %}">FAQ</a>
                         </li>
+                        <!-- TODO: remove d-none when available! -->
                         <li class="nav-item">
-                            <a class="nav-link" href="#">Blog</a>
+                            <a class="nav-link d-none" href="#">Blog</a>
                         </li>
                         <li class="nav-item active">
                             <a class="nav-link d-block d-lg-none" href="#">Login<span class="sr-only">(current)</span></a>
@@ -131,11 +135,13 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'about' %}">About</a>
                         </li>
+                        <!-- TODO: remove d-none when available! -->
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'faq' %}">FAQ</a>
+                            <a class="nav-link d-none" href="{% url 'faq' %}">FAQ</a>
                         </li>
+                        <!-- TODO: remove d-none when available! -->
                         <li class="nav-item">
-                            <a class="nav-link" href="#">Blog</a>
+                            <a class="nav-link d-none" href="#">Blog</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link d-block d-lg-none" href="{% url 'login' %}">Login</a>
@@ -154,11 +160,13 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'about' %}">About</a>
                         </li>
+                        <!-- TODO: remove d-none when available! -->
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'faq' %}">FAQ</a>
+                            <a class="nav-link d-none" href="{% url 'faq' %}">FAQ</a>
                         </li>
+                        <!-- TODO: remove d-none when available! -->
                         <li class="nav-item">
-                            <a class="nav-link" href="#">Blog</a>
+                            <a class="nav-link d-none" href="#">Blog</a>
                         </li>
                         {% if user.is_authenticated %}
                             <li class="nav-item dropdown nav-dropdown">
@@ -188,11 +196,13 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'about' %}">About</a>
                     </li>
+                    <!-- TODO: remove d-none when available! -->
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'faq' %}">FAQ<span class="sr-only">(current)</span></a>
+                        <a class="nav-link d-none" href="{% url 'faq' %}">FAQ<span class="sr-only">(current)</span></a>
                     </li>
+                    <!-- TODO: remove d-none when available! -->
                     <li class="nav-item">
-                        <a class="nav-link" href="#">Blog</a>
+                        <a class="nav-link d-none" href="#">Blog</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link d-block d-lg-none" href="{% url 'login' %}">Login</a>
@@ -210,11 +220,13 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'about' %}">About</a>
                     </li>
+                    <!-- TODO: remove d-none when available! -->
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'faq' %}">FAQ</a>
+                        <a class="nav-link d-none" href="{% url 'faq' %}">FAQ</a>
                     </li>
+                    <!-- TODO: remove d-none when available! -->
                     <li class="nav-item">
-                        <a class="nav-link" href="#">Blog</a>
+                        <a class="nav-link d-none" href="#">Blog</a>
                     </li>
                     <li class="nav-item dropdown nav-dropdown active">
                         <a class="nav-link dropdown-toggle" href="http://example.com" id="nav-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Account</a>
