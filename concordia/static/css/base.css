@@ -120,14 +120,6 @@ h6 {
     color: var(--secondary-color);
 }
 
-orange {
-    color: var(--primary-color);
-}
-
-blue {
-    color: var(--secondary-color);
-}
-
 .gray-text {
     color: var(--text-color-primary);
 }
@@ -139,19 +131,29 @@ h2.contribute-breadcrumb {
     color: var(--text-color-offwhite);
 }
 
+a.primary-text {
+  color: var(--primary-color);
+  text-decoration: none;
+}
+
 a.primary-text:hover {
   color: var(--primary-color-hover);
   text-decoration: underline;
 }
 
+a.secondary-text {
+  color: var(--secondary-color);
+  text-decoration: none;
+}
+
 a.secondary-text:hover {
-  color: var(--primary-color-hover);
+  color: var(--secondary-color-hover);
   text-decoration: underline;
 }
 
 a.offwhite-text {
   color: var(--text-color-offwhite);
-  text-decoration: underline;
+  text-decoration: none;
 }
 
 a.offwhite-text:hover {
@@ -159,9 +161,13 @@ a.offwhite-text:hover {
   text-decoration: underline;
 }
 
+a.gray-text {
+  text-decoration: none;
+}
+
 a.gray-text:hover {
   color: var(--primary-color);
-  text-decoration: none;
+  text-decoration: underline;
 }
 
 a.nav-secondary {
