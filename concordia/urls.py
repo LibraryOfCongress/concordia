@@ -31,9 +31,7 @@ tx_urlpatterns = (
             views.ConcordiaAlternateAssetView.as_view(),
             name="alternate asset",
         ),
-        re_path(
-            r"^([^/]+)/$", views.ConcordiaCollectionView.as_view(), name="collection"
-        ),
+        re_path(r"^([^/]+)/$", views.ConcordiaProjectView.as_view(), name="collection"),
         re_path(
             r"exportCSV/([^/]+)/$",
             exporter_views.ExportCollectionToCSV.as_view(),
@@ -69,9 +67,13 @@ tx_urlpatterns = (
             views.TranscriptionView.as_view(),
             name="transcription",
         ),
+        re_path(
+            r"^([^/]+)/([^/]+)/$", views.ConcordiaCollectionView.as_view(), name="project"
+        ),
     ],
     "transcriptions",
 )
+
 
 urlpatterns = [
     re_path(r"^$", TemplateView.as_view(template_name="home.html")),
@@ -114,7 +116,6 @@ urlpatterns = [
     re_path(r"^admin/", admin.site.urls),
     # Apps
     re_path(r"^forum/", include(board.urls)),
-
     # Web Services
     re_path(r'^ws/page_in_use/(?P<page_url>(.*?))/$', views_ws.PageInUseGet.as_view()),
     re_path(r'^ws/page_in_use_update/(?P<page_url>(.*?))/$', views_ws.PageInUsePut.as_view()),
@@ -164,12 +165,17 @@ urlpatterns += [
     re_path(
         r"^check_and_save_collection_assets/(?P<task_id>[a-zA-Z0-9-]+)/(?P<item_id>[a-zA-Z0-9-]+)$",
         check_and_save_collection_assets,
-        name="check_and_save_collection_assets",
+        name="check_and_save_collection_item_assets",
     ),
     re_path(
         r"^check_and_save_collection_assets/(?P<task_id>[a-zA-Z0-9-]+)/$",
         check_and_save_collection_assets,
         name="check_and_save_collection_assets",
+    ),
+    re_path(
+        r"^filter/collections/$",
+        views.FilterCollections.as_view(),
+        name="filter_collections",
     ),
 ]
 

@@ -1,8 +1,6 @@
-
 import html
 import json
 import os
-from datetime import datetime, timedelta
 from logging import getLogger
 
 import requests
@@ -21,6 +19,7 @@ from django.template import loader
 from django.urls import reverse
 from django.views.generic import FormView, TemplateView, View
 from registration.backends.simple.views import RegistrationView
+from rest_framework import generics
 from rest_framework.test import APIRequestFactory
 
 from concordia.forms import (CaptchaEmbedForm, ConcordiaContactUsForm,
@@ -33,6 +32,7 @@ from importer.views import CreateCollectionView
 logger = getLogger(__name__)
 
 ASSETS_PER_PAGE = 36
+PROJECTS_PER_PAGE = 36
 
 
 def concordia_api(relative_path):
@@ -47,10 +47,8 @@ def concordia_api(relative_path):
 def get_anonymous_user(user_id=True):
     """
     Get the user called "anonymous" if it exist. Create the user if it doesn't exist
-
     This is the default concordia user if someone is working on the site without logging in first.
     :parameter: user_id Boolean defaults to True, if true returns user id, otherwise return user object
-
     :return: User id or User
     """
     anon_user = User.objects.filter(username="anonymous").first()
@@ -139,6 +137,29 @@ class ConcordiaView(TemplateView):
         return dict(super().get_context_data(**kws), response=response)
 
 
+class ConcordiaProjectView(TemplateView):
+    template_name = "transcriptions/project.html"
+
+    def get_context_data(self, **kws):
+        try:
+            collection = Collection.objects.get(slug=self.args[0])
+        except Collection.DoesNotExist:
+            raise Http404
+        project_list = collection.subcollection_set.all().order_by("title")
+        paginator = Paginator(project_list, PROJECTS_PER_PAGE)
+
+        if not self.request.GET.get("page"):
+            page = 1
+        else:
+            page = self.request.GET.get("page")
+
+        projects = paginator.get_page(page)
+
+        return dict(
+            super().get_context_data(**kws), collection=collection, projects=projects
+        )
+
+
 class ConcordiaCollectionView(TemplateView):
     template_name = "transcriptions/collection.html"
 
@@ -212,6 +233,8 @@ class ConcordiaAssetView(TemplateView):
             else get_anonymous_user()
         )
         page_in_use = self.check_page_in_use(in_use_url, current_user_id)
+        # TODO: in the future, this is from a settings file value
+        discussion_hide = True
 
         # Get all transcriptions, they are no longer tied to a specific user
         transcription = Transcription.objects.filter(asset=asset).last()
@@ -262,6 +285,7 @@ class ConcordiaAssetView(TemplateView):
             transcription=transcription,
             tags=all_tags,
             captcha_form=captcha_form,
+            discussion_hide=discussion_hide
         )
 
     def post(self, *args, **kwargs):
@@ -494,7 +518,6 @@ class CollectionView(TemplateView):
 class DeleteCollectionView(TemplateView):
     """
     deletes the collection
-
     """
 
     def get(self, request, *args, **kwargs):
@@ -515,7 +538,7 @@ class DeleteAssetView(TemplateView):
     """
 
     def get(self, request, *args, **kwargs):
-        
+
         collection = Collection.objects.get(slug=self.args[0])
         asset = Asset.objects.get(slug=self.args[1], collection=collection)
         asset.status = Status.INACTIVE
@@ -526,7 +549,6 @@ class DeleteAssetView(TemplateView):
 class ReportCollectionView(TemplateView):
     """
     Report the collection
-
     """
 
     template_name = "transcriptions/report.html"
@@ -555,3 +577,21 @@ class ReportCollectionView(TemplateView):
 
         projects = paginator.get_page(page)
         return render(self.request, self.template_name, locals())
+
+
+class FilterCollections(generics.ListAPIView):
+    def get_queryset(self):
+        name_query = self.request.query_params.get("name")
+        if name_query:
+            queryset = Collection.objects.filter(slug__contains=name_query).values_list(
+                "slug", flat=True
+            )
+        else:
+            queryset = Collection.objects.all().values_list("slug", flat=True)
+        return queryset
+
+    def list(self, request):
+        queryset = self.get_queryset()
+        from django.http import JsonResponse
+
+        return JsonResponse(list(queryset), safe=False)

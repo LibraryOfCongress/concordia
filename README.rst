@@ -17,7 +17,7 @@ the concordia app and it is not included in the source code respository.
 
 You must create this file in the concordia root directory.
 
-This file contains nine values, which are:
+This file contains several values, which are:
 ::
 
     GRAFANA_ADMIN_PW=<grafana_admin_password_here>

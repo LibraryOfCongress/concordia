@@ -1,0 +1,43 @@
+{% extends "transcriptions/base.html" %} {% load staticfiles %}
+{% block title %}Concordia - {{ collection }}{% endblock title %}
+{% block head_content %}
+
+{% endblock head_content %}
+{% block main_content %}
+<div class="container-fluid py-default">
+    <div class="row">
+        <div class="col-md-10 mx-auto bg-offwhite rounded">
+            <h3 class="mt-default mb-half ml-half">{{ collection }} - Projects</h3>
+            <p class="ml-default mb-default">{{ collection.description }}</p>
+            <div class="row">
+                <div class="d-flex flex-wrap col-12 justify-content-around">
+                    {% for project in projects %}
+                    <div class="col-12 col-md-4 col-lg-3 mb-default mx-quarter card shadow-regular bg-lightest-gray">
+                        <div class="card-body bg-offwhite">
+                          <h5 class="card-title align-text-middle w-100">{{ project.title }}</h5>
+                          <div class="col-md-8 mx-auto text-center">
+                            <a href="{% url 'transcriptions:project' project.collection.slug project.slug %}" class="btn btn-primary col mb-quarter">View</a>
+                          </div>
+                        </div>
+                      </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="pagination justify-content-center align-items-center mb-default">
+                <span class="step-links">
+                    {% if projects.has_previous %}
+                        <a class="pr-3 blue-text" href="?page=1">&laquo; first</a>
+                        <a class="pr-3 blue-text" href="?page={{ projects.previous_page_number }}">previous</a>
+                    {% endif %}
+                    <span class="current">Page {{ projects.number }} of {{ projects.paginator.num_pages }}</span>
+                    {% if projects.has_next %}
+                        <a class="pl-3 blue-text" href="?page={{ projects.next_page_number }}">next</a>
+                        <a class="pl-3 blue-text" href="?page={{ projects.paginator.num_pages }}">last &raquo;</a>
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock main_content %}
+

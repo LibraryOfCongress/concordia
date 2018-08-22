@@ -7,7 +7,9 @@ class Command(BaseCommand):
 
     def _add_data(self):
         """
-        Add a collection and 5 assets to db
+        Add a collection with two items to db.  The 1st item has 5 assets and the second item
+        has 3 assets
+
         """
         collection, created = Collection.objects.update_or_create(
             title="Test S3",
@@ -25,6 +27,7 @@ class Command(BaseCommand):
             media_type=MediaType.IMAGE,
             collection=collection,
             metadata={"key": "val2"},
+            sequence=0,
             status=Status.EDIT,
         )
 
@@ -36,6 +39,7 @@ class Command(BaseCommand):
             media_type=MediaType.IMAGE,
             collection=collection,
             metadata={"key": "val2"},
+            sequence=1,
             status=Status.EDIT,
         )
 
@@ -47,6 +51,7 @@ class Command(BaseCommand):
             media_type=MediaType.IMAGE,
             collection=collection,
             metadata={"key": "val2"},
+            sequence=2,
             status=Status.EDIT,
         )
 
@@ -58,6 +63,7 @@ class Command(BaseCommand):
             media_type=MediaType.IMAGE,
             collection=collection,
             metadata={"key": "val2"},
+            sequence=3,
             status=Status.EDIT,
         )
 
@@ -69,6 +75,43 @@ class Command(BaseCommand):
             media_type=MediaType.IMAGE,
             collection=collection,
             metadata={"key": "val2"},
+            sequence=4,
+            status=Status.EDIT,
+        )
+
+        asset6, created = Asset.objects.update_or_create(
+            title="mss859430178",
+            slug="mss8594301780",
+            description="mss859430178",
+            media_url="https://s3.us-east-2.amazonaws.com/chc-collections/test_s3/mss859430178/0.png",
+            media_type=MediaType.IMAGE,
+            collection=collection,
+            metadata={"key": "val2"},
+            sequence=0,
+            status=Status.EDIT,
+        )
+
+        asset7, created = Asset.objects.update_or_create(
+            title="mss859430178",
+            slug="mss8594301781",
+            description="mss859430178",
+            media_url="https://s3.us-east-2.amazonaws.com/chc-collections/test_s3/mss859430178/1.png",
+            media_type=MediaType.IMAGE,
+            collection=collection,
+            metadata={"key": "val2"},
+            sequence=1,
+            status=Status.EDIT,
+        )
+
+        asset8, created = Asset.objects.update_or_create(
+            title="mss859430178",
+            slug="mss8594301782",
+            description="mss859430178",
+            media_url="https://s3.us-east-2.amazonaws.com/chc-collections/test_s3/mss859430178/2.png",
+            media_type=MediaType.IMAGE,
+            collection=collection,
+            metadata={"key": "val2"},
+            sequence=2,
             status=Status.EDIT,
         )
 
