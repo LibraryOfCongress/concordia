@@ -31,7 +31,7 @@ services:
       - ./postgresql:/docker-entrypoint-initdb.d
       - db_volume:/var/lib/postgresl/data/
     environment:
-        - POSTGRES_MULTIPLE_DATABASES=concordia,sentry
+        - POSTGRES_MULTIPLE_DATABASES=concordia
 
   rabbit:
     hostname: rabbit

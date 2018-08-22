@@ -24,7 +24,7 @@ up: 	increase-elk-max-map-count create-docker-sentry-network
 .PHONY: clean
 clean:
 	docker network rm sentry 2>>/dev/null || true
-	docker-compose -f sentry-docker-compose.yml down -v --remove-orphans
+	docker-compose -f docker-compose-sentry.yml down -v --remove-orphans
 	rm -rf postgresql-data/
 
 
