@@ -1,0 +1,16 @@
+Description:
+  This template deploys a bastion host in each of the public subnets.
+
+Parameters:
+
+    EnvironmentName:
+        Description: An environment name that will be prefixed to resource names
+        Type: String
+
+    BastionHostsSecurityGroup:
+        Description: The security group for bastion hosts
+        Type: AWS::EC2::SecurityGroup::Id
+    
+    KeyPairName:
+        Description: key pair (within this region) for ECS instances access
+        Type: String    

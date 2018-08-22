@@ -19,6 +19,9 @@ Parameters:
         Description: Master database password to use for RDS
         Type: String
 
+    KeyPairName:
+        Description: key pair within this region for ECS access
+        Type: String
 
 Resources:
 
@@ -85,6 +88,7 @@ Resources:
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
+                KeyPairName: !Ref KeyPairName
                 SecurityGroup: !GetAtt SecurityGroups.Outputs.ECSHostSecurityGroup
                 Subnets: !GetAtt VPC.Outputs.PrivateSubnets
 

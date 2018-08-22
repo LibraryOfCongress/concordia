@@ -40,6 +40,10 @@ Parameters:
         Description: Select the Security Group to use for the ECS cluster hosts
         Type: AWS::EC2::SecurityGroup::Id
 
+    KeyPairName:
+        Description: key pair (within this region) for ECS instances access
+        Type: String
+
 Mappings:
 
     # These are the latest ECS optimized AMIs as of Feb 2018:
@@ -121,13 +125,12 @@ Resources:
                   - ScheduledActions
                 WaitOnResourceSignals: true
 
-
-    # TODO: Update this launch configuration for our own docker hosts
     ECSLaunchConfiguration:
         Type: AWS::AutoScaling::LaunchConfiguration
         Properties:
             ImageId:  !FindInMap [AWSRegionToAMI, !Ref "AWS::Region", AMI]
             InstanceType: !Ref InstanceType
+            KeyName: !Ref KeyPairName
             SecurityGroups:
                 - !Ref SecurityGroup
             IamInstanceProfile: !Ref ECSInstanceProfile

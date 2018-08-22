@@ -24,9 +24,12 @@ Resources:
             VpcId: !Ref VPC
             GroupDescription: Access to the ECS hosts and the tasks/containers that run on them
             SecurityGroupIngress:
-                # Only allow inbound access to ECS from the ELB
                 - SourceSecurityGroupId: !Ref LoadBalancerSecurityGroup 
                   IpProtocol: -1
+                - SourceSecurityGroupId: !Ref BastionHostSecurityGroup
+                  IpProtocol: tcp
+                  FromPort: 22
+                  ToPort: 22   
             Tags: 
                 - Key: Name
                   Value: !Sub ${EnvironmentName}-ECS-Hosts
@@ -60,6 +63,25 @@ Resources:
                   FromPort: 5432
                   ToPort: 5432
 
+    BastionHostSecurityGroup:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+            VpcId: !Ref VPC
+            GroupDescription: Bastion hosts for ECS access
+            SecurityGroupIngress:
+                - CidrIp: 140.147.0.0/16
+                  IpProtocol: tcp
+                  FromPort: 22
+                  ToPort: 22
+            SecurityGroupEgress:
+                - SourceSecurityGroupId: !Ref ECSHostSecurityGroup
+                  IpProtocol: tcp
+                  FromPort: 22
+                  ToPort: 22
+            Tags:
+                - Key: Name
+                  Value: !Sub ${EnvironmentName}-BastionHosts
+
 Outputs:
 
     ECSHostSecurityGroup: 
@@ -74,3 +96,6 @@ Outputs:
         Description: A reference to the security group for RDS
         Value: !Ref DatabaseSecurityGroup
 
+    BastionHostSecurityGroup:
+        Description: A reference to the security group for bastion hosts
+        Value: !Ref BastionHostSecurityGroup
