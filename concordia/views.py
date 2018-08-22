@@ -1,7 +1,6 @@
 import html
 import json
 import os
-from datetime import datetime, timedelta
 from logging import getLogger
 
 import requests
@@ -20,6 +19,7 @@ from django.template import loader
 from django.urls import reverse
 from django.views.generic import FormView, TemplateView, View
 from registration.backends.simple.views import RegistrationView
+from rest_framework import generics
 from rest_framework.test import APIRequestFactory
 
 from concordia.forms import (CaptchaEmbedForm, ConcordiaContactUsForm,
@@ -32,6 +32,7 @@ from importer.views import CreateCollectionView
 logger = getLogger(__name__)
 
 ASSETS_PER_PAGE = 36
+PROJECTS_PER_PAGE = 36
 
 
 def concordia_api(relative_path):
@@ -134,6 +135,29 @@ class ConcordiaView(TemplateView):
     def get_context_data(self, **kws):
         response = concordia_api("collections/")
         return dict(super().get_context_data(**kws), response=response)
+
+
+class ConcordiaProjectView(TemplateView):
+    template_name = "transcriptions/project.html"
+
+    def get_context_data(self, **kws):
+        try:
+            collection = Collection.objects.get(slug=self.args[0])
+        except Collection.DoesNotExist:
+            raise Http404
+        project_list = collection.subcollection_set.all().order_by("title")
+        paginator = Paginator(project_list, PROJECTS_PER_PAGE)
+
+        if not self.request.GET.get("page"):
+            page = 1
+        else:
+            page = self.request.GET.get("page")
+
+        projects = paginator.get_page(page)
+
+        return dict(
+            super().get_context_data(**kws), collection=collection, projects=projects
+        )
 
 
 class ConcordiaCollectionView(TemplateView):
@@ -514,7 +538,7 @@ class DeleteAssetView(TemplateView):
     """
 
     def get(self, request, *args, **kwargs):
-        
+
         collection = Collection.objects.get(slug=self.args[0])
         asset = Asset.objects.get(slug=self.args[1], collection=collection)
         asset.status = Status.INACTIVE
@@ -553,3 +577,21 @@ class ReportCollectionView(TemplateView):
 
         projects = paginator.get_page(page)
         return render(self.request, self.template_name, locals())
+
+
+class FilterCollections(generics.ListAPIView):
+    def get_queryset(self):
+        name_query = self.request.query_params.get("name")
+        if name_query:
+            queryset = Collection.objects.filter(slug__contains=name_query).values_list(
+                "slug", flat=True
+            )
+        else:
+            queryset = Collection.objects.all().values_list("slug", flat=True)
+        return queryset
+
+    def list(self, request):
+        queryset = self.get_queryset()
+        from django.http import JsonResponse
+
+        return JsonResponse(list(queryset), safe=False)

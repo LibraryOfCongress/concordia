@@ -4,6 +4,16 @@
 <style>
 input#id_captcha_1 {
   padding: .375rem .75rem;
+  margin-right: 5px
+}
+div#input_group_for_captcha {
+  margin-top: 5px
+}
+div#captcha_div{
+  margin: 10px;
+  padding: 5px;
+  background-color: #48352f4d;
+  border-style: double;
 }
 </style>
 {% endblock head_content %}
@@ -41,9 +51,9 @@ input#id_captcha_1 {
                         </div>
                         <div class="tab-pane fade rounded" id="tab-tag" role="tabpanel" aria-labelledby="nav-pill-tag">
                             {% if user.is_authenticated %}
-                                <input type="text" class="textarea w-100" id="tag-input" name="tags" data-role="tagsinput" value="{%for tag in tags %}{{tag}},{% endfor %}" aria-label="Tag input">
+                                <input type="text" id="tag-input" name="tags" data-role="tagsinput" value="{%for tag in tags %}{{tag}},{% endfor %}" aria-label="Tag input">
                             {% else %}
-                                <input type="text" class="textarea w-100" id="tag-input" name="tags" data-role="tagsinput" value="{%for tag in tags %}{{tag}},{% endfor %}" aria-label="Tag input" disabled="true">
+                                <input type="text" id="tag-input" name="tags" data-role="tagsinput" value="{%for tag in tags %}{{tag}},{% endfor %}" aria-label="Tag input" disabled="true">
                             {% endif %}
                         </div>
                         {% if not discussion_hide %}
@@ -129,7 +139,9 @@ input#id_captcha_1 {
                             {% if user.is_anonymous %}
                             <tr class="d-none" id="captcha_tr">
                                 <td>
+                                   <div id="captcha_div">
                                     {{ captcha_form.captcha }}
+                                   </div>
                                 </td>
                             </tr>
                             {% endif %}
@@ -193,7 +205,6 @@ input#id_captcha_1 {
 {% block body_scripts %}
     <script src="{% static "js/contribute.js" %}"></script>
     <script src="{% static "js/jquery.cookie.js" %}"></script>
-    <script src="https://www.jqueryscript.net/demo/Bootstrap-4-Tag-Input-Plugin-jQuery/tagsinput.js"></script>
     <script src="{% static "vendor/openseadragon/openseadragon.min.js" %}"></script>
     <script type="text/javascript">
         var csrftoken = $.cookie('csrftoken');
@@ -220,7 +231,7 @@ input#id_captcha_1 {
                 pinchRotate: true
             }
         });
-         
+
         viewer.addHandler('open', function() {
             var instructionButton = new OpenSeadragon.Button({
                 onClick: function(e){
@@ -231,17 +242,17 @@ input#id_captcha_1 {
             $(instructionButton.element).empty().append("<div><div id='instruction_content'></div><div id='instruction_button' class='btn btn-primary' style='display:block'>+Instructions</div></div>");
 
             viewer.addControl(instructionButton.element, { anchor: OpenSeadragon.ControlAnchor.BOTTOM_LEFT });
-            
+
             $(instructionButton.element).css("width", "100%");
             $(instructionButton.element).css("display", "block");
             $(instructionButton.element).parent().css("width", "100%");
             $(instructionButton.element).parent().css("display", "block");
             $(instructionButton.element).parent().parent().css("width", "100%");
             $(instructionButton.element).parent().parent().css("display", "block");
-            
+
             $("div#instruction_content").empty().css('background-color', '#dee2e6');
             $("div#instruction_content").empty().append($('#instructionModal'));
-            
+
             $( "div#instruction_button" ).click(function() {
 	            	  if ( $( "div#instructionModal" ).is( ":hidden" ) ) {
 	            		  $( "div#instructionModal" ).show();
@@ -371,14 +382,14 @@ input#id_captcha_1 {
                     switch ("{{ transcription.status }}") {
                         case 'Edit':
                             $("#transcription-state").text("Transcription is open for Edit");
-                            $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> Your contribution has been saved.</div>');
+                            $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute py-half fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> Your contribution has been saved.</div>');
                             setTimeout(function() {
                                 $('.alert-contribute').fadeOut(500);
                             }, 3000);
                             break;
                         case 'Submitted':
                             $("#transcription-state").text("Transcription is submitted for Review");
-                            $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> The transcription is ready for review.</div>');
+                            $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute py-half fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> The transcription is ready for review.</div>');
                             setTimeout(function() {
                                 $('.alert-contribute').fadeOut(500);
                             }, 3000);
@@ -386,7 +397,7 @@ input#id_captcha_1 {
                             break;
                         case 'Completed':
                             $("#transcription-state").text("Transcription is Complete");
-                            $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> The transcription is now complete.</div>');
+                            $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute py-half fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> The transcription is now complete.</div>');
                             setTimeout(function() {
                                 $('.alert-contribute').fadeOut(500);
                             }, 3000);

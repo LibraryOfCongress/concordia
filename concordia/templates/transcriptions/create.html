@@ -1,16 +1,79 @@
 {% extends "transcriptions/base.html" %}
 {% load staticfiles %}
 {% block title %}Citizen Historian Create a Collection{% endblock title %}
-{% block head_content %}{% endblock head_content %}
+{% block head_content %}
+<style>
+* {
+  box-sizing: border-box;
+}
+
+.autocomplete {
+  /*the container must be positioned relative:*/
+  position: relative;
+  display: inline-block;
+}
+
+input {
+  border: 1px solid transparent;
+  background-color: #f1f1f1;
+  padding: 10px;
+  font-size: 16px;
+}
+
+input[type=text] {
+  background-color: #f1f1f1;
+  width: 100%;
+}
+
+input[type=submit] {
+  background-color: DodgerBlue;
+  color: #fff;
+  cursor: pointer;
+}
+
+.autocomplete-items {
+  position: absolute;
+  border: 1px solid #d4d4d4;
+  border-bottom: none;
+  border-top: none;
+  z-index: 99;
+  /*position the autocomplete items to be the same width as the container:*/
+  top: 100%;
+  left: 0;
+  right: 0;
+}
+
+.autocomplete-items div {
+  padding: 10px;
+  cursor: pointer;
+  background-color: #fff;
+  border-bottom: 1px solid #d4d4d4;
+}
+
+.autocomplete-items div:hover {
+  /*when hovering an item:*/
+  background-color: #e9e9e9;
+}
+
+.autocomplete-active {
+  /*when navigating through the items using the arrow keys:*/
+  background-color: DodgerBlue !important;
+  color: #ffffff;
+}
+</style>
+
+{% endblock head_content %}
 {% block main_content %}
-<script src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
+<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 <div class="container-fluid py-default" id='container'>
   <div class="row">
     <div class="col-md-10 mx-auto bg-offwhite rounded">
       <h3 class="mt-half ml-half">Import a New Collection</h3>
       <div class="text-center d-none loading">
        <div class="loading-pulse mx-auto"></div>
-              <h6 class="form-text offwhite-text">Creating the collection for you</h6>
+              <h6 class="form-text offwhite-text">Creating the collection for you...<span id="progress"></span>
+              </h6>
       </div>
         <div class="alert alert-danger alert-dismissible fade show" id="close_error" role="alert">
           <button type="button" class="close" onclick="hide_box()" data-dismiss="alert" aria-label="Close">
@@ -19,7 +82,7 @@
           <strong id="error_msg"></strong>
         </div>
 
-{#      <form class="mx-default my-default" method="POST" onsubmit="return handle_form_submission()">#}
+      <!--<form class="mx-default my-default">-->
       {% if error %}
         <div class="alert alert-danger alert-dismissible fade show" id="close" role="alert">
           <button type="button" class="close" onclick="hide_box()" data-dismiss="alert" aria-label="Close">
@@ -32,17 +95,24 @@
       {% csrf_token %}
       <div class="form-group col-lg-6 col-md-8 mx-auto">
         <label for="name">Name</label>
-        <input type="text" class="form-control" name="name" id="name" placeholder="Enter name" required>
+        <input type="text" class="form-control" name="name" id="name" placeholder="Enter name">
       </div>
+
       <div class="form-group col-lg-6 col-md-8 mx-auto">
-        <label for="url">URL</label>
-        <input type="url" class="form-control" id="url" name="url" required>
+        <label for="project-name">Project Name</label>
+        <input type="text" class="form-control" name="project-name" id="project-name" placeholder="Enter Project name">
       </div>
+
+      <div class="form-group col-lg-6 col-md-8 mx-auto">
+                  <label for="url">URL</label>
+        <input type="url" class="form-control" id="url" name="url">
+      </div>
+
       <div class="d-flex col-lg-6 col-md-8 mx-auto justify-content-between pt-half">
-        <button type="submit" class="btn btn-primary mr-auto" id="create_btn">Create</button>
+        <button class="btn btn-primary mr-auto" id="create_btn">Create</button>
         <a href="/transcribe" role="button" class="btn btn-dark">Cancel</a>
     </div>
-{#      </form>#}
+      <!--</form>-->
     </div>
         <input type="hidden" id="task_id">
         <input type="hidden" id="collection_slug">
@@ -68,7 +138,15 @@ function write_save_collection_assets(task_id){
         success: function(data, textStatus, jqXHR) {
             console.log("response: ", data);
             var slug = $("#collection_slug").val().toLowerCase().replace(/ +/g,'-');
-            window.location.href = "/transcribe/"+slug+"/";
+            var projslug = $("#project-name").val().toLowerCase().replace(/ +/g,'-');
+            if($("#item_id").val()){
+                var rurl = "/transcribe/"+slug+"/"+projslug+"/";
+            }
+            else{
+                var rurl = "/transcribe/"+slug+"/";
+            }
+
+            window.location.href = rurl;
         }
     }).fail(function(jqXHR, textStatus, errorThrown) {
         if(jqXHR.status == 0 || jqXHR == 302) {
@@ -77,7 +155,7 @@ function write_save_collection_assets(task_id){
             console.log('Unknown error returned while saving' + (typeof errorThrown == 'string' && errorThrown.trim().length > 0 ? ':\n' + errorThrown : ''));
          $("#error_msg").html("Sorry..!! There is some error for creating collection...");
         $(".loading").addClass("d-none");
-        $("#close_error").show();
+                $("#close_error").show();
         }
     });
 
@@ -90,11 +168,15 @@ function get_task_status(task_id){
         success: function(data, textStatus, jqXHR) {
             console.log("gts: ", gts);
             var gts = setTimeout(get_task_status($("#task_id").val()), 60000);
-            if(data == 'SUCCESS'){
+            if(data['progress']){
+                $("#progress").html(data['progress']);
+            }
+
+            if(data['state'] == 'SUCCESS'){
                 write_save_collection_assets(task_id);
+                $("#progress").html("");
                 clearInterval(gts);
             }
-            <!--clearInterval(gts);-->
 
         }
     }).fail(function(jqXHR, textStatus, errorThrown) {
@@ -107,44 +189,43 @@ function get_task_status(task_id){
 }
 
 $("#create_btn").click(function(){
-    $(".loading").removeClass("d-none");
     $("#close_error").hide();
     $("#task_id, #collection_slug, #item_id").val("");
     var name = $("#name").val();
+    var project_name = $("#project-name").val();
     var url = $("#url").val();
-    var create_type = '';
-    if(url.indexOf('/item/')>=0){
-        create_type = "item";
-        $("#item_id").val(get_item_id_from_item_url(url));
-    }else{
-        create_type = "collections";
-        $("#item_id").val("");
-    }
 
-    $.ajax({
-        url: '/create_collection/',
-        type: 'post',
-        data: {"name": name, "url": url, "create_type": create_type,'csrfmiddlewaretoken': $("input[name=csrfmiddlewaretoken]").val()},
-        success: function(data, textStatus, jqXHR) {
-            $("#task_id").val(data['task_id']);
-            $("#collection_slug").val(data['name']);
-            var gts = setTimeout(get_task_status(data['task_id']), 60000);
-        }
-    }).fail(function(data, jqXHR, textStatus, errorThrown) {
-        console.log("data: ", data);
-        if(jqXHR.status == 0 || jqXHR == 302) {
-            $("#error_msg").html("Sorry..!! There is some error for creating collection...");
-        } else {
-            if(data.responseJSON.message){
-                 $("#error_msg").html(data.responseJSON.message);
-	    }
-	    else{
- 		$("#error_msg").html("Sorry..!! There is some error for creating collection...");
+    if(name && project_name && url){
+        $.ajax({
+            url: '/create_collection/',
+            type: 'post',
+            data: {"name": name, "url": url, "project": project_name,'csrfmiddlewaretoken': $("input[name=csrfmiddlewaretoken]").val()},
+            success: function(data, textStatus, jqXHR) {
+                $(".loading").removeClass("d-none");
+                $("#task_id").val(data['task_id']);
+                $("#collection_slug").val(data['name']);
+                $("#item_id").val(data['item_id']);
+                var gts = setTimeout(get_task_status(data['task_id']), 60000);
             }
-        }
-        $(".loading").addClass("d-none");
+        }).fail(function(data, jqXHR, textStatus, errorThrown) {
+            $(".loading").removeClass("d-none");
+            if(jqXHR.status == 0 || jqXHR == 302) {
+                $("#error_msg").html("Sorry..!! There is some error for creating collection...");
+            } else {
+                if(data.responseJSON.message){
+                     $("#error_msg").html(data.responseJSON.message);
+            }
+            else{
+            $("#error_msg").html("Sorry..!! There is some error for creating collection...");
+                }
+            }
+            $("#close_error").show();
+        });
+    }
+    else{
+        $("#error_msg").html("Sorry..!! Please furnish below all required details...");
         $("#close_error").show();
-    });
+    }
 })
 
 function get_item_id_from_item_url(item_url){
@@ -161,6 +242,15 @@ function get_item_id_from_item_url(item_url){
 
 get_task_status($("#task_id").val());
 
+
+$(function(){
+    $( "#name" ).autocomplete({
+        source: '/filter/collections',
+        minLength: 1,
+    });
+});
+
 </script>
 {% endblock main_content %}
+
 

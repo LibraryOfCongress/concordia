@@ -13,7 +13,7 @@ from django.test.utils import override_settings
 from PIL import Image
 
 from concordia.models import (Asset, Collection, MediaType, Status, Tag, Transcription,
-                              User, UserAssetTagCollection, UserProfile, PageInUse)
+                              User, UserAssetTagCollection, UserProfile, PageInUse, Subcollection)
 
 logging.disable(logging.CRITICAL)
 
@@ -341,7 +341,7 @@ class ViewTest_Concordia(TestCase):
         # Assert
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(
-            response, template_name="transcriptions/collection.html"
+            response, template_name="transcriptions/project.html"
         )
 
     def test_concordiaCollectionView_get_page2(self):
@@ -368,7 +368,7 @@ class ViewTest_Concordia(TestCase):
         # Assert
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(
-            response, template_name="transcriptions/collection.html"
+            response, template_name="transcriptions/project.html"
         )
 
     def test_ExportCollectionView_get(self):
@@ -1115,3 +1115,173 @@ class ViewTest_Concordia(TestCase):
 
         # Assert
         self.assertEqual(anon_user.id, anon_obj.id)
+
+
+    def test_ConcordiaProjectView_get(self):
+        """
+        Test GET on route /transcribe/<slug-value> (collection)
+        :return:
+        """
+
+        # Arrange
+
+        # add an item to Collection
+        self.collection = Collection(
+            title="TextCollection",
+            slug="test-slug2",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection.save()
+
+        self.subcollection = Subcollection(
+            title="TextCollection sub collection",
+            slug="test-slug2-proj",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+            collection=self.collection
+        )
+        self.subcollection.save()
+
+        self.subcollection1 = Subcollection(
+            title="TextCollection sub collection1",
+            slug="test-slug2-proj1",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+            collection=self.collection
+        )
+        self.subcollection1.save()
+
+        # Act
+        response = self.client.get("/transcribe/test-slug2/test-slug2-proj1/")
+
+        # Assert
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, template_name="transcriptions/collection.html"
+        )
+
+    def test_ConcordiaProjectView_get_page2(self):
+        """
+        Test GET on route /transcribe/<slug-value>/ (collection) on page 2
+        :return:
+        """
+
+        # Arrange
+
+        # add an item to Collection
+        self.collection = Collection(
+            title="TextCollection",
+            slug="test-slug2",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection.save()
+
+        self.subcollection = Subcollection(
+            title="TextCollection sub collection",
+            slug="test-slug2-proj",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+            collection=self.collection
+        )
+        self.subcollection.save()
+
+        self.subcollection1 = Subcollection(
+            title="TextCollection sub collection1",
+            slug="test-slug2-proj1",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+            collection=self.collection
+        )
+        self.subcollection1.save()
+
+        # Act
+        response = self.client.get("/transcribe/test-slug2/test-slug2-proj1/", {"page": 2})
+
+        # Assert
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, template_name="transcriptions/collection.html")
+
+    def test_FilterCollections_get(self):
+        """Test list of filer collection get API"""
+
+        #Arrange
+        self.collection = Collection(
+            title="TextCollection",
+            slug="slug1",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection.save()
+
+
+        self.collection = Collection(
+            title="Text Collection",
+            slug="slug2",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection.save()
+
+        # Act
+        response = self.client.get("/filter/collections/")
+
+        # Assert
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()), 2)
+        self.assertEqual(response.json()[0], 'slug1')
+        self.assertEqual(response.json()[1], 'slug2')
+
+
+    def test_FilterCollectionsWithParams_get(self):
+        """Test list of filer collection get API"""
+
+        #Arrange
+        self.collection = Collection(
+            title="TextCollection",
+            slug="slug1",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection.save()
+
+
+        self.collection = Collection(
+            title="Text Collection",
+            slug="slug2",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection.save()
+
+        # Act
+        response = self.client.get("/filter/collections/?name=sl")
+
+        # Assert
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()), 2)
+        self.assertEqual(response.json()[0], 'slug1')
+        self.assertEqual(response.json()[1], 'slug2')
+
+
+    def test_FilterCollectionsEmpty_get(self):
+        """Test list of filer collection get API"""
+
+        #Arrange, to test empty filter collections. No need of arranging data
+
+        # Act
+        response = self.client.get("/filter/collections/")
+
+        # Assert
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()), 0)
+
+

@@ -3,7 +3,6 @@ import os
 import sys
 
 from dotenv import load_dotenv
-
 from machina import MACHINA_MAIN_STATIC_DIR, MACHINA_MAIN_TEMPLATE_DIR
 from machina import get_apps as get_machina_apps
 
@@ -12,7 +11,7 @@ PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(PROJECT_DIR)
 
 # Build path for and load .env file.
-dotenv_path = os.path.join(BASE_DIR, '.env')
+dotenv_path = os.path.join(BASE_DIR, ".env")
 load_dotenv(dotenv_path)
 
 # SECURITY WARNING: keep the secret key used in production secret!
@@ -155,11 +154,11 @@ CELERY_IMPORTS = ("importer.tasks",)
 
 CELERY_BROKER_HEARTBEAT = 0
 CELERY_BROKER_TRANSPORT_OPTIONS = {
-  "confirm_publish": True,
-  "max_retries": 3,
-  "interval_start": 0,
-  "interval_step": 0.2,
-  "interval_max": 0.5
+    "confirm_publish": True,
+    "max_retries": 3,
+    "interval_start": 0,
+    "interval_step": 0.2,
+    "interval_max": 0.5,
 }
 
 LOGGING = {
@@ -220,10 +219,10 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework.authentication.BasicAuthentication",
         "rest_framework.authentication.SessionAuthentication",
-    )
+    ),
 }
 
-CONCORDIA = {"netloc": "http://0.0.0.0:80"}
+CONCORDIA = {"netloc": "http://0:80"}
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
@@ -245,16 +244,18 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "concordia.validators.complexity"},
 ]
 
-AUTHENTICATION_BACKENDS = ['concordia.email_username_backend.EmailOrUsernameModelBackend']
+AUTHENTICATION_BACKENDS = [
+    "concordia.email_username_backend.EmailOrUsernameModelBackend"
+]
 
 REGISTRATION_URLS = "registration.backends.simple.urls"
 
-CAPTCHA_CHALLENGE_FUNCT = 'captcha.helpers.random_char_challenge'
-CAPTCHA_FIELD_TEMPLATE = 'captcha/field.html'
-CAPTCHA_TEXT_FIELD_TEMPLATE = 'captcha/text_field.html'
+CAPTCHA_CHALLENGE_FUNCT = "captcha.helpers.random_char_challenge"
+CAPTCHA_FIELD_TEMPLATE = "captcha/field.html"
+CAPTCHA_TEXT_FIELD_TEMPLATE = "captcha/text_field.html"
 
 AWS_S3 = {
     "AWS_ACCESS_KEY_ID": os.getenv("AWS_ACCESS_KEY_ID"),
     "AWS_SECRET_ACCESS_KEY": os.getenv("AWS_SECRET_ACCESS_KEY"),
-    "S3_COLLECTION_BUCKET": "chc-collections"
+    "S3_COLLECTION_BUCKET": "chc-collections",
 }
