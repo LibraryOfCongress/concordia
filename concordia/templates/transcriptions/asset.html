@@ -20,7 +20,7 @@ input#id_captcha_1 {
                 <div id="asset-image" class="asset-image bg-offwhite">
                 </div>
             </div>
-            <div class="col-6 bg-darkest-gray shadow-regular rounded contribute-box" id="contribute-box">
+            <div class="col-6 bg-darkest-gray shadow-regular contribute-box" id="contribute-box">
                 <nav class="px-half py-1">
                     <div class="nav nav-pills" id="nav-pill-contribute-box" role="tablist">
                         <a class="nav-item nav-link active" id="nav-pill-transcription" data-toggle="tab"
@@ -220,7 +220,7 @@ input#id_captcha_1 {
                 pinchRotate: true
             }
         });
-         
+
         viewer.addHandler('open', function() {
             var instructionButton = new OpenSeadragon.Button({
                 onClick: function(e){
@@ -231,17 +231,17 @@ input#id_captcha_1 {
             $(instructionButton.element).empty().append("<div><div id='instruction_content'></div><div id='instruction_button' class='btn btn-primary' style='display:block'>+Instructions</div></div>");
 
             viewer.addControl(instructionButton.element, { anchor: OpenSeadragon.ControlAnchor.BOTTOM_LEFT });
-            
+
             $(instructionButton.element).css("width", "100%");
             $(instructionButton.element).css("display", "block");
             $(instructionButton.element).parent().css("width", "100%");
             $(instructionButton.element).parent().css("display", "block");
             $(instructionButton.element).parent().parent().css("width", "100%");
             $(instructionButton.element).parent().parent().css("display", "block");
-            
+
             $("div#instruction_content").empty().css('background-color', '#dee2e6');
             $("div#instruction_content").empty().append($('#instructionModal'));
-            
+
             $( "div#instruction_button" ).click(function() {
 	            	  if ( $( "div#instructionModal" ).is( ":hidden" ) ) {
 	            		  $( "div#instructionModal" ).show();
