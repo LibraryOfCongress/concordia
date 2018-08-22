@@ -5,13 +5,16 @@
 #   SENTRY_PW=<sentry_password_here>
 #   SENTRY_SECRET_KEY=<sentry_secret_key_here>
 
+# To create the sentry secret key:
+#    $ docker-compose -f docker-compose-sentry.yml run --rm sentry sentry config generate-secret-key
+
 
 ### Start Docker containers with the following command :
 #  sudo make up
 
 version: '3.6'
 services:
-  db:
+  sentrydb:
     image: postgres
     env_file: ./.env
     environment:
@@ -21,7 +24,7 @@ services:
       - 54321:5432
     volumes:
       - ./postgresql:/docker-entrypoint-initdb.d
-      - db_volume:/var/lib/postgresl/data/
+      - sentrydb_volume:/var/lib/postgresl/data/
     environment:
         - POSTGRES_MULTIPLE_DATABASES=sentry,concordia
 
@@ -34,7 +37,7 @@ services:
     environment:
       - SENTRY_SECRET_KEY=${SENTRY_SECRET_KEY}
       - SENTRY_REDIS_HOST=sentry_redis
-      - SENTRY_POSTGRES_HOST=db
+      - SENTRY_POSTGRES_HOST=sentrydb
       - SENTRY_DB_USER=sentry
       - SENTRY_DB_PASSWORD=${POSTGRESQL_PW}
 
@@ -45,7 +48,7 @@ services:
     environment:
       - SENTRY_SECRET_KEY=${SENTRY_SECRET_KEY}
       - SENTRY_REDIS_HOST=sentry_redis
-      - SENTRY_POSTGRES_HOST=db
+      - SENTRY_POSTGRES_HOST=sentrydb
       - SENTRY_DB_USER=sentry
       - SENTRY_DB_PASSWORD=${POSTGRESQL_PW}
     command: run cron
@@ -57,7 +60,7 @@ services:
     environment:
       - SENTRY_SECRET_KEY=${SENTRY_SECRET_KEY}
       - SENTRY_REDIS_HOST=sentry_redis
-      - SENTRY_POSTGRES_HOST=db
+      - SENTRY_POSTGRES_HOST=sentrydb
       - SENTRY_DB_USER=sentry
       - SENTRY_DB_PASSWORD=${POSTGRESQL_PW}
     command: run worker
@@ -74,10 +77,10 @@ services:
   wait_sentry_postgres:
     image: "waisbrot/wait"
     environment:
-      TARGETS: db:5432
+      TARGETS: sentrydb:5432
 
 volumes:
-  db_volume:
+  sentrydb_volume:
 
 networks:
   default:
