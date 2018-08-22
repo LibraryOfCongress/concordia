@@ -241,15 +241,15 @@ input {
 }
 
 .navbar {
-    margin: 0;
+    padding: 0;
 }
 
 .navbar-toggler {
-    margin: 0 0 0 1rem;
+    margin: 0;
 }
 
 .navbar-toggler-icon:focus {
-    border: solid 0px transparent;
+    outline: none;
 }
 
 .navbar-brand {
@@ -532,7 +532,7 @@ div.nav-secondary {
     .border-left-home-contribute { border-left: solid 0px transparent; }
     .container-fluid.px-default { padding-left: 0; padding-right: 0; }
     h1 { font-size: 2.25rem; }
-    h1.header-text { font-style: 1.75rem; }
+    h1.header-text { font-style: 2rem; }
     .carousel-text { top: 1rem; margin-left: 1.5rem; }
     p.hero-text { font-size: 1.1875rem; }
     .text-home-contribute { width: 100%; }
@@ -540,6 +540,8 @@ div.nav-secondary {
 
 /* Screens wider than the MD breakpoint */
 @media (min-width: 992px) {
+    .text-home-contribute { width: 50%; }
+
     .mxy-md-default {
         margin: 2rem;
     }
@@ -803,10 +805,6 @@ div.nav-secondary {
   background-color: var(--bg-darkest-gray);
   border-color: var(--bg-darkest-gray);
   color: var(--text-color-offwhite);
-}
-
-.text-home-contribute {
-    width: 50%;
 }
 
 .card-body {
