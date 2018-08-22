@@ -200,6 +200,84 @@ class ConcordiaAssetView(TemplateView):
         "Mark Completed": Status.COMPLETED,
     }
 
+    def get_asset_list_json(self):
+        """
+        make a call to the REST web service to assets for a collection
+        :return: json of the assets
+        """
+        response = requests.get(
+            "%s://%s/ws/asset/%s/"
+            % (
+                self.request.scheme,
+                self.request.get_host(),
+                self.args[0]),
+            cookies=self.request.COOKIES,
+        )
+        return json.loads(response.content.decode("utf-8"))
+
+    def submitted_page(self, url, asset_json):
+        """
+        when the transcription state is SUBMITTED, return a page that does not have a transcription started.
+        If all pages are started, return the url passed in
+        :param url: default url to return
+        :param asset_json: Unused, needed to make function signature match completed_page
+        :return: url of next page
+        """
+        return_path = url
+
+        # find a page with no transcriptions in this collection
+
+        asset_list_json = self.get_asset_list_json()
+
+        for asset_item in asset_list_json["results"]:
+            response = requests.get(
+                "%s://%s/ws/transcription/%s/"
+                % (self.request.scheme, self.request.get_host(), asset_item["id"]),
+                cookies=self.request.COOKIES,
+            )
+            transcription_json = json.loads(response.content.decode("utf-8"))
+            if transcription_json["text"] == "":
+                return_path = "/transcribe/%s/asset/%s/" % (self.args[0], asset_item["slug"])
+                break
+
+        return return_path
+
+    def completed_page(self, url, asset_json):
+        """
+        when the transcription state is COMPLETED, return the next page in sequence that needs work
+        If all pages are completed, return the url passed in
+        :param url: default url to return
+        :param asset_json: json representation of the asset
+        :return: url of next page
+        """
+        return_path = url
+
+        asset_list_json = self.get_asset_list_json()
+
+        def get_transcription(asset_item):
+                response = requests.get(
+                    "%s://%s/ws/transcription/%s/"
+                    % (self.request.scheme, self.request.get_host(), asset_item["id"]),
+                    cookies=self.request.COOKIES,
+                )
+                return json.loads(response.content.decode("utf-8"))
+
+        for asset_item in asset_list_json["results"][asset_json["sequence"]+1:]:
+            transcription_json = get_transcription(asset_item)
+            if transcription_json["status"] != Status.COMPLETED:
+                return_path = "/transcribe/%s/asset/%s/" % (self.args[0], asset_item["slug"])
+                break
+
+        # no asset found, iterate the asset_list_json from beginning to this asset's sequence
+        if return_path == url:
+            for asset_item in asset_list_json["results"][:asset_json["sequence"]]:
+                transcription_json = get_transcription(asset_item)
+                if transcription_json["status"] != Status.COMPLETED:
+                    return_path = "/transcribe/%s/asset/%s/" % (self.args[0], asset_item["slug"])
+                    break
+
+        return return_path
+
     def check_page_in_use(self, url, user):
         """
         Check the page in use for the asset, return true if in use within the last 5 minutes, otherwise false
@@ -352,27 +430,15 @@ class ConcordiaAssetView(TemplateView):
                 cookies=self.request.COOKIES,
             )
 
-            if tx_status == Status.SUBMITTED:
-                # find a page with no transcriptions in this collection
-                response = requests.get(
-                    "%s://%s/ws/asset/%s/"
-                    % (
-                        self.request.scheme,
-                        self.request.get_host(),
-                        self.args[0]),
-                    cookies=self.request.COOKIES,
-                )
-                asset_list_json = json.loads(response.content.decode("utf-8"))
-                for asset_item in asset_list_json["results"]:
-                    response = requests.get(
-                        "%s://%s/ws/transcription/%s/"
-                        % (self.request.scheme, self.request.get_host(), asset_item["id"]),
-                        cookies=self.request.COOKIES,
-                    )
-                    transcription_json = json.loads(response.content.decode("utf-8"))
-                    if transcription_json["text"] == "":
-                        redirect_path = "/transcribe/%s/asset/%s/" % (self.args[0], asset_item["slug"])
-                        break
+            # dictionary to pick which function should return the next page on a POST submit
+            next_page_dictionary = {
+                Status.EDIT: lambda x, y: x,
+                Status.SUBMITTED: self.submitted_page,
+                Status.COMPLETED: self.completed_page,
+
+            }
+
+            redirect_path = next_page_dictionary[tx_status](redirect_path, asset_json)
 
         if "tags" in self.request.POST and self.request.user.is_authenticated == True:
             tags = self.request.POST.get("tags").split(",")
