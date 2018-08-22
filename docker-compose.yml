@@ -26,7 +26,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRESQL_PW}
       POSTGRES_USER: concordia
     ports:
-      - 54321:5432
+      - 54323:5432
     volumes:
       - ./postgresql:/docker-entrypoint-initdb.d
       - db_volume:/var/lib/postgresl/data/
