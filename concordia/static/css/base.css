@@ -10,7 +10,8 @@
   --bg-lightest-gray: rgba(245,245,245,1); /* #F5F5F5 */
   --bg-darkest-gray: rgba(51,51,51,1); /* #333333 */
   --bg-offblack: rgba(38,50,56,1); /* #263238 */
-  --bg-main: rgba(102,102,102,1); /* #666666 */
+  --bg-dark-gray: rgba(102,102,102,1); /* #666666 */
+  --bg-medium-gray: rgba(153,153,153,1); /* #999999 */
   --bg-footer: rgba(238,238,238,1); /* #EEEEEE */
   --bg-divider: rgba(189,189,189,1); /* #BDBDBD */
   --bg-card-title: rgba(51,51,51,.7); /* #333333 */
@@ -111,12 +112,20 @@ h6 {
     color: var(--text-color-offwhite);
 }
 
-.blue-text {
+.primary-text {
+    color: var(--primary-color);
+}
+
+.secondary-text {
+    color: var(--secondary-color);
+}
+
+orange {
     color: var(--primary-color);
 }
 
 blue {
-    color: var(--primary-color);
+    color: var(--secondary-color);
 }
 
 .gray-text {
@@ -130,10 +139,16 @@ h2.contribute-breadcrumb {
     color: var(--text-color-offwhite);
 }
 
-a.blue-text:hover {
+a.primary-text:hover {
   color: var(--primary-color-hover);
   text-decoration: underline;
 }
+
+a.secondary-text:hover {
+  color: var(--primary-color-hover);
+  text-decoration: underline;
+}
+
 a.offwhite-text {
   color: var(--text-color-offwhite);
   text-decoration: underline;
@@ -197,11 +212,15 @@ p.hero-secondary.offwhite-text {
     background-color: var(--bg-lightest-gray);
 }
 
+.bg-medium-gray {
+    background-color: var(--bg-medium-gray);
+}
+
 .bg-darkest-gray {
   background-color: var(--bg-darkest-gray);
 }
 
-.bg-main {
+.bg-dark-gray {
     background-color: var(--bg-darkest-gray);
 }
 
@@ -278,7 +297,7 @@ div.nav-secondary {
 
 .navbar-brand .vl {
     height: 6rem;
-    background-color: var(--bg-main);
+    background-color: var(--bg-dark-gray);
     width: .0675rem;
 }
 
@@ -782,31 +801,43 @@ div.nav-secondary {
 }
 
 .btn-default {
+    background-color: var(--bg-medium-gray);
+    border-color: var(--bg-medium-gray);
+    color: var(--text-color-offwhite);
+}
+
+.btn-default:hover {
     background-color: var(--bg-darkest-gray);
     border-color: var(--bg-darkest-gray);
     color: var(--text-color-offwhite);
 }
 
-.btn-default:hover {
-    background-color: var(--bg-offblack);
-    border-color: var(--bg-offblack);
-    color: var(--text-color-offwhite);
-}
-
 .btn-outline-default {
-    border-color: var(--bg-darkest-gray);
-    color: var(--text-color-offwhite);
+    border-color: var(--bg-medium-gray);
+    color: var(--bg-medium-gray);
 }
 
 .btn-outline-default:hover {
     border-color: var(--bg-darkest-gray);
     background-color: transparent;
-    color: var(--text-color-offwhite);
+    color: var(--bg-darkest-gray);
 }
 
 .btn-dark {
   background-color: var(--bg-darkest-gray);
   border-color: var(--bg-darkest-gray);
+  color: var(--text-color-offwhite);
+}
+
+.btn-dark {
+  background-color: var(--bg-darkest-gray);
+  border-color: var(--bg-darkest-gray);
+  color: var(--text-color-offwhite);
+}
+
+.btn-dark {
+  background-color: var(--bg-offblack);
+  border-color: var(--bg-offblack);
   color: var(--text-color-offwhite);
 }
 
