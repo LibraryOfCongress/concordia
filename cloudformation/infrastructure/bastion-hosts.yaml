@@ -7,7 +7,7 @@ Parameters:
         Description: An environment name that will be prefixed to resource names
         Type: String
 
-    BastionHostSecurityGroup:
+    BastionHostsSecurityGroup:
         Description: The security group for bastion hosts
         Type: AWS::EC2::SecurityGroup::Id
     
