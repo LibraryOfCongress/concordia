@@ -677,6 +677,213 @@ class ViewTest_Concordia(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, "/transcribe/Collection1/asset/Asset1/")
 
+    @patch("concordia.views.ConcordiaAssetView.get_context_data")
+    @responses.activate
+    def test_ConcordiaAssetView_submitted_post(self, mock_requests):
+        """
+        This unit test tests the POST route /transcribe/<collection>/asset/<Asset_name>/
+        when teh post status is submitted. the response should be to the other asset
+        :return:
+        """
+        # Arrange
+        self.login_user()
+
+        # create a collection
+        collection_slug = "Collection1"
+        self.collection = Collection(
+            title="TestCollection",
+            slug=collection_slug,
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection.save()
+
+        # create an Asset
+        asset_slug = "Asset1"
+
+        self.asset = Asset(
+            title="TestAsset",
+            slug=asset_slug,
+            description="Asset Description",
+            media_url="http://www.foo.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            collection=self.collection,
+            metadata={"key": "val2"},
+            status=Status.EDIT,
+        )
+        self.asset.save()
+
+        asset_slug2 = "Asset2"
+
+        self.asset2 = Asset(
+            title="TestAsset2",
+            slug=asset_slug2,
+            description="Asset2 Description",
+            media_url="http://www.foo.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            collection=self.collection,
+            metadata={"key": "val2"},
+            status=Status.EDIT,
+        )
+        self.asset2.save()
+
+        # add a Transcription object
+        self.transcription = Transcription(
+            asset=self.asset,
+            user_id=self.user.id,
+            text="Test transcription 1",
+            status=Status.EDIT,
+        )
+        self.transcription.save()
+
+        tag_name = "Test tag 1"
+
+        # mock REST requests
+        asset_by_slug_response = {
+            "id": self.asset.id,
+            "title": "TestAsset",
+            "slug": asset_slug,
+            "description": "mss859430177",
+            "media_url": "https://s3.us-east-2.amazonaws.com/chc-collections/test_s3/mss859430177/1.jpg",
+            "media_type": MediaType.IMAGE,
+            "collection": {"slug": "Collection1"},
+            "subcollection": None,
+            "sequence": 1,
+            "metadata": {"key": "val2"},
+            "status": Status.EDIT,
+        }
+
+        transcription_json = {
+            "asset": {
+                "title": "",
+                "slug": "",
+                "description": "",
+                "media_url": "",
+                "media_type": None,
+                "collection": {
+                    "slug": "",
+                    "title": "",
+                    "description": "",
+                    "s3_storage": False,
+                    "start_date": None,
+                    "end_date": None,
+                    "status": None,
+                    "assets": [],
+                },
+                "subcollection": None,
+                "sequence": None,
+                "metadata": None,
+                "status": None,
+            },
+            "user_id": None,
+            "text": "transcription value here",
+            "status": None,
+        }
+
+        transcription_no_value_json = {
+            "asset": {
+                "title": "",
+                "slug": "",
+                "description": "",
+                "media_url": "",
+                "media_type": None,
+                "collection": {
+                    "slug": "",
+                    "title": "",
+                    "description": "",
+                    "s3_storage": False,
+                    "start_date": None,
+                    "end_date": None,
+                    "status": None,
+                    "assets": [],
+                },
+                "subcollection": None,
+                "sequence": None,
+                "metadata": None,
+                "status": None,
+            },
+            "user_id": None,
+            "text": "",
+            "status": None,
+        }
+
+        tag_json = {"results": []}
+
+        responses.add(
+            responses.GET,
+            "http://testserver/ws/page_in_use_filter/tester//transcribe/Collection1/asset/Asset1//",
+            json={"count": 0, "results": []},
+            status=200,
+        )
+
+        responses.add(
+            responses.GET,
+            "http://testserver/ws/asset_by_slug/Collection1/Asset1/",
+            json=asset_by_slug_response,
+            status=200,
+        )
+
+        responses.add(
+            responses.GET,
+            "http://testserver/ws/transcription/%s/" % (self.asset.id,),
+            json=transcription_json,
+            status=200,
+        )
+
+        responses.add(
+            responses.GET,
+            "http://testserver/ws/transcription/%s/" % (self.asset2.id,),
+            json=transcription_no_value_json,
+            status=200,
+        )
+
+        responses.add(
+            responses.GET,
+            "http://testserver/ws/tags/%s/" % (self.asset.id,),
+            json=tag_json,
+            status=200,
+        )
+
+        assets_json = {
+            "results": [
+                asset_by_slug_response,
+                {
+                    "id": self.asset2.id,
+                    "title": "TestAsset",
+                    "slug": asset_slug2,
+                    "description": "mss859430177",
+                    "media_url": "https://s3.us-east-2.amazonaws.com/chc-collections/test_s3/mss859430177/1.jpg",
+                    "media_type": MediaType.IMAGE,
+                    "collection": {"slug": "Collection1"},
+                    "subcollection": None,
+                    "sequence": 1,
+                    "metadata": {"key": "val2"},
+                    "status": Status.EDIT,
+                }
+            ]
+        }
+        responses.add(
+            responses.GET,
+            "http://testserver/ws/asset/%s/" % (collection_slug,),
+            json=assets_json, status=200,
+        )
+
+        responses.add(
+            responses.POST, "http://testserver/ws/transcription_create/", status=200
+        )
+        responses.add(responses.POST, "http://testserver/ws/tag_create/", status=200)
+
+        # Act
+        response = self.client.post(
+            "/transcribe/Collection1/asset/Asset1/",
+            {"tx": "First Test Transcription", "tags": tag_name, "action": "Submit for Review"},
+        )
+
+        # Assert
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, "/transcribe/Collection1/asset/%s/" % (asset_slug2, ))
+
     @responses.activate
     def test_ConcordiaAssetView_post_anonymous_happy_path(self):
         """

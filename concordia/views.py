@@ -313,7 +313,8 @@ class ConcordiaAssetView(TemplateView):
         :param kwargs:
         :return: redirect back to same page
         """
-        self.get_context_data()
+        # don't know why this would be called here
+        # self.get_context_data()
         response = requests.get(
             "%s://%s/ws/asset_by_slug/%s/%s/"
             % (
@@ -331,6 +332,9 @@ class ConcordiaAssetView(TemplateView):
             if not captcha_form.is_valid():
                 logger.info("Invalid captcha response")
                 return self.get(self.request, *args, **kwargs)
+
+        redirect_path = self.request.path
+
         if "tx" in self.request.POST:
             tx = self.request.POST.get("tx")
             tx_status = self.state_dictionary[self.request.POST.get("action")]
@@ -347,6 +351,28 @@ class ConcordiaAssetView(TemplateView):
                 },
                 cookies=self.request.COOKIES,
             )
+
+            if tx_status == Status.SUBMITTED:
+                # find a page with no transcriptions in this collection
+                response = requests.get(
+                    "%s://%s/ws/asset/%s/"
+                    % (
+                        self.request.scheme,
+                        self.request.get_host(),
+                        self.args[0]),
+                    cookies=self.request.COOKIES,
+                )
+                asset_list_json = json.loads(response.content.decode("utf-8"))
+                for asset_item in asset_list_json["results"]:
+                    response = requests.get(
+                        "%s://%s/ws/transcription/%s/"
+                        % (self.request.scheme, self.request.get_host(), asset_item["id"]),
+                        cookies=self.request.COOKIES,
+                    )
+                    transcription_json = json.loads(response.content.decode("utf-8"))
+                    if transcription_json["text"] == "":
+                        redirect_path = "/transcribe/%s/asset/%s/" % (self.args[0], asset_item["slug"])
+                        break
 
         if "tags" in self.request.POST and self.request.user.is_authenticated == True:
             tags = self.request.POST.get("tags").split(",")
@@ -377,7 +403,7 @@ class ConcordiaAssetView(TemplateView):
                     cookies=self.request.COOKIES,
                 )
 
-        return redirect(self.request.path)
+        return redirect(redirect_path)
 
 
 class ConcordiaAlternateAssetView(View):
