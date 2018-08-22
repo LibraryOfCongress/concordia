@@ -43,10 +43,9 @@ If you are proposing a feature:
 * Remember that this is a volunteer-driven project, and that contributions
   are welcome :)
 
-Get Started!
-------------
+### Get Started!
 
-Ready to contribute? Check out our [README](https://github.com/LibraryOfCongress/concordia/blob/master/README.rst) on how to set up your machine for local development.
+Ready to contribute? Check out our [README](https://github.com/LibraryOfCongress/concordia#concordia) on how to set up your machine for local development.
 
 1. Fork the `concordia` repo on GitHub.
 2. Clone your fork locally:
@@ -55,13 +54,7 @@ Ready to contribute? Check out our [README](https://github.com/LibraryOfCongress
     $ git clone git@github.com:your_name_here/concordia.git
     ```
 
-3. Install your local copy into a virtualenv. Assuming you have virtualenvwrapper installed, this is how you set up your fork for local development::
-
-    ```
-    $ mkvirtualenv concordia
-    $ cd concordia/
-    $ python setup.py develop
-    ```
+3. Install your local copy to your virtual environment. Follow the instructions on [installing pipenv in our README](https://github.com/LibraryOfCongress/concordia/blob/2b211d3054fb681edb28adfab37928ad80ff859c/README.rst#serve)
 
 4. Create a branch for local development:
 
@@ -90,4 +83,4 @@ Before you submit a pull request, check that it meets these guidelines:
 2. If the pull request adds functionality, the docs should be updated. Put
    your new functionality into a function with a docstring, and add the
    feature to the list in README.rst.
-3. The pull request should work for Python [add versions here]
+3. The pull request should work for Python `3.6`
