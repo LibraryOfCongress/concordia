@@ -6,7 +6,15 @@ $( document ).ready(function() {
 
   $( 'input[type="submit"]' ).click(function() {
     sessionStorage.setItem('show_message', 'true');
-    });;
+    });
+
+  $('#instruction-button').toggle(function() {
+    instructionButton = $(this)
+    instructionButton.children('span').rotate({ endDeg:180, persist:true });
+  }, function() {
+    instructionButton = $(this)
+    instructionButton.children('span').rotate({ endDeg:360, duration:.2 });
+  });
 });
 
 /*
