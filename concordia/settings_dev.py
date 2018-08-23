@@ -25,7 +25,7 @@ ALLOWED_HOSTS = ["127.0.0.1", "0.0.0.0", "*"]
 
 CELERY_BROKER_URL = "amqp://"
 
-CONCORDIA = {"netloc": "http://0:80"}
+CONCORDIA = {"netloc": "http://0.0.0.0:8000"}
 
 IMPORTER = {
     "BASE_URL": "",
