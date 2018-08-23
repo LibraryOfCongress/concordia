@@ -695,10 +695,12 @@ input {
 }
 
 .instruction-arrow {
-    transition: all .25s;
+    -webkit-transform .25s; /* Safari */
+    transition: transform .25s;
 }
 
-.instruction-arrow.up {
+#instruction-arrow.up {
+    -webkit-transform: rotate(180deg); /* Safari */
     transform: rotate(180deg);
 }
 
