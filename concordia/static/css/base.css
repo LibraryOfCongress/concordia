@@ -585,7 +585,7 @@ input {
 .asset-image {
     height: var(--height-contribute-image);
     min-height: calc( 100vh - 9.625rem );
-    border: 1px solid var(--bg-lightest-gray);
+    border: 0px solid transparent;
 }
 
 #test-percent {
@@ -672,13 +672,26 @@ input {
     100% {width: 100%; height: 100%; opacity: 1; color: rgba(51,51,51,1) !important; }
 }
 
-.contribute-instructions.instruction-window {
-    animation-name: instructions;
-    animation-duration: .5s;
+.contribute-instructions.instruction-window.collapse {
     display: none;
     position: absolute;
     left: 0;
     bottom: 2.375rem;
+}
+
+.contribute-instructions.instruction-window.collapsing {
+    animation-name: instructions;
+    animation-duration: .5s;
+}
+
+.contribute-instructions.instruction-window.collapse.show {
+    display: block;
+    height: 100%;
+    bottom: 2.375rem;
+}
+
+.instruction-window p {
+    margin-bottom: 0;
 }
 
 /*
