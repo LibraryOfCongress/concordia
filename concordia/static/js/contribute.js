@@ -9,6 +9,7 @@ $( document ).ready(function() {
     });
 
   $('#instruction-button').click(function() {
+    instructionButton = $(this);
     instructionButton.children('span').toggleClass('up');
   });
 });
