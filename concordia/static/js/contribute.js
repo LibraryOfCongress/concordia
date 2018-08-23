@@ -8,12 +8,8 @@ $( document ).ready(function() {
     sessionStorage.setItem('show_message', 'true');
     });
 
-  $('#instruction-button').toggle(function() {
-    instructionButton = $(this)
-    instructionButton.children('span').rotate({ endDeg:180, persist:true });
-  }, function() {
-    instructionButton = $(this)
-    instructionButton.children('span').rotate({ endDeg:360, duration:.2 });
+  $('#instruction-button').click(function() {
+    instructionButton.children('span').toggleClass('up');
   });
 });
 

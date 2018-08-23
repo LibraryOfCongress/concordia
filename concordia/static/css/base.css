@@ -694,6 +694,14 @@ input {
     margin-bottom: 0;
 }
 
+.instruction-arrow {
+    transition: all .25s;
+}
+
+.instruction-arrow.up {
+    transform: rotate(180deg);
+}
+
 /*
 * tag-input
 */
