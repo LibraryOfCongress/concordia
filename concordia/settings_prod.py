@@ -40,3 +40,10 @@ EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 EMAIL_PORT = 587
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "")
 DEFAULT_TO_EMAIL = DEFAULT_FROM_EMAIL
+
+# HMAC activation flow provide the two-step registration process,
+# the user signs up and then completes activation via email instructions.
+REGISTRATION_URLS = "registration.backends.hmac.urls"
+REGISTRATION_SALT = "registration"  # doesn't need to be secret
+
+ACCOUNT_ACTIVATION_DAYS = 1  # required for HMAC registration two-step-flow
