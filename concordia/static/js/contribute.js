@@ -7,11 +7,6 @@ $( document ).ready(function() {
   $( 'input[type="submit"]' ).click(function() {
     sessionStorage.setItem('show_message', 'true');
     });
-
-  $('#instruction-button').click(function() {
-    instructionButton = $(this);
-    instructionButton.children('span').toggleClass('up');
-  });
 });
 
 /*

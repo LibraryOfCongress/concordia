@@ -690,18 +690,21 @@ input {
     bottom: 2.375rem;
 }
 
+.instruction-window {
+    border-top: .0675rem solid var(--bg-darkest-gray);
+}
+
 .instruction-window p {
     margin-bottom: 0;
 }
 
-.instruction-arrow {
-    -webkit-transform .25s; /* Safari */
-    transition: transform .25s;
+.instruction-button {
+    border-radius: 0;
 }
 
-#instruction-arrow.up {
-    -webkit-transform: rotate(180deg); /* Safari */
-    transform: rotate(180deg);
+.instruction-button:focus {
+    border-radius: 0;
+    box-shadow: none;
 }
 
 /*
