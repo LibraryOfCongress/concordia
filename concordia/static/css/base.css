@@ -698,11 +698,11 @@ input {
     margin-bottom: 0;
 }
 
-.instruction-button {
+#instruction-button {
     border-radius: 0;
 }
 
-.instruction-button:focus {
+#instruction-button:focus {
     border-radius: 0;
     box-shadow: none;
 }
