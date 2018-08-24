@@ -47,7 +47,7 @@
                 <a class="dropdown-item" href="{% url 'admin:index' %}">Admin pages</a>
                 {% endif %}
                 {% if request.user|has_group:"CM" %}
-                    <a class="dropdown-item" href="{% url 'admin:index' %}">Communit Manager Pages</a>
+                    <a class="dropdown-item" href="{% url 'admin:index' %}">Community Manager Pages</a>
                 {% endif %}
                 <a class="dropdown-item" href="{% url 'logout' %}">Logout</a>
               </div>
