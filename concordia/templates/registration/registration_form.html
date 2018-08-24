@@ -58,15 +58,6 @@ input#id_captcha_1 {
                     <label class="sr-only" for="id_password2">Confirm password</label>
                     {{ form.password2 }}
                 </div>
-                <div class="form-group">
-                    {% if form.captcha.errors %}
-                        <div class="text-danger">
-                            {% for error in form.captcha.errors %}{{ error }} {% endfor %}
-                        </div>
-                    {% endif %}
-                    <label class="sr-only" for="id_password2">Captcha</label>
-                    {{ form.captcha }}
-                </div>
                 <div class="d-flex col mx-auto justify-content-center pt-half">
                     <a href="{% url 'login' %}" class="text-center blue-text">I already have an account</a>
                 </div>
