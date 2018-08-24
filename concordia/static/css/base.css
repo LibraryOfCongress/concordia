@@ -66,6 +66,13 @@ h5 {
     font-weight: normal;
 }
 
+h5.small {
+    font-family: "Open Sans", sans-serif;
+    font-size: .75rem;
+    line-height: 125%;
+    font-weight: normal;
+}
+
 h6 {
     font-family: 'Open Sans', sans-serif;
     font-size: 0.875rem;
@@ -127,6 +134,10 @@ a.offwhite-text:hover {
 a.gray-text:hover {
     color: var(--primary-color);
     text-decoration: none;
+}
+
+#transcription-state-div i {
+    font-size: .75rem;
 }
 
 .bg-offwhite {

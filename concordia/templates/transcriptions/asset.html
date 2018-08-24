@@ -43,6 +43,27 @@ div#captcha_div{
                         {% endif %}
                     </div>
                 </nav>
+                {% if transcription.status %}
+                    switch ("{{ transcription.status }}") {
+                        case 'Edit':
+                            <div id="transcription-state-div" class="mx-half" >
+                                <i class="fas fa-edit offwhite-text"><h5 class="offwhite-text d-inline small" id="transcription-state" name="transcription-state">Current State: {{ transcription.status }}</h5>
+                            </div>
+                        case 'Submitted':
+                            <div id="transcription-state-div" class="mx-half" >
+                                <i class="fas fa-list offwhite-text"><h5 class="offwhite-text d-inline small" id="transcription-state" name="transcription-state">Current State: {{ transcription.status }}</h5>
+                            </div>
+                        case 'Completed':
+                            <div id="transcription-state-div" class="mx-half" >
+                                <i class="fas fa-check offwhite-text"><h5 class="offwhite-text d-inline small" id="transcription-state" name="transcription-state">Current State: {{ transcription.status }}</h5>
+                            </div>
+
+                    }
+                {% else %}
+                    <div id="transcription-state-div" class="mx-half" >
+                        <i class="fas fa-edit offwhite-text"><h5 class="offwhite-text d-inline small" id="transcription-state" name="transcription-state">Current State: {{ transcription.status }}</h5>
+                    </div>
+                {% endif %}
                 <form class="mx-half" id="contribute-form" method="post">
                     {% csrf_token %}
                     <div class="tab-content" id="nav-tabContent">
@@ -172,9 +193,6 @@ div#captcha_div{
                         </table>
                     </div>
                 </form>
-                <div id="transcription-state-div">
-                    <h5 class="offwhite-text d-inline" id="transcription-state" name="transcription-state">Current State: {{ transcription.status }}</h5>
-                </div>
                 <div>
                     <h5 class="offwhite-text d-inline" id="register-login-reminder">Only registered users can tag.
                         <a class="blue-text" href="/account/register/">Register</a> or <a class="blue-text" href="/account/login">Login</a></h5>
