@@ -16,11 +16,11 @@ echo Running migrations
 echo Running collectstatic
 ./manage.py collectstatic --clear --noinput -v0
 
-echo Running indexing
-./manage.py search_index --rebuild -f
-
 echo Creating admin user
 ./manage.py shell -c "from django.contrib.auth.models import User; User.objects.create_superuser('admin', 'admin@example.com', '$CONCORDIA_ADMIN_PW')"
+
+echo Running indexing
+./manage.py search_index --rebuild -f
 
 echo Running Django dev server
 ./manage.py runserver 0:80

@@ -9,6 +9,8 @@ LOGGING["handlers"]["celery"]["filename"] = "./logs/concordia-celery.log"
 LOGGING["loggers"]["django"]["level"] = "INFO"
 LOGGING["loggers"]["celery"]["level"] = "INFO"
 
+INSTALLED_APPS += ['django_elasticsearch_dsl']
+
 DJANGO_SECRET_KEY = "changeme"
 
 # TODO: For final deployment to production,
@@ -21,6 +23,13 @@ IMPORTER = {
     "IMAGES_FOLDER": "/concordia_images/",
     "ITEM_COUNT": "",
     "S3_BUCKET_NAME": "",
+}
+
+ELASTICSEARCH_DSL_SIGNAL_PROCESSOR = 'django_elasticsearch_dsl.signals.RealTimeSignalProcessor'
+ELASTICSEARCH_DSL = {
+    'default': {
+        'hosts': 'elk:9200'
+    },
 }
 
 EMAIL_USE_TLS = True
