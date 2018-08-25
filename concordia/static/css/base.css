@@ -136,7 +136,7 @@ a.gray-text:hover {
     text-decoration: none;
 }
 
-#transcription-state-div i {
+#transcription-state-div i, #transcription-state-div {
     font-size: .75rem;
     text-transform: capitalize;
 }
