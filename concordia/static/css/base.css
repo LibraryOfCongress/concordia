@@ -138,6 +138,7 @@ a.gray-text:hover {
 
 #transcription-state-div i {
     font-size: .75rem;
+    text-transform: capitalize;
 }
 
 .bg-offwhite {

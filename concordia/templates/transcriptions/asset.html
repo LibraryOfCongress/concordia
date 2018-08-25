@@ -46,35 +46,35 @@ div#captcha_div{
                 {% if transcription.status %}
                     switch ("{{ transcription.status }}") {
                         case 'Edit':
-                            <div id="transcription-state-div" class="mx-half" >
-                                <i class="fas fa-edit offwhite-text"><h5 class="offwhite-text d-inline small" id="transcription-state" name="transcription-state">Current State: {{ transcription.status }}</h5>
+                            <div id="transcription-state-div" class="mx-half w-100" >
+                                <i class="fas fa-edit tx-edit pr-2"></i><h5 class="offwhite-text d-inline small" id="transcription-state" name="transcription-state">Open for edit</h5>
                             </div>
                         case 'Submitted':
-                            <div id="transcription-state-div" class="mx-half" >
-                                <i class="fas fa-list offwhite-text"><h5 class="offwhite-text d-inline small" id="transcription-state" name="transcription-state">Current State: {{ transcription.status }}</h5>
+                            <div id="transcription-state-div" class="mx-half w-100" >
+                                <i class="fas fa-list tx-submitted pr-2"></i><h5 class="offwhite-text d-inline small" id="transcription-state" name="transcription-state">Submitted for Review</h5>
                             </div>
                         case 'Completed':
-                            <div id="transcription-state-div" class="mx-half" >
-                                <i class="fas fa-check offwhite-text"><h5 class="offwhite-text d-inline small" id="transcription-state" name="transcription-state">Current State: {{ transcription.status }}</h5>
+                            <div id="transcription-state-div" class="mx-half w-100" >
+                                <i class="fas fa-check tx-completed pr-2"></i><h5 class="offwhite-text d-inline small" id="transcription-state" name="transcription-state">Completed</h5>
                             </div>
 
                     }
                 {% else %}
-                    <div id="transcription-state-div" class="mx-half" >
-                        <i class="fas fa-edit offwhite-text"><h5 class="offwhite-text d-inline small" id="transcription-state" name="transcription-state">Current State: {{ transcription.status }}</h5>
+                    <div id="transcription-state-div" class="mx-half w-100" >
+                        <i class="fas fa-edit tx-edit"></i><h5 class="offwhite-text d-inline small" id="transcription-state" name="transcription-state">Open for edit</h5>
                     </div>
                 {% endif %}
                 <form class="mx-half" id="contribute-form" method="post">
                     {% csrf_token %}
                     <div class="tab-content" id="nav-tabContent">
                         <div class="tab-pane fade show active rounded" id="tab-transcription" role="tabpanel" aria-labelledby="nav-pill-transcription">
-                            <textarea class="w-100" name="tx" id="transcription-input" placeholder="Go ahead, start typing. You got this!" aria-label="Transcription input">{{transcription.text}}</textarea>
+                            <textarea class="w-100 rounded" name="tx" id="transcription-input" placeholder="Go ahead, start typing. You got this!" aria-label="Transcription input">{{transcription.text}}</textarea>
                         </div>
                         <div class="tab-pane fade rounded" id="tab-tag" role="tabpanel" aria-labelledby="nav-pill-tag">
                             {% if user.is_authenticated %}
-                                <input type="text" id="tag-input" name="tags" data-role="tagsinput" value="{%for tag in tags %}{{tag}},{% endfor %}" aria-label="Tag input">
+                                <input type="text" id="tag-input" class="rounded" name="tags" data-role="tagsinput" value="{%for tag in tags %}{{tag}},{% endfor %}" aria-label="Tag input">
                             {% else %}
-                                <input type="text" id="tag-input" name="tags" data-role="tagsinput" value="{%for tag in tags %}{{tag}},{% endfor %}" aria-label="Tag input" disabled="true">
+                                <input type="text" id="tag-input" class="rounded" name="tags" data-role="tagsinput" value="{%for tag in tags %}{{tag}},{% endfor %}" aria-label="Tag input" disabled="true">
                             {% endif %}
                         </div>
                         {% if not discussion_hide %}
@@ -149,48 +149,17 @@ div#captcha_div{
                     </div>
 
                     <div class="my-quarter d-flex justify-content-around align-items-center">
-                        <table>
-                            <tr>
-                                <td>
-                                    <input id="save-button" name="action" type="submit"
-                                           class="btn btn-primary btn-primary-fixed-width float-left" value="Save">
-                                </td>
-                            </tr>
-
-                            {% if user.is_anonymous %}
-                            <tr class="d-none" id="captcha_tr">
-                                <td>
-                                   <div id="captcha_div">
-                                    {{ captcha_form.captcha }}
-                                   </div>
-                                </td>
-                            </tr>
-                            {% endif %}
-
-                            <tr>
-                                <td>
-                                    <input id="review-button" name="action" type="submit"
-                                           class="btn btn-primary btn-primary-fixed-width float-left"
-                                           value="Submit for Review">
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    <input id="contact-button" name="action" type="submit"
-                                           class="btn btn-primary btn-primary-fixed-width float-left"
-                                           value="Contact Manager">
-                                </td>
-                            </tr>
-                            {% if user.is_authenticated %}
-                            <tr>
-                                <td>
-                                    <input id="complete-button" name="action" type="submit"
-                                           class="btn btn-primary btn-primary-fixed-width float-left"
-                                           value="Mark Completed">
-                                </td>
-                            </tr>
-                            {% endif %}
-                        </table>
+                        <input id="save-button" name="action" type="submit" class="btn btn-primary" value="Save">
+                        <input id="review-button" name="action" type="submit" class="btn btn-primary" value="Submit for Review">
+                        <input id="contact-button" name="action" type="submit" class="btn btn-secondary" value="Contact Manager">
+                        {% if user.is_authenticated %}
+                            <input id="complete-button" name="action" type="submit" class="btn btn-primary" value="Mark Completed">
+                        {% endif %}
+                        {% if user.is_anonymous %}
+                            <div id="captcha_div">
+                                {{ captcha_form.captcha }}
+                            </div>
+                        {% endif %}
                     </div>
                 </form>
                 <div>
@@ -399,14 +368,12 @@ div#captcha_div{
                 {% if transcription.status %}
                     switch ("{{ transcription.status }}") {
                         case 'Edit':
-                            $("#transcription-state").text("Transcription is open for Edit");
                             $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute py-half fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> Your contribution has been saved.</div>');
                             setTimeout(function() {
                                 $('.alert-contribute').fadeOut(500);
                             }, 3000);
                             break;
                         case 'Submitted':
-                            $("#transcription-state").text("Transcription is submitted for Review");
                             $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute py-half fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> The transcription is ready for review.</div>');
                             setTimeout(function() {
                                 $('.alert-contribute').fadeOut(500);
@@ -414,36 +381,17 @@ div#captcha_div{
 
                             break;
                         case 'Completed':
-                            $("#transcription-state").text("Transcription is Complete");
                             $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute py-half fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> The transcription is now complete.</div>');
                             setTimeout(function() {
                                 $('.alert-contribute').fadeOut(500);
                             }, 3000);
 
                     }
-                {% else %}
-                    $("#transcription-state").text("Transcription is open for Edit");
                 {% endif %}
 
                 sessionStorage.setItem('show_message', 'false');
                 show_message = sessionStorage.getItem('show_message');
             } else {
-                {% if transcription.status %}
-                    switch ("{{ transcription.status }}") {
-                        case 'Edit':
-                            $("#transcription-state").text("Transcription is open for Edit");
-                            break;
-                        case 'Submitted':
-                            $("#transcription-state").text("Transcription is submitted for Review");
-                            break;
-                        case 'Completed':
-                            $("#transcription-state").text("Transcription is Complete");
-
-                    }
-                {% else %}
-                    $("#transcription-state").text("Transcription is open for Edit");
-                {% endif %}
-
                 sessionStorage.setItem('show_message', 'false');
                 show_message = sessionStorage.getItem('show_message');
             }
