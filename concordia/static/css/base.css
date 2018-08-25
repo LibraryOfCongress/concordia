@@ -1,6 +1,6 @@
 :root {
     --primary-color: rgba(0,97,142,1); /* #00618E */
-      --primary-color-hover: rgba(0,35,71,1); /* #002347 */
+    --primary-color-hover: rgba(0,35,71,1); /* #002347 */
     --secondary-color: rgba(227,72,0,1); /* #E34800 */
     --text-color-primary: rgba(51,51,51,1); /* #333333 */
     --text-color-offwhite: rgba(250,250,250,1); /* #FAFAFA */
@@ -139,6 +139,18 @@ a.gray-text:hover {
 #transcription-state-div i {
     font-size: .75rem;
     text-transform: capitalize;
+}
+
+i.tx-edit {
+    color: var(--text-color-offwhite);
+}
+
+i.tx-submitted {
+    color: var(--secondary-color);
+}
+
+i.tx-completed {
+    color: rgba(22,201,74,1);
 }
 
 .bg-offwhite {
@@ -460,9 +472,9 @@ input {
 }
 
 .btn-default {
-    background-color: var(--bg-darkest-gray);
-    border-color: var(--bg-darkest-gray);
-    color: var(--text-color-offwhite);
+    background-color: rgba(158,158,158,1);
+    border-color: rgba(158,158,158,1);
+    color: var(--text-color-primary);
 }
 
 .btn-dark {
