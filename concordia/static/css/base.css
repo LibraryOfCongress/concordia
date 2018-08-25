@@ -71,7 +71,7 @@ h5.small {
     font-size: .75rem;
     line-height: 125%;
     font-weight: normal;
-    text-transform: capitalize !important;
+    text-transform: uppercase;
 }
 
 h6 {
