@@ -23,7 +23,7 @@
                           </div>
                     {% if request.user|has_group:"CM" %}
 			<div class="col-md-8 mx-auto text-center">
-                        {% if project.is_active %}
+                        {% if project.is_publish %}
                             <button type="button" class="confirm-modal btn btn-primary col" data-toggle="modal" id="{{ project.slug }}" data-target="#projectConfirmModal" data-collection="{{ project.collection.slug }}">
                                     Unpublish</button>
                         {% else %}

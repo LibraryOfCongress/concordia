@@ -625,8 +625,8 @@ def publish_collection(request, collection, is_publish):
 
     collection.save()
 
-    return JsonResponse({'message': 'Collection has been %s.' % ('published' if is_publish else 'unpublished'),
-                         'state': True if is_publish else False}, safe=True)
+    return JsonResponse({'message': 'Collection has been %s.' % ('published' if is_publish=='true' else 'unpublished'),
+                         'state': True if is_publish=='true' else False}, safe=True)
 
 
 def publish_project(request, collection, project, is_publish):
@@ -642,6 +642,6 @@ def publish_project(request, collection, project, is_publish):
 
     sub_collection.save()
 
-    return JsonResponse({'message': 'Project has been %s.' % ('published' if is_publish else 'unpublished'),
+    return JsonResponse({'message': 'Project has been %s.' % ('published' if is_publish=='true' else 'unpublished'),
                          'state': True if is_publish=='true' else False}, safe=True)
 
