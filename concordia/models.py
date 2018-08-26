@@ -28,7 +28,6 @@ class Status:
     COMPLETED = "Completed"
     INACTIVE = "Inactive"
     ACTIVE = "Active"
-    PUBLISH = 'Publish'
 
     DEFAULT = EDIT
     CHOICES = (
@@ -37,7 +36,6 @@ class Status:
         (COMPLETED, "Transcription Completed"),
         (INACTIVE, "Inactive"),
         (ACTIVE, "Active"),
-        (PUBLISH, "Publish"),
     )
 
 
@@ -61,6 +59,7 @@ class Collection(MetricsModelMixin("collection"), models.Model):
     status = models.CharField(
         max_length=10, choices=Status.CHOICES, default=Status.DEFAULT
     )
+    is_publish = models.BooleanField(default=False, blank=True)
 
     def __str__(self):
         return self.title
@@ -110,6 +109,7 @@ class Subcollection(models.Model):
     status = models.CharField(
         max_length=10, choices=Status.CHOICES, default=Status.DEFAULT
     )
+    is_publish = models.BooleanField(default=False, blank=True)
 
     class Meta:
         unique_together = (("slug", "collection"),)

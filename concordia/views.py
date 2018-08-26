@@ -27,7 +27,7 @@ from rest_framework.response import Response
 from concordia.forms import (CaptchaEmbedForm, ConcordiaContactUsForm,
                              ConcordiaUserEditForm, ConcordiaUserForm)
 from concordia.models import (Asset, Collection, PageInUse, Status, Tag, Transcription,
-                              UserAssetTagCollection, UserProfile)
+                              UserAssetTagCollection, UserProfile,Subcollection)
 from concordia.views_ws import PageInUseCreate, PageInUsePut
 from importer.views import CreateCollectionView
 
@@ -612,15 +612,36 @@ def publish_collection(request, collection, is_publish):
     except Collection.DoesNotExist:
         raise Http404
 
-    existing_status = collection.status
-
-    if is_publish=='true':
-        to_status = Status.PUBLISH
-        collection.status = Status.PUBLISH
+    if is_publish == 'true':
+        collection.is_publish = True
     else:
-        to_status = Status.EDIT
-        collection.status = Status.EDIT
+        collection.is_publish = False
+
+    sub_collections = collection.subcollection_set.all()
+
+    for sc in sub_collections:
+        sc.is_publish = True if is_publish == 'true' else False
+        sc.save()
 
     collection.save()
 
-    return JsonResponse({'message': 'collection status changed from {0} to {1}'.format(existing_status, to_status), 'to_status': to_status}, safe=True)
+    return JsonResponse({'message': 'Collection has been %s.' % ('published' if is_publish else 'unpublished'),
+                         'state': True if is_publish else False}, safe=True)
+
+
+def publish_project(request, collection, project, is_publish):
+    try:
+        sub_collection = Subcollection.objects.get(collection__slug=collection, slug=project)
+    except Subcollection.DoesNotExist:
+        raise Http404
+
+    if is_publish == 'true':
+        sub_collection.is_publish = True
+    else:
+        sub_collection.is_publish = False
+
+    sub_collection.save()
+
+    return JsonResponse({'message': 'Project has been %s.' % ('published' if is_publish else 'unpublished'),
+                         'state': True if is_publish=='true' else False}, safe=True)
+

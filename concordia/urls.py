@@ -73,6 +73,11 @@ tx_urlpatterns = (
             name="publish collection",
         ),
         re_path(
+            r"publish/project/(?P<collection>[a-zA-Z0-9-]+)/(?P<project>[a-zA-Z0-9-]+)/(?P<is_publish>[a-zA-Z]+)/$",
+            views.publish_project,
+            name="publish project",
+        ),
+        re_path(
             r"^([^/]+)/([^/]+)/$", views.ConcordiaCollectionView.as_view(), name="project"
         ),
     ],
