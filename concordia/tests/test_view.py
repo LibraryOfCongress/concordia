@@ -1323,6 +1323,47 @@ class ViewTest_Concordia(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['state'], True)
 
+    def test_UnpublishCollectionView(self):
+        """Test for updating status of a collection"""
+
+        # Arrange
+        self.collection = Collection(
+            title="TextCollection",
+            slug="slug1",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+            is_publish=True,
+        )
+        self.collection.save()
+
+        self.subcollection = Subcollection(
+            title="TextCollection sub collection",
+            slug="test-slug2-proj",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+            collection=self.collection,
+            is_publish=True,
+        )
+        self.subcollection.save()
+
+        self.subcollection1 = Subcollection(
+            title="TextCollection sub collection1",
+            slug="test-slug2-proj1",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+            collection=self.collection,
+            is_publish=True,
+        )
+        self.subcollection1.save()
+
+        # Act
+        response = self.client.get("/transcribe/publish/collection/slug1/false/")
+
+        # Assert
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['state'], False)
+
     def test_PublishProjectView(self):
         """Test for updating status of a project"""
         
@@ -1361,8 +1402,43 @@ class ViewTest_Concordia(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['state'], True)
 
+    def test_UnpublishProjectView(self):
+        """Test for updating status of a project"""
 
+        # Arrange
+        self.collection = Collection(
+            title="TextCollection",
+            slug="slug1",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+            is_publish=True,
+        )
+        self.collection.save()
 
+        self.subcollection = Subcollection(
+            title="TextCollection sub collection",
+            slug="test-slug2-proj",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+            collection=self.collection,
+            is_publish=True,
+        )
+        self.subcollection.save()
 
+        self.subcollection1 = Subcollection(
+            title="TextCollection sub collection1",
+            slug="test-slug2-proj1",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+            collection=self.collection,
+            is_publish=True,
+        )
+        self.subcollection1.save()
 
+        # Act
+        response = self.client.get("/transcribe/publish/project/slug1/test-slug2-proj/false/")
 
+        # Assert
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['state'], False)
