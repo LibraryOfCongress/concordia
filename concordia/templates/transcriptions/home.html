@@ -22,14 +22,16 @@
                   <a href="{% url 'transcriptions:delete collection' c.slug %}" class="btn btn-danger col mb-quarter">Delete</a>
                   <a href="{% url 'transcriptions:exportCSV collection' c.slug %}" class="btn btn-success col mb-quarter">Export to csv</a>
                   <a href="{% url 'transcriptions:exportBagit collection' c.slug %}" class="btn btn-success col">Export to Bagit</a>
-                  <a href="{% url 'transcriptions:report collection' c.slug %}" class="mt-half">Report</a>
+                  <a href="{% url 'transcriptions:report collection' c.slug %}" class="mt-half col btn btn-primary">Report</a>
                 {% endif %}
                 {% if request.user|has_group:"CM" %}
-                    {% ifequal c.status 'Publish' %}
-                        <a class="publish_btn btn btn-success" href="#" id="{{ c.slug }}">Unpublish</a>
-		    {% else %}
-			<a class="publish_btn btn btn-success" href="#" id="{{ c.slug }}">Publish</a>
-		    {% endifequal %}
+                    {% if c.is_publish %}
+                        <button type="button" class="confirm-modal btn btn-primary col mt-half" data-toggle="modal" id="{{ c.slug }}" data-target="#collectionConfirmModal">
+                                Unpublish</button>
+                    {% else %}
+                        <button type="button" class="confirm-modal btn btn-primary col mt-half" data-toggle="modal" id="{{ c.slug }}" data-target="#collectionConfirmModal">
+                                Publish</button>
+                    {% endif %}
                 {% endif %}
               </div>
             </div>
@@ -50,29 +52,58 @@
     </div>
   </div>
 </div>
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="collectionConfirmModal" tabindex="-1" role="dialog" aria-labelledby="collectionConfirmModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="collectionConfirmModalLabel">Confirm Collection</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to make it public ?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="confirmbtn">Submit</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
-    $(".publish_btn").click(function(){
-        var collection_slug = $(this).attr('id');
-        var requested_status = $(this).text();
-	if(requested_status == 'Publish'){
-	    var to_status = 'true';
-	}
-	else{
-	    var to_status = 'false';
-	}
-        $.ajax({
-            url: '/transcribe/publish/collection/'+collection_slug+"/"+to_status+"/",
-            type: 'GET',
-            success: function(data, textStatus, jqXHR) {
-		if(data['to_status'] == 'Edit'){
-    		    $("#"+collection_slug).text('Publish');
-		}else{
-	            $("#"+collection_slug).text('Unpublish');
-		}
-            }
-        }).fail(function(data, jqXHR, textStatus, errorThrown) {
-            console.log("error: ", data);
-        });
+    $(document).ready(function(){
+         $(document).on('shown.bs.modal',"#collectionConfirmModal", function (e) {
+             var $invoker = $(e.relatedTarget);
+             $("#confirmbtn").click(function(e){
+                var collection_slug = $($invoker[0]).attr('id');
+                var requested_status = $("#"+collection_slug).text().trim();
+                if(requested_status == 'Publish'){
+                    var to_status = 'true';
+                }
+                else{
+                    var to_status = 'false';
+                }
+                $.ajax({
+                    url: '/transcribe/publish/collection/'+collection_slug+"/"+to_status+"/",
+                    type: 'GET',
+                    success: function(data, textStatus, jqXHR) {
+                        $('#collectionConfirmModal').modal('hide');
+                        if(data['state']){
+                            $("#"+collection_slug).text('Unpublish');
+                        }else{
+                            $("#"+collection_slug).text('Publish');
+                        }
+                    }
+                }).fail(function(data, jqXHR, textStatus, errorThrown) {
+                   console.log("error: ", data);
+                });
+             });
+         });
     });
 </script>
 {% endblock main_content %}
+
