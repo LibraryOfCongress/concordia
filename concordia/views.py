@@ -2,6 +2,7 @@ import html
 import json
 import os
 from logging import getLogger
+from datetime import datetime, timedelta
 
 import requests
 from captcha.fields import CaptchaField
@@ -13,14 +14,15 @@ from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
 from django.db.models import Count, Q
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import Http404, get_object_or_404, redirect, render
 from django.template import loader
 from django.urls import reverse
 from django.views.generic import FormView, TemplateView, View
 from registration.backends.simple.views import RegistrationView
-from rest_framework import generics
+from rest_framework import generics, status
 from rest_framework.test import APIRequestFactory
+from rest_framework.response import Response
 
 from concordia.forms import (CaptchaEmbedForm, ConcordiaContactUsForm,
                              ConcordiaUserEditForm, ConcordiaUserForm)
@@ -595,3 +597,30 @@ class FilterCollections(generics.ListAPIView):
         from django.http import JsonResponse
 
         return JsonResponse(list(queryset), safe=False)
+
+
+class UserView(TemplateView):
+    template_name = "user.html"
+
+    def get_context_data(self, **kws):
+        return dict(super().get_context_data(**kws))
+
+
+def publish_collection(request, collection, is_publish):
+    try:
+        collection = Collection.objects.get(slug=collection)
+    except Collection.DoesNotExist:
+        raise Http404
+
+    existing_status = collection.status
+
+    if is_publish=='true':
+        to_status = Status.PUBLISH
+        collection.status = Status.PUBLISH
+    else:
+        to_status = Status.EDIT
+        collection.status = Status.EDIT
+
+    collection.save()
+
+    return JsonResponse({'message': 'collection status changed from {0} to {1}'.format(existing_status, to_status), 'to_status': to_status}, safe=True)

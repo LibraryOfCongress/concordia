@@ -1,6 +1,9 @@
 {% extends "transcriptions/base.html" %}
 {% block title %}Citizen Historian Collections{% endblock title %}
 {% block main_content %} {% load staticfiles %}
+{% load auth_extras %}
+<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 <div class="container-fluid py-default">
   <div class="row">
     <div class="col-md-10 mx-auto bg-offwhite rounded">
@@ -21,6 +24,13 @@
                   <a href="{% url 'transcriptions:exportBagit collection' c.slug %}" class="btn btn-success col">Export to Bagit</a>
                   <a href="{% url 'transcriptions:report collection' c.slug %}" class="mt-half">Report</a>
                 {% endif %}
+                {% if request.user|has_group:"CM" %}
+                    {% ifequal c.status 'Publish' %}
+                        <a class="publish_btn btn btn-success" href="#" id="{{ c.slug }}">Unpublish</a>
+		    {% else %}
+			<a class="publish_btn btn btn-success" href="#" id="{{ c.slug }}">Publish</a>
+		    {% endifequal %}
+                {% endif %}
               </div>
             </div>
           </div>
@@ -40,4 +50,29 @@
     </div>
   </div>
 </div>
+<script>
+    $(".publish_btn").click(function(){
+        var collection_slug = $(this).attr('id');
+        var requested_status = $(this).text();
+	if(requested_status == 'Publish'){
+	    var to_status = 'true';
+	}
+	else{
+	    var to_status = 'false';
+	}
+        $.ajax({
+            url: '/transcribe/publish/collection/'+collection_slug+"/"+to_status+"/",
+            type: 'GET',
+            success: function(data, textStatus, jqXHR) {
+		if(data['to_status'] == 'Edit'){
+    		    $("#"+collection_slug).text('Publish');
+		}else{
+	            $("#"+collection_slug).text('Unpublish');
+		}
+            }
+        }).fail(function(data, jqXHR, textStatus, errorThrown) {
+            console.log("error: ", data);
+        });
+    });
+</script>
 {% endblock main_content %}

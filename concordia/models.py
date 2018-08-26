@@ -28,6 +28,7 @@ class Status:
     COMPLETED = "Completed"
     INACTIVE = "Inactive"
     ACTIVE = "Active"
+    PUBLISH = 'Publish'
 
     DEFAULT = EDIT
     CHOICES = (
@@ -36,6 +37,7 @@ class Status:
         (COMPLETED, "Transcription Completed"),
         (INACTIVE, "Inactive"),
         (ACTIVE, "Active"),
+        (PUBLISH, "Publish"),
     )
 
 

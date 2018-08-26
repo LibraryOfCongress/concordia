@@ -68,6 +68,11 @@ tx_urlpatterns = (
             name="transcription",
         ),
         re_path(
+            r"publish/collection/(?P<collection>[a-zA-Z0-9-]+)/(?P<is_publish>[a-zA-Z]+)/$",
+            views.publish_collection,
+            name="publish collection",
+        ),
+        re_path(
             r"^([^/]+)/([^/]+)/$", views.ConcordiaCollectionView.as_view(), name="project"
         ),
     ],
@@ -129,7 +134,9 @@ urlpatterns = [
     re_path(r'^ws/transcription_create/$', views_ws.TranscriptionCreate().as_view()),
     re_path(r'^ws/tags/(?P<asset>(.*?))/$', views_ws.UserAssetTagsGet().as_view()),
     re_path(r'^ws/tag_create/$', views_ws.TagCreate.as_view()),
-
+    re_path(
+        r"^user/cm/$", views.UserView.as_view(), name="user-cm-view"
+    ),
 ]
 
 urlpatterns += [
@@ -192,3 +199,5 @@ urlpatterns += [url("", include("django_prometheus_metrics.urls"))]
 urlpatterns += [
     url(r'^captcha/', include('captcha.urls')),
 ]
+
+
