@@ -607,6 +607,9 @@ class UserView(TemplateView):
 
 
 def publish_collection(request, collection, is_publish):
+    """ Publish/Unpublish a collection to otherr users. On un/publishing collection,
+    it will get does the same effect for all its projects. """
+
     try:
         collection = Collection.objects.get(slug=collection)
     except Collection.DoesNotExist:
@@ -630,6 +633,8 @@ def publish_collection(request, collection, is_publish):
 
 
 def publish_project(request, collection, project, is_publish):
+    """ Publish/Unpublish a project to other users. """
+
     try:
         sub_collection = Subcollection.objects.get(collection__slug=collection, slug=project)
     except Subcollection.DoesNotExist:
