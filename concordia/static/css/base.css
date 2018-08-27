@@ -483,6 +483,10 @@ input {
     color: var(--text-color-offwhite);
 }
 
+.btn-row .btn {
+    width: 9.875rem !important;
+}
+
 .card-body {
     padding: 1rem 0.5rem;
 }
