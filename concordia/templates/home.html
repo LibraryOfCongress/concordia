@@ -1,158 +1,89 @@
-{% extends "base.html" %}
-{% block title %}Citizen Historian Home{% endblock title %}
-{% load staticfiles %}
-{% block main_content %}
-    <div class="container-fluid">
-      <div class="row">
-        <div class="col-12 overflow-hidden">
-          <div class="img-header text-center">
-            <div class="col-md-5 mx-auto padding-header">
-              <h1 class="header-text display-4">Make history</h1>
-              <a class="btn btn-secondary btn-lg mt-4" href="{% url 'transcriptions:transcribe' %}">GET STARTED!</a>
-            </div>
-          </div>
-        </div>
-        <div class="col-12 text-center">
-          <div class="bg-offwhite round-corners-bottom w-100">
-            <div class="col-lg-8 col-md-11 mx-auto py-half">
-              <h4 class="d-none d-md-block">Help us discover history by transcribing and tagging documents,<br />making these snapshots in time searchable and accessible for all.</h4>
-              <h4 class="d-md-none">Help us discover history by transcribing and tagging documents, making these snapshots in time searchable and accessible for all.</h4>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="container-fluid my-default">
-      <div class="row">
-        <div class="col-md-10 mx-auto bg-offwhite rounded mb-default">
-          <h3 class="mt-default ml-half">Collections</h3>
-          <div class="row">
-            <div class="d-flex flex-wrap col-12 justify-content-around">
-              <div class="col-12 col-md-4 col-lg-3 mb-default card home-collections shadow-regular bg-lightest-gray">
-                  <img class="card-img" src="{% static "img/AbrahamLincoln.png" %}">
-                  <div class="card-img-overlay card-img-overlay-featured bg-card-title">
-                    <h5 class="card-title align-text-bottom offwhite-text w-100">Abraham Lincoln Papers</h5>
-                  </div>
-              </div>
-              <div class="col-12 col-md-4 col-lg-3 mb-default card home-collections shadow-regular bg-lightest-gray">
-                  <img class="card-img" src="{% static "img/BranchRickey.png" %}">
-                  <div class="card-img-overlay card-img-overlay-featured bg-card-title">
-                    <h5 class="card-title align-text-bottom offwhite-text w-100">Branch Rickey Papers</h5>
-                  </div>
-              </div>
-              <div class="col-12 col-md-4 col-lg-3 mb-default card shadow-regular bg-lightest-gray">
-                  <img class="card-img" src="{% static "img/ClaraBarton.png" %}">
-                  <div class="card-img-overlay card-img-overlay-featured bg-card-title">
-                    <h5 class="card-title align-text-bottom offwhite-text w-100">Clara Barton Papers</h5>
-                  </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-md-10 mx-auto bg-offwhite rounded">
-          <h3 class="mt-default ml-half">Latest Blog Posts</h3>
-          <div class="row">
-            <div class="d-flex flex-wrap col-12 mb-default justify-content-around">
-              <div class="col-12 col-md-4 col-lg-3 mb-default card home-blogpost shadow-regular bg-lightest-gray">
-                <div class="latestblog-imgmask card-img-top mx-auto">
-                  <a href="#"><img class="rounded d-block mx-auto img-latestblog" src="{% static "img/Volunteer home v3 card full page.png" %}"></a>
-                </div>
-                <div class="card-body text-center">
-                  <h5 class="mb-0"><a href="#" class="card-title w-100 blue-text mb-0">Introducing Citizen Historian Center</a></h5>
-                  <small>September 25, 2018 by <a class="blue-text" href="">Meghan Ferriter</a></small>
-                  <h6 class="p-latestblog mt-3">As a part of Library of Congress Labs release last week, the National Digital Initiatives team launched Citizen Historian Center. This pilot crowdsourcing application was created in collaboration with the Serial and Government Publications Division and the Office of the Chief Information Officer (OCIO) at the Library of Congress […]</h6>
-                </div>
-              </div>
-
-              <div class="col-12 col-md-4 col-lg-3 mb-default card home-blogpost shadow-regular bg-lightest-gray">
-                <div class="latestblog-imgmask card-img-top mx-auto">
-                  <a href="#"><img class="rounded d-block mx-auto img-latestblog" src="{% static "img/Branch Rickey.png" %}"></a>
-                </div>
-                <div class="card-body text-center">
-                  <h5 class="mb-0"><a href="#" class="card-title w-100 blue-text mb-0">Now Online: Branch Rickey Scouting Reports</a></h5>
-                  <small>April 3, 2018 by <a class="blue-text" href="">Wendi Maloney</a></small>
-                  <h6 class="p-latestblog mt-3">Opening day for Major League Baseball took place last week, on March 29—the earliest opening date in MLB history, excepting for special international events. This year’s opening day also marked the first time in 50 years that a full slate of games was scheduled for the first day. The Library of Congress is marking the […]</h6>
-                </div>
-              </div>
-
-              <div class="col-12 col-md-4 col-lg-3 mb-default card shadow-regular bg-lightest-gray">
-                <div class="latestblog-imgmask card-img-top mx-auto">
-                  <a href="#"><img class="rounded d-block mx-auto img-latestblog" src="{% static "img/Volunteer home v3 card full page.png" %}"></a>
-                </div>
-                <div class="card-body text-center">
-                  <h5 class="mb-0"><a href="#" class="card-title w-100 blue-text mb-0">Introducing Citizen Historian Center</a></h5>
-                  <small>September 25, 2018 by <a class="blue-text" href="">Meghan Ferriter</a></small>
-                  <h6 class="p-latestblog mt-3">As a part of Library of Congress Labs release last week, the National Digital Initiatives team launched Citizen Historian Center. This pilot crowdsourcing application was created in collaboration with the Serial and Government Publications Division and the Office of the Chief Information Officer (OCIO) at the Library of Congress […]</h6>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+{% extends "base.html" %} {% block title %}Citizen Historian Home{% endblock title %} {% load staticfiles %} {% block main_content %}
+<div class="container-fluid px-default">
     <div class="row">
-      <div class="col-md-10 mx-auto mb-default bg-offwhite rounded">
-        <div class="mxy-default">
-          <h3 class="mt-default mx-half">Welcome to the Citizen Historian Center</h3>
-          <h5 class="mt-default mb-half font-weight-bolder mx-default">Enabling and Unleashing the Wisdom of the Crowd </h5>
-          <h6 class="mt-half mx-default">Welcome to the Library of Congress transcription and tagging site.<br /><br />This is a place for volunteers to help make history, by making historical artifacts easier to read and searchable with metadata.  Digital archives at the Library contain hundreds of thousands of mixed media types—manuscripts, photographs, audio and video files, to name a few—more than Library staff alone can catalog in a timely fashion.  So, we're opening up the vaults and appealing to you to help by translating and typing text into forms by way of transcriptions, tags, and comments.<br /><br />Through crowdsourcing efforts like this, the Library encourages volunteers to contribute time and effort towards the ultimate goal of transcribing and tagging a massive amount of original materials to make them searchable via metadata, ultimately allowing people to find specific information via search tools.  This effort also allows librarians and content managers to organize and make the material searchable and index-ready for web crawlers and other machine-learning agents.<br /><br />Please join us in preserving our Nation’s history by making records accessible, bit by bit, piece by piece, one precious artifact at a time.<br /><br />Let’s get started. <a class="blue-text" href="{% url 'transcriptions:transcribe' %}">Pick an image</a> and begin transcribing.
-          </h6>
+        <div class="col-12 ">
+            <div id="homepage-carousel" class="carousel slide" data-ride="carousel" data-interval="3000">
+                <div class="carousel-inner">
+                    <div class="carousel-item text-right active">
+                        <img class="d-block" src="{% static "img/rosa-parks.png" %}" alt="Rosa Parks carousel image">
+                    </div>
+                    <div class="carousel-item text-right">
+                        <img class="d-block" src="{% static "img/branch-rickey.png" %}" alt="Branch Rickey carousel image">
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 carousel-text text-center py-default">
+                <h1 class=" px-md-default">Make history</h1>
+                <p class="hero-text px-default d-none d-md-block">Help us discover history by transcribing and tagging documents, making these snapshots in time searchable and accessible for all.</p>
+                <a class="btn btn-primary btn-lg my-4" href="{% url 'transcriptions:transcribe' %}">GET STARTED!</a>
+            </div>
         </div>
-      </div>
     </div>
-    <div class="row">
-      <div class="col-12 col-md-10 mx-auto mb-default bg-offwhite rounded">
-        <div class="mxy-default">
-          <h3 class="mt-default mx-half">Trending</h3>
-          <h5 class="mt-default mb-half text-center"><a class="blue-text" href="#">Civil War</a>   /   <a class="blue-text" href="#">Baseball</a>   /   <a class="blue-text" href="#">Diary</a>   /   <a class="blue-text" href="#">Red Cross</a>   /   <a class="blue-text" href="#">Scouting Report</a>   /   <a class="blue-text" href="#">Journal</a>   /   <a class="blue-text" href="#">Major League Baseball</a>   /   <a class="blue-text" href="#">Manuscript</a></h5>
-          <div class="list-group col-12 col-lg-8 col-md-10 mx-auto mt-default">
-            <a href="#" class="list-group-item list-group-item-action flex-column align-items-start bg-lightest-gray">
-              <div class="d-flex w-100 justify-content-center align-items-center">
-                <img class="rounded d-block mr-half" src="{% static "img/Clara Barton 43.png" %}">
-                <p><blue class="blue-text">Clara Barton Papers: Image 43</blue> — 22 comments this hour</p>
-              </div>
-            </a>
-            <a href="#" class="list-group-item list-group-item-action flex-column align-items-start bg-offwhite">
-              <div class="d-flex w-100 justify-content-center align-items-center">
-                <img class="rounded d-block mr-half" src="{% static "img/Branch Rickey 2.png" %}">
-                <p><blue class="blue-text">Branch Rickey Papers: Image 2</blue> — 19 comments this hour</p>
-              </div>
-            </a>
-            <a href="#" class="list-group-item list-group-item-action flex-column align-items-start bg-lightest-gray">
-              <div class="d-flex w-100 justify-content-center align-items-center">
-                <img class="rounded d-block mr-half" src="{% static "img/Clara Barton 164.png" %}">
-                <p><blue class="blue-text">Clara Barton Papers: Image 164</blue> — 14 comments this hour</p>
-              </div>
-            </a>
-            <a href="#" class="list-group-item list-group-item-action flex-column align-items-start bg-offwhite">
-              <div class="d-flex w-100 justify-content-center align-items-center">
-                <img class="rounded d-block mr-half" src="{% static "img/Clara Barton 187.png" %}">
-                <p><blue class="blue-text">Clara Barton Papers: Image 187</blue> — 9 comments this hour</p>
-              </div>
-            </a>
-            <a href="#" class="list-group-item list-group-item-action flex-column align-items-start bg-lightest-gray">
-              <div class="d-flex w-100 justify-content-center align-items-center">
-                <img class="rounded d-block mr-half" src="{% static "img/Branch Rickey 95.png" %}">
-                <p><blue class="blue-text">Branch Rickey Papers: Image 95</blue> — 7 comments this hour</p>
-              </div>
-            </a>
-          </div>
+    <div class="row mxy-default">
+        <div class="col-12 col-md-7">
+            <h2 class="px-default px-md-0 ml-md-default">What is Citizen Historian?</h2>
+            <p class="px-default hero-secondary px-md-0 ml-md-default">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec quis volutpat orci. Nulla semper vestibulum erat sed vulputate.</p>
+            <img src="{% static "img/laptop.png" %}" class="mx-auto d-block img-fluid" alt="laptop showing site design">
         </div>
-      </div>
-      <div class="col-12 col-md-3 mb-default pb-half card bg-lightest-gray">
-          <div class="card-header pt-default">Development</div>
-          <div class="card-body">
-            <p class="card-text">Quick links to development pages and experiments</p>
-            <ul>
-              <li><a href="{% url 'experiments' 'models' %}">Data Models</a></li>
-              <li><a href="/wireframes/">Original Wireframes</a></li>
-            </ul>
-          </div>
-      </div>
+        <div class="col-12 col-md-5 text-center mt-half mt-md-0">
+            <h3>Help make historical artifacts</h3>
+            <img src="{% static "img/artifacts.svg" %}" class="mx-auto d-block" alt="help make historical artifacts">
+            <h4 class="mt-quarter">Easier to read</h4>
+            <p class="border-bottom-artifacts mb-default pb-default px-default">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec quis volutpat orci. Nulla semper vestibulum erat sed vulputate. Mauris leo eros, facilisis rhoncus nunc sed, pulvinar condimentum enim.</p>
+            <img src="{% static "img/magnifying-glass.svg" %}" class="mx-auto d-block" alt="magnifying glass">
+            <h4 class="mt-half">Searchable with metadata</h4>
+            <p class="px-default">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec quis volutpat orci. Nulla semper vestibulum erat sed vulputate. Mauris leo eros, facilisis rhoncus nunc sed, pulvinar condimentum enim.</p>
+        </div>
     </div>
-  </div>
+    <div class="row bg-home-contribute pxy-default">
+        <div class="col-12 mb-default">
+            <h2 class="offwhite-text px-default px-md-0 ml-md-default">There are several ways to contribute</h2>
+            <p class="px-default hero-secondary offwhite-text  text-home-contribute px-md-0 ml-md-default">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec quis volutpat orci. Nulla semper vestibulum erat sed vulputate. Mauris leo eros, facilisis rhoncus nunc sed, pulvinar condimentum enim.</p>
+        </div>
+        <div class="d-flex flex-wrap col-12 justify-content-around">
+            <div class="col-12 col-md-4 mb-default text-center">
+                <img class="img-home-contribute d-block mx-auto" src="{% static "img/homepage-pencil.svg" %}">
+                <h4 class="offwhite-text mt-half">TRANSCRIBE</h4>
+                <p class="offwhite-text px-default">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec quis volutpat orci.</p>
+            </div>
+            <div class="col-12 col-md-4 mb-default text-center border-left-home-contribute">
+                <img class="img-home-contribute d-block mx-auto" src="{% static "img/homepage-tag.svg" %}">
+                <h4 class="offwhite-text mt-half">TAG</h4>
+                <p class="offwhite-text px-default">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec quis volutpat orci.</p>
+            </div>
+            <div class="col-12 col-md-4 mb-default text-center border-left-home-contribute">
+                <img class="img-home-contribute d-block mx-auto" src="{% static "img/homepage-comment.svg" %}">
+                <h4 class="offwhite-text mt-half">COMMENT</h4>
+                <p class="offwhite-text px-default">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec quis volutpat orci.</p>
+            </div>
+        </div>
+    </div>
+    <div class="row my-default">
+        <div class="col-12 mb-half">
+            <h2 class="px-default px-md-0 ml-md-default">Choose what to transcribe</h2>
+            <p class="px-default hero-secondary px-md-0 ml-md-default">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec quis volutpat orci. Nulla semper vestibulum erat sed vulputate.</p>
+        </div>
+        <div class="d-flex flex-wrap col-12 justify-content-around">
+            <div class="col-12 col-md-4 mb-default text-center">
+                <img class="img-home-contribute d-block mx-auto img-fluid" src="{% static "img/rosa-parks-campaign.svg" %}" alt="Rosa Parks Papers">
+                <h3 class="mt-half">Rosa Parks Papers</h3>
+                <a class="btn btn-outline-primary" href="#" role="button">Get Started!</a>
+            </div>
+            <div class="col-12 col-md-4 mb-default text-center border-left-home-contribute">
+                <img class="img-home-contribute d-block mx-auto img-fluid" src="{% static "img/branch-rickey-campaign.svg" %}" alt="Branch Rickey Papers">
+                <h3 class="mt-half">Branch Rickey Papers</h3>
+                <a class="btn btn-outline-primary" href="#" role="button">Get Started!</a>
+            </div>
+            <div class="col-12 col-md-4 mb-default text-center border-left-home-contribute">
+                <img class="img-home-contribute d-block mx-auto img-fluid" src="{% static "img/clara-barton-campaign.svg" %}" alt="Clara Barton Papers">
+                <h3 class="mt-half">Clara Barton Papers</h3>
+                <a class="btn btn-outline-primary" href="#" role="button">Get Started!</a>
+            </div>
+        </div>
+        <div class="col mx-auto d-flex justify-content-center my-default">
+            <a class="btn btn-primary" href="{% url 'transcriptions:transcribe' %}" role="button">Browse More Collections</a>
+        </div>
+    </div>
+
 </div>
 {% endblock main_content %}
