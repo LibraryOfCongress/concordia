@@ -57,6 +57,15 @@ input#id_captcha_1 {
                     {% endif %}
                     <label class="sr-only" for="id_password2">Confirm password</label>
                     {{ form.password2 }}
+                    <div class="text-info" id="password_req">
+                        Password Requirements:
+                        <ul>
+                            <li id="req1">Must be at least 8 characters long</li>
+                            <li id="req2">Must contain 1 or more unique uppercase characters</li>
+                            <li id="req3">Must contain 1 or more unique digits</li>
+                            <li id="req4">Must contain 1 or more non unique special characters</li>
+                        </ul>
+                    </div>
                 </div>
                 <div class="d-flex col mx-auto justify-content-center pt-half">
                     <a href="{% url 'login' %}" class="text-center blue-text">I already have an account</a>
@@ -72,13 +81,52 @@ input#id_captcha_1 {
 
 {% block body_scripts %}
 <script>
+$("form input[name='password1']").keyup(function () {
+    var input_value = $('#id_password1').val();
+
+    var upperCase = new RegExp('[A-Z]');
+    var numbers = new RegExp('[0-9]');
+    var special = new RegExp('[!@#$%^&*(),.?":{}|<>;\'/~_+`=\\\\\\[\\]\\-]');
+
+    if (input_value.length >= 8) {
+        $('#req1').hide();
+    } else {
+        $('#req1').show();
+    }
+
+    if (input_value.match(upperCase)) {
+        $('#req2').hide();
+    } else {
+        $('#req2').show();
+    }
+
+    if (input_value.match(numbers)) {
+        $('#req3').hide();
+    } else {
+        $('#req3').show();
+    }
+
+    if (input_value.match(special)) {
+        $('#req4').hide();
+    } else {
+        $('#req4').show();
+    }
+
+    if (input_value.length >= 8 && input_value.match(upperCase) && input_value.match(numbers) && input_value.match(special)) {
+        $('#password_req').hide();
+    } else {
+        $('#password_req').show();
+    }
+});
+</script>
+<script>
 	$(document).ready(function(){
 	    $(".js-captcha-refresh").click(function(e){
 	    	     e.preventDefault();
 		    	 $.getJSON("{% url 'captcha-refresh' %}", function (result) {
 		    	        $('.captcha').attr('src', result['image_url']);
 		    	        $('#id_captcha_0').val(result['key'])
-		    	    });	           
+		    	    });
 	    })
 	})
 </script>
