@@ -13,7 +13,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Max
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import Http404, get_object_or_404, redirect, render
 from django.template import loader
@@ -226,7 +226,21 @@ class ConcordiaAssetView(TemplateView):
         :return: dictionary of items used in the template
         """
 
+        max_sequence = Asset.objects.filter(collection__slug=self.args[0]).aggregate(Max('sequence'))['sequence__max']
+
         asset = Asset.objects.get(collection__slug=self.args[0], slug=self.args[1])
+        try:
+            prev_asset = Asset.objects.get(collection__slug=self.args[0],
+                                           sequence=(lambda x, y: x - 1 if x > 0 else y)(asset.sequence, max_sequence))
+        except Asset.DoesNotExist:
+            prev_asset = asset
+
+        try:
+            next_asset = Asset.objects.get(collection__slug=self.args[0],
+                                           sequence=(lambda x, y: x + 1 if x < max_sequence else 0)(asset.sequence, max_sequence))
+        except Asset.DoesNotExist:
+            next_asset = asset
+
         in_use_url = "/transcribe/%s/asset/%s/" % (asset.collection.slug, asset.slug)
         current_user_id = (
             self.request.user.id
@@ -283,6 +297,8 @@ class ConcordiaAssetView(TemplateView):
             super().get_context_data(**kws),
             page_in_use=page_in_use,
             asset=asset,
+            prev_asset=prev_asset,
+            next_asset=next_asset,
             transcription=transcription,
             tags=all_tags,
             captcha_form=captcha_form,
