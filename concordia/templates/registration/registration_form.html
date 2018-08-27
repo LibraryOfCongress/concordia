@@ -5,6 +5,25 @@
 input#id_captcha_1 {
   padding: .375rem .75rem;
 }
+
+.checkmark {
+    list-style: none;
+    position: relative;
+    right:30px;
+}
+.checkmark::before {
+  content: '✓  ';
+}
+
+.nocheckmark {
+    list-style: none;
+    position: relative;
+    right:30px;
+}
+.nocheckmark::before {
+  content: '• ';
+}
+
 </style>
 {% endblock head_content %}
 {% block main_content %}
@@ -60,10 +79,10 @@ input#id_captcha_1 {
                     <div class="text-info" id="password_req">
                         Password Requirements:
                         <ul>
-                            <li id="req1">Must be at least 8 characters long</li>
-                            <li id="req2">Must contain 1 or more unique uppercase characters</li>
-                            <li id="req3">Must contain 1 or more unique digits</li>
-                            <li id="req4">Must contain 1 or more non unique special characters</li>
+                            <li id="req1" class="nocheckmark">Must be at least 8 characters long</li>
+                            <li id="req2" class="nocheckmark">Must contain 1 or more unique uppercase characters</li>
+                            <li id="req3" class="nocheckmark">Must contain 1 or more unique digits</li>
+                            <li id="req4" class="nocheckmark">Must contain 1 or more non unique special characters</li>
                         </ul>
                     </div>
                 </div>
@@ -89,34 +108,37 @@ $("form input[name='password1']").keyup(function () {
     var special = new RegExp('[!@#$%^&*(),.?":{}|<>;\'/~_+`=\\\\\\[\\]\\-]');
 
     if (input_value.length >= 8) {
-        $('#req1').hide();
+        $('#req1').removeClass("nocheckmark");
+        $('#req1').addClass("checkmark");
     } else {
-        $('#req1').show();
+        $('#req1').removeClass("checkmark");
+        $('#req1').addClass("nocheckmark");
     }
 
     if (input_value.match(upperCase)) {
-        $('#req2').hide();
+        $('#req2').removeClass("nocheckmark");
+        $('#req2').addClass("checkmark");
     } else {
-        $('#req2').show();
+        $('#req2').removeClass("checkmark");
+        $('#req2').addClass("nocheckmark");
     }
 
     if (input_value.match(numbers)) {
-        $('#req3').hide();
+        $('#req3').removeClass("nocheckmark");
+        $('#req3').addClass("checkmark");
     } else {
-        $('#req3').show();
+        $('#req3').removeClass("checkmark");
+        $('#req3').addClass("nocheckmark");
     }
 
     if (input_value.match(special)) {
-        $('#req4').hide();
+        $('#req4').removeClass("nocheckmark");
+        $('#req4').addClass("checkmark");
     } else {
-        $('#req4').show();
+        $('#req4').removeClass("checkmark");
+        $('#req4').addClass("nocheckmark");
     }
 
-    if (input_value.length >= 8 && input_value.match(upperCase) && input_value.match(numbers) && input_value.match(special)) {
-        $('#password_req').hide();
-    } else {
-        $('#password_req').show();
-    }
 });
 </script>
 <script>
