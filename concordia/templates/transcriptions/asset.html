@@ -1,21 +1,6 @@
 {% extends "transcriptions/base.html" %} {% load staticfiles %}
 {% block title %}{{ asset.title }}{% endblock title %}
 {% block head_content %}
-<style>
-input#id_captcha_1 {
-  padding: .375rem .75rem;
-  margin-right: 5px
-}
-div#input_group_for_captcha {
-  margin-top: 5px
-}
-div#captcha_div{
-  margin: 10px;
-  padding: 5px;
-  background-color: #48352f4d;
-  border-style: double;
-}
-</style>
 {% endblock head_content %}
 {% block main_content %}
     <div class="container-fluid">
@@ -412,7 +397,9 @@ div#captcha_div{
                         $(this).prop("disabled",true);
                         $("#captcha_container").removeClass('d-none');
                         $("#captcha_container").show();
-                        $("input#id_captcha_1").after($('<span class="input-group-btn">' + '<button class="btn btn-secondary" type="submit" name="action" value="Save">Enter</button>' + '</span>'));
+                        $("#input_group_for_captcha").addClass('d-flex justify-content-center');
+                        $("input#id_captcha_1").addClass('col-6');
+                        $("input#id_captcha_1").after($('<div class="input-group-append">' + '<button class="btn btn-secondary" type="submit" name="action" value="Save">Enter</button>' + '</div>'));
                     }
                 });
                 $("#review-button").click(function(e){
@@ -422,7 +409,9 @@ div#captcha_div{
                        $(this).prop("disabled",true);
                        $("#captcha_container").removeClass('d-none');
                        $("#captcha_container").show();
-                       $("input#id_captcha_1").after($('<span class="input-group-btn">' + '<button class="btn btn-secondary" type="submit" name="action" value="Submit for Review">Enter</button>' + '</span>'));
+                       $("#input_group_for_captcha").addClass('d-flex justify-content-center');
+                        $("input#id_captcha_1").addClass('col-6');
+                        $("input#id_captcha_1").after($('<div class="input-group-append">' + '<button class="btn btn-secondary" type="submit" name="action" value="Save">Enter</button>' + '</div>'));
                    }
                });
 
