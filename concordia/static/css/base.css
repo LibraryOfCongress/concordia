@@ -455,14 +455,17 @@ input {
     color: var(--text-color-offwhite);
 }
 
-.btn-primary-fixed-width {
-    width: 200px;
-}
 
 .btn-primary:hover {
     background-color: var(--primary-color-hover);
     border-color: var(--primary-color-hover);
     color: var(--text-color-offwhite);
+}
+
+.btn-primary.disabled, .btn-primary:disabled {
+    background-color: var(--primary-color-hover) !important;
+    border-color: var(--primary-color-hover) !important;
+    color: var(--text-color-offwhite) !important;
 }
 
 .btn-secondary {
@@ -471,16 +474,34 @@ input {
     color: var(--text-color-offwhite);
 }
 
+.btn-secondary.disabled, .btn-secondary:disabled {
+    background-color: var(--secondary-color) !important;
+    border-color: var(--secondary-color) !important;
+    color: var(--text-color-offwhite) !important;
+}
+
 .btn-default {
     background-color: rgba(158,158,158,1);
     border-color: rgba(158,158,158,1);
     color: var(--text-color-primary);
 }
 
+.btn-default.disabled, .btn-default:disabled {
+    background-color: rgba(158,158,158,1) !important;
+    border-color: rgba(158,158,158,1) !important;
+    color: var(--text-color-primary) !important;
+}
+
 .btn-dark {
     background-color: var(--bg-darkest-gray);
     border-color: var(--bg-darkest-gray);
     color: var(--text-color-offwhite);
+}
+
+.btn-dark.disabled, .btn-dark:disabled {
+    background-color: var(--bg-darkest-gray) !important;
+    border-color: var(--bg-darkest-gray) !important;
+    color: var(--text-color-offwhite) !important;
 }
 
 .btn-row .btn {
