@@ -14,28 +14,42 @@
             <p class="ml-default mb-default">{{ collection.description }}</p>
             <div class="row">
                 <div class="d-flex flex-wrap col-12 justify-content-around">
-                    {% for project in projects %}
-                    <div class="col-12 col-md-4 col-lg-3 mb-default mx-quarter card shadow-regular bg-lightest-gray">
-                        <div class="card-body bg-offwhite">
-                          <h5 class="card-title align-text-middle w-100">{{ project.title }}</h5>
-                          <div class="col-md-8 mx-auto text-center">
-                            <a href="{% url 'transcriptions:project' project.collection.slug project.slug %}" class="btn btn-primary col mb-quarter">View</a>
-                          </div>
-                    {% if request.user|has_group:"CM" %}
-			<div class="col-md-8 mx-auto text-center">
-                        {% if project.is_publish %}
-                            <button type="button" class="confirm-modal btn btn-primary col" data-toggle="modal" id="{{ project.slug }}" data-target="#projectConfirmModal" data-collection="{{ project.collection.slug }}">
-                                    Unpublish</button>
-                        {% else %}
-                            <button type="button" class="confirm-modal btn btn-primary col" data-toggle="modal" id="{{ project.slug }}" data-target="#projectConfirmModal" data-collection="{{ project.collection.slug }}">
-                                    Publish</button>
-                        {% endif %}
-			</div>
+                    {% if request.user.is_anonymous %}
+                        {% for project in projects %}
+                            {% if project.is_publish %}
+                                <div class="col-12 col-md-4 col-lg-3 mb-default mx-quarter card shadow-regular bg-lightest-gray">
+                                    <div class="card-body bg-offwhite">
+                                      <h5 class="card-title align-text-middle w-100">{{ project.title }}</h5>
+                                      <div class="col-md-8 mx-auto text-center">
+                                        <a href="{% url 'transcriptions:project' project.collection.slug project.slug %}" class="btn btn-primary col mb-quarter">View</a>
+                                      </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        {% for project in projects %}
+                            <div class="col-12 col-md-4 col-lg-3 mb-default mx-quarter card shadow-regular bg-lightest-gray">
+                                <div class="card-body bg-offwhite">
+                                  <h5 class="card-title align-text-middle w-100">{{ project.title }}</h5>
+                                  <div class="col-md-8 mx-auto text-center">
+                                    <a href="{% url 'transcriptions:project' project.collection.slug project.slug %}" class="btn btn-primary col mb-quarter">View</a>
+                                  </div>
+                                {% if request.user|has_group:"CM" %}
+                                    <div class="col-md-8 mx-auto text-center">
+                                    {% if project.is_publish %}
+                                        <button type="button" class="confirm-modal btn btn-primary col" data-toggle="modal" id="{{ project.slug }}" data-target="#projectConfirmModal" data-collection="{{ project.collection.slug }}">
+                                                Unpublish</button>
+                                    {% else %}
+                                        <button type="button" class="confirm-modal btn btn-primary col" data-toggle="modal" id="{{ project.slug }}" data-target="#projectConfirmModal" data-collection="{{ project.collection.slug }}">
+                                                Publish</button>
+                                    {% endif %}
+                                    </div>
+                                {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
                     {% endif %}
-
-                    {% endfor %}
-		    </div>
-                    </div>
                 </div>
             </div>
             <div class="pagination justify-content-center align-items-center mb-default">
@@ -110,5 +124,6 @@
 </script>
 
 {% endblock main_content %}
+
 
 
