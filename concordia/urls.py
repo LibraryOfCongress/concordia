@@ -137,9 +137,6 @@ urlpatterns = [
     re_path(r'^ws/transcription_create/$', views_ws.TranscriptionCreate().as_view()),
     re_path(r'^ws/tags/(?P<asset>(.*?))/$', views_ws.UserAssetTagsGet().as_view()),
     re_path(r'^ws/tag_create/$', views_ws.TagCreate.as_view()),
-    re_path(
-        r"^user/cm/$", views.UserView.as_view(), name="user-cm-view"
-    ),
 ]
 
 urlpatterns += [

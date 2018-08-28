@@ -599,12 +599,6 @@ class FilterCollections(generics.ListAPIView):
         return JsonResponse(list(queryset), safe=False)
 
 
-class UserView(TemplateView):
-    template_name = "user.html"
-
-    def get_context_data(self, **kws):
-        return dict(super().get_context_data(**kws))
-
 
 def publish_collection(request, collection, is_publish):
     """ Publish/Unpublish a collection to otherr users. On un/publishing collection,

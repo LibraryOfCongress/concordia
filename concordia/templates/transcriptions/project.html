@@ -14,7 +14,7 @@
             <p class="ml-default mb-default">{{ collection.description }}</p>
             <div class="row">
                 <div class="d-flex flex-wrap col-12 justify-content-around">
-                    {% if request.user.is_anonymous %}
+                    {% if request.user.is_anonymous or request.user.is_staff is False %}
                         {% for project in projects %}
                             {% if project.is_publish %}
                                 <div class="col-12 col-md-4 col-lg-3 mb-default mx-quarter card shadow-regular bg-lightest-gray">

@@ -11,7 +11,7 @@
       <div class="row">
         <div class="d-flex flex-wrap col-12 mb-default justify-content-around">
           {% if response.results %}
-            {% if request.user.is_anonymous %}
+            {% if request.user.is_anonymous or request.user.is_staff is False%}
                 {% for c in response.results %}
                   {% if c.is_publish %}
                   <div class="col-12 col-md-4 col-lg-3 mb-default mx-quarter card shadow-regular bg-lightest-gray">
@@ -29,7 +29,7 @@
                 {% for c in response.results %}
                   <div class="col-12 col-md-4 col-lg-3 mb-default mx-quarter card shadow-regular bg-lightest-gray">
                     <div class="card-body bg-offwhite">
-                      {% if request.user.is_staff %}
+                      {% if request.user.is_staff or request.user|has_group:"CM" %}
                         <h5 class="card-title align-text-middle w-100">{{ c.title }}</h5>
                           <h6 class="card-text mb-half">{{ c.description }}</h6>
                           <div class="col-md-8 mx-auto text-center">
