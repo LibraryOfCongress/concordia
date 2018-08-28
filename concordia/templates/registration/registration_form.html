@@ -6,24 +6,6 @@ input#id_captcha_1 {
   padding: .375rem .75rem;
 }
 
-/*.checkmark {
-    list-style: none;
-    position: relative;
-    right:30px;
-}
-.checkmark::before {
-  content: '✓  ';
-}
-
-.nocheckmark {
-    list-style: none;
-    position: relative;
-    right:30px;
-}
-.nocheckmark::before {
-  content: '• ';
-}*/
-
 </style>
 {% endblock head_content %}
 {% block main_content %}
@@ -76,14 +58,12 @@ input#id_captcha_1 {
                     {% endif %}
                     <label class="sr-only" for="id_password2">Confirm password</label>
                     {{ form.password2 }}
-                    <div class="text-info" id="password_req">
+                    <div class="form-text text-muted mx-quarter" id="password_req">
                         Password Requirements:
-                        <ul>
-                            <li id="req1" class="nocheckmark"><i class="far fa-square mr-2"></i>At least 8 characters long</li>
-                            <li id="req2" class="nocheckmark"><i class="far fa-square mr-2"></i>1 or more unique uppercase characters</li>
-                            <li id="req3" class="nocheckmark"><i class="far fa-square mr-2"></i>1 or more unique digits</li>
-                            <li id="req4" class="nocheckmark"><i class="far fa-square mr-2"></i>1 or more non-unique special characters</li>
-                        </ul>
+                            <ul id="req1" class="nocheckmark"><i class="far fa-square mr-2"></i>At least 8 characters long</ul>
+                            <ul id="req2" class="nocheckmark"><i class="far fa-square mr-2"></i>1 or more unique uppercase characters</ul>
+                            <ul id="req3" class="nocheckmark"><i class="far fa-square mr-2"></i>1 or more unique digits</ul>
+                            <ul id="req4" class="nocheckmark"><i class="far fa-square mr-2"></i>1 or more non-unique special characters</ul>
                     </div>
                 </div>
                 <div class="form-group">
