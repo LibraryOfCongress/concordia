@@ -737,6 +737,10 @@ input {
     display: none;
 }
 
+#password_req ul {
+    margin-bottom: .5rem;
+}
+
 .nocheckmark i {
     color: var(--text-color-primary);
 }
