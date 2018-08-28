@@ -17,6 +17,7 @@ class CollectionListSerializer(serializers.ModelSerializer):
             "end_date",
             "status",
             "asset_count",
+            "is_publish",
         )
 
 
