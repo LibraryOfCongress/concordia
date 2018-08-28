@@ -153,14 +153,14 @@ div#captcha_div{
                             <input id="complete-button" name="action" type="submit" class="btn btn-primary" value="Mark Completed">
                         {% endif %}
                         <input id="contact-button" name="action" type="submit" class="btn btn-default" value="Contact Manager">
-                        {% if user.is_anonymous %}
-                            <div class="d-none my-quarter col-12 col-md-10 col-lg-8" id="captcha_container">
-                                <div id="captcha_div">
-                                    {{ captcha_form.captcha }}
-                                </div>
-                            </div>
-                        {% endif %}
                     </div>
+                    {% if user.is_anonymous %}
+                        <div class="d-none my-quarter col-12 col-md-10 col-lg-8 mx-auto" id="captcha_container">
+                            <div id="captcha_div">
+                                {{ captcha_form.captcha }}
+                            </div>
+                        </div>
+                    {% endif %}
                 </form>
                 <div>
                     <h5 class="offwhite-text d-inline" id="register-login-reminder">Only registered users can tag.
@@ -408,7 +408,7 @@ div#captcha_div{
                 $("#save-button").click(function(e){
                     if($("#captcha_container").hasClass('d-none')) {
                         e.preventDefault();
-                        $(this).removeClass("btn-primary");
+                        // $(this).removeClass("btn-primary");
                         $(this).prop("disabled",true);
                         $("#captcha_container").removeClass('d-none');
                         $("#captcha_container").show();
@@ -418,7 +418,7 @@ div#captcha_div{
                 $("#review-button").click(function(e){
                     if($("#captcha_container").hasClass('d-none')) {
                         e.preventDefault();
-                       $(this).removeClass("btn-primary");
+                       // $(this).removeClass("btn-primary");
                        $(this).prop("disabled",true);
                        $("#captcha_container").removeClass('d-none');
                        $("#captcha_container").show();
