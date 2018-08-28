@@ -5,44 +5,80 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('concordia', '0012_merge_20180806_1254'),
-    ]
+    dependencies = [("concordia", "0012_merge_20180806_1254")]
 
     operations = [
         migrations.AddField(
-            model_name='collection',
-            name='is_publish',
+            model_name="collection",
+            name="is_publish",
             field=models.BooleanField(default=False),
         ),
         migrations.AddField(
-            model_name='subcollection',
-            name='is_publish',
+            model_name="subcollection",
+            name="is_publish",
             field=models.BooleanField(default=False),
         ),
         migrations.AlterField(
-            model_name='asset',
-            name='status',
-            field=models.CharField(choices=[('Edit', 'Open for Edit'), ('Submitted', 'Submitted for Review'), ('Completed', 'Transcription Completed'), ('Inactive', 'Inactive'), ('Active', 'Active')], default='Edit', max_length=10),
+            model_name="asset",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("Edit", "Open for Edit"),
+                    ("Submitted", "Submitted for Review"),
+                    ("Completed", "Transcription Completed"),
+                    ("Inactive", "Inactive"),
+                    ("Active", "Active"),
+                ],
+                default="Edit",
+                max_length=10,
+            ),
         ),
         migrations.AlterField(
-            model_name='collection',
-            name='status',
-            field=models.CharField(choices=[('Edit', 'Open for Edit'), ('Submitted', 'Submitted for Review'), ('Completed', 'Transcription Completed'), ('Inactive', 'Inactive'), ('Active', 'Active')], default='Edit', max_length=10),
+            model_name="collection",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("Edit", "Open for Edit"),
+                    ("Submitted", "Submitted for Review"),
+                    ("Completed", "Transcription Completed"),
+                    ("Inactive", "Inactive"),
+                    ("Active", "Active"),
+                ],
+                default="Edit",
+                max_length=10,
+            ),
         ),
         migrations.AlterField(
-            model_name='pageinuse',
-            name='updated_on',
-            field=models.DateTimeField(),
+            model_name="pageinuse", name="updated_on", field=models.DateTimeField()
         ),
         migrations.AlterField(
-            model_name='subcollection',
-            name='status',
-            field=models.CharField(choices=[('Edit', 'Open for Edit'), ('Submitted', 'Submitted for Review'), ('Completed', 'Transcription Completed'), ('Inactive', 'Inactive'), ('Active', 'Active')], default='Edit', max_length=10),
+            model_name="subcollection",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("Edit", "Open for Edit"),
+                    ("Submitted", "Submitted for Review"),
+                    ("Completed", "Transcription Completed"),
+                    ("Inactive", "Inactive"),
+                    ("Active", "Active"),
+                ],
+                default="Edit",
+                max_length=10,
+            ),
         ),
         migrations.AlterField(
-            model_name='transcription',
-            name='status',
-            field=models.CharField(choices=[('Edit', 'Open for Edit'), ('Submitted', 'Submitted for Review'), ('Completed', 'Transcription Completed'), ('Inactive', 'Inactive'), ('Active', 'Active')], default='Edit', max_length=10),
+            model_name="transcription",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("Edit", "Open for Edit"),
+                    ("Submitted", "Submitted for Review"),
+                    ("Completed", "Transcription Completed"),
+                    ("Inactive", "Inactive"),
+                    ("Active", "Active"),
+                ],
+                default="Edit",
+                max_length=10,
+            ),
         ),
     ]

@@ -55,8 +55,7 @@ class AssetSerializer(serializers.ModelSerializer):
 class PageInUseSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         page_in_use = models.PageInUse(
-            page_url=validated_data["page_url"],
-            user=validated_data["user"]
+            page_url=validated_data["page_url"], user=validated_data["user"]
         )
         page_in_use.save()
 
@@ -64,7 +63,9 @@ class PageInUseSerializer(serializers.ModelSerializer):
         from datetime import datetime, timedelta
 
         time_threshold = datetime.now() - timedelta(minutes=5)
-        old_page_entries = models.PageInUse.objects.filter(updated_on__lt=time_threshold)
+        old_page_entries = models.PageInUse.objects.filter(
+            updated_on__lt=time_threshold
+        )
         for old_page in old_page_entries:
             old_page.delete()
 
@@ -76,21 +77,13 @@ class PageInUseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.PageInUse
-        fields = (
-            "page_url",
-            "user"
-        )
+        fields = ("page_url", "user")
 
 
 class TranscriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Transcription
-        fields = (
-            "asset",
-            "user_id",
-            "text",
-            "status"
-        )
+        fields = ("asset", "user_id", "text", "status")
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -102,6 +95,4 @@ class TagSerializer(serializers.ModelSerializer):
 class UserAssetTagSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.UserAssetTagCollection
-        fields = (
-            "asset", "user_id", "tags"
-            )
+        fields = ("asset", "user_id", "tags")
