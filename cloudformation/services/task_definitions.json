@@ -1,0 +1,81 @@
+{
+    "containerDefinitions": [
+        {
+            "essential": true,
+            "image": "concordia_app:latest",
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "cf-42",
+                    "awslogs-region": "us-east-2",
+                    "awslogs-stream-prefix": "concordia_app"
+                }
+            },
+            "mountPoints": [
+                {
+                    "containerPath": "/app",
+                    "sourceVolume": "_"
+                },
+                {
+                    "containerPath": "/concordia_images",
+                    "sourceVolume": "Images_Volume"
+                }
+            ],
+            "name": "app",
+            "portMappings": [
+                {
+                    "containerPort": 80
+                }
+            ]
+        },
+        {
+            "essential": true,
+            "image": "concordia_importer:latest",
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "cf-42",
+                    "awslogs-region": "us-east-2",
+                    "awslogs-stream-prefix": "concordia_importer"
+                }
+            },
+            "mountPoints": [
+                {
+                    "containerPath": "/concordia_images",
+                    "sourceVolume": "Images_Volume"
+                }
+            ],
+            "name": "importer"
+        },
+        {
+            "essential": true,
+            "image": "rabbitmq:latest",
+            "name": "rabbit",
+            "portMappings": [
+                {
+                    "containerPort": 5672
+                },
+                {
+                    "containerPort": 15672
+                }
+            ]
+        }
+    ],
+    "family": "concordia",
+    "memory": "512",
+    "cpu": "1024",
+    "volumes": [
+        {
+            "host": {
+                "sourcePath": "."
+            },
+            "name": "_"
+        },
+        {
+            "host": {
+                "sourcePath": "images_volume"
+            },
+            "name": "Images_Volume"
+        }
+    ]
+}
