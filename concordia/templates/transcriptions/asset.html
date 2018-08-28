@@ -141,7 +141,7 @@
                     </div>
                     {% if user.is_anonymous %}
                         <div class="d-none my-quarter col-12 col-md-10 col-lg-8 mx-auto" id="captcha_container">
-                            <div id="captcha_div">
+                            <div class="text-center mt-2" id="captcha_div">
                                 {{ captcha_form.captcha }}
                             </div>
                         </div>
@@ -394,24 +394,20 @@
                     if($("#captcha_container").hasClass('d-none')) {
                         e.preventDefault();
                         // $(this).removeClass("btn-primary");
-                        $(this).prop("disabled",true);
+                        $(this).attr("disabled", "disabled");
                         $("#captcha_container").removeClass('d-none');
                         $("#captcha_container").show();
-                        $("#input_group_for_captcha").addClass('d-flex justify-content-center');
-                        $("input#id_captcha_1").addClass('col-6');
-                        $("input#id_captcha_1").after($('<div class="input-group-append">' + '<button class="btn btn-secondary" type="submit" name="action" value="Save">Enter</button>' + '</div>'));
+                        // $("input#id_captcha_1").after($('<div class="input-group-append">' + '<button class="btn btn-secondary" type="submit" name="action" value="Save">Enter</button>' + '</div>'));
                     }
                 });
                 $("#review-button").click(function(e){
                     if($("#captcha_container").hasClass('d-none')) {
                         e.preventDefault();
                        // $(this).removeClass("btn-primary");
-                       $(this).prop("disabled",true);
+                       $(this).attr("disabled", "disabled");
                        $("#captcha_container").removeClass('d-none');
                        $("#captcha_container").show();
-                       $("#input_group_for_captcha").addClass('d-flex justify-content-center');
-                        $("input#id_captcha_1").addClass('col-6');
-                        $("input#id_captcha_1").after($('<div class="input-group-append">' + '<button class="btn btn-secondary" type="submit" name="action" value="Save">Enter</button>' + '</div>'));
+                       // $("input#id_captcha_1").after($('<div class="input-group-append">' + '<button class="btn btn-secondary" type="submit" name="action" value="Save">Enter</button>' + '</div>'));
                    }
                });
 

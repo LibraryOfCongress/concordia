@@ -762,3 +762,12 @@ input {
 .form-register .helptext {
     display: none;
 }
+
+/*
+* CAPTCHA styling
+*/
+
+.captcha {
+    width: 10rem;
+    height: auto;
+}
