@@ -455,10 +455,21 @@ input {
     color: var(--text-color-offwhite);
 }
 
+.btn-minimal-primary {
+    background-color: var(--primary-color);
+    border-color: transparent;
+    color: var(--text-color-offwhite);
+}
 
 .btn-primary:hover {
     background-color: var(--primary-color-hover);
     border-color: var(--primary-color-hover);
+    color: var(--text-color-offwhite);
+}
+
+.btn-minimal-primary:hover {
+    background-color: var(--primary-color);
+    border-color: transparent;
     color: var(--text-color-offwhite);
 }
 
@@ -471,6 +482,18 @@ input {
 .btn-secondary {
     background-color: var(--secondary-color);
     border-color: var(--secondary-color);
+    color: var(--text-color-offwhite);
+}
+
+.btn-minimal-secondary {
+    background-color: var(--secondary-color);
+    border-color: transparent;
+    color: var(--text-color-offwhite);
+}
+
+.btn-minimal-secondary:hover {
+    background-color: var(--secondary-color);
+    border-color: transparent;
     color: var(--text-color-offwhite);
 }
 
@@ -702,6 +725,12 @@ input {
 #status-id-label {
     color: var(--text-color-offwhite);
     margin-bottom: 0;
+}
+
+#contact-button {
+    position: absolute;
+    right: .5rem;
+    bottom: .5rem;
 }
 
 /*
