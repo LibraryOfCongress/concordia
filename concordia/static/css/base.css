@@ -456,9 +456,9 @@ input {
 }
 
 .btn-minimal-primary {
-    background-color: var(--primary-color);
+    background-color:  transparent;
     border-color: transparent;
-    color: var(--text-color-offwhite);
+    color: var(--primary-color);
 }
 
 .btn-primary:hover {
@@ -486,9 +486,9 @@ input {
 }
 
 .btn-minimal-secondary {
-    background-color: var(--secondary-color);
+    background-color: transparent;
     border-color: transparent;
-    color: var(--text-color-offwhite);
+    color: var(--secondary-color);
 }
 
 .btn-minimal-secondary:hover {
