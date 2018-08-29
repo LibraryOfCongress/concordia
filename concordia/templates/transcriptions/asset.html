@@ -333,8 +333,7 @@
                     $("#review-button").hide();
                     $("#complete-button").show();
                 {% elif transcription.status == 'Completed' %}
-                    $("#save-button").show();
-                    $("#review-button").hide();
+                    $("#save-button, #review-button").hide();
                 {% endif %}
             {% endif %}
 
