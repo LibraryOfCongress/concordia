@@ -22,7 +22,7 @@ input#id_captcha_1 {
                 {% endfor %}
             {% endif %}
             <form method="post" id="registration-form"
-                  class="col-10 mx-auto form-register">{% csrf_token %} {{ form.non_field_errors }} {{ form.source.errors }} {{ form.source }}
+                  class="col-10 mx-auto form-register">{% csrf_token %} {{ form.non_field_errors }}
                 <div class="form-group form-row">
                     {% if form.username.errors %}
                         <div class="text-danger">
