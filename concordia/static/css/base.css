@@ -25,6 +25,7 @@ body {
     top: 0;
     left: 0;
     color: var(--bg-darkest-gray);
+    overflow-x: hidden;
 }
 
 h1 {
