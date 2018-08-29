@@ -98,7 +98,7 @@ input#id_captcha_1 {
             });
         });
 
-        $("form input[name='password1']").keyup(function() {
+	    $("form input[name='password1']").on('keyup change blur keypress', function() {
             var input_value = $('#id_password1').val();
             var upperCase = new RegExp('[A-Z]');
             var numbers = new RegExp('[0-9]');
