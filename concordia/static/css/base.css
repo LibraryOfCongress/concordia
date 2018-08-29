@@ -23,7 +23,7 @@
   --height-contribute-input: calc( ( 100vh - ( 8.0625rem + 1.5625rem + 2.3125rem ) ) / 2 ); /* Subtract height of navbar, breadcrumd, and nav pills */
   --height-tags-input: calc( 50vh - 3.375rem );
   --top-value-tags-input: calc( 50vh - 3rem );
-};
+}
 
 body {
     top: 0;
