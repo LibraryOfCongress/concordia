@@ -75,7 +75,7 @@ h2 small {
     line-height: 125%;
     font-weight: normal;
     text-transform: uppercase;
-    color: var(--text-color-offwhite);
+    color: var(--text-color-primary);
 }
 
 
