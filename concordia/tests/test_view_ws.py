@@ -276,6 +276,32 @@ class ViewWSTest_Concordia(TestCase):
         self.assertEqual(page.id, updated_page[0].id)
         self.assertTrue(updated_page[0].updated_on > min_update_time)
 
+    def test_PageInUse_delete(self):
+        """
+        This unit test tests the delete of an existing PageInUse using DELETE on route ws/page_in_use_delete/
+        :return:
+        """
+        # Arrange
+        self.login_user()
+
+        # Add a value to database
+        page = PageInUse(page_url="foo.com/blah", user=self.user)
+        page.save()
+
+        current_page_in_use_count = PageInUse.objects.all().count()
+
+        # Act
+        response = self.client.delete("/ws/page_in_use_delete/%s/" % "foo.com/blah")
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        deleted_page_in_use_count = PageInUse.objects.all().count()
+
+        deleted_page = PageInUse.objects.filter(page_url="foo.com/blah")
+        self.assertEqual(len(deleted_page), 0)
+        self.assertEqual(current_page_in_use_count-1, deleted_page_in_use_count)
+
     def test_Collection_get(self):
         """
         Test getting a Collection object
@@ -319,9 +345,48 @@ class ViewWSTest_Concordia(TestCase):
                 "status": Status.EDIT,
                 "s3_storage": False,
                 "title": "TextCollection2",
+                'subcollections': [],
                 "assets": [],
             },
         )
+
+    def test_Collection_delete(self):
+        """
+        Test deleting a Collection object
+        :return:
+        """
+        # Arrange
+        self.login_user()
+
+        # create 2 collections
+        self.collection = Collection(
+            title="TextCollection",
+            slug="slug1",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection.save()
+
+        self.collection2 = Collection(
+            title="TextCollection2",
+            slug="slug2",
+            description="Collection2 Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection2.save()
+
+        current_collection_count = Collection.objects.all().count()
+
+        # Act
+        response = self.client.delete("/ws/collection_delete/slug2/")
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        deleted_collection_count = Collection.objects.all().count()
+        self.assertEqual(current_collection_count-1, deleted_collection_count)
 
     def test_Collection_by_id_get(self):
         """
@@ -366,6 +431,7 @@ class ViewWSTest_Concordia(TestCase):
                 "status": Status.EDIT,
                 "s3_storage": False,
                 "title": "TextCollection2",
+                'subcollections': [],
                 "assets": [],
             },
         )
@@ -443,6 +509,90 @@ class ViewWSTest_Concordia(TestCase):
         # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(json_resp["results"]), 2)
+
+    def test_Asset_Update_put(self):
+        """
+        Test updating an asset by collection and slug to inactive
+        :return:
+        """
+
+        # Arrange
+        self.login_user()
+        self.maxDiff = None
+
+        self.collection = Collection(
+            title="TextCollection",
+            slug="slug1",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection.save()
+
+        self.asset = Asset(
+            title="TestAsset",
+            slug="Asset1",
+            description="Asset Description",
+            media_url="http://www.foo.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            collection=self.collection,
+            metadata={"key": "val2"},
+            status=Status.EDIT,
+        )
+        self.asset.save()
+
+        expected_response = {
+            "id": self.asset.id,
+            "title": "TestAsset3",
+            "slug": "Asset3",
+            "description": "Asset Description",
+            "media_url": "http://www.foo.com/1/2/3",
+            "media_type": "IMG",
+            "collection": {
+                "id": self.collection.id,
+                "slug": "slug1",
+                "title": "TextCollection",
+                "description": "Collection Description",
+                "s3_storage": False,
+                "start_date": None,
+                "end_date": None,
+                "status": "Edit",
+                'subcollections': [],
+                "assets": [
+                    {
+                        "title": "TestAsset3",
+                        "slug": "Asset3",
+                        "description": "Asset Description",
+                        "media_url": "http://www.foo.com/1/2/3",
+                        "media_type": "IMG",
+                        "sequence": 1,
+                        "metadata": {"key": "val2"},
+                        "status": "Edit",
+                    }
+                ],
+            },
+            "subcollection": None,
+            "sequence": 1,
+            "metadata": {"key": "val2"},
+            "status": "Edit",
+        }
+
+        # Act
+
+        asset_update = {"collection": self.collection.slug, "slug": self.asset.slug}
+
+        # Act
+        response = self.client.put(
+            "/ws/asset_update/%s/%s/" % (self.collection.slug, self.asset.slug),
+            data=json.dumps(asset_update),
+            content_type="application/json",
+        )
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        updated_asset = Asset.objects.get(slug=self.asset.slug)
+        self.assertEqual(updated_asset.status, Status.INACTIVE)
+
 
     def test_get_assets_by_collection_and_slug(self):
         """
@@ -526,6 +676,7 @@ class ViewWSTest_Concordia(TestCase):
                 "start_date": None,
                 "end_date": None,
                 "status": "Edit",
+                'subcollections': [],
                 "assets": [
                     {
                         "title": "TestAsset3",
@@ -638,6 +789,7 @@ class ViewWSTest_Concordia(TestCase):
                     "start_date": None,
                     "status": None,
                     "assets": [],
+                    'subcollections': [],
                     "title": "",
                 },
                 "sequence": None,

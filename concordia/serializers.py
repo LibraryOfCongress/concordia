@@ -35,8 +35,22 @@ class AssetSetForCollectionSerializer(serializers.HyperlinkedModelSerializer):
         )
 
 
+class SubcollectionSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = models.Subcollection
+        fields = (
+            "id",
+            "title",
+            "slug",
+            "metadata",
+            "status",
+        )
+
+
 class CollectionDetailSerializer(serializers.HyperlinkedModelSerializer):
     assets = AssetSetForCollectionSerializer(source="asset_set", many=True)
+    subcollections = SubcollectionSerializer(source="subcollection_set", many=True)
 
     class Meta:
         model = models.Collection
@@ -49,6 +63,7 @@ class CollectionDetailSerializer(serializers.HyperlinkedModelSerializer):
             "start_date",
             "end_date",
             "status",
+            "subcollections",
             "assets",
         )
 
@@ -74,13 +89,8 @@ class AssetSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class PageInUseSerializer(serializers.ModelSerializer):
-    def create(self, validated_data):
-        page_in_use = models.PageInUse(
-            page_url=validated_data["page_url"], user=validated_data["user"]
-        )
-        page_in_use.save()
 
-        # On every insertion, delete any entries not updated in the last 5 minutes
+    def delete_old(self):
         from datetime import datetime, timedelta
 
         time_threshold = datetime.now() - timedelta(minutes=5)
@@ -90,10 +100,20 @@ class PageInUseSerializer(serializers.ModelSerializer):
         for old_page in old_page_entries:
             old_page.delete()
 
+    def create(self, validated_data):
+        page_in_use = models.PageInUse(
+            page_url=validated_data["page_url"], user=validated_data["user"]
+        )
+        page_in_use.save()
+
+        # On every insertion, delete any entries not updated in the last 5 minutes
+        self.delete_old()
+
         return page_in_use
 
     def update(self, instance, validated_data):
         instance.save()
+        self.delete_old()
         return instance
 
     class Meta:

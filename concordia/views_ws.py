@@ -43,6 +43,18 @@ class PageInUseCreate(generics.CreateAPIView):
     serializer_class = PageInUseSerializer
 
 
+class PageInUseDelete(generics.DestroyAPIView):
+    """
+    DELETE: Delete a PageInUse value
+    """
+
+    model = PageInUse
+    authentication_classes = (ConcordiaAPIAuth,)
+    queryset = PageInUse.objects.all()
+    serializer_class = PageInUseSerializer
+    lookup_field = "page_url"
+
+
 class PageInUseGet(generics.RetrieveUpdateAPIView):
     """
     GET: Get a PageInUse value
@@ -76,6 +88,30 @@ class PageInUseUserGet(generics.RetrieveUpdateAPIView):
             .filter(page_url=self.kwargs["page_url"], user__id=self.kwargs["user"])
             .last()
         )
+
+
+class PageInUseCount(generics.RetrieveAPIView):
+    """
+    GET: Return True if the page is in use by a different user, otherwise False
+    """
+    model = PageInUse
+    authentication_classes = (ConcordiaAPIAuth,)
+    serializer_class = PageInUseSerializer
+    queryset = PageInUse.objects.all()
+    lookup_fields = ("page_url", "user")
+
+    def get(self, request, *args, **kwargs):
+        time_threshold = datetime.now() - timedelta(minutes=5)
+        page_in_use_count = (
+            PageInUse.objects.filter(page_url=self.kwargs["page_url"], updated_on__gt=time_threshold)
+                .exclude(user__id=self.kwargs["user"])
+                .count()
+        )
+
+        if page_in_use_count > 0:
+            return Response(data={'page_in_use': True})
+        else:
+            return Response(data={'page_in_use': False})
 
 
 class PageInUsePut(generics.UpdateAPIView):
@@ -145,6 +181,18 @@ class CollectionAssetsGet(generics.RetrieveAPIView):
     lookup_field = "slug"
 
 
+class CollectionDelete(generics.DestroyAPIView):
+    """
+    DELETE: Delete a Collection
+    """
+
+    model = Collection
+    authentication_classes = (ConcordiaAPIAuth,)
+    queryset = Collection.objects.all()
+    serializer_class = CollectionDetailSerializer
+    lookup_field = "slug"
+
+
 class AssetsList(generics.ListAPIView):
     """
     GET: Return Assets by collection
@@ -179,6 +227,60 @@ class AssetBySlug(generics.RetrieveAPIView):
             return asset[0]
         else:
             return None
+
+
+class AssetRandomInCollection(generics.RetrieveAPIView):
+    """
+    GET: Return a random asset from the collection excluding the passed in asset slug
+    """
+    model = Asset
+    authentication_classes = (ConcordiaAPIAuth,)
+    serializer_class = AssetSerializer
+    lookup_fields = ("collection", "slug")
+
+    def get_object(self):
+        asset = (Asset.objects.filter(collection__slug=self.kwargs["collection"], status=Status.EDIT)
+                 .exclude(slug=self.kwargs["slug"])
+                 .order_by("?")
+                 .first()
+                 )
+
+        if len(asset) > 0:
+            return asset[0]
+        else:
+            return None
+
+
+class AssetUpdate(generics.UpdateAPIView):
+    """
+    PUT: Update an Asset
+    """
+
+    model = Collection
+    authentication_classes = (ConcordiaAPIAuth,)
+    queryset = Collection.objects.all()
+    serializer_class = CollectionDetailSerializer
+    lookup_fields = ("collection", "slug")
+
+    def put(self, request, *args, **kwargs):
+        if type(request.data) == QueryDict:
+            # when using APIFactory to submit post, data must be converted from QueryDict
+            request_data = request.data.dict()
+        else:
+            request_data = request.data
+
+        collection = Collection.objects.get(slug=request_data["collection"])
+        asset = Asset.objects.get(slug=request_data["slug"], collection=collection)
+        asset.status = Status.INACTIVE
+        asset.save()
+
+        serializer = CollectionDetailSerializer(data=request_data)
+        if serializer.is_valid():
+            pass
+        return Response(serializer.data)
+
+
+
 
 
 class PageInUseFilteredGet(generics.ListAPIView):

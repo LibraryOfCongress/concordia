@@ -20,14 +20,14 @@ from django.template import loader
 from django.urls import reverse
 from django.views.generic import FormView, TemplateView, View
 from registration.backends.simple.views import RegistrationView
-from rest_framework import status
+from rest_framework import status, generics
 from rest_framework.test import APIRequestFactory
 
 from concordia.forms import (CaptchaEmbedForm, ConcordiaContactUsForm,
                              ConcordiaUserEditForm, ConcordiaUserForm)
-from concordia.models import (Asset, Collection, PageInUse, Status, Tag, Transcription,
-                              UserAssetTagCollection, UserProfile)
-from concordia.views_ws import PageInUseCreate, PageInUsePut
+from concordia.models import (Asset, Collection, PageInUse, Status, Transcription,
+                              UserProfile)
+from concordia.views_ws import PageInUseCreate
 from importer.views import CreateCollectionView
 
 logger = getLogger(__name__)
@@ -159,12 +159,21 @@ class ConcordiaProjectView(TemplateView):
     template_name = "transcriptions/project.html"
 
     def get_context_data(self, **kws):
-        try:
-            collection = Collection.objects.get(slug=self.args[0])
-        except Collection.DoesNotExist:
-            raise Http404
-        project_list = collection.subcollection_set.all().order_by("title")
-        paginator = Paginator(project_list, PROJECTS_PER_PAGE)
+
+        response = requests.get(
+            "%s://%s/ws/collection/%s/"
+            % (self.request.scheme, self.request.get_host(), self.args[0]),
+            cookies=self.request.COOKIES,
+        )
+        collection_json_val = json.loads(response.content.decode("utf-8"))
+        for sub_col in collection_json_val["subcollections"]:
+            sub_col["collection"] = collection_json_val
+
+        project_sorted_list = sorted(
+            collection_json_val["subcollections"], key=lambda k: (k["title"])
+        )
+
+        paginator = Paginator(project_sorted_list, ASSETS_PER_PAGE)
 
         if not self.request.GET.get("page"):
             page = 1
@@ -174,7 +183,7 @@ class ConcordiaProjectView(TemplateView):
         projects = paginator.get_page(page)
 
         return dict(
-            super().get_context_data(**kws), collection=collection, projects=projects
+            super().get_context_data(**kws), collection=collection_json_val, projects=projects
         )
 
 
@@ -222,6 +231,84 @@ class ConcordiaAssetView(TemplateView):
         "Mark Completed": Status.COMPLETED,
     }
 
+    def get_asset_list_json(self):
+        """
+        make a call to the REST web service to assets for a collection
+        :return: json of the assets
+        """
+        response = requests.get(
+            "%s://%s/ws/asset/%s/"
+            % (
+                self.request.scheme,
+                self.request.get_host(),
+                self.args[0]),
+            cookies=self.request.COOKIES,
+        )
+        return json.loads(response.content.decode("utf-8"))
+
+    def submitted_page(self, url, asset_json):
+        """
+        when the transcription state is SUBMITTED, return a page that does not have a transcription started.
+        If all pages are started, return the url passed in
+        :param url: default url to return
+        :param asset_json: Unused, needed to make function signature match completed_page
+        :return: url of next page
+        """
+        return_path = url
+
+        # find a page with no transcriptions in this collection
+
+        asset_list_json = self.get_asset_list_json()
+
+        for asset_item in asset_list_json["results"]:
+            response = requests.get(
+                "%s://%s/ws/transcription/%s/"
+                % (self.request.scheme, self.request.get_host(), asset_item["id"]),
+                cookies=self.request.COOKIES,
+            )
+            transcription_json = json.loads(response.content.decode("utf-8"))
+            if transcription_json["text"] == "":
+                return_path = "/transcribe/%s/asset/%s/" % (self.args[0], asset_item["slug"])
+                break
+
+        return return_path
+
+    def completed_page(self, url, asset_json):
+        """
+        when the transcription state is COMPLETED, return the next page in sequence that needs work
+        If all pages are completed, return the url passed in
+        :param url: default url to return
+        :param asset_json: json representation of the asset
+        :return: url of next page
+        """
+        return_path = url
+
+        asset_list_json = self.get_asset_list_json()
+
+        def get_transcription(asset_item):
+                response = requests.get(
+                    "%s://%s/ws/transcription/%s/"
+                    % (self.request.scheme, self.request.get_host(), asset_item["id"]),
+                    cookies=self.request.COOKIES,
+                )
+                return json.loads(response.content.decode("utf-8"))
+
+        for asset_item in asset_list_json["results"][asset_json["sequence"]:]:
+            transcription_json = get_transcription(asset_item)
+            if transcription_json["status"] != Status.COMPLETED:
+                return_path = "/transcribe/%s/asset/%s/" % (self.args[0], asset_item["slug"])
+                break
+
+        # no asset found, iterate the asset_list_json from beginning to this asset's sequence
+        if return_path == url:
+            for asset_item in asset_list_json["results"][:asset_json["sequence"]]:
+                transcription_json = get_transcription(asset_item)
+                if transcription_json["status"] != Status.COMPLETED:
+                    return_path = "/transcribe/%s/asset/%s/" % (self.args[0], asset_item["slug"])
+                    break
+
+        return return_path
+
     def check_page_in_use(self, url, user):
         """
         Check the page in use for the asset, return true if in use within the last 5 minutes, otherwise false
@@ -230,16 +317,13 @@ class ConcordiaAssetView(TemplateView):
         :return: True or False
         """
         response = requests.get(
-            "%s://%s/ws/page_in_use_filter/%s/%s/"
+            "%s://%s/ws/page_in_use_count/%s/%s/"
             % (self.request.scheme, self.request.get_host(), user, url),
             cookies=self.request.COOKIES,
         )
         json_val = json.loads(response.content.decode("utf-8"))
 
-        if json_val["count"] > 0:
-            return True
-        else:
-            return False
+        return json_val["page_in_use"]
 
     def get_context_data(self, **kws):
         """
@@ -259,17 +343,6 @@ class ConcordiaAssetView(TemplateView):
         )
         asset_json = json.loads(response.content.decode("utf-8"))
 
-        asset = Asset.objects.get(collection__slug=self.args[0], slug=self.args[1])
-        in_use_url = "/transcribe/%s/asset/%s/" % (asset.collection.slug, asset.slug)
-        current_user_id = (
-            self.request.user.id
-            if self.request.user.id is not None
-            else get_anonymous_user()
-        )
-        page_in_use = self.check_page_in_use(in_use_url, current_user_id)
-        # TODO: in the future, this is from a settings file value
-        discussion_hide = True
-        # asset = Asset.objects.get(collection__slug=self.args[0], slug=self.args[1])
         in_use_url = "/transcribe/%s/asset/%s/" % (
             asset_json["collection"]["slug"],
             asset_json["slug"],
@@ -279,10 +352,9 @@ class ConcordiaAssetView(TemplateView):
             if self.request.user.id is not None
             else get_anonymous_user()
         )
-        page_in_use = self.check_page_in_use(in_use_url, self.request.user)
+        page_in_use = self.check_page_in_use(in_use_url, current_user_id)
 
         # Get all transcriptions, they are no longer tied to a specific user
-        # transcription = Transcription.objects.filter(asset=asset).last()
 
         response = requests.get(
             "%s://%s/ws/transcription/%s/"
@@ -296,16 +368,30 @@ class ConcordiaAssetView(TemplateView):
             % (self.request.scheme, self.request.get_host(), asset_json["id"]),
             cookies=self.request.COOKIES,
         )
+        json_tags = []
         if response.status_code == status.HTTP_200_OK:
-            json_tags = json.loads(response.content.decode("utf-8"))
-        else:
-            json_tags = {}
+            json_tags_response = json.loads(response.content.decode("utf-8"))
+            for json_tag in json_tags_response["results"]:
+                json_tags.append(json_tag["value"])
 
         captcha_form = CaptchaEmbedForm()
 
-        same_page_count_for_this_user = PageInUse.objects.filter(
-            page_url=in_use_url, user=current_user_id
-        ).count()
+        response = requests.get(
+            "%s://%s/ws/page_in_use_user/%s/%s/" %
+            (
+                self.request.scheme,
+                self.request.get_host(),
+                current_user_id,
+                in_use_url
+            ),
+            cookies=self.request.COOKIES,
+        )
+        page_in_use_json = json.loads(response.content.decode("utf-8"))
+
+        if page_in_use_json["user"] is None:
+            same_page_count_for_this_user = 0
+        else:
+            same_page_count_for_this_user = 1
 
         page_dict = {
             "page_url": in_use_url,
@@ -325,8 +411,19 @@ class ConcordiaAssetView(TemplateView):
             PageInUseCreate.as_view()(request)
         elif same_page_count_for_this_user == 1:
             # update the PageInUse
-            obj, created = PageInUse.objects.update_or_create(
-                page_url=in_use_url, user=current_user_id
+            change_page_in_use = {"page_url": in_use_url, "user": current_user_id}
+
+            requests.put(
+                "%s://%s/ws/page_in_use_update/%s/%s/" %
+                (
+
+                    self.request.scheme,
+                    self.request.get_host(),
+                    current_user_id,
+                    in_use_url
+                ),
+                data=change_page_in_use,
+                cookies=self.request.COOKIES,
             )
 
         return dict(
@@ -334,7 +431,7 @@ class ConcordiaAssetView(TemplateView):
             page_in_use=page_in_use,
             asset=asset_json,
             transcription=transcription_json,
-            tags=json_tags["results"],
+            tags=json_tags,
             captcha_form=captcha_form,
         )
 
@@ -345,7 +442,18 @@ class ConcordiaAssetView(TemplateView):
         :param kwargs:
         :return: redirect back to same page
         """
-        self.get_context_data()
+        # don't know why this would be called here
+        # self.get_context_data()
+
+        if self.request.POST.get("action").lower() == 'contact manager':
+            return redirect(reverse('contact') + "?pre_populate=true")
+
+        if self.request.user.is_anonymous:
+            captcha_form = CaptchaEmbedForm(self.request.POST)
+            if not captcha_form.is_valid():
+                logger.info("Invalid captcha response")
+                return self.get(self.request, *args, **kwargs)
+
         response = requests.get(
             "%s://%s/ws/asset_by_slug/%s/%s/"
             % (
@@ -358,11 +466,8 @@ class ConcordiaAssetView(TemplateView):
         )
         asset_json = json.loads(response.content.decode("utf-8"))
 
-        if self.request.user.is_anonymous:
-            captcha_form = CaptchaEmbedForm(self.request.POST)
-            if not captcha_form.is_valid():
-                logger.info("Invalid captcha response")
-                return self.get(self.request, *args, **kwargs)
+        redirect_path = self.request.path
+
         if "tx" in self.request.POST:
             tx = self.request.POST.get("tx")
             tx_status = self.state_dictionary[self.request.POST.get("action")]
@@ -379,6 +484,16 @@ class ConcordiaAssetView(TemplateView):
                 },
                 cookies=self.request.COOKIES,
             )
+
+            # dictionary to pick which function should return the next page on a POST submit
+            next_page_dictionary = {
+                Status.EDIT: lambda x, y: x,
+                Status.SUBMITTED: self.submitted_page,
+                Status.COMPLETED: self.completed_page,
+
+            }
+
+            redirect_path = next_page_dictionary[tx_status](redirect_path, asset_json)
 
         if "tags" in self.request.POST and self.request.user.is_authenticated == True:
             tags = self.request.POST.get("tags").split(",")
@@ -409,7 +524,22 @@ class ConcordiaAssetView(TemplateView):
                     cookies=self.request.COOKIES,
                 )
 
-        return redirect(self.request.path)
+                # keep track of existing tags so we can remove deleted tags
+                if tag in existing_tags_list:
+                    existing_tags_list.remove(tag)
+
+            # delete "old" tags
+            for old_tag in existing_tags_list:
+                response = requests.delete("%s://%s/ws/tag_delete/%s/%s/%s/%s/" %
+                                           (self.request.scheme,
+                                            self.request.get_host(),
+                                            self.args[0],
+                                            self.args[1],
+                                            old_tag,
+                                            self.request.user.id),
+                                           cookies=self.request.COOKIES)
+
+        return redirect(redirect_path)
 
 
 class ConcordiaAlternateAssetView(View):
@@ -436,6 +566,13 @@ class ConcordiaAlternateAssetView(View):
             asset_slug = self.request.POST.get("asset", None)
 
         if collection_slug and asset_slug:
+            response = requests.get(
+                "%s://%s/ws/collection_asset_random/%s/%s"
+                % (self.request.scheme, self.request.get_host(), collection_slug, asset_slug),
+                cookies=self.request.COOKIES,
+            )
+            random_asset_json_val = json.loads(response.content.decode("utf-8"))
+
             collection = Collection.objects.filter(slug=collection_slug)
 
             # select a random asset in this collection that has status of EDIT
@@ -447,7 +584,7 @@ class ConcordiaAlternateAssetView(View):
             )
 
             return HttpResponse(
-                "/transcribe/%s/asset/%s/" % (collection_slug, asset.slug)
+                "/transcribe/%s/asset/%s/" % (collection_slug, random_asset_json_val["slug"])
             )
 
 
@@ -480,30 +617,28 @@ class ConcordiaPageInUse(View):
             user_obj = User.objects.filter(username=user).first()
 
             # update the PageInUse
-            obj, created = PageInUse.objects.update_or_create(
-                page_url=page_url, user=user_obj
+
+            change_page_in_use = {"page_url": page_url, "user": user_obj.id}
+
+            requests.put(
+                "%s://%s/ws/page_in_use_update/%s/%s/" %
+                (
+
+                    self.request.scheme,
+                    self.request.get_host(),
+                    user_obj.id,
+                    page_url
+                ),
+                data=change_page_in_use,
+                cookies=self.request.COOKIES,
             )
 
-            if created:
-                # delete any other PageInUse with same url
-                pages_in_use = PageInUse.objects.filter(page_url=page_url).exclude(
-                    user=user_obj
-                )
-                for page in pages_in_use:
-                    page.delete()
-
-        # delete any pages not updated in the last 15 minutes
-        from datetime import datetime, timedelta
-
-        time_threshold = datetime.now() - timedelta(minutes=15)
-        old_page_entries = PageInUse.objects.filter(updated_on__lt=time_threshold)
-        for old_page in old_page_entries:
-            old_page.delete()
 
         return HttpResponse("ok")
 
 
 class TranscriptionView(TemplateView):
+    # TODO: Is this class still used??
     template_name = "transcriptions/transcription.html"
 
     def get_context_data(self, **kws):
@@ -596,28 +731,39 @@ class DeleteCollectionView(TemplateView):
     """
 
     def get(self, request, *args, **kwargs):
-        print("Deleting:", self.args[0])
-        collection = Collection.objects.get(slug=self.args[0])
-        collection.asset_set.all().delete()
-        collection.delete()
+        requests.delete("%s://%s/ws/collection_delete/%s/" %
+                        (self.request.scheme,
+                         self.request.get_host(),
+                         self.args[0]),
+                        cookies=self.request.COOKIES)
+
         os.system(
-            "rm -rf {0}".format(settings.MEDIA_ROOT + "/concordia/" + collection.slug)
+            "rm -rf {0}".format(settings.MEDIA_ROOT + "/concordia/" + self.args[0])
         )
         return redirect("/transcribe/")
 
 
 class DeleteAssetView(TemplateView):
     """
-    Hides an asset with status inactive. Hided assets does not display in
-    asset viiew. After hiding an asset, page redirects to collection view.
+    Hides an asset with status inactive. Hidden assets do not display in
+    asset view. After hiding an asset, page redirects to collection view.
     """
 
     def get(self, request, *args, **kwargs):
+        asset_update = {"collection": self.args[0], "slug": self.args[1]}
 
-        collection = Collection.objects.get(slug=self.args[0])
-        asset = Asset.objects.get(slug=self.args[1], collection=collection)
-        asset.status = Status.INACTIVE
-        asset.save()
+        requests.put(
+            "%s://%s/ws/asset_update/%s/%s/" %
+            (
+                self.request.scheme,
+                self.request.get_host(),
+                self.args[0],
+                self.args[1],
+            ),
+            data=asset_update,
+            cookies=self.request.COOKIES,
+        )
+
         return redirect("/transcribe/" + self.args[0] + "/")
 
 
