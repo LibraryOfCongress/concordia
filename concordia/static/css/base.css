@@ -1269,3 +1269,15 @@ box-shadow: inset 0 .1875rem .3125rem rgba(0, 0, 0, .125);
 .form-register .helptext {
     display: none;
 }
+
+#password_req ul {
+    margin-bottom: .5rem;
+}
+
+.nocheckmark i {
+    color: var(--text-color-primary);
+}
+
+.checkmark i {
+    color: var(--color-success);
+}
