@@ -69,7 +69,7 @@ h2.offwhite {
     color: var(--text-color-offwhite);
 }
 
-h2.hero-secondary {
+h2 small {
     font-family: 'Roboto Slab', serif;
     font-size: 1.5rem;
     line-height: 125%;
