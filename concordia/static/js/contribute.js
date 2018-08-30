@@ -6,7 +6,7 @@ $( document ).ready(function() {
 
   $( 'input[type="submit"]' ).click(function() {
     sessionStorage.setItem('show_message', 'true');
-    });;
+    });
 });
 
 /*

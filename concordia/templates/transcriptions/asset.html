@@ -29,8 +29,16 @@ div#captcha_div{
             <div class="col-6">
                 <div id="asset-image" class="asset-image bg-offwhite">
                 </div>
+                <div class="contribute-instructions col-12" id="contribute-instructions">
+                    <div class="instruction-window bg-offwhite shadow-regular collapse" id="instruction-window">
+                        <p class="px-half px-md-default py-quarter py-md-half">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+                        </p>
+                    </div>
+                    <button class="btn btn-default w-100" type="button" id="instruction-button" data-toggle="collapse" data-target="#instruction-window" aria-expanded="false" aria-controls="instruction-window">Instructions</button>
+                </div>
             </div>
-            <div class="col-6 bg-darkest-gray shadow-regular rounded contribute-box" id="contribute-box">
+
+            <div class="col-6 bg-darkest-gray contribute-box" id="contribute-box">
                 <nav class="px-half py-1">
                     <div class="nav nav-pills" id="nav-pill-contribute-box" role="tablist">
                         <a class="nav-item nav-link active" id="nav-pill-transcription" data-toggle="tab"
@@ -67,7 +75,7 @@ div#captcha_div{
                                             <a href=""><img class="mx-auto rounded-circle img-fluid" src="http://demos.themes.guide/bodeo/assets/images/users/m103.jpg" alt="admin's avatar"></a>
                                         </div>
                                         <div class="comment-content col-md-11 col-sm-10">
-                                            <h6 class="small comment-meta"><a href="#" class="blue-text">admin</a> Today, 2:38</h6>
+                                            <h6 class="small comment-meta"><a href="#" class="primary-text">admin</a> Today, 2:38</h6>
                                             <div class="comment-body">
                                                 <p>
                                                     Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
@@ -84,7 +92,7 @@ div#captcha_div{
                                                     <a href=""><img class="mx-auto rounded-circle img-fluid" src="http://demos.themes.guide/bodeo/assets/images/users/m101.jpg" alt="phildowney's avatar"></a>
                                                 </div>
                                                 <div class="comment-content col-md-11 col-sm-10 col-12">
-                                                    <h6 class="small comment-meta"><a href="#" class="blue-text">phildownney</a> Today, 12:31</h6>
+                                                    <h6 class="small comment-meta"><a href="#" class="primary-text">phildownney</a> Today, 12:31</h6>
                                                     <div class="comment-body">
                                                         <p>Really?? Consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
                                                             <br>
@@ -103,7 +111,7 @@ div#captcha_div{
                                             <a href=""><img class="mx-auto rounded-circle img-fluid" src="http://demos.themes.guide/bodeo/assets/images/users/w102.jpg" alt="maslarino's avatar"></a>
                                         </div>
                                         <div class="comment-content col-md-11 col-sm-10">
-                                            <h6 class="small comment-meta"><a href="#" class="blue-text">maslarino</a> Yesterday, 5:03 PM</h6>
+                                            <h6 class="small comment-meta"><a href="#" class="primary-text">maslarino</a> Yesterday, 5:03 PM</h6>
                                             <div class="comment-body">
                                                 <p>Sit amet, consectetur adipisicing elit, sed do eiusmod tempor.
                                                     <br>
@@ -185,29 +193,11 @@ div#captcha_div{
                 </div>
                 <div>
                     <h5 class="offwhite-text d-inline" id="register-login-reminder">Only registered users can tag.
-                        <a class="blue-text" href="/account/register/">Register</a> or <a class="blue-text" href="/account/login">Login</a></h5>
+                        <a class="primary-text" href="/account/register/">Register</a> or <a class="primary-text" href="/account/login">Login</a></h5>
                 </div>
             </div>
         </div>
     </div>
-
-
-    <!-- The Instruction Modal -->
-	<div id="instructionModal" style="display:none; margin-left: 10px; margin-right: 10px;">
-        <p>Lorem ipsum dolor sit amet, consectetur
-           adipiscing elit, sed do eiusmod tempor incididunt ut
-           labore et dolore magna aliqua. Ut enim ad minim
-           veniam,
-           quis nostrud exercitation ullamco laboris nisi ut
-           aliquip ex ea commodo consequat. Duis aute irure
-           dolor
-           in reprehenderit in voluptate velit esse cillum
-           dolore
-           eu fugiat nulla pariatur. Excepteur sint occaecat
-           cupidatat non proident, sunt in culpa qui officia
-           deserunt mollit anim id est laborum.
-        </p>
-	</div>
 {% endblock main_content %}
 
 {% block body_scripts %}
@@ -215,13 +205,6 @@ div#captcha_div{
     <script src="{% static "js/jquery.cookie.js" %}"></script>
     <script src="{% static "vendor/openseadragon/openseadragon.min.js" %}"></script>
     <script type="text/javascript">
-        var csrftoken = $.cookie('csrftoken');
-
-        function csrfSafeMethod(method) {
-            // these HTTP methods do not require CSRF protection
-            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
-        }
-
         {% if asset.collection.s3_storage %}
             var asset_url = '{{ asset.media_url }}';
         {% else %}
@@ -239,37 +222,6 @@ div#captcha_div{
                 pinchRotate: true
             }
         });
-
-        viewer.addHandler('open', function() {
-            var instructionButton = new OpenSeadragon.Button({
-                onClick: function(e){
-                       $(instructionButton.element).insertBefore("#instructions");
-                }
-            });
-            $(instructionButton.element).removeAttr("style");
-            $(instructionButton.element).empty().append("<div><div id='instruction_content'></div><div id='instruction_button' class='btn btn-primary' style='display:block'>+Instructions</div></div>");
-
-            viewer.addControl(instructionButton.element, { anchor: OpenSeadragon.ControlAnchor.BOTTOM_LEFT });
-
-            $(instructionButton.element).css("width", "100%");
-            $(instructionButton.element).css("display", "block");
-            $(instructionButton.element).parent().css("width", "100%");
-            $(instructionButton.element).parent().css("display", "block");
-            $(instructionButton.element).parent().parent().css("width", "100%");
-            $(instructionButton.element).parent().parent().css("display", "block");
-
-            $("div#instruction_content").empty().css('background-color', '#dee2e6');
-            $("div#instruction_content").empty().append($('#instructionModal'));
-
-            $( "div#instruction_button" ).click(function() {
-	            	  if ( $( "div#instructionModal" ).is( ":hidden" ) ) {
-	            		  $( "div#instructionModal" ).show();
-	            	  } else {
-	            		  console.log("Here")
-	            		  $( "div#instructionModal" ).hide();
-	            	  }
-            	});
-          });
     </script>
     <script type="text/javascript">
         var csrftoken = $.cookie('csrftoken');

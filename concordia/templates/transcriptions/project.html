@@ -4,6 +4,9 @@
 
 {% endblock head_content %}
 {% block main_content %}
+{% load auth_extras %}
+<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 <div class="container-fluid py-default">
     <div class="row">
         <div class="col-md-10 mx-auto bg-offwhite rounded">
@@ -11,16 +14,42 @@
             <p class="ml-default mb-default">{{ collection.description }}</p>
             <div class="row">
                 <div class="d-flex flex-wrap col-12 justify-content-around">
-                    {% for project in projects %}
-                    <div class="col-12 col-md-4 col-lg-3 mb-default mx-quarter card shadow-regular bg-lightest-gray">
-                        <div class="card-body bg-offwhite">
-                          <h5 class="card-title align-text-middle w-100">{{ project.title }}</h5>
-                          <div class="col-md-8 mx-auto text-center">
-                            <a href="{% url 'transcriptions:project' project.collection.slug project.slug %}" class="btn btn-primary col mb-quarter">View</a>
-                          </div>
-                        </div>
-                      </div>
-                    {% endfor %}
+                    {% if request.user.is_anonymous or request.user.is_staff is False %}
+                        {% for project in projects %}
+                            {% if project.is_publish %}
+                                <div class="col-12 col-md-4 col-lg-3 mb-default mx-quarter card shadow-regular bg-lightest-gray">
+                                    <div class="card-body bg-offwhite">
+                                      <h5 class="card-title align-text-middle w-100">{{ project.title }}</h5>
+                                      <div class="col-md-8 mx-auto text-center">
+                                        <a href="{% url 'transcriptions:project' project.collection.slug project.slug %}" class="btn btn-primary col mb-quarter">View</a>
+                                      </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        {% for project in projects %}
+                            <div class="col-12 col-md-4 col-lg-3 mb-default mx-quarter card shadow-regular bg-lightest-gray">
+                                <div class="card-body bg-offwhite">
+                                  <h5 class="card-title align-text-middle w-100">{{ project.title }}</h5>
+                                  <div class="col-md-8 mx-auto text-center">
+                                    <a href="{% url 'transcriptions:project' project.collection.slug project.slug %}" class="btn btn-primary col mb-quarter">View</a>
+                                  </div>
+                                {% if request.user|has_group:"CM" %}
+                                    <div class="col-md-8 mx-auto text-center">
+                                    {% if project.is_publish %}
+                                        <button type="button" class="confirm-modal btn btn-primary col" data-toggle="modal" id="{{ project.slug }}" data-target="#projectConfirmModal" data-collection="{{ project.collection.slug }}">
+                                                Unpublish</button>
+                                    {% else %}
+                                        <button type="button" class="confirm-modal btn btn-primary col" data-toggle="modal" id="{{ project.slug }}" data-target="#projectConfirmModal" data-collection="{{ project.collection.slug }}">
+                                                Publish</button>
+                                    {% endif %}
+                                    </div>
+                                {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
                 </div>
             </div>
             <div class="pagination justify-content-center align-items-center mb-default">
@@ -39,5 +68,62 @@
         </div>
     </div>
 </div>
+<!-- Confirmation Modal -->
+<div class="modal fade" id="projectConfirmModal" tabindex="-1" role="dialog" aria-labelledby="projectConfirmModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="projectConfirmModalLabel">Confirm Project</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to make it public ?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="confirmprojectbtn">Submit</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+    $(document).ready(function(){
+         $(document).on('shown.bs.modal',"#projectConfirmModal", function (e) {
+            var $invoker = $(e.relatedTarget);
+
+            $("#confirmprojectbtn").click(function(e){
+                var collection_slug = $($invoker[0]).attr('data-collection');
+                var project_slug = $($invoker[0]).attr('id');
+                var requested_status = $("#"+project_slug).text().trim();
+                if(requested_status == 'Publish'){
+                    var to_status = 'true';
+                }
+                else{
+                    var to_status = 'false';
+                }
+                $.ajax({
+                    url: '/transcribe/publish/project/'+collection_slug+"/"+project_slug+"/"+to_status+"/",
+                    type: 'GET',
+                    success: function(data, textStatus, jqXHR) {
+			$('#projectConfirmModal').modal('hide');
+                        if(data['state']){
+                            $("#"+project_slug).text('Unpublish');
+                        }else{
+                            $("#"+project_slug).text('Publish');
+                        }
+                    }
+                }).fail(function(data, jqXHR, textStatus, errorThrown) {
+                   console.log("error: ", data);
+                });
+            });
+         });
+    });
+</script>
+
 {% endblock main_content %}
+
+
 
