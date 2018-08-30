@@ -319,8 +319,7 @@ div.nav-secondary {
 }
 
 .border-left-home-contribute {
-    /*border-left: solid .0675rem var(--bg-offwhite);*/
-    border-left: solid .0675rem var(--bg-darkest-gray);
+    border-left: solid .0675rem var(--bg-offwhite);
 }
 
 .navbar-offwhite .navbar-nav .active>.nav-link, .navbar-offwhite .navbar-nav .nav-link.active, .navbar-offwhite .navbar-nav .nav-link.show, .navbar-offwhite .navbar-nav .show>.nav-link {
