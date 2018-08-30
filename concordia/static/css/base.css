@@ -362,6 +362,7 @@ div.nav-secondary {
 
 .carousel-item img {
     min-width: 100%;
+    width: 100%;
     overflow: hidden;
     align-self: flex-end !important;
 }
