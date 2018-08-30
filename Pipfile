@@ -25,6 +25,8 @@ django-prometheus-metrics = "*"
 django-widget-tweaks = "*"
 django-simple-captcha = "*"
 python-dotenv = "*"
+django-elasticsearch-dsl = "*"
+elasticsearch-dsl = "==6.1.0"
 
 [dev-packages]
 invoke = "*"

@@ -1,204 +1,297 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 {% load staticfiles %}
 {% load auth_extras %}
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>{% block title %}Untitled{% endblock title %}</title>
     <link rel="shortcut icon" href="{% static "img/favicon.ico" %}">
     <!-- Stylesheets -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.2/css/bootstrap.min.css" integrity="sha384-Smlep5jCw/wG7hdkwQ/Z5nLIefveQRIY9nfy6xoR1uRYBtpZgI6339F5dgvm/e9B" crossorigin="anonymous">
-    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,600,700|Roboto+Slab" rel="stylesheet">
-    <link rel="stylesheet" href="{% static "css/base.css" %}">
-    {% block head_content %}{% endblock head_content %}
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,600,700|Roboto+Slab:300,400,700" rel="stylesheet">
+    <link rel="stylesheet" href="{% static "css/base.css" %}"> {% block head_content %}{% endblock head_content %}
 </head>
+
 <body>
-  <header>
-    <nav class="navbar navbar-expand-lg flex-md-row navbar-offwhite bg-offwhite justify-content-between">
-      <div class="d-flex navbar-brand">
-        <a class="mr-1 my-auto" href="#"><img src="{% static "img/loc.svg" %}" alt="Library of Congress logo"></a>
-        <span class="vl mx-2 my-auto"></span>
-        {% if request.path == '/' %}
-        <h1><a class="gray-text align-middle d-none d-md-inline" href="#">citizen historian</a><a class="gray-text align-middle d-md-none" href="#">chc</a></h1>
-        {% else %}
-        <h1><a class="gray-text align-middle d-none d-md-inline" href="/">citizen historian</a><a class="gray-text align-middle d-md-none" href="/">chc</a></h1>
-        {% endif %}
-      </div>
-    <button class="navbar-toggler navbar-light" type="button" data-toggle="collapse" data-target="#nav-menu" aria-controls="nav-menu" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-
-    <div class="collapse navbar-collapse text-center" id="nav-menu">
-      <ul class="navbar-nav ml-auto">
-        {% if request.path == '/' %}
-        <li class="nav-item active">
-          <a class="nav-link" href="#">Home<span class="sr-only">(current)</span></a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'transcriptions:transcribe' %}">Collections</a>
-        </li>
-            {% if user.is_authenticated %}
-            <li class="nav-item dropdown nav-dropdown">
-              <a class="nav-link dropdown-toggle" href="http://example.com" id="nav-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Account</a>
-              <div class="dropdown-menu" aria-labelledby="nav-dropdown">
-                <a class="dropdown-item" href="{% url 'user-profile' %}">{{ user }} profile</a>
-                {% if user.is_superuser %}
-                <a class="dropdown-item" href="{% url 'admin:index' %}">Admin pages</a>
+    <header>
+        <nav class="navbar navbar-expand-lg flex-row navbar-offwhite bg-offwhite justify-content-between align-items-end py-half px-md-default pl-2">
+            <div class="d-flex navbar-brand">
+                <a class="my-auto" href="#"><img src="{% static "img/LoC-logo.svg" %}" alt="Library of Congress logo"></a>
+                <span class="vl mx-2 my-auto"></span>
+                {% if request.path == '/' %}
+                    <h1 class="header-text align-self-end"><a class="gray-text align-baseline d-inline" href="#">crowd</a>
+                {% else %}
+                    <h1 class="header-text align-self-end"><a class="gray-text align-baseline d-inline" href="/">crowd</a>
                 {% endif %}
-                <a class="dropdown-item" href="{% url 'logout' %}">Logout</a>
-              </div>
-            </li>
-            {% else %}
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'login' %}">Login</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'registration_register' %}">Register</a>
-            </li>
+            </div>
+            <button class="navbar-toggler navbar-light" type="button" data-toggle="collapse" data-target="#nav-menu" aria-controls="nav-menu" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse text-center" id="nav-menu">
+                <ul class="navbar-nav ml-auto">
+                    {% if request.path == '/' %}
+                        <li class="nav-item active">
+                            <a class="nav-link" href="#">Home<span class="sr-only">(current)</span></a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'transcriptions:transcribe' %}">Campaigns</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'about' %}">About</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'faq' %}">FAQ</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Blog</a>
+                        </li>
+                        {% if user.is_authenticated %}
+                            <li class="nav-item dropdown nav-dropdown">
+                                <a class="nav-link dropdown-toggle" href="http://example.com" id="nav-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Account</a>
+                                <div class="dropdown-menu" aria-labelledby="nav-dropdown">
+                                    <a class="dropdown-item" href="{% url 'user-profile' %}">{{ user }} profile</a> {% if user.is_superuser %}
+                                    <a class="dropdown-item" href="{% url 'admin:index' %}">Admin pages</a> {% endif %}
+                                    <a class="dropdown-item" href="{% url 'logout' %}">Logout</a>
+                                </div>
+                            </li>
+                        {% else %}
+                            <li class="nav-item">
+                                <a class="nav-link d-block d-lg-none" href="{% url 'login' %}">Login</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link d-block d-lg-none" href="{% url 'registration_register' %}">Register</a>
+                            </li>
+                        {% endif %}
+
+                    {% elif '/about/' in request.path %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="/">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'transcriptions:transcribe' %}">Campaigns</a>
+                        </li>
+                        <li class="nav-item active">
+                            <a class="nav-link" href="{% url 'about' %}">About<span class="sr-only">(current)</span></a>
+                        </li>
+                        <!-- TODO: remove d-none when available! -->
+                        <li class="nav-item">
+                            <a class="nav-link d-none" href="{% url 'faq' %}">FAQ</a>
+                        </li>
+                        <!-- TODO: remove d-none when available! -->
+                        <li class="nav-item">
+                            <a class="nav-link d-none" href="#">Blog</a>
+                        </li>
+                        {% if user.is_authenticated %}
+                            <li class="nav-item dropdown nav-dropdown">
+                                <a class="nav-link dropdown-toggle" href="http://example.com" id="nav-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Account</a>
+                                <div class="dropdown-menu" aria-labelledby="nav-dropdown">
+                                    <a class="dropdown-item" href="{% url 'user-profile' %}">{{ user }} profile</a> {% if user.is_superuser %}
+                                    <a class="dropdown-item" href="{% url 'admin:index' %}">Admin pages</a> {% endif %}
+                                    <a class="dropdown-item" href="{% url 'logout' %}">Logout</a>
+                                </div>
+                            </li>
+                        {% else %}
+                            <li class="nav-item">
+                                <a class="nav-link d-block d-lg-none" href="{% url 'login' %}">Login</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link d-block d-lg-none" href="{% url 'registration_register' %}">Register</a>
+                            </li>
+                        {% endif %}
+
+                    {% elif '/login/' in request.path %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="/">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'transcriptions:transcribe' %}">Campaigns</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'about' %}">About</a>
+                        </li>
+                        <!-- TODO: remove d-none when available! -->
+                        <li class="nav-item">
+                            <a class="nav-link d-none" href="{% url 'faq' %}">FAQ</a>
+                        </li>
+                        <!-- TODO: remove d-none when available! -->
+                        <li class="nav-item">
+                            <a class="nav-link d-none" href="#">Blog</a>
+                        </li>
+                        <li class="nav-item active">
+                            <a class="nav-link d-block d-lg-none" href="#">Login<span class="sr-only">(current)</span></a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link d-block d-lg-none" href="{% url 'registration_register' %}">Register</a>
+                        </li>
+
+                    {% elif '/register/' in request.path %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="/">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'transcriptions:transcribe' %}">Campaigns</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'about' %}">About</a>
+                        </li>
+                        <!-- TODO: remove d-none when available! -->
+                        <li class="nav-item">
+                            <a class="nav-link d-none" href="{% url 'faq' %}">FAQ</a>
+                        </li>
+                        <!-- TODO: remove d-none when available! -->
+                        <li class="nav-item">
+                            <a class="nav-link d-none" href="#">Blog</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link d-block d-lg-none" href="{% url 'login' %}">Login</a>
+                        </li>
+                        <li class="nav-item active">
+                            <a class="nav-link d-block d-lg-none" href="#">Register<span class="sr-only">(current)</span></a>
+                        </li>
+
+                    {% elif request.path == '/transcribe/' or '/transcribe/' in request.path %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="/">Home</a>
+                        </li>
+                        <li class="nav-item active">
+                            <a class="nav-link" href="#">Campaigns<span class="sr-only">(current)</span></a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'about' %}">About</a>
+                        </li>
+                        <!-- TODO: remove d-none when available! -->
+                        <li class="nav-item">
+                            <a class="nav-link d-none" href="{% url 'faq' %}">FAQ</a>
+                        </li>
+                        <!-- TODO: remove d-none when available! -->
+                        <li class="nav-item">
+                            <a class="nav-link d-none" href="#">Blog</a>
+                        </li>
+                        {% if user.is_authenticated %}
+                            <li class="nav-item dropdown nav-dropdown">
+                                <a class="nav-link dropdown-toggle" href="http://example.com" id="nav-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Account</a>
+                                <div class="dropdown-menu" aria-labelledby="nav-dropdown">
+                                    <a class="dropdown-item" href="{% url 'user-profile' %}">{{ user }} profile</a> {% if user.is_superuser %}
+                                    <a class="dropdown-item" href="{% url 'admin:index' %}">Admin pages</a> {% endif %}
+                                    <a class="dropdown-item" href="{% url 'logout' %}">Logout</a>
+                                </div>
+                            </li>
+                        {% else %}
+                            <li class="nav-item">
+                                <a class="nav-link d-block d-lg-none" href="{% url 'login' %}">Login</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link d-block d-lg-none" href="{% url 'registration_register' %}">Register</a>
+                            </li>
+                        {% endif %}
+
+                    {% elif '/faq/' in request.path %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'transcriptions:transcribe' %}">Campaigns</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'about' %}">About</a>
+                    </li>
+                    <!-- TODO: remove d-none when available! -->
+                    <li class="nav-item">
+                        <a class="nav-link d-none" href="{% url 'faq' %}">FAQ<span class="sr-only">(current)</span></a>
+                    </li>
+                    <!-- TODO: remove d-none when available! -->
+                    <li class="nav-item">
+                        <a class="nav-link d-none" href="#">Blog</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-block d-lg-none" href="{% url 'login' %}">Login</a>
+                    </li>
+                    <li class="nav-item active">
+                        <a class="nav-link" href="#">Register</a>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'transcriptions:transcribe' %}">Campaigns</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'about' %}">About</a>
+                    </li>
+                    <!-- TODO: remove d-none when available! -->
+                    <li class="nav-item">
+                        <a class="nav-link d-none" href="{% url 'faq' %}">FAQ</a>
+                    </li>
+                    <!-- TODO: remove d-none when available! -->
+                    <li class="nav-item">
+                        <a class="nav-link d-none" href="#">Blog</a>
+                    </li>
+                    <li class="nav-item dropdown nav-dropdown active">
+                        <a class="nav-link dropdown-toggle" href="http://example.com" id="nav-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Account</a>
+                        <div class="dropdown-menu" aria-labelledby="nav-dropdown">
+                            <a class="dropdown-item" href="{% url 'user-profile' %}">{{ user }} profile<span class="sr-only">(current)</span></a> {% if user.is_superuser %}
+                            <a class="dropdown-item" href="{% url 'admin:index' %}">Admin pages</a> {% endif %}
+                            <a class="dropdown-item" href="{% url 'logout' %}">Logout</a>
+                        </div>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+            {% if not user.is_authenticated %}
+            <div class="nav-secondary">
+                <a class="nav-link nav-secondary d-none d-lg-inline nav-link-login" href="{% url 'login' %}">Login</a>
+                <a class="nav-link nav-secondary d-none d-lg-inline nav-link-register" href="{% url 'registration_register' %}">Register</a>
+            </div>
             {% endif %}
-
-        {% elif '/login/' in request.path %}
-        <li class="nav-item">
-          <a class="nav-link" href="/">Home</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'transcriptions:transcribe' %}">Collections</a>
-        </li>
-        <li class="nav-item active">
-          <a class="nav-link" href="#">Login<span class="sr-only">(current)</span></a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'registration_register' %}">Register</a>
-        </li>
-
-        {% elif '/register/' in request.path %}
-        <li class="nav-item">
-          <a class="nav-link" href="/">Home</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'transcriptions:transcribe' %}">Collections</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'login' %}">Login</a>
-        </li>
-        <li class="nav-item active">
-          <a class="nav-link" href="#">Register<span class="sr-only">(current)</span></a>
-        </li>
-
-        {% elif request.path == '/transcribe/' %}
-        <li class="nav-item">
-          <a class="nav-link" href="/">Home</a>
-        </li>
-        <li class="nav-item active">
-          <a class="nav-link" href="#">Collections<span class="sr-only">(current)</span></a>
-        </li>
-            {% if user.is_authenticated %}
-            <li class="nav-item dropdown nav-dropdown">
-              <a class="nav-link dropdown-toggle" href="http://example.com" id="nav-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Account</a>
-              <div class="dropdown-menu" aria-labelledby="nav-dropdown">
-                <a class="dropdown-item" href="{% url 'user-profile' %}">{{ user }} profile</a>
-                {% if user.is_superuser %}
-                <a class="dropdown-item" href="{% url 'admin:index' %}">Admin pages</a>
-                {% endif %}
-                <a class="dropdown-item" href="{% url 'logout' %}">Logout</a>
-              </div>
-            </li>
-            {% else %}
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'login' %}">Login</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'registration_register' %}">Register</a>
-            </li>
-            {% endif %}
-
-        {% elif '/transcribe/' in request.path %}
-        <li class="nav-item">
-          <a class="nav-link" href="/">Home</a>
-        </li>
-        <li class="nav-item active">
-          <a class="nav-link" href="{% url 'transcriptions:transcribe' %}">Collections<span class="sr-only">(current)</span></a>
-        </li>
-            {% if user.is_authenticated %}
-            <li class="nav-item dropdown nav-dropdown">
-              <a class="nav-link dropdown-toggle" href="http://example.com" id="nav-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Account</a>
-              <div class="dropdown-menu" aria-labelledby="nav-dropdown">
-                <a class="dropdown-item" href="{% url 'user-profile' %}">{{ user }} profile</a>
-                {% if user.is_superuser %}
-                <a class="dropdown-item" href="{% url 'admin:index' %}">Admin pages</a>
-                {% endif %}
-                <a class="dropdown-item" href="{% url 'logout' %}">Logout</a>
-              </div>
-            </li>
-            {% else %}
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'login' %}">Login</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'registration_register' %}">Register</a>
-            </li>
-            {% endif %}
-
-        {% else %}
-        <li class="nav-item">
-          <a class="nav-link" href="/">Home</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'transcriptions:transcribe' %}">Collections</a>
-        </li>
-        <li class="nav-item dropdown nav-dropdown active">
-          <a class="nav-link dropdown-toggle" href="http://example.com" id="nav-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Account</a>
-          <div class="dropdown-menu" aria-labelledby="nav-dropdown">
-            <a class="dropdown-item" href="{% url 'user-profile' %}">{{ user }} profile<span class="sr-only">(current)</span></a>
-            {% if user.is_superuser %}
-            <a class="dropdown-item" href="{% url 'admin:index' %}">Admin pages</a>
-            {% endif %}
-            <a class="dropdown-item" href="{% url 'logout' %}">Logout</a>
-          </div>
-        </li>
-        {% endif %}
-      </ul>
-    </div>
-  </nav>
-  </header>
-  <main>
-    {% block main_content %}{% endblock main_content %}
-  </main>
-  <footer class="container-fluid text-center font-weight-light bg-footer py-default">
-    <div class="row">
-      <div class="col justify-content-center text-center ml-auto">
-        <a class="blue-text" href="/">HOME</a><br />
-        <a class="blue-text" href="#">COLLECTIONS</a><br />
-        <a class="blue-text" href="{% url 'about' %}">ABOUT</a><br />
-        <a class="blue-text" href="{% url 'contact' %}">CONTACT US</a><br />
-        <a class="blue-text" href="{% url 'faq' %}">FAQ</a><br />
-        <a class="blue-text" href="{% url 'legal' %}">LEGAL</a><br />
-        <a class="blue-text" href="https://loc.gov">LoC.GOV</a>
-      </div>
-      <div class="col-md-4 justify-content-center">
-        <p class="mb-half">Connect with us</p>
-        <a href="https://www.facebook.com/libraryofcongress/" target="_blank"><img class="mb-half" src="{% static "img/f.svg" %}" alt="link to Library of Congress Facebook page"></a>
-        <br />
-        <a href="https://twitter.com/librarycongress" target="_blank"><img class="mb-half" src="{% static "img/t.svg" %}" alt="link to Library of Congress Twitter page"></a>
-        <br />
-        <a href="https://www.youtube.com/channel/UCbObxjfi3W9YKnDS0PgadNA" target="_blank"><img class="mb-half" src="{% static "img/yt.svg" %}" alt="link to Library of Congress YouTube page"></a>
-        <br />
-        <a href="https://www.flickr.com/photos/library_of_congress/" target="_blank"><img src="{% static "img/fl.svg" %}" alt="link to Library of Congress Flickr page"></a>
-      </div>
-      <div class="col-md-4 justify-content-start text-center">
-        <p class="mb-regular">Statistics</p>
-        <p class="mb-regular">4,120 artifacts transcribed</p>
-        <p class="mb-regular">2,257 transcriptions in progress</p>
-        <p>1,179 contributions need review</p>
-      </div>
-    </div>
-  </footer>
-  <!-- JS -->
-  <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
-  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.2/js/bootstrap.min.js" integrity="sha384-o+RDsa0aLu++PJvFqy8fFScvbHFLtbvScb8AjopnFD+iEQ7wo/CG0xlczd+2O/em" crossorigin="anonymous"></script>
-  <script src="{% static "js/base.js" %}"></script>
-  {% block body_scripts %}{% endblock body_scripts %}
+        </nav>
+    </header>
+    <main>
+        {% block main_content %}{% endblock main_content %}
+    </main>
+    <footer class="container-fluid text-center font-weight-light bg-footer py-default">
+        <div class="row">
+            <div class="col justify-content-center text-center ml-auto">
+                <a class="primary-text" href="/">HOME</a>
+                <br />
+                <a class="primary-text" href="#">CAMPAIGNS</a>
+                <br />
+                <a class="primary-text" href="{% url 'about' %}">ABOUT</a>
+                <br />
+                <a class="primary-text" href="{% url 'contact' %}">CONTACT US</a>
+                <br />
+                <a class="primary-text" href="{% url 'faq' %}">FAQ</a>
+                <br />
+                <a class="primary-text" href="{% url 'legal' %}">LEGAL</a>
+                <br />
+                <a class="primary-text" href="https://loc.gov">LoC.GOV</a>
+            </div>
+            <div class="col-md-4 justify-content-center">
+                <p class="mb-half">Connect with us</p>
+                <a href="https://www.facebook.com/libraryofcongress/" target="_blank"><img class="mb-half" src="{% static "img/f.svg" %}" alt="link to Library of Congress Facebook page"></a>
+                <br />
+                <a href="https://twitter.com/librarycongress" target="_blank"><img class="mb-half" src="{% static "img/t.svg" %}" alt="link to Library of Congress Twitter page"></a>
+                <br />
+                <a href="https://www.youtube.com/channel/UCbObxjfi3W9YKnDS0PgadNA" target="_blank"><img class="mb-half" src="{% static "img/yt.svg" %}" alt="link to Library of Congress YouTube page"></a>
+                <br />
+                <a href="https://www.flickr.com/photos/library_of_congress/" target="_blank"><img src="{% static "img/fl.svg" %}" alt="link to Library of Congress Flickr page"></a>
+            </div>
+            <div class="col-md-4 justify-content-start text-center">
+                <p class="mb-regular">Statistics</p>
+                <p class="mb-regular">4,120 artifacts transcribed</p>
+                <p class="mb-regular">2,257 transcriptions in progress</p>
+                <p>1,179 contributions need review</p>
+            </div>
+        </div>
+    </footer>
+    <!-- JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+    <script src="{% static "js/base.js" %}"></script>
+    {% block body_scripts %}{% endblock body_scripts %}
 </body>
+
 </html>
