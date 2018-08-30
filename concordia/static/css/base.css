@@ -435,6 +435,10 @@ input {
     width: 200px;
 }
 
+.btn-primary-centered {
+    display: inline-block;
+}
+
 .btn-primary:hover {
     background-color: var(--primary-color-hover);
     border-color: var(--primary-color-hover);
@@ -457,6 +461,64 @@ input {
     background-color: var(--bg-darkest-gray);
     border-color: var(--bg-darkest-gray);
     color: var(--text-color-offwhite);
+}
+
+.btn-prev {
+  position: relative;
+  z-index: 99;
+  width: 32px;
+  height: 32px;
+  float: left;
+  border: 1px solid #000;
+  border-radius: 16px;
+  background-color: #fff;
+  -webkit-transition: all 300ms ease-in-out;
+  transition: all 300ms ease-in-out;
+  font-family: Lato, sans-serif;
+  color: #2e2e2e;
+  font-size: 28px;
+  line-height: 28px;
+  font-weight: 300;
+  letter-spacing: 2px;
+  text-decoration: none;
+}
+
+.btn-prev:hover {
+  background-color: #686868;
+  color: #fff;
+  text-decoration: none;
+}
+
+.btn-next {
+  margin-left: auto;
+  float: right;
+  letter-spacing: -1px;
+}
+
+.tooltip {
+    position: relative;
+    display: inline-block;
+    border-bottom: 1px dotted black; /* If you want dots under the hoverable text */
+}
+
+/* Tooltip text */
+.tooltip .tooltiptext {
+    visibility: hidden;
+    width: 120px;
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    padding: 5px 0;
+    border-radius: 6px;
+
+    /* Position the tooltip text - see examples below! */
+    position: absolute;
+    z-index: 1;
+}
+
+/* Show the tooltip text when you mouse over the tooltip container */
+.tooltip:hover .tooltiptext {
+    visibility: visible;
 }
 
 .card-body {

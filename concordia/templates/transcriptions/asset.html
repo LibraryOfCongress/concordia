@@ -129,16 +129,24 @@ div#captcha_div{
 
                     <div class="my-quarter d-flex justify-content-around align-items-center">
                         <table>
-                            <tr>
+                            <tr align="center">
+                                <td>
+                                    <a href="{% url 'transcriptions:asset' asset.collection.slug prev_asset.slug%}"
+                                       class="btn-prev"><</a>
+                                </td>
                                 <td>
                                     <input id="save-button" name="action" type="submit"
-                                           class="btn btn-primary btn-primary-fixed-width float-left" value="Save">
+                                           class="btn btn-primary btn-primary-fixed-width" value="Save">
+                                </td>
+                                <td>
+                                    <a href="{% url 'transcriptions:asset' asset.collection.slug next_asset.slug%}"
+                                    class="btn-prev btn-next">></a>
                                 </td>
                             </tr>
 
                             {% if user.is_anonymous %}
                             <tr class="d-none" id="captcha_tr">
-                                <td>
+                                <td colspan="3" align="center">
                                    <div id="captcha_div">
                                     {{ captcha_form.captcha }}
                                    </div>
@@ -147,24 +155,24 @@ div#captcha_div{
                             {% endif %}
 
                             <tr>
-                                <td>
+                                <td colspan="3" align="center">
                                     <input id="review-button" name="action" type="submit"
-                                           class="btn btn-primary btn-primary-fixed-width float-left"
+                                           class="btn btn-primary btn-primary-fixed-width"
                                            value="Submit for Review">
                                 </td>
                             </tr>
                             <tr>
-                                <td>
+                                <td colspan="3" align="center">
                                     <input id="contact-button" name="action" type="submit"
-                                           class="btn btn-primary btn-primary-fixed-width float-left"
+                                           class="btn btn-primary btn-primary-fixed-width"
                                            value="Contact Manager">
                                 </td>
                             </tr>
                             {% if user.is_authenticated %}
                             <tr>
-                                <td>
+                                <td colspan="3" align="center">
                                     <input id="complete-button" name="action" type="submit"
-                                           class="btn btn-primary btn-primary-fixed-width float-left"
+                                           class="btn btn-primary btn-primary-fixed-width"
                                            value="Mark Completed">
                                 </td>
                             </tr>

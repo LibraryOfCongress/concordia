@@ -9,13 +9,13 @@ from unittest.mock import Mock, patch
 import views
 from captcha.models import CaptchaStore
 from django.test import Client, TestCase
-from django.test.utils import override_settings
 from PIL import Image
 
 from concordia.models import (Asset, Collection, MediaType, Status, Tag, Transcription,
                               User, UserAssetTagCollection, UserProfile, PageInUse, Subcollection)
 
 logging.disable(logging.CRITICAL)
+
 
 class ViewTest_Concordia(TestCase):
     """
