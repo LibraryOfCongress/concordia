@@ -62,6 +62,7 @@ class ConcordiaUserForm(RegistrationForm):
 
 class ConcordiaUserEditForm(ConcordiaUserForm):
     myfile = forms.FileField(required=False)
+    captcha = CaptchaField(required=False)
 
 
 class ConcordiaContactUsForm(forms.Form):

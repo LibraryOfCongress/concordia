@@ -12,8 +12,8 @@ from captcha.models import CaptchaStore
 from django.test import Client, TestCase
 from PIL import Image
 
-from concordia.models import (Asset, Collection, MediaType, PageInUse, Status, Tag,
-                              Transcription, User, UserAssetTagCollection, UserProfile)
+from concordia.models import (Asset, Collection, MediaType, Status, Tag, Transcription,
+                              User, UserAssetTagCollection, UserProfile, PageInUse, Subcollection)
 
 logging.disable(logging.CRITICAL)
 
@@ -405,7 +405,7 @@ class ViewTest_Concordia(TestCase):
         # Assert
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(
-            response, template_name="transcriptions/collection.html"
+            response, template_name="transcriptions/project.html"
         )
 
     @responses.activate
@@ -454,7 +454,7 @@ class ViewTest_Concordia(TestCase):
         # Assert
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(
-            response, template_name="transcriptions/collection.html"
+            response, template_name="transcriptions/project.html"
         )
 
     def test_ExportCollectionView_get(self):
@@ -544,6 +544,67 @@ class ViewTest_Concordia(TestCase):
         collection2 = Collection.objects.all()
         self.assertEqual(len(collection2), 0)
 
+    @patch("concordia.views.requests")
+    def test_DeleteAsset_get(self, mock_requests):
+        """
+        Test GET route /transcribe/delete/asset/<slug-value>/ (asset)
+        :return:
+        """
+
+        # Arrange
+        mock_requests.get.return_value.status_code = 200
+        mock_requests.get.return_value.json.return_value = {
+            "concordia_data": "abc123456"
+        }
+
+        # add an item to Collection
+        self.collection = Collection(
+            title="TextCollection",
+            slug="test-collection-slug",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection.save()
+
+        self.asset = Asset(
+            title="TestAsset",
+            slug="test-asset-slug",
+            description="Asset Description",
+            media_url="http://www.foo.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            collection=self.collection,
+            metadata={"key": "val2"},
+            status=Status.EDIT,
+        )
+        self.asset.save()
+
+        self.asset = Asset(
+            title="TestAsset1",
+            slug="test-asset-slug1",
+            description="Asset Description1",
+            media_url="http://www.foo1.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            collection=self.collection,
+			metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.asset.save()
+
+        # Act
+
+        response = self.client.get("/transcribe/test-collection-slug/delete/asset/test-asset-slug1/", follow=True)
+
+        # Assert
+        self.assertEqual(response.status_code, 200)
+
+        collection2 = Collection.objects.get(slug="test-collection-slug")
+        all_assets = Asset.objects.filter(collection=collection2)
+        hided_assets = Asset.objects.filter(collection=collection2, status=Status.INACTIVE)
+        self.assertEqual(len(all_assets), 2)
+        self.assertEqual(len(hided_assets), 1)
+
+    def test_ConcordiaAssetView_post(self):
     @patch("concordia.views.ConcordiaAssetView.get_context_data")
     @responses.activate
     def test_ConcordiaAssetView_post(self, mock_requests):
@@ -678,6 +739,85 @@ class ViewTest_Concordia(TestCase):
         self.assertEqual(response.url, "/transcribe/Collection1/asset/Asset1/")
 
     @responses.activate
+        # Verify the new transcription and tag are in the db
+        transcription = Transcription.objects.filter(
+            text="First Test Transcription", asset=self.asset
+        )
+        self.assertEqual(len(transcription), 1)
+
+        tags = UserAssetTagCollection.objects.filter(
+            asset=self.asset, user_id=self.user.id
+        )
+        if tags:
+            separate_tags = tags[0].tags.all()
+
+        self.assertEqual(len(tags), 1)
+        self.assertEqual(separate_tags[0].name, tag_name)
+
+    def test_ConcordiaAssetView_post_contact_community_manager(self):
+        """
+        This unit test test the POST route /transcribe/<collection>/asset/<Asset_name>/
+        for an anonymous user. Clicking the contact community manager button
+        should redirect to the contact us page.
+        :return:
+        """
+        # Arrange
+
+        # create a collection
+        self.collection = Collection(
+            title="TestCollection",
+            slug="Collection1",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection.save()
+
+        # create an Asset
+        self.asset = Asset(
+            title="TestAsset",
+            slug="Asset1",
+            description="Asset Description",
+            media_url="http://www.foo.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            collection=self.collection,
+            metadata={"key": "val2"},
+            status=Status.EDIT,
+        )
+        self.asset.save()
+
+        # create anonymous user
+        anon_user = User.objects.create(username="anonymous", email="tester@foo.com")
+        anon_user.set_password("blah_anonymous!")
+        anon_user.save()
+
+        # add a Transcription object
+        self.transcription = Transcription(
+            asset=self.asset,
+            user_id=anon_user.id,
+            text="Test transcription 1",
+            status=Status.EDIT,
+        )
+        self.transcription.save()
+
+        tag_name = "Test tag 1"
+
+        # Act
+        response = self.client.get(
+            "/transcribe/Collection1/asset/Asset1/")
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.post(
+            "/transcribe/Collection1/asset/Asset1/",
+            {"tx": "",
+             "tags": "",
+             "action": "Contact Manager"},
+        )
+
+        # Assert
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, "/contact/?pre_populate=true")
+
     def test_ConcordiaAssetView_post_anonymous_happy_path(self):
         """
         This unit test test the POST route /transcribe/<collection>/asset/<Asset_name>/
@@ -1258,3 +1398,173 @@ class ViewTest_Concordia(TestCase):
 
         # Assert
         self.assertEqual(anon_user.id, anon_obj.id)
+
+
+    def test_ConcordiaProjectView_get(self):
+        """
+        Test GET on route /transcribe/<slug-value> (collection)
+        :return:
+        """
+
+        # Arrange
+
+        # add an item to Collection
+        self.collection = Collection(
+            title="TextCollection",
+            slug="test-slug2",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection.save()
+
+        self.subcollection = Subcollection(
+            title="TextCollection sub collection",
+            slug="test-slug2-proj",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+            collection=self.collection
+        )
+        self.subcollection.save()
+
+        self.subcollection1 = Subcollection(
+            title="TextCollection sub collection1",
+            slug="test-slug2-proj1",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+            collection=self.collection
+        )
+        self.subcollection1.save()
+
+        # Act
+        response = self.client.get("/transcribe/test-slug2/test-slug2-proj1/")
+
+        # Assert
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, template_name="transcriptions/collection.html"
+        )
+
+    def test_ConcordiaProjectView_get_page2(self):
+        """
+        Test GET on route /transcribe/<slug-value>/ (collection) on page 2
+        :return:
+        """
+
+        # Arrange
+
+        # add an item to Collection
+        self.collection = Collection(
+            title="TextCollection",
+            slug="test-slug2",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection.save()
+
+        self.subcollection = Subcollection(
+            title="TextCollection sub collection",
+            slug="test-slug2-proj",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+            collection=self.collection
+        )
+        self.subcollection.save()
+
+        self.subcollection1 = Subcollection(
+            title="TextCollection sub collection1",
+            slug="test-slug2-proj1",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+            collection=self.collection
+        )
+        self.subcollection1.save()
+
+        # Act
+        response = self.client.get("/transcribe/test-slug2/test-slug2-proj1/", {"page": 2})
+
+        # Assert
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, template_name="transcriptions/collection.html")
+
+    def test_FilterCollections_get(self):
+        """Test list of filer collection get API"""
+
+        #Arrange
+        self.collection = Collection(
+            title="TextCollection",
+            slug="slug1",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection.save()
+
+
+        self.collection = Collection(
+            title="Text Collection",
+            slug="slug2",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection.save()
+
+        # Act
+        response = self.client.get("/filter/collections/")
+
+        # Assert
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()), 2)
+        self.assertEqual(response.json()[0], 'slug1')
+        self.assertEqual(response.json()[1], 'slug2')
+
+
+    def test_FilterCollectionsWithParams_get(self):
+        """Test list of filer collection get API"""
+
+        #Arrange
+        self.collection = Collection(
+            title="TextCollection",
+            slug="slug1",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection.save()
+
+
+        self.collection = Collection(
+            title="Text Collection",
+            slug="slug2",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection.save()
+
+        # Act
+        response = self.client.get("/filter/collections/?name=sl")
+
+        # Assert
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()), 2)
+        self.assertEqual(response.json()[0], 'slug1')
+        self.assertEqual(response.json()[1], 'slug2')
+
+
+    def test_FilterCollectionsEmpty_get(self):
+        """Test list of filer collection get API"""
+
+        #Arrange, to test empty filter collections. No need of arranging data
+
+        # Act
+        response = self.client.get("/filter/collections/")
+
+        # Assert
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()), 0)
+
+

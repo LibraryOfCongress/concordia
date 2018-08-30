@@ -51,11 +51,13 @@ services:
       WAIT_HOSTS: db:5432
     depends_on:
       - db
+      - elk
     volumes:
       - .:/app
       - images_volume:/concordia_images
     links:
       - rabbit
+      - elk
     ports:
       - 80:80
 

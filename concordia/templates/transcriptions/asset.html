@@ -4,20 +4,33 @@
 <style>
 input#id_captcha_1 {
   padding: .375rem .75rem;
+  margin-right: 5px
+}
+div#input_group_for_captcha {
+  margin-top: 5px
+}
+div#captcha_div{
+  margin: 10px;
+  padding: 5px;
+  background-color: #48352f4d;
+  border-style: double;
 }
 </style>
 {% endblock head_content %}
 {% block main_content %}
     <div class="container-fluid">
         <div class="row">
+            <div id="show_message">
+
+            </div>
             <div class="col-12 d-flex align-items-middle py-1 bg-darkest-gray">
                 <h2 class="contribute-breadcrumb pl-default mb-0"><a class="offwhite-text" href="{% url 'transcriptions:collection' asset.collection.slug %}"> Go back to {{ asset.collection.title }}</a>  >  {{ asset.title }}</h2>
             </div>
-            <div class="col-7 col-md-8">
+            <div class="col-6">
                 <div id="asset-image" class="asset-image bg-offwhite">
                 </div>
             </div>
-            <div class="col-5 col-md-4 bg-darkest-gray shadow-regular rounded contribute-box" id="contribute-box">
+            <div class="col-6 bg-darkest-gray shadow-regular contribute-box" id="contribute-box">
                 <nav class="px-half py-1">
                     <div class="nav nav-pills" id="nav-pill-contribute-box" role="tablist">
                         <a class="nav-item nav-link active" id="nav-pill-transcription" data-toggle="tab"
@@ -25,123 +38,132 @@ input#id_captcha_1 {
                            aria-selected="true" onclick="return show_buttons()">Transcription</a>
                         <a class="nav-item nav-link" id="nav-pill-tag" data-toggle="tab" href="#tab-tag" role="tab"
                            aria-controls="tab-tag" aria-selected="false" onclick="return hide_buttons('tags')">Tags</a>
-                        <a class="nav-item nav-link" id="nav-pill-discussion" data-toggle="tab" href="#tab-discussion"
-                           role="tab" aria-controls="tab-discussion" aria-selected="false"
-                           onclick="return hide_buttons('discussion')">Discussion</a>
+                        {% if not discussion_hide %}
+                            <a class="nav-item nav-link" id="nav-pill-discussion" data-toggle="tab" href="#tab-discussion" role="tab" aria-controls="tab-discussion" aria-selected="false" onclick="return hide_buttons('discussion')">Discussion</a>
+                        {% endif %}
                     </div>
                 </nav>
                 <form class="mx-half" id="contribute-form" method="post">
                     {% csrf_token %}
-                    <div class="tab-content" id="test percent">
-                        status:
-                        {{ transcription.status }}
-
-                    </div>
                     <div class="tab-content" id="nav-tabContent">
                         <div class="tab-pane fade show active rounded" id="tab-transcription" role="tabpanel" aria-labelledby="nav-pill-transcription">
                             <textarea class="w-100" name="tx" id="transcription-input" placeholder="Go ahead, start typing. You got this!" aria-label="Transcription input">{{transcription.text}}</textarea>
                         </div>
                         <div class="tab-pane fade rounded" id="tab-tag" role="tabpanel" aria-labelledby="nav-pill-tag">
-                            <input type="text" class="textarea w-100" id="tag-input" name="tags" data-role="tagsinput" value="{%for tag in tags %}{{tag.value}},{% endfor %}" aria-label="Tag input">
+                            {% if user.is_authenticated %}
+                                <input type="text" id="tag-input" name="tags" data-role="tagsinput" value="{%for tag in tags %}{{tag}},{% endfor %}" aria-label="Tag input">
+                            {% else %}
+                                <input type="text" id="tag-input" name="tags" data-role="tagsinput" value="{%for tag in tags %}{{tag.value}},{% endfor %}" aria-label="Tag input" disabled="true">
+                            {% endif %}
                         </div>
-                        <div class="tab-pane fade pxy-quarter rounded" id="tab-discussion" role="tabpanel"
-                             aria-labelledby="nav-pill-discussion">
-                            <div class="row">
-                                <div class="comments col-md-9" id="comments">
-                                    <!-- individual comment -->
-                                    <div class="comment mb-2 row">
-                                    <div class="comment-avatar col-md-1 col-sm-2 text-center pr-1">
-                                        <a href=""><img class="mx-auto rounded-circle img-fluid" src="http://demos.themes.guide/bodeo/assets/images/users/m103.jpg" alt="admin's avatar"></a>
-                                    </div>
-                                    <div class="comment-content col-md-11 col-sm-10">
-                                        <h6 class="small comment-meta"><a href="#" class="blue-text">admin</a> Today, 2:38</h6>
-                                        <div class="comment-body">
-                                            <p>
-                                                Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
-                                                <br>
-                                                <a href="" class="text-right small"><i class="ion-reply"></i> Reply</a>
-                                            </p>
+                        {% if not discussion_hide %}
+                            <div class="tab-pane fade pxy-quarter rounded" id="tab-discussion" role="tabpanel"
+                                 aria-labelledby="nav-pill-discussion">
+                                <div class="row">
+                                    <div class="comments col-md-9" id="comments">
+                                        <!-- individual comment -->
+                                        <div class="comment mb-2 row">
+                                        <div class="comment-avatar col-md-1 col-sm-2 text-center pr-1">
+                                            <a href=""><img class="mx-auto rounded-circle img-fluid" src="http://demos.themes.guide/bodeo/assets/images/users/m103.jpg" alt="admin's avatar"></a>
                                         </div>
-                                    </div>
-
-                                    <!-- reply is indented -->
-                                    <div class="comment-reply col-md-11 offset-md-1 col-sm-10 offset-sm-2">
-                                        <div class="row">
-                                            <div class="comment-avatar col-md-1 col-sm-2 text-center pr-1">
-                                                <a href=""><img class="mx-auto rounded-circle img-fluid" src="http://demos.themes.guide/bodeo/assets/images/users/m101.jpg" alt="phildowney's avatar"></a>
+                                        <div class="comment-content col-md-11 col-sm-10">
+                                            <h6 class="small comment-meta"><a href="#" class="primary-text">admin</a> Today, 2:38</h6>
+                                            <div class="comment-body">
+                                                <p>
+                                                    Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
+                                                    <br>
+                                                    <a href="" class="text-right small"><i class="ion-reply"></i> Reply</a>
+                                                </p>
                                             </div>
-                                            <div class="comment-content col-md-11 col-sm-10 col-12">
-                                                <h6 class="small comment-meta"><a href="#" class="blue-text">phildownney</a> Today, 12:31</h6>
-                                                <div class="comment-body">
-                                                    <p>Really?? Consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-                                                        <br>
-                                                        <a href="" class="text-right small"><i class="ion-reply"></i> Reply</a>
-                                                    </p>
+                                        </div>
+
+                                        <!-- reply is indented -->
+                                        <div class="comment-reply col-md-11 offset-md-1 col-sm-10 offset-sm-2">
+                                            <div class="row">
+                                                <div class="comment-avatar col-md-1 col-sm-2 text-center pr-1">
+                                                    <a href=""><img class="mx-auto rounded-circle img-fluid" src="http://demos.themes.guide/bodeo/assets/images/users/m101.jpg" alt="phildowney's avatar"></a>
+                                                </div>
+                                                <div class="comment-content col-md-11 col-sm-10 col-12">
+                                                    <h6 class="small comment-meta"><a href="#" class="primary-text">phildownney</a> Today, 12:31</h6>
+                                                    <div class="comment-body">
+                                                        <p>Really?? Consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+                                                            <br>
+                                                            <a href="" class="text-right small"><i class="ion-reply"></i> Reply</a>
+                                                        </p>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                   </div>
-                                   <!-- /reply is indented -->
-                                </div>
-                                <!-- /comment -->
-                                <!-- comment -->
-                                <div class="comment mb-2 row">
-                                    <div class="comment-avatar col-md-1 col-sm-2 text-center pr-1">
-                                        <a href=""><img class="mx-auto rounded-circle img-fluid" src="http://demos.themes.guide/bodeo/assets/images/users/w102.jpg" alt="maslarino's avatar"></a>
-                                    </div>
-                                    <div class="comment-content col-md-11 col-sm-10">
-                                        <h6 class="small comment-meta"><a href="#" class="blue-text">maslarino</a> Yesterday, 5:03 PM</h6>
-                                        <div class="comment-body">
-                                            <p>Sit amet, consectetur adipisicing elit, sed do eiusmod tempor.
-                                                <br>
-                                                <a href="" class="text-right small"><i class="ion-reply"></i> Reply</a>
-                                            </p>
-                                        </div>
-                                        </div>
+                                       </div>
+                                       <!-- /reply is indented -->
                                     </div>
                                     <!-- /comment -->
-                                    {% if user.is_authenticated %}
-                                        <div class="row pt-2">
-                                            <div class="col-12">
-                                                <a href="" class="btn btn-sm btn-primary">Comment</a>
+                                    <!-- comment -->
+                                    <div class="comment mb-2 row">
+                                        <div class="comment-avatar col-md-1 col-sm-2 text-center pr-1">
+                                            <a href=""><img class="mx-auto rounded-circle img-fluid" src="http://demos.themes.guide/bodeo/assets/images/users/w102.jpg" alt="maslarino's avatar"></a>
+                                        </div>
+                                        <div class="comment-content col-md-11 col-sm-10">
+                                            <h6 class="small comment-meta"><a href="#" class="primary-text">maslarino</a> Yesterday, 5:03 PM</h6>
+                                            <div class="comment-body">
+                                                <p>Sit amet, consectetur adipisicing elit, sed do eiusmod tempor.
+                                                    <br>
+                                                    <a href="" class="text-right small"><i class="ion-reply"></i> Reply</a>
+                                                </p>
+                                            </div>
                                             </div>
                                         </div>
-                                    {% endif %}
+                                        <!-- /comment -->
+                                        {% if user.is_authenticated %}
+                                            <div class="row pt-2">
+                                                <div class="col-12">
+                                                    <a href="" class="btn btn-sm btn-primary">Comment</a>
+                                                </div>
+                                            </div>
+                                        {% endif %}
 
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        {% endif %}
                     </div>
 
                     <div class="my-quarter d-flex justify-content-around align-items-center">
                         <table>
                             <tr>
                                 <td>
-                                    <input id="save_button" name="action" type="submit"
+                                    <input id="save-button" name="action" type="submit"
                                            class="btn btn-primary btn-primary-fixed-width float-left" value="Save">
                                 </td>
                             </tr>
 
                             {% if user.is_anonymous %}
-                            <tr id="captcha_tr" style="display: none;">
+                            <tr class="d-none" id="captcha_tr">
                                 <td>
+                                   <div id="captcha_div">
                                     {{ captcha_form.captcha }}
+                                   </div>
                                 </td>
                             </tr>
                             {% endif %}
 
                             <tr>
                                 <td>
-                                    <input id="review_button" name="action" type="submit"
+                                    <input id="review-button" name="action" type="submit"
                                            class="btn btn-primary btn-primary-fixed-width float-left"
                                            value="Submit for Review">
                                 </td>
                             </tr>
-
+                            <tr>
+                                <td>
+                                    <input id="contact-button" name="action" type="submit"
+                                           class="btn btn-primary btn-primary-fixed-width float-left"
+                                           value="Contact Manager">
+                                </td>
+                            </tr>
                             {% if user.is_authenticated %}
                             <tr>
                                 <td>
-                                    <input id="complete_button" name="action" type="submit"
+                                    <input id="complete-button" name="action" type="submit"
                                            class="btn btn-primary btn-primary-fixed-width float-left"
                                            value="Mark Completed">
                                 </td>
@@ -150,40 +172,40 @@ input#id_captcha_1 {
                         </table>
                     </div>
                 </form>
-                <div style="color:whitesmoke" id="transcription_state_div">
-                    <h5 style="display: inline">Current State:&nbsp;</h5>
-                    <h5 id="transcription_state" name="transcription_state" style="display: inline">State value</h5>
+                <div id="transcription-state-div">
+                    <h5 class="offwhite-text d-inline" id="transcription-state" name="transcription-state">Current State: {{ transcription.status }}</h5>
                 </div>
-                <div style="color:whitesmoke">
-                    <h5 id="register_or_login_reminder" style="display: inline">Only registered users can tag.
-                        <a href="/account/register/">Register</a> or <a href="/account/login">Login</a></h5>
+                <div>
+                    <h5 class="offwhite-text d-inline" id="register-login-reminder">Only registered users can tag.
+                        <a class="primary-text" href="/account/register/">Register</a> or <a class="primary-text" href="/account/login">Login</a></h5>
                 </div>
             </div>
         </div>
     </div>
 
+
+    <!-- The Instruction Modal -->
+	<div id="instructionModal" style="display:none; margin-left: 10px; margin-right: 10px;">
+        <p>Lorem ipsum dolor sit amet, consectetur
+           adipiscing elit, sed do eiusmod tempor incididunt ut
+           labore et dolore magna aliqua. Ut enim ad minim
+           veniam,
+           quis nostrud exercitation ullamco laboris nisi ut
+           aliquip ex ea commodo consequat. Duis aute irure
+           dolor
+           in reprehenderit in voluptate velit esse cillum
+           dolore
+           eu fugiat nulla pariatur. Excepteur sint occaecat
+           cupidatat non proident, sunt in culpa qui officia
+           deserunt mollit anim id est laborum.
+        </p>
+	</div>
 {% endblock main_content %}
 
 {% block body_scripts %}
     <script src="{% static "js/contribute.js" %}"></script>
     <script src="{% static "js/jquery.cookie.js" %}"></script>
-    <script src="https://www.jqueryscript.net/demo/Bootstrap-4-Tag-Input-Plugin-jQuery/tagsinput.js"></script>
     <script src="{% static "vendor/openseadragon/openseadragon.min.js" %}"></script>
-    <script>
-        {% if asset.collection.s3_storage %}
-            var asset_url = '{{ asset.media_url }}';
-        {% else %}
-            var asset_url = '{{ MEDIA_URL }}{{ asset.media_url }}';
-        {% endif %}
-        OpenSeadragon({
-            id: 'asset-image',
-            prefixUrl: '{% static "vendor/openseadragon/images/" %}',
-            tileSources: {
-                type: 'image',
-                url: asset_url
-            }
-        });
-    </script>
     <script type="text/javascript">
         var csrftoken = $.cookie('csrftoken');
 
@@ -192,6 +214,61 @@ input#id_captcha_1 {
             return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
         }
 
+        {% if asset.collection.s3_storage %}
+            var asset_url = '{{ asset.media_url }}';
+        {% else %}
+            var asset_url = '{{ MEDIA_URL }}{{ asset.media_url }}';
+        {% endif %}
+        var viewer = OpenSeadragon({
+            id: 'asset-image',
+            prefixUrl: '{% static "vendor/openseadragon/images/" %}',
+            tileSources: {
+                type: 'image',
+                url: asset_url
+            },
+            showRotationControl: true,
+            gestureSettingsTouch: {
+                pinchRotate: true
+            }
+        });
+
+        viewer.addHandler('open', function() {
+            var instructionButton = new OpenSeadragon.Button({
+                onClick: function(e){
+                       $(instructionButton.element).insertBefore("#instructions");
+                }
+            });
+            $(instructionButton.element).removeAttr("style");
+            $(instructionButton.element).empty().append("<div><div id='instruction_content'></div><div id='instruction_button' class='btn btn-primary' style='display:block'>+Instructions</div></div>");
+
+            viewer.addControl(instructionButton.element, { anchor: OpenSeadragon.ControlAnchor.BOTTOM_LEFT });
+
+            $(instructionButton.element).css("width", "100%");
+            $(instructionButton.element).css("display", "block");
+            $(instructionButton.element).parent().css("width", "100%");
+            $(instructionButton.element).parent().css("display", "block");
+            $(instructionButton.element).parent().parent().css("width", "100%");
+            $(instructionButton.element).parent().parent().css("display", "block");
+
+            $("div#instruction_content").empty().css('background-color', '#dee2e6');
+            $("div#instruction_content").empty().append($('#instructionModal'));
+
+            $( "div#instruction_button" ).click(function() {
+	            	  if ( $( "div#instructionModal" ).is( ":hidden" ) ) {
+	            		  $( "div#instructionModal" ).show();
+	            	  } else {
+	            		  console.log("Here")
+	            		  $( "div#instructionModal" ).hide();
+	            	  }
+            	});
+          });
+    </script>
+    <script type="text/javascript">
+        var csrftoken = $.cookie('csrftoken');
+        function csrfSafeMethod(method) {
+            // these HTTP methods do not require CSRF protection
+            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+        }
         $.ajaxSetup({
             beforeSend: function(xhr, settings) {
                 if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
@@ -199,7 +276,6 @@ input#id_captcha_1 {
                 }
             }
         });
-
         function checkin_page_in_use() {
             $.ajax({
                 url : "/transcribe/pageinuse/",
@@ -218,13 +294,10 @@ input#id_captcha_1 {
                 error: function (jqXHR, textStatus, errorThrown)
                 {
                    $.noop(); // alert('POST failed!');//data - response from server
-
                 }
             });
             setTimeout(checkin_page_in_use, 30000);
-
         }
-
         function showalert(){
             var optsel = confirm("This transcription is being worked on by another user.\nYou may lose your work.\nDo you want to work on another page in this collection?");
             if (optsel == true) {
@@ -254,109 +327,148 @@ input#id_captcha_1 {
             }
         }
 
-       $("document").ready( function () {
-           setTimeout(checkin_page_in_use, 5000);
-           {% if page_in_use %}
-               showalert();
-           {% endif %}
-       });
-</script>
-    <script type="text/javascript">
+        function hide_buttons(tab_name) {
+            $("#review-button, #complete-button").hide();
+            $("#register-login-reminder").removeClass('d-inline');
+            $("#register-login-reminder").addClass('d-none');
 
-    $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
-        var target = $(e.target).attr("href") // activated tab
-        if (target == "#tab-tag") {
-            hide_buttons("tags");
-        }
-    });
+            {% if not user.is_authenticated %}
+                $("#register-login-reminder").removeClass('d-none');
+                $("#register-login-reminder").addClass('d-inline');
 
-    function hide_buttons(tab_name) {
-        $("#review_button").hide();
-        $("#complete_button").hide();
-        $("#register_or_login_reminder").hide();
-
-        {% if not user.is_authenticated %}
-            $("#register_or_login_reminder").show();
-
-            $("#save_button").hide();
-            if (tab_name == 'tags') {
-                $("#tag-input").attr('disabled', true);
-            }
-        {% endif %}
-        return true;
-    }
-    function show_buttons() {
-        $("#save_button").show();
-        $("#review_button").show();
-        $("#complete_button").hide();
-
-        $("#register_or_login_reminder").hide();
-
-        $("#transcription-input").attr('disabled', false);
-
-        {% if not user.is_authenticated and not transcription.status %}
-            $("#save_button").show();
-            $("#review_button").show();
-        {% elif not user.is_authenticated and transcription.status != 'Edit'%}
-            $("#save_button").hide();
-            $("#review_button").hide();
-            $("#transcription-input").attr('disabled', true);
-        {% else %}
-            {% if transcription.status == 'Submitted' %}
-                $("#review_button").hide();
-                $("#complete_button").show();
-            {% elif transcription.status == 'Completed' %}
-                $("#save_button").show();
-                $("#review_button").hide();
+                $("#save-button").hide();
+                if (tab_name == 'tags') {
+                    $("#tag-input").attr('disabled', true);
+                }
             {% endif %}
-        {% endif %}
+            return true;
+        }
+        function show_buttons() {
+            $("#save-button, #review-button").show();
+            $("#complete-button").hide();
+            $("#register-login-reminder").removeClass('d-inline');
+            $("#register-login-reminder").addClass('d-none');
 
-        return true;
-    }
-    </script>
-    <script>
-        {% if transcription.status %}
-            switch ("{{ transcription.status }}") {
-                case 'Edit':
-                    $("#transcription_state").text("Transcription is open for Edit");
-                    break;
-                case 'Submitted':
-                    $("#transcription_state").text("Transcription is submitted for Review");
-                    break;
-                case 'Completed':
-                    $("#transcription_state").text("Transcription is Complete");
+            $("#transcription-input").attr('disabled', false);
 
+            {% if not user.is_authenticated and not transcription.status %}
+                $("#save-button, #review-button").show();
+            {% elif not user.is_authenticated and transcription.status != 'Edit'%}
+                $("#save-button, #review-button").hide();
+                $("#transcription-input").attr('disabled', true);
+            {% else %}
+                {% if transcription.status == 'Submitted' %}
+                    $("#review-button").hide();
+                    $("#complete-button").show();
+                {% elif transcription.status == 'Completed' %}
+                    $("#save-button").show();
+                    $("#review-button").hide();
+                {% endif %}
+            {% endif %}
+
+            return true;
+        }
+
+        $("document").ready( function () {
+            setTimeout(checkin_page_in_use, 5000);
+            {% if page_in_use %}
+                showalert();
+            {% endif %}
+
+            var show_message = sessionStorage.getItem('show_message');
+
+            if( show_message === 'true' ) {
+                {% if transcription.status %}
+                    switch ("{{ transcription.status }}") {
+                        case 'Edit':
+                            $("#transcription-state").text("Transcription is open for Edit");
+                            $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute py-half fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> Your contribution has been saved.</div>');
+                            setTimeout(function() {
+                                $('.alert-contribute').fadeOut(500);
+                            }, 3000);
+                            break;
+                        case 'Submitted':
+                            $("#transcription-state").text("Transcription is submitted for Review");
+                            $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute py-half fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> The transcription is ready for review.</div>');
+                            setTimeout(function() {
+                                $('.alert-contribute').fadeOut(500);
+                            }, 3000);
+
+                            break;
+                        case 'Completed':
+                            $("#transcription-state").text("Transcription is Complete");
+                            $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute py-half fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> The transcription is now complete.</div>');
+                            setTimeout(function() {
+                                $('.alert-contribute').fadeOut(500);
+                            }, 3000);
+
+                    }
+                {% else %}
+                    $("#transcription-state").text("Transcription is open for Edit");
+                {% endif %}
+
+                sessionStorage.setItem('show_message', 'false');
+                show_message = sessionStorage.getItem('show_message');
+            } else {
+                {% if transcription.status %}
+                    switch ("{{ transcription.status }}") {
+                        case 'Edit':
+                            $("#transcription-state").text("Transcription is open for Edit");
+                            break;
+                        case 'Submitted':
+                            $("#transcription-state").text("Transcription is submitted for Review");
+                            break;
+                        case 'Completed':
+                            $("#transcription-state").text("Transcription is Complete");
+
+                    }
+                {% else %}
+                    $("#transcription-state").text("Transcription is open for Edit");
+                {% endif %}
+
+                sessionStorage.setItem('show_message', 'false');
+                show_message = sessionStorage.getItem('show_message');
             }
-        {% else %}
-            $("#transcription_state").text("Transcription is open for Edit");
-        {% endif %}
-        show_buttons();
-    </script>
+            show_buttons();
 
-    {% if user.is_anonymous %}
-    <script>
-    
-        $(document).ready(function(){
-            $("#save_button").click(function(e){
-            	   if($("#captcha_tr").is(":hidden")) {
-	               e.preventDefault();
-	               $(this).removeClass("btn-primary");
-	               $(this).prop("disabled",true);                   
-	               $("#captcha_tr").show();  
-	               $("input#id_captcha_1").after($('<span class="input-group-btn">' +
-	            		      '<button class="btn .btn-primary" type="submit" name="action" value="Save">Enter</button>' + 
-	            		      '</span>'));
-            	   }
+            $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+                var target = $(e.target).attr("href") // activated tab
+                if (target == "#tab-tag") {
+                    hide_buttons("tags");
+                }
             });
-            
-            $(".js-captcha-refresh").click(function(e){
-            	    e.preventDefault();
-                $.getJSON("{% url 'captcha-refresh' %}", function (result) {
-                       $('.captcha').attr('src', result['image_url']);
-                       $('#id_captcha_0').val(result['key'])
-                });            
-            })
-        })
+
+            {% if user.is_anonymous %}
+                $("#save-button").click(function(e){
+                    if($("#captcha_tr").hasClass('d-none')) {
+                        e.preventDefault();
+                        $(this).removeClass("btn-primary");
+                        $(this).prop("disabled",true);
+                        $("#captcha_tr").removeClass('d-none');
+                        $("#captcha_tr").show();
+                        $("input#id_captcha_1").after($('<span class="input-group-btn">' + '<button class="btn btn-secondary" type="submit" name="action" value="Save">Enter</button>' + '</span>'));
+                    }
+                });
+                $("#review-button").click(function(e){
+                    if($("#captcha_tr").hasClass('d-none')) {
+                        e.preventDefault();
+                       $(this).removeClass("btn-primary");
+                       $(this).prop("disabled",true);
+                       $("#captcha_tr").removeClass('d-none');
+                       $("#captcha_tr").show();
+                       $("input#id_captcha_1").after($('<span class="input-group-btn">' + '<button class="btn btn-secondary" type="submit" name="action" value="Submit for Review">Enter</button>' + '</span>'));
+                   }
+               });
+
+                $(".js-captcha-refresh").click(function(e){
+                    e.preventDefault();
+                    $.getJSON("{% url 'captcha-refresh' %}", function (result) {
+                        $('.captcha').attr('src', result['image_url']);
+                        $('#id_captcha_0').val(result['key']);
+                        sessionStorage.setItem('show_message', 'true');
+                    });
+                })
+            {% endif %}
+        });
     </script>
-    {% endif %}
 {% endblock body_scripts %}

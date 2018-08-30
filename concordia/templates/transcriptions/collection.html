@@ -23,8 +23,13 @@
                             <div class="d-flex justify-content-center col-9 col-md-8 mx-auto mt-half">
                                 <a href="{% url 'transcriptions:asset' collection.slug a.slug %}#tab-tag" class="btn btn-primary btn-lg w-100">Tag</a>
                             </div>
+                            {% if user.is_superuser %}
+                                <div class="d-flex justify-content-center col-9 col-md-8 mx-auto mt-half">
+                                    <a href="{% url 'transcriptions:delete_asset' collection.slug a.slug %}#tab-tag" class="btn btn-secondary btn-lg w-100">Hide</a>
+                                </div>
+                            {% endif %}
                         </div>
-                        <a href="{% url 'transcriptions:asset' collection.slug a.slug %}" class="collection-image-link"><h6 class="text-center blue-text my-half">{{ a.slug }}</h6></a>
+                        <a href="{% url 'transcriptions:asset' collection.slug a.slug %}" class="collection-image-link"><h6 class="text-center primary-text my-half">{{ a.slug }}</h6></a>
                     </div>
                     {% endfor %}
                 </div>
@@ -32,13 +37,13 @@
             <div class="pagination justify-content-center align-items-center mb-default">
                 <span class="step-links">
                     {% if assets.has_previous %}
-                        <a class="pr-3 blue-text" href="?page=1">&laquo; first</a>
-                        <a class="pr-3 blue-text" href="?page={{ assets.previous_page_number }}">previous</a>
+                        <a class="pr-3 primary-text" href="?page=1">&laquo; first</a>
+                        <a class="pr-3 primary-text" href="?page={{ assets.previous_page_number }}">previous</a>
                     {% endif %}
                     <span class="current">Page {{ assets.number }} of {{ assets.paginator.num_pages }}</span>
                     {% if assets.has_next %}
-                        <a class="pl-3 blue-text" href="?page={{ assets.next_page_number }}">next</a>
-                        <a class="pl-3 blue-text" href="?page={{ assets.paginator.num_pages }}">last &raquo;</a>
+                        <a class="pl-3 primary-text" href="?page={{ assets.next_page_number }}">next</a>
+                        <a class="pl-3 primary-text" href="?page={{ assets.paginator.num_pages }}">last &raquo;</a>
                     {% endif %}
                 </span>
             </div>
