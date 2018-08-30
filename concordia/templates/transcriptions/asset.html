@@ -29,8 +29,16 @@ div#captcha_div{
             <div class="col-6">
                 <div id="asset-image" class="asset-image bg-offwhite">
                 </div>
+                <div class="contribute-instructions col-12" id="contribute-instructions">
+                    <div class="instruction-window bg-offwhite shadow-regular collapse" id="instruction-window">
+                        <p class="px-half px-md-default py-quarter py-md-half">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+                        </p>
+                    </div>
+                    <button class="btn btn-default w-100" type="button" id="instruction-button" data-toggle="collapse" data-target="#instruction-window" aria-expanded="false" aria-controls="instruction-window">Instructions</button>
+                </div>
             </div>
-            <div class="col-6 bg-darkest-gray shadow-regular contribute-box" id="contribute-box">
+
+            <div class="col-6 bg-darkest-gray contribute-box" id="contribute-box">
                 <nav class="px-half py-1">
                     <div class="nav nav-pills" id="nav-pill-contribute-box" role="tablist">
                         <a class="nav-item nav-link active" id="nav-pill-transcription" data-toggle="tab"
@@ -129,16 +137,24 @@ div#captcha_div{
 
                     <div class="my-quarter d-flex justify-content-around align-items-center">
                         <table>
-                            <tr>
+                            <tr align="center">
+                                <td>
+                                    <a href="{% url 'transcriptions:asset' asset.collection.slug prev_asset.slug%}"
+                                       class="btn-prev"><</a>
+                                </td>
                                 <td>
                                     <input id="save-button" name="action" type="submit"
-                                           class="btn btn-primary btn-primary-fixed-width float-left" value="Save">
+                                           class="btn btn-primary btn-primary-fixed-width" value="Save">
+                                </td>
+                                <td>
+                                    <a href="{% url 'transcriptions:asset' asset.collection.slug next_asset.slug%}"
+                                    class="btn-prev btn-next">></a>
                                 </td>
                             </tr>
 
                             {% if user.is_anonymous %}
                             <tr class="d-none" id="captcha_tr">
-                                <td>
+                                <td colspan="3" align="center">
                                    <div id="captcha_div">
                                     {{ captcha_form.captcha }}
                                    </div>
@@ -147,24 +163,24 @@ div#captcha_div{
                             {% endif %}
 
                             <tr>
-                                <td>
+                                <td colspan="3" align="center">
                                     <input id="review-button" name="action" type="submit"
-                                           class="btn btn-primary btn-primary-fixed-width float-left"
+                                           class="btn btn-primary btn-primary-fixed-width"
                                            value="Submit for Review">
                                 </td>
                             </tr>
                             <tr>
-                                <td>
+                                <td colspan="3" align="center">
                                     <input id="contact-button" name="action" type="submit"
-                                           class="btn btn-primary btn-primary-fixed-width float-left"
+                                           class="btn btn-primary btn-primary-fixed-width"
                                            value="Contact Manager">
                                 </td>
                             </tr>
                             {% if user.is_authenticated %}
                             <tr>
-                                <td>
+                                <td colspan="3" align="center">
                                     <input id="complete-button" name="action" type="submit"
-                                           class="btn btn-primary btn-primary-fixed-width float-left"
+                                           class="btn btn-primary btn-primary-fixed-width"
                                            value="Mark Completed">
                                 </td>
                             </tr>
@@ -182,24 +198,6 @@ div#captcha_div{
             </div>
         </div>
     </div>
-
-
-    <!-- The Instruction Modal -->
-	<div id="instructionModal" style="display:none; margin-left: 10px; margin-right: 10px;">
-        <p>Lorem ipsum dolor sit amet, consectetur
-           adipiscing elit, sed do eiusmod tempor incididunt ut
-           labore et dolore magna aliqua. Ut enim ad minim
-           veniam,
-           quis nostrud exercitation ullamco laboris nisi ut
-           aliquip ex ea commodo consequat. Duis aute irure
-           dolor
-           in reprehenderit in voluptate velit esse cillum
-           dolore
-           eu fugiat nulla pariatur. Excepteur sint occaecat
-           cupidatat non proident, sunt in culpa qui officia
-           deserunt mollit anim id est laborum.
-        </p>
-	</div>
 {% endblock main_content %}
 
 {% block body_scripts %}
@@ -207,13 +205,6 @@ div#captcha_div{
     <script src="{% static "js/jquery.cookie.js" %}"></script>
     <script src="{% static "vendor/openseadragon/openseadragon.min.js" %}"></script>
     <script type="text/javascript">
-        var csrftoken = $.cookie('csrftoken');
-
-        function csrfSafeMethod(method) {
-            // these HTTP methods do not require CSRF protection
-            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
-        }
-
         {% if asset.collection.s3_storage %}
             var asset_url = '{{ asset.media_url }}';
         {% else %}
@@ -231,37 +222,6 @@ div#captcha_div{
                 pinchRotate: true
             }
         });
-
-        viewer.addHandler('open', function() {
-            var instructionButton = new OpenSeadragon.Button({
-                onClick: function(e){
-                       $(instructionButton.element).insertBefore("#instructions");
-                }
-            });
-            $(instructionButton.element).removeAttr("style");
-            $(instructionButton.element).empty().append("<div><div id='instruction_content'></div><div id='instruction_button' class='btn btn-primary' style='display:block'>+Instructions</div></div>");
-
-            viewer.addControl(instructionButton.element, { anchor: OpenSeadragon.ControlAnchor.BOTTOM_LEFT });
-
-            $(instructionButton.element).css("width", "100%");
-            $(instructionButton.element).css("display", "block");
-            $(instructionButton.element).parent().css("width", "100%");
-            $(instructionButton.element).parent().css("display", "block");
-            $(instructionButton.element).parent().parent().css("width", "100%");
-            $(instructionButton.element).parent().parent().css("display", "block");
-
-            $("div#instruction_content").empty().css('background-color', '#dee2e6');
-            $("div#instruction_content").empty().append($('#instructionModal'));
-
-            $( "div#instruction_button" ).click(function() {
-	            	  if ( $( "div#instructionModal" ).is( ":hidden" ) ) {
-	            		  $( "div#instructionModal" ).show();
-	            	  } else {
-	            		  console.log("Here")
-	            		  $( "div#instructionModal" ).hide();
-	            	  }
-            	});
-          });
     </script>
     <script type="text/javascript">
         var csrftoken = $.cookie('csrftoken');
