@@ -299,7 +299,7 @@ class ConcordiaAssetView(TemplateView):
         self.get_context_data()
         asset = Asset.objects.get(collection__slug=self.args[0], slug=self.args[1])
 
-        if self.request.POST.get("action").lower() == 'contact manager':
+        if self.request.POST.get("action").lower() == 'contact a manager':
             return redirect(reverse('contact') + "?pre_populate=true")
 
         if self.request.user.is_anonymous:
