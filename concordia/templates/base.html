@@ -46,8 +46,9 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'faq' %}">FAQ</a>
                         </li>
+                        <!-- TODO: remove d-none when available! -->
                         <li class="nav-item">
-                            <a class="nav-link" href="#">Blog</a>
+                            <a class="nav-link d-none" href="#">Blog</a>
                         </li>
                         {% if user.is_authenticated %}
                             <li class="nav-item dropdown nav-dropdown">
