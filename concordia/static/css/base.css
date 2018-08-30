@@ -69,6 +69,15 @@ h2.offwhite {
     color: var(--text-color-offwhite);
 }
 
+h2.hero-secondary {
+    font-family: 'Roboto Slab', serif;
+    font-size: 1.5rem;
+    line-height: 125%;
+    font-weight: normal;
+    text-transform: uppercase;
+    color: var(--text-color-offwhite);
+}
+
 
 
 h3 {
@@ -566,12 +575,10 @@ div.nav-secondary {
     h1.header-text { font-size: 2rem; }
     .carousel-text { top: 1rem; margin-left: 1.5rem; }
     p.hero-text { font-size: 1.1875rem; }
-    .text-home-contribute { width: 100%; }
 }
 
 /* Screens wider than the MD breakpoint */
 @media (min-width: 992px) {
-    .text-home-contribute { width: 50%; }
 
     .mxy-md-default {
         margin: 2rem !important;

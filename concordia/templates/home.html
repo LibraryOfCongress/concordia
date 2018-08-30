@@ -2,10 +2,10 @@
 <div class="container-fluid px-default">
     <div class="row">
         <div class="col-12 ">
-            <div id="homepage-carousel" class="carousel slide" data-ride="carousel" data-interval="3000">
+            <div id="homepage-carousel" class="carousel slide" data-ride="carousel" data-interval="5000">
                 <div class="carousel-inner">
                     <div class="carousel-item text-right active">
-                        <img class="d-block" src="{% static "img/rosa-parks.png" %}" alt="Rosa Parks carousel image">
+                        <img class="d-block" src="{% static "img/OjoSarco.jpg" %}" alt="child writing on a chalkboard carousel image">
                     </div>
                     <div class="carousel-item text-right">
                         <img class="d-block" src="{% static "img/branch-rickey.png" %}" alt="Branch Rickey carousel image">
@@ -14,7 +14,7 @@
             </div>
             <div class="col-6 carousel-text text-center py-default">
                 <h1 class=" px-md-default">Make Your Mark</h1>
-                <p class="hero-text px-default d-none d-md-block">Uncover our shared history by transcribing and tagging documents from the library’s diverse collections. Explore the past and help make documents more searchable for readers and researchers of the future</p>
+                <p class="hero-text px-default d-none d-md-block">Uncover our shared history by transcribing and tagging documents from the library’s diverse collections.<br>Explore the past and help make documents more searchable for readers and researchers of the future</p>
                 <a class="btn btn-primary btn-lg my-4" href="{% url 'transcriptions:transcribe' %}">GET STARTED!</a>
             </div>
         </div>
@@ -23,7 +23,7 @@
         <div class="row bg-home-contribute pxy-default">
             <div class="col-12 mb-default">
                 <h2 class="px-default offwhite-text px-md-0 ml-md-default">Contribute</h2>
-                <p class="px-default offwhite-text hero-secondary text-home-contribute px-md-0 ml-md-default">Anyone can transcribe a document. Register to review and edit existing transcriptions and to describe documents by adding tags.</p>
+                <p class="px-default offwhite-text hero-secondary text-home-contribute px-md-0 ml-md-default col-12 col-md-8">Anyone can transcribe a document.<br>Register to review and edit existing transcriptions and to describe documents by adding tags.</p>
             </div>
             <div class="d-flex flex-wrap col-12 justify-content-around">
                 <div class="col-12 col-md-4 mb-default text-center">
@@ -45,8 +45,7 @@
         </div>
     <div class="row my-5">
         <div class="col-12 mb-half">
-            <h2 class="px-default px-md-0 ml-md-default">Campaigns: Choose what you’ll transcribe</h2>
-            <!-- <p class="px-default hero-secondary px-md-0 ml-md-default">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec quis volutpat orci. Nulla semper vestibulum erat sed vulputate.</p> -->
+            <h2 class="px-default px-md-0 ml-md-default">Campaigns: <h2 class="hero-secondary">Choose what you’ll transcribe</h2></h2>
         </div>
         <div class="d-flex flex-wrap col-12 justify-content-around">
             <div class="col-12 col-md-4 mb-default text-center">
