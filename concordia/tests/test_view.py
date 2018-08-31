@@ -197,6 +197,35 @@ class ViewTest_Concordia(TestCase):
         updated_user = User.objects.get(email=test_email)
         self.assertEqual(updated_user.email, test_email)
 
+    def test_AccountProfileView_post_no_password(self):
+        """
+        This unit test tests the post entry for the route account/profile
+        :param self:
+        :return:
+        """
+
+        test_email = "tester@foo.com"
+
+        # Arrange
+        self.login_user()
+
+        # Act
+        response = self.client.post(
+            "/account/profile/",
+            {
+                "email": test_email,
+                "username": "tester",
+            },
+        )
+
+        # Assert
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, "/account/profile/")
+
+        # Verify the User was correctly updated
+        updated_user = User.objects.get(email=test_email)
+        self.assertEqual(updated_user.email, test_email)
+
     def test_AccountProfileView_post_invalid_form(self):
         """
         This unit test tests the post entry for the route account/profile but submits an invalid form

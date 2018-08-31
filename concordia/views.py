@@ -9,6 +9,7 @@ from captcha.fields import CaptchaField
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model
+from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
@@ -84,10 +85,12 @@ class AccountProfileView(LoginRequiredMixin, TemplateView):
             obj = form.save(commit=True)
             obj.id = self.request.user.id
             if (
-                not self.request.POST["password1"]
-                and not self.request.POST["password2"]
+                not self.request.POST.get("password1", None)
+                and not self.request.POST.get("password2", None)
             ):
                 obj.password = self.request.user.password
+            else:
+                update_session_auth_hash(self.request, obj)
             obj.save()
 
             if "myfile" in self.request.FILES:
@@ -95,7 +98,10 @@ class AccountProfileView(LoginRequiredMixin, TemplateView):
                 profile, created = UserProfile.objects.update_or_create(
                     user=obj, defaults={"myfile": myfile}
                 )
+
+            messages.success(self.request, "User profile informaiton changed!")
         else:
+            messages.error(self.request, form.errors)
             return HttpResponseRedirect("/account/profile/")
         return redirect(reverse("user-profile"))
 

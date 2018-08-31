@@ -59,6 +59,34 @@ class ConcordiaUserForm(RegistrationForm):
 
 class ConcordiaUserEditForm(ConcordiaUserForm):
     myfile = forms.FileField(required=False)
+    username = forms.CharField(
+        label="Username",
+        required=False,
+        widget=forms.TextInput(
+            attrs={"class": "form-control", "placeholder": "Username"}
+        ),
+    )
+    email = forms.CharField(
+        label="Email",
+        required=False,
+        widget=forms.EmailInput(
+            attrs={"class": "form-control", "placeholder": "Email"}
+        ),
+    )
+    password1 = forms.CharField(
+        label="Password",
+        required=False,
+        widget=forms.PasswordInput(
+            attrs={"class": "form-control", "placeholder": "Password"}
+        ),
+    )
+    password2 = forms.CharField(
+        label="Confirm",
+        required=False,
+        widget=forms.PasswordInput(
+            attrs={"class": "form-control", "placeholder": "Confirm"}
+        ),
+    )
 
 
 class ConcordiaContactUsForm(forms.Form):
