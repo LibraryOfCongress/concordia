@@ -1,0 +1,887 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Resources": {
+    "vpc0ca0aaf8357f808b6": {
+      "Type": "AWS::EC2::VPC",
+      "Properties": {
+        "CidrBlock": "10.0.0.0/16",
+        "InstanceTenancy": "default",
+        "EnableDnsSupport": "true",
+        "EnableDnsHostnames": "true",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "rstorey-concordia"
+          }
+        ]
+      }
+    },
+    "subnet038b68c5e6cedba8e": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "CidrBlock": "10.0.0.0/24",
+        "AvailabilityZone": "us-east-1d",
+        "VpcId": {
+          "Ref": "vpc0ca0aaf8357f808b6"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "rstorey-concordia-public-subnet"
+          }
+        ]
+      }
+    },
+    "subnet095748204cf0ea5ab": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "CidrBlock": "10.0.2.0/24",
+        "AvailabilityZone": "us-east-1b",
+        "VpcId": {
+          "Ref": "vpc0ca0aaf8357f808b6"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "rstorey-concordia-public-subnet2"
+          }
+        ]
+      }
+    },
+    "subnet05a05f01aa7133128": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "CidrBlock": "10.0.3.0/24",
+        "AvailabilityZone": "us-east-1b",
+        "VpcId": {
+          "Ref": "vpc0ca0aaf8357f808b6"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "rstorey-concordia-private-subnet2"
+          }
+        ]
+      }
+    },
+    "subnet096f46b2b396c4bde": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "CidrBlock": "10.0.1.0/24",
+        "AvailabilityZone": "us-east-1d",
+        "VpcId": {
+          "Ref": "vpc0ca0aaf8357f808b6"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "rstorey-concordia-private-subnet"
+          }
+        ]
+      }
+    },
+    "igw05eed2d6a55714cd8": {
+      "Type": "AWS::EC2::InternetGateway",
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "rstorey-concordia"
+          }
+        ]
+      }
+    },
+    "dopt68479110": {
+      "Type": "AWS::EC2::DHCPOptions",
+      "Properties": {
+        "DomainName": "ec2.internal",
+        "DomainNameServers": [
+          "AmazonProvidedDNS"
+        ]
+      }
+    },
+    "acl05b5ca253d6c159bc": {
+      "Type": "AWS::EC2::NetworkAcl",
+      "Properties": {
+        "VpcId": {
+          "Ref": "vpc0ca0aaf8357f808b6"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "rstorey-concordia"
+          }
+        ]
+      }
+    },
+    "rtb071e75c6461ff0583": {
+      "Type": "AWS::EC2::RouteTable",
+      "Properties": {
+        "VpcId": {
+          "Ref": "vpc0ca0aaf8357f808b6"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "rstorey-concordia-public2"
+          }
+        ]
+      }
+    },
+    "rtb0fdc2e511323123ee": {
+      "Type": "AWS::EC2::RouteTable",
+      "Properties": {
+        "VpcId": {
+          "Ref": "vpc0ca0aaf8357f808b6"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "rstorey-concordia-private"
+          }
+        ]
+      }
+    },
+    "rtb0357e3963c45b2501": {
+      "Type": "AWS::EC2::RouteTable",
+      "Properties": {
+        "VpcId": {
+          "Ref": "vpc0ca0aaf8357f808b6"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "rstorey-concordia-public"
+          }
+        ]
+      }
+    },
+    "rtb016fc69bb1cdce566": {
+      "Type": "AWS::EC2::RouteTable",
+      "Properties": {
+        "VpcId": {
+          "Ref": "vpc0ca0aaf8357f808b6"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "rstorey-concordia-private2"
+          }
+        ]
+      }
+    },
+    "eip18211108151": {
+      "Type": "AWS::EC2::EIP",
+      "Properties": {
+        "Domain": "vpc"
+      }
+    },
+    "asgrstoreyconcordiapublicdev2Copy": {
+      "Type": "AWS::AutoScaling::AutoScalingGroup",
+      "Properties": {
+        "AvailabilityZones": [
+          "us-east-1b",
+          "us-east-1d"
+        ],
+        "Cooldown": "300",
+        "DesiredCapacity": "2",
+        "HealthCheckGracePeriod": "300",
+        "HealthCheckType": "EC2",
+        "MaxSize": "5",
+        "MinSize": "2",
+        "VPCZoneIdentifier": [
+          {
+            "Ref": "subnet038b68c5e6cedba8e"
+          },
+          {
+            "Ref": "subnet095748204cf0ea5ab"
+          }
+        ],
+        "NotificationConfigurations": [
+          {
+            "TopicARN": "arn:aws:sns:us-east-1:351149051428:rstorey-concordia-dev",
+            "NotificationTypes": [
+              "autoscaling:EC2_INSTANCE_LAUNCH",
+              "autoscaling:EC2_INSTANCE_LAUNCH_ERROR",
+              "autoscaling:EC2_INSTANCE_TERMINATE",
+              "autoscaling:EC2_INSTANCE_TERMINATE_ERROR"
+            ]
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "Owner",
+            "Value": "rstorey",
+            "PropagateAtLaunch": true
+          },
+          {
+            "Key": "Project",
+            "Value": "Concordia",
+            "PropagateAtLaunch": true
+          }
+        ],
+        "TerminationPolicies": [
+          "Default"
+        ]
+      }
+    },
+    "rdsconcordia": {
+      "Type": "AWS::RDS::DBInstance",
+      "Properties": {
+        "AllocatedStorage": "20",
+        "AllowMajorVersionUpgrade": "false",
+        "AutoMinorVersionUpgrade": "true",
+        "DBInstanceClass": "db.t2.medium",
+        "Port": "5432",
+        "StorageType": "gp2",
+        "BackupRetentionPeriod": "7",
+        "MasterUsername": "concordia",
+        "MasterUserPassword": "MyPassword",
+        "PreferredBackupWindow": "03:47-04:17",
+        "PreferredMaintenanceWindow": "sun:07:14-sun:07:44",
+        "DBName": "MyDatabase",
+        "Engine": "postgres",
+        "EngineVersion": "9.6.6",
+        "LicenseModel": "postgresql-license",
+        "DBSubnetGroupName": {
+          "Ref": "dbsubnetdefaultvpc0ca0aaf8357f808b6"
+        },
+        "VPCSecurityGroups": [
+          {
+            "Ref": "sgdefault"
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "workload-type",
+            "Value": "other"
+          }
+        ]
+      }
+    },
+    "s3clarabartonpapers": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "AccessControl": "Private",
+        "VersioningConfiguration": {
+          "Status": "Suspended"
+        },
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "concordia"
+          }
+        ]
+      }
+    },
+    "dbsubnetdefaultvpc0ca0aaf8357f808b6": {
+      "Type": "AWS::RDS::DBSubnetGroup",
+      "Properties": {
+        "DBSubnetGroupDescription": "Created from the RDS Management Console",
+        "SubnetIds": [
+          {
+            "Ref": "subnet05a05f01aa7133128"
+          },
+          {
+            "Ref": "subnet096f46b2b396c4bde"
+          },
+          {
+            "Ref": "subnet038b68c5e6cedba8e"
+          },
+          {
+            "Ref": "subnet095748204cf0ea5ab"
+          }
+        ]
+      }
+    },
+    "topicrstoreyconcordiadev": {
+      "Type": "AWS::SNS::Topic",
+      "Properties": {
+        "DisplayName": "rstorey-concordia-dev",
+        "Subscription": [
+          {
+            "Endpoint": "rstorey@loc.gov",
+            "Protocol": "email"
+          }
+        ]
+      }
+    },
+    "sgrdslaunchwizard": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Created from the RDS Management Console: 2018/08/03 18:06:59",
+        "VpcId": {
+          "Ref": "vpc0ca0aaf8357f808b6"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "rstorey-concordia-dev-rds"
+          }
+        ]
+      }
+    },
+    "sgrstoreyconcordiadev": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "rstorey-concordia-dev",
+        "VpcId": "vpc-309b7a4b",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "rstorey-concordia-dev"
+          }
+        ]
+      }
+    },
+    "sgdefault": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "default VPC security group",
+        "VpcId": {
+          "Ref": "vpc0ca0aaf8357f808b6"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "rstorey-concordia-vpc-default"
+          }
+        ]
+      }
+    },
+    "snspolicyrstoreyconcordiadev": {
+      "Type": "AWS::SNS::TopicPolicy",
+      "Properties": {
+        "Topics": [
+          {
+            "Ref": "topicrstoreyconcordiadev"
+          }
+        ],
+        "PolicyDocument": {
+          "Version": "2008-10-17",
+          "Id": "__default_policy_ID",
+          "Statement": [
+            {
+              "Sid": "__default_statement_ID",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "*"
+              },
+              "Action": [
+                "SNS:GetTopicAttributes",
+                "SNS:SetTopicAttributes",
+                "SNS:AddPermission",
+                "SNS:RemovePermission",
+                "SNS:DeleteTopic",
+                "SNS:Subscribe",
+                "SNS:ListSubscriptionsByTopic",
+                "SNS:Publish",
+                "SNS:Receive"
+              ],
+              "Resource": {
+                "Ref": "topicrstoreyconcordiadev"
+              },
+              "Condition": {
+                "StringEquals": {
+                  "AWS:SourceOwner": "351149051428"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "scalingDecreaseGroupSize": {
+      "Type": "AWS::AutoScaling::ScalingPolicy",
+      "Properties": {
+        "AdjustmentType": "ChangeInCapacity",
+        "PolicyType": "StepScaling",
+        "StepAdjustments": [
+          {
+            "ScalingAdjustment": -1,
+            "MetricIntervalUpperBound": 0.0
+          }
+        ],
+        "AutoScalingGroupName": {
+          "Ref": "asgrstoreyconcordiapublicdev2Copy"
+        }
+      }
+    },
+    "scalingIncreaseGroupSize": {
+      "Type": "AWS::AutoScaling::ScalingPolicy",
+      "Properties": {
+        "AdjustmentType": "ChangeInCapacity",
+        "PolicyType": "StepScaling",
+        "StepAdjustments": [
+          {
+            "ScalingAdjustment": 1,
+            "MetricIntervalLowerBound": 0.0
+          }
+        ],
+        "AutoScalingGroupName": {
+          "Ref": "asgrstoreyconcordiapublicdev2Copy"
+        }
+      }
+    },
+    "alarmawsec2rstoreyconcordiadev2CPUUtilization": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "ActionsEnabled": "true",
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "EvaluationPeriods": "1",
+        "MetricName": "CPUUtilization",
+        "Namespace": "AWS/EC2",
+        "Period": "300",
+        "Statistic": "Average",
+        "Threshold": "80.0",
+        "AlarmActions": [
+          "arn:aws:sns:us-east-1:351149051428:rstorey-concordia-dev",
+          {
+            "Ref": "scalingIncreaseGroupSize"
+          }
+        ],
+        "Dimensions": [
+          {
+            "Name": "AutoScalingGroupName",
+            "Value": "rstorey-concordia-dev2"
+          }
+        ]
+      }
+    },
+    "alarmawsec2rstoreyconcordiadev2lowCPUUtilization": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "ActionsEnabled": "true",
+        "ComparisonOperator": "LessThanOrEqualToThreshold",
+        "EvaluationPeriods": "1",
+        "MetricName": "CPUUtilization",
+        "Namespace": "AWS/EC2",
+        "Period": "300",
+        "Statistic": "Average",
+        "Threshold": "30.0",
+        "AlarmActions": [
+          "arn:aws:sns:us-east-1:351149051428:rstorey-concordia-dev",
+          {
+            "Ref": "scalingDecreaseGroupSize"
+          }
+        ],
+        "Dimensions": [
+          {
+            "Name": "AutoScalingGroupName",
+            "Value": "rstorey-concordia-dev2"
+          }
+        ]
+      }
+    },
+    "acl4": {
+      "Type": "AWS::EC2::NetworkAclEntry",
+      "Properties": {
+        "CidrBlock": "0.0.0.0/0",
+        "Egress": "true",
+        "Protocol": "-1",
+        "RuleAction": "allow",
+        "RuleNumber": "100",
+        "NetworkAclId": {
+          "Ref": "acl05b5ca253d6c159bc"
+        }
+      }
+    },
+    "acl5": {
+      "Type": "AWS::EC2::NetworkAclEntry",
+      "Properties": {
+        "CidrBlock": "140.147.236.152/32",
+        "Protocol": "-1",
+        "RuleAction": "deny",
+        "RuleNumber": "10",
+        "NetworkAclId": {
+          "Ref": "acl05b5ca253d6c159bc"
+        }
+      }
+    },
+    "acl6": {
+      "Type": "AWS::EC2::NetworkAclEntry",
+      "Properties": {
+        "CidrBlock": "140.147.236.214/32",
+        "Protocol": "-1",
+        "RuleAction": "deny",
+        "RuleNumber": "11",
+        "NetworkAclId": {
+          "Ref": "acl05b5ca253d6c159bc"
+        }
+      }
+    },
+    "acl7": {
+      "Type": "AWS::EC2::NetworkAclEntry",
+      "Properties": {
+        "CidrBlock": "140.147.0.0/16",
+        "Protocol": "6",
+        "RuleAction": "allow",
+        "RuleNumber": "100",
+        "PortRange": {
+          "From": "22",
+          "To": "22"
+        },
+        "NetworkAclId": {
+          "Ref": "acl05b5ca253d6c159bc"
+        }
+      }
+    },
+    "acl8": {
+      "Type": "AWS::EC2::NetworkAclEntry",
+      "Properties": {
+        "CidrBlock": "0.0.0.0/0",
+        "Protocol": "6",
+        "RuleAction": "allow",
+        "RuleNumber": "110",
+        "PortRange": {
+          "From": "1024",
+          "To": "65535"
+        },
+        "NetworkAclId": {
+          "Ref": "acl05b5ca253d6c159bc"
+        }
+      }
+    },
+    "acl9": {
+      "Type": "AWS::EC2::NetworkAclEntry",
+      "Properties": {
+        "CidrBlock": "0.0.0.0/0",
+        "Protocol": "6",
+        "RuleAction": "allow",
+        "RuleNumber": "200",
+        "PortRange": {
+          "From": "80",
+          "To": "80"
+        },
+        "NetworkAclId": {
+          "Ref": "acl05b5ca253d6c159bc"
+        }
+      }
+    },
+    "acl10": {
+      "Type": "AWS::EC2::NetworkAclEntry",
+      "Properties": {
+        "CidrBlock": "0.0.0.0/0",
+        "Protocol": "6",
+        "RuleAction": "allow",
+        "RuleNumber": "210",
+        "PortRange": {
+          "From": "443",
+          "To": "443"
+        },
+        "NetworkAclId": {
+          "Ref": "acl05b5ca253d6c159bc"
+        }
+      }
+    },
+    "acl11": {
+      "Type": "AWS::EC2::NetworkAclEntry",
+      "Properties": {
+        "CidrBlock": "0.0.0.0/0",
+        "Protocol": "-1",
+        "RuleAction": "allow",
+        "RuleNumber": "300",
+        "NetworkAclId": {
+          "Ref": "acl05b5ca253d6c159bc"
+        }
+      }
+    },
+    "subnetacl5": {
+      "Type": "AWS::EC2::SubnetNetworkAclAssociation",
+      "Properties": {
+        "NetworkAclId": {
+          "Ref": "acl05b5ca253d6c159bc"
+        },
+        "SubnetId": {
+          "Ref": "subnet038b68c5e6cedba8e"
+        }
+      }
+    },
+    "subnetacl6": {
+      "Type": "AWS::EC2::SubnetNetworkAclAssociation",
+      "Properties": {
+        "NetworkAclId": {
+          "Ref": "acl05b5ca253d6c159bc"
+        },
+        "SubnetId": {
+          "Ref": "subnet05a05f01aa7133128"
+        }
+      }
+    },
+    "subnetacl7": {
+      "Type": "AWS::EC2::SubnetNetworkAclAssociation",
+      "Properties": {
+        "NetworkAclId": {
+          "Ref": "acl05b5ca253d6c159bc"
+        },
+        "SubnetId": {
+          "Ref": "subnet096f46b2b396c4bde"
+        }
+      }
+    },
+    "subnetacl8": {
+      "Type": "AWS::EC2::SubnetNetworkAclAssociation",
+      "Properties": {
+        "NetworkAclId": {
+          "Ref": "acl05b5ca253d6c159bc"
+        },
+        "SubnetId": {
+          "Ref": "subnet095748204cf0ea5ab"
+        }
+      }
+    },
+    "gw2": {
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+      "Properties": {
+        "VpcId": {
+          "Ref": "vpc0ca0aaf8357f808b6"
+        },
+        "InternetGatewayId": {
+          "Ref": "igw05eed2d6a55714cd8"
+        }
+      }
+    },
+    "subnetroute6": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "rtb071e75c6461ff0583"
+        },
+        "SubnetId": {
+          "Ref": "subnet095748204cf0ea5ab"
+        }
+      }
+    },
+    "subnetroute7": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "rtb0fdc2e511323123ee"
+        },
+        "SubnetId": {
+          "Ref": "subnet096f46b2b396c4bde"
+        }
+      }
+    },
+    "subnetroute9": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "rtb0357e3963c45b2501"
+        },
+        "SubnetId": {
+          "Ref": "subnet038b68c5e6cedba8e"
+        }
+      }
+    },
+    "subnetroute10": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "rtb016fc69bb1cdce566"
+        },
+        "SubnetId": {
+          "Ref": "subnet05a05f01aa7133128"
+        }
+      }
+    },
+    "route5": {
+      "Type": "AWS::EC2::Route",
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "RouteTableId": {
+          "Ref": "rtb071e75c6461ff0583"
+        },
+        "GatewayId": {
+          "Ref": "igw05eed2d6a55714cd8"
+        }
+      },
+      "DependsOn": "gw2"
+    },
+    "route6": {
+      "Type": "AWS::EC2::Route",
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "RouteTableId": {
+          "Ref": "rtb0fdc2e511323123ee"
+        }
+      }
+    },
+    "route7": {
+      "Type": "AWS::EC2::Route",
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "RouteTableId": {
+          "Ref": "rtb0357e3963c45b2501"
+        },
+        "GatewayId": {
+          "Ref": "igw05eed2d6a55714cd8"
+        }
+      },
+      "DependsOn": "gw2"
+    },
+    "route8": {
+      "Type": "AWS::EC2::Route",
+      "Properties": {
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "RouteTableId": {
+          "Ref": "rtb016fc69bb1cdce566"
+        }
+      }
+    },
+    "dchpassoc2": {
+      "Type": "AWS::EC2::VPCDHCPOptionsAssociation",
+      "Properties": {
+        "VpcId": {
+          "Ref": "vpc0ca0aaf8357f808b6"
+        },
+        "DhcpOptionsId": {
+          "Ref": "dopt68479110"
+        }
+      }
+    },
+    "ingress10": {
+      "Type": "AWS::EC2::SecurityGroupIngress",
+      "Properties": {
+        "GroupId": {
+          "Ref": "sgrdslaunchwizard"
+        },
+        "IpProtocol": "tcp",
+        "FromPort": "5432",
+        "ToPort": "5432",
+        "SourceSecurityGroupId": {
+          "Ref": "sgdefault"
+        },
+        "SourceSecurityGroupOwnerId": "351149051428"
+      }
+    },
+    "ingress11": {
+      "Type": "AWS::EC2::SecurityGroupIngress",
+      "Properties": {
+        "GroupId": {
+          "Ref": "sgrdslaunchwizard"
+        },
+        "IpProtocol": "tcp",
+        "FromPort": "5432",
+        "ToPort": "5432",
+        "CidrIp": "10.0.2.0/24"
+      }
+    },
+    "ingress12": {
+      "Type": "AWS::EC2::SecurityGroupIngress",
+      "Properties": {
+        "GroupId": {
+          "Ref": "sgrstoreyconcordiadev"
+        },
+        "IpProtocol": "tcp",
+        "FromPort": "80",
+        "ToPort": "80",
+        "CidrIp": "140.147.0.0/16"
+      }
+    },
+    "ingress13": {
+      "Type": "AWS::EC2::SecurityGroupIngress",
+      "Properties": {
+        "GroupId": {
+          "Ref": "sgrstoreyconcordiadev"
+        },
+        "IpProtocol": "tcp",
+        "FromPort": "22",
+        "ToPort": "22",
+        "CidrIp": "140.147.0.0/16"
+      }
+    },
+    "ingress14": {
+      "Type": "AWS::EC2::SecurityGroupIngress",
+      "Properties": {
+        "GroupId": {
+          "Ref": "sgrstoreyconcordiadev"
+        },
+        "IpProtocol": "tcp",
+        "FromPort": "443",
+        "ToPort": "443",
+        "CidrIp": "140.147.0.0/16"
+      }
+    },
+    "ingress15": {
+      "Type": "AWS::EC2::SecurityGroupIngress",
+      "Properties": {
+        "GroupId": {
+          "Ref": "sgdefault"
+        },
+        "IpProtocol": "tcp",
+        "FromPort": "80",
+        "ToPort": "80",
+        "CidrIp": "140.147.0.0/16"
+      }
+    },
+    "ingress16": {
+      "Type": "AWS::EC2::SecurityGroupIngress",
+      "Properties": {
+        "GroupId": {
+          "Ref": "sgdefault"
+        },
+        "IpProtocol": "-1",
+        "SourceSecurityGroupId": {
+          "Ref": "sgdefault"
+        },
+        "SourceSecurityGroupOwnerId": "351149051428"
+      }
+    },
+    "ingress17": {
+      "Type": "AWS::EC2::SecurityGroupIngress",
+      "Properties": {
+        "GroupId": {
+          "Ref": "sgdefault"
+        },
+        "IpProtocol": "tcp",
+        "FromPort": "22",
+        "ToPort": "22",
+        "CidrIp": "140.147.0.0/16"
+      }
+    },
+    "ingress18": {
+      "Type": "AWS::EC2::SecurityGroupIngress",
+      "Properties": {
+        "GroupId": {
+          "Ref": "sgdefault"
+        },
+        "IpProtocol": "tcp",
+        "FromPort": "443",
+        "ToPort": "443",
+        "CidrIp": "140.147.0.0/16"
+      }
+    },
+    "egress4": {
+      "Type": "AWS::EC2::SecurityGroupEgress",
+      "Properties": {
+        "GroupId": {
+          "Ref": "sgrdslaunchwizard"
+        },
+        "IpProtocol": "-1",
+        "CidrIp": "0.0.0.0/0"
+      }
+    },
+    "egress5": {
+      "Type": "AWS::EC2::SecurityGroupEgress",
+      "Properties": {
+        "GroupId": {
+          "Ref": "sgrstoreyconcordiadev"
+        },
+        "IpProtocol": "-1",
+        "CidrIp": "0.0.0.0/0"
+      }
+    },
+    "egress6": {
+      "Type": "AWS::EC2::SecurityGroupEgress",
+      "Properties": {
+        "GroupId": {
+          "Ref": "sgdefault"
+        },
+        "IpProtocol": "-1",
+        "CidrIp": "0.0.0.0/0"
+      }
+    }
+  },
+  "Description": "Concordia"
+}

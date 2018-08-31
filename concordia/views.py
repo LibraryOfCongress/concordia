@@ -13,20 +13,22 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
-from django.db.models import Count, Q
-from django.http import HttpResponse, HttpResponseRedirect
+from django.db.models import Count, Q, Max
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import Http404, get_object_or_404, redirect, render
 from django.template import loader
 from django.urls import reverse
 from django.views.generic import FormView, TemplateView, View
-from registration.backends.simple.views import RegistrationView
-from rest_framework import generics
+from rest_framework import generics, status
+from rest_framework.response import Response
+from registration.backends.hmac.views import RegistrationView
+
 from rest_framework.test import APIRequestFactory
 
 from concordia.forms import (CaptchaEmbedForm, ConcordiaContactUsForm,
                              ConcordiaUserEditForm, ConcordiaUserForm)
-from concordia.models import (Asset, Collection, PageInUse, Status, Tag, Transcription,
-                              UserAssetTagCollection, UserProfile)
+from concordia.models import (Asset, Collection, PageInUse, Status, Subcollection, Tag,
+                              Transcription, UserAssetTagCollection, UserProfile)
 from concordia.views_ws import PageInUseCreate, PageInUsePut
 from importer.views import CreateCollectionView
 
@@ -226,7 +228,21 @@ class ConcordiaAssetView(TemplateView):
         :return: dictionary of items used in the template
         """
 
+        max_sequence = Asset.objects.filter(collection__slug=self.args[0]).aggregate(Max('sequence'))['sequence__max']
+
         asset = Asset.objects.get(collection__slug=self.args[0], slug=self.args[1])
+        try:
+            prev_asset = Asset.objects.get(collection__slug=self.args[0],
+                                           sequence=(lambda x, y: x - 1 if x > 0 else y)(asset.sequence, max_sequence))
+        except Asset.DoesNotExist:
+            prev_asset = asset
+
+        try:
+            next_asset = Asset.objects.get(collection__slug=self.args[0],
+                                           sequence=(lambda x, y: x + 1 if x < max_sequence else 0)(asset.sequence, max_sequence))
+        except Asset.DoesNotExist:
+            next_asset = asset
+
         in_use_url = "/transcribe/%s/asset/%s/" % (asset.collection.slug, asset.slug)
         current_user_id = (
             self.request.user.id
@@ -283,10 +299,12 @@ class ConcordiaAssetView(TemplateView):
             super().get_context_data(**kws),
             page_in_use=page_in_use,
             asset=asset,
+            prev_asset=prev_asset,
+            next_asset=next_asset,
             transcription=transcription,
             tags=all_tags,
             captcha_form=captcha_form,
-            discussion_hide=discussion_hide
+            discussion_hide=discussion_hide,
         )
 
     def post(self, *args, **kwargs):
@@ -456,15 +474,14 @@ class ContactUsView(FormView):
             return None
         else:
             return {
-                'email': (
-                    None
-                    if self.request.user.is_anonymous
-                    else self.request.user.email
+                "email": (
+                    None if self.request.user.is_anonymous else self.request.user.email
                 ),
-                'link': (
-                    self.request.META.get('HTTP_REFERER')
-                    if self.request.META.get('HTTP_REFERER') else None
-                )
+                "link": (
+                    self.request.META.get("HTTP_REFERER")
+                    if self.request.META.get("HTTP_REFERER")
+                    else None
+                ),
             }
 
     def post(self, *args, **kwargs):
@@ -596,3 +613,62 @@ class FilterCollections(generics.ListAPIView):
         from django.http import JsonResponse
 
         return JsonResponse(list(queryset), safe=False)
+
+
+def publish_collection(request, collection, is_publish):
+    """ Publish/Unpublish a collection to otherr users. On un/publishing collection,
+    it will get does the same effect for all its projects. """
+
+    try:
+        collection = Collection.objects.get(slug=collection)
+    except Collection.DoesNotExist:
+        raise Http404
+
+    if is_publish == "true":
+        collection.is_publish = True
+    else:
+        collection.is_publish = False
+
+    sub_collections = collection.subcollection_set.all()
+
+    for sc in sub_collections:
+        sc.is_publish = True if is_publish == "true" else False
+        sc.save()
+
+    collection.save()
+
+    return JsonResponse(
+        {
+            "message": "Collection has been %s."
+            % ("published" if is_publish == "true" else "unpublished"),
+            "state": True if is_publish == "true" else False,
+        },
+        safe=True,
+    )
+
+
+def publish_project(request, collection, project, is_publish):
+    """ Publish/Unpublish a project to other users. """
+
+    try:
+        sub_collection = Subcollection.objects.get(
+            collection__slug=collection, slug=project
+        )
+    except Subcollection.DoesNotExist:
+        raise Http404
+
+    if is_publish == "true":
+        sub_collection.is_publish = True
+    else:
+        sub_collection.is_publish = False
+
+    sub_collection.save()
+
+    return JsonResponse(
+        {
+            "message": "Project has been %s."
+            % ("published" if is_publish == "true" else "unpublished"),
+            "state": True if is_publish == "true" else False,
+        },
+        safe=True,
+    )
