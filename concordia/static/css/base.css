@@ -215,6 +215,7 @@ i.tx-submitted {
 
 i.tx-completed {
     color: rgba(22,201,74,1);
+}
 
 a.nav-secondary:first-of-type {
     border-right: solid .0675rem var(--bg-darkest-gray);
