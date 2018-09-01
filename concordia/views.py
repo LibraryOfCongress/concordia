@@ -99,7 +99,7 @@ class AccountProfileView(LoginRequiredMixin, TemplateView):
                     user=obj, defaults={"myfile": myfile}
                 )
 
-            messages.success(self.request, "User profile informaiton changed!")
+            messages.success(self.request, "User profile information changed!")
         else:
             messages.error(self.request, form.errors)
             return HttpResponseRedirect("/account/profile/")
