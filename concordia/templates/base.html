@@ -7,11 +7,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>{% block title %}Untitled{% endblock title %}</title>
-    <link rel="shortcut icon" href="{% static "img/favicon.ico" %}">
+    <link rel="shortcut icon" href="{% static 'img/favicon.ico' %}">
     <!-- Stylesheets -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
     <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,600,700|Roboto+Slab" rel="stylesheet">
-    <link rel="stylesheet" href="{% static "css/base.css" %}">
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
     <!-- It's Font Awesome time! -->
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.2.0/css/all.css" integrity="sha384-hWVjflwFxL6sNzntih27bfxkr27PmbbK/iSvJ+a4+0owXq79v+lsFkW54bOGbiDQ" crossorigin="anonymous">
     {% block head_content %}{% endblock head_content %}
@@ -21,7 +21,7 @@
     <header>
         <nav class="navbar navbar-expand-lg flex-row navbar-offwhite bg-offwhite justify-content-between align-items-end py-half px-md-default pl-2">
             <div class="d-flex navbar-brand">
-                <a class="my-auto" href="#"><img src="{% static "img/LoC-logo.svg" %}" alt="Library of Congress logo"></a>
+                <a class="my-auto" href="#"><img src="{% static 'img/LoC-logo.svg' %}" alt="Library of Congress logo"></a>
                 <span class="vl mx-2 my-auto"></span>
                 {% if request.path == '/' %}
                     <h1 class="header-text align-self-end"><a class="gray-text align-baseline d-inline" href="#">crowd</a>
@@ -274,13 +274,13 @@
             </div>
             <div class="col-md-4 justify-content-center">
                 <p class="mb-half">Connect with us</p>
-                <a href="https://www.facebook.com/libraryofcongress/" target="_blank"><img class="mb-half" src="{% static "img/f.svg" %}" alt="link to Library of Congress Facebook page"></a>
+                <a href="https://www.facebook.com/libraryofcongress/" target="_blank"><img class="mb-half" src="{% static 'img/f.svg' %}" alt="link to Library of Congress Facebook page"></a>
                 <br />
-                <a href="https://twitter.com/librarycongress" target="_blank"><img class="mb-half" src="{% static "img/t.svg" %}" alt="link to Library of Congress Twitter page"></a>
+                <a href="https://twitter.com/librarycongress" target="_blank"><img class="mb-half" src="{% static 'img/t.svg' %}" alt="link to Library of Congress Twitter page"></a>
                 <br />
-                <a href="https://www.youtube.com/channel/UCbObxjfi3W9YKnDS0PgadNA" target="_blank"><img class="mb-half" src="{% static "img/yt.svg" %}" alt="link to Library of Congress YouTube page"></a>
+                <a href="https://www.youtube.com/channel/UCbObxjfi3W9YKnDS0PgadNA" target="_blank"><img class="mb-half" src="{% static 'img/yt.svg' %}" alt="link to Library of Congress YouTube page"></a>
                 <br />
-                <a href="https://www.flickr.com/photos/library_of_congress/" target="_blank"><img src="{% static "img/fl.svg" %}" alt="link to Library of Congress Flickr page"></a>
+                <a href="https://www.flickr.com/photos/library_of_congress/" target="_blank"><img src="{% static 'img/fl.svg' %}" alt="link to Library of Congress Flickr page"></a>
             </div>
             <div class="col-md-4 justify-content-start text-center">
                 <p class="mb-regular">Statistics</p>

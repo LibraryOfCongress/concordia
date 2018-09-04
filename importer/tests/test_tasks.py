@@ -299,8 +299,8 @@ class DownloadWriteCampaignItemAssetsTest(TestCase):
             "campaign_name": self.name,
             "campaign_slug": slugify(self.name),
             "campaign_task_id": "123",
-            "subcollection_name": self.project,
-            "subcollection_slug": slugify(self.project),
+            "project_name": self.project,
+            "project_slug": slugify(self.project),
         }
         CampaignTaskDetails.objects.create(**campaign)
 
@@ -320,7 +320,7 @@ class DownloadWriteCampaignItemAssetsTest(TestCase):
         download_write_campaign_item_assets(self.name, self.project, self.url)
 
         ctd = CampaignTaskDetails.objects.get(
-            campaign_slug=self.name, subcollection_slug=self.project
+            campaign_slug=self.name, project_slug=self.project
         )
         ciac = CampaignItemAssetCount.objects.get(campaign_task=ctd)
 
@@ -354,7 +354,7 @@ class DownloadWriteCampaignItemAssetsTest(TestCase):
         download_write_campaign_item_assets(self.name, self.project, self.url)
 
         ctd = CampaignTaskDetails.objects.get(
-            campaign_slug=self.name, subcollection_slug=self.project
+            campaign_slug=self.name, project_slug=self.project
         )
         ciac = CampaignItemAssetCount.objects.get(
             campaign_task=ctd, campaign_item_identifier=self.item_id
@@ -387,8 +387,8 @@ class DownloadWriteItemAssetsTest(TestCase):
             "campaign_name": self.name,
             "campaign_slug": slugify(self.name),
             "campaign_task_id": "123",
-            "subcollection_name": self.project,
-            "subcollection_slug": slugify(self.project),
+            "project_name": self.project,
+            "project_slug": slugify(self.project),
         }
         CampaignTaskDetails.objects.create(**campaign)
         mock_resp = MockResponse(mock_data.COLLECTION_ITEM_URLS_DATA, 200)
@@ -399,7 +399,7 @@ class DownloadWriteItemAssetsTest(TestCase):
         download_write_item_assets(self.name, self.project, self.item_id)
 
         ctd = CampaignTaskDetails.objects.get(
-            campaign_slug=self.name, subcollection_slug=self.project
+            campaign_slug=self.name, project_slug=self.project
         )
         ciac = CampaignItemAssetCount.objects.get(
             campaign_task=ctd, campaign_item_identifier=self.item_id
@@ -425,7 +425,7 @@ class DownloadWriteItemAssetsTest(TestCase):
         download_write_item_assets(self.name, self.project, self.item_id)
 
         ctd = CampaignTaskDetails.objects.get(
-            campaign_slug=self.name, subcollection_slug=self.project
+            campaign_slug=self.name, project_slug=self.project
         )
         ciac = CampaignItemAssetCount.objects.get(
             campaign_task=ctd, campaign_item_identifier=self.item_id

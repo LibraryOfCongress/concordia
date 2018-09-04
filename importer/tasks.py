@@ -171,8 +171,8 @@ def download_write_campaign_item_assets(campaign_name, project, campaign_url):
 
     ctd, created = CampaignTaskDetails.objects.get_or_create(
         campaign_slug=slugify(campaign_name),
-        subcollection_slug=slugify(project),
-        defaults={"campaign_name": campaign_name, "subcollection_name": project},
+        project_slug=slugify(project),
+        defaults={"campaign_name": campaign_name, "project_name": project},
     )
     ctd.campaign_item_count = len(campaign_item_ids)
     ctd.campaign_asset_count = sum(items_asset_count_dict.values())
@@ -207,8 +207,8 @@ def download_write_item_assets(campaign_name, project, item_id):
 
     ctd, created = CampaignTaskDetails.objects.get_or_create(
         campaign_slug=slugify(campaign_name),
-        subcollection_slug=slugify(project),
-        defaults={"campaign_name": campaign_name, "subcollection_name": project},
+        project_slug=slugify(project),
+        defaults={"campaign_name": campaign_name, "project_name": project},
     )
     ctd.campaign_item_count += 1
     ctd.campaign_asset_count += len(item_asset_urls)

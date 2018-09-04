@@ -29,13 +29,13 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name="campaigntaskdetails",
-            name="subcollection_name",
+            name="project_name",
             field=models.CharField(default=1, max_length=250),
             preserve_default=False,
         ),
         migrations.AddField(
             model_name="campaigntaskdetails",
-            name="subcollection_slug",
+            name="project_slug",
             field=models.SlugField(default=1, max_length=250, unique=True),
             preserve_default=False,
         ),
@@ -44,6 +44,6 @@ class Migration(migrations.Migration):
         ),
         migrations.AlterUniqueTogether(
             name="campaigntaskdetails",
-            unique_together={("campaign_slug", "subcollection_slug")},
+            unique_together={("campaign_slug", "project_slug")},
         ),
     ]

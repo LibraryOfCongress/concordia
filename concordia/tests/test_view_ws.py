@@ -473,7 +473,7 @@ class ViewWSTest_Concordia(TestCase):
                 "campaign": self.campaign.id,
                 "sequence": 1,
                 "metadata": {"key": "val2"},
-                "subcollection": None,
+                "project": None,
                 "status": Status.EDIT,
             }
         )
@@ -559,7 +559,7 @@ class ViewWSTest_Concordia(TestCase):
                 "campaign": None,
                 "sequence": None,
                 "metadata": None,
-                "subcollection": None,
+                "project": None,
                 "status": None,
             }
         )

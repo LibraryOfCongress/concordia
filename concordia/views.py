@@ -27,7 +27,7 @@ from rest_framework.test import APIRequestFactory
 
 from concordia.forms import (CaptchaEmbedForm, ConcordiaContactUsForm,
                              ConcordiaUserEditForm, ConcordiaUserForm)
-from concordia.models import (Asset, Campaign, PageInUse, Status, Subcollection, Tag,
+from concordia.models import (Asset, Campaign, PageInUse, Status, Project, Tag,
                               Transcription, UserAssetTagCollection, UserProfile)
 from concordia.views_ws import PageInUseCreate, PageInUsePut
 from importer.views import CreateCampaignView
@@ -148,7 +148,7 @@ class ConcordiaProjectView(TemplateView):
             campaign = Campaign.objects.get(slug=self.args[0])
         except Campaign.DoesNotExist:
             raise Http404
-        project_list = campaign.subcollection_set.all().order_by("title")
+        project_list = campaign.project_set.all().order_by("title")
         paginator = Paginator(project_list, PROJECTS_PER_PAGE)
 
         if not self.request.GET.get("page"):
@@ -629,7 +629,7 @@ def publish_campaign(request, campaign, is_publish):
     else:
         campaign.is_publish = False
 
-    sub_collections = campaign.subcollection_set.all()
+    sub_collections = campaign.project_set.all()
 
     for sc in sub_collections:
         sc.is_publish = True if is_publish == "true" else False
@@ -651,10 +651,10 @@ def publish_project(request, campaign, project, is_publish):
     """ Publish/Unpublish a project to other users. """
 
     try:
-        sub_collection = Subcollection.objects.get(
+        sub_collection = Project.objects.get(
             collection__slug=campaign, slug=project
         )
-    except Subcollection.DoesNotExist:
+    except Project.DoesNotExist:
         raise Http404
 
     if is_publish == "true":

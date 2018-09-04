@@ -4,15 +4,15 @@ from django.db import models
 class CampaignTaskDetails(models.Model):
     campaign_name = models.CharField(max_length=50)
     campaign_slug = models.SlugField(max_length=50)
-    subcollection_name = models.CharField(max_length=250)
-    subcollection_slug = models.SlugField(max_length=250)
+    project_name = models.CharField(max_length=250)
+    project_slug = models.SlugField(max_length=250)
     # collection_page_count = models.IntegerField(null=True, blank=True, default=0)
     campaign_item_count = models.IntegerField(null=True, blank=True, default=0)
     campaign_asset_count = models.IntegerField(null=True, blank=True, default=0)
     campaign_task_id = models.CharField(max_length=100, null=True, blank=True)
 
     class Meta:
-        unique_together = ("campaign_slug", "subcollection_slug")
+        unique_together = ("campaign_slug", "project_slug")
 
 
 class CampaignItemAssetCount(models.Model):

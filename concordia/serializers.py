@@ -45,7 +45,7 @@ class AssetSerializer(serializers.ModelSerializer):
             "media_url",
             "media_type",
             "campaign",
-            "subcollection",
+            "project",
             "sequence",
             "metadata",
             "status",

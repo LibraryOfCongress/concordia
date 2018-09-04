@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
             field=models.BooleanField(default=False),
         ),
         migrations.AddField(
-            model_name="subcollection",
+            model_name="project",
             name="is_publish",
             field=models.BooleanField(default=False),
         ),
@@ -52,7 +52,7 @@ class Migration(migrations.Migration):
             model_name="pageinuse", name="updated_on", field=models.DateTimeField()
         ),
         migrations.AlterField(
-            model_name="subcollection",
+            model_name="project",
             name="status",
             field=models.CharField(
                 choices=[

@@ -12,7 +12,7 @@ from django.test import Client, TestCase
 from PIL import Image
 
 from concordia.models import (Asset, Campaign, MediaType, PageInUse, Status,
-                              Subcollection, Tag, Transcription, User,
+                              Project, Tag, Transcription, User,
                               UserAssetTagCollection, UserProfile)
 
 logging.disable(logging.CRITICAL)
@@ -1128,23 +1128,23 @@ class ViewTest_Concordia(TestCase):
         )
         self.campaign.save()
 
-        self.subcollection = Subcollection(
+        self.project = Project(
             title="TextCampaign sub campaign",
             slug="test-slug2-proj",
             metadata={"key": "val1"},
             status=Status.EDIT,
             campaign=self.campaign,
         )
-        self.subcollection.save()
+        self.project.save()
 
-        self.subcollection1 = Subcollection(
+        self.project1 = Project(
             title="TextCampaign sub collection1",
             slug="test-slug2-proj1",
             metadata={"key": "val1"},
             status=Status.EDIT,
             campaign=self.campaign,
         )
-        self.subcollection1.save()
+        self.project1.save()
 
         # Act
         response = self.client.get("/transcribe/test-slug2/test-slug2-proj1/")
@@ -1173,23 +1173,23 @@ class ViewTest_Concordia(TestCase):
         )
         self.campaign.save()
 
-        self.subcollection = Subcollection(
+        self.project = Project(
             title="TextCampaign sub campaign",
             slug="test-slug2-proj",
             metadata={"key": "val1"},
             status=Status.EDIT,
             campaign=self.campaign,
         )
-        self.subcollection.save()
+        self.project.save()
 
-        self.subcollection1 = Subcollection(
+        self.project1 = Project(
             title="TextCampaign sub collection1",
             slug="test-slug2-proj1",
             metadata={"key": "val1"},
             status=Status.EDIT,
             campaign=self.campaign,
         )
-        self.subcollection1.save()
+        self.project1.save()
 
         # Act
         response = self.client.get(
@@ -1289,23 +1289,23 @@ class ViewTest_Concordia(TestCase):
         )
         self.campaign.save()
 
-        self.subcollection = Subcollection(
+        self.project = Project(
             title="TextCampaign sub campaign",
             slug="test-slug2-proj",
             metadata={"key": "val1"},
             status=Status.EDIT,
             campaign=self.campaign,
         )
-        self.subcollection.save()
+        self.project.save()
 
-        self.subcollection1 = Subcollection(
+        self.project1 = Project(
             title="TextCampaign sub collection1",
             slug="test-slug2-proj1",
             metadata={"key": "val1"},
             status=Status.EDIT,
             campaign=self.campaign,
         )
-        self.subcollection1.save()
+        self.project1.save()
 
         # Act
         response = self.client.get("/transcribe/publish/campaign/slug1/true/")
@@ -1328,7 +1328,7 @@ class ViewTest_Concordia(TestCase):
         )
         self.campaign.save()
 
-        self.subcollection = Subcollection(
+        self.project = Project(
             title="TextCampaign sub campaign",
             slug="test-slug2-proj",
             metadata={"key": "val1"},
@@ -1336,9 +1336,9 @@ class ViewTest_Concordia(TestCase):
             campaign=self.campaign,
             is_publish=True,
         )
-        self.subcollection.save()
+        self.project.save()
 
-        self.subcollection1 = Subcollection(
+        self.project1 = Project(
             title="TextCampaign sub collection1",
             slug="test-slug2-proj1",
             metadata={"key": "val1"},
@@ -1346,7 +1346,7 @@ class ViewTest_Concordia(TestCase):
             campaign=self.campaign,
             is_publish=True,
         )
-        self.subcollection1.save()
+        self.project1.save()
 
         # Act
         response = self.client.get("/transcribe/publish/campaign/slug1/false/")
@@ -1368,23 +1368,23 @@ class ViewTest_Concordia(TestCase):
         )
         self.campaign.save()
 
-        self.subcollection = Subcollection(
+        self.project = Project(
             title="TextCampaign sub campaign",
             slug="test-slug2-proj",
             metadata={"key": "val1"},
             status=Status.EDIT,
             campaign=self.campaign,
         )
-        self.subcollection.save()
+        self.project.save()
 
-        self.subcollection1 = Subcollection(
+        self.project1 = Project(
             title="TextCampaign sub collection1",
             slug="test-slug2-proj1",
             metadata={"key": "val1"},
             status=Status.EDIT,
             campaign=self.campaign,
         )
-        self.subcollection1.save()
+        self.project1.save()
 
         # Act
         response = self.client.get(
@@ -1409,7 +1409,7 @@ class ViewTest_Concordia(TestCase):
         )
         self.campaign.save()
 
-        self.subcollection = Subcollection(
+        self.project = Project(
             title="TextCampaign sub campaign",
             slug="test-slug2-proj",
             metadata={"key": "val1"},
@@ -1417,9 +1417,9 @@ class ViewTest_Concordia(TestCase):
             campaign=self.campaign,
             is_publish=True,
         )
-        self.subcollection.save()
+        self.project.save()
 
-        self.subcollection1 = Subcollection(
+        self.project1 = Project(
             title="TextCampaign sub collection1",
             slug="test-slug2-proj1",
             metadata={"key": "val1"},
@@ -1427,7 +1427,7 @@ class ViewTest_Concordia(TestCase):
             campaign=self.campaign,
             is_publish=True,
         )
-        self.subcollection1.save()
+        self.project1.save()
 
         # Act
         response = self.client.get(

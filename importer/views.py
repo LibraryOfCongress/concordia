@@ -11,7 +11,7 @@ from rest_framework import generics, status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from concordia.models import Asset, Campaign, Subcollection
+from concordia.models import Asset, Campaign, Project
 from importer.models import CampaignItemAssetCount, CampaignTaskDetails
 from importer.serializer import CreateCampaign
 from importer.tasks import (download_write_campaign_item_assets,
@@ -34,8 +34,8 @@ class CreateCampaignView(generics.CreateAPIView):
         campaign_details = {
             "campaign_name": name,
             "campaign_slug": slugify(name),
-            "subcollection_name": project,
-            "subcollection_slug": slugify(project),
+            "project_name": project,
+            "project_slug": slugify(project),
         }
 
         if create_type == "campaigns":
@@ -54,8 +54,8 @@ class CreateCampaignView(generics.CreateAPIView):
             )
             ctd, created = CampaignTaskDetails.objects.get_or_create(
                 campaign_slug=slugify(name),
-                subcollection_slug=slugify(project),
-                defaults={"campaign_name": name, "subcollection_name": project},
+                project_slug=slugify(project),
+                defaults={"campaign_name": name, "project_name": project},
             )
             CampaignItemAssetCount.objects.create(
                 campaign_task=ctd,
@@ -82,7 +82,7 @@ def get_task_status(request, task_id):
             project_local_path = os.path.join(
                 settings.IMPORTER["IMAGES_FOLDER"],
                 ciac.campaign_task.campaign_slug,
-                ciac.campaign_task.subcollection_slug,
+                ciac.campaign_task.project_slug,
             )
             item_downloaded_asset_count = sum(
                 [
@@ -108,7 +108,7 @@ def get_task_status(request, task_id):
                 project_local_path = os.path.join(
                     settings.IMPORTER["IMAGES_FOLDER"],
                     ctd.campaign_slug,
-                    ctd.subcollection_slug,
+                    ctd.project_slug,
                 )
                 campaign_downloaded_asset_count = sum(
                     [len(files) for path, dirs, files in os.walk(project_local_path)]
@@ -139,7 +139,7 @@ def check_completeness(ciac, item_id=None):
     project_local_path = os.path.join(
         settings.IMPORTER["IMAGES_FOLDER"],
         ciac.campaign_task.campaign_slug,
-        ciac.campaign_task.subcollection_slug,
+        ciac.campaign_task.project_slug,
     )
     if item_id:
         item_local_path = os.path.join(project_local_path, item_id)
@@ -178,7 +178,7 @@ def check_completeness(ciac, item_id=None):
     return False
 
 
-def save_campaign_item_assets(subcollection, the_path, item_id=None):
+def save_campaign_item_assets(project, the_path, item_id=None):
 
     for root, dirs, files in os.walk(the_path):
         for filename in files:
@@ -196,8 +196,8 @@ def save_campaign_item_assets(subcollection, the_path, item_id=None):
                 media_url=media_url,
                 media_type="IMG",
                 sequence=sequence,
-                campaign=subcollection.campaign,
-                subcollection=subcollection,
+                campaign=project.campaign,
+                project=project,
             )
 
             try:
@@ -233,7 +233,7 @@ def check_and_save_campaign_assets(request, task_id, item_id=None):
                         "transcriptions:project",
                         args=[
                             ciac.campaign_task.campaign_slug,
-                            ciac.campaign_task.subcollection_slug,
+                            ciac.campaign_task.project_slug,
                         ],
                         current_app=request.resolver_match.namespace,
                     )
@@ -266,11 +266,11 @@ def check_and_save_campaign_assets(request, task_id, item_id=None):
 def check_and_save_campaign_completeness(ciac):
     if check_completeness(ciac):
         try:
-            subcollection = subcollection.objects.get(
+            project = project.objects.get(
                 campaign__slug=ciac.campaign_task.campaign_slug,
-                slug=ciac.campaign_task.subcollection_slug,
+                slug=ciac.campaign_task.project_slug,
             )
-        except Subcollection.DoesNotExist:
+        except Project.DoesNotExist:
             campaign, created = Campaign.objects.get_or_create(
                 title=ciac.campaign_task.campaign_name,
                 slug=ciac.campaign_task.campaign_slug,
@@ -278,25 +278,25 @@ def check_and_save_campaign_completeness(ciac):
                 is_active=True,
             )
 
-            subcollection = subcollection.objects.create(
-                title=ciac.campaign_task.subcollection_name,
+            project = project.objects.create(
+                title=ciac.campaign_task.project_name,
                 campaign=campaign,
-                slug=ciac.campaign_task.subcollection_slug,
+                slug=ciac.campaign_task.project_slug,
             )
 
         project_local_path = os.path.join(
             settings.IMPORTER["IMAGES_FOLDER"],
-            subcollection.campaign.slug,
-            subcollection.slug,
+            project.campaign.slug,
+            project.slug,
         )
 
-        save_campaign_item_assets(subcollection, project_local_path)
+        save_campaign_item_assets(project, project_local_path)
 
         shutil.rmtree(
             os.path.join(
                 settings.IMPORTER["IMAGES_FOLDER"],
-                subcollection.campaign.slug,
-                subcollection.slug,
+                project.campaign.slug,
+                project.slug,
             )
         )
 
@@ -309,11 +309,11 @@ def check_and_save_item_completeness(ciac, item_id):
 
     if check_completeness(ciac, item_id):
         try:
-            subcollection = subcollection.objects.get(
+            project = project.objects.get(
                 campaign__slug=ciac.campaign_task.campaign_slug,
-                slug=ciac.campaign_task.subcollection_slug,
+                slug=ciac.campaign_task.project_slug,
             )
-        except subcollection.DoesNotExist:
+        except project.DoesNotExist:
             campaign, created = Campaign.objects.get_or_create(
                 title=ciac.campaign_task.campaign_name,
                 slug=ciac.campaign_task.campaign_slug,
@@ -321,24 +321,24 @@ def check_and_save_item_completeness(ciac, item_id):
                 is_active=True,
             )
 
-            subcollection = subcollection.objects.create(
-                title=ciac.campaign_task.subcollection_name,
+            project = project.objects.create(
+                title=ciac.campaign_task.project_name,
                 campaign=campaign,
-                slug=ciac.campaign_task.subcollection_slug,
+                slug=ciac.campaign_task.project_slug,
             )
         item_local_path = os.path.join(
             settings.IMPORTER["IMAGES_FOLDER"],
-            subcollection.campaign.slug,
-            subcollection.slug,
+            project.campaign.slug,
+            project.slug,
             item_id,
         )
 
-        save_campaign_item_assets(subcollection, item_local_path, item_id)
+        save_campaign_item_assets(project, item_local_path, item_id)
         shutil.rmtree(
             os.path.join(
                 settings.IMPORTER["IMAGES_FOLDER"],
-                subcollection.campaign.slug,
-                subcollection.slug,
+                project.campaign.slug,
+                project.slug,
             )
         )
         return True

@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import (Asset, Campaign, Subcollection, Tag, Transcription,
+from .models import (Asset, Campaign, Project, Tag, Transcription,
                      UserAssetTagCollection)
 
 
@@ -22,8 +22,8 @@ class CampaignAdmin(admin.ModelAdmin):
     list_display_links = ("id", "title", "slug")
 
 
-@admin.register(Subcollection)
-class SubcollectionAdmin(admin.ModelAdmin):
+@admin.register(Project)
+class ProjectAdmin(admin.ModelAdmin):
     # todo: replace metadata with truncated values
     # todo: add foreignKey link for campaign
     list_display = (
@@ -49,7 +49,7 @@ class AssetAdmin(admin.ModelAdmin):
         "media_url",
         "media_type",
         "campaign",
-        "subcollection",
+        "project",
         "sequence",
         # 'metadata',
         "status",

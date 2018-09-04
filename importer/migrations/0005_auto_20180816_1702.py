@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AlterField(
             model_name="campaigntaskdetails",
-            name="subcollection_slug",
+            name="project_slug",
             field=models.SlugField(max_length=250),
         ),
     ]

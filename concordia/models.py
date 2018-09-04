@@ -100,7 +100,7 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
                 )
 
 
-class Subcollection(models.Model):
+class Project(models.Model):
     title = models.CharField(max_length=50)
     slug = models.SlugField(max_length=50)
     category = models.CharField(max_length=12, blank=True)
@@ -162,8 +162,8 @@ class Asset(models.Model):
         max_length=4, choices=MediaType.CHOICES, db_index=True
     )
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
-    subcollection = models.ForeignKey(
-        Subcollection, on_delete=models.CASCADE, blank=True, null=True
+    project = models.ForeignKey(
+        Project, on_delete=models.CASCADE, blank=True, null=True
     )
     sequence = models.PositiveIntegerField(default=1)
     metadata = JSONField(default=metadata_default)

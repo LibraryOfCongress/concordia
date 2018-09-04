@@ -26,7 +26,7 @@ class CreateCampaign(serializers.Serializer):
             try:
                 CampaignTaskDetails.objects.get(
                     campaign_slug=slugify(data["name"]),
-                    subcollection_slug=slugify(data["project"]),
+                    project_slug=slugify(data["project"]),
                 )
             except CampaignTaskDetails.DoesNotExist:
                 pass

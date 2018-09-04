@@ -96,7 +96,7 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.CreateModel(
-            name="Subcollection",
+            name="Project",
             fields=[
                 (
                     "id",
@@ -238,16 +238,16 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name="asset",
-            name="subcollection",
+            name="project",
             field=models.ForeignKey(
                 blank=True,
                 null=True,
                 on_delete=django.db.models.deletion.CASCADE,
-                to="concordia.Subcollection",
+                to="concordia.Project",
             ),
         ),
         migrations.AlterUniqueTogether(
-            name="subcollection", unique_together={("slug", "campaign")}
+            name="project", unique_together={("slug", "campaign")}
         ),
         migrations.AlterUniqueTogether(
             name="asset", unique_together={("slug", "campaign")}

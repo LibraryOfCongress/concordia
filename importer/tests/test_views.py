@@ -51,8 +51,8 @@ class CreateCampaignViewTests(APITestCase):
         self.campaign = {
             "campaign_name": self.data.get("name"),
             "campaign_slug": slugify(self.data.get("name")),
-            "subcollection_name": self.data.get("project"),
-            "subcollection_slug": slugify(self.data.get("project")),
+            "project_name": self.data.get("project"),
+            "project_slug": slugify(self.data.get("project")),
         }
 
     def test_create_campaign_fields_required_bad_request(self):
@@ -176,8 +176,8 @@ class GetTaskStatusTests(APITestCase):
         self.campaign = {
             "campaign_name": self.data.get("name"),
             "campaign_slug": slugify(self.data.get("name")),
-            "subcollection_name": self.data.get("project"),
-            "subcollection_slug": slugify(self.data.get("project")),
+            "project_name": self.data.get("project"),
+            "project_slug": slugify(self.data.get("project")),
         }
 
     @patch('importer.views.AsyncResult')
@@ -276,8 +276,8 @@ class CheckAndSaveCampaignAssetsTests(APITestCase):
         self.campaign = {
             "campaign_name": self.data.get("name"),
             "campaign_slug": slugify(self.data.get("name")),
-            "subcollection_name": self.data.get("project"),
-            "subcollection_slug": slugify(self.data.get("project")),
+            "project_name": self.data.get("project"),
+            "project_slug": slugify(self.data.get("project")),
         }
 
     def test_campaign_assets_fail_no_db_entry(self):
@@ -393,8 +393,8 @@ class CheckAndSaveCampaignAssetsTests(APITestCase):
         campaign_task_detail = CampaignTaskDetails(
             campaign_name="campaign name",
             campaign_slug="campaign_slug",
-            subcollection_name="subcollection name",
-            subcollection_slug="subcollection_slug",
+            project_name="project name",
+            project_slug="project_slug",
             campaign_item_count=1,
             campaign_asset_count=1,
             campaign_task_id="task_id")
@@ -408,7 +408,7 @@ class CheckAndSaveCampaignAssetsTests(APITestCase):
             campaign_item_asset_count=1)
         campaign_item_asset_count.save()
 
-        test_dir = '/tmp/concordia_images/campaign_slug/subcollection_slug/'
+        test_dir = '/tmp/concordia_images/campaign_slug/project_slug/'
         if not os.path.exists(test_dir):
             os.makedirs(test_dir)
 
@@ -434,8 +434,8 @@ class CheckAndSaveCampaignAssetsTests(APITestCase):
         campaign_task_detail = CampaignTaskDetails(
             campaign_name="campaign name",
             campaign_slug="campaign_slug",
-            subcollection_name="subcollection name",
-            subcollection_slug="subcollection_slug",
+            project_name="project name",
+            project_slug="project_slug",
             campaign_item_count=1,
             campaign_asset_count=2,
             campaign_task_id="task_id")
@@ -448,7 +448,7 @@ class CheckAndSaveCampaignAssetsTests(APITestCase):
             campaign_item_identifier="campaign_item_identifer")
         campaign_item_asset_count.save()
 
-        test_dir = '/tmp/concordia_images/campaign_slug/subcollection_slug/'
+        test_dir = '/tmp/concordia_images/campaign_slug/project_slug/'
         if not os.path.exists(test_dir):
             os.makedirs(test_dir)
 
@@ -473,8 +473,8 @@ class CheckAndSaveCampaignAssetsTests(APITestCase):
         campaign_task_detail = CampaignTaskDetails(
             campaign_name="campaign name",
             campaign_slug="campaign_slug",
-            subcollection_name="subcollection name",
-            subcollection_slug="subcollection_slug")
+            project_name="project name",
+            project_slug="project_slug")
 
         campaign_task_detail.save()
 
@@ -485,7 +485,7 @@ class CheckAndSaveCampaignAssetsTests(APITestCase):
             campaign_item_asset_count=1)
         campaign_item_asset_count.save()
 
-        test_dir = '/tmp/concordia_images/campaign_slug/subcollection_slug/campaign_item_identifer/'
+        test_dir = '/tmp/concordia_images/campaign_slug/project_slug/campaign_item_identifer/'
         if not os.path.exists(test_dir):
             os.makedirs(test_dir)
 
@@ -511,8 +511,8 @@ class CheckAndSaveCampaignAssetsTests(APITestCase):
         campaign_task_detail = CampaignTaskDetails(
             campaign_name="campaign name",
             campaign_slug="campaign_slug",
-            subcollection_name="subcollection name",
-            subcollection_slug="subcollection_slug")
+            project_name="project name",
+            project_slug="project_slug")
 
         campaign_task_detail.save()
 
@@ -523,7 +523,7 @@ class CheckAndSaveCampaignAssetsTests(APITestCase):
             campaign_item_asset_count=2)
         campaign_item_asset_count.save()
 
-        test_dir = '/tmp/concordia_images/campaign_slug/subcollection_slug/campaign_item_identifer/'
+        test_dir = '/tmp/concordia_images/campaign_slug/project_slug/campaign_item_identifer/'
         if not os.path.exists(test_dir):
             os.makedirs(test_dir)
 
