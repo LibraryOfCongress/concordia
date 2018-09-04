@@ -1437,3 +1437,61 @@ class ViewTest_Concordia(TestCase):
         # Assert
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["state"], False)
+
+
+    @patch("concordia.views.requests")
+    def test_DeleteProject_get(self, mock_requests):
+        """
+        Test GET route /transcribe/delete/<slug-value>/<slug-value>/ (project)
+        :return:
+        """
+
+        # Arrange
+        mock_requests.get.return_value.status_code = 200
+        mock_requests.get.return_value.json.return_value = {
+            "concordia_data": "abc123456"
+        }
+
+        # add an item to Collection
+        self.collection = Collection(
+            title="TextCollection",
+            slug="test-slug2",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection.save()
+
+        self.subcollection1 = Subcollection(
+            title="TextCollection sub collection1",
+            slug="test-slug2-proj1",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+            collection=self.collection,
+            is_publish=True,
+        )
+        self.subcollection1.save()
+
+        self.asset = Asset(
+            title="TestAsset",
+            slug="test-slug2",
+            description="Asset Description",
+            media_url="http://www.foo.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            collection=self.collection,
+            subcollection=self.subcollection1,
+            metadata={"key": "val2"},
+            status=Status.EDIT,
+        )
+        self.asset.save()
+
+        # Act
+
+        response = self.client.get("/transcribe/delete/project/test-slug2/test-slug2-proj1/", follow=True)
+
+        # Assert
+        self.assertEqual(response.status_code, 200)
+
+        # verify the collection is not in db
+        subcollections = Subcollection.objects.all()
+        self.assertEqual(len(subcollections), 0)

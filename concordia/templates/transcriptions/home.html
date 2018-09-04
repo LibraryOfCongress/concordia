@@ -34,7 +34,7 @@
                           <h6 class="card-text mb-half">{{ c.description }}</h6>
                           <div class="col-md-8 mx-auto text-center">
                             <a href="{% url 'transcriptions:collection' c.slug %}" class="btn btn-primary col mb-quarter">View</a>
-                            <a href="{% url 'transcriptions:delete collection' c.slug %}" class="btn btn-danger col mb-quarter">Delete</a>
+                            <a href="#" class="btn btn-danger col mb-quarter" data-collection="{{ c.slug }}" data-toggle="modal" data-target="#deleteConfirmModal">Delete</a>
                             <a href="{% url 'transcriptions:exportCSV collection' c.slug %}" class="btn btn-success col mb-quarter">Export to csv</a>
                             <a href="{% url 'transcriptions:exportBagit collection' c.slug %}" class="btn btn-success col">Export to Bagit</a>
                             <a href="{% url 'transcriptions:report collection' c.slug %}" class="mt-half col btn btn-primary">Report</a>
@@ -69,7 +69,7 @@
   </div>
 </div>
 
-<!-- Confirmation Modal -->
+<!-- Publish Confirmation Modal -->
 <div class="modal fade" id="collectionConfirmModal" tabindex="-1" role="dialog" aria-labelledby="collectionConfirmModalLabel" aria-hidden="true">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
@@ -85,6 +85,27 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
         <button type="button" class="btn btn-primary" id="confirmbtn">Submit</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" role="dialog" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteConfirmModalLabel">Confirm Delete</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        Are you sure want to delete collection ?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="deleteconfirmbtn">Delete</button>
       </div>
     </div>
   </div>
@@ -119,6 +140,27 @@
                 });
              });
          });
+
+    	$(document).on('shown.bs.modal',"#deleteConfirmModal", function (e) {
+		var $invoker = $(e.relatedTarget);
+
+		$("#deleteconfirmbtn").click(function(e){
+		    var collection_slug = $($invoker[0]).attr("data-collection");
+		    $('#deleteConfirmModal').modal('hide');
+
+		    $.ajax({
+			url: '/transcribe/delete/'+collection_slug+'/',
+			type: 'GET',
+			success: function(data, textStatus, jqXHR) {
+				$("#thumbnailConfirmModal").modal('hide');
+				window.location.href = '/transcribe/';
+			    }
+			}).fail(function(data, jqXHR, textStatus, errorThrown) {
+			    console.log("error: ", data);
+			    $("#thumbnailConfirmModal").modal('hide');
+			});
+        	});
+    	});
     });
 </script>
 {% endblock main_content %}

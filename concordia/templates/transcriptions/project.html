@@ -23,6 +23,9 @@
                                       <div class="col-md-8 mx-auto text-center">
                                         <a href="{% url 'transcriptions:project' project.collection.slug project.slug %}" class="btn btn-primary col mb-quarter">View</a>
                                       </div>
+				      <div class="col-md-8 mx-auto text-center">
+					<a href="#" class="btn btn-danger col mb-quarter" data-collection="{{ project.collection.slug }}" data-subcollection="{{ project.slug }}" data-toggle="modal" data-target="#deleteConfirmModal">Delete</a>
+				      </div>
                                     </div>
                                 </div>
                             {% endif %}
@@ -35,6 +38,8 @@
                                   <div class="col-md-8 mx-auto text-center">
                                     <a href="{% url 'transcriptions:project' project.collection.slug project.slug %}" class="btn btn-primary col mb-quarter">View</a>
                                   </div>
+                                        <a href="#" class="btn btn-danger col mb-quarter" data-collection="{{ project.collection.slug }}" data-subcollection="{{ project.slug }}" data-toggle="modal" data-target="#deleteConfirmModal">Delete</a>
+                                    </div>
                                 {% if request.user|has_group:"CM" %}
                                     <div class="col-md-8 mx-auto text-center">
                                     {% if project.is_publish %}
@@ -88,7 +93,26 @@
     </div>
   </div>
 </div>
-
+<!-- Delete Project Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" role="dialog" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteConfirmModalLabel">Confirm Delete</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        Are you sure want to delete project ?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="deleteconfirmbtn">Delete</button>
+      </div>
+    </div>
+  </div>
+</div>
 <script>
     $(document).ready(function(){
          $(document).on('shown.bs.modal',"#projectConfirmModal", function (e) {
@@ -120,6 +144,28 @@
                 });
             });
          });
+
+	$(document).on('shown.bs.modal',"#deleteConfirmModal", function (e) {
+            var $invoker = $(e.relatedTarget);
+
+            $("#deleteconfirmbtn").click(function(e){
+                var collection_slug = $($invoker[0]).attr("data-collection");
+                var subcollection_slug = $($invoker[0]).attr("data-subcollection");
+                $('#deleteConfirmModal').modal('hide');
+
+                $.ajax({
+                    url: '/transcribe/delete/project/'+collection_slug+'/'+subcollection_slug+'/',
+                    type: 'GET',
+                    success: function(data, textStatus, jqXHR) {
+                            $("#thumbnailConfirmModal").modal('hide');
+                            window.location.href = '/transcribe/';
+                        }
+                    }).fail(function(data, jqXHR, textStatus, errorThrown) {
+                        console.log("error: ", data);
+                        $("#thumbnailConfirmModal").modal('hide');
+                    });
+            });
+        });
     });
 </script>
 

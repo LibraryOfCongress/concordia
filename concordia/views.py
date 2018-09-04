@@ -672,3 +672,20 @@ def publish_project(request, collection, project, is_publish):
         },
         safe=True,
     )
+
+
+class DeleteProjectView(TemplateView):
+    """
+    deletes the project
+    """
+
+    def get(self, request, *args, **kwargs):
+        collection = Collection.objects.get(slug=self.args[0])
+        subcollection = Subcollection.objects.get(slug=self.args[1])
+        subcollection.asset_set.all().delete()
+        subcollection.delete()
+        os.system(
+            "rm -rf {0}".format(settings.MEDIA_ROOT + "/concordia/" + collection.slug + "/" + subcollection.slug)
+        )
+        return redirect("/transcribe/"+collection.slug+"/")
+
