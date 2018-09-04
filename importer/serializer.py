@@ -3,10 +3,10 @@ from urllib.parse import urlsplit
 from django.template.defaultfilters import slugify
 from rest_framework import serializers
 
-from importer.models import CollectionTaskDetails
+from importer.models import CampaignTaskDetails
 
 
-class CreateCollection(serializers.Serializer):
+class CreateCampaign(serializers.Serializer):
     name = serializers.CharField()
     url = serializers.URLField()
     project = serializers.CharField()
@@ -14,25 +14,25 @@ class CreateCollection(serializers.Serializer):
 
     def validate(self, data):
         """
-        Check that the collection and project exist or not.
+        Check that the campaign and project exist or not.
         """
         create_type = urlsplit(data["url"]).path.split("/")[1]
-        create_types = ["collections", "item"]
+        create_types = ["campaigns", "item"]
         if create_type not in create_types:
             raise serializers.ValidationError(
-                "The url not belongs to collections or item"
+                "The url not belongs to campaigns or item"
             )
         if create_type == create_types[0]:
             try:
-                CollectionTaskDetails.objects.get(
-                    collection_slug=slugify(data["name"]),
+                CampaignTaskDetails.objects.get(
+                    campaign_slug=slugify(data["name"]),
                     subcollection_slug=slugify(data["project"]),
                 )
-            except CollectionTaskDetails.DoesNotExist:
+            except CampaignTaskDetails.DoesNotExist:
                 pass
             else:
                 raise serializers.ValidationError(
-                    "collection and project already exist"
+                    "campaign and project already exist"
                 )
 
         data["create_type"] = create_type

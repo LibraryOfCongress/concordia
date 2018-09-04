@@ -84,7 +84,7 @@ class ConcordiaContactUsForm(forms.Form):
         widget=forms.Select(
             choices=(
                 ('General', 'General'),
-                ('Collection', 'Question about collection'),
+                ('Campaign', 'Question about campaign'),
                 ('Problem', 'Something is not working')
             ),
             attrs={"class": "col-sm-8 form-control"}

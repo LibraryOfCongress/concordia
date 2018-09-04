@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AddField(
-            model_name="collection",
+            model_name="campaign",
             name="is_active",
             field=models.BooleanField(default=False),
         )

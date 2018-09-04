@@ -58,7 +58,7 @@ class Migration(migrations.Migration):
             options={"ordering": ["title", "sequence"]},
         ),
         migrations.CreateModel(
-            name="Collection",
+            name="Campaign",
             fields=[
                 (
                     "id",
@@ -130,10 +130,10 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 (
-                    "collection",
+                    "campaign",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
-                        to="concordia.Collection",
+                        to="concordia.Campaign",
                     ),
                 ),
             ],
@@ -231,9 +231,9 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name="asset",
-            name="collection",
+            name="campaign",
             field=models.ForeignKey(
-                on_delete=django.db.models.deletion.CASCADE, to="concordia.Collection"
+                on_delete=django.db.models.deletion.CASCADE, to="concordia.Campaign"
             ),
         ),
         migrations.AddField(
@@ -247,9 +247,9 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.AlterUniqueTogether(
-            name="subcollection", unique_together={("slug", "collection")}
+            name="subcollection", unique_together={("slug", "campaign")}
         ),
         migrations.AlterUniqueTogether(
-            name="asset", unique_together={("slug", "collection")}
+            name="asset", unique_together={("slug", "campaign")}
         ),
     ]

@@ -123,14 +123,14 @@ body {
     <h3>My Contributions</h3> {% if transcriptions %}
     <table class="table">
         <tr>
-            <td>Collection</td>
+            <td>Campaign</td>
             <td>Asset Name</td>
             <td>Date</td>
         </tr>
         {% for t in transcriptions %}
         <tr>
-            <td>{{t.collection_name}}</td>
-            <td><a href="/transcribe/{{t.collection_name}}/asset/{{t.asset.slug}}">{{t.asset.slug}}</a></td>
+            <td>{{t.campaign_name}}</td>
+            <td><a href="/transcribe/{{t.campaign_name}}/asset/{{t.asset.slug}}">{{t.asset.slug}}</a></td>
             <td>{{ t.updated_on|date:'Y-m-d H:i' }}</td>
         </tr>
         {% endfor %} {% endif %}

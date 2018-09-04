@@ -1,5 +1,5 @@
 {% extends "transcriptions/base.html" %} {% load staticfiles %}
-{% block title %}Concordia - {{ collection }}{% endblock title %}
+{% block title %}Concordia - {{ campaign }}{% endblock title %}
 {% block head_content %}
 
 {% endblock head_content %}
@@ -7,25 +7,25 @@
 <div class="container-fluid py-default">
     <div class="row">
         <div class="col-md-10 mx-auto bg-offwhite rounded">
-            <h3 class="mt-default mb-half ml-half">{{ collection }}</h3>
-            <p class="ml-default mb-default">{{ collection.description }}</p>
+            <h3 class="mt-default mb-half ml-half">{{ campaign }}</h3>
+            <p class="ml-default mb-default">{{ campaign.description }}</p>
             <div class="row">
                 <div class="d-flex flex-wrap col-12 justify-content-around">
                     {% for a in assets %}
                     <div class="col-12 col-md-4 col-lg-3 mx-quarter mb-default card bg-lightest-gray shadow-regular">
-                        <a href="{% url 'transcriptions:asset' collection.slug a.slug %}">
-                            <img class="card-img card-img-collection" alt="{{ a.slug }}" src="{% if collection.s3_storage %}{{ a.media_url }}{% else %}{{ MEDIA_URL }}{{a.media_url }}{% endif %}">
+                        <a href="{% url 'transcriptions:asset' campaign.slug a.slug %}">
+                            <img class="card-img card-img-campaign" alt="{{ a.slug }}" src="{% if campaign.s3_storage %}{{ a.media_url }}{% else %}{{ MEDIA_URL }}{{a.media_url }}{% endif %}">
                         </a>
-                        <div class="card-img-overlay img-collection">
+                        <div class="card-img-overlay img-campaign">
                             <div class="d-flex flex-column justify-content-center align-items-bottom col-9 col-md-8 mx-auto">
-                                <a href="{% url 'transcriptions:asset' collection.slug a.slug %}" class="btn btn-primary btn-lg w-100 mb-quarter">Transcribe</a>
-                                <a href="{% url 'transcriptions:asset' collection.slug a.slug %}#tab-tag" class="btn btn-primary btn-lg w-100 mb-quarter">Tag</a>
+                                <a href="{% url 'transcriptions:asset' campaign.slug a.slug %}" class="btn btn-primary btn-lg w-100 mb-quarter">Transcribe</a>
+                                <a href="{% url 'transcriptions:asset' campaign.slug a.slug %}#tab-tag" class="btn btn-primary btn-lg w-100 mb-quarter">Tag</a>
                                 {% if user.is_superuser %}
-                                    <a href="{% url 'transcriptions:delete_asset' collection.slug a.slug %}" class="btn btn-primary btn-lg w-100 mb-quarter">Hide</a>
+                                    <a href="{% url 'transcriptions:delete_asset' campaign.slug a.slug %}" class="btn btn-primary btn-lg w-100 mb-quarter">Hide</a>
                                 {% endif %}
                             </div>
                         </div>
-                        <a href="{% url 'transcriptions:asset' collection.slug a.slug %}" class="collection-image-link"><h6 class="text-center primary-text my-half">{{ a.slug }}</h6></a>
+                        <a href="{% url 'transcriptions:asset' campaign.slug a.slug %}" class="campaign-image-link"><h6 class="text-center primary-text my-half">{{ a.slug }}</h6></a>
                     </div>
                     {% endfor %}
                 </div>

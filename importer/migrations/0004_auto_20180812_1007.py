@@ -10,40 +10,40 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RemoveField(
-            model_name="collectionitemassetcount", name="collection_slug"
+            model_name="campaignitemassetcount", name="campaign_slug"
         ),
         migrations.AddField(
-            model_name="collectionitemassetcount",
-            name="collection_task",
+            model_name="campaignitemassetcount",
+            name="campaign_task",
             field=models.ForeignKey(
                 default=1,
                 on_delete=django.db.models.deletion.CASCADE,
-                to="importer.CollectionTaskDetails",
+                to="importer.CampaignTaskDetails",
             ),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name="collectionitemassetcount",
+            model_name="campaignitemassetcount",
             name="item_task_id",
             field=models.CharField(blank=True, max_length=100, null=True),
         ),
         migrations.AddField(
-            model_name="collectiontaskdetails",
+            model_name="campaigntaskdetails",
             name="subcollection_name",
             field=models.CharField(default=1, max_length=250),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name="collectiontaskdetails",
+            model_name="campaigntaskdetails",
             name="subcollection_slug",
             field=models.SlugField(default=1, max_length=250, unique=True),
             preserve_default=False,
         ),
         migrations.RemoveField(
-            model_name="collectiontaskdetails", name="collection_page_count"
+            model_name="campaigntaskdetails", name="campaign_page_count"
         ),
         migrations.AlterUniqueTogether(
-            name="collectiontaskdetails",
-            unique_together={("collection_slug", "subcollection_slug")},
+            name="campaigntaskdetails",
+            unique_together={("campaign_slug", "subcollection_slug")},
         ),
     ]

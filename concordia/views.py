@@ -27,10 +27,10 @@ from rest_framework.test import APIRequestFactory
 
 from concordia.forms import (CaptchaEmbedForm, ConcordiaContactUsForm,
                              ConcordiaUserEditForm, ConcordiaUserForm)
-from concordia.models import (Asset, Collection, PageInUse, Status, Subcollection, Tag,
+from concordia.models import (Asset, Campaign, PageInUse, Status, Subcollection, Tag,
                               Transcription, UserAssetTagCollection, UserProfile)
 from concordia.views_ws import PageInUseCreate, PageInUsePut
-from importer.views import CreateCollectionView
+from importer.views import CreateCampaignView
 
 logger = getLogger(__name__)
 
@@ -120,8 +120,8 @@ class AccountProfileView(LoginRequiredMixin, TemplateView):
         ).order_by("-updated_on")
 
         for t in transcriptions:
-            collection = Collection.objects.get(id=t.asset.collection.id)
-            t.collection_name = collection.slug
+            campaign = Campaign.objects.get(id=t.asset.campaign.id)
+            t.campaign_name = campaign.slug
 
         return super().get_context_data(
             **dict(
@@ -136,7 +136,7 @@ class ConcordiaView(TemplateView):
     template_name = "transcriptions/home.html"
 
     def get_context_data(self, **kws):
-        response = concordia_api("collections/")
+        response = concordia_api("campaigns/")
         return dict(super().get_context_data(**kws), response=response)
 
 
@@ -145,10 +145,10 @@ class ConcordiaProjectView(TemplateView):
 
     def get_context_data(self, **kws):
         try:
-            collection = Collection.objects.get(slug=self.args[0])
-        except Collection.DoesNotExist:
+            campaign = Campaign.objects.get(slug=self.args[0])
+        except Campaign.DoesNotExist:
             raise Http404
-        project_list = collection.subcollection_set.all().order_by("title")
+        project_list = campaign.subcollection_set.all().order_by("title")
         paginator = Paginator(project_list, PROJECTS_PER_PAGE)
 
         if not self.request.GET.get("page"):
@@ -159,20 +159,20 @@ class ConcordiaProjectView(TemplateView):
         projects = paginator.get_page(page)
 
         return dict(
-            super().get_context_data(**kws), collection=collection, projects=projects
+            super().get_context_data(**kws), campaign=campaign, projects=projects
         )
 
 
-class ConcordiaCollectionView(TemplateView):
-    template_name = "transcriptions/collection.html"
+class ConcordiaCampaignView(TemplateView):
+    template_name = "transcriptions/campaign.html"
 
     def get_context_data(self, **kws):
         try:
-            collection = Collection.objects.get(slug=self.args[0])
-        except Collection.DoesNotExist:
+            campaign = Campaign.objects.get(slug=self.args[0])
+        except Campaign.DoesNotExist:
             raise Http404
         asset_list = Asset.objects.filter(
-            collection=collection,
+            campaign=campaign,
             status__in=[Status.EDIT, Status.SUBMITTED, Status.COMPLETED, Status.ACTIVE],
         ).order_by("title", "sequence")
         paginator = Paginator(asset_list, ASSETS_PER_PAGE)
@@ -185,13 +185,13 @@ class ConcordiaCollectionView(TemplateView):
         assets = paginator.get_page(page)
 
         return dict(
-            super().get_context_data(**kws), collection=collection, assets=assets
+            super().get_context_data(**kws), campaign=campaign, assets=assets
         )
 
 
 class ConcordiaAssetView(TemplateView):
     """
-    Class to handle GET ansd POST requests on route /transcribe/<collection>/asset/<asset>
+    Class to handle GET ansd POST requests on route /transcribe/<campaign>/asset/<asset>
     """
 
     template_name = "transcriptions/asset.html"
@@ -228,22 +228,22 @@ class ConcordiaAssetView(TemplateView):
         :return: dictionary of items used in the template
         """
 
-        max_sequence = Asset.objects.filter(collection__slug=self.args[0]).aggregate(Max('sequence'))['sequence__max']
+        max_sequence = Asset.objects.filter(campaign__slug=self.args[0]).aggregate(Max('sequence'))['sequence__max']
 
-        asset = Asset.objects.get(collection__slug=self.args[0], slug=self.args[1])
+        asset = Asset.objects.get(campaign__slug=self.args[0], slug=self.args[1])
         try:
-            prev_asset = Asset.objects.get(collection__slug=self.args[0],
+            prev_asset = Asset.objects.get(campaign__slug=self.args[0],
                                            sequence=(lambda x, y: x - 1 if x > 0 else y)(asset.sequence, max_sequence))
         except Asset.DoesNotExist:
             prev_asset = asset
 
         try:
-            next_asset = Asset.objects.get(collection__slug=self.args[0],
+            next_asset = Asset.objects.get(campaign__slug=self.args[0],
                                            sequence=(lambda x, y: x + 1 if x < max_sequence else 0)(asset.sequence, max_sequence))
         except Asset.DoesNotExist:
             next_asset = asset
 
-        in_use_url = "/transcribe/%s/asset/%s/" % (asset.collection.slug, asset.slug)
+        in_use_url = "/transcribe/%s/asset/%s/" % (asset.campaign.slug, asset.slug)
         current_user_id = (
             self.request.user.id
             if self.request.user.id is not None
@@ -315,7 +315,7 @@ class ConcordiaAssetView(TemplateView):
         :return: redirect back to same page
         """
         self.get_context_data()
-        asset = Asset.objects.get(collection__slug=self.args[0], slug=self.args[1])
+        asset = Asset.objects.get(campaign__slug=self.args[0], slug=self.args[1])
 
         if self.request.POST.get("action").lower() == 'contact a manager':
             return redirect(reverse('contact') + "?pre_populate=true")
@@ -373,25 +373,25 @@ class ConcordiaAlternateAssetView(View):
 
         if self.request.is_ajax():
             json_dict = json.loads(self.request.body)
-            collection_slug = json_dict["collection"]
+            campaign_slug = json_dict["campaign"]
             asset_slug = json_dict["asset"]
         else:
-            collection_slug = self.request.POST.get("collection", None)
+            campaign_slug = self.request.POST.get("campaign", None)
             asset_slug = self.request.POST.get("asset", None)
 
-        if collection_slug and asset_slug:
-            collection = Collection.objects.filter(slug=collection_slug)
+        if campaign_slug and asset_slug:
+            campaign = Campaign.objects.filter(slug=campaign_slug)
 
-            # select a random asset in this collection that has status of EDIT
+            # select a random asset in this campaign that has status of EDIT
             asset = (
-                Asset.objects.filter(collection=collection[0], status=Status.EDIT)
+                Asset.objects.filter(campaign=campaign[0], status=Status.EDIT)
                 .exclude(slug=asset_slug)
                 .order_by("?")
                 .first()
             )
 
             return HttpResponse(
-                "/transcribe/%s/asset/%s/" % (collection_slug, asset.slug)
+                "/transcribe/%s/asset/%s/" % (campaign_slug, asset.slug)
             )
 
 
@@ -518,7 +518,7 @@ class ExperimentsView(TemplateView):
         return ["experiments/{}.html".format(self.args[0])]
 
 
-class CollectionView(TemplateView):
+class CampaignView(TemplateView):
     template_name = "transcriptions/create.html"
 
     def post(self, *args, **kwargs):
@@ -527,24 +527,24 @@ class CollectionView(TemplateView):
         url = self.request.POST.get("url")
         slug = name.replace(" ", "-")
 
-        view = CreateCollectionView.as_view()
+        view = CreateCampaignView.as_view()
         importer_resp = view(self.request, *args, **kwargs)
 
         return render(self.request, self.template_name, importer_resp.data)
 
 
-class DeleteCollectionView(TemplateView):
+class DeleteCampaignView(TemplateView):
     """
-    deletes the collection
+    deletes the campaign
     """
 
     def get(self, request, *args, **kwargs):
         print("Deleting:", self.args[0])
-        collection = Collection.objects.get(slug=self.args[0])
-        collection.asset_set.all().delete()
-        collection.delete()
+        campaign = Campaign.objects.get(slug=self.args[0])
+        campaign.asset_set.all().delete()
+        campaign.delete()
         os.system(
-            "rm -rf {0}".format(settings.MEDIA_ROOT + "/concordia/" + collection.slug)
+            "rm -rf {0}".format(settings.MEDIA_ROOT + "/concordia/" + campaign.slug)
         )
         return redirect("/transcribe/")
 
@@ -552,30 +552,30 @@ class DeleteCollectionView(TemplateView):
 class DeleteAssetView(TemplateView):
     """
     Hides an asset with status inactive. Hided assets does not display in
-    asset viiew. After hiding an asset, page redirects to collection view.
+    asset viiew. After hiding an asset, page redirects to campaign view.
     """
 
     def get(self, request, *args, **kwargs):
 
-        collection = Collection.objects.get(slug=self.args[0])
-        asset = Asset.objects.get(slug=self.args[1], collection=collection)
+        campaign = Campaign.objects.get(slug=self.args[0])
+        asset = Asset.objects.get(slug=self.args[1], campaign=campaign)
         asset.status = Status.INACTIVE
         asset.save()
         return redirect("/transcribe/" + self.args[0] + "/")
 
 
-class ReportCollectionView(TemplateView):
+class ReportCampaignView(TemplateView):
     """
-    Report the collection
+    Report the campaign
     """
 
     template_name = "transcriptions/report.html"
 
     def get(self, request, *args, **kwargs):
-        collection = Collection.objects.get(slug=self.args[0])
-        collection.asset_set.all()
+        campaign = Campaign.objects.get(slug=self.args[0])
+        campaign.asset_set.all()
         projects = (
-            collection.asset_set.values("title")
+            campaign.asset_set.values("title")
             .annotate(
                 total=Count("title"),
                 in_progress=Count("status", filter=Q(status__in=["25", "75", "50"])),
@@ -597,15 +597,15 @@ class ReportCollectionView(TemplateView):
         return render(self.request, self.template_name, locals())
 
 
-class FilterCollections(generics.ListAPIView):
+class FilterCampaigns(generics.ListAPIView):
     def get_queryset(self):
         name_query = self.request.query_params.get("name")
         if name_query:
-            queryset = Collection.objects.filter(slug__contains=name_query).values_list(
+            queryset = Campaign.objects.filter(slug__contains=name_query).values_list(
                 "slug", flat=True
             )
         else:
-            queryset = Collection.objects.all().values_list("slug", flat=True)
+            queryset = Campaign.objects.all().values_list("slug", flat=True)
         return queryset
 
     def list(self, request):
@@ -615,31 +615,31 @@ class FilterCollections(generics.ListAPIView):
         return JsonResponse(list(queryset), safe=False)
 
 
-def publish_collection(request, collection, is_publish):
-    """ Publish/Unpublish a collection to otherr users. On un/publishing collection,
+def publish_campaign(request, campaign, is_publish):
+    """ Publish/Unpublish a campaign to otherr users. On un/publishing campaign,
     it will get does the same effect for all its projects. """
 
     try:
-        collection = Collection.objects.get(slug=collection)
-    except Collection.DoesNotExist:
+        campaign = Campaign.objects.get(slug=campaign)
+    except Campaign.DoesNotExist:
         raise Http404
 
     if is_publish == "true":
-        collection.is_publish = True
+        campaign.is_publish = True
     else:
-        collection.is_publish = False
+        campaign.is_publish = False
 
-    sub_collections = collection.subcollection_set.all()
+    sub_collections = campaign.subcollection_set.all()
 
     for sc in sub_collections:
         sc.is_publish = True if is_publish == "true" else False
         sc.save()
 
-    collection.save()
+    campaign.save()
 
     return JsonResponse(
         {
-            "message": "Collection has been %s."
+            "message": "Campaign has been %s."
             % ("published" if is_publish == "true" else "unpublished"),
             "state": True if is_publish == "true" else False,
         },
@@ -647,12 +647,12 @@ def publish_collection(request, collection, is_publish):
     )
 
 
-def publish_project(request, collection, project, is_publish):
+def publish_project(request, campaign, project, is_publish):
     """ Publish/Unpublish a project to other users. """
 
     try:
         sub_collection = Subcollection.objects.get(
-            collection__slug=collection, slug=project
+            collection__slug=campaign, slug=project
         )
     except Subcollection.DoesNotExist:
         raise Http404

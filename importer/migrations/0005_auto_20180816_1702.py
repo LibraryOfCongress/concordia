@@ -9,12 +9,12 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AlterField(
-            model_name="collectiontaskdetails",
-            name="collection_slug",
+            model_name="campaigntaskdetails",
+            name="campaign_slug",
             field=models.SlugField(),
         ),
         migrations.AlterField(
-            model_name="collectiontaskdetails",
+            model_name="campaigntaskdetails",
             name="subcollection_slug",
             field=models.SlugField(max_length=250),
         ),

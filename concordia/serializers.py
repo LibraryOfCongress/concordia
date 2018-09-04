@@ -3,11 +3,11 @@ from rest_framework import serializers
 from . import models
 
 
-class CollectionListSerializer(serializers.ModelSerializer):
+class CampaignListSerializer(serializers.ModelSerializer):
     asset_count = serializers.IntegerField(source="asset_set.count", read_only=True)
 
     class Meta:
-        model = models.Collection
+        model = models.Campaign
         fields = (
             "id",
             "slug",
@@ -21,9 +21,9 @@ class CollectionListSerializer(serializers.ModelSerializer):
         )
 
 
-class CollectionDetailSerializer(serializers.ModelSerializer):
+class CampaignDetailSerializer(serializers.ModelSerializer):
     class Meta:
-        model = models.Collection
+        model = models.Campaign
         fields = (
             "id",
             "slug",
@@ -44,7 +44,7 @@ class AssetSerializer(serializers.ModelSerializer):
             "description",
             "media_url",
             "media_type",
-            "collection",
+            "campaign",
             "subcollection",
             "sequence",
             "metadata",

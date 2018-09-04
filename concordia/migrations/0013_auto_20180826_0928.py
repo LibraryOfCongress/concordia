@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AddField(
-            model_name="collection",
+            model_name="campaign",
             name="is_publish",
             field=models.BooleanField(default=False),
         ),
@@ -34,7 +34,7 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.AlterField(
-            model_name="collection",
+            model_name="campaign",
             name="status",
             field=models.CharField(
                 choices=[

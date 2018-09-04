@@ -1,11 +1,11 @@
 from django.contrib import admin
 
-from .models import (Asset, Collection, Subcollection, Tag, Transcription,
+from .models import (Asset, Campaign, Subcollection, Tag, Transcription,
                      UserAssetTagCollection)
 
 
-@admin.register(Collection)
-class CollectionAdmin(admin.ModelAdmin):
+@admin.register(Campaign)
+class CampaignAdmin(admin.ModelAdmin):
     # todo: replace description & metadata with truncated values
     list_display = (
         "id",
@@ -25,13 +25,13 @@ class CollectionAdmin(admin.ModelAdmin):
 @admin.register(Subcollection)
 class SubcollectionAdmin(admin.ModelAdmin):
     # todo: replace metadata with truncated values
-    # todo: add foreignKey link for collection
+    # todo: add foreignKey link for campaign
     list_display = (
         "id",
         "title",
         "slug",
         "category",
-        "collection",
+        "campaign",
         "metadata",
         "status",
     )
@@ -48,7 +48,7 @@ class AssetAdmin(admin.ModelAdmin):
         # 'description',
         "media_url",
         "media_type",
-        "collection",
+        "campaign",
         "subcollection",
         "sequence",
         # 'metadata',

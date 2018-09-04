@@ -22,7 +22,7 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.AlterField(
-            model_name="collection",
+            model_name="campaign",
             name="status",
             field=models.CharField(
                 choices=[

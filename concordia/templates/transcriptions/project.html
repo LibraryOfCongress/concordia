@@ -1,5 +1,5 @@
 {% extends "transcriptions/base.html" %} {% load staticfiles %}
-{% block title %}Concordia - {{ collection }}{% endblock title %}
+{% block title %}Concordia - {{ campaign }}{% endblock title %}
 {% block head_content %}
 
 {% endblock head_content %}
@@ -10,8 +10,8 @@
 <div class="container-fluid py-default">
     <div class="row">
         <div class="col-md-10 mx-auto bg-offwhite rounded">
-            <h3 class="mt-default mb-half ml-half">{{ collection }} - Projects</h3>
-            <p class="ml-default mb-default">{{ collection.description }}</p>
+            <h3 class="mt-default mb-half ml-half">{{ campaign }} - Projects</h3>
+            <p class="ml-default mb-default">{{ campaign.description }}</p>
             <div class="row">
                 <div class="d-flex flex-wrap col-12 justify-content-around">
                     {% if request.user.is_anonymous or request.user.is_staff is False %}
@@ -21,7 +21,7 @@
                                     <div class="card-body bg-offwhite">
                                       <h5 class="card-title align-text-middle w-100">{{ project.title }}</h5>
                                       <div class="col-md-8 mx-auto text-center">
-                                        <a href="{% url 'transcriptions:project' project.collection.slug project.slug %}" class="btn btn-primary col mb-quarter">View</a>
+                                        <a href="{% url 'transcriptions:project' project.campaign.slug project.slug %}" class="btn btn-primary col mb-quarter">View</a>
                                       </div>
                                     </div>
                                 </div>
@@ -33,15 +33,15 @@
                                 <div class="card-body bg-offwhite">
                                   <h5 class="card-title align-text-middle w-100">{{ project.title }}</h5>
                                   <div class="col-md-8 mx-auto text-center">
-                                    <a href="{% url 'transcriptions:project' project.collection.slug project.slug %}" class="btn btn-primary col mb-quarter">View</a>
+                                    <a href="{% url 'transcriptions:project' project.campaign.slug project.slug %}" class="btn btn-primary col mb-quarter">View</a>
                                   </div>
                                 {% if request.user|has_group:"CM" %}
                                     <div class="col-md-8 mx-auto text-center">
                                     {% if project.is_publish %}
-                                        <button type="button" class="confirm-modal btn btn-primary col" data-toggle="modal" id="{{ project.slug }}" data-target="#projectConfirmModal" data-collection="{{ project.collection.slug }}">
+                                        <button type="button" class="confirm-modal btn btn-primary col" data-toggle="modal" id="{{ project.slug }}" data-target="#projectConfirmModal" data-campaign="{{ project.campaign.slug }}">
                                                 Unpublish</button>
                                     {% else %}
-                                        <button type="button" class="confirm-modal btn btn-primary col" data-toggle="modal" id="{{ project.slug }}" data-target="#projectConfirmModal" data-collection="{{ project.collection.slug }}">
+                                        <button type="button" class="confirm-modal btn btn-primary col" data-toggle="modal" id="{{ project.slug }}" data-target="#projectConfirmModal" data-campaign="{{ project.campaign.slug }}">
                                                 Publish</button>
                                     {% endif %}
                                     </div>
@@ -95,7 +95,7 @@
             var $invoker = $(e.relatedTarget);
 
             $("#confirmprojectbtn").click(function(e){
-                var collection_slug = $($invoker[0]).attr('data-collection');
+                var campaign_slug = $($invoker[0]).attr('data-campaign');
                 var project_slug = $($invoker[0]).attr('id');
                 var requested_status = $("#"+project_slug).text().trim();
                 if(requested_status == 'Publish'){
@@ -105,7 +105,7 @@
                     var to_status = 'false';
                 }
                 $.ajax({
-                    url: '/transcribe/publish/project/'+collection_slug+"/"+project_slug+"/"+to_status+"/",
+                    url: '/transcribe/publish/project/'+campaign_slug+"/"+project_slug+"/"+to_status+"/",
                     type: 'GET',
                     success: function(data, textStatus, jqXHR) {
 			$('#projectConfirmModal').modal('hide');

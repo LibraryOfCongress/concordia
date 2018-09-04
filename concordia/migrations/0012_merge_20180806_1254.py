@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('concordia', '0007_collection_s3_storage'),
+        ('concordia', '0007_campaign_s3_storage'),
         ('concordia', '0011_auto_20180730_2046'),
     ]
 

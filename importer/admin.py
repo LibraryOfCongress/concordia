@@ -1,26 +1,26 @@
 from django.contrib import admin
 
-from importer.models import CollectionItemAssetCount, CollectionTaskDetails
+from importer.models import CampaignItemAssetCount, CampaignTaskDetails
 
 
-@admin.register(CollectionTaskDetails)
-class CollectionTaskDetailsAdmin(admin.ModelAdmin):
+@admin.register(CampaignTaskDetails)
+class CampaignTaskDetailsAdmin(admin.ModelAdmin):
     # todo: replace text with truncated value
     # todo: add foreignKey link for asset, parent, & user_id
     pass
     list_display = (
-        "collection_name",
-        "collection_slug",
-        "collection_task_id",
-        "collection_asset_count",
-        "collection_item_count",
+        "campaign_name",
+        "campaign_slug",
+        "campaign_task_id",
+        "campaign_asset_count",
+        "campaign_item_count",
     )
-    # list_display_links = ("collection_name")
+    # list_display_links = ("campaign_name")
 
 
-@admin.register(CollectionItemAssetCount)
-class CollectionItemAssetCountAdmin(admin.ModelAdmin):
+@admin.register(CampaignItemAssetCount)
+class CampaignItemAssetCountAdmin(admin.ModelAdmin):
     # todo: replace text with truncated value
     # todo: add foreignKey link for asset, parent, & user_id
     pass
-    list_display = ("collection_item_identifier", "collection_item_asset_count")
+    list_display = ("campaign_item_identifier", "campaign_item_asset_count")

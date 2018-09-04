@@ -1,6 +1,6 @@
 {% extends "transcriptions/base.html" %}
 {% load staticfiles %}
-{% block title %}Citizen Historian Create a Collection{% endblock title %}
+{% block title %}Citizen Historian Create a Campaign{% endblock title %}
 {% block head_content %}
 <style>
 * {
@@ -69,10 +69,10 @@ input[type=submit] {
 <div class="container-fluid py-default" id='container'>
   <div class="row">
     <div class="col-md-10 mx-auto bg-offwhite rounded">
-      <h3 class="mt-half ml-half">Import a New Collection</h3>
+      <h3 class="mt-half ml-half">Import a New Campaign</h3>
       <div class="text-center d-none loading">
        <div class="loading-pulse mx-auto"></div>
-              <h6 class="form-text offwhite-text">Creating the collection for you...<span id="progress"></span>
+              <h6 class="form-text offwhite-text">Creating the campaign for you...<span id="progress"></span>
               </h6>
       </div>
         <div class="alert alert-danger alert-dismissible fade show" id="close_error" role="alert">
@@ -115,7 +115,7 @@ input[type=submit] {
       <!--</form>-->
     </div>
         <input type="hidden" id="task_id">
-        <input type="hidden" id="collection_slug">
+        <input type="hidden" id="campaign_slug">
         <input type="hidden" id="item_id">
   </div>
 </div>
@@ -130,14 +130,14 @@ function hide_box(){
    document.getElementById("close").style.display = "none";
 }
 
-function write_save_collection_assets(task_id){
+function write_save_campaign_assets(task_id){
    $("#close_error").hide();
    $.ajax({
-        url: "/check_and_save_collection_assets/"+task_id+"/"+$("#item_id").val(),
+        url: "/check_and_save_campaign_assets/"+task_id+"/"+$("#item_id").val(),
         type: 'GET',
         success: function(data, textStatus, jqXHR) {
             console.log("response: ", data);
-            var slug = $("#collection_slug").val().toLowerCase().replace(/ +/g,'-');
+            var slug = $("#campaign_slug").val().toLowerCase().replace(/ +/g,'-');
             var projslug = $("#project-name").val().toLowerCase().replace(/ +/g,'-');
             if($("#item_id").val()){
                 var rurl = "/transcribe/"+slug+"/"+projslug+"/";
@@ -153,7 +153,7 @@ function write_save_collection_assets(task_id){
             console.log('Your session has ended due to inactivity after 10 minutes.\nPlease refresh this page, or close this window and log back in to system.');
         } else {
             console.log('Unknown error returned while saving' + (typeof errorThrown == 'string' && errorThrown.trim().length > 0 ? ':\n' + errorThrown : ''));
-         $("#error_msg").html("Sorry..!! There is some error for creating collection...");
+         $("#error_msg").html("Sorry..!! There is some error for creating campaign...");
         $(".loading").addClass("d-none");
                 $("#close_error").show();
         }
@@ -173,7 +173,7 @@ function get_task_status(task_id){
             }
 
             if(data['state'] == 'SUCCESS'){
-                write_save_collection_assets(task_id);
+                write_save_campaign_assets(task_id);
                 $("#progress").html("");
                 clearInterval(gts);
             }
@@ -190,33 +190,33 @@ function get_task_status(task_id){
 
 $("#create_btn").click(function(){
     $("#close_error").hide();
-    $("#task_id, #collection_slug, #item_id").val("");
+    $("#task_id, #campaign_slug, #item_id").val("");
     var name = $("#name").val();
     var project_name = $("#project-name").val();
     var url = $("#url").val();
 
     if(name && project_name && url){
         $.ajax({
-            url: '/create_collection/',
+            url: '/create_campaign/',
             type: 'post',
             data: {"name": name, "url": url, "project": project_name,'csrfmiddlewaretoken': $("input[name=csrfmiddlewaretoken]").val()},
             success: function(data, textStatus, jqXHR) {
                 $(".loading").removeClass("d-none");
                 $("#task_id").val(data['task_id']);
-                $("#collection_slug").val(data['name']);
+                $("#campaign_slug").val(data['name']);
                 $("#item_id").val(data['item_id']);
                 var gts = setTimeout(get_task_status(data['task_id']), 60000);
             }
         }).fail(function(data, jqXHR, textStatus, errorThrown) {
             $(".loading").removeClass("d-none");
             if(jqXHR.status == 0 || jqXHR == 302) {
-                $("#error_msg").html("Sorry..!! There is some error for creating collection...");
+                $("#error_msg").html("Sorry..!! There is some error for creating campaign...");
             } else {
                 if(data.responseJSON.message){
                      $("#error_msg").html(data.responseJSON.message);
             }
             else{
-            $("#error_msg").html("Sorry..!! There is some error for creating collection...");
+            $("#error_msg").html("Sorry..!! There is some error for creating campaign...");
                 }
             }
             $("#close_error").show();
@@ -245,7 +245,7 @@ get_task_status($("#task_id").val());
 
 $(function(){
     $( "#name" ).autocomplete({
-        source: '/filter/collections',
+        source: '/filter/campaigns',
         minLength: 1,
     });
 });

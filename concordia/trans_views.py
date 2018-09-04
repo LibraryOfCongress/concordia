@@ -13,15 +13,15 @@ logger = getLogger(__name__)
 @api_view(["GET"])
 def api_root(request, format=None):
     return Response(
-        {"collections": reverse("collection-list", request=request, format=format)}
+        {"campaigns": reverse("campaign-list", request=request, format=format)}
     )
 
 
-class CollectionList(viewsets.ModelViewSet):
-    queryset = models.Collection.objects.filter(is_active=1).order_by("title")
-    serializer_class = serializers.CollectionListSerializer
+class CampaignList(viewsets.ModelViewSet):
+    queryset = models.Campaign.objects.filter(is_active=1).order_by("title")
+    serializer_class = serializers.CampaignListSerializer
 
 
-class CollectionDetail(viewsets.ModelViewSet):
-    queryset = models.Collection.objects.order_by("title")
-    serializer_class = serializers.CollectionDetailSerializer
+class CampaignDetail(viewsets.ModelViewSet):
+    queryset = models.Campaign.objects.order_by("title")
+    serializer_class = serializers.CampaignDetailSerializer

@@ -9,7 +9,7 @@
 
             </div>
             <div class="col-12 d-flex align-items-middle py-1 bg-darkest-gray">
-                <h2 class="contribute-breadcrumb pl-default mb-0"><a class="offwhite-text" href="{% url 'transcriptions:collection' asset.collection.slug %}"> Go back to {{ asset.collection.title }}</a>  >  {{ asset.title }}</h2>
+                <h2 class="contribute-breadcrumb pl-default mb-0"><a class="offwhite-text" href="{% url 'transcriptions:campaign' asset.campaign.slug %}"> Go back to {{ asset.campaign.title }}</a>  >  {{ asset.title }}</h2>
             </div>
             <div class="col-6">
                 <div id="asset-image" class="asset-image bg-offwhite">
@@ -169,7 +169,7 @@
     <script src="{% static "js/jquery.cookie.js" %}"></script>
     <script src="{% static "vendor/openseadragon/openseadragon.min.js" %}"></script>
     <script type="text/javascript">
-        {% if asset.collection.s3_storage %}
+        {% if asset.campaign.s3_storage %}
             var asset_url = '{{ asset.media_url }}';
         {% else %}
             var asset_url = '{{ MEDIA_URL }}{{ asset.media_url }}';
@@ -223,13 +223,13 @@
             setTimeout(checkin_page_in_use, 30000);
         }
         function showalert(){
-            var optsel = confirm("This transcription is being worked on by another user.\nYou may lose your work.\nDo you want to work on another page in this collection?");
+            var optsel = confirm("This transcription is being worked on by another user.\nYou may lose your work.\nDo you want to work on another page in this campaign?");
             if (optsel == true) {
                 $.ajax({
                     url: "/transcribe/alternateasset/",
                     type: "post",
                     data: JSON.stringify({
-                        'collection': '{{ asset.collection.slug }}',
+                        'campaign': '{{ asset.campaign.slug }}',
                         'asset': '{{ asset.slug }}'
                     }),
                     processData: false,
