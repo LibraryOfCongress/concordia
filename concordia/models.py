@@ -116,41 +116,25 @@ class Project(models.Model):
         ordering = ["title"]
 
 
-class PageInUse(models.Model):
-    page_url = models.CharField(max_length=256)
-    user = models.ForeignKey(User, models.DO_NOTHING)
-    created_on = models.DateTimeField(editable=False)
-    updated_on = models.DateTimeField()
+class Item(models.Model):
+    title = models.CharField(max_length=100)
+    slug = models.SlugField(max_length=100)
+    description = models.TextField(blank=True)
+    item_url = models.URLField(max_length=255)
+    campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, blank=True, null=True)
+    item_id = models.CharField(max_length=100, blank=True)
+    metadata = JSONField(default=metadata_default)
+    thumbnail_image = models.URLField(max_length=255)
+    status = models.CharField(max_length=10, choices=Status.CHOICES, default=Status.DEFAULT)
+    is_publish = models.BooleanField(default=False, blank=True)
 
-    def save(self, *args, **kwargs):
-        """
-        On save, update timestamps. Allows assignment of created_on and updated_on timestamp used in testing
-        :param args:
-        :param kwargs:
-        :return:
-        """
-        # if not self.id and not self.created_on:
-        #     self.created_on = timezone.now()
-        #
-        # self.updated_on = timezone.now()
-        # return super(PageInUse, self).save(*args, **kwargs)
+    class Meta:
+        unique_together = (("item_id", "campaign"),)
+        ordering = ["item_id"]
 
-    def save(self, force_insert=False, *args, **kwargs):
-        updated = False
-        if self.pk and not force_insert:
-            updated = self.custom_update()
-        if not updated:
-            self.custom_insert()
-        return super(PageInUse, self).save(*args, **kwargs)
-
-    def custom_update(self):
-        self.updated_on = timezone.now()
-        return True
-
-    def custom_insert(self):
-        self.created_on = timezone.now()
-        if not self.updated_on:
-            self.updated_on = timezone.now()
+    def __str__(self):
+        return self.item_id
 
 
 class Asset(models.Model):
@@ -165,6 +149,7 @@ class Asset(models.Model):
     project = models.ForeignKey(
         Project, on_delete=models.CASCADE, blank=True, null=True
     )
+    item = models.ForeignKey(Item, blank=True, null=True, on_delete=models.CASCADE)
     sequence = models.PositiveIntegerField(default=1)
     metadata = JSONField(default=metadata_default)
     status = models.CharField(
@@ -173,7 +158,7 @@ class Asset(models.Model):
 
     class Meta:
         unique_together = (("slug", "campaign"),)
-        ordering = ["title", "sequence"]
+        ordering = ["item", "sequence"]
 
     def __str__(self):
         return self.title
@@ -211,3 +196,39 @@ class Transcription(models.Model):
 
     def __str__(self):
         return str(self.asset)
+
+class PageInUse(models.Model):
+    page_url = models.CharField(max_length=256)
+    user = models.ForeignKey(User, models.DO_NOTHING)
+    created_on = models.DateTimeField(editable=False)
+    updated_on = models.DateTimeField()
+
+    def save(self, *args, **kwargs):
+        """
+        On save, update timestamps. Allows assignment of created_on and updated_on timestamp used in testing
+        :param args:
+        :param kwargs:
+        :return:
+        """
+        # if not self.id and not self.created_on:
+        #     self.created_on = timezone.now()
+        #
+        # self.updated_on = timezone.now()
+        # return super(PageInUse, self).save(*args, **kwargs)
+
+    def save(self, force_insert=False, *args, **kwargs):
+        updated = False
+        if self.pk and not force_insert:
+            updated = self.custom_update()
+        if not updated:
+            self.custom_insert()
+        return super(PageInUse, self).save(*args, **kwargs)
+
+    def custom_update(self):
+        self.updated_on = timezone.now()
+        return True
+
+    def custom_insert(self):
+        self.created_on = timezone.now()
+        if not self.updated_on:
+            self.updated_on = timezone.now()

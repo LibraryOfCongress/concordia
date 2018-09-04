@@ -266,7 +266,7 @@ def check_and_save_campaign_assets(request, task_id, item_id=None):
 def check_and_save_campaign_completeness(ciac):
     if check_completeness(ciac):
         try:
-            project = project.objects.get(
+            project = Project.objects.get(
                 campaign__slug=ciac.campaign_task.campaign_slug,
                 slug=ciac.campaign_task.project_slug,
             )
@@ -278,7 +278,7 @@ def check_and_save_campaign_completeness(ciac):
                 is_active=True,
             )
 
-            project = project.objects.create(
+            project = Project.objects.create(
                 title=ciac.campaign_task.project_name,
                 campaign=campaign,
                 slug=ciac.campaign_task.project_slug,
@@ -309,11 +309,11 @@ def check_and_save_item_completeness(ciac, item_id):
 
     if check_completeness(ciac, item_id):
         try:
-            project = project.objects.get(
+            project = Project.objects.get(
                 campaign__slug=ciac.campaign_task.campaign_slug,
                 slug=ciac.campaign_task.project_slug,
             )
-        except project.DoesNotExist:
+        except Project.DoesNotExist:
             campaign, created = Campaign.objects.get_or_create(
                 title=ciac.campaign_task.campaign_name,
                 slug=ciac.campaign_task.campaign_slug,
@@ -321,7 +321,7 @@ def check_and_save_item_completeness(ciac, item_id):
                 is_active=True,
             )
 
-            project = project.objects.create(
+            project = Project.objects.create(
                 title=ciac.campaign_task.project_name,
                 campaign=campaign,
                 slug=ciac.campaign_task.project_slug,
