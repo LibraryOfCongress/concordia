@@ -149,7 +149,7 @@ class Asset(models.Model):
     project = models.ForeignKey(
         Project, on_delete=models.CASCADE, blank=True, null=True
     )
-    item = models.ForeignKey(Item, blank=True, null=True, on_delete=models.CASCADE)
+#    item = models.ForeignKey(Item, blank=True, null=True, on_delete=models.CASCADE)
     sequence = models.PositiveIntegerField(default=1)
     metadata = JSONField(default=metadata_default)
     status = models.CharField(
@@ -158,7 +158,7 @@ class Asset(models.Model):
 
     class Meta:
         unique_together = (("slug", "campaign"),)
-        ordering = ["item", "sequence"]
+        ordering = ["title", "sequence"]
 
     def __str__(self):
         return self.title
