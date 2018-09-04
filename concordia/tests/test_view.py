@@ -1129,7 +1129,7 @@ class ViewTest_Concordia(TestCase):
         self.campaign.save()
 
         self.project = Project(
-            title="TextCampaign sub campaign",
+            title="TextCampaign project",
             slug="test-slug2-proj",
             metadata={"key": "val1"},
             status=Status.EDIT,
@@ -1138,7 +1138,7 @@ class ViewTest_Concordia(TestCase):
         self.project.save()
 
         self.project1 = Project(
-            title="TextCampaign sub collection1",
+            title="TextCampaign project 1",
             slug="test-slug2-proj1",
             metadata={"key": "val1"},
             status=Status.EDIT,
@@ -1174,7 +1174,7 @@ class ViewTest_Concordia(TestCase):
         self.campaign.save()
 
         self.project = Project(
-            title="TextCampaign sub campaign",
+            title="TextCampaign project",
             slug="test-slug2-proj",
             metadata={"key": "val1"},
             status=Status.EDIT,
@@ -1183,7 +1183,7 @@ class ViewTest_Concordia(TestCase):
         self.project.save()
 
         self.project1 = Project(
-            title="TextCampaign sub collection1",
+            title="TextCampaign project 1",
             slug="test-slug2-proj1",
             metadata={"key": "val1"},
             status=Status.EDIT,
@@ -1290,7 +1290,7 @@ class ViewTest_Concordia(TestCase):
         self.campaign.save()
 
         self.project = Project(
-            title="TextCampaign sub campaign",
+            title="TextCampaign project",
             slug="test-slug2-proj",
             metadata={"key": "val1"},
             status=Status.EDIT,
@@ -1299,7 +1299,7 @@ class ViewTest_Concordia(TestCase):
         self.project.save()
 
         self.project1 = Project(
-            title="TextCampaign sub collection1",
+            title="TextCampaign project 1",
             slug="test-slug2-proj1",
             metadata={"key": "val1"},
             status=Status.EDIT,
@@ -1329,7 +1329,7 @@ class ViewTest_Concordia(TestCase):
         self.campaign.save()
 
         self.project = Project(
-            title="TextCampaign sub campaign",
+            title="TextCampaign project",
             slug="test-slug2-proj",
             metadata={"key": "val1"},
             status=Status.EDIT,
@@ -1339,7 +1339,7 @@ class ViewTest_Concordia(TestCase):
         self.project.save()
 
         self.project1 = Project(
-            title="TextCampaign sub collection1",
+            title="TextCampaign project 1",
             slug="test-slug2-proj1",
             metadata={"key": "val1"},
             status=Status.EDIT,
@@ -1369,7 +1369,7 @@ class ViewTest_Concordia(TestCase):
         self.campaign.save()
 
         self.project = Project(
-            title="TextCampaign sub campaign",
+            title="TextCampaign project",
             slug="test-slug2-proj",
             metadata={"key": "val1"},
             status=Status.EDIT,
@@ -1378,7 +1378,7 @@ class ViewTest_Concordia(TestCase):
         self.project.save()
 
         self.project1 = Project(
-            title="TextCampaign sub collection1",
+            title="TextCampaign project1",
             slug="test-slug2-proj1",
             metadata={"key": "val1"},
             status=Status.EDIT,
@@ -1410,7 +1410,7 @@ class ViewTest_Concordia(TestCase):
         self.campaign.save()
 
         self.project = Project(
-            title="TextCampaign sub campaign",
+            title="TextCampaign project",
             slug="test-slug2-proj",
             metadata={"key": "val1"},
             status=Status.EDIT,
@@ -1420,7 +1420,7 @@ class ViewTest_Concordia(TestCase):
         self.project.save()
 
         self.project1 = Project(
-            title="TextCampaign sub collection1",
+            title="TextCampaign project1",
             slug="test-slug2-proj1",
             metadata={"key": "val1"},
             status=Status.EDIT,

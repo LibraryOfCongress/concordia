@@ -6,7 +6,6 @@ class CampaignTaskDetails(models.Model):
     campaign_slug = models.SlugField(max_length=50)
     project_name = models.CharField(max_length=250)
     project_slug = models.SlugField(max_length=250)
-    # collection_page_count = models.IntegerField(null=True, blank=True, default=0)
     campaign_item_count = models.IntegerField(null=True, blank=True, default=0)
     campaign_asset_count = models.IntegerField(null=True, blank=True, default=0)
     campaign_task_id = models.CharField(max_length=100, null=True, blank=True)
@@ -16,7 +15,6 @@ class CampaignTaskDetails(models.Model):
 
 
 class CampaignItemAssetCount(models.Model):
-    # collection_slug = models.SlugField(max_length=50)
     campaign_task = models.ForeignKey(CampaignTaskDetails, on_delete=models.CASCADE)
     campaign_item_identifier = models.CharField(max_length=50)
     campaign_item_asset_count = models.IntegerField(null=True, blank=True, default=0)
