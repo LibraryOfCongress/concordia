@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+ {% load staticfiles %}
 {% block title %}User Profile Page{% endblock title %}
 {% block head_content %}
 <style type="text/css">
@@ -73,35 +74,31 @@ body {
         <div class="col-12 col-md-10 bg-offwhite mx-auto my-default pxy-default rounded">
             <form class="form-horizontal" action="/account/profile/" method="POST" enctype="multipart/form-data">{% csrf_token %}
                 <span>{{ form.non_field_errors }}</span>
-                <div class="col-sm-3">
-                    <div class="span6">
-                        <div class="area">
-                            <img src="{% if form.myfile.value %}/media/{{form.myfile.value}}{% else %}http://placehold.it/320x200 {% endif %}" alt="profile image" class="img-circle">
-                        </div>
-                    </div>
+                <div class="col-md-4 text-center">
+                            <img src="{% static "img/default_profile.png" %}" alt="profile image" class="img-circle">
                 </div>
-                <div class="col-sm-9">
-                    <div class="form-group">
-                        <label class="" for="Name (Full name)">Username</label>
+                <div class="col-lg-8">
+                    <div class="form-group row">
+                        <label class="secondary-text" for="Name (Full name)">Username</label>
                         <div class="input-group col-md-4">
                             <input id="{{form.username.id_for_label}}" name="{{form.username.html_name}}" value="{{form.username.value}}" type="text" class="form-control-plaintext" readonly="readonly">
                             <span>{{ form.username.errors }}</span>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label class="" for="email">Email</label>
+                    <div class="form-group row">
+                        <label class="secondary-text" for="email">Email</label>
                         <div class="col-md-4 input-group">
                             <input id="{{form.email.id_for_label}}" name="{{form.email.html_name}}" type="text" value="{{ form.email.value }}" class="form-control-plaintext" readonly="readonly">
                         </div>
                     </div>
                     <div class="password-section">
-                        <div class="form-group">
-                            <label class="" for="email">Password</label>
+                        <div class="form-group row">
+                            <label class="secondary-text" for="email">Password</label>
                             <div class="col-md-4 input-group">
                                 <input id="{{form.password1.id_for_label}}" name="{{form.password1.html_name}}" type="password" class="form-control">
                             </div>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group row">
                             <label class="" for="email">Re-enter Password</label>
                             <div class="col-md-4 input-group">
                                 <input id="{{form.password2.id_for_label}}" name="{{form.password2.html_name}}" type="password" class="form-control">
