@@ -17,9 +17,9 @@
 </div>
     {% endfor %}
     {% endif %}
-<div class="container-fluid">
+<div class="container-fluid bg-main">
     <div class="row">
-        <div class="col-12 col-md-10 bg-offwhite mx-auto my-default pxy-default rounded">
+        <div class="col-12 col-md-10 bg-offwhite mx-auto mt-default pxy-default rounded">
             <form class="form-horizontal" action="/account/profile/" method="POST" enctype="multipart/form-data">{% csrf_token %}
                 <span>{{ form.non_field_errors }}</span>
                 <div class="col-12">
@@ -70,25 +70,28 @@
                 </div>
             </form>
         </div>
-        <div class="col-12 col-md-10 bg-offwhite mx-auto my-default pxy-default rounded">
-            <h3>My Contributions</h3> {% if transcriptions %}
-            <table class="table">
-                <tr>
-                    <td>Collection</td>
-                    <td>Asset Name</td>
-                    <td>Current Status</td>
-                    <td>Date</td>
-                </tr>
-                {% for t in transcriptions %}
-                <tr>
-                    <td>{{t.collection_name}}</td>
-                    <td><a href="/transcribe/{{t.collection_name}}/asset/{{t.asset.slug}}">{{t.asset.slug}}</a></td>
-                    <td>{{t.asset.status}}</td>
-                    <td>{{ t.updated_on|date:'Y-m-d H:i' }}</td>
-                </tr>
-                {% endfor %} {% endif %}
-            </table>
-        </div>
+    </div>
+    <div class="col-10 my-default">
+        <hr>
+    </div>
+    <div class="col-12 col-md-10 bg-offwhite mx-auto pxy-default rounded">
+        <h3>My Contributions</h3> {% if transcriptions %}
+        <table class="table">
+            <tr>
+                <td>Collection</td>
+                <td>Asset Name</td>
+                <td>Current Status</td>
+                <td>Date</td>
+            </tr>
+            {% for t in transcriptions %}
+            <tr>
+                <td>{{t.collection_name}}</td>
+                <td><a href="/transcribe/{{t.collection_name}}/asset/{{t.asset.slug}}">{{t.asset.slug}}</a></td>
+                <td>{{t.asset.status}}</td>
+                <td>{{ t.updated_on|date:'Y-m-d H:i' }}</td>
+            </tr>
+            {% endfor %} {% endif %}
+        </table>
     </div>
 </div>
 {% endblock main_content %}
