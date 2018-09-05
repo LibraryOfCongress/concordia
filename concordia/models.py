@@ -59,6 +59,7 @@ class Collection(MetricsModelMixin("collection"), models.Model):
     status = models.CharField(
         max_length=10, choices=Status.CHOICES, default=Status.DEFAULT
     )
+    is_publish = models.BooleanField(default=False, blank=True)
 
     def __str__(self):
         return self.title
@@ -108,6 +109,7 @@ class Subcollection(models.Model):
     status = models.CharField(
         max_length=10, choices=Status.CHOICES, default=Status.DEFAULT
     )
+    is_publish = models.BooleanField(default=False, blank=True)
 
     class Meta:
         unique_together = (("slug", "collection"),)
@@ -127,6 +129,11 @@ class PageInUse(models.Model):
         :param kwargs:
         :return:
         """
+        # if not self.id and not self.created_on:
+        #     self.created_on = timezone.now()
+        #
+        # self.updated_on = timezone.now()
+        # return super(PageInUse, self).save(*args, **kwargs)
 
     def save(self, force_insert=False, *args, **kwargs):
         updated = False

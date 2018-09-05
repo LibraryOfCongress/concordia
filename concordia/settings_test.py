@@ -32,4 +32,4 @@ IMPORTER = {
     "S3_BUCKET_NAME": "",
 }
 
-EMAIL_BACKEND = "django.core.mail.backends.dummy.EmailBackend"
+EMAIL_BACKEND = 'django.core.mail.backends.dummy.EmailBackend'

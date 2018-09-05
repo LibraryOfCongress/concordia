@@ -26,7 +26,7 @@ class ViewTest_1st_level(TestCase):
 
         # Assert:
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "contact.html")
+        self.assertTemplateUsed(response, 'contact.html')
 
     def test_contact_us_get_pre_populate(self):
         # Arrange
@@ -49,7 +49,7 @@ class ViewTest_1st_level(TestCase):
             "subject": "Problem found",
             "category": "Something is not working",
             "link": "www.loc.gov/nowhere",
-            "story": "Houston, we got a problem",
+            "story": "Houston, we got a problem"
         }
 
         # Act
@@ -59,3 +59,4 @@ class ViewTest_1st_level(TestCase):
         # Assert:
         # redirected to contact us page.
         self.assertEqual(response.status_code, 302)
+

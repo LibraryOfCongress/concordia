@@ -2,6 +2,7 @@
 import os
 import sys
 
+from django.contrib import messages
 from dotenv import load_dotenv
 from machina import MACHINA_MAIN_STATIC_DIR, MACHINA_MAIN_TEMPLATE_DIR
 from machina import get_apps as get_machina_apps
@@ -258,4 +259,11 @@ AWS_S3 = {
     "AWS_ACCESS_KEY_ID": os.getenv("AWS_ACCESS_KEY_ID"),
     "AWS_SECRET_ACCESS_KEY": os.getenv("AWS_SECRET_ACCESS_KEY"),
     "S3_COLLECTION_BUCKET": "chc-collections",
+}
+
+PASSWORD_RESET_TIMEOUT_DAYS = 1
+REGISTRATION_OPEN = True  # set to false to temporarily disable registrations
+
+MESSAGE_TAGS = {
+    messages.ERROR: 'danger',
 }

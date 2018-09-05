@@ -19,6 +19,7 @@
   --shadow-color: rgba(51,51,51,.8); /* #333333 */
   --height-top-nav: 8.0625rem;
   --height-main: calc( 100vh - 8.0625rem ); /* Subtract height of navbar */
+  --height-contribute-image: calc( 100vh - ( 9.625rem + 2.375rem ) ); /* Making room for instructions button on bottom and breadcrumb and nav on top */
   --height-contribute-input: calc( ( 100vh - ( 8.0625rem + 1.5625rem + 2.3125rem ) ) / 2 ); /* Subtract height of navbar, breadcrumd, and nav pills */
   --height-tags-input: calc( 50vh - 3.375rem );
   --top-value-tags-input: calc( 50vh - 3rem );
@@ -27,7 +28,8 @@
 body {
     top: 0;
     left: 0;
-    color: var(--bg-darkest-gray);
+    color: var(--bg-offwhite);
+    overflow-x: hidden;
     border-top: .25rem solid var(--primary-color);
     background-color: var(--bg-offwhite);
 }
@@ -68,7 +70,14 @@ h2.offwhite {
     color: var(--text-color-offwhite);
 }
 
-
+h2 small {
+    font-family: 'Roboto Slab', serif;
+    font-size: 1.5rem;
+    line-height: 125%;
+    font-weight: normal;
+    text-transform: uppercase;
+    color: var(--text-color-primary);
+}
 
 h3 {
     font-family: 'Roboto Slab', serif;
@@ -92,6 +101,14 @@ h5 {
   line-height: 125%;
   font-weight: bold;
   font-weight: normal;
+}
+
+h5.small {
+    font-family: "Open Sans", sans-serif;
+    font-size: .75rem;
+    line-height: 125%;
+    font-weight: normal;
+    text-transform: uppercase;
 }
 
 h6 {
@@ -182,6 +199,22 @@ a.nav-secondary {
 a.nav-secondary:hover {
     opacity: 70%;
     text-decoration: none;
+}
+
+#transcription-state-div i {
+    font-size: .75rem;
+}
+
+i.tx-edit {
+    color: var(--text-color-offwhite);
+}
+
+i.tx-submitted {
+    color: var(--secondary-color);
+}
+
+i.tx-completed {
+    color: rgba(22,201,74,1);
 }
 
 a.nav-secondary:first-of-type {
@@ -352,6 +385,7 @@ div.nav-secondary {
 
 .carousel-item img {
     min-width: 100%;
+    width: 100%;
     overflow: hidden;
     align-self: flex-end !important;
 }
@@ -565,12 +599,10 @@ div.nav-secondary {
     h1.header-text { font-size: 2rem; }
     .carousel-text { top: 1rem; margin-left: 1.5rem; }
     p.hero-text { font-size: 1.1875rem; }
-    .text-home-contribute { width: 100%; }
 }
 
 /* Screens wider than the MD breakpoint */
 @media (min-width: 992px) {
-    .text-home-contribute { width: 50%; }
 
     .mxy-md-default {
         margin: 2rem !important;
@@ -764,8 +796,14 @@ div.nav-secondary {
     color: var(--text-color-offwhite);
 }
 
-.btn-primary-fixed-width {
-    width: 200px;
+.btn-minimal-primary {
+    background-color:  transparent;
+    border-color: transparent;
+    color: var(--primary-color);
+}
+
+.btn-primary-centered {
+    display: inline-block;
 }
 
 .btn-primary:hover {
@@ -774,6 +812,18 @@ div.nav-secondary {
     color: var(--text-color-offwhite);
 }
 
+.btn-minimal-primary:hover {
+    background-color: var(--primary-color);
+    border-color: transparent;
+    color: var(--text-color-offwhite);
+}
+
+.btn-primary.disabled, .btn-primary:disabled {
+    background-color: var(--primary-color-hover) !important;
+    border-color: var(--primary-color-hover) !important;
+    color: var(--text-color-offwhite) !important;
+}
+  
 .btn-outline-primary {
     border-color: var(--primary-color);
     color: var(--primary-color);
@@ -790,7 +840,7 @@ div.nav-secondary {
     border-color: var(--secondary-color);
     color: var(--text-color-offwhite);
 }
-
+  
 .btn-secondary:hover {
     background-color: var(--secondary-color-hover);
     border-color: var(--secondary-color-hover);
@@ -808,10 +858,34 @@ div.nav-secondary {
     color: var(--secondary-color-hover);
 }
 
-.btn-default {
-    background-color: var(--bg-medium-gray);
-    border-color: var(--bg-medium-gray);
+.btn-minimal-secondary {
+    background-color: transparent;
+    border-color: transparent;
+    color: var(--secondary-color);
+}
+
+.btn-minimal-secondary:hover {
+    background-color: var(--secondary-color);
+    border-color: transparent;
     color: var(--text-color-offwhite);
+}
+
+.btn-secondary.disabled, .btn-secondary:disabled {
+    background-color: var(--secondary-color) !important;
+    border-color: var(--secondary-color) !important;
+    color: var(--text-color-offwhite) !important;
+}
+
+.btn-default {
+    background-color: rgba(158,158,158,1);
+    border-color: rgba(158,158,158,1);
+    color: var(--text-color-primary);
+}
+
+.btn-default.disabled, .btn-default:disabled {
+    background-color: rgba(158,158,158,1) !important;
+    border-color: rgba(158,158,158,1) !important;
+    color: var(--text-color-primary) !important;
 }
 
 .btn-default:hover {
@@ -831,22 +905,77 @@ div.nav-secondary {
     color: var(--bg-darkest-gray);
 }
 
-.btn-dark {
-  background-color: var(--bg-darkest-gray);
-  border-color: var(--bg-darkest-gray);
-  color: var(--text-color-offwhite);
+.btn-row .btn {
+    width: 9.875rem !important;
 }
-
-.btn-dark {
-    background-color: var(--bg-darkest-gray);
-    border-color: var(--bg-darkest-gray);
-    color: var(--text-color-offwhite);
-}
-
+  
 .btn-dark {
   background-color: var(--bg-offblack);
   border-color: var(--bg-offblack);
   color: var(--text-color-offwhite);
+}
+  
+.btn-dark.disabled, .btn-dark:disabled {
+  background-color: var(--bg-darkest-gray) !important;
+  border-color: var(--bg-darkest-gray) !important;
+  color: var(--text-color-offwhite) !important;
+}
+
+.btn-prev {
+  position: relative;
+  z-index: 99;
+  width: 32px;
+  height: 32px;
+  float: left;
+  border: 1px solid #000;
+  border-radius: 16px;
+  background-color: #fff;
+  -webkit-transition: all 300ms ease-in-out;
+  transition: all 300ms ease-in-out;
+  font-family: Lato, sans-serif;
+  color: #2e2e2e;
+  font-size: 28px;
+  line-height: 28px;
+  font-weight: 300;
+  letter-spacing: 2px;
+  text-decoration: none;
+}
+
+.btn-prev:hover {
+  background-color: #686868;
+  color: #fff;
+  text-decoration: none;
+}
+
+.btn-next {
+  margin-left: auto;
+  float: right;
+  letter-spacing: -1px;
+}
+
+.tooltip {
+    position: relative;
+    display: inline-block;
+    border-bottom: 1px dotted black; /* If you want dots under the hoverable text */
+}
+
+/* Tooltip text */
+.tooltip .tooltiptext {
+    visibility: hidden;
+    width: 120px;
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    padding: 5px 0;
+    border-radius: 6px;
+    /* Position the tooltip text - see examples below! */
+    position: absolute;
+    z-index: 1;
+}
+
+/* Show the tooltip text when you mouse over the tooltip container */
+.tooltip:hover .tooltiptext {
+    visibility: visible;
 }
 
 .card-body {
@@ -863,8 +992,12 @@ div.nav-secondary {
     left: 0;
     right: 0;
     bottom: 0;
-    margin-top: 40%;
+    margin-bottom: 3.0675rem;
     padding: .5rem 1.25rem;
+}
+
+.card-img-overlay.img-collection {
+    padding: 0;
 }
 
 .card-title {
@@ -888,10 +1021,6 @@ div.nav-secondary {
     width: 100%;
     height: auto;
     overflow: hidden;
-}
-
-.img-collection {
-    padding: 0 1.25rem !important;
 }
 
 .collection-image-link {
@@ -972,8 +1101,9 @@ div.nav-secondary {
 }
 
 .asset-image {
-    height: calc( 100vh - 6.0625rem );
-    border: 1px solid var(--bg-lightest-gray);
+    height: var(--height-contribute-image);
+    min-height: calc( 100vh - 9.625rem );
+    border: 0px solid transparent;
 }
 
 #test-percent {
@@ -1043,6 +1173,62 @@ div.nav-secondary {
 #status-id-label {
     color: var(--text-color-offwhite);
     margin-bottom: 0;
+}
+
+#contact-button {
+    position: absolute;
+    right: .5rem;
+    bottom: .5rem;
+}
+  
+.contribute-instructions {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+}
+
+@keyframes instructions {
+    0%   { display: block; opacity: 0; color: rgba(255,255,255,0) !important; }
+    25%  { width: 25%; height: 25%; opacity: .25; }
+    50%  { width: 50%; height: 50%; opacity: .50; }
+    75%  { width: 75%; height: 75%; opacity: .75; }
+    85%  { color: rgba(51,51,51,.3) !important; }
+    100% {width: 100%; height: 100%; opacity: 1; color: rgba(51,51,51,1) !important; }
+}
+
+.contribute-instructions.instruction-window.collapse {
+    display: none;
+    position: absolute;
+    left: 0;
+    bottom: 2.375rem;
+}
+
+.contribute-instructions.instruction-window.collapsing {
+    animation-name: instructions;
+    animation-duration: .5s;
+}
+
+.contribute-instructions.instruction-window.collapse.show {
+    display: block;
+    height: 100%;
+    bottom: 2.375rem;
+}
+
+.instruction-window {
+    border-top: .0675rem solid var(--bg-darkest-gray);
+}
+
+.instruction-window p {
+    margin-bottom: 0;
+}
+
+#instruction-button {
+    border-radius: 0;
+}
+
+#instruction-button:focus {
+    border-radius: 0;
+    box-shadow: none;
 }
 
 /*
@@ -1154,4 +1340,25 @@ box-shadow: inset 0 .1875rem .3125rem rgba(0, 0, 0, .125);
 
 .form-register .helptext {
     display: none;
+}
+
+/*
+* CAPTCHA styling
+*/
+
+.captcha {
+    width: 10rem;
+    height: auto;
+}
+
+#password_req ul {
+    margin-bottom: .5rem;
+}
+
+.nocheckmark i {
+    color: var(--text-color-primary);
+}
+
+.checkmark i {
+    color: var(--color-success);
 }

@@ -1,9 +1,15 @@
 {% extends "base.html" %}
 {% block title %}Account Activation{% endblock title %}
 {% block main_content %}
-    <h2>Account Activation Complete</h2>
-    <p>
-        <a class="btn btn-primary" href="{% url 'login' %}">Login</a>
-    </p>
+<div class="container-fluid py-default">
+    <div class="row">
+        <div class="col-md-8 mx-auto bg-offwhite rounded shadow-regular">
+            <h2>Account Activation Complete</h2>
+            <p>
+                <a class="btn btn-primary" href="{% url 'login' %}">Login</a>
+            </p>
+        </div>
+    </div>
+</div>
 {% endblock main_content %}
 

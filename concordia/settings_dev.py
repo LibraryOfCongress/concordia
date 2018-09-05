@@ -34,7 +34,7 @@ IMPORTER = {
     "S3_BUCKET_NAME": "",
 }
 
-EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 EMAIL_FILE_PATH = "/tmp/concordia-messages"  # change this to a proper location
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "")
 DEFAULT_TO_EMAIL = DEFAULT_FROM_EMAIL
@@ -47,3 +47,7 @@ ELASTICSEARCH_DSL = {
 }
 
 INSTALLED_APPS += ['django_elasticsearch_dsl']
+REGISTRATION_URLS = "registration.backends.hmac.urls"
+REGISTRATION_SALT = "registration"  # doesn't need to be secret
+
+ACCOUNT_ACTIVATION_DAYS = 1  # required for HMAC registration two-step-flow

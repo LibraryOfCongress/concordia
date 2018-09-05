@@ -81,10 +81,7 @@ class AccountProfileView(LoginRequiredMixin, TemplateView):
         if form.is_valid():
             obj = form.save(commit=True)
             obj.id = self.request.user.id
-            if (
-                not self.request.POST["password1"]
-                and not self.request.POST["password2"]
-            ):
+            if "password1" not in self.request.POST and "password2" not in self.request.POST:
                 obj.password = self.request.user.password
             obj.save()
 
