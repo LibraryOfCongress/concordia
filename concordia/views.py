@@ -146,6 +146,33 @@ class ConcordiaProjectView(TemplateView):
     def get_context_data(self, **kws):
         try:
             campaign = Campaign.objects.get(slug=self.args[0])
+            project = Project.objects.get(slug=self.args[1])
+        except Campaign.DoesNotExist:
+            raise Http404
+        asset_list = Asset.objects.filter(
+            campaign=campaign,
+            status__in=[Status.EDIT, Status.SUBMITTED, Status.COMPLETED, Status.ACTIVE],
+        ).order_by("title", "sequence")
+        paginator = Paginator(asset_list, ASSETS_PER_PAGE)        
+        
+        if not self.request.GET.get("page"):
+            page = 1
+        else:
+            page = self.request.GET.get("page")
+
+        assets = paginator.get_page(page)
+
+        return dict(
+            super().get_context_data(**kws), campaign=campaign, project=project, assets=assets
+        )
+
+
+class ConcordiaCampaignView(TemplateView):
+    template_name = "transcriptions/campaign.html"
+
+    def get_context_data(self, **kws):
+        try:
+            campaign = Campaign.objects.get(slug=self.args[0])
         except Campaign.DoesNotExist:
             raise Http404
         project_list = campaign.project_set.all().order_by("title")
@@ -160,32 +187,6 @@ class ConcordiaProjectView(TemplateView):
 
         return dict(
             super().get_context_data(**kws), campaign=campaign, projects=projects
-        )
-
-
-class ConcordiaCampaignView(TemplateView):
-    template_name = "transcriptions/campaign.html"
-
-    def get_context_data(self, **kws):
-        try:
-            campaign = Campaign.objects.get(slug=self.args[0])
-        except Campaign.DoesNotExist:
-            raise Http404
-        asset_list = Asset.objects.filter(
-            campaign=campaign,
-            status__in=[Status.EDIT, Status.SUBMITTED, Status.COMPLETED, Status.ACTIVE],
-        ).order_by("title", "sequence")
-        paginator = Paginator(asset_list, ASSETS_PER_PAGE)
-
-        if not self.request.GET.get("page"):
-            page = 1
-        else:
-            page = self.request.GET.get("page")
-
-        assets = paginator.get_page(page)
-
-        return dict(
-            super().get_context_data(**kws), campaign=campaign, assets=assets
         )
 
 

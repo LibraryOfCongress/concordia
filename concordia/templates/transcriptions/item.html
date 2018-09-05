@@ -5,12 +5,11 @@
 {% endblock head_content %}
 {% block main_content %}
 {% load auth_extras %}
-<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
-<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
 <div class="container-fluid py-default">
     <div class="row">
         <div class="col-md-10 mx-auto bg-offwhite rounded">
-            <h3 class="mt-default mb-half ml-half">{{ campaign }} Campaign</h3>
+            <h3 class="mt-default mb-half ml-half">{{ campaign }} - Projects</h3>
             <p class="ml-default mb-default">{{ campaign.description }}</p>
             <div class="row">
                 <div class="d-flex flex-wrap col-12 justify-content-around">

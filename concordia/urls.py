@@ -31,7 +31,7 @@ tx_urlpatterns = (
             views.ConcordiaAlternateAssetView.as_view(),
             name="alternate asset",
         ),
-        re_path(r"^([^/]+)/$", views.ConcordiaProjectView.as_view(), name="campaign"),
+        re_path(r"^([^/]+)/$", views.ConcordiaCampaignView.as_view(), name="campaign"),
         re_path(
             r"exportCSV/([^/]+)/$",
             exporter_views.ExportCampaignToCSV.as_view(),
@@ -69,7 +69,7 @@ tx_urlpatterns = (
         ),
         re_path(
             r"^([^/]+)/([^/]+)/$",
-            views.ConcordiaCampaignView.as_view(),
+            views.ConcordiaProjectView.as_view(),
             name="project",
         ),
         re_path(

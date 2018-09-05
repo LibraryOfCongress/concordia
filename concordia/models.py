@@ -116,7 +116,7 @@ class Project(models.Model):
         ordering = ["title"]
     
     def __str__(self):
-        return self.slug
+        return self.title
 
 
 class Item(models.Model):
