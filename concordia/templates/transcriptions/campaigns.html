@@ -104,7 +104,7 @@
                     var to_status = 'false';
                 }
                 $.ajax({
-                    url: '/transcribe/publish/campaign/'+campaign_slug+"/"+to_status+"/",
+                    url: '/campaigns/publish/campaign/'+campaign_slug+"/"+to_status+"/",
                     type: 'GET',
                     success: function(data, textStatus, jqXHR) {
                         $('#campaignConfirmModal').modal('hide');

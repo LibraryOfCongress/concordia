@@ -299,7 +299,7 @@ class ViewTest_Concordia(TestCase):
     @patch("concordia.views.requests")
     def test_concordiaView(self, mock_requests):
         """
-        Test the GET method for route /transcribe
+        Test the GET method for route /campaigns
         :return:
         """
         # Arrange
@@ -310,15 +310,15 @@ class ViewTest_Concordia(TestCase):
         }
 
         # Act
-        response = self.client.get("/transcribe/")
+        response = self.client.get("/campaigns/")
 
         # Assert
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, template_name="transcriptions/home.html")
+        self.assertTemplateUsed(response, template_name="transcriptions/campaigns.html")
 
     def test_concordiaCampaignView_get(self):
         """
-        Test GET on route /transcribe/<slug-value> (campaign)
+        Test GET on route /campaigns/<slug-value> (campaign)
         :return:
         """
 
@@ -335,7 +335,7 @@ class ViewTest_Concordia(TestCase):
         self.campaign.save()
 
         # Act
-        response = self.client.get("/transcribe/test-slug2/")
+        response = self.client.get("/campaigns/test-slug2/")
 
         # Assert
         self.assertEqual(response.status_code, 200)
@@ -343,7 +343,7 @@ class ViewTest_Concordia(TestCase):
 
     def test_concordiaCampaignView_get_page2(self):
         """
-        Test GET on route /transcribe/<slug-value>/ (campaign) on page 2
+        Test GET on route /campaigns/<slug-value>/ (campaign) on page 2
         :return:
         """
 
@@ -360,7 +360,7 @@ class ViewTest_Concordia(TestCase):
         self.campaign.save()
 
         # Act
-        response = self.client.get("/transcribe/test-slug2/", {"page": 2})
+        response = self.client.get("/campaigns/test-slug2/", {"page": 2})
 
         # Assert
         self.assertEqual(response.status_code, 200)
@@ -368,7 +368,7 @@ class ViewTest_Concordia(TestCase):
 
     def test_ExportCampaignView_get(self):
         """
-        Test GET route /transcribe/export/<slug-value>/ (campaign)
+        Test GET route /campaigns/export/<slug-value>/ (campaign)
         :return:
         """
 
@@ -396,7 +396,7 @@ class ViewTest_Concordia(TestCase):
         self.asset.save()
 
         # Act
-        response = self.client.get("/transcribe/exportCSV/slug2/")
+        response = self.client.get("/campaigns/exportCSV/slug2/")
 
         # Assert
         self.assertEqual(response.status_code, 200)
@@ -410,7 +410,7 @@ class ViewTest_Concordia(TestCase):
     @patch("concordia.views.requests")
     def test_DeleteCampaign_get(self, mock_requests):
         """
-        Test GET route /transcribe/delete/<slug-value>/ (campaign)
+        Test GET route /campaigns/delete/<slug-value>/ (campaign)
         :return:
         """
 
@@ -444,7 +444,7 @@ class ViewTest_Concordia(TestCase):
 
         # Act
 
-        response = self.client.get("/transcribe/delete/test-slug2", follow=True)
+        response = self.client.get("/campaigns/delete/test-slug2", follow=True)
 
         # Assert
         self.assertEqual(response.status_code, 200)
@@ -456,7 +456,7 @@ class ViewTest_Concordia(TestCase):
     @patch("concordia.views.requests")
     def test_DeleteAsset_get(self, mock_requests):
         """
-        Test GET route /transcribe/delete/asset/<slug-value>/ (asset)
+        Test GET route /campaigns/delete/asset/<slug-value>/ (asset)
         :return:
         """
 
@@ -503,7 +503,7 @@ class ViewTest_Concordia(TestCase):
         # Act
 
         response = self.client.get(
-            "/transcribe/test-campaign-slug/delete/asset/test-asset-slug1/",
+            "/campaigns/test-campaign-slug/delete/asset/test-asset-slug1/",
             follow=True,
         )
 
@@ -520,7 +520,7 @@ class ViewTest_Concordia(TestCase):
 
     def test_ConcordiaAssetView_post(self):
         """
-        This unit test test the POST route /transcribe/<campaign>/asset/<Asset_name>/
+        This unit test test the POST route /campaigns/<campaign>/asset/<Asset_name>/
         :return:
         """
         # Arrange
@@ -562,13 +562,13 @@ class ViewTest_Concordia(TestCase):
 
         # Act
         response = self.client.post(
-            "/transcribe/Campaign1/asset/Asset1/",
+            "/campaigns/Campaign1/asset/Asset1/",
             {"tx": "First Test Transcription", "tags": tag_name, "action": "Save"},
         )
 
         # Assert
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, "/transcribe/Campaign1/asset/Asset1/")
+        self.assertEqual(response.url, "/campaigns/Campaign1/asset/Asset1/")
 
         # Verify the new transcription and tag are in the db
         transcription = Transcription.objects.filter(
@@ -587,7 +587,7 @@ class ViewTest_Concordia(TestCase):
 
     def test_ConcordiaAssetView_post_contact_community_manager(self):
         """
-        This unit test test the POST route /transcribe/<campaign>/asset/<Asset_name>/
+        This unit test test the POST route /campaigns/<campaign>/asset/<Asset_name>/
         for an anonymous user. Clicking the contact community manager button
         should redirect to the contact us page.
         :return:
@@ -634,11 +634,11 @@ class ViewTest_Concordia(TestCase):
         tag_name = "Test tag 1"
 
         # Act
-        response = self.client.get("/transcribe/Campaign1/asset/Asset1/")
+        response = self.client.get("/campaigns/Campaign1/asset/Asset1/")
         self.assertEqual(response.status_code, 200)
 
         response = self.client.post(
-            "/transcribe/Campaign1/asset/Asset1/",
+            "/campaigns/Campaign1/asset/Asset1/",
             {"tx": "", "tags": "", "action": "Contact Manager"},
         )
 
@@ -648,7 +648,7 @@ class ViewTest_Concordia(TestCase):
 
     def test_ConcordiaAssetView_post_anonymous_happy_path(self):
         """
-        This unit test test the POST route /transcribe/<campaign>/asset/<Asset_name>/
+        This unit test test the POST route /campaigns/<campaign>/asset/<Asset_name>/
         for an anonymous user. This user should not be able to tag
         :return:
         """
@@ -694,13 +694,13 @@ class ViewTest_Concordia(TestCase):
         tag_name = "Test tag 1"
 
         # Act
-        response = self.client.get("/transcribe/Campaign1/asset/Asset1/")
+        response = self.client.get("/campaigns/Campaign1/asset/Asset1/")
         self.assertEqual(response.status_code, 200)
         hash_ = re.findall(r'value="([0-9a-f]+)"', str(response.content))[0]
         captcha_response = CaptchaStore.objects.get(hashkey=hash_).response
 
         response = self.client.post(
-            "/transcribe/Campaign1/asset/Asset1/",
+            "/campaigns/Campaign1/asset/Asset1/",
             {
                 "tx": "First Test Transcription 1",
                 "tags": tag_name,
@@ -712,7 +712,7 @@ class ViewTest_Concordia(TestCase):
 
         # Assert
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, "/transcribe/Campaign1/asset/Asset1/")
+        self.assertEqual(response.url, "/campaigns/Campaign1/asset/Asset1/")
 
         # Verify the new transcription in the db
         transcription = Transcription.objects.filter(
@@ -729,7 +729,7 @@ class ViewTest_Concordia(TestCase):
 
     def test_ConcordiaAssetView_post_anonymous_invalid_captcha(self):
         """
-        This unit test test the POST route /transcribe/<campaign>/asset/<Asset_name>/
+        This unit test test the POST route /campaigns/<campaign>/asset/<Asset_name>/
         for an anonymous user with missing captcha. This user should not be able to tag
         also
         :return:
@@ -778,7 +778,7 @@ class ViewTest_Concordia(TestCase):
         # Act
         # post as anonymous user without captcha data
         response = self.client.post(
-            "/transcribe/Campaign1/asset/Asset1/",
+            "/campaigns/Campaign1/asset/Asset1/",
             {"tx": "First Test Transcription", "tags": tag_name, "action": "Save"},
         )
 
@@ -793,7 +793,7 @@ class ViewTest_Concordia(TestCase):
 
     def test_ConcordiaAssetView_get(self):
         """
-        This unit test test the GET route /transcribe/<campaign>/asset/<Asset_name>/
+        This unit test test the GET route /campaigns/<campaign>/asset/<Asset_name>/
         with already in use. Verify the updated_on time is updated on PageInUse
         :return:
         """
@@ -833,7 +833,7 @@ class ViewTest_Concordia(TestCase):
         )
         self.transcription.save()
 
-        url = "/transcribe/Campaign1/asset/Asset1/"
+        url = "/campaigns/Campaign1/asset/Asset1/"
 
         # Act
         response = self.client.get(url)
@@ -887,7 +887,7 @@ class ViewTest_Concordia(TestCase):
         )
         self.asset.save()
 
-        in_use_url = "/transcribe/%s/asset/%s/" % (
+        in_use_url = "/campaigns/%s/asset/%s/" % (
             self.asset.campaign.slug,
             self.asset.slug,
         )
@@ -937,7 +937,7 @@ class ViewTest_Concordia(TestCase):
         )
         self.asset.save()
 
-        in_use_url = "/transcribe/%s/asset/%s/" % (
+        in_use_url = "/campaigns/%s/asset/%s/" % (
             self.asset.campaign.slug,
             self.asset.slug,
         )
@@ -954,7 +954,7 @@ class ViewTest_Concordia(TestCase):
 
     def test_redirect_when_same_page_in_use(self):
         """
-        Test the GET route for /transcribe/<campaign>/alternateasset/<Asset_name>/
+        Test the GET route for /campaigns/<campaign>/alternateasset/<Asset_name>/
         :return:
         """
         # Arrange
@@ -997,7 +997,7 @@ class ViewTest_Concordia(TestCase):
 
         # Act
         response = self.client.post(
-            "/transcribe/alternateasset/",
+            "/campaigns/alternateasset/",
             {"campaign": self.campaign.slug, "asset": self.asset.slug},
         )
 
@@ -1006,12 +1006,12 @@ class ViewTest_Concordia(TestCase):
 
         # only 2 assets in campaign, this response should be for the other asset
         self.assertEqual(
-            str(response.content, "utf-8"), "/transcribe/Campaign1/asset/Asset2/"
+            str(response.content, "utf-8"), "/campaigns/Campaign1/asset/Asset2/"
         )
 
     def test_pageinuse_post(self):
         """
-        Test the POST method on /transcribe/pageinuse/ route
+        Test the POST method on /campaigns/pageinuse/ route
 
         test that matching PageInUse entries with same page_url are deleted
         test that old entries in PageInUse table are removed
@@ -1052,7 +1052,7 @@ class ViewTest_Concordia(TestCase):
 
         # Act
         response = self.client.post(
-            "/transcribe/pageinuse/", {"page_url": url, "user": self.user}
+            "/campaigns/pageinuse/", {"page_url": url, "user": self.user}
         )
 
         # Assert
@@ -1064,7 +1064,7 @@ class ViewTest_Concordia(TestCase):
 
     def test_pageinuse_multiple_same_entries_in_pageinuse_post(self):
         """
-        Test the POST method on /transcribe/pageinuse/ route
+        Test the POST method on /campaigns/pageinuse/ route
         Create an additional entry in PageInUse, verify 1 different entry in PageInUse after call
         :return:
         """
@@ -1074,7 +1074,7 @@ class ViewTest_Concordia(TestCase):
 
         # Act
         response = self.client.post(
-            "/transcribe/pageinuse/", {"page_url": "foo.com/bar", "user": self.user}
+            "/campaigns/pageinuse/", {"page_url": "foo.com/bar", "user": self.user}
         )
 
         # Assert
@@ -1112,7 +1112,7 @@ class ViewTest_Concordia(TestCase):
 
     def test_ConcordiaProjectView_get(self):
         """
-        Test GET on route /transcribe/<slug-value> (campaign)
+        Test GET on route /campaigns/<slug-value> (campaign)
         :return:
         """
 
@@ -1147,7 +1147,7 @@ class ViewTest_Concordia(TestCase):
         self.project1.save()
 
         # Act
-        response = self.client.get("/transcribe/test-slug2/test-slug2-proj1/")
+        response = self.client.get("/campaigns/test-slug2/test-slug2-proj1/")
 
         # Assert
         self.assertEqual(response.status_code, 200)
@@ -1157,7 +1157,7 @@ class ViewTest_Concordia(TestCase):
 
     def test_ConcordiaProjectView_get_page2(self):
         """
-        Test GET on route /transcribe/<slug-value>/ (campaign) on page 2
+        Test GET on route /campaigns/<slug-value>/ (campaign) on page 2
         :return:
         """
 
@@ -1193,7 +1193,7 @@ class ViewTest_Concordia(TestCase):
 
         # Act
         response = self.client.get(
-            "/transcribe/test-slug2/test-slug2-proj1/", {"page": 2}
+            "/campaigns/test-slug2/test-slug2-proj1/", {"page": 2}
         )
 
         # Assert
@@ -1308,7 +1308,7 @@ class ViewTest_Concordia(TestCase):
         self.project1.save()
 
         # Act
-        response = self.client.get("/transcribe/publish/campaign/slug1/true/")
+        response = self.client.get("/campaigns/publish/campaign/slug1/true/")
 
         # Assert
         self.assertEqual(response.status_code, 200)
@@ -1349,7 +1349,7 @@ class ViewTest_Concordia(TestCase):
         self.project1.save()
 
         # Act
-        response = self.client.get("/transcribe/publish/campaign/slug1/false/")
+        response = self.client.get("/campaigns/publish/campaign/slug1/false/")
 
         # Assert
         self.assertEqual(response.status_code, 200)
@@ -1388,7 +1388,7 @@ class ViewTest_Concordia(TestCase):
 
         # Act
         response = self.client.get(
-            "/transcribe/publish/project/slug1/test-slug2-proj/true/"
+            "/campaigns/publish/project/slug1/test-slug2-proj/true/"
         )
 
         # Assert
@@ -1431,7 +1431,7 @@ class ViewTest_Concordia(TestCase):
 
         # Act
         response = self.client.get(
-            "/transcribe/publish/project/slug1/test-slug2-proj/false/"
+            "/campaigns/publish/project/slug1/test-slug2-proj/false/"
         )
 
         # Assert

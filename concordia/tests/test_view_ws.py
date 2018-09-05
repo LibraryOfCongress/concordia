@@ -56,7 +56,7 @@ class ViewWSTest_Concordia(TestCase):
         response = self.client.post(
             "/ws/page_in_use/",
             {
-                "page_url": "transcribe/American-Jerusalem/asset/mamcol.0930/",
+                "page_url": "campaigns/American-Jerusalem/asset/mamcol.0930/",
                 "user": self.user.id,
             },
         )
@@ -98,7 +98,7 @@ class ViewWSTest_Concordia(TestCase):
         response = self.client.post(
             "/ws/page_in_use/",
             {
-                "page_url": "transcribe/American-Jerusalem/asset/mamcol.0930/",
+                "page_url": "campaigns/American-Jerusalem/asset/mamcol.0930/",
                 "user": self.user.id,
             },
         )
@@ -125,7 +125,7 @@ class ViewWSTest_Concordia(TestCase):
         response = self.client.post(
             "/ws/page_in_use/",
             {
-                "page_url": "transcribe/American-Jerusalem/asset/mamcol.0930/",
+                "page_url": "campaigns/American-Jerusalem/asset/mamcol.0930/",
                 "user": self.user.id,
             },
         )
@@ -155,7 +155,7 @@ class ViewWSTest_Concordia(TestCase):
         response = self.client.post(
             "/ws/page_in_use/",
             {
-                "page_url": "transcribe/American-Jerusalem/asset/mamcol.0930/",
+                "page_url": "campaigns/American-Jerusalem/asset/mamcol.0930/",
                 "user": self.user.id,
             },
         )

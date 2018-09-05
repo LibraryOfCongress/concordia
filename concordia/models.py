@@ -114,6 +114,9 @@ class Project(models.Model):
     class Meta:
         unique_together = (("slug", "campaign"),)
         ordering = ["title"]
+    
+    def __str__(self):
+        return self.slug
 
 
 class Item(models.Model):
@@ -149,8 +152,14 @@ class Asset(models.Model):
     project = models.ForeignKey(
         Project, on_delete=models.CASCADE, blank=True, null=True
     )
-#    item = models.ForeignKey(Item, blank=True, null=True, on_delete=models.CASCADE)
+    item = models.ForeignKey(Item, blank=True, null=True, on_delete=models.CASCADE)
     sequence = models.PositiveIntegerField(default=1)
+    
+    # The original ID of the image resource on loc.gov
+    resource_id = models.CharField(max_length=100, blank=True, null=True)
+    # The URL used to download this image from loc.gov
+    download_url = models.CharField(max_length=255, blank=True, null=True)
+
     metadata = JSONField(default=metadata_default)
     status = models.CharField(
         max_length=10, choices=Status.CHOICES, default=Status.DEFAULT

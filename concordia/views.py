@@ -133,7 +133,7 @@ class AccountProfileView(LoginRequiredMixin, TemplateView):
 
 
 class ConcordiaView(TemplateView):
-    template_name = "transcriptions/home.html"
+    template_name = "transcriptions/campaigns.html"
 
     def get_context_data(self, **kws):
         response = concordia_api("campaigns/")
@@ -191,7 +191,7 @@ class ConcordiaCampaignView(TemplateView):
 
 class ConcordiaAssetView(TemplateView):
     """
-    Class to handle GET ansd POST requests on route /transcribe/<campaign>/asset/<asset>
+    Class to handle GET ansd POST requests on route /campaigns/<campaign>/asset/<asset>
     """
 
     template_name = "transcriptions/asset.html"
@@ -243,7 +243,7 @@ class ConcordiaAssetView(TemplateView):
         except Asset.DoesNotExist:
             next_asset = asset
 
-        in_use_url = "/transcribe/%s/asset/%s/" % (asset.campaign.slug, asset.slug)
+        in_use_url = "/campaigns/%s/asset/%s/" % (asset.campaign.slug, asset.slug)
         current_user_id = (
             self.request.user.id
             if self.request.user.id is not None
@@ -309,7 +309,7 @@ class ConcordiaAssetView(TemplateView):
 
     def post(self, *args, **kwargs):
         """
-        Handle POST from transcribe page for individual asset
+        Handle POST from campaigns page for individual asset
         :param args:
         :param kwargs:
         :return: redirect back to same page
@@ -391,7 +391,7 @@ class ConcordiaAlternateAssetView(View):
             )
 
             return HttpResponse(
-                "/transcribe/%s/asset/%s/" % (campaign_slug, asset.slug)
+                "/campaigns/%s/asset/%s/" % (campaign_slug, asset.slug)
             )
 
 
@@ -546,7 +546,7 @@ class DeleteCampaignView(TemplateView):
         os.system(
             "rm -rf {0}".format(settings.MEDIA_ROOT + "/concordia/" + campaign.slug)
         )
-        return redirect("/transcribe/")
+        return redirect("/campaigns/")
 
 
 class DeleteAssetView(TemplateView):
@@ -561,7 +561,7 @@ class DeleteAssetView(TemplateView):
         asset = Asset.objects.get(slug=self.args[1], campaign=campaign)
         asset.status = Status.INACTIVE
         asset.save()
-        return redirect("/transcribe/" + self.args[0] + "/")
+        return redirect("/campaigns/" + self.args[0] + "/")
 
 
 class ReportCampaignView(TemplateView):

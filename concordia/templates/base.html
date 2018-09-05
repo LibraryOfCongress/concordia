@@ -39,7 +39,7 @@
                             <a class="nav-link" href="#">Home<span class="sr-only">(current)</span></a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'transcriptions:transcribe' %}">Campaigns</a>
+                            <a class="nav-link" href="{% url 'transcriptions:campaigns' %}">Campaigns</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'about' %}">About</a>
@@ -74,7 +74,7 @@
                             <a class="nav-link" href="/">Home</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'transcriptions:transcribe' %}">Campaigns</a>
+                            <a class="nav-link" href="{% url 'transcriptions:campaigns' %}">Campaigns</a>
                         </li>
                         <li class="nav-item active">
                             <a class="nav-link" href="{% url 'about' %}">About<span class="sr-only">(current)</span></a>
@@ -110,7 +110,7 @@
                             <a class="nav-link" href="/">Home</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'transcriptions:transcribe' %}">Campaigns</a>
+                            <a class="nav-link" href="{% url 'transcriptions:campaigns' %}">Campaigns</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'about' %}">About</a>
@@ -135,7 +135,7 @@
                             <a class="nav-link" href="/">Home</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'transcriptions:transcribe' %}">Campaigns</a>
+                            <a class="nav-link" href="{% url 'transcriptions:campaigns' %}">Campaigns</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'about' %}">About</a>
@@ -155,7 +155,7 @@
                             <a class="nav-link d-block d-lg-none" href="#">Register<span class="sr-only">(current)</span></a>
                         </li>
 
-                    {% elif request.path == '/transcribe/' or '/transcribe/' in request.path %}
+                    {% elif request.path == '/campaigns/' or '/campaigns/' in request.path %}
                         <li class="nav-item">
                             <a class="nav-link" href="/">Home</a>
                         </li>
@@ -196,7 +196,7 @@
                         <a class="nav-link" href="/">Home</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'transcriptions:transcribe' %}">Campaigns</a>
+                        <a class="nav-link" href="{% url 'transcriptions:campaigns' %}">Campaigns</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'about' %}">About</a>
@@ -220,7 +220,7 @@
                         <a class="nav-link" href="/">Home</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'transcriptions:transcribe' %}">Campaigns</a>
+                        <a class="nav-link" href="{% url 'transcriptions:campaigns' %}">Campaigns</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'about' %}">About</a>

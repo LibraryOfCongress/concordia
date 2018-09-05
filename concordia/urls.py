@@ -21,7 +21,7 @@ for key, value in getattr(settings, "ADMIN_SITE", {}).items():
 
 tx_urlpatterns = (
     [
-        re_path(r"^$", views.ConcordiaView.as_view(), name="transcribe"),
+        re_path(r"^$", views.ConcordiaView.as_view(), name="campaigns"),
         re_path(r"^create/$", views.CampaignView.as_view(), name="create"),
         re_path(
             r"^pageinuse/$", views.ConcordiaPageInUse.as_view(), name="page in use"
@@ -93,7 +93,7 @@ urlpatterns = [
         r"^about/$", TemplateView.as_view(template_name="about.html"), name="about"
     ),
     re_path(r"^contact/$", views.ContactUsView.as_view(), name="contact"),
-    re_path(r"^transcribe/", include(tx_urlpatterns, namespace="transcriptions")),
+    re_path(r"^campaigns/", include(tx_urlpatterns, namespace="transcriptions")),
     re_path(r"^api/v1/", include(trans_urls)),
     re_path(
         r"^account/register/$",

@@ -202,7 +202,7 @@
         });
         function checkin_page_in_use() {
             $.ajax({
-                url : "/transcribe/pageinuse/",
+                url : "/campaigns/pageinuse/",
                 type: "post",
                 data: JSON.stringify({ 'page_url' : window.location.pathname,
                     'user': '{{ user }}' }),
@@ -226,7 +226,7 @@
             var optsel = confirm("This transcription is being worked on by another user.\nYou may lose your work.\nDo you want to work on another page in this campaign?");
             if (optsel == true) {
                 $.ajax({
-                    url: "/transcribe/alternateasset/",
+                    url: "/campaigns/alternateasset/",
                     type: "post",
                     data: JSON.stringify({
                         'campaign': '{{ asset.campaign.slug }}',

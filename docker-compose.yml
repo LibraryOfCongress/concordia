@@ -41,48 +41,8 @@ services:
     ports:
       - 5672:5672
       - 15672:15672
-  
-  elk:
-    image: sebp/elk
-    ports:
-      - "5601:5601"
-      - "9200:9200"
-      - "5044:5044"
-
-  app:
-    env_file: ./.env
-    build: .
-    environment:
-      # The concordia app needs to wait for the db to completely start. Use docker-compose-wait
-      # as defined at https://github.com/ufoscout/docker-compose-wait
-      WAIT_HOSTS: db:5432, elk:9200
-    depends_on:
-      - db
-      - elk
-    volumes:
-      - .:/app
-      - images_volume:/concordia_images
-    links:
-      - rabbit
-      - elk
-    ports:
-      - 80:80
-
-  importer:
-    build:
-       context: .
-       dockerfile: importer/Dockerfile
-    depends_on:
-      - rabbit
-    volumes:
-      - images_volume:/concordia_images
-
-  wait_elk:
-    image: "waisbrot/wait"
-    environment:
-      TARGETS: elk:9200
 
 volumes:
   db_volume:
-  images_volume:
+
 

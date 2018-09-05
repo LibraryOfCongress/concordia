@@ -130,7 +130,7 @@ body {
         {% for t in transcriptions %}
         <tr>
             <td>{{t.campaign_name}}</td>
-            <td><a href="/transcribe/{{t.campaign_name}}/asset/{{t.asset.slug}}">{{t.asset.slug}}</a></td>
+            <td><a href="/campaigns/{{t.campaign_name}}/asset/{{t.asset.slug}}">{{t.asset.slug}}</a></td>
             <td>{{ t.updated_on|date:'Y-m-d H:i' }}</td>
         </tr>
         {% endfor %} {% endif %}

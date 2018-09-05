@@ -110,7 +110,7 @@ input[type=submit] {
 
       <div class="d-flex col-lg-6 col-md-8 mx-auto justify-content-between pt-half">
         <button class="btn btn-primary mr-auto" id="create_btn">Create</button>
-        <a href="/transcribe" role="button" class="btn btn-dark">Cancel</a>
+        <a href="/campaigns" role="button" class="btn btn-dark">Cancel</a>
     </div>
       <!--</form>-->
     </div>
@@ -140,10 +140,10 @@ function write_save_campaign_assets(task_id){
             var slug = $("#campaign_slug").val().toLowerCase().replace(/ +/g,'-');
             var projslug = $("#project-name").val().toLowerCase().replace(/ +/g,'-');
             if($("#item_id").val()){
-                var rurl = "/transcribe/"+slug+"/"+projslug+"/";
+                var rurl = "/campaigns/"+slug+"/"+projslug+"/";
             }
             else{
-                var rurl = "/transcribe/"+slug+"/";
+                var rurl = "/campaigns/"+slug+"/";
             }
 
             window.location.href = rurl;

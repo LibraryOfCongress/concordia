@@ -47,7 +47,7 @@ class ViewTest_Exporter(TestCase):
 
     def test_ExportCampaignToBagit_get(self):
         """
-        Test the http GET on route /transcribe/exportBagit/<campaignname>/
+        Test the http GET on route /campaigns/exportBagit/<campaignname>/
         :return:
         """
 
@@ -156,7 +156,7 @@ class ViewTest_Exporter(TestCase):
             )
 
         # Act (local storage campaign)
-        response = self.client.get("/transcribe/exportBagit/locstorcampaign/")
+        response = self.client.get("/campaigns/exportBagit/locstorcampaign/")
 
         # Assert for Local Storage Campaign
 
@@ -180,7 +180,7 @@ class ViewTest_Exporter(TestCase):
 
 
         # Act (s3 campaign)
-        response2 = self.client.get("/transcribe/exportBagit/test_s3/")
+        response2 = self.client.get("/campaigns/exportBagit/test_s3/")
 
         # Assert for s3 Campaign
 
