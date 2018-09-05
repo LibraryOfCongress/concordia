@@ -246,6 +246,10 @@ p.hero-secondary.offwhite-text {
     color: var(--text-color-offwhite);
 }
 
+.profile_edit:hover {
+    color: var(--primary-color-hover);
+}
+
 .bg-offwhite {
     background-color: var(--bg-offwhite);
 }
