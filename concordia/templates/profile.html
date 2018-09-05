@@ -70,7 +70,7 @@ body {
     {% endif %}
 <div class="container-fluid">
     <div class="row">
-        <div class="col-12 col-md-10 bg-offwhite mx-auto my-default px-default">
+        <div class="col-12 col-md-10 bg-offwhite mx-auto my-default pxy-default rounded">
             <form class="form-horizontal" action="/account/profile/" method="POST" enctype="multipart/form-data">{% csrf_token %}
                 <span>{{ form.non_field_errors }}</span>
                 <div class="col-sm-3">
@@ -128,7 +128,7 @@ body {
                 </div>
             </form>
         </div>
-        <div class="col-12 col-md-10 bg-offwhite mx-auto my-default px-default">
+        <div class="col-12 col-md-10 bg-offwhite mx-auto my-default pxy-default rounded">
             <h3>My Contributions</h3> {% if transcriptions %}
             <table class="table">
                 <tr>
