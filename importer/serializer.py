@@ -31,9 +31,7 @@ class CreateCampaign(serializers.Serializer):
             except CampaignTaskDetails.DoesNotExist:
                 pass
             else:
-                raise serializers.ValidationError(
-                    "campaign and project already exist"
-                )
+                raise serializers.ValidationError("campaign and project already exist")
 
         data["create_type"] = create_type
 

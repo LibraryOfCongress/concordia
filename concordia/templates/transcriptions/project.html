@@ -8,39 +8,38 @@
     <div class="row">
         <div class="col-md-10 mx-auto bg-offwhite rounded">
             <h3 class="mt-default mb-half ml-half">{{ campaign }} Campaign</h3>
-            <h4>{{ project }} Project</h4>
-            <p class="ml-default mb-default">{{ campaign.description }}</p>
+            <p class="ml-default mb-default">{{ project }} Project</p>
             <div class="row">
                 <div class="d-flex flex-wrap col-12 justify-content-around">
-                    {% for a in assets %}
+                    {% for i in items %}
                     <div class="col-12 col-md-4 col-lg-3 mx-quarter mb-default card bg-lightest-gray shadow-regular">
-                        <a href="{% url 'transcriptions:asset' campaign.slug a.slug %}">
-                            <img class="card-img card-img-campaign" alt="{{ a.slug }}" src="{% if campaign.s3_storage %}{{ a.media_url }}{% else %}{{ MEDIA_URL }}{{a.media_url }}{% endif %}">
+                        <a href="{% url 'transcriptions:item' campaign.slug project.slug i.slug %}">
+                            <img class="card-img card-img-campaign" alt="{{ i.slug }}" src="{{ i.thumbnail_url }}">
                         </a>
                         <div class="card-img-overlay img-campaign">
                             <div class="d-flex flex-column justify-content-center align-items-bottom col-9 col-md-8 mx-auto">
-                                <a href="{% url 'transcriptions:asset' campaign.slug a.slug %}" class="btn btn-primary btn-lg w-100 mb-quarter">Transcribe</a>
-                                <a href="{% url 'transcriptions:asset' campaign.slug a.slug %}#tab-tag" class="btn btn-primary btn-lg w-100 mb-quarter">Tag</a>
-                                {% if user.is_superuser %}
-                                    <a href="{% url 'transcriptions:delete_asset' campaign.slug a.slug %}" class="btn btn-primary btn-lg w-100 mb-quarter">Hide</a>
-                                {% endif %}
+                                <a href="{% url 'transcriptions:item' campaign.slug project.slug i.slug %}" 
+                                    class="btn btn-primary btn-lg w-100 mb-quarter">Transcribe</a>
+                                <a href="{% url 'transcriptions:item' campaign.slug project.slug i.slug %}#tab-tag" 
+                                    class="btn btn-primary btn-lg w-100 mb-quarter">Tag</a>
                             </div>
                         </div>
-                        <a href="{% url 'transcriptions:asset' campaign.slug a.slug %}" class="campaign-image-link"><h6 class="text-center primary-text my-half">{{ a.slug }}</h6></a>
+                        <a href="{% url 'transcriptions:item' campaign.slug project.slug i.slug %}" 
+                            class="campaign-image-link"><h6 class="text-center primary-text my-half">{{ i.slug }}</h6></a>
                     </div>
                     {% endfor %}
                 </div>
             </div>
             <div class="pagination justify-content-center align-items-center mb-default">
                 <span class="step-links">
-                    {% if assets.has_previous %}
+                    {% if items.has_previous %}
                         <a class="pr-3 primary-text" href="?page=1">&laquo; first</a>
-                        <a class="pr-3 primary-text" href="?page={{ assets.previous_page_number }}">previous</a>
+                        <a class="pr-3 primary-text" href="?page={{ items.previous_page_number }}">previous</a>
                     {% endif %}
-                    <span class="current">Page {{ assets.number }} of {{ assets.paginator.num_pages }}</span>
-                    {% if assets.has_next %}
-                        <a class="pl-3 primary-text" href="?page={{ assets.next_page_number }}">next</a>
-                        <a class="pl-3 primary-text" href="?page={{ assets.paginator.num_pages }}">last &raquo;</a>
+                    <span class="current">Page {{ items.number }} of {{ items.paginator.num_pages }}</span>
+                    {% if items.has_next %}
+                        <a class="pl-3 primary-text" href="?page={{ items.next_page_number }}">next</a>
+                        <a class="pl-3 primary-text" href="?page={{ items.paginator.num_pages }}">last &raquo;</a>
                     {% endif %}
                 </span>
             </div>

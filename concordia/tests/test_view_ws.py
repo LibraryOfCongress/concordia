@@ -1,17 +1,19 @@
 # TODO: Add correct copyright header
 
-from datetime import datetime, timedelta
 import json
+import logging
 import time
+from datetime import datetime, timedelta
+
 from django.test import Client, TestCase
 from django.utils.encoding import force_text
-import logging
 from rest_framework import status
 
-from concordia.models import PageInUse, User, Campaign, Status, Asset, MediaType, \
-    Transcription, Tag, UserAssetTagCollection
+from concordia.models import (Asset, Campaign, MediaType, PageInUse, Status, Tag,
+                              Transcription, User, UserAssetTagCollection)
 
 logging.disable(logging.CRITICAL)
+
 
 class ViewWSTest_Concordia(TestCase):
     """
@@ -40,7 +42,7 @@ class ViewWSTest_Concordia(TestCase):
         self.client.login(username="tester", password="top_secret")
 
         # create a session cookie
-        self.client.session['foo'] = 123  # HACK: needed for django Client
+        self.client.session["foo"] = 123  # HACK: needed for django Client
 
     def test_PageInUse_post(self):
         """
@@ -80,14 +82,16 @@ class ViewWSTest_Concordia(TestCase):
             page_url="foo.com/blah",
             user=self.user,
             created_on=time_threshold,
-            updated_on=time_threshold)
+            updated_on=time_threshold,
+        )
         page1.save()
 
         page2 = PageInUse(
             page_url="bar.com/blah",
             user=self.user,
             created_on=time_threshold,
-            updated_on=time_threshold)
+            updated_on=time_threshold,
+        )
         page2.save()
 
         pages_in_use = PageInUse.objects.all()
@@ -105,8 +109,6 @@ class ViewWSTest_Concordia(TestCase):
 
         # Assert
         self.assert_post_successful(response)
-
-
 
     def test_PageInUse_nologin_post(self):
         """
@@ -186,13 +188,9 @@ class ViewWSTest_Concordia(TestCase):
         self.login_user()
 
         # Add two values to database
-        PageInUse.objects.create(
-            page_url="foo.com/blah",
-            user=self.user)
+        PageInUse.objects.create(page_url="foo.com/blah", user=self.user)
 
-        PageInUse.objects.create(
-            page_url="bar.com/blah",
-            user=self.user)
+        PageInUse.objects.create(page_url="bar.com/blah", user=self.user)
 
         # Act
         response = self.client.get("/ws/page_in_use/bar.com/blah/")
@@ -200,8 +198,8 @@ class ViewWSTest_Concordia(TestCase):
         # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertJSONEqual(
-            str(response.content, encoding='utf8'),
-            {"page_url": "bar.com/blah", "user": self.user.id }
+            str(response.content, encoding="utf8"),
+            {"page_url": "bar.com/blah", "user": self.user.id},
         )
 
     def test_PageInUseUser_get(self):
@@ -221,22 +219,20 @@ class ViewWSTest_Concordia(TestCase):
 
         test_page_url = "foo.com/blah"
         # Add two values to database
-        PageInUse.objects.create(
-            page_url=test_page_url,
-            user=self.user)
+        PageInUse.objects.create(page_url=test_page_url, user=self.user)
 
-        PageInUse.objects.create(
-            page_url="bar.com/blah",
-            user=self.user2)
+        PageInUse.objects.create(page_url="bar.com/blah", user=self.user2)
 
         # Act
-        response = self.client.get("/ws/page_in_use_user/%s/%s/" % (self.user.id, test_page_url))
+        response = self.client.get(
+            "/ws/page_in_use_user/%s/%s/" % (self.user.id, test_page_url)
+        )
 
         # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertJSONEqual(
-            str(response.content, encoding='utf8'),
-            {"page_url": test_page_url, "user": self.user.id }
+            str(response.content, encoding="utf8"),
+            {"page_url": test_page_url, "user": self.user.id},
         )
 
     def test_PageInUse_put(self):
@@ -248,9 +244,7 @@ class ViewWSTest_Concordia(TestCase):
         self.login_user()
 
         # Add a value to database
-        page = PageInUse(
-            page_url="foo.com/blah",
-            user=self.user)
+        page = PageInUse(page_url="foo.com/blah", user=self.user)
         page.save()
 
         min_update_time = page.created_on + timedelta(seconds=2)
@@ -264,7 +258,7 @@ class ViewWSTest_Concordia(TestCase):
         response = self.client.put(
             "/ws/page_in_use_update/foo.com/blah/",
             data=json.dumps(change_page_in_use),
-            content_type='application/json'
+            content_type="application/json",
         )
 
         # Assert
@@ -308,14 +302,16 @@ class ViewWSTest_Concordia(TestCase):
         # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertJSONEqual(
-            str(response.content, encoding='utf8'),
-            {'description': 'Campaign2 Description',
-             'end_date': None,
-             'id': self.campaign2.id,
-             'slug': 'slug2',
-             'start_date': None,
-             'status': Status.EDIT,
-             'title': 'TextCampaign2'}
+            str(response.content, encoding="utf8"),
+            {
+                "description": "Campaign2 Description",
+                "end_date": None,
+                "id": self.campaign2.id,
+                "slug": "slug2",
+                "start_date": None,
+                "status": Status.EDIT,
+                "title": "TextCampaign2",
+            },
         )
 
     def test_get_assets_by_campaign(self):
@@ -390,7 +386,7 @@ class ViewWSTest_Concordia(TestCase):
 
         # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(json_resp['results']), 2)
+        self.assertEqual(len(json_resp["results"]), 2)
 
     def test_get_assets_by_campaign_and_slug(self):
         """
@@ -475,7 +471,7 @@ class ViewWSTest_Concordia(TestCase):
                 "metadata": {"key": "val2"},
                 "project": None,
                 "status": Status.EDIT,
-            }
+            },
         )
 
     def test_get_assets_by_campaign_and_slug_no_match(self):
@@ -561,9 +557,8 @@ class ViewWSTest_Concordia(TestCase):
                 "metadata": None,
                 "project": None,
                 "status": None,
-            }
+            },
         )
-
 
     def test_PageInUse_filter_get(self):
         """
@@ -583,22 +578,20 @@ class ViewWSTest_Concordia(TestCase):
         self.user2.save()
 
         # Add values to database
-        PageInUse.objects.create(
-            page_url="foo.com/blah",
-            user=self.user)
+        PageInUse.objects.create(page_url="foo.com/blah", user=self.user)
 
-        PageInUse.objects.create(
-            page_url=test_url,
-            user=self.user2)
+        PageInUse.objects.create(page_url=test_url, user=self.user2)
 
         # Act
-        response = self.client.get("/ws/page_in_use_filter/%s/%s/" % (self.user.username, test_url, ))
+        response = self.client.get(
+            "/ws/page_in_use_filter/%s/%s/" % (self.user.username, test_url)
+        )
 
         json_resp = json.loads(response.content)
 
         # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertTrue(len(json_resp['results']) > 0)
+        self.assertTrue(len(json_resp["results"]) > 0)
 
     def test_PageInUse_filter_no_pages_get(self):
         """
@@ -618,13 +611,15 @@ class ViewWSTest_Concordia(TestCase):
         self.user2.save()
 
         # Act
-        response = self.client.get("/ws/page_in_use_filter/%s/%s/" % (self.user.username, test_url, ))
+        response = self.client.get(
+            "/ws/page_in_use_filter/%s/%s/" % (self.user.username, test_url)
+        )
 
         json_resp = json.loads(response.content)
 
         # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(json_resp['results']), 0)
+        self.assertEqual(len(json_resp["results"]), 0)
 
     def test_Transcriptions_latest_get(self):
         """
@@ -678,20 +673,14 @@ class ViewWSTest_Concordia(TestCase):
 
         # add Transcription objects
         self.transcription = Transcription(
-            asset=self.asset,
-            user_id=self.user.id,
-            status=Status.EDIT,
-            text="T1"
+            asset=self.asset, user_id=self.user.id, status=Status.EDIT, text="T1"
         )
         self.transcription.save()
 
         t2_text = "T2"
 
         self.transcription2 = Transcription(
-            asset=self.asset,
-            user_id=self.user2.id,
-            status=Status.EDIT,
-            text=t2_text
+            asset=self.asset, user_id=self.user2.id, status=Status.EDIT, text=t2_text
         )
         self.transcription2.save()
 
@@ -743,8 +732,7 @@ class ViewWSTest_Concordia(TestCase):
                 "asset": self.asset.id,
                 "user_id": self.user.id,
                 "status": Status.EDIT,
-                "text": "T1"
-
+                "text": "T1",
             },
         )
 
@@ -762,8 +750,7 @@ class ViewWSTest_Concordia(TestCase):
                 "asset": self.asset.id,
                 "user_id": self.user.id,
                 "status": Status.EDIT,
-                "text": "T2"
-
+                "text": "T2",
             },
         )
 
@@ -810,7 +797,7 @@ class ViewWSTest_Concordia(TestCase):
                 "asset": self.asset.slug,
                 "user_id": self.user.id,
                 "name": "T1",
-                "value": "T1"
+                "value": "T1",
             },
         )
 
@@ -856,7 +843,7 @@ class ViewWSTest_Concordia(TestCase):
                 "asset": self.asset.slug,
                 "user_id": self.user.id,
                 "name": "T1",
-                "value": "T1"
+                "value": "T1",
             },
         )
 
@@ -867,7 +854,7 @@ class ViewWSTest_Concordia(TestCase):
                 "asset": self.asset.slug,
                 "user_id": self.user.id,
                 "name": "T2",
-                "value": "T3"
+                "value": "T3",
             },
         )
 
@@ -912,36 +899,25 @@ class ViewWSTest_Concordia(TestCase):
         )
         self.asset.save()
 
-        self.tag1 = Tag(
-            name="Tag1",
-            value="Tag1"
-        )
+        self.tag1 = Tag(name="Tag1", value="Tag1")
         self.tag1.save()
 
-        self.tag2 = Tag(
-            name="Tag2",
-            value="Tag2"
-        )
+        self.tag2 = Tag(name="Tag2", value="Tag2")
         self.tag2.save()
 
-        self.tag3 = Tag(
-            name="Tag3",
-            value="Tag3"
-        )
+        self.tag3 = Tag(name="Tag3", value="Tag3")
         self.tag3.save()
 
         # Save for User1
         self.asset_tag_collection = UserAssetTagCollection(
-            asset=self.asset,
-            user_id=self.user.id
+            asset=self.asset, user_id=self.user.id
         )
         self.asset_tag_collection.save()
         self.asset_tag_collection.tags.add(self.tag1, self.tag2)
 
         # Save for User2
         self.asset_tag_collection2 = UserAssetTagCollection(
-            asset=self.asset,
-            user_id=self.user2.id
+            asset=self.asset, user_id=self.user2.id
         )
         self.asset_tag_collection2.save()
         self.asset_tag_collection2.tags.add(self.tag3)
@@ -954,5 +930,3 @@ class ViewWSTest_Concordia(TestCase):
         # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(json_resp["results"]), 3)
-
-

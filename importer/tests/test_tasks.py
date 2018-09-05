@@ -331,9 +331,7 @@ class DownloadWriteCampaignItemAssetsTest(TestCase):
 
     @patch("importer.tasks.get_save_item_assets")
     @patch("importer.tasks.requests.get")  # Mock 'requests' module 'get' method.
-    def test_download_write_campaign_item_asstes_no_db_entry(
-        self, mock_get, mock_save
-    ):
+    def test_download_write_campaign_item_asstes_no_db_entry(self, mock_get, mock_save):
         """
         Testing no of campaign item asset urls available in given campaign url wiht no db entry in CampaignTaskDetails
         """

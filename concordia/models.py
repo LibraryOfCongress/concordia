@@ -114,7 +114,7 @@ class Project(models.Model):
     class Meta:
         unique_together = (("slug", "campaign"),)
         ordering = ["title"]
-    
+
     def __str__(self):
         return self.title
 
@@ -125,11 +125,15 @@ class Item(models.Model):
     description = models.TextField(blank=True)
     item_url = models.URLField(max_length=255)
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
-    project = models.ForeignKey(Project, on_delete=models.CASCADE, blank=True, null=True)
+    project = models.ForeignKey(
+        Project, on_delete=models.CASCADE, blank=True, null=True
+    )
     item_id = models.CharField(max_length=100, blank=True)
     metadata = JSONField(default=metadata_default)
     thumbnail_image = models.URLField(max_length=255)
-    status = models.CharField(max_length=10, choices=Status.CHOICES, default=Status.DEFAULT)
+    status = models.CharField(
+        max_length=10, choices=Status.CHOICES, default=Status.DEFAULT
+    )
     is_publish = models.BooleanField(default=False, blank=True)
 
     class Meta:
@@ -154,7 +158,7 @@ class Asset(models.Model):
     )
     item = models.ForeignKey(Item, blank=True, null=True, on_delete=models.CASCADE)
     sequence = models.PositiveIntegerField(default=1)
-    
+
     # The original ID of the image resource on loc.gov
     resource_id = models.CharField(max_length=100, blank=True, null=True)
     # The URL used to download this image from loc.gov
@@ -205,6 +209,7 @@ class Transcription(models.Model):
 
     def __str__(self):
         return str(self.asset)
+
 
 class PageInUse(models.Model):
     page_url = models.CharField(max_length=256)

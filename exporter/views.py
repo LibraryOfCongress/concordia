@@ -143,9 +143,7 @@ class ExportCampaignToBagit(TemplateView):
         with open("%s.zip" % campaign_folder, "rb") as file:
             outfile = file.read()
         response = HttpResponse(outfile, content_type="application/zip")
-        response["Content-Disposition"] = (
-            "attachment; filename=%s.zip" % campaign.slug
-        )
+        response["Content-Disposition"] = "attachment; filename=%s.zip" % campaign.slug
 
         # Clean up temp folders & zipfile once exported
         try:

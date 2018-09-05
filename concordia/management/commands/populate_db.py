@@ -1,9 +1,13 @@
 from django.core.management.base import BaseCommand
-from concordia.models import Campaign, Asset, Status, MediaType
+
+from concordia.models import Asset, Campaign, MediaType, Status
+
 
 class Command(BaseCommand):
-    args = '<foo bar ...>'
-    help = 'This will populate the database with values needed to test the export with S3'
+    args = "<foo bar ...>"
+    help = (
+        "This will populate the database with values needed to test the export with S3"
+    )
 
     def _add_data(self):
         """
@@ -17,7 +21,8 @@ class Command(BaseCommand):
             description="Mockup test campaign for S3 Storage",
             is_active=True,
             s3_storage=True,
-            status=Status.EDIT)
+            status=Status.EDIT,
+        )
 
         asset, created = Asset.objects.update_or_create(
             title="mss859430177",

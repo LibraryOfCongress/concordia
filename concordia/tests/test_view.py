@@ -11,9 +11,9 @@ from captcha.models import CaptchaStore
 from django.test import Client, TestCase
 from PIL import Image
 
-from concordia.models import (Asset, Campaign, MediaType, PageInUse, Status,
-                              Project, Tag, Transcription, User,
-                              UserAssetTagCollection, UserProfile)
+from concordia.models import (Asset, Campaign, MediaType, PageInUse, Project, Status,
+                              Tag, Transcription, User, UserAssetTagCollection,
+                              UserProfile)
 
 logging.disable(logging.CRITICAL)
 
@@ -503,8 +503,7 @@ class ViewTest_Concordia(TestCase):
         # Act
 
         response = self.client.get(
-            "/campaigns/test-campaign-slug/delete/asset/test-asset-slug1/",
-            follow=True,
+            "/campaigns/test-campaign-slug/delete/asset/test-asset-slug1/", follow=True
         )
 
         # Assert
@@ -512,9 +511,7 @@ class ViewTest_Concordia(TestCase):
 
         campaign2 = Campaign.objects.get(slug="test-campaign-slug")
         all_assets = Asset.objects.filter(campaign=campaign2)
-        hided_assets = Asset.objects.filter(
-            campaign=campaign2, status=Status.INACTIVE
-        )
+        hided_assets = Asset.objects.filter(campaign=campaign2, status=Status.INACTIVE)
         self.assertEqual(len(all_assets), 2)
         self.assertEqual(len(hided_assets), 1)
 
@@ -1151,9 +1148,7 @@ class ViewTest_Concordia(TestCase):
 
         # Assert
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(
-            response, template_name="transcriptions/campaign.html"
-        )
+        self.assertTemplateUsed(response, template_name="transcriptions/campaign.html")
 
     def test_ConcordiaProjectView_get_page2(self):
         """
@@ -1198,9 +1193,7 @@ class ViewTest_Concordia(TestCase):
 
         # Assert
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(
-            response, template_name="transcriptions/campaign.html"
-        )
+        self.assertTemplateUsed(response, template_name="transcriptions/campaign.html")
 
     def test_FilterCampaigns_get(self):
         """Test list of filer campaign get API"""

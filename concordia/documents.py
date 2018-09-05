@@ -1,15 +1,12 @@
 # documents.py
 
-from django_elasticsearch_dsl import DocType, Index
 from django.contrib.auth.models import User
+from django_elasticsearch_dsl import DocType, Index
 
 # Name of the Elasticsearch index
-user = Index('users')
+user = Index("users")
 # See Elasticsearch Indices API reference for available settings
-user.settings(
-    number_of_shards=1,
-    number_of_replicas=0
-)
+user.settings(number_of_shards=1, number_of_replicas=0)
 
 
 @user.doc_type
@@ -18,10 +15,7 @@ class UserDocument(DocType):
         model = User  # The model associated with this DocType
 
         # The fields of the model you want to be indexed in Elasticsearch
-        fields = [
-            'last_login',
-            'date_joined'
-        ]
+        fields = ["last_login", "date_joined"]
 
         # Ignore auto updating of Elasticsearch when a model is saved
         # or deleted:

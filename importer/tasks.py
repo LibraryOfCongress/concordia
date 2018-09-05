@@ -54,8 +54,7 @@ def get_campaign_pages(campaign_url):
     resp = get_request_data(campaign_url, params={"fo": "json", "at": "pagination"})
     total_pages = resp.get("pagination", {}).get("total", 0)
     logger.info(
-        "total_campaign_pages: %s for campaign url : %s"
-        % (total_pages, campaign_url)
+        "total_campaign_pages: %s for campaign url : %s" % (total_pages, campaign_url)
     )
     return total_pages
 

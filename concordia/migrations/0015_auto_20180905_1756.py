@@ -5,23 +5,20 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('concordia', '0014_auto_20180904_1758'),
-    ]
+    dependencies = [("concordia", "0014_auto_20180904_1758")]
 
     operations = [
         migrations.AlterModelOptions(
-            name='asset',
-            options={'ordering': ['title', 'sequence']},
+            name="asset", options={"ordering": ["title", "sequence"]}
         ),
         migrations.AddField(
-            model_name='asset',
-            name='download_url',
+            model_name="asset",
+            name="download_url",
             field=models.CharField(blank=True, max_length=255, null=True),
         ),
         migrations.AddField(
-            model_name='asset',
-            name='resource_id',
+            model_name="asset",
+            name="resource_id",
             field=models.CharField(blank=True, max_length=100, null=True),
         ),
     ]

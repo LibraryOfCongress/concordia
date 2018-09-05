@@ -11,7 +11,7 @@ from rest_framework import generics, status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from concordia.models import Asset, Campaign, Project
+from concordia.models import Asset, Campaign, Item, Project
 from importer.models import CampaignItemAssetCount, CampaignTaskDetails
 from importer.serializer import CreateCampaign
 from importer.tasks import (download_write_campaign_item_assets,
@@ -88,9 +88,7 @@ def get_task_status(request, task_id):
                 [
                     len(files)
                     for path, dirs, files in os.walk(
-                        os.path.join(
-                            project_local_path, ciac.campaign_item_identifier
-                        )
+                        os.path.join(project_local_path, ciac.campaign_item_identifier)
                     )
                 ]
             )
@@ -123,9 +121,7 @@ def get_task_status(request, task_id):
                 return Response({"state": task_state, "progress": progress})
             except CampaignTaskDetails.DoesNotExist:
                 return Response(
-                    {
-                        "message": "Requested task id Does not exists campaign progress"
-                    },
+                    {"message": "Requested task id Does not exists campaign progress"},
                     status.HTTP_404_NOT_FOUND,
                 )
             # return Response({"message": "Requested task id Does not exists for item progress"},
@@ -162,11 +158,9 @@ def check_completeness(ciac, item_id=None):
             [len(files) for path, dirs, files in os.walk(project_local_path)]
         )
         if (
-            campaign_downloaded_asset_count
-            == ciac.campaign_task.campaign_asset_count
+            campaign_downloaded_asset_count == ciac.campaign_task.campaign_asset_count
         ) and (
-            campaign_downloaded_item_count
-            == ciac.campaign_task.campaign_item_count
+            campaign_downloaded_item_count == ciac.campaign_task.campaign_item_count
         ):
             return True
         else:
@@ -178,7 +172,7 @@ def check_completeness(ciac, item_id=None):
     return False
 
 
-def save_campaign_item_assets(project, the_path, item_id=None):
+def save_campaign_item_assets(project, item, the_path, item_id=None):
 
     for root, dirs, files in os.walk(the_path):
         for filename in files:
@@ -187,6 +181,7 @@ def save_campaign_item_assets(project, the_path, item_id=None):
                 title = item_id
             else:
                 title = file_path.replace(the_path + "/", "").split("/")[0]
+
             media_url = file_path.replace(settings.IMPORTER["IMAGES_FOLDER"], "")
             sequence = int(os.path.splitext(filename)[0])
             Asset.objects.create(
@@ -198,6 +193,7 @@ def save_campaign_item_assets(project, the_path, item_id=None):
                 sequence=sequence,
                 campaign=project.campaign,
                 project=project,
+                item=item,
             )
 
             try:
@@ -285,18 +281,14 @@ def check_and_save_campaign_completeness(ciac):
             )
 
         project_local_path = os.path.join(
-            settings.IMPORTER["IMAGES_FOLDER"],
-            project.campaign.slug,
-            project.slug,
+            settings.IMPORTER["IMAGES_FOLDER"], project.campaign.slug, project.slug
         )
 
         save_campaign_item_assets(project, project_local_path)
 
         shutil.rmtree(
             os.path.join(
-                settings.IMPORTER["IMAGES_FOLDER"],
-                project.campaign.slug,
-                project.slug,
+                settings.IMPORTER["IMAGES_FOLDER"], project.campaign.slug, project.slug
             )
         )
 
@@ -308,24 +300,43 @@ def check_and_save_campaign_completeness(ciac):
 def check_and_save_item_completeness(ciac, item_id):
 
     if check_completeness(ciac, item_id):
+        campaign, created = Campaign.objects.get_or_create(
+            title=ciac.campaign_task.campaign_name,
+            slug=ciac.campaign_task.campaign_slug,
+            description=ciac.campaign_task.campaign_name,
+            is_active=True,
+        )
+
         try:
             project = Project.objects.get(
                 campaign__slug=ciac.campaign_task.campaign_slug,
                 slug=ciac.campaign_task.project_slug,
             )
         except Project.DoesNotExist:
-            campaign, created = Campaign.objects.get_or_create(
-                title=ciac.campaign_task.campaign_name,
-                slug=ciac.campaign_task.campaign_slug,
-                description=ciac.campaign_task.campaign_name,
-                is_active=True,
-            )
 
             project = Project.objects.create(
                 title=ciac.campaign_task.project_name,
                 campaign=campaign,
                 slug=ciac.campaign_task.project_slug,
             )
+
+        try:
+            item = Item.objects.get(
+                campaign__slug=ciac.campaign_task.campaign_slug,
+                project__slug=ciac.campaign_task.project_slug,
+                title=item_id,
+                slug=item_id,
+                item_id=item_id,
+            )
+        except Item.DoesNotExist:
+            item = Item.objects.create(
+                campaign=campaign,
+                project=project,
+                item_id=item_id,
+                title=item_id,
+                slug=item_id,
+            )
+
         item_local_path = os.path.join(
             settings.IMPORTER["IMAGES_FOLDER"],
             project.campaign.slug,
@@ -333,12 +344,10 @@ def check_and_save_item_completeness(ciac, item_id):
             item_id,
         )
 
-        save_campaign_item_assets(project, item_local_path, item_id)
+        save_campaign_item_assets(project, item, item_local_path, item_id)
         shutil.rmtree(
             os.path.join(
-                settings.IMPORTER["IMAGES_FOLDER"],
-                project.campaign.slug,
-                project.slug,
+                settings.IMPORTER["IMAGES_FOLDER"], project.campaign.slug, project.slug
             )
         )
         return True

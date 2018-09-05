@@ -132,9 +132,10 @@ class ViewTest_Exporter(TestCase):
         )
         self.transcription2.save()
 
-
         # Make sure correct folders structure exists for Local Storage Campaign
-        campaign_folder = "{0}/{1}".format(settings.MEDIA_ROOT, locstor_campaign_name_str)
+        campaign_folder = "{0}/{1}".format(
+            settings.MEDIA_ROOT, locstor_campaign_name_str
+        )
         if not os.path.exists(campaign_folder):
             os.makedirs(campaign_folder)
         item_dir = "{0}/{1}".format(campaign_folder, locstor_asset_folder_name_str)
@@ -178,7 +179,6 @@ class ViewTest_Exporter(TestCase):
             zipped_file.close()
             f.close()
 
-
         # Act (s3 campaign)
         response2 = self.client.get("/campaigns/exportBagit/test_s3/")
 
@@ -186,8 +186,7 @@ class ViewTest_Exporter(TestCase):
 
         self.assertEqual(response2.status_code, 200)
         self.assertEquals(
-            response2.get("Content-Disposition"),
-            "attachment; filename=test_s3.zip",
+            response2.get("Content-Disposition"), "attachment; filename=test_s3.zip"
         )
         try:
             f = io.BytesIO(response2.content)
@@ -201,7 +200,6 @@ class ViewTest_Exporter(TestCase):
         finally:
             zipped_file.close()
             f.close()
-
 
         # Clean up temp folders
         try:

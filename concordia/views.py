@@ -13,21 +13,20 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
-from django.db.models import Count, Q, Max
+from django.db.models import Count, Max, Q
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import Http404, get_object_or_404, redirect, render
 from django.template import loader
 from django.urls import reverse
 from django.views.generic import FormView, TemplateView, View
+from registration.backends.hmac.views import RegistrationView
 from rest_framework import generics, status
 from rest_framework.response import Response
-from registration.backends.hmac.views import RegistrationView
-
 from rest_framework.test import APIRequestFactory
 
 from concordia.forms import (CaptchaEmbedForm, ConcordiaContactUsForm,
                              ConcordiaUserEditForm, ConcordiaUserForm)
-from concordia.models import (Asset, Campaign, PageInUse, Status, Project, Tag,
+from concordia.models import (Asset, Campaign, Item, PageInUse, Project, Status, Tag,
                               Transcription, UserAssetTagCollection, UserProfile)
 from concordia.views_ws import PageInUseCreate, PageInUsePut
 from importer.views import CreateCampaignView
@@ -36,6 +35,7 @@ logger = getLogger(__name__)
 
 ASSETS_PER_PAGE = 36
 PROJECTS_PER_PAGE = 36
+ITEMS_PER_PAGE = 36
 
 
 def concordia_api(relative_path):
@@ -149,12 +149,53 @@ class ConcordiaProjectView(TemplateView):
             project = Project.objects.get(slug=self.args[1])
         except Campaign.DoesNotExist:
             raise Http404
+        except Project.DoesNotExist:
+            raise Http404
+
+        item_list = Item.objects.filter(campaign=campaign, project=project).order_by(
+            "item_id"
+        )
+
+        paginator = Paginator(item_list, ITEMS_PER_PAGE)
+
+        if not self.request.GET.get("page"):
+            page = 1
+        else:
+            page = self.request.GET.get("page")
+
+        items = paginator.get_page(page)
+
+        return dict(
+            super().get_context_data(**kws),
+            campaign=campaign,
+            project=project,
+            items=items,
+        )
+
+
+class ConcordiaItemView(TemplateView):
+    template_name = "transcriptions/item.html"
+
+    def get_context_data(self, **kws):
+        try:
+            campaign = Campaign.objects.get(slug=self.args[0])
+            project = Project.objects.get(slug=self.args[1])
+            item = Item.objects.get(slug=self.args[2])
+        except Campaign.DoesNotExist:
+            raise Http404
+        except Project.DoesNotExist:
+            raise Http404
+        except Item.DoesNotExist:
+            raise Http404
+
         asset_list = Asset.objects.filter(
             campaign=campaign,
+            project=project,
+            item=item,
             status__in=[Status.EDIT, Status.SUBMITTED, Status.COMPLETED, Status.ACTIVE],
         ).order_by("title", "sequence")
-        paginator = Paginator(asset_list, ASSETS_PER_PAGE)        
-        
+        paginator = Paginator(asset_list, ASSETS_PER_PAGE)
+
         if not self.request.GET.get("page"):
             page = 1
         else:
@@ -163,7 +204,11 @@ class ConcordiaProjectView(TemplateView):
         assets = paginator.get_page(page)
 
         return dict(
-            super().get_context_data(**kws), campaign=campaign, project=project, assets=assets
+            super().get_context_data(**kws),
+            campaign=campaign,
+            project=project,
+            item=item,
+            assets=assets,
         )
 
 
@@ -229,18 +274,28 @@ class ConcordiaAssetView(TemplateView):
         :return: dictionary of items used in the template
         """
 
-        max_sequence = Asset.objects.filter(campaign__slug=self.args[0]).aggregate(Max('sequence'))['sequence__max']
+        max_sequence = Asset.objects.filter(campaign__slug=self.args[0]).aggregate(
+            Max("sequence")
+        )["sequence__max"]
 
         asset = Asset.objects.get(campaign__slug=self.args[0], slug=self.args[1])
         try:
-            prev_asset = Asset.objects.get(campaign__slug=self.args[0],
-                                           sequence=(lambda x, y: x - 1 if x > 0 else y)(asset.sequence, max_sequence))
+            prev_asset = Asset.objects.get(
+                campaign__slug=self.args[0],
+                sequence=(lambda x, y: x - 1 if x > 0 else y)(
+                    asset.sequence, max_sequence
+                ),
+            )
         except Asset.DoesNotExist:
             prev_asset = asset
 
         try:
-            next_asset = Asset.objects.get(campaign__slug=self.args[0],
-                                           sequence=(lambda x, y: x + 1 if x < max_sequence else 0)(asset.sequence, max_sequence))
+            next_asset = Asset.objects.get(
+                campaign__slug=self.args[0],
+                sequence=(lambda x, y: x + 1 if x < max_sequence else 0)(
+                    asset.sequence, max_sequence
+                ),
+            )
         except Asset.DoesNotExist:
             next_asset = asset
 
@@ -318,8 +373,8 @@ class ConcordiaAssetView(TemplateView):
         self.get_context_data()
         asset = Asset.objects.get(campaign__slug=self.args[0], slug=self.args[1])
 
-        if self.request.POST.get("action").lower() == 'contact a manager':
-            return redirect(reverse('contact') + "?pre_populate=true")
+        if self.request.POST.get("action").lower() == "contact a manager":
+            return redirect(reverse("contact") + "?pre_populate=true")
 
         if self.request.user.is_anonymous:
             captcha_form = CaptchaEmbedForm(self.request.POST)
@@ -391,9 +446,7 @@ class ConcordiaAlternateAssetView(View):
                 .first()
             )
 
-            return HttpResponse(
-                "/campaigns/%s/asset/%s/" % (campaign_slug, asset.slug)
-            )
+            return HttpResponse("/campaigns/%s/asset/%s/" % (campaign_slug, asset.slug))
 
 
 class ConcordiaPageInUse(View):
@@ -652,9 +705,7 @@ def publish_project(request, campaign, project, is_publish):
     """ Publish/Unpublish a project to other users. """
 
     try:
-        sub_collection = Project.objects.get(
-            collection__slug=campaign, slug=project
-        )
+        sub_collection = Project.objects.get(collection__slug=campaign, slug=project)
     except Project.DoesNotExist:
         raise Http404
 

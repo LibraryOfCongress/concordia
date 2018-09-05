@@ -68,9 +68,12 @@ tx_urlpatterns = (
             name="transcription",
         ),
         re_path(
-            r"^([^/]+)/([^/]+)/$",
-            views.ConcordiaProjectView.as_view(),
-            name="project",
+            r"^([^/]+)/([^/]+)/$", views.ConcordiaProjectView.as_view(), name="project"
+        ),
+        re_path(
+            r"^([^/]+)/([^/]+)/([^/]+)/$",
+            views.ConcordiaItemView.as_view(),
+            name="item",
         ),
         re_path(
             r"publish/campaign/(?P<campaign>[a-zA-Z0-9-]+)/(?P<is_publish>[a-zA-Z]+)/$",
@@ -175,9 +178,7 @@ urlpatterns += [
 
 urlpatterns += [
     re_path(
-        r"^create_campaign/$",
-        CreateCampaignView.as_view(),
-        name="create_campaign",
+        r"^create_campaign/$", CreateCampaignView.as_view(), name="create_campaign"
     ),
     re_path(
         r"^get_task_status/(?P<task_id>[a-zA-Z0-9-]+)$",
@@ -195,9 +196,7 @@ urlpatterns += [
         name="check_and_save_campaign_assets",
     ),
     re_path(
-        r"^filter/campaigns/$",
-        views.FilterCampaigns.as_view(),
-        name="filter_campaigns",
+        r"^filter/campaigns/$", views.FilterCampaigns.as_view(), name="filter_campaigns"
     ),
 ]
 
