@@ -246,6 +246,10 @@ p.hero-secondary.offwhite-text {
     color: var(--text-color-offwhite);
 }
 
+.profile_edit {
+    color: var(--primary-color) !important;
+}
+
 .profile_edit:hover {
     color: var(--primary-color-hover);
 }
@@ -306,6 +310,10 @@ main {
 input {
     color: var(--text-color-primary);
     background-color: var(--bg-offwhite);
+}
+
+hr {
+    color: var(--bg-dark-gray);
 }
 
 .navbar {
