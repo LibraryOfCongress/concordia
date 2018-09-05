@@ -114,6 +114,9 @@ urlpatterns = [
     # Apps
     re_path(r"^forum/", include(board.urls)),
     # Web Services
+    re_path(r"^ws/anonymous_user/$", views_ws.AnonymousUserGet.as_view()),
+    re_path(r"^ws/user_profile/(?P<user_id>(.*?))/$", views_ws.UserProfileGet.as_view()),
+    re_path(r"^ws/user/(?P<user_name>(.*?))/$", views_ws.UserGet.as_view()),
     re_path(r"^ws/page_in_use/(?P<page_url>(.*?))/$", views_ws.PageInUseGet.as_view()),
     re_path(
         r"^ws/page_in_use_update/(?P<page_url>(.*?))/$", views_ws.PageInUsePut.as_view()
@@ -157,6 +160,10 @@ urlpatterns = [
     re_path(
         r"^ws/transcription_by_user/(?P<user>(.*?))/$",
         views_ws.TranscriptionByUser().as_view(),
+    ),
+    re_path(
+        r"^ws/transcription_by_asset/(?P<asset_slug>(.*?))/$",
+        views_ws.TranscriptionByAsset().as_view(),
     ),
     re_path(r"^ws/transcription_create/$", views_ws.TranscriptionCreate().as_view()),
     re_path(r"^ws/tags/(?P<asset>(.*?))/$", views_ws.UserAssetTagsGet().as_view()),

@@ -2,17 +2,18 @@
 
 from datetime import datetime, timedelta
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import QueryDict
 from django.shortcuts import get_object_or_404
 from rest_framework import exceptions, generics, status
 from rest_framework.authentication import BasicAuthentication
 from rest_framework.response import Response
 
-from .models import (Asset, Collection, PageInUse, Status, Tag, Transcription, User,
+from .models import (Asset, Collection, PageInUse, Status, Tag, Transcription, User, UserProfile,
                      UserAssetTagCollection)
 from .serializers import (AssetSerializer, CollectionDetailSerializer,
                           PageInUseSerializer, TagSerializer, TranscriptionSerializer,
-                          UserAssetTagSerializer)
+                          UserAssetTagSerializer, UserSerializer, UserProfileSerializer)
 
 
 class ConcordiaAPIAuth(BasicAuthentication):
@@ -30,6 +31,63 @@ class ConcordiaAPIAuth(BasicAuthentication):
             raise exceptions.AuthenticationFailed
 
         return request.session.session_key, None
+
+
+class AnonymousUserGet(generics.RetrieveAPIView):
+    """
+    GET: Return anonymous user, Create it if needed (this is not the AnonymousUser django user)
+    """
+    model = User
+    authentication_classes = (ConcordiaAPIAuth,)
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+    def get_object(self):
+        anon_user = User.objects.filter(username="anonymous").first()
+        if anon_user is None:
+            anon_user = User.objects.create_user(
+                username="anonymous",
+                email="anonymous@anonymous.com",
+                password="concanonymous",
+            )
+        return anon_user
+
+
+class UserProfileGet(generics.RetrieveAPIView):
+    """
+    GET: Return a user profile
+    """
+    model = UserProfile
+    authentication_classes = (ConcordiaAPIAuth,)
+    queryset = UserProfile.objects.all()
+    serializer_class = UserProfileSerializer
+    lookup_field = "user_id"
+
+    def get_object(self):
+        try:
+            user = User.objects.get(id=int(self.kwargs["user_id"]))
+            return (
+                UserProfile.objects.get(user=user)
+            )
+        except ObjectDoesNotExist:
+            return None
+
+
+class UserGet(generics.RetrieveAPIView):
+    """
+    GET: Return a User
+    """
+    model = User
+    authentication_classes = (ConcordiaAPIAuth,)
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    lookup_field = "user_name"
+
+    def get_object(self):
+        try:
+            return User.objects.get(username=self.kwargs["user_name"])
+        except ObjectDoesNotExist:
+            return None
 
 
 class PageInUseCreate(generics.CreateAPIView):
@@ -239,15 +297,13 @@ class AssetRandomInCollection(generics.RetrieveAPIView):
     lookup_fields = ("collection", "slug")
 
     def get_object(self):
-        asset = (Asset.objects.filter(collection__slug=self.kwargs["collection"], status=Status.EDIT)
-                 .exclude(slug=self.kwargs["slug"])
-                 .order_by("?")
-                 .first()
-                 )
-
-        if len(asset) > 0:
-            return asset[0]
-        else:
+        try:
+            return (Asset.objects.filter(collection__slug=self.kwargs["collection"], status=Status.EDIT)
+                    .exclude(slug=self.kwargs["slug"])
+                    .order_by("?")
+                    .first()
+                    )
+        except ObjectDoesNotExist:
             return None
 
 
@@ -339,9 +395,30 @@ class TranscriptionByUser(generics.ListAPIView):
     def get_queryset(self):
         """
         Return the user's transcriptions
-        :return: Transcription object
+        :return: Transcription object list
         """
         return Transcription.objects.filter(user_id=self.kwargs["user"]).order_by(
+            "-updated_on"
+        )
+
+
+class TranscriptionByAsset(generics.ListAPIView):
+    """
+    GET: Get the transcriptions for an asset
+    """
+
+    model = Transcription
+    authentication_classes = (ConcordiaAPIAuth,)
+    serializer_class = TranscriptionSerializer
+    queryset = Transcription.objects.all()
+    lookup_field = "asset_slug"
+
+    def get_queryset(self):
+        """
+        Return the transcriptions for an asset
+        :return: Transcription object list
+        """
+        return Transcription.objects.filter(asset__slug=self.kwargs["asset_slug"]).order_by(
             "-updated_on"
         )
 

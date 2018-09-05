@@ -1,6 +1,32 @@
 from rest_framework import serializers
+from django.contrib.auth.models import User
 
 from . import models
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ("id",
+                  "username",
+                  "password",
+                  "first_name",
+                  "last_name",
+                  "email",
+                  "is_staff",
+                  "is_active",
+                  "date_joined"
+                  )
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = models.UserProfile
+        fields = ("id",
+                  "user",
+                  "myfile",
+                  )
 
 
 class CollectionListSerializer(serializers.ModelSerializer):
@@ -24,6 +50,7 @@ class AssetSetForCollectionSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = models.Asset
         fields = (
+            "id",
             "title",
             "slug",
             "description",
@@ -126,7 +153,7 @@ class TranscriptionSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = models.Transcription
-        fields = ("asset", "user_id", "text", "status", "updated_on")
+        fields = ("id", "asset", "user_id", "text", "status", "updated_on")
 
 
 class TagSerializer(serializers.ModelSerializer):

@@ -10,7 +10,7 @@ from django.utils.encoding import force_text
 from rest_framework import status
 
 from concordia.models import (Asset, Collection, MediaType, PageInUse, Status, Tag,
-                              Transcription, User, UserAssetTagCollection)
+                              Transcription, User, UserProfile, UserAssetTagCollection)
 
 logging.disable(logging.CRITICAL)
 
@@ -43,6 +43,44 @@ class ViewWSTest_Concordia(TestCase):
 
         # create a session cookie
         self.client.session["foo"] = 123  # HACK: needed for django Client
+
+    def test_AnonymousUser_get(self):
+        """
+        This unit test tests the get  route ws/anonymous_user/
+        :param self:
+        :return:
+        """
+
+        # Arrange
+        self.login_user()
+
+        # Act
+        response = self.client.get("/ws/anonymous_user/")
+        response2 = self.client.get("/ws/anonymous_user/")
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.content, response2.content)
+
+    def test_UserProfile_get(self):
+        """
+        This unit test tests the get route ws/user_profile/<user_id>/
+        :param self:
+        :return:
+        """
+
+        # Arrange
+        self.login_user()
+
+        profile = UserProfile(user_id=self.user.id)
+        profile.save()
+
+        # Act
+        response = self.client.get("/ws/user_profile/%s/" % self.user.id)
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
 
     def test_PageInUse_post(self):
         """
@@ -679,6 +717,7 @@ class ViewWSTest_Concordia(TestCase):
                 'subcollections': [],
                 "assets": [
                     {
+                        "id": self.asset3.id,
                         "title": "TestAsset3",
                         "slug": "Asset3",
                         "description": "Asset Description",
