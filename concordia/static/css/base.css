@@ -1009,19 +1009,9 @@ div.nav-secondary {
     border-radius: 0 0 .5rem .5rem;
 }
 
-.latestblog-imgmask {
-    width: 100%;
-    height: 12.5rem;
-    border-radius: .25rem;
-    overflow: hidden;
-    box-shadow: 0 0 .25rem var(--shadow-color);
-}
-
-.img-latestblog {
-    max-width: 100%;
-    width: 100%;
-    height: auto;
-    overflow: hidden;
+.img-fluid.rounded-circle {
+    max-height: 15rem;
+    width: auto;
 }
 
 .collection-image-link {
