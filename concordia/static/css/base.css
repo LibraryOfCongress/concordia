@@ -248,6 +248,7 @@ p.hero-secondary.offwhite-text {
 
 .profile_edit {
     color: var(--primary-color) !important;
+    cursor: pointer;
 }
 
 .profile_edit:hover {
