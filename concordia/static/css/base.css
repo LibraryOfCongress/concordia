@@ -4,7 +4,7 @@
   --secondary-color: rgba(0,167,228,1); /* #00A7E4 */
   --secondary-color-hover: rgba(0,35,71,1); /* #002347 */
   --text-color-primary: rgba(38,50,56,1); /* #263238 */
-  /* --text-color-primary: rgba(51,51,51,1); /* #333333 */
+  --color-success: rgba(22,201,74,1); /* #16C94A */
   --text-color-offwhite: rgba(250,250,250,1); /* #FAFAFA */
   --text-nav-current: rgba(252,76,2,1); /* #FC4C02 */
   --bg-offwhite: rgba(250,250,250,1); /* #FAFAFA */
@@ -20,10 +20,10 @@
   --shadow-color: rgba(51,51,51,.8); /* #333333 */
   --height-top-nav: 8.0625rem;
   --height-main: calc( 100vh - 8.0625rem ); /* Subtract height of navbar */
-  --height-contribute-image: calc( 100vh - ( 9.625rem + 2.375rem ) ); /* Making room for instructions button on bottom and breadcrumb and nav on top */
-  --height-contribute-input: calc( ( 100vh - ( 8.0625rem + 1.5625rem + 2.3125rem ) ) / 2 ); /* Subtract height of navbar, breadcrumd, and nav pills */
-  --height-tags-input: calc( 50vh - 3.375rem );
-  --top-value-tags-input: calc( 50vh - 3rem );
+  --height-contribute-image: calc( 100vh - ( 8.0625rem + 1.59375rem + 2.375rem ) ); /* Making room for instructions button on bottom and breadcrumb and nav on top */
+  --height-contribute-input: calc( 50vh - 5.96875rem ); /* Subtract height of navbar, breadcrumd, and nav pills */
+  --height-tags-input: calc( 50vh - 2.625rem );
+  --top-tags-input: calc( 50vh - .75rem );
 }
 
 body {
@@ -1112,7 +1112,7 @@ div.nav-secondary {
 }
 
 .contribute-box {
-    height: calc( 100vh - 6.0625rem );
+    height: calc( 100vh - ( 8.0625rem + 1.59375rem ) );
 }
 
 .contribute-box .dropdown-menu {
@@ -1193,7 +1193,7 @@ div.nav-secondary {
     25%  { width: 25%; height: 25%; opacity: .25; }
     50%  { width: 50%; height: 50%; opacity: .50; }
     75%  { width: 75%; height: 75%; opacity: .75; }
-    85%  { color: rgba(38,50,56,.3); }
+    90%  { color: rgba(38,50,56,.3); }
     100% {width: 100%; height: 100%; opacity: 1; color: rgba(38,50,56,1); }
 }
 
@@ -1274,12 +1274,20 @@ border: none;
 box-shadow: none;
 }
 
+.tag-input {
+    background-color: var(--bg-offwhite);
+    height: var(--height-contribute-input);
+    border: 1px solid var(--bg-lightest-gray);
+    resize: none;
+    overflow-y: auto;
+}
+
 .tag-input input {
     display: block;
     position: absolute;
-    top: var(--top-value-tags-input);
+    top: var(--top-tags-input);
     border: 1px solid var(--bg-lightest-gray);
-    margin-left: -.5625rem;
+    margin-left: -.5rem;
     width: calc( 100% - 2rem );
     height: 2.375rem;
     cursor: text;
