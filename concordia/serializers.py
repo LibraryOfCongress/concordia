@@ -97,6 +97,7 @@ class CollectionDetailSerializer(serializers.HyperlinkedModelSerializer):
 
 class AssetSerializer(serializers.HyperlinkedModelSerializer):
     collection = CollectionDetailSerializer()
+    subcollection = SubcollectionSerializer()
 
     class Meta:
         model = models.Asset

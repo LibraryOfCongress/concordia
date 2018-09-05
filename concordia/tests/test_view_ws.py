@@ -833,7 +833,7 @@ class ViewWSTest_Concordia(TestCase):
                 },
                 "sequence": None,
                 "metadata": None,
-                "subcollection": None,
+                'subcollection': {'metadata': None, 'slug': '', 'status': None, 'title': ''},
                 "status": None,
             },
         )
