@@ -1,7 +1,28 @@
 {% extends "base.html" %}
 {% block title %}User Profile Page{% endblock title %}
-{% block head_content %}{% endblock head_content %}
-{% block main_content %}
+{% block head_content %}
+<style type="text/css">
+.img-circle {
+    border-radius: 60%;
+    width: 160px;
+    height: 160px;
+}
+
+.form-control {
+    border-radius: 8px !important;
+}
+
+.change-password,
+.change-password:hover {
+    background: #5f656b;
+    color: #fff;
+}
+
+.m-top-5 {
+    margin-top: 5px;
+}
+
+</style>
 <style type="text/css">
 .profile_edit {
     color: #a3a3a3;
@@ -34,7 +55,18 @@ body {
 }
 
 </style>
+{% endblock head_content %}
+
+{% block main_content %}
 <div class="container bootstrap snippet well">
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %} alert-dismissable col-md-10 mx-auto rounded">
+        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&#215;</button>
+        {{ message }}
+    </div>
+    {% endfor %}
+    {% endif %}
     <div class="row">
         <div class="col-sm-5">
             <h3>Account Settings - <span id='toggle_edit_section' class='profile_edit'>edit</span></h3>
@@ -136,28 +168,9 @@ body {
         {% endfor %} {% endif %}
     </table>
 </div>
-<style type="text/css">
-.img-circle {
-    border-radius: 60%;
-    width: 160px;
-    height: 160px;
-}
+{% endblock main_content %}
 
-.form-control {
-    border-radius: 8px !important;
-}
-
-.change-password,
-.change-password:hover {
-    background: #5f656b;
-    color: #fff;
-}
-
-.m-top-5 {
-    margin-top: 5px;
-}
-
-</style>
+{% block body_scripts %}
 <script>
 $(".password-section").hide();
 $("#toggle_password_section").click(function(e) {
@@ -184,8 +197,10 @@ document.getElementById('toggle_edit_section').onclick = function() {
 
 $('#myfile').change(function() {
     $('.edit .d-none').removeClass('d-none')
-}); { % if form.errors % }
-$("#toggle_edit_section").click() { % endif % }
+}); 
+{% if form.errors %}
+$("#toggle_edit_section").click() 
+{% endif %}
 
 </script>
-{% endblock main_content %}
+{% endblock body_scripts %}
