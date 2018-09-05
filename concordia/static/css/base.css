@@ -247,7 +247,7 @@ p.hero-secondary.offwhite-text {
 }
 
 .profile_edit {
-    color: var(--primary-color) !important;
+    color: var(--primary-color);
     cursor: pointer;
 }
 
