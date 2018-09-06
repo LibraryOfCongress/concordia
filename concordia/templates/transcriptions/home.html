@@ -2,8 +2,7 @@
 {% block title %}Citizen Historian Collections{% endblock title %}
 {% block main_content %} {% load staticfiles %}
 {% load auth_extras %}
-<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
-<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
 <div class="container-fluid py-default">
   <div class="row">
     <div class="col-md-10 mx-auto bg-offwhite rounded">
@@ -89,10 +88,13 @@
     </div>
   </div>
 </div>
+{% endblock main_content %}
 
+{% block body_scripts %}
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 <script>
     $(document).ready(function(){
-         $(document).on('shown.bs.modal',"#collectionConfirmModal", function (e) {
+         $(document).on('show.bs.modal',"#collectionConfirmModal", function (e) {
              var $invoker = $(e.relatedTarget);
              $("#confirmbtn").click(function(e){
                 var collection_slug = $($invoker[0]).attr('id');
@@ -121,6 +123,4 @@
          });
     });
 </script>
-{% endblock main_content %}
-
-
+{% endblock body_scripts %}
