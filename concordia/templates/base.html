@@ -169,6 +169,23 @@
                         <li class="nav-item">
                             <a class="nav-link d-none" href="#">Blog</a>
                         </li>
+                        {% if user.is_authenticated %}
+                            <li class="nav-item dropdown nav-dropdown">
+                                <a class="nav-link dropdown-toggle" href="http://example.com" id="nav-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Account</a>
+                                <div class="dropdown-menu" aria-labelledby="nav-dropdown">
+                                    <a class="dropdown-item" href="{% url 'user-profile' %}">{{ user }} profile</a> {% if user.is_superuser %}
+                                    <a class="dropdown-item" href="{% url 'admin:index' %}">Admin pages</a> {% endif %}
+                                    <a class="dropdown-item" href="{% url 'logout' %}">Logout</a>
+                                </div>
+                            </li>
+                        {% else %}
+                            <li class="nav-item">
+                                <a class="nav-link d-block d-lg-none" href="{% url 'login' %}">Login</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link d-block d-lg-none" href="{% url 'registration_register' %}">Register</a>
+                            </li>
+                        {% endif %}
                     {% elif '/transcribe/' in request.path %}
                         <li class="nav-item">
                             <a class="nav-link" href="/">Home</a>
@@ -221,12 +238,23 @@
                     <li class="nav-item">
                         <a class="nav-link d-none" href="#">Blog</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link d-block d-lg-none" href="{% url 'login' %}">Login</a>
-                    </li>
-                    <li class="nav-item active">
-                        <a class="nav-link" href="#">Register</a>
-                    </li>
+                    {% if user.is_authenticated %}
+                        <li class="nav-item dropdown nav-dropdown">
+                            <a class="nav-link dropdown-toggle" href="http://example.com" id="nav-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Account</a>
+                            <div class="dropdown-menu" aria-labelledby="nav-dropdown">
+                                <a class="dropdown-item" href="{% url 'user-profile' %}">{{ user }} profile</a> {% if user.is_superuser %}
+                                <a class="dropdown-item" href="{% url 'admin:index' %}">Admin pages</a> {% endif %}
+                                <a class="dropdown-item" href="{% url 'logout' %}">Logout</a>
+                            </div>
+                        </li>
+                        {% else %}
+                            <li class="nav-item">
+                                <a class="nav-link d-block d-lg-none" href="{% url 'login' %}">Login</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link d-block d-lg-none" href="{% url 'registration_register' %}">Register</a>
+                            </li>
+                        {% endif %}
                     {% else %}
                     <li class="nav-item">
                         <a class="nav-link" href="/">Home</a>
@@ -244,16 +272,22 @@
                     <li class="nav-item">
                         <a class="nav-link d-none" href="#">Blog</a>
                     </li>
-	                    {% if user.is_authenticated %}
-	                    <li class="nav-item dropdown nav-dropdown active">
-	                        <a class="nav-link dropdown-toggle" href="http://example.com" id="nav-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Account</a>
-	                        <div class="dropdown-menu" aria-labelledby="nav-dropdown">
-	                            <a class="dropdown-item" href="{% url 'user-profile' %}">{{ user }} profile<span class="sr-only">(current)</span></a> {% if user.is_superuser %}
-	                            <a class="dropdown-item" href="{% url 'admin:index' %}">Admin pages</a> {% endif %}
-	                            <a class="dropdown-item" href="{% url 'logout' %}">Logout</a>
-	                        </div>
-	                    </li>
-	                    {% endif %}
+	                {% if user.is_authenticated %}
+                        <li class="nav-item dropdown nav-dropdown">
+                            <a class="nav-link dropdown-toggle" href="http://example.com" id="nav-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Account</a>
+                            <div class="dropdown-menu" aria-labelledby="nav-dropdown">
+                                <a class="dropdown-item" href="{% url 'user-profile' %}">{{ user }} profile</a> {% if user.is_superuser %}
+                                <a class="dropdown-item" href="{% url 'admin:index' %}">Admin pages</a> {% endif %}
+                                <a class="dropdown-item" href="{% url 'logout' %}">Logout</a>
+                            </div>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link d-block d-lg-none" href="{% url 'login' %}">Login</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link d-block d-lg-none" href="{% url 'registration_register' %}">Register</a>
+                        </li>
                     {% endif %}
                 </ul>
             </div>
