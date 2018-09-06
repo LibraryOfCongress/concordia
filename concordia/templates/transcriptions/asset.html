@@ -300,41 +300,32 @@
             {% endif %}
 
             var show_message = sessionStorage.getItem('show_message');
+            var status = sessionStorage.getItem('status');
 
-            if( show_message === 'true' ) {
-                {% if transcription.status %}
-                    switch ("{{ transcription.status }}") {
-                        case 'Edit':
-                            $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute py-half fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> Your contribution has been saved.</div>');
-                            setTimeout(function() {
-                                $('.alert-contribute').fadeOut(500);
-                            }, 3000);
-                            break;
-                        case 'Submitted':
-                            $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute py-half fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> The transcription is ready for review.</div>');
-                            setTimeout(function() {
-                                $('.alert-contribute').fadeOut(500);
-                            }, 3000);
-
-                            break;
-                        case 'Completed':
-                            $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute py-half fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> The transcription is now complete.</div>');
-                            setTimeout(function() {
-                                $('.alert-contribute').fadeOut(500);
-                            }, 3000);
-
-                    }
-                {% endif %}
-
+            if( show_message == 'true' ) {
+                if( status == 'save' ) {
+                    $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute py-half fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> Your contribution has been saved.</div>');
+                    setTimeout(function() {
+                        $('.alert-contribute').fadeOut(500);
+                    }, 3000);
+                } elif( status == 'review') {
+                    $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute py-half fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> The transcription is ready for review.</div>');
+                    setTimeout(function() {
+                        $('.alert-contribute').fadeOut(500);
+                    }, 3000);
+                } else {
+                    $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute py-half fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> The transcription is now complete.</div>');
+                    setTimeout(function() {
+                        $('.alert-contribute').fadeOut(500);
+                    }, 3000);
+                }
                 sessionStorage.setItem('show_message', 'false');
-                show_message = sessionStorage.getItem('show_message');
-            } else {
-                sessionStorage.setItem('show_message', 'false');
-                show_message = sessionStorage.getItem('show_message');
+                sessionStorage.setItem('status', '');
             }
+
             show_buttons();
 
-            $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+            $('a[data-toggle="tab"]').on('show.bs.tab', function (e) {
                 var target = $(e.target).attr("href") // activated tab
                 if (target == "#tab-tag") {
                     hide_buttons("tags");
