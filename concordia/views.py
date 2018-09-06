@@ -1,8 +1,10 @@
 import html
 import json
 import os
+from collections import namedtuple
 from datetime import datetime, timedelta
 from logging import getLogger
+from types import SimpleNamespace
 
 import requests
 from captcha.fields import CaptchaField
@@ -20,16 +22,15 @@ from django.shortcuts import Http404, get_object_or_404, redirect, render
 from django.template import loader
 from django.urls import reverse
 from django.views.generic import FormView, TemplateView, View
-from registration.backends.hmac.views import RegistrationView
-from rest_framework import generics, status
-from rest_framework.response import Response
+from registration.backends.simple.views import RegistrationView
+from rest_framework import status, generics
 from rest_framework.test import APIRequestFactory
 
 from concordia.forms import (CaptchaEmbedForm, ConcordiaContactUsForm,
                              ConcordiaUserEditForm, ConcordiaUserForm)
-from concordia.models import (Asset, Campaign, Item, PageInUse, Project, Status, Tag,
-                              Transcription, UserAssetTagCollection, UserProfile)
-from concordia.views_ws import PageInUseCreate, PageInUsePut
+from concordia.models import (Asset, Campaign, PageInUse, Status, Transcription,
+                              UserProfile)
+from concordia.views_ws import PageInUseCreate
 from importer.views import CreateCampaignView
 
 logger = getLogger(__name__)
@@ -48,24 +49,24 @@ def concordia_api(relative_path):
     return data
 
 
-def get_anonymous_user(user_id=True):
+def get_anonymous_user(request, user_id=True):
     """
     Get the user called "anonymous" if it exist. Create the user if it doesn't exist
     This is the default concordia user if someone is working on the site without logging in first.
+    :parameter: request django request object
     :parameter: user_id Boolean defaults to True, if true returns user id, otherwise return user object
     :return: User id or User
     """
-    anon_user = User.objects.filter(username="anonymous").first()
-    if anon_user is None:
-        anon_user = User.objects.create_user(
-            username="anonymous",
-            email="anonymous@anonymous.com",
-            password="concanonymous",
-        )
+    response = requests.get(
+        "%s://%s/ws/anonymous_user/"
+        % (request.scheme, request.get_host()),
+        cookies=request.COOKIES,
+    )
+    anonymous_json_val = json.loads(response.content.decode("utf-8"))
     if user_id:
-        return anon_user.id
+        return anonymous_json_val["id"]
     else:
-        return anon_user
+        return anonymous_json_val
 
 
 class ConcordiaRegistrationView(RegistrationView):
@@ -84,10 +85,7 @@ class AccountProfileView(LoginRequiredMixin, TemplateView):
         if form.is_valid():
             obj = form.save(commit=True)
             obj.id = self.request.user.id
-            if (
-                not self.request.POST.get("password1", None)
-                and not self.request.POST.get("password2", None)
-            ):
+            if "password1" not in self.request.POST and "password2" not in self.request.POST:
                 obj.password = self.request.user.password
             else:
                 update_session_auth_hash(self.request, obj)
@@ -117,22 +115,46 @@ class AccountProfileView(LoginRequiredMixin, TemplateView):
             "email": self.request.user.email,
             "first_name": self.request.user.first_name + last_name,
         }
-        profile = UserProfile.objects.filter(user=self.request.user)
-        if profile:
-            data["myfile"] = profile[0].myfile
 
-        transcriptions = Transcription.objects.filter(
-            user_id=self.request.user.id
-        ).order_by("-updated_on")
+        response = requests.get(
+            "%s://%s/ws/user_profile/%s/"
+            % (self.request.scheme, self.request.get_host(), self.request.user.id),
+            cookies=self.request.COOKIES,
+        )
+        user_profile_json_val = json.loads(response.content.decode("utf-8"))
 
-        for t in transcriptions:
-            campaign = Campaign.objects.get(id=t.asset.campaign.id)
-            t.campaign_name = campaign.slug
+        if "myfile" in user_profile_json_val:
+            data["myfile"] = user_profile_json_val["myfile"]
+
+        response = requests.get(
+            "%s://%s/ws/transcription_by_user/%s/"
+            % (self.request.scheme, self.request.get_host(), self.request.user.id),
+            cookies=self.request.COOKIES,
+        )
+
+        transcription_json_val = json.loads(response.content.decode("utf-8"))
+
+        for trans in transcription_json_val["results"]:
+            campaign_response = requests.get(
+                "%s://%s/ws/campaign_by_id/%s/"
+                % (
+                    self.request.scheme,
+                    self.request.get_host(),
+                    trans["asset"]["campaign"]["id"],
+                ),
+                cookies=self.request.COOKIES,
+            )
+            trans["campaign_name"] = json.loads(
+                campaign_response.content.decode("utf-8")
+            )["slug"]
+            trans["updated_on"] = datetime.strptime(
+                trans["updated_on"], "%Y-%m-%dT%H:%M:%S.%fZ"
+            )
 
         return super().get_context_data(
             **dict(
                 kws,
-                transcriptions=transcriptions,
+                transcriptions=transcription_json_val["results"],
                 form=ConcordiaUserEditForm(initial=data),
             )
         )
@@ -150,19 +172,23 @@ class ConcordiaProjectView(TemplateView):
     template_name = "transcriptions/project.html"
 
     def get_context_data(self, **kws):
-        try:
-            campaign = Campaign.objects.get(slug=self.args[0])
-            project = Project.objects.get(slug=self.args[1])
-        except Campaign.DoesNotExist:
-            raise Http404
-        except Project.DoesNotExist:
-            raise Http404
 
-        item_list = Item.objects.filter(campaign=campaign, project=project).order_by(
-            "item_id"
+        print("ws/campaign url:", "%s://%s/ws/campaign/%s/" % (self.request.scheme, self.request.get_host(), self.args[0]))
+
+        response = requests.get(
+            "%s://%s/ws/campaign/%s/"
+            % (self.request.scheme, self.request.get_host(), self.args[0]),
+            cookies=self.request.COOKIES,
+        )
+        campaign_json_val = json.loads(response.content.decode("utf-8"))
+        for sub_col in campaign_json_val["projects"]:
+            sub_col["campaign"] = campaign_json_val
+
+        project_sorted_list = sorted(
+            campaign_json_val["projects"], key=lambda k: (k["title"])
         )
 
-        paginator = Paginator(item_list, ITEMS_PER_PAGE)
+        paginator = Paginator(project_sorted_list, ASSETS_PER_PAGE)
 
         if not self.request.GET.get("page"):
             page = 1
@@ -172,10 +198,7 @@ class ConcordiaProjectView(TemplateView):
         items = paginator.get_page(page)
 
         return dict(
-            super().get_context_data(**kws),
-            campaign=campaign,
-            project=project,
-            items=items,
+            super().get_context_data(**kws), campaign=campaign_json_val, projects=projects
         )
 
 
@@ -183,24 +206,18 @@ class ConcordiaItemView(TemplateView):
     template_name = "transcriptions/item.html"
 
     def get_context_data(self, **kws):
-        try:
-            campaign = Campaign.objects.get(slug=self.args[0])
-            project = Project.objects.get(slug=self.args[1])
-            item = Item.objects.get(slug=self.args[2])
-        except Campaign.DoesNotExist:
-            raise Http404
-        except Project.DoesNotExist:
-            raise Http404
-        except Item.DoesNotExist:
-            raise Http404
 
-        asset_list = Asset.objects.filter(
-            campaign=campaign,
-            project=project,
-            item=item,
-            status__in=[Status.EDIT, Status.SUBMITTED, Status.COMPLETED, Status.ACTIVE],
-        ).order_by("title", "sequence")
-        paginator = Paginator(asset_list, ASSETS_PER_PAGE)
+        response = requests.get(
+            "%s://%s/ws/campaign/%s/"
+            % (self.request.scheme, self.request.get_host(), self.args[0]),
+            cookies=self.request.COOKIES,
+        )
+        campaign_json_val = json.loads(response.content.decode("utf-8"))
+        asset_sorted_list = sorted(
+            campaign_json_val["assets"], key=lambda k: (k["slug"])
+        )
+
+        paginator = Paginator(asset_sorted_list, ASSETS_PER_PAGE)
 
         if not self.request.GET.get("page"):
             page = 1
@@ -211,33 +228,8 @@ class ConcordiaItemView(TemplateView):
 
         return dict(
             super().get_context_data(**kws),
-            campaign=campaign,
-            project=project,
-            item=item,
+            campaign=campaign_json_val,
             assets=assets,
-        )
-
-
-class ConcordiaCampaignView(TemplateView):
-    template_name = "transcriptions/campaign.html"
-
-    def get_context_data(self, **kws):
-        try:
-            campaign = Campaign.objects.get(slug=self.args[0])
-        except Campaign.DoesNotExist:
-            raise Http404
-        project_list = campaign.project_set.all().order_by("title")
-        paginator = Paginator(project_list, PROJECTS_PER_PAGE)
-
-        if not self.request.GET.get("page"):
-            page = 1
-        else:
-            page = self.request.GET.get("page")
-
-        projects = paginator.get_page(page)
-
-        return dict(
-            super().get_context_data(**kws), campaign=campaign, projects=projects
         )
 
 
@@ -254,24 +246,99 @@ class ConcordiaAssetView(TemplateView):
         "Mark Completed": Status.COMPLETED,
     }
 
+    def get_asset_list_json(self):
+        """
+        make a call to the REST web service to assets for a campaign
+        :return: json of the assets
+        """
+        response = requests.get(
+            "%s://%s/ws/asset/%s/"
+            % (
+                self.request.scheme,
+                self.request.get_host(),
+                self.args[0]),
+            cookies=self.request.COOKIES,
+        )
+        return json.loads(response.content.decode("utf-8"))
+
+    def submitted_page(self, url, asset_json):
+        """
+        when the transcription state is SUBMITTED, return a page that does not have a transcription started.
+        If all pages are started, return the url passed in
+        :param url: default url to return
+        :param asset_json: Unused, needed to make function signature match completed_page
+        :return: url of next page
+        """
+        return_path = url
+
+        # find a page with no transcriptions in this campaign
+
+        asset_list_json = self.get_asset_list_json()
+
+        for asset_item in asset_list_json["results"]:
+            response = requests.get(
+                "%s://%s/ws/transcription/%s/"
+                % (self.request.scheme, self.request.get_host(), asset_item["id"]),
+                cookies=self.request.COOKIES,
+            )
+            transcription_json = json.loads(response.content.decode("utf-8"))
+            if transcription_json["text"] == "":
+                return_path = "/campaigns/%s/asset/%s/" % (self.args[0], asset_item["slug"])
+                break
+
+        return return_path
+
+    def completed_page(self, url, asset_json):
+        """
+        when the transcription state is COMPLETED, return the next page in sequence that needs work
+        If all pages are completed, return the url passed in
+        :param url: default url to return
+        :param asset_json: json representation of the asset
+        :return: url of next page
+        """
+        return_path = url
+
+        asset_list_json = self.get_asset_list_json()
+
+        def get_transcription(asset_item):
+                response = requests.get(
+                    "%s://%s/ws/transcription/%s/"
+                    % (self.request.scheme, self.request.get_host(), asset_item["id"]),
+                    cookies=self.request.COOKIES,
+                )
+                return json.loads(response.content.decode("utf-8"))
+
+        for asset_item in asset_list_json["results"][asset_json["sequence"]:]:
+            transcription_json = get_transcription(asset_item)
+            if transcription_json["status"] != Status.COMPLETED:
+                return_path = "/campaigns/%s/asset/%s/" % (self.args[0], asset_item["slug"])
+                break
+
+        # no asset found, iterate the asset_list_json from beginning to this asset's sequence
+        if return_path == url:
+            for asset_item in asset_list_json["results"][:asset_json["sequence"]]:
+                transcription_json = get_transcription(asset_item)
+                if transcription_json["status"] != Status.COMPLETED:
+                    return_path = "/campaigns/%s/asset/%s/" % (self.args[0], asset_item["slug"])
+                    break
+
+        return return_path
+
     def check_page_in_use(self, url, user):
         """
         Check the page in use for the asset, return true if in use within the last 5 minutes, otherwise false
         :param url: url to test if in use
-        :param user: user id
+        :param user: user object
         :return: True or False
         """
-        time_threshold = datetime.now() - timedelta(minutes=5)
-        page_in_use_count = (
-            PageInUse.objects.filter(page_url=url, updated_on__gt=time_threshold)
-            .exclude(user=user)
-            .count()
+        response = requests.get(
+            "%s://%s/ws/page_in_use_count/%s/%s/"
+            % (self.request.scheme, self.request.get_host(), user, url),
+            cookies=self.request.COOKIES,
         )
+        json_val = json.loads(response.content.decode("utf-8"))
 
-        if page_in_use_count > 0:
-            return True
-        else:
-            return False
+        return json_val["page_in_use"]
 
     def get_context_data(self, **kws):
         """
@@ -279,67 +346,76 @@ class ConcordiaAssetView(TemplateView):
         :param kws:
         :return: dictionary of items used in the template
         """
+        response = requests.get(
+            "%s://%s/ws/asset_by_slug/%s/%s/"
+            % (
+                self.request.scheme,
+                self.request.get_host(),
+                self.args[0],
+                self.args[1],
+            ),
+            cookies=self.request.COOKIES,
+        )
+        asset_json = json.loads(response.content.decode("utf-8"))
 
-        max_sequence = Asset.objects.filter(campaign__slug=self.args[0]).aggregate(
-            Max("sequence")
-        )["sequence__max"]
-
-        asset = Asset.objects.get(campaign__slug=self.args[0], slug=self.args[1])
-        try:
-            prev_asset = Asset.objects.get(
-                campaign__slug=self.args[0],
-                sequence=(lambda x, y: x - 1 if x > 0 else y)(
-                    asset.sequence, max_sequence
-                ),
-            )
-        except Asset.DoesNotExist:
-            prev_asset = asset
-
-        try:
-            next_asset = Asset.objects.get(
-                campaign__slug=self.args[0],
-                sequence=(lambda x, y: x + 1 if x < max_sequence else 0)(
-                    asset.sequence, max_sequence
-                ),
-            )
-        except Asset.DoesNotExist:
-            next_asset = asset
-
-        in_use_url = "/campaigns/%s/asset/%s/" % (asset.campaign.slug, asset.slug)
+        in_use_url = "/campaigns/%s/asset/%s/" % (
+            asset_json["campaign"]["slug"],
+            asset_json["slug"],
+        )
         current_user_id = (
             self.request.user.id
             if self.request.user.id is not None
-            else get_anonymous_user()
+            else get_anonymous_user(self.request)
         )
         page_in_use = self.check_page_in_use(in_use_url, current_user_id)
+
         # TODO: in the future, this is from a settings file value
         discussion_hide = True
 
         # Get all transcriptions, they are no longer tied to a specific user
-        transcription = Transcription.objects.filter(asset=asset).last()
 
-        # Get all tags, they are no longer tied to a specific user
-        db_tags = UserAssetTagCollection.objects.filter(asset=asset)
+        response = requests.get(
+            "%s://%s/ws/transcription/%s/"
+            % (self.request.scheme, self.request.get_host(), asset_json["id"]),
+            cookies=self.request.COOKIES,
+        )
+        transcription_json = json.loads(response.content.decode("utf-8"))
 
-        tags = all_tags = None
-        if db_tags:
-            for tags_in_db in db_tags:
-                if tags is None:
-                    tags = tags_in_db.tags.all()
-                    all_tags = tags
-                else:
-                    pass
-                    all_tags = (
-                        tags | tags_in_db.tags.all()
-                    ).distinct()  # merge the querysets
+        response = requests.get(
+            "%s://%s/ws/tags/%s/"
+            % (self.request.scheme, self.request.get_host(), asset_json["id"]),
+            cookies=self.request.COOKIES,
+        )
+        json_tags = []
+        if response.status_code == status.HTTP_200_OK:
+            json_tags_response = json.loads(response.content.decode("utf-8"))
+            for json_tag in json_tags_response["results"]:
+                json_tags.append(json_tag["value"])
 
         captcha_form = CaptchaEmbedForm()
 
-        same_page_count_for_this_user = PageInUse.objects.filter(
-            page_url=in_use_url, user=current_user_id
-        ).count()
+        response = requests.get(
+            "%s://%s/ws/page_in_use_user/%s/%s/" %
+            (
+                self.request.scheme,
+                self.request.get_host(),
+                current_user_id,
+                in_use_url
+            ),
+            cookies=self.request.COOKIES,
+        )
+        page_in_use_json = json.loads(response.content.decode("utf-8"))
 
-        page_dict = {"page_url": in_use_url, "user": current_user_id}
+        if page_in_use_json["user"] is None:
+            same_page_count_for_this_user = 0
+        else:
+            same_page_count_for_this_user = 1
+
+        page_dict = {
+            "page_url": in_use_url,
+            "user": current_user_id,
+            "updated_on": datetime.now(),
+        }
 
         if page_in_use is False and same_page_count_for_this_user == 0:
             # add this page as being in use by this user
@@ -353,18 +429,35 @@ class ConcordiaAssetView(TemplateView):
             PageInUseCreate.as_view()(request)
         elif same_page_count_for_this_user == 1:
             # update the PageInUse
-            obj, created = PageInUse.objects.update_or_create(
-                page_url=in_use_url, user=current_user_id
+            change_page_in_use = {"page_url": in_use_url, "user": current_user_id}
+
+            test_url = "%s://%s/ws/page_in_use_update/%s/%s/" % (
+
+                    self.request.scheme,
+                    self.request.get_host(),
+                    current_user_id,
+                    in_use_url
+                )
+
+            requests.put(
+                "%s://%s/ws/page_in_use_update/%s/%s/" %
+                (
+
+                    self.request.scheme,
+                    self.request.get_host(),
+                    current_user_id,
+                    in_use_url
+                ),
+                data=change_page_in_use,
+                cookies=self.request.COOKIES,
             )
 
         return dict(
             super().get_context_data(**kws),
             page_in_use=page_in_use,
-            asset=asset,
-            prev_asset=prev_asset,
-            next_asset=next_asset,
-            transcription=transcription,
-            tags=all_tags,
+            asset=asset_json,
+            transcription=transcription_json,
+            tags=json_tags,
             captcha_form=captcha_form,
             discussion_hide=discussion_hide,
         )
@@ -376,8 +469,8 @@ class ConcordiaAssetView(TemplateView):
         :param kwargs:
         :return: redirect back to same page
         """
-        self.get_context_data()
-        asset = Asset.objects.get(campaign__slug=self.args[0], slug=self.args[1])
+        # don't know why this would be called here
+        # self.get_context_data()
 
         if self.request.POST.get("action").lower() == "contact a manager":
             return redirect(reverse("contact") + "?pre_populate=true")
@@ -387,35 +480,93 @@ class ConcordiaAssetView(TemplateView):
             if not captcha_form.is_valid():
                 logger.info("Invalid captcha response")
                 return self.get(self.request, *args, **kwargs)
+
+        response = requests.get(
+            "%s://%s/ws/asset_by_slug/%s/%s/"
+            % (
+                self.request.scheme,
+                self.request.get_host(),
+                self.args[0],
+                self.args[1],
+            ),
+            cookies=self.request.COOKIES,
+        )
+        asset_json = json.loads(response.content.decode("utf-8"))
+
+        redirect_path = self.request.path
+
         if "tx" in self.request.POST:
             tx = self.request.POST.get("tx")
-            status = self.state_dictionary[self.request.POST.get("action")]
-            # Save all transcriptions, we will need this reports
-            Transcription.objects.create(
-                asset=asset,
-                user_id=self.request.user.id
-                if self.request.user.id is not None
-                else get_anonymous_user(),
-                text=tx,
-                status=status,
+            tx_status = self.state_dictionary[self.request.POST.get("action")]
+            requests.post(
+                "%s://%s/ws/transcription_create/"
+                % (self.request.scheme, self.request.get_host()),
+                data={
+                    "asset": asset_json["id"],
+                    "user_id": self.request.user.id
+                    if self.request.user.id is not None
+                    else get_anonymous_user(self.request),
+                    "status": tx_status,
+                    "text": tx,
+                },
+                cookies=self.request.COOKIES,
             )
-            asset.status = status
-            asset.save()
+
+            # dictionary to pick which function should return the next page on a POST submit
+            next_page_dictionary = {
+                Status.EDIT: lambda x, y: x,
+                Status.SUBMITTED: self.submitted_page,
+                Status.COMPLETED: self.completed_page,
+
+            }
+
+            redirect_path = next_page_dictionary[tx_status](redirect_path, asset_json)
+
         if "tags" in self.request.POST and self.request.user.is_authenticated == True:
             tags = self.request.POST.get("tags").split(",")
-            utags, status = UserAssetTagCollection.objects.get_or_create(
-                asset=asset, user_id=self.request.user.id
+            # get existing tags
+            response = requests.get(
+                "%s://%s/ws/tags/%s/"
+                % (self.request.scheme, self.request.get_host(), asset_json["id"]),
+                cookies=self.request.COOKIES,
             )
-            all_tag = utags.tags.all().values_list("name", flat=True)
-            all_tag_list = list(all_tag)
-            delete_tags = [i for i in all_tag_list if i not in tags]
-            utags.tags.filter(name__in=delete_tags).delete()
-            for tag in tags:
-                tag_ob, t_status = Tag.objects.get_or_create(name=tag, value=tag)
-                if tag_ob not in utags.tags.all():
-                    utags.tags.add(tag_ob)
+            existing_tags_json_val = json.loads(response.content.decode("utf-8"))
+            existing_tags_list = []
+            for tag_dict in existing_tags_json_val["results"]:
+                existing_tags_list.append(tag_dict["value"])
 
-        return redirect(self.request.path)
+            for tag in tags:
+                response = requests.post(
+                    "%s://%s/ws/tag_create/"
+                    % (self.request.scheme, self.request.get_host()),
+                    data={
+                        "campaign": asset_json["campaign"]["slug"],
+                        "asset": asset_json["slug"],
+                        "user_id": self.request.user.id
+                        if self.request.user.id is not None
+                        else get_anonymous_user(self.request),
+                        "name": tag,
+                        "value": tag,
+                    },
+                    cookies=self.request.COOKIES,
+                )
+
+                # keep track of existing tags so we can remove deleted tags
+                if tag in existing_tags_list:
+                    existing_tags_list.remove(tag)
+
+            # delete "old" tags
+            for old_tag in existing_tags_list:
+                response = requests.delete("%s://%s/ws/tag_delete/%s/%s/%s/%s/" %
+                                           (self.request.scheme,
+                                            self.request.get_host(),
+                                            self.args[0],
+                                            self.args[1],
+                                            old_tag,
+                                            self.request.user.id),
+                                           cookies=self.request.COOKIES)
+
+        return redirect(redirect_path)
 
 
 class ConcordiaAlternateAssetView(View):
@@ -442,17 +593,16 @@ class ConcordiaAlternateAssetView(View):
             asset_slug = self.request.POST.get("asset", None)
 
         if campaign_slug and asset_slug:
-            campaign = Campaign.objects.filter(slug=campaign_slug)
-
-            # select a random asset in this campaign that has status of EDIT
-            asset = (
-                Asset.objects.filter(campaign=campaign[0], status=Status.EDIT)
-                .exclude(slug=asset_slug)
-                .order_by("?")
-                .first()
+            response = requests.get(
+                "%s://%s/ws/campaign_asset_random/%s/%s"
+                % (self.request.scheme, self.request.get_host(), campaign_slug, asset_slug),
+                cookies=self.request.COOKIES,
             )
+            random_asset_json_val = json.loads(response.content.decode("utf-8"))
 
-            return HttpResponse("/campaigns/%s/asset/%s/" % (campaign_slug, asset.slug))
+            return HttpResponse(
+                "/campaigns/%s/asset/%s/" % (campaign_slug, random_asset_json_val["slug"])
+            )
 
 
 class ConcordiaPageInUse(View):
@@ -471,43 +621,45 @@ class ConcordiaPageInUse(View):
 
         if self.request.is_ajax():
             json_dict = json.loads(self.request.body)
-            user = json_dict["user"]
+            user_name = json_dict["user"]
             page_url = json_dict["page_url"]
         else:
-            user = self.request.POST.get("user", None)
+            user_name = self.request.POST.get("user", None)
             page_url = self.request.POST.get("page_url", None)
 
-        if user == "AnonymousUser":
-            user = "anonymous"
+        if user_name == "AnonymousUser":
+            user_name = "anonymous"
 
-        if user and page_url:
-            user_obj = User.objects.filter(username=user).first()
+        if user_name and page_url:
+            response = requests.get(
+                "%s://%s/ws/user/%s/"
+                % (self.request.scheme, self.request.get_host(), user_name),
+                cookies=self.request.COOKIES,
+            )
+            user_json_val = json.loads(response.content.decode("utf-8"))
 
             # update the PageInUse
-            obj, created = PageInUse.objects.update_or_create(
-                page_url=page_url, user=user_obj
+
+            change_page_in_use = {"page_url": page_url, "user": user_json_val["id"]}
+
+            requests.put(
+                "%s://%s/ws/page_in_use_update/%s/%s/" %
+                (
+
+                    self.request.scheme,
+                    self.request.get_host(),
+                    user_json_val["id"],
+                    page_url
+                ),
+                data=change_page_in_use,
+                cookies=self.request.COOKIES,
             )
-
-            if created:
-                # delete any other PageInUse with same url
-                pages_in_use = PageInUse.objects.filter(page_url=page_url).exclude(
-                    user=user_obj
-                )
-                for page in pages_in_use:
-                    page.delete()
-
-        # delete any pages not updated in the last 15 minutes
-        from datetime import datetime, timedelta
-
-        time_threshold = datetime.now() - timedelta(minutes=15)
-        old_page_entries = PageInUse.objects.filter(updated_on__lt=time_threshold)
-        for old_page in old_page_entries:
-            old_page.delete()
 
         return HttpResponse("ok")
 
 
 class TranscriptionView(TemplateView):
+    # TODO: Is this class still used??
     template_name = "transcriptions/transcription.html"
 
     def get_context_data(self, **kws):
@@ -599,28 +751,39 @@ class DeleteCampaignView(TemplateView):
     """
 
     def get(self, request, *args, **kwargs):
-        print("Deleting:", self.args[0])
-        campaign = Campaign.objects.get(slug=self.args[0])
-        campaign.asset_set.all().delete()
-        campaign.delete()
+        requests.delete("%s://%s/ws/campaign_delete/%s/" %
+                        (self.request.scheme,
+                         self.request.get_host(),
+                         self.args[0]),
+                        cookies=self.request.COOKIES)
+
         os.system(
-            "rm -rf {0}".format(settings.MEDIA_ROOT + "/concordia/" + campaign.slug)
+            "rm -rf {0}".format(settings.MEDIA_ROOT + "/concordia/" + self.args[0])
         )
         return redirect("/campaigns/")
 
 
 class DeleteAssetView(TemplateView):
     """
-    Hides an asset with status inactive. Hided assets does not display in
-    asset viiew. After hiding an asset, page redirects to campaign view.
+    Hides an asset with status inactive. Hidden assets do not display in
+    asset view. After hiding an asset, page redirects to campaign view.
     """
 
     def get(self, request, *args, **kwargs):
+        asset_update = {"campaign": self.args[0], "slug": self.args[1]}
 
-        campaign = Campaign.objects.get(slug=self.args[0])
-        asset = Asset.objects.get(slug=self.args[1], campaign=campaign)
-        asset.status = Status.INACTIVE
-        asset.save()
+        requests.put(
+            "%s://%s/ws/asset_update/%s/%s/" %
+            (
+                self.request.scheme,
+                self.request.get_host(),
+                self.args[0],
+                self.args[1],
+            ),
+            data=asset_update,
+            cookies=self.request.COOKIES,
+        )
+
         return redirect("/campaigns/" + self.args[0] + "/")
 
 
@@ -628,25 +791,138 @@ class ReportCampaignView(TemplateView):
     """
     Report the campaign
     """
-
     template_name = "transcriptions/report.html"
 
-    def get(self, request, *args, **kwargs):
-        campaign = Campaign.objects.get(slug=self.args[0])
-        campaign.asset_set.all()
-        projects = (
-            campaign.asset_set.values("title")
-            .annotate(
-                total=Count("title"),
-                in_progress=Count("status", filter=Q(status__in=["25", "75", "50"])),
-                complete=Count("status", filter=Q(status="100")),
-                tags=Count("userassettagcollection__tags", distinct=True),
-                contributors=Count("transcription__user_id", distinct=True),
-                not_started=Count("status", filter=Q(status="0")),
-            )
-            .order_by("title")
+    def __init__(self):
+        self.transcription_json_dict = {}
+
+    def get_asset_tag_count(self, request, asset_id):
+        """
+        Return the count of tags for an asset
+        :param request: django http request object
+        :param asset_id:
+        :return:
+        """
+
+        response = requests.get(
+            "%s://%s/ws/tags/%s/"
+            % (request.scheme, request.get_host(), asset_id),
+            cookies=self.request.COOKIES,
         )
-        paginator = Paginator(projects, ASSETS_PER_PAGE)
+        existing_tags_json_val = json.loads(response.content.decode("utf-8"))
+
+        return existing_tags_json_val["count"]
+
+    def get_asset_transcribe_count(self, request, asset):
+        """
+        Return 1 if last transcriptions for an asset exists
+        :param request: HTTP django request object
+        :param asset: asset id
+        :return:
+        """
+
+        response = requests.get(
+            "%s://%s/ws/transcription/%s/"
+            % (request.scheme, request.get_host(), asset),
+            cookies=self.request.COOKIES,
+        )
+        transcription_json = json.loads(response.content.decode("utf-8"))
+
+        self.transcription_json_dict[asset] = transcription_json
+
+        return 1 if len(transcription_json["text"]) > 0 else 0
+
+    def get_asset_transcribe_count_by_status(self, request, asset, status):
+        """
+        Return 1 if last transcriptions for an asset based on status  state
+        :param request: HTTP django request object
+        :param asset: asset id
+        :param status: Status to check
+        :return:
+        """
+
+        if asset not in self.transcription_json_dict:
+
+            response = requests.get(
+                "%s://%s/ws/transcription/%s/"
+                % (request.scheme, request.get_host(), asset),
+                cookies=self.request.COOKIES,
+            )
+            transcription_json = json.loads(response.content.decode("utf-8"))
+
+            self.transcription_json_dict[asset] = transcription_json
+
+        return 1 if len(self.transcription_json_dict[asset]["text"]) > 0 and \
+                    self.transcription_json_dict[asset]["status"] == status else 0
+
+    def get_transcribe_user_count(self, request, asset_slug):
+        """
+        return the count of users who have entered transcriptions for an asset
+        :param request: django http request objec
+        :param asset_slug: slug of asset
+        :return: array of uniques users who contributed transcriptions to the asset
+        """
+        response = requests.get(
+            "%s://%s/ws/transcription_by_asset/%s/"
+            % (request.scheme, request.get_host(), asset_slug),
+            cookies=self.request.COOKIES,
+        )
+        transcription_json = json.loads(response.content.decode("utf-8"))
+
+        user_array = []
+        if transcription_json["count"] > 0:
+            for trans in transcription_json["results"]:
+                if trans["user_id"] not in user_array:
+                    user_array.append(trans["user_id"])
+
+        return user_array
+
+    def get(self, request, *args, **kwargs):
+
+        response = requests.get(
+            "%s://%s/ws/campaign/%s/"
+            % (self.request.scheme, self.request.get_host(), self.args[0]),
+            cookies=self.request.COOKIES,
+        )
+        campaign_json = json.loads(response.content.decode("utf-8"))
+        for sub_col in campaign_json["projects"]:
+            sub_col["campaign"] = campaign_json
+
+        project_sorted_list = sorted(
+            campaign_json["projects"], key=lambda k: (k["title"])
+        )
+
+        for sorted_project in project_sorted_list:
+            transcription_count = 0
+            transcription_edit_count = 0
+            transcription_submitted_count = 0
+            transcription_complete_count = 0
+            user_array = []
+            total_tags = 0
+
+            for asset in sorted_project["campaign"]["assets"]:
+                transcription_count += self.get_asset_transcribe_count(request, asset["id"])
+                transcription_edit_count += self.get_asset_transcribe_count_by_status(request, asset["id"], Status.EDIT)
+                transcription_submitted_count += self.get_asset_transcribe_count_by_status(request, asset["id"],
+                                                                                           Status.SUBMITTED)
+                transcription_complete_count += self.get_asset_transcribe_count_by_status(request, asset["id"],
+                                                                                          Status.COMPLETED)
+                asset_user_array = self.get_transcribe_user_count(request, asset["slug"])
+                for asset_user in asset_user_array:
+                    if asset_user not in user_array:
+                        user_array.append(asset_user)
+
+                total_tags += self.get_asset_tag_count(request, asset["id"])
+
+            sorted_project["total"] = len(sorted_project["campaign"]["assets"])
+            sorted_project["not_started"] = sorted_project["total"] - transcription_count
+            sorted_project["edit"] = transcription_edit_count
+            sorted_project["submitted"] = transcription_submitted_count
+            sorted_project["complete"] = transcription_complete_count
+            sorted_project["contributors"] = len(user_array)
+            sorted_project["tags"] = total_tags
+
+        paginator = Paginator(project_sorted_list, ASSETS_PER_PAGE)
 
         if not self.request.GET.get("page"):
             page = 1
@@ -654,6 +930,7 @@ class ReportCampaignView(TemplateView):
             page = self.request.GET.get("page")
 
         projects = paginator.get_page(page)
+
         return render(self.request, self.template_name, locals())
 
 
@@ -689,9 +966,9 @@ def publish_campaign(request, campaign, is_publish):
     else:
         campaign.is_publish = False
 
-    sub_collections = campaign.project_set.all()
+    projects = campaign.project_set.all()
 
-    for sc in sub_collections:
+    for sc in projects:
         sc.is_publish = True if is_publish == "true" else False
         sc.save()
 
@@ -711,16 +988,16 @@ def publish_project(request, campaign, project, is_publish):
     """ Publish/Unpublish a project to other users. """
 
     try:
-        sub_collection = Project.objects.get(collection__slug=campaign, slug=project)
+        project = Project.objects.get(campaign__slug=campaign, slug=project)
     except Project.DoesNotExist:
         raise Http404
 
     if is_publish == "true":
-        sub_collection.is_publish = True
+        project.is_publish = True
     else:
-        sub_collection.is_publish = False
+        project.is_publish = False
 
-    sub_collection.save()
+    project.save()
 
     return JsonResponse(
         {

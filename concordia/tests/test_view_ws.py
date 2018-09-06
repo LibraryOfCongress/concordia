@@ -10,7 +10,7 @@ from django.utils.encoding import force_text
 from rest_framework import status
 
 from concordia.models import (Asset, Campaign, MediaType, PageInUse, Status, Tag,
-                              Transcription, User, UserAssetTagCollection)
+                              Transcription, User, UserProfile, UserAssetTagCollection)
 
 logging.disable(logging.CRITICAL)
 
@@ -44,6 +44,44 @@ class ViewWSTest_Concordia(TestCase):
         # create a session cookie
         self.client.session["foo"] = 123  # HACK: needed for django Client
 
+    def test_AnonymousUser_get(self):
+        """
+        This unit test tests the get  route ws/anonymous_user/
+        :param self:
+        :return:
+        """
+
+        # Arrange
+        self.login_user()
+
+        # Act
+        response = self.client.get("/ws/anonymous_user/")
+        response2 = self.client.get("/ws/anonymous_user/")
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.content, response2.content)
+
+    def test_UserProfile_get(self):
+        """
+        This unit test tests the get route ws/user_profile/<user_id>/
+        :param self:
+        :return:
+        """
+
+        # Arrange
+        self.login_user()
+
+        profile = UserProfile(user_id=self.user.id)
+        profile.save()
+
+        # Act
+        response = self.client.get("/ws/user_profile/%s/" % self.user.id)
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+
     def test_PageInUse_post(self):
         """
         This unit test tests the post entry for the route ws/page_in_use
@@ -60,6 +98,7 @@ class ViewWSTest_Concordia(TestCase):
             {
                 "page_url": "campaigns/American-Jerusalem/asset/mamcol.0930/",
                 "user": self.user.id,
+                "updated_on": datetime.now(),
             },
         )
 
@@ -94,16 +133,13 @@ class ViewWSTest_Concordia(TestCase):
         )
         page2.save()
 
-        pages_in_use = PageInUse.objects.all()
-        for p in pages_in_use:
-            print(p.page_url, p.created_on, p.updated_on)
-
         # Act
         response = self.client.post(
             "/ws/page_in_use/",
             {
                 "page_url": "campaigns/American-Jerusalem/asset/mamcol.0930/",
                 "user": self.user.id,
+                "updated_on": datetime.now(),
             },
         )
 
@@ -159,6 +195,7 @@ class ViewWSTest_Concordia(TestCase):
             {
                 "page_url": "campaigns/American-Jerusalem/asset/mamcol.0930/",
                 "user": self.user.id,
+                "updated_on": datetime.now(),
             },
         )
 
@@ -190,7 +227,7 @@ class ViewWSTest_Concordia(TestCase):
         # Add two values to database
         PageInUse.objects.create(page_url="foo.com/blah", user=self.user)
 
-        PageInUse.objects.create(page_url="bar.com/blah", user=self.user)
+        page_in_use = PageInUse.objects.create(page_url="bar.com/blah", user=self.user)
 
         # Act
         response = self.client.get("/ws/page_in_use/bar.com/blah/")
@@ -199,7 +236,11 @@ class ViewWSTest_Concordia(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertJSONEqual(
             str(response.content, encoding="utf8"),
-            {"page_url": "bar.com/blah", "user": self.user.id},
+            {
+                "page_url": "bar.com/blah",
+                "user": self.user.id,
+                "updated_on": page_in_use.updated_on.strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
+            },
         )
 
     def test_PageInUseUser_get(self):
@@ -219,7 +260,7 @@ class ViewWSTest_Concordia(TestCase):
 
         test_page_url = "foo.com/blah"
         # Add two values to database
-        PageInUse.objects.create(page_url=test_page_url, user=self.user)
+        page_in_use = PageInUse.objects.create(page_url=test_page_url, user=self.user)
 
         PageInUse.objects.create(page_url="bar.com/blah", user=self.user2)
 
@@ -232,7 +273,11 @@ class ViewWSTest_Concordia(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertJSONEqual(
             str(response.content, encoding="utf8"),
-            {"page_url": test_page_url, "user": self.user.id},
+            {
+                "page_url": test_page_url,
+                "user": self.user.id,
+                "updated_on": page_in_use.updated_on.strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
+            },
         )
 
     def test_PageInUse_put(self):
@@ -249,10 +294,10 @@ class ViewWSTest_Concordia(TestCase):
 
         min_update_time = page.created_on + timedelta(seconds=2)
 
-        change_page_in_use = {"page_url": "foo.com/blah", "user": self.user.id}
-
         # sleep so update time can be tested against original time
         time.sleep(2)
+
+        change_page_in_use = {"page_url": "foo.com/blah", "user": self.user.id}
 
         # Act
         response = self.client.put(
@@ -268,6 +313,32 @@ class ViewWSTest_Concordia(TestCase):
         self.assertTrue(len(updated_page), 1)
         self.assertEqual(page.id, updated_page[0].id)
         self.assertTrue(updated_page[0].updated_on > min_update_time)
+
+    def test_PageInUse_delete(self):
+        """
+        This unit test tests the delete of an existing PageInUse using DELETE on route ws/page_in_use_delete/
+        :return:
+        """
+        # Arrange
+        self.login_user()
+
+        # Add a value to database
+        page = PageInUse(page_url="foo.com/blah", user=self.user)
+        page.save()
+
+        current_page_in_use_count = PageInUse.objects.all().count()
+
+        # Act
+        response = self.client.delete("/ws/page_in_use_delete/%s/" % "foo.com/blah")
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        deleted_page_in_use_count = PageInUse.objects.all().count()
+
+        deleted_page = PageInUse.objects.filter(page_url="foo.com/blah")
+        self.assertEqual(len(deleted_page), 0)
+        self.assertEqual(current_page_in_use_count-1, deleted_page_in_use_count)
 
     def test_Campaign_get(self):
         """
@@ -310,7 +381,96 @@ class ViewWSTest_Concordia(TestCase):
                 "slug": "slug2",
                 "start_date": None,
                 "status": Status.EDIT,
+                "s3_storage": False,
                 "title": "TextCampaign2",
+                'projects': [],
+                "assets": [],
+            },
+        )
+
+    def test_Campaign_delete(self):
+        """
+        Test deleting a Campaign object
+        :return:
+        """
+        # Arrange
+        self.login_user()
+
+        # create 2 campaigns
+        self.campaign = Campaign(
+            title="TextCampaign",
+            slug="slug1",
+            description="Campaign Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.campaign.save()
+
+        self.campaign2 = Campaign(
+            title="TextCampaign2",
+            slug="slug2",
+            description="Campaign2 Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.campaign2.save()
+
+        current_campaign_count = Campaign.objects.all().count()
+
+        # Act
+        response = self.client.delete("/ws/campaign_delete/slug2/")
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        deleted_campaign_count = Campaign.objects.all().count()
+        self.assertEqual(current_campaign_count-1, deleted_campaign_count)
+
+    def test_Campaign_by_id_get(self):
+        """
+        Test getting a Campaign object by id
+        :return:
+        """
+        # Arrange
+        self.login_user()
+
+        # create 2 campaigns
+        self.campaign = Campaign(
+            title="TextCampaign",
+            slug="slug1",
+            description="Campaign Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.campaign.save()
+
+        self.campaign2 = Campaign(
+            title="TextCampaign2",
+            slug="slug2",
+            description="Campaign2 Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.campaign2.save()
+
+        # Act
+        response = self.client.get("/ws/campaign_by_id/%s/" % self.campaign2.id)
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertJSONEqual(
+            str(response.content, encoding="utf8"),
+            {
+                "description": "Campaign2 Description",
+                "end_date": None,
+                "id": self.campaign2.id,
+                "slug": "slug2",
+                "start_date": None,
+                "status": Status.EDIT,
+                "s3_storage": False,
+                "title": "TextCampaign2",
+                'projects': [],
+                "assets": [],
             },
         )
 
@@ -388,6 +548,90 @@ class ViewWSTest_Concordia(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(json_resp["results"]), 2)
 
+    def test_Asset_Update_put(self):
+        """
+        Test updating an asset by campaign and slug to inactive
+        :return:
+        """
+
+        # Arrange
+        self.login_user()
+        self.maxDiff = None
+
+        self.campaign = Campaign(
+            title="TextCampaign",
+            slug="slug1",
+            description="Campaign Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.campaign.save()
+
+        self.asset = Asset(
+            title="TestAsset",
+            slug="Asset1",
+            description="Asset Description",
+            media_url="http://www.foo.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            campaign=self.campaign,
+            metadata={"key": "val2"},
+            status=Status.EDIT,
+        )
+        self.asset.save()
+
+        expected_response = {
+            "id": self.asset.id,
+            "title": "TestAsset3",
+            "slug": "Asset3",
+            "description": "Asset Description",
+            "media_url": "http://www.foo.com/1/2/3",
+            "media_type": "IMG",
+            "campaign": {
+                "id": self.campaign.id,
+                "slug": "slug1",
+                "title": "TextCampaign",
+                "description": "Campaign Description",
+                "s3_storage": False,
+                "start_date": None,
+                "end_date": None,
+                "status": "Edit",
+                'projects': [],
+                "assets": [
+                    {
+                        "title": "TestAsset3",
+                        "slug": "Asset3",
+                        "description": "Asset Description",
+                        "media_url": "http://www.foo.com/1/2/3",
+                        "media_type": "IMG",
+                        "sequence": 1,
+                        "metadata": {"key": "val2"},
+                        "status": "Edit",
+                    }
+                ],
+            },
+            "project": None,
+            "sequence": 1,
+            "metadata": {"key": "val2"},
+            "status": "Edit",
+        }
+
+        # Act
+
+        asset_update = {"campaign": self.campaign.slug, "slug": self.asset.slug}
+
+        # Act
+        response = self.client.put(
+            "/ws/asset_update/%s/%s/" % (self.campaign.slug, self.asset.slug),
+            data=json.dumps(asset_update),
+            content_type="application/json",
+        )
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        updated_asset = Asset.objects.get(slug=self.asset.slug)
+        self.assertEqual(updated_asset.status, Status.INACTIVE)
+
+
     def test_get_assets_by_campaign_and_slug(self):
         """
         Test getting an asset by campaign and slug
@@ -396,6 +640,7 @@ class ViewWSTest_Concordia(TestCase):
 
         # Arrange
         self.login_user()
+        self.maxDiff = None
 
         # create 2 campaigns
         self.campaign = Campaign(
@@ -453,26 +698,49 @@ class ViewWSTest_Concordia(TestCase):
         )
         self.asset3.save()
 
+        expected_response = {
+            "id": self.asset3.id,
+            "title": "TestAsset3",
+            "slug": "Asset3",
+            "description": "Asset Description",
+            "media_url": "http://www.foo.com/1/2/3",
+            "media_type": "IMG",
+            "campaign": {
+                "id": self.campaign.id,
+                "slug": "slug1",
+                "title": "TextCampaign",
+                "description": "Campaign Description",
+                "s3_storage": False,
+                "start_date": None,
+                "end_date": None,
+                "status": "Edit",
+                'projects': [],
+                "assets": [
+                    {
+                        "id": self.asset3.id,
+                        "title": "TestAsset3",
+                        "slug": "Asset3",
+                        "description": "Asset Description",
+                        "media_url": "http://www.foo.com/1/2/3",
+                        "media_type": "IMG",
+                        "sequence": 1,
+                        "metadata": {"key": "val2"},
+                        "status": "Edit",
+                    }
+                ],
+            },
+            "project": None,
+            "sequence": 1,
+            "metadata": {"key": "val2"},
+            "status": "Edit",
+        }
+
         # Act
         response = self.client.get("/ws/asset_by_slug/slug1/Asset3/")
 
         # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertJSONEqual(
-            force_text(response.content),
-            {
-                "title": "TestAsset3",
-                "slug": "Asset3",
-                "description": "Asset Description",
-                "media_url": "http://www.foo.com/1/2/3",
-                "media_type": MediaType.IMAGE,
-                "campaign": self.campaign.id,
-                "sequence": 1,
-                "metadata": {"key": "val2"},
-                "project": None,
-                "status": Status.EDIT,
-            },
-        )
+        self.assertJSONEqual(force_text(response.content), expected_response)
 
     def test_get_assets_by_campaign_and_slug_no_match(self):
         """
@@ -552,10 +820,20 @@ class ViewWSTest_Concordia(TestCase):
                 "description": "",
                 "media_url": "",
                 "media_type": None,
-                "campaign": None,
+                "campaign": {
+                    "description": "",
+                    "end_date": None,
+                    "s3_storage": False,
+                    "slug": "",
+                    "start_date": None,
+                    "status": None,
+                    "assets": [],
+                    'projects': [],
+                    "title": "",
+                },
                 "sequence": None,
                 "metadata": None,
-                "project": None,
+                'project': {'metadata': None, 'slug': '', 'status': None, 'title': ''},
                 "status": None,
             },
         )
@@ -694,6 +972,93 @@ class ViewWSTest_Concordia(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(json_resp["text"], t2_text)
 
+    def test_Transcriptions_by_user(self):
+        """
+        Test getting the user's transcriptions. route ws/transcription_by_user/<userid>/
+        :return:
+        """
+
+        # Arrange
+        self.login_user()
+
+        # create a second user
+        username = "tester2"
+        self.user2 = User.objects.create(username=username, email="tester2@foo.com")
+        self.user2.set_password("top_secret")
+        self.user2.save()
+
+        # create a campaign
+        self.campaign = Campaign(
+            title="TextCampaign",
+            slug="www.foo.com/slug2",
+            description="Campaign Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.campaign.save()
+
+        # create Assets
+        self.asset = Asset(
+            title="TestAsset",
+            slug="www.foo.com/slug1",
+            description="Asset Description",
+            media_url="http://www.foo.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            campaign=self.campaign,
+            metadata={"key": "val2"},
+            status=Status.EDIT,
+        )
+        self.asset.save()
+
+        self.asset2 = Asset(
+            title="TestAsset2",
+            slug="www.foo.com/slug2",
+            description="Asset Description",
+            media_url="http://www.foo.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            campaign=self.campaign,
+            metadata={"key": "val2"},
+            status=Status.EDIT,
+        )
+        self.asset2.save()
+
+        # add Transcription objects
+        t1_text = "T1"
+        self.transcription = Transcription(
+            asset=self.asset, user_id=self.user.id, status=Status.EDIT, text=t1_text
+        )
+        self.transcription.save()
+
+        t2_text = "T2"
+
+        self.transcription2 = Transcription(
+            asset=self.asset, user_id=self.user2.id, status=Status.EDIT, text=t2_text
+        )
+        self.transcription2.save()
+
+        t3_text = "T3"
+
+        self.transcription3 = Transcription(
+            asset=self.asset, user_id=self.user.id, status=Status.EDIT, text=t3_text
+        )
+        self.transcription3.save()
+
+        # Act
+
+        response = self.client.get("/ws/transcription_by_user/%s/" % self.user.id)
+
+        json_resp = json.loads(response.content)
+        transcriptions_array = []
+        for trans in json_resp["results"]:
+            transcriptions_array.append(trans["text"])
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(json_resp["count"], 2)
+        self.assertTrue("T3" in transcriptions_array)
+        self.assertTrue("T1" in transcriptions_array)
+        self.assertFalse("T2" in transcriptions_array)
+
     def test_Transcriptions_create_post(self):
         """
         Test creating a transcription. route ws/transcription_create/
@@ -803,6 +1168,66 @@ class ViewWSTest_Concordia(TestCase):
 
         # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_Tag_delete(self):
+        """
+        Test deleting a tag. route ws/tag_/
+        :return:
+        """
+        # Arrange
+        self.login_user()
+
+        # create a campaign
+        self.campaign = Campaign(
+            title="TextCampaign",
+            slug="campaignslug",
+            description="Campaign Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.campaign.save()
+
+        # create Assets
+        self.asset = Asset(
+            title="TestAsset",
+            slug="assetslug1",
+            description="Asset Description",
+            media_url="http://www.foo.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            campaign=self.campaign,
+            metadata={"key": "val2"},
+            status=Status.EDIT,
+        )
+        self.asset.save()
+
+        self.tag1 = Tag(name="Tag1", value="Tag1")
+        self.tag1.save()
+
+        self.tag2 = Tag(name="Tag2", value="Tag2")
+        self.tag2.save()
+
+        # Save for User1
+        self.asset_tag_collection = UserAssetTagCollection(
+            asset=self.asset, user_id=self.user.id
+        )
+        self.asset_tag_collection.save()
+        self.asset_tag_collection.tags.add(self.tag1, self.tag2)
+
+        # Act
+        url = "/ws/tag_delete/%s/%s/%s/%s/" % (
+            self.campaign.slug,
+            self.asset.slug,
+            "Tag1",
+            self.user.id,
+        )
+        response = self.client.delete(url, follow=True)
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # verify only 1 tag in db
+        remaining_tags = Tag.objects.all()
+        self.assertEqual(len(remaining_tags), 1)
 
     def test_Tag_create_with_an_existing_tag_post(self):
         """
@@ -930,3 +1355,50 @@ class ViewWSTest_Concordia(TestCase):
         # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(json_resp["results"]), 3)
+
+    def test_GetTags_notags_get(self):
+        """
+        Test getting the tags for an asset when no tags exist, route /ws/tags/<asset>
+        :return:
+        """
+
+        # Arrange
+        self.login_user()
+
+        # create a second user
+        username = "tester2"
+        self.user2 = User.objects.create(username=username, email="tester2@foo.com")
+        self.user2.set_password("top_secret")
+        self.user2.save()
+
+        # create a campaign
+        self.campaign = Campaign(
+            title="TextCampaign",
+            slug="www.foo.com/slug2",
+            description="Campaign Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.campaign.save()
+
+        # create Assets
+        self.asset = Asset(
+            title="TestAsset",
+            slug="www.foo.com/slug1",
+            description="Asset Description",
+            media_url="http://www.foo.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            campaign=self.campaign,
+            metadata={"key": "val2"},
+            status=Status.EDIT,
+        )
+        self.asset.save()
+
+        # Act
+        response = self.client.get("/ws/tags/%s/" % self.asset.id)
+
+        json_resp = json.loads(response.content)
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(json_resp["results"]), 0)
