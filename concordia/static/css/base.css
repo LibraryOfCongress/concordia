@@ -259,6 +259,10 @@ thead td {
     font-weight: bold;
 }
 
+table td {
+    color: var(--text-color-primary);
+}
+
 .bg-offwhite {
     background-color: var(--bg-offwhite);
 }
