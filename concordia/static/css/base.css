@@ -4,6 +4,9 @@
   --secondary-color: rgba(0,167,228,1); /* #00A7E4 */
   --secondary-color-hover: rgba(0,35,71,1); /* #002347 */
   --color-success: rgba(22,201,74,1); /* #16C94A */
+  --color-danger: rgba(254,12,11,1); /* #FE0C0B */
+  --color-warning: rgba(254,153,11,1); /* #FE990B */
+  --color-info: rgba(2,252,216,1); /* #02FCD8 */
   --text-color-primary: rgba(38,50,56,1); /* #263238 */
   --text-color-offwhite: rgba(250,250,250,1); /* #FAFAFA */
   --text-nav-current: rgba(252,76,2,1); /* #FC4C02 */
@@ -1373,4 +1376,44 @@ box-shadow: inset 0 .1875rem .3125rem rgba(0, 0, 0, .125);
 
 .checkmark i {
     color: var(--color-success);
+}
+
+/*
+* Alerts
+*/
+
+.alert.alert-primary {
+    background-color: var(--primary-color);
+    border-color: none;
+    color: var(--text-color-offwhite);
+}
+
+.alert.alert-secondary {
+    background-color: var(--secondary-color);
+    border-color: none;
+    color: var(--text-color-primary);
+}
+
+.alert.alert-success {
+    background-color: var(--color-success);
+    border-color: none;
+    color: var(--text-color-offwhite);
+}
+
+.alert.alert-danger {
+    background-color: var(--color-danger);
+    border-color: none;
+    color: var(--text-color-offwhite);
+}
+
+.alert.alert-warning {
+    background-color: var(--color-warning);
+    border-color: none;
+    color: var(--text-color-primary);
+}
+
+.alert.alert-info {
+    background-color: var(--color-info);
+    border-color: none;
+    color: var(--text-color-primary);
 }
