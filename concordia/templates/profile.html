@@ -23,7 +23,7 @@
             <form class="form-horizontal" action="/account/profile/" method="POST" enctype="multipart/form-data">{% csrf_token %}
                 <span>{{ form.non_field_errors }}</span>
                 <div class="col-12">
-                    <h2 class="mb-default">Account Settings</h2>
+                    <h2 class="mb-5">Account Settings</h2>
                 </div>
                 <div class="col-md-10 col-lg-8 mx-auto">
                     <div class="form-group row">
@@ -65,20 +65,23 @@
     <div class="col-10 my-default mx-auto">
         <hr>
     </div>
-    <div class="col-12 col-md-10 bg-offwhite mx-auto pxy-default rounded">
+    <div class="col-12 col-md-10 bg-offwhite mx-auto pxy-default mb-default rounded">
         <h2 class="mb-default">My Contributions</h2>
         {% if transcriptions %}
-            <table class="table">
-                <tr>
-                    <td>Collection</td>
-                    <td>Asset Name</td>
-                    <td>Current Status</td>
-                    <td>Date</td>
-                </tr>
+            <table class="table mb-default">
+                <thead class="bg-lightest-gray">
+                    <tr>
+                        <td>Collection</td>
+                        <td>Asset Name</td>
+                        <td>Current Status</td>
+                        <td>Date</td>
+                    </tr>
+                </thead>
+
                 {% for t in transcriptions %}
                     <tr>
                         <td>{{t.collection_name}}</td>
-                        <td><a href="/transcribe/{{t.collection_name}}/asset/{{t.asset.slug}}">{{t.asset.slug}}</a></td>
+                        <td><a class="primary-text" href="/transcribe/{{t.collection_name}}/asset/{{t.asset.slug}}">{{t.asset.slug}}</a></td>
                         <td>{{t.asset.status}}</td>
                         <td>{{ t.updated_on|date:'Y-m-d H:i' }}</td>
                     </tr>
