@@ -28,7 +28,7 @@ from rest_framework.test import APIRequestFactory
 
 from concordia.forms import (CaptchaEmbedForm, ConcordiaContactUsForm,
                              ConcordiaUserEditForm, ConcordiaUserForm)
-from concordia.models import (Asset, Collection, PageInUse, Status, Transcription,
+from concordia.models import (Asset, Collection, Subcollection, PageInUse, Status, Transcription,
                               UserProfile)
 from concordia.views_ws import PageInUseCreate
 from importer.views import CreateCollectionView
