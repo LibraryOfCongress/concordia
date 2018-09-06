@@ -72,7 +72,7 @@ input[type=submit] {
       <h3 class="mt-half ml-half">Import a New Campaign</h3>
       <div class="text-center d-none loading">
        <div class="loading-pulse mx-auto"></div>
-              <h6 class="form-text offwhite-text">Creating the campaign for you...<span id="progress"></span>
+              <h6 class="form-text offwhite-text">Creating campaign...<span id="progress"></span>
               </h6>
       </div>
         <div class="alert alert-danger alert-dismissible fade show" id="close_error" role="alert">
@@ -153,7 +153,7 @@ function write_save_campaign_assets(task_id){
             console.log('Your session has ended due to inactivity after 10 minutes.\nPlease refresh this page, or close this window and log back in to system.');
         } else {
             console.log('Unknown error returned while saving' + (typeof errorThrown == 'string' && errorThrown.trim().length > 0 ? ':\n' + errorThrown : ''));
-         $("#error_msg").html("Sorry..!! There is some error for creating campaign...");
+         $("#error_msg").html("An error occurred while creating campaign.");
         $(".loading").addClass("d-none");
                 $("#close_error").show();
         }
@@ -210,20 +210,20 @@ $("#create_btn").click(function(){
         }).fail(function(data, jqXHR, textStatus, errorThrown) {
             $(".loading").removeClass("d-none");
             if(jqXHR.status == 0 || jqXHR == 302) {
-                $("#error_msg").html("Sorry..!! There is some error for creating campaign...");
+                $("#error_msg").html("An error occurred while creating campaign.");
             } else {
                 if(data.responseJSON.message){
                      $("#error_msg").html(data.responseJSON.message);
             }
             else{
-            $("#error_msg").html("Sorry..!! There is some error for creating campaign...");
+            $("#error_msg").html("An error occurred while creating campaign.");
                 }
             }
             $("#close_error").show();
         });
     }
     else{
-        $("#error_msg").html("Sorry..!! Please furnish below all required details...");
+        $("#error_msg").html("Please fill out required fields below.");
         $("#close_error").show();
     }
 })
