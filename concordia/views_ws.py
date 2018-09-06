@@ -1,23 +1,26 @@
 # TODO: Add copyright header
 
 from datetime import datetime, timedelta
-from django.shortcuts import get_object_or_404
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import QueryDict
-
-from rest_framework import generics, exceptions
+from django.shortcuts import get_object_or_404
+from rest_framework import exceptions, generics, status
 from rest_framework.authentication import BasicAuthentication
 from rest_framework.response import Response
 
-from .models import PageInUse, User, Collection, Asset, Transcription, Tag, UserAssetTagCollection
-from .serializers import PageInUseSerializer, CollectionDetailSerializer, AssetSerializer, \
-    TranscriptionSerializer, UserAssetTagSerializer, TagSerializer
+from .models import (Asset, Collection, PageInUse, Status, Tag, Transcription, User, UserProfile,
+                     UserAssetTagCollection)
+from .serializers import (AssetSerializer, CollectionDetailSerializer,
+                          PageInUseSerializer, TagSerializer, TranscriptionSerializer,
+                          UserAssetTagSerializer, UserSerializer, UserProfileSerializer)
 
 
 class ConcordiaAPIAuth(BasicAuthentication):
     """
     Verify the user's session exists. Even anonymous users are "logged" in, though they are not aware of it.
     """
+
     def authenticate(self, request):
         # anonymous user does not log in, so test if the user is "anonymous"
         if "user" in request.data:
@@ -30,14 +33,84 @@ class ConcordiaAPIAuth(BasicAuthentication):
         return request.session.session_key, None
 
 
+class AnonymousUserGet(generics.RetrieveAPIView):
+    """
+    GET: Return anonymous user, Create it if needed (this is not the AnonymousUser django user)
+    """
+    model = User
+    authentication_classes = (ConcordiaAPIAuth,)
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+    def get_object(self):
+        anon_user = User.objects.filter(username="anonymous").first()
+        if anon_user is None:
+            anon_user = User.objects.create_user(
+                username="anonymous",
+                email="anonymous@anonymous.com",
+                password="concanonymous",
+            )
+        return anon_user
+
+
+class UserProfileGet(generics.RetrieveAPIView):
+    """
+    GET: Return a user profile
+    """
+    model = UserProfile
+    authentication_classes = (ConcordiaAPIAuth,)
+    queryset = UserProfile.objects.all()
+    serializer_class = UserProfileSerializer
+    lookup_field = "user_id"
+
+    def get_object(self):
+        try:
+            user = User.objects.get(id=int(self.kwargs["user_id"]))
+            return (
+                UserProfile.objects.get(user=user)
+            )
+        except ObjectDoesNotExist:
+            return None
+
+
+class UserGet(generics.RetrieveAPIView):
+    """
+    GET: Return a User
+    """
+    model = User
+    authentication_classes = (ConcordiaAPIAuth,)
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    lookup_field = "user_name"
+
+    def get_object(self):
+        try:
+            return User.objects.get(username=self.kwargs["user_name"])
+        except ObjectDoesNotExist:
+            return None
+
+
 class PageInUseCreate(generics.CreateAPIView):
     """
     POST: Create a PageInUse value
     """
+
     model = PageInUse
     authentication_classes = (ConcordiaAPIAuth,)
     queryset = PageInUse.objects.all()
     serializer_class = PageInUseSerializer
+
+
+class PageInUseDelete(generics.DestroyAPIView):
+    """
+    DELETE: Delete a PageInUse value
+    """
+
+    model = PageInUse
+    authentication_classes = (ConcordiaAPIAuth,)
+    queryset = PageInUse.objects.all()
+    serializer_class = PageInUseSerializer
+    lookup_field = "page_url"
 
 
 class PageInUseGet(generics.RetrieveUpdateAPIView):
@@ -45,14 +118,14 @@ class PageInUseGet(generics.RetrieveUpdateAPIView):
     GET: Get a PageInUse value
     PUT: Update a PageInUse value
     """
+
     model = PageInUse
     authentication_classes = (ConcordiaAPIAuth,)
     serializer_class = PageInUseSerializer
-    #    queryset = PageInUse.objects.all()
-    lookup_field = 'page_url'
+    lookup_field = "page_url"
 
     def get_queryset(self):
-        return PageInUse.objects.all().filter(page_url=self.kwargs['page_url'])
+        return PageInUse.objects.all().filter(page_url=self.kwargs["page_url"])
 
 
 class PageInUseUserGet(generics.RetrieveUpdateAPIView):
@@ -60,87 +133,221 @@ class PageInUseUserGet(generics.RetrieveUpdateAPIView):
     GET: Get a PageInUse value for user
     PUT: Update a PageInUse value
     """
+
     model = PageInUse
     authentication_classes = (ConcordiaAPIAuth,)
     serializer_class = PageInUseSerializer
     #    queryset = PageInUse.objects.all()
-    lookup_fields = ('page_url', 'user')
+    lookup_fields = ("page_url", "user")
 
     def get_object(self):
-        return PageInUse.objects.all().filter(page_url=self.kwargs['page_url'], user__id=self.kwargs['user']).last()
+        return (
+            PageInUse.objects.all()
+            .filter(page_url=self.kwargs["page_url"], user__id=self.kwargs["user"])
+            .last()
+        )
+
+
+class PageInUseCount(generics.RetrieveAPIView):
+    """
+    GET: Return True if the page is in use by a different user, otherwise False
+    """
+    model = PageInUse
+    authentication_classes = (ConcordiaAPIAuth,)
+    serializer_class = PageInUseSerializer
+    queryset = PageInUse.objects.all()
+    lookup_fields = ("page_url", "user")
+
+    def get(self, request, *args, **kwargs):
+        time_threshold = datetime.now() - timedelta(minutes=5)
+        page_in_use_count = (
+            PageInUse.objects.filter(page_url=self.kwargs["page_url"], updated_on__gt=time_threshold)
+                .exclude(user__id=self.kwargs["user"])
+                .count()
+        )
+
+        if page_in_use_count > 0:
+            return Response(data={'page_in_use': True})
+        else:
+            return Response(data={'page_in_use': False})
 
 
 class PageInUsePut(generics.UpdateAPIView):
     """
     PUT: Update an existing PageInUse
     """
+
     model = PageInUse
     authentication_classes = (ConcordiaAPIAuth,)
     serializer_class = PageInUseSerializer
     queryset = PageInUse.objects.all()
-    lookup_field = 'page_url'
+    lookup_field = "page_url"
+
+    def put(self, request, *args, **kwargs):
+        if type(request.data) == QueryDict:
+            # when using APIFactory to submit post, data must be converted from QueryDict
+            request_data = request.data.dict()
+        else:
+            request_data = request.data
+
+        request_data["updated_on"] = datetime.now()
+        page_in_use = PageInUse.objects.get(
+            page_url=request_data["page_url"], user_id=request_data["user"]
+        )
+        page_in_use.updated_on = datetime.now()
+        page_in_use.save()
+
+        serializer = PageInUseSerializer(data=request_data)
+        if serializer.is_valid():
+            pass
+        return Response(serializer.data)
 
 
 class CollectionGet(generics.RetrieveAPIView):
     """
-    GET: Retrieve an existing Collection
+    GET: Retrieve an existing Collection by slug value
     """
+
     model = Collection
     authentication_classes = (ConcordiaAPIAuth,)
     serializer_class = CollectionDetailSerializer
     queryset = Collection.objects.all()
-    lookup_field = 'slug'
+    lookup_field = "slug"
+
+
+class CollectionGetById(generics.RetrieveAPIView):
+    """
+    GET: Retrieve an existing Collection by id
+    """
+
+    model = Collection
+    authentication_classes = (ConcordiaAPIAuth,)
+    serializer_class = CollectionDetailSerializer
+    queryset = Collection.objects.all()
+    lookup_field = "id"
 
 
 class CollectionAssetsGet(generics.RetrieveAPIView):
     """
     GET: Retrieve an existing Collection
     """
+
     model = Collection
     authentication_classes = (ConcordiaAPIAuth,)
     serializer_class = CollectionDetailSerializer
     queryset = Collection.objects.all()
-    lookup_field = 'slug'
+    lookup_field = "slug"
+
+
+class CollectionDelete(generics.DestroyAPIView):
+    """
+    DELETE: Delete a Collection
+    """
+
+    model = Collection
+    authentication_classes = (ConcordiaAPIAuth,)
+    queryset = Collection.objects.all()
+    serializer_class = CollectionDetailSerializer
+    lookup_field = "slug"
 
 
 class AssetsList(generics.ListAPIView):
     """
     GET: Return Assets by collection
     """
+
     model = Asset
     authentication_classes = (ConcordiaAPIAuth,)
     serializer_class = AssetSerializer
-    lookup_field = 'collection'
+    lookup_field = "collection"
 
     def get_queryset(self):
-        return Asset.objects.filter(collection__slug=self.kwargs['collection']).order_by("title", "sequence")
+        return Asset.objects.filter(
+            collection__slug=self.kwargs["collection"]
+        ).order_by("title", "sequence")
 
 
 class AssetBySlug(generics.RetrieveAPIView):
     """
     GET: Return Asset by collection and slug
     """
+
     model = Asset
     authentication_classes = (ConcordiaAPIAuth,)
     serializer_class = AssetSerializer
-    lookup_fields = ('collection', 'slug')
+    lookup_fields = ("collection", "slug")
 
     def get_object(self):
-        asset = Asset.objects.filter(collection__slug=self.kwargs['collection'], slug=self.kwargs['slug'])
+        asset = Asset.objects.filter(
+            collection__slug=self.kwargs["collection"], slug=self.kwargs["slug"]
+        )
         if len(asset) > 0:
             return asset[0]
         else:
             return None
 
 
+class AssetRandomInCollection(generics.RetrieveAPIView):
+    """
+    GET: Return a random asset from the collection excluding the passed in asset slug
+    """
+    model = Asset
+    authentication_classes = (ConcordiaAPIAuth,)
+    serializer_class = AssetSerializer
+    lookup_fields = ("collection", "slug")
+
+    def get_object(self):
+        try:
+            return (Asset.objects.filter(collection__slug=self.kwargs["collection"], status=Status.EDIT)
+                    .exclude(slug=self.kwargs["slug"])
+                    .order_by("?")
+                    .first()
+                    )
+        except ObjectDoesNotExist:
+            return None
+
+
+class AssetUpdate(generics.UpdateAPIView):
+    """
+    PUT: Update an Asset
+    """
+
+    model = Collection
+    authentication_classes = (ConcordiaAPIAuth,)
+    queryset = Collection.objects.all()
+    serializer_class = CollectionDetailSerializer
+    lookup_fields = ("collection", "slug")
+
+    def put(self, request, *args, **kwargs):
+        if type(request.data) == QueryDict:
+            # when using APIFactory to submit post, data must be converted from QueryDict
+            request_data = request.data.dict()
+        else:
+            request_data = request.data
+
+        collection = Collection.objects.get(slug=request_data["collection"])
+        asset = Asset.objects.get(slug=request_data["slug"], collection=collection)
+        asset.status = Status.INACTIVE
+        asset.save()
+
+        serializer = CollectionDetailSerializer(data=request_data)
+        if serializer.is_valid():
+            pass
+        return Response(serializer.data)
+
+
+
+
+
 class PageInUseFilteredGet(generics.ListAPIView):
     """
     GET: Retrieve all existing PageInUse with filtered values
     """
+
     model = PageInUse
     authentication_classes = (ConcordiaAPIAuth,)
     serializer_class = PageInUseSerializer
-    lookup_field = 'page_url'
+    lookup_field = "page_url"
 
     def get_queryset(self):
         """
@@ -148,51 +355,119 @@ class PageInUseFilteredGet(generics.ListAPIView):
         by users other than the user arg
         """
         time_threshold = datetime.now() - timedelta(minutes=5)
-        return PageInUse.objects.filter(page_url=self.kwargs['page_url'],
-                                        updated_on__gt=time_threshold).exclude(user__username=self.kwargs['user'])
+        page = PageInUse.objects.filter(
+            page_url=self.kwargs["page_url"], updated_on__gt=time_threshold
+        ).exclude(user__username=self.kwargs["user"])
+        return page
 
 
 class TranscriptionLastGet(generics.RetrieveAPIView):
     """
     GET: Get the last transcription for an asset
     """
+
     model = Transcription
     authentication_classes = (ConcordiaAPIAuth,)
     serializer_class = TranscriptionSerializer
     queryset = Transcription.objects.all()
-    lookup_field = 'asset'
+    lookup_field = "asset"
 
     def get_object(self):
         """
         Return the 'last' object for the asset_id. (this is the Transcription with the highest is value.)
         :return: Transcription object
         """
-        obj = Transcription.objects.filter(asset__id=self.kwargs['asset']).last()
+        obj = Transcription.objects.filter(asset__id=self.kwargs["asset"]).last()
         return obj
+
+
+class TranscriptionByUser(generics.ListAPIView):
+    """
+    GET: Get the transcriptions for a user id
+    """
+
+    model = Transcription
+    authentication_classes = (ConcordiaAPIAuth,)
+    serializer_class = TranscriptionSerializer
+    queryset = Transcription.objects.all()
+    lookup_field = "user"
+
+    def get_queryset(self):
+        """
+        Return the user's transcriptions
+        :return: Transcription object list
+        """
+        return Transcription.objects.filter(user_id=self.kwargs["user"]).order_by(
+            "-updated_on"
+        )
+
+
+class TranscriptionByAsset(generics.ListAPIView):
+    """
+    GET: Get the transcriptions for an asset
+    """
+
+    model = Transcription
+    authentication_classes = (ConcordiaAPIAuth,)
+    serializer_class = TranscriptionSerializer
+    queryset = Transcription.objects.all()
+    lookup_field = "asset_slug"
+
+    def get_queryset(self):
+        """
+        Return the transcriptions for an asset
+        :return: Transcription object list
+        """
+        return Transcription.objects.filter(asset__slug=self.kwargs["asset_slug"]).order_by(
+            "-updated_on"
+        )
 
 
 class TranscriptionCreate(generics.CreateAPIView):
     """
     POST: Create a new Transcription
     """
+
     model = Transcription
     authentication_classes = (ConcordiaAPIAuth,)
     serializer_class = TranscriptionSerializer
     queryset = Transcription.objects.all()
+
+    def post(self, request, *args, **kwargs):
+        if type(request.data) == QueryDict:
+            # when using APIFactory to submit post, data must be converted from QueryDict
+            request_data = request.data.dict()
+        else:
+            request_data = request.data
+
+        asset = get_object_or_404(Asset, id=request_data["asset"])
+
+        transcription = Transcription.objects.create(
+            asset=asset,
+            user_id=request_data["user_id"],
+            text=request_data["text"],
+            status=request_data["status"],
+        )
+
+        serializer = TranscriptionSerializer(data=request_data)
+        if serializer.is_valid():
+            pass
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class UserAssetTagsGet(generics.ListAPIView):
     """
     Get all tags for an asset
     """
+
     model = UserAssetTagCollection
     authentication_classes = (ConcordiaAPIAuth,)
     serializer_class = TagSerializer
     queryset = UserAssetTagCollection.objects.all()
-    lookup_field = 'asset'
+    lookup_field = "asset"
 
     def get_queryset(self):
-        db_tags = UserAssetTagCollection.objects.filter(asset__id=self.kwargs['asset'])
+        db_tags = UserAssetTagCollection.objects.filter(asset__id=self.kwargs["asset"])
 
         tags = all_tags = None
         if db_tags:
@@ -205,13 +480,17 @@ class UserAssetTagsGet(generics.ListAPIView):
                         tags | tags_in_db.tags.all()
                     ).distinct()  # merge the querysets
 
-        return all_tags
+        if all_tags:
+            return all_tags
+        else:
+            return UserAssetTagCollection.objects.filter(asset__id=-1)
 
 
 class TagCreate(generics.ListCreateAPIView):
     """
     POST: create or retrieve a tag
     """
+
     model = Tag
     authentication_classes = (ConcordiaAPIAuth,)
     serializer_class = TagSerializer
@@ -224,13 +503,17 @@ class TagCreate(generics.ListCreateAPIView):
         else:
             request_data = request.data
 
-        asset = Asset.objects.get(collection__slug=request_data["collection"], slug=request_data["asset"])
+        asset = Asset.objects.get(
+            collection__slug=request_data["collection"], slug=request_data["asset"]
+        )
 
         utags, status = UserAssetTagCollection.objects.get_or_create(
             asset=asset, user_id=request_data["user_id"]
         )
 
-        tag_ob, t_status = Tag.objects.get_or_create(name=request_data["name"], value=request_data["value"])
+        tag_ob, t_status = Tag.objects.get_or_create(
+            name=request_data["name"], value=request_data["value"]
+        )
         if tag_ob not in utags.tags.all():
             utags.tags.add(tag_ob)
 
@@ -239,3 +522,29 @@ class TagCreate(generics.ListCreateAPIView):
             pass
         return Response(serializer.data)
 
+
+class TagDelete(generics.DestroyAPIView):
+    """
+    DELETE: delete a tag
+    """
+
+    model = UserAssetTagCollection
+    authentication_classes = (ConcordiaAPIAuth,)
+    serializer_class = UserAssetTagSerializer
+    queryset = UserAssetTagCollection.objects.all()
+
+    def delete(self, request, *args, **kwargs):
+        asset = Asset.objects.get(
+            collection__slug=kwargs["collection"], slug=kwargs["asset"]
+        )
+
+        user_asset_collection = get_object_or_404(
+            UserAssetTagCollection, asset=asset, user_id=kwargs["user_id"]
+        )
+
+        user_asset_collection.tags.filter(name=kwargs["name"]).delete()
+
+        serializer = UserAssetTagSerializer(data=kwargs)
+        if serializer.is_valid():
+            pass
+        return Response(serializer.data)
