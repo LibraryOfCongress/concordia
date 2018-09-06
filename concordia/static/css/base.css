@@ -1160,10 +1160,6 @@ div.nav-secondary {
     overflow-y: hidden;
 }
 
-#tab-transcription {
-
-}
-
 #tab-tag {
     height: var(--height-tags-input);
 }
@@ -1191,6 +1187,10 @@ div.nav-secondary {
     margin-bottom: 0;
 }
 
+.offwhite-text#register-login-reminder {
+    display: none;
+}
+
 #contact-button {
     position: absolute;
     right: .5rem;
@@ -1213,6 +1213,11 @@ div.nav-secondary {
 
 }
 
+.contribute-instructions.instruction-window {
+    border-top: .0675rem solid var(--bg-darkest-gray);
+    animation: instructions .5s linear;
+}
+
 .contribute-instructions.instruction-window.collapse {
     display: none;
     position: absolute;
@@ -1221,8 +1226,7 @@ div.nav-secondary {
 }
 
 .contribute-instructions.instruction-window.collapsing {
-    animation-name: instructions;
-    animation-duration: .5s;
+
 }
 
 .contribute-instructions.instruction-window.collapse.show {
@@ -1232,7 +1236,6 @@ div.nav-secondary {
 }
 
 .instruction-window {
-    border-top: .0675rem solid var(--bg-darkest-gray);
 }
 
 .instruction-window p {

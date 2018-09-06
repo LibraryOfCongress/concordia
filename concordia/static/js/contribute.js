@@ -5,14 +5,14 @@ $( document ).ready(function() {
   }
 
   $( 'input[type="submit"]' ).click(function(e) {
-    $target = e.target.id;
+    var target = e.target.id;
     sessionStorage.setItem('show_message', 'true');
 
-    if( $target == 'save-button' ) {
+    if( target == 'save-button' ) {
         sessionStorage.setItem('status', 'save');
-    } elif ( $target == 'review-button' ) {
+    } elif ( target == 'review-button' ) {
         sessionStorage.setItem('status', 'review');
-    } else {
+    } elif ( target == 'complete-button' ) {
         sessionStorage.setItem('status', 'complete');
     }
     });

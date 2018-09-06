@@ -156,7 +156,7 @@
                     <input id="contact-button" name="action" type="submit" class="btn btn-minimal-secondary" value="Contact a Manager">
                 </form>
                 <div>
-                    <h5 class="mx-half offwhite-text d-inline" id="register-login-reminder">Only registered users can tag.
+                    <h5 class="mx-half offwhite-text" id="register-login-reminder">Only registered users can tag.
                         <a class="primary-text" href="/account/register/">Register</a> or <a class="primary-text" href="/account/login">Login</a></h5>
                 </div>
             </div>
@@ -253,16 +253,14 @@
 
         function hide_buttons(tab_name) {
             $("#review-button, #complete-button").hide();
-            $("#register-login-reminder").removeClass('d-inline');
-            $("#register-login-reminder, #register-login-reminder a").addClass('d-none');
+            $("#register-login-reminder").hide();
 
             {% if not user.is_authenticated %}
-                $("#register-login-reminder, #register-login-reminder a").removeClass('d-none');
-                $("#register-login-reminder").addClass('d-inline');
+                $("#register-login-reminder").show();
 
-                $("#save-button").hide();
                 if (tab_name == 'tags') {
                     $("#tag-input").attr('disabled', true);
+                    $()
                 }
             {% endif %}
             return true;
@@ -270,8 +268,7 @@
         function show_buttons() {
             $("#save-button, #review-button").show();
             $("#complete-button").hide();
-            $("#register-login-reminder").removeClass('d-inline');
-            $("#register-login-reminder, #register-login-reminder a").addClass('d-none');
+            $("#register-login-reminder").hide();
 
             $("#transcription-input").attr('disabled', false);
 
@@ -336,21 +333,17 @@
                 $("#save-button").click(function(e){
                     if($("#captcha_container").hasClass('d-none')) {
                         e.preventDefault();
-                        // $(this).removeClass("btn-primary");
                         $(this).attr("disabled", "disabled");
                         $("#captcha_container").removeClass('d-none');
                         $("#captcha_container").show();
-                        // $("input#id_captcha_1").after($('<div class="input-group-append">' + '<button class="btn btn-secondary" type="submit" name="action" value="Save">Enter</button>' + '</div>'));
                     }
                 });
                 $("#review-button").click(function(e){
                     if($("#captcha_container").hasClass('d-none')) {
                         e.preventDefault();
-                       // $(this).removeClass("btn-primary");
                        $(this).attr("disabled", "disabled");
                        $("#captcha_container").removeClass('d-none');
                        $("#captcha_container").show();
-                       // $("input#id_captcha_1").after($('<div class="input-group-append">' + '<button class="btn btn-secondary" type="submit" name="action" value="Save">Enter</button>' + '</div>'));
                    }
                });
 
