@@ -1189,7 +1189,7 @@ div.nav-secondary {
 }
 
 @keyframes instructions {
-    0%   { display: block; opacity: 0; color: rgba(255,255,255,0) !important; }
+    0%   { display: block; opacity: 0; color: rgba(255,255,255,0); }
     25%  { width: 25%; height: 25%; opacity: .25; }
     50%  { width: 50%; height: 50%; opacity: .50; }
     75%  { width: 75%; height: 75%; opacity: .75; }
