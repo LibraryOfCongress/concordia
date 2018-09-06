@@ -375,8 +375,8 @@ class ViewTest_Concordia(TestCase):
 
         # mock REST requests
 
-        collection_json = {
-            "id": self.collection.id,
+        campaign_json = {
+            "id": self.campaign.id,
             "slug": "test-slug2",
             "title": "TextCampaign",
             "description": "Campaign Description",
@@ -390,8 +390,8 @@ class ViewTest_Concordia(TestCase):
 
         responses.add(
             responses.GET,
-            "http://testserver/ws/collection/test-slug2/",
-            json=collection_json,
+            "http://testserver/ws/campaign/test-slug2/",
+            json=campaign_json,
             status=200,
         )
 
@@ -400,7 +400,7 @@ class ViewTest_Concordia(TestCase):
 
         # Assert
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, template_name="transcriptions/project.html")
+        self.assertTemplateUsed(response, template_name="transcriptions/campaign.html")
 
     @responses.activate
     def test_concordiaCampaignView_get_page2(self):
@@ -423,8 +423,8 @@ class ViewTest_Concordia(TestCase):
 
         # mock REST requests
 
-        collection_json = {
-            "id": self.collection.id,
+        campaign_json = {
+            "id": self.campaign.id,
             "slug": "test-slug2",
             "title": "TextCampaign",
             "description": "Campaign Description",
@@ -438,8 +438,8 @@ class ViewTest_Concordia(TestCase):
 
         responses.add(
             responses.GET,
-            "http://testserver/ws/collection/test-slug2/",
-            json=collection_json,
+            "http://testserver/ws/campaign/test-slug2/",
+            json=campaign_json,
             status=200,
         )
 
@@ -448,7 +448,7 @@ class ViewTest_Concordia(TestCase):
 
         # Assert
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, template_name="transcriptions/project.html")
+        self.assertTemplateUsed(response, template_name="transcriptions/campaign.html")
 
     def test_ExportCampaignView_get(self):
         """
@@ -524,7 +524,7 @@ class ViewTest_Concordia(TestCase):
 
         # Mock REST api calls
         responses.add(responses.DELETE,
-                      "http://testserver/ws/collection_delete/%s/" % (self.collection.slug, ),
+                      "http://testserver/ws/campaign_delete/%s/" % (self.campaign.slug, ),
                       status=200)
 
 
@@ -580,9 +580,9 @@ class ViewTest_Concordia(TestCase):
         self.asset.save()
 
         # Mock REST calls
-        collection_json = {
-            "id": self.collection.id,
-            "slug": self.collection.slug,
+        campaign_json = {
+            "id": self.campaign.id,
+            "slug": self.campaign.slug,
             "title": "TextCampaign",
             "description": "Campaign Description",
             "s3_storage": True,
@@ -594,18 +594,18 @@ class ViewTest_Concordia(TestCase):
 
         responses.add(
             responses.GET,
-            "http://testserver/ws/collection/%s/" % (self.collection.slug, ),
-            json=collection_json,
+            "http://testserver/ws/campaign/%s/" % (self.campaign.slug, ),
+            json=campaign_json,
             status=200,
         )
 
         responses.add(responses.PUT,
-                      "http://testserver/ws/asset_update/%s/%s/" % (self.collection.slug, self.asset.slug, ),
+                      "http://testserver/ws/asset_update/%s/%s/" % (self.campaign.slug, self.asset.slug, ),
                       status=200)
 
         # Act
 
-        response = self.client.get("/campaigns/%s/delete/asset/%s/" % (self.collection.slug, self.asset.slug, ),
+        response = self.client.get("/campaigns/%s/delete/asset/%s/" % (self.campaign.slug, self.asset.slug, ),
                                    ollow=True)
 
         # Assert
@@ -664,7 +664,7 @@ class ViewTest_Concordia(TestCase):
             "description": "mss859430177",
             "media_url": "https://s3.us-east-2.amazonaws.com/chc-collections/test_s3/mss859430177/1.jpg",
             "media_type": MediaType.IMAGE,
-            "collection": {"slug": "Campaign1"},
+            "campaign": {"slug": "Campaign1"},
             "project": None,
             "sequence": 1,
             "metadata": {"key": "val2"},
@@ -678,7 +678,7 @@ class ViewTest_Concordia(TestCase):
                 "description": "",
                 "media_url": "",
                 "media_type": None,
-                "collection": {
+                "campaign": {
                     "slug": "",
                     "title": "",
                     "description": "",
@@ -801,7 +801,7 @@ class ViewTest_Concordia(TestCase):
             "description": "mss859430177",
             "media_url": "https://s3.us-east-2.amazonaws.com/chc-collections/test_s3/mss859430177/1.jpg",
             "media_type": MediaType.IMAGE,
-            "collection": {"slug": "Campaign1"},
+            "campaign": {"slug": "Campaign1"},
             "project": None,
             "sequence": 1,
             "metadata": {"key": "val2"},
@@ -815,7 +815,7 @@ class ViewTest_Concordia(TestCase):
                 "description": "",
                 "media_url": "",
                 "media_type": None,
-                "collection": {
+                "campaign": {
                     "slug": "",
                     "title": "",
                     "description": "",
@@ -970,7 +970,7 @@ class ViewTest_Concordia(TestCase):
             "description": "mss859430177",
             "media_url": "https://s3.us-east-2.amazonaws.com/chc-collections/test_s3/mss859430177/1.jpg",
             "media_type": MediaType.IMAGE,
-            "collection": {"slug": "Campaign1"},
+            "campaign": {"slug": "Campaign1"},
             "project": None,
             "sequence": 1,
             "metadata": {"key": "val2"},
@@ -984,7 +984,7 @@ class ViewTest_Concordia(TestCase):
                 "description": "",
                 "media_url": "",
                 "media_type": None,
-                "collection": {
+                "campaign": {
                     "slug": "",
                     "title": "",
                     "description": "",
@@ -1136,7 +1136,7 @@ class ViewTest_Concordia(TestCase):
             "description": "mss859430177",
             "media_url": "https://s3.us-east-2.amazonaws.com/chc-collections/test_s3/mss859430177/1.jpg",
             "media_type": MediaType.IMAGE,
-            "collection": {"slug": "Campaign1"},
+            "campaign": {"slug": "Campaign1"},
             "project": None,
             "sequence": 1,
             "metadata": {"key": "val2"},
@@ -1150,7 +1150,7 @@ class ViewTest_Concordia(TestCase):
                 "description": "",
                 "media_url": "",
                 "media_type": None,
-                "collection": {
+                "campaign": {
                     "slug": "",
                     "title": "",
                     "description": "",
@@ -1290,7 +1290,7 @@ class ViewTest_Concordia(TestCase):
             "description": "mss859430177",
             "media_url": "https://s3.us-east-2.amazonaws.com/chc-collections/test_s3/mss859430177/1.jpg",
             "media_type": MediaType.IMAGE,
-            "collection": {"slug": "Campaign1"},
+            "campaign": {"slug": "Campaign1"},
             "project": None,
             "sequence": 1,
             "metadata": {"key": "val2"},
@@ -1304,7 +1304,7 @@ class ViewTest_Concordia(TestCase):
                 "description": "",
                 "media_url": "",
                 "media_type": None,
-                "collection": {
+                "campaign": {
                     "slug": "",
                     "title": "",
                     "description": "",
@@ -1423,7 +1423,7 @@ class ViewTest_Concordia(TestCase):
                 "description": "",
                 "media_url": "",
                 "media_type": None,
-                "collection": {
+                "campaign": {
                     "slug": "",
                     "title": "",
                     "description": "",
@@ -1441,7 +1441,7 @@ class ViewTest_Concordia(TestCase):
 
         responses.add(
             responses.GET,
-            "http://testserver/ws/collection_asset_random/%s/%s" % (self.collection.slug, self.asset.slug,),
+            "http://testserver/ws/campaign_asset_random/%s/%s" % (self.campaign.slug, self.asset.slug,),
             json=asset_json,
             status=200,
         )
@@ -1561,8 +1561,8 @@ class ViewTest_Concordia(TestCase):
 
         # mock REST requests
 
-        collection_json = {
-            "id": self.collection.id,
+        campaign_json = {
+            "id": self.campaign.id,
             "slug": "test-slug2",
             "title": "TextCampaign",
             "description": "Campaign Description",
@@ -1575,8 +1575,8 @@ class ViewTest_Concordia(TestCase):
 
         responses.add(
             responses.GET,
-            "http://testserver/ws/collection/test-slug2/",
-            json=collection_json,
+            "http://testserver/ws/campaign/test-slug2/",
+            json=campaign_json,
             status=200,
         )
 
@@ -1585,7 +1585,7 @@ class ViewTest_Concordia(TestCase):
 
         # Assert
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, template_name="transcriptions/campaign.html")
+        self.assertTemplateUsed(response, template_name="transcriptions/project.html")
 
     @responses.activate
     def test_ConcordiaProjectView_get_page2(self):
@@ -1626,8 +1626,8 @@ class ViewTest_Concordia(TestCase):
 
         # mock REST requests
 
-        collection_json = {
-            "id": self.collection.id,
+        campaign_json = {
+            "id": self.campaign.id,
             "slug": "test-slug2",
             "title": "TextCampaign",
             "description": "Campaign Description",
@@ -1640,8 +1640,8 @@ class ViewTest_Concordia(TestCase):
 
         responses.add(
             responses.GET,
-            "http://testserver/ws/collection/test-slug2/",
-            json=collection_json,
+            "http://testserver/ws/campaign/test-slug2/",
+            json=campaign_json,
             status=200,
         )
 
@@ -1652,7 +1652,7 @@ class ViewTest_Concordia(TestCase):
 
         # Assert
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, template_name="transcriptions/campaign.html")
+        self.assertTemplateUsed(response, template_name="transcriptions/project.html")
 
     def test_FilterCampaigns_get(self):
         """Test list of filer campaign get API"""

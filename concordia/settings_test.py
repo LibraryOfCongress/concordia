@@ -14,12 +14,14 @@ DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": "concordia",
-        "USER": "concordia",
+        "USER": "postgres",
         "PASSWORD": "concordia",
         "HOST": "0.0.0.0",
-        "PORT": "54321",
+        "PORT": "5433",
     }
 }
+
+DEFAULT_TO_EMAIL = "rstorey@loc.gov"
 
 ALLOWED_HOSTS = ["127.0.0.1", "0.0.0.0"]
 
