@@ -1206,6 +1206,7 @@ div.nav-secondary {
     75%  { width: 75%; height: 75%; opacity: .75; }
     90%  { color: rgba(38,50,56,.3); }
     100% {width: 100%; height: 100%; opacity: 1; color: rgba(38,50,56,1); }
+
 }
 
 .contribute-instructions.instruction-window.collapse {
