@@ -11,12 +11,13 @@ from captcha.fields import CaptchaField
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model
+from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
-from django.db.models import Count, Q
-from django.http import HttpResponse, HttpResponseRedirect
+from django.db.models import Count, Q, Max
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import Http404, get_object_or_404, redirect, render
 from django.template import loader
 from django.urls import reverse
@@ -85,6 +86,8 @@ class AccountProfileView(LoginRequiredMixin, TemplateView):
             obj.id = self.request.user.id
             if "password1" not in self.request.POST and "password2" not in self.request.POST:
                 obj.password = self.request.user.password
+            else:
+                update_session_auth_hash(self.request, obj)
             obj.save()
 
             if "myfile" in self.request.FILES:
@@ -92,7 +95,10 @@ class AccountProfileView(LoginRequiredMixin, TemplateView):
                 profile, created = UserProfile.objects.update_or_create(
                     user=obj, defaults={"myfile": myfile}
                 )
+
+            messages.success(self.request, "User profile information changed!")
         else:
+            messages.error(self.request, form.errors)
             return HttpResponseRedirect("/account/profile/")
         return redirect(reverse("user-profile"))
 
@@ -465,7 +471,7 @@ class ConcordiaAssetView(TemplateView):
         # don't know why this would be called here
         # self.get_context_data()
 
-        if self.request.POST.get("action").lower() == 'contact manager':
+        if self.request.POST.get("action").lower() == 'contact a manager':
             return redirect(reverse('contact') + "?pre_populate=true")
 
         if self.request.user.is_anonymous:
@@ -679,15 +685,14 @@ class ContactUsView(FormView):
             return None
         else:
             return {
-                'email': (
-                    None
-                    if self.request.user.is_anonymous
-                    else self.request.user.email
+                "email": (
+                    None if self.request.user.is_anonymous else self.request.user.email
                 ),
-                'link': (
-                    self.request.META.get('HTTP_REFERER')
-                    if self.request.META.get('HTTP_REFERER') else None
-                )
+                "link": (
+                    self.request.META.get("HTTP_REFERER")
+                    if self.request.META.get("HTTP_REFERER")
+                    else None
+                ),
             }
 
     def post(self, *args, **kwargs):
@@ -944,3 +949,62 @@ class FilterCollections(generics.ListAPIView):
         from django.http import JsonResponse
 
         return JsonResponse(list(queryset), safe=False)
+
+
+def publish_collection(request, collection, is_publish):
+    """ Publish/Unpublish a collection to otherr users. On un/publishing collection,
+    it will get does the same effect for all its projects. """
+
+    try:
+        collection = Collection.objects.get(slug=collection)
+    except Collection.DoesNotExist:
+        raise Http404
+
+    if is_publish == "true":
+        collection.is_publish = True
+    else:
+        collection.is_publish = False
+
+    sub_collections = collection.subcollection_set.all()
+
+    for sc in sub_collections:
+        sc.is_publish = True if is_publish == "true" else False
+        sc.save()
+
+    collection.save()
+
+    return JsonResponse(
+        {
+            "message": "Collection has been %s."
+            % ("published" if is_publish == "true" else "unpublished"),
+            "state": True if is_publish == "true" else False,
+        },
+        safe=True,
+    )
+
+
+def publish_project(request, collection, project, is_publish):
+    """ Publish/Unpublish a project to other users. """
+
+    try:
+        sub_collection = Subcollection.objects.get(
+            collection__slug=collection, slug=project
+        )
+    except Subcollection.DoesNotExist:
+        raise Http404
+
+    if is_publish == "true":
+        sub_collection.is_publish = True
+    else:
+        sub_collection.is_publish = False
+
+    sub_collection.save()
+
+    return JsonResponse(
+        {
+            "message": "Project has been %s."
+            % ("published" if is_publish == "true" else "unpublished"),
+            "state": True if is_publish == "true" else False,
+        },
+        safe=True,
+    )

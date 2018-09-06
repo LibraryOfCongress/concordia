@@ -68,7 +68,19 @@ tx_urlpatterns = (
             name="transcription",
         ),
         re_path(
-            r"^([^/]+)/([^/]+)/$", views.ConcordiaCollectionView.as_view(), name="project"
+            r"^([^/]+)/([^/]+)/$",
+            views.ConcordiaCollectionView.as_view(),
+            name="project",
+        ),
+        re_path(
+            r"publish/collection/(?P<collection>[a-zA-Z0-9-]+)/(?P<is_publish>[a-zA-Z]+)/$",
+            views.publish_collection,
+            name="publish collection",
+        ),
+        re_path(
+            r"publish/project/(?P<collection>[a-zA-Z0-9-]+)/(?P<project>[a-zA-Z0-9-]+)/(?P<is_publish>[a-zA-Z]+)/$",
+            views.publish_project,
+            name="publish project",
         ),
     ],
     "transcriptions",

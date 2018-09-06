@@ -43,6 +43,7 @@ class CollectionListSerializer(serializers.ModelSerializer):
             "end_date",
             "status",
             "asset_count",
+            "is_publish",
         )
 
 
@@ -117,6 +118,11 @@ class AssetSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class PageInUseSerializer(serializers.ModelSerializer):
+    def create(self, validated_data):
+        page_in_use = models.PageInUse(
+            page_url=validated_data["page_url"], user=validated_data["user"]
+        )
+        page_in_use.save()
 
     def delete_old(self):
         from datetime import datetime, timedelta
@@ -147,7 +153,6 @@ class PageInUseSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.PageInUse
         fields = ("page_url", "user", "updated_on")
-
 
 class TranscriptionSerializer(serializers.HyperlinkedModelSerializer):
     asset = AssetSerializer()
