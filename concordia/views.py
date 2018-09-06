@@ -1,8 +1,10 @@
 import html
 import json
 import os
+from collections import namedtuple
 from datetime import datetime, timedelta
 from logging import getLogger
+from types import SimpleNamespace
 
 import requests
 from captcha.fields import CaptchaField
@@ -360,6 +362,9 @@ class ConcordiaAssetView(TemplateView):
         )
         page_in_use = self.check_page_in_use(in_use_url, current_user_id)
 
+        # TODO: in the future, this is from a settings file value
+        discussion_hide = True
+
         # Get all transcriptions, they are no longer tied to a specific user
 
         response = requests.get(
@@ -447,6 +452,7 @@ class ConcordiaAssetView(TemplateView):
             transcription=transcription_json,
             tags=json_tags,
             captcha_form=captcha_form,
+            discussion_hide=discussion_hide,
         )
 
     def post(self, *args, **kwargs):
@@ -866,19 +872,18 @@ class ReportCollectionView(TemplateView):
         return user_array
 
     def get(self, request, *args, **kwargs):
-        # TODO: Implement REST calls to report values on the report page
 
         response = requests.get(
             "%s://%s/ws/collection/%s/"
             % (self.request.scheme, self.request.get_host(), self.args[0]),
             cookies=self.request.COOKIES,
         )
-        collection_json_val = json.loads(response.content.decode("utf-8"))
-        for sub_col in collection_json_val["subcollections"]:
-            sub_col["collection"] = collection_json_val
+        collection_json = json.loads(response.content.decode("utf-8"))
+        for sub_col in collection_json["subcollections"]:
+            sub_col["collection"] = collection_json
 
         project_sorted_list = sorted(
-            collection_json_val["subcollections"], key=lambda k: (k["title"])
+            collection_json["subcollections"], key=lambda k: (k["title"])
         )
 
         for sorted_project in project_sorted_list:
