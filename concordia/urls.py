@@ -142,10 +142,10 @@ urlpatterns = [
         r"^ws/page_in_use_user/(?P<user>(.*?))/(?P<page_url>(.*?))/$",
         views_ws.PageInUseUserGet.as_view(),
     ),
-    re_path(r"^ws/campaign/(?P<slug>(.*?))/$", views_ws.CollectionGet().as_view()),
-    re_path(r"^ws/campaign_delete/(?P<slug>(.*?))/$", views_ws.CollectionDelete.as_view()),
+    re_path(r"^ws/campaign/(?P<slug>(.*?))/$", views_ws.CampaignGet().as_view()),
+    re_path(r"^ws/campaign_delete/(?P<slug>(.*?))/$", views_ws.CampaignDelete.as_view()),
     re_path(
-        r"^ws/campaign_by_id/(?P<id>(.*?))/$", views_ws.CollectionGetById().as_view()
+        r"^ws/campaign_by_id/(?P<id>(.*?))/$", views_ws.CampaignGetById().as_view()
     ),
     re_path(r"^ws/asset/(?P<campaign>(.*?))/$", views_ws.AssetsList().as_view()),
     re_path(
@@ -158,7 +158,7 @@ urlpatterns = [
     ),
     re_path(
         r"^ws/campaign_asset_random/(?P<campaign>(.*?))/(?P<slug>(.*?))/$",
-        views_ws.AssetRandomInCollection().as_view(),
+        views_ws.AssetRandomInCampaign().as_view(),
     ),
     re_path(
         r"^ws/page_in_use_filter/(?P<user>(.*?))/(?P<page_url>(.*?))/$",

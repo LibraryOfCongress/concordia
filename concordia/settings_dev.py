@@ -23,7 +23,8 @@ DATABASES = {
 
 ALLOWED_HOSTS = ["127.0.0.1", "0.0.0.0", "*"]
 
-CELERY_BROKER_URL = "amqp://"
+CELERY_BROKER_URL = "pyamqp://guest@localhost"
+CELERY_RESULT_BACKEND = "rpc://"
 
 CONCORDIA = {"netloc": "http://0.0.0.0:8000"}
 

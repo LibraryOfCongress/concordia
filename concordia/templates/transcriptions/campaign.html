@@ -1,5 +1,5 @@
 {% extends "transcriptions/base.html" %} {% load staticfiles %}
-{% block title %}Concordia - {{ campaign }}{% endblock title %}
+{% block title %}Concordia - {{ campaign.title }}{% endblock title %}
 {% block head_content %}
 
 {% endblock head_content %}
@@ -10,7 +10,7 @@
 <div class="container-fluid py-default">
     <div class="row">
         <div class="col-md-10 mx-auto bg-offwhite rounded">
-            <h3 class="mt-default mb-half ml-half">{{ campaign }} Campaign</h3>
+            <h3 class="mt-default mb-half ml-half">{{ campaign.title }}</h3>
             <p class="ml-default mb-default">{{ campaign.description }}</p>
             <div class="row">
                 <div class="d-flex flex-wrap col-12 justify-content-around">

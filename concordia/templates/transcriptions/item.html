@@ -1,5 +1,5 @@
 {% extends "transcriptions/base.html" %} {% load staticfiles %}
-{% block title %}Concordia - {{ campaign }}{% endblock title %}
+{% block title %}Concordia - {{ campaign.title }}{% endblock title %}
 {% block head_content %}
 
 {% endblock head_content %}
@@ -8,9 +8,8 @@
     <div class="row">
         <div class="col-md-10 mx-auto bg-offwhite rounded">
             <h3 class="mt-default mb-half ml-half">{{ campaign.title }}</h3>
-            <p class="ml-default mb-default">{{ campaign.description }}</p>
-            <p class="ml-default mb-default">{{ project }} Project</p>
-            <h4>{{ item }} Item</h4>
+            <h4>{{ project.title }}</h4>
+            <h4>Item {{ item.item_id }}</h4>
             <div class="row">
                 <div class="d-flex flex-wrap col-12 justify-content-around">
                     {% for a in assets %}

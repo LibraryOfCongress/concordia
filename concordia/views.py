@@ -28,7 +28,7 @@ from rest_framework.test import APIRequestFactory
 
 from concordia.forms import (CaptchaEmbedForm, ConcordiaContactUsForm,
                              ConcordiaUserEditForm, ConcordiaUserForm)
-from concordia.models import (Asset, Campaign, PageInUse, Status, Transcription,
+from concordia.models import (Asset, Project, Item, Campaign, PageInUse, Status, Transcription,
                               UserProfile)
 from concordia.views_ws import PageInUseCreate
 from importer.views import CreateCampaignView
@@ -168,13 +168,10 @@ class ConcordiaView(TemplateView):
         return dict(super().get_context_data(**kws), response=response)
 
 
-class ConcordiaProjectView(TemplateView):
-    template_name = "transcriptions/project.html"
+class ConcordiaCampaignView(TemplateView):
+    template_name = "transcriptions/campaign.html"
 
     def get_context_data(self, **kws):
-
-        print("ws/campaign url:", "%s://%s/ws/campaign/%s/" % (self.request.scheme, self.request.get_host(), self.args[0]))
-
         response = requests.get(
             "%s://%s/ws/campaign/%s/"
             % (self.request.scheme, self.request.get_host(), self.args[0]),
@@ -198,9 +195,40 @@ class ConcordiaProjectView(TemplateView):
         items = paginator.get_page(page)
 
         return dict(
-            super().get_context_data(**kws), campaign=campaign_json_val, projects=projects
+            super().get_context_data(**kws), campaign=campaign_json_val, projects=project_sorted_list
         )
 
+class ConcordiaProjectView(TemplateView):
+    template_name = "transcriptions/project.html"
+
+    def get_context_data(self, **kws):
+        try:
+            campaign = Campaign.objects.get(slug=self.args[0])
+            project = Project.objects.get(slug=self.args[1])
+        except Campaign.DoesNotExist:
+            raise Http404
+        except Project.DoesNotExist:
+            raise Http404
+
+        item_list = Item.objects.filter(campaign=campaign, project=project).order_by(
+            "item_id"
+        )
+
+        paginator = Paginator(item_list, ITEMS_PER_PAGE)
+
+        if not self.request.GET.get("page"):
+            page = 1
+        else:
+            page = self.request.GET.get("page")
+
+        items = paginator.get_page(page)
+
+        return dict(
+            super().get_context_data(**kws),
+            campaign=campaign,
+            project=project,
+            items=items,
+        )
 
 class ConcordiaItemView(TemplateView):
     template_name = "transcriptions/item.html"
@@ -217,6 +245,15 @@ class ConcordiaItemView(TemplateView):
             campaign_json_val["assets"], key=lambda k: (k["slug"])
         )
 
+        try:
+            project = Project.objects.get(slug=self.args[1])
+            item = Item.objects.get(slug=self.args[2])
+        except Item.DoesNotExist:
+            raise Http404
+        except Project.DoesNotExist:
+            raise Http404
+
+
         paginator = Paginator(asset_sorted_list, ASSETS_PER_PAGE)
 
         if not self.request.GET.get("page"):
@@ -229,6 +266,8 @@ class ConcordiaItemView(TemplateView):
         return dict(
             super().get_context_data(**kws),
             campaign=campaign_json_val,
+            project=project,
+            item=item,
             assets=assets,
         )
 
