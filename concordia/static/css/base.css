@@ -255,6 +255,10 @@ p.hero-secondary.offwhite-text {
     color: var(--primary-color-hover);
 }
 
+thead td {
+    font-weight: bold;
+}
+
 .bg-offwhite {
     background-color: var(--bg-offwhite);
 }
