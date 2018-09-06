@@ -3,7 +3,8 @@
   --primary-color-hover: rgba(188,57,1,1); /* #BC3901 */
   --secondary-color: rgba(0,167,228,1); /* #00A7E4 */
   --secondary-color-hover: rgba(0,35,71,1); /* #002347 */
-  --text-color-primary: rgba(51,51,51,1); /* #333333 */
+  --text-color-primary: rgba(38,50,56,1); /* #263238 */
+  /* --text-color-primary: rgba(51,51,51,1); /* #333333 */
   --text-color-offwhite: rgba(250,250,250,1); /* #FAFAFA */
   --text-nav-current: rgba(252,76,2,1); /* #FC4C02 */
   --bg-offwhite: rgba(250,250,250,1); /* #FAFAFA */
@@ -823,7 +824,7 @@ div.nav-secondary {
     border-color: var(--primary-color-hover) !important;
     color: var(--text-color-offwhite) !important;
 }
-  
+
 .btn-outline-primary {
     border-color: var(--primary-color);
     color: var(--primary-color);
@@ -840,7 +841,7 @@ div.nav-secondary {
     border-color: var(--secondary-color);
     color: var(--text-color-offwhite);
 }
-  
+
 .btn-secondary:hover {
     background-color: var(--secondary-color-hover);
     border-color: var(--secondary-color-hover);
@@ -908,13 +909,13 @@ div.nav-secondary {
 .btn-row .btn {
     width: 9.875rem !important;
 }
-  
+
 .btn-dark {
   background-color: var(--bg-offblack);
   border-color: var(--bg-offblack);
   color: var(--text-color-offwhite);
 }
-  
+
 .btn-dark.disabled, .btn-dark:disabled {
   background-color: var(--bg-darkest-gray) !important;
   border-color: var(--bg-darkest-gray) !important;
@@ -1180,7 +1181,7 @@ div.nav-secondary {
     right: .5rem;
     bottom: .5rem;
 }
-  
+
 .contribute-instructions {
     position: absolute;
     left: 0;
@@ -1192,8 +1193,8 @@ div.nav-secondary {
     25%  { width: 25%; height: 25%; opacity: .25; }
     50%  { width: 50%; height: 50%; opacity: .50; }
     75%  { width: 75%; height: 75%; opacity: .75; }
-    85%  { color: rgba(51,51,51,.3) !important; }
-    100% {width: 100%; height: 100%; opacity: 1; color: rgba(51,51,51,1) !important; }
+    85%  { color: rgba(38,50,56,.3) !important; }
+    100% {width: 100%; height: 100%; opacity: 1; color: rgba(38,50,56,1) !important; }
 }
 
 .contribute-instructions.instruction-window.collapse {
