@@ -29,7 +29,7 @@
 body {
     top: 0;
     left: 0;
-    color: var(--bg-offwhite);
+    color: var(--text-color-primary);
     overflow-x: hidden;
     border-top: .25rem solid var(--primary-color);
     background-color: var(--bg-offwhite);
