@@ -212,20 +212,20 @@ $("#create_btn").click(function(){
         }).fail(function(data, jqXHR, textStatus, errorThrown) {
             $(".loading").removeClass("d-none");
             if(jqXHR.status == 0 || jqXHR == 302) {
-                $("#error_msg").html("Sorry..!! There is some error for creating collection...");
+                $("#error_msg").html("<strong>Sorry!</strong> We've encountered an error in creating the collection");
             } else {
                 if(data.responseJSON.message){
                      $("#error_msg").html(data.responseJSON.message);
             }
             else{
-            $("#error_msg").html("Sorry..!! There is some error for creating collection...");
+            $("#error_msg").html("<strong>Sorry!</strong> We've encountered an error in creating the collection");
                 }
             }
             $("#close_error").show();
         });
     }
     else{
-        $("#error_msg").html("Sorry..!! Please furnish below all required details...");
+        $("#error_msg").html("<strong>Hold up a second!</strong> We actually need all the information for which we're asking =/");
         $("#close_error").show();
     }
 })
