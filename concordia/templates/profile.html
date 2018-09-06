@@ -23,45 +23,40 @@
             <form class="form-horizontal" action="/account/profile/" method="POST" enctype="multipart/form-data">{% csrf_token %}
                 <span>{{ form.non_field_errors }}</span>
                 <div class="col-12">
-                    <h2 class="mb-default">Account Settings — <span id="toggle_edit_section" class="profile_edit color-primary">edit</span></h2>
+                    <h2 class="mb-default">Account Settings</h2>
                 </div>
-                <div class="row">
-                    <div class="col text-center">
-                                <img src="{% static "img/default_profile.png" %}" alt="profile image" class="img-fluid rounded-circle">
+                <div class="col-md-10 col-lg-8 mx-auto">
+                    <div class="form-group row">
+                        <label class="col-md-2 secondary-text col-form-label" for="{{form.username.id_for_label}}">Username</label>
+                        <div class="col-md-10">
+                            <input id="{{form.username.id_for_label}}" name="{{form.username.html_name}}" value="{{form.username.value}}" type="text" class="form-control form-control" readonly="readonly">
+                            <span>{{ form.username.errors }}</span>
+                        </div>
                     </div>
-                    <div class="col-lg-8">
+                    <div class="form-group row">
+                        <label class="col-md-2 secondary-text col-form-label" for="{{form.email.id_for_label}}">Email</label>
+                        <div class="col-md-10">
+                            <input id="{{form.email.id_for_label}}" name="{{form.email.html_name}}" type="text" value="{{ form.email.value }}" class="form-control form-control" readonly="readonly">
+                        </div>
+                    </div>
+                    <div class="password-section">
                         <div class="form-group row">
-                            <label class="col-md-2 secondary-text col-form-label" for="{{form.username.id_for_label}}">Username</label>
+                            <label class="col-md-2 secondary-text col-form-label" for="{{form.password1.id_for_label}}">Password</label>
                             <div class="col-md-10">
-                                <input id="{{form.username.id_for_label}}" name="{{form.username.html_name}}" value="{{form.username.value}}" type="text" class="form-control form-control" readonly="readonly">
-                                <span>{{ form.username.errors }}</span>
+                                <input id="{{form.password1.id_for_label}}" name="{{form.password1.html_name}}" type="password" class="form-control">
                             </div>
                         </div>
                         <div class="form-group row">
-                            <label class="col-md-2 secondary-text col-form-label" for="{{form.email.id_for_label}}">Email</label>
+                            <label class="col-md-2 secondary-text col-form-label" for="{{form.password2.id_for_label}}">Re-enter Password</label>
                             <div class="col-md-10">
-                                <input id="{{form.email.id_for_label}}" name="{{form.email.html_name}}" type="text" value="{{ form.email.value }}" class="form-control form-control" readonly="readonly">
+                                <input id="{{form.password2.id_for_label}}" name="{{form.password2.html_name}}" type="password" class="form-control">
                             </div>
                         </div>
-                        <div class="password-section">
-                            <div class="form-group row">
-                                <label class="col-md-2 secondary-text col-form-label" for="{{form.password1.id_for_label}}">Password</label>
-                                <div class="col-md-10">
-                                    <input id="{{form.password1.id_for_label}}" name="{{form.password1.html_name}}" type="password" class="form-control">
-                                </div>
-                            </div>
-                            <div class="form-group row">
-                                <label class="col-md-2 secondary-text col-form-label" for="{{form.password2.id_for_label}}">Re-enter Password</label>
-                                <div class="col-md-10">
-                                    <input id="{{form.password2.id_for_label}}" name="{{form.password2.html_name}}" type="password" class="form-control">
-                                </div>
-                            </div>
-                        </div>
-                        <button class="btn btn-secondary offset-md-2" id="toggle_password_section"> Change Password</button>
-                        <div class="col-md-8 offset-md-2 d-flex justify-content-between justify-content-center my-half edit">
-                            <a href="{{request.path}}" class="d-none btn btn-default">Cancel</a>
-                            <button type="submit" class="d-none btn btn-primary">Save</button>
-                        </div>
+                    </div>
+                    <button class="btn btn-secondary offset-md-2" id="toggle_password_section"> Change Password</button>
+                    <div class="col-md-8 offset-md-2 d-flex justify-content-between justify-content-center my-half edit">
+                        <a href="{{request.path}}" class="d-none btn btn-default">Cancel</a>
+                        <button type="submit" class="d-none btn btn-primary">Save</button>
                     </div>
                 </div>
             </form>
@@ -71,23 +66,25 @@
         <hr>
     </div>
     <div class="col-12 col-md-10 bg-offwhite mx-auto pxy-default rounded">
-        <h2 class="mb-default">My Contributions</h2> {% if transcriptions %}
-        <table class="table">
-            <tr>
-                <td>Collection</td>
-                <td>Asset Name</td>
-                <td>Current Status</td>
-                <td>Date</td>
-            </tr>
-            {% for t in transcriptions %}
-            <tr>
-                <td>{{t.collection_name}}</td>
-                <td><a href="/transcribe/{{t.collection_name}}/asset/{{t.asset.slug}}">{{t.asset.slug}}</a></td>
-                <td>{{t.asset.status}}</td>
-                <td>{{ t.updated_on|date:'Y-m-d H:i' }}</td>
-            </tr>
-            {% endfor %} {% endif %}
-        </table>
+        <h2 class="mb-default">My Contributions</h2>
+        {% if transcriptions %}
+            <table class="table">
+                <tr>
+                    <td>Collection</td>
+                    <td>Asset Name</td>
+                    <td>Current Status</td>
+                    <td>Date</td>
+                </tr>
+                {% for t in transcriptions %}
+                    <tr>
+                        <td>{{t.collection_name}}</td>
+                        <td><a href="/transcribe/{{t.collection_name}}/asset/{{t.asset.slug}}">{{t.asset.slug}}</a></td>
+                        <td>{{t.asset.status}}</td>
+                        <td>{{ t.updated_on|date:'Y-m-d H:i' }}</td>
+                    </tr>
+                {% endfor %}
+            </table>
+        {% endif %}
     </div>
 </div>
 {% endblock main_content %}
@@ -106,22 +103,13 @@ $("#toggle_password_section").click(function(e) {
         $(".password-section").hide();
         $('.edit .d-none').removeClass('d-none')
     }
-})
-
-document.getElementById('toggle_edit_section').onclick = function() {
-    $('.form-control-plaintext').addClass('form-control').removeClass('form-control-plaintext')
-    $('.edit .d-none').removeClass('d-none')
-    document.getElementById('id_first_name').removeAttribute('readonly');
-    document.getElementById('id_username').removeAttribute('readonly');
-    document.getElementById('id_email').removeAttribute('readonly');
-
-};
+});
 
 $('#myfile').change(function() {
     $('.edit .d-none').removeClass('d-none')
 });
 {% if form.errors %}
-$("#toggle_edit_section").click()
+$("#toggle_edit_section").click();
 {% endif %}
 
 </script>
