@@ -61,11 +61,9 @@ input[type=submit] {
   color: #ffffff;
 }
 </style>
-
 {% endblock head_content %}
+
 {% block main_content %}
-<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
-<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 <div class="container-fluid py-default" id='container'>
   <div class="row">
     <div class="col-md-10 mx-auto bg-offwhite rounded">
@@ -119,6 +117,10 @@ input[type=submit] {
         <input type="hidden" id="item_id">
   </div>
 </div>
+{% endblock main_content %}
+
+{% block body_scripts %}
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 <script>
 $("#close_error").hide();
 function handle_form_submission()
@@ -251,6 +253,8 @@ $(function(){
 });
 
 </script>
-{% endblock main_content %}
+{% endblock body_scripts %}
+
+
 
 
