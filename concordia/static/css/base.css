@@ -1434,3 +1434,7 @@ box-shadow: inset 0 .1875rem .3125rem rgba(0, 0, 0, .125);
     border-color: none;
     color: var(--text-color-primary);
 }
+
+.alert .close {
+    opacity: .8;
+}
