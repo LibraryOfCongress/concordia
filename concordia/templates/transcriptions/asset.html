@@ -253,15 +253,16 @@
 
         function hide_buttons(tab_name) {
             $("#review-button, #complete-button").hide();
-            $("#register-login-reminder").hide();
 
             {% if not user.is_authenticated %}
                 $("#register-login-reminder").show();
 
                 if (tab_name == 'tags') {
                     $("#tag-input").attr('disabled', true);
-                    $()
+                    $("#save-button").hide();
                 }
+            {% else %}
+                $("#register-login-reminder").hide();
             {% endif %}
             return true;
         }
