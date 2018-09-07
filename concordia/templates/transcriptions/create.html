@@ -3,9 +3,9 @@
 {% block title %}Citizen Historian Create a Collection{% endblock title %}
 {% block head_content %}
 <style>
-* {
+/** {
   box-sizing: border-box;
-}
+}*/
 
 .autocomplete {
   /*the container must be positioned relative:*/
@@ -61,6 +61,7 @@ input[type=submit] {
   color: #ffffff;
 }
 </style>
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 {% endblock head_content %}
 
 {% block main_content %}
@@ -120,7 +121,7 @@ input[type=submit] {
 {% endblock main_content %}
 
 {% block body_scripts %}
-<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous"></script>
 <script>
 $("#close_error").hide();
 function handle_form_submission()
@@ -128,9 +129,6 @@ function handle_form_submission()
   $(".loading").removeClass("d-none");
   // document.getElementById("container").style.display = "none";
 }
-// function hide_box(){
-//    document.getElementById("close").style.display = "none";
-// }
 
 function write_save_collection_assets(task_id){
    $("#close_error").hide();
@@ -254,7 +252,3 @@ $(function(){
 
 </script>
 {% endblock body_scripts %}
-
-
-
-
