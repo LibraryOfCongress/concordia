@@ -28,3 +28,6 @@ clean:
 	rm -rf postgresql-data/
 
 
+down:
+	docker-compose -f docker-compose-sentry.yml -f docker-compose-elk.yml \
+		-f docker-compose-prometheus.yml -f docker-compose.yml down

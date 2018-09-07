@@ -47,7 +47,8 @@ ELASTICSEARCH_DSL = {
     },
 }
 
-INSTALLED_APPS += ['django_elasticsearch_dsl']
+# INSTALLED_APPS += ['django_elasticsearch_dsl']
+
 REGISTRATION_URLS = "registration.backends.hmac.urls"
 REGISTRATION_SALT = "registration"  # doesn't need to be secret
 
