@@ -37,7 +37,7 @@
                             <a href="{% url 'transcriptions:exportCSV collection' c.slug %}" class="btn btn-success col mb-quarter">Export to csv</a>
                             <a href="{% url 'transcriptions:exportBagit collection' c.slug %}" class="btn btn-success col">Export to Bagit</a>
                             <a href="{% url 'transcriptions:report collection' c.slug %}" class="mt-half col btn btn-primary">Report</a>
-                            {% if request.user|has_group:"CM" %}
+                            <!-- {% if request.user|has_group:"CM" %} -->
                                 {% if c.is_publish %}
                                     <button type="button" class="confirm-modal btn btn-primary col mt-half" data-toggle="modal" id="{{ c.slug }}" data-target="#collectionConfirmModal">
                                             Unpublish</button>
@@ -45,7 +45,7 @@
                                     <button type="button" class="confirm-modal btn btn-primary col mt-half" data-toggle="modal" id="{{ c.slug }}" data-target="#collectionConfirmModal">
                                             Publish</button>
                                 {% endif %}
-                            {% endif %}
+                            <!-- {% endif %} -->
                           </div>
                       {% endif %}
                     </div>
