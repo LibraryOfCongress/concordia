@@ -258,6 +258,18 @@ p.hero-secondary.offwhite-text {
     color: var(--primary-color-hover);
 }
 
+.profile-label {
+    font-family: 'Roboto Slab', serif;
+    font-size: 1.25rem;
+    line-height: 125%;
+    font-weight: bold;
+    color: var(--secondary-color);
+}
+
+.profile-attribute {
+    border-bottom: 1px solid rgba(153,153,153,1);
+}
+
 thead td {
     font-weight: bold;
 }
