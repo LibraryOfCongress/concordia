@@ -903,7 +903,7 @@ class ViewTest_Concordia(TestCase):
             {
                 "tx": "First Test Transcription 1",
                 "tags": "",
-                "action": "Contact Manager",
+                "action": "contact a manager",
                 "captcha_0": hash_,
                 "captcha_1": captcha_response,
             },
@@ -1523,6 +1523,7 @@ class ViewTest_Concordia(TestCase):
         # Assert
         self.assertEqual(response.status_code, 200)
 
+    @responses.activate
     def test_ConcordiaProjectView_get(self):
         """
         Test GET on route /transcribe/<slug-value> (collection)
