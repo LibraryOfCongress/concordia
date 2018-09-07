@@ -627,19 +627,36 @@ div.nav-secondary {
     padding-left: .5rem !important;
 }
 
+/* Responsive header behavior for XS devices */
+@media (max-width: 368.98px) {
+    h1.header-text { font-size: 1.75rem; }
+}
+
+/* SM breakpoint and below */
+@media (max-width: 767.98px) {
+    h1 { margin-bottom: 0; }
+    h1.header-text { font-size: 2rem; }
+    .carousel-text { top: .25rem; margin-left: 1rem; }
+    .container-fluid { padding-left: 0; padding-right: 0; }
+}
+
 /* MD breakpoint and below */
 @media (max-width: 991.98px) {
     .border-bottom-artifacts { border-bottom: solid 0px transparent; }
     .border-left-home-contribute { border-left: solid 0px transparent; }
     .container-fluid.px-default { padding-left: 0; padding-right: 0; }
-    h1 { font-size: 2.25rem; }
-    h1.header-text { font-size: 2rem; }
-    .carousel-text { top: 1rem; margin-left: 1.5rem; }
-    p.hero-text { font-size: 1.1875rem; }
+    h1 { font-size: 1.75rem; }
+    h1.header-text { font-size: 2.25rem; }
+    .carousel-text { top: .5rem; margin-left: 1.25rem; }
+    p.hero-text { font-size: 1.0625rem; }
 }
 
 /* Screens wider than the MD breakpoint */
 @media (min-width: 992px) {
+
+    .container-fluid {
+        padding-left: 2rem; padding-right: 2rem;
+    }
 
     .mxy-md-default {
         margin: 2rem !important;
