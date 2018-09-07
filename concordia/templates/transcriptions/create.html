@@ -61,11 +61,9 @@ input[type=submit] {
   color: #ffffff;
 }
 </style>
-
 {% endblock head_content %}
+
 {% block main_content %}
-<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
-<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 <div class="container-fluid py-default" id='container'>
   <div class="row">
     <div class="col-md-10 mx-auto bg-offwhite rounded">
@@ -75,20 +73,20 @@ input[type=submit] {
               <h6 class="form-text offwhite-text">Creating the collection for you...<span id="progress"></span>
               </h6>
       </div>
-        <div class="alert alert-danger alert-dismissible fade show" id="close_error" role="alert">
-          <button type="button" class="close" onclick="hide_box()" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-          <strong id="error_msg"></strong>
+        <div class="alert alert-danger alert-dismissible fade" id="close_error" role="alert">
+            <strong id="error_msg"></strong>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
         </div>
 
       <!--<form class="mx-default my-default">-->
       {% if error %}
-        <div class="alert alert-danger alert-dismissible fade show" id="close" role="alert">
-          <button type="button" class="close" onclick="hide_box()" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-          <strong>Sorry!</strong> We're having some trouble accessing that URL. Is it accessible? You want to double check if you entered it correctly?
+        <div class="alert alert-danger alert-dismissible fade" id="close" role="alert">
+            <strong>Sorry!</strong> We're having some trouble accessing that URL. Is it accessible? You want to double check if you entered it correctly?
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
         </div>
       {% endif %}
 
@@ -119,6 +117,10 @@ input[type=submit] {
         <input type="hidden" id="item_id">
   </div>
 </div>
+{% endblock main_content %}
+
+{% block body_scripts %}
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 <script>
 $("#close_error").hide();
 function handle_form_submission()
@@ -126,9 +128,9 @@ function handle_form_submission()
   $(".loading").removeClass("d-none");
   // document.getElementById("container").style.display = "none";
 }
-function hide_box(){
-   document.getElementById("close").style.display = "none";
-}
+// function hide_box(){
+//    document.getElementById("close").style.display = "none";
+// }
 
 function write_save_collection_assets(task_id){
    $("#close_error").hide();
@@ -153,9 +155,9 @@ function write_save_collection_assets(task_id){
             console.log('Your session has ended due to inactivity after 10 minutes.\nPlease refresh this page, or close this window and log back in to system.');
         } else {
             console.log('Unknown error returned while saving' + (typeof errorThrown == 'string' && errorThrown.trim().length > 0 ? ':\n' + errorThrown : ''));
-         $("#error_msg").html("Sorry..!! There is some error for creating collection...");
-        $(".loading").addClass("d-none");
-                $("#close_error").show();
+            $("#error_msg").html("<strong>Sorry!</strong> We've encountered an error in creating the collection");
+            $(".loading").addClass("d-none");
+            $("#close_error").show();
         }
     });
 
@@ -210,20 +212,20 @@ $("#create_btn").click(function(){
         }).fail(function(data, jqXHR, textStatus, errorThrown) {
             $(".loading").removeClass("d-none");
             if(jqXHR.status == 0 || jqXHR == 302) {
-                $("#error_msg").html("Sorry..!! There is some error for creating collection...");
+                $("#error_msg").html("<strong>Sorry!</strong> We've encountered an error in creating the collection");
             } else {
                 if(data.responseJSON.message){
                      $("#error_msg").html(data.responseJSON.message);
             }
             else{
-            $("#error_msg").html("Sorry..!! There is some error for creating collection...");
+            $("#error_msg").html("<strong>Sorry!</strong> We've encountered an error in creating the collection");
                 }
             }
             $("#close_error").show();
         });
     }
     else{
-        $("#error_msg").html("Sorry..!! Please furnish below all required details...");
+        $("#error_msg").html("<strong>Hold up a second!</strong> We actually need all the information for which we're asking =/");
         $("#close_error").show();
     }
 })
@@ -251,6 +253,8 @@ $(function(){
 });
 
 </script>
-{% endblock main_content %}
+{% endblock body_scripts %}
+
+
 
 

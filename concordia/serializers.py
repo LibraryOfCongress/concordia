@@ -73,6 +73,7 @@ class SubcollectionSerializer(serializers.ModelSerializer):
             "slug",
             "metadata",
             "status",
+            "is_publish",
         )
 
 
