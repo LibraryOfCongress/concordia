@@ -65,7 +65,7 @@
                             {% if user.is_authenticated %}
                                 <input type="text" id="tag-input" class="rounded" name="tags" data-role="tagsinput" value="{%for tag in tags %}{{tag}},{% endfor %}" aria-label="Tag input">
                             {% else %}
-                                <input type="text" id="tag-input" class="rounded" name="tags" data-role="tagsinput" value="{%for tag in tags %}{{tag}},{% endfor %}" aria-label="Tag input" disabled="true">
+                                <input type="text" id="tag-input" class="rounded" name="tags" data-role="tagsinput" value="{%for tag in tags %}{{tag.value}},{% endfor %}" aria-label="Tag input" disabled="true">
                             {% endif %}
                         </div>
                         {% if not discussion_hide %}
@@ -156,7 +156,7 @@
                     <input id="contact-button" name="action" type="submit" class="btn btn-minimal-secondary" value="Contact a Manager">
                 </form>
                 <div>
-                    <h5 class="offwhite-text d-inline" id="register-login-reminder">Only registered users can tag.
+                    <h5 class="mx-half offwhite-text d-inline" id="register-login-reminder">Only registered users can tag.
                         <a class="primary-text" href="/account/register/">Register</a> or <a class="primary-text" href="/account/login">Login</a></h5>
                 </div>
             </div>
@@ -254,10 +254,10 @@
         function hide_buttons(tab_name) {
             $("#review-button, #complete-button").hide();
             $("#register-login-reminder").removeClass('d-inline');
-            $("#register-login-reminder").addClass('d-none');
+            $("#register-login-reminder, #register-login-reminder a").addClass('d-none');
 
             {% if not user.is_authenticated %}
-                $("#register-login-reminder").removeClass('d-none');
+                $("#register-login-reminder, #register-login-reminder a").removeClass('d-none');
                 $("#register-login-reminder").addClass('d-inline');
 
                 $("#save-button").hide();
@@ -271,7 +271,7 @@
             $("#save-button, #review-button").show();
             $("#complete-button").hide();
             $("#register-login-reminder").removeClass('d-inline');
-            $("#register-login-reminder").addClass('d-none');
+            $("#register-login-reminder, #register-login-reminder a").addClass('d-none');
 
             $("#transcription-input").attr('disabled', false);
 
