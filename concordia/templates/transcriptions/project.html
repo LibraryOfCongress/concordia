@@ -77,7 +77,7 @@
         </button>
       </div>
       <div class="modal-body">
-        Are you sure you want to make it public ?
+        Are you sure you want to make this project public?
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
@@ -89,7 +89,7 @@
 
 <script>
     $(document).ready(function(){
-         $(document).on('shown.bs.modal',"#projectConfirmModal", function (e) {
+        $(document).on('show.bs.modal',"#projectConfirmModal", function (e) {
             var $invoker = $(e.relatedTarget);
 
             $("#confirmprojectbtn").click(function(e){
@@ -106,18 +106,18 @@
                     url: '/transcribe/publish/project/'+collection_slug+"/"+project_slug+"/"+to_status+"/",
                     type: 'GET',
                     success: function(data, textStatus, jqXHR) {
-			$('#projectConfirmModal').modal('hide');
+                        $('#projectConfirmModal').modal('hide');
                         if(data['state']){
                             $("#"+project_slug).text('Unpublish');
-                        }else{
+                        } else{
                             $("#"+project_slug).text('Publish');
                         }
                     }
                 }).fail(function(data, jqXHR, textStatus, errorThrown) {
-                   console.log("error: ", data);
+                    console.log("error: ", data);
                 });
             });
-         });
+        });
     });
 </script>
 
