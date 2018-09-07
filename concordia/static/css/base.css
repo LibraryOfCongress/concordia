@@ -8,7 +8,6 @@
   --color-warning: rgba(254,153,11,1); /* #FE990B */
   --color-info: rgba(2,252,216,1); /* #02FCD8 */
   --text-color-primary: rgba(38,50,56,1); /* #263238 */
-  --color-success: rgba(22,201,74,1); /* #16C94A */
   --text-color-offwhite: rgba(250,250,250,1); /* #FAFAFA */
   --text-nav-current: rgba(252,76,2,1); /* #FC4C02 */
   --bg-offwhite: rgba(250,250,250,1); /* #FAFAFA */
@@ -1208,9 +1207,14 @@ div.nav-secondary {
     25%  { width: 25%; height: 25%; opacity: .25; }
     50%  { width: 50%; height: 50%; opacity: .50; }
     75%  { width: 75%; height: 75%; opacity: .75; }
+<<<<<<< HEAD
     90%  { color: rgba(38,50,56,.3); }
     100% {width: 100%; height: 100%; opacity: 1; color: rgba(38,50,56,1); }
 
+=======
+    85%  { color: rgba(38,50,56,.3); }
+    100% {width: 100%; height: 100%; opacity: 1; color: rgba(38,50,56,1); }
+>>>>>>> 15e007a04dcc5ed8f964f08a8552890901dbbce7
 }
 
 .contribute-instructions.instruction-window {
