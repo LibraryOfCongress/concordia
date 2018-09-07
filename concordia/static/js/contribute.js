@@ -10,9 +10,9 @@ $( document ).ready(function() {
 
     if( target == 'save-button' ) {
         sessionStorage.setItem('status', 'save');
-    } elif ( target == 'review-button' ) {
+    } else if ( target == 'review-button' ) {
         sessionStorage.setItem('status', 'review');
-    } elif ( target == 'complete-button' ) {
+    } else if ( target == 'complete-button' ) {
         sessionStorage.setItem('status', 'complete');
     }
     });
