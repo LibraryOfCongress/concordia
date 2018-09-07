@@ -60,6 +60,13 @@
                                     <a class="dropdown-item" href="{% url 'logout' %}">Logout</a>
                                 </div>
                             </li>
+                        {% else %}
+                            <li class="nav-item">
+                                <a class="nav-link d-lg-none" href="{% url 'login' %}">Login</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link d-lg-none" href="{% url 'registration_register' %}">Register</a>
+                            </li>
                         {% endif %}
                 </ul>
             </div>
@@ -89,6 +96,13 @@
                                     <a class="dropdown-item" href="{% url 'admin:index' %}">Admin pages</a> {% endif %}
                                     <a class="dropdown-item" href="{% url 'logout' %}">Logout</a>
                                 </div>
+                            </li>
+                        {% else %}
+                            <li class="nav-item">
+                                <a class="nav-link d-lg-none" href="{% url 'login' %}">Login</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link d-lg-none" href="{% url 'registration_register' %}">Register</a>
                             </li>
                         {% endif %}
                 </ul>
@@ -282,10 +296,17 @@
                                     <a class="dropdown-item" href="{% url 'logout' %}">Logout</a>
                                 </div>
                             </li>
+                        {% else %}
+                            <li class="nav-item">
+                                <a class="nav-link d-lg-none" href="{% url 'login' %}">Login</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link d-lg-none" href="{% url 'registration_register' %}">Register</a>
+                            </li>
                         {% endif %}
                 </ul>
             </div>
-                    {% endif %}
+                    {% endif %}Arsena!6
 
             {% if not user.is_authenticated %}
             <div class="nav-secondary">
