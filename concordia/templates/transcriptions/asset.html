@@ -345,6 +345,8 @@
                        $(this).attr("disabled", "disabled");
                        $("#captcha_container").removeClass('d-none');
                        $("#captcha_container").show();
+                       // need to pass in button value to captcha enter button 
+                       $("#input_group_for_captcha > .input-group-append > button").attr("value", $("#review-button").attr("value"));
                    }
                });
 
