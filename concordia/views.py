@@ -535,7 +535,6 @@ class ConcordiaAssetView(TemplateView):
                 return self.get(self.request, *args, **kwargs)
 
         redirect_path = self.request.path
-
         if "tx" in self.request.POST and 'tagging' not in self.request.POST:
             tx = self.request.POST.get("tx")
             tx_status = self.state_dictionary[self.request.POST.get("action")]
@@ -563,7 +562,7 @@ class ConcordiaAssetView(TemplateView):
 
             redirect_path = next_page_dictionary[tx_status](redirect_path, asset_json)
 
-        elif "tags" in self.request.POST and self.request.user.is_authenticated == True:
+        if "tags" in self.request.POST and self.request.user.is_authenticated == True:
             tags = self.request.POST.get("tags").split(",")
             # get existing tags
             response = requests.get(
