@@ -1,5 +1,7 @@
 import os
 import shutil
+import boto3
+import botocore
 from logging import getLogger
 
 from celery.result import AsyncResult
@@ -16,8 +18,13 @@ from importer.models import CampaignItemAssetCount, CampaignTaskDetails
 from importer.serializer import CreateCampaign
 from importer.tasks import (download_write_campaign_item_assets,
                             download_write_item_assets, get_item_id_from_item_url)
+from importer.config import IMPORTER
 
 logger = getLogger(__name__)
+
+S3_CLIENT = boto3.client("s3")
+S3_BUCKET_NAME = IMPORTER.get("S3_BUCKET_NAME", "")
+S3_RESOURCE = boto3.resource("s3")
 
 
 class CreateCampaignView(generics.CreateAPIView):
@@ -173,6 +180,7 @@ def check_completeness(ciac, item_id=None):
 
 
 def save_campaign_item_assets(project, item, the_path, item_id=None):
+    list_asset_info = []
 
     for root, dirs, files in os.walk(the_path):
         for filename in files:
@@ -184,7 +192,7 @@ def save_campaign_item_assets(project, item, the_path, item_id=None):
 
             media_url = file_path.replace(settings.IMPORTER["IMAGES_FOLDER"], "")
             sequence = int(os.path.splitext(filename)[0])
-            Asset.objects.create(
+            asset_info = Asset(
                 title=title,
                 slug="{0}{1}".format(title, sequence),
                 description="{0} description".format(title),
@@ -195,17 +203,57 @@ def save_campaign_item_assets(project, item, the_path, item_id=None):
                 project=project,
                 item=item,
             )
+            list_asset_info.append(asset_info)
+            # Asset.objects.create(
+            #     title=title,
+            #     slug="{0}{1}".format(title, sequence),
+            #     description="{0} description".format(title),
+            #     media_url=media_url,
+            #     media_type="IMG",
+            #     sequence=sequence,
+            #     campaign=project.campaign,
+            #     project=project,
+            #     item=item,
+            # )
+            if S3_BUCKET_NAME:
+                image_stats = os.stat(filename)
+                filesize_on_disk = image_stats.st_size
+                if check_image_file_on_s3(filename, filesize_on_disk):
+                    S3_CLIENT.upload_file(filename, S3_BUCKET_NAME, filename)
+                    logger.info(
+                        "Uploaded %(filename)s to %(bucket_name)s",
+                        {"filename": filename, "bucket_name": S3_BUCKET_NAME},
+                    )
+                else:
+                    logger.info(
+                        "File %(filename)s with size %(size_on_disk)d already exists in s3 bucket",
+                        {"filename": filename, "size_on_disk": filesize_on_disk},
+                    )
+            else:
+                try:
+                    item_path = "/".join(
+                        os.path.join(settings.MEDIA_ROOT, media_url).split("/")[:-1]
+                    )
+                    os.makedirs(item_path)
+                except Exception as e:
+                    logger.error("Error/warning while creating dir path: %s" % e)
 
-            try:
-                item_path = "/".join(
-                    os.path.join(settings.MEDIA_ROOT, media_url).split("/")[:-1]
-                )
-                os.makedirs(item_path)
-            except Exception as e:
-                logger.error("Error/warning while creating dir path: %s" % e)
+                shutil.move(file_path, os.path.join(settings.MEDIA_ROOT, media_url))
+        Asset.objects.bulk_create(list_asset_info)
 
-            shutil.move(file_path, os.path.join(settings.MEDIA_ROOT, media_url))
 
+def check_image_file_on_s3(filename, filesize):
+    if S3_BUCKET_NAME:
+        try:
+            object_summary = S3_RESOURCE.ObjectSummary(S3_BUCKET_NAME, filename)
+            if object_summary.size == filesize:
+                return True
+            else:
+                return False
+        except botocore.exceptions.ClientError:
+            return False
+    else:
+        return False
 
 @api_view(["GET"])
 def check_and_save_campaign_assets(request, task_id, item_id=None):
