@@ -216,10 +216,10 @@ def save_campaign_item_assets(project, item, the_path, item_id=None):
             #     item=item,
             # )
             if S3_BUCKET_NAME:
-                image_stats = os.stat(filename)
+                image_stats = os.stat(file_path)
                 filesize_on_disk = image_stats.st_size
-                if check_image_file_on_s3(filename, filesize_on_disk):
-                    S3_CLIENT.upload_file(filename, S3_BUCKET_NAME, filename)
+                if not check_image_file_on_s3(file_path, filesize_on_disk):
+                    S3_CLIENT.upload_file(file_path, S3_BUCKET_NAME, filename)
                     logger.info(
                         "Uploaded %(filename)s to %(bucket_name)s",
                         {"filename": filename, "bucket_name": S3_BUCKET_NAME},
