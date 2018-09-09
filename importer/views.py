@@ -218,16 +218,17 @@ def save_campaign_item_assets(project, item, the_path, item_id=None):
             if S3_BUCKET_NAME:
                 image_stats = os.stat(file_path)
                 filesize_on_disk = image_stats.st_size
-                if not check_image_file_on_s3(file_path, filesize_on_disk):
-                    S3_CLIENT.upload_file(file_path, S3_BUCKET_NAME, filename)
+                #if not check_image_file_on_s3(file_path, filesize_on_disk):
+                try:
+                    S3_CLIENT.upload_file(file_path, S3_BUCKET_NAME, media_url)
                     logger.info(
                         "Uploaded %(filename)s to %(bucket_name)s",
-                        {"filename": filename, "bucket_name": S3_BUCKET_NAME},
+                        {"filename": file_path, "bucket_name": S3_BUCKET_NAME},
                     )
-                else:
+                except:
                     logger.info(
                         "File %(filename)s with size %(size_on_disk)d already exists in s3 bucket",
-                        {"filename": filename, "size_on_disk": filesize_on_disk},
+                        {"filename": file_path, "size_on_disk": filesize_on_disk},
                     )
             else:
                 try:
@@ -240,7 +241,11 @@ def save_campaign_item_assets(project, item, the_path, item_id=None):
 
                 shutil.move(file_path, os.path.join(settings.MEDIA_ROOT, media_url))
         Asset.objects.bulk_create(list_asset_info)
-
+        if S3_BUCKET_NAME:
+            S3_CLIENT.upload_file(file_path, S3_BUCKET_NAME, file_path.replace(settings.IMPORTER["IMAGES_FOLDER"], ""))
+        else:
+            pass
+        
 
 def check_image_file_on_s3(filename, filesize):
     if S3_BUCKET_NAME:
