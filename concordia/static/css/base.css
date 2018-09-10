@@ -56,6 +56,10 @@ h1.header-text {
     color: black;
 }
 
+h1.header-text a {
+    display: inline;
+}
+
 h2 {
     font-family: 'Roboto Slab', serif;
     font-size: 1.5rem;
@@ -628,7 +632,12 @@ div.nav-secondary {
 }
 
 /* Responsive header behavior for XS devices */
-@media (max-width: 368.98px) {
+@media (max-width: 355.98px) {
+    h1.header-text a { display: none; }
+}
+
+/* Responsive header behavior for XS devices */
+@media (max-width: 386.98px) {
     h1.header-text { font-size: 1.75rem; }
 }
 
