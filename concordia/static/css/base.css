@@ -638,7 +638,7 @@ div.nav-secondary {
 }
 
 /* Responsive header behavior for XS devices */
-@media (max-width: 449.98px) {
+@media (max-width: 449.98px) and (min-width: 356px) {
     h1.header-text { font-size: 1.75rem; }
 }
 
@@ -650,7 +650,7 @@ div.nav-secondary {
 }
 
 /* MD screensize and below */
-@media (max-width: 795.98px) {
+@media (max-width: 798.98px) and (min-width: 449.98px) {
     h1.header-text { font-size: 2rem; }
 }
 
@@ -664,9 +664,16 @@ div.nav-secondary {
     .carousel-text { top: .5rem; margin-left: 1.25rem; }
     p.hero-text { font-size: 1.0625rem; }
 }
+@media (max-width: 991.98px) and (min-width: 768px) {
+    .carousel-text { top: .5rem; margin-left: 1.25rem; }
+}
+
+@media (max-width: 991.98px) and (min-width: 799px) {
+    h1.header-text { font-size: 2.25rem; }
+}
 
 /* LG breakpoint and below */
-@media (max-width: 1199.98px) {
+@media (max-width: 1199.98px) (max-width: 992px) {
     h1 { font-size: 2.5rem; }
     .carousel-text { top: 1rem; margin-left: 2rem; }
     p.hero-text { font-size: 1.2rem; }
