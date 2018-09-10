@@ -230,21 +230,22 @@ class ConcordiaProjectView(TemplateView):
             items=items,
         )
 
+
 class ConcordiaItemView(TemplateView):
+    """
+    Handle GET requests on /campaign/<campaign>/<project>/<item>
+    """
     template_name = "transcriptions/item.html"
 
     def get_context_data(self, **kws):
 
         response = requests.get(
-            "%s://%s/ws/campaign/%s/"
-            % (self.request.scheme, self.request.get_host(), self.args[0]),
+            "%s://%s/ws/item_by_id/%s"
+            % (self.request.scheme, self.request.get_host(), self.args[2]),
             cookies=self.request.COOKIES,
         )
-        campaign_json_val = json.loads(response.content.decode("utf-8"))
-        asset_sorted_list = sorted(
-            campaign_json_val["assets"], key=lambda k: (k["slug"])
-        )
-
+        assets_json_val = json.loads(response.content.decode("utf-8"))
+        
         try:
             project = Project.objects.get(slug=self.args[1])
             item = Item.objects.get(slug=self.args[2])
@@ -253,8 +254,7 @@ class ConcordiaItemView(TemplateView):
         except Project.DoesNotExist:
             raise Http404
 
-
-        paginator = Paginator(asset_sorted_list, ASSETS_PER_PAGE)
+        paginator = Paginator(asset_json_val, ASSETS_PER_PAGE)
 
         if not self.request.GET.get("page"):
             page = 1

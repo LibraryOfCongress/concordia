@@ -227,6 +227,8 @@ class CampaignGetById(generics.RetrieveAPIView):
     lookup_field = "id"
 
 
+
+
 class CampaignAssetsGet(generics.RetrieveAPIView):
     """
     GET: Retrieve an existing Campaign
@@ -249,6 +251,22 @@ class CampaignDelete(generics.DestroyAPIView):
     queryset = Campaign.objects.all()
     serializer_class = CampaignDetailSerializer
     lookup_field = "slug"
+
+
+class ItemGetById(generics.RetrieveAPIView):
+    """
+    GET: Retrieve assets for one item
+    """
+
+    model = Asset
+    authentication_classes = (ConcordiaAPIAuth,)
+    serializer_class = AssetSerializer
+    lookup_field = "item_id"
+
+    def get_queryset(self):
+        return Asset.objects.filter(
+            item__slug=self.kwargs["item_id"],
+        ).order_by("sequence")
 
 
 class AssetsList(generics.ListAPIView):
