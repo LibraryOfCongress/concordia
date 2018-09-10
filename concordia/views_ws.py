@@ -9,9 +9,9 @@ from rest_framework import exceptions, generics, status
 from rest_framework.authentication import BasicAuthentication
 from rest_framework.response import Response
 
-from .models import (Asset, Collection, PageInUse, Status, Tag, Transcription, User, UserProfile,
+from .models import (Asset, Campaign, PageInUse, Status, Tag, Transcription, User, UserProfile,
                      UserAssetTagCollection)
-from .serializers import (AssetSerializer, CollectionDetailSerializer,
+from .serializers import (AssetSerializer, CampaignDetailSerializer,
                           PageInUseSerializer, TagSerializer, TranscriptionSerializer,
                           UserAssetTagSerializer, UserSerializer, UserProfileSerializer)
 
@@ -203,83 +203,83 @@ class PageInUsePut(generics.UpdateAPIView):
         return Response(serializer.data)
 
 
-class CollectionGet(generics.RetrieveAPIView):
+class CampaignGet(generics.RetrieveAPIView):
     """
-    GET: Retrieve an existing Collection by slug value
+    GET: Retrieve an existing Campaign by slug value
     """
 
-    model = Collection
+    model = Campaign
     authentication_classes = (ConcordiaAPIAuth,)
-    serializer_class = CollectionDetailSerializer
-    queryset = Collection.objects.all()
+    serializer_class = CampaignDetailSerializer
+    queryset = Campaign.objects.all()
     lookup_field = "slug"
 
 
-class CollectionGetById(generics.RetrieveAPIView):
+class CampaignGetById(generics.RetrieveAPIView):
     """
-    GET: Retrieve an existing Collection by id
+    GET: Retrieve an existing Campaign by id
     """
 
-    model = Collection
+    model = Campaign
     authentication_classes = (ConcordiaAPIAuth,)
-    serializer_class = CollectionDetailSerializer
-    queryset = Collection.objects.all()
+    serializer_class = CampaignDetailSerializer
+    queryset = Campaign.objects.all()
     lookup_field = "id"
 
 
-class CollectionAssetsGet(generics.RetrieveAPIView):
+class CampaignAssetsGet(generics.RetrieveAPIView):
     """
-    GET: Retrieve an existing Collection
+    GET: Retrieve an existing Campaign
     """
 
-    model = Collection
+    model = Campaign
     authentication_classes = (ConcordiaAPIAuth,)
-    serializer_class = CollectionDetailSerializer
-    queryset = Collection.objects.all()
+    serializer_class = CampaignDetailSerializer
+    queryset = Campaign.objects.all()
     lookup_field = "slug"
 
 
-class CollectionDelete(generics.DestroyAPIView):
+class CampaignDelete(generics.DestroyAPIView):
     """
-    DELETE: Delete a Collection
+    DELETE: Delete a Campaign
     """
 
-    model = Collection
+    model = Campaign
     authentication_classes = (ConcordiaAPIAuth,)
-    queryset = Collection.objects.all()
-    serializer_class = CollectionDetailSerializer
+    queryset = Campaign.objects.all()
+    serializer_class = CampaignDetailSerializer
     lookup_field = "slug"
 
 
 class AssetsList(generics.ListAPIView):
     """
-    GET: Return Assets by collection
+    GET: Return Assets by campaign
     """
 
     model = Asset
     authentication_classes = (ConcordiaAPIAuth,)
     serializer_class = AssetSerializer
-    lookup_field = "collection"
+    lookup_field = "campaign"
 
     def get_queryset(self):
         return Asset.objects.filter(
-            collection__slug=self.kwargs["collection"]
+            campaign__slug=self.kwargs["campaign"]
         ).order_by("title", "sequence")
 
 
 class AssetBySlug(generics.RetrieveAPIView):
     """
-    GET: Return Asset by collection and slug
+    GET: Return Asset by campaign and slug
     """
 
     model = Asset
     authentication_classes = (ConcordiaAPIAuth,)
     serializer_class = AssetSerializer
-    lookup_fields = ("collection", "slug")
+    lookup_fields = ("campaign", "slug")
 
     def get_object(self):
         asset = Asset.objects.filter(
-            collection__slug=self.kwargs["collection"], slug=self.kwargs["slug"]
+            campaign__slug=self.kwargs["campaign"], slug=self.kwargs["slug"]
         )
         if len(asset) > 0:
             return asset[0]
@@ -287,18 +287,18 @@ class AssetBySlug(generics.RetrieveAPIView):
             return None
 
 
-class AssetRandomInCollection(generics.RetrieveAPIView):
+class AssetRandomInCampaign(generics.RetrieveAPIView):
     """
-    GET: Return a random asset from the collection excluding the passed in asset slug
+    GET: Return a random asset from the campaign excluding the passed in asset slug
     """
     model = Asset
     authentication_classes = (ConcordiaAPIAuth,)
     serializer_class = AssetSerializer
-    lookup_fields = ("collection", "slug")
+    lookup_fields = ("campaign", "slug")
 
     def get_object(self):
         try:
-            return (Asset.objects.filter(collection__slug=self.kwargs["collection"], status=Status.EDIT)
+            return (Asset.objects.filter(campaign__slug=self.kwargs["campaign"], status=Status.EDIT)
                     .exclude(slug=self.kwargs["slug"])
                     .order_by("?")
                     .first()
@@ -312,11 +312,11 @@ class AssetUpdate(generics.UpdateAPIView):
     PUT: Update an Asset
     """
 
-    model = Collection
+    model = Campaign
     authentication_classes = (ConcordiaAPIAuth,)
-    queryset = Collection.objects.all()
-    serializer_class = CollectionDetailSerializer
-    lookup_fields = ("collection", "slug")
+    queryset = Campaign.objects.all()
+    serializer_class = CampaignDetailSerializer
+    lookup_fields = ("campaign", "slug")
 
     def put(self, request, *args, **kwargs):
         if type(request.data) == QueryDict:
@@ -325,12 +325,12 @@ class AssetUpdate(generics.UpdateAPIView):
         else:
             request_data = request.data
 
-        collection = Collection.objects.get(slug=request_data["collection"])
-        asset = Asset.objects.get(slug=request_data["slug"], collection=collection)
+        campaign = Campaign.objects.get(slug=request_data["campaign"])
+        asset = Asset.objects.get(slug=request_data["slug"], campaign=campaign)
         asset.status = Status.INACTIVE
         asset.save()
 
-        serializer = CollectionDetailSerializer(data=request_data)
+        serializer = CampaignDetailSerializer(data=request_data)
         if serializer.is_valid():
             pass
         return Response(serializer.data)
@@ -504,7 +504,7 @@ class TagCreate(generics.ListCreateAPIView):
             request_data = request.data
 
         asset = Asset.objects.get(
-            collection__slug=request_data["collection"], slug=request_data["asset"]
+            campaign__slug=request_data["campaign"], slug=request_data["asset"]
         )
 
         utags, status = UserAssetTagCollection.objects.get_or_create(
@@ -535,7 +535,7 @@ class TagDelete(generics.DestroyAPIView):
 
     def delete(self, request, *args, **kwargs):
         asset = Asset.objects.get(
-            collection__slug=kwargs["collection"], slug=kwargs["asset"]
+            campaign__slug=kwargs["campaign"], slug=kwargs["asset"]
         )
 
         user_asset_collection = get_object_or_404(

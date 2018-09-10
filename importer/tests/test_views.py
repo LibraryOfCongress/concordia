@@ -2,10 +2,9 @@
 
 from unittest.mock import Mock, patch
 
+from django.conf import settings
 from django.template.defaultfilters import slugify
 from django.urls import reverse
-from django.conf import settings
-
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
@@ -31,13 +30,13 @@ class MockAsyncResult:
         self.state = state
 
 
-class CreateCollectionViewTests(APITestCase):
+class CreateCampaignViewTests(APITestCase):
     def setUp(self):
         """
         Setting up the required test data input for importer views test cases
         """
         self.client = APIClient()
-        self.url = reverse("create_collection")
+        self.url = reverse("create_campaign")
         self.data = {
             "name": "branch-rickey-papers",
             "url": "https://www.loc.gov/collections/branch-rickey-papers/?fa=partof:branch+rickey+papers:+baseball+file,+1906-1971",
@@ -48,16 +47,16 @@ class CreateCollectionViewTests(APITestCase):
             "url": "https://www.loc.gov/item/mss859430021",
             "project": "brp",
         }
-        self.collection = {
-            "collection_name": self.data.get("name"),
-            "collection_slug": slugify(self.data.get("name")),
-            "subcollection_name": self.data.get("project"),
-            "subcollection_slug": slugify(self.data.get("project")),
+        self.campaign = {
+            "campaign_name": self.data.get("name"),
+            "campaign_slug": slugify(self.data.get("name")),
+            "project_name": self.data.get("project"),
+            "project_slug": slugify(self.data.get("project")),
         }
 
-    def test_create_collection_fields_required_bad_request(self):
+    def test_create_campaign_fields_required_bad_request(self):
         """
-        Create collection with bad request, required fields not given project and url.
+        Create campaign with bad request, required fields not given project and url.
         """
 
         # Arrange
@@ -69,9 +68,9 @@ class CreateCollectionViewTests(APITestCase):
         # Assert that the request-response cycle completed successfully.
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_create_collection_wrong_url(self):
+    def test_create_campaign_wrong_url(self):
         """
-        Create collection with bad request, in url collections or item or no present.
+        Create campaign with bad request, in url campaigns or item or no present.
         """
 
         # Arrange
@@ -87,13 +86,13 @@ class CreateCollectionViewTests(APITestCase):
         # Assert that the request-response cycle completed successfully.
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    def test_create_collection_bad_request(self):
+    def test_create_campaign_bad_request(self):
         """
-        Create collection with bad request.
+        Create campaign with bad request.
         """
         # Arrange
-        self.collection["collection_task_id"] = "123"
-        CollectionTaskDetails.objects.create(**self.collection)
+        self.campaign["campaign_task_id"] = "123"
+        CampaignTaskDetails.objects.create(**self.campaign)
 
         # Act
         response = self.client.post(self.url, self.data, format="json")
@@ -101,10 +100,10 @@ class CreateCollectionViewTests(APITestCase):
         # Assert that the request-response cycle completed successfully.
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-    @patch("importer.views.download_write_collection_item_assets.delay")
-    def test_create_collection(self, mock_download_func):
+    @patch("importer.views.download_write_campaign_item_assets.delay")
+    def test_create_campaign(self, mock_download_func):
         """
-        Create collection with proper data.
+        Create campaign with proper data.
         """
 
         # Arrange
@@ -121,11 +120,11 @@ class CreateCollectionViewTests(APITestCase):
     @patch("importer.views.download_write_item_assets.delay")
     def test_create_item_with_db_entry(self, mock_download_func):
         """
-        Create collection item with CollectionTaskDetails db entry.
+        Create campaign item with CampaignTaskDetails db entry.
         """
         # Arrange
-        self.collection["collection_task_id"] = "123"
-        CollectionTaskDetails.objects.create(**self.collection)
+        self.campaign["campaign_task_id"] = "123"
+        CampaignTaskDetails.objects.create(**self.campaign)
         mock_resp_instance = CeleryMockResponse("1234")
         mock_download_func.return_value = mock_resp_instance
 
@@ -140,7 +139,7 @@ class CreateCollectionViewTests(APITestCase):
     @patch("importer.views.download_write_item_assets.delay")
     def test_create_item_without_db_entry(self, mock_download_func):
         """
-        Create collection item without CollectionTaskDetails db entry.
+        Create campaign item without CampaignTaskDetails db entry.
         """
         # Arrange
         mock_resp_instance = CeleryMockResponse("1234")
@@ -156,13 +155,12 @@ class CreateCollectionViewTests(APITestCase):
 
 
 class GetTaskStatusTests(APITestCase):
-
     def setUp(self):
         """
         Setting up the required test data input for importer views test cases
         """
         self.client = APIClient()
-        self.url = reverse("get_task_status", kwargs={"task_id":"123abc"})
+        self.url = reverse("get_task_status", kwargs={"task_id": "123abc"})
         self.data = {
             "name": "branch-rickey-papers",
             "url": "https://www.loc.gov/collections/branch-rickey-papers/?fa=partof:branch+rickey+papers:+baseball+file,+1906-1971",
@@ -173,96 +171,108 @@ class GetTaskStatusTests(APITestCase):
             "url": "https://www.loc.gov/item/mss859430021",
             "project": "brp",
         }
-        self.collection = {
-            "collection_name": self.data.get("name"),
-            "collection_slug": slugify(self.data.get("name")),
-            "subcollection_name": self.data.get("project"),
-            "subcollection_slug": slugify(self.data.get("project")),
+        self.campaign = {
+            "campaign_name": self.data.get("name"),
+            "campaign_slug": slugify(self.data.get("name")),
+            "project_name": self.data.get("project"),
+            "project_slug": slugify(self.data.get("project")),
         }
 
-    @patch('importer.views.AsyncResult')
-    def test_get_task_status_with_no_collection(self, mock_async):
+    @patch("importer.views.AsyncResult")
+    def test_get_task_status_with_no_campaign(self, mock_async):
         """
-        Get task status of not existed collection
+        Get task status of not existed campaign
         """
 
         # Arrange
-        async_obj = MockAsyncResult('PENDING')
+        async_obj = MockAsyncResult("PENDING")
         mock_async.return_value = async_obj
 
-        #Act
+        # Act
         response = self.client.get(self.url, format="json")
 
         # Assert that the request-response cycle completed successfully.
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEquals(response.data.get('message'), "Requested task id Does not exists collection progress")
+        self.assertEquals(
+            response.data.get("message"),
+            "Requested task id Does not exists campaign progress",
+        )
 
-    @patch('importer.views.sum')
-    @patch('importer.views.AsyncResult')
+    @patch("importer.views.sum")
+    @patch("importer.views.AsyncResult")
     def test_get_task_status_no_asset(self, mock_async, mock_sum):
         """
-        get task status of not existed collection assets db entry
+        get task status of not existed campaign assets db entry
         """
         # Arrange
-        async_obj = MockAsyncResult('INPROGRESS')
+        async_obj = MockAsyncResult("INPROGRESS")
         mock_async.return_value = async_obj
-        self.collection["collection_task_id"] = "123abc"
-        self.collection["collection_asset_count"] = 5
+        self.campaign["campaign_task_id"] = "123abc"
+        self.campaign["campaign_asset_count"] = 5
         mock_sum.return_value = 3
-        CollectionTaskDetails.objects.create(**self.collection)
+        CampaignTaskDetails.objects.create(**self.campaign)
 
-        #Act
+        # Act
         response = self.client.get(self.url, format="json")
 
         # Assert that the request-response cycle completed successfully.
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEquals(response.data.get('state'), "INPROGRESS")
-        self.assertEquals(response.data.get('progress'), "3 of 5 processed")
+        self.assertEquals(response.data.get("state"), "INPROGRESS")
+        self.assertEquals(response.data.get("progress"), "3 of 5 processed")
 
         # Arrange
-        async_obj = MockAsyncResult('SUCCESS')
+        async_obj = MockAsyncResult("SUCCESS")
         mock_async.return_value = async_obj
         mock_sum.return_value = 5
 
-        #Act
+        # Act
         response = self.client.get(self.url, format="json")
 
         # Assert that the request-response cycle completed successfully.
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEquals(response.data.get('state'), "SUCCESS")
-        self.assertEquals(response.data.get('progress'), "5 of 5 processed")
+        self.assertEquals(response.data.get("state"), "SUCCESS")
+        self.assertEquals(response.data.get("progress"), "5 of 5 processed")
 
-    @patch('importer.views.sum')
-    @patch('importer.views.AsyncResult')
+    @patch("importer.views.sum")
+    @patch("importer.views.AsyncResult")
     def test_get_task_status_with_asset(self, mock_async, mock_sum):
         """
-        get task status of existed collection assets db entry
+        get task status of existed campaign assets db entry
         """
         # Arrange
-        async_obj = MockAsyncResult('INPROGRESS')
+        async_obj = MockAsyncResult("INPROGRESS")
         mock_async.return_value = async_obj
         mock_sum.return_value = 3
-        ctd = CollectionTaskDetails.objects.create(**self.collection)
-        CollectionItemAssetCount.objects.create(collection_task=ctd, collection_item_identifier="abc",
-                                                collection_item_asset_count=5, item_task_id="123abc")
+        ctd = CampaignTaskDetails.objects.create(**self.campaign)
+        CampaignItemAssetCount.objects.create(
+            campaign_task=ctd,
+            campaign_item_identifier="abc",
+            campaign_item_asset_count=5,
+            item_task_id="123abc",
+        )
 
-        #Act
+        # Act
         response = self.client.get(self.url, format="json")
 
         # Assert that the request-response cycle completed successfully.
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEquals(response.data.get('state'), "INPROGRESS")
-        self.assertEquals(response.data.get('progress'), "3 of 5 processed")
+        self.assertEquals(response.data.get("state"), "INPROGRESS")
+        self.assertEquals(response.data.get("progress"), "3 of 5 processed")
 
 
-class CheckAndSaveCollectionAssetsTests(APITestCase):
+class CheckAndSaveCampaignAssetsTests(APITestCase):
     def setUp(self):
         """
         Setting up the required test data input for importer views test cases
         """
         self.client = APIClient()
-        self.url_itemid = reverse("check_and_save_collection_item_assets",  kwargs={"task_id": "123abc", "item_id": "123abc"})
-        self.url = reverse("check_and_save_collection_assets",  kwargs={"task_id": "123abc"})
+        self.url_itemid = reverse(
+            "check_and_save_campaign_item_assets",
+            kwargs={"task_id": "123abc", "item_id": "123abc"},
+        )
+        self.url = reverse(
+            "check_and_save_campaign_assets", kwargs={"task_id": "123abc"}
+        )
         self.data = {
             "name": "branch-rickey-papers",
             "url": "https://www.loc.gov/collections/branch-rickey-papers/?fa=partof:branch+rickey+papers:+baseball+file,+1906-1971",
@@ -273,16 +283,16 @@ class CheckAndSaveCollectionAssetsTests(APITestCase):
             "url": "https://www.loc.gov/item/mss859430021",
             "project": "brp",
         }
-        self.collection = {
-            "collection_name": self.data.get("name"),
-            "collection_slug": slugify(self.data.get("name")),
-            "subcollection_name": self.data.get("project"),
-            "subcollection_slug": slugify(self.data.get("project")),
+        self.campaign = {
+            "campaign_name": self.data.get("name"),
+            "campaign_slug": slugify(self.data.get("name")),
+            "project_name": self.data.get("project"),
+            "project_slug": slugify(self.data.get("project")),
         }
 
-    def test_collection_assets_fail_no_db_entry(self):
+    def test_campaign_assets_fail_no_db_entry(self):
         """
-        no CollectionItemAssetCount db entry
+        no CampaignItemAssetCount db entry
         """
 
         # Arrange
@@ -292,11 +302,13 @@ class CheckAndSaveCollectionAssetsTests(APITestCase):
 
         # Assert that the request-response cycle completed successfully.
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(response.data.get('message'), "Requested Collection Does not exists")
+        self.assertEqual(
+            response.data.get("message"), "Requested Campaign Does not exists"
+        )
 
-    def test_collection_assets_fail_no_itemid(self):
+    def test_campaign_assets_fail_no_itemid(self):
         """
-        no CollectionAssetCount db entry without itemid
+        no CampaignAssetCount db entry without itemid
         """
 
         # Arrange
@@ -306,37 +318,47 @@ class CheckAndSaveCollectionAssetsTests(APITestCase):
 
         # Assert that the request-response cycle completed successfully.
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(response.data.get('message'), "Requested Collection Does not exists")
+        self.assertEqual(
+            response.data.get("message"), "Requested Campaign Does not exists"
+        )
 
-    @patch('importer.views.check_and_save_item_completeness')
-    def test_collection_assets_with_db_entry(self, mock_complete):
+    @patch("importer.views.check_and_save_item_completeness")
+    def test_campaign_assets_with_db_entry(self, mock_complete):
         """
-        check and save CollectionItemAssetCount with db entry
+        check and save CampaignItemAssetCount with db entry
         """
 
         # Arrange
         mock_complete.return_value = True
-        ctd = CollectionTaskDetails.objects.create(**self.collection)
-        CollectionItemAssetCount.objects.create(collection_task=ctd, collection_item_identifier="123abc",
-                                                collection_item_asset_count=5, item_task_id="123abc")
+        ctd = CampaignTaskDetails.objects.create(**self.campaign)
+        CampaignItemAssetCount.objects.create(
+            campaign_task=ctd,
+            campaign_item_identifier="123abc",
+            campaign_item_asset_count=5,
+            item_task_id="123abc",
+        )
 
         # Act
         response = self.client.get(self.url_itemid)
         # Assert that the request-response cycle completed successfully.
         self.assertEqual(response.status_code, status.HTTP_302_FOUND)
 
-    @patch('importer.views.check_and_save_collection_completeness')
-    def test_collection_assets_with_db_no_itemid(self, mock_complete):
+    @patch("importer.views.check_and_save_campaign_completeness")
+    def test_campaign_assets_with_db_no_itemid(self, mock_complete):
         """
-        check and save CollectionAssetCount db entry without itemid
+        check and save CampaignAssetCount db entry without itemid
         """
 
         # Arrange
         mock_complete.return_value = True
-        self.collection["collection_task_id"] = "123abc"
-        ctd = CollectionTaskDetails.objects.create(**self.collection)
-        CollectionItemAssetCount.objects.create(collection_task=ctd, collection_item_identifier="123abc",
-                                                collection_item_asset_count=5, item_task_id="123abc")
+        self.campaign["campaign_task_id"] = "123abc"
+        ctd = CampaignTaskDetails.objects.create(**self.campaign)
+        CampaignItemAssetCount.objects.create(
+            campaign_task=ctd,
+            campaign_item_identifier="123abc",
+            campaign_item_asset_count=5,
+            item_task_id="123abc",
+        )
 
         # Act
         response = self.client.get(self.url)
@@ -344,120 +366,138 @@ class CheckAndSaveCollectionAssetsTests(APITestCase):
         # Assert that the request-response cycle completed successfully.
         self.assertEqual(response.status_code, status.HTTP_302_FOUND)
 
-    @patch('importer.views.check_and_save_item_completeness')
-    def test_collection_assets_with_db_entry_not_complete(self, mock_complete):
+    @patch("importer.views.check_and_save_item_completeness")
+    def test_campaign_assets_with_db_entry_not_complete(self, mock_complete):
         """
-        check and save CollectionItemAssetCount with db entry not completeness
+        check and save CampaignItemAssetCount with db entry not completeness
         """
 
         # Arrange
         mock_complete.return_value = False
-        ctd = CollectionTaskDetails.objects.create(**self.collection)
-        CollectionItemAssetCount.objects.create(collection_task=ctd, collection_item_identifier="123abc",
-                                                collection_item_asset_count=5, item_task_id="123abc")
+        ctd = CampaignTaskDetails.objects.create(**self.campaign)
+        CampaignItemAssetCount.objects.create(
+            campaign_task=ctd,
+            campaign_item_identifier="123abc",
+            campaign_item_asset_count=5,
+            item_task_id="123abc",
+        )
 
         # Act
         response = self.client.get(self.url_itemid)
         # Assert that the request-response cycle completed successfully.
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(response.data.get('message'), "Creating a collection is failed since assets are not completely downloaded")
+        self.assertEqual(
+            response.data.get("message"),
+            "Creating a campaign is failed since assets are not completely downloaded",
+        )
 
-    @patch('importer.views.check_and_save_collection_completeness')
-    def test_collection_assets_with_db_no_itemid_not_complete(self, mock_complete):
+    @patch("importer.views.check_and_save_campaign_completeness")
+    def test_campaign_assets_with_db_no_itemid_not_complete(self, mock_complete):
         """
-        check and save CollectionAssetCount db entry without itemid not completeness
+        check and save CampaignAssetCount db entry without itemid not completeness
         """
 
         # Arrange
         mock_complete.return_value = False
-        self.collection["collection_task_id"] = "123abc"
-        ctd = CollectionTaskDetails.objects.create(**self.collection)
-        CollectionItemAssetCount.objects.create(collection_task=ctd, collection_item_identifier="123abc",
-                                                collection_item_asset_count=5, item_task_id="123abc")
+        self.campaign["campaign_task_id"] = "123abc"
+        ctd = CampaignTaskDetails.objects.create(**self.campaign)
+        CampaignItemAssetCount.objects.create(
+            campaign_task=ctd,
+            campaign_item_identifier="123abc",
+            campaign_item_asset_count=5,
+            item_task_id="123abc",
+        )
 
         # Act
         response = self.client.get(self.url)
 
         # Assert that the request-response cycle completed successfully.
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(response.data.get('message'), "Creating a collection is failed since assets are not completely downloaded")
+        self.assertEqual(
+            response.data.get("message"),
+            "Creating a campaign is failed since assets are not completely downloaded",
+        )
 
-    def test_check_and_save_collection_completeness(self):
+    def test_check_and_save_campaign_completeness(self):
         """
-        Test check_and_save_collection_completeness
+        Test check_and_save_campaign_completeness
         :return:
         """
 
         # Arrange
 
-        collection_task_detail = CollectionTaskDetails(
-            collection_name="collection name",
-            collection_slug="collection_slug",
-            subcollection_name="subcollection name",
-            subcollection_slug="subcollection_slug",
-            collection_item_count=1,
-            collection_asset_count=1,
-            collection_task_id="task_id")
+        campaign_task_detail = CampaignTaskDetails(
+            campaign_name="campaign name",
+            campaign_slug="campaign_slug",
+            project_name="project name",
+            project_slug="project_slug",
+            campaign_item_count=1,
+            campaign_asset_count=1,
+            campaign_task_id="task_id",
+        )
 
-        collection_task_detail.save()
+        campaign_task_detail.save()
 
-        collection_item_asset_count = CollectionItemAssetCount(
+        campaign_item_asset_count = CampaignItemAssetCount(
             item_task_id="task_id",
-            collection_task=collection_task_detail,
-            collection_item_identifier="collection_item_identifer",
-            collection_item_asset_count=1)
-        collection_item_asset_count.save()
+            campaign_task=campaign_task_detail,
+            campaign_item_identifier="campaign_item_identifer",
+            campaign_item_asset_count=1,
+        )
+        campaign_item_asset_count.save()
 
-        test_dir = '/tmp/concordia_images/collection_slug/subcollection_slug/'
+        test_dir = "/tmp/concordia_images/campaign_slug/project_slug/"
         if not os.path.exists(test_dir):
             os.makedirs(test_dir)
 
         # add a file to test_dir
-        with open(test_dir + '1', 'a') as the_file:
-            the_file.write('Hello\n')
+        with open(test_dir + "1", "a") as the_file:
+            the_file.write("Hello\n")
 
         # Act
-        result = check_and_save_collection_completeness(collection_item_asset_count)
-        #shutil.rmtree(settings.MEDIA_ROOT) #if media folder wants to delete in test cases
+        result = check_and_save_campaign_completeness(campaign_item_asset_count)
+        # shutil.rmtree(settings.MEDIA_ROOT) #if media folder wants to delete in test cases
 
         # Assert
         self.assertEqual(result, True)
 
-    def test_check_and_save_collection_completeness_false(self):
+    def test_check_and_save_campaign_completeness_false(self):
         """
-        Test check_and_save_collection_completeness_false
+        Test check_and_save_campaign_completeness_false
         :return:
         """
 
         # Arrange
 
-        collection_task_detail = CollectionTaskDetails(
-            collection_name="collection name",
-            collection_slug="collection_slug",
-            subcollection_name="subcollection name",
-            subcollection_slug="subcollection_slug",
-            collection_item_count=1,
-            collection_asset_count=2,
-            collection_task_id="task_id")
+        campaign_task_detail = CampaignTaskDetails(
+            campaign_name="campaign name",
+            campaign_slug="campaign_slug",
+            project_name="project name",
+            project_slug="project_slug",
+            campaign_item_count=1,
+            campaign_asset_count=2,
+            campaign_task_id="task_id",
+        )
 
-        collection_task_detail.save()
+        campaign_task_detail.save()
 
-        collection_item_asset_count = CollectionItemAssetCount(
+        campaign_item_asset_count = CampaignItemAssetCount(
             item_task_id="task_id",
-            collection_task=collection_task_detail,
-            collection_item_identifier="collection_item_identifer")
-        collection_item_asset_count.save()
+            campaign_task=campaign_task_detail,
+            campaign_item_identifier="campaign_item_identifer",
+        )
+        campaign_item_asset_count.save()
 
-        test_dir = '/tmp/concordia_images/collection_slug/subcollection_slug/'
+        test_dir = "/tmp/concordia_images/campaign_slug/project_slug/"
         if not os.path.exists(test_dir):
             os.makedirs(test_dir)
 
         # add a file to test_dir
-        with open(test_dir + '1', 'a') as the_file:
-            the_file.write('Hello\n')
+        with open(test_dir + "1", "a") as the_file:
+            the_file.write("Hello\n")
 
         # Act
-        result = check_and_save_collection_completeness(collection_item_asset_count)
+        result = check_and_save_campaign_completeness(campaign_item_asset_count)
 
         # Assert
         self.assertEqual(result, False)
@@ -470,32 +510,38 @@ class CheckAndSaveCollectionAssetsTests(APITestCase):
 
         # Arrange
 
-        collection_task_detail = CollectionTaskDetails(
-            collection_name="collection name",
-            collection_slug="collection_slug",
-            subcollection_name="subcollection name",
-            subcollection_slug="subcollection_slug")
+        campaign_task_detail = CampaignTaskDetails(
+            campaign_name="campaign name",
+            campaign_slug="campaign_slug",
+            project_name="project name",
+            project_slug="project_slug",
+        )
 
-        collection_task_detail.save()
+        campaign_task_detail.save()
 
-        collection_item_asset_count = CollectionItemAssetCount(
+        campaign_item_asset_count = CampaignItemAssetCount(
             item_task_id="task_id",
-            collection_task=collection_task_detail,
-            collection_item_identifier="collection_item_identifer",
-            collection_item_asset_count=1)
-        collection_item_asset_count.save()
+            campaign_task=campaign_task_detail,
+            campaign_item_identifier="campaign_item_identifer",
+            campaign_item_asset_count=1,
+        )
+        campaign_item_asset_count.save()
 
-        test_dir = '/tmp/concordia_images/collection_slug/subcollection_slug/collection_item_identifer/'
+        test_dir = (
+            "/tmp/concordia_images/campaign_slug/project_slug/campaign_item_identifer/"
+        )
         if not os.path.exists(test_dir):
             os.makedirs(test_dir)
 
         # add a file to test_dir
-        with open(test_dir + '1', 'a') as the_file:
-            the_file.write('Hello\n')
+        with open(test_dir + "1", "a") as the_file:
+            the_file.write("Hello\n")
 
         # Act
-        result = check_and_save_item_completeness(collection_item_asset_count, 'collection_item_identifer')
-        #shutil.rmtree(settings.MEDIA_ROOT) #if media folder wants to delete in test cases
+        result = check_and_save_item_completeness(
+            campaign_item_asset_count, "campaign_item_identifer"
+        )
+        # shutil.rmtree(settings.MEDIA_ROOT) #if media folder wants to delete in test cases
 
         # Assert
         self.assertEqual(result, True)
@@ -508,32 +554,37 @@ class CheckAndSaveCollectionAssetsTests(APITestCase):
 
         # Arrange
 
-        collection_task_detail = CollectionTaskDetails(
-            collection_name="collection name",
-            collection_slug="collection_slug",
-            subcollection_name="subcollection name",
-            subcollection_slug="subcollection_slug")
+        campaign_task_detail = CampaignTaskDetails(
+            campaign_name="campaign name",
+            campaign_slug="campaign_slug",
+            project_name="project name",
+            project_slug="project_slug",
+        )
 
-        collection_task_detail.save()
+        campaign_task_detail.save()
 
-        collection_item_asset_count = CollectionItemAssetCount(
+        campaign_item_asset_count = CampaignItemAssetCount(
             item_task_id="task_id",
-            collection_task=collection_task_detail,
-            collection_item_identifier="collection_item_identifer",
-            collection_item_asset_count=2)
-        collection_item_asset_count.save()
+            campaign_task=campaign_task_detail,
+            campaign_item_identifier="campaign_item_identifer",
+            campaign_item_asset_count=2,
+        )
+        campaign_item_asset_count.save()
 
-        test_dir = '/tmp/concordia_images/collection_slug/subcollection_slug/collection_item_identifer/'
+        test_dir = (
+            "/tmp/concordia_images/campaign_slug/project_slug/campaign_item_identifer/"
+        )
         if not os.path.exists(test_dir):
             os.makedirs(test_dir)
 
         # add a file to test_dir
-        with open(test_dir + '1', 'a') as the_file:
-            the_file.write('Hello\n')
+        with open(test_dir + "1", "a") as the_file:
+            the_file.write("Hello\n")
 
         # Act
-        result = check_and_save_item_completeness(collection_item_asset_count, 'collection_item_identifer')
+        result = check_and_save_item_completeness(
+            campaign_item_asset_count, "campaign_item_identifer"
+        )
 
         # Assert
         self.assertEqual(result, False)
-

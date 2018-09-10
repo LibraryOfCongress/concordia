@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name="CollectionItemAssetCount",
+            name="CampaignItemAssetCount",
             fields=[
                 (
                     "id",
@@ -22,13 +22,13 @@ class Migration(migrations.Migration):
                         verbose_name="ID",
                     ),
                 ),
-                ("collection_slug", models.SlugField()),
-                ("collection_item_identifier", models.CharField(max_length=50)),
-                ("collection_item_asset_count", models.IntegerField()),
+                ("campaign_slug", models.SlugField()),
+                ("campaign_item_identifier", models.CharField(max_length=50)),
+                ("campaign_item_asset_count", models.IntegerField()),
             ],
         ),
         migrations.CreateModel(
-            name="CollectionTaskDetails",
+            name="CampaignTaskDetails",
             fields=[
                 (
                     "id",
@@ -39,12 +39,12 @@ class Migration(migrations.Migration):
                         verbose_name="ID",
                     ),
                 ),
-                ("collection_name", models.CharField(max_length=50)),
-                ("collection_slug", models.SlugField(unique=True)),
-                ("collection_page_count", models.IntegerField()),
-                ("collection_item_count", models.IntegerField()),
-                ("collection_asset_count", models.IntegerField()),
-                ("collection_task_id", models.CharField(max_length=100)),
+                ("campaign_name", models.CharField(max_length=50)),
+                ("campaign_slug", models.SlugField(unique=True)),
+                ("campaign_page_count", models.IntegerField()),
+                ("campaign_item_count", models.IntegerField()),
+                ("campaign_asset_count", models.IntegerField()),
+                ("campaign_task_id", models.CharField(max_length=100)),
             ],
         ),
     ]

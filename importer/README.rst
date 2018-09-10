@@ -17,8 +17,8 @@ Usage
  root@62e3ebef4de2:/app# python3 ./manage.py shell
  Python 3.6.5rc1 (default, Mar 14 2018, 06:54:23) [GCC 7.3.0] on linux
  Type "help", "copyright", "credits" or "license" for more information.
- >>> from importer.importer.tasks import download_async_collection, check_completeness
- >>> result = download_async_collection.delay("https://www.loc.gov/collections/clara-barton-papers/?fa=partof:clara+barton+papers:++diaries+and+journals,+1849-1911")
+ >>> from importer.importer.tasks import download_async_campaign, check_completeness
+ >>> result = download_async_campaign.delay("https://www.loc.gov/collections/clara-barton-papers/?fa=partof:clara+barton+papers:++diaries+and+journals,+1849-1911")
  >>> result.ready()
  >>> result.get()
  >>> result2 = check_completeness.delay()

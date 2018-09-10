@@ -16,7 +16,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
-from django.db.models import Count, Q, Max
+from django.db.models import Count, Max, Q
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import Http404, get_object_or_404, redirect, render
 from django.template import loader
@@ -28,15 +28,16 @@ from rest_framework.test import APIRequestFactory
 
 from concordia.forms import (CaptchaEmbedForm, ConcordiaContactUsForm,
                              ConcordiaUserEditForm, ConcordiaUserForm)
-from concordia.models import (Asset, Collection, Subcollection, PageInUse, Status, Transcription,
+from concordia.models import (Asset, Project, Item, Campaign, PageInUse, Status, Transcription,
                               UserProfile)
 from concordia.views_ws import PageInUseCreate
-from importer.views import CreateCollectionView
+from importer.views import CreateCampaignView
 
 logger = getLogger(__name__)
 
 ASSETS_PER_PAGE = 36
 PROJECTS_PER_PAGE = 36
+ITEMS_PER_PAGE = 36
 
 
 def concordia_api(relative_path):
@@ -134,17 +135,17 @@ class AccountProfileView(LoginRequiredMixin, TemplateView):
         transcription_json_val = json.loads(response.content.decode("utf-8"))
 
         for trans in transcription_json_val["results"]:
-            collection_response = requests.get(
-                "%s://%s/ws/collection_by_id/%s/"
+            campaign_response = requests.get(
+                "%s://%s/ws/campaign_by_id/%s/"
                 % (
                     self.request.scheme,
                     self.request.get_host(),
-                    trans["asset"]["collection"]["id"],
+                    trans["asset"]["campaign"]["id"],
                 ),
                 cookies=self.request.COOKIES,
             )
-            trans["collection_name"] = json.loads(
-                collection_response.content.decode("utf-8")
+            trans["campaign_name"] = json.loads(
+                campaign_response.content.decode("utf-8")
             )["slug"]
             trans["updated_on"] = datetime.strptime(
                 trans["updated_on"], "%Y-%m-%dT%H:%M:%S.%fZ"
@@ -160,31 +161,28 @@ class AccountProfileView(LoginRequiredMixin, TemplateView):
 
 
 class ConcordiaView(TemplateView):
-    template_name = "transcriptions/home.html"
+    template_name = "transcriptions/campaigns.html"
 
     def get_context_data(self, **kws):
-        response = concordia_api("collections/")
+        response = concordia_api("campaigns/")
         return dict(super().get_context_data(**kws), response=response)
 
 
-class ConcordiaProjectView(TemplateView):
-    template_name = "transcriptions/project.html"
+class ConcordiaCampaignView(TemplateView):
+    template_name = "transcriptions/campaign.html"
 
     def get_context_data(self, **kws):
-
-        print("ws/collection url:", "%s://%s/ws/collection/%s/" % (self.request.scheme, self.request.get_host(), self.args[0]))
-
         response = requests.get(
-            "%s://%s/ws/collection/%s/"
+            "%s://%s/ws/campaign/%s/"
             % (self.request.scheme, self.request.get_host(), self.args[0]),
             cookies=self.request.COOKIES,
         )
-        collection_json_val = json.loads(response.content.decode("utf-8"))
-        for sub_col in collection_json_val["subcollections"]:
-            sub_col["collection"] = collection_json_val
+        campaign_json_val = json.loads(response.content.decode("utf-8"))
+        for sub_col in campaign_json_val["projects"]:
+            sub_col["campaign"] = campaign_json_val
 
         project_sorted_list = sorted(
-            collection_json_val["subcollections"], key=lambda k: (k["title"])
+            campaign_json_val["projects"], key=lambda k: (k["title"])
         )
 
         paginator = Paginator(project_sorted_list, ASSETS_PER_PAGE)
@@ -194,27 +192,67 @@ class ConcordiaProjectView(TemplateView):
         else:
             page = self.request.GET.get("page")
 
-        projects = paginator.get_page(page)
+        items = paginator.get_page(page)
 
         return dict(
-            super().get_context_data(**kws), collection=collection_json_val, projects=projects
+            super().get_context_data(**kws), campaign=campaign_json_val, projects=project_sorted_list
         )
 
+class ConcordiaProjectView(TemplateView):
+    template_name = "transcriptions/project.html"
 
-class ConcordiaCollectionView(TemplateView):
-    template_name = "transcriptions/collection.html"
+    def get_context_data(self, **kws):
+        try:
+            campaign = Campaign.objects.get(slug=self.args[0])
+            project = Project.objects.get(slug=self.args[1])
+        except Campaign.DoesNotExist:
+            raise Http404
+        except Project.DoesNotExist:
+            raise Http404
+
+        item_list = Item.objects.filter(campaign=campaign, project=project).order_by(
+            "item_id"
+        )
+
+        paginator = Paginator(item_list, ITEMS_PER_PAGE)
+
+        if not self.request.GET.get("page"):
+            page = 1
+        else:
+            page = self.request.GET.get("page")
+
+        items = paginator.get_page(page)
+
+        return dict(
+            super().get_context_data(**kws),
+            campaign=campaign,
+            project=project,
+            items=items,
+        )
+
+class ConcordiaItemView(TemplateView):
+    template_name = "transcriptions/item.html"
 
     def get_context_data(self, **kws):
 
         response = requests.get(
-            "%s://%s/ws/collection/%s/"
+            "%s://%s/ws/campaign/%s/"
             % (self.request.scheme, self.request.get_host(), self.args[0]),
             cookies=self.request.COOKIES,
         )
-        collection_json_val = json.loads(response.content.decode("utf-8"))
+        campaign_json_val = json.loads(response.content.decode("utf-8"))
         asset_sorted_list = sorted(
-            collection_json_val["assets"], key=lambda k: (k["slug"])
+            campaign_json_val["assets"], key=lambda k: (k["slug"])
         )
+
+        try:
+            project = Project.objects.get(slug=self.args[1])
+            item = Item.objects.get(slug=self.args[2])
+        except Item.DoesNotExist:
+            raise Http404
+        except Project.DoesNotExist:
+            raise Http404
+
 
         paginator = Paginator(asset_sorted_list, ASSETS_PER_PAGE)
 
@@ -227,14 +265,16 @@ class ConcordiaCollectionView(TemplateView):
 
         return dict(
             super().get_context_data(**kws),
-            collection=collection_json_val,
+            campaign=campaign_json_val,
+            project=project,
+            item=item,
             assets=assets,
         )
 
 
 class ConcordiaAssetView(TemplateView):
     """
-    Class to handle GET ansd POST requests on route /transcribe/<collection>/asset/<asset>
+    Class to handle GET ansd POST requests on route /campaigns/<campaign>/asset/<asset>
     """
 
     template_name = "transcriptions/asset.html"
@@ -247,7 +287,7 @@ class ConcordiaAssetView(TemplateView):
 
     def get_asset_list_json(self):
         """
-        make a call to the REST web service to assets for a collection
+        make a call to the REST web service to assets for a campaign
         :return: json of the assets
         """
         response = requests.get(
@@ -270,7 +310,7 @@ class ConcordiaAssetView(TemplateView):
         """
         return_path = url
 
-        # find a page with no transcriptions in this collection
+        # find a page with no transcriptions in this campaign
 
         asset_list_json = self.get_asset_list_json()
 
@@ -282,7 +322,7 @@ class ConcordiaAssetView(TemplateView):
             )
             transcription_json = json.loads(response.content.decode("utf-8"))
             if transcription_json["text"] == "":
-                return_path = "/transcribe/%s/asset/%s/" % (self.args[0], asset_item["slug"])
+                return_path = "/campaigns/%s/asset/%s/" % (self.args[0], asset_item["slug"])
                 break
 
         return return_path
@@ -310,7 +350,7 @@ class ConcordiaAssetView(TemplateView):
         for asset_item in asset_list_json["results"][asset_json["sequence"]:]:
             transcription_json = get_transcription(asset_item)
             if transcription_json["status"] != Status.COMPLETED:
-                return_path = "/transcribe/%s/asset/%s/" % (self.args[0], asset_item["slug"])
+                return_path = "/campaigns/%s/asset/%s/" % (self.args[0], asset_item["slug"])
                 break
 
         # no asset found, iterate the asset_list_json from beginning to this asset's sequence
@@ -318,7 +358,7 @@ class ConcordiaAssetView(TemplateView):
             for asset_item in asset_list_json["results"][:asset_json["sequence"]]:
                 transcription_json = get_transcription(asset_item)
                 if transcription_json["status"] != Status.COMPLETED:
-                    return_path = "/transcribe/%s/asset/%s/" % (self.args[0], asset_item["slug"])
+                    return_path = "/campaigns/%s/asset/%s/" % (self.args[0], asset_item["slug"])
                     break
 
         return return_path
@@ -357,8 +397,8 @@ class ConcordiaAssetView(TemplateView):
         )
         asset_json = json.loads(response.content.decode("utf-8"))
 
-        in_use_url = "/transcribe/%s/asset/%s/" % (
-            asset_json["collection"]["slug"],
+        in_use_url = "/campaigns/%s/asset/%s/" % (
+            asset_json["campaign"]["slug"],
             asset_json["slug"],
         )
         current_user_id = (
@@ -463,7 +503,7 @@ class ConcordiaAssetView(TemplateView):
 
     def post(self, *args, **kwargs):
         """
-        Handle POST from transcribe page for individual asset
+        Handle POST from campaigns page for individual asset
         :param args:
         :param kwargs:
         :return: redirect back to same page
@@ -471,8 +511,8 @@ class ConcordiaAssetView(TemplateView):
         # don't know why this would be called here
         # self.get_context_data()
 
-        if self.request.POST.get("action").lower() == 'contact a manager':
-            return redirect(reverse('contact') + "?pre_populate=true")
+        if self.request.POST.get("action").lower() == "contact a manager":
+            return redirect(reverse("contact") + "?pre_populate=true")
 
         if self.request.user.is_anonymous:
             captcha_form = CaptchaEmbedForm(self.request.POST)
@@ -546,7 +586,7 @@ class ConcordiaAssetView(TemplateView):
                     "%s://%s/ws/tag_create/"
                     % (self.request.scheme, self.request.get_host()),
                     data={
-                        "collection": asset_json["collection"]["slug"],
+                        "campaign": asset_json["campaign"]["slug"],
                         "asset": asset_json["slug"],
                         "user_id": self.request.user.id
                         if self.request.user.id is not None
@@ -592,22 +632,22 @@ class ConcordiaAlternateAssetView(View):
 
         if self.request.is_ajax():
             json_dict = json.loads(self.request.body)
-            collection_slug = json_dict["collection"]
+            campaign_slug = json_dict["campaign"]
             asset_slug = json_dict["asset"]
         else:
-            collection_slug = self.request.POST.get("collection", None)
+            campaign_slug = self.request.POST.get("campaign", None)
             asset_slug = self.request.POST.get("asset", None)
 
-        if collection_slug and asset_slug:
+        if campaign_slug and asset_slug:
             response = requests.get(
-                "%s://%s/ws/collection_asset_random/%s/%s"
-                % (self.request.scheme, self.request.get_host(), collection_slug, asset_slug),
+                "%s://%s/ws/campaign_asset_random/%s/%s"
+                % (self.request.scheme, self.request.get_host(), campaign_slug, asset_slug),
                 cookies=self.request.COOKIES,
             )
             random_asset_json_val = json.loads(response.content.decode("utf-8"))
 
             return HttpResponse(
-                "/transcribe/%s/asset/%s/" % (collection_slug, random_asset_json_val["slug"])
+                "/campaigns/%s/asset/%s/" % (campaign_slug, random_asset_json_val["slug"])
             )
 
 
@@ -736,7 +776,7 @@ class ExperimentsView(TemplateView):
         return ["experiments/{}.html".format(self.args[0])]
 
 
-class CollectionView(TemplateView):
+class CampaignView(TemplateView):
     template_name = "transcriptions/create.html"
 
     def post(self, *args, **kwargs):
@@ -745,19 +785,19 @@ class CollectionView(TemplateView):
         url = self.request.POST.get("url")
         slug = name.replace(" ", "-")
 
-        view = CreateCollectionView.as_view()
+        view = CreateCampaignView.as_view()
         importer_resp = view(self.request, *args, **kwargs)
 
         return render(self.request, self.template_name, importer_resp.data)
 
 
-class DeleteCollectionView(TemplateView):
+class DeleteCampaignView(TemplateView):
     """
-    deletes the collection
+    deletes the campaign
     """
 
     def get(self, request, *args, **kwargs):
-        requests.delete("%s://%s/ws/collection_delete/%s/" %
+        requests.delete("%s://%s/ws/campaign_delete/%s/" %
                         (self.request.scheme,
                          self.request.get_host(),
                          self.args[0]),
@@ -766,17 +806,17 @@ class DeleteCollectionView(TemplateView):
         os.system(
             "rm -rf {0}".format(settings.MEDIA_ROOT + "/concordia/" + self.args[0])
         )
-        return redirect("/transcribe/")
+        return redirect("/campaigns/")
 
 
 class DeleteAssetView(TemplateView):
     """
     Hides an asset with status inactive. Hidden assets do not display in
-    asset view. After hiding an asset, page redirects to collection view.
+    asset view. After hiding an asset, page redirects to campaign view.
     """
 
     def get(self, request, *args, **kwargs):
-        asset_update = {"collection": self.args[0], "slug": self.args[1]}
+        asset_update = {"campaign": self.args[0], "slug": self.args[1]}
 
         requests.put(
             "%s://%s/ws/asset_update/%s/%s/" %
@@ -790,12 +830,12 @@ class DeleteAssetView(TemplateView):
             cookies=self.request.COOKIES,
         )
 
-        return redirect("/transcribe/" + self.args[0] + "/")
+        return redirect("/campaigns/" + self.args[0] + "/")
 
 
-class ReportCollectionView(TemplateView):
+class ReportCampaignView(TemplateView):
     """
-    Report the collection
+    Report the campaign
     """
     template_name = "transcriptions/report.html"
 
@@ -886,16 +926,16 @@ class ReportCollectionView(TemplateView):
     def get(self, request, *args, **kwargs):
 
         response = requests.get(
-            "%s://%s/ws/collection/%s/"
+            "%s://%s/ws/campaign/%s/"
             % (self.request.scheme, self.request.get_host(), self.args[0]),
             cookies=self.request.COOKIES,
         )
-        collection_json = json.loads(response.content.decode("utf-8"))
-        for sub_col in collection_json["subcollections"]:
-            sub_col["collection"] = collection_json
+        campaign_json = json.loads(response.content.decode("utf-8"))
+        for sub_col in campaign_json["projects"]:
+            sub_col["campaign"] = campaign_json
 
         project_sorted_list = sorted(
-            collection_json["subcollections"], key=lambda k: (k["title"])
+            campaign_json["projects"], key=lambda k: (k["title"])
         )
 
         for sorted_project in project_sorted_list:
@@ -906,7 +946,7 @@ class ReportCollectionView(TemplateView):
             user_array = []
             total_tags = 0
 
-            for asset in sorted_project["collection"]["assets"]:
+            for asset in sorted_project["campaign"]["assets"]:
                 transcription_count += self.get_asset_transcribe_count(request, asset["id"])
                 transcription_edit_count += self.get_asset_transcribe_count_by_status(request, asset["id"], Status.EDIT)
                 transcription_submitted_count += self.get_asset_transcribe_count_by_status(request, asset["id"],
@@ -920,7 +960,7 @@ class ReportCollectionView(TemplateView):
 
                 total_tags += self.get_asset_tag_count(request, asset["id"])
 
-            sorted_project["total"] = len(sorted_project["collection"]["assets"])
+            sorted_project["total"] = len(sorted_project["campaign"]["assets"])
             sorted_project["not_started"] = sorted_project["total"] - transcription_count
             sorted_project["edit"] = transcription_edit_count
             sorted_project["submitted"] = transcription_submitted_count
@@ -940,15 +980,15 @@ class ReportCollectionView(TemplateView):
         return render(self.request, self.template_name, locals())
 
 
-class FilterCollections(generics.ListAPIView):
+class FilterCampaigns(generics.ListAPIView):
     def get_queryset(self):
         name_query = self.request.query_params.get("name")
         if name_query:
-            queryset = Collection.objects.filter(slug__contains=name_query).values_list(
+            queryset = Campaign.objects.filter(slug__contains=name_query).values_list(
                 "slug", flat=True
             )
         else:
-            queryset = Collection.objects.all().values_list("slug", flat=True)
+            queryset = Campaign.objects.all().values_list("slug", flat=True)
         return queryset
 
     def list(self, request):
@@ -958,31 +998,31 @@ class FilterCollections(generics.ListAPIView):
         return JsonResponse(list(queryset), safe=False)
 
 
-def publish_collection(request, collection, is_publish):
-    """ Publish/Unpublish a collection to otherr users. On un/publishing collection,
+def publish_campaign(request, campaign, is_publish):
+    """ Publish/Unpublish a campaign to otherr users. On un/publishing campaign,
     it will get does the same effect for all its projects. """
 
     try:
-        collection = Collection.objects.get(slug=collection)
-    except Collection.DoesNotExist:
+        campaign = Campaign.objects.get(slug=campaign)
+    except Campaign.DoesNotExist:
         raise Http404
 
     if is_publish == "true":
-        collection.is_publish = True
+        campaign.is_publish = True
     else:
-        collection.is_publish = False
+        campaign.is_publish = False
 
-    sub_collections = collection.subcollection_set.all()
+    projects = campaign.project_set.all()
 
-    for sc in sub_collections:
+    for sc in projects:
         sc.is_publish = True if is_publish == "true" else False
         sc.save()
 
-    collection.save()
+    campaign.save()
 
     return JsonResponse(
         {
-            "message": "Collection has been %s."
+            "message": "Campaign has been %s."
             % ("published" if is_publish == "true" else "unpublished"),
             "state": True if is_publish == "true" else False,
         },
@@ -990,22 +1030,20 @@ def publish_collection(request, collection, is_publish):
     )
 
 
-def publish_project(request, collection, project, is_publish):
+def publish_project(request, campaign, project, is_publish):
     """ Publish/Unpublish a project to other users. """
 
     try:
-        sub_collection = Subcollection.objects.get(
-            collection__slug=collection, slug=project
-        )
-    except Subcollection.DoesNotExist:
+        project = Project.objects.get(campaign__slug=campaign, slug=project)
+    except Project.DoesNotExist:
         raise Http404
 
     if is_publish == "true":
-        sub_collection.is_publish = True
+        project.is_publish = True
     else:
-        sub_collection.is_publish = False
+        project.is_publish = False
 
-    sub_collection.save()
+    project.save()
 
     return JsonResponse(
         {

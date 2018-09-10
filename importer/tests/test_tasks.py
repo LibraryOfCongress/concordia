@@ -113,7 +113,7 @@ class GETRequestDataTest(TestCase):
         self.assertEqual(response, mock_resp_instance)
 
 
-class GetCollectionPagesTest(TestCase):
+class GetCampaignPagesTest(TestCase):
     def setUp(self):
         """
         Setting up the required test data input for importer tasks test cases
@@ -121,9 +121,9 @@ class GetCollectionPagesTest(TestCase):
         self.url = "https://www.loc.gov/collections/branch-rickey-papers/?fa=partof:branch+rickey+papers:+baseball+file,+1906-1971"
 
     @patch("importer.tasks.requests.get")  # Mock 'requests' module 'get' method.
-    def test_get_collection_pages(self, mock_get):
+    def test_get_campaign_pages(self, mock_get):
         """
-        get collection pages successfully with pages info
+        get campaign pages successfully with pages info
         """
         # Arrange
         # Construct our mock response object, giving it relevant expected behaviours
@@ -131,16 +131,16 @@ class GetCollectionPagesTest(TestCase):
         mock_get.return_value = mock_resp_instance
 
         # Act
-        response = get_collection_pages(self.url)
+        response = get_campaign_pages(self.url)
 
         # Assert that the request-response cycle completed successfully.
         self.assertEqual(mock_resp_instance.status_code, 200)
         self.assertEqual(response, 10)
 
     @patch("importer.tasks.requests.get")  # Mock 'requests' module 'get' method.
-    def test_get_collection_sucess_no_pages(self, mock_get):
+    def test_get_campaign_sucess_no_pages(self, mock_get):
         """
-        get collection pages successfully with no pages info
+        get campaign pages successfully with no pages info
         """
 
         # Arrange
@@ -149,14 +149,14 @@ class GetCollectionPagesTest(TestCase):
         mock_get.return_value = mock_resp_instance
 
         # Act
-        response = get_collection_pages(self.url)
+        response = get_campaign_pages(self.url)
 
         # Assert that the request-response cycle completed successfully.
         self.assertEqual(mock_resp_instance.status_code, 200)
         self.assertEqual(response, 0)
 
 
-class GetCollectionItemidsTest(TestCase):
+class GetCampaignItemidsTest(TestCase):
     def setUp(self):
         """
         Setting up the required test data input for importer tasks test cases
@@ -164,9 +164,9 @@ class GetCollectionItemidsTest(TestCase):
         self.url = "https://www.loc.gov/collections/branch-rickey-papers/?fa=partof:branch+rickey+papers:+baseball+file,+1906-1971"
 
     @patch("importer.tasks.requests.get")  # Mock 'requests' module 'get' method.
-    def test_get_collection_item_ids(self, mock_get):
+    def test_get_campaign_item_ids(self, mock_get):
         """
-        Testing no of collection item ids available in given collection url
+        Testing no of campaign item ids available in given campaign url
         """
         # Arrange
         mock_page1_result = MockResponse(mock_data.ITEM_IDS_DATA, 200)
@@ -174,15 +174,15 @@ class GetCollectionItemidsTest(TestCase):
         mock_get.side_effect = [mock_page1_result, mock_page2_result]
 
         # Act
-        response = get_collection_item_ids(self.url, 2)
+        response = get_campaign_item_ids(self.url, 2)
 
         # Assert
         self.assertListEqual(response, ["mss37820001"])
 
     @patch("importer.tasks.requests.get")  # Mock 'requests' module 'get' method.
-    def test_get_collection_item_ids_no_ids(self, mock_get):
+    def test_get_campaign_item_ids_no_ids(self, mock_get):
         """
-        Testing no of collection item ids not availabel collection url
+        Testing no of campaign item ids not availabel campaign url
         """
         # Arrange
         mock_page1_result = MockResponse({}, 200)
@@ -190,13 +190,13 @@ class GetCollectionItemidsTest(TestCase):
         mock_get.side_effect = [mock_page1_result, mock_page2_result]
 
         # Act
-        response = get_collection_item_ids(self.url, 2)
+        response = get_campaign_item_ids(self.url, 2)
 
         # Arrange
         self.assertListEqual(response, [])
 
 
-class GetCollectionItemAssetURLsTest(TestCase):
+class GetCampaignItemAssetURLsTest(TestCase):
     def setUp(self):
         """
         Setting up the required test data input for importer tasks test cases
@@ -204,16 +204,16 @@ class GetCollectionItemAssetURLsTest(TestCase):
         self.item_id = "mss37820001"
 
     @patch("importer.tasks.requests.get")  # Mock 'requests' module 'get' method.
-    def test_get_collection_asset_urls(self, mock_get):
+    def test_get_campaign_asset_urls(self, mock_get):
         """
-        Testing no of collection item asset urls available in given item id
+        Testing no of campaign item asset urls available in given item id
         """
         # Arrange
         mock_resp = MockResponse(mock_data.COLLECTION_ITEM_URLS_DATA, 200)
         mock_get.return_value = mock_resp
 
         # Act
-        response = get_collection_item_asset_urls(self.item_id)
+        response = get_campaign_item_asset_urls(self.item_id)
 
         # Assert
         self.assertListEqual(
@@ -224,16 +224,16 @@ class GetCollectionItemAssetURLsTest(TestCase):
         )
 
     @patch("importer.tasks.requests.get")  # Mock 'requests' module 'get' method.
-    def test_get_collection_no_asset_urls(self, mock_get):
+    def test_get_campaign_no_asset_urls(self, mock_get):
         """
-        Testing no of collection item asset urls not available in given item id
+        Testing no of campaign item asset urls not available in given item id
         """
         # Arrange
         mock_resp = MockResponse({}, 200)
         mock_get.return_value = mock_resp
 
         # Act
-        response = get_collection_item_asset_urls(self.item_id)
+        response = get_campaign_item_asset_urls(self.item_id)
 
         # Assert
         self.assertListEqual(response, [])
@@ -253,7 +253,7 @@ class DownloadWriteCollcetionItemAssetTest(TestCase):
         with patch("__main__.open", m, create=True):
 
             # Act
-            abc = download_write_collection_item_asset("dumy/image/url", "foo")
+            abc = download_write_campaign_item_asset("dumy/image/url", "foo")
 
             # Assert
             self.assertEquals(abc, True)
@@ -271,13 +271,13 @@ class DownloadWriteCollcetionItemAssetTest(TestCase):
         with patch("__main__.open", m, create=True):
 
             # Act
-            abc = download_write_collection_item_asset("dumy/image/url", "foo")
+            abc = download_write_campaign_item_asset("dumy/image/url", "foo")
 
             # Assert
             self.assertEquals(abc, False)
 
 
-class DownloadWriteCollectionItemAssetsTest(TestCase):
+class DownloadWriteCampaignItemAssetsTest(TestCase):
     def setUp(self):
         """
         Setting up the required test data input for importer tasks test cases
@@ -289,20 +289,20 @@ class DownloadWriteCollectionItemAssetsTest(TestCase):
 
     @patch("importer.tasks.get_save_item_assets")
     @patch("importer.tasks.requests.get")  # Mock 'requests' module 'get' method.
-    def test_download_write_collection_item_asstes(self, mock_get, mock_save):
+    def test_download_write_campaign_item_asstes(self, mock_get, mock_save):
         """
-        Testing no of collection item asset urls available in given collection url
+        Testing no of campaign item asset urls available in given campaign url
         """
         # Arrange
 
-        collection = {
-            "collection_name": self.name,
-            "collection_slug": slugify(self.name),
-            "collection_task_id": "123",
-            "subcollection_name": self.project,
-            "subcollection_slug": slugify(self.project),
+        campaign = {
+            "campaign_name": self.name,
+            "campaign_slug": slugify(self.name),
+            "campaign_task_id": "123",
+            "project_name": self.project,
+            "project_slug": slugify(self.project),
         }
-        CollectionTaskDetails.objects.create(**collection)
+        CampaignTaskDetails.objects.create(**campaign)
 
         mock_resp_page = MockResponse({"pagination": {"total": 2}}, 200)
         mock_page1_result = MockResponse(mock_data.ITEM_IDS_DATA, 200)
@@ -317,25 +317,23 @@ class DownloadWriteCollectionItemAssetsTest(TestCase):
         mock_save.return_value = None
 
         # Act
-        download_write_collection_item_assets(self.name, self.project, self.url)
+        download_write_campaign_item_assets(self.name, self.project, self.url)
 
-        ctd = CollectionTaskDetails.objects.get(
-            collection_slug=self.name, subcollection_slug=self.project
+        ctd = CampaignTaskDetails.objects.get(
+            campaign_slug=self.name, project_slug=self.project
         )
-        ciac = CollectionItemAssetCount.objects.get(collection_task=ctd)
+        ciac = CampaignItemAssetCount.objects.get(campaign_task=ctd)
 
         # Assert
-        self.assertEqual(ciac.collection_item_asset_count, 1)
-        self.assertEqual(ciac.collection_item_identifier, self.item_id)
-        self.assertEqual(ctd.collection_asset_count, 1)
+        self.assertEqual(ciac.campaign_item_asset_count, 1)
+        self.assertEqual(ciac.campaign_item_identifier, self.item_id)
+        self.assertEqual(ctd.campaign_asset_count, 1)
 
     @patch("importer.tasks.get_save_item_assets")
     @patch("importer.tasks.requests.get")  # Mock 'requests' module 'get' method.
-    def test_download_write_collection_item_asstes_no_db_entry(
-        self, mock_get, mock_save
-    ):
+    def test_download_write_campaign_item_asstes_no_db_entry(self, mock_get, mock_save):
         """
-        Testing no of collection item asset urls available in given collection url wiht no db entry in CollectionTaskDetails
+        Testing no of campaign item asset urls available in given campaign url wiht no db entry in CampaignTaskDetails
         """
         # Arrange
         mock_resp_page = MockResponse({"pagination": {"total": 2}}, 200)
@@ -351,19 +349,19 @@ class DownloadWriteCollectionItemAssetsTest(TestCase):
         mock_save.return_value = None
 
         # Act
-        download_write_collection_item_assets(self.name, self.project, self.url)
+        download_write_campaign_item_assets(self.name, self.project, self.url)
 
-        ctd = CollectionTaskDetails.objects.get(
-            collection_slug=self.name, subcollection_slug=self.project
+        ctd = CampaignTaskDetails.objects.get(
+            campaign_slug=self.name, project_slug=self.project
         )
-        ciac = CollectionItemAssetCount.objects.get(
-            collection_task=ctd, collection_item_identifier=self.item_id
+        ciac = CampaignItemAssetCount.objects.get(
+            campaign_task=ctd, campaign_item_identifier=self.item_id
         )
 
         # Assert
-        self.assertEqual(ciac.collection_item_asset_count, 1)
-        self.assertEqual(ciac.collection_item_identifier, self.item_id)
-        self.assertEqual(ctd.collection_asset_count, 1)
+        self.assertEqual(ciac.campaign_item_asset_count, 1)
+        self.assertEqual(ciac.campaign_item_identifier, self.item_id)
+        self.assertEqual(ctd.campaign_asset_count, 1)
 
 
 class DownloadWriteItemAssetsTest(TestCase):
@@ -379,18 +377,18 @@ class DownloadWriteItemAssetsTest(TestCase):
     @patch("importer.tasks.requests.get")  # Mock 'requests' module 'get' method.
     def test_download_write_item_asstes(self, mock_get, mock_save):
         """
-        Testing no of collection item asset urls available in given item id
+        Testing no of campaign item asset urls available in given item id
         """
         # Arrange
 
-        collection = {
-            "collection_name": self.name,
-            "collection_slug": slugify(self.name),
-            "collection_task_id": "123",
-            "subcollection_name": self.project,
-            "subcollection_slug": slugify(self.project),
+        campaign = {
+            "campaign_name": self.name,
+            "campaign_slug": slugify(self.name),
+            "campaign_task_id": "123",
+            "project_name": self.project,
+            "project_slug": slugify(self.project),
         }
-        CollectionTaskDetails.objects.create(**collection)
+        CampaignTaskDetails.objects.create(**campaign)
         mock_resp = MockResponse(mock_data.COLLECTION_ITEM_URLS_DATA, 200)
         mock_get.return_value = mock_resp
         mock_save.return_value = None
@@ -398,23 +396,23 @@ class DownloadWriteItemAssetsTest(TestCase):
         # Act
         download_write_item_assets(self.name, self.project, self.item_id)
 
-        ctd = CollectionTaskDetails.objects.get(
-            collection_slug=self.name, subcollection_slug=self.project
+        ctd = CampaignTaskDetails.objects.get(
+            campaign_slug=self.name, project_slug=self.project
         )
-        ciac = CollectionItemAssetCount.objects.get(
-            collection_task=ctd, collection_item_identifier=self.item_id
+        ciac = CampaignItemAssetCount.objects.get(
+            campaign_task=ctd, campaign_item_identifier=self.item_id
         )
 
         # Assert
-        self.assertEqual(ciac.collection_item_asset_count, 1)
-        self.assertEqual(ciac.collection_item_identifier, self.item_id)
-        self.assertEqual(ctd.collection_asset_count, 1)
+        self.assertEqual(ciac.campaign_item_asset_count, 1)
+        self.assertEqual(ciac.campaign_item_identifier, self.item_id)
+        self.assertEqual(ctd.campaign_asset_count, 1)
 
     @patch("importer.tasks.get_save_item_assets")
     @patch("importer.tasks.requests.get")  # Mock 'requests' module 'get' method.
     def test_download_write_item_asstes_no_db_entry(self, mock_get, mock_save):
         """
-        Testing no of collection item asset urls available in given item id wiht no db entry in CollectionTaskDetails
+        Testing no of campaign item asset urls available in given item id wiht no db entry in CampaignTaskDetails
         """
         # Arrange
         mock_resp = MockResponse(mock_data.COLLECTION_ITEM_URLS_DATA, 200)
@@ -424,14 +422,14 @@ class DownloadWriteItemAssetsTest(TestCase):
         # Act
         download_write_item_assets(self.name, self.project, self.item_id)
 
-        ctd = CollectionTaskDetails.objects.get(
-            collection_slug=self.name, subcollection_slug=self.project
+        ctd = CampaignTaskDetails.objects.get(
+            campaign_slug=self.name, project_slug=self.project
         )
-        ciac = CollectionItemAssetCount.objects.get(
-            collection_task=ctd, collection_item_identifier=self.item_id
+        ciac = CampaignItemAssetCount.objects.get(
+            campaign_task=ctd, campaign_item_identifier=self.item_id
         )
 
         # Assert
-        self.assertEqual(ciac.collection_item_asset_count, 1)
-        self.assertEqual(ciac.collection_item_identifier, self.item_id)
-        self.assertEqual(ctd.collection_asset_count, 1)
+        self.assertEqual(ciac.campaign_item_asset_count, 1)
+        self.assertEqual(ciac.campaign_item_identifier, self.item_id)
+        self.assertEqual(ctd.campaign_asset_count, 1)

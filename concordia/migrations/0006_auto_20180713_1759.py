@@ -22,7 +22,7 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.AlterField(
-            model_name="collection",
+            model_name="campaign",
             name="status",
             field=models.CharField(
                 choices=[
@@ -35,7 +35,7 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.AlterField(
-            model_name="subcollection",
+            model_name="project",
             name="status",
             field=models.CharField(
                 choices=[

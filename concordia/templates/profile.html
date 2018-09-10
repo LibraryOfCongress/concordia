@@ -74,7 +74,7 @@
             <table class="table mb-default">
                 <thead class="bg-lightest-gray">
                     <tr>
-                        <td>Collection</td>
+                        <td>Campaign</td>
                         <td>Asset Name</td>
                         <td>Current Status</td>
                         <td>Date</td>
@@ -83,8 +83,8 @@
 
                 {% for t in transcriptions %}
                     <tr>
-                        <td>{{t.collection_name}}</td>
-                        <td><a class="primary-text" href="/transcribe/{{t.collection_name}}/asset/{{t.asset.slug}}">{{t.asset.slug}}</a></td>
+                        <td>{{t.campaign_name}}</td>
+                        <td><a class="primary-text" href="/campaigns/{{t.campaign_name}}/asset/{{t.asset.slug}}">{{t.asset.slug}}</a></td>
                         <td>{{t.status}}</td>
                         <td>{{ t.updated_on|date:'Y-m-d H:i' }}</td>
                     </tr>

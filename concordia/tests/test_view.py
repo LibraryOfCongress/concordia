@@ -11,9 +11,9 @@ from captcha.models import CaptchaStore
 from django.test import Client, TestCase
 from PIL import Image
 
-from concordia.models import (Asset, Collection, MediaType, PageInUse, Status,
-                              Subcollection, Tag, Transcription, User,
-                              UserAssetTagCollection, UserProfile)
+from concordia.models import (Asset, Campaign, MediaType, PageInUse, Project, Status,
+                              Tag, Transcription, User, UserAssetTagCollection,
+                              UserProfile)
 
 import views
 
@@ -55,14 +55,14 @@ class ViewTest_Concordia(TestCase):
 
         responses.add(
             responses.GET,
-            "http://testserver/ws/page_in_use_filter/tester//transcribe/Collection1/asset/Asset1//",
+            "http://testserver/ws/page_in_use_filter/tester//campaigns/Campaign1/asset/Asset1//",
             json={"count": 0, "results": []},
             status=200,
         )
 
         responses.add(
             responses.GET,
-            "http://testserver/ws/page_in_use_count/%s//transcribe/Collection1/asset/Asset1//" %
+            "http://testserver/ws/page_in_use_count/%s//campaigns/Campaign1/asset/Asset1//" %
             (self.user.id if hasattr(self, "user") else self.anon_user.id,),
             json={"page_in_use": False},
             status=200,
@@ -70,7 +70,7 @@ class ViewTest_Concordia(TestCase):
 
         responses.add(
             responses.GET,
-            "http://testserver/ws/page_in_use_user/%s//transcribe/Collection1/asset/Asset1//" %
+            "http://testserver/ws/page_in_use_user/%s//campaigns/Campaign1/asset/Asset1//" %
             (self.user.id if hasattr(self, "user") else self.anon_user.id,),
             json={"user": self.user.id if hasattr(self, "user") else self.anon_user.id},
             status=200
@@ -129,15 +129,15 @@ class ViewTest_Concordia(TestCase):
 
         self.login_user()
 
-        # create a collection
-        self.collection = Collection(
-            title="TextCollection",
+        # create a campaign
+        self.campaign = Campaign(
+            title="TextCampaign",
             slug="www.foo.com/slug2",
-            description="Collection Description",
+            description="Campaign Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
         )
-        self.collection.save()
+        self.campaign.save()
 
         # create an Asset
         self.asset = Asset(
@@ -146,7 +146,7 @@ class ViewTest_Concordia(TestCase):
             description="Asset Description",
             media_url="http://www.foo.com/1/2/3",
             media_type=MediaType.IMAGE,
-            collection=self.collection,
+            campaign=self.campaign,
             metadata={"key": "val2"},
             status=Status.EDIT,
         )
@@ -337,7 +337,7 @@ class ViewTest_Concordia(TestCase):
     @patch("concordia.views.requests")
     def test_concordiaView(self, mock_requests):
         """
-        Test the GET method for route /transcribe
+        Test the GET method for route /campaigns
         :return:
         """
         # Arrange
@@ -348,124 +348,124 @@ class ViewTest_Concordia(TestCase):
         }
 
         # Act
-        response = self.client.get("/transcribe/")
+        response = self.client.get("/campaigns/")
 
         # Assert
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, template_name="transcriptions/home.html")
+        self.assertTemplateUsed(response, template_name="transcriptions/campaigns.html")
 
     @responses.activate
-    def test_concordiaCollectionView_get(self):
+    def test_concordiaCampaignView_get(self):
         """
-        Test GET on route /transcribe/<slug-value> (collection)
+        Test GET on route /campaigns/<slug-value> (campaign)
         :return:
         """
 
         # Arrange
 
-        # add an item to Collection
-        self.collection = Collection(
-            title="TextCollection",
+        # add an item to Campaign
+        self.campaign = Campaign(
+            title="TextCampaign",
             slug="test-slug2",
-            description="Collection Description",
+            description="Campaign Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
         )
-        self.collection.save()
+        self.campaign.save()
 
         # mock REST requests
 
-        collection_json = {
-            "id": self.collection.id,
+        campaign_json = {
+            "id": self.campaign.id,
             "slug": "test-slug2",
-            "title": "TextCollection",
-            "description": "Collection Description",
+            "title": "TextCampaign",
+            "description": "Campaign Description",
             "s3_storage": True,
             "start_date": None,
             "end_date": None,
             "status": Status.EDIT,
             "assets": [],
-            "subcollections": [],
+            "projects": [],
         }
 
         responses.add(
             responses.GET,
-            "http://testserver/ws/collection/test-slug2/",
-            json=collection_json,
+            "http://testserver/ws/campaign/test-slug2/",
+            json=campaign_json,
             status=200,
         )
 
         # Act
-        response = self.client.get("/transcribe/test-slug2/")
+        response = self.client.get("/campaigns/test-slug2/")
 
         # Assert
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, template_name="transcriptions/project.html")
+        self.assertTemplateUsed(response, template_name="transcriptions/campaign.html")
 
     @responses.activate
-    def test_concordiaCollectionView_get_page2(self):
+    def test_concordiaCampaignView_get_page2(self):
         """
-        Test GET on route /transcribe/<slug-value>/ (collection) on page 2
+        Test GET on route /campaigns/<slug-value>/ (campaign) on page 2
         :return:
         """
 
         # Arrange
 
-        # add an item to Collection
-        self.collection = Collection(
-            title="TextCollection",
+        # add an item to Campaign
+        self.campaign = Campaign(
+            title="TextCampaign",
             slug="test-slug2",
-            description="Collection Description",
+            description="Campaign Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
         )
-        self.collection.save()
+        self.campaign.save()
 
         # mock REST requests
 
-        collection_json = {
-            "id": self.collection.id,
+        campaign_json = {
+            "id": self.campaign.id,
             "slug": "test-slug2",
-            "title": "TextCollection",
-            "description": "Collection Description",
+            "title": "TextCampaign",
+            "description": "Campaign Description",
             "s3_storage": True,
             "start_date": None,
             "end_date": None,
             "status": Status.EDIT,
             "assets": [],
-            "subcollections": [],
+            "projects": [],
         }
 
         responses.add(
             responses.GET,
-            "http://testserver/ws/collection/test-slug2/",
-            json=collection_json,
+            "http://testserver/ws/campaign/test-slug2/",
+            json=campaign_json,
             status=200,
         )
 
         # Act
-        response = self.client.get("/transcribe/test-slug2/", {"page": 2})
+        response = self.client.get("/campaigns/test-slug2/", {"page": 2})
 
         # Assert
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, template_name="transcriptions/project.html")
+        self.assertTemplateUsed(response, template_name="transcriptions/campaign.html")
 
-    def test_ExportCollectionView_get(self):
+    def test_ExportCampaignView_get(self):
         """
-        Test GET route /transcribe/export/<slug-value>/ (collection)
+        Test GET route /campaigns/export/<slug-value>/ (campaign)
         :return:
         """
 
         # Arrange
 
-        self.collection = Collection(
-            title="TextCollection",
+        self.campaign = Campaign(
+            title="TextCampaign",
             slug="slug2",
-            description="Collection Description",
+            description="Campaign Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
         )
-        self.collection.save()
+        self.campaign.save()
 
         self.asset = Asset(
             title="TestAsset",
@@ -473,42 +473,42 @@ class ViewTest_Concordia(TestCase):
             description="Asset Description",
             media_url="http://www.foo.com/1/2/3",
             media_type=MediaType.IMAGE,
-            collection=self.collection,
+            campaign=self.campaign,
             metadata={"key": "val2"},
             status=Status.EDIT,
         )
         self.asset.save()
 
         # Act
-        response = self.client.get("/transcribe/exportCSV/slug2/")
+        response = self.client.get("/campaigns/exportCSV/slug2/")
 
         # Assert
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             str(response.content),
-            "b'Collection,Title,Description,MediaUrl,Transcription,Tags\\r\\n"
-            "TextCollection,TestAsset,Asset Description,"
+            "b'Campaign,Title,Description,MediaUrl,Transcription,Tags\\r\\n"
+            "TextCampaign,TestAsset,Asset Description,"
             "http://www.foo.com/1/2/3,,\\r\\n'",
         )
 
     @responses.activate
-    def test_DeleteCollection_get(self):
+    def test_DeleteCampaign_get(self):
         """
-        Test GET route /transcribe/delete/<slug-value>/ (collection)
+        Test GET route /campaigns/delete/<slug-value>/ (campaign)
         :return:
         """
 
         # Arrange
 
-        # add an item to Collection
-        self.collection = Collection(
-            title="TextCollection",
+        # add an item to Campaign
+        self.campaign = Campaign(
+            title="TextCampaign",
             slug="test-slug2",
-            description="Collection Description",
+            description="Campaign Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
         )
-        self.collection.save()
+        self.campaign.save()
 
         self.asset = Asset(
             title="TestAsset",
@@ -516,7 +516,7 @@ class ViewTest_Concordia(TestCase):
             description="Asset Description",
             media_url="http://www.foo.com/1/2/3",
             media_type=MediaType.IMAGE,
-            collection=self.collection,
+            campaign=self.campaign,
             metadata={"key": "val2"},
             status=Status.EDIT,
         )
@@ -524,14 +524,14 @@ class ViewTest_Concordia(TestCase):
 
         # Mock REST api calls
         responses.add(responses.DELETE,
-                      "http://testserver/ws/collection_delete/%s/" % (self.collection.slug, ),
+                      "http://testserver/ws/campaign_delete/%s/" % (self.campaign.slug, ),
                       status=200)
 
 
 
         # Act
 
-        response = self.client.get("/transcribe/delete/test-slug2", follow=False)
+        response = self.client.get("/campaigns/delete/test-slug2", follow=False)
 
         # Assert
         self.assertEqual(response.status_code, 301)
@@ -539,21 +539,21 @@ class ViewTest_Concordia(TestCase):
     @responses.activate
     def test_DeleteAsset_get(self):
         """
-        Test GET route /transcribe/delete/asset/<slug-value>/ (asset)
+        Test GET route /campaigns/delete/asset/<slug-value>/ (asset)
         :return:
         """
 
         # Arrange
 
-        # add an item to Collection
-        self.collection = Collection(
-            title="TextCollection",
-            slug="test-collection-slug",
-            description="Collection Description",
+        # add an item to Campaign
+        self.campaign = Campaign(
+            title="TextCampaign",
+            slug="test-campaign-slug",
+            description="Campaign Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
         )
-        self.collection.save()
+        self.campaign.save()
 
         self.asset = Asset(
             title="TestAsset",
@@ -561,7 +561,7 @@ class ViewTest_Concordia(TestCase):
             description="Asset Description",
             media_url="http://www.foo.com/1/2/3",
             media_type=MediaType.IMAGE,
-            collection=self.collection,
+            campaign=self.campaign,
             metadata={"key": "val2"},
             status=Status.EDIT,
         )
@@ -573,18 +573,18 @@ class ViewTest_Concordia(TestCase):
             description="Asset Description1",
             media_url="http://www.foo1.com/1/2/3",
             media_type=MediaType.IMAGE,
-            collection=self.collection,
+            campaign=self.campaign,
             metadata={"key": "val1"},
             status=Status.EDIT,
         )
         self.asset.save()
 
         # Mock REST calls
-        collection_json = {
-            "id": self.collection.id,
-            "slug": self.collection.slug,
-            "title": "TextCollection",
-            "description": "Collection Description",
+        campaign_json = {
+            "id": self.campaign.id,
+            "slug": self.campaign.slug,
+            "title": "TextCampaign",
+            "description": "Campaign Description",
             "s3_storage": True,
             "start_date": None,
             "end_date": None,
@@ -594,18 +594,18 @@ class ViewTest_Concordia(TestCase):
 
         responses.add(
             responses.GET,
-            "http://testserver/ws/collection/%s/" % (self.collection.slug, ),
-            json=collection_json,
+            "http://testserver/ws/campaign/%s/" % (self.campaign.slug, ),
+            json=campaign_json,
             status=200,
         )
 
         responses.add(responses.PUT,
-                      "http://testserver/ws/asset_update/%s/%s/" % (self.collection.slug, self.asset.slug, ),
+                      "http://testserver/ws/asset_update/%s/%s/" % (self.campaign.slug, self.asset.slug, ),
                       status=200)
 
         # Act
 
-        response = self.client.get("/transcribe/%s/delete/asset/%s/" % (self.collection.slug, self.asset.slug, ),
+        response = self.client.get("/campaigns/%s/delete/asset/%s/" % (self.campaign.slug, self.asset.slug, ),
                                    ollow=True)
 
         # Assert
@@ -614,21 +614,21 @@ class ViewTest_Concordia(TestCase):
     @responses.activate
     def test_ConcordiaAssetView_post(self):
         """
-        This unit test test the POST route /transcribe/<collection>/asset/<Asset_name>/
+        This unit test test the POST route /campaigns/<campaign>/asset/<Asset_name>/
         :return:
         """
         # Arrange
         self.login_user()
 
-        # create a collection
-        self.collection = Collection(
-            title="TestCollection",
-            slug="Collection1",
-            description="Collection Description",
+        # create a campaign
+        self.campaign = Campaign(
+            title="TestCampaign",
+            slug="Campaign1",
+            description="Campaign Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
         )
-        self.collection.save()
+        self.campaign.save()
 
         # create an Asset
         asset_slug = "Asset1"
@@ -639,7 +639,7 @@ class ViewTest_Concordia(TestCase):
             description="Asset Description",
             media_url="http://www.foo.com/1/2/3",
             media_type=MediaType.IMAGE,
-            collection=self.collection,
+            campaign=self.campaign,
             metadata={"key": "val2"},
             status=Status.EDIT,
         )
@@ -664,8 +664,8 @@ class ViewTest_Concordia(TestCase):
             "description": "mss859430177",
             "media_url": "https://s3.us-east-2.amazonaws.com/chc-collections/test_s3/mss859430177/1.jpg",
             "media_type": MediaType.IMAGE,
-            "collection": {"slug": "Collection1"},
-            "subcollection": None,
+            "campaign": {"slug": "Campaign1"},
+            "project": None,
             "sequence": 1,
             "metadata": {"key": "val2"},
             "status": Status.EDIT,
@@ -678,7 +678,7 @@ class ViewTest_Concordia(TestCase):
                 "description": "",
                 "media_url": "",
                 "media_type": None,
-                "collection": {
+                "campaign": {
                     "slug": "",
                     "title": "",
                     "description": "",
@@ -688,7 +688,7 @@ class ViewTest_Concordia(TestCase):
                     "status": None,
                     "assets": [],
                 },
-                "subcollection": None,
+                "project": None,
                 "sequence": None,
                 "metadata": None,
                 "status": None,
@@ -702,14 +702,14 @@ class ViewTest_Concordia(TestCase):
 
         responses.add(
             responses.GET,
-            "http://testserver/ws/page_in_use_filter/tester//transcribe/Collection1/asset/Asset1//",
+            "http://testserver/ws/page_in_use_filter/tester//campaigns/Campaign1/asset/Asset1//",
             json={"count": 0, "results": []},
             status=200,
         )
 
         responses.add(
             responses.GET,
-            "http://testserver/ws/asset_by_slug/Collection1/Asset1/",
+            "http://testserver/ws/asset_by_slug/Campaign1/Asset1/",
             json=asset_by_slug_response,
             status=200,
         )
@@ -735,33 +735,33 @@ class ViewTest_Concordia(TestCase):
 
         # Act
         response = self.client.post(
-            "/transcribe/Collection1/asset/Asset1/",
+            "/campaigns/Campaign1/asset/Asset1/",
             {"tx": "First Test Transcription", "tags": tag_name, "action": "Save"},
         )
 
         # Assert
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, "/transcribe/Collection1/asset/Asset1/")
+        self.assertEqual(response.url, "/campaigns/Campaign1/asset/Asset1/")
 
     @responses.activate
     def test_ConcordiaAssetView_post_contact_community_manager(self):
         """
-        This unit test test the POST route /transcribe/<collection>/asset/<Asset_name>/
+        This unit test test the POST route /campaigns/<campaign>/asset/<Asset_name>/
         for an anonymous user. Clicking the contact community manager button
         should redirect to the contact us page.
         :return:
         """
         # Arrange
 
-        # create a collection
-        self.collection = Collection(
-            title="TestCollection",
-            slug="Collection1",
-            description="Collection Description",
+        # create a campaign
+        self.campaign = Campaign(
+            title="TestCampaign",
+            slug="Campaign1",
+            description="Campaign Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
         )
-        self.collection.save()
+        self.campaign.save()
 
         asset_slug = "Asset1"
 
@@ -771,7 +771,7 @@ class ViewTest_Concordia(TestCase):
             description="Asset Description",
             media_url="http://www.foo.com/1/2/3",
             media_type=MediaType.IMAGE,
-            collection=self.collection,
+            campaign=self.campaign,
             metadata={"key": "val2"},
             status=Status.EDIT,
         )
@@ -801,8 +801,8 @@ class ViewTest_Concordia(TestCase):
             "description": "mss859430177",
             "media_url": "https://s3.us-east-2.amazonaws.com/chc-collections/test_s3/mss859430177/1.jpg",
             "media_type": MediaType.IMAGE,
-            "collection": {"slug": "Collection1"},
-            "subcollection": None,
+            "campaign": {"slug": "Campaign1"},
+            "project": None,
             "sequence": 1,
             "metadata": {"key": "val2"},
             "status": Status.EDIT,
@@ -815,7 +815,7 @@ class ViewTest_Concordia(TestCase):
                 "description": "",
                 "media_url": "",
                 "media_type": None,
-                "collection": {
+                "campaign": {
                     "slug": "",
                     "title": "",
                     "description": "",
@@ -825,7 +825,7 @@ class ViewTest_Concordia(TestCase):
                     "status": None,
                     "assets": [],
                 },
-                "subcollection": None,
+                "project": None,
                 "sequence": None,
                 "metadata": None,
                 "status": None,
@@ -847,14 +847,14 @@ class ViewTest_Concordia(TestCase):
 
         responses.add(
             responses.GET,
-            "http://testserver/ws/page_in_use_filter/AnonymousUser//transcribe/Collection1/asset/Asset1//",
+            "http://testserver/ws/page_in_use_filter/AnonymousUser//campaigns/Campaign1/asset/Asset1//",
             json={"count": 0, "results": []},
             status=200,
         )
 
         responses.add(
             responses.GET,
-            "http://testserver/ws/asset_by_slug/Collection1/Asset1/",
+            "http://testserver/ws/asset_by_slug/Campaign1/Asset1/",
             json=asset_by_slug_response,
             status=200,
         )
@@ -879,7 +879,7 @@ class ViewTest_Concordia(TestCase):
         responses.add(responses.POST, "http://testserver/ws/tag_create/", status=200)
 
         responses.add(responses.PUT,
-                      "http://testserver/ws/page_in_use_update/%s//transcribe/Collection1/asset/Asset1//" %
+                      "http://testserver/ws/page_in_use_update/%s//campaigns/Campaign1/asset/Asset1//" %
                       (self.anon_user.id, ),
                       status=200)
 
@@ -892,14 +892,14 @@ class ViewTest_Concordia(TestCase):
 
 
         # Act
-        response = self.client.get("/transcribe/Collection1/asset/Asset1/")
+        response = self.client.get("/campaigns/Campaign1/asset/Asset1/")
         self.assertEqual(response.status_code, 200)
 
         hash_ = re.findall(r'value="([0-9a-f]+)"', str(response.content))[0]
         captcha_response = CaptchaStore.objects.get(hashkey=hash_).response
 
         response = self.client.post(
-            "/transcribe/Collection1/asset/Asset1/",
+            "/campaigns/Campaign1/asset/Asset1/",
             {
                 "tx": "First Test Transcription 1",
                 "tags": "",
@@ -916,21 +916,21 @@ class ViewTest_Concordia(TestCase):
     @responses.activate
     def test_ConcordiaAssetView_post_anonymous_happy_path(self):
         """
-        This unit test test the POST route /transcribe/<collection>/asset/<Asset_name>/
+        This unit test test the POST route /campaigns/<campaign>/asset/<Asset_name>/
         for an anonymous user. This user should not be able to tag
         :return:
         """
         # Arrange
 
-        # create a collection
-        self.collection = Collection(
-            title="TestCollection",
-            slug="Collection1",
-            description="Collection Description",
+        # create a campaign
+        self.campaign = Campaign(
+            title="TestCampaign",
+            slug="Campaign1",
+            description="Campaign Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
         )
-        self.collection.save()
+        self.campaign.save()
 
         # create an Asset
         asset_slug = "Asset1"
@@ -940,7 +940,7 @@ class ViewTest_Concordia(TestCase):
             description="Asset Description",
             media_url="http://www.foo.com/1/2/3",
             media_type=MediaType.IMAGE,
-            collection=self.collection,
+            campaign=self.campaign,
             metadata={"key": "val2"},
             status=Status.EDIT,
         )
@@ -970,8 +970,8 @@ class ViewTest_Concordia(TestCase):
             "description": "mss859430177",
             "media_url": "https://s3.us-east-2.amazonaws.com/chc-collections/test_s3/mss859430177/1.jpg",
             "media_type": MediaType.IMAGE,
-            "collection": {"slug": "Collection1"},
-            "subcollection": None,
+            "campaign": {"slug": "Campaign1"},
+            "project": None,
             "sequence": 1,
             "metadata": {"key": "val2"},
             "status": Status.EDIT,
@@ -984,7 +984,7 @@ class ViewTest_Concordia(TestCase):
                 "description": "",
                 "media_url": "",
                 "media_type": None,
-                "collection": {
+                "campaign": {
                     "slug": "",
                     "title": "",
                     "description": "",
@@ -994,7 +994,7 @@ class ViewTest_Concordia(TestCase):
                     "status": None,
                     "assets": [],
                 },
-                "subcollection": None,
+                "project": None,
                 "sequence": None,
                 "metadata": None,
                 "status": None,
@@ -1016,14 +1016,14 @@ class ViewTest_Concordia(TestCase):
 
         responses.add(
             responses.GET,
-            "http://testserver/ws/page_in_use_filter/AnonymousUser//transcribe/Collection1/asset/Asset1//",
+            "http://testserver/ws/page_in_use_filter/AnonymousUser//campaigns/Campaign1/asset/Asset1//",
             json={"count": 0, "results": []},
             status=200,
         )
 
         responses.add(
             responses.GET,
-            "http://testserver/ws/asset_by_slug/Collection1/Asset1/",
+            "http://testserver/ws/asset_by_slug/Campaign1/Asset1/",
             json=asset_by_slug_response,
             status=200,
         )
@@ -1048,7 +1048,7 @@ class ViewTest_Concordia(TestCase):
         responses.add(responses.POST, "http://testserver/ws/tag_create/", status=200)
 
         responses.add(responses.PUT,
-                      "http://testserver/ws/page_in_use_update/%s//transcribe/Collection1/asset/Asset1//" %
+                      "http://testserver/ws/page_in_use_update/%s//campaigns/Campaign1/asset/Asset1//" %
                       (self.anon_user.id, ),
                       status=200)
 
@@ -1060,13 +1060,13 @@ class ViewTest_Concordia(TestCase):
         )
 
         # Act
-        response = self.client.get("/transcribe/Collection1/asset/Asset1/")
+        response = self.client.get("/campaigns/Campaign1/asset/Asset1/")
         self.assertEqual(response.status_code, 200)
         hash_ = re.findall(r'value="([0-9a-f]+)"', str(response.content))[0]
         captcha_response = CaptchaStore.objects.get(hashkey=hash_).response
 
         response = self.client.post(
-            "/transcribe/Collection1/asset/Asset1/",
+            "/campaigns/Campaign1/asset/Asset1/",
             {
                 "tx": "First Test Transcription 1",
                 "tags": tag_name,
@@ -1078,27 +1078,27 @@ class ViewTest_Concordia(TestCase):
 
         # Assert
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, "/transcribe/Collection1/asset/Asset1/")
+        self.assertEqual(response.url, "/campaigns/Campaign1/asset/Asset1/")
 
     @responses.activate
     def test_ConcordiaAssetView_post_anonymous_invalid_captcha(self):
         """
-        This unit test test the POST route /transcribe/<collection>/asset/<Asset_name>/
+        This unit test test the POST route /campaigns/<campaign>/asset/<Asset_name>/
         for an anonymous user with missing captcha. This user should not be able to tag
         also
         :return:
         """
         # Arrange
 
-        # create a collection
-        self.collection = Collection(
-            title="TestCollection",
-            slug="Collection1",
-            description="Collection Description",
+        # create a campaign
+        self.campaign = Campaign(
+            title="TestCampaign",
+            slug="Campaign1",
+            description="Campaign Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
         )
-        self.collection.save()
+        self.campaign.save()
 
         # create an Asset
         asset_slug = "Asset1"
@@ -1108,7 +1108,7 @@ class ViewTest_Concordia(TestCase):
             description="Asset Description",
             media_url="http://www.foo.com/1/2/3",
             media_type=MediaType.IMAGE,
-            collection=self.collection,
+            campaign=self.campaign,
             metadata={"key": "val2"},
             status=Status.EDIT,
         )
@@ -1136,8 +1136,8 @@ class ViewTest_Concordia(TestCase):
             "description": "mss859430177",
             "media_url": "https://s3.us-east-2.amazonaws.com/chc-collections/test_s3/mss859430177/1.jpg",
             "media_type": MediaType.IMAGE,
-            "collection": {"slug": "Collection1"},
-            "subcollection": None,
+            "campaign": {"slug": "Campaign1"},
+            "project": None,
             "sequence": 1,
             "metadata": {"key": "val2"},
             "status": Status.EDIT,
@@ -1150,7 +1150,7 @@ class ViewTest_Concordia(TestCase):
                 "description": "",
                 "media_url": "",
                 "media_type": None,
-                "collection": {
+                "campaign": {
                     "slug": "",
                     "title": "",
                     "description": "",
@@ -1160,7 +1160,7 @@ class ViewTest_Concordia(TestCase):
                     "status": None,
                     "assets": [],
                 },
-                "subcollection": None,
+                "project": None,
                 "sequence": None,
                 "metadata": None,
                 "status": None,
@@ -1182,14 +1182,14 @@ class ViewTest_Concordia(TestCase):
 
         responses.add(
             responses.GET,
-            "http://testserver/ws/page_in_use_filter/AnonymousUser//transcribe/Collection1/asset/Asset1//",
+            "http://testserver/ws/page_in_use_filter/AnonymousUser//campaigns/Campaign1/asset/Asset1//",
             json={"count": 0, "results": []},
             status=200,
         )
 
         responses.add(
             responses.GET,
-            "http://testserver/ws/asset_by_slug/Collection1/Asset1/",
+            "http://testserver/ws/asset_by_slug/Campaign1/Asset1/",
             json=asset_by_slug_response,
             status=200,
         )
@@ -1214,7 +1214,7 @@ class ViewTest_Concordia(TestCase):
         responses.add(responses.POST, "http://testserver/ws/tag_create/", status=200)
 
         responses.add(responses.PUT,
-                      "http://testserver/ws/page_in_use_update/%s//transcribe/Collection1/asset/Asset1//" %
+                      "http://testserver/ws/page_in_use_update/%s//campaigns/Campaign1/asset/Asset1//" %
                       (self.anon_user.id, ),
                       status=200)
 
@@ -1230,7 +1230,7 @@ class ViewTest_Concordia(TestCase):
         # Act
         # post as anonymous user without captcha data
         response = self.client.post(
-            "/transcribe/Collection1/asset/Asset1/",
+            "/campaigns/Campaign1/asset/Asset1/",
             {"tx": "First Test Transcription", "tags": tag_name, "action": "Save"},
         )
 
@@ -1240,7 +1240,7 @@ class ViewTest_Concordia(TestCase):
     @responses.activate
     def test_ConcordiaAssetView_get(self):
         """
-        This unit test test the GET route /transcribe/<collection>/asset/<Asset_name>/
+        This unit test test the GET route /campaigns/<campaign>/asset/<Asset_name>/
         with already in use. Verify the updated_on time is updated on PageInUse
         :return:
         """
@@ -1249,15 +1249,15 @@ class ViewTest_Concordia(TestCase):
         # Arrange
         self.login_user()
 
-        # create a collection
-        self.collection = Collection(
-            title="TestCollection",
-            slug="Collection1",
-            description="Collection Description",
+        # create a campaign
+        self.campaign = Campaign(
+            title="TestCampaign",
+            slug="Campaign1",
+            description="Campaign Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
         )
-        self.collection.save()
+        self.campaign.save()
 
         # create an Asset
         self.asset = Asset(
@@ -1266,7 +1266,7 @@ class ViewTest_Concordia(TestCase):
             description="Asset Description",
             media_url="http://www.foo.com/1/2/3",
             media_type=MediaType.IMAGE,
-            collection=self.collection,
+            campaign=self.campaign,
             metadata={"key": "val2"},
             status=Status.EDIT,
         )
@@ -1290,8 +1290,8 @@ class ViewTest_Concordia(TestCase):
             "description": "mss859430177",
             "media_url": "https://s3.us-east-2.amazonaws.com/chc-collections/test_s3/mss859430177/1.jpg",
             "media_type": MediaType.IMAGE,
-            "collection": {"slug": "Collection1"},
-            "subcollection": None,
+            "campaign": {"slug": "Campaign1"},
+            "project": None,
             "sequence": 1,
             "metadata": {"key": "val2"},
             "status": Status.EDIT,
@@ -1304,7 +1304,7 @@ class ViewTest_Concordia(TestCase):
                 "description": "",
                 "media_url": "",
                 "media_type": None,
-                "collection": {
+                "campaign": {
                     "slug": "",
                     "title": "",
                     "description": "",
@@ -1314,7 +1314,7 @@ class ViewTest_Concordia(TestCase):
                     "status": None,
                     "assets": [],
                 },
-                "subcollection": None,
+                "project": None,
                 "sequence": None,
                 "metadata": None,
                 "status": None,
@@ -1330,19 +1330,19 @@ class ViewTest_Concordia(TestCase):
 
         responses.add(
             responses.PUT,
-            "http://testserver/ws/page_in_use_update/%s//transcribe/Collection1/asset/Asset1//" % (self.user.id, ),
+            "http://testserver/ws/page_in_use_update/%s//campaigns/Campaign1/asset/Asset1//" % (self.user.id, ),
             status=200)
 
         responses.add(
             responses.GET,
-            "http://testserver/ws/page_in_use_user/%s//transcribe/Collection1/asset/Asset1//" % (self.user.id, ),
+            "http://testserver/ws/page_in_use_user/%s//campaigns/Campaign1/asset/Asset1//" % (self.user.id, ),
             json={"user": self.user.id},
             status=200
         )
 
         responses.add(
             responses.GET,
-            "http://testserver/ws/asset_by_slug/Collection1/Asset1/",
+            "http://testserver/ws/asset_by_slug/Campaign1/Asset1/",
             json=asset_by_slug_response,
             status=200,
         )
@@ -1363,7 +1363,7 @@ class ViewTest_Concordia(TestCase):
 
         self.add_page_in_use_mocks(responses)
 
-        url = "/transcribe/Collection1/asset/Asset1/"
+        url = "/campaigns/Campaign1/asset/Asset1/"
 
         # Act
         response = self.client.get(url)
@@ -1374,21 +1374,21 @@ class ViewTest_Concordia(TestCase):
     @responses.activate
     def test_redirect_when_same_page_in_use(self):
         """
-        Test the GET route for /transcribe/<collection>/alternateasset/<Asset_name>/
+        Test the GET route for /campaigns/<campaign>/alternateasset/<Asset_name>/
         :return:
         """
         # Arrange
         self.login_user()
 
-        # create a collection
-        self.collection = Collection(
-            title="TestCollection",
-            slug="Collection1",
-            description="Collection Description",
+        # create a campaign
+        self.campaign = Campaign(
+            title="TestCampaign",
+            slug="Campaign1",
+            description="Campaign Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
         )
-        self.collection.save()
+        self.campaign.save()
 
         # create 2 Assets
         self.asset = Asset(
@@ -1397,7 +1397,7 @@ class ViewTest_Concordia(TestCase):
             description="Asset Description",
             media_url="http://www.foo.com/1/2/3",
             media_type=MediaType.IMAGE,
-            collection=self.collection,
+            campaign=self.campaign,
             metadata={"key": "val2"},
             status=Status.EDIT,
         )
@@ -1409,7 +1409,7 @@ class ViewTest_Concordia(TestCase):
             description="Asset Description",
             media_url="http://www.foo.com/1/2/3",
             media_type=MediaType.IMAGE,
-            collection=self.collection,
+            campaign=self.campaign,
             metadata={"key": "val2"},
             status=Status.EDIT,
         )
@@ -1423,7 +1423,7 @@ class ViewTest_Concordia(TestCase):
                 "description": "",
                 "media_url": "",
                 "media_type": None,
-                "collection": {
+                "campaign": {
                     "slug": "",
                     "title": "",
                     "description": "",
@@ -1433,7 +1433,7 @@ class ViewTest_Concordia(TestCase):
                     "status": None,
                     "assets": [],
                 },
-                "subcollection": None,
+                "project": None,
                 "sequence": None,
                 "metadata": None,
                 "status": Status.EDIT,
@@ -1441,15 +1441,15 @@ class ViewTest_Concordia(TestCase):
 
         responses.add(
             responses.GET,
-            "http://testserver/ws/collection_asset_random/%s/%s" % (self.collection.slug, self.asset.slug,),
+            "http://testserver/ws/campaign_asset_random/%s/%s" % (self.campaign.slug, self.asset.slug,),
             json=asset_json,
             status=200,
         )
 
         # Act
         response = self.client.post(
-            "/transcribe/alternateasset/",
-            {"collection": self.collection.slug, "asset": self.asset.slug},
+            "/campaigns/alternateasset/",
+            {"campaign": self.campaign.slug, "asset": self.asset.slug},
         )
 
         # Assert
@@ -1458,7 +1458,7 @@ class ViewTest_Concordia(TestCase):
     @responses.activate
     def test_pageinuse_post(self):
         """
-        Test the POST method on /transcribe/pageinuse/ route
+        Test the POST method on /campaigns/pageinuse/ route
 
         test that matching PageInUse entries with same page_url are deleted
         test that old entries in PageInUse table are removed
@@ -1517,7 +1517,7 @@ class ViewTest_Concordia(TestCase):
 
                 # Act
         response = self.client.post(
-            "/transcribe/pageinuse/", {"page_url": url, "user": self.user}
+            "/campaigns/pageinuse/", {"page_url": url, "user": self.user}
         )
 
         # Assert
@@ -1526,47 +1526,47 @@ class ViewTest_Concordia(TestCase):
     @responses.activate
     def test_ConcordiaProjectView_get(self):
         """
-        Test GET on route /transcribe/<slug-value> (collection)
+        Test GET on route /campaigns/<slug-value> (campaign)
         :return:
         """
 
         # Arrange
 
-        # add an item to Collection
-        self.collection = Collection(
-            title="TextCollection",
+        # add an item to Campaign
+        self.campaign = Campaign(
+            title="TextCampaign",
             slug="test-slug2",
-            description="Collection Description",
+            description="Campaign Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
         )
-        self.collection.save()
+        self.campaign.save()
 
-        self.subcollection = Subcollection(
-            title="TextCollection sub collection",
+        self.project = Project(
+            title="TextCampaign project",
             slug="test-slug2-proj",
             metadata={"key": "val1"},
             status=Status.EDIT,
-            collection=self.collection,
+            campaign=self.campaign,
         )
-        self.subcollection.save()
+        self.project.save()
 
-        self.subcollection1 = Subcollection(
-            title="TextCollection sub collection1",
+        self.project1 = Project(
+            title="TextCampaign project 1",
             slug="test-slug2-proj1",
             metadata={"key": "val1"},
             status=Status.EDIT,
-            collection=self.collection,
+            campaign=self.campaign,
         )
-        self.subcollection1.save()
+        self.project1.save()
 
         # mock REST requests
 
-        collection_json = {
-            "id": self.collection.id,
+        campaign_json = {
+            "id": self.campaign.id,
             "slug": "test-slug2",
-            "title": "TextCollection",
-            "description": "Collection Description",
+            "title": "TextCampaign",
+            "description": "Campaign Description",
             "s3_storage": True,
             "start_date": None,
             "end_date": None,
@@ -1576,64 +1576,62 @@ class ViewTest_Concordia(TestCase):
 
         responses.add(
             responses.GET,
-            "http://testserver/ws/collection/test-slug2/",
-            json=collection_json,
+            "http://testserver/ws/campaign/test-slug2/",
+            json=campaign_json,
             status=200,
         )
 
         # Act
-        response = self.client.get("/transcribe/test-slug2/test-slug2-proj1/")
+        response = self.client.get("/campaigns/test-slug2/test-slug2-proj1/")
 
         # Assert
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(
-            response, template_name="transcriptions/collection.html"
-        )
+        self.assertTemplateUsed(response, template_name="transcriptions/project.html")
 
     @responses.activate
     def test_ConcordiaProjectView_get_page2(self):
         """
-        Test GET on route /transcribe/<slug-value>/ (collection) on page 2
+        Test GET on route /campaigns/<slug-value>/ (campaign) on page 2
         :return:
         """
 
         # Arrange
 
-        # add an item to Collection
-        self.collection = Collection(
-            title="TextCollection",
+        # add an item to Campaign
+        self.campaign = Campaign(
+            title="TextCampaign",
             slug="test-slug2",
-            description="Collection Description",
+            description="Campaign Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
         )
-        self.collection.save()
+        self.campaign.save()
 
-        self.subcollection = Subcollection(
-            title="TextCollection sub collection",
+        self.project = Project(
+            title="TextCampaign project",
             slug="test-slug2-proj",
             metadata={"key": "val1"},
             status=Status.EDIT,
-            collection=self.collection,
+            campaign=self.campaign,
         )
-        self.subcollection.save()
+        self.project.save()
 
-        self.subcollection1 = Subcollection(
-            title="TextCollection sub collection1",
+        self.project1 = Project(
+            title="TextCampaign project 1",
             slug="test-slug2-proj1",
             metadata={"key": "val1"},
             status=Status.EDIT,
-            collection=self.collection,
+            campaign=self.campaign,
         )
-        self.subcollection1.save()
+        self.project1.save()
 
         # mock REST requests
 
-        collection_json = {
-            "id": self.collection.id,
+        campaign_json = {
+            "id": self.campaign.id,
             "slug": "test-slug2",
-            "title": "TextCollection",
-            "description": "Collection Description",
+            "title": "TextCampaign",
+            "description": "Campaign Description",
             "s3_storage": True,
             "start_date": None,
             "end_date": None,
@@ -1643,46 +1641,44 @@ class ViewTest_Concordia(TestCase):
 
         responses.add(
             responses.GET,
-            "http://testserver/ws/collection/test-slug2/",
-            json=collection_json,
+            "http://testserver/ws/campaign/test-slug2/",
+            json=campaign_json,
             status=200,
         )
 
         # Act
         response = self.client.get(
-            "/transcribe/test-slug2/test-slug2-proj1/", {"page": 2}
+            "/campaigns/test-slug2/test-slug2-proj1/", {"page": 2}
         )
 
         # Assert
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(
-            response, template_name="transcriptions/collection.html"
-        )
+        self.assertTemplateUsed(response, template_name="transcriptions/project.html")
 
-    def test_FilterCollections_get(self):
-        """Test list of filer collection get API"""
+    def test_FilterCampaigns_get(self):
+        """Test list of filer campaign get API"""
 
         # Arrange
-        self.collection = Collection(
-            title="TextCollection",
+        self.campaign = Campaign(
+            title="TextCampaign",
             slug="slug1",
-            description="Collection Description",
+            description="Campaign Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
         )
-        self.collection.save()
+        self.campaign.save()
 
-        self.collection = Collection(
-            title="Text Collection",
+        self.campaign = Campaign(
+            title="Text Campaign",
             slug="slug2",
-            description="Collection Description",
+            description="Campaign Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
         )
-        self.collection.save()
+        self.campaign.save()
 
         # Act
-        response = self.client.get("/filter/collections/")
+        response = self.client.get("/filter/campaigns/")
 
         # Assert
         self.assertEqual(response.status_code, 200)
@@ -1690,30 +1686,30 @@ class ViewTest_Concordia(TestCase):
         self.assertEqual(response.json()[0], "slug1")
         self.assertEqual(response.json()[1], "slug2")
 
-    def test_FilterCollectionsWithParams_get(self):
-        """Test list of filer collection get API"""
+    def test_FilterCampaignsWithParams_get(self):
+        """Test list of filer campaign get API"""
 
         # Arrange
-        self.collection = Collection(
-            title="TextCollection",
+        self.campaign = Campaign(
+            title="TextCampaign",
             slug="slug1",
-            description="Collection Description",
+            description="Campaign Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
         )
-        self.collection.save()
+        self.campaign.save()
 
-        self.collection = Collection(
-            title="Text Collection",
+        self.campaign = Campaign(
+            title="Text Campaign",
             slug="slug2",
-            description="Collection Description",
+            description="Campaign Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
         )
-        self.collection.save()
+        self.campaign.save()
 
         # Act
-        response = self.client.get("/filter/collections/?name=sl")
+        response = self.client.get("/filter/campaigns/?name=sl")
 
         # Assert
         self.assertEqual(response.status_code, 200)
@@ -1721,92 +1717,92 @@ class ViewTest_Concordia(TestCase):
         self.assertEqual(response.json()[0], "slug1")
         self.assertEqual(response.json()[1], "slug2")
 
-    def test_FilterCollectionsEmpty_get(self):
-        """Test list of filer collection get API"""
+    def test_FilterCampaignsEmpty_get(self):
+        """Test list of filer campaign get API"""
 
-        # Arrange, to test empty filter collections. No need of arranging data
+        # Arrange, to test empty filter campaigns. No need of arranging data
 
         # Act
-        response = self.client.get("/filter/collections/")
+        response = self.client.get("/filter/campaigns/")
 
         # Assert
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.json()), 0)
 
-    def test_PublishCollectionView(self):
-        """Test for updating status of a collection"""
+    def test_PublishCampaignView(self):
+        """Test for updating status of a campaign"""
 
         # Arrange
-        self.collection = Collection(
-            title="TextCollection",
+        self.campaign = Campaign(
+            title="TextCampaign",
             slug="slug1",
-            description="Collection Description",
+            description="Campaign Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
         )
-        self.collection.save()
+        self.campaign.save()
 
-        self.subcollection = Subcollection(
-            title="TextCollection sub collection",
+        self.project = Project(
+            title="TextCampaign project",
             slug="test-slug2-proj",
             metadata={"key": "val1"},
             status=Status.EDIT,
-            collection=self.collection,
+            campaign=self.campaign,
         )
-        self.subcollection.save()
+        self.project.save()
 
-        self.subcollection1 = Subcollection(
-            title="TextCollection sub collection1",
+        self.project1 = Project(
+            title="TextCampaign project 1",
             slug="test-slug2-proj1",
             metadata={"key": "val1"},
             status=Status.EDIT,
-            collection=self.collection,
+            campaign=self.campaign,
         )
-        self.subcollection1.save()
+        self.project1.save()
 
         # Act
-        response = self.client.get("/transcribe/publish/collection/slug1/true/")
+        response = self.client.get("/campaigns/publish/campaign/slug1/true/")
 
         # Assert
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["state"], True)
 
-    def test_UnpublishCollectionView(self):
-        """Test for updating status of a collection"""
+    def test_UnpublishCampaignView(self):
+        """Test for updating status of a campaign"""
 
         # Arrange
-        self.collection = Collection(
-            title="TextCollection",
+        self.campaign = Campaign(
+            title="TextCampaign",
             slug="slug1",
-            description="Collection Description",
+            description="Campaign Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
             is_publish=True,
         )
-        self.collection.save()
+        self.campaign.save()
 
-        self.subcollection = Subcollection(
-            title="TextCollection sub collection",
+        self.project = Project(
+            title="TextCampaign project",
             slug="test-slug2-proj",
             metadata={"key": "val1"},
             status=Status.EDIT,
-            collection=self.collection,
+            campaign=self.campaign,
             is_publish=True,
         )
-        self.subcollection.save()
+        self.project.save()
 
-        self.subcollection1 = Subcollection(
-            title="TextCollection sub collection1",
+        self.project1 = Project(
+            title="TextCampaign project 1",
             slug="test-slug2-proj1",
             metadata={"key": "val1"},
             status=Status.EDIT,
-            collection=self.collection,
+            campaign=self.campaign,
             is_publish=True,
         )
-        self.subcollection1.save()
+        self.project1.save()
 
         # Act
-        response = self.client.get("/transcribe/publish/collection/slug1/false/")
+        response = self.client.get("/campaigns/publish/campaign/slug1/false/")
 
         # Assert
         self.assertEqual(response.status_code, 200)
@@ -1816,36 +1812,36 @@ class ViewTest_Concordia(TestCase):
         """Test for updating status of a project"""
 
         # Arrange
-        self.collection = Collection(
-            title="TextCollection",
+        self.campaign = Campaign(
+            title="TextCampaign",
             slug="slug1",
-            description="Collection Description",
+            description="Campaign Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
         )
-        self.collection.save()
+        self.campaign.save()
 
-        self.subcollection = Subcollection(
-            title="TextCollection sub collection",
+        self.project = Project(
+            title="TextCampaign project",
             slug="test-slug2-proj",
             metadata={"key": "val1"},
             status=Status.EDIT,
-            collection=self.collection,
+            campaign=self.campaign,
         )
-        self.subcollection.save()
+        self.project.save()
 
-        self.subcollection1 = Subcollection(
-            title="TextCollection sub collection1",
+        self.project1 = Project(
+            title="TextCampaign project1",
             slug="test-slug2-proj1",
             metadata={"key": "val1"},
             status=Status.EDIT,
-            collection=self.collection,
+            campaign=self.campaign,
         )
-        self.subcollection1.save()
+        self.project1.save()
 
         # Act
         response = self.client.get(
-            "/transcribe/publish/project/slug1/test-slug2-proj/true/"
+            "/campaigns/publish/project/slug1/test-slug2-proj/true/"
         )
 
         # Assert
@@ -1856,39 +1852,39 @@ class ViewTest_Concordia(TestCase):
         """Test for updating status of a project"""
 
         # Arrange
-        self.collection = Collection(
-            title="TextCollection",
+        self.campaign = Campaign(
+            title="TextCampaign",
             slug="slug1",
-            description="Collection Description",
+            description="Campaign Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
             is_publish=True,
         )
-        self.collection.save()
+        self.campaign.save()
 
-        self.subcollection = Subcollection(
-            title="TextCollection sub collection",
+        self.project = Project(
+            title="TextCampaign project",
             slug="test-slug2-proj",
             metadata={"key": "val1"},
             status=Status.EDIT,
-            collection=self.collection,
+            campaign=self.campaign,
             is_publish=True,
         )
-        self.subcollection.save()
+        self.project.save()
 
-        self.subcollection1 = Subcollection(
-            title="TextCollection sub collection1",
+        self.project1 = Project(
+            title="TextCampaign project1",
             slug="test-slug2-proj1",
             metadata={"key": "val1"},
             status=Status.EDIT,
-            collection=self.collection,
+            campaign=self.campaign,
             is_publish=True,
         )
-        self.subcollection1.save()
+        self.project1.save()
 
         # Act
         response = self.client.get(
-            "/transcribe/publish/project/slug1/test-slug2-proj/false/"
+            "/campaigns/publish/project/slug1/test-slug2-proj/false/"
         )
 
         # Assert

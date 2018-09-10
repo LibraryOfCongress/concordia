@@ -1,23 +1,28 @@
 from django.core.management.base import BaseCommand
-from concordia.models import Collection, Asset, Status, MediaType
+
+from concordia.models import Asset, Campaign, MediaType, Status
+
 
 class Command(BaseCommand):
-    args = '<foo bar ...>'
-    help = 'This will populate the database with values needed to test the export with S3'
+    args = "<foo bar ...>"
+    help = (
+        "This will populate the database with values needed to test the export with S3"
+    )
 
     def _add_data(self):
         """
-        Add a collection with two items to db.  The 1st item has 5 assets and the second item
+        Add a campaign with two items to db.  The 1st item has 5 assets and the second item
         has 3 assets
 
         """
-        collection, created = Collection.objects.update_or_create(
+        campaign, created = Campaign.objects.update_or_create(
             title="Test S3",
             slug="test_s3",
-            description="Mockup test collection for S3 Storage",
+            description="Mockup test campaign for S3 Storage",
             is_active=True,
             s3_storage=True,
-            status=Status.EDIT)
+            status=Status.EDIT,
+        )
 
         asset, created = Asset.objects.update_or_create(
             title="mss859430177",
@@ -25,7 +30,7 @@ class Command(BaseCommand):
             description="mss859430177",
             media_url="https://s3.us-east-2.amazonaws.com/chc-collections/test_s3/mss859430177/0.jpg",
             media_type=MediaType.IMAGE,
-            collection=collection,
+            campaign=campaign,
             metadata={"key": "val2"},
             sequence=0,
             status=Status.EDIT,
@@ -37,7 +42,7 @@ class Command(BaseCommand):
             description="mss859430177",
             media_url="https://s3.us-east-2.amazonaws.com/chc-collections/test_s3/mss859430177/1.jpg",
             media_type=MediaType.IMAGE,
-            collection=collection,
+            campaign=campaign,
             metadata={"key": "val2"},
             sequence=1,
             status=Status.EDIT,
@@ -49,7 +54,7 @@ class Command(BaseCommand):
             description="mss859430177",
             media_url="https://s3.us-east-2.amazonaws.com/chc-collections/test_s3/mss859430177/2.jpg",
             media_type=MediaType.IMAGE,
-            collection=collection,
+            campaign=campaign,
             metadata={"key": "val2"},
             sequence=2,
             status=Status.EDIT,
@@ -61,7 +66,7 @@ class Command(BaseCommand):
             description="mss859430177",
             media_url="https://s3.us-east-2.amazonaws.com/chc-collections/test_s3/mss859430177/3.jpg",
             media_type=MediaType.IMAGE,
-            collection=collection,
+            campaign=campaign,
             metadata={"key": "val2"},
             sequence=3,
             status=Status.EDIT,
@@ -73,7 +78,7 @@ class Command(BaseCommand):
             description="mss859430177",
             media_url="https://s3.us-east-2.amazonaws.com/chc-collections/test_s3/mss859430177/4.jpg",
             media_type=MediaType.IMAGE,
-            collection=collection,
+            campaign=campaign,
             metadata={"key": "val2"},
             sequence=4,
             status=Status.EDIT,
@@ -85,7 +90,7 @@ class Command(BaseCommand):
             description="mss859430178",
             media_url="https://s3.us-east-2.amazonaws.com/chc-collections/test_s3/mss859430178/0.png",
             media_type=MediaType.IMAGE,
-            collection=collection,
+            campaign=campaign,
             metadata={"key": "val2"},
             sequence=0,
             status=Status.EDIT,
@@ -97,7 +102,7 @@ class Command(BaseCommand):
             description="mss859430178",
             media_url="https://s3.us-east-2.amazonaws.com/chc-collections/test_s3/mss859430178/1.png",
             media_type=MediaType.IMAGE,
-            collection=collection,
+            campaign=campaign,
             metadata={"key": "val2"},
             sequence=1,
             status=Status.EDIT,
@@ -109,7 +114,7 @@ class Command(BaseCommand):
             description="mss859430178",
             media_url="https://s3.us-east-2.amazonaws.com/chc-collections/test_s3/mss859430178/2.png",
             media_type=MediaType.IMAGE,
-            collection=collection,
+            campaign=campaign,
             metadata={"key": "val2"},
             sequence=2,
             status=Status.EDIT,

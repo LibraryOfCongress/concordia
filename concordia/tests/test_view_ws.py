@@ -9,7 +9,7 @@ from django.test import Client, TestCase
 from django.utils.encoding import force_text
 from rest_framework import status
 
-from concordia.models import (Asset, Collection, MediaType, PageInUse, Status, Tag,
+from concordia.models import (Asset, Campaign, MediaType, PageInUse, Status, Tag,
                               Transcription, User, UserProfile, UserAssetTagCollection)
 
 logging.disable(logging.CRITICAL)
@@ -96,7 +96,7 @@ class ViewWSTest_Concordia(TestCase):
         response = self.client.post(
             "/ws/page_in_use/",
             {
-                "page_url": "transcribe/American-Jerusalem/asset/mamcol.0930/",
+                "page_url": "campaigns/American-Jerusalem/asset/mamcol.0930/",
                 "user": self.user.id,
                 "updated_on": datetime.now(),
             },
@@ -137,7 +137,7 @@ class ViewWSTest_Concordia(TestCase):
         response = self.client.post(
             "/ws/page_in_use/",
             {
-                "page_url": "transcribe/American-Jerusalem/asset/mamcol.0930/",
+                "page_url": "campaigns/American-Jerusalem/asset/mamcol.0930/",
                 "user": self.user.id,
                 "updated_on": datetime.now(),
             },
@@ -163,7 +163,7 @@ class ViewWSTest_Concordia(TestCase):
         response = self.client.post(
             "/ws/page_in_use/",
             {
-                "page_url": "transcribe/American-Jerusalem/asset/mamcol.0930/",
+                "page_url": "campaigns/American-Jerusalem/asset/mamcol.0930/",
                 "user": self.user.id,
             },
         )
@@ -193,7 +193,7 @@ class ViewWSTest_Concordia(TestCase):
         response = self.client.post(
             "/ws/page_in_use/",
             {
-                "page_url": "transcribe/American-Jerusalem/asset/mamcol.0930/",
+                "page_url": "campaigns/American-Jerusalem/asset/mamcol.0930/",
                 "user": self.user.id,
                 "updated_on": datetime.now(),
             },
@@ -340,176 +340,176 @@ class ViewWSTest_Concordia(TestCase):
         self.assertEqual(len(deleted_page), 0)
         self.assertEqual(current_page_in_use_count-1, deleted_page_in_use_count)
 
-    def test_Collection_get(self):
+    def test_Campaign_get(self):
         """
-        Test getting a Collection object
+        Test getting a Campaign object
         :return:
         """
         # Arrange
         self.login_user()
 
-        # create 2 collections
-        self.collection = Collection(
-            title="TextCollection",
+        # create 2 campaigns
+        self.campaign = Campaign(
+            title="TextCampaign",
             slug="slug1",
-            description="Collection Description",
+            description="Campaign Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
         )
-        self.collection.save()
+        self.campaign.save()
 
-        self.collection2 = Collection(
-            title="TextCollection2",
+        self.campaign2 = Campaign(
+            title="TextCampaign2",
             slug="slug2",
-            description="Collection2 Description",
+            description="Campaign2 Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
         )
-        self.collection2.save()
+        self.campaign2.save()
 
         # Act
-        response = self.client.get("/ws/collection/slug2/")
+        response = self.client.get("/ws/campaign/slug2/")
 
         # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertJSONEqual(
             str(response.content, encoding="utf8"),
             {
-                "description": "Collection2 Description",
+                "description": "Campaign2 Description",
                 "end_date": None,
-                "id": self.collection2.id,
+                "id": self.campaign2.id,
                 "slug": "slug2",
                 "start_date": None,
                 "status": Status.EDIT,
                 "s3_storage": False,
-                "title": "TextCollection2",
-                'subcollections': [],
+                "title": "TextCampaign2",
+                'projects': [],
                 "assets": [],
             },
         )
 
-    def test_Collection_delete(self):
+    def test_Campaign_delete(self):
         """
-        Test deleting a Collection object
+        Test deleting a Campaign object
         :return:
         """
         # Arrange
         self.login_user()
 
-        # create 2 collections
-        self.collection = Collection(
-            title="TextCollection",
+        # create 2 campaigns
+        self.campaign = Campaign(
+            title="TextCampaign",
             slug="slug1",
-            description="Collection Description",
+            description="Campaign Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
         )
-        self.collection.save()
+        self.campaign.save()
 
-        self.collection2 = Collection(
-            title="TextCollection2",
+        self.campaign2 = Campaign(
+            title="TextCampaign2",
             slug="slug2",
-            description="Collection2 Description",
+            description="Campaign2 Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
         )
-        self.collection2.save()
+        self.campaign2.save()
 
-        current_collection_count = Collection.objects.all().count()
+        current_campaign_count = Campaign.objects.all().count()
 
         # Act
-        response = self.client.delete("/ws/collection_delete/slug2/")
+        response = self.client.delete("/ws/campaign_delete/slug2/")
 
         # Assert
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
-        deleted_collection_count = Collection.objects.all().count()
-        self.assertEqual(current_collection_count-1, deleted_collection_count)
+        deleted_campaign_count = Campaign.objects.all().count()
+        self.assertEqual(current_campaign_count-1, deleted_campaign_count)
 
-    def test_Collection_by_id_get(self):
+    def test_Campaign_by_id_get(self):
         """
-        Test getting a Collection object by id
+        Test getting a Campaign object by id
         :return:
         """
         # Arrange
         self.login_user()
 
-        # create 2 collections
-        self.collection = Collection(
-            title="TextCollection",
+        # create 2 campaigns
+        self.campaign = Campaign(
+            title="TextCampaign",
             slug="slug1",
-            description="Collection Description",
+            description="Campaign Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
         )
-        self.collection.save()
+        self.campaign.save()
 
-        self.collection2 = Collection(
-            title="TextCollection2",
+        self.campaign2 = Campaign(
+            title="TextCampaign2",
             slug="slug2",
-            description="Collection2 Description",
+            description="Campaign2 Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
         )
-        self.collection2.save()
+        self.campaign2.save()
 
         # Act
-        response = self.client.get("/ws/collection_by_id/%s/" % self.collection2.id)
+        response = self.client.get("/ws/campaign_by_id/%s/" % self.campaign2.id)
 
         # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertJSONEqual(
             str(response.content, encoding="utf8"),
             {
-                "description": "Collection2 Description",
+                "description": "Campaign2 Description",
                 "end_date": None,
-                "id": self.collection2.id,
+                "id": self.campaign2.id,
                 "slug": "slug2",
                 "start_date": None,
                 "status": Status.EDIT,
                 "s3_storage": False,
-                "title": "TextCollection2",
-                'subcollections': [],
+                "title": "TextCampaign2",
+                'projects': [],
                 "assets": [],
             },
         )
 
-    def test_get_assets_by_collection(self):
+    def test_get_assets_by_campaign(self):
         """
-        Test getting a list of assets by collection
+        Test getting a list of assets by campaign
         :return:
         """
 
         # Arrange
         self.login_user()
 
-        # create 2 collections
-        self.collection = Collection(
-            title="TextCollection",
+        # create 2 campaigns
+        self.campaign = Campaign(
+            title="TextCampaign",
             slug="slug1",
-            description="Collection Description",
+            description="Campaign Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
         )
-        self.collection.save()
+        self.campaign.save()
 
-        self.collection2 = Collection(
-            title="TextCollection2",
+        self.campaign2 = Campaign(
+            title="TextCampaign2",
             slug="slug2",
-            description="Collection2 Description",
+            description="Campaign2 Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
         )
-        self.collection2.save()
+        self.campaign2.save()
 
-        # Add 2 assets to collection2, 1 asset to collection1
+        # Add 2 assets to campaign2, 1 asset to campaign1
         self.asset = Asset(
             title="TestAsset",
             slug="Asset1",
             description="Asset Description",
             media_url="http://www.foo.com/1/2/3",
             media_type=MediaType.IMAGE,
-            collection=self.collection2,
+            campaign=self.campaign2,
             metadata={"key": "val2"},
             status=Status.EDIT,
         )
@@ -521,7 +521,7 @@ class ViewWSTest_Concordia(TestCase):
             description="Asset Description",
             media_url="http://www.foo.com/1/2/3",
             media_type=MediaType.IMAGE,
-            collection=self.collection2,
+            campaign=self.campaign2,
             metadata={"key": "val2"},
             status=Status.EDIT,
         )
@@ -533,7 +533,7 @@ class ViewWSTest_Concordia(TestCase):
             description="Asset Description",
             media_url="http://www.foo.com/1/2/3",
             media_type=MediaType.IMAGE,
-            collection=self.collection,
+            campaign=self.campaign,
             metadata={"key": "val2"},
             status=Status.EDIT,
         )
@@ -550,7 +550,7 @@ class ViewWSTest_Concordia(TestCase):
 
     def test_Asset_Update_put(self):
         """
-        Test updating an asset by collection and slug to inactive
+        Test updating an asset by campaign and slug to inactive
         :return:
         """
 
@@ -558,14 +558,14 @@ class ViewWSTest_Concordia(TestCase):
         self.login_user()
         self.maxDiff = None
 
-        self.collection = Collection(
-            title="TextCollection",
+        self.campaign = Campaign(
+            title="TextCampaign",
             slug="slug1",
-            description="Collection Description",
+            description="Campaign Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
         )
-        self.collection.save()
+        self.campaign.save()
 
         self.asset = Asset(
             title="TestAsset",
@@ -573,7 +573,7 @@ class ViewWSTest_Concordia(TestCase):
             description="Asset Description",
             media_url="http://www.foo.com/1/2/3",
             media_type=MediaType.IMAGE,
-            collection=self.collection,
+            campaign=self.campaign,
             metadata={"key": "val2"},
             status=Status.EDIT,
         )
@@ -586,16 +586,16 @@ class ViewWSTest_Concordia(TestCase):
             "description": "Asset Description",
             "media_url": "http://www.foo.com/1/2/3",
             "media_type": "IMG",
-            "collection": {
-                "id": self.collection.id,
+            "campaign": {
+                "id": self.campaign.id,
                 "slug": "slug1",
-                "title": "TextCollection",
-                "description": "Collection Description",
+                "title": "TextCampaign",
+                "description": "Campaign Description",
                 "s3_storage": False,
                 "start_date": None,
                 "end_date": None,
                 "status": "Edit",
-                'subcollections': [],
+                'projects': [],
                 "assets": [
                     {
                         "title": "TestAsset3",
@@ -609,7 +609,7 @@ class ViewWSTest_Concordia(TestCase):
                     }
                 ],
             },
-            "subcollection": None,
+            "project": None,
             "sequence": 1,
             "metadata": {"key": "val2"},
             "status": "Edit",
@@ -617,11 +617,11 @@ class ViewWSTest_Concordia(TestCase):
 
         # Act
 
-        asset_update = {"collection": self.collection.slug, "slug": self.asset.slug}
+        asset_update = {"campaign": self.campaign.slug, "slug": self.asset.slug}
 
         # Act
         response = self.client.put(
-            "/ws/asset_update/%s/%s/" % (self.collection.slug, self.asset.slug),
+            "/ws/asset_update/%s/%s/" % (self.campaign.slug, self.asset.slug),
             data=json.dumps(asset_update),
             content_type="application/json",
         )
@@ -632,9 +632,9 @@ class ViewWSTest_Concordia(TestCase):
         self.assertEqual(updated_asset.status, Status.INACTIVE)
 
 
-    def test_get_assets_by_collection_and_slug(self):
+    def test_get_assets_by_campaign_and_slug(self):
         """
-        Test getting an asset by collection and slug
+        Test getting an asset by campaign and slug
         :return:
         """
 
@@ -642,33 +642,33 @@ class ViewWSTest_Concordia(TestCase):
         self.login_user()
         self.maxDiff = None
 
-        # create 2 collections
-        self.collection = Collection(
-            title="TextCollection",
+        # create 2 campaigns
+        self.campaign = Campaign(
+            title="TextCampaign",
             slug="slug1",
-            description="Collection Description",
+            description="Campaign Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
         )
-        self.collection.save()
+        self.campaign.save()
 
-        self.collection2 = Collection(
-            title="TextCollection2",
+        self.campaign2 = Campaign(
+            title="TextCampaign2",
             slug="slug2",
-            description="Collection2 Description",
+            description="Campaign2 Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
         )
-        self.collection2.save()
+        self.campaign2.save()
 
-        # Add 2 assets to collection2, 1 asset to collection1
+        # Add 2 assets to campaign2, 1 asset to campaign1
         self.asset = Asset(
             title="TestAsset",
             slug="Asset1",
             description="Asset Description",
             media_url="http://www.foo.com/1/2/3",
             media_type=MediaType.IMAGE,
-            collection=self.collection2,
+            campaign=self.campaign2,
             metadata={"key": "val2"},
             status=Status.EDIT,
         )
@@ -680,7 +680,7 @@ class ViewWSTest_Concordia(TestCase):
             description="Asset Description",
             media_url="http://www.foo.com/1/2/3",
             media_type=MediaType.IMAGE,
-            collection=self.collection2,
+            campaign=self.campaign2,
             metadata={"key": "val2"},
             status=Status.EDIT,
         )
@@ -692,7 +692,7 @@ class ViewWSTest_Concordia(TestCase):
             description="Asset Description",
             media_url="http://www.foo.com/1/2/3",
             media_type=MediaType.IMAGE,
-            collection=self.collection,
+            campaign=self.campaign,
             metadata={"key": "val2"},
             status=Status.EDIT,
         )
@@ -705,16 +705,16 @@ class ViewWSTest_Concordia(TestCase):
             "description": "Asset Description",
             "media_url": "http://www.foo.com/1/2/3",
             "media_type": "IMG",
-            "collection": {
-                "id": self.collection.id,
+            "campaign": {
+                "id": self.campaign.id,
                 "slug": "slug1",
-                "title": "TextCollection",
-                "description": "Collection Description",
+                "title": "TextCampaign",
+                "description": "Campaign Description",
                 "s3_storage": False,
                 "start_date": None,
                 "end_date": None,
                 "status": "Edit",
-                'subcollections': [],
+                'projects': [],
                 "assets": [
                     {
                         "id": self.asset3.id,
@@ -729,7 +729,7 @@ class ViewWSTest_Concordia(TestCase):
                     }
                 ],
             },
-            "subcollection": None,
+            "project": None,
             "sequence": 1,
             "metadata": {"key": "val2"},
             "status": "Edit",
@@ -742,42 +742,42 @@ class ViewWSTest_Concordia(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertJSONEqual(force_text(response.content), expected_response)
 
-    def test_get_assets_by_collection_and_slug_no_match(self):
+    def test_get_assets_by_campaign_and_slug_no_match(self):
         """
-        Test getting an asset by collection and slug using a slug that doesn't exist
+        Test getting an asset by campaign and slug using a slug that doesn't exist
         :return:
         """
 
         # Arrange
         self.login_user()
 
-        # create 2 collections
-        self.collection = Collection(
-            title="TextCollection",
+        # create 2 campaigns
+        self.campaign = Campaign(
+            title="TextCampaign",
             slug="slug1",
-            description="Collection Description",
+            description="Campaign Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
         )
-        self.collection.save()
+        self.campaign.save()
 
-        self.collection2 = Collection(
-            title="TextCollection2",
+        self.campaign2 = Campaign(
+            title="TextCampaign2",
             slug="slug2",
-            description="Collection2 Description",
+            description="Campaign2 Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
         )
-        self.collection2.save()
+        self.campaign2.save()
 
-        # Add 2 assets to collection2, 1 asset to collection1
+        # Add 2 assets to campaign2, 1 asset to campaign1
         self.asset = Asset(
             title="TestAsset",
             slug="Asset1",
             description="Asset Description",
             media_url="http://www.foo.com/1/2/3",
             media_type=MediaType.IMAGE,
-            collection=self.collection2,
+            campaign=self.campaign2,
             metadata={"key": "val2"},
             status=Status.EDIT,
         )
@@ -789,7 +789,7 @@ class ViewWSTest_Concordia(TestCase):
             description="Asset Description",
             media_url="http://www.foo.com/1/2/3",
             media_type=MediaType.IMAGE,
-            collection=self.collection2,
+            campaign=self.campaign2,
             metadata={"key": "val2"},
             status=Status.EDIT,
         )
@@ -801,7 +801,7 @@ class ViewWSTest_Concordia(TestCase):
             description="Asset Description",
             media_url="http://www.foo.com/1/2/3",
             media_type=MediaType.IMAGE,
-            collection=self.collection,
+            campaign=self.campaign,
             metadata={"key": "val2"},
             status=Status.EDIT,
         )
@@ -821,7 +821,7 @@ class ViewWSTest_Concordia(TestCase):
                 "description": "",
                 "media_url": "",
                 "media_type": None,
-                "collection": {
+                "campaign": {
                     "description": "",
                     "end_date": None,
                     "s3_storage": False,
@@ -829,12 +829,12 @@ class ViewWSTest_Concordia(TestCase):
                     "start_date": None,
                     "status": None,
                     "assets": [],
-                    'subcollections': [],
+                    'projects': [],
                     "title": "",
                 },
                 "sequence": None,
                 "metadata": None,
-                'subcollection': {'metadata': None, 'slug': '', 'is_publish': False, 'status': None, 'title': ''},
+                'project': {'metadata': None, 'slug': '', 'is_publish': False, 'status': None, 'title': ''},
                 "status": None,
             },
         )
@@ -915,15 +915,15 @@ class ViewWSTest_Concordia(TestCase):
         self.user2.set_password("top_secret")
         self.user2.save()
 
-        # create a collection
-        self.collection = Collection(
-            title="TextCollection",
+        # create a campaign
+        self.campaign = Campaign(
+            title="TextCampaign",
             slug="www.foo.com/slug2",
-            description="Collection Description",
+            description="Campaign Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
         )
-        self.collection.save()
+        self.campaign.save()
 
         # create Assets
         self.asset = Asset(
@@ -932,7 +932,7 @@ class ViewWSTest_Concordia(TestCase):
             description="Asset Description",
             media_url="http://www.foo.com/1/2/3",
             media_type=MediaType.IMAGE,
-            collection=self.collection,
+            campaign=self.campaign,
             metadata={"key": "val2"},
             status=Status.EDIT,
         )
@@ -944,7 +944,7 @@ class ViewWSTest_Concordia(TestCase):
             description="Asset Description",
             media_url="http://www.foo.com/1/2/3",
             media_type=MediaType.IMAGE,
-            collection=self.collection,
+            campaign=self.campaign,
             metadata={"key": "val2"},
             status=Status.EDIT,
         )
@@ -988,15 +988,15 @@ class ViewWSTest_Concordia(TestCase):
         self.user2.set_password("top_secret")
         self.user2.save()
 
-        # create a collection
-        self.collection = Collection(
-            title="TextCollection",
+        # create a campaign
+        self.campaign = Campaign(
+            title="TextCampaign",
             slug="www.foo.com/slug2",
-            description="Collection Description",
+            description="Campaign Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
         )
-        self.collection.save()
+        self.campaign.save()
 
         # create Assets
         self.asset = Asset(
@@ -1005,7 +1005,7 @@ class ViewWSTest_Concordia(TestCase):
             description="Asset Description",
             media_url="http://www.foo.com/1/2/3",
             media_type=MediaType.IMAGE,
-            collection=self.collection,
+            campaign=self.campaign,
             metadata={"key": "val2"},
             status=Status.EDIT,
         )
@@ -1017,7 +1017,7 @@ class ViewWSTest_Concordia(TestCase):
             description="Asset Description",
             media_url="http://www.foo.com/1/2/3",
             media_type=MediaType.IMAGE,
-            collection=self.collection,
+            campaign=self.campaign,
             metadata={"key": "val2"},
             status=Status.EDIT,
         )
@@ -1068,15 +1068,15 @@ class ViewWSTest_Concordia(TestCase):
         # Arrange
         self.login_user()
 
-        # create a collection
-        self.collection = Collection(
-            title="TextCollection",
+        # create a campaign
+        self.campaign = Campaign(
+            title="TextCampaign",
             slug="www.foo.com/slug2",
-            description="Collection Description",
+            description="Campaign Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
         )
-        self.collection.save()
+        self.campaign.save()
 
         # create Assets
         self.asset = Asset(
@@ -1085,7 +1085,7 @@ class ViewWSTest_Concordia(TestCase):
             description="Asset Description",
             media_url="http://www.foo.com/1/2/3",
             media_type=MediaType.IMAGE,
-            collection=self.collection,
+            campaign=self.campaign,
             metadata={"key": "val2"},
             status=Status.EDIT,
         )
@@ -1132,15 +1132,15 @@ class ViewWSTest_Concordia(TestCase):
         # Arrange
         self.login_user()
 
-        # create a collection
-        self.collection = Collection(
-            title="TextCollection",
+        # create a campaign
+        self.campaign = Campaign(
+            title="TextCampaign",
             slug="www.foo.com/slug2",
-            description="Collection Description",
+            description="Campaign Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
         )
-        self.collection.save()
+        self.campaign.save()
 
         # create Assets
         self.asset = Asset(
@@ -1149,7 +1149,7 @@ class ViewWSTest_Concordia(TestCase):
             description="Asset Description",
             media_url="http://www.foo.com/1/2/3",
             media_type=MediaType.IMAGE,
-            collection=self.collection,
+            campaign=self.campaign,
             metadata={"key": "val2"},
             status=Status.EDIT,
         )
@@ -1159,7 +1159,7 @@ class ViewWSTest_Concordia(TestCase):
         response = self.client.post(
             "/ws/tag_create/",
             {
-                "collection": self.collection.slug,
+                "campaign": self.campaign.slug,
                 "asset": self.asset.slug,
                 "user_id": self.user.id,
                 "name": "T1",
@@ -1178,15 +1178,15 @@ class ViewWSTest_Concordia(TestCase):
         # Arrange
         self.login_user()
 
-        # create a collection
-        self.collection = Collection(
-            title="TextCollection",
-            slug="collectionslug",
-            description="Collection Description",
+        # create a campaign
+        self.campaign = Campaign(
+            title="TextCampaign",
+            slug="campaignslug",
+            description="Campaign Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
         )
-        self.collection.save()
+        self.campaign.save()
 
         # create Assets
         self.asset = Asset(
@@ -1195,7 +1195,7 @@ class ViewWSTest_Concordia(TestCase):
             description="Asset Description",
             media_url="http://www.foo.com/1/2/3",
             media_type=MediaType.IMAGE,
-            collection=self.collection,
+            campaign=self.campaign,
             metadata={"key": "val2"},
             status=Status.EDIT,
         )
@@ -1216,7 +1216,7 @@ class ViewWSTest_Concordia(TestCase):
 
         # Act
         url = "/ws/tag_delete/%s/%s/%s/%s/" % (
-            self.collection.slug,
+            self.campaign.slug,
             self.asset.slug,
             "Tag1",
             self.user.id,
@@ -1238,15 +1238,15 @@ class ViewWSTest_Concordia(TestCase):
         # Arrange
         self.login_user()
 
-        # create a collection
-        self.collection = Collection(
-            title="TextCollection",
+        # create a campaign
+        self.campaign = Campaign(
+            title="TextCampaign",
             slug="www.foo.com/slug2",
-            description="Collection Description",
+            description="Campaign Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
         )
-        self.collection.save()
+        self.campaign.save()
 
         # create Assets
         self.asset = Asset(
@@ -1255,7 +1255,7 @@ class ViewWSTest_Concordia(TestCase):
             description="Asset Description",
             media_url="http://www.foo.com/1/2/3",
             media_type=MediaType.IMAGE,
-            collection=self.collection,
+            campaign=self.campaign,
             metadata={"key": "val2"},
             status=Status.EDIT,
         )
@@ -1265,7 +1265,7 @@ class ViewWSTest_Concordia(TestCase):
         response = self.client.post(
             "/ws/tag_create/",
             {
-                "collection": self.collection.slug,
+                "campaign": self.campaign.slug,
                 "asset": self.asset.slug,
                 "user_id": self.user.id,
                 "name": "T1",
@@ -1276,7 +1276,7 @@ class ViewWSTest_Concordia(TestCase):
         response = self.client.post(
             "/ws/tag_create/",
             {
-                "collection": self.collection.slug,
+                "campaign": self.campaign.slug,
                 "asset": self.asset.slug,
                 "user_id": self.user.id,
                 "name": "T2",
@@ -1302,15 +1302,15 @@ class ViewWSTest_Concordia(TestCase):
         self.user2.set_password("top_secret")
         self.user2.save()
 
-        # create a collection
-        self.collection = Collection(
-            title="TextCollection",
+        # create a campaign
+        self.campaign = Campaign(
+            title="TextCampaign",
             slug="www.foo.com/slug2",
-            description="Collection Description",
+            description="Campaign Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
         )
-        self.collection.save()
+        self.campaign.save()
 
         # create Assets
         self.asset = Asset(
@@ -1319,7 +1319,7 @@ class ViewWSTest_Concordia(TestCase):
             description="Asset Description",
             media_url="http://www.foo.com/1/2/3",
             media_type=MediaType.IMAGE,
-            collection=self.collection,
+            campaign=self.campaign,
             metadata={"key": "val2"},
             status=Status.EDIT,
         )
@@ -1372,15 +1372,15 @@ class ViewWSTest_Concordia(TestCase):
         self.user2.set_password("top_secret")
         self.user2.save()
 
-        # create a collection
-        self.collection = Collection(
-            title="TextCollection",
+        # create a campaign
+        self.campaign = Campaign(
+            title="TextCampaign",
             slug="www.foo.com/slug2",
-            description="Collection Description",
+            description="Campaign Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
         )
-        self.collection.save()
+        self.campaign.save()
 
         # create Assets
         self.asset = Asset(
@@ -1389,7 +1389,7 @@ class ViewWSTest_Concordia(TestCase):
             description="Asset Description",
             media_url="http://www.foo.com/1/2/3",
             media_type=MediaType.IMAGE,
-            collection=self.collection,
+            campaign=self.campaign,
             metadata={"key": "val2"},
             status=Status.EDIT,
         )

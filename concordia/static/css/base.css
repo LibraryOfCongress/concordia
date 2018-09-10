@@ -1019,7 +1019,7 @@ div.nav-secondary {
     padding: 1rem .5rem;
 }
 
-.card-img-collection {
+.card-img-campaign {
     object-position: center top;
     object-fit: cover;
     height: 18.75rem;
@@ -1033,7 +1033,7 @@ div.nav-secondary {
     padding: .5rem 1.25rem;
 }
 
-.card-img-overlay.img-collection {
+.card-img-overlay.img-campaign {
     padding: 0;
 }
 
@@ -1050,7 +1050,7 @@ div.nav-secondary {
     width: auto;
 }
 
-.collection-image-link {
+.campaign-image-link {
     z-index: 2;
 }
 

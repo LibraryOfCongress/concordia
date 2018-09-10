@@ -1,12 +1,12 @@
 {% extends "transcriptions/base.html" %}
-{% block title %}Citizen Historian Collections{% endblock title %}
+{% block title %}Citizen Historian Campaigns{% endblock title %}
 {% block main_content %} {% load staticfiles %}
 {% load auth_extras %}
 
 <div class="container-fluid py-default">
   <div class="row">
     <div class="col-md-10 mx-auto bg-offwhite rounded">
-      <h3 class="mt-default ml-half mb-default">Collections</h3>
+      <h3 class="mt-default ml-half mb-default">Campaigns</h3>
       <div class="row">
         <div class="d-flex flex-wrap col-12 mb-default justify-content-around">
           {% if response.results %}
@@ -18,7 +18,7 @@
                           <h5 class="card-title align-text-middle w-100">{{ c.title }}</h5>
                           <h6 class="card-text mb-half">{{ c.description }}</h6>
                           <div class="col-md-8 mx-auto text-center">
-                            <a href="{% url 'transcriptions:collection' c.slug %}" class="btn btn-primary col mb-quarter">View</a>
+                            <a href="{% url 'transcriptions:campaign' c.slug %}" class="btn btn-primary col mb-quarter">View</a>
                           </div>
                     </div>
                   </div>
@@ -32,17 +32,17 @@
                         <h5 class="card-title align-text-middle w-100">{{ c.title }}</h5>
                           <h6 class="card-text mb-half">{{ c.description }}</h6>
                           <div class="col-md-8 mx-auto text-center">
-                            <a href="{% url 'transcriptions:collection' c.slug %}" class="btn btn-primary col mb-quarter">View</a>
-                            <a href="{% url 'transcriptions:delete collection' c.slug %}" class="btn btn-danger col mb-quarter">Delete</a>
-                            <a href="{% url 'transcriptions:exportCSV collection' c.slug %}" class="btn btn-success col mb-quarter">Export to csv</a>
-                            <a href="{% url 'transcriptions:exportBagit collection' c.slug %}" class="btn btn-success col">Export to Bagit</a>
-                            <a href="{% url 'transcriptions:report collection' c.slug %}" class="mt-half col btn btn-primary">Report</a>
+                            <a href="{% url 'transcriptions:campaign' c.slug %}" class="btn btn-primary col mb-quarter">View</a>
+                            <a href="{% url 'transcriptions:delete campaign' c.slug %}" class="btn btn-danger col mb-quarter">Delete</a>
+                            <a href="{% url 'transcriptions:exportCSV campaign' c.slug %}" class="btn btn-success col mb-quarter">Export to csv</a>
+                            <a href="{% url 'transcriptions:exportBagit campaign' c.slug %}" class="btn btn-success col">Export to Bagit</a>
+                            <a href="{% url 'transcriptions:report campaign' c.slug %}" class="mt-half col btn btn-primary">Report</a>
                             {% if request.user|has_group:"CM" %}
                                 {% if c.is_publish %}
-                                    <button type="button" class="confirm-modal btn btn-primary col mt-half" data-toggle="modal" id="{{ c.slug }}" data-target="#collectionConfirmModal">
+                                    <button type="button" class="confirm-modal btn btn-primary col mt-half" data-toggle="modal" id="{{ c.slug }}" data-target="#campaignConfirmModal">
                                             Unpublish</button>
                                 {% else %}
-                                    <button type="button" class="confirm-modal btn btn-primary col mt-half" data-toggle="modal" id="{{ c.slug }}" data-target="#collectionConfirmModal">
+                                    <button type="button" class="confirm-modal btn btn-primary col mt-half" data-toggle="modal" id="{{ c.slug }}" data-target="#campaignConfirmModal">
                                             Publish</button>
                                 {% endif %}
                             {% endif %}
@@ -57,7 +57,7 @@
           <div class="col-12 col-md-4 col-lg-3 mb-default card shadow-regular bg-lightest-gray">
             <div class="d-flex card-body align-items-center justify-content-center">
               <div>
-                <a href="{% url 'transcriptions:create' %}"><span>Add new Collection</span></a>
+                <a href="{% url 'transcriptions:create' %}"><span>Add new Campaign</span></a>
                 </div>
             </div>
           </div>
@@ -69,11 +69,11 @@
 </div>
 
 <!-- Confirmation Modal -->
-<div class="modal fade" id="collectionConfirmModal" tabindex="-1" role="dialog" aria-labelledby="collectionConfirmModalLabel" aria-hidden="true">
+<div class="modal fade" id="campaignConfirmModal" tabindex="-1" role="dialog" aria-labelledby="campaignConfirmModalLabel" aria-hidden="true">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="collectionConfirmModalLabel">Confirm Collection</h5>
+        <h5 class="modal-title" id="campaignConfirmModalLabel">Confirm Campaign</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
@@ -93,11 +93,11 @@
 {% block body_scripts %}
 <script>
     $(document).ready(function(){
-         $(document).on('show.bs.modal',"#collectionConfirmModal", function (e) {
+         $(document).on('show.bs.modal',"#campaignConfirmModal", function (e) {
              var $invoker = $(e.relatedTarget);
              $("#confirmbtn").click(function(e){
-                var collection_slug = $($invoker[0]).attr('id');
-                var requested_status = $("#"+collection_slug).text().trim();
+                var campaign_slug = $($invoker[0]).attr('id');
+                var requested_status = $("#"+campaign_slug).text().trim();
                 if(requested_status == 'Publish'){
                     var to_status = 'true';
                 }
@@ -105,14 +105,14 @@
                     var to_status = 'false';
                 }
                 $.ajax({
-                    url: '/transcribe/publish/collection/'+collection_slug+"/"+to_status+"/",
+                    url: '/campaigns/publish/campaign/'+campaign_slug+"/"+to_status+"/",
                     type: 'GET',
                     success: function(data, textStatus, jqXHR) {
-                        $('#collectionConfirmModal').modal('hide');
+                        $('#campaignConfirmModal').modal('hide');
                         if(data['state']){
-                            $("#"+collection_slug).text('Unpublish');
+                            $("#"+campaign_slug).text('Unpublish');
                         }else{
-                            $("#"+collection_slug).text('Publish');
+                            $("#"+campaign_slug).text('Publish');
                         }
                     }
                 }).fail(function(data, jqXHR, textStatus, errorThrown) {

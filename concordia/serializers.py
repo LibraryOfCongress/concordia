@@ -29,11 +29,11 @@ class UserProfileSerializer(serializers.ModelSerializer):
                   )
 
 
-class CollectionListSerializer(serializers.ModelSerializer):
+class CampaignListSerializer(serializers.ModelSerializer):
     asset_count = serializers.IntegerField(source="asset_set.count", read_only=True)
 
     class Meta:
-        model = models.Collection
+        model = models.Campaign
         fields = (
             "id",
             "slug",
@@ -47,7 +47,7 @@ class CollectionListSerializer(serializers.ModelSerializer):
         )
 
 
-class AssetSetForCollectionSerializer(serializers.HyperlinkedModelSerializer):
+class AssetSetForCampaignSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = models.Asset
         fields = (
@@ -63,10 +63,10 @@ class AssetSetForCollectionSerializer(serializers.HyperlinkedModelSerializer):
         )
 
 
-class SubcollectionSerializer(serializers.ModelSerializer):
+class ProjectSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = models.Subcollection
+        model = models.Project
         fields = (
             "id",
             "title",
@@ -77,12 +77,12 @@ class SubcollectionSerializer(serializers.ModelSerializer):
         )
 
 
-class CollectionDetailSerializer(serializers.HyperlinkedModelSerializer):
-    assets = AssetSetForCollectionSerializer(source="asset_set", many=True)
-    subcollections = SubcollectionSerializer(source="subcollection_set", many=True)
+class CampaignDetailSerializer(serializers.HyperlinkedModelSerializer):
+    assets = AssetSetForCampaignSerializer(source="asset_set", many=True)
+    projects = ProjectSerializer(source="project_set", many=True)
 
     class Meta:
-        model = models.Collection
+        model = models.Campaign
         fields = (
             "id",
             "slug",
@@ -92,14 +92,14 @@ class CollectionDetailSerializer(serializers.HyperlinkedModelSerializer):
             "start_date",
             "end_date",
             "status",
-            "subcollections",
+            "projects",
             "assets",
         )
 
 
 class AssetSerializer(serializers.HyperlinkedModelSerializer):
-    collection = CollectionDetailSerializer()
-    subcollection = SubcollectionSerializer()
+    campaign = CampaignDetailSerializer()
+    project = ProjectSerializer()
 
     class Meta:
         model = models.Asset
@@ -110,8 +110,8 @@ class AssetSerializer(serializers.HyperlinkedModelSerializer):
             "description",
             "media_url",
             "media_type",
-            "collection",
-            "subcollection",
+            "campaign",
+            "project",
             "sequence",
             "metadata",
             "status",

@@ -10,19 +10,19 @@
 {% endblock head_content %}
 {% block main_content %}
 <div class="container">
-	<h4>Collection and Project Level Reporting</h4>
+	<h4>Campaign and Project Level Reporting</h4>
 	<table class="table table-bordered" style="width: 50%;">
 		<tbody>
 			<tr>
-				<td>COLLECTION: </td>
-				<td>{{collection_json.title}}</td>
+				<td>CAMPAIGN: </td>
+				<td>{{campaign_json.title}}</td>
 			</tr>
 			<tr>
-				<td>Total Images in Collection: </td>
-				<td>{{collection_json.assets|length}}</td>
+				<td>Total Images in Campaign: </td>
+				<td>{{campaign_json.assets|length}}</td>
 			</tr>
 			<tr>
-				<td>Total Projects in Collection: </td>
+				<td>Total Projects in Campaign: </td>
 				<td>{{ paginator.count }} </td>
 			</tr>
 		</tbody>

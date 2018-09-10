@@ -2,14 +2,16 @@
 Sendmail email backend class.
 Credits: https://djangosnippets.org/snippets/1864/
 """
+from subprocess import PIPE, Popen
+
 from django.core.mail.backends.base import BaseEmailBackend
-from subprocess import Popen, PIPE
 
 
 class SendmailEmailBackend(BaseEmailBackend):
     """
     A wrapper that calls the sendmail program.
     """
+
     def send_messages(self, email_messages):
         """
         Sends one or more EmailMessage objects and returns the number of email
@@ -30,8 +32,7 @@ class SendmailEmailBackend(BaseEmailBackend):
             return False
         try:
             # -t: Read message for recipients
-            ps = Popen(['/usr/sbin/sendmail'] + recipients, stdin=PIPE,
-                       stderr=PIPE)
+            ps = Popen(["/usr/sbin/sendmail"] + recipients, stdin=PIPE, stderr=PIPE)
             ps.stdin.write(email_message.message().as_bytes())
             (stdout, stderr) = ps.communicate()
         except Exception as e:
@@ -41,6 +42,6 @@ class SendmailEmailBackend(BaseEmailBackend):
         if ps.returncode:
             if not self.fail_silently:
                 error = stderr if stderr else stdout
-                raise Exception('send_messages failed: %s' % error)
+                raise Exception("send_messages failed: %s" % error)
             return False
         return True
