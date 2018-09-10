@@ -41,7 +41,7 @@ Create a new key pair or use existing key pair
     "importer":"IMAGES_FOLDER" : "/app/"
 
 31. Browse url login as admin
-32. add new collection (watch in celery as images come in)
+32. add new campaign (watch in celery as images come in)
 
 33. Setup postgresql
 

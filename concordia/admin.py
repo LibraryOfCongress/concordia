@@ -1,11 +1,10 @@
 from django.contrib import admin
 
-from .models import (Asset, Collection, Subcollection, Tag, Transcription,
-                     UserAssetTagCollection)
+from .models import Asset, Campaign, Item, Project, Tag, Transcription, UserAssetTagCollection
 
 
-@admin.register(Collection)
-class CollectionAdmin(admin.ModelAdmin):
+@admin.register(Campaign)
+class CampaignAdmin(admin.ModelAdmin):
     # todo: replace description & metadata with truncated values
     list_display = (
         "id",
@@ -22,20 +21,17 @@ class CollectionAdmin(admin.ModelAdmin):
     list_display_links = ("id", "title", "slug")
 
 
-@admin.register(Subcollection)
-class SubcollectionAdmin(admin.ModelAdmin):
+@admin.register(Project)
+class ProjectAdmin(admin.ModelAdmin):
     # todo: replace metadata with truncated values
-    # todo: add foreignKey link for collection
-    list_display = (
-        "id",
-        "title",
-        "slug",
-        "category",
-        "collection",
-        "metadata",
-        "status",
-    )
+    # todo: add foreignKey link for campaign
+    list_display = ("id", "title", "slug", "category", "campaign", "metadata", "status")
     list_display_links = ("id", "title", "slug")
+
+@admin.register(Item)
+class ItemAdmin(admin.ModelAdmin):
+    list_display = ("title", "slug", "item_id", "campaign", "project", "status", "is_publish")
+    list_display_links = ("title", "slug", "item_id")
 
 
 @admin.register(Asset)
@@ -48,8 +44,8 @@ class AssetAdmin(admin.ModelAdmin):
         # 'description',
         "media_url",
         "media_type",
-        "collection",
-        "subcollection",
+        "campaign",
+        "project",
         "sequence",
         # 'metadata',
         "status",

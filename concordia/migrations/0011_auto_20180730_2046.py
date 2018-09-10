@@ -5,14 +5,12 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('concordia', '0010_auto_20180730_2032'),
-    ]
+    dependencies = [("concordia", "0010_auto_20180730_2032")]
 
     operations = [
         migrations.AlterField(
-            model_name='pageinuse',
-            name='updated_on',
+            model_name="pageinuse",
+            name="updated_on",
             field=models.DateTimeField(auto_now=True),
-        ),
+        )
     ]

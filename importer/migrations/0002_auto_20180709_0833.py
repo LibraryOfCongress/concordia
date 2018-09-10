@@ -9,28 +9,28 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AlterField(
-            model_name="collectionitemassetcount",
-            name="collection_item_asset_count",
+            model_name="campaignitemassetcount",
+            name="campaign_item_asset_count",
             field=models.IntegerField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name="collectiontaskdetails",
-            name="collection_asset_count",
+            model_name="campaigntaskdetails",
+            name="campaign_asset_count",
             field=models.IntegerField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name="collectiontaskdetails",
-            name="collection_item_count",
+            model_name="campaigntaskdetails",
+            name="campaign_item_count",
             field=models.IntegerField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name="collectiontaskdetails",
-            name="collection_page_count",
+            model_name="campaigntaskdetails",
+            name="campaign_page_count",
             field=models.IntegerField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name="collectiontaskdetails",
-            name="collection_task_id",
+            model_name="campaigntaskdetails",
+            name="campaign_task_id",
             field=models.CharField(blank=True, max_length=100, null=True),
         ),
     ]

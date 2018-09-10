@@ -1,0 +1,50 @@
+{% extends "transcriptions/base.html" %} {% load staticfiles %}
+{% block title %}Concordia - {{ campaign.title }}{% endblock title %}
+{% block head_content %}
+
+{% endblock head_content %}
+{% block main_content %}
+<div class="container-fluid py-default">
+    <div class="row">
+        <div class="col-md-10 mx-auto bg-offwhite rounded">
+            <h3 class="mt-default mb-half ml-half">{{ campaign.title }}</h3>
+            <h4>{{ project.title }}</h4>
+            <h4>Item {{ item.item_id }}</h4>
+            <div class="row">
+                <div class="d-flex flex-wrap col-12 justify-content-around">
+                    {% for a in assets %}
+                    <div class="col-12 col-md-4 col-lg-3 mx-quarter mb-default card bg-lightest-gray shadow-regular">
+                        <a href="{% url 'transcriptions:asset' campaign.slug a.slug %}">
+                            <img class="card-img card-img-campaign" alt="{{ a.slug }}" src="{% if campaign.s3_storage %}{{ a.media_url }}{% else %}{{ MEDIA_URL }}{{a.media_url }}{% endif %}">
+                        </a>
+                        <div class="card-img-overlay img-campaign">
+                            <div class="d-flex flex-column justify-content-end col-9 col-md-8 mx-auto h-100">
+                                <a href="{% url 'transcriptions:asset' campaign.slug a.slug %}" class="btn btn-primary btn-lg w-100 mb-quarter">Transcribe</a>
+                                <a href="{% url 'transcriptions:asset' campaign.slug a.slug %}#tab-tag" class="btn btn-primary btn-lg w-100 mb-quarter">Tag</a>
+                                {% if user.is_superuser %}
+                                    <a href="{% url 'transcriptions:delete_asset' campaign.slug a.slug %}" class="btn btn-primary btn-lg w-100 mb-quarter">Hide</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <a href="{% url 'transcriptions:asset' campaign.slug a.slug %}" class="campaign-image-link"><h6 class="text-center primary-text my-half">{{ a.slug }}</h6></a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="pagination justify-content-center align-items-center mb-default">
+                <span class="step-links">
+                    {% if assets.has_previous %}
+                        <a class="pr-3 primary-text" href="?page=1">&laquo; first</a>
+                        <a class="pr-3 primary-text" href="?page={{ assets.previous_page_number }}">previous</a>
+                    {% endif %}
+                    <span class="current">Page {{ assets.number }} of {{ assets.paginator.num_pages }}</span>
+                    {% if assets.has_next %}
+                        <a class="pl-3 primary-text" href="?page={{ assets.next_page_number }}">next</a>
+                        <a class="pl-3 primary-text" href="?page={{ assets.paginator.num_pages }}">last &raquo;</a>
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock main_content %}

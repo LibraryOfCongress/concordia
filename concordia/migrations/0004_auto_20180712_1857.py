@@ -5,7 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [("concordia", "0003_collection_is_active")]
+    dependencies = [("concordia", "0003_campaign_is_active")]
 
     operations = [
         migrations.AlterField(
@@ -22,7 +22,7 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.AlterField(
-            model_name="collection",
+            model_name="campaign",
             name="status",
             field=models.CharField(
                 choices=[
@@ -35,7 +35,7 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.AlterField(
-            model_name="subcollection",
+            model_name="project",
             name="status",
             field=models.CharField(
                 choices=[
