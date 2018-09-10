@@ -2,12 +2,18 @@
 import os
 import sys
 
+from django.contrib import messages
+from dotenv import load_dotenv
 from machina import MACHINA_MAIN_STATIC_DIR, MACHINA_MAIN_TEMPLATE_DIR
 from machina import get_apps as get_machina_apps
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 BASE_DIR = os.path.dirname(PROJECT_DIR)
+
+# Build path for and load .env file.
+dotenv_path = os.path.join(BASE_DIR, ".env")
+load_dotenv(dotenv_path)
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = "django-secret-key"
@@ -217,7 +223,7 @@ REST_FRAMEWORK = {
     ),
 }
 
-CONCORDIA = {"netloc": "http://0.0.0.0:80"}
+CONCORDIA = {"netloc": "http://0:80"}
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
@@ -248,3 +254,16 @@ REGISTRATION_URLS = "registration.backends.simple.urls"
 CAPTCHA_CHALLENGE_FUNCT = "captcha.helpers.random_char_challenge"
 CAPTCHA_FIELD_TEMPLATE = "captcha/field.html"
 CAPTCHA_TEXT_FIELD_TEMPLATE = "captcha/text_field.html"
+
+AWS_S3 = {
+    "AWS_ACCESS_KEY_ID": os.getenv("AWS_ACCESS_KEY_ID"),
+    "AWS_SECRET_ACCESS_KEY": os.getenv("AWS_SECRET_ACCESS_KEY"),
+    "S3_COLLECTION_BUCKET": "chc-collections",
+}
+
+PASSWORD_RESET_TIMEOUT_DAYS = 1
+REGISTRATION_OPEN = True  # set to false to temporarily disable registrations
+
+MESSAGE_TAGS = {
+    messages.ERROR: 'danger',
+}

@@ -5,12 +5,14 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [("concordia", "0006_auto_20180713_1759")]
+    dependencies = [
+        ('concordia', '0006_auto_20180713_1759'),
+    ]
 
     operations = [
         migrations.AddField(
-            model_name="collection",
-            name="s3_storage",
+            model_name='collection',
+            name='s3_storage',
             field=models.BooleanField(default=False),
-        )
+        ),
     ]

@@ -1,31 +1,34 @@
-
 import html
 import json
 import os
+from collections import namedtuple
 from datetime import datetime, timedelta
 from logging import getLogger
+from types import SimpleNamespace
 
 import requests
+from captcha.fields import CaptchaField
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model
+from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
-from django.db.models import Count, Q
-from django.http import HttpResponse, HttpResponseRedirect
+from django.db.models import Count, Q, Max
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import Http404, get_object_or_404, redirect, render
 from django.template import loader
 from django.urls import reverse
 from django.views.generic import FormView, TemplateView, View
 from registration.backends.simple.views import RegistrationView
-from rest_framework import status
+from rest_framework import status, generics
 from rest_framework.test import APIRequestFactory
 
 from concordia.forms import (CaptchaEmbedForm, ConcordiaContactUsForm,
                              ConcordiaUserEditForm, ConcordiaUserForm)
-from concordia.models import (Asset, Collection, PageInUse, Status, Transcription,
+from concordia.models import (Asset, Collection, Subcollection, PageInUse, Status, Transcription,
                               UserProfile)
 from concordia.views_ws import PageInUseCreate
 from importer.views import CreateCollectionView
@@ -33,6 +36,7 @@ from importer.views import CreateCollectionView
 logger = getLogger(__name__)
 
 ASSETS_PER_PAGE = 36
+PROJECTS_PER_PAGE = 36
 
 
 def concordia_api(relative_path):
@@ -44,26 +48,24 @@ def concordia_api(relative_path):
     return data
 
 
-def get_anonymous_user(user_id=True):
+def get_anonymous_user(request, user_id=True):
     """
     Get the user called "anonymous" if it exist. Create the user if it doesn't exist
-
     This is the default concordia user if someone is working on the site without logging in first.
+    :parameter: request django request object
     :parameter: user_id Boolean defaults to True, if true returns user id, otherwise return user object
-
     :return: User id or User
     """
-    anon_user = User.objects.filter(username="anonymous").first()
-    if anon_user is None:
-        anon_user = User.objects.create_user(
-            username="anonymous",
-            email="anonymous@anonymous.com",
-            password="concanonymous",
-        )
+    response = requests.get(
+        "%s://%s/ws/anonymous_user/"
+        % (request.scheme, request.get_host()),
+        cookies=request.COOKIES,
+    )
+    anonymous_json_val = json.loads(response.content.decode("utf-8"))
     if user_id:
-        return anon_user.id
+        return anonymous_json_val["id"]
     else:
-        return anon_user
+        return anonymous_json_val
 
 
 class ConcordiaRegistrationView(RegistrationView):
@@ -82,11 +84,10 @@ class AccountProfileView(LoginRequiredMixin, TemplateView):
         if form.is_valid():
             obj = form.save(commit=True)
             obj.id = self.request.user.id
-            if (
-                not self.request.POST["password1"]
-                and not self.request.POST["password2"]
-            ):
+            if "password1" not in self.request.POST and "password2" not in self.request.POST:
                 obj.password = self.request.user.password
+            else:
+                update_session_auth_hash(self.request, obj)
             obj.save()
 
             if "myfile" in self.request.FILES:
@@ -94,7 +95,10 @@ class AccountProfileView(LoginRequiredMixin, TemplateView):
                 profile, created = UserProfile.objects.update_or_create(
                     user=obj, defaults={"myfile": myfile}
                 )
+
+            messages.success(self.request, "User profile information changed!")
         else:
+            messages.error(self.request, form.errors)
             return HttpResponseRedirect("/account/profile/")
         return redirect(reverse("user-profile"))
 
@@ -110,9 +114,16 @@ class AccountProfileView(LoginRequiredMixin, TemplateView):
             "email": self.request.user.email,
             "first_name": self.request.user.first_name + last_name,
         }
-        profile = UserProfile.objects.filter(user=self.request.user)
-        if profile:
-            data["myfile"] = profile[0].myfile
+
+        response = requests.get(
+            "%s://%s/ws/user_profile/%s/"
+            % (self.request.scheme, self.request.get_host(), self.request.user.id),
+            cookies=self.request.COOKIES,
+        )
+        user_profile_json_val = json.loads(response.content.decode("utf-8"))
+
+        if "myfile" in user_profile_json_val:
+            data["myfile"] = user_profile_json_val["myfile"]
 
         response = requests.get(
             "%s://%s/ws/transcription_by_user/%s/"
@@ -154,6 +165,40 @@ class ConcordiaView(TemplateView):
     def get_context_data(self, **kws):
         response = concordia_api("collections/")
         return dict(super().get_context_data(**kws), response=response)
+
+
+class ConcordiaProjectView(TemplateView):
+    template_name = "transcriptions/project.html"
+
+    def get_context_data(self, **kws):
+
+        print("ws/collection url:", "%s://%s/ws/collection/%s/" % (self.request.scheme, self.request.get_host(), self.args[0]))
+
+        response = requests.get(
+            "%s://%s/ws/collection/%s/"
+            % (self.request.scheme, self.request.get_host(), self.args[0]),
+            cookies=self.request.COOKIES,
+        )
+        collection_json_val = json.loads(response.content.decode("utf-8"))
+        for sub_col in collection_json_val["subcollections"]:
+            sub_col["collection"] = collection_json_val
+
+        project_sorted_list = sorted(
+            collection_json_val["subcollections"], key=lambda k: (k["title"])
+        )
+
+        paginator = Paginator(project_sorted_list, ASSETS_PER_PAGE)
+
+        if not self.request.GET.get("page"):
+            page = 1
+        else:
+            page = self.request.GET.get("page")
+
+        projects = paginator.get_page(page)
+
+        return dict(
+            super().get_context_data(**kws), collection=collection_json_val, projects=projects
+        )
 
 
 class ConcordiaCollectionView(TemplateView):
@@ -262,7 +307,7 @@ class ConcordiaAssetView(TemplateView):
                 )
                 return json.loads(response.content.decode("utf-8"))
 
-        for asset_item in asset_list_json["results"][asset_json["sequence"]+1:]:
+        for asset_item in asset_list_json["results"][asset_json["sequence"]:]:
             transcription_json = get_transcription(asset_item)
             if transcription_json["status"] != Status.COMPLETED:
                 return_path = "/transcribe/%s/asset/%s/" % (self.args[0], asset_item["slug"])
@@ -286,16 +331,13 @@ class ConcordiaAssetView(TemplateView):
         :return: True or False
         """
         response = requests.get(
-            "%s://%s/ws/page_in_use_filter/%s/%s/"
+            "%s://%s/ws/page_in_use_count/%s/%s/"
             % (self.request.scheme, self.request.get_host(), user, url),
             cookies=self.request.COOKIES,
         )
         json_val = json.loads(response.content.decode("utf-8"))
 
-        if json_val["count"] > 0:
-            return True
-        else:
-            return False
+        return json_val["page_in_use"]
 
     def get_context_data(self, **kws):
         """
@@ -315,7 +357,6 @@ class ConcordiaAssetView(TemplateView):
         )
         asset_json = json.loads(response.content.decode("utf-8"))
 
-        # asset = Asset.objects.get(collection__slug=self.args[0], slug=self.args[1])
         in_use_url = "/transcribe/%s/asset/%s/" % (
             asset_json["collection"]["slug"],
             asset_json["slug"],
@@ -323,12 +364,14 @@ class ConcordiaAssetView(TemplateView):
         current_user_id = (
             self.request.user.id
             if self.request.user.id is not None
-            else get_anonymous_user()
+            else get_anonymous_user(self.request)
         )
-        page_in_use = self.check_page_in_use(in_use_url, self.request.user)
+        page_in_use = self.check_page_in_use(in_use_url, current_user_id)
+
+        # TODO: in the future, this is from a settings file value
+        discussion_hide = True
 
         # Get all transcriptions, they are no longer tied to a specific user
-        # transcription = Transcription.objects.filter(asset=asset).last()
 
         response = requests.get(
             "%s://%s/ws/transcription/%s/"
@@ -342,16 +385,30 @@ class ConcordiaAssetView(TemplateView):
             % (self.request.scheme, self.request.get_host(), asset_json["id"]),
             cookies=self.request.COOKIES,
         )
+        json_tags = []
         if response.status_code == status.HTTP_200_OK:
-            json_tags = json.loads(response.content.decode("utf-8"))
-        else:
-            json_tags = {}
+            json_tags_response = json.loads(response.content.decode("utf-8"))
+            for json_tag in json_tags_response["results"]:
+                json_tags.append(json_tag["value"])
 
         captcha_form = CaptchaEmbedForm()
 
-        same_page_count_for_this_user = PageInUse.objects.filter(
-            page_url=in_use_url, user=current_user_id
-        ).count()
+        response = requests.get(
+            "%s://%s/ws/page_in_use_user/%s/%s/" %
+            (
+                self.request.scheme,
+                self.request.get_host(),
+                current_user_id,
+                in_use_url
+            ),
+            cookies=self.request.COOKIES,
+        )
+        page_in_use_json = json.loads(response.content.decode("utf-8"))
+
+        if page_in_use_json["user"] is None:
+            same_page_count_for_this_user = 0
+        else:
+            same_page_count_for_this_user = 1
 
         page_dict = {
             "page_url": in_use_url,
@@ -371,8 +428,27 @@ class ConcordiaAssetView(TemplateView):
             PageInUseCreate.as_view()(request)
         elif same_page_count_for_this_user == 1:
             # update the PageInUse
-            obj, created = PageInUse.objects.update_or_create(
-                page_url=in_use_url, user=current_user_id
+            change_page_in_use = {"page_url": in_use_url, "user": current_user_id}
+
+            test_url = "%s://%s/ws/page_in_use_update/%s/%s/" % (
+
+                    self.request.scheme,
+                    self.request.get_host(),
+                    current_user_id,
+                    in_use_url
+                )
+
+            requests.put(
+                "%s://%s/ws/page_in_use_update/%s/%s/" %
+                (
+
+                    self.request.scheme,
+                    self.request.get_host(),
+                    current_user_id,
+                    in_use_url
+                ),
+                data=change_page_in_use,
+                cookies=self.request.COOKIES,
             )
 
         return dict(
@@ -380,19 +456,29 @@ class ConcordiaAssetView(TemplateView):
             page_in_use=page_in_use,
             asset=asset_json,
             transcription=transcription_json,
-            tags=json_tags["results"],
+            tags=json_tags,
             captcha_form=captcha_form,
+            discussion_hide=discussion_hide,
         )
 
     def post(self, *args, **kwargs):
         """
-        Handle POST from trancribe page for individual asset
+        Handle POST from transcribe page for individual asset
         :param args:
         :param kwargs:
         :return: redirect back to same page
         """
         # don't know why this would be called here
         # self.get_context_data()
+
+        if self.request.POST.get("action").lower() == 'contact a manager':
+            return redirect(reverse('contact') + "?pre_populate=true")
+
+        if self.request.user.is_anonymous:
+            captcha_form = CaptchaEmbedForm(self.request.POST)
+            if not captcha_form.is_valid():
+                logger.info("Invalid captcha response")
+                return self.get(self.request, *args, **kwargs)
         response = requests.get(
             "%s://%s/ws/asset_by_slug/%s/%s/"
             % (
@@ -413,6 +499,8 @@ class ConcordiaAssetView(TemplateView):
 
         redirect_path = self.request.path
 
+        redirect_path = self.request.path
+
         if "tx" in self.request.POST:
             tx = self.request.POST.get("tx")
             tx_status = self.state_dictionary[self.request.POST.get("action")]
@@ -423,7 +511,7 @@ class ConcordiaAssetView(TemplateView):
                     "asset": asset_json["id"],
                     "user_id": self.request.user.id
                     if self.request.user.id is not None
-                    else get_anonymous_user(),
+                    else get_anonymous_user(self.request),
                     "status": tx_status,
                     "text": tx,
                 },
@@ -462,12 +550,27 @@ class ConcordiaAssetView(TemplateView):
                         "asset": asset_json["slug"],
                         "user_id": self.request.user.id
                         if self.request.user.id is not None
-                        else get_anonymous_user(),
+                        else get_anonymous_user(self.request),
                         "name": tag,
                         "value": tag,
                     },
                     cookies=self.request.COOKIES,
                 )
+
+                # keep track of existing tags so we can remove deleted tags
+                if tag in existing_tags_list:
+                    existing_tags_list.remove(tag)
+
+            # delete "old" tags
+            for old_tag in existing_tags_list:
+                response = requests.delete("%s://%s/ws/tag_delete/%s/%s/%s/%s/" %
+                                           (self.request.scheme,
+                                            self.request.get_host(),
+                                            self.args[0],
+                                            self.args[1],
+                                            old_tag,
+                                            self.request.user.id),
+                                           cookies=self.request.COOKIES)
 
         return redirect(redirect_path)
 
@@ -496,18 +599,15 @@ class ConcordiaAlternateAssetView(View):
             asset_slug = self.request.POST.get("asset", None)
 
         if collection_slug and asset_slug:
-            collection = Collection.objects.filter(slug=collection_slug)
-
-            # select a random asset in this collection that has status of EDIT
-            asset = (
-                Asset.objects.filter(collection=collection[0], status=Status.EDIT)
-                .exclude(slug=asset_slug)
-                .order_by("?")
-                .first()
+            response = requests.get(
+                "%s://%s/ws/collection_asset_random/%s/%s"
+                % (self.request.scheme, self.request.get_host(), collection_slug, asset_slug),
+                cookies=self.request.COOKIES,
             )
+            random_asset_json_val = json.loads(response.content.decode("utf-8"))
 
             return HttpResponse(
-                "/transcribe/%s/asset/%s/" % (collection_slug, asset.slug)
+                "/transcribe/%s/asset/%s/" % (collection_slug, random_asset_json_val["slug"])
             )
 
 
@@ -527,43 +627,45 @@ class ConcordiaPageInUse(View):
 
         if self.request.is_ajax():
             json_dict = json.loads(self.request.body)
-            user = json_dict["user"]
+            user_name = json_dict["user"]
             page_url = json_dict["page_url"]
         else:
-            user = self.request.POST.get("user", None)
+            user_name = self.request.POST.get("user", None)
             page_url = self.request.POST.get("page_url", None)
 
-        if user == "AnonymousUser":
-            user = "anonymous"
+        if user_name == "AnonymousUser":
+            user_name = "anonymous"
 
-        if user and page_url:
-            user_obj = User.objects.filter(username=user).first()
+        if user_name and page_url:
+            response = requests.get(
+                "%s://%s/ws/user/%s/"
+                % (self.request.scheme, self.request.get_host(), user_name),
+                cookies=self.request.COOKIES,
+            )
+            user_json_val = json.loads(response.content.decode("utf-8"))
 
             # update the PageInUse
-            obj, created = PageInUse.objects.update_or_create(
-                page_url=page_url, user=user_obj
+
+            change_page_in_use = {"page_url": page_url, "user": user_json_val["id"]}
+
+            requests.put(
+                "%s://%s/ws/page_in_use_update/%s/%s/" %
+                (
+
+                    self.request.scheme,
+                    self.request.get_host(),
+                    user_json_val["id"],
+                    page_url
+                ),
+                data=change_page_in_use,
+                cookies=self.request.COOKIES,
             )
-
-            if created:
-                # delete any other PageInUse with same url
-                pages_in_use = PageInUse.objects.filter(page_url=page_url).exclude(
-                    user=user_obj
-                )
-                for page in pages_in_use:
-                    page.delete()
-
-        # delete any pages not updated in the last 15 minutes
-        from datetime import datetime, timedelta
-
-        time_threshold = datetime.now() - timedelta(minutes=15)
-        old_page_entries = PageInUse.objects.filter(updated_on__lt=time_threshold)
-        for old_page in old_page_entries:
-            old_page.delete()
 
         return HttpResponse("ok")
 
 
 class TranscriptionView(TemplateView):
+    # TODO: Is this class still used??
     template_name = "transcriptions/transcription.html"
 
     def get_context_data(self, **kws):
@@ -584,6 +686,21 @@ class ContactUsView(FormView):
     template_name = "contact.html"
     form_class = ConcordiaContactUsForm
     success_url = "."
+
+    def get_initial(self):
+        if self.request.GET.get("pre_populate", None) is None:
+            return None
+        else:
+            return {
+                "email": (
+                    None if self.request.user.is_anonymous else self.request.user.email
+                ),
+                "link": (
+                    self.request.META.get("HTTP_REFERER")
+                    if self.request.META.get("HTTP_REFERER")
+                    else None
+                ),
+            }
 
     def post(self, *args, **kwargs):
         email = html.escape(self.request.POST.get("email") or "")
@@ -637,44 +754,181 @@ class CollectionView(TemplateView):
 class DeleteCollectionView(TemplateView):
     """
     deletes the collection
-
     """
 
     def get(self, request, *args, **kwargs):
-        print("Deleting:", self.args[0])
-        collection = Collection.objects.get(slug=self.args[0])
-        collection.asset_set.all().delete()
-        collection.delete()
+        requests.delete("%s://%s/ws/collection_delete/%s/" %
+                        (self.request.scheme,
+                         self.request.get_host(),
+                         self.args[0]),
+                        cookies=self.request.COOKIES)
+
         os.system(
-            "rm -rf {0}".format(settings.MEDIA_ROOT + "/concordia/" + collection.slug)
+            "rm -rf {0}".format(settings.MEDIA_ROOT + "/concordia/" + self.args[0])
         )
         return redirect("/transcribe/")
+
+
+class DeleteAssetView(TemplateView):
+    """
+    Hides an asset with status inactive. Hidden assets do not display in
+    asset view. After hiding an asset, page redirects to collection view.
+    """
+
+    def get(self, request, *args, **kwargs):
+        asset_update = {"collection": self.args[0], "slug": self.args[1]}
+
+        requests.put(
+            "%s://%s/ws/asset_update/%s/%s/" %
+            (
+                self.request.scheme,
+                self.request.get_host(),
+                self.args[0],
+                self.args[1],
+            ),
+            data=asset_update,
+            cookies=self.request.COOKIES,
+        )
+
+        return redirect("/transcribe/" + self.args[0] + "/")
 
 
 class ReportCollectionView(TemplateView):
     """
     Report the collection
-
     """
-
     template_name = "transcriptions/report.html"
 
-    def get(self, request, *args, **kwargs):
-        collection = Collection.objects.get(slug=self.args[0])
-        collection.asset_set.all()
-        projects = (
-            collection.asset_set.values("title")
-            .annotate(
-                total=Count("title"),
-                in_progress=Count("status", filter=Q(status__in=["25", "75", "50"])),
-                complete=Count("status", filter=Q(status="100")),
-                tags=Count("userassettagcollection__tags", distinct=True),
-                contributors=Count("transcription__user_id", distinct=True),
-                not_started=Count("status", filter=Q(status="0")),
-            )
-            .order_by("title")
+    def __init__(self):
+        self.transcription_json_dict = {}
+
+    def get_asset_tag_count(self, request, asset_id):
+        """
+        Return the count of tags for an asset
+        :param request: django http request object
+        :param asset_id:
+        :return:
+        """
+
+        response = requests.get(
+            "%s://%s/ws/tags/%s/"
+            % (request.scheme, request.get_host(), asset_id),
+            cookies=self.request.COOKIES,
         )
-        paginator = Paginator(projects, ASSETS_PER_PAGE)
+        existing_tags_json_val = json.loads(response.content.decode("utf-8"))
+
+        return existing_tags_json_val["count"]
+
+    def get_asset_transcribe_count(self, request, asset):
+        """
+        Return 1 if last transcriptions for an asset exists
+        :param request: HTTP django request object
+        :param asset: asset id
+        :return:
+        """
+
+        response = requests.get(
+            "%s://%s/ws/transcription/%s/"
+            % (request.scheme, request.get_host(), asset),
+            cookies=self.request.COOKIES,
+        )
+        transcription_json = json.loads(response.content.decode("utf-8"))
+
+        self.transcription_json_dict[asset] = transcription_json
+
+        return 1 if len(transcription_json["text"]) > 0 else 0
+
+    def get_asset_transcribe_count_by_status(self, request, asset, status):
+        """
+        Return 1 if last transcriptions for an asset based on status  state
+        :param request: HTTP django request object
+        :param asset: asset id
+        :param status: Status to check
+        :return:
+        """
+
+        if asset not in self.transcription_json_dict:
+
+            response = requests.get(
+                "%s://%s/ws/transcription/%s/"
+                % (request.scheme, request.get_host(), asset),
+                cookies=self.request.COOKIES,
+            )
+            transcription_json = json.loads(response.content.decode("utf-8"))
+
+            self.transcription_json_dict[asset] = transcription_json
+
+        return 1 if len(self.transcription_json_dict[asset]["text"]) > 0 and \
+                    self.transcription_json_dict[asset]["status"] == status else 0
+
+    def get_transcribe_user_count(self, request, asset_slug):
+        """
+        return the count of users who have entered transcriptions for an asset
+        :param request: django http request objec
+        :param asset_slug: slug of asset
+        :return: array of uniques users who contributed transcriptions to the asset
+        """
+        response = requests.get(
+            "%s://%s/ws/transcription_by_asset/%s/"
+            % (request.scheme, request.get_host(), asset_slug),
+            cookies=self.request.COOKIES,
+        )
+        transcription_json = json.loads(response.content.decode("utf-8"))
+
+        user_array = []
+        if transcription_json["count"] > 0:
+            for trans in transcription_json["results"]:
+                if trans["user_id"] not in user_array:
+                    user_array.append(trans["user_id"])
+
+        return user_array
+
+    def get(self, request, *args, **kwargs):
+
+        response = requests.get(
+            "%s://%s/ws/collection/%s/"
+            % (self.request.scheme, self.request.get_host(), self.args[0]),
+            cookies=self.request.COOKIES,
+        )
+        collection_json = json.loads(response.content.decode("utf-8"))
+        for sub_col in collection_json["subcollections"]:
+            sub_col["collection"] = collection_json
+
+        project_sorted_list = sorted(
+            collection_json["subcollections"], key=lambda k: (k["title"])
+        )
+
+        for sorted_project in project_sorted_list:
+            transcription_count = 0
+            transcription_edit_count = 0
+            transcription_submitted_count = 0
+            transcription_complete_count = 0
+            user_array = []
+            total_tags = 0
+
+            for asset in sorted_project["collection"]["assets"]:
+                transcription_count += self.get_asset_transcribe_count(request, asset["id"])
+                transcription_edit_count += self.get_asset_transcribe_count_by_status(request, asset["id"], Status.EDIT)
+                transcription_submitted_count += self.get_asset_transcribe_count_by_status(request, asset["id"],
+                                                                                           Status.SUBMITTED)
+                transcription_complete_count += self.get_asset_transcribe_count_by_status(request, asset["id"],
+                                                                                          Status.COMPLETED)
+                asset_user_array = self.get_transcribe_user_count(request, asset["slug"])
+                for asset_user in asset_user_array:
+                    if asset_user not in user_array:
+                        user_array.append(asset_user)
+
+                total_tags += self.get_asset_tag_count(request, asset["id"])
+
+            sorted_project["total"] = len(sorted_project["collection"]["assets"])
+            sorted_project["not_started"] = sorted_project["total"] - transcription_count
+            sorted_project["edit"] = transcription_edit_count
+            sorted_project["submitted"] = transcription_submitted_count
+            sorted_project["complete"] = transcription_complete_count
+            sorted_project["contributors"] = len(user_array)
+            sorted_project["tags"] = total_tags
+
+        paginator = Paginator(project_sorted_list, ASSETS_PER_PAGE)
 
         if not self.request.GET.get("page"):
             page = 1
@@ -682,4 +936,82 @@ class ReportCollectionView(TemplateView):
             page = self.request.GET.get("page")
 
         projects = paginator.get_page(page)
+
         return render(self.request, self.template_name, locals())
+
+
+class FilterCollections(generics.ListAPIView):
+    def get_queryset(self):
+        name_query = self.request.query_params.get("name")
+        if name_query:
+            queryset = Collection.objects.filter(slug__contains=name_query).values_list(
+                "slug", flat=True
+            )
+        else:
+            queryset = Collection.objects.all().values_list("slug", flat=True)
+        return queryset
+
+    def list(self, request):
+        queryset = self.get_queryset()
+        from django.http import JsonResponse
+
+        return JsonResponse(list(queryset), safe=False)
+
+
+def publish_collection(request, collection, is_publish):
+    """ Publish/Unpublish a collection to otherr users. On un/publishing collection,
+    it will get does the same effect for all its projects. """
+
+    try:
+        collection = Collection.objects.get(slug=collection)
+    except Collection.DoesNotExist:
+        raise Http404
+
+    if is_publish == "true":
+        collection.is_publish = True
+    else:
+        collection.is_publish = False
+
+    sub_collections = collection.subcollection_set.all()
+
+    for sc in sub_collections:
+        sc.is_publish = True if is_publish == "true" else False
+        sc.save()
+
+    collection.save()
+
+    return JsonResponse(
+        {
+            "message": "Collection has been %s."
+            % ("published" if is_publish == "true" else "unpublished"),
+            "state": True if is_publish == "true" else False,
+        },
+        safe=True,
+    )
+
+
+def publish_project(request, collection, project, is_publish):
+    """ Publish/Unpublish a project to other users. """
+
+    try:
+        sub_collection = Subcollection.objects.get(
+            collection__slug=collection, slug=project
+        )
+    except Subcollection.DoesNotExist:
+        raise Http404
+
+    if is_publish == "true":
+        sub_collection.is_publish = True
+    else:
+        sub_collection.is_publish = False
+
+    sub_collection.save()
+
+    return JsonResponse(
+        {
+            "message": "Project has been %s."
+            % ("published" if is_publish == "true" else "unpublished"),
+            "state": True if is_publish == "true" else False,
+        },
+        safe=True,
+    )

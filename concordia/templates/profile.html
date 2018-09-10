@@ -1,163 +1,101 @@
 {% extends "base.html" %}
+ {% load staticfiles %}
 {% block title %}User Profile Page{% endblock title %}
-{% block head_content %}{% endblock head_content %}
+{% block head_content %}
+{% endblock head_content %}
+
 {% block main_content %}
-<style type="text/css">
-.profile_edit {
-    color: #a3a3a3;
-    cursor: pointer;
-    font-size: 21px;
-}
-
-.profile_edit:hover {
-    color: #23527c;
-}
-
-body {
-    background: #ccc;
-}
-
-.container {
-    margin: 20px auto;
-    /* center the page */
-    width: 80em;
-}
-
-.inut-group input {
-    border: 0;
-}
-
-.remove_button_css:focus,
-.remove_button_css:hover {
-    color: #23527c;
-    text-decoration: underline;
-}
-
-</style>
-<div class="container bootstrap snippet well">
-    <div class="row">
-        <div class="col-sm-5">
-            <h3>Account Settings - <span id='toggle_edit_section' class='profile_edit'>edit</span></h3>
-        </div>
+<div class="bootstrap snippet">
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %} alert-dismissable col-md-10 mx-auto rounded">
+        {{ message }}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
     </div>
+</div>
+    {% endfor %}
+    {% endif %}
+<div class="container-fluid bg-main">
     <div class="row">
-        <div class="container">
+        <div class="col-12 col-md-10 bg-offwhite mx-auto mt-default pxy-default rounded">
             <form class="form-horizontal" action="/account/profile/" method="POST" enctype="multipart/form-data">{% csrf_token %}
                 <span>{{ form.non_field_errors }}</span>
-                <div class="col-sm-3">
-                    <div class="span6">
-                        <div class="area">
-                            <img src="{% if form.myfile.value %}/media/{{form.myfile.value}}{% else %}http://placehold.it/320x200 {% endif %}" alt="ALT NAME" class="img-circle">
-                            <label class="btn btn-file m-top-5" style="color: #4286f4">
-                                Change profile image
-                                <input type="file" style="display: none;" id="myfile" name="myfile">
-                            </label>
-                        </div>
-                    </div>
+                <div class="col-12">
+                    <h2 class="mb-5">Account Settings</h2>
                 </div>
-                <div class="col-sm-9">
-                    <div class="form-group">
-                        <label class="col-md-2" for="Name (Full name)">Username</label>
-                        <div class="col-md-4">
-                            <div class="input-group">
-                                <input id="{{form.username.id_for_label}}" name="{{form.username.html_name}}" value="{{form.username.value}}" type="text" class="form-control-plaintext" readonly="readonly">
-                                <span>{{ form.username.errors }}</span>
-                            </div>
+                <div class="col-md-10 col-lg-8 mx-auto">
+                    <div class="row mb-default">
+                        <div class="col-md-2">
+                            <h3 class="secondary-text">Username<h3>
+                        </div>
+                        <div class="col-md-10 profile-attribute px-half">
+                            <p id="{{form.username.id_for_label}}" name="{{form.username.html_name}}">{{form.username.value}}</p>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label class="col-md-2" for="email">Email</label>
-                        <div class="col-md-4">
-                            <div class="input-group">
-                                <input id="{{form.email.id_for_label}}" name="{{form.email.html_name}}" type="text" value="{{ form.email.value }}" class="form-control-plaintext" readonly="readonly">
-                            </div>
+                    <div class="row mb-default">
+                        <div class="col-md-2">
+                            <h3 class="secondary-text">Email<h3>
+                        </div>
+                        <div class="col-md-10 profile-attribute px-half">
+                            <p id="{{form.email.id_for_label}}" name="{{form.email.html_name}}">{{form.email.value}}</p>
                         </div>
                     </div>
                     <div class="password-section">
-                        <div class="form-group">
-                            <label class="col-md-2" for="email">Password</label>
-                            <div class="col-md-4">
-                                <div class="input-group">
-                                    <input id="{{form.password1.id_for_label}}" name="{{form.password1.html_name}}" type="password" class="form-control">
-                                </div>
+                        <div class="form-group row">
+                            <label class="col-md-2 col-form-label profile-label" for="{{form.password1.id_for_label}}">Password</label>
+                            <div class="col-md-10">
+                                <input id="{{form.password1.id_for_label}}" name="{{form.password1.html_name}}" type="password" class="form-control">
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label class="col-md-2" for="email">Re-enter Password</label>
-                            <div class="col-md-4">
-                                <div class="input-group">
-                                    <input id="{{form.password2.id_for_label}}" name="{{form.password2.html_name}}" type="password" class="form-control">
-                                </div>
+                        <div class="form-group row">
+                            <label class="col-md-2 col-form-label profile-label" for="{{form.password2.id_for_label}}">Re-enter Password</label>
+                            <div class="col-md-10">
+                                <input id="{{form.password2.id_for_label}}" name="{{form.password2.html_name}}" type="password" class="form-control">
                             </div>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <div class="col-md-4 col-md-offset-2">
-                            <div class="input-group">
-                                <div class="col-md-10">
-                                    <button class="btn change-password text-uppercase" id="toggle_password_section"> change password</button>
-                                </div>
-                            </div>
-                        </div>
+                    <button class="btn btn-secondary offset-md-2" id="toggle_password_section"> Change Password</button>
+                    <div class="col-md-8 offset-md-2 d-flex justify-content-between justify-content-center my-half edit">
+                        <a href="{{request.path}}" class="d-none btn btn-default">Cancel</a>
+                        <button type="submit" class="d-none btn btn-primary">Save</button>
                     </div>
-                    <div class="form-group">
-                        <div class="col-md-4 col-md-offset-2">
-                            <div class="input-group edit">
-                                <div class="row">
-                                    <div class="col-md-10">
-                                        <a href="{{request.path}}" class="d-none btn btn-primary pull-left text-uppercase">Cancel</a>
-                                    </div>
-                                    <div class="col-md-2">
-                                        <button type="submit" class="d-none btn btn-primary pull-right text-uppercase">Save</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                </div>
             </form>
-            </div>
         </div>
     </div>
+    <div class="col-10 my-default mx-auto">
+        <hr>
+    </div>
+    <div class="col-12 col-md-10 bg-offwhite mx-auto pxy-default mb-default rounded">
+        <h2 class="mb-default">My Contributions</h2>
+        {% if transcriptions %}
+            <table class="table mb-default">
+                <thead class="bg-lightest-gray">
+                    <tr>
+                        <td>Collection</td>
+                        <td>Asset Name</td>
+                        <td>Current Status</td>
+                        <td>Date</td>
+                    </tr>
+                </thead>
+
+                {% for t in transcriptions %}
+                    <tr>
+                        <td>{{t.collection_name}}</td>
+                        <td><a class="primary-text" href="/transcribe/{{t.collection_name}}/asset/{{t.asset.slug}}">{{t.asset.slug}}</a></td>
+                        <td>{{t.status}}</td>
+                        <td>{{ t.updated_on|date:'Y-m-d H:i' }}</td>
+                    </tr>
+                {% endfor %}
+            </table>
+        {% endif %}
+    </div>
 </div>
-<div class="container well">
-    <h3>My Contributions</h3> {% if transcriptions %}
-    <table class="table">
-        <tr>
-            <td>Collection</td>
-            <td>Asset Name</td>
-            <td>Date</td>
-        </tr>
-        {% for t in transcriptions %}
-        <tr>
-            <td>{{t.collection_name}}</td>
-            <td><a href="/transcribe/{{t.collection_name}}/asset/{{t.asset.slug}}">{{t.asset.slug}}</a></td>
-            <td>{{ t.updated_on|date:'Y-m-d H:i' }}</td>
-        </tr>
-        {% endfor %} {% endif %}
-    </table>
-</div>
-<style type="text/css">
-.img-circle {
-    border-radius: 60%;
-    width: 160px;
-    height: 160px;
-}
+{% endblock main_content %}
 
-.form-control {
-    border-radius: 8px !important;
-}
-
-.change-password,
-.change-password:hover {
-    background: #5f656b;
-    color: #fff;
-}
-
-.m-top-5 {
-    margin-top: 5px;
-}
-
-</style>
+{% block body_scripts %}
 <script>
 $(".password-section").hide();
 $("#toggle_password_section").click(function(e) {
@@ -171,21 +109,14 @@ $("#toggle_password_section").click(function(e) {
         $(".password-section").hide();
         $('.edit .d-none').removeClass('d-none')
     }
-})
-
-document.getElementById('toggle_edit_section').onclick = function() {
-    $('.form-control-plaintext').addClass('form-control').removeClass('form-control-plaintext')
-    $('.edit .d-none').removeClass('d-none')
-    document.getElementById('id_first_name').removeAttribute('readonly');
-    document.getElementById('id_username').removeAttribute('readonly');
-    document.getElementById('id_email').removeAttribute('readonly');
-
-};
+});
 
 $('#myfile').change(function() {
     $('.edit .d-none').removeClass('d-none')
-}); { % if form.errors % }
-$("#toggle_edit_section").click() { % endif % }
+});
+{% if form.errors %}
+$("#toggle_edit_section").click();
+{% endif %}
 
 </script>
-{% endblock main_content %}
+{% endblock body_scripts %}

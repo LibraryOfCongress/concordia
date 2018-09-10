@@ -31,9 +31,7 @@ tx_urlpatterns = (
             views.ConcordiaAlternateAssetView.as_view(),
             name="alternate asset",
         ),
-        re_path(
-            r"^([^/]+)/$", views.ConcordiaCollectionView.as_view(), name="collection"
-        ),
+        re_path(r"^([^/]+)/$", views.ConcordiaProjectView.as_view(), name="collection"),
         re_path(
             r"exportCSV/([^/]+)/$",
             exporter_views.ExportCollectionToCSV.as_view(),
@@ -50,6 +48,11 @@ tx_urlpatterns = (
             name="delete collection",
         ),
         re_path(
+            r"^([^/]+)/delete/asset/([^/]+)/$",
+            views.DeleteAssetView.as_view(),
+            name="delete_asset",
+        ),
+        re_path(
             r"report/([^/]+)/$",
             views.ReportCollectionView.as_view(),
             name="report collection",
@@ -64,9 +67,25 @@ tx_urlpatterns = (
             views.TranscriptionView.as_view(),
             name="transcription",
         ),
+        re_path(
+            r"^([^/]+)/([^/]+)/$",
+            views.ConcordiaCollectionView.as_view(),
+            name="project",
+        ),
+        re_path(
+            r"publish/collection/(?P<collection>[a-zA-Z0-9-]+)/(?P<is_publish>[a-zA-Z]+)/$",
+            views.publish_collection,
+            name="publish collection",
+        ),
+        re_path(
+            r"publish/project/(?P<collection>[a-zA-Z0-9-]+)/(?P<project>[a-zA-Z0-9-]+)/(?P<is_publish>[a-zA-Z]+)/$",
+            views.publish_project,
+            name="publish project",
+        ),
     ],
     "transcriptions",
 )
+
 
 urlpatterns = [
     re_path(r"^$", TemplateView.as_view(template_name="home.html")),
@@ -107,16 +126,21 @@ urlpatterns = [
     # Apps
     re_path(r"^forum/", include(board.urls)),
     # Web Services
+    re_path(r"^ws/anonymous_user/$", views_ws.AnonymousUserGet.as_view()),
+    re_path(r"^ws/user_profile/(?P<user_id>(.*?))/$", views_ws.UserProfileGet.as_view()),
+    re_path(r"^ws/user/(?P<user_name>(.*?))/$", views_ws.UserGet.as_view()),
     re_path(r"^ws/page_in_use/(?P<page_url>(.*?))/$", views_ws.PageInUseGet.as_view()),
     re_path(
         r"^ws/page_in_use_update/(?P<page_url>(.*?))/$", views_ws.PageInUsePut.as_view()
     ),
     re_path(r"^ws/page_in_use/$", views_ws.PageInUseCreate.as_view()),
+    re_path(r"^ws/page_in_use_delete/(?P<page_url>(.*?))/$", views_ws.PageInUseDelete.as_view()),
     re_path(
         r"^ws/page_in_use_user/(?P<user>(.*?))/(?P<page_url>(.*?))/$",
         views_ws.PageInUseUserGet.as_view(),
     ),
     re_path(r"^ws/collection/(?P<slug>(.*?))/$", views_ws.CollectionGet().as_view()),
+    re_path(r"^ws/collection_delete/(?P<slug>(.*?))/$", views_ws.CollectionDelete.as_view()),
     re_path(
         r"^ws/collection_by_id/(?P<id>(.*?))/$", views_ws.CollectionGetById().as_view()
     ),
@@ -126,8 +150,20 @@ urlpatterns = [
         views_ws.AssetBySlug().as_view(),
     ),
     re_path(
+        r"^ws/asset_update/(?P<collection>(.*?))/(?P<slug>(.*?))/$",
+        views_ws.AssetUpdate().as_view(),
+    ),
+    re_path(
+        r"^ws/collection_asset_random/(?P<collection>(.*?))/(?P<slug>(.*?))/$",
+        views_ws.AssetRandomInCollection().as_view(),
+    ),
+    re_path(
         r"^ws/page_in_use_filter/(?P<user>(.*?))/(?P<page_url>(.*?))/$",
         views_ws.PageInUseFilteredGet.as_view(),
+    ),
+    re_path(
+        r"^ws/page_in_use_count/(?P<user>(.*?))/(?P<page_url>(.*?))/$",
+        views_ws.PageInUseCount.as_view(),
     ),
     re_path(
         r"^ws/transcription/(?P<asset>(.*?))/$",
@@ -136,6 +172,10 @@ urlpatterns = [
     re_path(
         r"^ws/transcription_by_user/(?P<user>(.*?))/$",
         views_ws.TranscriptionByUser().as_view(),
+    ),
+    re_path(
+        r"^ws/transcription_by_asset/(?P<asset_slug>(.*?))/$",
+        views_ws.TranscriptionByAsset().as_view(),
     ),
     re_path(r"^ws/transcription_create/$", views_ws.TranscriptionCreate().as_view()),
     re_path(r"^ws/tags/(?P<asset>(.*?))/$", views_ws.UserAssetTagsGet().as_view()),
@@ -179,12 +219,17 @@ urlpatterns += [
     re_path(
         r"^check_and_save_collection_assets/(?P<task_id>[a-zA-Z0-9-]+)/(?P<item_id>[a-zA-Z0-9-]+)$",
         check_and_save_collection_assets,
-        name="check_and_save_collection_assets",
+        name="check_and_save_collection_item_assets",
     ),
     re_path(
         r"^check_and_save_collection_assets/(?P<task_id>[a-zA-Z0-9-]+)/$",
         check_and_save_collection_assets,
         name="check_and_save_collection_assets",
+    ),
+    re_path(
+        r"^filter/collections/$",
+        views.FilterCollections.as_view(),
+        name="filter_collections",
     ),
 ]
 
