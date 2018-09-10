@@ -634,6 +634,7 @@ div.nav-secondary {
 /* Responsive header behavior for XS devices */
 @media (max-width: 355.98px) {
     h1.header-text a { display: none; }
+    a.btn-primary.btn-lg {font-size: 1rem;}
 }
 
 /* Responsive header behavior for XS devices */
@@ -658,6 +659,13 @@ div.nav-secondary {
     h1.header-text { font-size: 2.25rem; }
     .carousel-text { top: .5rem; margin-left: 1.25rem; }
     p.hero-text { font-size: 1.0625rem; }
+}
+
+/* LG breakpoint and below */
+@media (max-width: 1199.98px) {
+    h1 { font-size: 2.5rem; }
+    .carousel-text { top: 1rem; margin-left: 2rem; }
+    p.hero-text { font-size: 1.2rem; }
 }
 
 /* Screens wider than the MD breakpoint */
