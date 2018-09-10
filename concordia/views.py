@@ -22,7 +22,7 @@ from django.shortcuts import Http404, get_object_or_404, redirect, render
 from django.template import loader
 from django.urls import reverse
 from django.views.generic import FormView, TemplateView, View
-from registration.backends.simple.views import RegistrationView
+from registration.backends.hmac.views import RegistrationView
 from rest_framework import status, generics
 from rest_framework.test import APIRequestFactory
 
