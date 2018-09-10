@@ -17,7 +17,7 @@ class CreateCampaign(serializers.Serializer):
         Check that the campaign and project exist or not.
         """
         create_type = urlsplit(data["url"]).path.split("/")[1]
-        create_types = ["campaigns", "item"]
+        create_types = ["collections", "item"]
         if create_type not in create_types:
             raise serializers.ValidationError(
                 "The url not belongs to campaigns or item"
