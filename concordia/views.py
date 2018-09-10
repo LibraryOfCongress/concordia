@@ -535,6 +535,7 @@ class ConcordiaAssetView(TemplateView):
                 return self.get(self.request, *args, **kwargs)
 
         redirect_path = self.request.path
+
         if "tx" in self.request.POST and 'tagging' not in self.request.POST:
             tx = self.request.POST.get("tx")
             tx_status = self.state_dictionary[self.request.POST.get("action")]
