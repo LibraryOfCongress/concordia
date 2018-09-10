@@ -263,6 +263,14 @@
                 }
             {% else %}
                 $("#register-login-reminder").hide();
+                if (tab_name == 'tags') {
+	                	$('<input />').attr({
+	                	    type: 'hidden',
+	                	    class: 'tagging-hidden-input',
+	                	    value: 'true',
+	                	    name: 'tagging'
+	                	}).appendTo('form#contribute-form');
+                }
             {% endif %}
             return true;
         }
@@ -327,6 +335,8 @@
                 var target = $(e.target).attr("href") // activated tab
                 if (target == "#tab-tag") {
                     hide_buttons("tags");
+                } else {
+                	   $('input.tagging-hidden-input').remove();
                 }
             });
 

@@ -514,11 +514,6 @@ class ConcordiaAssetView(TemplateView):
         if self.request.POST.get("action").lower() == "contact a manager":
             return redirect(reverse("contact") + "?pre_populate=true")
 
-        if self.request.user.is_anonymous:
-            captcha_form = CaptchaEmbedForm(self.request.POST)
-            if not captcha_form.is_valid():
-                logger.info("Invalid captcha response")
-                return self.get(self.request, *args, **kwargs)
         response = requests.get(
             "%s://%s/ws/asset_by_slug/%s/%s/"
             % (
@@ -539,9 +534,7 @@ class ConcordiaAssetView(TemplateView):
 
         redirect_path = self.request.path
 
-        redirect_path = self.request.path
-
-        if "tx" in self.request.POST and "tags" not in self.request.POST:
+        if "tx" in self.request.POST and 'tagging' not in self.request.POST:
             tx = self.request.POST.get("tx")
             tx_status = self.state_dictionary[self.request.POST.get("action")]
             requests.post(
