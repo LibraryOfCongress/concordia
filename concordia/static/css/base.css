@@ -673,8 +673,8 @@ div.nav-secondary {
 }
 
 /* LG breakpoint and below */
-@media (max-width: 1199.98px) (max-width: 992px) {
-    h1 { font-size: 2.5rem; }
+@media (max-width: 1199.98px) and (max-width: 992px) {
+    h1 { font-size: 2.25rem; }
     .carousel-text { top: 1rem; margin-left: 2rem; }
     p.hero-text { font-size: 1.2rem; }
 }
