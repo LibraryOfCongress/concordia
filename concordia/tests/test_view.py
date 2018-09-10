@@ -1496,7 +1496,7 @@ class ViewTest_Concordia(TestCase):
             updated_on=time_threshold,
         )
         page3.save()
-        
+
         # Mock REST API
         user_json_val = {"id": self.user.id, "username": "anonymous",
                          "password": "pbkdf2_sha256$100000$6lht1V74YYXZ$fagq9FeSFlDfqqikuBRGMcxl1GaBvC7tIO7fiiAkReo=",
