@@ -638,16 +638,20 @@ div.nav-secondary {
 }
 
 /* Responsive header behavior for XS devices */
-@media (max-width: 386.98px) {
+@media (max-width: 449.98px) {
     h1.header-text { font-size: 1.75rem; }
 }
 
 /* SM breakpoint and below */
 @media (max-width: 767.98px) {
     h1 { margin-bottom: 0; }
-    h1.header-text { font-size: 2rem; }
     .carousel-text { top: .25rem; margin-left: 1rem; }
     .container-fluid { padding-left: 0; padding-right: 0; }
+}
+
+/* MD screensize and below */
+@media (max-width: 795.98px) {
+    h1.header-text { font-size: 2rem; }
 }
 
 /* MD breakpoint and below */
