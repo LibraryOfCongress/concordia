@@ -3,7 +3,11 @@
   --primary-color-hover: rgba(188,57,1,1); /* #BC3901 */
   --secondary-color: rgba(0,167,228,1); /* #00A7E4 */
   --secondary-color-hover: rgba(0,35,71,1); /* #002347 */
-  --text-color-primary: rgba(51,51,51,1); /* #333333 */
+  --color-success: rgba(22,201,74,1); /* #16C94A */
+  --color-danger: rgba(254,12,11,1); /* #FE0C0B */
+  --color-warning: rgba(254,153,11,1); /* #FE990B */
+  --color-info: rgba(2,252,216,1); /* #02FCD8 */
+  --text-color-primary: rgba(38,50,56,1); /* #263238 */
   --text-color-offwhite: rgba(250,250,250,1); /* #FAFAFA */
   --text-nav-current: rgba(252,76,2,1); /* #FC4C02 */
   --bg-offwhite: rgba(250,250,250,1); /* #FAFAFA */
@@ -19,16 +23,16 @@
   --shadow-color: rgba(51,51,51,.8); /* #333333 */
   --height-top-nav: 8.0625rem;
   --height-main: calc( 100vh - 8.0625rem ); /* Subtract height of navbar */
-  --height-contribute-image: calc( 100vh - ( 9.625rem + 2.375rem ) ); /* Making room for instructions button on bottom and breadcrumb and nav on top */
-  --height-contribute-input: calc( ( 100vh - ( 8.0625rem + 1.5625rem + 2.3125rem ) ) / 2 ); /* Subtract height of navbar, breadcrumd, and nav pills */
-  --height-tags-input: calc( 50vh - 3.375rem );
-  --top-value-tags-input: calc( 50vh - 3rem );
+  --height-contribute-image: calc( 100vh - ( 8.0625rem + 1.59375rem + 2.375rem ) ); /* Making room for instructions button on bottom and breadcrumb and nav on top */
+  --height-contribute-input: calc( 50vh - 5.96875rem ); /* Subtract height of navbar, breadcrumd, and nav pills */
+  --height-tags-input: calc( 50vh - 2.625rem );
+  --top-tags-input: calc( 50vh - .75rem );
 }
 
 body {
     top: 0;
     left: 0;
-    color: var(--bg-offwhite);
+    color: var(--text-color-primary);
     overflow-x: hidden;
     border-top: .25rem solid var(--primary-color);
     background-color: var(--bg-offwhite);
@@ -245,6 +249,35 @@ p.hero-secondary.offwhite-text {
     color: var(--text-color-offwhite);
 }
 
+.profile_edit {
+    color: var(--primary-color);
+    cursor: pointer;
+}
+
+.profile_edit:hover {
+    color: var(--primary-color-hover);
+}
+
+.profile-label {
+    font-family: 'Roboto Slab', serif;
+    font-size: 1.25rem;
+    line-height: 125%;
+    font-weight: bold;
+    color: var(--secondary-color);
+}
+
+.profile-attribute {
+    border-bottom: 1px solid rgba(153,153,153,1);
+}
+
+thead td {
+    font-weight: bold;
+}
+
+table td {
+    color: var(--text-color-primary);
+}
+
 .bg-offwhite {
     background-color: var(--bg-offwhite);
 }
@@ -301,6 +334,10 @@ main {
 input {
     color: var(--text-color-primary);
     background-color: var(--bg-offwhite);
+}
+
+hr {
+    color: var(--bg-dark-gray);
 }
 
 .navbar {
@@ -397,197 +434,197 @@ div.nav-secondary {
 
 .margin-default,
 .mxy-default {
-    margin: 2rem;
+    margin: 2rem !important;
 }
 
 .mx-default {
-    margin-right: 2rem;
-    margin-left: 2rem;
+    margin-right: 2rem !important;
+    margin-left: 2rem !important;
 }
 
 .my-default {
-    margin-top: 2rem;
-    margin-bottom: 2rem;
+    margin-top: 2rem !important;
+    margin-bottom: 2rem !important;
 }
 
 .margin-top-default,
 .mt-default {
-    margin-top: 2rem;
+    margin-top: 2rem !important;
 }
 
 .margin-right-default,
 .mr-default {
-    margin-right: 2rem;
+    margin-right: 2rem !important;
 }
 
 .margin-bottom-default,
 .mb-default {
-    margin-bottom: 2rem;
+    margin-bottom: 2rem !important;
 }
 
 .margin-left-default,
 .ml-default {
-    margin-left: 2rem;
+    margin-left: 2rem !important;
 }
 
 .margin-half,
 .mxy-half {
-    margin: 1rem;
+    margin: 1rem !important;
 }
 
 .mx-half {
-    margin-right: 1rem;
-    margin-left: 1rem;
+    margin-right: 1rem !important;
+    margin-left: 1rem !important;
 }
 
 .my-half {
-    margin-top: 1rem;
-    margin-bottom: 1rem;
+    margin-top: 1rem !important;
+    margin-bottom: 1rem !important;
 }
 
 .margin-top-half,
 .mt-half {
-    margin-top: 1rem;
+    margin-top: 1rem !important;
 }
 
 .margin-right-half,
 .mr-half {
-    margin-right: 1rem;
+    margin-right: 1rem !important;
 }
 
 .margin-bottom-half,
 .mb-half {
-    margin-bottom: 1rem;
+    margin-bottom: 1rem !important;
 }
 
 .margin-left-half,
 .ml-half {
-    margin-left: 1rem;
+    margin-left: 1rem !important;
 }
 
 .margin-quarter, .mxy-quarter {
-    margin: .5rem;
+    margin: .5rem !important;
 }
 
 .mx-quarter {
-    margin-right: .5rem;
-    margin-left: .5rem;
+    margin-right: .5rem !important;
+    margin-left: .5rem !important;
 }
 
 .my-quarter {
-    margin-top: .5rem;
-    margin-bottom: .5rem;
+    margin-top: .5rem !important;
+    margin-bottom: .5rem !important;
 }
 
 .margin-top-quarter, .mt-quarter {
-    margin-top: .5rem;
+    margin-top: .5rem !important;
 }
 
 .margin-right-quarter, .mr-quarter {
-    margin-right: .5rem;
+    margin-right: .5rem !important;
 }
 
 .margin-bottom-quarter, .mb-quarter {
-    margin-bottom: .5rem;
+    margin-bottom: .5rem !important;
 }
 
 .margin-left-quarter, .ml-quarter {
-    margin-left: .5rem;
+    margin-left: .5rem !important;
 }
 
 .padding-default, .pxy-default {
-    padding: 2rem;
+    padding: 2rem !important;
 }
 
 .px-default {
-    padding-right: 2rem;
-    padding-left: 2rem;
+    padding-right: 2rem !important;
+    padding-left: 2rem !important;
 }
 
 .py-default {
-    padding-top: 2rem;
-    padding-bottom: 2rem;
+    padding-top: 2rem !important;
+    padding-bottom: 2rem !important;
 }
 
 .padding-top-default,
 .pt-default {
-    padding-top: 2rem;
+    padding-top: 2rem !important;
 }
 
 .padding-right-default,
 .pr-default {
-    padding-right: 2rem;
+    padding-right: 2rem !important;
 }
 
 .padding-bottom-default,
 .pb-default {
-    padding-bottom: 2rem;
+    padding-bottom: 2rem !important;
 }
 
 .padding-left-default,
 .pl-default {
-    padding-left: 2rem;
+    padding-left: 2rem !important;
 }
 
 .padding-half,
 .pxy-half {
-    padding: 1rem;
+    padding: 1rem !important;
 }
 
 .px-half {
-    padding-right: 1rem;
-    padding-left: 1rem;
+    padding-right: 1rem !important;
+    padding-left: 1rem !important;
 }
 
 .py-half {
-    padding-top: 1rem;
-    padding-bottom: 1rem;
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
 }
 
 .padding-top-half, .pt-half {
-    padding-top: 1rem;
+    padding-top: 1rem !important;
 }
 
 .padding-right-half, .pr-half {
-    padding-right: 1rem;
+    padding-right: 1rem !important;
 }
 
 .padding-bottom-half, .pb-half {
-    padding-bottom: 1rem;
+    padding-bottom: 1rem !important;
 }
 
 .padding-left-half, .pl-half {
-    padding-left: 1rem;
+    padding-left: 1rem !important;
 }
 
 .padding-quarter, .pxy-quarter {
-    padding: .5rem;
+    padding: .5rem !important;
 }
 
 .px-quarter {
-    padding-right: .5rem;
-    padding-left: .5rem;
+    padding-right: .5rem !important;
+    padding-left: .5rem !important;
 }
 
 .py-quarter {
-    padding-top: .5rem;
-    padding-bottom: .5rem;
+    padding-top: .5rem !important;
+    padding-bottom: .5rem !important;
 }
 
 .padding-top-quarter, .pt-quarter {
-    padding-top: .5rem;
+    padding-top: .5rem !important;
 }
 
 .padding-right-quarter, .pr-quarter {
-    padding-right: .5rem;
+    padding-right: .5rem !important;
 }
 
 .padding-bottom-quarter, .pb-quarter {
-    padding-bottom: .5rem;
+    padding-bottom: .5rem !important;
 }
 
 .padding-left-quarter, .pl-quarter {
-    padding-left: .5rem;
+    padding-left: .5rem !important;
 }
 
 /* MD breakpoint and below */
@@ -823,7 +860,7 @@ div.nav-secondary {
     border-color: var(--primary-color-hover) !important;
     color: var(--text-color-offwhite) !important;
 }
-  
+
 .btn-outline-primary {
     border-color: var(--primary-color);
     color: var(--primary-color);
@@ -840,7 +877,7 @@ div.nav-secondary {
     border-color: var(--secondary-color);
     color: var(--text-color-offwhite);
 }
-  
+
 .btn-secondary:hover {
     background-color: var(--secondary-color-hover);
     border-color: var(--secondary-color-hover);
@@ -908,13 +945,13 @@ div.nav-secondary {
 .btn-row .btn {
     width: 9.875rem !important;
 }
-  
+
 .btn-dark {
   background-color: var(--bg-offblack);
   border-color: var(--bg-offblack);
   color: var(--text-color-offwhite);
 }
-  
+
 .btn-dark.disabled, .btn-dark:disabled {
   background-color: var(--bg-darkest-gray) !important;
   border-color: var(--bg-darkest-gray) !important;
@@ -1008,19 +1045,9 @@ div.nav-secondary {
     border-radius: 0 0 .5rem .5rem;
 }
 
-.latestblog-imgmask {
-    width: 100%;
-    height: 12.5rem;
-    border-radius: .25rem;
-    overflow: hidden;
-    box-shadow: 0 0 .25rem var(--shadow-color);
-}
-
-.img-latestblog {
-    max-width: 100%;
-    width: 100%;
-    height: auto;
-    overflow: hidden;
+.img-fluid.rounded-circle {
+    max-height: 15rem;
+    width: auto;
 }
 
 .campaign-image-link {
@@ -1111,7 +1138,7 @@ div.nav-secondary {
 }
 
 .contribute-box {
-    height: calc( 100vh - 6.0625rem );
+    height: calc( 100vh - ( 8.0625rem + 1.59375rem ) );
 }
 
 .contribute-box .dropdown-menu {
@@ -1144,10 +1171,6 @@ div.nav-secondary {
     overflow-y: hidden;
 }
 
-#tab-transcription {
-
-}
-
 #tab-tag {
     height: var(--height-tags-input);
 }
@@ -1175,12 +1198,16 @@ div.nav-secondary {
     margin-bottom: 0;
 }
 
+.offwhite-text#register-login-reminder {
+    display: none;
+}
+
 #contact-button {
     position: absolute;
     right: .5rem;
     bottom: .5rem;
 }
-  
+
 .contribute-instructions {
     position: absolute;
     left: 0;
@@ -1188,12 +1215,23 @@ div.nav-secondary {
 }
 
 @keyframes instructions {
-    0%   { display: block; opacity: 0; color: rgba(255,255,255,0) !important; }
+    0%   { display: block; opacity: 0; color: rgba(38,50,56,0); }
     25%  { width: 25%; height: 25%; opacity: .25; }
     50%  { width: 50%; height: 50%; opacity: .50; }
     75%  { width: 75%; height: 75%; opacity: .75; }
-    85%  { color: rgba(51,51,51,.3) !important; }
-    100% {width: 100%; height: 100%; opacity: 1; color: rgba(51,51,51,1) !important; }
+<<<<<<< HEAD
+    90%  { color: rgba(38,50,56,.3); }
+    100% {width: 100%; height: 100%; opacity: 1; color: rgba(38,50,56,1); }
+
+=======
+    85%  { color: rgba(38,50,56,.3); }
+    100% {width: 100%; height: 100%; opacity: 1; color: rgba(38,50,56,1); }
+>>>>>>> 15e007a04dcc5ed8f964f08a8552890901dbbce7
+}
+
+.contribute-instructions.instruction-window {
+    border-top: .0675rem solid var(--bg-darkest-gray);
+    animation: instructions .5s linear;
 }
 
 .contribute-instructions.instruction-window.collapse {
@@ -1204,8 +1242,7 @@ div.nav-secondary {
 }
 
 .contribute-instructions.instruction-window.collapsing {
-    animation-name: instructions;
-    animation-duration: .5s;
+
 }
 
 .contribute-instructions.instruction-window.collapse.show {
@@ -1215,7 +1252,6 @@ div.nav-secondary {
 }
 
 .instruction-window {
-    border-top: .0675rem solid var(--bg-darkest-gray);
 }
 
 .instruction-window p {
@@ -1273,12 +1309,20 @@ border: none;
 box-shadow: none;
 }
 
+.tag-input {
+    background-color: var(--bg-offwhite);
+    height: var(--height-contribute-input);
+    border: 1px solid var(--bg-lightest-gray);
+    resize: none;
+    overflow-y: auto;
+}
+
 .tag-input input {
     display: block;
     position: absolute;
-    top: var(--top-value-tags-input);
+    top: var(--top-tags-input);
     border: 1px solid var(--bg-lightest-gray);
-    margin-left: -.5625rem;
+    margin-left: -.5rem;
     width: calc( 100% - 2rem );
     height: 2.375rem;
     cursor: text;
@@ -1361,4 +1405,48 @@ box-shadow: inset 0 .1875rem .3125rem rgba(0, 0, 0, .125);
 
 .checkmark i {
     color: var(--color-success);
+}
+
+/*
+* Alerts
+*/
+
+.alert.alert-primary {
+    background-color: var(--primary-color);
+    border-color: none;
+    color: var(--text-color-offwhite);
+}
+
+.alert.alert-secondary {
+    background-color: var(--secondary-color);
+    border-color: none;
+    color: var(--text-color-primary);
+}
+
+.alert.alert-success {
+    background-color: var(--color-success);
+    border-color: none;
+    color: var(--text-color-offwhite);
+}
+
+.alert.alert-danger {
+    background-color: var(--color-danger);
+    border-color: none;
+    color: var(--text-color-offwhite);
+}
+
+.alert.alert-warning {
+    background-color: var(--color-warning);
+    border-color: none;
+    color: var(--text-color-primary);
+}
+
+.alert.alert-info {
+    background-color: var(--color-info);
+    border-color: none;
+    color: var(--text-color-primary);
+}
+
+.alert .close {
+    opacity: .8;
 }

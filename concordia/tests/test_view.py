@@ -903,7 +903,7 @@ class ViewTest_Concordia(TestCase):
             {
                 "tx": "First Test Transcription 1",
                 "tags": "",
-                "action": "Contact Manager",
+                "action": "contact a manager",
                 "captcha_0": hash_,
                 "captcha_1": captcha_response,
             },
@@ -1496,7 +1496,7 @@ class ViewTest_Concordia(TestCase):
             updated_on=time_threshold,
         )
         page3.save()
-        
+
         # Mock REST API
         user_json_val = {"id": self.user.id, "username": "anonymous",
                          "password": "pbkdf2_sha256$100000$6lht1V74YYXZ$fagq9FeSFlDfqqikuBRGMcxl1GaBvC7tIO7fiiAkReo=",
@@ -1523,6 +1523,7 @@ class ViewTest_Concordia(TestCase):
         # Assert
         self.assertEqual(response.status_code, 200)
 
+    @responses.activate
     def test_ConcordiaProjectView_get(self):
         """
         Test GET on route /campaigns/<slug-value> (campaign)

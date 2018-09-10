@@ -812,6 +812,7 @@ class ViewWSTest_Concordia(TestCase):
 
         # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
         self.assertJSONEqual(
             force_text(response.content),
             {
@@ -833,7 +834,7 @@ class ViewWSTest_Concordia(TestCase):
                 },
                 "sequence": None,
                 "metadata": None,
-                'project': {'metadata': None, 'slug': '', 'status': None, 'title': ''},
+                'project': {'metadata': None, 'slug': '', 'is_publish': False, 'status': None, 'title': ''},
                 "status": None,
             },
         )

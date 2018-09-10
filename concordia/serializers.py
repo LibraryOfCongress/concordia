@@ -73,6 +73,7 @@ class ProjectSerializer(serializers.ModelSerializer):
             "slug",
             "metadata",
             "status",
+            "is_publish",
         )
 
 

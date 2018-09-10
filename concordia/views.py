@@ -22,7 +22,7 @@ from django.shortcuts import Http404, get_object_or_404, redirect, render
 from django.template import loader
 from django.urls import reverse
 from django.views.generic import FormView, TemplateView, View
-from registration.backends.simple.views import RegistrationView
+from registration.backends.hmac.views import RegistrationView
 from rest_framework import status, generics
 from rest_framework.test import APIRequestFactory
 
@@ -519,7 +519,6 @@ class ConcordiaAssetView(TemplateView):
             if not captcha_form.is_valid():
                 logger.info("Invalid captcha response")
                 return self.get(self.request, *args, **kwargs)
-
         response = requests.get(
             "%s://%s/ws/asset_by_slug/%s/%s/"
             % (
@@ -531,6 +530,14 @@ class ConcordiaAssetView(TemplateView):
             cookies=self.request.COOKIES,
         )
         asset_json = json.loads(response.content.decode("utf-8"))
+
+        if self.request.user.is_anonymous:
+            captcha_form = CaptchaEmbedForm(self.request.POST)
+            if not captcha_form.is_valid():
+                logger.info("Invalid captcha response")
+                return self.get(self.request, *args, **kwargs)
+
+        redirect_path = self.request.path
 
         redirect_path = self.request.path
 
