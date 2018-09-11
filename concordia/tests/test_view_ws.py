@@ -562,16 +562,11 @@ class ViewWSTest_Concordia(TestCase):
         self.asset3.save()
 
         # Act
-        response = self.client.get("/ws/item_by_id/item1")
-
+        response = self.client.get("/ws/item_by_id/item1/")
 
         # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 #        self.assertEqual(len(json_resp["assets"]), 2)
-
-
-
-
 
     def test_get_assets_by_campaign(self):
         """

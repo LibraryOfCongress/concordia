@@ -448,6 +448,7 @@ class ViewTest_Concordia(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, template_name="transcriptions/campaign.html")
 
+    @responses.activate
     def test_ConcordiaItemView_get(self):
         """
         Test GET on route /campaigns/<campaign-slug>/<project-slug>/<item-slug>
@@ -506,7 +507,7 @@ class ViewTest_Concordia(TestCase):
         response = self.client.get("/campaigns/test-slug/project-slug/item-slug", follow=True)
 
         # Assert
-        self.assertEqual(response.status_code, 301)
+        self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, template_name="transcriptions/item.html")
 
 
