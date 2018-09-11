@@ -638,7 +638,7 @@ div.nav-secondary {
 }
 
 /* Responsive header behavior for XS devices */
-@media (max-width: 355.98px) {
+@media (max-width: 403.98px) {
     .carousel-text { top: .25rem; margin-left: 1rem; }
 }
 
