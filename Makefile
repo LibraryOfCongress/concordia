@@ -7,8 +7,8 @@ create-docker-sentry-network:
 .PHONY: up increase-elk-max-map-count
 increase-elk-max-map-count:
 	bash ./elk/increase_max_map_count.sh
-up: 	increase-elk-max-map-count create-docker-sentry-network
-	docker-compose -f docker-compose-sentry.yml up -d sentry_redis db
+up: increase-elk-max-map-count create-docker-sentry-network
+	docker-compose -f docker-compose-sentry.yml up -d sentry_redis sentrydb
 	docker-compose -f docker-compose-sentry.yml run --rm wait_sentry_postgres
 	docker-compose -f docker-compose-sentry.yml run --rm wait_sentry_redis
 	docker-compose -f docker-compose-sentry.yml run --rm sentry sentry upgrade --noinput
