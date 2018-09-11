@@ -564,9 +564,11 @@ class ViewWSTest_Concordia(TestCase):
         # Act
         response = self.client.get("/ws/item_by_id/item1/")
 
+        json_resp = json.loads(response.content)
+
         # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-#        self.assertEqual(len(json_resp["assets"]), 2)
+        self.assertEqual(len(json_resp["assets"]), 2)
 
     def test_get_assets_by_campaign(self):
         """
