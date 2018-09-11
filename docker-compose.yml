@@ -83,4 +83,3 @@ services:
 volumes:
   db_volume:
   images_volume:
-
