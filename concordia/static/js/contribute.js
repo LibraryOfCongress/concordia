@@ -25,9 +25,9 @@ $( document ).ready(function() {
 
 function changeTheURL(nav) {
     if ( nav == 'tab-tag') {
-        window.location.href = window.location.href.replace('#tab-transcription','#tab-tag');
+        window.location.hash = 'tab-tag';
     } else {
-        window.location.href = window.location.href.replace('#tab-tag','#tab-transcription');
+        window.location.hash = 'tab-transcription';
     }
 }
 
