@@ -45,7 +45,7 @@ class CreateCampaignView(generics.CreateAPIView):
             "project_slug": slugify(project),
         }
 
-        if create_type == "campaigns":
+        if create_type == "collections" or  create_type == "search":
 
             download_task = download_write_campaign_item_assets.delay(
                 slugify(name), slugify(project), url
