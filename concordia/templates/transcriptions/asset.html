@@ -271,6 +271,13 @@
 	                	    name: 'tagging'
 	                	}).appendTo('form#contribute-form');
                 }
+                
+                {% if transcription.status == 'Completed' %}
+                if(tab_name == "transcription")
+                    $("#save-button").hide();
+                else
+                	    $("#save-button").show();
+                {% endif %}
             {% endif %}
             return true;
         }
@@ -292,7 +299,8 @@
                     $("#complete-button").show();
                 {% elif transcription.status == 'Completed' %}
                     $("#save-button").show();
-                    $("#save-button, #review-button").hide();
+                    $("#review-button").hide();
+                    $("#save-button").hide();
                 {% endif %}
             {% endif %}
 
@@ -331,14 +339,21 @@
 
             show_buttons();
 
+            var target = null;
             $('a[data-toggle="tab"]').on('show.bs.tab', function (e) {
-                var target = $(e.target).attr("href") // activated tab
+                target = $(e.target).attr("href") // activated tab
                 if (target == "#tab-tag") {
                     hide_buttons("tags");
                 } else {
                 	   $('input.tagging-hidden-input').remove();
                 }
             });
+            
+            var url = window.location.href;
+            var lastPart = url.substr(url.lastIndexOf('/') + 1);
+            if (lastPart == "#tab-tag") {
+                hide_buttons("tags");
+            }
 
             {% if user.is_anonymous %}
                 $("#save-button").click(function(e){

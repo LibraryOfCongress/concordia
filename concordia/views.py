@@ -491,7 +491,7 @@ class ConcordiaAssetView(TemplateView):
                 cookies=self.request.COOKIES,
             )
 
-        return dict(
+        res = dict(
             super().get_context_data(**kws),
             page_in_use=page_in_use,
             asset=asset_json,
@@ -500,6 +500,8 @@ class ConcordiaAssetView(TemplateView):
             captcha_form=captcha_form,
             discussion_hide=discussion_hide,
         )
+
+        return res
 
     def post(self, *args, **kwargs):
         """
@@ -604,6 +606,7 @@ class ConcordiaAssetView(TemplateView):
                                             old_tag,
                                             self.request.user.id),
                                            cookies=self.request.COOKIES)
+            redirect_path += "#tab-tag"
 
         return redirect(redirect_path)
 
