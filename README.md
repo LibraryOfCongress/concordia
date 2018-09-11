@@ -50,7 +50,7 @@ must be preceded by a backslash, `\`, when the value is added to the
 
     $ git clone https://github.com/LibraryOfCongress/concordia.git
     $ cd concordia
-    $ docker-compose up
+    $ make devup
 
 Browse to [localhost](http://localhost)
 
@@ -62,7 +62,7 @@ virtual environment to work in.
 
 #### Serve
 
-Instead of doing `docker-compose up` as above, instead do the following:
+Instead of doing `make devup` as above, instead do the following:
 
     $ docker-compose up -d db
     $ docker-compose up -d rabbit
