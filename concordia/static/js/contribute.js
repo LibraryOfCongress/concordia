@@ -4,6 +4,11 @@ $( document ).ready(function() {
     $( '#tag-input').focus();
   }
 
+  $('#nav-pill-tag, #nav-pill-transcription').click(function(e)) {
+    var target = e.target.id;
+    changeTheURL(target);
+  }
+
   $( 'input[type="submit"]' ).click(function(e) {
     var target = e.target.id;
     sessionStorage.setItem('show_message', 'true');
@@ -17,6 +22,14 @@ $( document ).ready(function() {
     }
     });
 });
+
+function changeTheURL(nav) {
+    if ( nav == 'tab-tag') {
+        window.location.href = window.location.href.replace('#tab-transcription','#tab-tag');
+    } else {
+        window.location.href = window.location.href.replace('#tab-tag','#tab-transcription');
+    }
+}
 
 /*
  * tagsinput
