@@ -606,6 +606,7 @@ class ConcordiaAssetView(TemplateView):
                                             old_tag,
                                             self.request.user.id),
                                            cookies=self.request.COOKIES)
+            redirect_path += "#tab-tag"
 
             redirect_path += "#tab-tag"
 
