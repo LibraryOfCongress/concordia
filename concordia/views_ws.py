@@ -9,9 +9,10 @@ from rest_framework import exceptions, generics, status
 from rest_framework.authentication import BasicAuthentication
 from rest_framework.response import Response
 
-from .models import (Asset, Campaign, PageInUse, Status, Tag, Transcription, User, UserProfile,
+from .models import (Asset, Campaign, Item, PageInUse, Status, Tag, Transcription, User, UserProfile,
                      UserAssetTagCollection)
 from .serializers import (AssetSerializer, CampaignDetailSerializer,
+                          ItemSerializer,
                           PageInUseSerializer, TagSerializer, TranscriptionSerializer,
                           UserAssetTagSerializer, UserSerializer, UserProfileSerializer)
 
@@ -258,15 +259,15 @@ class ItemGetById(generics.RetrieveAPIView):
     GET: Retrieve assets for one item
     """
 
-    model = Asset
+    model = Item
     authentication_classes = (ConcordiaAPIAuth,)
-    serializer_class = AssetSerializer
+    serializer_class = ItemSerializer
     lookup_field = "item_id"
 
     def get_queryset(self):
-        return Asset.objects.filter(
-            item__slug=self.kwargs["item_id"],
-        ).order_by("sequence")
+        return Item.objects.filter(
+            slug=self.kwargs["item_id"],
+        )
 
 
 class AssetsList(generics.ListAPIView):
