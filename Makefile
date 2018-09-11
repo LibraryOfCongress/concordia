@@ -7,7 +7,7 @@ create-docker-sentry-network:
 .PHONY: up increase-elk-max-map-count
 increase-elk-max-map-count:
 	bash ./elk/increase_max_map_count.sh
-up: increase-elk-max-map-count create-docker-sentry-network
+firstup: increase-elk-max-map-count create-docker-sentry-network
 	docker-compose -f docker-compose-sentry.yml up -d sentry_redis sentrydb
 	docker-compose -f docker-compose-sentry.yml run --rm wait_sentry_postgres
 	docker-compose -f docker-compose-sentry.yml run --rm wait_sentry_redis
@@ -18,7 +18,16 @@ up: increase-elk-max-map-count create-docker-sentry-network
 		--superuser --no-input
 	docker-compose up -d elk
 	docker-compose run --rm wait_elk
-	docker-compose -f docker-compose-sentry.yml -f prometheus-docker-compose.yml -f docker-compose.yml up -d
+	docker-compose -f docker-compose-sentry.yml -f docker-compose-prometheus.yml -f docker-compose.yml up -d
+
+up:	create-docker-sentry-network
+	docker-compose -f docker-compose-sentry.yml up -d sentry_redis sentrydb
+	docker-compose -f docker-compose-sentry.yml run --rm wait_sentry_postgres
+	docker-compose -f docker-compose-sentry.yml run --rm wait_sentry_redis
+	docker-compose -f docker-compose-sentry.yml run --rm sentry sentry upgrade --noinput
+	docker-compose up -d elk
+	docker-compose run --rm wait_elk
+	docker-compose -f docker-compose-sentry.yml -f docker-compose-prometheus.yml -f docker-compose.yml up -d
 
 
 .PHONY: clean
