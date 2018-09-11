@@ -7,7 +7,7 @@ from celery import task
 from django.conf import settings
 from django.template.defaultfilters import slugify
 
-from importer.models import CollectionItemAssetCount, CollectionTaskDetails
+from importer.models import CampaignItemAssetCount, CampaignTaskDetails
 
 logger = getLogger(__name__)
 
@@ -45,55 +45,54 @@ def get_request_data(url, params=None, timeout=120, json_resp=True, **kwargs):
     return {}
 
 
-def get_collection_pages(collection_url):
+def get_campaign_pages(campaign_url):
     """
-    Return total pages in given loc gov collection urls
-    :param collection_url:
+    Return total pages in given loc gov campaign urls
+    :param campaign_url:
     :return: int total no of pages
     """
-    resp = get_request_data(collection_url, params={"fo": "json", "at": "pagination"})
+    resp = get_request_data(campaign_url, params={"fo": "json", "at": "pagination"})
     total_pages = resp.get("pagination", {}).get("total", 0)
     logger.info(
-        "total_collection_pages: %s for collection url : %s"
-        % (total_pages, collection_url)
+        "total_campaign_pages: %s for campaign url : %s" % (total_pages, campaign_url)
     )
     return total_pages
 
 
-def get_collection_item_ids(collection_url, total_pages):
+def get_campaign_item_ids(campaign_url, total_pages):
     """
-    :param collection_url: collection url
-    :param total_pages: number of pages in this collection url
-    :return: list of collection of item ids
+    :param campaign_url: campaign url
+    :param total_pages: number of pages in this campaign url
+    :return: list of campaign of item ids
     """
-    collection_item_ids = []
+    campaign_item_ids = []
     for page_num in range(1, total_pages + 1):
-        resp = get_request_data(collection_url, params={"fo": "json", "at": "results"})
+        resp = get_request_data(campaign_url, params={"fo": "json", "at": "results"})
         page_results = resp.get("results", [])
         for pr in page_results:
             if (
                 pr.get("id")
                 and pr.get("image_url")
-                and "collection" not in pr.get("original_format")
+                and "campaign" not in pr.get("original_format")
                 and "web page" not in pr.get("original_format")
             ):
-                collection_item_url = pr.get("id")
-                collection_item_ids.append(collection_item_url.split("/")[-2])
-    if not collection_item_ids:
-        logger.info("No item ids found for collection url: %s" % collection_url)
+                campaign_item_url = pr.get("id")
+                campaign_item_ids.append(campaign_item_url.split("/")[-2])
+    if not campaign_item_ids:
+        logger.info("No item ids found for campaign url: %s" % campaign_url)
 
-    return collection_item_ids
+    return campaign_item_ids
 
 
-def get_collection_item_asset_urls(item_id):
+def get_campaign_item_asset_urls(item_id):
     """
-    :param item_id: collection item id
+    :param item_id: campaign item id
     :return: item asset urls
     """
-    collection_item_asset_urls = []
+    campaign_item_asset_urls = []
     item_url = "https://www.loc.gov/item/{0}/".format(item_id)
-    collection_item_resp = get_request_data(item_url, {"fo": "json"})
-    item_resources = collection_item_resp.get("resources", [])
+    campaign_item_resp = get_request_data(item_url, {"fo": "json"})
+    item_resources = campaign_item_resp.get("resources", [])
     for ir in item_resources:
         item_files = ir.get("files", [])
         for item_file in item_files:
@@ -102,12 +101,12 @@ def get_collection_item_asset_urls(item_id):
                 if itf.get("mimetype") == "image/jpeg":
                     similar_img_urls.append(itf.get("url"))
             if similar_img_urls:
-                collection_item_asset_urls.append(similar_img_urls[-1])
+                campaign_item_asset_urls.append(similar_img_urls[-1])
 
-    return collection_item_asset_urls
+    return campaign_item_asset_urls
 
 
-def download_write_collection_item_asset(image_url, asset_local_path):
+def download_write_campaign_item_asset(image_url, asset_local_path):
     """
     :param image_url:
     :param asset_local_path:
@@ -125,18 +124,18 @@ def download_write_collection_item_asset(image_url, asset_local_path):
     return False
 
 
-def get_save_item_assets(collection_name, project, item_id, item_asset_urls):
+def get_save_item_assets(campaign_name, project, item_id, item_asset_urls):
     """
     creates a item directory if it already does not exists, and iterates asset urls list then download each asset
     and saves to local in item directory
-    :param collection_name: collection_name
-    :param item_id: item id of the collection
+    :param campaign_name: campaign_name
+    :param item_id: item id of the campaign
     :param item_asset_urls: list of item asset urls
     :return: nothing, it will download the assets to local path
     """
 
     item_local_path = os.path.join(
-        settings.IMPORTER["IMAGES_FOLDER"], collection_name, project, item_id
+        settings.IMPORTER["IMAGES_FOLDER"], campaign_name, project, item_id
     )
 
     try:
@@ -147,76 +146,76 @@ def get_save_item_assets(collection_name, project, item_id, item_asset_urls):
     for idx, ciau in enumerate(item_asset_urls):
         asset_local_path = os.path.join(item_local_path, "{0}.jpg".format(str(idx)))
 
-        download_write_collection_item_asset(ciau, asset_local_path)
+        download_write_campaign_item_asset(ciau, asset_local_path)
 
 
 @task
-def download_write_collection_item_assets(collection_name, project, collection_url):
+def download_write_campaign_item_assets(campaign_name, project, campaign_url):
     """
-    It will downloads all images from loc.gov site and saves into local directory as per collection and items.
-    :param collection_name: collection for requested item url
-    :param collection_url: collection url path
+    It will downloads all images from loc.gov site and saves into local directory as per campaign and items.
+    :param campaign_name: campaign for requested item url
+    :param campaign_url: campaign url path
     :return: nothing, will downloads the files and saves to a directory
     """
-    total_pages = get_collection_pages(collection_url)
-    collection_item_ids = get_collection_item_ids(collection_url, total_pages)
+    total_pages = get_campaign_pages(campaign_url)
+    campaign_item_ids = get_campaign_item_ids(campaign_url, total_pages)
     items_asset_count_dict = defaultdict(int)
     items_assets = {}
 
-    for cii in collection_item_ids:
-        collection_item_asset_urls = get_collection_item_asset_urls(cii)
-        items_asset_count_dict[cii] = len(collection_item_asset_urls)
-        items_assets[cii] = collection_item_asset_urls
-        # get_save_item_assets(collection_name, project, cii, collection_item_asset_urls)
+    for cii in campaign_item_ids:
+        campaign_item_asset_urls = get_campaign_item_asset_urls(cii)
+        items_asset_count_dict[cii] = len(campaign_item_asset_urls)
+        items_assets[cii] = campaign_item_asset_urls
+        # get_save_item_assets(campaign_name, project, cii, campaign_item_asset_urls)
 
-    ctd, created = CollectionTaskDetails.objects.get_or_create(
-        collection_slug=slugify(collection_name),
-        subcollection_slug=slugify(project),
-        defaults={"collection_name": collection_name, "subcollection_name": project},
+    ctd, created = CampaignTaskDetails.objects.get_or_create(
+        campaign_slug=slugify(campaign_name),
+        project_slug=slugify(project),
+        defaults={"campaign_name": campaign_name, "project_name": project},
     )
-    ctd.collection_item_count = len(collection_item_ids)
-    ctd.collection_asset_count = sum(items_asset_count_dict.values())
+    ctd.campaign_item_count = len(campaign_item_ids)
+    ctd.campaign_asset_count = sum(items_asset_count_dict.values())
     ctd.save()
     ciac_details = []
     for key, value in items_asset_count_dict.items():
         ciac_details.append(
-            CollectionItemAssetCount(
-                collection_task=ctd,
-                collection_item_identifier=key,
-                collection_item_asset_count=value,
+            CampaignItemAssetCount(
+                campaign_task=ctd,
+                campaign_item_identifier=key,
+                campaign_item_asset_count=value,
             )
         )
-    CollectionItemAssetCount.objects.bulk_create(ciac_details)
+    CampaignItemAssetCount.objects.bulk_create(ciac_details)
 
-    for cii in collection_item_ids:
-        # collection_item_asset_urls = get_collection_item_asset_urls(cii)
-        # items_asset_count_dict[cii] = len(collection_item_asset_urls)
-        get_save_item_assets(collection_name, project, cii, items_assets[cii])
+    for cii in campaign_item_ids:
+        # campaign_item_asset_urls = get_campaign_item_asset_urls(cii)
+        # items_asset_count_dict[cii] = len(campaign_item_asset_urls)
+        get_save_item_assets(campaign_name, project, cii, items_assets[cii])
 
 
 @task
-def download_write_item_assets(collection_name, project, item_id):
+def download_write_item_assets(campaign_name, project, item_id):
 
     """
     It will downloads all images from loc.gov site and saves into local directory as per item level directory.
-    :param collection_name: collection for requested item url
+    :param campaign_name: campaign for requested item url
     :param item_url: item url path
     :return: nothing, will downloads the files and saves to a directory
     """
-    item_asset_urls = get_collection_item_asset_urls(item_id)
+    item_asset_urls = get_campaign_item_asset_urls(item_id)
 
-    ctd, created = CollectionTaskDetails.objects.get_or_create(
-        collection_slug=slugify(collection_name),
-        subcollection_slug=slugify(project),
-        defaults={"collection_name": collection_name, "subcollection_name": project},
+    ctd, created = CampaignTaskDetails.objects.get_or_create(
+        campaign_slug=slugify(campaign_name),
+        project_slug=slugify(project),
+        defaults={"campaign_name": campaign_name, "project_name": project},
     )
-    ctd.collection_item_count += 1
-    ctd.collection_asset_count += len(item_asset_urls)
+    ctd.campaign_item_count += 1
+    ctd.campaign_asset_count += len(item_asset_urls)
     ctd.save()
-    ciac, created = CollectionItemAssetCount.objects.get_or_create(
-        collection_task=ctd, collection_item_identifier=item_id
+    ciac, created = CampaignItemAssetCount.objects.get_or_create(
+        campaign_task=ctd, campaign_item_identifier=item_id
     )
-    ciac.collection_item_asset_count = len(item_asset_urls)
+    ciac.campaign_item_asset_count = len(item_asset_urls)
     ciac.save()
 
-    get_save_item_assets(collection_name, project, item_id, item_asset_urls)
+    get_save_item_assets(campaign_name, project, item_id, item_asset_urls)

@@ -4,8 +4,17 @@ $( document ).ready(function() {
     $( '#tag-input').focus();
   }
 
-  $( 'input[type="submit"]' ).click(function() {
+  $( 'input[type="submit"]' ).click(function(e) {
+    var target = e.target.id;
     sessionStorage.setItem('show_message', 'true');
+
+    if( target == 'save-button' ) {
+        sessionStorage.setItem('status', 'save');
+    } else if ( target == 'review-button' ) {
+        sessionStorage.setItem('status', 'review');
+    } else if ( target == 'complete-button' ) {
+        sessionStorage.setItem('status', 'complete');
+    }
     });
 });
 

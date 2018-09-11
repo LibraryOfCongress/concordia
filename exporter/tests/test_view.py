@@ -9,7 +9,7 @@ import boto3
 from django.conf import settings
 from django.test import Client, TestCase
 
-from concordia.models import Asset, Collection, MediaType, Status, Transcription, User
+from concordia.models import Asset, Campaign, MediaType, Status, Transcription, User
 
 PACKAGE_PARENT = ".."
 SCRIPT_DIR = os.path.dirname(
@@ -45,33 +45,33 @@ class ViewTest_Exporter(TestCase):
         self.user.set_password("top_secret")
         self.user.save()
 
-    def test_ExportCollectionToBagit_get(self):
+    def test_ExportCampaignToBagit_get(self):
         """
-        Test the http GET on route /transcribe/exportBagit/<collectionname>/
+        Test the http GET on route /campaigns/exportBagit/<campaignname>/
         :return:
         """
 
         # Arrange
         self.login_user()
 
-        ## Build test data for local storage collection ##
-        # Collection Info (local storage)
-        locstor_media_url_str = "/locstorcollection/testasset/asset.jpg"
-        locstor_collection_name_str = "locstorcollection"
+        ## Build test data for local storage campaign ##
+        # Campaign Info (local storage)
+        locstor_media_url_str = "/locstorcampaign/testasset/asset.jpg"
+        locstor_campaign_name_str = "locstorcampaign"
         locstor_asset_folder_name_str = "testasset"
         locstor_asset_name_str = "asset.jpg"
 
-        # create a collection (local Storage)
-        self.collection1 = Collection(
-            title="LocStorCollection",
-            slug=locstor_collection_name_str,
-            description="Collection Description",
+        # create a campaign (local Storage)
+        self.campaign1 = Campaign(
+            title="LocStorCampaign",
+            slug=locstor_campaign_name_str,
+            description="Campaign Description",
             metadata={"key": "val1"},
             is_active=True,
             s3_storage=False,
             status=Status.EDIT,
         )
-        self.collection1.save()
+        self.campaign1.save()
 
         # create an Asset (local Storage)
         self.asset1 = Asset(
@@ -80,7 +80,7 @@ class ViewTest_Exporter(TestCase):
             description="Asset Description",
             media_url=locstor_media_url_str,
             media_type=MediaType.IMAGE,
-            collection=self.collection1,
+            campaign=self.campaign1,
             sequence=0,
             metadata={"key": "val2"},
             status=Status.EDIT,
@@ -93,24 +93,24 @@ class ViewTest_Exporter(TestCase):
         )
         self.transcription1.save()
 
-        ## Build test data for S3 Storage Collection ##
-        # Collection Info (S3 storage)
+        ## Build test data for S3 Storage Campaign ##
+        # Campaign Info (S3 storage)
         s3_media_url_str = "https://s3.us-east-2.amazonaws.com/chc-collections/test_s3/mss859430177/0.jpg"
-        s3_collection_name_str = "test_s3"
+        s3_campaign_name_str = "test_s3"
         s3_asset_folder_name_str = "testasset"
         s3_asset_name_str = "asset.jpg"
 
-        # create a collection (local Storage)
-        self.collection2 = Collection(
+        # create a campaign (local Storage)
+        self.campaign2 = Campaign(
             title="Test S3",
-            slug=s3_collection_name_str,
-            description="Collection Description",
+            slug=s3_campaign_name_str,
+            description="Campaign Description",
             metadata={"key": "val1"},
             is_active=True,
             s3_storage=True,
             status=Status.EDIT,
         )
-        self.collection2.save()
+        self.campaign2.save()
 
         # create an Asset (local Storage)
         self.asset2 = Asset(
@@ -119,7 +119,7 @@ class ViewTest_Exporter(TestCase):
             description="Asset Description",
             media_url=s3_media_url_str,
             media_type=MediaType.IMAGE,
-            collection=self.collection2,
+            campaign=self.campaign2,
             sequence=0,
             metadata={"key": "val2"},
             status=Status.EDIT,
@@ -132,21 +132,22 @@ class ViewTest_Exporter(TestCase):
         )
         self.transcription2.save()
 
-
-        # Make sure correct folders structure exists for Local Storage Collection
-        collection_folder = "{0}/{1}".format(settings.MEDIA_ROOT, locstor_collection_name_str)
-        if not os.path.exists(collection_folder):
-            os.makedirs(collection_folder)
-        item_dir = "{0}/{1}".format(collection_folder, locstor_asset_folder_name_str)
+        # Make sure correct folders structure exists for Local Storage Campaign
+        campaign_folder = "{0}/{1}".format(
+            settings.MEDIA_ROOT, locstor_campaign_name_str
+        )
+        if not os.path.exists(campaign_folder):
+            os.makedirs(campaign_folder)
+        item_dir = "{0}/{1}".format(campaign_folder, locstor_asset_folder_name_str)
         if not os.path.exists(item_dir):
             os.makedirs(item_dir)
 
-        # create source asset file for Local Storage Collection
+        # create source asset file for Local Storage Campaign
         with open("{0}/{1}".format(item_dir, locstor_asset_name_str), "w+") as csv_file:
             writer = csv.writer(csv_file)
             writer.writerow(
                 [
-                    "Collection",
+                    "Campaign",
                     "Title",
                     "Description",
                     "MediaUrl",
@@ -155,15 +156,15 @@ class ViewTest_Exporter(TestCase):
                 ]
             )
 
-        # Act (local storage collection)
-        response = self.client.get("/transcribe/exportBagit/locstorcollection/")
+        # Act (local storage campaign)
+        response = self.client.get("/campaigns/exportBagit/locstorcampaign/")
 
-        # Assert for Local Storage Collection
+        # Assert for Local Storage Campaign
 
         self.assertEqual(response.status_code, 200)
         self.assertEquals(
             response.get("Content-Disposition"),
-            "attachment; filename=locstorcollection.zip",
+            "attachment; filename=locstorcampaign.zip",
         )
         try:
             f = io.BytesIO(response.content)
@@ -178,16 +179,14 @@ class ViewTest_Exporter(TestCase):
             zipped_file.close()
             f.close()
 
+        # Act (s3 campaign)
+        response2 = self.client.get("/campaigns/exportBagit/test_s3/")
 
-        # Act (s3 collection)
-        response2 = self.client.get("/transcribe/exportBagit/test_s3/")
-
-        # Assert for s3 Collection
+        # Assert for s3 Campaign
 
         self.assertEqual(response2.status_code, 200)
         self.assertEquals(
-            response2.get("Content-Disposition"),
-            "attachment; filename=test_s3.zip",
+            response2.get("Content-Disposition"), "attachment; filename=test_s3.zip"
         )
         try:
             f = io.BytesIO(response2.content)
@@ -202,10 +201,9 @@ class ViewTest_Exporter(TestCase):
             zipped_file.close()
             f.close()
 
-
         # Clean up temp folders
         try:
-            shutil.rmtree(collection_folder)
+            shutil.rmtree(campaign_folder)
         except Exception as e:
             pass
 

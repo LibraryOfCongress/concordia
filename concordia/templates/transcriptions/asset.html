@@ -9,7 +9,7 @@
 
             </div>
             <div class="col-12 d-flex align-items-middle py-1 bg-darkest-gray">
-                <h2 class="contribute-breadcrumb pl-default mb-0"><a class="offwhite-text" href="{% url 'transcriptions:collection' asset.collection.slug %}"> Go back to {{ asset.collection.title }}</a>  >  {{ asset.title }}</h2>
+                <h2 class="contribute-breadcrumb pl-default mb-0"><a class="offwhite-text" href="{% url 'transcriptions:campaign' asset.campaign.slug %}"> Go back to {{ asset.campaign.title }}</a>  >  {{ asset.title }}</h2>
             </div>
             <div class="col-6">
                 <div id="asset-image" class="asset-image bg-offwhite">
@@ -38,20 +38,20 @@
                 </nav>
                 {% if transcription.status %}
                     {% if transcription.status == 'Edit' %}
-                        <div id="transcription-state-div" class="mx-half w-100" >
+                        <div id="transcription-state-div" class="mx-default w-100" >
                             <i class="fas fa-edit tx-edit pr-quarter"></i><h5 class="offwhite-text d-inline small" id="transcription-state" name="transcription-state">Open for edit</h5>
                         </div>
                     {% elif transcription.status == 'Submitted' %}
-                        <div id="transcription-state-div" class="mx-half w-100" >
+                        <div id="transcription-state-div" class="mx-default w-100" >
                             <i class="fas fa-list tx-submitted pr-quarter"></i><h5 class="offwhite-text d-inline small" id="transcription-state" name="transcription-state">Submitted for Review</h5>
                         </div>
                     {% elif transcription.status == 'Completed' %}
-                        <div id="transcription-state-div" class="mx-half w-100" >
+                        <div id="transcription-state-div" class="mx-default w-100" >
                             <i class="fas fa-check tx-completed pr-quarter"></i><h5 class="offwhite-text d-inline small" id="transcription-state" name="transcription-state">Completed</h5>
                         </div>
                     {% endif %}
                 {% else %}
-                    <div id="transcription-state-div" class="mx-half w-100" >
+                    <div id="transcription-state-div" class="mx-default w-100" >
                         <i class="fas fa-edit tx-edit pr-quarter"></i><h5 class="offwhite-text d-inline small" id="transcription-state" name="transcription-state">Open for edit</h5>
                     </div>
                 {% endif %}
@@ -65,7 +65,7 @@
                             {% if user.is_authenticated %}
                                 <input type="text" id="tag-input" class="rounded" name="tags" data-role="tagsinput" value="{%for tag in tags %}{{tag}},{% endfor %}" aria-label="Tag input">
                             {% else %}
-                                <input type="text" id="tag-input" class="rounded" name="tags" data-role="tagsinput" value="{%for tag in tags %}{{tag}},{% endfor %}" aria-label="Tag input" disabled="true">
+                                <input type="text" id="tag-input" class="rounded" name="tags" data-role="tagsinput" value="{%for tag in tags %}{{tag.value}},{% endfor %}" aria-label="Tag input" disabled="true">
                             {% endif %}
                         </div>
                         {% if not discussion_hide %}
@@ -139,7 +139,7 @@
                         {% endif %}
                     </div>
 
-                    <div class="my-quarter d-flex justify-content-around align-items-center btn-row">
+                    <div class="my-half d-flex justify-content-around align-items-center btn-row">
                         <input id="save-button" name="action" type="submit" class="btn btn-primary" value="Save">
                         <input id="review-button" name="action" type="submit" class="btn btn-primary" value="Submit for Review">
                         {% if user.is_authenticated %}
@@ -156,7 +156,7 @@
                     <input id="contact-button" name="action" type="submit" class="btn btn-minimal-secondary" value="Contact a Manager">
                 </form>
                 <div>
-                    <h5 class="offwhite-text d-inline" id="register-login-reminder">Only registered users can tag.
+                    <h5 class="mx-half offwhite-text" id="register-login-reminder">Only registered users can tag.
                         <a class="primary-text" href="/account/register/">Register</a> or <a class="primary-text" href="/account/login">Login</a></h5>
                 </div>
             </div>
@@ -169,7 +169,7 @@
     <script src="{% static "js/jquery.cookie.js" %}"></script>
     <script src="{% static "vendor/openseadragon/openseadragon.min.js" %}"></script>
     <script type="text/javascript">
-        {% if asset.collection.s3_storage %}
+        {% if asset.campaign.s3_storage %}
             var asset_url = '{{ asset.media_url }}';
         {% else %}
             var asset_url = '{{ MEDIA_URL }}{{ asset.media_url }}';
@@ -202,7 +202,7 @@
         });
         function checkin_page_in_use() {
             $.ajax({
-                url : "/transcribe/pageinuse/",
+                url : "/campaigns/pageinuse/",
                 type: "post",
                 data: JSON.stringify({ 'page_url' : window.location.pathname,
                     'user': '{{ user }}' }),
@@ -223,13 +223,13 @@
             setTimeout(checkin_page_in_use, 30000);
         }
         function showalert(){
-            var optsel = confirm("This transcription is being worked on by another user.\nYou may lose your work.\nDo you want to work on another page in this collection?");
+            var optsel = confirm("This transcription is being worked on by another user.\nYou may lose your work.\nDo you want to work on another page in this campaign?");
             if (optsel == true) {
                 $.ajax({
-                    url: "/transcribe/alternateasset/",
+                    url: "/campaigns/alternateasset/",
                     type: "post",
                     data: JSON.stringify({
-                        'collection': '{{ asset.collection.slug }}',
+                        'campaign': '{{ asset.campaign.slug }}',
                         'asset': '{{ asset.slug }}'
                     }),
                     processData: false,
@@ -253,25 +253,23 @@
 
         function hide_buttons(tab_name) {
             $("#review-button, #complete-button").hide();
-            $("#register-login-reminder").removeClass('d-inline');
-            $("#register-login-reminder").addClass('d-none');
 
             {% if not user.is_authenticated %}
-                $("#register-login-reminder").removeClass('d-none');
-                $("#register-login-reminder").addClass('d-inline');
+                $("#register-login-reminder").show();
 
-                $("#save-button").hide();
                 if (tab_name == 'tags') {
                     $("#tag-input").attr('disabled', true);
+                    $("#save-button").hide();
                 }
+            {% else %}
+                $("#register-login-reminder").hide();
             {% endif %}
             return true;
         }
         function show_buttons() {
             $("#save-button, #review-button").show();
             $("#complete-button").hide();
-            $("#register-login-reminder").removeClass('d-inline');
-            $("#register-login-reminder").addClass('d-none');
+            $("#register-login-reminder").hide();
 
             $("#transcription-input").attr('disabled', false);
 
@@ -300,41 +298,32 @@
             {% endif %}
 
             var show_message = sessionStorage.getItem('show_message');
+            var status = sessionStorage.getItem('status');
 
-            if( show_message === 'true' ) {
-                {% if transcription.status %}
-                    switch ("{{ transcription.status }}") {
-                        case 'Edit':
-                            $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute py-half fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> Your contribution has been saved.</div>');
-                            setTimeout(function() {
-                                $('.alert-contribute').fadeOut(500);
-                            }, 3000);
-                            break;
-                        case 'Submitted':
-                            $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute py-half fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> The transcription is ready for review.</div>');
-                            setTimeout(function() {
-                                $('.alert-contribute').fadeOut(500);
-                            }, 3000);
-
-                            break;
-                        case 'Completed':
-                            $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute py-half fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> The transcription is now complete.</div>');
-                            setTimeout(function() {
-                                $('.alert-contribute').fadeOut(500);
-                            }, 3000);
-
-                    }
-                {% endif %}
-
+            if( show_message == 'true' ) {
+                if( status == 'save' ) {
+                    $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute py-half fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> Your contribution has been saved.</div>');
+                    setTimeout(function() {
+                        $('.alert-contribute').fadeOut(500);
+                    }, 3000);
+                } else if( status == 'review') {
+                    $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute py-half fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> The transcription is ready for review.</div>');
+                    setTimeout(function() {
+                        $('.alert-contribute').fadeOut(500);
+                    }, 3000);
+                } else {
+                    $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute py-half fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> The transcription is now complete.</div>');
+                    setTimeout(function() {
+                        $('.alert-contribute').fadeOut(500);
+                    }, 3000);
+                }
                 sessionStorage.setItem('show_message', 'false');
-                show_message = sessionStorage.getItem('show_message');
-            } else {
-                sessionStorage.setItem('show_message', 'false');
-                show_message = sessionStorage.getItem('show_message');
+                sessionStorage.setItem('status', '');
             }
+
             show_buttons();
 
-            $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+            $('a[data-toggle="tab"]').on('show.bs.tab', function (e) {
                 var target = $(e.target).attr("href") // activated tab
                 if (target == "#tab-tag") {
                     hide_buttons("tags");
@@ -345,21 +334,17 @@
                 $("#save-button").click(function(e){
                     if($("#captcha_container").hasClass('d-none')) {
                         e.preventDefault();
-                        // $(this).removeClass("btn-primary");
                         $(this).attr("disabled", "disabled");
                         $("#captcha_container").removeClass('d-none');
                         $("#captcha_container").show();
-                        // $("input#id_captcha_1").after($('<div class="input-group-append">' + '<button class="btn btn-secondary" type="submit" name="action" value="Save">Enter</button>' + '</div>'));
                     }
                 });
                 $("#review-button").click(function(e){
                     if($("#captcha_container").hasClass('d-none')) {
                         e.preventDefault();
-                       // $(this).removeClass("btn-primary");
                        $(this).attr("disabled", "disabled");
                        $("#captcha_container").removeClass('d-none');
                        $("#captcha_container").show();
-                       // $("input#id_captcha_1").after($('<div class="input-group-append">' + '<button class="btn btn-secondary" type="submit" name="action" value="Save">Enter</button>' + '</div>'));
                    }
                });
 

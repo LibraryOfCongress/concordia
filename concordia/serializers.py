@@ -1,13 +1,39 @@
 from rest_framework import serializers
+from django.contrib.auth.models import User
 
 from . import models
 
 
-class CollectionListSerializer(serializers.ModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ("id",
+                  "username",
+                  "password",
+                  "first_name",
+                  "last_name",
+                  "email",
+                  "is_staff",
+                  "is_active",
+                  "date_joined"
+                  )
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = models.UserProfile
+        fields = ("id",
+                  "user",
+                  "myfile",
+                  )
+
+
+class CampaignListSerializer(serializers.ModelSerializer):
     asset_count = serializers.IntegerField(source="asset_set.count", read_only=True)
 
     class Meta:
-        model = models.Collection
+        model = models.Campaign
         fields = (
             "id",
             "slug",
@@ -21,31 +47,71 @@ class CollectionListSerializer(serializers.ModelSerializer):
         )
 
 
-class CollectionDetailSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.Collection
-        fields = (
-            "id",
-            "slug",
-            "title",
-            "description",
-            "start_date",
-            "end_date",
-            "status",
-        )
-
-
-class AssetSerializer(serializers.ModelSerializer):
+class AssetSetForCampaignSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = models.Asset
         fields = (
+            "id",
             "title",
             "slug",
             "description",
             "media_url",
             "media_type",
-            "collection",
-            "subcollection",
+            "sequence",
+            "metadata",
+            "status",
+        )
+
+
+class ProjectSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = models.Project
+        fields = (
+            "id",
+            "title",
+            "slug",
+            "metadata",
+            "status",
+            "is_publish",
+        )
+
+
+class CampaignDetailSerializer(serializers.HyperlinkedModelSerializer):
+    assets = AssetSetForCampaignSerializer(source="asset_set", many=True)
+    projects = ProjectSerializer(source="project_set", many=True)
+
+    class Meta:
+        model = models.Campaign
+        fields = (
+            "id",
+            "slug",
+            "title",
+            "description",
+            "s3_storage",
+            "start_date",
+            "end_date",
+            "status",
+            "projects",
+            "assets",
+        )
+
+
+class AssetSerializer(serializers.HyperlinkedModelSerializer):
+    campaign = CampaignDetailSerializer()
+    project = ProjectSerializer()
+
+    class Meta:
+        model = models.Asset
+        fields = (
+            "id",
+            "title",
+            "slug",
+            "description",
+            "media_url",
+            "media_type",
+            "campaign",
+            "project",
             "sequence",
             "metadata",
             "status",
@@ -59,7 +125,7 @@ class PageInUseSerializer(serializers.ModelSerializer):
         )
         page_in_use.save()
 
-        # On every insertion, delete any entries not updated in the last 5 minutes
+    def delete_old(self):
         from datetime import datetime, timedelta
 
         time_threshold = datetime.now() - timedelta(minutes=5)
@@ -69,21 +135,32 @@ class PageInUseSerializer(serializers.ModelSerializer):
         for old_page in old_page_entries:
             old_page.delete()
 
+    def create(self, validated_data):
+        page_in_use = models.PageInUse(
+            page_url=validated_data["page_url"], user=validated_data["user"]
+        )
+        page_in_use.save()
+
+        # On every insertion, delete any entries not updated in the last 5 minutes
+        self.delete_old()
+
         return page_in_use
 
     def update(self, instance, validated_data):
         instance.save()
+        self.delete_old()
         return instance
 
     class Meta:
         model = models.PageInUse
-        fields = ("page_url", "user")
+        fields = ("page_url", "user", "updated_on")
 
+class TranscriptionSerializer(serializers.HyperlinkedModelSerializer):
+    asset = AssetSerializer()
 
-class TranscriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Transcription
-        fields = ("asset", "user_id", "text", "status")
+        fields = ("id", "asset", "user_id", "text", "status", "updated_on")
 
 
 class TagSerializer(serializers.ModelSerializer):

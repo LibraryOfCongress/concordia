@@ -23,7 +23,8 @@ DATABASES = {
 
 ALLOWED_HOSTS = ["127.0.0.1", "0.0.0.0", "*"]
 
-CELERY_BROKER_URL = "amqp://"
+CELERY_BROKER_URL = "pyamqp://guest@localhost"
+CELERY_RESULT_BACKEND = "rpc://"
 
 CONCORDIA = {"netloc": "http://0.0.0.0:8000"}
 
@@ -34,14 +35,14 @@ IMPORTER = {
     "S3_BUCKET_NAME": "",
 }
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 EMAIL_FILE_PATH = "/tmp/concordia-messages"  # change this to a proper location
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "")
 DEFAULT_TO_EMAIL = DEFAULT_FROM_EMAIL
 
 ELASTICSEARCH_DSL_SIGNAL_PROCESSOR = 'django_elasticsearch_dsl.signals.RealTimeSignalProcessor'
 ELASTICSEARCH_DSL = {
-    'default': {
+   'default': {
         'hosts': 'localhost:9200'
     },
 }

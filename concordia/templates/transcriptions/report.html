@@ -10,19 +10,19 @@
 {% endblock head_content %}
 {% block main_content %}
 <div class="container">
-	<h4>Collection and Project Level Reporting</h4>
+	<h4>Campaign and Project Level Reporting</h4>
 	<table class="table table-bordered" style="width: 50%;">
 		<tbody>
 			<tr>
-				<td>COLLECTION: </td>
-				<td>{{collection.title}}</td>
+				<td>CAMPAIGN: </td>
+				<td>{{campaign_json.title}}</td>
 			</tr>
 			<tr>
-				<td>Total Images in Collection: </td>
-				<td>{{collection.asset_set.count}}</td>
+				<td>Total Images in Campaign: </td>
+				<td>{{campaign_json.assets|length}}</td>
 			</tr>
 			<tr>
-				<td>Total Projects in Collection: </td>
+				<td>Total Projects in Campaign: </td>
 				<td>{{ paginator.count }} </td>
 			</tr>
 		</tbody>
@@ -32,7 +32,7 @@
         <div class="col-sm-3">
          	<div class="card">
 			  <div class="card-header">
-			    {{p.title}}
+			    {{p.slug}}
 			  </div>
 			  <div class="card-body" style="padding:0px">
                             <table class="table table-bordered" style="margin-bottom:0px">
@@ -46,12 +46,12 @@
 	                                <td>{{p.not_started}}</td>
         	                    </tr>
                     		    <tr>
-	                                <td>In Progress</td>
-        	                        <td>{{ p.in_progress }} </td>
+	                                <td>In Edit</td>
+        	                        <td>{{ p.edit }} </td>
                 		    </tr>
                                     <tr>
-                                        <td>Transcribed/Need Review</td>
-                                        <td>{{ p.need_review }} </td>
+                                        <td>Submitted for Review</td>
+                                        <td>{{ p.submitted }} </td>
                                     </tr>
                                     <tr>
                                         <td>Complete</td>
@@ -82,7 +82,7 @@
         {% endif %}
 
         <span class="current">
-            Page {{ projects.number }} of {{ assets.paginator.num_pages }}.
+            Page {{ projects.number }} of {{ projects.paginator.num_pages }}.
         </span>
 
         {% if projects.has_next %}

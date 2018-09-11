@@ -28,5 +28,5 @@ To run a single unittest module:
 
 
 To run a single unittest in a django unittest module:
-    $ python manage.py test importer.tests.test_importer.CreateCollectionViewTest.test_create_item_collection
+    $ python manage.py test importer.tests.test_importer.CreateCampaignViewTest.test_create_item_campaign
 

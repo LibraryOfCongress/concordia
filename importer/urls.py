@@ -5,8 +5,8 @@ from importer import views
 
 urlpatterns = [
     re_path(
-        r"^create_collection/$",
-        views.CreateCollectionView.as_view(),
-        name="create_collection",
+        r"^create_campaign/$",
+        views.CreateCampaignView.as_view(),
+        name="create_campaign",
     )
 ]

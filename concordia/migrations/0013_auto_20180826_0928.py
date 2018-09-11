@@ -9,12 +9,12 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.AddField(
-            model_name="collection",
+            model_name="campaign",
             name="is_publish",
             field=models.BooleanField(default=False),
         ),
         migrations.AddField(
-            model_name="subcollection",
+            model_name="project",
             name="is_publish",
             field=models.BooleanField(default=False),
         ),
@@ -34,7 +34,7 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.AlterField(
-            model_name="collection",
+            model_name="campaign",
             name="status",
             field=models.CharField(
                 choices=[
@@ -52,7 +52,7 @@ class Migration(migrations.Migration):
             model_name="pageinuse", name="updated_on", field=models.DateTimeField()
         ),
         migrations.AlterField(
-            model_name="subcollection",
+            model_name="project",
             name="status",
             field=models.CharField(
                 choices=[

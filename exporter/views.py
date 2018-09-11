@@ -9,29 +9,29 @@ from django.conf import settings
 from django.http import HttpResponse
 from django.views.generic import TemplateView
 
-from concordia.models import Collection, Transcription, UserAssetTagCollection
+from concordia.models import Campaign, Transcription, UserAssetTagCollection
 
 
-class ExportCollectionToCSV(TemplateView):
+class ExportCampaignToCSV(TemplateView):
     """
     Exports the transcription and tags to csv file
 
     """
 
-    template_name = "transcriptions/collection.html"
+    template_name = "transcriptions/campaign.html"
 
     def get(self, request, *args, **kwargs):
-        collection = Collection.objects.get(slug=self.args[0])
-        asset_list = collection.asset_set.all().order_by("title", "sequence")
+        campaign = Campaign.objects.get(slug=self.args[0])
+        asset_list = campaign.asset_set.all().order_by("title", "sequence")
         # Create the HttpResponse object with the appropriate CSV header.
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = 'attachment; filename="{0}.csv"'.format(
-            collection.slug
+            campaign.slug
         )
         field_names = ["title", "description", "media_url"]
         writer = csv.writer(response)
         writer.writerow(
-            ["Collection", "Title", "Description", "MediaUrl", "Transcription", "Tags"]
+            ["Campaign", "Title", "Description", "MediaUrl", "Transcription", "Tags"]
         )
         for asset in asset_list:
             transcription = Transcription.objects.filter(
@@ -49,7 +49,7 @@ class ExportCollectionToCSV(TemplateView):
             else:
                 tags = ""
             row = (
-                [collection.title]
+                [campaign.title]
                 + [getattr(asset, i) for i in field_names]
                 + [transcription, tags]
             )
@@ -57,7 +57,7 @@ class ExportCollectionToCSV(TemplateView):
         return response
 
 
-class ExportCollectionToBagit(TemplateView):
+class ExportCampaignToBagit(TemplateView):
     """
     Creates temp directory structure for source data.  Copies source image
     file from S3 or local storage into temp directory, builds export.csv
@@ -68,11 +68,11 @@ class ExportCollectionToBagit(TemplateView):
     """
 
     include_images = True
-    template_name = "transcriptions/collection.html"
+    template_name = "transcriptions/campaign.html"
 
     def get(self, request, *args, **kwargs):
-        collection = Collection.objects.get(slug=self.args[0])
-        asset_list = collection.asset_set.all().order_by("title", "sequence")
+        campaign = Campaign.objects.get(slug=self.args[0])
+        asset_list = campaign.asset_set.all().order_by("title", "sequence")
 
         # Make sure export folder exists (media/exporter)
         export_folder = "%s/exporter" % (settings.MEDIA_ROOT)
@@ -80,17 +80,17 @@ class ExportCollectionToBagit(TemplateView):
             os.makedirs(export_folder)
 
         # Create temp exporter folder structure in media for bagit
-        collection_folder = "%s/exporter/%s" % (settings.MEDIA_ROOT, collection.slug)
+        campaign_folder = "%s/exporter/%s" % (settings.MEDIA_ROOT, campaign.slug)
 
-        # Create collection folder (media/exporter/<collection>)
-        if not os.path.exists(collection_folder):
-            os.mkdir(collection_folder)
+        # Create campaign folder (media/exporter/<campaign>)
+        if not os.path.exists(campaign_folder):
+            os.mkdir(campaign_folder)
 
         for asset in asset_list:
             item_folder_name = asset.media_url.rsplit("/")[-2]
-            item_folder = "%s/%s" % (collection_folder, item_folder_name)
+            item_folder = "%s/%s" % (campaign_folder, item_folder_name)
 
-            # Create asset folders (media/exporter/<collection>/<asset>
+            # Create asset folders (media/exporter/<campaign>/<asset>
             if not os.path.exists(item_folder):
                 os.mkdir(item_folder)
 
@@ -100,7 +100,7 @@ class ExportCollectionToBagit(TemplateView):
             dest = "%s/%s" % (item_folder, src_name)
 
             if self.include_images:
-                if collection.s3_storage:
+                if campaign.s3_storage:
                     s3 = boto3.client(
                         "s3",
                         aws_access_key_id=settings.AWS_S3["AWS_ACCESS_KEY_ID"],
@@ -108,7 +108,7 @@ class ExportCollectionToBagit(TemplateView):
                     )
                     bucket_name = settings.AWS_S3["S3_COLLECTION_BUCKET"]
                     s3_path = "{0}/{1}/{2}".format(
-                        collection.slug, item_folder_name, src_name
+                        campaign.slug, item_folder_name, src_name
                     )
                     # Copy asset image from S3 into temp asset folder
                     s3.download_file(bucket_name, s3_path, dest)
@@ -133,27 +133,25 @@ class ExportCollectionToBagit(TemplateView):
             tran_out_file.close()
 
         # Turn Structure into bagit format
-        bagit.make_bag(collection_folder, {"Contact-Name": request.user.username})
+        bagit.make_bag(campaign_folder, {"Contact-Name": request.user.username})
 
-        # Build .zipfile of bagit formatted Collection Folder
-        archive_name = collection_folder
-        shutil.make_archive(archive_name, "zip", collection_folder)
+        # Build .zipfile of bagit formatted Campaign Folder
+        archive_name = campaign_folder
+        shutil.make_archive(archive_name, "zip", campaign_folder)
 
         # Download zip
-        with open("%s.zip" % collection_folder, "rb") as file:
+        with open("%s.zip" % campaign_folder, "rb") as file:
             outfile = file.read()
         response = HttpResponse(outfile, content_type="application/zip")
-        response["Content-Disposition"] = (
-            "attachment; filename=%s.zip" % collection.slug
-        )
+        response["Content-Disposition"] = "attachment; filename=%s.zip" % campaign.slug
 
         # Clean up temp folders & zipfile once exported
         try:
-            shutil.rmtree(collection_folder)
+            shutil.rmtree(campaign_folder)
         except Exception as e:
             pass
         try:
-            os.remove("%s.zip" % collection_folder)
+            os.remove("%s.zip" % campaign_folder)
         except Exception as e:
             pass
 

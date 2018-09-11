@@ -47,7 +47,7 @@ class MediaType:
     CHOICES = ((IMAGE, "Image"), (AUDIO, "Audio"), (VIDEO, "Video"))
 
 
-class Collection(MetricsModelMixin("collection"), models.Model):
+class Campaign(MetricsModelMixin("campaign"), models.Model):
     title = models.CharField(max_length=50)
     slug = models.SlugField(max_length=50, unique=True)
     description = models.TextField(blank=True)
@@ -64,29 +64,29 @@ class Collection(MetricsModelMixin("collection"), models.Model):
     def __str__(self):
         return self.title
 
-    def copy_images_to_collection(self, url, collection_path):
+    def copy_images_to_campaign(self, url, campaign_path):
         result = None
         try:
-            result = download_async_collection.delay(url)
+            result = download_async_campaign.delay(url)
             result.ready()
             result.get()
 
         except Exception as e:
-            logger.error("Unable to copy images to collection: %s", e, exc_info=True)
+            logger.error("Unable to copy images to campaign: %s", e, exc_info=True)
             pass
 
         if result and not result.state == "PENDING":
-            if os.path.isdir(collection_path):
-                shutil.rmtree(collection_path)
-            shutil.copytree(settings.IMPORTER["IMAGES_FOLDER"], collection_path)
+            if os.path.isdir(campaign_path):
+                shutil.rmtree(campaign_path)
+            shutil.copytree(settings.IMPORTER["IMAGES_FOLDER"], campaign_path)
             for the_dir in os.listdir(settings.IMPORTER["IMAGES_FOLDER"]):
                 shutil.rmtree(os.path.join(settings.IMPORTER["IMAGES_FOLDER"], the_dir))
 
-    def create_assets_from_filesystem(self, collection_path):
-        for root, dirs, files in os.walk(collection_path):
+    def create_assets_from_filesystem(self, campaign_path):
+        for root, dirs, files in os.walk(campaign_path):
             for filename in files:
                 file_path = os.path.join(root, filename)
-                title = file_path.replace(collection_path + "/", "").split("/")[0]
+                title = file_path.replace(campaign_path + "/", "").split("/")[0]
                 media_url = file_path.replace(settings.MEDIA_ROOT, "")
                 sequence = int(os.path.splitext(filename)[0])
                 Asset.objects.create(
@@ -96,15 +96,15 @@ class Collection(MetricsModelMixin("collection"), models.Model):
                     media_url=media_url,
                     media_type="IMG",
                     sequence=sequence,
-                    collection=self,
+                    campaign=self,
                 )
 
 
-class Subcollection(models.Model):
+class Project(models.Model):
     title = models.CharField(max_length=50)
     slug = models.SlugField(max_length=50)
     category = models.CharField(max_length=12, blank=True)
-    collection = models.ForeignKey(Collection, on_delete=models.CASCADE)
+    campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
     metadata = JSONField(default=metadata_default)
     status = models.CharField(
         max_length=10, choices=Status.CHOICES, default=Status.DEFAULT
@@ -112,45 +112,36 @@ class Subcollection(models.Model):
     is_publish = models.BooleanField(default=False, blank=True)
 
     class Meta:
-        unique_together = (("slug", "collection"),)
+        unique_together = (("slug", "campaign"),)
         ordering = ["title"]
 
+    def __str__(self):
+        return self.title
 
-class PageInUse(models.Model):
-    page_url = models.CharField(max_length=256)
-    user = models.ForeignKey(User, models.DO_NOTHING)
-    created_on = models.DateTimeField(editable=False)
-    updated_on = models.DateTimeField()
 
-    def save(self, *args, **kwargs):
-        """
-        On save, update timestamps. Allows assignment of created_on and updated_on timestamp used in testing
-        :param args:
-        :param kwargs:
-        :return:
-        """
-        # if not self.id and not self.created_on:
-        #     self.created_on = timezone.now()
-        #
-        # self.updated_on = timezone.now()
-        # return super(PageInUse, self).save(*args, **kwargs)
+class Item(models.Model):
+    title = models.CharField(max_length=100)
+    slug = models.SlugField(max_length=100)
+    description = models.TextField(blank=True)
+    item_url = models.URLField(max_length=255)
+    campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
+    project = models.ForeignKey(
+        Project, on_delete=models.CASCADE, blank=True, null=True
+    )
+    item_id = models.CharField(max_length=100, blank=True)
+    metadata = JSONField(default=metadata_default)
+    thumbnail_url = models.URLField(max_length=255)
+    status = models.CharField(
+        max_length=10, choices=Status.CHOICES, default=Status.DEFAULT
+    )
+    is_publish = models.BooleanField(default=False, blank=True)
 
-    def save(self, force_insert=False, *args, **kwargs):
-        updated = False
-        if self.pk and not force_insert:
-            updated = self.custom_update()
-        if not updated:
-            self.custom_insert()
-        return super(PageInUse, self).save(*args, **kwargs)
+    class Meta:
+        unique_together = (("item_id", "campaign"),)
+        ordering = ["item_id"]
 
-    def custom_update(self):
-        self.updated_on = timezone.now()
-        return True
-
-    def custom_insert(self):
-        self.created_on = timezone.now()
-        if not self.updated_on:
-            self.updated_on = timezone.now()
+    def __str__(self):
+        return self.item_id
 
 
 class Asset(models.Model):
@@ -161,18 +152,25 @@ class Asset(models.Model):
     media_type = models.CharField(
         max_length=4, choices=MediaType.CHOICES, db_index=True
     )
-    collection = models.ForeignKey(Collection, on_delete=models.CASCADE)
-    subcollection = models.ForeignKey(
-        Subcollection, on_delete=models.CASCADE, blank=True, null=True
+    campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
+    project = models.ForeignKey(
+        Project, on_delete=models.CASCADE, blank=True, null=True
     )
+    item = models.ForeignKey(Item, blank=True, null=True, on_delete=models.CASCADE)
     sequence = models.PositiveIntegerField(default=1)
+
+    # The original ID of the image resource on loc.gov
+    resource_id = models.CharField(max_length=100, blank=True, null=True)
+    # The URL used to download this image from loc.gov
+    download_url = models.CharField(max_length=255, blank=True, null=True)
+
     metadata = JSONField(default=metadata_default)
     status = models.CharField(
         max_length=10, choices=Status.CHOICES, default=Status.DEFAULT
     )
 
     class Meta:
-        unique_together = (("slug", "collection"),)
+        unique_together = (("slug", "campaign"),)
         ordering = ["title", "sequence"]
 
     def __str__(self):
@@ -211,3 +209,40 @@ class Transcription(models.Model):
 
     def __str__(self):
         return str(self.asset)
+
+
+class PageInUse(models.Model):
+    page_url = models.CharField(max_length=256)
+    user = models.ForeignKey(User, models.DO_NOTHING)
+    created_on = models.DateTimeField(editable=False)
+    updated_on = models.DateTimeField()
+
+    def save(self, *args, **kwargs):
+        """
+        On save, update timestamps. Allows assignment of created_on and updated_on timestamp used in testing
+        :param args:
+        :param kwargs:
+        :return:
+        """
+        # if not self.id and not self.created_on:
+        #     self.created_on = timezone.now()
+        #
+        # self.updated_on = timezone.now()
+        # return super(PageInUse, self).save(*args, **kwargs)
+
+    def save(self, force_insert=False, *args, **kwargs):
+        updated = False
+        if self.pk and not force_insert:
+            updated = self.custom_update()
+        if not updated:
+            self.custom_insert()
+        return super(PageInUse, self).save(*args, **kwargs)
+
+    def custom_update(self):
+        self.updated_on = timezone.now()
+        return True
+
+    def custom_insert(self):
+        self.created_on = timezone.now()
+        if not self.updated_on:
+            self.updated_on = timezone.now()
