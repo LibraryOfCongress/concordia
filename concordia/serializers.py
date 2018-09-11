@@ -47,7 +47,7 @@ class CampaignListSerializer(serializers.ModelSerializer):
         )
 
 
-class AssetSetForCampaignSerializer(serializers.HyperlinkedModelSerializer):
+class AssetSetSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = models.Asset
         fields = (
@@ -78,7 +78,7 @@ class ProjectSerializer(serializers.ModelSerializer):
 
 
 class CampaignDetailSerializer(serializers.HyperlinkedModelSerializer):
-    assets = AssetSetForCampaignSerializer(source="asset_set", many=True)
+    assets = AssetSetSerializer(source="asset_set", many=True)
     projects = ProjectSerializer(source="project_set", many=True)
 
     class Meta:
@@ -94,6 +94,23 @@ class CampaignDetailSerializer(serializers.HyperlinkedModelSerializer):
             "status",
             "projects",
             "assets",
+        )
+
+
+class ItemSerializer(serializers.ModelSerializer):
+    assets = AssetSetSerializer(source="asset_set", many=True)
+    campaign = CampaignDetailSerializer()
+    project = ProjectSerializer()
+
+    class Meta:
+        model = models.Item
+        fields = (
+            "title",
+            "slug",
+            "thumbnail_url",
+            "assets",
+            "project",
+            "campaign",
         )
 
 
@@ -154,6 +171,7 @@ class PageInUseSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.PageInUse
         fields = ("page_url", "user", "updated_on")
+
 
 class TranscriptionSerializer(serializers.HyperlinkedModelSerializer):
     asset = AssetSerializer()

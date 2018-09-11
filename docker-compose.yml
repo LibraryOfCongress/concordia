@@ -41,7 +41,7 @@ services:
     ports:
       - 5672:5672
       - 15672:15672
-      
+
   elk:
     image: sebp/elk
     ports:
@@ -184,7 +184,7 @@ services:
     image: "waisbrot/wait"
     environment:
       TARGETS: db:5432
-  
+
   wait_elk:
     image: "waisbrot/wait"
     environment:
