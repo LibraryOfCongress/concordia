@@ -4,10 +4,10 @@ $( document ).ready(function() {
     $( '#tag-input').focus();
   }
 
-  $('#nav-pill-tag, #nav-pill-transcription').click(function(e)) {
+  $('#nav-pill-tag, #nav-pill-transcription').click(function(e) {
     var target = e.target.id;
     changeTheURL(target);
-  }
+  });
 
   $( 'input[type="submit"]' ).click(function(e) {
     var target = e.target.id;
@@ -21,6 +21,7 @@ $( document ).ready(function() {
         sessionStorage.setItem('status', 'complete');
     }
     });
+
 });
 
 function changeTheURL(nav) {
