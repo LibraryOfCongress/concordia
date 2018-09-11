@@ -32,14 +32,7 @@ services:
     ports:
       - 5672:5672
       - 15672:15672
-
-  elk:
-    image: sebp/elk
-    ports:
-      - "5601:5601"
-      - "9200:9200"
-      - "5044:5044"
-
+      
   app:
     env_file: ./.env
     build: .
@@ -71,6 +64,18 @@ services:
       - db
     volumes:
       - images_volume:/concordia_images
+
+  elk:
+    image: sebp/elk
+    ports:
+      - "5601:5601"
+      - "9200:9200"
+      - "5044:5044"
+
+  wait_elk:
+    image: "waisbrot/wait"
+    environment:
+      TARGETS: elk:9200
 
 volumes:
   db_volume:

@@ -145,25 +145,3 @@ the Pipfile.lock file:
 
 Both the Pipfile and the Pipfile.lock file must be committed to the
 source code repository.
-
-
-#### Deployment Environment
-
-If you are developing with concordia and you want to use any of the 
-deployment environment tools in your development environment, you can use the following.
-
-##### Sentry for log aggregation
-
-    $ make up
-
-##### Prometheus with Grafana for application health monitoring
-
-    $ docker-compose -f docker-compose-prometheus.yml
-
-##### ElasticSearch and Kibana for data visualization
-
-    $ docker-compose -f docker-compose-elk.yml
-
-#### Everything
-
-    $ docker-compose -f docker-compose-elk.yml -f docker-compose-prometheus.yml -f docker-compose-sentry.yml -f docker-compose.yml up

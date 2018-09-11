@@ -10,7 +10,7 @@ LOGGING["handlers"]["celery"]["filename"] = "./logs/concordia-celery.log"
 LOGGING["loggers"]["django"]["level"] = "INFO"
 LOGGING["loggers"]["celery"]["level"] = "INFO"
 
-#INSTALLED_APPS += ['django_elasticsearch_dsl']
+INSTALLED_APPS += ['django_elasticsearch_dsl']
 
 DJANGO_SECRET_KEY = "changeme"
 
