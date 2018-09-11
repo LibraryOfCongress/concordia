@@ -609,8 +609,6 @@ class ConcordiaAssetView(TemplateView):
 
             redirect_path += "#tab-tag"
 
-            redirect_path += "#tab-tag"
-
         return redirect(redirect_path)
 
 
