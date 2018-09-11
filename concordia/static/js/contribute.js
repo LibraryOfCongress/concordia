@@ -25,7 +25,7 @@ $( document ).ready(function() {
 });
 
 function changeTheURL(nav) {
-    if ( nav == 'tab-tag') {
+    if ( nav == 'nav-pill-tag') {
         window.location.hash = 'tab-tag';
     } else {
         window.location.hash = 'tab-transcription';
