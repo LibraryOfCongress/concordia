@@ -1,5 +1,6 @@
-{{ user }}, you have {{ expiration_days }} days to activate your registration.
+Thank you {{ user }} for registering for an account with Library of Congress transcription service.
 
+To complete activation, please click the following link:
 http://{{ site }}{% url "registration_activate" activation_key %}
 
-
+Please note that the activation link will expire in {{ expiration_days }} days.
