@@ -1,10 +1,8 @@
 import html
 import json
 import os
-from collections import namedtuple
 from datetime import datetime, timedelta
 from logging import getLogger
-from types import SimpleNamespace
 
 import requests
 from captcha.fields import CaptchaField
@@ -198,6 +196,7 @@ class ConcordiaCampaignView(TemplateView):
             super().get_context_data(**kws), campaign=campaign_json_val, projects=project_sorted_list
         )
 
+
 class ConcordiaProjectView(TemplateView):
     template_name = "transcriptions/project.html"
 
@@ -230,6 +229,7 @@ class ConcordiaProjectView(TemplateView):
             items=items,
         )
 
+
 class ConcordiaItemView(TemplateView):
     template_name = "transcriptions/item.html"
 
@@ -252,7 +252,6 @@ class ConcordiaItemView(TemplateView):
             raise Http404
         except Project.DoesNotExist:
             raise Http404
-
 
         paginator = Paginator(asset_sorted_list, ASSETS_PER_PAGE)
 
@@ -531,14 +530,6 @@ class ConcordiaAssetView(TemplateView):
         )
         asset_json = json.loads(response.content.decode("utf-8"))
 
-        if self.request.user.is_anonymous:
-            captcha_form = CaptchaEmbedForm(self.request.POST)
-            if not captcha_form.is_valid():
-                logger.info("Invalid captcha response")
-                return self.get(self.request, *args, **kwargs)
-
-        redirect_path = self.request.path
-
         redirect_path = self.request.path
 
         if "tx" in self.request.POST:
@@ -779,16 +770,37 @@ class ExperimentsView(TemplateView):
 class CampaignView(TemplateView):
     template_name = "transcriptions/create.html"
 
+    def get(self, *args, **kwargs):
+        """
+        GET request to create a collection. Only allow admin access
+        :param args:
+        :param kwargs:
+        :return: redirect to home (/) or render template create.html
+        """
+        if not self.request.user.is_superuser:
+            return HttpResponseRedirect('/')
+        else:
+            return render(self.request, self.template_name)
+
     def post(self, *args, **kwargs):
-        self.get_context_data()
-        name = self.request.POST.get("name")
-        url = self.request.POST.get("url")
-        slug = name.replace(" ", "-")
+        """
+        POST request when form submitted to create a collection. Only allows admin access
+        :param args:
+        :param kwargs:
+        :return: redirect to home (/) or render template create.html
+        """
+        if self.request.user.is_superuser:
+            self.get_context_data()
+            name = self.request.POST.get("name")
+            url = self.request.POST.get("url")
+            slug = name.replace(" ", "-")
 
-        view = CreateCampaignView.as_view()
-        importer_resp = view(self.request, *args, **kwargs)
+            view = CreateCampaignView.as_view()
+            importer_resp = view(self.request, *args, **kwargs)
 
-        return render(self.request, self.template_name, importer_resp.data)
+            return render(self.request, self.template_name, importer_resp.data)
+        else:
+            return HttpResponseRedirect('/')
 
 
 class DeleteCampaignView(TemplateView):
@@ -797,16 +809,25 @@ class DeleteCampaignView(TemplateView):
     """
 
     def get(self, request, *args, **kwargs):
-        requests.delete("%s://%s/ws/campaign_delete/%s/" %
-                        (self.request.scheme,
-                         self.request.get_host(),
-                         self.args[0]),
-                        cookies=self.request.COOKIES)
-
-        os.system(
-            "rm -rf {0}".format(settings.MEDIA_ROOT + "/concordia/" + self.args[0])
-        )
-        return redirect("/campaigns/")
+        """
+        GET request to delete a collection. Only allow admin access
+        :param request:
+        :param args:
+        :param kwargs:
+        :return: redirect to home (/) or redirect to /transcribe/
+        """
+        if not self.request.user.is_superuser:
+            return HttpResponseRedirect('/')
+        else:
+            requests.delete("%s://%s/ws/campaign_delete/%s/" %
+                            (self.request.scheme,
+                             self.request.get_host(),
+                             self.args[0]),
+                            cookies=self.request.COOKIES)
+            os.system(
+                "rm -rf {0}".format(settings.MEDIA_ROOT + "/concordia/" + collection.slug)
+            )
+            return redirect("/transcribe/")
 
 
 class DeleteAssetView(TemplateView):
@@ -816,21 +837,32 @@ class DeleteAssetView(TemplateView):
     """
 
     def get(self, request, *args, **kwargs):
-        asset_update = {"campaign": self.args[0], "slug": self.args[1]}
+        """
+        GET request to delete an asset. Only allow admin access
+        :param request:
+        :param args:
+        :param kwargs:
+        :return: redirect to home (/) or redirect to /transcribe
+        :return:
+        """
+        if not self.request.user.is_superuser:
+            return HttpResponseRedirect('/')
+        else:
+            asset_update = {"campaign": self.args[0], "slug": self.args[1]}
 
-        requests.put(
-            "%s://%s/ws/asset_update/%s/%s/" %
-            (
-                self.request.scheme,
-                self.request.get_host(),
-                self.args[0],
-                self.args[1],
-            ),
-            data=asset_update,
-            cookies=self.request.COOKIES,
-        )
+            requests.put(
+                "%s://%s/ws/asset_update/%s/%s/" %
+                (
+                    self.request.scheme,
+                    self.request.get_host(),
+                    self.args[0],
+                    self.args[1],
+                ),
+                data=asset_update,
+                cookies=self.request.COOKIES,
+            )
 
-        return redirect("/campaigns/" + self.args[0] + "/")
+            return redirect("/campaigns/" + self.args[0] + "/")
 
 
 class ReportCampaignView(TemplateView):

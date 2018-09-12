@@ -5,8 +5,9 @@ from datetime import datetime, timedelta
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import QueryDict
 from django.shortcuts import get_object_or_404
-from rest_framework import exceptions, generics, status
+from rest_framework import exceptions, generics, status, permissions
 from rest_framework.authentication import BasicAuthentication
+from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 
 from .models import (Asset, Campaign, PageInUse, Status, Tag, Transcription, User, UserProfile,
@@ -31,6 +32,26 @@ class ConcordiaAPIAuth(BasicAuthentication):
             raise exceptions.AuthenticationFailed
 
         return request.session.session_key, None
+
+
+class ConcordiaAdminPermission(permissions.BasePermission):
+    """
+    Verify the user is an admin. Called for any action to db that is not a Retrieve
+    """
+
+    def has_permission(self, request, view):
+        # always allow GET method
+        if request.method in permissions.SAFE_METHODS:
+            return True
+
+        if not request.session.exists(request.session.session_key):
+            return False
+
+        try:
+            user = User.objects.get(id=request.session._session["_auth_user_id"])
+            return user.is_superuser
+        except ObjectDoesNotExist:
+            return False
 
 
 class AnonymousUserGet(generics.RetrieveAPIView):
@@ -246,6 +267,7 @@ class CampaignDelete(generics.DestroyAPIView):
 
     model = Campaign
     authentication_classes = (ConcordiaAPIAuth,)
+    permission_classes = (ConcordiaAdminPermission,)
     queryset = Campaign.objects.all()
     serializer_class = CampaignDetailSerializer
     lookup_field = "slug"
@@ -314,6 +336,7 @@ class AssetUpdate(generics.UpdateAPIView):
 
     model = Campaign
     authentication_classes = (ConcordiaAPIAuth,)
+    permission_classes = (ConcordiaAdminPermission,)
     queryset = Campaign.objects.all()
     serializer_class = CampaignDetailSerializer
     lookup_fields = ("campaign", "slug")
@@ -334,9 +357,6 @@ class AssetUpdate(generics.UpdateAPIView):
         if serializer.is_valid():
             pass
         return Response(serializer.data)
-
-
-
 
 
 class PageInUseFilteredGet(generics.ListAPIView):
