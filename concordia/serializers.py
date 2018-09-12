@@ -1,7 +1,14 @@
+import boto3
 from rest_framework import serializers
 from django.contrib.auth.models import User
 
 from . import models
+
+
+from importer.config import IMPORTER
+
+S3_BUCKET_NAME = IMPORTER.get("S3_BUCKET_NAME", "")
+S3_CLIENT = boto3.client('s3','us-east-2')
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -48,6 +55,15 @@ class CampaignListSerializer(serializers.ModelSerializer):
 
 
 class AssetSetForCampaignSerializer(serializers.HyperlinkedModelSerializer):
+
+    media_url = serializers.SerializerMethodField()
+
+    def get_media_url(self, obj):
+        if S3_BUCKET_NAME and obj:
+            url = '{}/{}/{}'.format(S3_CLIENT.meta.endpoint_url, S3_BUCKET_NAME, obj.media_url)
+            return url
+        else:
+            return obj.media_url
     class Meta:
         model = models.Asset
         fields = (
@@ -99,6 +115,14 @@ class CampaignDetailSerializer(serializers.HyperlinkedModelSerializer):
 class AssetSerializer(serializers.HyperlinkedModelSerializer):
     campaign = CampaignDetailSerializer()
     project = ProjectSerializer()
+    media_url = serializers.SerializerMethodField()
+
+    def get_media_url(self, obj):
+        if S3_BUCKET_NAME and obj:
+            url = '{}/{}/{}'.format(S3_CLIENT.meta.endpoint_url, S3_BUCKET_NAME, obj.media_url)
+            return url
+        else:
+            return obj.media_url
 
     class Meta:
         model = models.Asset
