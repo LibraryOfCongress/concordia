@@ -73,8 +73,11 @@ services:
     build:
        context: .
        dockerfile: importer/Dockerfile
+    environment:
+      POSTGRESQL_HOST: db
     depends_on:
       - rabbit
+      - db
     volumes:
       - images_volume:/concordia_images
 
