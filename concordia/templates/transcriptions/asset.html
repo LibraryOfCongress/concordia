@@ -362,6 +362,7 @@
                         $(this).attr("disabled", "disabled");
                         $("#captcha_container").removeClass('d-none');
                         $("#captcha_container").show();
+                        $("#review-button").prop("disabled",true);
                     }
                 });
                 $("#review-button").click(function(e){
