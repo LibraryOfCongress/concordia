@@ -230,31 +230,24 @@ class ConcordiaProjectView(TemplateView):
             items=items,
         )
 
+
 class ConcordiaItemView(TemplateView):
+    """
+    Handle GET requests on /campaign/<campaign>/<project>/<item>
+    """
     template_name = "transcriptions/item.html"
 
     def get_context_data(self, **kws):
 
         response = requests.get(
-            "%s://%s/ws/campaign/%s/"
-            % (self.request.scheme, self.request.get_host(), self.args[0]),
+            "%s://%s/ws/item_by_id/%s"
+            % (self.request.scheme, self.request.get_host(), self.args[2]),
             cookies=self.request.COOKIES,
         )
-        campaign_json_val = json.loads(response.content.decode("utf-8"))
-        asset_sorted_list = sorted(
-            campaign_json_val["assets"], key=lambda k: (k["slug"])
-        )
+        item_json_val = json.loads(response.content.decode("utf-8"))
+        assets_json_val = item_json_val["assets"]
 
-        try:
-            project = Project.objects.get(slug=self.args[1])
-            item = Item.objects.get(slug=self.args[2])
-        except Item.DoesNotExist:
-            raise Http404
-        except Project.DoesNotExist:
-            raise Http404
-
-
-        paginator = Paginator(asset_sorted_list, ASSETS_PER_PAGE)
+        paginator = Paginator(assets_json_val, ASSETS_PER_PAGE)
 
         if not self.request.GET.get("page"):
             page = 1
@@ -265,9 +258,9 @@ class ConcordiaItemView(TemplateView):
 
         return dict(
             super().get_context_data(**kws),
-            campaign=campaign_json_val,
-            project=project,
-            item=item,
+            campaign=item_json_val["campaign"],
+            project=item_json_val["project"],
+            item=item_json_val,
             assets=assets,
         )
 
@@ -491,7 +484,7 @@ class ConcordiaAssetView(TemplateView):
                 cookies=self.request.COOKIES,
             )
 
-        return dict(
+        res = dict(
             super().get_context_data(**kws),
             page_in_use=page_in_use,
             asset=asset_json,
@@ -500,6 +493,8 @@ class ConcordiaAssetView(TemplateView):
             captcha_form=captcha_form,
             discussion_hide=discussion_hide,
         )
+
+        return res
 
     def post(self, *args, **kwargs):
         """
@@ -514,11 +509,6 @@ class ConcordiaAssetView(TemplateView):
         if self.request.POST.get("action").lower() == "contact a manager":
             return redirect(reverse("contact") + "?pre_populate=true")
 
-        if self.request.user.is_anonymous:
-            captcha_form = CaptchaEmbedForm(self.request.POST)
-            if not captcha_form.is_valid():
-                logger.info("Invalid captcha response")
-                return self.get(self.request, *args, **kwargs)
         response = requests.get(
             "%s://%s/ws/asset_by_slug/%s/%s/"
             % (
@@ -539,9 +529,7 @@ class ConcordiaAssetView(TemplateView):
 
         redirect_path = self.request.path
 
-        redirect_path = self.request.path
-
-        if "tx" in self.request.POST:
+        if "tx" in self.request.POST and 'tagging' not in self.request.POST:
             tx = self.request.POST.get("tx")
             tx_status = self.state_dictionary[self.request.POST.get("action")]
             requests.post(
@@ -568,7 +556,7 @@ class ConcordiaAssetView(TemplateView):
 
             redirect_path = next_page_dictionary[tx_status](redirect_path, asset_json)
 
-        if "tags" in self.request.POST and self.request.user.is_authenticated == True:
+        elif "tags" in self.request.POST and self.request.user.is_authenticated == True:
             tags = self.request.POST.get("tags").split(",")
             # get existing tags
             response = requests.get(
@@ -611,6 +599,8 @@ class ConcordiaAssetView(TemplateView):
                                             old_tag,
                                             self.request.user.id),
                                            cookies=self.request.COOKIES)
+
+            redirect_path += "#tab-tag"
 
         return redirect(redirect_path)
 

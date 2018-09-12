@@ -9,9 +9,10 @@ from rest_framework import exceptions, generics, status
 from rest_framework.authentication import BasicAuthentication
 from rest_framework.response import Response
 
-from .models import (Asset, Campaign, PageInUse, Status, Tag, Transcription, User, UserProfile,
+from .models import (Asset, Campaign, Item, PageInUse, Status, Tag, Transcription, User, UserProfile,
                      UserAssetTagCollection)
 from .serializers import (AssetSerializer, CampaignDetailSerializer,
+                          ItemSerializer,
                           PageInUseSerializer, TagSerializer, TranscriptionSerializer,
                           UserAssetTagSerializer, UserSerializer, UserProfileSerializer)
 
@@ -227,6 +228,8 @@ class CampaignGetById(generics.RetrieveAPIView):
     lookup_field = "id"
 
 
+
+
 class CampaignAssetsGet(generics.RetrieveAPIView):
     """
     GET: Retrieve an existing Campaign
@@ -249,6 +252,22 @@ class CampaignDelete(generics.DestroyAPIView):
     queryset = Campaign.objects.all()
     serializer_class = CampaignDetailSerializer
     lookup_field = "slug"
+
+
+class ItemGetById(generics.RetrieveAPIView):
+    """
+    GET: Retrieve assets for one item
+    """
+
+    model = Item
+    authentication_classes = (ConcordiaAPIAuth,)
+    serializer_class = ItemSerializer
+    lookup_field = "item_id"
+
+    def get_queryset(self):
+        return Item.objects.filter(
+            slug=self.kwargs["item_id"],
+        )
 
 
 class AssetsList(generics.ListAPIView):

@@ -147,6 +147,9 @@ urlpatterns = [
     re_path(
         r"^ws/campaign_by_id/(?P<id>(.*?))/$", views_ws.CampaignGetById().as_view()
     ),
+    re_path(
+        r"^ws/item_by_id/(?P<item_id>(.*?))/$", views_ws.ItemGetById().as_view()
+    ),
     re_path(r"^ws/asset/(?P<campaign>(.*?))/$", views_ws.AssetsList().as_view()),
     re_path(
         r"^ws/asset_by_slug/(?P<campaign>(.*?))/(?P<slug>(.*?))/$",
