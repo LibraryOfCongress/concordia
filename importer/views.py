@@ -18,12 +18,12 @@ from importer.models import CampaignItemAssetCount, CampaignTaskDetails
 from importer.serializer import CreateCampaign
 from importer.tasks import (download_write_campaign_item_assets,
                             download_write_item_assets, get_item_id_from_item_url)
-from importer.config import IMPORTER
+from importer.config import IMPORTER,IMPORTER_AWS_S3
 
 logger = getLogger(__name__)
 
 S3_CLIENT = boto3.client("s3")
-S3_BUCKET_NAME = IMPORTER.get("S3_BUCKET_NAME", "")
+S3_BUCKET_NAME = IMPORTER_AWS_S3.get("S3_BUCKET_NAME", "")
 S3_RESOURCE = boto3.resource("s3")
 
 

@@ -5,9 +5,9 @@ from django.contrib.auth.models import User
 from . import models
 
 
-from importer.config import IMPORTER
+from importer.config import IMPORTER, IMPORTER_AWS_S3
 
-S3_BUCKET_NAME = IMPORTER.get("S3_BUCKET_NAME", "")
+S3_BUCKET_NAME = IMPORTER_AWS_S3.get("S3_BUCKET_NAME", "")
 S3_CLIENT = boto3.client('s3','us-east-2')
 
 
