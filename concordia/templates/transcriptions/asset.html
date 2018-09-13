@@ -65,7 +65,7 @@
                             {% if user.is_authenticated %}
                                 <input type="text" id="tag-input" class="rounded" name="tags" data-role="tagsinput" value="{%for tag in tags %}{{tag}},{% endfor %}" aria-label="Tag input">
                             {% else %}
-                                <input type="text" id="tag-input" class="rounded" name="tags" data-role="tagsinput" value="{%for tag in tags %}{{tag.value}},{% endfor %}" aria-label="Tag input" disabled="true">
+                                <input type="text" id="tag-input" class="rounded" name="tags" data-role="tagsinput" value="{%for tag in tags %}{{tag}},{% endfor %}" aria-label="Tag input" disabled="true">
                             {% endif %}
                         </div>
                         {% if not discussion_hide %}
