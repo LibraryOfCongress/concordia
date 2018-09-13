@@ -49,28 +49,47 @@ Ready to contribute? Check out our [README](https://github.com/LibraryOfCongress
 
 1. Fork the `concordia` repo on GitHub.
 2. Clone your fork locally:
-
+    
+    #### Git Bash ####
     ```
-    $ git clone git@github.com:your_name_here/concordia.git
+    $ git clone git@github.com:YOUR_USERNAME/concordia.git
     ```
+    #### GitHub Desktop ####
+    
+    File > Clone Repository > YOUR_USERNAME/concordia
 
 3. Install your local copy to your virtual environment. Follow the instructions on [installing pipenv in our README](https://github.com/LibraryOfCongress/concordia/blob/2b211d3054fb681edb28adfab37928ad80ff859c/README.rst#serve)
 
 4. Create a branch for local development:
-
-    `$ git checkout -b name-of-your-bugfix-or-feature`
-
+    
+    #### Git Bash ####
+    ```
+   `$ git checkout -b name-of-your-bugfix-or-feature`
+    ```
+    #### GitHub Desktop ####
+    
+    Branch > New Branch > NAME_OF_BRANCH > Create new branch
+    
    Now you can make your changes locally.
 
 5. When you're done making changes, run your code through the Library's coding standards. You can find step by step instructions in the [README](https://github.com/LibraryOfCongress/concordia#code-quality):
 
 6. Commit your changes and push your branch to GitHub:
-
+    
+    #### Git Bash ####
     ```
     $ git add .
     $ git commit -m "Your detailed description of your changes."
     $ git push origin name-of-your-bugfix-or-feature
     ```
+    #### GitHub Desktop
+    I. Enter Commit Message
+    
+    II. Enter in optional extended description
+    
+    III. Select commit to YOUR_BRANCH
+    
+    IV. Click Push to Origin
 
 7. Submit a pull request through the GitHub website.
 
