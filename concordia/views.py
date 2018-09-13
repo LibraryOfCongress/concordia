@@ -238,29 +238,28 @@ class ConcordiaItemView(TemplateView):
     template_name = "transcriptions/item.html"
 
     def get_context_data(self, **kws):
+        from .serializers import ItemSerializer
 
-        response = requests.get(
-            "%s://%s/ws/item_by_id/%s"
-            % (self.request.scheme, self.request.get_host(), self.args[2]),
-            cookies=self.request.COOKIES,
+        item = get_object_or_404(
+            Item,
+            campaign__slug=self.args[0],
+            project__slug=self.args[1],
+            slug=self.args[2],
         )
-        item_json_val = json.loads(response.content.decode("utf-8"))
-        assets_json_val = item_json_val["assets"]
 
-        paginator = Paginator(assets_json_val, ASSETS_PER_PAGE)
+        serialized = ItemSerializer(item).data
 
-        if not self.request.GET.get("page"):
-            page = 1
-        else:
-            page = self.request.GET.get("page")
+        paginator = Paginator(serialized["assets"], ASSETS_PER_PAGE)
+
+        page = int(self.request.GET.get("page") or "1")
 
         assets = paginator.get_page(page)
 
         return dict(
             super().get_context_data(**kws),
-            campaign=item_json_val["campaign"],
-            project=item_json_val["project"],
-            item=item_json_val,
+            campaign=serialized["campaign"],
+            project=serialized["project"],
+            item=serialized,
             assets=assets,
         )
 
