@@ -356,11 +356,16 @@ def check_and_save_campaign_completeness(ciac):
 def check_and_save_item_completeness(ciac, item_id):
 
     if check_completeness(ciac, item_id):
+        if S3_BUCKET_NAME:
+            s3_storage = True
+        else:
+            s3_storage = False
         campaign, created = Campaign.objects.get_or_create(
             title=ciac.campaign_task.campaign_name,
             slug=ciac.campaign_task.campaign_slug,
             description=ciac.campaign_task.campaign_name,
             is_active=True,
+            s3_storage=s3_storage
         )
 
         try:
