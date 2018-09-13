@@ -205,10 +205,19 @@ LOGGING = {
             "formatter": "long",
             "maxBytes": 1024 * 1024 * 100,  # 100 mb
         },
+        'sentry': {
+            'level': 'WARNING',
+            'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
+        },
     },
     "loggers": {
         "django": {"handlers": ["file", "stream"], "level": "DEBUG", "propagate": True},
         "celery": {"handlers": ["celery", "stream"], "level": "DEBUG"},
+        'sentry.errors': {
+            'level': 'INFO',
+            'handlers': ['stream'],
+            'propagate': False,
+        },
     },
 }
 
