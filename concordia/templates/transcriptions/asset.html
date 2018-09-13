@@ -357,6 +357,7 @@
 
             {% if user.is_anonymous %}
                 $("#save-button").click(function(e){
+                	    {% if not is_anonymous_user_captcha_validated %}
                     if($("#captcha_container").hasClass('d-none')) {
                         e.preventDefault();
                         $(this).attr("disabled", "disabled");
@@ -364,6 +365,7 @@
                         $("#captcha_container").show();
                         $("#review-button").prop("disabled",true);
                     }
+                    {% endif %}
                 });
                 $("#review-button").click(function(e){
                     if($("#captcha_container").hasClass('d-none')) {
