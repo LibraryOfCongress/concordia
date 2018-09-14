@@ -2,13 +2,13 @@
     "containerDefinitions": [
         {
             "essential": true,
-            "image": "concordia_app:latest",
+            "image": "351149051428.dkr.ecr.us-east-1.amazonaws.com/concordia:latest",
             "logConfiguration": {
                 "logDriver": "awslogs",
                 "options": {
-                    "awslogs-group": "cf-42",
-                    "awslogs-region": "us-east-2",
-                    "awslogs-stream-prefix": "concordia_app"
+                    "awslogs-group": "concordia",
+                    "awslogs-region": "us-east-1",
+                    "awslogs-stream-prefix": "concordia"
                 }
             },
             "mountPoints": [
@@ -30,12 +30,12 @@
         },
         {
             "essential": true,
-            "image": "concordia_importer:latest",
+            "image": "351149051428.dkr.ecr.us-east-1.amazonaws.com/concordia/importer:latest",
             "logConfiguration": {
                 "logDriver": "awslogs",
                 "options": {
-                    "awslogs-group": "cf-42",
-                    "awslogs-region": "us-east-2",
+                    "awslogs-group": "concordia",
+                    "awslogs-region": "us-east-1",
                     "awslogs-stream-prefix": "concordia_importer"
                 }
             },
@@ -65,12 +65,6 @@
     "memory": "512",
     "cpu": "1024",
     "volumes": [
-        {
-            "host": {
-                "sourcePath": "."
-            },
-            "name": "_"
-        },
         {
             "host": {
                 "sourcePath": "images_volume"

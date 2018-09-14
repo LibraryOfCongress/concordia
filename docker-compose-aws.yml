@@ -33,7 +33,7 @@ services:
   app:
     essential: true
     env_file: ./.env
-    image: concordia_app:latest
+    image: concordia:latest
     volumes:
       - .:/app
       - images_volume:/concordia_images
@@ -43,13 +43,12 @@ services:
     logging:
       driver: awslogs
       options: 
-        awslogs-group: cf-42
-        awslogs-region: us-east-2
+        awslogs-group: concordai
+        awslogs-region: us-east-1
         awslogs-stream-prefix: concordia_app
 
   importer:
-    essential: true
-    image: concordia_importer:latest
+    image: concordia/importer:latest
 
     volumes:
       - images_volume:/concordia_images
@@ -57,8 +56,8 @@ services:
     logging:
       driver: awslogs
       options: 
-        awslogs-group: cf-42
-        awslogs-region: us-east-2
+        awslogs-group: concordia
+        awslogs-region: us-east-1
         awslogs-stream-prefix: concordia_importer
 
 volumes:

@@ -23,12 +23,16 @@ Parameters:
         Description: key pair within this region for ECS access
         Type: String
 
+    BasePath:
+        Description: Base path location for scripts, e.g. https://s3.amazonaws.com/rstorey-concordia-refarch
+        Type: String
+
 Resources:
 
     VPC:
         Type: AWS::CloudFormation::Stack
         Properties:
-
+#            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/vpc.yaml" ]]
             TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/vpc.yaml"
             Parameters:
                 EnvironmentName:    !Ref AWS::StackName
@@ -42,7 +46,8 @@ Resources:
     NetworkACL:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL:  "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/network-acl.yaml"
+#            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/network-acl.yaml" ]]
+            TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/network-acl.yaml"
             Parameters: 
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
@@ -54,7 +59,8 @@ Resources:
     SecurityGroups:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL:  "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/security-groups.yaml"
+            TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/security-groups.yaml"
+#            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/security-groups.yaml" ]]
             Parameters: 
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
@@ -62,7 +68,8 @@ Resources:
     RDS:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL:  "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/rds.yaml"
+            TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/rds.yaml"
+#            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/rds.yaml" ]]
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
@@ -74,7 +81,8 @@ Resources:
     ALB:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL:  "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/load-balancers.yaml"
+            TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/load-balancers.yaml"
+#            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/load-balancers.yaml" ]]
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
@@ -84,7 +92,8 @@ Resources:
     ECS:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL:  "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/ecs-cluster.yaml"
+            TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/ecs-cluster.yaml"
+#            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/ecs-cluster.yaml" ]]
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
@@ -96,6 +105,7 @@ Resources:
         Type: AWS::CloudFormation::Stack
         Properties:
             TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/services/concordia-service/service.yaml"
+#            TemplateURL: !Join [ "/", [ !Ref BasePath, "/services/concordia-service/service.yaml" ]]
             Parameters:
                 VPC: !GetAtt VPC.Outputs.VPC
                 Cluster: !GetAtt ECS.Outputs.Cluster
@@ -108,7 +118,8 @@ Resources:
     LifecycleHook:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL:  "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/lifecyclehook.yaml"
+            TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/lifecyclehook.yaml"
+#            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/lifecyclehook.yaml" ]]
             Parameters:
                 Cluster: !GetAtt ECS.Outputs.Cluster
                 ECSAutoScalingGroupName: !GetAtt ECS.Outputs.ECSAutoScalingGroupName

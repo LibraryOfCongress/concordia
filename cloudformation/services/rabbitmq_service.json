@@ -1,0 +1,18 @@
+{
+    "family": "rabbitmq",
+    "containerDefinitions": [
+        {
+            "name": "rabbitmq",
+            "image": "351149051428.dkr.ecr.us-east-1.amazonaws.com/rabbitmq:latest",
+            "cpu": 10,
+            "memory": 500,
+            "portMappings": [
+                {
+                    "containerPort": 5672,
+                    "hostPort": 5672
+                }
+            ],
+            "essential": true
+        }
+    ]
+}

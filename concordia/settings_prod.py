@@ -12,6 +12,8 @@ LOGGING["loggers"]["celery"]["level"] = "INFO"
 
 INSTALLED_APPS += ['django_elasticsearch_dsl']
 
+ELASTICSEARCH_DSL_AUTOSYNC = False
+
 DJANGO_SECRET_KEY = "changeme"
 
 # TODO: For final deployment to production,
@@ -23,7 +25,7 @@ DATABASES = {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": "concordia",
         "USER": "concordia",
-        "PASSWORD": "changeme",
+        "PASSWORD": os.getenv("POSTGRESQL_PW"),
         "HOST": os.getenv("POSTGRESQL_HOST"),
         "PORT": "5432",
     }

@@ -1,0 +1,12 @@
+{
+    "family": "concordia-importer",
+    "containerDefinitions": [
+        {
+            "name": "importer",
+            "image": "351149051428.dkr.ecr.us-east-1.amazonaws.com/concordia/importer:latest",
+            "cpu": 10,
+            "memory": 500,
+            "essential": true
+        }
+    ]
+}

@@ -7,12 +7,12 @@ This README, and set of CloudFormation templates, is based on the AWS sample tem
 The sample templates have been modified and new templates have been added. For the Concordia dev environment, CloudFormation templates are deployed from the [rstorey-concordia-refarch S3 bucket](https://s3.amazonaws.com/rstorey-concordia-refarch/master.yaml).
 
 To use these templates: 
- 1. Upload this directory to an S3 bucket and make sure the name of the bucket matches the TemplateURLs in master.yaml.
- 2. Read [how to get started with AWS ECR](https://docs.aws.amazon.com/AmazonECR/latest/userguide/ECR_GetStarted.html) and follow the instructions.
- 3. Create an AWS ECR repository.
- 4. Build the `concordia_app` docker image.
- 5. Tag and push the `concordia_app` docker image according to the instructions in the AWS ECR get started guide.
- 6. Update the docker image URL for your `concordia_app` docker image in `services/concordia-service/service.yaml`
+ 1. Upload this directory to an S3 bucket.
+ 2. Read [how to get started with AWS ECR](https://docs.aws.amazon.com/AmazonECR/latest/userguide/ECR_GetStarted.html) and follow the instructions to create an AWS ECR repository.
+ 3. Look at `configure-ecs-cli.sh` for command line examples for the following steps.
+ 4. Build the `concordia_app` and `concordia_importer` docker images.
+ 5. Tag and push the docker images according to the instructions in the AWS ECR get started guide.
+ 6. Update the docker image URL for your images in the appropriate `service.yaml` files.
  7. Use CloudFormation to create a stack, using the master.yaml in the S3 bucket you uploaded in step 1 as the initial template.
 
 ![build-status](https://codebuild.eu-west-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiKzBuNjJCUFk2STRvbDZENXlMUFJOenF2V2EyQ3FMbEtuWDlQeVp6TWlxdXhNMGVOZGo5bG9jdTl1YU16RmZIVVNxa3VqTVg3V3drSnJxOUQwSmhqV2g0PSIsIml2UGFyYW1ldGVyU3BlYyI6IlJJRE4wZGJaS25LL0s0dzkiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master)
