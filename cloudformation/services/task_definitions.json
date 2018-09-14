@@ -6,25 +6,22 @@
             "logConfiguration": {
                 "logDriver": "awslogs",
                 "options": {
-                    "awslogs-group": "concordia",
+                    "awslogs-group": "concordia2",
                     "awslogs-region": "us-east-1",
                     "awslogs-stream-prefix": "concordia"
                 }
             },
             "mountPoints": [
                 {
-                    "containerPath": "/app",
-                    "sourceVolume": "_"
-                },
-                {
-                    "containerPath": "/concordia_images",
-                    "sourceVolume": "Images_Volume"
+                    "sourceVolume": "images_volume",
+                    "containerPath": "/concordia_images"
                 }
             ],
             "name": "app",
             "portMappings": [
                 {
-                    "containerPort": 80
+                    "containerPort": 80,
+                    "hostPort": 80
                 }
             ]
         },
@@ -34,29 +31,36 @@
             "logConfiguration": {
                 "logDriver": "awslogs",
                 "options": {
-                    "awslogs-group": "concordia",
+                    "awslogs-group": "concordia2",
                     "awslogs-region": "us-east-1",
                     "awslogs-stream-prefix": "concordia_importer"
                 }
             },
             "mountPoints": [
                 {
-                    "containerPath": "/concordia_images",
-                    "sourceVolume": "Images_Volume"
+                    "sourceVolume": "images_volume",
+                    "containerPath": "/concordia_images"
                 }
             ],
             "name": "importer"
         },
         {
             "essential": true,
-            "image": "rabbitmq:latest",
+            "image": "351149051428.dkr.ecr.us-east-1.amazonaws.com/rabbitmq:latest",
             "name": "rabbit",
+            "hostname": "rabbit",
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "concordia2",
+                    "awslogs-region": "us-east-1",
+                    "awslogs-stream-prefix": "concordia_rabbit"
+                }
+            },
             "portMappings": [
                 {
-                    "containerPort": 5672
-                },
-                {
-                    "containerPort": 15672
+                    "containerPort": 5672,
+                    "hostPort": 5672
                 }
             ]
         }
@@ -66,10 +70,7 @@
     "cpu": "1024",
     "volumes": [
         {
-            "host": {
-                "sourcePath": "images_volume"
-            },
-            "name": "Images_Volume"
+            "name": "images_volume"
         }
     ]
 }

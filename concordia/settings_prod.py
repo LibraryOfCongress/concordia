@@ -10,11 +10,7 @@ LOGGING["handlers"]["celery"]["filename"] = "./logs/concordia-celery.log"
 LOGGING["loggers"]["django"]["level"] = "INFO"
 LOGGING["loggers"]["celery"]["level"] = "INFO"
 
-INSTALLED_APPS += ['django_elasticsearch_dsl']
-
-ELASTICSEARCH_DSL_AUTOSYNC = False
-
-DJANGO_SECRET_KEY = "changeme"
+DJANGO_SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 
 # TODO: For final deployment to production,
 # when we are running https, uncomment this next line
@@ -31,6 +27,8 @@ DATABASES = {
     }
 }
 
+CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL")
+CELERY_RESULT_BACKEND = "rpc://"
 
 
 IMPORTER = {
@@ -40,6 +38,10 @@ IMPORTER = {
     "ITEM_COUNT": "",
     "S3_BUCKET_NAME": "",
 }
+
+ELASTICSEARCH_DSL_AUTOSYNC = False
+
+INSTALLED_APPS += ['django_elasticsearch_dsl']
 
 ELASTICSEARCH_DSL_SIGNAL_PROCESSOR = 'django_elasticsearch_dsl.signals.RealTimeSignalProcessor'
 ELASTICSEARCH_DSL = {
