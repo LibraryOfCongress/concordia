@@ -1061,8 +1061,8 @@ class DeleteProjectView(TemplateView):
     """
 
     def get(self, request, *args, **kwargs):
-        collection = Collection.objects.get(slug=self.args[0])
-        subcollection = Subcollection.objects.get(slug=self.args[1])
+        collection = Campaign.objects.get(slug=self.args[0])
+        subcollection = Project.objects.get(slug=self.args[1])
         subcollection.asset_set.all().delete()
         subcollection.delete()
         os.system(

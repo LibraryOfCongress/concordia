@@ -1906,7 +1906,7 @@ class ViewTest_Concordia(TestCase):
         }
 
         # add an item to Collection
-        self.collection = Collection(
+        self.collection = Campaign(
             title="TextCollection",
             slug="test-slug2",
             description="Collection Description",
@@ -1915,7 +1915,7 @@ class ViewTest_Concordia(TestCase):
         )
         self.collection.save()
 
-        self.subcollection1 = Subcollection(
+        self.subcollection1 = Project(
             title="TextCollection sub collection1",
             slug="test-slug2-proj1",
             metadata={"key": "val1"},
@@ -1946,5 +1946,5 @@ class ViewTest_Concordia(TestCase):
         self.assertEqual(response.status_code, 200)
 
         # verify the collection is not in db
-        subcollections = Subcollection.objects.all()
+        subcollections = Project.objects.all()
         self.assertEqual(len(subcollections), 0)
