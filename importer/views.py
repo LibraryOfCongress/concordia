@@ -18,12 +18,11 @@ from importer.models import CampaignItemAssetCount, CampaignTaskDetails
 from importer.serializer import CreateCampaign
 from importer.tasks import (download_write_campaign_item_assets,
                             download_write_item_assets, get_item_id_from_item_url)
-from importer.config import IMPORTER,IMPORTER_AWS_S3
 
 logger = getLogger(__name__)
 
 S3_CLIENT = boto3.client("s3")
-S3_BUCKET_NAME = IMPORTER_AWS_S3.get("S3_BUCKET_NAME", "")
+S3_BUCKET_NAME = settings.AWS_S3.get("S3_COLLECTION_BUCKET", "")
 S3_RESOURCE = boto3.resource("s3")
 
 
@@ -229,22 +228,12 @@ def save_campaign_item_assets(project, the_path, item_id=None):
                 os.makedirs(item_path)
             except Exception as e:
                 logger.error("Error/warning while creating dir path: %s" % e)
-            # Asset.objects.create(
-            #     title=title,
-            #     slug="{0}{1}".format(title, sequence),
-            #     description="{0} description".format(title),
-            #     media_url=media_url,
-            #     media_type="IMG",
-            #     sequence=sequence,
-            #     campaign=project.campaign,
-            #     project=project,
-            #     item=item,
-            # )
+
     Asset.objects.bulk_create(list_asset_info)
     if S3_BUCKET_NAME:
         for a in list_asset_info:
+            source_file_path = os.path.join(settings.IMPORTER["IMAGES_FOLDER"], a.media_url)
             try:
-                source_file_path = os.path.join(settings.IMPORTER["IMAGES_FOLDER"], a.media_url)
                 S3_CLIENT.upload_file(source_file_path, S3_BUCKET_NAME, a.media_url)
                 logger.info(
                     "Uploaded %(filename)s to %(bucket_name)s",

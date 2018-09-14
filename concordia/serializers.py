@@ -1,14 +1,12 @@
 import boto3
 from rest_framework import serializers
 from django.contrib.auth.models import User
+from django.conf import settings
 
 from . import models
 
-
-from importer.config import IMPORTER, IMPORTER_AWS_S3
-
-S3_BUCKET_NAME = IMPORTER_AWS_S3.get("S3_BUCKET_NAME", "")
-S3_CLIENT = boto3.client('s3','us-east-2')
+S3_BUCKET_NAME = settings.AWS_S3.get("S3_COLLECTION_BUCKET", "")
+S3_CLIENT = boto3.client('s3', settings.AWS_S3.get("REGION", ""))
 
 
 class UserSerializer(serializers.ModelSerializer):
