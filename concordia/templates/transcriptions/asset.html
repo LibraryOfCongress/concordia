@@ -368,6 +368,7 @@
                     {% endif %}
                 });
                 $("#review-button").click(function(e){
+                	   {% if not is_anonymous_user_captcha_validated %}
                     if($("#captcha_container").hasClass('d-none')) {
                         e.preventDefault();
                        $(this).attr("disabled", "disabled");
@@ -377,6 +378,7 @@
                        // need to pass in button value to captcha enter button 
                        $("#input_group_for_captcha > .input-group-append > button").attr("value", $("#review-button").attr("value"));
                    }
+                   {% endif %}
                });
 
                 $(".js-captcha-refresh").click(function(e){
