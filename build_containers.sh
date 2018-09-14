@@ -4,10 +4,10 @@ set -eu
 
 AWS_ACCOUNT_ID="$(aws sts get-caller-identity  --output=text --query "Account")"
 
+eval "$(aws ecr get-login --no-include-email --region us-east-1)"
+
 docker build -t concordia .
 docker tag concordia:latest ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia:latest
-
-eval "$(aws ecr get-login --no-include-email --region us-east-1)"
 docker push ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia:latest
 
 docker build -t concordia/importer:latest --file importer/Dockerfile .

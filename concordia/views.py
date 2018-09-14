@@ -172,31 +172,28 @@ class ConcordiaCampaignView(TemplateView):
     template_name = "transcriptions/campaign.html"
 
     def get_context_data(self, **kws):
-        response = requests.get(
-            "%s://%s/ws/campaign/%s/"
-            % (self.request.scheme, self.request.get_host(), self.args[0]),
-            cookies=self.request.COOKIES,
+        from .serializers import CampaignSerializer
+
+        campaign = get_object_or_404(
+            Campaign,
+            slug=self.args[0],
         )
-        campaign_json_val = json.loads(response.content.decode("utf-8"))
-        for sub_col in campaign_json_val["projects"]:
-            sub_col["campaign"] = campaign_json_val
+
+        serialized = CampaignSerializer(campaign).data
+
+        for sub_col in campaign["projects"]:
+            sub_col["campaign"] = campaign
 
         project_sorted_list = sorted(
-            campaign_json_val["projects"], key=lambda k: (k["title"])
+            campaign["projects"], key=lambda k: (k["title"])
         )
-
-        paginator = Paginator(project_sorted_list, ASSETS_PER_PAGE)
-
-        if not self.request.GET.get("page"):
-            page = 1
-        else:
-            page = self.request.GET.get("page")
-
-        items = paginator.get_page(page)
 
         return dict(
-            super().get_context_data(**kws), campaign=campaign_json_val, projects=project_sorted_list
+            super().get_context_data(**kws),
+            campaign=serialized["campaign"],
+            projects=project_sorted_list,
         )
+
 
 class ConcordiaProjectView(TemplateView):
     template_name = "transcriptions/project.html"
