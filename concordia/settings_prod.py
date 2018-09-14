@@ -36,7 +36,7 @@ IMPORTER = {
     # /concordia_images is a docker volume shared by importer and concordia
     "IMAGES_FOLDER": "/concordia_images/",
     "ITEM_COUNT": "",
-    "S3_BUCKET_NAME": "",
+    "S3_BUCKET_NAME": os.getenv("S3_BUCKET_NAME"),
 }
 
 ELASTICSEARCH_DSL_AUTOSYNC = False
@@ -46,7 +46,7 @@ INSTALLED_APPS += ['django_elasticsearch_dsl']
 ELASTICSEARCH_DSL_SIGNAL_PROCESSOR = 'django_elasticsearch_dsl.signals.RealTimeSignalProcessor'
 ELASTICSEARCH_DSL = {
     'default': {
-        'hosts': 'elk:9200'
+        'hosts': os.getenv("ELASTICSEARCH_ENDPOINT")
     },
 }
 
@@ -56,7 +56,7 @@ EMAIL_HOST = os.environ.get("EMAIL_HOST", "localhost")
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 EMAIL_PORT = 587
-DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "")
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "noreply@loc.gov")
 DEFAULT_TO_EMAIL = DEFAULT_FROM_EMAIL
 
 # HMAC activation flow provide the two-step registration process,
