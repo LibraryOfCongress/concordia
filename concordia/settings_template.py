@@ -278,6 +278,8 @@ AWS_S3 = {
 PASSWORD_RESET_TIMEOUT_DAYS = 1
 REGISTRATION_OPEN = True  # set to false to temporarily disable registrations
 
+MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
+
 MESSAGE_TAGS = {
     messages.ERROR: 'danger',
 }
