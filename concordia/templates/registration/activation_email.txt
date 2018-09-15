@@ -1,6 +1,7 @@
+{% load custom_math %}
 Hi {{ user }},
 
-Thank you for joining Make Your Mark! Please verify your email address in the next {{ expiration_days * 24 }} hours.
+Thank you for joining Make Your Mark! Please verify your email address in the next {{ expiration_days |multiply:24 }} hours.
 
 To complete activation, please click the following link:
 <button class=button><a href='http://{{ site }}{% url "registration_activate" activation_key %}'>Verify Now</a></button>
