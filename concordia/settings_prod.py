@@ -39,7 +39,7 @@ IMPORTER = {
     "S3_BUCKET_NAME": os.getenv("S3_BUCKET_NAME"),
 }
 
-ELASTICSEARCH_DSL_AUTOSYNC = False
+ELASTICSEARCH_DSL_AUTOSYNC = os.getenv("ENABLE_ELASTICSEARCH")
 
 INSTALLED_APPS += ['django_elasticsearch_dsl']
 

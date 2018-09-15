@@ -15,9 +15,9 @@ DATABASES = {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": "concordia",
         "USER": "concordia",
-        "PASSWORD": "post12345",
+        "PASSWORD": "${POSTGRESQL_PW}",
         "HOST": "0.0.0.0",
-        "PORT": "54321",
+        "PORT": "54323",
     }
 }
 
@@ -39,6 +39,8 @@ EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 EMAIL_FILE_PATH = "/tmp/concordia-messages"  # change this to a proper location
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "")
 DEFAULT_TO_EMAIL = DEFAULT_FROM_EMAIL
+
+ELASTICSEARCH_DSL_AUTOSYNC = False
 
 ELASTICSEARCH_DSL_SIGNAL_PROCESSOR = 'django_elasticsearch_dsl.signals.RealTimeSignalProcessor'
 ELASTICSEARCH_DSL = {

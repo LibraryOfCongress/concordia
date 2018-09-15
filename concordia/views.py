@@ -172,25 +172,25 @@ class ConcordiaCampaignView(TemplateView):
     template_name = "transcriptions/campaign.html"
 
     def get_context_data(self, **kws):
-        from .serializers import CampaignSerializer
+        from .serializers import CampaignDetailSerializer
 
         campaign = get_object_or_404(
             Campaign,
             slug=self.args[0],
         )
 
-        serialized = CampaignSerializer(campaign).data
+        serialized = CampaignDetailSerializer(campaign).data
 
-        for sub_col in campaign["projects"]:
+        for sub_col in serialized["projects"]:
             sub_col["campaign"] = campaign
 
         project_sorted_list = sorted(
-            campaign["projects"], key=lambda k: (k["title"])
+            serialized["projects"], key=lambda k: (k["title"])
         )
 
         return dict(
             super().get_context_data(**kws),
-            campaign=serialized["campaign"],
+            campaign=serialized,
             projects=project_sorted_list,
         )
 
