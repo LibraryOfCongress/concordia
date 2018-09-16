@@ -1940,7 +1940,7 @@ class ViewTest_Concordia(TestCase):
 
         # Act
 
-        response = self.client.get("/transcribe/delete/project/test-slug2/test-slug2-proj1/", follow=True)
+        response = self.client.get("/campaigns/delete/project/test-slug2/test-slug2-proj1/", follow=True)
 
         # Assert
         self.assertEqual(response.status_code, 200)
