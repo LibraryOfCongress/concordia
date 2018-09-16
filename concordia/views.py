@@ -1068,5 +1068,5 @@ class DeleteProjectView(TemplateView):
         os.system(
             "rm -rf {0}".format(settings.MEDIA_ROOT + "/concordia/" + collection.slug + "/" + subcollection.slug)
         )
-        return redirect("/transcribe/"+collection.slug+"/")
+        return redirect("/campaigns/"+collection.slug+"/")
 

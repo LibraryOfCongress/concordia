@@ -109,8 +109,11 @@
     </div>
   </div>
 </div>
+
 {% endblock main_content %}
-{% endblock main_content %}
+
+{% block body_scripts %}
+
 <script>
     $(document).ready(function(){
          $(document).on('show.bs.modal',"#campaignConfirmModal", function (e) {
@@ -145,15 +148,15 @@
 		var $invoker = $(e.relatedTarget);
 
 		$("#deleteconfirmbtn").click(function(e){
-		    var collection_slug = $($invoker[0]).attr("data-collection");
+		    var campaign_slug = $($invoker[0]).attr("data-collection");
 		    $('#deleteConfirmModal').modal('hide');
 
 		    $.ajax({
-			url: '/transcribe/delete/'+campaign_slug+'/',
+			url: '/campaigns/delete/'+campaign_slug+'/',
 			type: 'GET',
 			success: function(data, textStatus, jqXHR) {
 				$("#thumbnailConfirmModal").modal('hide');
-				window.location.href = '/transcribe/';
+				window.location.href = '/campaigns/';
 			    }
 			}).fail(function(data, jqXHR, textStatus, errorThrown) {
 			    console.log("error: ", data);

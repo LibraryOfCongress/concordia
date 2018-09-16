@@ -36,7 +36,7 @@
                                     <a href="{% url 'transcriptions:project' project.campaign.slug project.slug %}" class="btn btn-primary col mb-quarter">View</a>
                                   </div>
                                   <div class="col-md-8 mx-auto text-center">
-                                      <a href="#" class="btn btn-danger col mb-quarter" data-collection="{{ project.collection.slug }}" data-subcollection="{{ project.slug }}" data-toggle="modal" data-target="#deleteConfirmModal">Delete</a>
+                                      <a href="#" class="btn btn-danger col mb-quarter" data-collection="{{ project.campaign.slug }}" data-subcollection="{{ project.slug }}" data-toggle="modal" data-target="#deleteConfirmModal">Delete</a>
                                   </div>
                                 {% if request.user|has_group:"CM" %}
                                     <div class="col-md-8 mx-auto text-center">
@@ -158,11 +158,11 @@
                 $('#deleteConfirmModal').modal('hide');
 
                 $.ajax({
-                    url: '/transcribe/delete/project/'+collection_slug+'/'+subcollection_slug+'/',
+                    url: '/campaigns/delete/project/'+collection_slug+'/'+subcollection_slug+'/',
                     type: 'GET',
                     success: function(data, textStatus, jqXHR) {
                             $("#thumbnailConfirmModal").modal('hide');
-                            window.location.href = '/transcribe/';
+                            window.location.href = '/campaigns/';
                         }
                     }).fail(function(data, jqXHR, textStatus, errorThrown) {
                         console.log("error: ", data);
