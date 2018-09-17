@@ -1,0 +1,19 @@
+version: 1
+task_definition:
+  task_execution_role: ecsTaskExecutionRole
+  ecs_network_mode: awsvpc
+  services:
+    app:
+    importer:
+    rabbit:
+  task_size:
+    mem_limit: 0.5GB
+    cpu_limit: 256
+run_params:
+  network_configuration:
+    awsvpc_configuration:
+      subnets:
+        - "subnet-0fc613dd2045d7c36"
+        - "subnet-0bc1b64bcbde86ecb"
+      security_groups:
+        - "sg-07fefd4d36c828ce7"

@@ -1,6 +1,5 @@
 # Contributing
 
-
 Contributions are welcome and are greatly appreciated! Every little bit helps, and credit will always be given.
 
 You can contribute in many ways:
@@ -8,7 +7,6 @@ You can contribute in many ways:
 ## Types of Contributions
 
 ### Report Bugs
-
 
 Report bugs by [submitting an issue](https://github.com/LibraryOfCongress/concordia/issues).
 

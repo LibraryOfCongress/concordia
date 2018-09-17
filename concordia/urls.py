@@ -1,9 +1,9 @@
 
 from django.conf import settings
-from django.conf.urls import include, url
+from django.conf.urls import url
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
-from django.urls import include, re_path
+from django.urls import include, path, re_path
 from django.views.generic import TemplateView
 from django.views.static import serve
 from machina.app import board
@@ -130,26 +130,31 @@ urlpatterns = [
     re_path(r"^forum/", include(board.urls)),
     # Web Services
     re_path(r"^ws/anonymous_user/$", views_ws.AnonymousUserGet.as_view()),
-    re_path(r"^ws/user_profile/(?P<user_id>(.*?))/$", views_ws.UserProfileGet.as_view()),
+    re_path(
+        r"^ws/user_profile/(?P<user_id>(.*?))/$", views_ws.UserProfileGet.as_view()
+    ),
     re_path(r"^ws/user/(?P<user_name>(.*?))/$", views_ws.UserGet.as_view()),
     re_path(r"^ws/page_in_use/(?P<page_url>(.*?))/$", views_ws.PageInUseGet.as_view()),
     re_path(
         r"^ws/page_in_use_update/(?P<page_url>(.*?))/$", views_ws.PageInUsePut.as_view()
     ),
     re_path(r"^ws/page_in_use/$", views_ws.PageInUseCreate.as_view()),
-    re_path(r"^ws/page_in_use_delete/(?P<page_url>(.*?))/$", views_ws.PageInUseDelete.as_view()),
+    re_path(
+        r"^ws/page_in_use_delete/(?P<page_url>(.*?))/$",
+        views_ws.PageInUseDelete.as_view(),
+    ),
     re_path(
         r"^ws/page_in_use_user/(?P<user>(.*?))/(?P<page_url>(.*?))/$",
         views_ws.PageInUseUserGet.as_view(),
     ),
     re_path(r"^ws/campaign/(?P<slug>(.*?))/$", views_ws.CampaignGet().as_view()),
-    re_path(r"^ws/campaign_delete/(?P<slug>(.*?))/$", views_ws.CampaignDelete.as_view()),
+    re_path(
+        r"^ws/campaign_delete/(?P<slug>(.*?))/$", views_ws.CampaignDelete.as_view()
+    ),
     re_path(
         r"^ws/campaign_by_id/(?P<id>(.*?))/$", views_ws.CampaignGetById().as_view()
     ),
-    re_path(
-        r"^ws/item_by_id/(?P<item_id>(.*?))/$", views_ws.ItemGetById().as_view()
-    ),
+    re_path(r"^ws/item_by_id/(?P<item_id>(.*?))/$", views_ws.ItemGetById().as_view()),
     re_path(r"^ws/asset/(?P<campaign>(.*?))/$", views_ws.AssetsList().as_view()),
     re_path(
         r"^ws/asset_by_slug/(?P<campaign>(.*?))/(?P<slug>(.*?))/$",
@@ -246,3 +251,10 @@ urlpatterns += [
 urlpatterns += [url("", include("django_prometheus_metrics.urls"))]
 
 urlpatterns += [url(r"^captcha/", include("captcha.urls"))]
+
+urlpatterns += [url(r"^maintenance-mode/", include("maintenance_mode.urls"))]
+
+if settings.DEBUG:
+    import debug_toolbar
+
+    urlpatterns = [path("__debug__/", include(debug_toolbar.urls))] + urlpatterns
