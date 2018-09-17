@@ -287,4 +287,3 @@ if SENTRY_DSN:
 # When the MAINTENANCE_MODE setting is true, this template will be used to
 # generate a 503 response:
 MAINTENANCE_MODE_TEMPLATE = "maintenance-mode.html"
-

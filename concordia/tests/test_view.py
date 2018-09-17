@@ -7,26 +7,14 @@ import time
 from unittest.mock import Mock, patch
 
 import responses
+import views
 from captcha.models import CaptchaStore
 from django.test import Client, TestCase
 from PIL import Image
 
-from concordia.models import (
-    Asset,
-    Campaign,
-    Item,
-    MediaType,
-    PageInUse,
-    Project,
-    Status,
-    Tag,
-    Transcription,
-    User,
-    UserAssetTagCollection,
-    UserProfile,
-)
-
-import views
+from concordia.models import (Asset, Campaign, Item, MediaType, PageInUse, Project,
+                              Status, Tag, Transcription, User, UserAssetTagCollection,
+                              UserProfile)
 
 logging.disable(logging.CRITICAL)
 
