@@ -1,6 +1,5 @@
 # concordia
 
-
 ## Prerequisites
 
 This application can run on a single Docker host using docker-compose. (recommended for development environments). For production, see the cloudformation directory for AWS Elastic Container stack templates.
@@ -29,7 +28,6 @@ This file contains:
 Setting the passwords in this file is the only location where user
 passwords are defined. All access to these passwords is through the `.env`
 file.
-
 
 ### Sentry Secret Key
 
@@ -117,7 +115,6 @@ the changes from each step are visible.
 
 #### Data Model Graph
 
-
 To generate a model graph, do:
 
     $ docker-compose up -d app
@@ -128,7 +125,6 @@ To generate a model graph, do:
 
 #### Python Dependencies
 
-
 Python dependencies are managed using pipenv
 \<<https://docs.pipenv.org/>\>.
 
@@ -136,12 +132,12 @@ If you want to add a new Python package requirement to the application
 environment, it must be added to the Pipfile and the Pipfile.lock file.
 This can be done with the command:
 
-	$ pipenv install <package>
+    $ pipenv install <package>
 
 If you manually add package names to Pipfile, then you need to update
 the Pipfile.lock file:
 
-	$ pipenv lock
+    $ pipenv lock
 
 Both the Pipfile and the Pipfile.lock file must be committed to the
 source code repository.
