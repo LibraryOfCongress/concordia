@@ -39,6 +39,10 @@ ITEMS_PER_PAGE = 36
 
 
 def concordia_api(relative_path):
+    warn(
+        f"Internal API call for {relative_path} should be refactored",
+        category=DeprecationWarning,
+    )
     abs_path = "{}/api/v1/{}".format(settings.CONCORDIA["netloc"], relative_path)
     logger.debug("Calling API path %s", abs_path)
     data = requests.get(abs_path).json()
