@@ -7,26 +7,23 @@ from . import models
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ("id",
-                  "username",
-                  "password",
-                  "first_name",
-                  "last_name",
-                  "email",
-                  "is_staff",
-                  "is_active",
-                  "date_joined"
-                  )
+        fields = (
+            "id",
+            "username",
+            "password",
+            "first_name",
+            "last_name",
+            "email",
+            "is_staff",
+            "is_active",
+            "date_joined",
+        )
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = models.UserProfile
-        fields = ("id",
-                  "user",
-                  "myfile",
-                  )
+        fields = ("id", "user", "myfile")
 
 
 class CampaignListSerializer(serializers.ModelSerializer):
@@ -64,17 +61,9 @@ class AssetSetSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class ProjectSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = models.Project
-        fields = (
-            "id",
-            "title",
-            "slug",
-            "metadata",
-            "status",
-            "is_publish",
-        )
+        fields = ("id", "title", "slug", "metadata", "status", "is_publish")
 
 
 class CampaignDetailSerializer(serializers.HyperlinkedModelSerializer):
@@ -104,14 +93,7 @@ class ItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Item
-        fields = (
-            "title",
-            "slug",
-            "thumbnail_url",
-            "assets",
-            "project",
-            "campaign",
-        )
+        fields = ("title", "slug", "thumbnail_url", "assets", "project", "campaign")
 
 
 class AssetSerializer(serializers.HyperlinkedModelSerializer):

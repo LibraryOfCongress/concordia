@@ -41,14 +41,12 @@ IMPORTER = {
 
 ELASTICSEARCH_DSL_AUTOSYNC = os.getenv("ENABLE_ELASTICSEARCH")
 
-INSTALLED_APPS += ['django_elasticsearch_dsl']
+INSTALLED_APPS += ["django_elasticsearch_dsl"]
 
-ELASTICSEARCH_DSL_SIGNAL_PROCESSOR = 'django_elasticsearch_dsl.signals.RealTimeSignalProcessor'
-ELASTICSEARCH_DSL = {
-    'default': {
-        'hosts': os.getenv("ELASTICSEARCH_ENDPOINT")
-    },
-}
+ELASTICSEARCH_DSL_SIGNAL_PROCESSOR = (
+    "django_elasticsearch_dsl.signals.RealTimeSignalProcessor"
+)
+ELASTICSEARCH_DSL = {"default": {"hosts": os.getenv("ELASTICSEARCH_ENDPOINT")}}
 
 EMAIL_USE_TLS = True
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"

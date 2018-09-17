@@ -14,8 +14,11 @@ from rest_framework.response import Response
 from concordia.models import Asset, Campaign, Item, Project
 from importer.models import CampaignItemAssetCount, CampaignTaskDetails
 from importer.serializer import CreateCampaign
-from importer.tasks import (download_write_campaign_item_assets,
-                            download_write_item_assets, get_item_id_from_item_url)
+from importer.tasks import (
+    download_write_campaign_item_assets,
+    download_write_item_assets,
+    get_item_id_from_item_url,
+)
 
 logger = getLogger(__name__)
 
