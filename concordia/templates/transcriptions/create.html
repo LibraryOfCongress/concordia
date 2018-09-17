@@ -3,9 +3,9 @@
 {% block title %}Citizen Historian Create a Campaign{% endblock title %}
 {% block head_content %}
 <style>
-* {
+/** {
   box-sizing: border-box;
-}
+}*/
 
 .autocomplete {
   /*the container must be positioned relative:*/
@@ -61,11 +61,10 @@ input[type=submit] {
   color: #ffffff;
 }
 </style>
-
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 {% endblock head_content %}
+
 {% block main_content %}
-<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
-<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 <div class="container-fluid py-default" id='container'>
   <div class="row">
     <div class="col-md-10 mx-auto bg-offwhite rounded">
@@ -75,20 +74,20 @@ input[type=submit] {
               <h6 class="form-text offwhite-text">Creating campaign...<span id="progress"></span>
               </h6>
       </div>
-        <div class="alert alert-danger alert-dismissible fade show" id="close_error" role="alert">
-          <button type="button" class="close" onclick="hide_box()" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-          <strong id="error_msg"></strong>
+        <div class="alert alert-danger alert-dismissible fade" id="close_error" role="alert">
+            <strong id="error_msg"></strong>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
         </div>
 
       <!--<form class="mx-default my-default">-->
       {% if error %}
-        <div class="alert alert-danger alert-dismissible fade show" id="close" role="alert">
-          <button type="button" class="close" onclick="hide_box()" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-          <strong>Sorry!</strong> We're having some trouble accessing that URL. Is it accessible? You want to double check if you entered it correctly?
+        <div class="alert alert-danger alert-dismissible fade" id="close" role="alert">
+            <strong>Sorry!</strong> We're having some trouble accessing that URL. Is it accessible? You want to double check if you entered it correctly?
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
         </div>
       {% endif %}
 
@@ -119,15 +118,16 @@ input[type=submit] {
         <input type="hidden" id="item_id">
   </div>
 </div>
+{% endblock main_content %}
+
+{% block body_scripts %}
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous"></script>
 <script>
 $("#close_error").hide();
 function handle_form_submission()
 {
   $(".loading").removeClass("d-none");
   // document.getElementById("container").style.display = "none";
-}
-function hide_box(){
-   document.getElementById("close").style.display = "none";
 }
 
 function write_save_campaign_assets(task_id){
@@ -153,9 +153,9 @@ function write_save_campaign_assets(task_id){
             console.log('Your session has ended due to inactivity after 10 minutes.\nPlease refresh this page, or close this window and log back in to system.');
         } else {
             console.log('Unknown error returned while saving' + (typeof errorThrown == 'string' && errorThrown.trim().length > 0 ? ':\n' + errorThrown : ''));
-         $("#error_msg").html("An error occurred while creating campaign.");
-        $(".loading").addClass("d-none");
-                $("#close_error").show();
+            $("#error_msg").html("<strong>Sorry!</strong> An error occurred creating the campaign.");
+            $(".loading").addClass("d-none");
+            $("#close_error").show();
         }
     });
 
@@ -210,13 +210,13 @@ $("#create_btn").click(function(){
         }).fail(function(data, jqXHR, textStatus, errorThrown) {
             $(".loading").removeClass("d-none");
             if(jqXHR.status == 0 || jqXHR == 302) {
-                $("#error_msg").html("An error occurred while creating campaign.");
+                $("#error_msg").html("<strong>Sorry!</strong> An error occurred while creating campaign.");
             } else {
                 if(data.responseJSON.message){
                      $("#error_msg").html(data.responseJSON.message);
             }
             else{
-            $("#error_msg").html("An error occurred while creating campaign.");
+            $("#error_msg").html("<strong>Sorry!</strong> An error occurred while creating campaign.");
                 }
             }
             $("#close_error").show();
@@ -251,6 +251,4 @@ $(function(){
 });
 
 </script>
-{% endblock main_content %}
-
-
+{% endblock body_scripts %}

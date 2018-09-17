@@ -68,62 +68,66 @@
         </div>
     </div>
 </div>
+
 <!-- Confirmation Modal -->
 <div class="modal fade" id="projectConfirmModal" tabindex="-1" role="dialog" aria-labelledby="projectConfirmModalLabel" aria-hidden="true">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="projectConfirmModalLabel">Confirm Project</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        Are you sure you want to make it public ?
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary" id="confirmprojectbtn">Submit</button>
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="projectConfirmModalLabel">Confirm Project</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          Are you sure you want to make this project public?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" id="confirmprojectbtn">Submit</button>
+        </div>
       </div>
     </div>
   </div>
-</div>
+  {% endblock main_content %}
+  
+  {% block body_scripts %}
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous"></script>
+  <script>
+      $(document).ready(function(){
+          $(document).on('show.bs.modal',"#projectConfirmModal", function (e) {
+              var $invoker = $(e.relatedTarget);
+  
+              $("#confirmprojectbtn").click(function(e){
+                  var collection_slug = $($invoker[0]).attr('data-collection');
+                  var project_slug = $($invoker[0]).attr('id');
+                  var requested_status = $("#"+project_slug).text().trim();
+                  if(requested_status == 'Publish'){
+                      var to_status = 'true';
+                  }
+                  else{
+                      var to_status = 'false';
+                  }
+                  $.ajax({
+                      url: '/transcribe/publish/project/'+collection_slug+"/"+project_slug+"/"+to_status+"/",
+                      type: 'GET',
+                      success: function(data, textStatus, jqXHR) {
+                          $('#projectConfirmModal').modal('hide');
+                          if(data['state']){
+                              $("#"+project_slug).text('Unpublish');
+                          } else{
+                              $("#"+project_slug).text('Publish');
+                          }
+                      }
+                  }).fail(function(data, jqXHR, textStatus, errorThrown) {
+                      console.log("error: ", data);
+                  });
+              });
+          });
+      });
+  </script>
+  {% endblock body_scripts %}
 
-<script>
-    $(document).ready(function(){
-         $(document).on('shown.bs.modal',"#projectConfirmModal", function (e) {
-            var $invoker = $(e.relatedTarget);
-
-            $("#confirmprojectbtn").click(function(e){
-                var campaign_slug = $($invoker[0]).attr('data-campaign');
-                var project_slug = $($invoker[0]).attr('id');
-                var requested_status = $("#"+project_slug).text().trim();
-                if(requested_status == 'Publish'){
-                    var to_status = 'true';
-                }
-                else{
-                    var to_status = 'false';
-                }
-                $.ajax({
-                    url: '/campaigns/publish/project/'+campaign_slug+"/"+project_slug+"/"+to_status+"/",
-                    type: 'GET',
-                    success: function(data, textStatus, jqXHR) {
-			$('#projectConfirmModal').modal('hide');
-                        if(data['state']){
-                            $("#"+project_slug).text('Unpublish');
-                        }else{
-                            $("#"+project_slug).text('Publish');
-                        }
-                    }
-                }).fail(function(data, jqXHR, textStatus, errorThrown) {
-                   console.log("error: ", data);
-                });
-            });
-         });
-    });
-</script>
-
-{% endblock main_content %}
 
 
 

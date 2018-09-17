@@ -18,6 +18,8 @@ load_dotenv(dotenv_path)
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = "django-secret-key"
 
+CONCORDIA_ENVIRONMENT = os.environ.get("CONCORDIA_ENVIRONMENT", "development")
+
 # Optional SMTP authentication information for EMAIL_HOST.
 EMAIL_HOST_USER = ""
 EMAIL_HOST_PASSWORD = ""
@@ -74,6 +76,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "raven.contrib.django.raven_compat",
     "rest_framework",
     "concordia",
     "exporter",
@@ -119,6 +122,8 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "django.template.context_processors.media",
+                # Concordia
+                "concordia.context_processors.system_configuration",
                 # Machina
                 "machina.core.context_processors.metadata",
             ],
@@ -200,10 +205,19 @@ LOGGING = {
             "formatter": "long",
             "maxBytes": 1024 * 1024 * 100,  # 100 mb
         },
+        'sentry': {
+            'level': 'WARNING',
+            'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
+        },
     },
     "loggers": {
         "django": {"handlers": ["file", "stream"], "level": "DEBUG", "propagate": True},
         "celery": {"handlers": ["celery", "stream"], "level": "DEBUG"},
+        'sentry.errors': {
+            'level': 'INFO',
+            'handlers': ['stream'],
+            'propagate': False,
+        },
     },
 }
 
@@ -268,3 +282,9 @@ REGISTRATION_OPEN = True  # set to false to temporarily disable registrations
 MESSAGE_TAGS = {
     messages.ERROR: 'danger',
 }
+
+SENTRY_DSN = os.environ.get("SENTRY_DSN", "")
+SENTRY_PUBLIC_DSN = os.environ.get("SENTRY_PUBLIC_DSN", "")
+
+if SENTRY_DSN:
+    RAVEN_CONFIG = {"dsn": SENTRY_DSN, "environment": CONCORDIA_ENVIRONMENT}
