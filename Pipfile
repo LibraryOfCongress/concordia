@@ -13,6 +13,7 @@ coreapi = "*"
 django-machina = "*"
 django-haystack = "*"
 "boto3" = "*"
+botocore = '*'
 requests = "*"
 Django = "<2.1,>=2"
 Pillow = "*"
