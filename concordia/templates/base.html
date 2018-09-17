@@ -23,11 +23,10 @@
             <div class="d-flex navbar-brand">
                 <a class="my-auto" href="#"><img src="{% static 'img/LoC-logo.svg' %}" alt="Library of Congress logo"></a>
                 <span class="vl mx-2 my-auto"></span>
-                {% if request.path == '/' %}
-                    <h1 class="header-text align-self-end"><a class="gray-text align-baseline d-inline" href="#">crowd</a>
-                {% else %}
-                    <h1 class="header-text align-self-end"><a class="gray-text align-baseline d-inline" href="/">crowd</a>
-                {% endif %}
+
+                <h1 class="header-text align-self-end">
+                    <a class="gray-text align-baseline" href="{% if request.path == '/' %}#{% else %}/{% endif %}">crowd</a>
+                </h1>
             </div>
             <button class="navbar-toggler navbar-light" type="button" data-toggle="collapse" data-target="#nav-menu" aria-controls="nav-menu" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -355,6 +354,10 @@
         </div>
     </footer>
     <!-- JS -->
+    {% if SENTRY_PUBLIC_DSN %}
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/raven.js/3.26.1/raven.min.js" integrity="sha256-N3YzTdAC27tvNKpIM2rly/WvlJf8YAat0NjPXgh5Bw4=" crossorigin="anonymous"></script>
+        <script>Raven.config('{{ SENTRY_PUBLIC_DSN }}').install()</script>
+    {% endif %}
     <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>

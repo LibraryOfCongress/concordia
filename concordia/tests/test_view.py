@@ -11,7 +11,7 @@ from captcha.models import CaptchaStore
 from django.test import Client, TestCase
 from PIL import Image
 
-from concordia.models import (Asset, Campaign, MediaType, PageInUse, Project, Status,
+from concordia.models import (Asset, Campaign, Item, MediaType, PageInUse, Project, Status,
                               Tag, Transcription, User, UserAssetTagCollection,
                               UserProfile)
 
@@ -447,6 +447,69 @@ class ViewTest_Concordia(TestCase):
         # Assert
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, template_name="transcriptions/campaign.html")
+
+    @responses.activate
+    def test_ConcordiaItemView_get(self):
+        """
+        Test GET on route /campaigns/<campaign-slug>/<project-slug>/<item-slug>
+        :return:
+        """
+
+        # Arrange
+
+        # add an item to Campaign
+        self.campaign = Campaign(
+            title="TextCampaign",
+            slug="test-slug",
+            status=Status.EDIT,
+        )
+        self.campaign.save()
+
+        self.project = Project(
+            title="TestProject",
+            slug="project-slug",
+            campaign=self.campaign
+        )
+
+        self.project.save()
+
+        self.item = Item(
+            title="item-slug",
+            slug="item-slug",
+            item_id="item-slug",
+            is_publish=True,
+            campaign=self.campaign,
+            project=self.project
+        )
+
+        self.item.save()
+
+        # mock REST requests
+
+        item_json = {
+            "slug": self.item.slug,
+            "title": self.item.title,
+            "description": "Item Description",
+            "assets": [],
+            "is_publish": True,
+            "campaign": self.campaign.id,
+            "project": self.project.id
+        }
+
+        responses.add(
+            responses.GET,
+            "http://testserver/ws/item_by_id/item-slug",
+            json=item_json,
+            status=200,
+        )
+
+        # Act
+        response = self.client.get("/campaigns/test-slug/project-slug/item-slug", follow=True)
+
+        # Assert
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, template_name="transcriptions/item.html")
+
 
     def test_ExportCampaignView_get(self):
         """

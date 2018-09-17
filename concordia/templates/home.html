@@ -1,5 +1,11 @@
-{% extends "base.html" %} {% block title %}Citizen Historian Home{% endblock title %} {% load staticfiles %} {% block main_content %}
-<div class="container-fluid px-default">
+{% extends "base.html" %}
+
+{% load staticfiles %}
+
+{% block title %}Citizen Historian Home{% endblock title %}
+
+{% block main_content %}
+<div class="container-fluid">
     <div class="row">
         <div class="col-12 ">
             <div id="homepage-carousel" class="carousel slide" data-ride="carousel" data-interval="5000">
@@ -12,10 +18,10 @@
                     </div>
                 </div>
             </div>
-            <div class="col-6 carousel-text text-center py-half">
+            <div class="col-8 col-md-6 carousel-text text-center py-md-half">
                 <h1 class=" px-md-default">Make Your Mark</h1>
-                <p class="hero-text px-default d-none d-md-block">Uncover our shared history by transcribing and tagging documents from the library’s diverse collections.<br>Explore the past and help make documents more searchable for readers and researchers of the future</p>
-                <a class="btn btn-primary btn-lg my-3" href="{% url 'transcriptions:campaigns' %}">GET STARTED!</a>
+                <p class="hero-text d-none d-md-block mb-0 mx-quarter">Uncover our shared history by transcribing and tagging documents from the library’s diverse collections.<br>Explore the past and help make documents more searchable for readers and researchers of the future</p>
+                <a class="btn btn-primary btn-lg my-2 mb-md-3" href="{% url 'transcriptions:campaigns' %}">GET STARTED!</a>
             </div>
         </div>
     </div>
@@ -43,6 +49,7 @@
                 </div>
             </div>
         </div>
+    </div>
     <div class="row my-5">
         <div class="col-12 mb-half">
             <h2 class="px-default px-md-0 ml-md-default">Campaigns: <small>Choose what to transcribe</small></h2>
@@ -85,6 +92,5 @@
             <a class="btn btn-primary" href="{% url 'transcriptions:campaigns' %}" role="button">Browse More Campaigns</a>
         </div>
     </div>
-
 </div>
 {% endblock main_content %}

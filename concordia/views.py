@@ -230,44 +230,36 @@ class ConcordiaProjectView(TemplateView):
             items=items,
         )
 
+
 class ConcordiaItemView(TemplateView):
+    """
+    Handle GET requests on /campaign/<campaign>/<project>/<item>
+    """
     template_name = "transcriptions/item.html"
 
     def get_context_data(self, **kws):
+        from .serializers import ItemSerializer
 
-        response = requests.get(
-            "%s://%s/ws/campaign/%s/"
-            % (self.request.scheme, self.request.get_host(), self.args[0]),
-            cookies=self.request.COOKIES,
-        )
-        campaign_json_val = json.loads(response.content.decode("utf-8"))
-        asset_sorted_list = sorted(
-            campaign_json_val["assets"], key=lambda k: (k["slug"])
+        item = get_object_or_404(
+            Item,
+            campaign__slug=self.args[0],
+            project__slug=self.args[1],
+            slug=self.args[2],
         )
 
-        try:
-            project = Project.objects.get(slug=self.args[1])
-            item = Item.objects.get(slug=self.args[2])
-        except Item.DoesNotExist:
-            raise Http404
-        except Project.DoesNotExist:
-            raise Http404
+        serialized = ItemSerializer(item).data
 
+        paginator = Paginator(serialized["assets"], ASSETS_PER_PAGE)
 
-        paginator = Paginator(asset_sorted_list, ASSETS_PER_PAGE)
-
-        if not self.request.GET.get("page"):
-            page = 1
-        else:
-            page = self.request.GET.get("page")
+        page = int(self.request.GET.get("page") or "1")
 
         assets = paginator.get_page(page)
 
         return dict(
             super().get_context_data(**kws),
-            campaign=campaign_json_val,
-            project=project,
-            item=item,
+            campaign=serialized["campaign"],
+            project=serialized["project"],
+            item=serialized,
             assets=assets,
         )
 
@@ -500,8 +492,20 @@ class ConcordiaAssetView(TemplateView):
             captcha_form=captcha_form,
             discussion_hide=discussion_hide,
         )
-
+        if self.request.user.is_anonymous:
+            res['is_anonymous_user_captcha_validated'] = (
+                self.is_anonymous_user_captcha_validated()
+            )
         return res
+
+    def is_anonymous_user_captcha_validated(self):
+        if 'captcha_validated_at' in self.request.session:
+            if (datetime.now().timestamp() -
+                    self.request.session['captcha_validated_at']) <= \
+                        getattr(settings, 'CAPTCHA_SESSION_VALID_TIME',
+                                24*60*60):
+                return True
+        return False
 
     def post(self, *args, **kwargs):
         """
@@ -528,11 +532,16 @@ class ConcordiaAssetView(TemplateView):
         )
         asset_json = json.loads(response.content.decode("utf-8"))
 
-        if self.request.user.is_anonymous:
+        if self.request.user.is_anonymous and not (
+                self.is_anonymous_user_captcha_validated()):
             captcha_form = CaptchaEmbedForm(self.request.POST)
             if not captcha_form.is_valid():
                 logger.info("Invalid captcha response")
                 return self.get(self.request, *args, **kwargs)
+            else:
+                self.request.session['captcha_validated_at'] = (
+                    datetime.now().timestamp()
+                )
 
         redirect_path = self.request.path
 
