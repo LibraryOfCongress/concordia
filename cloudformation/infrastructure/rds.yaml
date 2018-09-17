@@ -22,6 +22,10 @@ Parameters:
         Description: A reference to the private subnet in the 2nd Availability Zone
         Type: AWS::EC2::Subnet::Id
 
+    DbPassword:
+        Description: The password to use for the database
+        Type: String
+
 Resources:
   dbsubnetdefaultvpc0ca0aaf8357f808b6:
     Type: AWS::RDS::DBSubnetGroup
@@ -42,10 +46,10 @@ Resources:
       StorageType: gp2
       BackupRetentionPeriod: '7'
       MasterUsername: concordia
-      MasterUserPassword: MyPassword
+      MasterUserPassword: !Ref DbPassword
       PreferredBackupWindow: 03:47-04:17
       PreferredMaintenanceWindow: sun:07:14-sun:07:44
-      DBName: MyDatabase
+      DBName: concordia
       Engine: postgres
       EngineVersion: 9.6.6
       LicenseModel: postgresql-license
@@ -56,3 +60,9 @@ Resources:
       Tags:
       - Key: workload-type
         Value: other
+
+Outputs:
+    DatabaseHostName:
+        Description : "Hostname for the relational database service"
+        Value : !GetAtt rdsconcordia.Endpoint.Address
+    

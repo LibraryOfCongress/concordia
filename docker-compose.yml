@@ -7,15 +7,8 @@
 #   EMAIL_HOST_PASSWORD=<your_smtp_email_host_password_here>
 #   DEFAULT_FROM_EMAIL=<your_email_from_address_here>
 
-
-
 ### Start Docker containers with the following command :
 #  sudo make up
-
-### Create grafana user and assign the grafana admin password.
-#  with docker-compose running, in a separate terminal window, enter the following commands:
-#
-#  sudo docker exec -it concordia_grafana bash -c "./setup.sh/grafana_post_run.sh"
 
 version: '3.6'
 services:
@@ -46,7 +39,8 @@ services:
     environment:
       # The concordia app needs to wait for the db to completely start. Use docker-compose-wait
       # as defined at https://github.com/ufoscout/docker-compose-wait
-      WAIT_HOSTS: db:5432, elk:9200
+      WAIT_HOSTS: db:5432, elk:5601
+      POSTGRESQL_HOST: db
     depends_on:
       - db
       - elk
@@ -63,8 +57,11 @@ services:
     build:
        context: .
        dockerfile: importer/Dockerfile
+    environment:
+      POSTGRESQL_HOST: db
     depends_on:
       - rabbit
+      - db
     volumes:
       - images_volume:/concordia_images
 

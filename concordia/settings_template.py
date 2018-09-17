@@ -63,7 +63,7 @@ DATABASES = {
         "NAME": "concordia",
         "USER": "concordia",
         "PASSWORD": "$(POSTGRESQL_PW)",
-        "HOST": "db",
+        "HOST": "$(POSTGRESQL_HOST)",
         "PORT": "5432",
     }
 }
@@ -77,6 +77,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "raven.contrib.django.raven_compat",
+    "maintenance_mode",
     "rest_framework",
     "concordia",
     "exporter",
@@ -108,6 +109,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     # Machina
     "machina.apps.forum_permission.middleware.ForumPermissionMiddleware",
+    "maintenance_mode.middleware.MaintenanceModeMiddleware",
 ]
 
 TEMPLATES = [
@@ -205,19 +207,15 @@ LOGGING = {
             "formatter": "long",
             "maxBytes": 1024 * 1024 * 100,  # 100 mb
         },
-        'sentry': {
-            'level': 'WARNING',
-            'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
+        "sentry": {
+            "level": "WARNING",
+            "class": "raven.contrib.django.raven_compat.handlers.SentryHandler",
         },
     },
     "loggers": {
         "django": {"handlers": ["file", "stream"], "level": "DEBUG", "propagate": True},
         "celery": {"handlers": ["celery", "stream"], "level": "DEBUG"},
-        'sentry.errors': {
-            'level': 'INFO',
-            'handlers': ['stream'],
-            'propagate': False,
-        },
+        "sentry.errors": {"level": "INFO", "handlers": ["stream"], "propagate": False},
     },
 }
 
@@ -278,12 +276,14 @@ AWS_S3 = {
 PASSWORD_RESET_TIMEOUT_DAYS = 1
 REGISTRATION_OPEN = True  # set to false to temporarily disable registrations
 
-MESSAGE_TAGS = {
-    messages.ERROR: 'danger',
-}
+MESSAGE_TAGS = {messages.ERROR: "danger"}
 
 SENTRY_DSN = os.environ.get("SENTRY_DSN", "")
 SENTRY_PUBLIC_DSN = os.environ.get("SENTRY_PUBLIC_DSN", "")
 
 if SENTRY_DSN:
     RAVEN_CONFIG = {"dsn": SENTRY_DSN, "environment": CONCORDIA_ENVIRONMENT}
+
+# When the MAINTENANCE_MODE setting is true, this template will be used to
+# generate a 503 response:
+MAINTENANCE_MODE_TEMPLATE = "maintenance-mode.html"
