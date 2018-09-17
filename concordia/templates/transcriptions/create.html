@@ -1,5 +1,7 @@
 {% extends "transcriptions/base.html" %}
 {% load staticfiles %}
+{% comment %} FIXME: this entire view needs to be refactored to follow standard web practice — see
+https://github.com/LibraryOfCongress/concordia/issues/182 {% endcomment %}
 {% block title %}Citizen Historian Create a Campaign{% endblock title %}
 {% block head_content %}
 <style>
@@ -61,57 +63,58 @@
 
 {% block main_content %}
 <div class="container-fluid py-default" id='container'>
-  <div class="row">
-    <div class="col-md-10 mx-auto bg-offwhite rounded">
-      <h3 class="mt-half ml-half">Import a New Campaign</h3>
-      <div class="text-center d-none loading">
-       <div class="loading-pulse mx-auto"></div>
-              <h6 class="form-text offwhite-text">Creating campaign...<span id="progress"></span>
-              </h6>
-      </div>
-        <div class="alert alert-danger alert-dismissible fade" id="close_error" role="alert">
-            <strong id="error_msg"></strong>
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-            </button>
+    <div class="row">
+        <div class="col-md-10 mx-auto bg-offwhite rounded">
+            <h3 class="mt-half ml-half">Import a New Campaign</h3>
+            <div class="text-center d-none loading">
+                <div class="loading-pulse mx-auto"></div>
+                <h6 class="form-text offwhite-text">Creating campaign...<span id="progress"></span>
+                </h6>
+            </div>
+            <div class="alert alert-danger alert-dismissible fade" id="close_error" role="alert">
+                <strong id="error_msg"></strong>
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <!--<form class="mx-default my-default">-->
+            {% if error %}
+            <div class="alert alert-danger alert-dismissible fade" id="close" role="alert">
+                <strong>Sorry!</strong> We're having some trouble accessing that URL. Is it accessible? You want to
+                double check if you entered it correctly?
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            {% endif %}
+
+            {% csrf_token %}
+            <div class="form-group col-lg-6 col-md-8 mx-auto">
+                <label for="name">Name</label>
+                <input type="text" class="form-control" name="name" id="name" placeholder="Enter name">
+            </div>
+
+            <div class="form-group col-lg-6 col-md-8 mx-auto">
+                <label for="project-name">Project Name</label>
+                <input type="text" class="form-control" name="project-name" id="project-name" placeholder="Enter Project name">
+            </div>
+
+            <div class="form-group col-lg-6 col-md-8 mx-auto">
+                <label for="url">URL</label>
+                <input type="url" class="form-control" id="url" name="url">
+            </div>
+
+            <div class="d-flex col-lg-6 col-md-8 mx-auto justify-content-between pt-half">
+                <button class="btn btn-primary mr-auto" id="create_btn">Create</button>
+                <a href="/campaigns" role="button" class="btn btn-dark">Cancel</a>
+            </div>
+            <!--</form>-->
         </div>
-
-      <!--<form class="mx-default my-default">-->
-      {% if error %}
-        <div class="alert alert-danger alert-dismissible fade" id="close" role="alert">
-            <strong>Sorry!</strong> We're having some trouble accessing that URL. Is it accessible? You want to double check if you entered it correctly?
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-            </button>
-        </div>
-      {% endif %}
-
-      {% csrf_token %}
-      <div class="form-group col-lg-6 col-md-8 mx-auto">
-        <label for="name">Name</label>
-        <input type="text" class="form-control" name="name" id="name" placeholder="Enter name">
-      </div>
-
-      <div class="form-group col-lg-6 col-md-8 mx-auto">
-        <label for="project-name">Project Name</label>
-        <input type="text" class="form-control" name="project-name" id="project-name" placeholder="Enter Project name">
-      </div>
-
-      <div class="form-group col-lg-6 col-md-8 mx-auto">
-                  <label for="url">URL</label>
-        <input type="url" class="form-control" id="url" name="url">
-      </div>
-
-      <div class="d-flex col-lg-6 col-md-8 mx-auto justify-content-between pt-half">
-        <button class="btn btn-primary mr-auto" id="create_btn">Create</button>
-        <a href="/campaigns" role="button" class="btn btn-dark">Cancel</a>
-    </div>
-      <!--</form>-->
-    </div>
         <input type="hidden" id="task_id">
         <input type="hidden" id="campaign_slug">
         <input type="hidden" id="item_id">
-  </div>
+    </div>
 </div>
 {% endblock main_content %}
 
