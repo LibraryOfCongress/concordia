@@ -1,4 +1,4 @@
-`export SENTRY_DSN="http://<>:<>@devops-sentry-public-lb-718357739.us-east-1.elb.amazonaws.com/2"; 
+`export SENTRY_DSN="http://<>:<>@devops-sentry-public-lb-718357739.us-east-1.elb.amazonaws.com/2";
 
 export SENTRY_PUBLIC_DSN="http://<>@devops-sentry-public-lb-718357739.us-east-1.elb.amazonaws.com/3"`
 
