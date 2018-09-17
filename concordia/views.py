@@ -55,6 +55,7 @@ def get_anonymous_user(request, user_id=True):
     """
     Get the user called "anonymous" if it exist. Create the user if it doesn't exist
     This is the default concordia user if someone is working on the site without logging in first.
+
     :parameter: request django request object
     :parameter: user_id Boolean defaults to True, if true returns user id, otherwise return user object
     :return: User id or User
@@ -335,7 +336,7 @@ class ConcordiaAssetView(TemplateView):
             )
             return json.loads(response.content.decode("utf-8"))
 
-        for asset_item in asset_list_json["results"][asset_json["sequence"] :]:
+        for asset_item in asset_list_json["results"][asset_json["sequence"]:]:
             transcription_json = get_transcription(asset_item)
             if transcription_json["status"] != Status.COMPLETED:
                 return_path = "/campaigns/%s/asset/%s/" % (
