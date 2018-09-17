@@ -30,6 +30,7 @@ django-elasticsearch-dsl = "*"
 elasticsearch-dsl = "==6.1.0"
 raven = "*"
 django-maintenance-mode = "*"
+django-debug-toolbar = "*"
 
 [dev-packages]
 invoke = "*"
@@ -40,6 +41,7 @@ pytest-html = "*"
 pycodestyle = "*"
 black = "*"
 isort = "*"
+django-debug-toolbar = "*"
 
 [requires]
 python_version = "3.6"
