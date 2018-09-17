@@ -1,13 +1,10 @@
 import html
 import json
 import os
-from collections import namedtuple
-from datetime import datetime, timedelta
+from datetime import datetime
 from logging import getLogger
-from types import SimpleNamespace
 
 import requests
-from captcha.fields import CaptchaField
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model, update_session_auth_hash
@@ -15,7 +12,6 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
-from django.db.models import Count, Max, Q
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import Http404, get_object_or_404, redirect, render
 from django.template import loader
@@ -25,10 +21,13 @@ from registration.backends.hmac.views import RegistrationView
 from rest_framework import generics, status
 from rest_framework.test import APIRequestFactory
 
-from concordia.forms import (CaptchaEmbedForm, ConcordiaContactUsForm,
-                             ConcordiaUserEditForm, ConcordiaUserForm)
-from concordia.models import (Asset, Campaign, Item, PageInUse, Project, Status,
-                              Transcription, UserProfile)
+from concordia.forms import (
+    CaptchaEmbedForm,
+    ConcordiaContactUsForm,
+    ConcordiaUserEditForm,
+    ConcordiaUserForm,
+)
+from concordia.models import Campaign, Item, Project, Status, Transcription, UserProfile
 from concordia.views_ws import PageInUseCreate
 from importer.views import CreateCampaignView
 
