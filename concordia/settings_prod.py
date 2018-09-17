@@ -10,7 +10,7 @@ LOGGING["handlers"]["celery"]["filename"] = "./logs/concordia-celery.log"
 LOGGING["loggers"]["django"]["level"] = "INFO"
 LOGGING["loggers"]["celery"]["level"] = "INFO"
 
-DJANGO_SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
+DJANGO_SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "changeme")
 
 # TODO: For final deployment to production,
 # when we are running https, uncomment this next line
@@ -22,31 +22,29 @@ DATABASES = {
         "NAME": "concordia",
         "USER": "concordia",
         "PASSWORD": os.getenv("POSTGRESQL_PW"),
-        "HOST": os.getenv("POSTGRESQL_HOST"),
+        "HOST": os.getenv("POSTGRESQL_HOST", "db"),
         "PORT": "5432",
     }
 }
 
-CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL")
+CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "pyamqp://guest@rabbit:5672")
 CELERY_RESULT_BACKEND = "rpc://"
 
 
 IMPORTER = {
-    "BASE_URL": "",
     # /concordia_images is a docker volume shared by importer and concordia
     "IMAGES_FOLDER": "/concordia_images/",
-    "ITEM_COUNT": "",
     "S3_BUCKET_NAME": os.getenv("S3_BUCKET_NAME"),
 }
 
-ELASTICSEARCH_DSL_AUTOSYNC = os.getenv("ENABLE_ELASTICSEARCH")
+ELASTICSEARCH_DSL_AUTOSYNC = False
 
 INSTALLED_APPS += ["django_elasticsearch_dsl"]
 
 ELASTICSEARCH_DSL_SIGNAL_PROCESSOR = (
     "django_elasticsearch_dsl.signals.RealTimeSignalProcessor"
 )
-ELASTICSEARCH_DSL = {"default": {"hosts": os.getenv("ELASTICSEARCH_ENDPOINT")}}
+ELASTICSEARCH_DSL = {"default": {"hosts": os.getenv("ELASTICSEARCH_ENDPOINT", "elk:9200")}}
 
 EMAIL_USE_TLS = True
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
