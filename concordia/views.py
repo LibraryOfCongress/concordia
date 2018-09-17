@@ -461,13 +461,6 @@ class ConcordiaAssetView(TemplateView):
             # update the PageInUse
             change_page_in_use = {"page_url": in_use_url, "user": current_user_id}
 
-            test_url = "%s://%s/ws/page_in_use_update/%s/%s/" % (
-                self.request.scheme,
-                self.request.get_host(),
-                current_user_id,
-                in_use_url,
-            )
-
             requests.put(
                 "%s://%s/ws/page_in_use_update/%s/%s/"
                 % (
