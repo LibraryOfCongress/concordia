@@ -29,6 +29,7 @@ python-dotenv = "*"
 django-elasticsearch-dsl = "*"
 elasticsearch-dsl = "==6.1.0"
 raven = "*"
+django-maintenance-mode = "*"
 
 [dev-packages]
 invoke = "*"
