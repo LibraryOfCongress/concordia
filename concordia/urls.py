@@ -1,9 +1,9 @@
 
 from django.conf import settings
-from django.conf.urls import include, url
+from django.conf.urls import url
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
-from django.urls import include, re_path
+from django.urls import include, path, re_path
 from django.views.generic import TemplateView
 from django.views.static import serve
 from machina.app import board
@@ -249,3 +249,7 @@ urlpatterns += [url(r"^captcha/", include("captcha.urls"))]
 
 urlpatterns += [url(r"^maintenance-mode/", include("maintenance_mode.urls"))]
 
+if settings.DEBUG:
+    import debug_toolbar
+
+    urlpatterns = [path("__debug__/", include(debug_toolbar.urls))] + urlpatterns

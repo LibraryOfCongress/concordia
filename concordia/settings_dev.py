@@ -1,3 +1,5 @@
+import os
+
 from .settings_template import *
 
 LOGGING["handlers"]["stream"]["level"] = "DEBUG"
@@ -42,16 +44,19 @@ DEFAULT_TO_EMAIL = DEFAULT_FROM_EMAIL
 
 ELASTICSEARCH_DSL_AUTOSYNC = False
 
-ELASTICSEARCH_DSL_SIGNAL_PROCESSOR = 'django_elasticsearch_dsl.signals.RealTimeSignalProcessor'
-ELASTICSEARCH_DSL = {
-   'default': {
-        'hosts': 'localhost:9200'
-    },
-}
+ELASTICSEARCH_DSL_SIGNAL_PROCESSOR = (
+    "django_elasticsearch_dsl.signals.RealTimeSignalProcessor"
+)
+ELASTICSEARCH_DSL = {"default": {"hosts": "localhost:9200"}}
 
-INSTALLED_APPS += ['django_elasticsearch_dsl']
+INSTALLED_APPS += ["django_elasticsearch_dsl"]
 
 REGISTRATION_URLS = "registration.backends.hmac.urls"
 REGISTRATION_SALT = "registration"  # doesn't need to be secret
 
 ACCOUNT_ACTIVATION_DAYS = 1  # required for HMAC registration two-step-flow
+
+INSTALLED_APPS += ["debug_toolbar"]
+MIDDLEWARE += ["debug_toolbar.middleware.DebugToolbarMiddleware"]
+INTERNAL_IPS = ("127.0.0.1",)
+
