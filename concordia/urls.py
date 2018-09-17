@@ -71,7 +71,9 @@ tx_urlpatterns = (
             name="transcription",
         ),
         re_path(
-            r"^([^/]+)/([^/]+)/$", views.ConcordiaProjectView.as_view(), name="project"
+            r"^(?P<campaign_slug>[^/]+)/(?P<slug>[^/]+)/$",
+            views.ConcordiaProjectView.as_view(),
+            name="project-detail",
         ),
         re_path(
             r"^([^/]+)/([^/]+)/([^/]+)/$",
