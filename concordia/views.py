@@ -74,7 +74,6 @@ class AccountProfileView(LoginRequiredMixin, TemplateView):
     template_name = "profile.html"
 
     def post(self, *args, **kwargs):
-        context = self.get_context_data()
         instance = get_object_or_404(User, pk=self.request.user.id)
         form = ConcordiaUserEditForm(
             self.request.POST, self.request.FILES, instance=instance
@@ -785,10 +784,10 @@ class CampaignView(TemplateView):
     template_name = "transcriptions/create.html"
 
     def post(self, *args, **kwargs):
+        # FIXME: if we don't know why this is being done this way, replace this
+        # view with a direct call to the CreateCampaignView or delete that view
+        # and replace it with this one
         self.get_context_data()
-        name = self.request.POST.get("name")
-        url = self.request.POST.get("url")
-        slug = name.replace(" ", "-")
 
         view = CreateCampaignView.as_view()
         importer_resp = view(self.request, *args, **kwargs)
