@@ -14,6 +14,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
+from django.db.models import Count
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import Http404, get_object_or_404, redirect, render
 from django.template import loader
@@ -856,163 +857,68 @@ class DeleteAssetView(TemplateView):
 
 class ReportCampaignView(TemplateView):
     """
-    Report the campaign
+    Report about campaign resources and status
     """
 
     template_name = "transcriptions/report.html"
 
-    def __init__(self):
-        self.transcription_json_dict = {}
+    def get(self, request, campaign_slug):
+        campaign = get_object_or_404(Campaign, slug=campaign_slug)
 
-    def get_asset_tag_count(self, request, asset_id):
-        """
-        Return the count of tags for an asset
-        :param request: django http request object
-        :param asset_id:
-        :return:
-        """
+        try:
+            page = int(self.request.GET.get("page", "1"))
+        except ValueError:
+            return redirect(self.request.path)
 
-        response = requests.get(
-            "%s://%s/ws/tags/%s/" % (request.scheme, request.get_host(), asset_id),
-            cookies=self.request.COOKIES,
+        ctx = {
+            "title": campaign.title,
+            "campaign_slug": campaign.slug,
+            "total_asset_count": campaign.asset_set.count(),
+        }
+
+        projects_qs = campaign.project_set.order_by("title")
+
+        projects_qs = projects_qs.annotate(asset_count=Count("asset"))
+        projects_qs = projects_qs.annotate(
+            tag_count=Count("asset__userassettagcollection__tags", distinct=True)
         )
-        existing_tags_json_val = json.loads(response.content.decode("utf-8"))
-
-        return existing_tags_json_val["count"]
-
-    def get_asset_transcribe_count(self, request, asset):
-        """
-        Return 1 if last transcriptions for an asset exists
-        :param request: HTTP django request object
-        :param asset: asset id
-        :return:
-        """
-
-        response = requests.get(
-            "%s://%s/ws/transcription/%s/"
-            % (request.scheme, request.get_host(), asset),
-            cookies=self.request.COOKIES,
-        )
-        transcription_json = json.loads(response.content.decode("utf-8"))
-
-        self.transcription_json_dict[asset] = transcription_json
-
-        return 1 if len(transcription_json["text"]) > 0 else 0
-
-    def get_asset_transcribe_count_by_status(self, request, asset, status):
-        """
-        Return 1 if last transcriptions for an asset based on status  state
-        :param request: HTTP django request object
-        :param asset: asset id
-        :param status: Status to check
-        :return:
-        """
-
-        if asset not in self.transcription_json_dict:
-
-            response = requests.get(
-                "%s://%s/ws/transcription/%s/"
-                % (request.scheme, request.get_host(), asset),
-                cookies=self.request.COOKIES,
+        projects_qs = projects_qs.annotate(
+            contributor_count=Count(
+                "asset__userassettagcollection__user_id", distinct=True
             )
-            transcription_json = json.loads(response.content.decode("utf-8"))
-
-            self.transcription_json_dict[asset] = transcription_json
-
-        return (
-            1
-            if len(self.transcription_json_dict[asset]["text"]) > 0
-            and self.transcription_json_dict[asset]["status"] == status
-            else 0
         )
 
-    def get_transcribe_user_count(self, request, asset_slug):
-        """
-        return the count of users who have entered transcriptions for an asset
-        :param request: django http request objec
-        :param asset_slug: slug of asset
-        :return: array of uniques users who contributed transcriptions to the asset
-        """
-        response = requests.get(
-            "%s://%s/ws/transcription_by_asset/%s/"
-            % (request.scheme, request.get_host(), asset_slug),
-            cookies=self.request.COOKIES,
-        )
-        transcription_json = json.loads(response.content.decode("utf-8"))
+        paginator = Paginator(projects_qs, ASSETS_PER_PAGE)
+        projects_page = paginator.get_page(page)
+        if page > paginator.num_pages:
+            return redirect(self.request.path)
 
-        user_array = []
-        if transcription_json["count"] > 0:
-            for trans in transcription_json["results"]:
-                if trans["user_id"] not in user_array:
-                    user_array.append(trans["user_id"])
+        self.add_transcription_status_summary_to_projects(projects_page)
 
-        return user_array
+        ctx["paginator"] = paginator
+        ctx["projects"] = projects_page
 
-    def get(self, request, *args, **kwargs):
+        return render(self.request, self.template_name, ctx)
 
-        response = requests.get(
-            "%s://%s/ws/campaign/%s/"
-            % (self.request.scheme, self.request.get_host(), self.args[0]),
-            cookies=self.request.COOKIES,
-        )
-        campaign_json = json.loads(response.content.decode("utf-8"))
-        for sub_col in campaign_json["projects"]:
-            sub_col["campaign"] = campaign_json
+    def add_transcription_status_summary_to_projects(self, projects):
+        status_qs = Transcription.objects.filter(asset__project__in=projects)
+        status_qs = status_qs.values_list("asset__project__id", "status")
+        status_qs = status_qs.annotate(Count("status"))
+        project_statuses = {}
 
-        project_sorted_list = sorted(
-            campaign_json["projects"], key=lambda k: (k["title"])
-        )
+        # Map DB values to preferred display names
+        status_value_map = dict(Status.CHOICES)
 
-        for sorted_project in project_sorted_list:
-            transcription_count = 0
-            transcription_edit_count = 0
-            transcription_submitted_count = 0
-            transcription_complete_count = 0
-            user_array = []
-            total_tags = 0
+        for project_id, status_value, count in status_qs:
+            status_name = status_value_map[status_value]
+            project_statuses.setdefault(project_id, []).append((status_name, count))
 
-            for asset in sorted_project["campaign"]["assets"]:
-                transcription_count += self.get_asset_transcribe_count(
-                    request, asset["id"]
-                )
-                transcription_edit_count += self.get_asset_transcribe_count_by_status(
-                    request, asset["id"], Status.EDIT
-                )
-                transcription_submitted_count += self.get_asset_transcribe_count_by_status(
-                    request, asset["id"], Status.SUBMITTED
-                )
-                transcription_complete_count += self.get_asset_transcribe_count_by_status(
-                    request, asset["id"], Status.COMPLETED
-                )
-                asset_user_array = self.get_transcribe_user_count(
-                    request, asset["slug"]
-                )
-                for asset_user in asset_user_array:
-                    if asset_user not in user_array:
-                        user_array.append(asset_user)
-
-                total_tags += self.get_asset_tag_count(request, asset["id"])
-
-            sorted_project["total"] = len(sorted_project["campaign"]["assets"])
-            sorted_project["not_started"] = (
-                sorted_project["total"] - transcription_count
+        for project in projects:
+            project.transcription_statuses = project_statuses.get(project.id, [])
+            total_statuses = sum(j for i, j in project.transcription_statuses)
+            project.transcription_statuses.insert(
+                0, ("Not Started", project.asset_count - total_statuses)
             )
-            sorted_project["edit"] = transcription_edit_count
-            sorted_project["submitted"] = transcription_submitted_count
-            sorted_project["complete"] = transcription_complete_count
-            sorted_project["contributors"] = len(user_array)
-            sorted_project["tags"] = total_tags
-
-        paginator = Paginator(project_sorted_list, ASSETS_PER_PAGE)
-
-        if not self.request.GET.get("page"):
-            page = 1
-        else:
-            page = self.request.GET.get("page")
-
-        projects = paginator.get_page(page)
-
-        return render(self.request, self.template_name, locals())
 
 
 class FilterCampaigns(generics.ListAPIView):
