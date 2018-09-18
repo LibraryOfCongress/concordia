@@ -1,10 +1,10 @@
 {% extends "transcriptions/base.html" %} {% load staticfiles %}
+{% load concordia_auth_tags %}
 {% block title %}Concordia - {{ campaign.title }}{% endblock title %}
 {% block head_content %}
 
 {% endblock head_content %}
 {% block main_content %}
-{% load auth_extras %}
 <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 <div class="container-fluid py-default">
