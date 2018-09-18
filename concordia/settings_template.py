@@ -126,6 +126,7 @@ TEMPLATES = [
                 "django.template.context_processors.media",
                 # Concordia
                 "concordia.context_processors.system_configuration",
+                "concordia.context_processors.site_navigation",
                 # Machina
                 "machina.core.context_processors.metadata",
             ],
