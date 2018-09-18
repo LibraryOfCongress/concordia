@@ -1,26 +1,34 @@
 {% extends "transcriptions/base.html" %} {% load staticfiles %}
-{% block title %}Concordia - {{ campaign.title }}{% endblock title %}
+{% block title %}Crowd - {{ campaign.title }}: {{ project.title }}{% endblock title %}
 {% block head_content %}
-<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 {% endblock head_content %}
 {% block main_content %}
 {% load auth_extras %}
 <div class="container-fluid py-default">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb bg-offwhite">
+            <li class="breadcrumb-item"><a class="primary-text" href="/">Home</a></li>
+            <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaigns' %}">Campaigns</a></li>
+            <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaign' campaign.slug %}">{{ campaign.title }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ project.title }}</li>
+        </ol>
+    </nav>
     <div class="row">
         <div class="col-md-10 mx-auto bg-offwhite rounded">
             <h3 class="mt-default mb-half ml-half">{{ campaign.title }}</h3>
-            <h4>{{ project.title }}</h4>
+            <h4 class="mb-default ml-half">{{ project.title }}</h4>
             <div class="row">
                 <div class="d-flex flex-wrap col-12 justify-content-around">
                     {% for i in items %}
-                    <div class="col-12 col-md-4 col-lg-3 mx-quarter mb-default card bg-lightest-gray shadow-regular">
-                        <a href="{% url 'transcriptions:item' campaign.slug project.slug i.slug %}">
-                            <img class="card-img card-img-campaign" alt="{{ i.slug }}" src="{{ i.thumbnail_url }}">
-                        </a>
-                      
-                        <a href="{% url 'transcriptions:item' campaign.slug project.slug i.slug %}" 
-                            class="campaign-image-link"><h6 class="text-center primary-text my-half">{{ i.slug }}</h6></a>
-                    </div>
+                        <div class="col-12 col-md-4 col-lg-3 mx-quarter mb-default ">
+                            <a href="{% url 'transcriptions:item' campaign.slug project.slug i.slug %}">
+                                <img class="card-img card-img-campaign" alt="{{ i.slug }} image" src="{{ i.thumbnail_url }}">
+                                <!-- <img alt="{{ i.slug }} image" src="{% static "img/rosa-parks-campaign.svg" %}" class="img-fluid"> -->
+                            </a>
+
+                            <a href="{% url 'transcriptions:item' campaign.slug project.slug i.slug %}"
+                                class="campaign-image-link"><h6 class="text-center primary-text my-half">{{ i.slug }}</h6></a>
+                        </div>
                     {% endfor %}
                 </div>
             </div>

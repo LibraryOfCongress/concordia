@@ -5,11 +5,20 @@
 {% endblock head_content %}
 {% block main_content %}
 <div class="container-fluid py-default">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb bg-offwhite">
+            <li class="breadcrumb-item"><a class="primary-text" href="/">Home</a></li>
+            <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaigns' %}">Campaigns</a></li>
+            <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaign' campaign.slug %}">{{ campaign.title }}</a></li>
+            <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaign' project.slug %}">{{ project.title }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ item.title }}</li>
+        </ol>
+    </nav>
     <div class="row">
         <div class="col-md-10 mx-auto bg-offwhite rounded">
             <h3 class="mt-default mb-half ml-half">{{ campaign.title }}</h3>
             <h4>{{ project.title }}</h4>
-            <h4>Item {{ item.title }}</h4>
+            <h4>{{ item.title }}</h4>
             <div class="row">
                 <div class="d-flex flex-wrap col-12 justify-content-around">
                     {% for a in assets %}
