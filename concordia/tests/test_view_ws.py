@@ -9,9 +9,20 @@ from django.test import Client, TestCase
 from django.utils.encoding import force_text
 from rest_framework import status
 
-from concordia.models import (Asset, Campaign, Item, MediaType, PageInUse, Project,
-                              Status, Tag, Transcription, User, UserAssetTagCollection,
-                              UserProfile)
+from concordia.models import (
+    Asset,
+    Campaign,
+    Item,
+    MediaType,
+    PageInUse,
+    Project,
+    Status,
+    Tag,
+    Transcription,
+    User,
+    UserAssetTagCollection,
+    UserProfile,
+)
 
 logging.disable(logging.CRITICAL)
 
