@@ -1,13 +1,10 @@
 import html
 import json
 import os
-from collections import namedtuple
-from datetime import datetime, timedelta
+from datetime import datetime
 from logging import getLogger
-from types import SimpleNamespace
 
 import requests
-from captcha.fields import CaptchaField
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model, update_session_auth_hash
@@ -15,7 +12,6 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
-from django.db.models import Count, Max, Q
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import Http404, get_object_or_404, redirect, render
 from django.template import loader
@@ -25,10 +21,13 @@ from registration.backends.hmac.views import RegistrationView
 from rest_framework import generics, status
 from rest_framework.test import APIRequestFactory
 
-from concordia.forms import (CaptchaEmbedForm, ConcordiaContactUsForm,
-                             ConcordiaUserEditForm, ConcordiaUserForm)
-from concordia.models import (Asset, Campaign, Item, PageInUse, Project, Status,
-                              Transcription, UserProfile)
+from concordia.forms import (
+    CaptchaEmbedForm,
+    ConcordiaContactUsForm,
+    ConcordiaUserEditForm,
+    ConcordiaUserForm,
+)
+from concordia.models import Campaign, Item, Project, Status, Transcription, UserProfile
 from concordia.views_ws import PageInUseCreate
 from importer.views import CreateCampaignView
 
@@ -40,6 +39,10 @@ ITEMS_PER_PAGE = 36
 
 
 def concordia_api(relative_path):
+    warn(
+        f"Internal API call for {relative_path} should be refactored",
+        category=DeprecationWarning,
+    )
     abs_path = "{}/api/v1/{}".format(settings.CONCORDIA["netloc"], relative_path)
     logger.debug("Calling API path %s", abs_path)
     data = requests.get(abs_path).json()
@@ -52,6 +55,7 @@ def get_anonymous_user(request, user_id=True):
     """
     Get the user called "anonymous" if it exist. Create the user if it doesn't exist
     This is the default concordia user if someone is working on the site without logging in first.
+
     :parameter: request django request object
     :parameter: user_id Boolean defaults to True, if true returns user id, otherwise return user object
     :return: User id or User
@@ -75,7 +79,6 @@ class AccountProfileView(LoginRequiredMixin, TemplateView):
     template_name = "profile.html"
 
     def post(self, *args, **kwargs):
-        context = self.get_context_data()
         instance = get_object_or_404(User, pk=self.request.user.id)
         form = ConcordiaUserEditForm(
             self.request.POST, self.request.FILES, instance=instance
@@ -333,7 +336,7 @@ class ConcordiaAssetView(TemplateView):
             )
             return json.loads(response.content.decode("utf-8"))
 
-        for asset_item in asset_list_json["results"][asset_json["sequence"] :]:
+        for asset_item in asset_list_json["results"][asset_json["sequence"]:]:
             transcription_json = get_transcription(asset_item)
             if transcription_json["status"] != Status.COMPLETED:
                 return_path = "/campaigns/%s/asset/%s/" % (
@@ -462,13 +465,6 @@ class ConcordiaAssetView(TemplateView):
             # update the PageInUse
             change_page_in_use = {"page_url": in_use_url, "user": current_user_id}
 
-            test_url = "%s://%s/ws/page_in_use_update/%s/%s/" % (
-                self.request.scheme,
-                self.request.get_host(),
-                current_user_id,
-                in_use_url,
-            )
-
             requests.put(
                 "%s://%s/ws/page_in_use_update/%s/%s/"
                 % (
@@ -570,7 +566,7 @@ class ConcordiaAssetView(TemplateView):
 
             redirect_path = next_page_dictionary[tx_status](redirect_path, asset_json)
 
-        elif "tags" in self.request.POST and self.request.user.is_authenticated == True:
+        elif "tags" in self.request.POST and self.request.user.is_authenticated:
             tags = self.request.POST.get("tags").split(",")
             # get existing tags
             response = requests.get(
@@ -793,10 +789,10 @@ class CampaignView(TemplateView):
     template_name = "transcriptions/create.html"
 
     def post(self, *args, **kwargs):
+        # FIXME: if we don't know why this is being done this way, replace this
+        # view with a direct call to the CreateCampaignView or delete that view
+        # and replace it with this one
         self.get_context_data()
-        name = self.request.POST.get("name")
-        url = self.request.POST.get("url")
-        slug = name.replace(" ", "-")
 
         view = CreateCampaignView.as_view()
         importer_resp = view(self.request, *args, **kwargs)

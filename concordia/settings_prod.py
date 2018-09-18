@@ -44,7 +44,9 @@ INSTALLED_APPS += ["django_elasticsearch_dsl"]
 ELASTICSEARCH_DSL_SIGNAL_PROCESSOR = (
     "django_elasticsearch_dsl.signals.RealTimeSignalProcessor"
 )
-ELASTICSEARCH_DSL = {"default": {"hosts": os.getenv("ELASTICSEARCH_ENDPOINT", "elk:9200")}}
+ELASTICSEARCH_DSL = {
+    "default": {"hosts": os.getenv("ELASTICSEARCH_ENDPOINT", "elk:9200")}
+}
 
 EMAIL_USE_TLS = True
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"

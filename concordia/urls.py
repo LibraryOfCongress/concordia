@@ -10,8 +10,11 @@ from machina.app import board
 
 from exporter import views as exporter_views
 from faq.views import FAQView
-from importer.views import (CreateCampaignView, check_and_save_campaign_assets,
-                            get_task_status)
+from importer.views import (
+    CreateCampaignView,
+    check_and_save_campaign_assets,
+    get_task_status,
+)
 
 from . import trans_urls, views, views_ws
 
@@ -68,7 +71,9 @@ tx_urlpatterns = (
             name="transcription",
         ),
         re_path(
-            r"^([^/]+)/([^/]+)/$", views.ConcordiaProjectView.as_view(), name="project"
+            r"^(?P<campaign_slug>[^/]+)/(?P<slug>[^/]+)/$",
+            views.ConcordiaProjectView.as_view(),
+            name="project-detail",
         ),
         re_path(
             r"^([^/]+)/([^/]+)/([^/]+)/$",

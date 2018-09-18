@@ -3,73 +3,74 @@
 {% block title %}Citizen Historian Reporting{% endblock title %}
 {% block head_content %}
 <style>
-.col-sm-3 {
-    margin-bottom: 20px;
-}
+    /* FIXME: document why we are using this and switch to a more semantic class name */
+    .col-sm-3 {
+        margin-bottom: 20px;
+    }
 </style>
 {% endblock head_content %}
 {% block main_content %}
 <div class="container">
-	<h4>Campaign and Project Level Reporting</h4>
-	<table class="table table-bordered" style="width: 50%;">
-		<tbody>
-			<tr>
-				<td>CAMPAIGN: </td>
-				<td>{{campaign_json.title}}</td>
-			</tr>
-			<tr>
-				<td>Total Images in Campaign: </td>
-				<td>{{campaign_json.assets|length}}</td>
-			</tr>
-			<tr>
-				<td>Total Projects in Campaign: </td>
-				<td>{{ paginator.count }} </td>
-			</tr>
-		</tbody>
-	</table>
+    <h4>Campaign and Project Level Reporting</h4>
+    <table class="table table-bordered" style="width: 50%;">
+        <tbody>
+            <tr>
+                <td>CAMPAIGN: </td>
+                <td>{{ campaign_json.title }}</td>
+            </tr>
+            <tr>
+                <td>Total Images in Campaign: </td>
+                <td>{{ campaign_json.assets|length }}</td>
+            </tr>
+            <tr>
+                <td>Total Projects in Campaign: </td>
+                <td>{{ paginator.count }} </td>
+            </tr>
+        </tbody>
+    </table>
     <div class="row">
         {% for p in projects %}
         <div class="col-sm-3">
-         	<div class="card">
-			  <div class="card-header">
-			    {{p.slug}}
-			  </div>
-			  <div class="card-body" style="padding:0px">
-                            <table class="table table-bordered" style="margin-bottom:0px">
-		                <tbody>
-                	            <tr>
- 	   		       	        <td>Images in this Project</td>
-                                	<td>{{p.total}}</td>
-	                            </tr>
-            		            <tr>
-                        	        <td>Not Started</td>
-	                                <td>{{p.not_started}}</td>
-        	                    </tr>
-                    		    <tr>
-	                                <td>In Edit</td>
-        	                        <td>{{ p.edit }} </td>
-                		    </tr>
-                                    <tr>
-                                        <td>Submitted for Review</td>
-                                        <td>{{ p.submitted }} </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Complete</td>
-                                        <td>{{ p.complete }} </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Number of Contributors</td>
-                                        <td>{{ p.contributors }} </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Tags</td>
-                                        <td>{{ p.tags }} </td>
-                                    </tr>
-		                </tbody>
-			     </table>
+            <div class="card">
+                <div class="card-header">
+                    {{p.slug}}
+                </div>
+                <div class="card-body" style="padding:0px">
+                    <table class="table table-bordered" style="margin-bottom:0px">
+                        <tbody>
+                            <tr>
+                                <td>Images in this Project</td>
+                                <td>{{ p.total }}</td>
+                            </tr>
+                            <tr>
+                                <td>Not Started</td>
+                                <td>{{ p.not_started }}</td>
+                            </tr>
+                            <tr>
+                                <td>In Edit</td>
+                                <td>{{ p.edit }} </td>
+                            </tr>
+                            <tr>
+                                <td>Submitted for Review</td>
+                                <td>{{ p.submitted }} </td>
+                            </tr>
+                            <tr>
+                                <td>Complete</td>
+                                <td>{{ p.complete }} </td>
+                            </tr>
+                            <tr>
+                                <td>Number of Contributors</td>
+                                <td>{{ p.contributors }} </td>
+                            </tr>
+                            <tr>
+                                <td>Tags</td>
+                                <td>{{ p.tags }} </td>
+                            </tr>
+                        </tbody>
+                    </table>
 
-			</div>
-                 </div>
+                </div>
+            </div>
         </div>
         {% endfor %}
     </div>
@@ -77,8 +78,8 @@
 <div class="pagination">
     <span class="step-links">
         {% if projects.has_previous %}
-            <a href="?page=1">&laquo; first</a>
-            <a href="?page={{ projects.previous_page_number }}">previous</a>
+        <a href="?page=1">&laquo; first</a>
+        <a href="?page={{ projects.previous_page_number }}">previous</a>
         {% endif %}
 
         <span class="current">
@@ -86,11 +87,9 @@
         </span>
 
         {% if projects.has_next %}
-            <a href="?page={{ projects.next_page_number }}">next</a>
-            <a href="?page={{ projects.paginator.num_pages }}">last &raquo;</a>
+        <a href="?page={{ projects.next_page_number }}">next</a>
+        <a href="?page={{ projects.paginator.num_pages }}">last &raquo;</a>
         {% endif %}
     </span>
 </div>
-<script>
-</script>
 {% endblock main_content %}
