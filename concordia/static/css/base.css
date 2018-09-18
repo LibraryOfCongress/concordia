@@ -209,6 +209,19 @@ a.nav-secondary:hover {
     text-decoration: none;
 }
 
+a h1.campaign-title:hover{
+    color: var(--text-color-primary);
+    text-decoration: underline;
+}
+
+a.campaign-image-link {
+    z-index: 2;
+}
+
+a.campaign-image-link:hover {
+    color: var(--primary-color);
+}
+
 #transcription-state-div i {
     font-size: .75rem;
 }
@@ -1093,6 +1106,10 @@ div.nav-secondary {
     margin-bottom: .5rem;
 }
 
+.img-project {
+    min-height: 13.125rem;
+}
+
 .round-corners-bottom {
     border-radius: 0 0 .5rem .5rem;
 }
@@ -1100,10 +1117,6 @@ div.nav-secondary {
 .img-fluid.rounded-circle {
     max-height: 15rem;
     width: auto;
-}
-
-.campaign-image-link {
-    z-index: 2;
 }
 
 .shadow-regular {
