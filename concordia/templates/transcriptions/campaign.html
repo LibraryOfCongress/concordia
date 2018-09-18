@@ -123,7 +123,7 @@
               var $invoker = $(e.relatedTarget);
 
               $("#confirmprojectbtn").click(function(e){
-                  var collection_slug = $($invoker[0]).attr('data-collection');
+                  var collection_slug = $($invoker[0]).attr('data-campaign');
                   var project_slug = $($invoker[0]).attr('id');
                   var requested_status = $("#"+project_slug).text().trim();
                   if(requested_status == 'Publish'){
@@ -133,7 +133,7 @@
                       var to_status = 'false';
                   }
                   $.ajax({
-                      url: '/transcribe/publish/project/'+collection_slug+"/"+project_slug+"/"+to_status+"/",
+                      url: '/campaigns/publish/project/'+collection_slug+"/"+project_slug+"/"+to_status+"/",
                       type: 'GET',
                       success: function(data, textStatus, jqXHR) {
                           $('#projectConfirmModal').modal('hide');
