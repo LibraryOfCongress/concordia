@@ -137,8 +137,8 @@ function write_save_campaign_assets(task_id){
         type: 'GET',
         success: function(data, textStatus, jqXHR) {
             console.log("response: ", data);
-            var slug = $("#campaign_slug").val().toLowerCase().replace(/ +/g,'-');
-            var projslug = $("#project-name").val().toLowerCase().replace(/ +/g,'-');
+            var slug = slugify($("#campaign_slug").val());
+            var projslug = slugify($("#project-name").val());
             if($("#item_id").val()){
                 var rurl = "/campaigns/"+slug+"/"+projslug+"/";
             }
@@ -249,6 +249,18 @@ $(function(){
         minLength: 1,
     });
 });
+
+function slugify(string) {
+  return string
+    .toString()
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^\w\-]+/g, "")
+    .replace(/\-\-+/g, "-")
+    .replace(/^-+/, "")
+    .replace(/-+$/, "");
+}
 
 </script>
 {% endblock body_scripts %}

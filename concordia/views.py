@@ -492,8 +492,20 @@ class ConcordiaAssetView(TemplateView):
             captcha_form=captcha_form,
             discussion_hide=discussion_hide,
         )
-
+        if self.request.user.is_anonymous:
+            res['is_anonymous_user_captcha_validated'] = (
+                self.is_anonymous_user_captcha_validated()
+            )
         return res
+
+    def is_anonymous_user_captcha_validated(self):
+        if 'captcha_validated_at' in self.request.session:
+            if (datetime.now().timestamp() -
+                    self.request.session['captcha_validated_at']) <= \
+                        getattr(settings, 'CAPTCHA_SESSION_VALID_TIME',
+                                24*60*60):
+                return True
+        return False
 
     def post(self, *args, **kwargs):
         """
@@ -520,11 +532,16 @@ class ConcordiaAssetView(TemplateView):
         )
         asset_json = json.loads(response.content.decode("utf-8"))
 
-        if self.request.user.is_anonymous:
+        if self.request.user.is_anonymous and not (
+                self.is_anonymous_user_captcha_validated()):
             captcha_form = CaptchaEmbedForm(self.request.POST)
             if not captcha_form.is_valid():
                 logger.info("Invalid captcha response")
                 return self.get(self.request, *args, **kwargs)
+            else:
+                self.request.session['captcha_validated_at'] = (
+                    datetime.now().timestamp()
+                )
 
         redirect_path = self.request.path
 
