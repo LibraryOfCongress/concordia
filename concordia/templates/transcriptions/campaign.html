@@ -34,24 +34,19 @@
                 {% endfor %}
             {% else %}
                 {% for project in projects %}
-                    <div class="col-12 col-md-4 col-lg-3 mb-default mx-quarter card shadow-regular bg-lightest-gray">
-                        <div class="card-body bg-offwhite">
-                            <h5 class="card-title align-text-middle w-100">{{ project.title }}</h5>
-                            <div class="col-md-8 mx-auto text-center">
-                                <a href="{% url 'transcriptions:project' project.campaign.slug project.slug %}" class="btn btn-primary col mb-quarter">View</a>
+                    <div class="col-12 col-md-4 col-lg-3 px-quarter mb-default">
+                        <a href="{% url 'transcriptions:project' project.campaign.slug project.slug %}" class="">
+                            <div class="bg-img-placeholder card-img-campaign d-flex align-items-center justify-content-center">
                             </div>
-                            {% if request.user|has_group:"CM" %}
-                            <div class="col-md-8 mx-auto text-center">
-                                {% if project.is_publish %}
-                                <button type="button" class="confirm-modal btn btn-primary col" data-toggle="modal" id="{{ project.slug }}" data-target="#projectConfirmModal" data-campaign="{{ project.campaign.slug }}">
-                                    Unpublish</button>
-                                {% else %}
-                                <button type="button" class="confirm-modal btn btn-primary col" data-toggle="modal" id="{{ project.slug }}" data-target="#projectConfirmModal" data-campaign="{{ project.campaign.slug }}">
-                                    Publish</button>
-                                {% endif %}
-                            </div>
+                            <h5 class="text-center primary-text py-half bg-lightest-gray">{{ project.title }}</h5>
+                        </a>
+                        {% if request.user|has_group:"CM" %}
+                            {% if project.is_publish %}
+                                <button type="button" class="confirm-modal btn btn-primary w-100" data-toggle="modal" id="{{ project.slug }}" data-target="#projectConfirmModal" data-campaign="{{ project.campaign.slug }}">Unpublish</button>
+                            {% else %}
+                                <button type="button" class="confirm-modal btn btn-primary w-100" data-toggle="modal" id="{{ project.slug }}" data-target="#projectConfirmModal" data-campaign="{{ project.campaign.slug }}">Publish</button>
                             {% endif %}
-                        </div>
+                        {% endif %}
                     </div>
                 {% endfor %}
             {% endif %}

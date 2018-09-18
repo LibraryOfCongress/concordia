@@ -330,7 +330,7 @@ table td {
 }
 
 .bg-img-placeholder {
-    background-color: var(--bg-footer);
+    background-color: var(--bg-divider);
 }
 
 .bg-img-placeholder:hover {
