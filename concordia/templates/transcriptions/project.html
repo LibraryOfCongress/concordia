@@ -22,15 +22,12 @@
     <div class="row">
         <div class="d-flex flex-wrap col-12 justify-content-around">
             {% for i in items %}
-                <div class="col-12 col-md-4 col-lg-3 px-quarter mb-default ">
+                <div class="col-12 col-md-4 col-lg-3 px-quarter mb-default">
                     <a href="{% url 'transcriptions:item' campaign.slug project.slug i.slug %}">
                         <div class="bg-img-placeholder card-img-campaign d-flex align-items-center justify-content-center">
                         </div>
                         <!-- <img class="card-img card-img-campaign" alt="{{ i.slug }} image" src="{% if campaign.s3_storage %}{{ i.media_url }}{% else %}{{ MEDIA_URL }}{{i.media_url }}{% endif %}"> -->
-                    </a>
-
-                    <a href="{% url 'transcriptions:item' campaign.slug project.slug i.slug %}"
-                        class="campaign-image-link"><h6 class="text-center primary-text py-half bg-lightest-gray">{{ i.slug }}</h6></a>
+                        <h5 class="text-center primary-text py-half bg-lightest-gray">{{ i.slug }}</h5></a>
                 </div>
             {% endfor %}
         </div>
