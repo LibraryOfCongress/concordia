@@ -1,6 +1,7 @@
 import html
 import json
 import os
+import time
 from datetime import datetime
 from logging import getLogger
 from warnings import warn
@@ -17,6 +18,7 @@ from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import Http404, get_object_or_404, redirect, render
 from django.template import loader
 from django.urls import reverse
+from django.views.decorators.cache import never_cache
 from django.views.generic import FormView, TemplateView, View
 from registration.backends.hmac.views import RegistrationView
 from rest_framework import generics, status
@@ -70,6 +72,17 @@ def get_anonymous_user(request, user_id=True):
         return anonymous_json_val["id"]
     else:
         return anonymous_json_val
+
+
+@never_cache
+def healthz(request):
+    status = {"current_time": time.time(), "load_average": os.getloadavg()}
+
+    # We don't want to query a large table but we do want to hit the database
+    # at last once:
+    status["database_has_data"] = Campaign.objects.count() > 0
+
+    return HttpResponse(content=json.dumps(status), content_type="application/json")
 
 
 class ConcordiaRegistrationView(RegistrationView):
