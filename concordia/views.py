@@ -537,7 +537,7 @@ class ConcordiaAssetView(TemplateView):
             captcha_form = CaptchaEmbedForm(self.request.POST)
             if not captcha_form.is_valid():
                 logger.info("Invalid captcha response")
-                messages.error(self.request, 'Invalid Captcha..')
+                messages.error(self.request, 'Invalid Captcha.')
                 return self.get(self.request, *args, **kwargs)
             else:
                 self.request.session['captcha_validated_at'] = (
@@ -573,7 +573,7 @@ class ConcordiaAssetView(TemplateView):
 
             if tx_status == Status.EDIT:
                 messages.success(self.request,
-                                 'The transcription is saved successfully.')
+                                 'The transcription was saved successfully.')
             elif tx_status == Status.SUBMITTED:
                 messages.success(self.request,
                                  'The transcription is ready for review.')
@@ -630,7 +630,7 @@ class ConcordiaAssetView(TemplateView):
 
             redirect_path += "#tab-tag"
 
-            messages.success(self.request, "The transcription's tag is saved.")
+            messages.success(self.request, "Tags have been saved.")
 
         return redirect(redirect_path)
 
