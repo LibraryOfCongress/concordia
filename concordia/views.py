@@ -213,10 +213,8 @@ class ConcordiaProjectView(TemplateView):
 
     def get_context_data(self, **kws):
         try:
-            campaign = Campaign.objects.get(slug=self.args[0])
-            project = Project.objects.get(slug=self.args[1])
-        except Campaign.DoesNotExist:
-            raise Http404
+            project = Project.objects.get(slug=self.kwargs["slug"])
+            campaign = project.campaign
         except Project.DoesNotExist:
             raise Http404
 

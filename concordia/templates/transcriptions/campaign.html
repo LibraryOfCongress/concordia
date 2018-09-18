@@ -33,7 +33,7 @@
                                 <div class="card-body bg-offwhite">
                                   <h5 class="card-title align-text-middle w-100">{{ project.title }}</h5>
                                   <div class="col-md-8 mx-auto text-center">
-                                    <a href="{% url 'transcriptions:project' project.campaign.slug project.slug %}" class="btn btn-primary col mb-quarter">View</a>
+                                    <a href="{% url 'transcriptions:project-detail' project.campaign.slug project.slug %}" class="btn btn-primary col mb-quarter">View</a>
                                   </div>
                                 {% if request.user|has_group:"CM" %}
                                     <div class="col-md-8 mx-auto text-center">
