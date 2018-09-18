@@ -1,9 +1,10 @@
-{% extends "transcriptions/base.html" %} {% load staticfiles %}
-{% load concordia_auth_tags %}
-{% block title %}Concordia - {{ campaign.title }}{% endblock title %}
-{% block head_content %}
+{% extends "transcriptions/base.html" %}
 
-{% endblock head_content %}
+{% load staticfiles %}
+{% load concordia_auth_tags %}
+
+{% block title %}Concordia - {{ campaign.title }}{% endblock title %}
+
 {% block main_content %}
 <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>

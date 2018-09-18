@@ -1,30 +1,33 @@
-{% extends "transcriptions/base.html" %} {% load staticfiles %}
+{% extends "transcriptions/base.html" %}
+
+{% load staticfiles %}
+
 {% block title %}Citizen Historian FAQ{% endblock title %}
-{% block head_content %}{% endblock head_content %}
+
 {% block main_content %}
 <div class="container">
-<div id="accordion">
-{% for item in faq %}
+    <div id="accordion">
+        {% for item in faq %}
+        <div class="card">
+            <div class="card-header" id="headingOne">
+                <h5 class="mb-0">
+                    <button class="btn btn-link" data-toggle="collapse" data-target="#collapse{{item.pk}}" aria-expanded="true" aria-controls="collapseOne">
+                        {{item.question}}
+                    </button>
+                </h5>
+            </div>
 
-  <div class="card">
-    <div class="card-header" id="headingOne">
-      <h5 class="mb-0">
-        <button class="btn btn-link" data-toggle="collapse" data-target="#collapse{{item.pk}}" aria-expanded="true" aria-controls="collapseOne">
-          {{item.question}}
-        </button>
-      </h5>
-    </div>
-
-    <div id="collapse{{item.pk}}" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
-      <div class="card-body">
-        {{item.answer}}
-      </div>
-    </div>
-  </div>
-  {% endfor %}
-  </div>
+            <div id="collapse{{item.pk}}" class="collapse show" aria-labelledby="headingOne" data-parent="#accordion">
+                <div class="card-body">
+                    {{item.answer}}
+                </div>
+            </div>
         </div>
-    <script>
-    $('.collapse').collapse()
-    </script>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+$('.collapse').collapse()
+</script>
 {% endblock main_content %}
