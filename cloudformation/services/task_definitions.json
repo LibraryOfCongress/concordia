@@ -1,23 +1,58 @@
 {
+    "family": "concordia-prod",
+    "memory": "512",
+    "cpu": "1024",
+    "volumes": [
+        {
+            "name": "images_volume"
+        }
+    ],
+    "taskRoleArn": "arn:aws:iam::351149051428:role/ecs-concordia-service-crowd-prod-ConcordiaService-1BEJ9IBN21NZF",
     "containerDefinitions": [
         {
+            "name": "app",
             "essential": true,
             "image": "351149051428.dkr.ecr.us-east-1.amazonaws.com/concordia:latest",
             "logConfiguration": {
                 "logDriver": "awslogs",
                 "options": {
-                    "awslogs-group": "concordia2",
+                    "awslogs-group": "crowd-prod",
                     "awslogs-region": "us-east-1",
                     "awslogs-stream-prefix": "concordia"
                 }
             },
+            "links": [
+                "rabbit"
+            ],
+            "environment": [
+                {
+                    "name": "AWS",
+                    "value": "1"
+                },
+                {
+                    "name": "ENV_NAME",
+                    "value": "prod"
+                },
+                {
+                    "name": "CELERY_BROKER_URL",
+                    "value": "pyamqp://guest@localhost:5672"
+                },
+                {
+                    "name": "AWS_DEFAULT_REGION",
+                    "value": "us-east-1"
+                },
+                {
+                    "name": "SENTRY_PUBLIC_DSN",
+                    "value": "http://f69265b381a44ceb89e9bd467f86fbdd@devops-sentry-public-lb-718357739.us-east-1.elb.amazonaws.com/3"
+                } 
+            ],             
             "mountPoints": [
                 {
                     "sourceVolume": "images_volume",
                     "containerPath": "/concordia_images"
                 }
             ],
-            "name": "app",
+
             "portMappings": [
                 {
                     "containerPort": 80,
@@ -26,23 +61,48 @@
             ]
         },
         {
+            "name": "importer",
             "essential": true,
             "image": "351149051428.dkr.ecr.us-east-1.amazonaws.com/concordia/importer:latest",
             "logConfiguration": {
                 "logDriver": "awslogs",
                 "options": {
-                    "awslogs-group": "concordia2",
+                    "awslogs-group": "crowd-prod",
                     "awslogs-region": "us-east-1",
                     "awslogs-stream-prefix": "concordia_importer"
                 }
             },
+            "links": [
+                "rabbit"
+            ],
+            "environment": [
+                {
+                    "name": "AWS",
+                    "value": "1"
+                },
+                {
+                    "name": "ENV_NAME",
+                    "value": "prod"
+                },
+                {
+                    "name": "CELERY_BROKER_URL",
+                    "value": "pyamqp://guest@localhost:5672"
+                },
+                {
+                    "name": "AWS_DEFAULT_REGION",
+                    "value": "us-east-1"
+                },
+                {
+                    "name": "SENTRY_PUBLIC_DSN",
+                    "value": "http://f69265b381a44ceb89e9bd467f86fbdd@devops-sentry-public-lb-718357739.us-east-1.elb.amazonaws.com/3"
+                } 
+            ],            
             "mountPoints": [
                 {
                     "sourceVolume": "images_volume",
                     "containerPath": "/concordia_images"
                 }
-            ],
-            "name": "importer"
+            ]
         },
         {
             "essential": true,
@@ -52,7 +112,7 @@
             "logConfiguration": {
                 "logDriver": "awslogs",
                 "options": {
-                    "awslogs-group": "concordia2",
+                    "awslogs-group": "crowd-prod",
                     "awslogs-region": "us-east-1",
                     "awslogs-stream-prefix": "concordia_rabbit"
                 }
@@ -63,14 +123,6 @@
                     "hostPort": 5672
                 }
             ]
-        }
-    ],
-    "family": "concordia",
-    "memory": "512",
-    "cpu": "1024",
-    "volumes": [
-        {
-            "name": "images_volume"
         }
     ]
 }
