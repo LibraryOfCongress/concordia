@@ -38,7 +38,7 @@
                         </div>
                     {% endif %}
                     <a href="{% url 'transcriptions:asset' campaign.slug a.slug %}">
-                        <img class="img-fluid" alt="{{ a.slug }}" src="{% if campaign.s3_storage %}{{ a.media_url }}{% else %}{{ MEDIA_URL }}{{a.media_url }}{% endif %}">
+                        <img class="img-fluid card-img-campaign" alt="{{ a.slug }}" src="{% if campaign.s3_storage %}{{ a.media_url }}{% else %}{{ MEDIA_URL }}{{a.media_url }}{% endif %}">
                         <h5 class="pl-half project-title text-color-primary py-quarter">Image {{ a.sequence }}</h5>
                     </a>
                     {% if user.is_superuser %}
