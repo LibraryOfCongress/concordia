@@ -14,15 +14,15 @@
         </ol>
     </nav>
     <div class="row">
-        <div class="col-md-10 mx-auto bg-offwhite rounded">
+        <div class="col-md-10 mx-auto bg-offwhite">
             <h3 class="mt-default mb-half ml-half">{{ campaign.title }}</h3>
             <h4 class="mb-default ml-half">{{ project.title }}</h4>
             <div class="row">
                 <div class="d-flex flex-wrap col-12 justify-content-around">
                     {% for i in items %}
-                        <div class="col-12 col-md-4 col-lg-3 mx-quarter mb-default ">
+                        <div class="col-12 col-md-4 col-lg-3 px-quarter mb-default ">
                             <a href="{% url 'transcriptions:item' campaign.slug project.slug i.slug %}">
-                                <img class="card-img card-img-campaign" alt="{{ i.slug }} image" src="{{ i.thumbnail_url }}">
+                                <img class="card-img card-img-campaign" alt="{{ i.slug }} image" src="{% if campaign.s3_storage %}{{ i.media_url }}{% else %}{{ MEDIA_URL }}{{i.media_url }}{% endif %}">
                                 <!-- <img alt="{{ i.slug }} image" src="{% static "img/rosa-parks-campaign.svg" %}" class="img-fluid"> -->
                             </a>
 
