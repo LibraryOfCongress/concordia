@@ -1,6 +1,17 @@
 from __future__ import absolute_import, unicode_literals
 
+import os
+
 from celery import Celery
+from raven import Client
+from raven.contrib.celery import register_logger_signal, register_signal
+
+SENTRY_DSN = os.environ.get("SENTRY_DSN", None)
+
+if SENTRY_DSN:
+    client = Client(SENTRY_DSN)
+    register_logger_signal(client)
+    register_signal(client)
 
 app = Celery("concordia")
 
