@@ -9,7 +9,7 @@
         <div class="col-md-10 mx-auto bg-offwhite rounded">
             <h3 class="mt-default mb-half ml-half">{{ campaign.title }}</h3>
             <h4>{{ project.title }}</h4>
-            <h4>Item {{ item.item_id }}</h4>
+            <h4>Item {{ item.title }}</h4>
             <div class="row">
                 <div class="d-flex flex-wrap col-12 justify-content-around">
                     {% for a in assets %}
@@ -26,7 +26,7 @@
                                 {% endif %}
                             </div>
                         </div>
-                        <a href="{% url 'transcriptions:asset' campaign.slug a.slug %}" class="campaign-image-link"><h6 class="text-center primary-text my-half">{{ a.slug }}</h6></a>
+                        <a href="{% url 'transcriptions:asset' campaign.slug a.slug %}" class="campaign-image-link"><h6 class="text-center primary-text my-half">Image {{ a.sequence }}</h6></a>
                     </div>
                     {% endfor %}
                 </div>

@@ -9,7 +9,7 @@ from django.test import Client, TestCase
 from django.utils.encoding import force_text
 from rest_framework import status
 
-from concordia.models import (Asset, Campaign, MediaType, PageInUse, Status, Tag,
+from concordia.models import (Asset, Campaign, Item, MediaType, PageInUse, Project, Status, Tag,
                               Transcription, User, UserProfile, UserAssetTagCollection)
 
 logging.disable(logging.CRITICAL)
@@ -473,6 +473,102 @@ class ViewWSTest_Concordia(TestCase):
                 "assets": [],
             },
         )
+
+    def test_get_assets_by_item(self):
+        """
+        Test getting a list of assets by item
+        :return:
+        """
+
+        self.login_user()
+
+        # Create a campaign
+        self.campaign = Campaign(
+            title="TextCampaign",
+            slug="slug1",
+            description="Campaign Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.campaign.save()
+
+
+        # Create a project
+        self.project = Project(
+            title="A Project",
+            slug="project-slug",
+            campaign=self.campaign
+        )
+        self.project.save()
+
+        # Create two items
+        self.item1 = Item(
+            title="item1",
+            slug="item1",
+            item_id="item1",
+            campaign=self.campaign,
+            project=self.project
+        )
+        self.item1.save()
+
+        self.item2 = Item(
+            title="item2",
+            slug="item2",
+            item_id="item2",
+            campaign=self.campaign,
+            project=self.project
+        )
+        self.item2.save()
+
+
+        # Add 2 assets to item2, 1 asset to item1
+        self.asset = Asset(
+            title="TestAsset",
+            slug="Asset1",
+            description="Asset Description",
+            media_url="http://www.foo.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            campaign=self.campaign,
+            metadata={"key": "val2"},
+            status=Status.EDIT,
+            item=self.item1
+        )
+        self.asset.save()
+
+        self.asset2 = Asset(
+            title="TestAsset2",
+            slug="Asset2",
+            description="Asset Description",
+            media_url="http://www.foo.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            campaign=self.campaign,
+            metadata={"key": "val2"},
+            status=Status.EDIT,
+            item=self.item1
+        )
+        self.asset2.save()
+
+        self.asset3 = Asset(
+            title="TestAsset3",
+            slug="Asset3",
+            description="Asset Description",
+            media_url="http://www.foo.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            campaign=self.campaign,
+            metadata={"key": "val2"},
+            status=Status.EDIT,
+            item=self.item2
+        )
+        self.asset3.save()
+
+        # Act
+        response = self.client.get("/ws/item_by_id/item1/")
+
+        json_resp = json.loads(response.content)
+
+        # Assert
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(json_resp["assets"]), 2)
 
     def test_get_assets_by_campaign(self):
         """

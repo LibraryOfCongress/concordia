@@ -65,7 +65,7 @@
                             {% if user.is_authenticated %}
                                 <input type="text" id="tag-input" class="rounded" name="tags" data-role="tagsinput" value="{%for tag in tags %}{{tag}},{% endfor %}" aria-label="Tag input">
                             {% else %}
-                                <input type="text" id="tag-input" class="rounded" name="tags" data-role="tagsinput" value="{%for tag in tags %}{{tag.value}},{% endfor %}" aria-label="Tag input" disabled="true">
+                                <input type="text" id="tag-input" class="rounded" name="tags" data-role="tagsinput" value="{%for tag in tags %}{{tag}},{% endfor %}" aria-label="Tag input" disabled="true">
                             {% endif %}
                         </div>
                         {% if not discussion_hide %}
@@ -263,6 +263,21 @@
                 }
             {% else %}
                 $("#register-login-reminder").hide();
+                if (tab_name == 'tags') {
+	                	$('<input />').attr({
+	                	    type: 'hidden',
+	                	    class: 'tagging-hidden-input',
+	                	    value: 'true',
+	                	    name: 'tagging'
+	                	}).appendTo('form#contribute-form');
+                }
+                
+                {% if transcription.status == 'Completed' %}
+                if(tab_name == "transcription")
+                    $("#save-button").hide();
+                else
+                	    $("#save-button").show();
+                {% endif %}
             {% endif %}
             return true;
         }
@@ -284,7 +299,8 @@
                     $("#complete-button").show();
                 {% elif transcription.status == 'Completed' %}
                     $("#save-button").show();
-                    $("#save-button, #review-button").hide();
+                    $("#review-button").hide();
+                    $("#save-button").hide();
                 {% endif %}
             {% endif %}
 
@@ -323,29 +339,46 @@
 
             show_buttons();
 
+            var target = null;
             $('a[data-toggle="tab"]').on('show.bs.tab', function (e) {
-                var target = $(e.target).attr("href") // activated tab
+                target = $(e.target).attr("href") // activated tab
                 if (target == "#tab-tag") {
                     hide_buttons("tags");
+                } else {
+                	   $('input.tagging-hidden-input').remove();
                 }
             });
+            
+            var url = window.location.href;
+            var lastPart = url.substr(url.lastIndexOf('/') + 1);
+            if (lastPart == "#tab-tag") {
+                hide_buttons("tags");
+            }
 
             {% if user.is_anonymous %}
                 $("#save-button").click(function(e){
+                	    {% if not is_anonymous_user_captcha_validated %}
                     if($("#captcha_container").hasClass('d-none')) {
                         e.preventDefault();
                         $(this).attr("disabled", "disabled");
                         $("#captcha_container").removeClass('d-none');
                         $("#captcha_container").show();
+                        $("#review-button").prop("disabled",true);
                     }
+                    {% endif %}
                 });
                 $("#review-button").click(function(e){
+                	   {% if not is_anonymous_user_captcha_validated %}
                     if($("#captcha_container").hasClass('d-none')) {
                         e.preventDefault();
                        $(this).attr("disabled", "disabled");
                        $("#captcha_container").removeClass('d-none');
                        $("#captcha_container").show();
+                       $("#save-button").prop("disabled",true);
+                       // need to pass in button value to captcha enter button 
+                       $("#input_group_for_captcha > .input-group-append > button").attr("value", $("#review-button").attr("value"));
                    }
+                   {% endif %}
                });
 
                 $(".js-captcha-refresh").click(function(e){

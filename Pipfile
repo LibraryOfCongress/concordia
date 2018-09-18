@@ -13,6 +13,7 @@ coreapi = "*"
 django-machina = "*"
 django-haystack = "*"
 "boto3" = "*"
+botocore = '*'
 requests = "*"
 Django = "<2.1,>=2"
 Pillow = "*"
@@ -28,6 +29,7 @@ responses = "*"
 python-dotenv = "*"
 django-elasticsearch-dsl = "*"
 elasticsearch-dsl = "==6.1.0"
+raven = "*"
 
 [dev-packages]
 invoke = "*"
