@@ -91,19 +91,19 @@ class ConcordiaUserEditForm(ConcordiaUserForm):
 
 class ConcordiaContactUsForm(forms.Form):
     email = forms.CharField(
-        label="Email Address",
+        label="Your email",
         required=True,
-        widget=forms.EmailInput(attrs={"class": "col-sm-8 form-control"}),
+        widget=forms.EmailInput(attrs={"class": "form-control"}),
     )
 
     subject = forms.CharField(
         label="Subject",
         required=False,
-        widget=forms.TextInput(attrs={"class": "col-sm-8 form-control"}),
+        widget=forms.TextInput(attrs={"class": "form-control"}),
     )
 
     category = forms.CharField(
-        label="Subject",
+        label="Category",
         required=True,
         widget=forms.Select(
             choices=(
@@ -111,20 +111,20 @@ class ConcordiaContactUsForm(forms.Form):
                 ("Campaign", "Question about campaign"),
                 ("Problem", "Something is not working"),
             ),
-            attrs={"class": "col-sm-8 form-control"},
+            attrs={"class": "form-control"},
         ),
     )
 
     link = forms.CharField(
-        label="Link",
+        label="Link to the page you need support with",
         required=False,
-        widget=forms.TextInput(attrs={"class": "col-sm-8 form-control"}),
+        widget=forms.URLInput(attrs={"class": "form-control"}),
     )
 
     story = forms.CharField(
-        label="Tell us your story",
+        label="Why are you contacting us",
         required=True,
-        widget=forms.Textarea(attrs={"class": "col-sm-8 form-control"}),
+        widget=forms.Textarea(attrs={"class": "form-control"}),
     )
 
 

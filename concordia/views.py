@@ -744,7 +744,11 @@ class ToDoView(TemplateView):
 class ContactUsView(FormView):
     template_name = "contact.html"
     form_class = ConcordiaContactUsForm
-    success_url = "."
+
+    def get_context_data(self, *args, **kwargs):
+        res = super().get_context_data(*args, **kwargs)
+        res['title'] = "Contact Us"
+        return res
 
     def get_initial(self):
         if self.request.GET.get("pre_populate", None) is None:

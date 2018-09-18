@@ -1,12 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{% endblock title %}
-{% block head_content %}
-<style>
-#contact-form .form-group input,#contact-form .form-group textarea {
-  padding: .375rem .75rem;
-}
-</style>
-{% endblock head_content %}
+
 {% block main_content %}
 <div class="container-fluid py-default">
     {% if messages %}
@@ -16,65 +9,88 @@
         {{ message }}
     </div>
     {% endfor %}
-	{% endif %}
-    
+    {% endif %}
+
     <div class="row">
         <div class="col-md-10 mx-auto bg-offwhite rounded">
             <div class="mxy-default">
                 <h1 class="mt-half mb-quarter text-center">Contact Us</h1>
-                <form method="post" action="{% url 'contact' %}" id="contact-form" class="col-10 mx-auto form-contact">
+                <form method="post" action="{% url 'contact' %}" id="contact-form" class="col-10 mx-auto">
                     {% csrf_token %}
                     {{ form.non_field_errors }}
                     {% if form.errors %}
                     <p class="text-center">Please fix the errors below:</p>
                     {% endif %}
-                    <div class="form-group row justify-content-center">
-	                    <label class="col-sm-2 col-form-label" for="id_email_address">Your email</label>
-	                    {{ form.email }}
-	                    {% if form.email.errors %}
+
+                    <div class="form-group row">
+                        <label class="col-sm-2 col-form-label" for="{{ form.email.id_for_label }}">
+                            {{ form.email.label }}
+                        </label>
+                        <div class="col-sm-10">
+                            {{ form.email }}
+                            {% if form.email.errors %}
                             <div class="text-danger">
                                 {% for error in form.email.errors %}{{ error }} {% endfor %}
                             </div>
-                        {% endif %}
+                            {% endif %}
+                        </div>
                     </div>
                     <div class="form-group row justify-content-center">
-                        <label class="col-sm-2 col-form-label" for="id_subject">Subject</label>
-                        {{ form.subject }}
-                        {% if form.subject.errors %}
+                        <label class="col-sm-2 col-form-label" for="{{ form.subject.id_for_label }}">
+                            {{ form.subject.label }}
+                        </label>
+                        <div class="col-sm-10">
+                            {{ form.subject }}
+                            {% if form.subject.errors %}
                             <div class="text-danger">
                                 {% for error in form.subject.errors %}{{ error }} {% endfor %}
                             </div>
-                        {% endif %}
+                            {% endif %}
+                        </div>
                     </div>
                     <div class="form-group row justify-content-center">
-                        <label class="col-sm-2 col-form-label" for="id_category">Category</label>
-                        {{ form.category }}
-                        {% if form.subject.errors %}
+                        <label class="col-sm-2 col-form-label" for="{{ form.category.id_for_label }}">
+                            {{ form.category.label }}
+                        </label>
+                        <div class="col-sm-10">
+                            {{ form.category }}
+                            {% if form.subject.errors %}
                             <div class="text-danger">
                                 {% for error in form.subject.errors %}{{ error }} {% endfor %}
                             </div>
-                        {% endif %}
+                            {% endif %}
+                        </div>
                     </div>
                     <div class="form-group row justify-content-center">
-                        <label class="col-sm-2 col-form-label" for="id_link">link to page you need support with: </label>
-                        {{ form.link }}
-                        {% if form.link.errors %}
+                        <label class="col-sm-2 col-form-label" for="{{ form.link.id_for_label }}">
+                            {{ form.link.label }}
+                        </label>
+                        <div class="col-sm-10">
+                            {{ form.link }}
+                            {% if form.link.errors %}
                             <div class="text-danger">
                                 {% for error in form.link.errors %}{{ error }} {% endfor %}
                             </div>
-                        {% endif %}
+                            {% endif %}
+                        </div>
                     </div>
                     <div class="form-group row justify-content-center">
-                        <label class="col-sm-2 col-form-label" for="id_body">Why are you contacting us</label>
-                        {{ form.story }}
-                        {% if form.story.errors %}
+                        <label class="col-sm-2 col-form-label" for="{{ form.story.id_for_label }}">
+                            {{ form.story.label }}
+                        </label>
+                        <div class="col-sm-10">
+                            {{ form.story }}
+                            {% if form.story.errors %}
                             <div class="text-danger">
                                 {% for error in form.story.errors %}{{ error }} {% endfor %}
                             </div>
-                        {% endif %}
+                            {% endif %}
+                        </div>
                     </div>
-                    <div class="col-lg-10 d-flex mx-auto justify-content-end mb-default mt-half">
-                        <input class="btn btn-primary btn-lg" type="submit" value="Submit">
+                    <div class="form-group row justify-content-center">
+                        <div class="col-sm-10 offset-sm-2">
+                            <input class="btn btn-primary btn-lg" type="submit" value="Submit">
+                        </div>
                     </div>
                 </form>
             </div>
