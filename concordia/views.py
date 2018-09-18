@@ -3,6 +3,7 @@ import json
 import os
 from datetime import datetime
 from logging import getLogger
+from warnings import warn
 
 import requests
 from django.conf import settings
@@ -336,7 +337,7 @@ class ConcordiaAssetView(TemplateView):
             )
             return json.loads(response.content.decode("utf-8"))
 
-        for asset_item in asset_list_json["results"][asset_json["sequence"]:]:
+        for asset_item in asset_list_json["results"][asset_json["sequence"] :]:
             transcription_json = get_transcription(asset_item)
             if transcription_json["status"] != Status.COMPLETED:
                 return_path = "/campaigns/%s/asset/%s/" % (
