@@ -240,7 +240,7 @@ class ConcordiaItemView(TemplateView):
     def get_context_data(self, **kws):
 
         response = requests.get(
-            "%s://%s/ws/item_by_id/%s"
+            "%s://%s/ws/item_by_id/%s/"
             % (self.request.scheme, self.request.get_host(), self.args[2]),
             cookies=self.request.COOKIES,
         )
@@ -277,84 +277,6 @@ class ConcordiaAssetView(TemplateView):
         "Submit for Review": Status.SUBMITTED,
         "Mark Completed": Status.COMPLETED,
     }
-
-    def get_asset_list_json(self):
-        """
-        make a call to the REST web service to assets for a campaign
-        :return: json of the assets
-        """
-        response = requests.get(
-            "%s://%s/ws/asset/%s/"
-            % (
-                self.request.scheme,
-                self.request.get_host(),
-                self.args[0]),
-            cookies=self.request.COOKIES,
-        )
-        return json.loads(response.content.decode("utf-8"))
-
-    def submitted_page(self, url, asset_json):
-        """
-        when the transcription state is SUBMITTED, return a page that does not have a transcription started.
-        If all pages are started, return the url passed in
-        :param url: default url to return
-        :param asset_json: Unused, needed to make function signature match completed_page
-        :return: url of next page
-        """
-        return_path = url
-
-        # find a page with no transcriptions in this campaign
-
-        asset_list_json = self.get_asset_list_json()
-
-        for asset_item in asset_list_json["results"]:
-            response = requests.get(
-                "%s://%s/ws/transcription/%s/"
-                % (self.request.scheme, self.request.get_host(), asset_item["id"]),
-                cookies=self.request.COOKIES,
-            )
-            transcription_json = json.loads(response.content.decode("utf-8"))
-            if transcription_json["text"] == "":
-                return_path = "/campaigns/%s/asset/%s/" % (self.args[0], asset_item["slug"])
-                break
-
-        return return_path
-
-    def completed_page(self, url, asset_json):
-        """
-        when the transcription state is COMPLETED, return the next page in sequence that needs work
-        If all pages are completed, return the url passed in
-        :param url: default url to return
-        :param asset_json: json representation of the asset
-        :return: url of next page
-        """
-        return_path = url
-
-        asset_list_json = self.get_asset_list_json()
-
-        def get_transcription(asset_item):
-                response = requests.get(
-                    "%s://%s/ws/transcription/%s/"
-                    % (self.request.scheme, self.request.get_host(), asset_item["id"]),
-                    cookies=self.request.COOKIES,
-                )
-                return json.loads(response.content.decode("utf-8"))
-
-        for asset_item in asset_list_json["results"][asset_json["sequence"]:]:
-            transcription_json = get_transcription(asset_item)
-            if transcription_json["status"] != Status.COMPLETED:
-                return_path = "/campaigns/%s/asset/%s/" % (self.args[0], asset_item["slug"])
-                break
-
-        # no asset found, iterate the asset_list_json from beginning to this asset's sequence
-        if return_path == url:
-            for asset_item in asset_list_json["results"][:asset_json["sequence"]]:
-                transcription_json = get_transcription(asset_item)
-                if transcription_json["status"] != Status.COMPLETED:
-                    return_path = "/campaigns/%s/asset/%s/" % (self.args[0], asset_item["slug"])
-                    break
-
-        return return_path
 
     def check_page_in_use(self, url, user):
         """
@@ -547,14 +469,14 @@ class ConcordiaAssetView(TemplateView):
             )
 
             # dictionary to pick which function should return the next page on a POST submit
-            next_page_dictionary = {
-                Status.EDIT: lambda x, y: x,
-                Status.SUBMITTED: self.submitted_page,
-                Status.COMPLETED: self.completed_page,
-
-            }
-
-            redirect_path = next_page_dictionary[tx_status](redirect_path, asset_json)
+            # next_page_dictionary = {
+            #     Status.EDIT: lambda x, y: x,
+            #     Status.SUBMITTED: self.submitted_page,
+            #     Status.COMPLETED: self.completed_page,
+            #
+            # }
+            #
+            # redirect_path = next_page_dictionary[tx_status](redirect_path, asset_json)
 
         elif "tags" in self.request.POST and self.request.user.is_authenticated == True:
             tags = self.request.POST.get("tags").split(",")
@@ -603,6 +525,137 @@ class ConcordiaAssetView(TemplateView):
             redirect_path += "#tab-tag"
 
         return redirect(redirect_path)
+
+
+class AssetNewPage(View):
+    """
+    Class to handle get request when user wants to transcribe a different page after submitting for review
+    """
+
+    def check_page_in_use(self, url, user):
+        """
+        Check the page in use for the asset, return true if in use within the last 5 minutes, otherwise false
+        :param url: url to test if in use
+        :param user: user object
+        :return: True or False
+        """
+        response = requests.get(
+            "%s://%s/ws/page_in_use_count/%s/%s/"
+            % (self.request.scheme, self.request.get_host(), user, url),
+            cookies=self.request.COOKIES,
+        )
+        json_val = json.loads(response.content.decode("utf-8"))
+
+        return json_val["page_in_use"]
+
+    def get_asset_list_json(self):
+        """
+        make a call to the REST web service to assets for a campaign
+        :return: json of the assets
+        """
+        response = requests.get(
+            "%s://%s/ws/asset/%s/"
+            % (
+                self.request.scheme,
+                self.request.get_host(),
+                self.args[1]),
+            cookies=self.request.COOKIES,
+        )
+        return json.loads(response.content.decode("utf-8"))
+
+    def submitted_page(self, url, asset_json):
+        """
+        when the transcription state is SUBMITTED, return a page that does not have a transcription started.
+        If all pages are started, return the url passed in
+        :param url: default url to return
+        :param asset_json: Unused, needed to make function signature match completed_page
+        :return: url of next page
+        """
+        return_path = url
+
+        current_user_id = (
+            self.request.user.id
+            if self.request.user.id is not None
+            else get_anonymous_user(self.request)
+        )
+
+        # find a page with Status of Edit in this campaign
+
+        asset_list_json = self.get_asset_list_json()
+
+        for asset_item in asset_list_json["results"]:
+            response = requests.get(
+                "%s://%s/ws/transcription/%s/"
+                % (self.request.scheme, self.request.get_host(), asset_item["id"]),
+                cookies=self.request.COOKIES,
+            )
+            transcription_json = json.loads(response.content.decode("utf-8"))
+            if transcription_json["status"] == Status.EDIT:
+                page_in_use = self.check_page_in_use("/campaigns/%s/asset/%s/" % (self.args[1], asset_item["slug"]),
+                                                     current_user_id)
+                if page_in_use is False:
+                    return_path = "/campaigns/%s/asset/%s/" % (self.args[1], asset_item["slug"])
+                    break
+
+        return return_path
+
+    def completed_page(self, url, asset_json):
+        """
+        when the transcription state is COMPLETED, return the next page in sequence that needs work
+        If all pages are completed, return the url passed in
+        :param url: default url to return
+        :param asset_json: json representation of the asset
+        :return: url of next page
+        """
+        return_path = url
+
+        current_user_id = (
+            self.request.user.id
+            if self.request.user.id is not None
+            else get_anonymous_user(self.request)
+        )
+
+        asset_list_json = self.get_asset_list_json()
+
+        def get_transcription(asset_item):
+                response = requests.get(
+                    "%s://%s/ws/transcription/%s/"
+                    % (self.request.scheme, self.request.get_host(), asset_item["id"]),
+                    cookies=self.request.COOKIES,
+                )
+                return json.loads(response.content.decode("utf-8"))
+
+        # find a page with Status of Submitted in this campaign
+
+        for asset_item in asset_list_json["results"]:
+            transcription_json = get_transcription(asset_item)
+            if transcription_json["status"] == Status.SUBMITTED:
+                page_in_use = self.check_page_in_use("/campaigns/%s/asset/%s/" % (self.args[1], asset_item["slug"]),
+                                                     current_user_id)
+                if page_in_use is False:
+                    return_path = "/campaigns/%s/asset/%s/" % (self.args[1], asset_item["slug"])
+                    break
+
+        return return_path
+
+    def get(self, *args, **kwargs):
+        """
+        GET request to move user to different transcribe page
+        :param args:
+        :param kwargs:
+        :return:
+        """
+
+        # dictionary to pick which function should return the next page on a POST submit
+        next_page_dictionary = {
+            "review": self.submitted_page,
+            "complete": self.completed_page,
+
+        }
+
+        redirect_url = "/campaigns/%s/asset/%s/" % (self.args[1], self.args[2])
+
+        return HttpResponseRedirect(next_page_dictionary[self.args[0]](redirect_url, self.args[2]))
 
 
 class ConcordiaAlternateAssetView(View):

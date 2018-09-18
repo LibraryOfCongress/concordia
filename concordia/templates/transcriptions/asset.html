@@ -43,7 +43,7 @@
                         </div>
                     {% elif transcription.status == 'Submitted' %}
                         <div id="transcription-state-div" class="mx-default w-100" >
-                            <i class="fas fa-list tx-submitted pr-quarter"></i><h5 class="offwhite-text d-inline small" id="transcription-state" name="transcription-state">Submitted for Review</h5>
+                            <i class="fas fa-list tx-submitted pr-quarter"></i><h5 class="offwhite-text d-inline small" id="transcription-state" name="transcription-state">Submitted for Review.</h5>
                         </div>
                     {% elif transcription.status == 'Completed' %}
                         <div id="transcription-state-div" class="mx-default w-100" >
@@ -323,15 +323,15 @@
                         $('.alert-contribute').fadeOut(500);
                     }, 3000);
                 } else if( status == 'review') {
-                    $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute py-half fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> The transcription is ready for review.</div>');
+                    $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute py-half fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> Thank you for finishing that transcription. Move to new page? <a href="/campaigns/newpage/review/{{ asset.campaign.slug}}/{{asset.slug}}/">yes</a> </div>');
                     setTimeout(function() {
                         $('.alert-contribute').fadeOut(500);
-                    }, 3000);
+                    }, 10000);
                 } else {
-                    $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute py-half fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> The transcription is now complete.</div>');
+                    $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute py-half fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> Thank you for finishing that transcription. Move to a new page? <a href="/campaigns/newpage/complete/{{ asset.campaign.slug}}/{{asset.slug}}/">yes</a></div>');
                     setTimeout(function() {
                         $('.alert-contribute').fadeOut(500);
-                    }, 3000);
+                    }, 10000);
                 }
                 sessionStorage.setItem('show_message', 'false');
                 sessionStorage.setItem('status', '');
