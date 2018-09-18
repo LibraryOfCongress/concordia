@@ -348,13 +348,18 @@ class AssetUpdate(generics.UpdateAPIView):
             request_data = request.data
 
         campaign = Campaign.objects.get(slug=request_data["campaign"])
+
+        # FIXME: use .update for performance
+        # FIXME: do validation before updating
         asset = Asset.objects.get(slug=request_data["slug"], campaign=campaign)
         asset.status = Status.INACTIVE
         asset.save()
 
         serializer = CampaignDetailSerializer(data=request_data)
+        # FIXME: do something when validation fails
         if serializer.is_valid():
             pass
+
         return Response(serializer.data)
 
 

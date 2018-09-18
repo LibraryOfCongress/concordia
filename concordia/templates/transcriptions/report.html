@@ -1,95 +1,101 @@
 {% extends "transcriptions/base.html" %}
+
+{% load humanize %}
 {% load staticfiles %}
-{% block title %}Citizen Historian Reporting{% endblock title %}
-{% block head_content %}
-<style>
-    /* FIXME: document why we are using this and switch to a more semantic class name */
-    .col-sm-3 {
-        margin-bottom: 20px;
-    }
-</style>
-{% endblock head_content %}
+
+{% block title %}Citizen Historian Reporting: Campaign {{ title }}{% endblock title %}
+
 {% block main_content %}
 <div class="container">
-    <h4>Campaign and Project Level Reporting</h4>
-    <table class="table table-bordered" style="width: 50%;">
-        <tbody>
-            <tr>
-                <td>CAMPAIGN: </td>
-                <td>{{ campaign_json.title }}</td>
-            </tr>
-            <tr>
-                <td>Total Images in Campaign: </td>
-                <td>{{ campaign_json.assets|length }}</td>
-            </tr>
-            <tr>
-                <td>Total Projects in Campaign: </td>
-                <td>{{ paginator.count }} </td>
-            </tr>
-        </tbody>
-    </table>
     <div class="row">
-        {% for p in projects %}
-        <div class="col-sm-3">
-            <div class="card">
+        <h3>Campaign Summary: {{ title }}</h3>
+        <table class="table table-bordered table-hover">
+            <tbody>
+                <tr>
+                    <th>Total Images:</th>
+                    <td class="text-monospace text-right">{{ total_asset_count|intcomma }}</td>
+                </tr>
+                <tr>
+                    <th>Total Projects:</th>
+                    <td class="text-monospace text-right">{{ projects.paginator.count|intcomma }} </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="row">
+        <div class="card-columns">
+            {% for project in projects %}
+            <div class="card" style="width: 20em">
                 <div class="card-header">
-                    {{p.slug}}
+                    <a class="card-title" href="{% url 'transcriptions:project-detail' campaign_slug=campaign_slug slug=project.slug %}">
+                        {{ project.title }}
+                    </a>
                 </div>
-                <div class="card-body" style="padding:0px">
-                    <table class="table table-bordered" style="margin-bottom:0px">
+                <div class="card-body">
+                    <table class="table table-sm table-bordered table-striped">
                         <tbody>
                             <tr>
-                                <td>Images in this Project</td>
-                                <td>{{ p.total }}</td>
+                                <th>Images in this Project</th>
+                                <td class="text-monospace text-right">{{ project.asset_count|intcomma }}</td>
                             </tr>
                             <tr>
-                                <td>Not Started</td>
-                                <td>{{ p.not_started }}</td>
+                                <th>Number of Contributors</th>
+                                <td class="text-monospace text-right">{{ project.contributor_count|intcomma }} </td>
                             </tr>
                             <tr>
-                                <td>In Edit</td>
-                                <td>{{ p.edit }} </td>
-                            </tr>
-                            <tr>
-                                <td>Submitted for Review</td>
-                                <td>{{ p.submitted }} </td>
-                            </tr>
-                            <tr>
-                                <td>Complete</td>
-                                <td>{{ p.complete }} </td>
-                            </tr>
-                            <tr>
-                                <td>Number of Contributors</td>
-                                <td>{{ p.contributors }} </td>
-                            </tr>
-                            <tr>
-                                <td>Tags</td>
-                                <td>{{ p.tags }} </td>
+                                <th>Tags</th>
+                                <td class="text-monospace text-right">{{ project.tag_count|intcomma }} </td>
                             </tr>
                         </tbody>
                     </table>
 
+                    <table class="table table-sm table-bordered table-striped mb-0">
+                        <caption style="caption-side: top">Transcription Statuses</caption>
+                        <tbody>
+                            {% for status, count in project.transcription_statuses %}
+                            <tr>
+                                <th>{{ status }}</th>
+                                <td class="text-monospace text-right">{{ count }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
+            {% endfor %}
         </div>
-        {% endfor %}
     </div>
-</div>
-<div class="pagination">
-    <span class="step-links">
-        {% if projects.has_previous %}
-        <a href="?page=1">&laquo; first</a>
-        <a href="?page={{ projects.previous_page_number }}">previous</a>
-        {% endif %}
 
-        <span class="current">
-            Page {{ projects.number }} of {{ projects.paginator.num_pages }}.
-        </span>
+    <div class="row mt-3">
+        <nav class="w-100">
+            <ul class="pagination mx-auto justify-content-center">
+                {% if projects.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ projects.previous_page_number }}">Previous</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Previous</span>
+                </li>
+                {% endif %}
 
-        {% if projects.has_next %}
-        <a href="?page={{ projects.next_page_number }}">next</a>
-        <a href="?page={{ projects.paginator.num_pages }}">last &raquo;</a>
-        {% endif %}
-    </span>
+                {% for page_num in paginator.page_range %}
+                <li class="page-item {% if page_num == projects.number %}active{% endif %}">
+                    <a class="page-link" href="?page={{ page_num }}">{{ page_num }}</a>
+                </li>
+                {% endfor %}
+
+                {% if projects.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ projects.next_page_number }}">Next</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Next</span>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
 </div>
 {% endblock main_content %}

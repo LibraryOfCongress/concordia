@@ -1,8 +1,5 @@
-import os
-import shutil
 from logging import getLogger
 
-from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import JSONField
 from django.db import models
@@ -152,7 +149,10 @@ class Tag(models.Model):
 
 class UserAssetTagCollection(models.Model):
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
+
+    # FIXME: why is this not a foreignkey on User?
     user_id = models.PositiveIntegerField(db_index=True)
+
     tags = models.ManyToManyField(Tag, blank=True)
     created_on = models.DateTimeField(auto_now_add=True)
     updated_on = models.DateTimeField(auto_now=True)
@@ -181,19 +181,6 @@ class PageInUse(models.Model):
     user = models.ForeignKey(User, models.DO_NOTHING)
     created_on = models.DateTimeField(editable=False)
     updated_on = models.DateTimeField()
-
-    def save(self, *args, **kwargs):
-        """
-        On save, update timestamps. Allows assignment of created_on and updated_on timestamp used in testing
-        :param args:
-        :param kwargs:
-        :return:
-        """
-        # if not self.id and not self.created_on:
-        #     self.created_on = timezone.now()
-        #
-        # self.updated_on = timezone.now()
-        # return super(PageInUse, self).save(*args, **kwargs)
 
     def save(self, force_insert=False, *args, **kwargs):
         updated = False
