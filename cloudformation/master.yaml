@@ -101,19 +101,19 @@ Resources:
                 SecurityGroup: !GetAtt SecurityGroups.Outputs.ECSHostSecurityGroup
                 Subnets: !GetAtt VPC.Outputs.PrivateSubnets
 
-    ConcordiaService:
-        Type: AWS::CloudFormation::Stack
-        Properties:
-            TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/services/concordia-service/service.yaml"
+#    ConcordiaService:
+#        Type: AWS::CloudFormation::Stack
+#        Properties:
+#            TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/services/concordia-service/service.yaml"
 #            TemplateURL: !Join [ "/", [ !Ref BasePath, "/services/concordia-service/service.yaml" ]]
-            Parameters:
-                VPC: !GetAtt VPC.Outputs.VPC
-                Cluster: !GetAtt ECS.Outputs.Cluster
-                DesiredCount: 2
-                PostgresHost: !GetAtt RDS.Outputs.DatabaseHostName
-                Listener: !GetAtt ALB.Outputs.Listener
-                Path: /*
-                ECSServiceAutoScalingRoleARN: !GetAtt ECS.Outputs.ECSServiceAutoScalingRole
+#            Parameters:
+#                VPC: !GetAtt VPC.Outputs.VPC
+#                Cluster: !GetAtt ECS.Outputs.Cluster
+#                DesiredCount: 2
+#                PostgresHost: !GetAtt RDS.Outputs.DatabaseHostName
+#                Listener: !GetAtt ALB.Outputs.Listener
+#                Path: /*
+#                ECSServiceAutoScalingRoleARN: !GetAtt ECS.Outputs.ECSServiceAutoScalingRole
 
     LifecycleHook:
         Type: AWS::CloudFormation::Stack

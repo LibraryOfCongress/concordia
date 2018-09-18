@@ -40,6 +40,10 @@ Parameters:
         Description: The ECS service auto scaling role ARN
         Type: String
 
+    EnvName:
+        Type: String
+        Description: dev, test, stage or prod
+
 Resources:
 
 
@@ -58,16 +62,35 @@ Resources:
 
     TaskDefinition:
         Type: AWS::ECS::TaskDefinition
+        TaskRoleArn: !Ref ServiceRole
         Properties:
-            Family: concordia-service
+            Family: concordia-${EnvName}
+            Volumes:
+                - Name: images_volume
             ContainerDefinitions:
-                - Name: concordia-service
+                - Name: app
                   Essential: true
                   Image: 351149051428.dkr.ecr.us-east-1.amazonaws.com/concordia:latest
-                  Memory: 128
+                  Memory: 512
+                  Cpu: 1024
+                  Links:
+                    - rabbit
                   Environment: 
                     - Name: POSTGRESQL_HOST
                       Value: !Ref PostgresHost
+                    - Name: AWS
+                      Value: 1
+                    - Name: ENV_NAME 
+                      Value: !Ref EnvName
+                    - Name: CELERY_BROKER_URL
+                      Value: pyamqp://guest@localhost:5672
+                    - Name: AWS_DEFAULT_REGION
+                      Value: us-east-1                    
+                    - Name: SENTRY_PUBLIC_DSN
+                      Value: http://f69265b381a44ceb89e9bd467f86fbdd@devops-sentry-public-lb-718357739.us-east-1.elb.amazonaws.com/3
+                  MountPoints:
+                    - SourceVolume: images_volume
+                      ContainerPath: /concordia_images
                   PortMappings:
                     - ContainerPort: 80
                   LogConfiguration:
@@ -75,6 +98,42 @@ Resources:
                     Options:
                         awslogs-group: !Ref AWS::StackName
                         awslogs-region: !Ref AWS::Region
+                        awslogs-stream-prefix: concordia-app-
+                - Name: importer
+                  Essential: true
+                  Image: 351149051428.dkr.ecr.us-east-1.amazonaws.com/concordia/importer:latest
+                  Memory: 512
+                  Cpu: 1024
+                  Links:
+                    - rabbit
+                  Environment: 
+                    - Name: POSTGRESQL_HOST
+                      Value: !Ref PostgresHost
+                    - Name: AWS
+                      Value: 1
+                    - Name: ENV_NAME 
+                      Value: !Ref EnvName
+                    - Name: CELERY_BROKER_URL
+                      Value: pyamqp://guest@localhost:5672
+                    - Name: AWS_DEFAULT_REGION
+                      Value: us-east-1                    
+                    - Name: SENTRY_PUBLIC_DSN
+                      Value: http://f69265b381a44ceb89e9bd467f86fbdd@devops-sentry-public-lb-718357739.us-east-1.elb.amazonaws.com/3
+                  MountPoints:
+                    - SourceVolume: images_volume
+                      ContainerPath: /concordia_images
+                  LogConfiguration:
+                    LogDriver: awslogs
+                    Options:
+                        awslogs-group: !Ref AWS::StackName
+                        awslogs-region: !Ref AWS::Region
+                        awslogs-stream-prefix: concordia-importer-
+                - Name: rabbit
+                  Essential: true
+                  Image: 351149051428.dkr.ecr.us-east-1.amazonaws.com/rabbitmq:latest
+                  Hostname: rabbit
+                  PortMappings:
+                    - ContainerPort: 5672
 
     CloudWatchLogsGroup:
         Type: AWS::Logs::LogGroup
@@ -192,7 +251,7 @@ Resources:
     CPUScaleOutAlarm:
         Type: AWS::CloudWatch::Alarm
         Properties:
-            AlarmName: CPU utilization greater than 90%
+            AlarmName: !Sub CPU gt 90% ${AWS::StackName}
             AlarmDescription: Alarm if cpu utilization greater than 90% of reserved cpu
             Namespace: AWS/ECS
             MetricName: CPUUtilization
@@ -212,7 +271,7 @@ Resources:
     CPUScaleInAlarm:
         Type: AWS::CloudWatch::Alarm
         Properties:
-            AlarmName: CPU utilization less than 70%
+            AlarmName: !Sub CPU lt 70% ${AWS::StackName}
             AlarmDescription: Alarm if cpu utilization greater than 70% of reserved cpu
             Namespace: AWS/ECS
             MetricName: CPUUtilization
