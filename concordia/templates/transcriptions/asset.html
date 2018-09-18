@@ -317,24 +317,14 @@
             var status = sessionStorage.getItem('status');
 
             if( show_message == 'true' ) {
-                if( status == 'save' ) {
-                    $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute py-half fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> Your contribution has been saved.</div>');
-                    setTimeout(function() {
-                        $('.alert-contribute').fadeOut(500);
-                    }, 3000);
-                } else if( status == 'review') {
-                    $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute py-half fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> The transcription is ready for review.</div>');
-                    setTimeout(function() {
-                        $('.alert-contribute').fadeOut(500);
-                    }, 3000);
-                } else {
-                    $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute py-half fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> The transcription is now complete.</div>');
-                    setTimeout(function() {
-                        $('.alert-contribute').fadeOut(500);
-                    }, 3000);
-                }
-                sessionStorage.setItem('show_message', 'false');
-                sessionStorage.setItem('status', '');
+            	   {% if messages %}
+	            	   {% for message in messages %}
+	                $('#show_message').html('<div class="col-12 alert alert-{{ message.tags }} alert-dismissible alert-contribute py-half fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>{% if message.tags %}{% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}Error{% else %}Success{% endif %}{% endif %}!</strong> {{ message }}</div>');
+	                setTimeout(function() {
+	                    $('.alert-contribute').fadeOut(500);
+	                }, 3000);
+	                {% endfor %}
+                {% endif %}
             }
 
             show_buttons();
