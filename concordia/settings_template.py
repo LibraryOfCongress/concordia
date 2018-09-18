@@ -65,6 +65,7 @@ DATABASES = {
         "PASSWORD": "$(POSTGRESQL_PW)",
         "HOST": "$(POSTGRESQL_HOST)",
         "PORT": "5432",
+        "CONN_MAX_AGE": 15 * 60,  # Keep database connections open for 15 minutes
     }
 }
 
