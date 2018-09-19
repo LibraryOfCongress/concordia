@@ -21,12 +21,13 @@ from django.shortcuts import Http404, get_object_or_404, redirect, render
 from django.template import loader
 from django.urls import reverse
 from django.views.decorators.cache import never_cache
-from django.views.generic import FormView, TemplateView, View
+from django.views.generic import FormView, ListView, TemplateView, View
 from registration.backends.hmac.views import RegistrationView
 from rest_framework import generics, status
 from rest_framework.test import APIRequestFactory
 
 from concordia.forms import (
+    AssetFilteringForm,
     CaptchaEmbedForm,
     ConcordiaContactUsForm,
     ConcordiaUserEditForm,
@@ -210,67 +211,77 @@ class ConcordiaCampaignView(TemplateView):
         )
 
 
-class ConcordiaProjectView(TemplateView):
+class ConcordiaProjectView(ListView):
     template_name = "transcriptions/project.html"
+    context_object_name = "items"
+    paginate_by = 10
+
+    def get_queryset(self):
+        self.project = Project.objects.select_related("campaign").get(
+            slug=self.kwargs["slug"], campaign__slug=self.kwargs["campaign_slug"]
+        )
+
+        item_qs = self.project.item_set.order_by("item_id")
+
+        return item_qs
 
     def get_context_data(self, **kws):
-        try:
-            page = int(self.request.GET.get("page", "1"))
-        except ValueError:
-            return redirect(self.request.path)
-
-        try:
-            project = Project.objects.select_related("campaign").get(
-                slug=self.kwargs["slug"], campaign__slug=self.kwargs["campaign_slug"]
-            )
-        except Project.DoesNotExist:
-            raise Http404
-
-        item_qs = project.item_set.order_by("item_id")
-
-        paginator = Paginator(item_qs, ITEMS_PER_PAGE)
-        items = paginator.get_page(page)
-
         return dict(
             super().get_context_data(**kws),
-            campaign=project.campaign,
-            project=project,
-            items=items,
+            campaign=self.project.campaign,
+            project=self.project,
         )
 
 
-class ConcordiaItemView(TemplateView):
+class ConcordiaItemView(ListView):
+    # FIXME: review naming – we treat these as list views for sub-components and
+    # might want to change / combine some views
     """
     Handle GET requests on /campaign/<campaign>/<project>/<item>
     """
 
     template_name = "transcriptions/item.html"
+    context_object_name = "assets"
+    paginate_by = 10
 
-    def get_context_data(self, **kws):
-        from .serializers import ItemSerializer
+    form_class = AssetFilteringForm
 
-        item = get_object_or_404(
-            Item,
-            campaign__slug=self.args[0],
-            project__slug=self.args[1],
-            slug=self.args[2],
+    http_method_names = ["get", "options", "head"]
+
+    def get_queryset(self):
+        self.item = get_object_or_404(
+            Item.objects.select_related("project", "project__campaign"),
+            campaign__slug=self.kwargs["campaign_slug"],
+            project__slug=self.kwargs["project_slug"],
+            slug=self.kwargs["slug"],
         )
 
-        serialized = ItemSerializer(item).data
+        asset_qs = self.item.asset_set.all()
+        return self.apply_asset_filters(asset_qs)
 
-        paginator = Paginator(serialized["assets"], ASSETS_PER_PAGE)
+    def apply_asset_filters(self, asset_qs):
+        """Use optional GET parameters to filter the asset list"""
 
-        page = int(self.request.GET.get("page") or "1")
+        self.filter_form = form = self.form_class(asset_qs, self.request.GET)
+        if form.is_valid():
+            asset_qs = asset_qs.filter(
+                **{k: v for k, v in form.cleaned_data.items() if v}
+            )
 
-        assets = paginator.get_page(page)
+        return asset_qs
 
-        return dict(
-            super().get_context_data(**kws),
-            campaign=serialized["campaign"],
-            project=serialized["project"],
-            item=serialized,
-            assets=assets,
+    def get_context_data(self, **kwargs):
+        res = super().get_context_data(**kwargs)
+
+        res.update(
+            {
+                "campaign": self.item.campaign,
+                "project": self.item.project,
+                "item": self.item,
+                "filter_form": self.filter_form,
+            }
         )
+        return res
 
 
 class ConcordiaAssetView(TemplateView):
@@ -763,7 +774,7 @@ class ContactUsView(FormView):
 
     def get_context_data(self, *args, **kwargs):
         res = super().get_context_data(*args, **kwargs)
-        res['title'] = "Contact Us"
+        res["title"] = "Contact Us"
         return res
 
     def get_initial(self):
@@ -968,11 +979,8 @@ class ReportCampaignView(TemplateView):
         status_qs = status_qs.annotate(Count("status"))
         project_statuses = {}
 
-        # Map DB values to preferred display names
-        status_value_map = dict(Status.CHOICES)
-
         for project_id, status_value, count in status_qs:
-            status_name = status_value_map[status_value]
+            status_name = Status.CHOICE_MAP[status_value]
             project_statuses.setdefault(project_id, []).append((status_name, count))
 
         for project in projects:

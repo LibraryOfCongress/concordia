@@ -3,11 +3,13 @@ from logging import getLogger
 from captcha.fields import CaptchaField
 from django import forms
 from django.contrib.auth import get_user_model
+from django.db.models import Count
 from registration.forms import RegistrationForm
+
+from concordia.models import Status
 
 User = get_user_model()
 logger = getLogger(__name__)
-ROLE_CHOICES = (("admin", ("Admin")), ("cm", ("Content Manager")), ("user", ("User")))
 
 
 class ConcordiaUserForm(RegistrationForm):
@@ -130,3 +132,32 @@ class ConcordiaContactUsForm(forms.Form):
 
 class CaptchaEmbedForm(forms.Form):
     captcha = CaptchaField()
+
+
+class AssetFilteringForm(forms.Form):
+    status = forms.ChoiceField(
+        choices=Status.CHOICES,
+        required=False,
+        label="Image Status",
+        widget=forms.Select(attrs={"class": "form-control"}),
+    )
+
+    def __init__(self, asset_qs, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # We want to get a list of all of the available asset states in this
+        # item's assets and will return that with the preferred display labels
+        # including the asset count to be displayed in the filter UI
+        asset_state_qs = asset_qs.values_list("status")
+        asset_state_qs = asset_state_qs.annotate(Count("status")).order_by()
+
+        asset_states = {
+            i: "%s (%d)" % (Status.CHOICE_MAP[i], j) for i, j in asset_state_qs
+        }
+
+        filtered_choices = [("", "All Images")]
+        for val, label in self.fields["status"].choices:
+            if val in asset_states:
+                filtered_choices.append((val, asset_states[val]))
+
+        self.fields["status"].choices = filtered_choices

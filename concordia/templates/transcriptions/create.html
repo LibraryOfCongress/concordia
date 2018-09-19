@@ -149,7 +149,7 @@ https://github.com/LibraryOfCongress/concordia/issues/182 {% endcomment %}
                 window.location.href = rurl;
             }
         }).fail(function (jqXHR, textStatus, errorThrown) {
-            alert('Error while saving the campaign assets: ' + textStatus + '(' + errorThrown.toString() + ')');
+            alert('Error while saving the campaign assets: ' + textStatus + '(' + jqXHR.responseText || errorThrown + ')');
         });
     }
 
@@ -185,7 +185,7 @@ https://github.com/LibraryOfCongress/concordia/issues/182 {% endcomment %}
                 }
             }
         }).fail(function (jqXHR, textStatus, errorThrown) {
-            alert('Error while checking the task status: ' + textStatus + '(' + errorThrown.toString() + ')');
+            alert('Error while checking the task status: ' + textStatus + '(' + jqXHR.responseText || errorThrown + ')');
         });
     }
 
@@ -214,8 +214,8 @@ https://github.com/LibraryOfCongress/concordia/issues/182 {% endcomment %}
 
                     pollForTaskStatus();
                 }
-            }).fail(function (data, jqXHR, textStatus, errorThrown) {
-                alert('Error while saving the task: ' + textStatus + '(' + errorThrown.toString() + ')');
+            }).fail(function (jqXHR, textStatus, errorThrown) {
+                alert('Error while saving the task: ' + textStatus + ' (' + jqXHR.responseText || errorThrown + ')');
             });
         } else {
             $('#error_msg').html('Please fill out required fields below.');

@@ -1,0 +1,42 @@
+{% comment %}
+This template fragment assumes that you are using Bootstrap's default pagination
+with a Django ListView CBV or equivalent which has the default is_paginated,
+paginator, and page_obj variables defined.
+
+TODO: implement some nice context checks which would make the page list look
+like this:
+
+first … [current - 1…3] … current page … [current + 1…3] … last
+{% endcomment %}
+
+{% if is_paginated %}
+    <nav>
+        <ul class="pagination mx-auto justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Previous</span>
+                </li>
+            {% endif %}
+
+            <li class="page-item active">
+                <a class="page-link" href="?page={{ page_obj.number }}">
+                    {{ page_obj.number }}
+                </a>
+            </li>
+
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Next</span>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+{% endif %}

@@ -81,7 +81,7 @@ tx_urlpatterns = (
             name="project-detail",
         ),
         re_path(
-            r"^([^/]+)/([^/]+)/([^/]+)/$",
+            r"^(?P<campaign_slug>[^/]+)/(?P<project_slug>[^/]+)/(?P<slug>[^/]+)/$",
             views.ConcordiaItemView.as_view(),
             name="item",
         ),

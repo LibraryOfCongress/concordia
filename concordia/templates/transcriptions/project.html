@@ -18,30 +18,18 @@
             <div class="row">
                 <div class="d-flex flex-wrap col-12 justify-content-around">
                     {% for i in items %}
-                    <div class="col-12 col-md-4 col-lg-3 mx-quarter mb-default card bg-lightest-gray shadow-regular">
-                        <a href="{% url 'transcriptions:item' campaign.slug project.slug i.slug %}">
-                            <img class="card-img card-img-campaign" alt="{{ i.slug }}" src="{{ i.thumbnail_url }}">
-                        </a>
+                        <div class="col-12 col-md-4 col-lg-3 mx-quarter mb-default card bg-lightest-gray shadow-regular">
+                            <a href="{% url 'transcriptions:item' campaign.slug project.slug i.slug %}">
+                                <img class="card-img card-img-campaign" alt="{{ i.slug }}" src="{{ i.thumbnail_url }}">
+                            </a>
 
-                        <a href="{% url 'transcriptions:item' campaign.slug project.slug i.slug %}"
-                            class="campaign-image-link"><h6 class="text-center primary-text my-half">{{ i.slug }}</h6></a>
-                    </div>
+                            <a href="{% url 'transcriptions:item' campaign.slug project.slug i.slug %}"
+                                class="campaign-image-link"><h6 class="text-center primary-text my-half">{{ i.slug }}</h6></a>
+                        </div>
                     {% endfor %}
                 </div>
             </div>
-            <div class="pagination justify-content-center align-items-center mb-default">
-                <span class="step-links">
-                    {% if items.has_previous %}
-                        <a class="pr-3 primary-text" href="?page=1">&laquo; first</a>
-                        <a class="pr-3 primary-text" href="?page={{ items.previous_page_number }}">previous</a>
-                    {% endif %}
-                    <span class="current">Page {{ items.number }} of {{ items.paginator.num_pages }}</span>
-                    {% if items.has_next %}
-                        <a class="pl-3 primary-text" href="?page={{ items.next_page_number }}">next</a>
-                        <a class="pl-3 primary-text" href="?page={{ items.paginator.num_pages }}">last &raquo;</a>
-                    {% endif %}
-                </span>
-            </div>
+            {% include "standard-pagination.html" %}
         </div>
     </div>
 </div>
