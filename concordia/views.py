@@ -957,11 +957,8 @@ class ReportCampaignView(TemplateView):
         status_qs = status_qs.annotate(Count("status"))
         project_statuses = {}
 
-        # Map DB values to preferred display names
-        status_value_map = dict(Status.CHOICES)
-
         for project_id, status_value, count in status_qs:
-            status_name = status_value_map[status_value]
+            status_name = Status.CHOICE_MAP[status_value]
             project_statuses.setdefault(project_id, []).append((status_name, count))
 
         for project in projects:

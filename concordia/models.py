@@ -20,6 +20,8 @@ logger = getLogger(__name__)
 
 
 class Status:
+    # FIXME: determine whether this is actually universally applicable to all of
+    # our models or should be split into subsets
     EDIT = "Edit"
     SUBMITTED = "Submitted"
     COMPLETED = "Completed"
@@ -34,6 +36,9 @@ class Status:
         (INACTIVE, "Inactive"),
         (ACTIVE, "Active"),
     )
+
+    #: Convenience lookup dictionary for CHOICES:
+    CHOICE_MAP = dict(CHOICES)
 
 
 class MediaType:
