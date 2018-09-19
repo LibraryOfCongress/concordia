@@ -21,7 +21,7 @@ from django.shortcuts import Http404, get_object_or_404, redirect, render
 from django.template import loader
 from django.urls import reverse
 from django.views.decorators.cache import never_cache
-from django.views.generic import FormView, TemplateView, View
+from django.views.generic import FormView, ListView, TemplateView, View
 from registration.backends.hmac.views import RegistrationView
 from rest_framework import generics, status
 from rest_framework.test import APIRequestFactory
@@ -210,32 +210,25 @@ class ConcordiaCampaignView(TemplateView):
         )
 
 
-class ConcordiaProjectView(TemplateView):
+class ConcordiaProjectView(ListView):
     template_name = "transcriptions/project.html"
+    context_object_name = "items"
+    paginate_by = 10
+
+    def get_queryset(self):
+        self.project = Project.objects.select_related("campaign").get(
+            slug=self.kwargs["slug"], campaign__slug=self.kwargs["campaign_slug"]
+        )
+
+        item_qs = self.project.item_set.order_by("item_id")
+
+        return item_qs
 
     def get_context_data(self, **kws):
-        try:
-            page = int(self.request.GET.get("page", "1"))
-        except ValueError:
-            return redirect(self.request.path)
-
-        try:
-            project = Project.objects.select_related("campaign").get(
-                slug=self.kwargs["slug"], campaign__slug=self.kwargs["campaign_slug"]
-            )
-        except Project.DoesNotExist:
-            raise Http404
-
-        item_qs = project.item_set.order_by("item_id")
-
-        paginator = Paginator(item_qs, ITEMS_PER_PAGE)
-        items = paginator.get_page(page)
-
         return dict(
             super().get_context_data(**kws),
-            campaign=project.campaign,
-            project=project,
-            items=items,
+            campaign=self.project.campaign,
+            project=self.project,
         )
 
 
