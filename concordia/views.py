@@ -27,6 +27,7 @@ from rest_framework import generics, status
 from rest_framework.test import APIRequestFactory
 
 from concordia.forms import (
+    AssetFilteringForm,
     CaptchaEmbedForm,
     ConcordiaContactUsForm,
     ConcordiaUserEditForm,
@@ -243,6 +244,10 @@ class ConcordiaItemView(ListView):
     context_object_name = "assets"
     paginate_by = 10
 
+    form_class = AssetFilteringForm
+
+    http_method_names = ["get", "options", "head"]
+
     def get_queryset(self):
         self.item = get_object_or_404(
             Item.objects.select_related("project", "project__campaign"),
@@ -251,15 +256,32 @@ class ConcordiaItemView(ListView):
             slug=self.kwargs["slug"],
         )
 
-        return self.item.asset_set.all()
+        asset_qs = self.item.asset_set.all()
+        return self.apply_asset_filters(asset_qs)
 
-    def get_context_data(self, **kws):
-        return dict(
-            super().get_context_data(**kws),
-            campaign=self.item.campaign,
-            project=self.item.project,
-            item=self.item,
+    def apply_asset_filters(self, asset_qs):
+        """Use optional GET parameters to filter the asset list"""
+
+        self.filter_form = form = self.form_class(asset_qs, self.request.GET)
+        if form.is_valid():
+            asset_qs = asset_qs.filter(
+                **{k: v for k, v in form.cleaned_data.items() if v}
+            )
+
+        return asset_qs
+
+    def get_context_data(self, **kwargs):
+        res = super().get_context_data(**kwargs)
+
+        res.update(
+            {
+                "campaign": self.item.campaign,
+                "project": self.item.project,
+                "item": self.item,
+                "filter_form": self.filter_form,
+            }
         )
+        return res
 
 
 class ConcordiaAssetView(TemplateView):

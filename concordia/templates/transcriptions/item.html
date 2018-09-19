@@ -1,4 +1,8 @@
-{% extends "transcriptions/base.html" %} {% load staticfiles %}
+{% extends "transcriptions/base.html" %}
+
+{% load humanize %}
+{% load staticfiles %}
+
 {% block title %}Concordia - {{ campaign.title }}{% endblock title %}
 {% block head_content %}
 
@@ -11,23 +15,34 @@
             <h4>{{ project.title }}</h4>
             <h5>Item {{ item.title }}</h5>
             <div class="row">
-                <div class="d-flex flex-wrap col-12 justify-content-around">
-                    {% for a in assets %}
-                    <div class="col-12 col-md-4 col-lg-3 mx-quarter mb-default card bg-lightest-gray shadow-regular">
-                        <a href="{% url 'transcriptions:asset' campaign.slug a.slug %}">
-                            <img class="card-img card-img-campaign" alt="{{ a.slug }}" src="{% if campaign.s3_storage %}{{ a.media_url }}{% else %}{{ MEDIA_URL }}{{a.media_url }}{% endif %}">
-                        </a>
-                        <div class="card-img-overlay img-campaign">
-                            <div class="d-flex flex-column justify-content-end col-9 col-md-8 mx-auto h-100">
-                                <a href="{% url 'transcriptions:asset' campaign.slug a.slug %}" class="btn btn-primary btn-lg w-100 mb-quarter">Transcribe</a>
-                                <a href="{% url 'transcriptions:asset' campaign.slug a.slug %}#tab-tag" class="btn btn-primary btn-lg w-100 mb-quarter">Tag</a>
-                                {% if user.is_superuser %}
-                                    <a href="{% url 'transcriptions:delete_asset' campaign.slug a.slug %}" class="btn btn-primary btn-lg w-100 mb-quarter">Hide</a>
-                                {% endif %}
+                <form method="get" class="w-50 mx-auto">
+                    <h6>Filter {{ paginator.count|intcomma }} Assets:</h6>
+                    <div class="form-group row">
+                        <div class="input-group input-group-sm">
+                            {{ filter_form.status }}
+                            <div class="input-group-append">
+                                <button type="submit" class="btn btn-sm btn-outline-primary">Go</button>
                             </div>
                         </div>
-                        <a href="{% url 'transcriptions:asset' campaign.slug a.slug %}" class="campaign-image-link"><h6 class="text-center primary-text my-half">Image {{ a.sequence }}</h6></a>
                     </div>
+                </form>
+                <div class="d-flex flex-wrap col-12 justify-content-around">
+                    {% for a in assets %}
+                        <div class="col-12 col-md-4 col-lg-3 mx-quarter mb-default card bg-lightest-gray shadow-regular" data-asset-status="{{ a.status|lower }}">
+                            <a href="{% url 'transcriptions:asset' campaign.slug a.slug %}">
+                                <img class="card-img card-img-campaign" alt="{{ a.slug }}" src="{% if campaign.s3_storage %}{{ a.media_url }}{% else %}{{ MEDIA_URL }}{{a.media_url }}{% endif %}">
+                            </a>
+                            <div class="card-img-overlay img-campaign">
+                                <div class="d-flex flex-column justify-content-end col-9 col-md-8 mx-auto h-100">
+                                    <a href="{% url 'transcriptions:asset' campaign.slug a.slug %}" class="btn btn-primary btn-lg w-100 mb-quarter">Transcribe</a>
+                                    <a href="{% url 'transcriptions:asset' campaign.slug a.slug %}#tab-tag" class="btn btn-primary btn-lg w-100 mb-quarter">Tag</a>
+                                    {% if user.is_superuser %}
+                                        <a href="{% url 'transcriptions:delete_asset' campaign.slug a.slug %}" class="btn btn-primary btn-lg w-100 mb-quarter">Hide</a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <a href="{% url 'transcriptions:asset' campaign.slug a.slug %}" class="campaign-image-link"><h6 class="text-center primary-text my-half">Image {{ a.sequence }}</h6></a>
+                        </div>
                     {% endfor %}
                 </div>
             </div>
