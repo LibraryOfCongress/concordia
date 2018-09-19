@@ -1732,13 +1732,13 @@ box-shadow: inset 0 .1875rem .3125rem rgba(0, 0, 0, .125);
   width: 125px;
   height: 30px;
   background-size: 125px 30px;
-  background: url("congress-gov.svg") no-repeat;
+  background: url("../congress-gov.svg") no-repeat;
 }
 .intersites-links > li.intersites-link-copyright > a {
   width: 175px;
   height: 30px;
   background-size: 175px 30px;
-  background: url("copyright-gov.svg") no-repeat;
+  background: url("../copyright-gov.svg") no-repeat;
 }
 @media (max-width: 992px) {
   .intersites-links {
@@ -1750,7 +1750,7 @@ box-shadow: inset 0 .1875rem .3125rem rgba(0, 0, 0, .125);
   width: 16px;
   height: 16px;
   vertical-align: text-top;
-  background-image: url("icons-social-media.png");
+  background-image: url("../icons-social-media.png");
   background-position: -200px 0;
   background-repeat: no-repeat;
 }
