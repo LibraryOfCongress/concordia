@@ -323,12 +323,12 @@
                         $('.alert-contribute').fadeOut(500);
                     }, 3000);
                 } else if( status == 'review') {
-                    $('#show_message').html('<div class="col-12 alert alert-success alert-2line alert-dismissible alert-contribute py-half fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> Thank you for finishing that transcription.<br> Move to new page that needs more transcription? <a href="/campaigns/newpage/review/{{ asset.campaign.slug}}/{{asset.slug}}/">yes</a><br> (If all other pages are Completed or Submitted for Review, you will stay here.) </div>');
+                    $('#show_message').html('<div class="col-12 alert alert-success alert-2line alert-dismissible alert-contribute py-half fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> Thank you for finishing that transcription - now try this one. If you would like to go back to the page you just worked on, <a href="/campaigns/{{ asset.campaign.slug}}/asset/{{previous_asset}}/">click here</a>.</div>');
                     setTimeout(function() {
                         $('.alert-contribute').fadeOut(500);
                     }, 10000);
                 } else {
-                    $('#show_message').html('<div class="col-12 alert alert-success alert-2line alert-dismissible alert-contribute py-half fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> Thank you for finishing that transcription.<br> Move to a new page that is in Review? <a href="/campaigns/newpage/complete/{{ asset.campaign.slug}}/{{asset.slug}}/">yes</a><br> (If all other pages are Completed or no pages Submitted for Review, you will stay here.)</div>');
+                    $('#show_message').html('<div class="col-12 alert alert-success alert-2line alert-dismissible alert-contribute py-half fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> Thank you for reviewing that transcription - now try this one. If you would like to go back to the page you just worked on, <a href="/campaigns/{{ asset.campaign.slug}}/asset/{{previous_asset}}/">click here</a>.</div>');
                     setTimeout(function() {
                         $('.alert-contribute').fadeOut(500);
                     }, 10000);

@@ -1481,6 +1481,10 @@ box-shadow: inset 0 .1875rem .3125rem rgba(0, 0, 0, .125);
     color: var(--text-color-offwhite);
 }
 
+.alert.alert-2line {
+    height: 100px;
+}
+
 .alert.alert-danger {
     background-color: var(--color-danger);
     border-color: none;
