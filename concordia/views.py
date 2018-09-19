@@ -752,7 +752,7 @@ class ContactUsView(FormView):
 
     def get_context_data(self, *args, **kwargs):
         res = super().get_context_data(*args, **kwargs)
-        res['title'] = "Contact Us"
+        res["title"] = "Contact Us"
         return res
 
     def get_initial(self):
