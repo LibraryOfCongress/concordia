@@ -45,8 +45,8 @@ class MediaType:
 
 
 class Campaign(MetricsModelMixin("campaign"), models.Model):
-    title = models.CharField(max_length=50)
-    slug = models.SlugField(max_length=50, unique=True)
+    title = models.CharField(max_length=80)
+    slug = models.SlugField(max_length=80, unique=True)
     description = models.TextField(blank=True)
     start_date = models.DateTimeField(null=True, blank=True)
     end_date = models.DateTimeField(null=True, blank=True)
@@ -63,8 +63,8 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
 
 
 class Project(models.Model):
-    title = models.CharField(max_length=50)
-    slug = models.SlugField(max_length=50)
+    title = models.CharField(max_length=80)
+    slug = models.SlugField(max_length=80)
     category = models.CharField(max_length=12, blank=True)
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
     metadata = JSONField(default=metadata_default)

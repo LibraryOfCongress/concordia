@@ -274,12 +274,18 @@ AWS_S3 = {
     "AWS_ACCESS_KEY_ID": os.getenv("AWS_ACCESS_KEY_ID"),
     "AWS_SECRET_ACCESS_KEY": os.getenv("AWS_SECRET_ACCESS_KEY"),
     "S3_COLLECTION_BUCKET": "chc-collections",
+    "REGION": os.getenv("AWS_REGION"),
 }
 
 PASSWORD_RESET_TIMEOUT_DAYS = 1
+ACCOUNT_ACTIVATION_DAYS = 1
 REGISTRATION_OPEN = True  # set to false to temporarily disable registrations
 
-MESSAGE_TAGS = {messages.ERROR: "danger"}
+MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
+
+MESSAGE_TAGS = {
+    messages.ERROR: 'danger',
+}
 
 SENTRY_DSN = os.environ.get("SENTRY_DSN", "")
 SENTRY_PUBLIC_DSN = os.environ.get("SENTRY_PUBLIC_DSN", "")

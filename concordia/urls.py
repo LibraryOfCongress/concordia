@@ -51,6 +51,11 @@ tx_urlpatterns = (
             name="delete campaign",
         ),
         re_path(
+            r"delete/project/([^/]+)/([^/]+)/$",
+            views.DeleteProjectView.as_view(),
+            name="delete project",
+        ),
+        re_path(
             r"^([^/]+)/delete/asset/([^/]+)/$",
             views.DeleteAssetView.as_view(),
             name="delete_asset",
@@ -232,12 +237,12 @@ urlpatterns += [
         name="get_task_status",
     ),
     re_path(
-        r"^check_and_save_campaign_assets/(?P<task_id>[a-zA-Z0-9-]+)/(?P<item_id>[a-zA-Z0-9-]+)$",
+        r"^check_and_save_campaign_assets/(?P<task_id>[a-zA-Z0-9-]+)/(?P<item_id>[a-zA-Z0-9-.]+)$",
         check_and_save_campaign_assets,
         name="check_and_save_campaign_item_assets",
     ),
     re_path(
-        r"^check_and_save_campaign_assets/(?P<task_id>[a-zA-Z0-9-]+)/$",
+        r"^check_and_save_campaign_assets/(?P<task_id>[a-zA-Z0-9-.]+)/$",
         check_and_save_campaign_assets,
         name="check_and_save_campaign_assets",
     ),

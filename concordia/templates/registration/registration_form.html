@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Citizen Historian Registration{% endblock title %}
+{% block title %}Make Your Mark Registration{% endblock title %}
 {% block head_content %}
 <style>
 input#id_captcha_1 {
@@ -11,8 +11,34 @@ input#id_captcha_1 {
 {% block main_content %}
 <div class="container-fluid">
     <div class="row">
-        <div class="col-8 col-md-6 col-lg-4 mx-auto bg-offwhite rounded shadow-regular container-registration">
-            <h2 class="mt-half mb-quarter text-center">citizen historian</h2>
+        <div class="col-8 col-md-8 col-lg-6 mx-auto bg-offwhite rounded shadow-regular container-registration">
+            <div class="row">
+            <div class="left-pane col-6 padding-default">
+                <!--<h2 class="mt-half mb-quarter text-center">left pane</h2>-->
+                <p class="text-left">
+                    Create an account to be able to track your work, add tags
+                    and review transcriptions. Please provide a username, your
+                    email address and a strong password.
+                </p>
+                <hr/>
+                <p class="text-left">
+                    Why do we need your email? Your email address gives us the
+                    ability to support you. Community managers are here to help
+                    with account administration like changes to your profile,
+                    troubleshooting any issues with contributing to a
+                    transcription, or to answer general questions. You have the
+                    additional option to receive email updates by opting to
+                    subscribe. We will never share your information with other
+                    institutions or individuals.
+                </p>
+                <hr/>
+                <p class="text-left">
+                    Once you click register, we will send you a link to confirm
+                    your email address.
+                </p>
+            </div>
+            <div class="right-pane col-6">
+            <h2 class="mt-half mb-quarter text-center">Make Your Mark</h2>
             <h3 class="mb-default text-center">registration</h3>
             {% if form.errors %}
                 {% for error in form.non_field_errors %}
@@ -66,6 +92,13 @@ input#id_captcha_1 {
                             <ul id="req4" class="nocheckmark"><i class="far fa-square mr-2"></i>1 or more non-unique special characters</ul>
                     </div>
                 </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value=""
+                           id="defaultCheck1">
+                    <label class="form-check-label" for="defaultCheck1">
+                        I would like to receive email updates about new campaigns, upcoming events, and feature improvements.
+                    </label>
+                </div>
                 <div class="d-flex col mx-auto justify-content-center pt-half">
                     <a href="{% url 'login' %}" class="text-center blue-text">I already have an account</a>
                 </div>
@@ -73,6 +106,8 @@ input#id_captcha_1 {
                     <input class="btn btn-primary" type="submit" value="Register" id="registration-submit">
                 </div>
             </form>
+            </div>
+            </div>
         </div>
     </div>
 </div>

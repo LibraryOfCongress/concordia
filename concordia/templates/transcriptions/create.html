@@ -1,8 +1,10 @@
 {% extends "transcriptions/base.html" %}
 {% load staticfiles %}
+
 {% comment %} FIXME: this entire view needs to be refactored to follow standard web practice — see
 https://github.com/LibraryOfCongress/concordia/issues/182 {% endcomment %}
-{% block title %}Citizen Historian Create a Campaign{% endblock title %}
+{% block title %}Make Your Mark Create a Campaign{% endblock title %}
+
 {% block head_content %}
 <style>
     .autocomplete {
@@ -122,29 +124,29 @@ https://github.com/LibraryOfCongress/concordia/issues/182 {% endcomment %}
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU="
     crossorigin="anonymous"></script>
 <script>
-    $('#close_error').hide();
 
-    function write_save_campaign_assets(taskId) {
-        $('#close_error').hide();
-        $.ajax({
-            url: '/check_and_save_campaign_assets/' + taskId + '/' + $('#item_id').val(),
-            type: 'GET',
-            success: function (data, textStatus, jqXHR) {
-                console.log('response: ', data);
-                var slug = $('#campaign_slug')
-                    .val()
-                    .toLowerCase()
-                    .replace(/ +/g, '-');
-                var projslug = $('#project-name')
-                    .val()
-                    .toLowerCase()
-                    .replace(/ +/g, '-');
-                if ($('#item_id').val()) {
-                    var rurl = '/campaigns/' + slug + '/' + projslug + '/';
-                } else {
-                    var rurl = '/campaigns/' + slug + '/';
-                }
+$("#close_error").hide();
+function handle_form_submission()
+{
+  $(".loading").removeClass("d-none");
+  // document.getElementById("container").style.display = "none";
+}
 
+function write_save_campaign_assets(task_id){
+   $("#close_error").hide();
+   $.ajax({
+        url: "/check_and_save_campaign_assets/"+task_id+"/"+$("#item_id").val(),
+        type: 'GET',
+        success: function(data, textStatus, jqXHR) {
+            console.log("response: ", data);
+            var slug = slugify($("#campaign_slug").val());
+            var projslug = slugify($("#project-name").val());
+            if($("#item_id").val()){
+                var rurl = "/campaigns/"+slug+"/"+projslug+"/";
+            }
+            else{
+                var rurl = "/campaigns/"+slug+"/";
+            }
                 window.location.href = rurl;
             }
         }).fail(function (jqXHR, textStatus, errorThrown) {
@@ -239,5 +241,20 @@ https://github.com/LibraryOfCongress/concordia/issues/182 {% endcomment %}
             minLength: 1
         });
     });
+});
+
+function slugify(string) {
+  return string
+    .toString()
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^\w\-]+/g, "")
+    .replace(/\-\-+/g, "-")
+    .replace(/^-+/, "")
+    .replace(/-+$/, "");
+}
+
+
 </script>
 {% endblock body_scripts %}
