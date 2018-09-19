@@ -26,35 +26,20 @@ def get_item_id_from_item_url(item_url):
     return item_id
 
 
-def get_request_data(url, params=None, timeout=120, json_resp=True, **kwargs):
-    """
-    :param url: give any get url
-    :param params: parameters tho above url as dict
-    :param timeout: connection timeout 5 sec
-    :return:response dict
-    """
-    try:
-        response = requests.get(url, params=params, timeout=timeout, **kwargs)
-    except Exception as e:
-        logger.error("url %s accessing error %s" % (url, str(e)))
-    else:
-        if response.status_code == 200:
-            if not json_resp:
-                return response
-            return response.json()
-    return {}
-
-
 def get_campaign_pages(campaign_url):
     """
     Return total pages in given loc gov campaign urls
     :param campaign_url:
     :return: int total no of pages
     """
-    resp = get_request_data(campaign_url, params={"fo": "json", "at": "pagination"})
-    total_pages = resp.get("pagination", {}).get("total", 0)
+
+    resp = requests.get(campaign_url, params={"fo": "json", "at": "pagination"})
+    resp.raise_for_status()
+    data = resp.json()
+
+    total_pages = data.get("pagination", {}).get("total", 0)
     logger.info(
-        "total_campaign_pages: %s for campaign url : %s" % (total_pages, campaign_url)
+        "total_campaign_pages: %s for campaign url: %s", total_pages, campaign_url
     )
     return total_pages
 
@@ -67,8 +52,12 @@ def get_campaign_item_ids(campaign_url, total_pages):
     """
     campaign_item_ids = []
     for page_num in range(1, total_pages + 1):
-        resp = get_request_data(campaign_url, params={"fo": "json", "at": "results"})
-        page_results = resp.get("results", [])
+        resp = requests.get(campaign_url, params={"fo": "json", "at": "results"})
+        resp.raise_for_status()
+        data = resp.json()
+
+        page_results = data.get("results", [])
+
         for pr in page_results:
             if (
                 pr.get("id")
@@ -78,8 +67,9 @@ def get_campaign_item_ids(campaign_url, total_pages):
             ):
                 campaign_item_url = pr.get("id")
                 campaign_item_ids.append(campaign_item_url.split("/")[-2])
+
     if not campaign_item_ids:
-        logger.info("No item ids found for campaign url: %s" % campaign_url)
+        logger.info("No item ids found for campaign url: %s", campaign_url)
 
     return campaign_item_ids
 
@@ -91,8 +81,12 @@ def get_campaign_item_asset_urls(item_id):
     """
     campaign_item_asset_urls = []
     item_url = "https://www.loc.gov/item/{0}/".format(item_id)
-    campaign_item_resp = get_request_data(item_url, {"fo": "json"})
-    item_resources = campaign_item_resp.get("resources", [])
+    resp = requests.get(item_url, {"fo": "json"})
+    resp.raise_for_status()
+    campaign_item_data = resp.json()
+
+    item_resources = campaign_item_data.get("resources", [])
+
     for ir in item_resources:
         item_files = ir.get("files", [])
         for item_file in item_files:
@@ -110,18 +104,26 @@ def download_write_campaign_item_asset(image_url, asset_local_path):
     """
     :param image_url:
     :param asset_local_path:
-    :return:
     """
-    image_response = get_request_data(image_url, stream=True, json_resp=False)
 
-    with open(asset_local_path, "wb") as fd:
-        try:
-            for chunk in image_response.iter_content(chunk_size=100000):
+    try:
+        resp = requests.get(image_url, stream=True)
+        resp.raise_for_status()
+
+        with open(asset_local_path, "wb") as fd:
+            for chunk in resp.iter_content(chunk_size=256 * 1024):
                 fd.write(chunk)
-            return True
-        except Exception as e:
-            logger.error("Error while writing the file to disk : %s " % str(e))
-    return False
+    except Exception as e:
+        logger.error(
+            "Error while saving %s to %s: %s",
+            image_url,
+            asset_local_path,
+            e,
+            exc_info=True,
+            extra={
+                "data": {"image_url": image_url, "local filename": asset_local_path}
+            },
+        )
 
 
 def get_save_item_assets(campaign_name, project, item_id, item_asset_urls):
@@ -146,7 +148,16 @@ def get_save_item_assets(campaign_name, project, item_id, item_asset_urls):
     for idx, ciau in enumerate(item_asset_urls):
         asset_local_path = os.path.join(item_local_path, "{0}.jpg".format(str(idx)))
 
-        download_write_campaign_item_asset(ciau, asset_local_path)
+        try:
+            download_write_campaign_item_asset(ciau, asset_local_path)
+        except Exception as exc:
+            # FIXME: determine whether we can reliably recover from this condition
+            logger.error(
+                "Unable to save asset for campaign %s project %s item %s: %s",
+                campaign_name,
+                project,
+                item_id,
+            )
 
 
 @task

@@ -9,8 +9,9 @@ from django.test import Client, TestCase
 from django.utils.encoding import force_text
 from rest_framework import status
 
-from concordia.models import (Asset, Campaign, Item, MediaType, PageInUse, Project, Status, Tag,
-                              Transcription, User, UserProfile, UserAssetTagCollection)
+from concordia.models import (Asset, Campaign, Item, MediaType, PageInUse, Project,
+                              Status, Tag, Transcription, User, UserAssetTagCollection,
+                              UserProfile)
 
 logging.disable(logging.CRITICAL)
 
@@ -80,7 +81,6 @@ class ViewWSTest_Concordia(TestCase):
 
         # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-
 
     def test_PageInUse_post(self):
         """
@@ -338,7 +338,7 @@ class ViewWSTest_Concordia(TestCase):
 
         deleted_page = PageInUse.objects.filter(page_url="foo.com/blah")
         self.assertEqual(len(deleted_page), 0)
-        self.assertEqual(current_page_in_use_count-1, deleted_page_in_use_count)
+        self.assertEqual(current_page_in_use_count - 1, deleted_page_in_use_count)
 
     def test_Campaign_get(self):
         """
@@ -383,7 +383,7 @@ class ViewWSTest_Concordia(TestCase):
                 "status": Status.EDIT,
                 "s3_storage": False,
                 "title": "TextCampaign2",
-                'projects': [],
+                "projects": [],
                 "assets": [],
             },
         )
@@ -426,7 +426,7 @@ class ViewWSTest_Concordia(TestCase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
         deleted_campaign_count = Campaign.objects.all().count()
-        self.assertEqual(current_campaign_count-1, deleted_campaign_count)
+        self.assertEqual(current_campaign_count - 1, deleted_campaign_count)
 
     def test_Campaign_by_id_get(self):
         """
@@ -471,7 +471,7 @@ class ViewWSTest_Concordia(TestCase):
                 "status": Status.EDIT,
                 "s3_storage": False,
                 "title": "TextCampaign2",
-                'projects': [],
+                "projects": [],
                 "assets": [],
             },
         )
@@ -494,12 +494,9 @@ class ViewWSTest_Concordia(TestCase):
         )
         self.campaign.save()
 
-
         # Create a project
         self.project = Project(
-            title="A Project",
-            slug="project-slug",
-            campaign=self.campaign
+            title="A Project", slug="project-slug", campaign=self.campaign
         )
         self.project.save()
 
@@ -509,7 +506,7 @@ class ViewWSTest_Concordia(TestCase):
             slug="item1",
             item_id="item1",
             campaign=self.campaign,
-            project=self.project
+            project=self.project,
         )
         self.item1.save()
 
@@ -518,10 +515,9 @@ class ViewWSTest_Concordia(TestCase):
             slug="item2",
             item_id="item2",
             campaign=self.campaign,
-            project=self.project
+            project=self.project,
         )
         self.item2.save()
-
 
         # Add 2 assets to item2, 1 asset to item1
         self.asset = Asset(
@@ -533,7 +529,7 @@ class ViewWSTest_Concordia(TestCase):
             campaign=self.campaign,
             metadata={"key": "val2"},
             status=Status.EDIT,
-            item=self.item1
+            item=self.item1,
         )
         self.asset.save()
 
@@ -546,7 +542,7 @@ class ViewWSTest_Concordia(TestCase):
             campaign=self.campaign,
             metadata={"key": "val2"},
             status=Status.EDIT,
-            item=self.item1
+            item=self.item1,
         )
         self.asset2.save()
 
@@ -559,7 +555,7 @@ class ViewWSTest_Concordia(TestCase):
             campaign=self.campaign,
             metadata={"key": "val2"},
             status=Status.EDIT,
-            item=self.item2
+            item=self.item2,
         )
         self.asset3.save()
 
@@ -693,7 +689,7 @@ class ViewWSTest_Concordia(TestCase):
                 "start_date": None,
                 "end_date": None,
                 "status": "Edit",
-                'projects': [],
+                "projects": [],
                 "assets": [
                     {
                         "title": "TestAsset3",
@@ -894,7 +890,7 @@ class ViewWSTest_Concordia(TestCase):
                 "start_date": None,
                 "end_date": None,
                 "status": "Edit",
-                'projects': [],
+                "projects": [],
                 "assets": [
                     {
                         "id": self.asset3.id,
@@ -1009,12 +1005,18 @@ class ViewWSTest_Concordia(TestCase):
                     "start_date": None,
                     "status": None,
                     "assets": [],
-                    'projects': [],
+                    "projects": [],
                     "title": "",
                 },
                 "sequence": None,
                 "metadata": None,
-                'project': {'metadata': None, 'slug': '', 'is_publish': False, 'status': None, 'title': ''},
+                "project": {
+                    "metadata": None,
+                    "slug": "",
+                    "is_publish": False,
+                    "status": None,
+                    "title": "",
+                },
                 "status": None,
             },
         )

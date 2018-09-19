@@ -10,12 +10,11 @@ from rest_framework.authentication import BasicAuthentication
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 
-from .models import (Asset, Campaign, Item, PageInUse, Status, Tag, Transcription, User, UserProfile,
-                     UserAssetTagCollection)
-from .serializers import (AssetSerializer, CampaignDetailSerializer,
-                          ItemSerializer,
+from .models import (Asset, Campaign, Item, PageInUse, Status, Tag, Transcription, User,
+                     UserAssetTagCollection, UserProfile)
+from .serializers import (AssetSerializer, CampaignDetailSerializer, ItemSerializer,
                           PageInUseSerializer, TagSerializer, TranscriptionSerializer,
-                          UserAssetTagSerializer, UserSerializer, UserProfileSerializer)
+                          UserAssetTagSerializer, UserProfileSerializer, UserSerializer)
 
 
 class ConcordiaAPIAuth(BasicAuthentication):
@@ -59,6 +58,7 @@ class AnonymousUserGet(generics.RetrieveAPIView):
     """
     GET: Return anonymous user, Create it if needed (this is not the AnonymousUser django user)
     """
+
     model = User
     authentication_classes = (ConcordiaAPIAuth,)
     queryset = User.objects.all()
@@ -79,6 +79,7 @@ class UserProfileGet(generics.RetrieveAPIView):
     """
     GET: Return a user profile
     """
+
     model = UserProfile
     authentication_classes = (ConcordiaAPIAuth,)
     queryset = UserProfile.objects.all()
@@ -88,9 +89,7 @@ class UserProfileGet(generics.RetrieveAPIView):
     def get_object(self):
         try:
             user = User.objects.get(id=int(self.kwargs["user_id"]))
-            return (
-                UserProfile.objects.get(user=user)
-            )
+            return UserProfile.objects.get(user=user)
         except ObjectDoesNotExist:
             return None
 
@@ -99,6 +98,7 @@ class UserGet(generics.RetrieveAPIView):
     """
     GET: Return a User
     """
+
     model = User
     authentication_classes = (ConcordiaAPIAuth,)
     queryset = User.objects.all()
@@ -174,6 +174,7 @@ class PageInUseCount(generics.RetrieveAPIView):
     """
     GET: Return True if the page is in use by a different user, otherwise False
     """
+
     model = PageInUse
     authentication_classes = (ConcordiaAPIAuth,)
     serializer_class = PageInUseSerializer
@@ -183,15 +184,17 @@ class PageInUseCount(generics.RetrieveAPIView):
     def get(self, request, *args, **kwargs):
         time_threshold = datetime.now() - timedelta(minutes=5)
         page_in_use_count = (
-            PageInUse.objects.filter(page_url=self.kwargs["page_url"], updated_on__gt=time_threshold)
-                .exclude(user__id=self.kwargs["user"])
-                .count()
+            PageInUse.objects.filter(
+                page_url=self.kwargs["page_url"], updated_on__gt=time_threshold
+            )
+            .exclude(user__id=self.kwargs["user"])
+            .count()
         )
 
         if page_in_use_count > 0:
-            return Response(data={'page_in_use': True})
+            return Response(data={"page_in_use": True})
         else:
-            return Response(data={'page_in_use': False})
+            return Response(data={"page_in_use": False})
 
 
 class PageInUsePut(generics.UpdateAPIView):
@@ -249,8 +252,6 @@ class CampaignGetById(generics.RetrieveAPIView):
     lookup_field = "id"
 
 
-
-
 class CampaignAssetsGet(generics.RetrieveAPIView):
     """
     GET: Retrieve an existing Campaign
@@ -287,9 +288,7 @@ class ItemGetById(generics.RetrieveAPIView):
     lookup_field = "item_id"
 
     def get_queryset(self):
-        return Item.objects.filter(
-            slug=self.kwargs["item_id"],
-        )
+        return Item.objects.filter(slug=self.kwargs["item_id"])
 
 
 class AssetsList(generics.ListAPIView):
@@ -303,9 +302,9 @@ class AssetsList(generics.ListAPIView):
     lookup_field = "campaign"
 
     def get_queryset(self):
-        return Asset.objects.filter(
-            campaign__slug=self.kwargs["campaign"]
-        ).order_by("title", "sequence")
+        return Asset.objects.filter(campaign__slug=self.kwargs["campaign"]).order_by(
+            "title", "sequence"
+        )
 
 
 class AssetBySlug(generics.RetrieveAPIView):
@@ -332,6 +331,7 @@ class AssetRandomInCampaign(generics.RetrieveAPIView):
     """
     GET: Return a random asset from the campaign excluding the passed in asset slug
     """
+
     model = Asset
     authentication_classes = (ConcordiaAPIAuth,)
     serializer_class = AssetSerializer
@@ -339,11 +339,14 @@ class AssetRandomInCampaign(generics.RetrieveAPIView):
 
     def get_object(self):
         try:
-            return (Asset.objects.filter(campaign__slug=self.kwargs["campaign"], status=Status.EDIT)
-                    .exclude(slug=self.kwargs["slug"])
-                    .order_by("?")
-                    .first()
-                    )
+            return (
+                Asset.objects.filter(
+                    campaign__slug=self.kwargs["campaign"], status=Status.EDIT
+                )
+                .exclude(slug=self.kwargs["slug"])
+                .order_by("?")
+                .first()
+            )
         except ObjectDoesNotExist:
             return None
 
@@ -368,13 +371,18 @@ class AssetUpdate(generics.UpdateAPIView):
             request_data = request.data
 
         campaign = Campaign.objects.get(slug=request_data["campaign"])
+
+        # FIXME: use .update for performance
+        # FIXME: do validation before updating
         asset = Asset.objects.get(slug=request_data["slug"], campaign=campaign)
         asset.status = Status.INACTIVE
         asset.save()
 
         serializer = CampaignDetailSerializer(data=request_data)
+        # FIXME: do something when validation fails
         if serializer.is_valid():
             pass
+
         return Response(serializer.data)
 
 
@@ -457,9 +465,9 @@ class TranscriptionByAsset(generics.ListAPIView):
         Return the transcriptions for an asset
         :return: Transcription object list
         """
-        return Transcription.objects.filter(asset__slug=self.kwargs["asset_slug"]).order_by(
-            "-updated_on"
-        )
+        return Transcription.objects.filter(
+            asset__slug=self.kwargs["asset_slug"]
+        ).order_by("-updated_on")
 
 
 class TranscriptionCreate(generics.CreateAPIView):

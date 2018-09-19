@@ -1,8 +1,12 @@
 {% extends "transcriptions/base.html" %}
-{% block title %}Make Your Mark Campaigns{% endblock title %}
-{% block main_content %} {% load staticfiles %}
-{% load auth_extras %}
 
+{% load staticfiles %}
+{% load concordia_auth_tags %}
+
+{% block title %}Make Your Mark Campaigns{% endblock title %}
+
+
+{% block main_content %}
 <div class="container-fluid py-default">
   <div class="row">
     <div class="col-md-10 mx-auto bg-offwhite rounded">
