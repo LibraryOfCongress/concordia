@@ -14,7 +14,7 @@
       <div class="row">
         <div class="d-flex flex-wrap col-12 mb-default justify-content-around">
           {% if response.results %}
-            {% if request.user.is_anonymous or request.user.is_staff is False %}
+            {% if request.user.is_anonymous or not request.user.is_staff %}
                 {% for c in response.results %}
                   {% if c.is_publish %}
                   <div class="col-12 col-md-4 col-lg-3 mb-default mx-quarter card shadow-regular bg-lightest-gray">
