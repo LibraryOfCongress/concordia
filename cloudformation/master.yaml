@@ -13,14 +13,26 @@ Description: >
     Finally, it deploys a pair of example ECS services from containers published in 
     Amazon EC2 Container Registry (Amazon ECR).
 
+Parameters:
 
+    MyDbPassword:
+        Description: Master database password to use for RDS
+        Type: String
+
+    KeyPairName:
+        Description: key pair within this region for ECS access
+        Type: String
+
+    BasePath:
+        Description: Base path location for scripts, e.g. https://s3.amazonaws.com/rstorey-concordia-refarch
+        Type: String
 
 Resources:
 
     VPC:
         Type: AWS::CloudFormation::Stack
         Properties:
-
+#            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/vpc.yaml" ]]
             TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/vpc.yaml"
             Parameters:
                 EnvironmentName:    !Ref AWS::StackName
@@ -34,7 +46,8 @@ Resources:
     NetworkACL:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL:  "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/network-acl.yaml"
+#            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/network-acl.yaml" ]]
+            TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/network-acl.yaml"
             Parameters: 
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
@@ -46,7 +59,8 @@ Resources:
     SecurityGroups:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL:  "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/security-groups.yaml"
+            TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/security-groups.yaml"
+#            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/security-groups.yaml" ]]
             Parameters: 
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
@@ -54,10 +68,12 @@ Resources:
     RDS:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL:  "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/rds.yaml"
+            TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/rds.yaml"
+#            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/rds.yaml" ]]
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
+                DbPassword: !Ref MyDbPassword
                 DatabaseSecurityGroup: !GetAtt SecurityGroups.Outputs.DatabaseSecurityGroup
                 PrivateSubnet1: !GetAtt VPC.Outputs.PrivateSubnet1
                 PrivateSubnet2: !GetAtt VPC.Outputs.PrivateSubnet2
@@ -65,7 +81,8 @@ Resources:
     ALB:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL:  "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/load-balancers.yaml"
+            TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/load-balancers.yaml"
+#            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/load-balancers.yaml" ]]
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
@@ -75,10 +92,12 @@ Resources:
     ECS:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL:  "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/ecs-cluster.yaml"
+            TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/ecs-cluster.yaml"
+#            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/ecs-cluster.yaml" ]]
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
+                KeyPairName: !Ref KeyPairName
                 SecurityGroup: !GetAtt SecurityGroups.Outputs.ECSHostSecurityGroup
                 Subnets: !GetAtt VPC.Outputs.PrivateSubnets
 
@@ -86,28 +105,27 @@ Resources:
         Type: AWS::CloudFormation::Stack
         Properties:
             TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/services/concordia-service/service.yaml"
+#            TemplateURL: !Join [ "/", [ !Ref BasePath, "/services/concordia-service/service.yaml" ]]
             Parameters:
                 VPC: !GetAtt VPC.Outputs.VPC
                 Cluster: !GetAtt ECS.Outputs.Cluster
                 DesiredCount: 2
+                PostgresHost: !GetAtt RDS.Outputs.DatabaseHostName
                 Listener: !GetAtt ALB.Outputs.Listener
-                Path: /
+                Path: /*
                 ECSServiceAutoScalingRoleARN: !GetAtt ECS.Outputs.ECSServiceAutoScalingRole
 
     LifecycleHook:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL:  "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/lifecyclehook.yaml"
+            TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/lifecyclehook.yaml"
+#            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/lifecyclehook.yaml" ]]
             Parameters:
                 Cluster: !GetAtt ECS.Outputs.Cluster
                 ECSAutoScalingGroupName: !GetAtt ECS.Outputs.ECSAutoScalingGroupName
 
 Outputs:
 
-    ProductServiceUrl: 
-        Description: The URL endpoint for the product service
-        Value: !Join [ "/", [ !GetAtt ALB.Outputs.LoadBalancerUrl, "products" ]]
-
     WebsiteServiceUrl: 
-        Description: The URL endpoint for the website service
+        Description: The URL endpoint for the concordia website service
         Value: !Join ["", [ !GetAtt ALB.Outputs.LoadBalancerUrl, "/" ]]

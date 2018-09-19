@@ -4,9 +4,18 @@ import io
 from unittest.mock import mock_open, patch
 
 from django.test import TestCase
+from django.template.defaultfilters import slugify
 
-from importer.models import *
-from importer.tasks import *
+from importer.models import CampaignItemAssetCount, CampaignTaskDetails
+from importer.tasks import (
+    download_write_campaign_item_asset,
+    get_item_id_from_item_url,
+    get_campaign_pages,
+    get_campaign_item_ids,
+    get_campaign_item_asset_urls,
+    download_write_campaign_item_assets,
+    download_write_item_assets,
+)
 from importer.tests import mock_data
 
 
@@ -54,63 +63,6 @@ class GetItemIdFromItemURLTest(TestCase):
 
         # Assert
         self.assertEqual(resp, "mss859430021")
-
-
-class GETRequestDataTest(TestCase):
-    def setUp(self):
-        """
-        Setting up the required test data input for importer tasks test cases
-        :return:
-        """
-        self.url = "https://www.loc.gov/item/mss859430021?fo=json"
-
-    @patch("importer.tasks.requests.get")  # Mock 'requests' module 'get' method.
-    def test_get_request_success_json_data(self, mock_get):
-        """get data on success json data"""
-
-        # Arrange
-        # Construct our mock response object, giving it relevant expected behaviours
-        mock_resp_instance = MockResponse({"msg": "success"}, 200)
-        mock_get.return_value = mock_resp_instance
-
-        # Act
-        response = get_request_data(self.url)
-
-        # Assert that the request-response cycle completed successfully.
-        self.assertEqual(mock_resp_instance.status_code, 200)
-        self.assertEqual(response, mock_resp_instance.json())
-
-    @patch("importer.tasks.requests.get")  # Mock 'requests' module 'get' method.
-    def test_get_request_not_success(self, mock_get):
-        """get data on not success"""
-
-        # Arrange
-        # Construct our mock response object, giving it relevant expected behaviours
-        mock_resp_instance = MockResponse({"msg": "bad request"}, 400)
-        mock_get.return_value = mock_resp_instance
-
-        # Act
-        response = get_request_data(self.url)
-
-        # Assert that the request-response cycle completed successfully.
-        self.assertEqual(mock_resp_instance.status_code, 400)
-        self.assertEqual(response, {})
-
-    @patch("importer.tasks.requests.get")  # Mock 'requests' module 'get' method.
-    def test_get_request_normal_response(self, mock_get):
-        """if json false return repose object with content"""
-
-        # Arrange
-        # Construct our mock response object, giving it relevant expected behaviours
-        mock_resp_instance = MockResponse({"msg": "success"}, 200, content="abc")
-        mock_get.return_value = mock_resp_instance
-
-        # Act
-        response = get_request_data(self.url, json_resp=False)
-
-        # Assert that the request-response cycle completed successfully.
-        self.assertEqual(mock_resp_instance.status_code, 200)
-        self.assertEqual(response, mock_resp_instance)
 
 
 class GetCampaignPagesTest(TestCase):
@@ -251,12 +203,13 @@ class DownloadWriteCollcetionItemAssetTest(TestCase):
         m = mock_open()
 
         with patch("__main__.open", m, create=True):
-
-            # Act
-            abc = download_write_campaign_item_asset("dumy/image/url", "foo")
-
-            # Assert
-            self.assertEquals(abc, True)
+            try:
+                download_write_campaign_item_asset("dumy/image/url", "foo")
+            except Exception as exc:
+                self.fail(
+                    "Expected download_write_campaign_item_asset to complete normally but caught %s"
+                    % exc
+                )
 
     @patch("importer.tasks.requests.get")  # Mock 'requests' module 'get' method.
     def test_download_write_asset_item_error(self, mock_get):

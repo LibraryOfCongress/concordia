@@ -266,7 +266,7 @@ def check_and_save_campaign_assets(request, task_id, item_id=None):
             if check_and_save_item_completeness(ciac, item_id):
                 return redirect(
                     reverse(
-                        "transcriptions:project",
+                        "transcriptions:project-detail",
                         args=[
                             ciac.campaign_task.campaign_slug,
                             ciac.campaign_task.project_slug,

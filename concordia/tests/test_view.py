@@ -7,15 +7,14 @@ import time
 from unittest.mock import Mock, patch
 
 import responses
+import views
 from captcha.models import CaptchaStore
 from django.test import Client, TestCase
 from PIL import Image
 
-from concordia.models import (Asset, Campaign, Item, MediaType, PageInUse, Project, Status,
-                              Tag, Transcription, User, UserAssetTagCollection,
+from concordia.models import (Asset, Campaign, Item, MediaType, PageInUse, Project,
+                              Status, Tag, Transcription, User, UserAssetTagCollection,
                               UserProfile)
-
-import views
 
 logging.disable(logging.CRITICAL)
 
@@ -62,18 +61,18 @@ class ViewTest_Concordia(TestCase):
 
         responses.add(
             responses.GET,
-            "http://testserver/ws/page_in_use_count/%s//campaigns/Campaign1/asset/Asset1//" %
-            (self.user.id if hasattr(self, "user") else self.anon_user.id,),
+            "http://testserver/ws/page_in_use_count/%s//campaigns/Campaign1/asset/Asset1//"
+            % (self.user.id if hasattr(self, "user") else self.anon_user.id,),
             json={"page_in_use": False},
             status=200,
         )
 
         responses.add(
             responses.GET,
-            "http://testserver/ws/page_in_use_user/%s//campaigns/Campaign1/asset/Asset1//" %
-            (self.user.id if hasattr(self, "user") else self.anon_user.id,),
+            "http://testserver/ws/page_in_use_user/%s//campaigns/Campaign1/asset/Asset1//"
+            % (self.user.id if hasattr(self, "user") else self.anon_user.id,),
             json={"user": self.user.id if hasattr(self, "user") else self.anon_user.id},
-            status=200
+            status=200,
         )
 
     def test_concordia_api(self):
@@ -459,16 +458,12 @@ class ViewTest_Concordia(TestCase):
 
         # add an item to Campaign
         self.campaign = Campaign(
-            title="TextCampaign",
-            slug="test-slug",
-            status=Status.EDIT,
+            title="TextCampaign", slug="test-slug", status=Status.EDIT
         )
         self.campaign.save()
 
         self.project = Project(
-            title="TestProject",
-            slug="project-slug",
-            campaign=self.campaign
+            title="TestProject", slug="project-slug", campaign=self.campaign
         )
 
         self.project.save()
@@ -479,7 +474,7 @@ class ViewTest_Concordia(TestCase):
             item_id="item-slug",
             is_publish=True,
             campaign=self.campaign,
-            project=self.project
+            project=self.project,
         )
 
         self.item.save()
@@ -493,7 +488,7 @@ class ViewTest_Concordia(TestCase):
             "assets": [],
             "is_publish": True,
             "campaign": self.campaign.id,
-            "project": self.project.id
+            "project": self.project.id,
         }
 
         responses.add(
@@ -504,12 +499,13 @@ class ViewTest_Concordia(TestCase):
         )
 
         # Act
-        response = self.client.get("/campaigns/test-slug/project-slug/item-slug", follow=True)
+        response = self.client.get(
+            "/campaigns/test-slug/project-slug/item-slug", follow=True
+        )
 
         # Assert
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, template_name="transcriptions/item.html")
-
 
     def test_ExportCampaignView_get(self):
         """
@@ -584,11 +580,11 @@ class ViewTest_Concordia(TestCase):
         self.asset.save()
 
         # Mock REST api calls
-        responses.add(responses.DELETE,
-                      "http://testserver/ws/campaign_delete/%s/" % (self.campaign.slug, ),
-                      status=200)
-
-
+        responses.add(
+            responses.DELETE,
+            "http://testserver/ws/campaign_delete/%s/" % (self.campaign.slug,),
+            status=200,
+        )
 
         # Act
 
@@ -655,19 +651,24 @@ class ViewTest_Concordia(TestCase):
 
         responses.add(
             responses.GET,
-            "http://testserver/ws/campaign/%s/" % (self.campaign.slug, ),
+            "http://testserver/ws/campaign/%s/" % (self.campaign.slug,),
             json=campaign_json,
             status=200,
         )
 
-        responses.add(responses.PUT,
-                      "http://testserver/ws/asset_update/%s/%s/" % (self.campaign.slug, self.asset.slug, ),
-                      status=200)
+        responses.add(
+            responses.PUT,
+            "http://testserver/ws/asset_update/%s/%s/"
+            % (self.campaign.slug, self.asset.slug),
+            status=200,
+        )
 
         # Act
 
-        response = self.client.get("/campaigns/%s/delete/asset/%s/" % (self.campaign.slug, self.asset.slug, ),
-                                   ollow=True)
+        response = self.client.get(
+            "/campaigns/%s/delete/asset/%s/" % (self.campaign.slug, self.asset.slug),
+            ollow=True,
+        )
 
         # Assert
         self.assertEqual(response.status_code, 302)
@@ -971,7 +972,9 @@ class ViewTest_Concordia(TestCase):
         self.asset.save()
 
         # create anonymous user
-        self.anon_user = User.objects.create(username="anonymous", email="tester@foo.com")
+        self.anon_user = User.objects.create(
+            username="anonymous", email="tester@foo.com"
+        )
         self.anon_user.set_password("blah_anonymous!")
         self.anon_user.save()
 
@@ -1028,11 +1031,17 @@ class ViewTest_Concordia(TestCase):
             "status": None,
         }
 
-        anonymous_json = {"id": self.anon_user.id, "username": "anonymous",
-                          "password": "pbkdf2_sha256$100000$6lht1V74YYXZ$fagq9FeSFlDfqqikuBRGMcxl1GaBvC7tIO7fiiAkReo=",
-                          "first_name": "",
-                          "last_name": "", "email": "anonymous@anonymous.com", "is_staff": False, "is_active": True,
-                          "date_joined": "2018-08-28T19:05:45.653687Z"}
+        anonymous_json = {
+            "id": self.anon_user.id,
+            "username": "anonymous",
+            "password": "pbkdf2_sha256$100000$6lht1V74YYXZ$fagq9FeSFlDfqqikuBRGMcxl1GaBvC7tIO7fiiAkReo=",
+            "first_name": "",
+            "last_name": "",
+            "email": "anonymous@anonymous.com",
+            "is_staff": False,
+            "is_active": True,
+            "date_joined": "2018-08-28T19:05:45.653687Z",
+        }
 
         tag_json = {"results": []}
 
@@ -1071,18 +1080,19 @@ class ViewTest_Concordia(TestCase):
         )
         responses.add(responses.POST, "http://testserver/ws/tag_create/", status=200)
 
-        responses.add(responses.PUT,
-                      "http://testserver/ws/page_in_use_update/%s//campaigns/Campaign1/asset/Asset1//" %
-                      (self.anon_user.id, ),
-                      status=200)
+        responses.add(
+            responses.PUT,
+            "http://testserver/ws/page_in_use_update/%s//campaigns/Campaign1/asset/Asset1//"
+            % (self.anon_user.id,),
+            status=200,
+        )
 
         responses.add(
             responses.GET,
             "http:////testserver/ws/anonymous_user/",
             json=anonymous_json,
-            status=200
+            status=200,
         )
-
 
         # Act
         response = self.client.get("/campaigns/Campaign1/asset/Asset1/")
@@ -1140,7 +1150,9 @@ class ViewTest_Concordia(TestCase):
         self.asset.save()
 
         # create anonymous user
-        self.anon_user = User.objects.create(username="anonymous", email="tester@foo.com")
+        self.anon_user = User.objects.create(
+            username="anonymous", email="tester@foo.com"
+        )
         self.anon_user.set_password("blah_anonymous!")
         self.anon_user.save()
 
@@ -1197,11 +1209,17 @@ class ViewTest_Concordia(TestCase):
             "status": None,
         }
 
-        anonymous_json = {"id": self.anon_user.id, "username": "anonymous",
-                          "password": "pbkdf2_sha256$100000$6lht1V74YYXZ$fagq9FeSFlDfqqikuBRGMcxl1GaBvC7tIO7fiiAkReo=",
-                          "first_name": "",
-                          "last_name": "", "email": "anonymous@anonymous.com", "is_staff": False, "is_active": True,
-                          "date_joined": "2018-08-28T19:05:45.653687Z"}
+        anonymous_json = {
+            "id": self.anon_user.id,
+            "username": "anonymous",
+            "password": "pbkdf2_sha256$100000$6lht1V74YYXZ$fagq9FeSFlDfqqikuBRGMcxl1GaBvC7tIO7fiiAkReo=",
+            "first_name": "",
+            "last_name": "",
+            "email": "anonymous@anonymous.com",
+            "is_staff": False,
+            "is_active": True,
+            "date_joined": "2018-08-28T19:05:45.653687Z",
+        }
 
         tag_json = {"results": []}
 
@@ -1240,16 +1258,18 @@ class ViewTest_Concordia(TestCase):
         )
         responses.add(responses.POST, "http://testserver/ws/tag_create/", status=200)
 
-        responses.add(responses.PUT,
-                      "http://testserver/ws/page_in_use_update/%s//campaigns/Campaign1/asset/Asset1//" %
-                      (self.anon_user.id, ),
-                      status=200)
+        responses.add(
+            responses.PUT,
+            "http://testserver/ws/page_in_use_update/%s//campaigns/Campaign1/asset/Asset1//"
+            % (self.anon_user.id,),
+            status=200,
+        )
 
         responses.add(
             responses.GET,
             "http:////testserver/ws/anonymous_user/",
             json=anonymous_json,
-            status=200
+            status=200,
         )
 
         # Act
@@ -1308,7 +1328,9 @@ class ViewTest_Concordia(TestCase):
         self.asset.save()
 
         # create anonymous user
-        self.anon_user = User.objects.create(username="anonymous", email="tester@foo.com")
+        self.anon_user = User.objects.create(
+            username="anonymous", email="tester@foo.com"
+        )
         self.anon_user.set_password("blah_anonymous!")
         self.anon_user.save()
 
@@ -1363,11 +1385,17 @@ class ViewTest_Concordia(TestCase):
             "status": None,
         }
 
-        anonymous_json = {"id": self.anon_user.id, "username": "anonymous",
-                          "password": "pbkdf2_sha256$100000$6lht1V74YYXZ$fagq9FeSFlDfqqikuBRGMcxl1GaBvC7tIO7fiiAkReo=",
-                          "first_name": "",
-                          "last_name": "", "email": "anonymous@anonymous.com", "is_staff": False, "is_active": True,
-                          "date_joined": "2018-08-28T19:05:45.653687Z"}
+        anonymous_json = {
+            "id": self.anon_user.id,
+            "username": "anonymous",
+            "password": "pbkdf2_sha256$100000$6lht1V74YYXZ$fagq9FeSFlDfqqikuBRGMcxl1GaBvC7tIO7fiiAkReo=",
+            "first_name": "",
+            "last_name": "",
+            "email": "anonymous@anonymous.com",
+            "is_staff": False,
+            "is_active": True,
+            "date_joined": "2018-08-28T19:05:45.653687Z",
+        }
 
         self.add_page_in_use_mocks(responses)
 
@@ -1406,16 +1434,18 @@ class ViewTest_Concordia(TestCase):
         )
         responses.add(responses.POST, "http://testserver/ws/tag_create/", status=200)
 
-        responses.add(responses.PUT,
-                      "http://testserver/ws/page_in_use_update/%s//campaigns/Campaign1/asset/Asset1//" %
-                      (self.anon_user.id, ),
-                      status=200)
+        responses.add(
+            responses.PUT,
+            "http://testserver/ws/page_in_use_update/%s//campaigns/Campaign1/asset/Asset1//"
+            % (self.anon_user.id,),
+            status=200,
+        )
 
         responses.add(
             responses.GET,
             "http:////testserver/ws/anonymous_user/",
             json=anonymous_json,
-            status=200
+            status=200,
         )
 
         tag_name = "Test tag 1"
@@ -1523,14 +1553,17 @@ class ViewTest_Concordia(TestCase):
 
         responses.add(
             responses.PUT,
-            "http://testserver/ws/page_in_use_update/%s//campaigns/Campaign1/asset/Asset1//" % (self.user.id, ),
-            status=200)
+            "http://testserver/ws/page_in_use_update/%s//campaigns/Campaign1/asset/Asset1//"
+            % (self.user.id,),
+            status=200,
+        )
 
         responses.add(
             responses.GET,
-            "http://testserver/ws/page_in_use_user/%s//campaigns/Campaign1/asset/Asset1//" % (self.user.id, ),
+            "http://testserver/ws/page_in_use_user/%s//campaigns/Campaign1/asset/Asset1//"
+            % (self.user.id,),
             json={"user": self.user.id},
-            status=200
+            status=200,
         )
 
         responses.add(
@@ -1611,30 +1644,31 @@ class ViewTest_Concordia(TestCase):
         # Mock REST API calls
 
         asset_json = {
-                "title": "TestAsset2",
-                "slug": "Asset2",
+            "title": "TestAsset2",
+            "slug": "Asset2",
+            "description": "",
+            "media_url": "",
+            "media_type": None,
+            "campaign": {
+                "slug": "",
+                "title": "",
                 "description": "",
-                "media_url": "",
-                "media_type": None,
-                "campaign": {
-                    "slug": "",
-                    "title": "",
-                    "description": "",
-                    "s3_storage": False,
-                    "start_date": None,
-                    "end_date": None,
-                    "status": None,
-                    "assets": [],
-                },
-                "project": None,
-                "sequence": None,
-                "metadata": None,
-                "status": Status.EDIT,
-            }
+                "s3_storage": False,
+                "start_date": None,
+                "end_date": None,
+                "status": None,
+                "assets": [],
+            },
+            "project": None,
+            "sequence": None,
+            "metadata": None,
+            "status": Status.EDIT,
+        }
 
         responses.add(
             responses.GET,
-            "http://testserver/ws/campaign_asset_random/%s/%s" % (self.campaign.slug, self.asset.slug,),
+            "http://testserver/ws/campaign_asset_random/%s/%s"
+            % (self.campaign.slug, self.asset.slug),
             json=asset_json,
             status=200,
         )
@@ -1691,24 +1725,32 @@ class ViewTest_Concordia(TestCase):
         page3.save()
 
         # Mock REST API
-        user_json_val = {"id": self.user.id, "username": "anonymous",
-                         "password": "pbkdf2_sha256$100000$6lht1V74YYXZ$fagq9FeSFlDfqqikuBRGMcxl1GaBvC7tIO7fiiAkReo=",
-                         "first_name": "",
-                         "last_name": "", "email": "anonymous@anonymous.com", "is_staff": False, "is_active": True,
-                         "date_joined": "2018-08-28T19:05:45.653687Z"}
+        user_json_val = {
+            "id": self.user.id,
+            "username": "anonymous",
+            "password": "pbkdf2_sha256$100000$6lht1V74YYXZ$fagq9FeSFlDfqqikuBRGMcxl1GaBvC7tIO7fiiAkReo=",
+            "first_name": "",
+            "last_name": "",
+            "email": "anonymous@anonymous.com",
+            "is_staff": False,
+            "is_active": True,
+            "date_joined": "2018-08-28T19:05:45.653687Z",
+        }
 
         responses.add(
             responses.GET,
-            "http://testserver/ws/user/%s/" % (self.user.username, ),
+            "http://testserver/ws/user/%s/" % (self.user.username,),
             json=user_json_val,
             status=200,
         )
 
-        responses.add(responses.PUT,
-                      "http://testserver/ws/page_in_use_update/%s/%s/" % (self.user.id, url, ),
-                      status=200)
+        responses.add(
+            responses.PUT,
+            "http://testserver/ws/page_in_use_update/%s/%s/" % (self.user.id, url),
+            status=200,
+        )
 
-                # Act
+        # Act
         response = self.client.post(
             "/campaigns/pageinuse/", {"page_url": url, "user": self.user}
         )
@@ -2083,3 +2125,61 @@ class ViewTest_Concordia(TestCase):
         # Assert
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["state"], False)
+
+
+    @patch("concordia.views.requests")
+    def test_DeleteProject_get(self, mock_requests):
+        """
+        Test GET route /transcribe/delete/<slug-value>/<slug-value>/ (project)
+        :return:
+        """
+
+        # Arrange
+        mock_requests.get.return_value.status_code = 200
+        mock_requests.get.return_value.json.return_value = {
+            "concordia_data": "abc123456"
+        }
+
+        # add an item to Collection
+        self.collection = Campaign(
+            title="TextCollection",
+            slug="test-slug2",
+            description="Collection Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.collection.save()
+
+        self.subcollection1 = Project(
+            title="TextCollection sub collection1",
+            slug="test-slug2-proj1",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+            collection=self.collection,
+            is_publish=True,
+        )
+        self.subcollection1.save()
+
+        self.asset = Asset(
+            title="TestAsset",
+            slug="test-slug2",
+            description="Asset Description",
+            media_url="http://www.foo.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            collection=self.collection,
+            subcollection=self.subcollection1,
+            metadata={"key": "val2"},
+            status=Status.EDIT,
+        )
+        self.asset.save()
+
+        # Act
+
+        response = self.client.get("/campaigns/delete/project/test-slug2/test-slug2-proj1/", follow=True)
+
+        # Assert
+        self.assertEqual(response.status_code, 200)
+
+        # verify the collection is not in db
+        subcollections = Project.objects.all()
+        self.assertEqual(len(subcollections), 0)

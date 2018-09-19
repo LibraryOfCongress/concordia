@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 {% load widget_tweaks %}
-{% block title %}Citizen Historian Login{% endblock title %}
+{% block title %}Make Your Mark Login{% endblock title %}
 {% block main_content %}
 <div class="container-fluid">
     <div class="row">
         <div class="col-8 col-md-6 col-lg-4 mx-auto bg-offwhite rounded shadow-regular container-login">
-            <h2 class="mt-half mb-quarter text-center">citizen historian</h2>
+            <h2 class="mt-half mb-quarter text-center">Make Your Mark</h2>
             <h3 class="mb-default text-center">Welcome back!</h3>
             <form method="post" action="{% url 'login' %}" id="login-form" class="col-10 mx-auto form-login">{% csrf_token %} {{ form.non_field_errors }} {% if form.errors %}
                 <p class="text-center">Please fix the errors below:</p>

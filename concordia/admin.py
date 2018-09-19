@@ -1,6 +1,7 @@
 from django.contrib import admin
 
-from .models import Asset, Campaign, Item, Project, Tag, Transcription, UserAssetTagCollection
+from .models import (Asset, Campaign, Item, Project, Tag, Transcription,
+                     UserAssetTagCollection)
 
 
 @admin.register(Campaign)
@@ -28,9 +29,18 @@ class ProjectAdmin(admin.ModelAdmin):
     list_display = ("id", "title", "slug", "category", "campaign", "metadata", "status")
     list_display_links = ("id", "title", "slug")
 
+
 @admin.register(Item)
 class ItemAdmin(admin.ModelAdmin):
-    list_display = ("title", "slug", "item_id", "campaign", "project", "status", "is_publish")
+    list_display = (
+        "title",
+        "slug",
+        "item_id",
+        "campaign",
+        "project",
+        "status",
+        "is_publish",
+    )
     list_display_links = ("title", "slug", "item_id")
 
 
