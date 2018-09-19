@@ -214,27 +214,25 @@ class ConcordiaProjectView(TemplateView):
 
     def get_context_data(self, **kws):
         try:
-            project = Project.objects.get(slug=self.kwargs["slug"])
-            campaign = project.campaign
+            page = int(self.request.GET.get("page", "1"))
+        except ValueError:
+            return redirect(self.request.path)
+
+        try:
+            project = Project.objects.select_related("campaign").get(
+                slug=self.kwargs["slug"], campaign__slug=self.kwargs["campaign_slug"]
+            )
         except Project.DoesNotExist:
             raise Http404
 
-        item_list = Item.objects.filter(campaign=campaign, project=project).order_by(
-            "item_id"
-        )
+        item_qs = project.item_set.order_by("item_id")
 
-        paginator = Paginator(item_list, ITEMS_PER_PAGE)
-
-        if not self.request.GET.get("page"):
-            page = 1
-        else:
-            page = self.request.GET.get("page")
-
+        paginator = Paginator(item_qs, ITEMS_PER_PAGE)
         items = paginator.get_page(page)
 
         return dict(
             super().get_context_data(**kws),
-            campaign=campaign,
+            campaign=project.campaign,
             project=project,
             items=items,
         )
@@ -747,7 +745,11 @@ class ToDoView(TemplateView):
 class ContactUsView(FormView):
     template_name = "contact.html"
     form_class = ConcordiaContactUsForm
-    success_url = "."
+
+    def get_context_data(self, *args, **kwargs):
+        res = super().get_context_data(*args, **kwargs)
+        res['title'] = "Contact Us"
+        return res
 
     def get_initial(self):
         if self.request.GET.get("pre_populate", None) is None:

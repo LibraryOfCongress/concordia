@@ -419,7 +419,8 @@ div.nav-secondary {
     color: var(--text-color-primary);
 }
 
-.nav-dropdown .dropdown-menu {
+#topnav-account-dropdown ~ .dropdown-menu {
+    /* Our custom styling conflicts with the Bootstrap defaults */
     top: 3.375rem;
     left: -4rem;
 }
