@@ -104,7 +104,7 @@
                                                     <p class="hero-text">{{ c.description }}</p>
                                                 {% endif %}
                                             </a>
-                                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Admin tasks</button>
+                                            <button class="btn btn-outline-secondary dropdown-toggle mb-half" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Admin tasks</button>
                                             <div class="dropdown-menu">
                                                 <a href="{% url 'transcriptions:report campaign' c.slug %}" class="dropdown-item"> View Reports</a>
                                                 <a href="{% url 'transcriptions:exportCSV campaign' c.slug %}" class="dropdown-item">Export to CSV</a>
