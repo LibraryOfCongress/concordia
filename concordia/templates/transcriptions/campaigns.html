@@ -144,17 +144,20 @@
                                         </div>
                                     </div>
                                 </div>
-                                <!-- <div class="mb-default">
+                                <div class="my-default">
                                     {% for project in projects %}
                                         <div class="col-12 col-md-4 col-lg-3 mb-default mx-md-quarter">
                                             <a href="{% url 'transcriptions:project' project.campaign.slug project.slug %}">
-                                                <!-- TODO: Swap this out --
-                                                <img src="{% static "img/rosa-parks-campaign.svg" %}" class="img-fluid" alt="{{ project.title }} image">
-                                                <h4 class="">{{ project.title }}</h4>
+                                                <div class="col-12 col-md-4 col-lg-3 px-quarter mb-default">
+                                                        <div class="bg-img-placeholder card-img-campaign d-flex align-items-center justify-content-center">
+                                                        </div>
+                                                        <!-- <img class="card-img card-img-campaign" alt="{{ i.slug }} image" src="{% if campaign.s3_storage %}{{ i.media_url }}{% else %}{{ MEDIA_URL }}{{i.media_url }}{% endif %}"> -->
+                                                        <h4 class="pl-half project-title text-color-primary py-half bg-lightest-gray">{{ project.title }}</h4>
+                                                </div>
                                             </a>
                                         </div>
                                     {% endfor %}
-                                </div> -->
+                                </div>
                             {% endfor %}
                         {% endif %}
                     {% endif %}
