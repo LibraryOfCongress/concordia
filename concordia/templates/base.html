@@ -62,46 +62,51 @@
                                 <a class="nav-link d-lg-none" href="{% url 'registration_register' %}">Register</a>
                             </li>
                         {% endif %}
+                </ul>
+            </div>
+          
+        </nav>
+    </header>
+    <main>
+        {% block main_content %}{% endblock main_content %}
+    </main>
+    <footer class="footer" role="contentinfo">
+        <div class="footer-container">
+            <div class="footer-social-links-wrapper">
+                <span class="footer-social-title"><a href="/connect/">Follow Us</a></span>
+                <ul class="footer-social-links">
+                    <li class="footer-social-link-email"><a href="//loc.gov/subscribe/" title="Email"><i class="fa fa-envelope-square"></i><span> Email</span></a></li>
+                    <li class="footer-social-link-facebook"><a href="https://www.facebook.com/libraryofcongress/" title="Facebook"><i class="image-icon facebook"></i><span> Facebook</span></a></li>
+                    <li class="footer-social-link-twitter"><a href="https://www.twitter.com/librarycongress" title="Twitter"><i class="image-icon twitter"></i><span> Twitter</span></a></li>
+                    <li class="footer-social-link-youtube"><a href="https://www.youtube.com/libraryofcongress/" title="Youtube"><i class="image-icon youtube"></i><span> Youtube</span></a></li>
+                    <li class="footer-social-link-pinterest"><a href="https://www.pinterest.com/LibraryCongress/" title="Pinterest"><i class="image-icon pinterest"></i><span> Pinterest</span></a></li>
+                    <li class="footer-social-link-flickr"><a href="https://www.flickr.com/photos/library_of_congress/" title="Flickr"><i class="image-icon flickr"></i><span> Flickr</span></a></li>
+                    <li class="footer-social-link-instagram"><a href="https://instagram.com/librarycongress/" title="Instagram"><i class="image-icon instagram"></i><span> Instagram</span></a></li>
+                    <li class="footer-social-link-itunes"><a href="https://itunes.apple.com/us/artist/library-of-congress/id1280713133?mt=2" title="iTunes"> <i class="image-icon itunes"></i><span> iTunes</span></a></li>
+                    <li class="footer-social-link-survey"><a href="https://www.research.net/r/libraryofcongress?site=homepage" title="Take our survey">Take our survey <i class="icon icon-external-link fas fa-external-link-alt align-text-top"><span>External</span></i></a></li>
+                </ul>
+            </div>
+            <div class="footer-row">
+                <div class="footer-links-wrapper">
+                    <ul class="footer-links">
+                        <li><a href="/accessibility/">Accessibility</a></li>
+                        <li><a href="/legal/">Legal</a></li>
+                        <li><a href="/about/office-of-the-inspector-general/">Inspector General</a></li>
+                        <li><a href="/legal/standard-disclaimer-for-external-links/">External Link Disclaimer</a></li>
+                        <li><a href="http://www.usa.gov/">USA.gov</a></li>
+                        <li><a href="/careers/">Careers</a></li>
+                        <li><a href="/contact/">Contact</a></li>
+                        <li><a href="http://www.loc.gov/pressroom/">Media</a></li>
+                        <li><a href="http://www.loc.gov/philanthropy/index.php">Donate</a></li>
+                        <li><a href="http://library-of-congress-shop.myshopify.com/">Shop</a></li>
                     </ul>
                 </div>
-            </nav>
-        </header>
-        <main>
-            {% block main_content %}{% endblock main_content %}
-        </main>
-        <footer class="container-fluid text-center font-weight-light bg-footer py-default">
-            <div class="row">
-                <div class="col justify-content-center text-center ml-auto">
-                    {% comment %} TODO: use normal text here and CSS to change the case if desired {% endcomment %}
-                    <a class="primary-text" href="/">HOME</a>
-                    <br />
-                    <a class="primary-text" href="{% url 'transcriptions:campaigns' %}">CAMPAIGNS</a>
-                    <br />
-                    <a class="primary-text" href="{% url 'about' %}">ABOUT</a>
-                    <br />
-                    <a class="primary-text" href="{% url 'contact' %}">CONTACT US</a>
-                    <br />
-                    <a class="primary-text" href="{% url 'faq' %}">FAQ</a>
-                    <br />
-                    <a class="primary-text" href="{% url 'legal' %}">LEGAL</a>
-                    <br />
-                    <a class="primary-text" href="https://loc.gov">LoC.GOV</a>
-                </div>
-                <div class="col-md-4 justify-content-center">
-                    <p class="mb-half">Connect with us</p>
-                    <a href="https://www.facebook.com/libraryofcongress/" target="_blank"><img class="mb-half" src="{% static 'img/f.svg' %}" alt="link to Library of Congress Facebook page"></a>
-                    <br />
-                    <a href="https://twitter.com/librarycongress" target="_blank"><img class="mb-half" src="{% static 'img/t.svg' %}" alt="link to Library of Congress Twitter page"></a>
-                    <br />
-                    <a href="https://www.youtube.com/channel/UCbObxjfi3W9YKnDS0PgadNA" target="_blank"><img class="mb-half" src="{% static 'img/yt.svg' %}" alt="link to Library of Congress YouTube page"></a>
-                    <br />
-                    <a href="https://www.flickr.com/photos/library_of_congress/" target="_blank"><img src="{% static 'img/fl.svg' %}" alt="link to Library of Congress Flickr page"></a>
-                </div>
-                <div class="col-md-4 justify-content-start text-center">
-                    <p class="mb-regular">Statistics</p>
-                    <p class="mb-regular">4,120 artifacts transcribed</p>
-                    <p class="mb-regular">2,257 transcriptions in progress</p>
-                    <p>1,179 contributions need review</p>
+                <div class="intersites-links-wrapper">
+                    <ul class="intersites-links">
+                        <li class="intersites-link-congress"><a href="//www.congress.gov/"><span>Congress.gov</span></a></li>
+                        <li class="intersites-link-copyright"><a href="http://copyright.gov"><span>United States Copyright Office</span></a></li>
+                    </ul>
+
                 </div>
             </div>
         </footer>
