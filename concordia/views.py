@@ -814,7 +814,7 @@ class DeleteCampaignView(TemplateView):
         :param request:
         :param args:
         :param kwargs:
-        :return: redirect to home (/) or redirect to /transcribe/
+        :return: redirect to home (/) or redirect to /campaigns/
         """
         if not self.request.user.is_superuser:
             return HttpResponseRedirect('/')
@@ -827,7 +827,7 @@ class DeleteCampaignView(TemplateView):
             os.system(
                 "rm -rf {0}".format(settings.MEDIA_ROOT + "/concordia/" + collection.slug)
             )
-            return redirect("/transcribe/")
+            return redirect("/campaigns/")
 
 
 class DeleteAssetView(TemplateView):
@@ -842,7 +842,7 @@ class DeleteAssetView(TemplateView):
         :param request:
         :param args:
         :param kwargs:
-        :return: redirect to home (/) or redirect to /transcribe
+        :return: redirect to home (/) or redirect to /campaigns
         :return:
         """
         if not self.request.user.is_superuser:
