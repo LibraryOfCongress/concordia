@@ -158,7 +158,7 @@ h2.contribute-breadcrumb {
     color: var(--text-color-offwhite);
 }
 
-a: hover {
+a:hover {
     color: var(--text-color-primary);
 }
 
