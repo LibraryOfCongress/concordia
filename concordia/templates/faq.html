@@ -4,6 +4,12 @@
 
 {% block title %}Make Your Mark FAQ{% endblock title %}
 
+{% block body_scripts %}
+<script>
+$('.collapse').collapse()
+</script>
+{% endblock body_scripts %}
+
 {% block main_content %}
 <div class="container">
     <div id="accordion">
@@ -26,8 +32,4 @@
         {% endfor %}
     </div>
 </div>
-
-<script>
-$('.collapse').collapse()
-</script>
 {% endblock main_content %}

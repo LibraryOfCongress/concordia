@@ -45,6 +45,7 @@
                         <li class="nav-item">
                             <a class="nav-link {% if PATH_LEVEL_1 == 'faq'%}active{% endif %}" href="{% url 'faq' %}">FAQ</a>
                         </li>
+                        {% comment %} FIXME: this should be replaced with JS so we can cache pages {% endcomment %}
                         {% if user.is_authenticated %}
                             <li class="nav-item dropdown nav-dropdown">
                                 <a class="nav-link dropdown-toggle {% if PATH_LEVEL_1 == 'account'%}active{% endif %}" href="{% url 'user-profile' %}" id="topnav-account-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Account</a>
@@ -64,6 +65,15 @@
                         {% endif %}
                     </ul>
                 </div>
+
+                {% comment %} FIXME: this should be replaced with JS so we can cache pages {% endcomment %}
+                {% if not user.is_authenticated %}
+                    <div class="nav-secondary">
+                        <a class="nav-link nav-secondary d-none d-lg-inline nav-link-login" href="{% url 'login' %}">Login</a>
+                        <a class="nav-link nav-secondary d-none d-lg-inline nav-link-register" href="{% url 'registration_register' %}">Register</a>
+                        </ul>
+                    </div>
+                {% endif %}
             </nav>
         </header>
         <main>
