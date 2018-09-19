@@ -179,12 +179,7 @@
                   var collection_slug = $($invoker[0]).attr('data-campaign');
                   var project_slug = $($invoker[0]).attr('id');
                   var requested_status = $("#"+project_slug).text().trim();
-                  <!--if(requested_status == 'Publish'){-->
-                      <!--var to_status = 'true';-->
-                  <!--}-->
-                  <!--else{-->
                   var to_status = 'false';
-                  <!--}-->
                   $.ajax({
                       url: '/campaigns/publish/project/'+collection_slug+"/"+project_slug+"/"+to_status+"/",
                       type: 'GET',

@@ -39,7 +39,7 @@
                             <a href="{% url 'transcriptions:report campaign' c.slug %}" class="mt-half col btn btn-primary">Report</a>
                             {% if request.user|has_group:"CM" %}
                                 {% if c.is_publish %}
-                                    <button type="button" class="confirm-modal btn btn-primary col mt-half" data-toggle="modal" id="{{ c.slug }}" data-target="#campaignUnpublshModal">
+                                    <button type="button" class="confirm-modal btn btn-primary col mt-half" data-toggle="modal" id="{{ c.slug }}" data-target="#campaignUnpublishModal">
                                             Unpublish</button>
                                 {% else %}
                                     <button type="button" class="confirm-modal btn btn-primary col mt-half" data-toggle="modal" id="{{ c.slug }}" data-target="#campaignConfirmModal">
@@ -155,10 +155,10 @@
                         $('#campaignUnpublishModal').modal('hide');
                         if(data['state']){
                             $("#"+campaign_slug).text('Unpublish');
-                            $("#"+project_slug).attr('data-target','#campaignUnpublishModal');
+                            $("#"+campaign_slug).attr('data-target','#campaignUnpublishModal');
                         }else{
                             $("#"+campaign_slug).text('Publish');
-                            $("#"+project_slug).attr('data-target','#campaignConfirmModal');
+                            $("#"+campaign_slug).attr('data-target','#campaignConfirmModal');
                         }
                     }
                 }).fail(function(data, jqXHR, textStatus, errorThrown) {
@@ -169,15 +169,10 @@
 
          $(document).on('show.bs.modal',"#campaignUnpublishModal", function (e) {
              var $invoker = $(e.relatedTarget);
-             $("#confirmbtn").click(function(e){
+             $("#unpublishbtn").click(function(e){
                 var campaign_slug = $($invoker[0]).attr('id');
                 var requested_status = $("#"+campaign_slug).text().trim();
-                <!--if(requested_status == 'Publish'){-->
-                    <!--var to_status = 'true';-->
-                <!--}-->
-                <!--else{-->
                 var to_status = 'false';
-                <!--}-->
                 $.ajax({
                     url: '/campaigns/publish/campaign/'+campaign_slug+"/"+to_status+"/",
                     type: 'GET',
@@ -186,10 +181,10 @@
                         $('#campaignUnpublishModal').modal('hide');
                         if(data['state']){
                             $("#"+campaign_slug).text('Unpublish');
-                            $("#"+project_slug).attr('data-target','#campaignUnpublishModal');
+                            $("#"+campaign_slug).attr('data-target','#campaignUnpublishModal');
                         }else{
                             $("#"+campaign_slug).text('Publish');
-                            $("#"+project_slug).attr('data-target','#campaignConfirmModal');
+                            $("#"+campaign_slug).attr('data-target','#campaignConfirmModal');
                         }
                     }
                 }).fail(function(data, jqXHR, textStatus, errorThrown) {
