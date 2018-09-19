@@ -24,7 +24,7 @@ CONCORDIA_ENVIRONMENT = os.environ.get("CONCORDIA_ENVIRONMENT", "development")
 EMAIL_HOST_USER = ""
 EMAIL_HOST_PASSWORD = ""
 EMAIL_USE_TLS = False
-DEFAULT_FROM_EMAIL = "noreply@loc.gov"
+DEFAULT_FROM_EMAIL = "crowd@loc.gov"
 
 ALLOWED_HOSTS = ["*"]
 

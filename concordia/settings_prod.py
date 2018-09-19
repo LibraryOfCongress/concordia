@@ -54,7 +54,7 @@ EMAIL_HOST = os.environ.get("EMAIL_HOST", "localhost")
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 EMAIL_PORT = 587
-DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "noreply@loc.gov")
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "crowd@loc.gov")
 DEFAULT_TO_EMAIL = DEFAULT_FROM_EMAIL
 
 # HMAC activation flow provide the two-step registration process,
