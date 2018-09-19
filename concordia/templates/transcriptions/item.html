@@ -24,11 +24,11 @@
         <div class="d-flex flex-wrap col-12 justify-content-around">
             {% for a in assets %}
                 <div class="col-12 col-md-4 col-lg-3 px-quarter mb-default">
-                    {% if transcription.status == 'Submitted' %}
+                    {% if a.status == 'Submitted' %}
                         <div class="w-100 pt-quarter bg-primary-color">
                             <i class="fas fa-list tx-submitted px-quarter offwhite-text"></i><h6 class="offwhite-text d-inline">Review</h6>
                         </div>
-                    {% elif transcription.status == 'Completed' %}
+                    {% elif a.status == 'Completed' %}
                         <div class="w-100 pt-quarter bg-primary-color">
                             <i class="fas fa-check tx-completed px-quarter offwhite-text"></i><h6 class="offwhite-text d-inline">Complete</h6>
                         </div>
