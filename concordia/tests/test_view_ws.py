@@ -39,7 +39,7 @@ class ViewWSTest_Concordia(TestCase):
         self.user.set_password("top_secret")
         self.user.save()
 
-        self.client.login(username="tester", password="top_secret")
+        login_result = self.client.login(username="tester", password="top_secret")
 
         # create a session cookie
         self.client.session["foo"] = 123  # HACK: needed for django Client
@@ -395,6 +395,8 @@ class ViewWSTest_Concordia(TestCase):
         """
         # Arrange
         self.login_user()
+        self.user.is_superuser = True
+        self.user.save()
 
         # create 2 campaigns
         self.campaign = Campaign(
@@ -723,10 +725,92 @@ class ViewWSTest_Concordia(TestCase):
         )
 
         # Assert
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN) # user is not superuser
+
+    def test_Asset_Update_admin_put(self):
+        """
+        Test updating an asset as admin user by campaign and slug to inactive
+        :return:
+        """
+
+        # Arrange
+        self.login_user()
+        self.user.is_superuser = True
+        self.user.save()
+        self.maxDiff = None
+
+        self.campaign = Campaign(
+            title="TextCampaign",
+            slug="slug1",
+            description="Campaign Description",
+            metadata={"key": "val1"},
+            status=Status.EDIT,
+        )
+        self.campaign.save()
+
+        self.asset = Asset(
+            title="TestAsset",
+            slug="Asset1",
+            description="Asset Description",
+            media_url="http://www.foo.com/1/2/3",
+            media_type=MediaType.IMAGE,
+            campaign=self.campaign,
+            metadata={"key": "val2"},
+            status=Status.EDIT,
+        )
+        self.asset.save()
+
+        expected_response = {
+            "id": self.asset.id,
+            "title": "TestAsset3",
+            "slug": "Asset3",
+            "description": "Asset Description",
+            "media_url": "http://www.foo.com/1/2/3",
+            "media_type": "IMG",
+            "campaign": {
+                "id": self.campaign.id,
+                "slug": "slug1",
+                "title": "TextCampaign",
+                "description": "Campaign Description",
+                "s3_storage": False,
+                "start_date": None,
+                "end_date": None,
+                "status": "Edit",
+                'projects': [],
+                "assets": [
+                    {
+                        "title": "TestAsset3",
+                        "slug": "Asset3",
+                        "description": "Asset Description",
+                        "media_url": "http://www.foo.com/1/2/3",
+                        "media_type": "IMG",
+                        "sequence": 1,
+                        "metadata": {"key": "val2"},
+                        "status": "Edit",
+                    }
+                ],
+            },
+            "project": None,
+            "sequence": 1,
+            "metadata": {"key": "val2"},
+            "status": "Edit",
+        }
+
+        # Act
+
+        asset_update = {"campaign": self.campaign.slug, "slug": self.asset.slug}
+
+        # Act
+        response = self.client.put(
+            "/ws/asset_update/%s/%s/" % (self.campaign.slug, self.asset.slug),
+            data=json.dumps(asset_update),
+            content_type="application/json",
+        )
+
+        # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         updated_asset = Asset.objects.get(slug=self.asset.slug)
         self.assertEqual(updated_asset.status, Status.INACTIVE)
-
 
     def test_get_assets_by_campaign_and_slug(self):
         """
