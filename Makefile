@@ -27,7 +27,7 @@ firstup:
 
 .PHONY: adminuser
 adminuser:
-	docker-compose -f docker-compose.yml run --rm app ./manage.py shell -c "from django.contrib.auth.models import User;from django.contrib.auth.models import Group; User.objects.create_superuser('admin', 'ekam@loc.gov', '${CONCORDIA_ADMIN_PW}');Group.objects.create(name='CM')"
+	docker-compose -f docker-compose.yml run --rm app ./manage.py shell -c "from django.contrib.auth.models import User;from django.contrib.auth.models import Group; User.objects.create_superuser('admin', 'crowd@loc.gov', '${CONCORDIA_ADMIN_PW}');Group.objects.create(name='CM')"
 
 .PHONY: allup
 allup:	
