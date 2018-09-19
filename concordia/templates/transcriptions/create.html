@@ -125,28 +125,27 @@ https://github.com/LibraryOfCongress/concordia/issues/182 {% endcomment %}
     crossorigin="anonymous"></script>
 <script>
 
-$("#close_error").hide();
-function handle_form_submission()
-{
-  $(".loading").removeClass("d-none");
-  // document.getElementById("container").style.display = "none";
-}
+    $("#close_error").hide();
+    function handle_form_submission() {
+        $(".loading").removeClass("d-none");
+        // document.getElementById("container").style.display = "none";
+    }
 
-function write_save_campaign_assets(task_id){
-   $("#close_error").hide();
-   $.ajax({
-        url: "/check_and_save_campaign_assets/"+task_id+"/"+$("#item_id").val(),
-        type: 'GET',
-        success: function(data, textStatus, jqXHR) {
-            console.log("response: ", data);
-            var slug = slugify($("#campaign_slug").val());
-            var projslug = slugify($("#project-name").val());
-            if($("#item_id").val()){
-                var rurl = "/campaigns/"+slug+"/"+projslug+"/";
-            }
-            else{
-                var rurl = "/campaigns/"+slug+"/";
-            }
+    function write_save_campaign_assets(task_id) {
+        $("#close_error").hide();
+        $.ajax({
+            url: "/check_and_save_campaign_assets/" + task_id + "/" + $("#item_id").val(),
+            type: 'GET',
+            success: function (data, textStatus, jqXHR) {
+                console.log("response: ", data);
+                var slug = slugify($("#campaign_slug").val());
+                var projslug = slugify($("#project-name").val());
+                if ($("#item_id").val()) {
+                    var rurl = "/campaigns/" + slug + "/" + projslug + "/";
+                }
+                else {
+                    var rurl = "/campaigns/" + slug + "/";
+                }
                 window.location.href = rurl;
             }
         }).fail(function (jqXHR, textStatus, errorThrown) {
@@ -241,19 +240,18 @@ function write_save_campaign_assets(task_id){
             minLength: 1
         });
     });
-});
 
-function slugify(string) {
-  return string
-    .toString()
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, "-")
-    .replace(/[^\w\-]+/g, "")
-    .replace(/\-\-+/g, "-")
-    .replace(/^-+/, "")
-    .replace(/-+$/, "");
-}
+    function slugify(string) {
+        return string
+            .toString()
+            .trim()
+            .toLowerCase()
+            .replace(/\s+/g, "-")
+            .replace(/[^\w\-]+/g, "")
+            .replace(/\-\-+/g, "-")
+            .replace(/^-+/, "")
+            .replace(/-+$/, "");
+    }
 
 
 </script>
