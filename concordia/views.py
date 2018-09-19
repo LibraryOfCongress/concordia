@@ -232,37 +232,33 @@ class ConcordiaProjectView(ListView):
         )
 
 
-class ConcordiaItemView(TemplateView):
+class ConcordiaItemView(ListView):
+    # FIXME: review naming – we treat these as list views for sub-components and
+    # might want to change / combine some views
     """
     Handle GET requests on /campaign/<campaign>/<project>/<item>
     """
 
     template_name = "transcriptions/item.html"
+    context_object_name = "assets"
+    paginate_by = 10
 
-    def get_context_data(self, **kws):
-        from .serializers import ItemSerializer
-
-        item = get_object_or_404(
-            Item,
-            campaign__slug=self.args[0],
-            project__slug=self.args[1],
-            slug=self.args[2],
+    def get_queryset(self):
+        self.item = get_object_or_404(
+            Item.objects.select_related("project", "project__campaign"),
+            campaign__slug=self.kwargs["campaign_slug"],
+            project__slug=self.kwargs["project_slug"],
+            slug=self.kwargs["slug"],
         )
 
-        serialized = ItemSerializer(item).data
+        return self.item.asset_set.all()
 
-        paginator = Paginator(serialized["assets"], ASSETS_PER_PAGE)
-
-        page = int(self.request.GET.get("page") or "1")
-
-        assets = paginator.get_page(page)
-
+    def get_context_data(self, **kws):
         return dict(
             super().get_context_data(**kws),
-            campaign=serialized["campaign"],
-            project=serialized["project"],
-            item=serialized,
-            assets=assets,
+            campaign=self.item.campaign,
+            project=self.item.project,
+            item=self.item,
         )
 
 
