@@ -20,11 +20,12 @@
         <header>
             <nav class="navbar navbar-expand-lg flex-row navbar-offwhite bg-offwhite justify-content-between align-items-end py-half px-md-default pl-2">
                 <div class="d-flex navbar-brand">
-                    <a class="my-auto" href="#"><img src="{% static 'img/LoC-logo.svg' %}" alt="Library of Congress logo"></a>
+                    <a class="my-auto" href="https://www.loc.gov">
+                    <img src="{% static 'img/LoC-logo.svg' %}" alt="Library of Congress logo"></a>
                     <span class="vl mx-2 my-auto"></span>
 
                     <h1 class="header-text align-self-end">
-                        <a class="gray-text align-baseline" href="{% if request.path == '/' %}#{% else %}/{% endif %}">crowd</a>
+                        <a class="gray-text align-baseline" href="/">crowd</a>
                     </h1>
                 </div>
                 <button class="navbar-toggler navbar-light" type="button" data-toggle="collapse" data-target="#nav-menu" aria-controls="nav-menu" aria-expanded="false" aria-label="Toggle navigation">
@@ -74,7 +75,7 @@
                     {% comment %} TODO: use normal text here and CSS to change the case if desired {% endcomment %}
                     <a class="primary-text" href="/">HOME</a>
                     <br />
-                    <a class="primary-text" href="{% url 'campaigns' %}">CAMPAIGNS</a>
+                    <a class="primary-text" href="{% url 'transcriptions:campaigns' %}">CAMPAIGNS</a>
                     <br />
                     <a class="primary-text" href="{% url 'about' %}">ABOUT</a>
                     <br />
