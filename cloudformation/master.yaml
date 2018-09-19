@@ -129,3 +129,15 @@ Outputs:
     WebsiteServiceUrl: 
         Description: The URL endpoint for the concordia website service
         Value: !Join ["", [ !GetAtt ALB.Outputs.LoadBalancerUrl, "/" ]]
+    
+    ALBListener:
+        Description: The listener to register with for the ECS service 
+        Value: !GetAtt ALB.Outputs.Listener
+
+    ClusterId:
+        Description: Id of the ECS Cluster 
+        Value: !GetAtt ECS.Outputs.Cluster
+
+    ECSServiceAutoScalingRoleARN:
+        Description: ARN of the ECS AutoScaling IAM Role 
+        Value: !GetAtt ECS.Outputs.ECSServiceAutoScalingRole
