@@ -7,7 +7,6 @@ from registration.forms import RegistrationForm
 
 User = get_user_model()
 logger = getLogger(__name__)
-ROLE_CHOICES = (("admin", ("Admin")), ("cm", ("Content Manager")), ("user", ("User")))
 
 
 class ConcordiaUserForm(RegistrationForm):
