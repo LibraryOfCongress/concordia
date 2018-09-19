@@ -1,5 +1,5 @@
 {% extends "transcriptions/base.html" %}
-{% block title %}Citizen Historian Campaigns{% endblock title %}
+{% block title %}Make Your Mark Campaigns{% endblock title %}
 {% block main_content %} {% load staticfiles %}
 {% load auth_extras %}
 
@@ -33,13 +33,13 @@
                           <h6 class="card-text mb-half">{{ c.description }}</h6>
                           <div class="col-md-8 mx-auto text-center">
                             <a href="{% url 'transcriptions:campaign' c.slug %}" class="btn btn-primary col mb-quarter">View</a>
-                            <a href="{% url 'transcriptions:delete campaign' c.slug %}" class="btn btn-danger col mb-quarter">Delete</a>
+                            <a href="#" class="btn btn-danger col mb-quarter" data-collection="{{ c.slug }}" data-toggle="modal" data-target="#deleteConfirmModal">Delete</a>
                             <a href="{% url 'transcriptions:exportCSV campaign' c.slug %}" class="btn btn-success col mb-quarter">Export to csv</a>
                             <a href="{% url 'transcriptions:exportBagit campaign' c.slug %}" class="btn btn-success col">Export to Bagit</a>
                             <a href="{% url 'transcriptions:report campaign' c.slug %}" class="mt-half col btn btn-primary">Report</a>
                             {% if request.user|has_group:"CM" %}
                                 {% if c.is_publish %}
-                                    <button type="button" class="confirm-modal btn btn-primary col mt-half" data-toggle="modal" id="{{ c.slug }}" data-target="#campaignConfirmModal">
+                                    <button type="button" class="confirm-modal btn btn-primary col mt-half" data-toggle="modal" id="{{ c.slug }}" data-target="#campaignUnpublishModal">
                                             Unpublish</button>
                                 {% else %}
                                     <button type="button" class="confirm-modal btn btn-primary col mt-half" data-toggle="modal" id="{{ c.slug }}" data-target="#campaignConfirmModal">
@@ -79,7 +79,7 @@
         </button>
       </div>
       <div class="modal-body">
-        Are you sure you want to make this campaign public?
+        Are you sure you want to publish this campaign?
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
@@ -88,9 +88,52 @@
     </div>
   </div>
 </div>
+
+<div class="modal fade" id="campaignUnpublishModal" tabindex="-1" role="dialog" aria-labelledby="campaignUnpublishModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="campaignUnpublishModalLabel">Confirm Campaign</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to unpublish this campaign?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="unpublishbtn">Submit</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" role="dialog" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteConfirmModalLabel">Confirm Delete</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        Are you sure want to delete collection ?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="deleteconfirmbtn">Delete</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock main_content %}
 
 {% block body_scripts %}
+
 <script>
     $(document).ready(function(){
          $(document).on('show.bs.modal',"#campaignConfirmModal", function (e) {
@@ -109,10 +152,13 @@
                     type: 'GET',
                     success: function(data, textStatus, jqXHR) {
                         $('#campaignConfirmModal').modal('hide');
+                        $('#campaignUnpublishModal').modal('hide');
                         if(data['state']){
                             $("#"+campaign_slug).text('Unpublish');
+                            $("#"+campaign_slug).attr('data-target','#campaignUnpublishModal');
                         }else{
                             $("#"+campaign_slug).text('Publish');
+                            $("#"+campaign_slug).attr('data-target','#campaignConfirmModal');
                         }
                     }
                 }).fail(function(data, jqXHR, textStatus, errorThrown) {
@@ -120,6 +166,53 @@
                 });
              });
          });
+
+         $(document).on('show.bs.modal',"#campaignUnpublishModal", function (e) {
+             var $invoker = $(e.relatedTarget);
+             $("#unpublishbtn").click(function(e){
+                var campaign_slug = $($invoker[0]).attr('id');
+                var requested_status = $("#"+campaign_slug).text().trim();
+                var to_status = 'false';
+                $.ajax({
+                    url: '/campaigns/publish/campaign/'+campaign_slug+"/"+to_status+"/",
+                    type: 'GET',
+                    success: function(data, textStatus, jqXHR) {
+                        $('#campaignConfirmModal').modal('hide');
+                        $('#campaignUnpublishModal').modal('hide');
+                        if(data['state']){
+                            $("#"+campaign_slug).text('Unpublish');
+                            $("#"+campaign_slug).attr('data-target','#campaignUnpublishModal');
+                        }else{
+                            $("#"+campaign_slug).text('Publish');
+                            $("#"+campaign_slug).attr('data-target','#campaignConfirmModal');
+                        }
+                    }
+                }).fail(function(data, jqXHR, textStatus, errorThrown) {
+                   console.log("error: ", data);
+                });
+             });
+         });
+
+       $(document).on('shown.bs.modal',"#deleteConfirmModal", function (e) {
+      var $invoker = $(e.relatedTarget);
+
+      $("#deleteconfirmbtn").click(function(e){
+          var campaign_slug = $($invoker[0]).attr("data-collection");
+          $('#deleteConfirmModal').modal('hide');
+
+          $.ajax({
+         url: '/campaigns/delete/'+campaign_slug+'/',
+         type: 'GET',
+         success: function(data, textStatus, jqXHR) {
+            $("#thumbnailConfirmModal").modal('hide');
+            window.location.href = '/campaigns/';
+             }
+         }).fail(function(data, jqXHR, textStatus, errorThrown) {
+             console.log("error: ", data);
+             $("#thumbnailConfirmModal").modal('hide');
+         });
+           });
+       });
     });
 </script>
 {% endblock body_scripts %}

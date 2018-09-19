@@ -231,42 +231,34 @@ class ConcordiaProjectView(TemplateView):
 
 
 class ConcordiaItemView(TemplateView):
+    """
+    Handle GET requests on /campaign/<campaign>/<project>/<item>
+    """
     template_name = "transcriptions/item.html"
 
     def get_context_data(self, **kws):
+        from .serializers import ItemSerializer
 
-        response = requests.get(
-            "%s://%s/ws/campaign/%s/"
-            % (self.request.scheme, self.request.get_host(), self.args[0]),
-            cookies=self.request.COOKIES,
-        )
-        campaign_json_val = json.loads(response.content.decode("utf-8"))
-        asset_sorted_list = sorted(
-            campaign_json_val["assets"], key=lambda k: (k["slug"])
+        item = get_object_or_404(
+            Item,
+            campaign__slug=self.args[0],
+            project__slug=self.args[1],
+            slug=self.args[2],
         )
 
-        try:
-            project = Project.objects.get(slug=self.args[1])
-            item = Item.objects.get(slug=self.args[2])
-        except Item.DoesNotExist:
-            raise Http404
-        except Project.DoesNotExist:
-            raise Http404
+        serialized = ItemSerializer(item).data
 
-        paginator = Paginator(asset_sorted_list, ASSETS_PER_PAGE)
+        paginator = Paginator(serialized["assets"], ASSETS_PER_PAGE)
 
-        if not self.request.GET.get("page"):
-            page = 1
-        else:
-            page = self.request.GET.get("page")
+        page = int(self.request.GET.get("page") or "1")
 
         assets = paginator.get_page(page)
 
         return dict(
             super().get_context_data(**kws),
-            campaign=campaign_json_val,
-            project=project,
-            item=item,
+            campaign=serialized["campaign"],
+            project=serialized["project"],
+            item=serialized,
             assets=assets,
         )
 
@@ -490,7 +482,7 @@ class ConcordiaAssetView(TemplateView):
                 cookies=self.request.COOKIES,
             )
 
-        return dict(
+        res = dict(
             super().get_context_data(**kws),
             page_in_use=page_in_use,
             asset=asset_json,
@@ -499,6 +491,20 @@ class ConcordiaAssetView(TemplateView):
             captcha_form=captcha_form,
             discussion_hide=discussion_hide,
         )
+        if self.request.user.is_anonymous:
+            res['is_anonymous_user_captcha_validated'] = (
+                self.is_anonymous_user_captcha_validated()
+            )
+        return res
+
+    def is_anonymous_user_captcha_validated(self):
+        if 'captcha_validated_at' in self.request.session:
+            if (datetime.now().timestamp() -
+                    self.request.session['captcha_validated_at']) <= \
+                        getattr(settings, 'CAPTCHA_SESSION_VALID_TIME',
+                                24*60*60):
+                return True
+        return False
 
     def post(self, *args, **kwargs):
         """
@@ -513,11 +519,6 @@ class ConcordiaAssetView(TemplateView):
         if self.request.POST.get("action").lower() == "contact a manager":
             return redirect(reverse("contact") + "?pre_populate=true")
 
-        if self.request.user.is_anonymous:
-            captcha_form = CaptchaEmbedForm(self.request.POST)
-            if not captcha_form.is_valid():
-                logger.info("Invalid captcha response")
-                return self.get(self.request, *args, **kwargs)
         response = requests.get(
             "%s://%s/ws/asset_by_slug/%s/%s/"
             % (
@@ -530,9 +531,21 @@ class ConcordiaAssetView(TemplateView):
         )
         asset_json = json.loads(response.content.decode("utf-8"))
 
+        if self.request.user.is_anonymous and not (
+                self.is_anonymous_user_captcha_validated()):
+            captcha_form = CaptchaEmbedForm(self.request.POST)
+            if not captcha_form.is_valid():
+                logger.info("Invalid captcha response")
+                messages.error(self.request, 'Invalid Captcha.')
+                return self.get(self.request, *args, **kwargs)
+            else:
+                self.request.session['captcha_validated_at'] = (
+                    datetime.now().timestamp()
+                )
+
         redirect_path = self.request.path
 
-        if "tx" in self.request.POST:
+        if "tx" in self.request.POST and 'tagging' not in self.request.POST:
             tx = self.request.POST.get("tx")
             tx_status = self.state_dictionary[self.request.POST.get("action")]
             requests.post(
@@ -557,9 +570,20 @@ class ConcordiaAssetView(TemplateView):
 
             }
 
-            redirect_path = next_page_dictionary[tx_status](redirect_path, asset_json)
+            if tx_status == Status.EDIT:
+                messages.success(self.request,
+                                 'The transcription was saved successfully.')
+            elif tx_status == Status.SUBMITTED:
+                messages.success(self.request,
+                                 'The transcription is ready for review.')
+            elif tx_status == Status.COMPLETED:
+                messages.success(self.request,
+                                 'The transcription is completed.')
 
-        if "tags" in self.request.POST and self.request.user.is_authenticated == True:
+            redirect_path = next_page_dictionary[tx_status](redirect_path,
+                                                            asset_json)
+
+        elif "tags" in self.request.POST and self.request.user.is_authenticated == True:
             tags = self.request.POST.get("tags").split(",")
             # get existing tags
             response = requests.get(
@@ -602,6 +626,10 @@ class ConcordiaAssetView(TemplateView):
                                             old_tag,
                                             self.request.user.id),
                                            cookies=self.request.COOKIES)
+
+            redirect_path += "#tab-tag"
+
+            messages.success(self.request, "Tags have been saved.")
 
         return redirect(redirect_path)
 
@@ -1085,3 +1113,20 @@ def publish_project(request, campaign, project, is_publish):
         },
         safe=True,
     )
+
+
+class DeleteProjectView(TemplateView):
+    """
+    deletes the project
+    """
+
+    def get(self, request, *args, **kwargs):
+        collection = Campaign.objects.get(slug=self.args[0])
+        subcollection = Project.objects.get(slug=self.args[1])
+        subcollection.asset_set.all().delete()
+        subcollection.delete()
+        os.system(
+            "rm -rf {0}".format(settings.MEDIA_ROOT + "/concordia/" + collection.slug + "/" + subcollection.slug)
+        )
+        return redirect("/campaigns/"+collection.slug+"/")
+

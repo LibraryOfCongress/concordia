@@ -1,5 +1,7 @@
 import os
 import shutil
+import boto3
+import botocore
 from logging import getLogger
 
 from celery.result import AsyncResult
@@ -18,6 +20,10 @@ from importer.tasks import (download_write_campaign_item_assets,
                             download_write_item_assets, get_item_id_from_item_url)
 
 logger = getLogger(__name__)
+
+S3_CLIENT = boto3.client("s3")
+S3_BUCKET_NAME = settings.AWS_S3.get("S3_COLLECTION_BUCKET", "")
+S3_RESOURCE = boto3.resource("s3")
 
 
 class CreateCampaignView(generics.CreateAPIView):
@@ -38,7 +44,7 @@ class CreateCampaignView(generics.CreateAPIView):
             "project_slug": slugify(project),
         }
 
-        if create_type == "campaigns":
+        if create_type == "collections" or  create_type == "search":
 
             download_task = download_write_campaign_item_assets.delay(
                 slugify(name), slugify(project), url
@@ -172,7 +178,8 @@ def check_completeness(ciac, item_id=None):
     return False
 
 
-def save_campaign_item_assets(project, item, the_path, item_id=None):
+def save_campaign_item_assets(project, the_path, item_id=None):
+    list_asset_info = []
 
     for root, dirs, files in os.walk(the_path):
         for filename in files:
@@ -184,7 +191,25 @@ def save_campaign_item_assets(project, item, the_path, item_id=None):
 
             media_url = file_path.replace(settings.IMPORTER["IMAGES_FOLDER"], "")
             sequence = int(os.path.splitext(filename)[0])
-            Asset.objects.create(
+
+            try:
+                item = Item.objects.get(
+                    campaign__slug=project.campaign,
+                    project__slug=project,
+                    title=title,
+                    slug=title,
+                    item_id=title,
+                )
+            except Item.DoesNotExist:
+                item = Item.objects.create(
+                    campaign=project.campaign,
+                    project=project,
+                    item_id=title,
+                    title=title,
+                    slug=title,
+                )
+
+            asset_info = Asset(
                 title=title,
                 slug="{0}{1}".format(title, sequence),
                 description="{0} description".format(title),
@@ -195,7 +220,7 @@ def save_campaign_item_assets(project, item, the_path, item_id=None):
                 project=project,
                 item=item,
             )
-
+            list_asset_info.append(asset_info)
             try:
                 item_path = "/".join(
                     os.path.join(settings.MEDIA_ROOT, media_url).split("/")[:-1]
@@ -204,8 +229,23 @@ def save_campaign_item_assets(project, item, the_path, item_id=None):
             except Exception as e:
                 logger.error("Error/warning while creating dir path: %s" % e)
 
-            shutil.move(file_path, os.path.join(settings.MEDIA_ROOT, media_url))
-
+    Asset.objects.bulk_create(list_asset_info)
+    if S3_BUCKET_NAME:
+        for a in list_asset_info:
+            source_file_path = os.path.join(settings.IMPORTER["IMAGES_FOLDER"], a.media_url)
+            try:
+                S3_CLIENT.upload_file(source_file_path, S3_BUCKET_NAME, a.media_url)
+                logger.info(
+                    "Uploaded %(filename)s to %(bucket_name)s",
+                    {"filename": source_file_path, "bucket_name": S3_BUCKET_NAME},
+                )
+            except:
+                logger.info(
+                    "Files in %(filename)s already exists in s3 bucket",
+                    {"filename": source_file_path},
+                )
+    else:
+        shutil.move(the_path, os.path.join(settings.MEDIA_ROOT, the_path.replace(settings.IMPORTER["IMAGES_FOLDER"], "")))
 
 @api_view(["GET"])
 def check_and_save_campaign_assets(request, task_id, item_id=None):
@@ -267,11 +307,16 @@ def check_and_save_campaign_completeness(ciac):
                 slug=ciac.campaign_task.project_slug,
             )
         except Project.DoesNotExist:
+            if S3_BUCKET_NAME:
+                s3_storage = True
+            else:
+                s3_storage = False
             campaign, created = Campaign.objects.get_or_create(
                 title=ciac.campaign_task.campaign_name,
                 slug=ciac.campaign_task.campaign_slug,
                 description=ciac.campaign_task.campaign_name,
                 is_active=True,
+                s3_storage=s3_storage
             )
 
             project = Project.objects.create(
@@ -300,11 +345,16 @@ def check_and_save_campaign_completeness(ciac):
 def check_and_save_item_completeness(ciac, item_id):
 
     if check_completeness(ciac, item_id):
+        if S3_BUCKET_NAME:
+            s3_storage = True
+        else:
+            s3_storage = False
         campaign, created = Campaign.objects.get_or_create(
             title=ciac.campaign_task.campaign_name,
             slug=ciac.campaign_task.campaign_slug,
             description=ciac.campaign_task.campaign_name,
             is_active=True,
+            s3_storage=s3_storage
         )
 
         try:
@@ -344,7 +394,7 @@ def check_and_save_item_completeness(ciac, item_id):
             item_id,
         )
 
-        save_campaign_item_assets(project, item, item_local_path, item_id)
+        save_campaign_item_assets(project, item_local_path, item_id)
         shutil.rmtree(
             os.path.join(
                 settings.IMPORTER["IMAGES_FOLDER"], project.campaign.slug, project.slug
