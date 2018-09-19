@@ -209,7 +209,7 @@ a.nav-secondary:hover {
     text-decoration: none;
 }
 
-a h1.campaign-title:hover, a p.hero-text:hover {
+a .campaign-title:hover, a .hero-text:hover {
     color: var(--text-color-primary);
     text-decoration: underline;
 }

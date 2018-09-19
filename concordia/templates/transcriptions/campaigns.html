@@ -23,12 +23,44 @@
                                             <div class="col-12 col-md-8 px-half">
                                                 <a href="{% url 'transcriptions:campaign' c.slug %}">
                                                     <h1 class="campaign-title">{{ c.title }}</h1>
-                                                    <p class="hero-text">{{ c.description }}</p>
+                                                    {% if 'Lincoln' in c.title %}
+                                                        <p class="hero-text">The Abraham Lincoln Papers at the Library of Congress contains approximately 40,550 documents written by or to Abraham Lincoln (1809­–1865), lawyer, representative from Illinois, and sixteenth president of the United States. Many items pertain to his presidency (1861–1865). 20,000 items are available online, and around half have been transcribed already. Our goal now is to transcribe the remaining materials to make them word searchable for one and all. You can transcribe documents written by a large number of correspondents, including friends and associates from Lincoln’s Springfield days, well-known political figures and reformers, and individuals and organizations writing to their president.</p>
+                                                    {% elif 'Rosa Parks' in c.title %}
+                                                        <p class="hero-text">Rosa Parks is best known for her refusal to surrender her bus seat to a white passenger. Her arrest sparked the Montgomery Bus Boycott in 1955, a seminal event in the U.S. Civil Rights Movement. Transcription of these letters and assorted writings will shed light on lesser-known facts and facets of Parks' life including her faith, personal relationships, intimate thoughts and feelings, childhood, early activism, activities during and after the bus boycott, and the toll the bus incident took on her and her family.</p>
+                                                    {% elif 'Civil War' in c.title %}
+                                                        <p class="hero-text">Discover through their submissions to a Left-Hand Penmanship Contest the circumstances under which hundreds of Union veterans lost their right arms by disability or amputation during the Civil War, how they coped with and interpreted the loss of their arm, and how the contest aimed to demonstrate that these veterans were “disabled, but not disheartened.” Most of the veterans recounted their war service, the circumstances under which they were wounded, and sometimes their feelings about having sacrificed their dominant arm for the Union. Autograph books kept by Bourne while a chaplain at Central Park Hospital also contain inscriptions by soldiers, some of whom recorded their war service, their interpretations of the war, and occasionally their adaptations after significant injury. Although the stories are personal to each veteran and to the American Civil War, they carry great resonance throughout military history as the physical cost of wars to those who serve in combat.</p>
+                                                    {% elif 'Clara Barton' in c.title %}
+                                                        <p class="hero-text">Nurse, educator, philanthropist, and lecturer, Clara Barton (1821-1912) was one of the most prolific and active women of her time. Barton provided relief services on battlefields during the American Civil War, and in Europe during the Franco-Prussian War, and worked with bereaved families to identify lost soldiers and provide relief to the wounded and displaced. For most of her life she kept a diary, conducted a voluminous correspondence, and was active on many committees. Her diaries reveal that she suffered from periodic nervous breakdowns, and capture her struggles to remain active and healthy in the face of these challenges. In 1869 her doctors urged her to recuperate in Europe. There she met Louis Appia, a member of the International Committee of the Red Cross, whose work inspired Barton to found the American Red Cross. Many of Barton's papers have never been transcribed and you may be the first person in over a century to read these pages in full. Your transcriptions will make these materials accessible for other people all around the world, and be a catalyst for new research.</p>
+                                                    {% elif 'Branch Rickey' in c.title %}
+                                                        <p class="hero-text">Branch Rickey (1881-1965) helped to break the color line in Major League Baseball by recruiting Jackie Robinson to the Brooklyn Dodgers in 1947. By that time, Rickey had already built an impressive career as a player, manager, and baseball executive, which eventually earned him a place in the National Baseball Hall of Fame in Cooperstown, New York. His scouting reports, which you can transcribe here, were compiled between 1951 and 1964. They are mostly concentrated in the years 1951-1956 and 1962-1963, while Rickey was associated, respectively, with the Pittsburgh Pirates and St. Louis Cardinals.The reports document Rickey's skill in analyzing various aspects of a player's game. They reveal his candor in assessing a player's talent and sometimes include blunt comments about a player's upbringing or family background. Some of the better-known names featured include Hank Aaron, Lou Brock, Steve Carlton, Roberto Clemente, Don Drysdale, Bob Gibson, Harmon Killebrew, Sandy Koufax, Willie Mays, Bill Mazeroski, Stan Musial, and Frank Robinson. Future managers George Lee "Sparky" Anderson and Albert Fred "Red" Schoendienst are also evaluated as players. In addition to these Hall-of-Famers, Rickey also evaluated hundreds of players who had varying degrees of success in the minor and major leagues. What made a promising player in the eyes of this sportsman and recruiter? How did Rickey’s reports frame and ultimately change the game?</p>
+                                                    {% elif 'Mary Church Terrell' in c.title %}
+                                                        <p class="hero-text">{{ c.description }}</p>
+                                                    {% elif 'Frederick Law Olmstead' in c.title %}
+                                                        <p class="hero-text">{{ c.description }}</p>
+                                                    {% else %}
+                                                        <p class="hero-text">{{ c.description }}</p>
+                                                    {% endif %}
                                                 </a>
                                             </div>
                                             <div class="col-12 col-md-4">
                                                 <!-- TODO: Swap this out -->
-                                                <img src="{% static "img/rosa-parks-campaign.svg" %}" class="img-fluid" alt="{{ c.title }} image">
+                                                {% if 'Lincoln' in c.title %}
+                                                    <img src="{% static "img/AbrahamLincoln.svg" %}" class="img-fluid" alt="{{ c.title }} image">
+                                                {% elif 'Rosa Parks' in c.title %}
+                                                    <img src="{% static "img/rosa-parks-campaign.svg" %}" class="img-fluid" alt="{{ c.title }} image">
+                                                {% elif 'Civil War' in c.title %}
+                                                    <!-- <img class="img-fluid" alt="{{ c.title }} image" src="{% if campaign.s3_storage %}{{ c.media_url }}{% else %}{{ MEDIA_URL }}{{c.media_url }}{% endif %}"> -->
+                                                {% elif 'Clara Barton' in c.title %}
+                                                    <img src="{% static "img/clara-barton-campaign.svg" %}" class="img-fluid" alt="{{ c.title }} image">
+                                                {% elif 'Branch Rickey' in c.title %}
+                                                    <img src="{% static "img/branch-rickey-campaign.svg" %}" class="img-fluid" alt="{{ c.title }} image">
+                                                {% elif 'Mary Church Terrell' in c.title %}
+                                                    <img src="{% static "img/MaryChurchTerrell.svg" %}" class="img-fluid" alt="{{ c.title }} image">
+                                                {% elif 'Frederick Law Olmstead' in c.title %}
+                                                    <!-- <img class="img-fluid" alt="{{ c.title }} image" src="{% if campaign.s3_storage %}{{ c.media_url }}{% else %}{{ MEDIA_URL }}{{c.media_url }}{% endif %}"> -->
+                                                {% else %}
+                                                    <img class="img-fluid" alt="{{ c.title }} image" src="{% if campaign.s3_storage %}{{ c.media_url }}{% else %}{{ MEDIA_URL }}{{c.media_url }}{% endif %}">
+                                                {% endif %}
                                             </div>
                                         </div>
                                     </div>
@@ -54,7 +86,23 @@
                                         <div class="col-12 col-md-8 px-half">
                                             <a href="{% url 'transcriptions:campaign' c.slug %}">
                                                 <h1 class="campaign-title">{{ c.title }}</h1>
-                                                <p class="hero-text">{{ c.description }}</p>
+                                                {% if 'Lincoln' in c.title %}
+                                                    <p class="hero-text">The Abraham Lincoln Papers at the Library of Congress contains approximately 40,550 documents written by or to Abraham Lincoln (1809­–1865), lawyer, representative from Illinois, and sixteenth president of the United States. Many items pertain to his presidency (1861–1865). 20,000 items are available online, and around half have been transcribed already. Our goal now is to transcribe the remaining materials to make them word searchable for one and all. You can transcribe documents written by a large number of correspondents, including friends and associates from Lincoln’s Springfield days, well-known political figures and reformers, and individuals and organizations writing to their president.</p>
+                                                {% elif 'Rosa Parks' in c.title %}
+                                                    <p class="hero-text">Rosa Parks is best known for her refusal to surrender her bus seat to a white passenger. Her arrest sparked the Montgomery Bus Boycott in 1955, a seminal event in the U.S. Civil Rights Movement. Transcription of these letters and assorted writings will shed light on lesser-known facts and facets of Parks' life including her faith, personal relationships, intimate thoughts and feelings, childhood, early activism, activities during and after the bus boycott, and the toll the bus incident took on her and her family.</p>
+                                                {% elif 'Civil War' in c.title %}
+                                                    <p class="hero-text">Discover through their submissions to a Left-Hand Penmanship Contest the circumstances under which hundreds of Union veterans lost their right arms by disability or amputation during the Civil War, how they coped with and interpreted the loss of their arm, and how the contest aimed to demonstrate that these veterans were “disabled, but not disheartened.” Most of the veterans recounted their war service, the circumstances under which they were wounded, and sometimes their feelings about having sacrificed their dominant arm for the Union. Autograph books kept by Bourne while a chaplain at Central Park Hospital also contain inscriptions by soldiers, some of whom recorded their war service, their interpretations of the war, and occasionally their adaptations after significant injury. Although the stories are personal to each veteran and to the American Civil War, they carry great resonance throughout military history as the physical cost of wars to those who serve in combat.</p>
+                                                {% elif 'Clara Barton' in c.title %}
+                                                    <p class="hero-text">Nurse, educator, philanthropist, and lecturer, Clara Barton (1821-1912) was one of the most prolific and active women of her time. Barton provided relief services on battlefields during the American Civil War, and in Europe during the Franco-Prussian War, and worked with bereaved families to identify lost soldiers and provide relief to the wounded and displaced. For most of her life she kept a diary, conducted a voluminous correspondence, and was active on many committees. Her diaries reveal that she suffered from periodic nervous breakdowns, and capture her struggles to remain active and healthy in the face of these challenges. In 1869 her doctors urged her to recuperate in Europe. There she met Louis Appia, a member of the International Committee of the Red Cross, whose work inspired Barton to found the American Red Cross. Many of Barton's papers have never been transcribed and you may be the first person in over a century to read these pages in full. Your transcriptions will make these materials accessible for other people all around the world, and be a catalyst for new research.</p>
+                                                {% elif 'Branch Rickey' in c.title %}
+                                                    <p class="hero-text">Branch Rickey (1881-1965) helped to break the color line in Major League Baseball by recruiting Jackie Robinson to the Brooklyn Dodgers in 1947. By that time, Rickey had already built an impressive career as a player, manager, and baseball executive, which eventually earned him a place in the National Baseball Hall of Fame in Cooperstown, New York. His scouting reports, which you can transcribe here, were compiled between 1951 and 1964. They are mostly concentrated in the years 1951-1956 and 1962-1963, while Rickey was associated, respectively, with the Pittsburgh Pirates and St. Louis Cardinals.The reports document Rickey's skill in analyzing various aspects of a player's game. They reveal his candor in assessing a player's talent and sometimes include blunt comments about a player's upbringing or family background. Some of the better-known names featured include Hank Aaron, Lou Brock, Steve Carlton, Roberto Clemente, Don Drysdale, Bob Gibson, Harmon Killebrew, Sandy Koufax, Willie Mays, Bill Mazeroski, Stan Musial, and Frank Robinson. Future managers George Lee "Sparky" Anderson and Albert Fred "Red" Schoendienst are also evaluated as players. In addition to these Hall-of-Famers, Rickey also evaluated hundreds of players who had varying degrees of success in the minor and major leagues. What made a promising player in the eyes of this sportsman and recruiter? How did Rickey’s reports frame and ultimately change the game?</p>
+                                                {% elif 'Mary Church Terrell' in c.title %}
+                                                    <p class="hero-text">{{ c.description }}</p>
+                                                {% elif 'Frederick Law Olmstead' in c.title %}
+                                                    <p class="hero-text">{{ c.description }}</p>
+                                                {% else %}
+                                                    <p class="hero-text">{{ c.description }}</p>
+                                                {% endif %}
                                             </a>
                                             <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Admin tasks</button>
                                             <div class="dropdown-menu">
@@ -75,22 +123,38 @@
                                         <div class="col-12 col-md-4">
                                             <a href="{% url 'transcriptions:campaign' c.slug %}">
                                                 <!-- TODO: Swap this out -->
-                                                <img src="{% static "img/rosa-parks-campaign.svg" %}" class="img-fluid" alt="{{ c.title }} image">
+                                                {% if 'Lincoln' in c.title %}
+                                                    <img src="{% static "img/AbrahamLincoln.svg" %}" class="img-fluid" alt="{{ c.title }} image">
+                                                {% elif 'Rosa Parks' in c.title %}
+                                                    <img src="{% static "img/rosa-parks-campaign.svg" %}" class="img-fluid" alt="{{ c.title }} image">
+                                                {% elif 'Civil War' in c.title %}
+                                                    <!-- <img class="img-fluid" alt="{{ c.title }} image" src="{% if campaign.s3_storage %}{{ c.media_url }}{% else %}{{ MEDIA_URL }}{{c.media_url }}{% endif %}"> -->
+                                                {% elif 'Clara Barton' in c.title %}
+                                                    <img src="{% static "img/clara-barton-campaign.svg" %}" class="img-fluid" alt="{{ c.title }} image">
+                                                {% elif 'Branch Rickey' in c.title %}
+                                                    <img src="{% static "img/branch-rickey-campaign.svg" %}" class="img-fluid" alt="{{ c.title }} image">
+                                                {% elif 'Mary Church Terrell' in c.title %}
+                                                    <img src="{% static "img/MaryChurchTerrell.svg" %}" class="img-fluid" alt="{{ c.title }} image">
+                                                {% elif 'Frederick Law Olmstead' in c.title %}
+                                                    <!-- <img class="img-fluid" alt="{{ c.title }} image" src="{% if campaign.s3_storage %}{{ c.media_url }}{% else %}{{ MEDIA_URL }}{{c.media_url }}{% endif %}"> -->
+                                                {% else %}
+                                                    <img class="img-fluid" alt="{{ c.title }} image" src="{% if campaign.s3_storage %}{{ c.media_url }}{% else %}{{ MEDIA_URL }}{{c.media_url }}{% endif %}">
+                                                {% endif %}
                                             </a>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="mb-default">
+                                <!-- <div class="mb-default">
                                     {% for project in projects %}
                                         <div class="col-12 col-md-4 col-lg-3 mb-default mx-md-quarter">
                                             <a href="{% url 'transcriptions:project' project.campaign.slug project.slug %}">
-                                                <!-- TODO: Swap this out -->
+                                                <!-- TODO: Swap this out --
                                                 <img src="{% static "img/rosa-parks-campaign.svg" %}" class="img-fluid" alt="{{ project.title }} image">
                                                 <h4 class="">{{ project.title }}</h4>
                                             </a>
                                         </div>
                                     {% endfor %}
-                                </div>
+                                </div> -->
                             {% endfor %}
                         {% endif %}
                     {% endif %}
