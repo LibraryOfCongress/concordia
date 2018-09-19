@@ -158,6 +158,10 @@ h2.contribute-breadcrumb {
     color: var(--text-color-offwhite);
 }
 
+a: hover {
+    color: var(--text-color-primary);
+}
+
 a.primary-text {
   color: var(--primary-color);
   text-decoration: none;
