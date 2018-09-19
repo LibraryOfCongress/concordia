@@ -347,7 +347,7 @@ table td {
 }
 
 .bg-img-placeholder:hover {
-    background-image: linear-gradient( rgba(252,76,2,.3), rgba(252,76,2,0)),
+    background-image: linear-gradient( rgba(252,76,2,.5), rgba(252,76,2,.1)),
     linear-gradient( rgba(189,189,189,1), rgba(189,189,189,1));
 }
 
