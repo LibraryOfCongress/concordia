@@ -118,6 +118,7 @@ TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         "DIRS": [
+            os.path.join(SITE_ROOT_DIR, "templates"),
             os.path.join(CONCORDIA_APP_DIR, "templates"),
             MACHINA_MAIN_TEMPLATE_DIR,
         ],
