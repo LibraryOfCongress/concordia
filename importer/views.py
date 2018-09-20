@@ -173,71 +173,85 @@ def save_campaign_item_assets(project, the_path, item_id=None):
     Asset.objects.bulk_create(list_asset_info)
     if S3_BUCKET_NAME:
         for a in list_asset_info:
-            source_file_path = os.path.join(settings.IMPORTER["IMAGES_FOLDER"], a.media_url)
+            source_file_path = os.path.join(
+                settings.IMPORTER["IMAGES_FOLDER"], a.media_url
+            )
             try:
                 S3_CLIENT.upload_file(source_file_path, S3_BUCKET_NAME, a.media_url)
                 logger.info(
                     "Uploaded %(filename)s to %(bucket_name)s",
                     {"filename": source_file_path, "bucket_name": S3_BUCKET_NAME},
                 )
-            except:
-                logger.info(
+            except Exception:
+                # FIXME: this needs to handle all other exception types!
+                logger.error(
                     "Files in %(filename)s already exists in s3 bucket",
                     {"filename": source_file_path},
+                    exc_info=True,
                 )
+                raise
     else:
-        shutil.move(the_path, os.path.join(settings.MEDIA_ROOT, the_path.replace(settings.IMPORTER["IMAGES_FOLDER"], "")))
-
-@api_view(["GET"])
-def check_and_save_campaign_assets(request, task_id, item_id=None):
-
-    if request.method == "GET":
-        logger.info("check_and_save_campaign_assets for item_id: ", item_id)
-
-        if item_id:
-            try:
-                ciac = CampaignItemAssetCount.objects.get(
-                    item_task_id=task_id, campaign_item_identifier=item_id
-                )
-            except CampaignItemAssetCount.DoesNotExist:
-                return Response(
-                    {"message": "Requested Campaign Does not exists"},
-                    status.HTTP_404_NOT_FOUND,
-                )
-            if check_and_save_item_completeness(ciac, item_id):
-                return redirect(
-                    reverse(
-                        "transcriptions:project-detail",
-                        args=[
-                            ciac.campaign_task.campaign_slug,
-                            ciac.campaign_task.project_slug,
-                        ],
-                        current_app=request.resolver_match.namespace,
-                    )
-                )
-        else:
-            try:
-                ctd = CampaignTaskDetails.objects.get(campaign_task_id=task_id)
-                ciac = CampaignItemAssetCount.objects.filter(campaign_task=ctd)[0]
-            except CampaignTaskDetails.DoesNotExist:
-                return Response(
-                    {"message": "Requested Campaign Does not exists"},
-                    status.HTTP_404_NOT_FOUND,
-                )
-            if check_and_save_campaign_completeness(ciac):
-                return redirect(
-                    reverse(
-                        "transcriptions:campaign",
-                        args=[ctd.campaign_slug],
-                        current_app=request.resolver_match.namespace,
-                    )
-                )
-        return Response(
-            {
-                "message": "Creating a campaign is failed since assets are not completely downloaded"
-            },
-            status=status.HTTP_404_NOT_FOUND,
+        shutil.move(
+            the_path,
+            os.path.join(
+                settings.MEDIA_ROOT,
+                the_path.replace(settings.IMPORTER["IMAGES_FOLDER"], ""),
+            ),
         )
+
+
+@api_view(http_method_names=["GET"])
+def check_and_save_campaign_assets(request, task_id, item_id=None):
+    logger.debug("check_and_save_campaign_assets for item_id %s", item_id)
+
+    if item_id:
+        try:
+            ciac = CampaignItemAssetCount.objects.get(
+                item_task_id=task_id, campaign_item_identifier=item_id
+            )
+        except CampaignItemAssetCount.DoesNotExist:
+            return Response(
+                {"message": "Requested Campaign Does not exists"},
+                status.HTTP_404_NOT_FOUND,
+            )
+
+        if check_and_save_item_completeness(ciac, item_id):
+            return redirect(
+                reverse(
+                    "transcriptions:project-detail",
+                    args=[
+                        ciac.campaign_task.campaign_slug,
+                        ciac.campaign_task.project_slug,
+                    ],
+                    current_app=request.resolver_match.namespace,
+                )
+            )
+    else:
+        try:
+            ctd = CampaignTaskDetails.objects.get(campaign_task_id=task_id)
+        except CampaignTaskDetails.DoesNotExist:
+            return Response(
+                {"message": "Requested Campaign Does not exists"},
+                status.HTTP_404_NOT_FOUND,
+            )
+
+        # FIXME: determine what we're doing with n > 1
+        ciac = CampaignItemAssetCount.objects.filter(campaign_task=ctd)[0]
+
+        if check_and_save_campaign_completeness(ciac):
+            return redirect(
+                reverse(
+                    "transcriptions:campaign",
+                    args=[ctd.project.campaign.slug],
+                    current_app=request.resolver_match.namespace,
+                )
+            )
+
+    return Response(
+        # FIXME: we need better error reporting
+        {"message": "Unable to determine what failed"},
+        status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+    )
 
 
 def check_and_save_campaign_completeness(ciac):
@@ -257,7 +271,7 @@ def check_and_save_campaign_completeness(ciac):
                 slug=ciac.campaign_task.campaign_slug,
                 description=ciac.campaign_task.campaign_name,
                 is_active=True,
-                s3_storage=s3_storage
+                s3_storage=s3_storage,
             )
 
             project = Project.objects.create(
@@ -295,7 +309,7 @@ def check_and_save_item_completeness(ciac, item_id):
             slug=ciac.campaign_task.campaign_slug,
             description=ciac.campaign_task.campaign_name,
             is_active=True,
-            s3_storage=s3_storage
+            s3_storage=s3_storage,
         )
 
         try:
@@ -311,22 +325,11 @@ def check_and_save_item_completeness(ciac, item_id):
                 slug=ciac.campaign_task.project_slug,
             )
 
-        try:
-            item = Item.objects.get(
-                campaign__slug=ciac.campaign_task.campaign_slug,
-                project__slug=ciac.campaign_task.project_slug,
-                title=item_id,
-                slug=item_id,
-                item_id=item_id,
-            )
-        except Item.DoesNotExist:
-            item = Item.objects.create(
-                campaign=campaign,
-                project=project,
-                item_id=item_id,
-                title=item_id,
-                slug=item_id,
-            )
+        item, created = Item.objects.get_or_create(
+            project=ciac.campaign_task.project,
+            item_id=item_id,
+            defaults={"title": item_id, "slug": item_id},
+        )
 
         item_local_path = os.path.join(
             settings.IMPORTER["IMAGES_FOLDER"],
