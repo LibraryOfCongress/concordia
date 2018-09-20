@@ -103,15 +103,17 @@ if DEBUG:
 MIDDLEWARE = [
     "django_prometheus_metrics.middleware.PrometheusBeforeMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    # WhiteNoise serves static files efficiently:
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "maintenance_mode.middleware.MaintenanceModeMiddleware",
     # Machina
     "machina.apps.forum_permission.middleware.ForumPermissionMiddleware",
-    "maintenance_mode.middleware.MaintenanceModeMiddleware",
 ]
 
 TEMPLATES = [
@@ -277,15 +279,16 @@ AWS_S3 = {
     "REGION": os.getenv("AWS_REGION"),
 }
 
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+WHITENOISE_ROOT = STATIC_ROOT
+
 PASSWORD_RESET_TIMEOUT_DAYS = 1
 ACCOUNT_ACTIVATION_DAYS = 1
 REGISTRATION_OPEN = True  # set to false to temporarily disable registrations
 
-MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
+MESSAGE_STORAGE = "django.contrib.messages.storage.session.SessionStorage"
 
-MESSAGE_TAGS = {
-    messages.ERROR: 'danger',
-}
+MESSAGE_TAGS = {messages.ERROR: "danger"}
 
 SENTRY_DSN = os.environ.get("SENTRY_DSN", "")
 SENTRY_PUBLIC_DSN = os.environ.get("SENTRY_PUBLIC_DSN", "")
