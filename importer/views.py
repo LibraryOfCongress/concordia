@@ -23,58 +23,54 @@ S3_RESOURCE = boto3.resource("s3")
 
 @api_view(["GET"])
 def get_task_status(request, task_id):
+    celery_task_result = AsyncResult(task_id)
+    task_state = celery_task_result.state
 
-    if request.method == "GET":
-        celery_task_result = AsyncResult(task_id)
-        task_state = celery_task_result.state
-
+    try:
+        ciac = CampaignItemAssetCount.objects.get(item_task_id=task_id)
+        project_local_path = os.path.join(
+            settings.IMPORTER["IMAGES_FOLDER"],
+            ciac.campaign_task.campaign_slug,
+            ciac.campaign_task.project_slug,
+        )
+        item_downloaded_asset_count = sum(
+            [
+                len(files)
+                for path, dirs, files in os.walk(
+                    os.path.join(project_local_path, ciac.campaign_item_identifier)
+                )
+            ]
+        )
+        if item_downloaded_asset_count <= ciac.campaign_item_asset_count:
+            progress = "%s of %s processed" % (
+                item_downloaded_asset_count,
+                ciac.campaign_item_asset_count,
+            )
+        else:
+            progress = ""
+        return Response({"state": task_state, "progress": progress})
+    except CampaignItemAssetCount.DoesNotExist:
         try:
-            ciac = CampaignItemAssetCount.objects.get(item_task_id=task_id)
+            ctd = CampaignTaskDetails.objects.get(campaign_task_id=task_id)
             project_local_path = os.path.join(
-                settings.IMPORTER["IMAGES_FOLDER"],
-                ciac.campaign_task.campaign_slug,
-                ciac.campaign_task.project_slug,
+                settings.IMPORTER["IMAGES_FOLDER"], ctd.campaign_slug, ctd.project_slug
             )
-            item_downloaded_asset_count = sum(
-                [
-                    len(files)
-                    for path, dirs, files in os.walk(
-                        os.path.join(project_local_path, ciac.campaign_item_identifier)
-                    )
-                ]
+            campaign_downloaded_asset_count = sum(
+                [len(files) for path, dirs, files in os.walk(project_local_path)]
             )
-            if item_downloaded_asset_count <= ciac.campaign_item_asset_count:
+            if campaign_downloaded_asset_count <= ctd.campaign_asset_count:
                 progress = "%s of %s processed" % (
-                    item_downloaded_asset_count,
-                    ciac.campaign_item_asset_count,
+                    campaign_downloaded_asset_count,
+                    ctd.campaign_asset_count,
                 )
             else:
                 progress = ""
             return Response({"state": task_state, "progress": progress})
-        except CampaignItemAssetCount.DoesNotExist:
-            try:
-                ctd = CampaignTaskDetails.objects.get(campaign_task_id=task_id)
-                project_local_path = os.path.join(
-                    settings.IMPORTER["IMAGES_FOLDER"],
-                    ctd.campaign_slug,
-                    ctd.project_slug,
-                )
-                campaign_downloaded_asset_count = sum(
-                    [len(files) for path, dirs, files in os.walk(project_local_path)]
-                )
-                if campaign_downloaded_asset_count <= ctd.campaign_asset_count:
-                    progress = "%s of %s processed" % (
-                        campaign_downloaded_asset_count,
-                        ctd.campaign_asset_count,
-                    )
-                else:
-                    progress = ""
-                return Response({"state": task_state, "progress": progress})
-            except CampaignTaskDetails.DoesNotExist:
-                return Response(
-                    {"message": "Requested task id Does not exists campaign progress"},
-                    status.HTTP_404_NOT_FOUND,
-                )
+        except CampaignTaskDetails.DoesNotExist:
+            return Response(
+                {"message": "Requested task id Does not exists campaign progress"},
+                status.HTTP_404_NOT_FOUND,
+            )
 
 
 def check_completeness(ciac, item_id=None):
