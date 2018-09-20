@@ -164,8 +164,8 @@ def get_save_item_assets(project, item_id, item_asset_urls):
 
     os.makedirs(item_local_path, exist_ok=True)
 
-    for idx, ciau in enumerate(item_asset_urls):
-        asset_local_path = os.path.join(item_local_path, "{0}.jpg".format(str(idx)))
+    for idx, ciau in enumerate(item_asset_urls, start=1):
+        asset_local_path = os.path.join(item_local_path, "{}.jpg".format(idx))
 
         try:
             download_write_campaign_item_asset(ciau, asset_local_path)
