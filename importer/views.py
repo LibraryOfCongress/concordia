@@ -1,79 +1,24 @@
 import os
 import shutil
 import boto3
-import botocore
 from logging import getLogger
 
 from celery.result import AsyncResult
 from django.conf import settings
 from django.shortcuts import redirect
-from django.template.defaultfilters import slugify
 from django.urls import reverse
-from rest_framework import generics, status
+from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from concordia.models import Asset, Campaign, Item, Project
 from importer.models import CampaignItemAssetCount, CampaignTaskDetails
-from importer.serializer import CreateCampaign
-from importer.tasks import (download_write_campaign_item_assets,
-                            download_write_item_assets, get_item_id_from_item_url)
 
 logger = getLogger(__name__)
 
 S3_CLIENT = boto3.client("s3")
 S3_BUCKET_NAME = settings.AWS_S3.get("S3_COLLECTION_BUCKET", "")
 S3_RESOURCE = boto3.resource("s3")
-
-
-class CreateCampaignView(generics.CreateAPIView):
-    serializer_class = CreateCampaign
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        data = serializer.data
-        name = data.get("name")
-        project = data.get("project")
-        url = data.get("url")
-        create_type = data.get("create_type")
-        campaign_details = {
-            "campaign_name": name,
-            "campaign_slug": slugify(name),
-            "project_name": project,
-            "project_slug": slugify(project),
-        }
-
-        if create_type == "collections" or  create_type == "search":
-
-            download_task = download_write_campaign_item_assets.delay(
-                slugify(name), slugify(project), url
-            )
-            campaign_details["campaign_task_id"] = download_task.task_id
-            CampaignTaskDetails.objects.create(**campaign_details)
-            data["task_id"] = download_task.task_id
-
-        elif create_type == "item":
-            item_id = get_item_id_from_item_url(url)
-            download_task = download_write_item_assets.delay(
-                slugify(name), slugify(project), item_id
-            )
-            ctd, created = CampaignTaskDetails.objects.get_or_create(
-                campaign_slug=slugify(name),
-                project_slug=slugify(project),
-                defaults={"campaign_name": name, "project_name": project},
-            )
-            CampaignItemAssetCount.objects.create(
-                campaign_task=ctd,
-                campaign_item_identifier=item_id,
-                item_task_id=download_task.task_id,
-            )
-
-            data["task_id"] = download_task.task_id
-            data["item_id"] = item_id
-
-        headers = self.get_success_headers(data)
-        return Response(data, status=status.HTTP_202_ACCEPTED, headers=headers)
 
 
 @api_view(["GET"])
@@ -130,10 +75,6 @@ def get_task_status(request, task_id):
                     {"message": "Requested task id Does not exists campaign progress"},
                     status.HTTP_404_NOT_FOUND,
                 )
-            # return Response({"message": "Requested task id Does not exists for item progress"},
-            #                 status.HTTP_404_NOT_FOUND)
-
-        # return Response(task_state)
 
 
 def check_completeness(ciac, item_id=None):

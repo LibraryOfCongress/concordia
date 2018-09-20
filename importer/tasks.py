@@ -5,7 +5,6 @@ from logging import getLogger
 import requests
 from celery import task
 from django.conf import settings
-from django.template.defaultfilters import slugify
 
 from importer.models import CampaignItemAssetCount, CampaignTaskDetails
 
