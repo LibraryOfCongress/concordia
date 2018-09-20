@@ -29,6 +29,7 @@ class CampaignAdmin(admin.ModelAdmin):
     list_display_links = ("id", "title", "slug")
     prepopulated_fields = {"slug": ("title",)}
     search_fields = ["title", "description"]
+    list_filter = ("status", "is_active")
 
 
 @admin.register(Project)
@@ -39,6 +40,7 @@ class ProjectAdmin(admin.ModelAdmin):
     list_display_links = ("id", "title", "slug")
     prepopulated_fields = {"slug": ("title",)}
     search_fields = ["title", "campaign__title"]
+    list_filter = ("status", "category", "campaign")
 
 
 @admin.register(Item)
@@ -55,6 +57,7 @@ class ItemAdmin(admin.ModelAdmin):
     list_display_links = ("title", "slug", "item_id")
     prepopulated_fields = {"slug": ("title",)}
     search_fields = ["title", "campaign__title", "project__title"]
+    list_filter = ("status", "campaign")
 
 
 @admin.register(Asset)
@@ -76,6 +79,7 @@ class AssetAdmin(admin.ModelAdmin):
     list_display_links = ("id", "title", "slug")
     prepopulated_fields = {"slug": ("title",)}
     search_fields = ["title", "media_url", "campaign__title", "project__title"]
+    list_filter = ("status", "campaign", "media_type")
 
 
 @admin.register(Tag)
@@ -107,5 +111,8 @@ class TranscriptionAdmin(admin.ModelAdmin):
         "updated_on",
     )
     list_display_links = ("id", "asset")
+
+    list_filter = ("status",)
+
     search_fields = ["text"]
 
