@@ -1,4 +1,9 @@
+from urllib.parse import urljoin
+
+from django.conf import settings
 from django.contrib import admin
+from django.template.defaultfilters import truncatechars
+from django.utils.html import format_html
 
 from .models import (
     Asset,
@@ -11,17 +16,34 @@ from .models import (
 )
 
 
+class CustomListDisplayFieldsMixin:
+    """
+    Mixin which provides some custom text formatters for list display fields
+    used on multiple models
+    """
+
+    def truncated_description(self, obj):
+        return truncatechars(obj.description, 200)
+
+    truncated_description.short_description = "Description"
+
+    def truncated_metadata(self, obj):
+        return format_html("<code>{}</code>", truncatechars(obj.metadata, 200))
+
+    truncated_metadata.allow_tags = True
+    truncated_metadata.short_description = "Metadata"
+
+
 @admin.register(Campaign)
-class CampaignAdmin(admin.ModelAdmin):
-    # todo: replace description & metadata with truncated values
+class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     list_display = (
         "id",
         "title",
         "slug",
-        "description",
+        "truncated_description",
         "start_date",
         "end_date",
-        "metadata",
+        "truncated_metadata",
         "is_active",
         "s3_storage",
         "status",
@@ -33,10 +55,17 @@ class CampaignAdmin(admin.ModelAdmin):
 
 
 @admin.register(Project)
-class ProjectAdmin(admin.ModelAdmin):
-    # todo: replace metadata with truncated values
+class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     # todo: add foreignKey link for campaign
-    list_display = ("id", "title", "slug", "category", "campaign", "metadata", "status")
+    list_display = (
+        "id",
+        "title",
+        "slug",
+        "category",
+        "campaign",
+        "truncated_metadata",
+        "status",
+    )
     list_display_links = ("id", "title", "slug")
     prepopulated_fields = {"slug": ("title",)}
     search_fields = ["title", "campaign__title"]
@@ -61,25 +90,34 @@ class ItemAdmin(admin.ModelAdmin):
 
 
 @admin.register(Asset)
-class AssetAdmin(admin.ModelAdmin):
-    # todo: add truncated values for description & metadata
+class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     list_display = (
         "id",
         "title",
         "slug",
-        # 'description',
-        "media_url",
+        "truncated_description",
+        "truncated_media_url",
         "media_type",
         "campaign",
         "project",
         "sequence",
-        # 'metadata',
+        "truncated_metadata",
         "status",
     )
     list_display_links = ("id", "title", "slug")
     prepopulated_fields = {"slug": ("title",)}
     search_fields = ["title", "media_url", "campaign__title", "project__title"]
     list_filter = ("status", "campaign", "media_type")
+
+    def truncated_media_url(self, obj):
+        return format_html(
+            '<a target="_blank" href="{}">{}</a>',
+            urljoin(settings.MEDIA_URL, obj.media_url),
+            truncatechars(obj.media_url, 100),
+        )
+
+    truncated_media_url.allow_tags = True
+    truncated_media_url.short_description = "Media URL"
 
 
 @admin.register(Tag)
@@ -106,7 +144,7 @@ class TranscriptionAdmin(admin.ModelAdmin):
         "asset",
         "parent",
         "user_id",
-        "text",
+        "truncated_text",
         "status",
         "created_on",
         "updated_on",
@@ -117,3 +155,7 @@ class TranscriptionAdmin(admin.ModelAdmin):
 
     search_fields = ["text"]
 
+    def truncated_text(self, obj):
+        return truncatechars(obj.text, 100)
+
+    truncated_text.short_description = "Text"
