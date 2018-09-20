@@ -74,7 +74,7 @@ Resources:
                     - Name: ENV_NAME 
                       Value: !Ref EnvName
                     - Name: CELERY_BROKER_URL
-                      Value: pyamqp://guest@localhost:5672
+                      Value: pyamqp://guest@rabbit:5672
                     - Name: AWS_DEFAULT_REGION
                       Value: !Ref AWS::Region
                     - Name: SENTRY_PUBLIC_DSN
@@ -84,6 +84,7 @@ Resources:
                       ContainerPath: /concordia_images
                   PortMappings:
                     - ContainerPort: 80
+                      HostPort: 80
                   LogConfiguration:
                     LogDriver: awslogs
                     Options:
@@ -103,7 +104,7 @@ Resources:
                     - Name: ENV_NAME 
                       Value: !Ref EnvName
                     - Name: CELERY_BROKER_URL
-                      Value: pyamqp://guest@localhost:5672
+                      Value: pyamqp://guest@rabbit:5672
                     - Name: AWS_DEFAULT_REGION
                       Value: !Ref AWS::Region                  
                     - Name: SENTRY_PUBLIC_DSN
@@ -125,6 +126,8 @@ Resources:
                   Hostname: rabbit
                   PortMappings:
                     - ContainerPort: 5672
+                      HostPort: 5672
+                    
 
     CloudWatchLogsGroup:
         Type: AWS::Logs::LogGroup
