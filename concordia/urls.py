@@ -26,6 +26,7 @@ tx_urlpatterns = (
     [
         re_path(r"^$", views.ConcordiaView.as_view(), name="campaigns"),
         re_path(r"^create/$", views.CampaignView.as_view(), name="create"),
+        re_path(r"^newpage/([^/]+)/([^/]+)/([^/]+)/$", views.AssetNewPage.as_view(), name="newpage"),
         re_path(
             r"^pageinuse/$", views.ConcordiaPageInUse.as_view(), name="page in use"
         ),

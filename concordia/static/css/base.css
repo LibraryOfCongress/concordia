@@ -1649,6 +1649,10 @@ div.nav-secondary {
     color: var(--text-color-offwhite);
 }
 
+.alert.alert-2line {
+    height: 100px;
+}
+
 .alert.alert-danger {
     background-color: var(--color-danger);
     border-color: none;

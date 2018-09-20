@@ -43,7 +43,7 @@
                         </div>
                     {% elif transcription.status == 'Submitted' %}
                         <div id="transcription-state-div" class="mx-default w-100" >
-                            <i class="fas fa-list tx-submitted pr-quarter"></i><h5 class="offwhite-text d-inline small" id="transcription-state" name="transcription-state">Submitted for Review</h5>
+                            <i class="fas fa-list tx-submitted pr-quarter"></i><h5 class="offwhite-text d-inline small" id="transcription-state" name="transcription-state">Submitted for Review.</h5>
                         </div>
                     {% elif transcription.status == 'Completed' %}
                         <div id="transcription-state-div" class="mx-default w-100" >
@@ -317,6 +317,25 @@
             var status = sessionStorage.getItem('status');
 
             if( show_message == 'true' ) {
+                if( status == 'save' ) {
+                    $('#show_message').html('<div class="col-12 alert alert-success alert-dismissible alert-contribute py-half fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> Your contribution has been saved.</div>');
+                    setTimeout(function() {
+                        $('.alert-contribute').fadeOut(500);
+                    }, 3000);
+                } else if( status == 'review') {
+                    $('#show_message').html('<div class="col-12 alert alert-success alert-2line alert-dismissible alert-contribute py-half fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> Thank you for finishing that transcription - now try this one. If you would like to go back to the page you just worked on, <a href="/campaigns/{{ asset.campaign.slug}}/asset/{{previous_asset}}/">click here</a>.</div>');
+                    setTimeout(function() {
+                        $('.alert-contribute').fadeOut(500);
+                    }, 10000);
+                } else {
+                    $('#show_message').html('<div class="col-12 alert alert-success alert-2line alert-dismissible alert-contribute py-half fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>Success!</strong> Thank you for reviewing that transcription - now try this one. If you would like to go back to the page you just worked on, <a href="/campaigns/{{ asset.campaign.slug}}/asset/{{previous_asset}}/">click here</a>.</div>');
+                    setTimeout(function() {
+                        $('.alert-contribute').fadeOut(500);
+                    }, 10000);
+                }
+                sessionStorage.setItem('show_message', 'false');
+                sessionStorage.setItem('status', '');
+
             	   {% if messages %}
 	            	   {% for message in messages %}
 	                $('#show_message').html('<div class="col-12 alert alert-{{ message.tags }} alert-dismissible alert-contribute py-half fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>{% if message.tags %}{% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}Error{% else %}Success{% endif %}{% endif %}!</strong> {{ message }}</div>');
