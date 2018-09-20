@@ -1,7 +1,14 @@
 from django.contrib import admin
 
-from .models import (Asset, Campaign, Item, Project, Tag, Transcription,
-                     UserAssetTagCollection)
+from .models import (
+    Asset,
+    Campaign,
+    Item,
+    Project,
+    Tag,
+    Transcription,
+    UserAssetTagCollection,
+)
 
 
 @admin.register(Campaign)
@@ -20,6 +27,7 @@ class CampaignAdmin(admin.ModelAdmin):
         "status",
     )
     list_display_links = ("id", "title", "slug")
+    prepopulated_fields = {"slug": ("title",)}
 
 
 @admin.register(Project)
@@ -28,6 +36,7 @@ class ProjectAdmin(admin.ModelAdmin):
     # todo: add foreignKey link for campaign
     list_display = ("id", "title", "slug", "category", "campaign", "metadata", "status")
     list_display_links = ("id", "title", "slug")
+    prepopulated_fields = {"slug": ("title",)}
 
 
 @admin.register(Item)
@@ -42,6 +51,7 @@ class ItemAdmin(admin.ModelAdmin):
         "is_publish",
     )
     list_display_links = ("title", "slug", "item_id")
+    prepopulated_fields = {"slug": ("title",)}
 
 
 @admin.register(Asset)
@@ -61,6 +71,7 @@ class AssetAdmin(admin.ModelAdmin):
         "status",
     )
     list_display_links = ("id", "title", "slug")
+    prepopulated_fields = {"slug": ("title",)}
 
 
 @admin.register(Tag)
