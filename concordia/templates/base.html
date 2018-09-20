@@ -18,9 +18,13 @@
         {% comment %}
             Adobe's tag manager requires this script to be placed at the top even though it's bad for performance:
         {% endcomment %}
-        <script src="https://assets.adobedtm.com/dac62e20b491e735c6b56e64c39134d8ee93f9cf/satelliteLib-6b47f831c184878d7338d4683ecf773a17973bb9.js"></script>
+        {% if CONCORDIA_ENVIRONMENT == "production" %}
+            <script src="https://assets.adobedtm.com/dac62e20b491e735c6b56e64c39134d8ee93f9cf/satelliteLib-6b47f831c184878d7338d4683ecf773a17973bb9.js"></script>
+        {% else %}
+            <script src="https://assets.adobedtm.com/dac62e20b491e735c6b56e64c39134d8ee93f9cf/satelliteLib-6b47f831c184878d7338d4683ecf773a17973bb9-staging.js"></script>
+        {% endif %}
     </head>
-    <body class="view-{{ VIEW_NAME_FOR_CSS }} section-{{ PATH_LEVEL_1|default:'homepage' }}">
+    <body class="view-{{ VIEW_NAME_FOR_CSS }} section-{{ PATH_LEVEL_1|default:'homepage' }} environment-{{ CONCORDIA_ENVIRONMENT }}">
         <header>
             <nav class="navbar navbar-expand-lg flex-row navbar-offwhite bg-offwhite justify-content-between align-items-end py-half px-md-default pl-2">
                 <div class="d-flex navbar-brand">
