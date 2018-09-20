@@ -28,6 +28,7 @@ class CampaignAdmin(admin.ModelAdmin):
     )
     list_display_links = ("id", "title", "slug")
     prepopulated_fields = {"slug": ("title",)}
+    search_fields = ["title", "description"]
 
 
 @admin.register(Project)
@@ -37,6 +38,7 @@ class ProjectAdmin(admin.ModelAdmin):
     list_display = ("id", "title", "slug", "category", "campaign", "metadata", "status")
     list_display_links = ("id", "title", "slug")
     prepopulated_fields = {"slug": ("title",)}
+    search_fields = ["title", "campaign__title"]
 
 
 @admin.register(Item)
@@ -52,6 +54,7 @@ class ItemAdmin(admin.ModelAdmin):
     )
     list_display_links = ("title", "slug", "item_id")
     prepopulated_fields = {"slug": ("title",)}
+    search_fields = ["title", "campaign__title", "project__title"]
 
 
 @admin.register(Asset)
@@ -72,6 +75,7 @@ class AssetAdmin(admin.ModelAdmin):
     )
     list_display_links = ("id", "title", "slug")
     prepopulated_fields = {"slug": ("title",)}
+    search_fields = ["title", "media_url", "campaign__title", "project__title"]
 
 
 @admin.register(Tag)
@@ -79,20 +83,19 @@ class TagAdmin(admin.ModelAdmin):
     list_display = ("id", "name", "value")
     list_display_links = ("id", "name", "value")
 
+    search_fields = ["name", "value"]
+
 
 @admin.register(UserAssetTagCollection)
 class UserAssetTagCollectionAdmin(admin.ModelAdmin):
-    # todo: add foreignKey link for asset & user_id
-    pass
     list_display = ("id", "asset", "user_id", "created_on", "updated_on")
     list_display_links = ("id", "asset")
+    search_fields = ["asset__title", "asset__campaign__title", "asset__project__title"]
+    # FIXME: after fixing the user_id relationship add filtering on user attributes
 
 
 @admin.register(Transcription)
 class TranscriptionAdmin(admin.ModelAdmin):
-    # todo: replace text with truncated value
-    # todo: add foreignKey link for asset, parent, & user_id
-    pass
     list_display = (
         "id",
         "asset",
@@ -104,3 +107,5 @@ class TranscriptionAdmin(admin.ModelAdmin):
         "updated_on",
     )
     list_display_links = ("id", "asset")
+    search_fields = ["text"]
+
