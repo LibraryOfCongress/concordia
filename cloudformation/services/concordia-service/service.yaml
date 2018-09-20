@@ -60,7 +60,6 @@ Resources:
             Family: !Sub concordia-${EnvName}
             Volumes:
                 - Name: images_volume
-            TaskRoleArn: !Ref ServiceRole
             ContainerDefinitions:
                 - Name: app
                   Essential: true
