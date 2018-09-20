@@ -1,6 +1,5 @@
 # TODO: use correct copyright header
 import os
-import sys
 
 from django.contrib import messages
 from dotenv import load_dotenv
@@ -31,7 +30,6 @@ ALLOWED_HOSTS = ["*"]
 DEBUG = False
 CSRF_COOKIE_SECURE = False
 
-sys.path.append(PROJECT_DIR)
 AUTH_PASSWORD_VALIDATORS = []
 EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
 # EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'emails')
