@@ -140,10 +140,7 @@ def get_save_item_assets(campaign_name, project, item_id, item_asset_urls):
         settings.IMPORTER["IMAGES_FOLDER"], campaign_name, project, item_id
     )
 
-    try:
-        os.makedirs(item_local_path)
-    except Exception as e:
-        pass
+    os.makedirs(item_local_path, exist_ok=True)
 
     for idx, ciau in enumerate(item_asset_urls):
         asset_local_path = os.path.join(item_local_path, "{0}.jpg".format(str(idx)))
