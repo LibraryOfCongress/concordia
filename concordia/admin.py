@@ -2,9 +2,16 @@ from urllib.parse import urljoin
 
 from django.conf import settings
 from django.contrib import admin
+from django.contrib.auth.decorators import permission_required
+from django.shortcuts import get_object_or_404, render
 from django.template.defaultfilters import truncatechars
+from django.urls import path
+from django.utils.decorators import method_decorator
 from django.utils.html import format_html
 
+from importer.tasks import import_items_into_project_from_url
+
+from .forms import AdminItemImportForm
 from .models import (
     Asset,
     Campaign,
@@ -69,10 +76,76 @@ class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         "truncated_metadata",
         "status",
     )
+
     list_display_links = ("id", "title", "slug")
     prepopulated_fields = {"slug": ("title",)}
     search_fields = ["title", "campaign__title"]
     list_filter = ("status", "category", "campaign")
+
+    def get_urls(self):
+        urls = super().get_urls()
+
+        app_label = self.model._meta.app_label
+        model_name = self.model._meta.model_name
+
+        custom_urls = [
+            path(
+                "<path:object_id>/item-import/",
+                self.admin_site.admin_view(self.item_import_view),
+                name=f"{app_label}_{model_name}_item-import",
+            )
+        ]
+
+        return custom_urls + urls
+
+    @method_decorator(permission_required("concordia.add_campaign"))
+    @method_decorator(permission_required("concordia.change_campaign"))
+    @method_decorator(permission_required("concordia.add_project"))
+    @method_decorator(permission_required("concordia.change_project"))
+    @method_decorator(permission_required("concordia.add_item"))
+    @method_decorator(permission_required("concordia.change_item"))
+    def item_import_view(self, request, object_id):
+
+        project = get_object_or_404(Project, pk=object_id)
+
+        if request.method == "POST":
+            form = AdminItemImportForm(request.POST)
+
+            if form.is_valid():
+                import_url = form.cleaned_data["import_url"]
+
+                task_id = import_items_into_project_from_url(project, import_url)
+        else:
+            form = AdminItemImportForm()
+            task_id = None
+
+        media = self.media
+
+        context = {
+            **self.admin_site.each_context(request),
+            "app_label": self.model._meta.app_label,
+            "add": False,
+            "change": False,
+            "save_as": False,
+            "save_on_top": False,
+            "opts": self.model._meta,
+            "title": f"Import Items into “{project.title}”",
+            "object_id": object_id,
+            "original": project,
+            "media": media,
+            "preserved_filters": self.get_preserved_filters(request),
+            "is_popup": False,
+            "has_view_permission": True,
+            "has_add_permission": True,
+            "has_change_permission": True,
+            "has_delete_permission": False,
+            "has_editable_inline_admin_formsets": False,
+            "project": project,
+            "form": form,
+            "task_id": task_id,
+        }
+
+        return render(request, "admin/concordia/project/item_import.html", context)
 
 
 @admin.register(Item)
