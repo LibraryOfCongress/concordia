@@ -10,11 +10,7 @@ from machina.app import board
 
 from exporter import views as exporter_views
 from faq.views import FAQView
-from importer.views import (
-    CreateCampaignView,
-    check_and_save_campaign_assets,
-    get_task_status,
-)
+from importer.views import check_and_save_campaign_assets, get_task_status
 
 from . import trans_urls, views, views_ws
 
@@ -228,9 +224,6 @@ urlpatterns += [
 ]
 
 urlpatterns += [
-    re_path(
-        r"^create_campaign/$", CreateCampaignView.as_view(), name="create_campaign"
-    ),
     re_path(
         r"^get_task_status/(?P<task_id>[a-zA-Z0-9-]+)$",
         get_task_status,

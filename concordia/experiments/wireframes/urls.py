@@ -17,7 +17,7 @@ urlpatterns = [
 urlpatterns += static(
     "/images/",
     document_root=os.path.join(
-        settings.PROJECT_DIR, "experiments/wireframes/templates/wireframes/images"
+        settings.CONCORDIA_APP_DIR, "experiments/wireframes/templates/wireframes/images"
     ),
     show_indexes=True,
 )

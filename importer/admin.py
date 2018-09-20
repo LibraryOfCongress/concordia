@@ -9,13 +9,13 @@ class CampaignTaskDetailsAdmin(admin.ModelAdmin):
     # todo: add foreignKey link for asset, parent, & user_id
     pass
     list_display = (
-        "campaign_name",
-        "campaign_slug",
+        "project",
         "campaign_task_id",
         "campaign_asset_count",
         "campaign_item_count",
     )
-    # list_display_links = ("campaign_name")
+    list_display_links = ("campaign_task_id",)
+    list_filters = ["project"]
 
 
 @admin.register(CampaignItemAssetCount)
