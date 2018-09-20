@@ -18,6 +18,8 @@ load_dotenv(dotenv_path)
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = "django-secret-key"
 
+CONCORDIA_ENVIRONMENT = os.environ.get("CONCORDIA_ENVIRONMENT", "development")
+
 # Optional SMTP authentication information for EMAIL_HOST.
 EMAIL_HOST_USER = ""
 EMAIL_HOST_PASSWORD = ""
@@ -61,8 +63,9 @@ DATABASES = {
         "NAME": "concordia",
         "USER": "concordia",
         "PASSWORD": "$(POSTGRESQL_PW)",
-        "HOST": "db",
+        "HOST": "$(POSTGRESQL_HOST)",
         "PORT": "5432",
+        "CONN_MAX_AGE": 15 * 60,  # Keep database connections open for 15 minutes
     }
 }
 
@@ -71,9 +74,12 @@ INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
+    "django.contrib.humanize",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "raven.contrib.django.raven_compat",
+    "maintenance_mode",
     "rest_framework",
     "concordia",
     "exporter",
@@ -105,6 +111,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     # Machina
     "machina.apps.forum_permission.middleware.ForumPermissionMiddleware",
+    "maintenance_mode.middleware.MaintenanceModeMiddleware",
 ]
 
 TEMPLATES = [
@@ -119,6 +126,9 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "django.template.context_processors.media",
+                # Concordia
+                "concordia.context_processors.system_configuration",
+                "concordia.context_processors.site_navigation",
                 # Machina
                 "machina.core.context_processors.metadata",
             ],
@@ -200,10 +210,15 @@ LOGGING = {
             "formatter": "long",
             "maxBytes": 1024 * 1024 * 100,  # 100 mb
         },
+        "sentry": {
+            "level": "WARNING",
+            "class": "raven.contrib.django.raven_compat.handlers.SentryHandler",
+        },
     },
     "loggers": {
         "django": {"handlers": ["file", "stream"], "level": "DEBUG", "propagate": True},
         "celery": {"handlers": ["celery", "stream"], "level": "DEBUG"},
+        "sentry.errors": {"level": "INFO", "handlers": ["stream"], "propagate": False},
     },
 }
 
@@ -259,11 +274,25 @@ AWS_S3 = {
     "AWS_ACCESS_KEY_ID": os.getenv("AWS_ACCESS_KEY_ID"),
     "AWS_SECRET_ACCESS_KEY": os.getenv("AWS_SECRET_ACCESS_KEY"),
     "S3_COLLECTION_BUCKET": "chc-collections",
+    "REGION": os.getenv("AWS_REGION"),
 }
 
 PASSWORD_RESET_TIMEOUT_DAYS = 1
+ACCOUNT_ACTIVATION_DAYS = 1
 REGISTRATION_OPEN = True  # set to false to temporarily disable registrations
+
+MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
 
 MESSAGE_TAGS = {
     messages.ERROR: 'danger',
 }
+
+SENTRY_DSN = os.environ.get("SENTRY_DSN", "")
+SENTRY_PUBLIC_DSN = os.environ.get("SENTRY_PUBLIC_DSN", "")
+
+if SENTRY_DSN:
+    RAVEN_CONFIG = {"dsn": SENTRY_DSN, "environment": CONCORDIA_ENVIRONMENT}
+
+# When the MAINTENANCE_MODE setting is true, this template will be used to
+# generate a 503 response:
+MAINTENANCE_MODE_TEMPLATE = "maintenance-mode.html"

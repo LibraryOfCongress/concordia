@@ -65,7 +65,7 @@
                             {% if user.is_authenticated %}
                                 <input type="text" id="tag-input" class="rounded" name="tags" data-role="tagsinput" value="{%for tag in tags %}{{tag}},{% endfor %}" aria-label="Tag input">
                             {% else %}
-                                <input type="text" id="tag-input" class="rounded" name="tags" data-role="tagsinput" value="{%for tag in tags %}{{tag.value}},{% endfor %}" aria-label="Tag input" disabled="true">
+                                <input type="text" id="tag-input" class="rounded" name="tags" data-role="tagsinput" value="{%for tag in tags %}{{tag}},{% endfor %}" aria-label="Tag input" disabled="true">
                             {% endif %}
                         </div>
                         {% if not discussion_hide %}
@@ -166,7 +166,7 @@
 
 {% block body_scripts %}
     <script src="{% static "js/contribute.js" %}"></script>
-    <script src="{% static "js/jquery.cookie.js" %}"></script>
+    <script src="{% static "vendor/jquery.cookie.js" %}"></script>
     <script src="{% static "vendor/openseadragon/openseadragon.min.js" %}"></script>
     <script type="text/javascript">
         {% if asset.campaign.s3_storage %}
@@ -335,6 +335,15 @@
                 }
                 sessionStorage.setItem('show_message', 'false');
                 sessionStorage.setItem('status', '');
+
+            	   {% if messages %}
+	            	   {% for message in messages %}
+	                $('#show_message').html('<div class="col-12 alert alert-{{ message.tags }} alert-dismissible alert-contribute py-half fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>{% if message.tags %}{% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}Error{% else %}Success{% endif %}{% endif %}!</strong> {{ message }}</div>');
+	                setTimeout(function() {
+	                    $('.alert-contribute').fadeOut(500);
+	                }, 3000);
+	                {% endfor %}
+                {% endif %}
             }
 
             show_buttons();
@@ -357,22 +366,28 @@
 
             {% if user.is_anonymous %}
                 $("#save-button").click(function(e){
+                	    {% if not is_anonymous_user_captcha_validated %}
                     if($("#captcha_container").hasClass('d-none')) {
                         e.preventDefault();
                         $(this).attr("disabled", "disabled");
                         $("#captcha_container").removeClass('d-none');
                         $("#captcha_container").show();
+                        $("#review-button").prop("disabled",true);
                     }
+                    {% endif %}
                 });
                 $("#review-button").click(function(e){
+                	   {% if not is_anonymous_user_captcha_validated %}
                     if($("#captcha_container").hasClass('d-none')) {
                         e.preventDefault();
                        $(this).attr("disabled", "disabled");
                        $("#captcha_container").removeClass('d-none');
                        $("#captcha_container").show();
+                       $("#save-button").prop("disabled",true);
                        // need to pass in button value to captcha enter button 
                        $("#input_group_for_captcha > .input-group-append > button").attr("value", $("#review-button").attr("value"));
                    }
+                   {% endif %}
                });
 
                 $(".js-captcha-refresh").click(function(e){

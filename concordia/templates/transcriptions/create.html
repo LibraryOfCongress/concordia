@@ -1,128 +1,130 @@
 {% extends "transcriptions/base.html" %}
 {% load staticfiles %}
-{% block title %}Citizen Historian Create a Campaign{% endblock title %}
+
+{% comment %} FIXME: this entire view needs to be refactored to follow standard web practice — see
+https://github.com/LibraryOfCongress/concordia/issues/182 {% endcomment %}
+{% block title %}Make Your Mark Create a Campaign{% endblock title %}
+
 {% block head_content %}
 <style>
-/** {
-  box-sizing: border-box;
-}*/
+    .autocomplete {
+        position: relative;
+        display: inline-block;
+    }
 
-.autocomplete {
-  /*the container must be positioned relative:*/
-  position: relative;
-  display: inline-block;
-}
+    input {
+        border: 1px solid transparent;
+        background-color: #f1f1f1;
+        padding: 10px;
+        font-size: 16px;
+    }
 
-input {
-  border: 1px solid transparent;
-  background-color: #f1f1f1;
-  padding: 10px;
-  font-size: 16px;
-}
+    input[type='text'] {
+        background-color: #f1f1f1;
+        width: 100%;
+    }
 
-input[type=text] {
-  background-color: #f1f1f1;
-  width: 100%;
-}
+    input[type='submit'] {
+        background-color: DodgerBlue;
+        color: #fff;
+        cursor: pointer;
+    }
 
-input[type=submit] {
-  background-color: DodgerBlue;
-  color: #fff;
-  cursor: pointer;
-}
+    .autocomplete-items {
+        position: absolute;
+        border: 1px solid #d4d4d4;
+        border-bottom: none;
+        border-top: none;
+        z-index: 99;
+        /*position the autocomplete items to be the same width as the container:*/
+        top: 100%;
+        left: 0;
+        right: 0;
+    }
 
-.autocomplete-items {
-  position: absolute;
-  border: 1px solid #d4d4d4;
-  border-bottom: none;
-  border-top: none;
-  z-index: 99;
-  /*position the autocomplete items to be the same width as the container:*/
-  top: 100%;
-  left: 0;
-  right: 0;
-}
+    .autocomplete-items div {
+        padding: 10px;
+        cursor: pointer;
+        background-color: #fff;
+        border-bottom: 1px solid #d4d4d4;
+    }
 
-.autocomplete-items div {
-  padding: 10px;
-  cursor: pointer;
-  background-color: #fff;
-  border-bottom: 1px solid #d4d4d4;
-}
+    .autocomplete-items div:hover {
+        /*when hovering an item:*/
+        background-color: #e9e9e9;
+    }
 
-.autocomplete-items div:hover {
-  /*when hovering an item:*/
-  background-color: #e9e9e9;
-}
-
-.autocomplete-active {
-  /*when navigating through the items using the arrow keys:*/
-  background-color: DodgerBlue !important;
-  color: #ffffff;
-}
+    .autocomplete-active {
+        /*when navigating through the items using the arrow keys:*/
+        background-color: DodgerBlue !important;
+        color: #ffffff;
+    }
 </style>
 <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 {% endblock head_content %}
 
 {% block main_content %}
 <div class="container-fluid py-default" id='container'>
-  <div class="row">
-    <div class="col-md-10 mx-auto bg-offwhite rounded">
-      <h3 class="mt-half ml-half">Import a New Campaign</h3>
-      <div class="text-center d-none loading">
-       <div class="loading-pulse mx-auto"></div>
-              <h6 class="form-text offwhite-text">Creating campaign...<span id="progress"></span>
-              </h6>
-      </div>
-        <div class="alert alert-danger alert-dismissible fade" id="close_error" role="alert">
-            <strong id="error_msg"></strong>
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-            </button>
+    <div class="row">
+        <div class="col-md-10 mx-auto bg-offwhite rounded">
+            <h3 class="mt-half ml-half">Import a New Campaign</h3>
+            <div class="text-center d-none loading">
+                <div class="loading-pulse mx-auto"></div>
+                <h6 class="form-text offwhite-text">Creating campaign...<span id="progress"></span>
+                </h6>
+            </div>
+            <div class="alert alert-danger alert-dismissible fade" id="close_error" role="alert">
+                <strong id="error_msg"></strong>
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            <!--<form class="mx-default my-default">-->
+            {% if error %}
+            <div class="alert alert-danger alert-dismissible fade" id="close" role="alert">
+                <strong>Sorry!</strong> We're having some trouble accessing that URL. Is it accessible? You want to
+                double check if you entered it correctly?
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            {% endif %}
+
+            {% csrf_token %}
+            <div class="form-group col-lg-6 col-md-8 mx-auto">
+                <label for="name">Name</label>
+                <input type="text" class="form-control" name="name" id="name" placeholder="Enter name">
+            </div>
+
+            <div class="form-group col-lg-6 col-md-8 mx-auto">
+                <label for="project-name">Project Name</label>
+                <input type="text" class="form-control" name="project-name" id="project-name" placeholder="Enter Project name">
+            </div>
+
+            <div class="form-group col-lg-6 col-md-8 mx-auto">
+                <label for="url">URL</label>
+                <input type="url" class="form-control" id="url" name="url">
+            </div>
+
+            <div class="d-flex col-lg-6 col-md-8 mx-auto justify-content-between pt-half">
+                <button class="btn btn-primary mr-auto" id="create_btn">Create</button>
+                <a href="/campaigns" role="button" class="btn btn-dark">Cancel</a>
+            </div>
+            <!--</form>-->
         </div>
-
-      <!--<form class="mx-default my-default">-->
-      {% if error %}
-        <div class="alert alert-danger alert-dismissible fade" id="close" role="alert">
-            <strong>Sorry!</strong> We're having some trouble accessing that URL. Is it accessible? You want to double check if you entered it correctly?
-            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-            </button>
-        </div>
-      {% endif %}
-
-      {% csrf_token %}
-      <div class="form-group col-lg-6 col-md-8 mx-auto">
-        <label for="name">Name</label>
-        <input type="text" class="form-control" name="name" id="name" placeholder="Enter name">
-      </div>
-
-      <div class="form-group col-lg-6 col-md-8 mx-auto">
-        <label for="project-name">Project Name</label>
-        <input type="text" class="form-control" name="project-name" id="project-name" placeholder="Enter Project name">
-      </div>
-
-      <div class="form-group col-lg-6 col-md-8 mx-auto">
-                  <label for="url">URL</label>
-        <input type="url" class="form-control" id="url" name="url">
-      </div>
-
-      <div class="d-flex col-lg-6 col-md-8 mx-auto justify-content-between pt-half">
-        <button class="btn btn-primary mr-auto" id="create_btn">Create</button>
-        <a href="/campaigns" role="button" class="btn btn-dark">Cancel</a>
-    </div>
-      <!--</form>-->
-    </div>
         <input type="hidden" id="task_id">
         <input type="hidden" id="campaign_slug">
         <input type="hidden" id="item_id">
-  </div>
+    </div>
 </div>
 {% endblock main_content %}
 
 {% block body_scripts %}
-<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU="
+    crossorigin="anonymous"></script>
 <script>
+
 $("#close_error").hide();
 function handle_form_submission()
 {
@@ -137,118 +139,122 @@ function write_save_campaign_assets(task_id){
         type: 'GET',
         success: function(data, textStatus, jqXHR) {
             console.log("response: ", data);
-            var slug = $("#campaign_slug").val().toLowerCase().replace(/ +/g,'-');
-            var projslug = $("#project-name").val().toLowerCase().replace(/ +/g,'-');
+            var slug = slugify($("#campaign_slug").val());
+            var projslug = slugify($("#project-name").val());
             if($("#item_id").val()){
                 var rurl = "/campaigns/"+slug+"/"+projslug+"/";
             }
             else{
                 var rurl = "/campaigns/"+slug+"/";
             }
-
-            window.location.href = rurl;
-        }
-    }).fail(function(jqXHR, textStatus, errorThrown) {
-        if(jqXHR.status == 0 || jqXHR == 302) {
-            console.log('Your session has ended due to inactivity after 10 minutes.\nPlease refresh this page, or close this window and log back in to system.');
-        } else {
-            console.log('Unknown error returned while saving' + (typeof errorThrown == 'string' && errorThrown.trim().length > 0 ? ':\n' + errorThrown : ''));
-            $("#error_msg").html("<strong>Sorry!</strong> An error occurred creating the campaign.");
-            $(".loading").addClass("d-none");
-            $("#close_error").show();
-        }
-    });
-
-}
-
-function get_task_status(task_id){
-    $.ajax({
-        url: "/get_task_status/"+task_id,
-        type: 'GET',
-        success: function(data, textStatus, jqXHR) {
-            console.log("gts: ", gts);
-            var gts = setTimeout(get_task_status($("#task_id").val()), 60000);
-            if(data['progress']){
-                $("#progress").html(data['progress']);
+                window.location.href = rurl;
             }
-
-            if(data['state'] == 'SUCCESS'){
-                write_save_campaign_assets(task_id);
-                $("#progress").html("");
-                clearInterval(gts);
-            }
-
-        }
-    }).fail(function(jqXHR, textStatus, errorThrown) {
-        if(jqXHR.status == 0 || jqXHR == 302) {
-            console.log('Your session has ended due to inactivity after 10 minutes.\nPlease refresh this page, or close this window and log back in to system.');
-        } else {
-            console.log('Unknown error returned while saving' + (typeof errorThrown == 'string' && errorThrown.trim().length > 0 ? ':\n' + errorThrown : ''));
-        }
-    });
-}
-
-$("#create_btn").click(function(){
-    $("#close_error").hide();
-    $("#task_id, #campaign_slug, #item_id").val("");
-    var name = $("#name").val();
-    var project_name = $("#project-name").val();
-    var url = $("#url").val();
-
-    if(name && project_name && url){
-        $.ajax({
-            url: '/create_campaign/',
-            type: 'post',
-            data: {"name": name, "url": url, "project": project_name,'csrfmiddlewaretoken': $("input[name=csrfmiddlewaretoken]").val()},
-            success: function(data, textStatus, jqXHR) {
-                $(".loading").removeClass("d-none");
-                $("#task_id").val(data['task_id']);
-                $("#campaign_slug").val(data['name']);
-                $("#item_id").val(data['item_id']);
-                var gts = setTimeout(get_task_status(data['task_id']), 60000);
-            }
-        }).fail(function(data, jqXHR, textStatus, errorThrown) {
-            $(".loading").removeClass("d-none");
-            if(jqXHR.status == 0 || jqXHR == 302) {
-                $("#error_msg").html("<strong>Sorry!</strong> An error occurred while creating campaign.");
-            } else {
-                if(data.responseJSON.message){
-                     $("#error_msg").html(data.responseJSON.message);
-            }
-            else{
-            $("#error_msg").html("<strong>Sorry!</strong> An error occurred while creating campaign.");
-                }
-            }
-            $("#close_error").show();
+        }).fail(function (jqXHR, textStatus, errorThrown) {
+            alert('Error while saving the campaign assets: ' + textStatus + '(' + errorThrown.toString() + ')');
         });
     }
-    else{
-        $("#error_msg").html("Please fill out required fields below.");
-        $("#close_error").show();
+
+    function pollForTaskStatus() {
+        /*
+                This will poll the /get_task_status/ endpoint and report progress
+            */
+        var taskId = $('#task_id').val();
+
+        $.ajax({
+            url: '/get_task_status/' + taskId,
+            type: 'GET',
+            success: function (data, textStatus, jqXHR) {
+                console.log('get_task_status returned', data);
+
+                if (data['progress']) {
+                    $('#progress').html(data['progress']);
+                }
+
+                var taskState = data['state'];
+
+                if (taskState == 'PENDING') {
+                    console.log('Task is still pending');
+                    setTimeout(pollForTaskStatus, 15000);
+                } else if (taskState == 'SUCCESS') {
+                    write_save_campaign_assets(taskId);
+                    $('#progress').html('');
+                } else if (data['state'] == 'FAILURE') {
+                    alert('Unable to create campaign:' + textStatus);
+                } else {
+                    console.error('Unknown state:', data['state']);
+                    setTimeout(pollForTaskStatus, 60000);
+                }
+            }
+        }).fail(function (jqXHR, textStatus, errorThrown) {
+            alert('Error while checking the task status: ' + textStatus + '(' + errorThrown.toString() + ')');
+        });
     }
-})
 
-function get_item_id_from_item_url(item_url){
-    var item_id = '';
-    var item_splits = item_url.split("/")
-    if(item_url.endsWith("/")){
-        item_id = item_splits[item_splits.length - 2]
+    $('#create_btn').click(function () {
+        $('#close_error').hide();
+        $('#task_id, #campaign_slug, #item_id').val('');
+        var name = $('#name').val();
+        var project_name = $('#project-name').val();
+        var url = $('#url').val();
+
+        if (name && project_name && url) {
+            $.ajax({
+                url: '/create_campaign/',
+                type: 'post',
+                data: {
+                    name: name,
+                    url: url,
+                    project: project_name,
+                    csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val()
+                },
+                success: function (data, textStatus, jqXHR) {
+                    $('.loading').removeClass('d-none');
+                    $('#task_id').val(data['task_id']);
+                    $('#campaign_slug').val(data['name']);
+                    $('#item_id').val(data['item_id']);
+
+                    pollForTaskStatus();
+                }
+            }).fail(function (data, jqXHR, textStatus, errorThrown) {
+                alert('Error while saving the task: ' + textStatus + '(' + errorThrown.toString() + ')');
+            });
+        } else {
+            $('#error_msg').html('Please fill out required fields below.');
+            $('#close_error').show();
+        }
+    });
+
+    function get_item_id_from_item_url(item_url) {
+        var item_id = '';
+        var item_splits = item_url.split('/');
+        if (item_url.endsWith('/')) {
+            item_id = item_splits[item_splits.length - 2];
+        } else {
+            item_id = item_splits[item_splits.length - 1];
+        }
+        return item_id;
     }
-    else{
-        item_id = item_splits[item_splits.length - 1]
-    }
-    return item_id;
-}
 
-get_task_status($("#task_id").val());
-
-
-$(function(){
-    $( "#name" ).autocomplete({
-        source: '/filter/campaigns',
-        minLength: 1,
+    $(function () {
+        $('#name').autocomplete({
+            source: '/filter/campaigns',
+            minLength: 1
+        });
     });
 });
+
+function slugify(string) {
+  return string
+    .toString()
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^\w\-]+/g, "")
+    .replace(/\-\-+/g, "-")
+    .replace(/^-+/, "")
+    .replace(/-+$/, "");
+}
+
 
 </script>
 {% endblock body_scripts %}

@@ -1,8 +1,5 @@
-import os
-import shutil
 from logging import getLogger
 
-from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import JSONField
 from django.db import models
@@ -48,8 +45,8 @@ class MediaType:
 
 
 class Campaign(MetricsModelMixin("campaign"), models.Model):
-    title = models.CharField(max_length=50)
-    slug = models.SlugField(max_length=50, unique=True)
+    title = models.CharField(max_length=80)
+    slug = models.SlugField(max_length=80, unique=True)
     description = models.TextField(blank=True)
     start_date = models.DateTimeField(null=True, blank=True)
     end_date = models.DateTimeField(null=True, blank=True)
@@ -64,45 +61,10 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
     def __str__(self):
         return self.title
 
-    def copy_images_to_campaign(self, url, campaign_path):
-        result = None
-        try:
-            result = download_async_campaign.delay(url)
-            result.ready()
-            result.get()
-
-        except Exception as e:
-            logger.error("Unable to copy images to campaign: %s", e, exc_info=True)
-            pass
-
-        if result and not result.state == "PENDING":
-            if os.path.isdir(campaign_path):
-                shutil.rmtree(campaign_path)
-            shutil.copytree(settings.IMPORTER["IMAGES_FOLDER"], campaign_path)
-            for the_dir in os.listdir(settings.IMPORTER["IMAGES_FOLDER"]):
-                shutil.rmtree(os.path.join(settings.IMPORTER["IMAGES_FOLDER"], the_dir))
-
-    def create_assets_from_filesystem(self, campaign_path):
-        for root, dirs, files in os.walk(campaign_path):
-            for filename in files:
-                file_path = os.path.join(root, filename)
-                title = file_path.replace(campaign_path + "/", "").split("/")[0]
-                media_url = file_path.replace(settings.MEDIA_ROOT, "")
-                sequence = int(os.path.splitext(filename)[0])
-                Asset.objects.create(
-                    title=title,
-                    slug="{0}{1}".format(title, sequence),
-                    description="{0} description".format(title),
-                    media_url=media_url,
-                    media_type="IMG",
-                    sequence=sequence,
-                    campaign=self,
-                )
-
 
 class Project(models.Model):
-    title = models.CharField(max_length=50)
-    slug = models.SlugField(max_length=50)
+    title = models.CharField(max_length=80)
+    slug = models.SlugField(max_length=80)
     category = models.CharField(max_length=12, blank=True)
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
     metadata = JSONField(default=metadata_default)
@@ -187,7 +149,10 @@ class Tag(models.Model):
 
 class UserAssetTagCollection(models.Model):
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
+
+    # FIXME: why is this not a foreignkey on User?
     user_id = models.PositiveIntegerField(db_index=True)
+
     tags = models.ManyToManyField(Tag, blank=True)
     created_on = models.DateTimeField(auto_now_add=True)
     updated_on = models.DateTimeField(auto_now=True)
@@ -216,19 +181,6 @@ class PageInUse(models.Model):
     user = models.ForeignKey(User, models.DO_NOTHING)
     created_on = models.DateTimeField(editable=False)
     updated_on = models.DateTimeField()
-
-    def save(self, *args, **kwargs):
-        """
-        On save, update timestamps. Allows assignment of created_on and updated_on timestamp used in testing
-        :param args:
-        :param kwargs:
-        :return:
-        """
-        # if not self.id and not self.created_on:
-        #     self.created_on = timezone.now()
-        #
-        # self.updated_on = timezone.now()
-        # return super(PageInUse, self).save(*args, **kwargs)
 
     def save(self, force_insert=False, *args, **kwargs):
         updated = False

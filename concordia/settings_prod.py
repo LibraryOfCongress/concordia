@@ -10,27 +10,42 @@ LOGGING["handlers"]["celery"]["filename"] = "./logs/concordia-celery.log"
 LOGGING["loggers"]["django"]["level"] = "INFO"
 LOGGING["loggers"]["celery"]["level"] = "INFO"
 
-INSTALLED_APPS += ['django_elasticsearch_dsl']
-
-DJANGO_SECRET_KEY = "changeme"
+DJANGO_SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "changeme")
 
 # TODO: For final deployment to production,
 # when we are running https, uncomment this next line
 # CSRF_COOKIE_SECURE = True
 
-IMPORTER = {
-    "BASE_URL": "",
-    # /concordia_images is a docker volume shared by importer and concordia
-    "IMAGES_FOLDER": "/concordia_images/",
-    "ITEM_COUNT": "",
-    "S3_BUCKET_NAME": "",
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "concordia",
+        "USER": "concordia",
+        "PASSWORD": os.getenv("POSTGRESQL_PW"),
+        "HOST": os.getenv("POSTGRESQL_HOST", "db"),
+        "PORT": "5432",
+    }
 }
 
-ELASTICSEARCH_DSL_SIGNAL_PROCESSOR = 'django_elasticsearch_dsl.signals.RealTimeSignalProcessor'
+CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "pyamqp://guest@rabbit:5672")
+CELERY_RESULT_BACKEND = "rpc://"
+
+
+IMPORTER = {
+    # /concordia_images is a docker volume shared by importer and concordia
+    "IMAGES_FOLDER": "/concordia_images/",
+    "S3_BUCKET_NAME": os.getenv("S3_BUCKET_NAME"),
+}
+
+ELASTICSEARCH_DSL_AUTOSYNC = False
+
+INSTALLED_APPS += ["django_elasticsearch_dsl"]
+
+ELASTICSEARCH_DSL_SIGNAL_PROCESSOR = (
+    "django_elasticsearch_dsl.signals.RealTimeSignalProcessor"
+)
 ELASTICSEARCH_DSL = {
-    'default': {
-        'hosts': 'elk:9200'
-    },
+    "default": {"hosts": os.getenv("ELASTICSEARCH_ENDPOINT", "elk:9200")}
 }
 
 EMAIL_USE_TLS = True
@@ -39,7 +54,7 @@ EMAIL_HOST = os.environ.get("EMAIL_HOST", "localhost")
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 EMAIL_PORT = 587
-DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "")
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "noreply@loc.gov")
 DEFAULT_TO_EMAIL = DEFAULT_FROM_EMAIL
 
 # HMAC activation flow provide the two-step registration process,

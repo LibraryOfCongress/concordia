@@ -1,32 +1,35 @@
+import boto3
 from rest_framework import serializers
 from django.contrib.auth.models import User
+from django.conf import settings
+
 
 from . import models
+
+S3_BUCKET_NAME = settings.AWS_S3.get("S3_COLLECTION_BUCKET", "")
+S3_CLIENT = boto3.client('s3', settings.AWS_S3.get("REGION", ""))
 
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ("id",
-                  "username",
-                  "password",
-                  "first_name",
-                  "last_name",
-                  "email",
-                  "is_staff",
-                  "is_active",
-                  "date_joined"
-                  )
+        fields = (
+            "id",
+            "username",
+            "password",
+            "first_name",
+            "last_name",
+            "email",
+            "is_staff",
+            "is_active",
+            "date_joined",
+        )
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = models.UserProfile
-        fields = ("id",
-                  "user",
-                  "myfile",
-                  )
+        fields = ("id", "user", "myfile")
 
 
 class CampaignListSerializer(serializers.ModelSerializer):
@@ -48,6 +51,15 @@ class CampaignListSerializer(serializers.ModelSerializer):
 
 
 class AssetSetSerializer(serializers.HyperlinkedModelSerializer):
+
+    media_url = serializers.SerializerMethodField()
+
+    def get_media_url(self, obj):
+        if S3_BUCKET_NAME and obj:
+            url = '{}/{}/{}'.format(S3_CLIENT.meta.endpoint_url, S3_BUCKET_NAME, obj.media_url)
+            return url
+        else:
+            return obj.media_url
     class Meta:
         model = models.Asset
         fields = (
@@ -64,17 +76,9 @@ class AssetSetSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class ProjectSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = models.Project
-        fields = (
-            "id",
-            "title",
-            "slug",
-            "metadata",
-            "status",
-            "is_publish",
-        )
+        fields = ("id", "title", "slug", "metadata", "status", "is_publish")
 
 
 class CampaignDetailSerializer(serializers.HyperlinkedModelSerializer):
@@ -104,19 +108,20 @@ class ItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Item
-        fields = (
-            "title",
-            "slug",
-            "thumbnail_url",
-            "assets",
-            "project",
-            "campaign",
-        )
+        fields = ("title", "slug", "thumbnail_url", "assets", "project", "campaign")
 
 
 class AssetSerializer(serializers.HyperlinkedModelSerializer):
     campaign = CampaignDetailSerializer()
     project = ProjectSerializer()
+    media_url = serializers.SerializerMethodField()
+
+    def get_media_url(self, obj):
+        if S3_BUCKET_NAME and obj:
+            url = '{}/{}/{}'.format(S3_CLIENT.meta.endpoint_url, S3_BUCKET_NAME, obj.media_url)
+            return url
+        else:
+            return obj.media_url
 
     class Meta:
         model = models.Asset
