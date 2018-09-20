@@ -1,4 +1,6 @@
 import os
+import re
+from urllib.parse import urlparse
 from collections import defaultdict
 from logging import getLogger
 
@@ -6,6 +8,7 @@ import requests
 from celery import task
 from django.conf import settings
 
+from concordia.models import Project
 from importer.models import CampaignItemAssetCount, CampaignTaskDetails
 
 logger = getLogger(__name__)
@@ -99,6 +102,25 @@ def get_campaign_item_asset_urls(item_id):
     return campaign_item_asset_urls
 
 
+def import_items_into_project_from_url(project, import_url):
+    """
+    Given a loc.gov URL, return the task ID for the import task
+    """
+
+    parsed_url = urlparse(import_url)
+
+    if re.match(r"^/(collections|search)/", parsed_url.path):
+        task_id = download_write_campaign_item_assets.delay(project.pk, import_url)
+    elif re.match(r"^/(item)/", parsed_url.path):
+        task_id = download_write_item_assets.delay(project.pk, import_url)
+    else:
+        raise ValueError(
+            f"{import_url} doesn't match one of the known importable patterns"
+        )
+
+    return task_id
+
+
 def download_write_campaign_item_asset(image_url, asset_local_path):
     """
     :param image_url:
@@ -125,10 +147,11 @@ def download_write_campaign_item_asset(image_url, asset_local_path):
         )
 
 
-def get_save_item_assets(campaign_name, project, item_id, item_asset_urls):
+def get_save_item_assets(project, item_id, item_asset_urls):
     """
-    creates a item directory if it already does not exists, and iterates asset urls list then download each asset
-    and saves to local in item directory
+    creates a item directory if it already does not exists, and iterates asset
+    urls list then download each asset and saves to local in item directory
+
     :param campaign_name: campaign_name
     :param item_id: item id of the campaign
     :param item_asset_urls: list of item asset urls
@@ -136,7 +159,7 @@ def get_save_item_assets(campaign_name, project, item_id, item_asset_urls):
     """
 
     item_local_path = os.path.join(
-        settings.IMPORTER["IMAGES_FOLDER"], campaign_name, project, item_id
+        settings.IMPORTER["IMAGES_FOLDER"], project.campaign.slug, project.slug, item_id
     )
 
     os.makedirs(item_local_path, exist_ok=True)
@@ -150,79 +173,86 @@ def get_save_item_assets(campaign_name, project, item_id, item_asset_urls):
             # FIXME: determine whether we can reliably recover from this condition
             logger.error(
                 "Unable to save asset for campaign %s project %s item %s: %s",
-                campaign_name,
-                project,
+                project.campaign.title,
+                project.title,
                 item_id,
             )
 
 
 @task
-def download_write_campaign_item_assets(campaign_name, project, campaign_url):
+def download_write_campaign_item_assets(project_id, collection_url):
     """
-    It will downloads all images from loc.gov site and saves into local directory as per campaign and items.
-    :param campaign_name: campaign for requested item url
-    :param campaign_url: campaign url path
-    :return: nothing, will downloads the files and saves to a directory
+    Download images from a loc.gov collection or search page into a local
+    directory under a campaign/project hierarchy
+
+    :param project_id: primary key for a concordia.Project instance
+    :param collection_url: collection or search results URL
+    :return: nothing
     """
-    total_pages = get_campaign_pages(campaign_url)
-    campaign_item_ids = get_campaign_item_ids(campaign_url, total_pages)
+
+    # To avoid stale data we pass the project ID rather than the serialized object:
+    project = Project.objects.get(pk=project_id)
+
+    total_pages = get_campaign_pages(collection_url)
+    collection_item_ids = get_campaign_item_ids(collection_url, total_pages)
     items_asset_count_dict = defaultdict(int)
     items_assets = {}
 
-    for cii in campaign_item_ids:
+    for cii in collection_item_ids:
         campaign_item_asset_urls = get_campaign_item_asset_urls(cii)
         items_asset_count_dict[cii] = len(campaign_item_asset_urls)
         items_assets[cii] = campaign_item_asset_urls
-        # get_save_item_assets(campaign_name, project, cii, campaign_item_asset_urls)
 
-    ctd, created = CampaignTaskDetails.objects.get_or_create(
-        campaign_slug=slugify(campaign_name),
-        project_slug=slugify(project),
-        defaults={"campaign_name": campaign_name, "project_name": project},
-    )
-    ctd.campaign_item_count = len(campaign_item_ids)
+    ctd, created = CampaignTaskDetails.objects.get_or_create(project)
+    ctd.campaign_item_count = len(collection_item_ids)
     ctd.campaign_asset_count = sum(items_asset_count_dict.values())
     ctd.save()
+
     ciac_details = []
     for key, value in items_asset_count_dict.items():
-        ciac_details.append(
-            CampaignItemAssetCount(
-                campaign_task=ctd,
-                campaign_item_identifier=key,
-                campaign_item_asset_count=value,
-            )
+        ciac = CampaignItemAssetCount(
+            campaign_task=ctd,
+            campaign_item_identifier=key,
+            campaign_item_asset_count=value,
         )
+        ciac.full_clean()
+        ciac_details.append(ciac)
     CampaignItemAssetCount.objects.bulk_create(ciac_details)
 
-    for cii in campaign_item_ids:
-        # campaign_item_asset_urls = get_campaign_item_asset_urls(cii)
-        # items_asset_count_dict[cii] = len(campaign_item_asset_urls)
-        get_save_item_assets(campaign_name, project, cii, items_assets[cii])
+    for cii in collection_item_ids:
+        get_save_item_assets(project, cii, items_assets[cii])
 
 
 @task
-def download_write_item_assets(campaign_name, project, item_id):
+def download_write_item_assets(project_id, item_url):
+    """
+    Download images from a loc.gov item into a local directory under a
+    campaign/project hierarchy
 
+    :param project_id: primary key for a concordia.Project instance
+    :param item_url: item URL
+    :return: nothing
     """
-    It will downloads all images from loc.gov site and saves into local directory as per item level directory.
-    :param campaign_name: campaign for requested item url
-    :param item_url: item url path
-    :return: nothing, will downloads the files and saves to a directory
-    """
+
+    # To avoid stale data we pass the project ID rather than the serialized object:
+    project = Project.objects.get(pk=project_id)
+
+    item_id = get_item_id_from_item_url(item_url)
+
     item_asset_urls = get_campaign_item_asset_urls(item_id)
 
-    ctd, created = CampaignTaskDetails.objects.get_or_create(
-        campaign_slug=slugify(campaign_name),
-        project_slug=slugify(project),
-        defaults={"campaign_name": campaign_name, "project_name": project},
-    )
+    ctd, created = CampaignTaskDetails.objects.get_or_create(project=project)
     ctd.campaign_item_count += 1
     ctd.campaign_asset_count += len(item_asset_urls)
+    ctd.full_clean()
     ctd.save()
+
     ciac, created = CampaignItemAssetCount.objects.get_or_create(
         campaign_task=ctd, campaign_item_identifier=item_id
     )
     ciac.campaign_item_asset_count = len(item_asset_urls)
+    ciac.full_clean()
     ciac.save()
 
-    get_save_item_assets(campaign_name, project, item_id, item_asset_urls)
+    get_save_item_assets(project, item_id, item_asset_urls)
+
