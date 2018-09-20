@@ -28,7 +28,10 @@ class CustomListDisplayFieldsMixin:
     truncated_description.short_description = "Description"
 
     def truncated_metadata(self, obj):
-        return format_html("<code>{}</code>", truncatechars(obj.metadata, 200))
+        if obj.metadata:
+            return format_html("<code>{}</code>", truncatechars(obj.metadata, 200))
+        else:
+            return ""
 
     truncated_metadata.allow_tags = True
     truncated_metadata.short_description = "Metadata"
