@@ -1,17 +1,13 @@
 from django.db import models
 
+# FIXME: these classes should have names which more accurately represent what they do
+
 
 class CampaignTaskDetails(models.Model):
-    campaign_name = models.CharField(max_length=80)
-    campaign_slug = models.SlugField(max_length=80)
-    project_name = models.CharField(max_length=250)
-    project_slug = models.SlugField(max_length=250)
+    project = models.ForeignKey("concordia.Project", on_delete=models.CASCADE)
     campaign_item_count = models.IntegerField(null=True, blank=True, default=0)
     campaign_asset_count = models.IntegerField(null=True, blank=True, default=0)
     campaign_task_id = models.CharField(max_length=100, null=True, blank=True)
-
-    class Meta:
-        unique_together = ("campaign_slug", "project_slug")
 
 
 class CampaignItemAssetCount(models.Model):
