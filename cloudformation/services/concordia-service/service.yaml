@@ -28,7 +28,7 @@ Parameters:
     Path: 
         Description: The path to register with the Application Load Balancer
         Type: String
-        Default: /
+        Default: /*
 
     ECSServiceAutoScalingRoleARN:
         Description: The ECS service auto scaling role ARN

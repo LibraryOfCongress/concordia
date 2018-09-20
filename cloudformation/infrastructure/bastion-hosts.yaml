@@ -47,7 +47,7 @@ Resources:
                 - AssociatePublicIpAddress: "true"
                   DeviceIndex: "0"
                   GroupSet: 
-                    - Ref: BastionHostSecurityGroup
+                    - Ref: BastionHostsSecurityGroup
                   SubnetId: 
                     Ref: PublicSubnet1
             Tags:
@@ -69,7 +69,7 @@ Resources:
                 - AssociatePublicIpAddress: "true"
                   DeviceIndex: "0"
                   GroupSet: 
-                    - Ref: BastionHostSecurityGroup
+                    - Ref: BastionHostsSecurityGroup
                   SubnetId: 
                     Ref: PublicSubnet2
             Tags:

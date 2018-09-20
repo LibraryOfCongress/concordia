@@ -44,10 +44,27 @@ if os.getenv("AWS"):
     SENTRY_DSN = sentry_secret["SentryDSN"]
     RAVEN_CONFIG = {"dsn": SENTRY_DSN, "environment": CONCORDIA_ENVIRONMENT}
 
+    smtp_secret_json = get_secret("concordia/SMTP")
+    smtp_secret = json.loads(smtp_secret_json)
+    EMAIL_HOST = smtp_secret["Hostname"]
+    EMAIL_HOST_USER = smtp_secret["Username"]
+    EMAIL_HOST_PASSWORD = smtp_secret["Password"]
+
 else:
     DJANGO_SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "changeme")
     POSTGRESQL_PW = os.getenv("POSTGRESQL_PW")
     POSTGRESQL_HOST = os.getenv("POSTGRESQL_HOST", "db")
+    EMAIL_HOST = os.environ.get("EMAIL_HOST", "localhost")
+    EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+    EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+
+
+EMAIL_USE_TLS = True
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_PORT = 587
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "crowd@loc.gov")
+DEFAULT_TO_EMAIL = DEFAULT_FROM_EMAIL
+
 
 # TODO: For final deployment to production,
 # when we are running https, uncomment this next line
@@ -85,14 +102,6 @@ ELASTICSEARCH_DSL = {
     "default": {"hosts": os.getenv("ELASTICSEARCH_ENDPOINT", "elk:9200")}
 }
 
-EMAIL_USE_TLS = True
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = os.environ.get("EMAIL_HOST", "localhost")
-EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
-EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
-EMAIL_PORT = 587
-DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "crowd@loc.gov")
-DEFAULT_TO_EMAIL = DEFAULT_FROM_EMAIL
 
 # HMAC activation flow provide the two-step registration process,
 # the user signs up and then completes activation via email instructions.
