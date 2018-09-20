@@ -161,3 +161,9 @@ class AssetFilteringForm(forms.Form):
                 filtered_choices.append((val, asset_states[val]))
 
         self.fields["status"].choices = filtered_choices
+
+
+class AdminItemImportForm(forms.Form):
+    import_url = forms.URLField(
+        required=True, label="URL of the item/collection/search page to import"
+    )

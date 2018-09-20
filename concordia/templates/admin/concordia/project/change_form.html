@@ -1,0 +1,14 @@
+{% extends "admin/change_form.html" %}
+
+{% load i18n admin_urls %}
+
+{% block object-tools-items %}
+    {% if original.pk %}
+        <li>
+            <a href="{% url 'admin:concordia_project_item-import' original.pk %}" class="viewsitelink">
+                Import Items
+            </a>
+        </li>
+    {% endif %}
+    {{ block.super }}
+{% endblock %}
