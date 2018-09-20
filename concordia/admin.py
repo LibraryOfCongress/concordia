@@ -94,6 +94,7 @@ class TagAdmin(admin.ModelAdmin):
 class UserAssetTagCollectionAdmin(admin.ModelAdmin):
     list_display = ("id", "asset", "user_id", "created_on", "updated_on")
     list_display_links = ("id", "asset")
+    date_hierarchy = "created_on"
     search_fields = ["asset__title", "asset__campaign__title", "asset__project__title"]
     # FIXME: after fixing the user_id relationship add filtering on user attributes
 
