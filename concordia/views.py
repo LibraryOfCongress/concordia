@@ -35,7 +35,6 @@ from concordia.forms import (
 )
 from concordia.models import Campaign, Item, Project, Status, Transcription, UserProfile
 from concordia.views_ws import PageInUseCreate
-from importer.views import CreateCampaignView
 
 logger = getLogger(__name__)
 
@@ -841,30 +840,6 @@ class CampaignView(TemplateView):
         else:
             return render(self.request, self.template_name)
 
-    def post(self, *args, **kwargs):
-        """
-        POST request when form submitted to create a collection. Only allows admin access
-        :param args:
-        :param kwargs:
-        :return: redirect to home (/) or render template create.html
-        """
-        # FIXME: if we don't know why this is being done this way, replace this
-        # view with a direct call to the CreateCampaignView or delete that view
-        # and replace it with this one
-        self.get_context_data()
-        
-        if self.request.user.is_superuser:
-            self.get_context_data()
-            name = self.request.POST.get("name")
-            url = self.request.POST.get("url")
-            slug = name.replace(" ", "-")
-            view = CreateCampaignView.as_view()
-            importer_resp = view(self.request, *args, **kwargs)
-
-            return render(self.request, self.template_name, importer_resp.data)
-        else:
-            return HttpResponseRedirect('/')
-
 
 class DeleteCampaignView(TemplateView):
     """
@@ -887,6 +862,7 @@ class DeleteCampaignView(TemplateView):
                              self.request.get_host(),
                              self.args[0]),
                             cookies=self.request.COOKIES)
+            # FIXME: this needs error handling or being replaced outright (and has never been tested)
             os.system(
                 "rm -rf {0}".format(settings.MEDIA_ROOT + "/concordia/" + collection.slug)
             )
@@ -912,7 +888,6 @@ class DeleteAssetView(TemplateView):
             return HttpResponseRedirect('/')
         else:
             asset_update = {"campaign": self.args[0], "slug": self.args[1]}
-
 
             requests.put(
                 "%s://%s/ws/asset_update/%s/%s/" %
