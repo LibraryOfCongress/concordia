@@ -32,6 +32,7 @@ elasticsearch-dsl = "==6.1.0"
 raven = "*"
 django-maintenance-mode = "*"
 django-debug-toolbar = "*"
+whitenoise = "*"
 
 [dev-packages]
 invoke = "*"
