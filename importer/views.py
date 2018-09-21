@@ -134,7 +134,7 @@ def save_campaign_item_assets(project, the_path, item_id=None):
 
             asset_info = Asset(
                 title=title,
-                slug="{0}—{1}".format(title, sequence),
+                slug="{0}-{1}".format(title, sequence),
                 description="{0} description".format(title),
                 media_url=media_url,
                 media_type="IMG",

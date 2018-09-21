@@ -33,7 +33,7 @@ from concordia.forms import (
     ConcordiaUserEditForm,
     ConcordiaUserForm,
 )
-from concordia.models import Campaign, Item, Project, Status, Transcription, UserProfile
+from concordia.models import Campaign, Asset, Item, Project, Status, Transcription, UserProfile
 from concordia.views_ws import PageInUseCreate
 
 logger = getLogger(__name__)
@@ -402,44 +402,31 @@ class ConcordiaAssetView(TemplateView):
         :param kws:
         :return: dictionary of items used in the template
         """
-        response = requests.get(
-            "%s://%s/ws/asset_by_slug/%s/%s/"
-            % (
-                self.request.scheme,
-                self.request.get_host(),
-                self.args[0],
-                self.args[1],
-            ),
-            cookies=self.request.COOKIES,
-        )
-        asset_json = json.loads(response.content.decode("utf-8"))
 
-        in_use_url = "/campaigns/%s/asset/%s/" % (
-            asset_json["campaign"]["slug"],
-            asset_json["slug"],
-        )
+        asset = get_object_or_404(Asset, slug=self.args[1])
+
         current_user_id = (
             self.request.user.id
             if self.request.user.id is not None
             else get_anonymous_user(self.request)
         )
-        page_in_use = self.check_page_in_use(in_use_url, current_user_id)
 
         # TODO: in the future, this is from a settings file value
         discussion_hide = True
 
         # Get all transcriptions, they are no longer tied to a specific user
-
+        #transcription = Transcription.
+        #transcription = get_object_or_404(Transcription, )
         response = requests.get(
             "%s://%s/ws/transcription/%s/"
-            % (self.request.scheme, self.request.get_host(), asset_json["id"]),
+            % (self.request.scheme, self.request.get_host(), asset.id),
             cookies=self.request.COOKIES,
         )
         transcription_json = json.loads(response.content.decode("utf-8"))
 
         response = requests.get(
             "%s://%s/ws/tags/%s/"
-            % (self.request.scheme, self.request.get_host(), asset_json["id"]),
+            % (self.request.scheme, self.request.get_host(), asset.id),
             cookies=self.request.COOKIES,
         )
         json_tags = []
@@ -450,59 +437,14 @@ class ConcordiaAssetView(TemplateView):
 
         captcha_form = CaptchaEmbedForm()
 
-        response = requests.get(
-            "%s://%s/ws/page_in_use_user/%s/%s/"
-            % (
-                self.request.scheme,
-                self.request.get_host(),
-                current_user_id,
-                in_use_url,
-            ),
-            cookies=self.request.COOKIES,
-        )
-        page_in_use_json = json.loads(response.content.decode("utf-8"))
-
-        if page_in_use_json["user"] is None:
-            same_page_count_for_this_user = 0
-        else:
-            same_page_count_for_this_user = 1
-
         page_dict = {
-            "page_url": in_use_url,
             "user": current_user_id,
             "updated_on": datetime.now(),
         }
 
-        if page_in_use is False and same_page_count_for_this_user == 0:
-            # add this page as being in use by this user
-            # call the web service which will use the serializer to insert the value.
-            # this takes care of deleting old entries in PageInUse table
-
-            factory = APIRequestFactory()
-            request = factory.post("/ws/page_in_use%s/" % (in_use_url,), page_dict)
-            request.session = self.request.session
-
-            PageInUseCreate.as_view()(request)
-        elif same_page_count_for_this_user == 1:
-            # update the PageInUse
-            change_page_in_use = {"page_url": in_use_url, "user": current_user_id}
-
-            requests.put(
-                "%s://%s/ws/page_in_use_update/%s/%s/"
-                % (
-                    self.request.scheme,
-                    self.request.get_host(),
-                    current_user_id,
-                    in_use_url,
-                ),
-                data=change_page_in_use,
-                cookies=self.request.COOKIES,
-            )
-
         res = dict(
             super().get_context_data(**kws),
-            page_in_use=page_in_use,
-            asset=asset_json,
+            asset=asset,
             transcription=transcription_json,
             tags=json_tags,
             captcha_form=captcha_form,
@@ -732,19 +674,6 @@ class ConcordiaPageInUse(View):
 
             # update the PageInUse
 
-            change_page_in_use = {"page_url": page_url, "user": user_json_val["id"]}
-
-            requests.put(
-                "%s://%s/ws/page_in_use_update/%s/%s/"
-                % (
-                    self.request.scheme,
-                    self.request.get_host(),
-                    user_json_val["id"],
-                    page_url,
-                ),
-                data=change_page_in_use,
-                cookies=self.request.COOKIES,
-            )
 
         return HttpResponse("ok")
 

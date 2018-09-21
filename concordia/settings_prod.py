@@ -14,7 +14,7 @@ LOGGING["loggers"]["celery"]["level"] = "INFO"
 
 # Pass the following environment into the stack when creating an AWS service:
 # SENTRY_PUBLIC_DSN=http://f69265b381a44ceb89e9bd467f86fbdd@devops-sentry-public-lb-718357739.us-east-1.elb.amazonaws.com/3
-# CELERY_BROKER_URL=pyamqp://guest@localhost:5672
+# CELERY_BROKER_URL=pyamqp://guest@rabbit:5672
 # AWS_DEFAULT_REGION=us-east-1
 # AWS=1
 # ENV_NAME=dev (or test, or stage, or prod)
@@ -88,7 +88,7 @@ CELERY_RESULT_BACKEND = "rpc://"
 IMPORTER = {
     # /concordia_images is a docker volume shared by importer and concordia
     "IMAGES_FOLDER": "/concordia_images/",
-    "S3_BUCKET_NAME": os.getenv("S3_BUCKET_NAME", ""),
+    "S3_BUCKET_NAME": os.getenv("S3_BUCKET_NAME"),
 }
 
 ELASTICSEARCH_DSL_AUTOSYNC = False
