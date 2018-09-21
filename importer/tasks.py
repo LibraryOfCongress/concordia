@@ -172,14 +172,14 @@ def import_items_into_project_from_url(project, import_url):
     if re.match(r"^/(collections|search)/", parsed_url.path):
         return download_write_campaign_item_assets.delay(project.pk, import_url)
     elif re.match(r"^/(item)/", parsed_url.path):
-        return download_write_item_assets.delay(project.pk, import_url)
+        return download_item_assets.delay(project.pk, import_url)
     else:
         raise ValueError(
             f"{import_url} doesn't match one of the known importable patterns"
         )
 
 
-def download_write_campaign_item_asset(image_url, asset_local_path):
+def download_image(image_url, asset_local_path):
     """
     :param image_url:
     :param asset_local_path:
@@ -226,7 +226,7 @@ def get_save_item_assets(project, item_id, item_asset_urls):
         asset_local_path = os.path.join(item_local_path, "{}.jpg".format(idx))
 
         try:
-            download_write_campaign_item_asset(ciau, asset_local_path)
+            download_image(ciau, asset_local_path)
         except Exception as exc:
             # FIXME: determine whether we can reliably recover from this condition
             logger.error(
@@ -264,14 +264,14 @@ def download_write_campaign_item_assets(self, project_id, original_collection_ur
 
     # FIXME: add a parent/child task tracking field
     item_group = group(
-        download_write_item_assets.s(project.pk, item_url)
+        download_item_assets.s(project.pk, item_url)
         for item_id, item_url in collection_items
     )
     return item_group()
 
 
 @task(bind=True)
-def download_write_item_assets(self, project_id, item_url):
+def download_item_assets(self, project_id, item_url):
     """
     Download images from a loc.gov item into a local directory under a
     campaign/project hierarchy
@@ -310,6 +310,9 @@ def download_write_item_assets(self, project_id, item_url):
         item_id=item_id,
         defaults={"title": item_id, "slug": item_id, "campaign": project.campaign},
     )
+    if not created:
+        logger.info("Won't re-import item %s", item)
+        return
 
     item_local_path = os.path.join(
         settings.IMPORTER["IMAGES_FOLDER"], project.campaign.slug, project.slug, item_id
@@ -324,6 +327,10 @@ def download_write_item_assets(self, project_id, item_url):
 
     shutil.rmtree(
         os.path.join(
-            settings.IMPORTER["IMAGES_FOLDER"], project.campaign.slug, project.slug
+            settings.IMPORTER["IMAGES_FOLDER"],
+            project.campaign.slug,
+            project.slug,
+            item_id,
         )
     )
+
