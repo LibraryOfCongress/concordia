@@ -1,17 +1,21 @@
+import re
 from urllib.parse import urljoin
 
 from django.conf import settings
-from django.contrib import admin
+from django.contrib import admin, messages
+from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import permission_required
 from django.shortcuts import get_object_or_404, render
-from django.template.defaultfilters import truncatechars
+from django.template.defaultfilters import slugify, truncatechars
 from django.urls import path
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html
+from django.views.decorators.cache import never_cache
 
 from importer.tasks import import_items_into_project_from_url
+from importer.utils.excel import slurp_excel
 
-from .forms import AdminItemImportForm
+from .forms import AdminItemImportForm, AdminProjectBulkImportForm
 from .models import (
     Asset,
     Campaign,
@@ -21,6 +25,111 @@ from .models import (
     Transcription,
     UserAssetTagCollection,
 )
+
+
+@never_cache
+@staff_member_required
+@permission_required("concordia.add_campaign")
+@permission_required("concordia.change_campaign")
+@permission_required("concordia.add_project")
+@permission_required("concordia.change_project")
+@permission_required("concordia.add_item")
+@permission_required("concordia.change_item")
+def admin_bulk_import_view(request):
+    # TODO: when we upgrade to Django 2.1 we can use the admin site override
+    # mechanism (the old one is broken in 2.0): see
+    # https://code.djangoproject.com/ticket/27887 in the meantime, this will
+    # simply be a regular Django view using forms and just enough context to
+    # reuse the Django admin template
+
+    request.current_app = "admin"
+
+    context = {"title": "Bulk Import"}
+
+    if request.method == "POST":
+        form = AdminProjectBulkImportForm(request.POST, request.FILES)
+
+        if form.is_valid():
+            context["task_ids"] = task_ids = []
+
+            rows = slurp_excel(request.FILES["spreadsheet_file"])
+            required_fields = [
+                "Campaign",
+                "Campaign Description",
+                "Project",
+                "Project Description",
+                "Import URLs",
+            ]
+            for idx, row in enumerate(rows):
+                missing_fields = [i for i in required_fields if i not in row]
+                if missing_fields:
+                    messages.add_message(
+                        request,
+                        messages.WARNING,
+                        f"Skipping row {idx}: missing fields {missing_fields}",
+                    )
+                    continue
+
+                campaign_title = row["Campaign"]
+                project_title = row["Project"]
+                import_url_blob = row["Import URLs"]
+
+                if not all((campaign_title, project_title, import_url_blob)):
+                    messages.add_message(
+                        request,
+                        messages.WARNING,
+                        f"Skipping row {idx}: at least one required field (Campaign, Project, Import URLs) is empty",
+                    )
+                    continue
+
+                campaign, created = Campaign.objects.get_or_create(
+                    title=campaign_title,
+                    defaults={
+                        "slug": slugify(campaign_title),
+                        "description": row["Campaign Description"] or "",
+                    },
+                )
+                if created:
+                    messages.add_message(
+                        request, messages.INFO, f"Created new campaign {campaign_title}"
+                    )
+                else:
+                    messages.add_message(
+                        request,
+                        messages.INFO,
+                        f"Reusing campaign {campaign_title} without modification",
+                    )
+
+                project, created = campaign.project_set.get_or_create(
+                    title=project_title, defaults={"slug": slugify(project_title)}
+                )
+                if created:
+                    messages.add_message(
+                        request, messages.INFO, f"Created new project {project_title}"
+                    )
+                else:
+                    messages.add_message(
+                        request,
+                        messages.INFO,
+                        f"Reusing project {project_title} without modification",
+                    )
+
+                potential_urls = filter(None, re.split(r"[\s]+", import_url_blob))
+                for url in potential_urls:
+                    if not url.startswith("http"):
+                        continue
+                    task_ids.append(import_items_into_project_from_url(project, url))
+                    messages.add_message(
+                        request,
+                        messages.INFO,
+                        f"Queued {campaign_title} {project_title} import for {url}",
+                    )
+    else:
+        form = AdminProjectBulkImportForm()
+
+    context["form"] = form
+
+    return render(request, "admin/bulk_import.html", context)
 
 
 class CustomListDisplayFieldsMixin:
