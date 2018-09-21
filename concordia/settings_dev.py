@@ -30,12 +30,9 @@ CELERY_RESULT_BACKEND = "rpc://"
 
 CONCORDIA = {"netloc": "http://0.0.0.0:8000"}
 
-IMPORTER = {
-    "BASE_URL": "",
-    "IMAGES_FOLDER": "/tmp/concordia_images/",
-    "ITEM_COUNT": "",
-    "S3_BUCKET_NAME": "",
-}
+IMPORTER = {"IMAGES_FOLDER": "/tmp/concordia_images/"}
+
+S3_BUCKET_NAME = "concordia-staticpages"
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 EMAIL_FILE_PATH = "/tmp/concordia-messages"  # change this to a proper location

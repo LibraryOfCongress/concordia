@@ -43,7 +43,7 @@
                     {% endif %}
                 </div>
             </nav>
-            {% if transcription.status %}
+            {% if transcription and transcription.status %}
             {% if transcription.status == 'Edit' %}
             <div id="transcription-state-div" class="mx-default w-100">
                 <i class="fas fa-edit tx-edit pr-quarter"></i>
@@ -196,8 +196,11 @@
 <script src="{% static 'vendor/openseadragon/openseadragon.min.js' %}"></script>
 <script type="text/javascript">
 
-    var asset_url = 'https://s3.amazonaws.com/concordia-staticpages/{{ asset.media_url }}';
-
+    {% if asset.campaign.s3_storage %}
+    var asset_url = 'https://s3.amazonaws.com/{{ S3_BUCKET_NAME }}/{{ asset.media_url }}';
+    {% else %}
+    var asset_url = '{{ MEDIA_URL }}{{ asset.media_url }}';
+    {% endif %}
 
     var viewer = OpenSeadragon({
         id: 'asset-image',
@@ -297,7 +300,7 @@
             }).appendTo('form#contribute-form');
         }
 
-        {% if transcription.status == 'Completed' %}
+        {% if transcription and transcription.status == 'Completed' %}
         if (tab_name == "transcription")
             $("#save-button").hide();
         else
@@ -313,16 +316,17 @@
 
         $("#transcription-input").attr('disabled', false);
 
-        {% if not user.is_authenticated and not transcription.status %}
+
+        {% if not transcription or not transcription.status and not user.is_authenticated %}
         $("#save-button, #review-button").show();
-        {% elif not user.is_authenticated and transcription.status != 'Edit' %}
+        {% elif not user.is_authenticated and transcription and transcription.status != 'Edit' %}
         $("#save-button, #review-button").hide();
         $("#transcription-input").attr('disabled', true);
         {% else %}
-        {% if transcription.status == 'Submitted' %}
+        {% if transcription and transcription.status == 'Submitted' %}
         $("#review-button").hide();
         $("#complete-button").show();
-        {% elif transcription.status == 'Completed' %}
+        {% elif transcription and transcription.status == 'Completed' %}
         $("#save-button").show();
         $("#review-button").hide();
         $("#save-button").hide();
