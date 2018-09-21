@@ -11,7 +11,7 @@ from importer.tasks import (
     download_write_campaign_item_asset,
     get_item_id_from_item_url,
     get_campaign_pages,
-    get_campaign_item_ids,
+    get_collection_item_ids,
     get_campaign_item_asset_urls,
     download_write_campaign_item_assets,
     download_write_item_assets,
@@ -126,7 +126,7 @@ class GetCampaignItemidsTest(TestCase):
         mock_get.side_effect = [mock_page1_result, mock_page2_result]
 
         # Act
-        response = get_campaign_item_ids(self.url, 2)
+        response = get_collection_item_ids(self.url, 2)
 
         # Assert
         self.assertListEqual(response, ["mss37820001"])
@@ -142,7 +142,7 @@ class GetCampaignItemidsTest(TestCase):
         mock_get.side_effect = [mock_page1_result, mock_page2_result]
 
         # Act
-        response = get_campaign_item_ids(self.url, 2)
+        response = get_collection_item_ids(self.url, 2)
 
         # Arrange
         self.assertListEqual(response, [])
