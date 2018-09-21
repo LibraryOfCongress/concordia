@@ -7,8 +7,13 @@
     <div id="content-main">
         {% if task_id %}
             <p>
-                Task ID <a target="_blank" href="{% url 'get_task_status' task_id=task_id %}">{{ task_id }}</a> created to import {{ form.cleaned_data.import_url }}
+                Task ID <a target="_blank" href="{% url 'get_task_status' task_id=task_id %}">{{ task_id }}</a>
+                created to import <a target="_blank" href="{{ form.cleaned_data.import_url }}">{{ form.cleaned_data.import_url }}</a>
             </p>
+            <ul>
+                <li><a target="_blank" href="{% url 'admin:concordia_item_changelist' %}?project__pk={{ object_id }}">View Project Items</a></li>
+                <li><a target="_blank" href="{% url 'admin:concordia_asset_changelist' %}?project__pk={{ object_id }}">View Project Assets</a></li>
+            </ul>
         {% else %}
             <form id="import-items" method="post">
                 {% csrf_token %}
@@ -34,6 +39,7 @@
                             <li onclick="document.getElementById('{{ form.import_url.id_for_label }}').value = 'https://www.loc.gov/item/mss859430231'">https://www.loc.gov/item/mss859430231</li>
                             <li onclick="document.getElementById('{{ form.import_url.id_for_label }}').value = 'https://www.loc.gov/collections/branch-rickey-papers/'">https://www.loc.gov/collections/branch-rickey-papers/</li>
                             <li onclick="document.getElementById('{{ form.import_url.id_for_label }}').value = 'https://www.loc.gov/item/mss859430231'">https://www.loc.gov/item/mss859430231</li>
+                            <li onclick="document.getElementById('{{ form.import_url.id_for_label }}').value = 'https://www.loc.gov/search/?q=group%3Amal&amp;fa=online-format!%3Aonline+text'">https://www.loc.gov/search/?q=group%3Amal&amp;fa=online-format!%3Aonline+text</li>
                         </ul>
                     </div>
                 </div>
