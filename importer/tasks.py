@@ -6,6 +6,7 @@ from urllib.parse import parse_qsl, urlencode, urlparse, urlsplit, urlunsplit
 import requests
 from celery import group, task
 from django.conf import settings
+from requests.exceptions import HTTPError
 
 from concordia.models import Project
 from importer.models import CampaignItemAssetCount, CampaignTaskDetails
@@ -270,7 +271,14 @@ def download_write_campaign_item_assets(self, project_id, original_collection_ur
     return item_group()
 
 
-@task(bind=True)
+@task(
+    bind=True,
+    autoretry_for=(HTTPError,),
+    retry_backoff=True,
+    retry_backoff_max=8 * 60 * 60,
+    retry_jitter=True,
+    retry_kwargs={"max_retries": 12},
+)
 def download_item_assets(self, project_id, item_url):
     """
     Download images from a loc.gov item into a local directory under a
@@ -333,4 +341,3 @@ def download_item_assets(self, project_id, item_url):
             item_id,
         )
     )
-
