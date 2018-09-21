@@ -33,7 +33,10 @@ from concordia.forms import (
     ConcordiaUserEditForm,
     ConcordiaUserForm,
 )
-from concordia.models import Campaign, Asset, Item, Project, Status, Transcription, UserProfile
+from concordia.models import (
+    Campaign, Asset, Item, Project, Status, 
+    Transcription, UserProfile, UserAssetTagCollection
+)
 from concordia.views_ws import PageInUseCreate
 
 logger = getLogger(__name__)
@@ -414,26 +417,17 @@ class ConcordiaAssetView(TemplateView):
         # TODO: in the future, this is from a settings file value
         discussion_hide = True
 
-        # Get all transcriptions, they are no longer tied to a specific user
-        #transcription = Transcription.
-        #transcription = get_object_or_404(Transcription, )
-        response = requests.get(
-            "%s://%s/ws/transcription/%s/"
-            % (self.request.scheme, self.request.get_host(), asset.id),
-            cookies=self.request.COOKIES,
-        )
-        transcription_json = json.loads(response.content.decode("utf-8"))
+        # Get the most recent transcription
+        latest_transcriptions = \
+            Transcription.objects.filter(asset__slug=asset.slug)\
+            .order_by('-updated_on')
 
-        response = requests.get(
-            "%s://%s/ws/tags/%s/"
-            % (self.request.scheme, self.request.get_host(), asset.id),
-            cookies=self.request.COOKIES,
-        )
-        json_tags = []
-        if response.status_code == status.HTTP_200_OK:
-            json_tags_response = json.loads(response.content.decode("utf-8"))
-            for json_tag in json_tags_response["results"]:
-                json_tags.append(json_tag["value"])
+        if latest_transcriptions:
+            transcription = latest_transcriptions[0]
+        else:
+            transcription = None
+
+        tags = UserAssetTagCollection.objects.filter(asset__slug=asset.slug)
 
         captcha_form = CaptchaEmbedForm()
 
@@ -445,8 +439,8 @@ class ConcordiaAssetView(TemplateView):
         res = dict(
             super().get_context_data(**kws),
             asset=asset,
-            transcription=transcription_json,
-            tags=json_tags,
+            transcription=transcription,
+            tags=tags,
             captcha_form=captcha_form,
             discussion_hide=discussion_hide,
         )
