@@ -8,6 +8,7 @@ from django.views.generic import TemplateView
 from django.views.static import serve
 from machina.app import board
 
+from concordia.admin import admin_bulk_import_view
 from exporter import views as exporter_views
 from faq.views import FAQView
 from importer.views import check_and_save_campaign_assets, get_task_status
@@ -132,6 +133,9 @@ urlpatterns = [
     re_path(
         r"^legal/$", TemplateView.as_view(template_name="legal.html"), name="legal"
     ),
+    # TODO: when we upgrade to Django 2.1 we can use the admin site override
+    # mechanism (the old one is broken in 2.0): see https://code.djangoproject.com/ticket/27887
+    path("admin/bulk-import", admin_bulk_import_view, name="admin-bulk-import"),
     re_path(r"^admin/", admin.site.urls),
     # Apps
     re_path(r"^forum/", include(board.urls)),
