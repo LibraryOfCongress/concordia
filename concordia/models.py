@@ -87,6 +87,8 @@ class Project(models.Model):
 
 
 class Item(models.Model):
+    visible = models.BooleanField(default=False, blank=True)
+
     title = models.CharField(max_length=100)
     slug = models.SlugField(max_length=100)
     description = models.TextField(blank=True)
@@ -97,7 +99,7 @@ class Item(models.Model):
     )
     item_id = models.CharField(max_length=100, blank=True)
     metadata = JSONField(default=metadata_default, blank=True, null=True)
-    thumbnail_url = models.URLField(max_length=255)
+    thumbnail_url = models.URLField(max_length=255, blank=True, null=True)
     status = models.CharField(
         max_length=10, choices=Status.CHOICES, default=Status.DEFAULT
     )

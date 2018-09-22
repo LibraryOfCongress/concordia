@@ -221,6 +221,8 @@ class ConcordiaProjectView(ListView):
         )
 
         item_qs = self.project.item_set.order_by("item_id")
+        if not self.request.user.is_staff:
+            item_qs = item_qs.exclude(visible=False)
 
         return item_qs
 
@@ -248,8 +250,13 @@ class ConcordiaItemView(ListView):
     http_method_names = ["get", "options", "head"]
 
     def get_queryset(self):
+        item_qs = Item.objects.select_related("project", "project__campaign")
+
+        if not self.request.user.is_staff:
+            item_qs = item_qs.filter(visible=True)
+
         self.item = get_object_or_404(
-            Item.objects.select_related("project", "project__campaign"),
+            item_qs,
             campaign__slug=self.kwargs["campaign_slug"],
             project__slug=self.kwargs["project_slug"],
             slug=self.kwargs["slug"],

@@ -266,7 +266,7 @@ class ItemAdmin(admin.ModelAdmin):
         "campaign",
         "project",
         "status",
-        "is_publish",
+        "visible",
     )
     list_display_links = ("title", "slug", "item_id")
     prepopulated_fields = {"slug": ("title",)}
