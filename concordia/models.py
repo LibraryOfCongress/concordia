@@ -117,7 +117,9 @@ class Asset(models.Model):
     title = models.CharField(max_length=100)
     slug = models.SlugField(max_length=100)
     description = models.TextField(blank=True)
-    media_url = models.URLField(max_length=255)
+    # TODO: do we really need this given that we import in lock-step sequence
+    #       numbers with a fixed extension?
+    media_url = models.TextField("Path component of the URL", max_length=255)
     media_type = models.CharField(
         max_length=4, choices=MediaType.CHOICES, db_index=True
     )
