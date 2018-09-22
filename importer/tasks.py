@@ -1,15 +1,22 @@
+"""
+See the module-level docstring for implementation details
+"""
+
 import os
 import re
 from logging import getLogger
-from urllib.parse import parse_qsl, urlencode, urlparse, urlsplit, urlunsplit
+from urllib.parse import parse_qsl, urlencode, urljoin, urlparse, urlsplit, urlunsplit
 
 import requests
 from celery import group, task
 from django.conf import settings
+from django.db.transaction import atomic
+from django.template.defaultfilters import slugify
+from django.utils.timezone import now
 from requests.exceptions import HTTPError
 
-from concordia.models import Project
-from importer.models import CampaignItemAssetCount, CampaignTaskDetails
+from concordia.models import Asset, MediaType, Project
+from importer.models import ImportItemAsset, ImportJob
 
 logger = getLogger(__name__)
 
@@ -137,47 +144,177 @@ def get_item_info_from_result(result):
     return m.group(1), item_url
 
 
-def get_campaign_item_asset_urls(item_id):
-    """
-    :param item_id: campaign item id
-    :return: item asset urls
-    """
-    campaign_item_asset_urls = []
-    item_url = "https://www.loc.gov/item/{0}/".format(item_id)
-    resp = requests.get(item_url, {"fo": "json"})
-    resp.raise_for_status()
-    campaign_item_data = resp.json()
-
-    item_resources = campaign_item_data.get("resources", [])
-
-    for ir in item_resources:
-        item_files = ir.get("files", [])
-        for item_file in item_files:
-            similar_img_urls = []
-            for itf in item_file:
-                if itf.get("mimetype") == "image/jpeg":
-                    similar_img_urls.append(itf.get("url"))
-            if similar_img_urls:
-                campaign_item_asset_urls.append(similar_img_urls[-1])
-
-    return campaign_item_asset_urls
-
-
-def import_items_into_project_from_url(project, import_url):
+def import_items_into_project_from_url(requesting_user, project, import_url):
     """
     Given a loc.gov URL, return the task ID for the import task
     """
 
     parsed_url = urlparse(import_url)
 
-    if re.match(r"^/(collections|search)/", parsed_url.path):
-        return download_write_campaign_item_assets.delay(project.pk, import_url)
-    elif re.match(r"^/(item)/", parsed_url.path):
-        return download_item_assets.delay(project.pk, import_url)
-    else:
+    m = re.match(r"^/(collections|search|item)/", parsed_url.path)
+    if not m:
         raise ValueError(
             f"{import_url} doesn't match one of the known importable patterns"
         )
+    url_type = m.group(1)
+
+    import_job = ImportJob(
+        project=project, created_by=requesting_user, source_url=import_url
+    )
+    import_job.full_clean()
+    import_job.save()
+
+    if url_type == "item":
+        import_item.delay(import_job.pk, import_url)
+    else:
+        # Both collections and search results return the same format JSON
+        # reponse so we can use the same code to process them:
+        import_collection.delay(import_job.pk)
+
+    return import_job
+
+
+@task(bind=True)
+@atomic
+def import_item(self, import_job_pk, item_url):
+    import_job = ImportJob.objects.get(pk=import_job_pk)
+
+    if import_job.completed or import_job.failed:
+        logger.warning("Not reprocessing finalized %s", import_job)
+        return
+
+    # Update metadata:
+    import_job.task_id = self.request.id
+    import_job.save()
+
+    item, created = import_job.project.item_set.get_or_create(
+        item_url=item_url,
+        campaign=import_job.project.campaign,
+        project=import_job.project,
+    )
+    if not created:
+        import_job.status = "Not reprocessing existing item %s" % item
+        import_job.completed = now()
+        import_job.full_clean()
+        import_job.save()
+
+        return
+
+    import_item, created = import_job.items.get_or_create(url=item_url, item=item)
+
+    # Load the Item record with metadata from the remote URL:
+
+    resp = requests.get(item_url, params={"fo": "json"})
+    resp.raise_for_status()
+    item_data = resp.json()
+
+    populate_item_from_url(item, item_data["item"])
+
+    item_assets = []
+    import_assets = []
+    for idx, asset_url in enumerate(
+        get_asset_urls_from_item_resources(item_data.get("resources", [])), start=1
+    ):
+        asset_title = f"{item.item_id}-{idx}"
+        item_asset = Asset(
+            project=import_job.project,
+            campaign=import_job.project.campaign,
+            item=item,
+            title=asset_title,
+            slug=slugify(asset_title),
+            sequence=idx,
+            media_url="{idx}.jpg",
+            media_type=MediaType.IMAGE,
+            download_url=asset_url,
+        )
+        item_asset.full_clean()
+        item_assets.append(item_asset)
+
+    Asset.objects.bulk_create(item_assets)
+
+    for asset in item_assets:
+        import_asset = ImportItemAsset(
+            import_item=import_item,
+            asset=asset,
+            url=asset.download_url,
+            sequence_number=asset.sequence,
+        )
+        import_asset.full_clean()
+        import_assets.append(import_asset)
+
+    import_item.assets.bulk_create(import_assets)
+
+    download_asset_group = group(download_asset.s(i) for i in import_assets)
+
+    import_item.full_clean()
+    import_item.save()
+
+    return download_asset_group()
+
+
+@task(bind=True)
+def import_collection(self, import_job_pk):
+    raise NotImplementedError
+
+
+def populate_item_from_url(item, item_info):
+    """
+    Populates a Concordia.Item from the provided loc.gov URL
+
+    Returns the retrieved JSON data so additional imports can be peformed
+    without a second request
+    """
+
+    item.item_id = get_item_id_from_item_url(item_info["id"])
+
+    for k in ("title", "description"):
+        v = item_info.get(k)
+        if v:
+            setattr(item, k, v)
+
+    if not item.slug:
+        item.slug = slugify(item.title)
+
+    # FIXME: this was never set before so we don't have selection logic:
+    thumb_urls = [i for i in item_info["image_url"] if ".jpg" in i]
+    if thumb_urls:
+        item.thumbnail_url = urljoin(item.item_url, thumb_urls[0])
+
+    item.full_clean()
+    item.save()
+
+
+def get_asset_urls_from_item_resources(resources):
+    """
+    Given a loc.gov JSON response, return the list of asset URLs matching our
+    criteria (JPEG, largest version available)
+    """
+
+    assets = []
+
+    for resource in resources:
+        # The JSON response for each file is a list of available image versions
+        # we will attempt to save the highest resolution JPEG:
+
+        for item_file in resource.get("files", []):
+            candidates = []
+
+            for variant in item_file:
+                if any(i for i in ("url", "height", "width") if i not in variant):
+                    continue
+
+                url = variant["url"]
+                height = variant["height"]
+                width = variant["width"]
+
+                if variant.get("mimetype") == "image/jpeg":
+                    candidates.append((url, height * width))
+
+            if candidates:
+                candidates.sort(key=lambda i: i[1], reverse=True)
+                assets.append(candidates[0][0])
+
+    return assets
 
 
 def download_image(image_url, asset_local_path):
@@ -206,7 +343,7 @@ def download_image(image_url, asset_local_path):
         )
 
 
-def get_save_item_assets(project, item_id, item_asset_urls):
+def download_item_assets(project, item_id, item_asset_urls):
     """
     creates a item directory if it already does not exists, and iterates asset
     urls list then download each asset and saves to local in item directory
@@ -257,12 +394,6 @@ def download_write_campaign_item_assets(self, project_id, original_collection_ur
     collection_url = normalize_collection_url(original_collection_url)
     collection_items = get_collection_items(collection_url)
 
-    ctd = CampaignTaskDetails()
-    ctd.project = project
-    ctd.campaign_task_id = self.request.id
-    ctd.campaign_item_count = len(collection_items)
-    ctd.save()
-
     # FIXME: add a parent/child task tracking field
     item_group = group(
         download_item_assets.s(project.pk, item_url)
@@ -288,31 +419,15 @@ def download_item_assets(self, project_id, item_url):
     :param item_url: item URL
     :return: nothing
     """
-
+    raise NotImplementedError
     # To avoid stale data we pass the project ID rather than the serialized object:
     project = Project.objects.get(pk=project_id)
 
     item_id = get_item_id_from_item_url(item_url)
 
-    item_asset_urls = get_campaign_item_asset_urls(item_id)
+    item_asset_urls = get_asset_urls_for_item(item_id)
 
-    ctd = CampaignTaskDetails()
-    ctd.project = project
-    ctd.campaign_item_count += 1
-    ctd.campaign_asset_count += len(item_asset_urls)
-    ctd.campaign_task_id = self.request.id
-    ctd.full_clean()
-    ctd.save()
-
-    ciac = CampaignItemAssetCount()
-    ciac.item_task_id = self.request.id
-    ciac.campaign_task = ctd
-    ciac.campaign_item_identifier = item_id
-    ciac.campaign_item_asset_count = len(item_asset_urls)
-    ciac.full_clean()
-    ciac.save()
-
-    get_save_item_assets(project, item_id, item_asset_urls)
+    download_item_assets(project, item_id, item_asset_urls)
 
     item, created = project.item_set.get_or_create(
         item_id=item_id,

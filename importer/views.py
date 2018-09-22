@@ -12,7 +12,6 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
 from concordia.models import Asset, Campaign, Item, Project
-from importer.models import CampaignItemAssetCount, CampaignTaskDetails
 
 logger = getLogger(__name__)
 

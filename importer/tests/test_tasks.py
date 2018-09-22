@@ -12,7 +12,7 @@ from importer.tasks import (
     get_item_id_from_item_url,
     get_campaign_pages,
     get_collection_item_ids,
-    get_campaign_item_asset_urls,
+    get_asset_urls_for_item,
     download_write_campaign_item_assets,
     download_item_assets,
 )
@@ -165,7 +165,7 @@ class GetCampaignItemAssetURLsTest(TestCase):
         mock_get.return_value = mock_resp
 
         # Act
-        response = get_campaign_item_asset_urls(self.item_id)
+        response = get_asset_urls_for_item(self.item_id)
 
         # Assert
         self.assertListEqual(
@@ -185,7 +185,7 @@ class GetCampaignItemAssetURLsTest(TestCase):
         mock_get.return_value = mock_resp
 
         # Act
-        response = get_campaign_item_asset_urls(self.item_id)
+        response = get_asset_urls_for_item(self.item_id)
 
         # Assert
         self.assertListEqual(response, [])

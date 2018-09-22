@@ -6,12 +6,12 @@
 
 {% block content %}
     <div id="content-main">
-        {% if task_ids %}
+        {% if import_jobs %}
             <h2>Import Tasks</h2>
             <ul>
-                {% for task_id in task_ids %}
+                {% for import_job in import_jobs %}
                     <li>
-                        <a target="_blank" href="{% url 'get_task_status' task_id=task_id %}">{{ task_id }}</a>
+                        <a target="_blank" href="{% url 'admin:importer_importjob_change' object_id=import_job.pk %}">{{ import_job }}</a>
                     </li>
                 {% endfor %}
             </ul>
