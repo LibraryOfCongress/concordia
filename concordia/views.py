@@ -561,7 +561,7 @@ class ConcordiaAssetView(TemplateView):
             captcha_form = CaptchaEmbedForm(self.request.POST)
             if not captcha_form.is_valid():
                 logger.info("Invalid captcha response")
-                messages.error(self.request, 'Invalid Captcha.')
+                messages.error(self.request, "Invalid Captcha.")
                 return self.get(self.request, *args, **kwargs)
             else:
                 self.request.session[
@@ -595,17 +595,15 @@ class ConcordiaAssetView(TemplateView):
             }
 
             if tx_status == Status.EDIT:
-                messages.success(self.request,
-                                 'The transcription was saved successfully.')
+                messages.success(
+                    self.request, "The transcription was saved successfully."
+                )
             elif tx_status == Status.SUBMITTED:
-                messages.success(self.request,
-                                 'The transcription is ready for review.')
+                messages.success(self.request, "The transcription is ready for review.")
             elif tx_status == Status.COMPLETED:
-                messages.success(self.request,
-                                 'The transcription is completed.')
+                messages.success(self.request, "The transcription is completed.")
 
-            redirect_path = next_page_dictionary[tx_status](redirect_path,
-                                                            asset_json)
+            redirect_path = next_page_dictionary[tx_status](redirect_path, asset_json)
 
         elif "tags" in self.request.POST and self.request.user.is_authenticated:
             tags = self.request.POST.get("tags").split(",")
@@ -843,7 +841,7 @@ class CampaignView(TemplateView):
         :return: redirect to home (/) or render template create.html
         """
         if not self.request.user.is_superuser:
-            return HttpResponseRedirect('/')
+            return HttpResponseRedirect("/")
         else:
             return render(self.request, self.template_name)
 
@@ -862,16 +860,18 @@ class DeleteCampaignView(TemplateView):
         :return: redirect to home (/) or redirect to /campaigns/
         """
         if not self.request.user.is_superuser:
-            return HttpResponseRedirect('/')
+            return HttpResponseRedirect("/")
         else:
-            requests.delete("%s://%s/ws/campaign_delete/%s/" %
-                            (self.request.scheme,
-                             self.request.get_host(),
-                             self.args[0]),
-                            cookies=self.request.COOKIES)
+            requests.delete(
+                "%s://%s/ws/campaign_delete/%s/"
+                % (self.request.scheme, self.request.get_host(), self.args[0]),
+                cookies=self.request.COOKIES,
+            )
             # FIXME: this needs error handling or being replaced outright (and has never been tested)
             os.system(
-                "rm -rf {0}".format(settings.MEDIA_ROOT + "/concordia/" + collection.slug)
+                "rm -rf {0}".format(
+                    settings.MEDIA_ROOT + "/concordia/" + collection.slug
+                )
             )
             return redirect("/campaigns/")
 
@@ -892,13 +892,13 @@ class DeleteAssetView(TemplateView):
         :return:
         """
         if not self.request.user.is_superuser:
-            return HttpResponseRedirect('/')
+            return HttpResponseRedirect("/")
         else:
             asset_update = {"campaign": self.args[0], "slug": self.args[1]}
 
             requests.put(
-                "%s://%s/ws/asset_update/%s/%s/" %
-                (
+                "%s://%s/ws/asset_update/%s/%s/"
+                % (
                     self.request.scheme,
                     self.request.get_host(),
                     self.args[0],
@@ -1059,7 +1059,13 @@ class DeleteProjectView(TemplateView):
         subcollection.asset_set.all().delete()
         subcollection.delete()
         os.system(
-            "rm -rf {0}".format(settings.MEDIA_ROOT + "/concordia/" + collection.slug + "/" + subcollection.slug)
+            "rm -rf {0}".format(
+                settings.MEDIA_ROOT
+                + "/concordia/"
+                + collection.slug
+                + "/"
+                + subcollection.slug
+            )
         )
-        return redirect("/campaigns/"+collection.slug+"/")
+        return redirect("/campaigns/" + collection.slug + "/")
 
