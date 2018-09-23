@@ -226,6 +226,7 @@ urlpatterns += [
     ),
 ]
 
+# FIXME: these should only be enabled for debugging as per https://docs.djangoproject.com/en/2.0/ref/views/#django.views.static.serve
 urlpatterns += [
     re_path(r"^static/(?P<path>.*)$", serve, {"document_root": settings.STATIC_ROOT})
 ]
