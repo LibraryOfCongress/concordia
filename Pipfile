@@ -17,7 +17,6 @@ botocore = '*'
 requests = "*"
 Django = "<2.1,>=2"
 Pillow = "*"
-Markdown = "*"
 confusable_homoglyphs = ">=3.1.1"
 Whoosh = "*"
 bagit = "*"
@@ -34,6 +33,7 @@ django-maintenance-mode = "*"
 django-debug-toolbar = "*"
 whitenoise = "*"
 openpyxl = "*"
+markdown = "<3"
 
 [dev-packages]
 invoke = "*"
