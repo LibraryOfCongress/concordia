@@ -9,13 +9,13 @@ from urllib.parse import parse_qsl, urlencode, urljoin, urlparse, urlsplit, urlu
 
 import requests
 from celery import group, task
-from django.conf import settings
 from django.db.transaction import atomic
 from django.template.defaultfilters import slugify
 from django.utils.timezone import now
 from requests.exceptions import HTTPError
 
 from concordia.models import Asset, MediaType, Project
+from concordia.storage import ASSET_STORAGE
 from importer.models import ImportItemAsset, ImportJob
 
 logger = getLogger(__name__)

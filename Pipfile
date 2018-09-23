@@ -33,6 +33,7 @@ django-maintenance-mode = "*"
 django-debug-toolbar = "*"
 whitenoise = "*"
 openpyxl = "*"
+django-storages = "*"
 markdown = "<3"
 
 [dev-packages]

@@ -30,12 +30,10 @@ DATABASES = {
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "pyamqp://guest@rabbit:5672")
 CELERY_RESULT_BACKEND = "rpc://"
 
-
-IMPORTER = {
-    # /concordia_images is a docker volume shared by importer and concordia
-    "IMAGES_FOLDER": "/concordia_images/",
-    "S3_BUCKET_NAME": os.getenv("S3_BUCKET_NAME"),
-}
+DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+STATICFILES_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+AWS_STORAGE_BUCKET_NAME = os.getenv("S3_BUCKET_NAME")
+AWS_DEFAULT_ACL = None  # Don't set an ACL on the files, inherit the bucket ACLs
 
 ELASTICSEARCH_DSL_AUTOSYNC = False
 
