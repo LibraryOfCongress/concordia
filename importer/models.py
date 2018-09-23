@@ -21,8 +21,8 @@ class TaskStatusModel(models.Model):
 
     status = models.TextField(
         verbose_name="Status message, if any, from the last worker",
-        null=True,
         blank=True,
+        default="",
     )
 
     task_id = models.UUIDField(
@@ -44,14 +44,14 @@ class ImportJob(TaskStatusModel):
 
     project = models.ForeignKey("concordia.Project", on_delete=models.CASCADE)
 
+    # TODO: do we just call this URL for consistency with the other models?
     source_url = models.URLField(verbose_name="Source URL for the entire job")
 
     def __str__(self):
-        return "ImportJob(created_by=%s, project=%s, source_url=%s, status=%s)" % (
+        return "ImportJob(created_by=%s, project=%s, source_url=%s)" % (
             self.created_by.username,
             self.project.title,
             self.source_url,
-            self.completed or "In Progress",
         )
 
 
@@ -65,6 +65,9 @@ class ImportItem(TaskStatusModel):
     url = models.URLField()
 
     item = models.ForeignKey("concordia.Item", on_delete=models.CASCADE)
+
+    def __str__(self):
+        return "ImportItem(job=%s, url=%s)" % (self.job, self.url)
 
 
 class ImportItemAsset(TaskStatusModel):
@@ -80,3 +83,6 @@ class ImportItemAsset(TaskStatusModel):
     sequence_number = models.PositiveIntegerField(validators=[MinValueValidator(1)])
 
     asset = models.ForeignKey("concordia.Asset", on_delete=models.CASCADE)
+
+    def __str__(self):
+        return "ImportItemAsset(import_item=%s, url=%s)" % (self.import_item, self.url)
