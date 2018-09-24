@@ -4,7 +4,6 @@ See the module-level docstring for implementation details
 
 import os
 import re
-from collections import defaultdict
 from functools import wraps
 from logging import getLogger
 from tempfile import NamedTemporaryFile
@@ -12,18 +11,14 @@ from urllib.parse import parse_qsl, urlencode, urljoin, urlparse, urlsplit, urlu
 
 import requests
 from celery import group, task
-from django.conf import settings
 from django.db.transaction import atomic
 from django.template.defaultfilters import slugify
 from django.utils.timezone import now
 from requests.exceptions import HTTPError
 
-from concordia.models import Asset, MediaType, Project
+from concordia.models import Asset, MediaType
 from concordia.storage import ASSET_STORAGE
-from importer.models import (
-    ImportItemAsset,
-    ImportJob,
-)
+from importer.models import ImportItem, ImportItemAsset, ImportJob
 
 logger = getLogger(__name__)
 
@@ -219,7 +214,7 @@ def import_items_into_project_from_url(requesting_user, project, import_url):
     import_job.save()
 
     if url_type == "item":
-        import_item_task.delay(import_job.pk, import_url)
+        create_item_import_task.delay(import_job.pk, import_url)
     else:
         # Both collections and search results return the same format JSON
         # reponse so we can use the same code to process them:
@@ -229,53 +224,90 @@ def import_items_into_project_from_url(requesting_user, project, import_url):
 
 
 @task(bind=True)
-def import_item_task(self, import_job_pk, item_url):
+def import_collection_task(self, import_job_pk):
     import_job = ImportJob.objects.get(pk=import_job_pk)
-    return import_item(self, import_job, item_url)
+    return import_collection(self, import_job)
 
 
 @update_task_status
-@atomic
-def import_item(self, import_job, item_url):
-    if import_job.completed or import_job.failed:
-        logger.warning("Not reprocessing finalized %s", import_job)
-        return
+def import_collection(self, import_job):
+    item_info = get_collection_items(normalize_collection_url(import_job.url))
+    for item_id, item_url in item_info:
+        create_item_import_task.delay(import_job.pk, item_url)
 
-    item, created = import_job.project.item_set.get_or_create(
-        item_url=item_url,
-        campaign=import_job.project.campaign,
-        project=import_job.project,
-    )
-    if not created:
-        logger.warning("Not reprocessing existing item %s", item)
 
-        import_job.status = "Not reprocessing existing item %s" % item
-        import_job.completed = now()
-        import_job.full_clean()
-        import_job.save()
+@task(
+    bind=True,
+    autoretry_for=(HTTPError,),
+    retry_backoff=True,
+    retry_backoff_max=8 * 60 * 60,
+    retry_jitter=True,
+    retry_kwargs={"max_retries": 12},
+)
+def create_item_import_task(self, import_job_pk, item_url):
+    """
+    Create an ImportItem record using the provided import job and URL by
+    requesting the metadata from the URL
 
-        return
+    Enqueues the actual import for the item once we have the metadata
+    """
 
-    import_item, created = import_job.items.get_or_create(url=item_url, item=item)
+    import_job = ImportJob.objects.get(pk=import_job_pk)
 
     # Load the Item record with metadata from the remote URL:
-
     resp = requests.get(item_url, params={"fo": "json"})
     resp.raise_for_status()
     item_data = resp.json()
 
-    populate_item_from_url(item, item_data["item"])
+    item, item_created = import_job.project.item_set.get_or_create(
+        item_id=get_item_id_from_item_url(item_data["item"]["id"]),
+        item_url=item_url,
+        campaign=import_job.project.campaign,
+        project=import_job.project,
+    )
 
+    import_item, import_item_created = import_job.items.get_or_create(
+        url=item_url, item=item
+    )
+
+    if not item_created:
+        logger.warning("Not reprocessing existing item %s", item)
+        import_item.status = "Not reprocessing existing item %s" % item
+        import_item.completed = now()
+        return
+
+    import_item.item.metadata.update(item_data)
+
+    populate_item_from_url(import_item.item, item_data["item"])
+
+    item.full_clean()
+    item.save()
+
+    return import_item_task.delay(import_item.pk)
+
+
+@task(bind=True)
+def import_item_task(self, import_item_pk):
+    i = ImportItem.objects.select_related("item").get(pk=import_item_pk)
+    return import_item(self, i)
+
+
+@update_task_status
+@atomic
+def import_item(self, import_item):
     item_assets = []
     import_assets = []
-    for idx, asset_url in enumerate(
-        get_asset_urls_from_item_resources(item_data.get("resources", [])), start=1
-    ):
-        asset_title = f"{item.item_id}-{idx}"
+
+    asset_urls = get_asset_urls_from_item_resources(
+        import_item.item.metadata.get("resources", [])
+    )
+
+    for idx, asset_url in enumerate(asset_urls, start=1):
+        asset_title = f"{import_item.item.item_id}-{idx}"
         item_asset = Asset(
-            project=import_job.project,
-            campaign=import_job.project.campaign,
-            item=item,
+            project=import_item.item.project,
+            campaign=import_item.item.project.campaign,
+            item=import_item.item,
             title=asset_title,
             slug=slugify(asset_title),
             sequence=idx,
@@ -308,19 +340,6 @@ def import_item(self, import_job, item_url):
     return download_asset_group()
 
 
-@task(bind=True)
-def import_collection_task(self, import_job_pk):
-    import_job = ImportJob.objects.get(pk=import_job_pk)
-    return import_collection(self, import_job)
-
-
-@update_task_status
-def import_collection(self, import_job):
-    item_info = get_collection_items(normalize_collection_url(import_job.url))
-    for item_id, item_url in item_info:
-        import_item_task.delay(import_job.pk, item_url)
-
-
 def populate_item_from_url(item, item_info):
     """
     Populates a Concordia.Item from the provided loc.gov URL
@@ -328,8 +347,6 @@ def populate_item_from_url(item, item_info):
     Returns the retrieved JSON data so additional imports can be peformed
     without a second request
     """
-
-    item.item_id = get_item_id_from_item_url(item_info["id"])
 
     for k in ("title", "description"):
         v = item_info.get(k)
@@ -343,9 +360,6 @@ def populate_item_from_url(item, item_info):
     thumb_urls = [i for i in item_info["image_url"] if ".jpg" in i]
     if thumb_urls:
         item.thumbnail_url = urljoin(item.item_url, thumb_urls[0])
-
-    item.full_clean()
-    item.save()
 
 
 def get_asset_urls_from_item_resources(resources):
