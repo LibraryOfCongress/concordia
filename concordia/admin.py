@@ -267,15 +267,23 @@ class ItemAdmin(admin.ModelAdmin):
         "title",
         "slug",
         "item_id",
-        "campaign",
+        "campaign_title",
         "project",
         "status",
         "visible",
     )
     list_display_links = ("title", "slug", "item_id")
     prepopulated_fields = {"slug": ("title",)}
-    search_fields = ["title", "campaign__title", "project__title"]
-    list_filter = ("status", "campaign")
+    search_fields = ["title", "project__campaign__title", "project__title"]
+    list_filter = ("status", "project__campaign", "project")
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        qs = qs.select_related("project", "project__campaign")
+        return qs
+
+    def campaign_title(self, obj):
+        return obj.project.campaign.title
 
 
 @admin.register(Asset)
