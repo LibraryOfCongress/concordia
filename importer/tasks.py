@@ -190,9 +190,7 @@ def import_items_into_project_from_url(requesting_user, project, import_url):
         )
     url_type = m.group(1)
 
-    import_job = ImportJob(
-        project=project, created_by=requesting_user, source_url=import_url
-    )
+    import_job = ImportJob(project=project, created_by=requesting_user, url=import_url)
     import_job.full_clean()
     import_job.save()
 

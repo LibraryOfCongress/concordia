@@ -44,14 +44,13 @@ class ImportJob(TaskStatusModel):
 
     project = models.ForeignKey("concordia.Project", on_delete=models.CASCADE)
 
-    # TODO: do we just call this URL for consistency with the other models?
-    source_url = models.URLField(verbose_name="Source URL for the entire job")
+    url = models.URLField(verbose_name="Source URL for the entire job")
 
     def __str__(self):
-        return "ImportJob(created_by=%s, project=%s, source_url=%s)" % (
+        return "ImportJob(created_by=%s, project=%s, url=%s)" % (
             self.created_by.username,
             self.project.title,
-            self.source_url,
+            self.url,
         )
 
 

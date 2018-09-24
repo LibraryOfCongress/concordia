@@ -47,14 +47,7 @@ class FailedFilter(NullableTimestampFilter):
 
 
 class ImportJobAdmin(admin.ModelAdmin):
-    list_display = (
-        "created",
-        "modified",
-        "last_started",
-        "completed",
-        "source_url",
-        "status",
-    )
+    list_display = ("created", "modified", "last_started", "completed", "url", "status")
     list_filter = (
         "created_by",
         "project",
@@ -62,7 +55,7 @@ class ImportJobAdmin(admin.ModelAdmin):
         CompletedFilter,
         FailedFilter,
     )
-    search_fields = ("source_url", "status")
+    search_fields = ("url", "status")
 
 
 class ImportItemAdmin(admin.ModelAdmin):
