@@ -4,44 +4,54 @@
 
 
 {% block content %}
-    <div id="content-main">
-        {% if task_id %}
-            <p>
-                Task ID <a target="_blank" href="{% url 'get_task_status' task_id=task_id %}">{{ task_id }}</a> created to import {{ form.cleaned_data.import_url }}
-            </p>
-        {% else %}
-            <form id="import-items" method="post">
-                {% csrf_token %}
-                <input type="hidden" name="project-id" value="{{ object_id }}">
+<div id="content-main">
+    {% if import_job %}
+    <p>
+        Task ID <a target="_blank" href="{% url 'admin:importer_importjob_change' object_id=import_job.pk %}">{{
+            import_job }}</a>
+        created to import <a target="_blank" href="{{ form.cleaned_data.import_url }}">{{ form.cleaned_data.import_url
+            }}</a>
+    </p>
+    <ul>
+        <li><a target="_blank" href="{% url 'admin:concordia_item_changelist' %}?project__pk={{ object_id }}">View
+                Project Items</a></li>
+        <li><a target="_blank" href="{% url 'admin:concordia_asset_changelist' %}?project__pk={{ object_id }}">View
+                Project Assets</a></li>
+    </ul>
+    {% else %}
+    <form id="import-items" method="post">
+        {% csrf_token %}
+        <input type="hidden" name="project-id" value="{{ object_id }}">
 
-                {{ form.non_field_errors }}
+        {{ form.non_field_errors }}
 
-                {% if form.errors %}
-                    <p>Please fix the errors below:</p>
-                {% endif %}
-
-                <div class="form-row">
-                    <div class="fieldBox field-import_url">
-                        <label for="{{ form.import_url.id_for_label }}">{{ form.import_url.label }}</label>
-                        {{ form.import_url }}
-                        <ul class="error">
-                            {% for error in form.import_url.errors %}
-                                <li>{{ error }}</li>
-                            {% endfor %}
-                        </ul>
-
-                        <ul>
-                            <li onclick="document.getElementById('{{ form.import_url.id_for_label }}').value = 'https://www.loc.gov/item/mss859430231'">https://www.loc.gov/item/mss859430231</li>
-                            <li onclick="document.getElementById('{{ form.import_url.id_for_label }}').value = 'https://www.loc.gov/collections/branch-rickey-papers/'">https://www.loc.gov/collections/branch-rickey-papers/</li>
-                            <li onclick="document.getElementById('{{ form.import_url.id_for_label }}').value = 'https://www.loc.gov/item/mss859430231'">https://www.loc.gov/item/mss859430231</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="submit-row">
-                    <input type="submit" value="Import" class="default">
-                </div>
-            </form>
+        {% if form.errors %}
+        <p>Please fix the errors below:</p>
         {% endif %}
-    </div>
+
+        <div class="form-row">
+            <div class="fieldBox field-import_url">
+                <label for="{{ form.import_url.id_for_label }}">{{ form.import_url.label }}</label>
+                {{ form.import_url }}
+                <ul class="error">
+                    {% for error in form.import_url.errors %}
+                    <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+
+                <ul>
+                    <li onclick="document.getElementById('{{ form.import_url.id_for_label }}').value = 'https://www.loc.gov/item/mss859430231'">https://www.loc.gov/item/mss859430231</li>
+                    <li onclick="document.getElementById('{{ form.import_url.id_for_label }}').value = 'https://www.loc.gov/collections/branch-rickey-papers/'">https://www.loc.gov/collections/branch-rickey-papers/</li>
+                    <li onclick="document.getElementById('{{ form.import_url.id_for_label }}').value = 'https://www.loc.gov/item/mss859430231'">https://www.loc.gov/item/mss859430231</li>
+                    <li onclick="document.getElementById('{{ form.import_url.id_for_label }}').value = 'https://www.loc.gov/search/?q=group%3Amal&amp;fa=online-format!%3Aonline+text'">https://www.loc.gov/search/?q=group%3Amal&amp;fa=online-format!%3Aonline+text</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="submit-row">
+            <input type="submit" value="Import" class="default">
+        </div>
+    </form>
+    {% endif %}
+</div>
 {% endblock content %}

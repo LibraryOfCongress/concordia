@@ -8,9 +8,9 @@ from django.views.generic import TemplateView
 from django.views.static import serve
 from machina.app import board
 
+from concordia.admin import admin_bulk_import_view
 from exporter import views as exporter_views
 from faq.views import FAQView
-from importer.views import check_and_save_campaign_assets, get_task_status
 
 from . import trans_urls, views, views_ws
 
@@ -61,10 +61,10 @@ tx_urlpatterns = (
             views.ReportCampaignView.as_view(),
             name="report campaign",
         ),
-        re_path(
-            r"^([^/]+)/asset/([^/]+)/$",
+        path(
+            "campaigns/<slug:campaign_slug>/<slug:project_slug>/<slug:item_slug>/<slug:slug>",
             views.ConcordiaAssetView.as_view(),
-            name="asset",
+            name="asset-detail",
         ),
         re_path(
             r"transcription/(\d+)/$",
@@ -132,6 +132,9 @@ urlpatterns = [
     re_path(
         r"^legal/$", TemplateView.as_view(template_name="legal.html"), name="legal"
     ),
+    # TODO: when we upgrade to Django 2.1 we can use the admin site override
+    # mechanism (the old one is broken in 2.0): see https://code.djangoproject.com/ticket/27887
+    path("admin/bulk-import", admin_bulk_import_view, name="admin-bulk-import"),
     re_path(r"^admin/", admin.site.urls),
     # Apps
     re_path(r"^forum/", include(board.urls)),
@@ -223,27 +226,7 @@ urlpatterns += [
     ),
 ]
 
-urlpatterns += [
-    re_path(
-        r"^get_task_status/(?P<task_id>[a-zA-Z0-9-]+)$",
-        get_task_status,
-        name="get_task_status",
-    ),
-    re_path(
-        r"^check_and_save_campaign_assets/(?P<task_id>[a-zA-Z0-9-]+)/(?P<item_id>[a-zA-Z0-9-.]+)$",
-        check_and_save_campaign_assets,
-        name="check_and_save_campaign_item_assets",
-    ),
-    re_path(
-        r"^check_and_save_campaign_assets/(?P<task_id>[a-zA-Z0-9-.]+)/$",
-        check_and_save_campaign_assets,
-        name="check_and_save_campaign_assets",
-    ),
-    re_path(
-        r"^filter/campaigns/$", views.FilterCampaigns.as_view(), name="filter_campaigns"
-    ),
-]
-
+# FIXME: these should only be enabled for debugging as per https://docs.djangoproject.com/en/2.0/ref/views/#django.views.static.serve
 urlpatterns += [
     re_path(r"^static/(?P<path>.*)$", serve, {"document_root": settings.STATIC_ROOT})
 ]

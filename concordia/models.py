@@ -5,6 +5,7 @@ from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.utils import timezone
 from django_prometheus_metrics.models import MetricsModelMixin
+from django.urls import reverse
 
 metadata_default = dict
 
@@ -66,6 +67,10 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
     def __str__(self):
         return self.title
 
+    def get_absolute_url(self):
+        # FIXME: change this with https://github.com/LibraryOfCongress/concordia/issues/242
+        return reverse("transcriptions:campaign", args=(self.slug,))
+
 
 class Project(models.Model):
     title = models.CharField(max_length=80)
@@ -85,10 +90,18 @@ class Project(models.Model):
     def __str__(self):
         return self.title
 
+    def get_absolute_url(self):
+        return reverse(
+            "transcriptions:project-detail",
+            kwargs={"campaign_slug": self.campaign.slug, "slug": self.slug},
+        )
+
 
 class Item(models.Model):
-    title = models.CharField(max_length=100)
-    slug = models.SlugField(max_length=100)
+    visible = models.BooleanField(default=False, blank=True)
+
+    title = models.CharField(max_length=300)
+    slug = models.SlugField(max_length=300)
     description = models.TextField(blank=True)
     item_url = models.URLField(max_length=255)
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
@@ -97,7 +110,7 @@ class Item(models.Model):
     )
     item_id = models.CharField(max_length=100, blank=True)
     metadata = JSONField(default=metadata_default, blank=True, null=True)
-    thumbnail_url = models.URLField(max_length=255)
+    thumbnail_url = models.URLField(max_length=255, blank=True, null=True)
     status = models.CharField(
         max_length=10, choices=Status.CHOICES, default=Status.DEFAULT
     )
@@ -110,20 +123,32 @@ class Item(models.Model):
     def __str__(self):
         return self.item_id
 
+    def get_absolute_url(self):
+        # FIXME: change this with https://github.com/LibraryOfCongress/concordia/issues/242
+
+        return reverse(
+            "transcriptions:item",
+            kwargs={
+                "campaign_slug": self.project.campaign.slug,
+                "project_slug": self.project.slug,
+                "slug": self.slug,
+            },
+        )
+
 
 class Asset(models.Model):
     title = models.CharField(max_length=100)
     slug = models.SlugField(max_length=100)
     description = models.TextField(blank=True)
-    media_url = models.URLField(max_length=255)
+    # TODO: do we really need this given that we import in lock-step sequence
+    #       numbers with a fixed extension?
+    media_url = models.TextField("Path component of the URL", max_length=255)
     media_type = models.CharField(
         max_length=4, choices=MediaType.CHOICES, db_index=True
     )
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
-    project = models.ForeignKey(
-        Project, on_delete=models.CASCADE, blank=True, null=True
-    )
-    item = models.ForeignKey(Item, blank=True, null=True, on_delete=models.CASCADE)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
+    item = models.ForeignKey(Item, on_delete=models.CASCADE)
     sequence = models.PositiveIntegerField(default=1)
 
     # The original ID of the image resource on loc.gov

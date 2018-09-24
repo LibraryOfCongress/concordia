@@ -8,13 +8,13 @@ from django.test import TestCase
 
 from importer.models import CampaignItemAssetCount, CampaignTaskDetails
 from importer.tasks import (
-    download_write_campaign_item_asset,
-    download_write_campaign_item_assets,
-    download_write_item_assets,
-    get_campaign_item_asset_urls,
-    get_campaign_item_ids,
-    get_campaign_pages,
+    download_image,
     get_item_id_from_item_url,
+    get_campaign_pages,
+    get_collection_item_ids,
+    get_asset_urls_for_item,
+    download_write_campaign_item_assets,
+    download_item_assets,
 )
 from importer.tests import mock_data
 
@@ -126,7 +126,7 @@ class GetCampaignItemidsTest(TestCase):
         mock_get.side_effect = [mock_page1_result, mock_page2_result]
 
         # Act
-        response = get_campaign_item_ids(self.url, 2)
+        response = get_collection_item_ids(self.url, 2)
 
         # Assert
         self.assertListEqual(response, ["mss37820001"])
@@ -142,7 +142,7 @@ class GetCampaignItemidsTest(TestCase):
         mock_get.side_effect = [mock_page1_result, mock_page2_result]
 
         # Act
-        response = get_campaign_item_ids(self.url, 2)
+        response = get_collection_item_ids(self.url, 2)
 
         # Arrange
         self.assertListEqual(response, [])
@@ -165,7 +165,7 @@ class GetCampaignItemAssetURLsTest(TestCase):
         mock_get.return_value = mock_resp
 
         # Act
-        response = get_campaign_item_asset_urls(self.item_id)
+        response = get_asset_urls_for_item(self.item_id)
 
         # Assert
         self.assertListEqual(
@@ -185,7 +185,7 @@ class GetCampaignItemAssetURLsTest(TestCase):
         mock_get.return_value = mock_resp
 
         # Act
-        response = get_campaign_item_asset_urls(self.item_id)
+        response = get_asset_urls_for_item(self.item_id)
 
         # Assert
         self.assertListEqual(response, [])
@@ -204,7 +204,7 @@ class DownloadWriteCollcetionItemAssetTest(TestCase):
 
         with patch("__main__.open", m, create=True):
             try:
-                download_write_campaign_item_asset("dumy/image/url", "foo")
+                download_image("dumy/image/url", "foo")
             except Exception as exc:
                 self.fail(
                     "Expected download_write_campaign_item_asset to complete normally but caught %s"
@@ -224,7 +224,7 @@ class DownloadWriteCollcetionItemAssetTest(TestCase):
         with patch("__main__.open", m, create=True):
 
             # Act
-            abc = download_write_campaign_item_asset("dumy/image/url", "foo")
+            abc = download_image("dumy/image/url", "foo")
 
             # Assert
             self.assertEquals(abc, False)
@@ -347,7 +347,7 @@ class DownloadWriteItemAssetsTest(TestCase):
         mock_save.return_value = None
 
         # Act
-        download_write_item_assets(self.name, self.project, self.item_id)
+        download_item_assets(self.name, self.project, self.item_id)
 
         ctd = CampaignTaskDetails.objects.get(
             campaign_slug=self.name, project_slug=self.project
@@ -373,7 +373,7 @@ class DownloadWriteItemAssetsTest(TestCase):
         mock_save.return_value = None
 
         # Act
-        download_write_item_assets(self.name, self.project, self.item_id)
+        download_item_assets(self.name, self.project, self.item_id)
 
         ctd = CampaignTaskDetails.objects.get(
             campaign_slug=self.name, project_slug=self.project
