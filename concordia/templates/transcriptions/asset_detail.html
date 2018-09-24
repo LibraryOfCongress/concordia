@@ -4,7 +4,9 @@
 
 {% load concordia_media_tags %}
 
-{% block title %}{{ asset.title }}{% endblock title %}
+{% block title %}
+    Crowd: {{ asset.title }} ({{ asset.project.campaign.title }} — {{ asset.project.title }})
+{% endblock title %}
 
 {% block head_content %}
 {% endblock head_content %}
