@@ -26,28 +26,30 @@
                             <div class="col-12 col-md-8 px-half">
                                 <a href="{% url 'transcriptions:campaign' c.slug %}">
                                     <h1 class="campaign-title">{{ c.title }}</h1>
-                                    {{ c.description }}
                                 </a>
+                                {{ c.description }}
                             </div>
                             <div class="col-12 col-md-4">
                                 <!-- TODO: Swap this out -->
-                                {% if 'Lincoln' in c.title %}
-                                <img src="{% static  'img/AbrahamLincoln.svg' %}" class="img-fluid" alt="{{ c.title }} image">
-                                {% elif 'Rosa Parks' in c.title %}
-                                <img src="{% static  'img/rosa-parks-campaign.svg' %}" class="img-fluid" alt="{{ c.title }} image">
-                                {% elif 'Civil War' in c.title %}
-                                <!-- <img class="img-fluid" alt="{{ c.title }} image" src="{% if campaign.s3_storage %}{{ c.media_url }}{% else %}{{ MEDIA_URL }}{{c.media_url }}{% endif %}"> -->
-                                {% elif 'Clara Barton' in c.title %}
-                                <img src="{% static  'img/clara-barton-campaign.svg' %}" class="img-fluid" alt="{{ c.title }} image">
-                                {% elif 'Branch Rickey' in c.title %}
-                                <img src="{% static 'img/branch-rickey-campaign.svg' %}" class="img-fluid" alt="{{ c.title }} image">
-                                {% elif 'Mary Church Terrell' in c.title %}
-                                <img src="{% static  'img/MaryChurchTerrell.svg' %}" class="img-fluid" alt="{{ c.title }} image">
-                                {% elif 'Frederick Law Olmstead' in c.title %}
-                                <!-- <img class="img-fluid" alt="{{ c.title }} image" src="{% if campaign.s3_storage %}{{ c.media_url }}{% else %}{{ MEDIA_URL }}{{c.media_url }}{% endif %}"> -->
-                                {% else %}
-                                <img class="img-fluid" alt="{{ c.title }} image" src="{% if campaign.s3_storage %}{{ c.media_url }}{% else %}{{ MEDIA_URL }}{{c.media_url }}{% endif %}">
-                                {% endif %}
+                                <a href="{% url 'transcriptions:campaign' c.slug %}">
+                                    {% if 'Lincoln' in c.title %}
+                                    <img src="{% static  'img/AbrahamLincoln.svg' %}" class="img-fluid" alt="{{ c.title }} image">
+                                    {% elif 'Rosa Parks' in c.title %}
+                                    <img src="{% static  'img/rosa-parks-campaign.svg' %}" class="img-fluid" alt="{{ c.title }} image">
+                                    {% elif 'Civil War' in c.title %}
+                                    <!-- <img class="img-fluid" alt="{{ c.title }} image" src="{% if campaign.s3_storage %}{{ c.media_url }}{% else %}{{ MEDIA_URL }}{{c.media_url }}{% endif %}"> -->
+                                    {% elif 'Clara Barton' in c.title %}
+                                    <img src="{% static  'img/clara-barton-campaign.svg' %}" class="img-fluid" alt="{{ c.title }} image">
+                                    {% elif 'Branch Rickey' in c.title %}
+                                    <img src="{% static 'img/branch-rickey-campaign.svg' %}" class="img-fluid" alt="{{ c.title }} image">
+                                    {% elif 'Mary Church Terrell' in c.title %}
+                                    <img src="{% static  'img/MaryChurchTerrell.svg' %}" class="img-fluid" alt="{{ c.title }} image">
+                                    {% elif 'Frederick Law Olmstead' in c.title %}
+                                    <!-- <img class="img-fluid" alt="{{ c.title }} image" src="{% if campaign.s3_storage %}{{ c.media_url }}{% else %}{{ MEDIA_URL }}{{c.media_url }}{% endif %}"> -->
+                                    {% else %}
+                                    <img class="img-fluid" alt="{{ c.title }} image" src="{% if campaign.s3_storage %}{{ c.media_url }}{% else %}{{ MEDIA_URL }}{{ c.media_url }}{% endif %}">
+                                    {% endif %}
+                                </a>
                             </div>
                         </div>
                     </div>
