@@ -109,7 +109,12 @@ class Item(models.Model):
         Project, on_delete=models.CASCADE, blank=True, null=True
     )
     item_id = models.CharField(max_length=100, blank=True)
-    metadata = JSONField(default=metadata_default, blank=True, null=True)
+    metadata = JSONField(
+        default=metadata_default,
+        blank=True,
+        null=True,
+        help_text="Raw metadata returned by the remote API",
+    )
     thumbnail_url = models.URLField(max_length=255, blank=True, null=True)
     status = models.CharField(
         max_length=10, choices=Status.CHOICES, default=Status.DEFAULT

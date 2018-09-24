@@ -67,6 +67,9 @@ class ImportItem(TaskStatusModel):
 
     item = models.ForeignKey("concordia.Item", on_delete=models.CASCADE)
 
+    class Meta:
+        unique_together = (("job", "item"),)
+
     def __str__(self):
         return "ImportItem(job=%s, url=%s)" % (self.job, self.url)
 
@@ -84,6 +87,9 @@ class ImportItemAsset(TaskStatusModel):
     sequence_number = models.PositiveIntegerField(validators=[MinValueValidator(1)])
 
     asset = models.ForeignKey("concordia.Asset", on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = (("import_item", "sequence_number"), ("import_item", "asset"))
 
     def __str__(self):
         return "ImportItemAsset(import_item=%s, url=%s)" % (self.import_item, self.url)
