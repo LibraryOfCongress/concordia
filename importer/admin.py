@@ -29,20 +29,20 @@ class NullableTimestampFilter(admin.SimpleListFilter):
 
 
 class LastStartedFilter(NullableTimestampFilter):
-    title = u"Last Started"
-    parameter_name = u"last_started"
+    title = "Last Started"
+    parameter_name = "last_started"
     lookup_labels = ("Unstarted", "Started")
 
 
 class CompletedFilter(NullableTimestampFilter):
-    title = u"Completed"
-    parameter_name = u"completed"
+    title = "Completed"
+    parameter_name = "completed"
     lookup_labels = ("Incomplete", "Completed")
 
 
 class FailedFilter(NullableTimestampFilter):
-    title = u"Failed"
-    parameter_name = u"failed"
+    title = "Failed"
+    parameter_name = "failed"
     lookup_labels = ("Has not failed", "Has failed")
 
 
