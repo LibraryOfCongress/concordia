@@ -2,6 +2,7 @@
 
 {% load humanize %}
 {% load staticfiles %}
+{% load concordia_media_tags %}
 
 {% block title %}Concordia - {{ campaign.title }}{% endblock title %}
 {% block head_content %}
@@ -29,8 +30,9 @@
                 <div class="d-flex flex-wrap col-12 justify-content-around">
                     {% for a in assets %}
                         <div class="col-12 col-md-4 col-lg-3 mx-quarter mb-default card bg-lightest-gray shadow-regular" data-asset-status="{{ a.status|lower }}">
+                            {% comment %} FIXME: use correct URL hierarchy for asset detail page {% endcomment %}
                             <a href="{% url 'transcriptions:asset' campaign.slug a.slug %}">
-                                <img class="card-img card-img-campaign" alt="{{ a.slug }}" src="{% if campaign.s3_storage %}{{ a.media_url }}{% else %}{{ MEDIA_URL }}{{a.media_url }}{% endif %}">
+                                <img class="card-img card-img-campaign" alt="{{ a.slug }}" src="{% asset_media_url a %}">
                             </a>
                             <div class="card-img-overlay img-campaign">
                                 <div class="d-flex flex-column justify-content-end col-9 col-md-8 mx-auto h-100">
