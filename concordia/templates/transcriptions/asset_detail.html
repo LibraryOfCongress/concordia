@@ -1,7 +1,14 @@
-{% extends "transcriptions/base.html" %} {% load staticfiles %}
+{% extends "transcriptions/base.html" %}
+
+{% load staticfiles %}
+
+{% load concordia_media_tags %}
+
 {% block title %}{{ asset.title }}{% endblock title %}
+
 {% block head_content %}
 {% endblock head_content %}
+
 {% block main_content %}
     <div class="container-fluid">
         <div class="row">
@@ -169,17 +176,12 @@
     <script src="{% static "vendor/jquery.cookie.js" %}"></script>
     <script src="{% static "vendor/openseadragon/openseadragon.min.js" %}"></script>
     <script type="text/javascript">
-        {% if asset.campaign.s3_storage %}
-            var asset_url = '{{ asset.media_url }}';
-        {% else %}
-            var asset_url = '{{ MEDIA_URL }}{{ asset.media_url }}';
-        {% endif %}
         var viewer = OpenSeadragon({
             id: 'asset-image',
             prefixUrl: '{% static "vendor/openseadragon/images/" %}',
             tileSources: {
                 type: 'image',
-                url: asset_url
+                url: "{% asset_media_url asset %}"
             },
             showRotationControl: true,
             gestureSettingsTouch: {
@@ -271,7 +273,7 @@
 	                	    name: 'tagging'
 	                	}).appendTo('form#contribute-form');
                 }
-                
+
                 {% if transcription.status == 'Completed' %}
                 if(tab_name == "transcription")
                     $("#save-button").hide();
@@ -338,7 +340,7 @@
                 	   $('input.tagging-hidden-input').remove();
                 }
             });
-            
+
             var url = window.location.href;
             var lastPart = url.substr(url.lastIndexOf('/') + 1);
             if (lastPart == "#tab-tag") {
@@ -365,7 +367,7 @@
                        $("#captcha_container").removeClass('d-none');
                        $("#captcha_container").show();
                        $("#save-button").prop("disabled",true);
-                       // need to pass in button value to captcha enter button 
+                       // need to pass in button value to captcha enter button
                        $("#input_group_for_captcha > .input-group-append > button").attr("value", $("#review-button").attr("value"));
                    }
                    {% endif %}

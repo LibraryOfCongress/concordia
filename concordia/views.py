@@ -1,7 +1,6 @@
 import html
 import json
 import os
-
 import time
 from datetime import datetime
 from logging import getLogger
@@ -21,19 +20,16 @@ from django.shortcuts import Http404, get_object_or_404, redirect, render
 from django.template import loader
 from django.urls import reverse
 from django.views.decorators.cache import never_cache
-from django.views.generic import FormView, ListView, TemplateView, View
+from django.views.generic import DetailView, FormView, ListView, TemplateView, View
 from registration.backends.hmac.views import RegistrationView
 from rest_framework import generics, status
 from rest_framework.test import APIRequestFactory
 
-from concordia.forms import (
-    AssetFilteringForm,
-    CaptchaEmbedForm,
-    ConcordiaContactUsForm,
-    ConcordiaUserEditForm,
-    ConcordiaUserForm,
-)
-from concordia.models import Campaign, Item, Project, Status, Transcription, UserProfile
+from concordia.forms import (AssetFilteringForm, CaptchaEmbedForm,
+                             ConcordiaContactUsForm, ConcordiaUserEditForm,
+                             ConcordiaUserForm)
+from concordia.models import (Asset, Campaign, Item, Project, Status, Transcription,
+                              UserProfile)
 from concordia.views_ws import PageInUseCreate
 
 logger = getLogger(__name__)
@@ -290,18 +286,29 @@ class ConcordiaItemView(ListView):
         return res
 
 
-class ConcordiaAssetView(TemplateView):
+class ConcordiaAssetView(DetailView):
     """
     Class to handle GET ansd POST requests on route /campaigns/<campaign>/asset/<asset>
     """
 
-    template_name = "transcriptions/asset.html"
+    template_name = "transcriptions/asset_detail.html"
 
     state_dictionary = {
         "Save": Status.EDIT,
         "Submit for Review": Status.SUBMITTED,
         "Mark Completed": Status.COMPLETED,
     }
+
+    def get_queryset(self):
+        asset_qs = Asset.objects.filter(
+            item__slug=self.kwargs["item_slug"],
+            item__project__slug=self.kwargs["project_slug"],
+            item__project__campaign__slug=self.kwargs["campaign_slug"],
+            slug=self.kwargs["slug"],
+        )
+        asset_qs = asset_qs.select_related("item__project__campaign")
+
+        return asset_qs
 
     def get_asset_list_json(self):
         """
@@ -403,50 +410,47 @@ class ConcordiaAssetView(TemplateView):
 
         return json_val["page_in_use"]
 
-    def get_context_data(self, **kws):
+    def get_context_data(self, **kwargs):
         """
         Handle the GET request
         :param kws:
         :return: dictionary of items used in the template
         """
-        response = requests.get(
-            "%s://%s/ws/asset_by_slug/%s/%s/"
-            % (
-                self.request.scheme,
-                self.request.get_host(),
-                self.args[0],
-                self.args[1],
-            ),
-            cookies=self.request.COOKIES,
-        )
-        asset_json = json.loads(response.content.decode("utf-8"))
 
-        in_use_url = "/campaigns/%s/asset/%s/" % (
-            asset_json["campaign"]["slug"],
-            asset_json["slug"],
+        ctx = super().get_context_data(**kwargs)
+        asset = ctx['asset']
+
+        in_use_url = reverse(
+            "transcriptions:asset-detail",
+            kwargs={
+                "campaign_slug": self.kwargs["campaign_slug"],
+                "project_slug": self.kwargs["project_slug"],
+                "item_slug": self.kwargs["item_slug"],
+                "slug": self.kwargs["slug"],
+            },
         )
+
         current_user_id = (
             self.request.user.id
             if self.request.user.id is not None
             else get_anonymous_user(self.request)
         )
+
         page_in_use = self.check_page_in_use(in_use_url, current_user_id)
 
-        # TODO: in the future, this is from a settings file value
         discussion_hide = True
 
         # Get all transcriptions, they are no longer tied to a specific user
-
         response = requests.get(
             "%s://%s/ws/transcription/%s/"
-            % (self.request.scheme, self.request.get_host(), asset_json["id"]),
+            % (self.request.scheme, self.request.get_host(), asset.id),
             cookies=self.request.COOKIES,
         )
         transcription_json = json.loads(response.content.decode("utf-8"))
 
         response = requests.get(
             "%s://%s/ws/tags/%s/"
-            % (self.request.scheme, self.request.get_host(), asset_json["id"]),
+            % (self.request.scheme, self.request.get_host(), asset.id),
             cookies=self.request.COOKIES,
         )
         json_tags = []
@@ -506,20 +510,22 @@ class ConcordiaAssetView(TemplateView):
                 cookies=self.request.COOKIES,
             )
 
-        res = dict(
-            super().get_context_data(**kws),
-            page_in_use=page_in_use,
-            asset=asset_json,
-            transcription=transcription_json,
-            tags=json_tags,
-            captcha_form=captcha_form,
-            discussion_hide=discussion_hide,
-        )
         if self.request.user.is_anonymous:
-            res[
+            ctx[
                 "is_anonymous_user_captcha_validated"
             ] = self.is_anonymous_user_captcha_validated()
-        return res
+
+        ctx.update(
+            {
+                "page_in_use": page_in_use,
+                "transcription": transcription_json,
+                "tags": json_tags,
+                "captcha_form": captcha_form,
+                "discussion_hide": discussion_hide,
+            }
+        )
+
+        return ctx
 
     def is_anonymous_user_captcha_validated(self):
         if "captcha_validated_at" in self.request.session:
@@ -1068,4 +1074,3 @@ class DeleteProjectView(TemplateView):
             )
         )
         return redirect("/campaigns/" + collection.slug + "/")
-

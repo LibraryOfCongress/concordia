@@ -61,10 +61,10 @@ tx_urlpatterns = (
             views.ReportCampaignView.as_view(),
             name="report campaign",
         ),
-        re_path(
-            r"^([^/]+)/asset/([^/]+)/$",
+        path(
+            "campaigns/<slug:campaign_slug>/<slug:project_slug>/<slug:item_slug>/<slug:slug>",
             views.ConcordiaAssetView.as_view(),
-            name="asset",
+            name="asset-detail",
         ),
         re_path(
             r"transcription/(\d+)/$",

@@ -29,21 +29,18 @@
                 </form>
                 <div class="d-flex flex-wrap col-12 justify-content-around">
                     {% for a in assets %}
+                        {% url 'transcriptions:asset-detail' a.project.campaign.slug a.project.slug a.item.slug a.slug as asset_detail_url %}
                         <div class="col-12 col-md-4 col-lg-3 mx-quarter mb-default card bg-lightest-gray shadow-regular" data-asset-status="{{ a.status|lower }}">
-                            {% comment %} FIXME: use correct URL hierarchy for asset detail page {% endcomment %}
-                            <a href="{% url 'transcriptions:asset' campaign.slug a.slug %}">
+                            <a href="{{ asset_detail_url }}">
                                 <img class="card-img card-img-campaign" alt="{{ a.slug }}" src="{% asset_media_url a %}">
                             </a>
                             <div class="card-img-overlay img-campaign">
                                 <div class="d-flex flex-column justify-content-end col-9 col-md-8 mx-auto h-100">
-                                    <a href="{% url 'transcriptions:asset' campaign.slug a.slug %}" class="btn btn-primary btn-lg w-100 mb-quarter">Transcribe</a>
-                                    <a href="{% url 'transcriptions:asset' campaign.slug a.slug %}#tab-tag" class="btn btn-primary btn-lg w-100 mb-quarter">Tag</a>
-                                    {% if user.is_superuser %}
-                                        <a href="{% url 'transcriptions:delete_asset' campaign.slug a.slug %}" class="btn btn-primary btn-lg w-100 mb-quarter">Hide</a>
-                                    {% endif %}
+                                    <a href="{{ asset_detail_url }}" class="btn btn-primary btn-lg w-100 mb-quarter">Transcribe</a>
+                                    <a href="{{ asset_detail_url }}#tab-tag" class="btn btn-primary btn-lg w-100 mb-quarter">Tag</a>
                                 </div>
                             </div>
-                            <a href="{% url 'transcriptions:asset' campaign.slug a.slug %}" class="campaign-image-link"><h6 class="text-center primary-text my-half">Image {{ a.sequence }}</h6></a>
+                            <a href="{{ asset_detail_url }}" class="campaign-image-link"><h6 class="text-center primary-text my-half">Image {{ a.sequence }}</h6></a>
                         </div>
                     {% endfor %}
                 </div>
