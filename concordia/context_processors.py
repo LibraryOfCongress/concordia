@@ -13,9 +13,10 @@ def system_configuration(request):
 
 
 def site_navigation(request):
-    data = {"VIEW_NAME": request.resolver_match.view_name}
+    if request.resolver_match:
+        data = {"VIEW_NAME": request.resolver_match.view_name}
 
-    data["VIEW_NAME_FOR_CSS"] = data["VIEW_NAME"].replace(":", "--")
+        data["VIEW_NAME_FOR_CSS"] = data["VIEW_NAME"].replace(":", "--")
 
     path_components = request.path.strip("/").split("/")
     for i, component in enumerate(path_components, start=1):
