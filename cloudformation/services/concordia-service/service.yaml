@@ -1,6 +1,5 @@
 Description: >
-    This is an example of a long running ECS service that needs to connect to another ECS service (product-service)
-    via it's load balancer. We use environment variables to pass the URL of the product-service to this one's container(s).
+    This is the main app plus the importer and RabbitMQ service for crowd.loc.gov.
 
 Parameters: 
 
@@ -29,16 +28,15 @@ Parameters:
     Path: 
         Description: The path to register with the Application Load Balancer
         Type: String
-        Default: /
-
-    PostgresHost:
-        Description: The host name of the RDS database server
-        Type: String
-        Default: db
+        Default: /*
 
     ECSServiceAutoScalingRoleARN:
         Description: The ECS service auto scaling role ARN
         Type: String
+
+    EnvName:
+        Type: String
+        Description: dev, test, stage or prod
 
 Resources:
 
@@ -52,29 +50,84 @@ Resources:
             DesiredCount: !Ref DesiredCount
             TaskDefinition: !Ref TaskDefinition
             LoadBalancers: 
-                - ContainerName: "concordia-service"
+                - ContainerName: "app"
                   ContainerPort: 80
                   TargetGroupArn: !Ref TargetGroup
 
     TaskDefinition:
         Type: AWS::ECS::TaskDefinition
         Properties:
-            Family: concordia-service
+            Family: !Sub concordia-${EnvName}
+            Volumes:
+                - Name: images_volume
             ContainerDefinitions:
-                - Name: concordia-service
+                - Name: app
                   Essential: true
                   Image: 351149051428.dkr.ecr.us-east-1.amazonaws.com/concordia:latest
-                  Memory: 128
+                  Memory: 512
+                  Cpu: 512
+                  Links:
+                    - rabbit
                   Environment: 
-                    - Name: POSTGRESQL_HOST
-                      Value: !Ref PostgresHost
+                    - Name: AWS
+                      Value: 1
+                    - Name: ENV_NAME 
+                      Value: !Ref EnvName
+                    - Name: CELERY_BROKER_URL
+                      Value: pyamqp://guest@rabbit:5672
+                    - Name: AWS_DEFAULT_REGION
+                      Value: !Ref AWS::Region
+                    - Name: SENTRY_PUBLIC_DSN
+                      Value: http://f69265b381a44ceb89e9bd467f86fbdd@devops-sentry-public-lb-718357739.us-east-1.elb.amazonaws.com/3
+                  MountPoints:
+                    - SourceVolume: images_volume
+                      ContainerPath: /concordia_images
                   PortMappings:
                     - ContainerPort: 80
+                      HostPort: 80
                   LogConfiguration:
                     LogDriver: awslogs
                     Options:
                         awslogs-group: !Ref AWS::StackName
                         awslogs-region: !Ref AWS::Region
+                        awslogs-stream-prefix: concordia-app-
+                - Name: importer
+                  Essential: true
+                  Image: 351149051428.dkr.ecr.us-east-1.amazonaws.com/concordia/importer:latest
+                  Memory: 512
+                  Cpu: 512
+                  Links:
+                    - rabbit
+                  Environment: 
+                    - Name: AWS
+                      Value: 1
+                    - Name: ENV_NAME 
+                      Value: !Ref EnvName
+                    - Name: CELERY_BROKER_URL
+                      Value: pyamqp://guest@rabbit:5672
+                    - Name: AWS_DEFAULT_REGION
+                      Value: !Ref AWS::Region                  
+                    - Name: SENTRY_PUBLIC_DSN
+                      Value: http://f69265b381a44ceb89e9bd467f86fbdd@devops-sentry-public-lb-718357739.us-east-1.elb.amazonaws.com/3
+                  MountPoints:
+                    - SourceVolume: images_volume
+                      ContainerPath: /concordia_images
+                  LogConfiguration:
+                    LogDriver: awslogs
+                    Options:
+                        awslogs-group: !Ref AWS::StackName
+                        awslogs-region: !Ref AWS::Region
+                        awslogs-stream-prefix: concordia-importer-
+                - Name: rabbit
+                  Essential: true
+                  Memory: 512
+                  Cpu: 512                  
+                  Image: 351149051428.dkr.ecr.us-east-1.amazonaws.com/rabbitmq:latest
+                  Hostname: rabbit
+                  PortMappings:
+                    - ContainerPort: 5672
+                      HostPort: 5672
+                    
 
     CloudWatchLogsGroup:
         Type: AWS::Logs::LogGroup
@@ -192,7 +245,7 @@ Resources:
     CPUScaleOutAlarm:
         Type: AWS::CloudWatch::Alarm
         Properties:
-            AlarmName: CPU utilization greater than 90%
+            AlarmName: !Sub CPU gt 90% ${AWS::StackName}
             AlarmDescription: Alarm if cpu utilization greater than 90% of reserved cpu
             Namespace: AWS/ECS
             MetricName: CPUUtilization
@@ -212,7 +265,7 @@ Resources:
     CPUScaleInAlarm:
         Type: AWS::CloudWatch::Alarm
         Properties:
-            AlarmName: CPU utilization less than 70%
+            AlarmName: !Sub CPU lt 70% ${AWS::StackName}
             AlarmDescription: Alarm if cpu utilization greater than 70% of reserved cpu
             Namespace: AWS/ECS
             MetricName: CPUUtilization

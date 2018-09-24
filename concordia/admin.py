@@ -1,7 +1,14 @@
 from django.contrib import admin
 
-from .models import (Asset, Campaign, Item, Project, Tag, Transcription,
-                     UserAssetTagCollection)
+from .models import (
+    Asset,
+    Campaign,
+    Item,
+    Project,
+    Tag,
+    Transcription,
+    UserAssetTagCollection,
+)
 
 
 @admin.register(Campaign)
