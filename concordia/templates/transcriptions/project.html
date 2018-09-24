@@ -40,18 +40,8 @@
             {% endfor %}
         </div>
     </div>
-    <div class="pagination justify-content-center align-items-center mb-default">
-        <span class="step-links">
-            {% if items.has_previous %}
-            <a class="pr-3 primary-text" href="?page=1">&laquo; first</a>
-            <a class="pr-3 primary-text" href="?page={{ items.previous_page_number }}">previous</a>
-            {% endif %}
-            <span class="current">Page {{ items.number }} of {{ items.paginator.num_pages }}</span>
-            {% if items.has_next %}
-            <a class="pl-3 primary-text" href="?page={{ items.next_page_number }}">next</a>
-            <a class="pl-3 primary-text" href="?page={{ items.paginator.num_pages }}">last &raquo;</a>
-            {% endif %}
-        </span>
+    <div class="row">
+        {% include "standard-pagination.html" %}
     </div>
 </div>
 {% endblock main_content %}

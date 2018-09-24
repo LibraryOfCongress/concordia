@@ -79,6 +79,14 @@
                 </ul>
             </div>
 
+            {% comment %} FIXME: this should be replaced with JS so we can cache pages {% endcomment %}
+            {% if not user.is_authenticated %}
+                <div class="nav-secondary">
+                    <a class="nav-link nav-secondary d-none d-lg-inline nav-link-login" href="{% url 'login' %}">Login</a>
+                    <a class="nav-link nav-secondary d-none d-lg-inline nav-link-register" href="{% url 'registration_register' %}">Register</a>
+                    </ul>
+                </div>
+            {% endif %}
         </nav>
     </header>
     <main>

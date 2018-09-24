@@ -10,7 +10,7 @@ first … [current - 1…3] … current page … [current + 1…3] … last
 {% endcomment %}
 
 {% if is_paginated %}
-    <nav>
+    <nav class="w-100">
         <ul class="pagination mx-auto justify-content-center">
             {% if page_obj.has_previous %}
                 <li class="page-item">
