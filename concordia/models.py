@@ -100,8 +100,8 @@ class Project(models.Model):
 class Item(models.Model):
     visible = models.BooleanField(default=False, blank=True)
 
-    title = models.CharField(max_length=100)
-    slug = models.SlugField(max_length=100)
+    title = models.CharField(max_length=300)
+    slug = models.SlugField(max_length=300)
     description = models.TextField(blank=True)
     item_url = models.URLField(max_length=255)
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
