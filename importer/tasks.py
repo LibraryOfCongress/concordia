@@ -21,8 +21,6 @@ from requests.exceptions import HTTPError
 from concordia.models import Asset, MediaType, Project
 from concordia.storage import ASSET_STORAGE
 from importer.models import (
-    CampaignItemAssetCount,
-    CampaignTaskDetails,
     ImportItemAsset,
     ImportJob,
 )

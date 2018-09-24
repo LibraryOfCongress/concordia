@@ -16,7 +16,7 @@
             <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaigns' %}">Campaigns</a></li>
             <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaign' campaign.slug %}">{{
                     campaign.title }}</a></li>
-            <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:project' project.slug %}">{{
+            <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:project-detail' campaign.slug project.slug %}">{{
                     project.title }}</a></li>
             <li class="breadcrumb-item active" aria-current="page">{{ item.title }}</li>
         </ol>
@@ -44,52 +44,33 @@
                 </form>
 
 
+    <div class="d-flex flex-wrap col-12 justify-content-around">
+            {% for a in assets %}
+{% url 'transcriptions:asset-detail' a.project.campaign.slug a.project.slug a.item.slug a.slug as asset_detail_url %}
 
-                <div class="d-flex flex-wrap col-12 justify-content-around">
-                    {% for a in assets %}
-                    <div class="col-12 col-md-4 col-lg-3 px-quarter mb-default">
-                        {% if a.status == 'Submitted' %}
-                        <div class="w-100 pt-quarter bg-primary-color">
-                            <i class="fas fa-list tx-submitted px-quarter offwhite-text"></i>
-                            <h6 class="offwhite-text d-inline">Review</h6>
-                        </div>
-                        {% elif a.status == 'Completed' %}
-                        <div class="w-100 pt-quarter bg-primary-color">
-                            <i class="fas fa-check tx-completed px-quarter offwhite-text"></i>
-                            <h6 class="offwhite-text d-inline">Complete</h6>
-                        </div>
-                        {% else %}
-                        <div class="w-100 pt-quarter bg-primary-color">
-                            <i class="fas fa-edit tx-edit px-quarter offwhite-text"></i>
-                            <h6 class="offwhite-text d-inline">Transcribe</h6>
-                            {% url 'transcriptions:asset-detail' a.project.campaign.slug a.project.slug a.item.slug
-                            a.slug as asset_detail_url %}
-                            <div class="col-12 col-md-4 col-lg-3 mx-quarter mb-default card bg-lightest-gray shadow-regular"
-                                data-asset-status="{{ a.status|lower }}">
-                                <a href="{{ asset_detail_url }}">
-                                    <img class="card-img card-img-campaign" alt="{{ a.slug }}" src="{% asset_media_url a %}">
-                                </a>
-                                <div class="card-img-overlay img-campaign">
-                                    <div class="d-flex flex-column justify-content-end col-9 col-md-8 mx-auto h-100">
-                                        <a href="{{ asset_detail_url }}" class="btn btn-primary btn-lg w-100 mb-quarter">Transcribe</a>
-                                        <a href="{{ asset_detail_url }}#tab-tag" class="btn btn-primary btn-lg w-100 mb-quarter">Tag</a>
-                                    </div>
-                                </div>
-                                <a href="{{ asset_detail_url }}" class="campaign-image-link">
-                                    <h6 class="text-center primary-text my-half">Image {{ a.sequence }}</h6>
-                                </a>
-                            </div>
-                            {% endif %}
-                            <a href="{% url 'transcriptions:asset' campaign.slug a.slug %}">
-                                <img class="img-fluid card-img-campaign" alt="{{ a.slug }}" src="{% if campaign.s3_storage %}{{ a.media_url }}{% else %}{{ MEDIA_URL }}{{a.media_url }}{% endif %}">
-                                <h5 class="pl-half project-title text-color-primary py-quarter">Image {{ a.sequence }}</h5>
-                            </a>
-                            {% if user.is_superuser %}
-                            <a href="{% url 'transcriptions:delete_asset' campaign.slug a.slug %}" class="btn btn-default w-100">Hide</a>
-                            {% endif %}
-                        </div>
-                        {% endfor %}
-
+            <div class="col-12 col-md-4 col-lg-3 px-quarter mb-default" data-asset-status="{{ a.status|lower }}">
+                {% if a.status == 'Submitted' %}
+                <div class="w-100 pt-quarter bg-primary-color">
+                    <i class="fas fa-list tx-submitted px-quarter offwhite-text"></i>
+                    <h6 class="offwhite-text d-inline">Review</h6>
+                </div>
+                {% elif a.status == 'Completed' %}
+                <div class="w-100 pt-quarter bg-primary-color">
+                    <i class="fas fa-check tx-completed px-quarter offwhite-text"></i>
+                    <h6 class="offwhite-text d-inline">Complete</h6>
+                </div>
+                {% else %}
+                <div class="w-100 pt-quarter bg-primary-color">
+                    <i class="fas fa-edit tx-edit px-quarter offwhite-text"></i>
+                    <h6 class="offwhite-text d-inline">Transcribe</h6>
+                </div>
+                {% endif %}
+                <a href="{{ asset_detail_url }}">
+                    <img class="img-fluid card-img-campaign" alt="{{ a.slug }}" src="{% if campaign.s3_storage %}{{ a.media_url }}{% else %}{{ MEDIA_URL }}{{a.media_url }}{% endif %}">
+                    <h5 class="pl-half project-title text-color-primary py-quarter">Image {{ a.sequence }}</h5>
+                </a>
+            </div>
+            {% endfor %}
                     </div>
                 </div>
 

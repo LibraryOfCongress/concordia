@@ -24,7 +24,7 @@
             {% for project in projects %}
             {% if project.is_publish %}
             <div class="col-12 col-md-4 col-lg-3 mb-default px-half">
-                <a href="{% url 'transcriptions:project' project.campaign.slug project.slug %}" class="">
+                <a href="{% url 'transcriptions:project-detail' project.campaign.slug project.slug %}" class="">
                     <div class="bg-img-placeholder card-img-campaign d-flex align-items-center justify-content-center">
                     </div>
                     <h5 class="card-title pl-half w-100 bg-lightest-gray">{{ project.title }}</h5>
@@ -35,7 +35,7 @@
             {% else %}
             {% for project in projects %}
             <div class="col-12 col-md-4 col-lg-3 px-quarter mb-default">
-                <a href="{% url 'transcriptions:project' project.campaign.slug project.slug %}" class="">
+                <a href="{% url 'transcriptions:project-detail' project.campaign.slug project.slug %}" class="">
                     <div class="bg-img-placeholder card-img-campaign d-flex align-items-center justify-content-center">
                     </div>
                     <h5 class="text-center primary-text py-half bg-lightest-gray">{{ project.title }}</h5>
@@ -44,18 +44,6 @@
             {% endfor %}
             {% endif %}
         </div>
-    </div>
-    <div class="d-flex pagination justify-content-center align-items-center mb-default px-default">
-        <span class="step-links">
-            {% if projects.has_previous %}
-            <a class="pr-3 primary-text" href="?page=1">&laquo; first</a>
-            <a class="pr-3 primary-text" href="?page={{ projects.previous_page_number }}">previous</a>
-            {% endif %}
-            <span class="current">Page {{ projects.number }} of {{ projects.paginator.num_pages }}</span> {% if
-            projects.has_next %}
-            <a class="pl-3 primary-text" href="?page={{ projects.next_page_number }}">next</a>
-            <a class="pl-3 primary-text" href="?page={{ projects.paginator.num_pages }}">last &raquo;</a> {% endif %}
-        </span>
     </div>
 </div>
 {% endblock main_content %}
