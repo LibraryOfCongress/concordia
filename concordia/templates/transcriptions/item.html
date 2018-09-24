@@ -2,6 +2,7 @@
 
 {% load humanize %}
 {% load staticfiles %}
+{% load concordia_media_tags %}
 
 {% block title %}Concordia - {{ campaign.title }}{% endblock title %}
 {% block head_content %}
@@ -9,11 +10,26 @@
 {% endblock head_content %}
 {% block main_content %}
 <div class="container-fluid py-default">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb bg-offwhite">
+            <li class="breadcrumb-item"><a class="primary-text" href="/">Home</a></li>
+            <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaigns' %}">Campaigns</a></li>
+            <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaign' campaign.slug %}">{{
+                    campaign.title }}</a></li>
+            <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:project-detail' campaign.slug project.slug %}">{{
+                    project.title }}</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ item.title }}</li>
+        </ol>
+    </nav>
     <div class="row">
+        <div class="col-md-12">
+            <h1 class="mt-default mb-half ml-half">{{ item.title }}</h1>
+            <p class="ml-default mb-default hero-text">{{ item.description }}</p>
+        </div>
+    </div>
+    <div class="row">
+
         <div class="col-md-10 mx-auto bg-offwhite rounded">
-            <h3 class="mt-default mb-half ml-half">{{ campaign.title }}</h3>
-            <h4>{{ project.title }}</h4>
-            <h5>Item {{ item.title }}</h5>
             <div class="row">
                 <form method="get" class="w-50 mx-auto">
                     <h6>Filter {{ paginator.count|intcomma }} Assets:</h6>
@@ -26,29 +42,54 @@
                         </div>
                     </div>
                 </form>
-                <div class="d-flex flex-wrap col-12 justify-content-around">
-                    {% for a in assets %}
-                        <div class="col-12 col-md-4 col-lg-3 mx-quarter mb-default card bg-lightest-gray shadow-regular" data-asset-status="{{ a.status|lower }}">
-                            <a href="{% url 'transcriptions:asset' campaign.slug a.slug %}">
-                                <img class="card-img card-img-campaign" alt="{{ a.slug }}" src="{% if campaign.s3_storage %}{{ a.media_url }}{% else %}{{ MEDIA_URL }}{{a.media_url }}{% endif %}">
-                            </a>
-                            <div class="card-img-overlay img-campaign">
-                                <div class="d-flex flex-column justify-content-end col-9 col-md-8 mx-auto h-100">
-                                    <a href="{% url 'transcriptions:asset' campaign.slug a.slug %}" class="btn btn-primary btn-lg w-100 mb-quarter">Transcribe</a>
-                                    <a href="{% url 'transcriptions:asset' campaign.slug a.slug %}#tab-tag" class="btn btn-primary btn-lg w-100 mb-quarter">Tag</a>
-                                    {% if user.is_superuser %}
-                                        <a href="{% url 'transcriptions:delete_asset' campaign.slug a.slug %}" class="btn btn-primary btn-lg w-100 mb-quarter">Hide</a>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <a href="{% url 'transcriptions:asset' campaign.slug a.slug %}" class="campaign-image-link"><h6 class="text-center primary-text my-half">Image {{ a.sequence }}</h6></a>
-                        </div>
-                    {% endfor %}
-                </div>
-            </div>
 
-            {% include "standard-pagination.html" %}
+
+    <div class="d-flex flex-wrap col-12 justify-content-around">
+            {% for a in assets %}
+{% url 'transcriptions:asset-detail' a.project.campaign.slug a.project.slug a.item.slug a.slug as asset_detail_url %}
+
+            <div class="col-12 col-md-4 col-lg-3 px-quarter mb-default" data-asset-status="{{ a.status|lower }}">
+                {% if a.status == 'Submitted' %}
+                <div class="w-100 pt-quarter bg-primary-color">
+                    <i class="fas fa-list tx-submitted px-quarter offwhite-text"></i>
+                    <h6 class="offwhite-text d-inline">Review</h6>
+                </div>
+                {% elif a.status == 'Completed' %}
+                <div class="w-100 pt-quarter bg-primary-color">
+                    <i class="fas fa-check tx-completed px-quarter offwhite-text"></i>
+                    <h6 class="offwhite-text d-inline">Complete</h6>
+                </div>
+                {% else %}
+                <div class="w-100 pt-quarter bg-primary-color">
+                    <i class="fas fa-edit tx-edit px-quarter offwhite-text"></i>
+                    <h6 class="offwhite-text d-inline">Transcribe</h6>
+                </div>
+                {% endif %}
+                <a href="{{ asset_detail_url }}">
+                    <img class="img-fluid card-img-campaign" alt="{{ a.slug }}" 
+                    src="{% if campaign.s3_storage %}https://s3.amazonaws.com/{{ S3_BUCKET_NAME }}/{{ a.media_url }}{% else %}{{ MEDIA_URL }}{{a.media_url }}{% endif %}">
+                    <h5 class="pl-half project-title text-color-primary py-quarter">Image {{ a.sequence }}</h5>
+                </a>
+            </div>
+            {% endfor %}
+                    </div>
+                </div>
+
+                {% include "standard-pagination.html" %}
+            </div>
+        </div>
+        <div class="pagination justify-content-center align-items-center mb-default">
+            <span class="step-links">
+                {% if assets.has_previous %}
+                <a class="pr-3 primary-text" href="?page=1">&laquo; first</a>
+                <a class="pr-3 primary-text" href="?page={{ assets.previous_page_number }}">previous</a>
+                {% endif %}
+                <span class="current">Page {{ assets.number }} of {{ assets.paginator.num_pages }}</span>
+                {% if assets.has_next %}
+                <a class="pl-3 primary-text" href="?page={{ assets.next_page_number }}">next</a>
+                <a class="pl-3 primary-text" href="?page={{ assets.paginator.num_pages }}">last &raquo;</a>
+                {% endif %}
+            </span>
         </div>
     </div>
-</div>
-{% endblock main_content %}
+    {% endblock main_content %}

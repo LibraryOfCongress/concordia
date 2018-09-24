@@ -1,27 +1,25 @@
 {% extends "base.html" %}
-
 {% load staticfiles %}
-
-{% block title %}Make Your Mark Home{% endblock title %}
-
+{% block title %}Crowd Home{% endblock title %}
 {% block main_content %}
-
 <div class="container-fluid">
     <div class="row">
         <div class="col-12 ">
             <div id="homepage-carousel" class="carousel slide" data-ride="carousel" data-interval="5000">
                 <div class="carousel-inner">
                     <div class="carousel-item text-right active">
-                        <img class="d-block" src="{% static "img/OjoSarco.jpg" %}" alt="child writing on a chalkboard carousel image">
+                        <img class="d-block" src="{% static  'img/OjoSarco.jpg' %}" alt="child writing on a chalkboard carousel image">
                     </div>
                     <div class="carousel-item text-right">
-                        <img class="d-block" src="{% static "img/branch-rickey.png" %}" alt="Branch Rickey carousel image">
+                        <img class="d-block" src="{% static  'img/branch-rickey.png' %}" alt="Branch Rickey carousel image">
                     </div>
                 </div>
             </div>
             <div class="col-8 col-md-6 carousel-text text-center py-md-half">
                 <h1 class=" px-md-default">Make Your Mark</h1>
-                <p class="hero-text d-none d-md-block mb-0 mx-quarter">Uncover our shared history by transcribing and tagging documents from the library’s diverse collections.<br>Explore the past and help make documents more searchable for readers and researchers of the future</p>
+                <p class="hero-text d-none d-md-block mb-0 mx-quarter">Uncover our shared history by transcribing and
+                    tagging documents from the library’s diverse collections.<br>Explore the past and help make
+                    documents more searchable for readers and researchers of the future</p>
                 <a class="btn btn-primary btn-lg my-2 mb-md-3" href="{% url 'transcriptions:campaigns' %}">GET STARTED!</a>
             </div>
         </div>
@@ -30,23 +28,27 @@
         <div class="row bg-home-contribute pxy-default">
             <div class="col-12 mb-default">
                 <h2 class="px-default offwhite-text px-md-0 ml-md-default">Contribute</h2>
-                <p class="px-default offwhite-text hero-secondary text-home-contribute px-md-0 ml-md-default col-12 col-md-8">Anyone can transcribe a document.<br>Register to review and edit existing transcriptions and to describe documents by adding tags.</p>
+                <p class="px-default offwhite-text hero-secondary text-home-contribute px-md-0 ml-md-default col-12 col-md-8">Anyone
+                    can transcribe a document.<br>Register to review and edit existing transcriptions and to describe
+                    documents by adding tags.</p>
             </div>
             <div class="d-flex flex-wrap col-12 justify-content-around">
                 <div class="col-12 col-md-4 mb-default text-center">
-                    <img class="img-home-contribute d-block mx-auto" src="{% static "img/homepage-pencil.svg" %}">
+                    <img class="img-home-contribute d-block mx-auto" src="{% static 'img/homepage-pencil.svg' %}">
                     <h4 class="offwhite-text mt-half">TRANSCRIBE</h4>
                     <p class="offwhite-text px-default">Type what you see on the page.</p>
                 </div>
                 <div class="col-12 col-md-4 mb-default text-center border-left-home-contribute">
-                    <img class="img-home-contribute d-block mx-auto" src="{% static "img/homepage-tag.svg" %}">
+                    <img class="img-home-contribute d-block mx-auto" src="{% static 'img/homepage-tag.svg' %}">
                     <h4 class="offwhite-text mt-half">TAG</h4>
-                    <p class="offwhite-text px-default">Add tags to share what you found interesting or useful about the page.</p>
+                    <p class="offwhite-text px-default">Add tags to share what you found interesting or useful about
+                        the page.</p>
                 </div>
                 <div class="col-12 col-md-4 mb-default text-center border-left-home-contribute">
-                    <img class="img-home-contribute d-block mx-auto" src="{% static "img/homepage-checkmark.svg" %}">
+                    <img class="img-home-contribute d-block mx-auto" src="{% static 'img/homepage-checkmark.svg' %}">
                     <h4 class="offwhite-text mt-half">REVIEW</h4>
-                    <p class="offwhite-text px-default">Check transcriptions to edit mistakes or mark pages as complete.</p>
+                    <p class="offwhite-text px-default">Check transcriptions to edit mistakes or mark pages as
+                        complete.</p>
                 </div>
             </div>
         </div>
@@ -57,34 +59,40 @@
         </div>
         <div class="d-flex flex-wrap col-12 justify-content-around">
             <div class="col-12 col-md-4 mb-default text-center">
-                <img class="img-home-contribute d-block mx-auto img-fluid" src="{% static "img/rosa-parks-campaign.svg" %}" alt="Rosa Parks Papers">
+                <img class="img-home-contribute d-block mx-auto img-fluid" src="{% static 'img/rosa-parks-campaign.svg' %}"
+                    alt="Rosa Parks Papers">
                 <h3 class="mt-half">Rosa Parks Papers</h3>
                 <a class="btn btn-outline-primary" href="#" role="button">Get Started!</a>
             </div>
             <div class="col-12 col-md-4 mb-default text-center border-left-home-contribute">
-                <img class="img-home-contribute d-block mx-auto img-fluid" src="{% static "img/branch-rickey-campaign.svg" %}" alt="Branch Rickey Papers">
+                <img class="img-home-contribute d-block mx-auto img-fluid" src="{% static 'img/branch-rickey-campaign.svg' %}"
+                    alt="Branch Rickey Papers">
                 <h3 class="mt-half">Branch Rickey Papers</h3>
                 <a class="btn btn-outline-primary" href="#" role="button">Get Started!</a>
             </div>
             <div class="col-12 col-md-4 mb-default text-center border-left-home-contribute">
-                <img class="img-home-contribute d-block mx-auto img-fluid" src="{% static "img/clara-barton-campaign.svg" %}" alt="Clara Barton Papers">
+                <img class="img-home-contribute d-block mx-auto img-fluid" src="{% static 'img/clara-barton-campaign.svg' %}"
+                    alt="Clara Barton Papers">
                 <h3 class="mt-half">Clara Barton Papers</h3>
                 <a class="btn btn-outline-primary" href="#" role="button">Get Started!</a>
             </div>
         </div>
         <div class="d-flex flex-wrap col-12 justify-content-around">
             <div class="col-12 col-md-4 mb-default text-center">
-                <img class="img-home-contribute d-block mx-auto img-fluid" src="{% static "img/AbrahamLincoln.svg" %}" alt="Abraham Lincoln Papers">
+                <img class="img-home-contribute d-block mx-auto img-fluid" src="{% static 'img/AbrahamLincoln.svg' %}"
+                    alt="Abraham Lincoln Papers">
                 <h3 class="mt-half">Abraham Lincoln Papers</h3>
                 <a class="btn btn-outline-primary" href="#" role="button">Get Started!</a>
             </div>
             <div class="col-12 col-md-4 mb-default text-center border-left-home-contribute">
-                <img class="img-home-contribute d-block mx-auto img-fluid" src="{% static "img/MaryChurchTerrell.svg" %}" alt="Mary Church Terrell Papers">
+                <img class="img-home-contribute d-block mx-auto img-fluid" src="{% static 'img/MaryChurchTerrell.svg' %}"
+                    alt="Mary Church Terrell Papers">
                 <h3 class="mt-half">Mary Church Terrell Papers</h3>
                 <a class="btn btn-outline-primary" href="#" role="button">Get Started!</a>
             </div>
             <div class="col-12 col-md-4 mb-default text-center border-left-home-contribute">
-                <img class="img-home-contribute d-block mx-auto img-fluid" src="{% static "img/WilliamOlandBourne.svg" %}" alt="William Oland Bourne Papers">
+                <img class="img-home-contribute d-block mx-auto img-fluid" src="{% static 'img/WilliamOlandBourne.svg' %}"
+                    alt="William Oland Bourne Papers">
                 <h3 class="mt-half">William Oland Bourne Papers</h3>
                 <a class="btn btn-outline-primary" href="#" role="button">Get Started!</a>
             </div>

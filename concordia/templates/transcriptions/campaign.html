@@ -1,214 +1,49 @@
 {% extends "transcriptions/base.html" %}
-
 {% load staticfiles %}
 {% load concordia_auth_tags %}
 
-{% block title %}Concordia - {{ campaign.title }}{% endblock title %}
-
+{% block title %}Crowd — {{ campaign.title }} Projects{% endblock title %}
 {% block main_content %}
-<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
-<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 <div class="container-fluid py-default">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb bg-offwhite">
+            <li class="breadcrumb-item"><a class="primary-text" href="/">Home</a></li>
+            <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaigns' %}">Campaigns</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ campaign.title }}</li>
+        </ol>
+    </nav>
     <div class="row">
-        <div class="col-md-10 mx-auto bg-offwhite rounded">
-            <h3 class="mt-default mb-half ml-half">{{ campaign.title }}</h3>
-            <p class="ml-default mb-default">{{ campaign.description }}</p>
-            <div class="row">
-                <div class="d-flex flex-wrap col-12 justify-content-around">
-                    {% if request.user.is_anonymous or not request.user.is_staff %}
-                        {% for project in projects %}
-                            {% if project.is_publish %}
-                                <div class="col-12 col-md-4 col-lg-3 mb-default mx-quarter card shadow-regular bg-lightest-gray">
-                                    <div class="card-body bg-offwhite">
-                                      <h5 class="card-title align-text-middle w-100">{{ project.title }}</h5>
-                                      <div class="col-md-8 mx-auto text-center">
-                                        <a href="{% url 'transcriptions:project' project.campaign.slug project.slug %}" class="btn btn-primary col mb-quarter">View</a>
-                                      </div>
-                                    </div>
-                                </div>
-                            {% endif %}
-                        {% endfor %}
-                    {% else %}
-                        {% for project in projects %}
-                            <div class="col-12 col-md-4 col-lg-3 mb-default mx-quarter card shadow-regular bg-lightest-gray">
-                                <div class="card-body bg-offwhite">
-                                  <h5 class="card-title align-text-middle w-100">{{ project.title }}</h5>
-                                  <div class="col-md-8 mx-auto text-center">
-                                    <a href="{% url 'transcriptions:project-detail' project.campaign.slug project.slug %}" class="btn btn-primary col mb-quarter">View</a>
-                                  </div>
-                                  <div class="col-md-8 mx-auto text-center">
-                                      <a href="#" class="btn btn-danger col mb-quarter" data-collection="{{ project.campaign.slug }}" data-subcollection="{{ project.slug }}" data-toggle="modal" data-target="#deleteConfirmModal">Delete</a>
-                                  </div>
-                                {% if request.user|has_group:"CM" %}
-                                    <div class="col-md-8 mx-auto text-center">
-                                    {% if project.is_publish %}
-                                        <button type="button" class="confirm-modal btn btn-primary col" data-toggle="modal" id="{{ project.slug }}" data-target="#projectUnpublishModal" data-campaign="{{ project.campaign.slug }}">
-                                                Unpublish</button>
-                                    {% else %}
-                                        <button type="button" class="confirm-modal btn btn-primary col" data-toggle="modal" id="{{ project.slug }}" data-target="#projectConfirmModal" data-campaign="{{ project.campaign.slug }}">
-                                                Publish</button>
-                                    {% endif %}
-                                    </div>
-                                {% endif %}
-                                </div>
-                            </div>
-                        {% endfor %}
-                    {% endif %}
-                </div>
+        <div class="col-12">
+            <h1 class="my-default ml-half">{{ campaign.title }}</h1>
+            <p class="ml-default mb-default hero-text">{{ campaign.description }}</p>
+        </div>
+    </div>
+    <div class="row">
+        <div class="d-flex flex-wrap col-12 justify-content-around">
+            {% if request.user.is_anonymous or request.user.is_staff is False %}
+            {% for project in projects %}
+            {% if project.is_publish %}
+            <div class="col-12 col-md-4 col-lg-3 mb-default px-half">
+                <a href="{% url 'transcriptions:project-detail' project.campaign.slug project.slug %}" class="">
+                    <div class="bg-img-placeholder card-img-campaign d-flex align-items-center justify-content-center">
+                    </div>
+                    <h5 class="card-title pl-half w-100 bg-lightest-gray">{{ project.title }}</h5>
+                </a>
             </div>
+            {% endif %}
+            {% endfor %}
+            {% else %}
+            {% for project in projects %}
+            <div class="col-12 col-md-4 col-lg-3 px-quarter mb-default">
+                <a href="{% url 'transcriptions:project-detail' project.campaign.slug project.slug %}" class="">
+                    <div class="bg-img-placeholder card-img-campaign d-flex align-items-center justify-content-center">
+                    </div>
+                    <h5 class="text-center primary-text py-half bg-lightest-gray">{{ project.title }}</h5>
+                </a>
+            </div>
+            {% endfor %}
+            {% endif %}
         </div>
     </div>
 </div>
-
-<!-- Confirmation Modal -->
-<div class="modal fade" id="projectConfirmModal" tabindex="-1" role="dialog" aria-labelledby="projectConfirmModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="projectConfirmModalLabel">Confirm Project</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body">
-          Are you sure you want to publish this project?
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-primary" id="confirmprojectbtn">Submit</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-<div class="modal fade" id="projectUnpublishModal" tabindex="-1" role="dialog" aria-labelledby="projectUnpublishModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="projectUnpublishModalLabel">Confirm Project</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body">
-          Are you sure you want to unpublish this project?
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-primary" id="unpublishprojectbtn">Submit</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-<!-- Delete Project Confirmation Modal -->
-<div class="modal fade" id="deleteConfirmModal" tabindex="-1" role="dialog" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="deleteConfirmModalLabel">Confirm Delete</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        Are you sure want to delete project ?
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary" id="deleteconfirmbtn">Delete</button>
-      </div>
-    </div>
-  </div>
-</div>
-  {% endblock main_content %}
-
-  {% block body_scripts %}
-  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous"></script>
-  <script>
-      $(document).ready(function(){
-          $(document).on('show.bs.modal',"#projectConfirmModal", function (e) {
-              var $invoker = $(e.relatedTarget);
-
-              $("#confirmprojectbtn").click(function(e){
-                  var collection_slug = $($invoker[0]).attr('data-campaign');
-                  var project_slug = $($invoker[0]).attr('id');
-                  var requested_status = $("#"+project_slug).text().trim();
-                  if(requested_status == 'Publish'){
-                      var to_status = 'true';
-                  }
-                  else{
-                      var to_status = 'false';
-                  }
-                  $.ajax({
-                      url: '/campaigns/publish/project/'+collection_slug+"/"+project_slug+"/"+to_status+"/",
-                      type: 'GET',
-                      success: function(data, textStatus, jqXHR) {
-                          $('#projectConfirmModal').modal('hide');
-                          $('#projectUnpublishModal').modal('hide');
-                          if(data['state']){
-                              $("#"+project_slug).text('Unpublish');
-                              $("#"+project_slug).attr('data-target','#projectUnpublishModal');
-                          } else{
-                              $("#"+project_slug).text('Publish');
-                              $("#"+project_slug).attr('data-target','#projectConfirmModal');
-                          }
-                      }
-                  }).fail(function(data, jqXHR, textStatus, errorThrown) {
-                      console.log("error: ", data);
-                  });
-              });
-          });
-
-          $(document).on('show.bs.modal',"#projectUnpublishModal", function (e) {
-              var $invoker = $(e.relatedTarget);
-
-              $("#unpublishprojectbtn").click(function(e){
-                  var collection_slug = $($invoker[0]).attr('data-campaign');
-                  var project_slug = $($invoker[0]).attr('id');
-                  var requested_status = $("#"+project_slug).text().trim();
-                  var to_status = 'false';
-                  $.ajax({
-                      url: '/campaigns/publish/project/'+collection_slug+"/"+project_slug+"/"+to_status+"/",
-                      type: 'GET',
-                      success: function(data, textStatus, jqXHR) {
-                          $('#projectConfirmModal').modal('hide');
-                          $('#projectUnpublishModal').modal('hide');
-                          if(data['state']){
-                              $("#"+project_slug).text('Unpublish');
-                              $("#"+project_slug).attr('data-target','#projectUnpublishModal');
-                          } else{
-                              $("#"+project_slug).text('Publish');
-                              $("#"+project_slug).attr('data-target','#projectConfirmModal');
-                          }
-                      }
-                  }).fail(function(data, jqXHR, textStatus, errorThrown) {
-                      console.log("error: ", data);
-                  });
-              });
-          });
-
-          $(document).on('shown.bs.modal',"#deleteConfirmModal", function (e) {
-            var $invoker = $(e.relatedTarget);
-
-            $("#deleteconfirmbtn").click(function(e){
-                var collection_slug = $($invoker[0]).attr("data-collection");
-                var subcollection_slug = $($invoker[0]).attr("data-subcollection");
-                $('#deleteConfirmModal').modal('hide');
-
-                $.ajax({
-                    url: '/campaigns/delete/project/'+collection_slug+'/'+subcollection_slug+'/',
-                    type: 'GET',
-                    success: function(data, textStatus, jqXHR) {
-                            $("#thumbnailConfirmModal").modal('hide');
-                            window.location.href = '/campaigns/';
-                        }
-                    }).fail(function(data, jqXHR, textStatus, errorThrown) {
-                        console.log("error: ", data);
-                        $("#thumbnailConfirmModal").modal('hide');
-                    });
-            });
-        });
-      });
-  </script>
-  {% endblock body_scripts %}
+{% endblock main_content %}

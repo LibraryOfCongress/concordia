@@ -1,7 +1,6 @@
 import html
 import json
 import os
-
 import time
 from datetime import datetime
 from logging import getLogger
@@ -21,21 +20,17 @@ from django.shortcuts import Http404, get_object_or_404, redirect, render
 from django.template import loader
 from django.urls import reverse
 from django.views.decorators.cache import never_cache
-from django.views.generic import FormView, ListView, TemplateView, View
+from django.views.generic import DetailView, FormView, ListView, TemplateView, View
 from registration.backends.hmac.views import RegistrationView
 from rest_framework import generics, status
 from rest_framework.test import APIRequestFactory
 
-from concordia.forms import (
-    AssetFilteringForm,
-    CaptchaEmbedForm,
-    ConcordiaContactUsForm,
-    ConcordiaUserEditForm,
-    ConcordiaUserForm,
-)
-from concordia.models import Campaign, Item, Project, Status, Transcription, UserProfile
+from concordia.forms import (AssetFilteringForm, CaptchaEmbedForm,
+                             ConcordiaContactUsForm, ConcordiaUserEditForm,
+                             ConcordiaUserForm)
+from concordia.models import (Asset, Campaign, Item, Project, Status, Transcription,
+                              UserProfile)
 from concordia.views_ws import PageInUseCreate
-from importer.views import CreateCampaignView
 
 logger = getLogger(__name__)
 
@@ -222,6 +217,8 @@ class ConcordiaProjectView(ListView):
         )
 
         item_qs = self.project.item_set.order_by("item_id")
+        if not self.request.user.is_staff:
+            item_qs = item_qs.exclude(visible=False)
 
         return item_qs
 
@@ -249,8 +246,13 @@ class ConcordiaItemView(ListView):
     http_method_names = ["get", "options", "head"]
 
     def get_queryset(self):
+        item_qs = Item.objects.select_related("project", "project__campaign")
+
+        if not self.request.user.is_staff:
+            item_qs = item_qs.filter(visible=True)
+
         self.item = get_object_or_404(
-            Item.objects.select_related("project", "project__campaign"),
+            item_qs,
             campaign__slug=self.kwargs["campaign_slug"],
             project__slug=self.kwargs["project_slug"],
             slug=self.kwargs["slug"],
@@ -284,18 +286,29 @@ class ConcordiaItemView(ListView):
         return res
 
 
-class ConcordiaAssetView(TemplateView):
+class ConcordiaAssetView(DetailView):
     """
     Class to handle GET ansd POST requests on route /campaigns/<campaign>/asset/<asset>
     """
 
-    template_name = "transcriptions/asset.html"
+    template_name = "transcriptions/asset_detail.html"
 
     state_dictionary = {
         "Save": Status.EDIT,
         "Submit for Review": Status.SUBMITTED,
         "Mark Completed": Status.COMPLETED,
     }
+
+    def get_queryset(self):
+        asset_qs = Asset.objects.filter(
+            item__slug=self.kwargs["item_slug"],
+            item__project__slug=self.kwargs["project_slug"],
+            item__project__campaign__slug=self.kwargs["campaign_slug"],
+            slug=self.kwargs["slug"],
+        )
+        asset_qs = asset_qs.select_related("item__project__campaign")
+
+        return asset_qs
 
     def get_asset_list_json(self):
         """
@@ -397,50 +410,47 @@ class ConcordiaAssetView(TemplateView):
 
         return json_val["page_in_use"]
 
-    def get_context_data(self, **kws):
+    def get_context_data(self, **kwargs):
         """
         Handle the GET request
         :param kws:
         :return: dictionary of items used in the template
         """
-        response = requests.get(
-            "%s://%s/ws/asset_by_slug/%s/%s/"
-            % (
-                self.request.scheme,
-                self.request.get_host(),
-                self.args[0],
-                self.args[1],
-            ),
-            cookies=self.request.COOKIES,
-        )
-        asset_json = json.loads(response.content.decode("utf-8"))
 
-        in_use_url = "/campaigns/%s/asset/%s/" % (
-            asset_json["campaign"]["slug"],
-            asset_json["slug"],
+        ctx = super().get_context_data(**kwargs)
+        asset = ctx['asset']
+
+        in_use_url = reverse(
+            "transcriptions:asset-detail",
+            kwargs={
+                "campaign_slug": self.kwargs["campaign_slug"],
+                "project_slug": self.kwargs["project_slug"],
+                "item_slug": self.kwargs["item_slug"],
+                "slug": self.kwargs["slug"],
+            },
         )
+
         current_user_id = (
             self.request.user.id
             if self.request.user.id is not None
             else get_anonymous_user(self.request)
         )
+
         page_in_use = self.check_page_in_use(in_use_url, current_user_id)
 
-        # TODO: in the future, this is from a settings file value
         discussion_hide = True
 
         # Get all transcriptions, they are no longer tied to a specific user
-
         response = requests.get(
             "%s://%s/ws/transcription/%s/"
-            % (self.request.scheme, self.request.get_host(), asset_json["id"]),
+            % (self.request.scheme, self.request.get_host(), asset.id),
             cookies=self.request.COOKIES,
         )
         transcription_json = json.loads(response.content.decode("utf-8"))
 
         response = requests.get(
             "%s://%s/ws/tags/%s/"
-            % (self.request.scheme, self.request.get_host(), asset_json["id"]),
+            % (self.request.scheme, self.request.get_host(), asset.id),
             cookies=self.request.COOKIES,
         )
         json_tags = []
@@ -500,20 +510,22 @@ class ConcordiaAssetView(TemplateView):
                 cookies=self.request.COOKIES,
             )
 
-        res = dict(
-            super().get_context_data(**kws),
-            page_in_use=page_in_use,
-            asset=asset_json,
-            transcription=transcription_json,
-            tags=json_tags,
-            captcha_form=captcha_form,
-            discussion_hide=discussion_hide,
-        )
         if self.request.user.is_anonymous:
-            res[
+            ctx[
                 "is_anonymous_user_captcha_validated"
             ] = self.is_anonymous_user_captcha_validated()
-        return res
+
+        ctx.update(
+            {
+                "page_in_use": page_in_use,
+                "transcription": transcription_json,
+                "tags": json_tags,
+                "captcha_form": captcha_form,
+                "discussion_hide": discussion_hide,
+            }
+        )
+
+        return ctx
 
     def is_anonymous_user_captcha_validated(self):
         if "captcha_validated_at" in self.request.session:
@@ -555,7 +567,7 @@ class ConcordiaAssetView(TemplateView):
             captcha_form = CaptchaEmbedForm(self.request.POST)
             if not captcha_form.is_valid():
                 logger.info("Invalid captcha response")
-                messages.error(self.request, 'Invalid Captcha.')
+                messages.error(self.request, "Invalid Captcha.")
                 return self.get(self.request, *args, **kwargs)
             else:
                 self.request.session[
@@ -589,17 +601,15 @@ class ConcordiaAssetView(TemplateView):
             }
 
             if tx_status == Status.EDIT:
-                messages.success(self.request,
-                                 'The transcription was saved successfully.')
+                messages.success(
+                    self.request, "The transcription was saved successfully."
+                )
             elif tx_status == Status.SUBMITTED:
-                messages.success(self.request,
-                                 'The transcription is ready for review.')
+                messages.success(self.request, "The transcription is ready for review.")
             elif tx_status == Status.COMPLETED:
-                messages.success(self.request,
-                                 'The transcription is completed.')
+                messages.success(self.request, "The transcription is completed.")
 
-            redirect_path = next_page_dictionary[tx_status](redirect_path,
-                                                            asset_json)
+            redirect_path = next_page_dictionary[tx_status](redirect_path, asset_json)
 
         elif "tags" in self.request.POST and self.request.user.is_authenticated:
             tags = self.request.POST.get("tags").split(",")
@@ -837,33 +847,9 @@ class CampaignView(TemplateView):
         :return: redirect to home (/) or render template create.html
         """
         if not self.request.user.is_superuser:
-            return HttpResponseRedirect('/')
+            return HttpResponseRedirect("/")
         else:
             return render(self.request, self.template_name)
-
-    def post(self, *args, **kwargs):
-        """
-        POST request when form submitted to create a collection. Only allows admin access
-        :param args:
-        :param kwargs:
-        :return: redirect to home (/) or render template create.html
-        """
-        # FIXME: if we don't know why this is being done this way, replace this
-        # view with a direct call to the CreateCampaignView or delete that view
-        # and replace it with this one
-        self.get_context_data()
-        
-        if self.request.user.is_superuser:
-            self.get_context_data()
-            name = self.request.POST.get("name")
-            url = self.request.POST.get("url")
-            slug = name.replace(" ", "-")
-            view = CreateCampaignView.as_view()
-            importer_resp = view(self.request, *args, **kwargs)
-
-            return render(self.request, self.template_name, importer_resp.data)
-        else:
-            return HttpResponseRedirect('/')
 
 
 class DeleteCampaignView(TemplateView):
@@ -880,15 +866,18 @@ class DeleteCampaignView(TemplateView):
         :return: redirect to home (/) or redirect to /campaigns/
         """
         if not self.request.user.is_superuser:
-            return HttpResponseRedirect('/')
+            return HttpResponseRedirect("/")
         else:
-            requests.delete("%s://%s/ws/campaign_delete/%s/" %
-                            (self.request.scheme,
-                             self.request.get_host(),
-                             self.args[0]),
-                            cookies=self.request.COOKIES)
+            requests.delete(
+                "%s://%s/ws/campaign_delete/%s/"
+                % (self.request.scheme, self.request.get_host(), self.args[0]),
+                cookies=self.request.COOKIES,
+            )
+            # FIXME: this needs error handling or being replaced outright (and has never been tested)
             os.system(
-                "rm -rf {0}".format(settings.MEDIA_ROOT + "/concordia/" + collection.slug)
+                "rm -rf {0}".format(
+                    settings.MEDIA_ROOT + "/concordia/" + collection.slug
+                )
             )
             return redirect("/campaigns/")
 
@@ -909,14 +898,13 @@ class DeleteAssetView(TemplateView):
         :return:
         """
         if not self.request.user.is_superuser:
-            return HttpResponseRedirect('/')
+            return HttpResponseRedirect("/")
         else:
             asset_update = {"campaign": self.args[0], "slug": self.args[1]}
 
-
             requests.put(
-                "%s://%s/ws/asset_update/%s/%s/" %
-                (
+                "%s://%s/ws/asset_update/%s/%s/"
+                % (
                     self.request.scheme,
                     self.request.get_host(),
                     self.args[0],
@@ -1077,7 +1065,12 @@ class DeleteProjectView(TemplateView):
         subcollection.asset_set.all().delete()
         subcollection.delete()
         os.system(
-            "rm -rf {0}".format(settings.MEDIA_ROOT + "/concordia/" + collection.slug + "/" + subcollection.slug)
+            "rm -rf {0}".format(
+                settings.MEDIA_ROOT
+                + "/concordia/"
+                + collection.slug
+                + "/"
+                + subcollection.slug
+            )
         )
-        return redirect("/campaigns/"+collection.slug+"/")
-
+        return redirect("/campaigns/" + collection.slug + "/")

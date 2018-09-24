@@ -1,21 +1,89 @@
+"""
+See the module-level docstring for implementation details
+"""
+from django.core.validators import MinValueValidator
 from django.db import models
 
+# FIXME: these classes should have names which more accurately represent what they do
 
-class CampaignTaskDetails(models.Model):
-    campaign_name = models.CharField(max_length=80)
-    campaign_slug = models.SlugField(max_length=80)
-    project_name = models.CharField(max_length=250)
-    project_slug = models.SlugField(max_length=250)
-    campaign_item_count = models.IntegerField(null=True, blank=True, default=0)
-    campaign_asset_count = models.IntegerField(null=True, blank=True, default=0)
-    campaign_task_id = models.CharField(max_length=100, null=True, blank=True)
+
+class TaskStatusModel(models.Model):
+    created = models.DateTimeField(auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)
+
+    last_started = models.DateTimeField(
+        "Last time when a worker started processing this job", null=True, blank=True
+    )
+    completed = models.DateTimeField(
+        "Time when the job completed processing", null=True, blank=True
+    )
+    failed = models.DateTimeField(
+        "Time when the job failed and will not be restarted", null=True, blank=True
+    )
+
+    status = models.TextField(
+        verbose_name="Status message, if any, from the last worker",
+        blank=True,
+        default="",
+    )
+
+    task_id = models.UUIDField(
+        verbose_name="UUID of the last Celery task to process this record",
+        null=True,
+        blank=True,
+    )
 
     class Meta:
-        unique_together = ("campaign_slug", "project_slug")
+        abstract = True
 
 
-class CampaignItemAssetCount(models.Model):
-    campaign_task = models.ForeignKey(CampaignTaskDetails, on_delete=models.CASCADE)
-    campaign_item_identifier = models.CharField(max_length=80)
-    campaign_item_asset_count = models.IntegerField(null=True, blank=True, default=0)
-    item_task_id = models.CharField(max_length=100, null=True, blank=True)
+class ImportJob(TaskStatusModel):
+    """
+    Represents a request by a user to import item(s) from a remote URL
+    """
+
+    created_by = models.ForeignKey("auth.User", null=True, on_delete=models.SET_NULL)
+
+    project = models.ForeignKey("concordia.Project", on_delete=models.CASCADE)
+
+    url = models.URLField(verbose_name="Source URL for the entire job")
+
+    def __str__(self):
+        return "ImportJob(created_by=%s, project=%s, url=%s)" % (
+            self.created_by.username,
+            self.project.title,
+            self.url,
+        )
+
+
+class ImportItem(TaskStatusModel):
+    """
+    Record of the task status for each Item being imported
+    """
+
+    job = models.ForeignKey(ImportJob, on_delete=models.CASCADE, related_name="items")
+
+    url = models.URLField()
+
+    item = models.ForeignKey("concordia.Item", on_delete=models.CASCADE)
+
+    def __str__(self):
+        return "ImportItem(job=%s, url=%s)" % (self.job, self.url)
+
+
+class ImportItemAsset(TaskStatusModel):
+    """
+    Record of the task status for each Asset being imported
+    """
+
+    import_item = models.ForeignKey(
+        ImportItem, on_delete=models.CASCADE, related_name="assets"
+    )
+
+    url = models.URLField()
+    sequence_number = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+
+    asset = models.ForeignKey("concordia.Asset", on_delete=models.CASCADE)
+
+    def __str__(self):
+        return "ImportItemAsset(import_item=%s, url=%s)" % (self.import_item, self.url)

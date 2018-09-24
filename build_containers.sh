@@ -18,4 +18,4 @@ docker push ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia/importer
 # docker tag rabbitmq:latest ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/rabbitmq:latest
 # docker push ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/rabbitmq:latest
 
-aws ecs update-service --cluster concordia2 --service concordia-service --force-new-deployment
+# aws ecs update-service --cluster concordia2 --service concordia-service --force-new-deployment

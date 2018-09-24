@@ -12,9 +12,20 @@ from captcha.models import CaptchaStore
 from django.test import Client, TestCase
 from PIL import Image
 
-from concordia.models import (Asset, Campaign, Item, MediaType, PageInUse, Project,
-                              Status, Tag, Transcription, User, UserAssetTagCollection,
-                              UserProfile)
+from concordia.models import (
+    Asset,
+    Campaign,
+    Item,
+    MediaType,
+    PageInUse,
+    Project,
+    Status,
+    Tag,
+    Transcription,
+    User,
+    UserAssetTagCollection,
+    UserProfile,
+)
 
 logging.disable(logging.CRITICAL)
 
@@ -472,7 +483,7 @@ class ViewTest_Concordia(TestCase):
             title="item-slug",
             slug="item-slug",
             item_id="item-slug",
-            is_publish=True,
+            visible=True,
             campaign=self.campaign,
             project=self.project,
         )
@@ -486,7 +497,7 @@ class ViewTest_Concordia(TestCase):
             "title": self.item.title,
             "description": "Item Description",
             "assets": [],
-            "is_publish": True,
+            "visible": True,
             "campaign": self.campaign.id,
             "project": self.project.id,
         }
