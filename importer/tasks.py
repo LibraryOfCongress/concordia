@@ -35,6 +35,25 @@ def update_task_status(f):
 
     @wraps(f)
     def inner(self, task_status_model, *args, **kwargs):
+        # We'll do a sanity check to make sure that another process hasn't
+        # updated the model status in the meantime:
+        guard_qs = task_status_model.__class__._default_manager.filter(
+            pk=task_status_model.pk, completed__isnull=False
+        )
+        if guard_qs.exists():
+            logger.warning(
+                "Task %s was already completed and will not be repeated",
+                task_status_model,
+                extra={
+                    "data": {
+                        "object": task_status_model,
+                        "args": args,
+                        "kwargs": kwargs,
+                    }
+                },
+            )
+            return
+
         task_status_model.last_started = now()
         task_status_model.task_id = self.request.id
         task_status_model.save()
@@ -44,11 +63,11 @@ def update_task_status(f):
             task_status_model.completed = now()
             task_status_model.save()
         except Exception as exc:
-            task_status_model.last_started = now()
             task_status_model.status = "{}\n\nUnhandled exception: {}".format(
                 task_status_model.status, exc
             ).strip()
             task_status_model.save()
+            raise
 
     return inner
 
