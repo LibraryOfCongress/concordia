@@ -63,6 +63,16 @@ class FailedFilter(NullableTimestampFilter):
 
 
 class TaskStatusModelAdmin(admin.ModelAdmin):
+    readonly_fields = (
+        "created",
+        "modified",
+        "last_started",
+        "completed",
+        "failed",
+        "status",
+        "task_id",
+    )
+
     @staticmethod
     def generate_natural_timestamp_display_property(field_name):
         def inner(obj):
@@ -93,6 +103,11 @@ class TaskStatusModelAdmin(admin.ModelAdmin):
 
 
 class ImportJobAdmin(TaskStatusModelAdmin):
+    readonly_fields = TaskStatusModelAdmin.readonly_fields + (
+        "project",
+        "created_by",
+        "url",
+    )
     list_display = (
         "display_created",
         "display_modified",
@@ -112,6 +127,8 @@ class ImportJobAdmin(TaskStatusModelAdmin):
 
 
 class ImportItemAdmin(TaskStatusModelAdmin):
+    readonly_fields = TaskStatusModelAdmin.readonly_fields + ("job", "item")
+
     list_display = (
         "display_created",
         "display_modified",
@@ -131,6 +148,12 @@ class ImportItemAdmin(TaskStatusModelAdmin):
 
 
 class ImportItemAssetAdmin(TaskStatusModelAdmin):
+    readonly_fields = TaskStatusModelAdmin.readonly_fields + (
+        "import_item",
+        "asset",
+        "sequence_number",
+    )
+
     list_display = (
         "display_created",
         "display_modified",
