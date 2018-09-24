@@ -87,7 +87,6 @@ CELERY_RESULT_BACKEND = "rpc://"
 S3_BUCKET_NAME = os.getenv("S3_BUCKET_NAME")
 
 DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
-STATICFILES_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 AWS_STORAGE_BUCKET_NAME = S3_BUCKET_NAME
 AWS_DEFAULT_ACL = None  # Don't set an ACL on the files, inherit the bucket ACLs
 
