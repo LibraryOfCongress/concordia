@@ -1,4 +1,5 @@
 from django.contrib import admin, messages
+from django.contrib.humanize.templatetags.humanize import naturaltime
 
 from .models import ImportItem, ImportItemAsset, ImportJob
 from .tasks import download_asset_task
@@ -61,8 +62,45 @@ class FailedFilter(NullableTimestampFilter):
     lookup_labels = ("Has not failed", "Has failed")
 
 
-class ImportJobAdmin(admin.ModelAdmin):
-    list_display = ("created", "modified", "last_started", "completed", "url", "status")
+class TaskStatusModelAdmin(admin.ModelAdmin):
+    @staticmethod
+    def generate_natural_timestamp_display_property(field_name):
+        def inner(obj):
+            value = getattr(obj, field_name)
+            if value:
+                return naturaltime(value)
+            else:
+                return value
+
+        inner.short_description = field_name.replace("_", " ").title()
+        return inner
+
+    def __init__(self, *args, **kwargs):
+        for field_name in (
+            "created",
+            "modified",
+            "last_started",
+            "completed",
+            "failed",
+        ):
+            setattr(
+                self,
+                f"display_{field_name}",
+                self.generate_natural_timestamp_display_property(field_name),
+            )
+
+        return super().__init__(*args, **kwargs)
+
+
+class ImportJobAdmin(TaskStatusModelAdmin):
+    list_display = (
+        "display_created",
+        "display_modified",
+        "display_last_started",
+        "display_completed",
+        "url",
+        "status",
+    )
     list_filter = (
         "created_by",
         "project",
@@ -73,8 +111,15 @@ class ImportJobAdmin(admin.ModelAdmin):
     search_fields = ("url", "status")
 
 
-class ImportItemAdmin(admin.ModelAdmin):
-    list_display = ("created", "modified", "last_started", "completed", "url", "status")
+class ImportItemAdmin(TaskStatusModelAdmin):
+    list_display = (
+        "display_created",
+        "display_modified",
+        "display_last_started",
+        "display_completed",
+        "url",
+        "status",
+    )
     list_filter = (
         "job__created_by",
         "job__project",
@@ -85,8 +130,15 @@ class ImportItemAdmin(admin.ModelAdmin):
     search_fields = ("url", "status")
 
 
-class ImportItemAssetAdmin(admin.ModelAdmin):
-    list_display = ("created", "modified", "last_started", "completed", "url", "status")
+class ImportItemAssetAdmin(TaskStatusModelAdmin):
+    list_display = (
+        "display_created",
+        "display_modified",
+        "display_last_started",
+        "display_completed",
+        "url",
+        "status",
+    )
     list_filter = (
         "import_item__job__created_by",
         "import_item__job__project",
