@@ -33,9 +33,11 @@ from concordia.forms import (
     ConcordiaUserEditForm,
     ConcordiaUserForm,
 )
-from concordia.models import Campaign, Item, Project, Status, Transcription, UserProfile
+from concordia.models import (
+    Campaign, Asset, Item, Project, Status, 
+    Transcription, UserProfile, UserAssetTagCollection
+)
 from concordia.views_ws import PageInUseCreate
-from importer.views import CreateCampaignView
 
 logger = getLogger(__name__)
 
@@ -403,109 +405,42 @@ class ConcordiaAssetView(TemplateView):
         :param kws:
         :return: dictionary of items used in the template
         """
-        response = requests.get(
-            "%s://%s/ws/asset_by_slug/%s/%s/"
-            % (
-                self.request.scheme,
-                self.request.get_host(),
-                self.args[0],
-                self.args[1],
-            ),
-            cookies=self.request.COOKIES,
-        )
-        asset_json = json.loads(response.content.decode("utf-8"))
 
-        in_use_url = "/campaigns/%s/asset/%s/" % (
-            asset_json["campaign"]["slug"],
-            asset_json["slug"],
-        )
+        asset = get_object_or_404(Asset, slug=self.args[1])
+
         current_user_id = (
             self.request.user.id
             if self.request.user.id is not None
             else get_anonymous_user(self.request)
         )
-        page_in_use = self.check_page_in_use(in_use_url, current_user_id)
 
         # TODO: in the future, this is from a settings file value
         discussion_hide = True
 
-        # Get all transcriptions, they are no longer tied to a specific user
+        # Get the most recent transcription
+        latest_transcriptions = \
+            Transcription.objects.filter(asset__slug=asset.slug)\
+            .order_by('-updated_on')
 
-        response = requests.get(
-            "%s://%s/ws/transcription/%s/"
-            % (self.request.scheme, self.request.get_host(), asset_json["id"]),
-            cookies=self.request.COOKIES,
-        )
-        transcription_json = json.loads(response.content.decode("utf-8"))
+        if latest_transcriptions:
+            transcription = latest_transcriptions[0]
+        else:
+            transcription = None
 
-        response = requests.get(
-            "%s://%s/ws/tags/%s/"
-            % (self.request.scheme, self.request.get_host(), asset_json["id"]),
-            cookies=self.request.COOKIES,
-        )
-        json_tags = []
-        if response.status_code == status.HTTP_200_OK:
-            json_tags_response = json.loads(response.content.decode("utf-8"))
-            for json_tag in json_tags_response["results"]:
-                json_tags.append(json_tag["value"])
+        tags = UserAssetTagCollection.objects.filter(asset__slug=asset.slug)
 
         captcha_form = CaptchaEmbedForm()
 
-        response = requests.get(
-            "%s://%s/ws/page_in_use_user/%s/%s/"
-            % (
-                self.request.scheme,
-                self.request.get_host(),
-                current_user_id,
-                in_use_url,
-            ),
-            cookies=self.request.COOKIES,
-        )
-        page_in_use_json = json.loads(response.content.decode("utf-8"))
-
-        if page_in_use_json["user"] is None:
-            same_page_count_for_this_user = 0
-        else:
-            same_page_count_for_this_user = 1
-
         page_dict = {
-            "page_url": in_use_url,
             "user": current_user_id,
             "updated_on": datetime.now(),
         }
 
-        if page_in_use is False and same_page_count_for_this_user == 0:
-            # add this page as being in use by this user
-            # call the web service which will use the serializer to insert the value.
-            # this takes care of deleting old entries in PageInUse table
-
-            factory = APIRequestFactory()
-            request = factory.post("/ws/page_in_use%s/" % (in_use_url,), page_dict)
-            request.session = self.request.session
-
-            PageInUseCreate.as_view()(request)
-        elif same_page_count_for_this_user == 1:
-            # update the PageInUse
-            change_page_in_use = {"page_url": in_use_url, "user": current_user_id}
-
-            requests.put(
-                "%s://%s/ws/page_in_use_update/%s/%s/"
-                % (
-                    self.request.scheme,
-                    self.request.get_host(),
-                    current_user_id,
-                    in_use_url,
-                ),
-                data=change_page_in_use,
-                cookies=self.request.COOKIES,
-            )
-
         res = dict(
             super().get_context_data(**kws),
-            page_in_use=page_in_use,
-            asset=asset_json,
-            transcription=transcription_json,
-            tags=json_tags,
+            asset=asset,
+            transcription=transcription,
+            tags=tags,
             captcha_form=captcha_form,
             discussion_hide=discussion_hide,
         )
@@ -733,19 +668,6 @@ class ConcordiaPageInUse(View):
 
             # update the PageInUse
 
-            change_page_in_use = {"page_url": page_url, "user": user_json_val["id"]}
-
-            requests.put(
-                "%s://%s/ws/page_in_use_update/%s/%s/"
-                % (
-                    self.request.scheme,
-                    self.request.get_host(),
-                    user_json_val["id"],
-                    page_url,
-                ),
-                data=change_page_in_use,
-                cookies=self.request.COOKIES,
-            )
 
         return HttpResponse("ok")
 
@@ -841,30 +763,6 @@ class CampaignView(TemplateView):
         else:
             return render(self.request, self.template_name)
 
-    def post(self, *args, **kwargs):
-        """
-        POST request when form submitted to create a collection. Only allows admin access
-        :param args:
-        :param kwargs:
-        :return: redirect to home (/) or render template create.html
-        """
-        # FIXME: if we don't know why this is being done this way, replace this
-        # view with a direct call to the CreateCampaignView or delete that view
-        # and replace it with this one
-        self.get_context_data()
-        
-        if self.request.user.is_superuser:
-            self.get_context_data()
-            name = self.request.POST.get("name")
-            url = self.request.POST.get("url")
-            slug = name.replace(" ", "-")
-            view = CreateCampaignView.as_view()
-            importer_resp = view(self.request, *args, **kwargs)
-
-            return render(self.request, self.template_name, importer_resp.data)
-        else:
-            return HttpResponseRedirect('/')
-
 
 class DeleteCampaignView(TemplateView):
     """
@@ -887,6 +785,7 @@ class DeleteCampaignView(TemplateView):
                              self.request.get_host(),
                              self.args[0]),
                             cookies=self.request.COOKIES)
+            # FIXME: this needs error handling or being replaced outright (and has never been tested)
             os.system(
                 "rm -rf {0}".format(settings.MEDIA_ROOT + "/concordia/" + collection.slug)
             )
@@ -912,7 +811,6 @@ class DeleteAssetView(TemplateView):
             return HttpResponseRedirect('/')
         else:
             asset_update = {"campaign": self.args[0], "slug": self.args[1]}
-
 
             requests.put(
                 "%s://%s/ws/asset_update/%s/%s/" %

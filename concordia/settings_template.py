@@ -1,18 +1,17 @@
 # TODO: use correct copyright header
 import os
-import sys
 
 from django.contrib import messages
 from dotenv import load_dotenv
 from machina import MACHINA_MAIN_STATIC_DIR, MACHINA_MAIN_TEMPLATE_DIR
 from machina import get_apps as get_machina_apps
 
-# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
-BASE_DIR = os.path.dirname(PROJECT_DIR)
+# Build paths inside the project like this: os.path.join(SITE_ROOT_DIR, ...)
+CONCORDIA_APP_DIR = os.path.abspath(os.path.dirname(__file__))
+SITE_ROOT_DIR = os.path.dirname(CONCORDIA_APP_DIR)
 
 # Build path for and load .env file.
-dotenv_path = os.path.join(BASE_DIR, ".env")
+dotenv_path = os.path.join(SITE_ROOT_DIR, ".env")
 load_dotenv(dotenv_path)
 
 # SECURITY WARNING: keep the secret key used in production secret!
@@ -31,10 +30,9 @@ ALLOWED_HOSTS = ["*"]
 DEBUG = False
 CSRF_COOKIE_SECURE = False
 
-sys.path.append(PROJECT_DIR)
 AUTH_PASSWORD_VALIDATORS = []
 EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
-# EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'emails')
+# EMAIL_FILE_PATH = os.path.join(SITE_ROOT_DIR, 'emails')
 EMAIL_HOST = "localhost"
 EMAIL_PORT = 25
 LANGUAGE_CODE = "en-us"
@@ -44,10 +42,10 @@ ROOT_URLCONF = "concordia.urls"
 STATIC_ROOT = "static"
 STATIC_URL = "/static/"
 STATICFILES_DIRS = [
-    os.path.join(PROJECT_DIR, "static"),
-    os.path.join("/".join(PROJECT_DIR.split("/")[:-1]), "concordia/static"),
+    os.path.join(CONCORDIA_APP_DIR, "static"),
+    os.path.join("/".join(CONCORDIA_APP_DIR.split("/")[:-1]), "concordia/static"),
 ]
-STATICFILES_DIRS = [os.path.join(PROJECT_DIR, "static"), MACHINA_MAIN_STATIC_DIR]
+STATICFILES_DIRS = [os.path.join(CONCORDIA_APP_DIR, "static"), MACHINA_MAIN_STATIC_DIR]
 TEMPLATE_DEBUG = False
 TIME_ZONE = "UTC"
 USE_I18N = True
@@ -119,8 +117,11 @@ MIDDLEWARE = [
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [os.path.join(PROJECT_DIR, "templates"), MACHINA_MAIN_TEMPLATE_DIR],
-        #    'APP_DIRS': True,
+        "DIRS": [
+            os.path.join(SITE_ROOT_DIR, "templates"),
+            os.path.join(CONCORDIA_APP_DIR, "templates"),
+            MACHINA_MAIN_TEMPLATE_DIR,
+        ],
         "OPTIONS": {
             "context_processors": [
                 "django.template.context_processors.debug",
@@ -200,7 +201,7 @@ LOGGING = {
             "class": "logging.handlers.TimedRotatingFileHandler",
             "level": "DEBUG",
             "formatter": "long",
-            "filename": "{}/logs/concordia.log".format(BASE_DIR),
+            "filename": "{}/logs/concordia.log".format(SITE_ROOT_DIR),
             "when": "H",
             "interval": 3,
             "backupCount": 16,
@@ -208,7 +209,7 @@ LOGGING = {
         "celery": {
             "level": "DEBUG",
             "class": "logging.handlers.RotatingFileHandler",
-            "filename": "{}/logs/celery.log".format(BASE_DIR),
+            "filename": "{}/logs/celery.log".format(SITE_ROOT_DIR),
             "formatter": "long",
             "maxBytes": 1024 * 1024 * 100,  # 100 mb
         },
@@ -242,7 +243,7 @@ REST_FRAMEWORK = {
 
 CONCORDIA = {"netloc": "http://0:80"}
 MEDIA_URL = "/media/"
-MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+MEDIA_ROOT = os.path.join(SITE_ROOT_DIR, "media")
 
 
 LOGIN_URL = "/account/login/"
@@ -275,7 +276,7 @@ CAPTCHA_TEXT_FIELD_TEMPLATE = "captcha/text_field.html"
 AWS_S3 = {
     "AWS_ACCESS_KEY_ID": os.getenv("AWS_ACCESS_KEY_ID"),
     "AWS_SECRET_ACCESS_KEY": os.getenv("AWS_SECRET_ACCESS_KEY"),
-    "S3_COLLECTION_BUCKET": "chc-collections",
+    "S3_COLLECTION_BUCKET": os.getenv("S3_BUCKET_NAME"),
     "REGION": os.getenv("AWS_REGION"),
 }
 

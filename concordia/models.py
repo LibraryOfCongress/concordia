@@ -55,7 +55,7 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
     description = models.TextField(blank=True)
     start_date = models.DateTimeField(null=True, blank=True)
     end_date = models.DateTimeField(null=True, blank=True)
-    metadata = JSONField(default=metadata_default)
+    metadata = JSONField(default=metadata_default, blank=True, null=True)
     is_active = models.BooleanField(default=False)
     s3_storage = models.BooleanField(default=False)
     status = models.CharField(
@@ -72,7 +72,7 @@ class Project(models.Model):
     slug = models.SlugField(max_length=80)
     category = models.CharField(max_length=12, blank=True)
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
-    metadata = JSONField(default=metadata_default)
+    metadata = JSONField(default=metadata_default, blank=True, null=True)
     status = models.CharField(
         max_length=10, choices=Status.CHOICES, default=Status.DEFAULT
     )
@@ -96,7 +96,7 @@ class Item(models.Model):
         Project, on_delete=models.CASCADE, blank=True, null=True
     )
     item_id = models.CharField(max_length=100, blank=True)
-    metadata = JSONField(default=metadata_default)
+    metadata = JSONField(default=metadata_default, blank=True, null=True)
     thumbnail_url = models.URLField(max_length=255)
     status = models.CharField(
         max_length=10, choices=Status.CHOICES, default=Status.DEFAULT
@@ -115,7 +115,7 @@ class Asset(models.Model):
     title = models.CharField(max_length=100)
     slug = models.SlugField(max_length=100)
     description = models.TextField(blank=True)
-    media_url = models.URLField(max_length=255)
+    media_url = models.TextField(max_length=255)
     media_type = models.CharField(
         max_length=4, choices=MediaType.CHOICES, db_index=True
     )
@@ -131,7 +131,7 @@ class Asset(models.Model):
     # The URL used to download this image from loc.gov
     download_url = models.CharField(max_length=255, blank=True, null=True)
 
-    metadata = JSONField(default=metadata_default)
+    metadata = JSONField(default=metadata_default, blank=True, null=True)
     status = models.CharField(
         max_length=10, choices=Status.CHOICES, default=Status.DEFAULT
     )

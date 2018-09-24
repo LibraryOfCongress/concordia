@@ -33,6 +33,7 @@ raven = "*"
 django-maintenance-mode = "*"
 django-debug-toolbar = "*"
 whitenoise = "*"
+openpyxl = "*"
 
 [dev-packages]
 invoke = "*"

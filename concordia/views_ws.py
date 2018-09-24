@@ -10,11 +10,29 @@ from rest_framework.authentication import BasicAuthentication
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 
-from .models import (Asset, Campaign, Item, PageInUse, Status, Tag, Transcription, User,
-                     UserAssetTagCollection, UserProfile)
-from .serializers import (AssetSerializer, CampaignDetailSerializer, ItemSerializer,
-                          PageInUseSerializer, TagSerializer, TranscriptionSerializer,
-                          UserAssetTagSerializer, UserProfileSerializer, UserSerializer)
+from .models import (
+    Asset,
+    Campaign,
+    Item,
+    PageInUse,
+    Status,
+    Tag,
+    Transcription,
+    User,
+    UserAssetTagCollection,
+    UserProfile,
+)
+from .serializers import (
+    AssetSerializer,
+    CampaignDetailSerializer,
+    ItemSerializer,
+    PageInUseSerializer,
+    TagSerializer,
+    TranscriptionSerializer,
+    UserAssetTagSerializer,
+    UserProfileSerializer,
+    UserSerializer,
+)
 
 
 class ConcordiaAPIAuth(BasicAuthentication):

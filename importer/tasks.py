@@ -1,12 +1,13 @@
 import os
-from collections import defaultdict
+import re
 from logging import getLogger
+from urllib.parse import parse_qsl, urlencode, urlparse, urlsplit, urlunsplit
 
 import requests
-from celery import task
+from celery import group, task
 from django.conf import settings
-from django.template.defaultfilters import slugify
 
+from concordia.models import Project
 from importer.models import CampaignItemAssetCount, CampaignTaskDetails
 
 logger = getLogger(__name__)
@@ -26,52 +27,113 @@ def get_item_id_from_item_url(item_url):
     return item_id
 
 
-def get_campaign_pages(campaign_url):
+def normalize_collection_url(original_url):
     """
-    Return total pages in given loc gov campaign urls
-    :param campaign_url:
-    :return: int total no of pages
+    Given a P1 collection/search URL, produce a normalized version which is safe
+    to import. This will replace parameters related to our response format and
+    pagination requirements but otherwise leave the query string unmodified.
     """
 
-    resp = requests.get(campaign_url, params={"fo": "json", "at": "pagination"})
-    resp.raise_for_status()
-    data = resp.json()
+    parsed_url = urlsplit(original_url)
 
-    total_pages = data.get("pagination", {}).get("total", 0)
-    logger.info(
-        "total_campaign_pages: %s for campaign url: %s", total_pages, campaign_url
+    new_qs = [("fo", "json")]
+
+    for k, v in parse_qsl(parsed_url.query):
+        if k not in ("fo", "at", "sp"):
+            new_qs.append((k, v))
+
+    return urlunsplit(
+        (parsed_url.scheme, parsed_url.netloc, parsed_url.path, urlencode(new_qs), None)
     )
-    return total_pages
 
 
-def get_campaign_item_ids(campaign_url, total_pages):
+def get_collection_items(collection_url):
     """
-    :param campaign_url: campaign url
-    :param total_pages: number of pages in this campaign url
-    :return: list of campaign of item ids
+    :param collection_url: URL of a loc.gov collection or search results page
+    :return: list of (item_id, item_url) tuples
     """
-    campaign_item_ids = []
-    for page_num in range(1, total_pages + 1):
-        resp = requests.get(campaign_url, params={"fo": "json", "at": "results"})
+
+    items = []
+    current_page_url = collection_url
+
+    while current_page_url:
+        resp = requests.get(current_page_url)
         resp.raise_for_status()
         data = resp.json()
 
-        page_results = data.get("results", [])
+        if "results" not in data:
+            logger.error('Expected URL %s to include "results"', resp.url)
+            continue
 
-        for pr in page_results:
-            if (
-                pr.get("id")
-                and pr.get("image_url")
-                and "campaign" not in pr.get("original_format")
-                and "web page" not in pr.get("original_format")
-            ):
-                campaign_item_url = pr.get("id")
-                campaign_item_ids.append(campaign_item_url.split("/")[-2])
+        for result in data["results"]:
+            try:
+                item_info = get_item_info_from_result(result)
+            except Exception as exc:
+                logger.warning(
+                    "Skipping result from %s which did not match expected format: %s",
+                    resp.url,
+                    exc,
+                    exc_info=True,
+                    extra={"data": {"result": result, "url": resp.url}},
+                )
+                continue
 
-    if not campaign_item_ids:
-        logger.info("No item ids found for campaign url: %s", campaign_url)
+            if item_info:
+                items.append(item_info)
 
-    return campaign_item_ids
+        current_page_url = data["pagination"].get("next", None)
+
+    if not items:
+        logger.warning("No valid items found for collection url: %s", collection_url)
+
+    return items
+
+
+def get_item_info_from_result(result):
+    """
+    Given a P1 result, return the item ID and URL if it represents a collection
+    item
+
+    :return: (item_id, item_url) tuple or None if the URL does not represent a
+             supported item type
+    """
+
+    ignored_formats = {"collection", "web page"}
+
+    item_id = result["id"]
+    original_format = result["original_format"]
+
+    if ignored_formats.intersection(original_format):
+        logger.info(
+            "Skipping result %s because it contains an unsupported format: %s",
+            item_id,
+            original_format,
+            extra={"data": {"result": result}},
+        )
+        return
+
+    image_url = result.get("image_url")
+    if not image_url:
+        logger.info(
+            "Skipping result %s because it lacks an image_url",
+            item_id,
+            extra={"data": {"result": result}},
+        )
+        return
+
+    item_url = result["url"]
+
+    m = re.search(r"loc.gov/item/([^/]+)", item_url)
+    if not m:
+        logger.info(
+            "Skipping %s because the URL %s doesn't appear to be an item!",
+            item_id,
+            item_url,
+            extra={"data": {"result": result}},
+        )
+        return
+
+    return m.group(1), item_url
 
 
 def get_campaign_item_asset_urls(item_id):
@@ -100,7 +162,24 @@ def get_campaign_item_asset_urls(item_id):
     return campaign_item_asset_urls
 
 
-def download_write_campaign_item_asset(image_url, asset_local_path):
+def import_items_into_project_from_url(project, import_url):
+    """
+    Given a loc.gov URL, return the task ID for the import task
+    """
+
+    parsed_url = urlparse(import_url)
+
+    if re.match(r"^/(collections|search)/", parsed_url.path):
+        return download_write_campaign_item_assets.delay(project.pk, import_url)
+    elif re.match(r"^/(item)/", parsed_url.path):
+        return download_item_assets.delay(project.pk, import_url)
+    else:
+        raise ValueError(
+            f"{import_url} doesn't match one of the known importable patterns"
+        )
+
+
+def download_image(image_url, asset_local_path):
     """
     :param image_url:
     :param asset_local_path:
@@ -126,10 +205,11 @@ def download_write_campaign_item_asset(image_url, asset_local_path):
         )
 
 
-def get_save_item_assets(campaign_name, project, item_id, item_asset_urls):
+def get_save_item_assets(project, item_id, item_asset_urls):
     """
-    creates a item directory if it already does not exists, and iterates asset urls list then download each asset
-    and saves to local in item directory
+    creates a item directory if it already does not exists, and iterates asset
+    urls list then download each asset and saves to local in item directory
+
     :param campaign_name: campaign_name
     :param item_id: item id of the campaign
     :param item_asset_urls: list of item asset urls
@@ -137,96 +217,120 @@ def get_save_item_assets(campaign_name, project, item_id, item_asset_urls):
     """
 
     item_local_path = os.path.join(
-        settings.IMPORTER["IMAGES_FOLDER"], campaign_name, project, item_id
+        settings.IMPORTER["IMAGES_FOLDER"], project.campaign.slug, project.slug, item_id
     )
 
-    try:
-        os.makedirs(item_local_path)
-    except Exception as e:
-        pass
+    os.makedirs(item_local_path, exist_ok=True)
 
-    for idx, ciau in enumerate(item_asset_urls):
-        asset_local_path = os.path.join(item_local_path, "{0}.jpg".format(str(idx)))
+    for idx, ciau in enumerate(item_asset_urls, start=1):
+        asset_local_path = os.path.join(item_local_path, "{}.jpg".format(idx))
 
         try:
-            download_write_campaign_item_asset(ciau, asset_local_path)
+            download_image(ciau, asset_local_path)
         except Exception as exc:
             # FIXME: determine whether we can reliably recover from this condition
             logger.error(
                 "Unable to save asset for campaign %s project %s item %s: %s",
-                campaign_name,
-                project,
+                project.campaign.title,
+                project.title,
                 item_id,
             )
+            raise
 
 
-@task
-def download_write_campaign_item_assets(campaign_name, project, campaign_url):
+@task(bind=True)
+def download_write_campaign_item_assets(self, project_id, original_collection_url):
     """
-    It will downloads all images from loc.gov site and saves into local directory as per campaign and items.
-    :param campaign_name: campaign for requested item url
-    :param campaign_url: campaign url path
-    :return: nothing, will downloads the files and saves to a directory
+    Download images from a loc.gov collection or search page into a local
+    directory under a campaign/project hierarchy
+
+    :param project_id: primary key for a concordia.Project instance
+    :param collection_url: collection or search results URL
+    :return: nothing
     """
-    total_pages = get_campaign_pages(campaign_url)
-    campaign_item_ids = get_campaign_item_ids(campaign_url, total_pages)
-    items_asset_count_dict = defaultdict(int)
-    items_assets = {}
 
-    for cii in campaign_item_ids:
-        campaign_item_asset_urls = get_campaign_item_asset_urls(cii)
-        items_asset_count_dict[cii] = len(campaign_item_asset_urls)
-        items_assets[cii] = campaign_item_asset_urls
-        # get_save_item_assets(campaign_name, project, cii, campaign_item_asset_urls)
+    # To avoid stale data we pass the project ID rather than the serialized object:
+    project = Project.objects.get(pk=project_id)
 
-    ctd, created = CampaignTaskDetails.objects.get_or_create(
-        campaign_slug=slugify(campaign_name),
-        project_slug=slugify(project),
-        defaults={"campaign_name": campaign_name, "project_name": project},
-    )
-    ctd.campaign_item_count = len(campaign_item_ids)
-    ctd.campaign_asset_count = sum(items_asset_count_dict.values())
+    # We'll split the URL parameters
+    collection_url = normalize_collection_url(original_collection_url)
+    collection_items = get_collection_items(collection_url)
+
+    ctd = CampaignTaskDetails()
+    ctd.project = project
+    ctd.campaign_task_id = self.request.id
+    ctd.campaign_item_count = len(collection_items)
     ctd.save()
-    ciac_details = []
-    for key, value in items_asset_count_dict.items():
-        ciac_details.append(
-            CampaignItemAssetCount(
-                campaign_task=ctd,
-                campaign_item_identifier=key,
-                campaign_item_asset_count=value,
-            )
-        )
-    CampaignItemAssetCount.objects.bulk_create(ciac_details)
 
-    for cii in campaign_item_ids:
-        # campaign_item_asset_urls = get_campaign_item_asset_urls(cii)
-        # items_asset_count_dict[cii] = len(campaign_item_asset_urls)
-        get_save_item_assets(campaign_name, project, cii, items_assets[cii])
+    # FIXME: add a parent/child task tracking field
+    item_group = group(
+        download_item_assets.s(project.pk, item_url)
+        for item_id, item_url in collection_items
+    )
+    return item_group()
 
 
-@task
-def download_write_item_assets(campaign_name, project, item_id):
-
+@task(bind=True)
+def download_item_assets(self, project_id, item_url):
     """
-    It will downloads all images from loc.gov site and saves into local directory as per item level directory.
-    :param campaign_name: campaign for requested item url
-    :param item_url: item url path
-    :return: nothing, will downloads the files and saves to a directory
+    Download images from a loc.gov item into a local directory under a
+    campaign/project hierarchy
+
+    :param project_id: primary key for a concordia.Project instance
+    :param item_url: item URL
+    :return: nothing
     """
+
+    # To avoid stale data we pass the project ID rather than the serialized object:
+    project = Project.objects.get(pk=project_id)
+
+    item_id = get_item_id_from_item_url(item_url)
+
     item_asset_urls = get_campaign_item_asset_urls(item_id)
 
-    ctd, created = CampaignTaskDetails.objects.get_or_create(
-        campaign_slug=slugify(campaign_name),
-        project_slug=slugify(project),
-        defaults={"campaign_name": campaign_name, "project_name": project},
-    )
+    ctd = CampaignTaskDetails()
+    ctd.project = project
     ctd.campaign_item_count += 1
     ctd.campaign_asset_count += len(item_asset_urls)
+    ctd.campaign_task_id = self.request.id
+    ctd.full_clean()
     ctd.save()
-    ciac, created = CampaignItemAssetCount.objects.get_or_create(
-        campaign_task=ctd, campaign_item_identifier=item_id
-    )
+
+    ciac = CampaignItemAssetCount()
+    ciac.item_task_id = self.request.id
+    ciac.campaign_task = ctd
+    ciac.campaign_item_identifier = item_id
     ciac.campaign_item_asset_count = len(item_asset_urls)
+    ciac.full_clean()
     ciac.save()
 
-    get_save_item_assets(campaign_name, project, item_id, item_asset_urls)
+    get_save_item_assets(project, item_id, item_asset_urls)
+
+    item, created = project.item_set.get_or_create(
+        item_id=item_id,
+        defaults={"title": item_id, "slug": item_id, "campaign": project.campaign},
+    )
+    if not created:
+        logger.info("Won't re-import item %s", item)
+        return
+
+    item_local_path = os.path.join(
+        settings.IMPORTER["IMAGES_FOLDER"], project.campaign.slug, project.slug, item_id
+    )
+
+    # FIXME: remove this import once the code is cleaned up
+    from .views import save_campaign_item_assets
+
+    save_campaign_item_assets(project, item_local_path, item_id)
+
+    import shutil
+
+    shutil.rmtree(
+        os.path.join(
+            settings.IMPORTER["IMAGES_FOLDER"],
+            project.campaign.slug,
+            project.slug,
+            item_id,
+        )
+    )
+
