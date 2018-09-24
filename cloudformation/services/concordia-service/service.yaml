@@ -73,6 +73,8 @@ Resources:
                       Value: 1
                     - Name: ENV_NAME 
                       Value: !Ref EnvName
+                    - Name: S3_BUCKET_NAME
+                      Value: concordia-staticpages                      
                     - Name: CELERY_BROKER_URL
                       Value: pyamqp://guest@rabbit:5672
                     - Name: AWS_DEFAULT_REGION
@@ -103,6 +105,8 @@ Resources:
                       Value: 1
                     - Name: ENV_NAME 
                       Value: !Ref EnvName
+                    - Name: S3_BUCKET_NAME
+                      Value: concordia-staticpages
                     - Name: CELERY_BROKER_URL
                       Value: pyamqp://guest@rabbit:5672
                     - Name: AWS_DEFAULT_REGION
