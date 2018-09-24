@@ -65,9 +65,10 @@
                         <a class="nav-link dropdown-toggle {% if PATH_LEVEL_1 == 'account'%}active{% endif %}" href="{% url 'user-profile' %}"
                             id="topnav-account-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Account</a>
                         <div class="dropdown-menu" aria-labelledby="topnav-account-dropdown">
-                            <a class="dropdown-item" href="{% url 'user-profile' %}">{{ user }} profile</a> {% if
-                            user.is_superuser %}
-                            <a class="dropdown-item" href="{% url 'admin:index' %}">Admin pages</a> {% endif %}
+                            <a class="dropdown-item" href="{% url 'user-profile' %}">{{ user }} profile</a>
+                            {% if user.is_superuser %}
+                            <a class="dropdown-item" href="{% url 'admin:index' %}">Admin pages</a>
+                            {% endif %}
                             <a class="dropdown-item" href="{% url 'logout' %}">Logout</a>
                         </div>
                     </li>
