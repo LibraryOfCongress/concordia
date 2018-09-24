@@ -1,6 +1,21 @@
-from django.contrib import admin
+from django.contrib import admin, messages
 
 from .models import ImportItem, ImportItemAsset, ImportJob
+from .tasks import download_asset_task
+
+
+def retry_download_task(modeladmin, request, queryset):
+    """
+    Queue an asset download task for another attempt
+    """
+
+    pks = queryset.values_list("pk", flat=True)
+    for pk in pks:
+        download_asset_task.delay(pk)
+    messages.add_message(request, messages.INFO, f"Queued %d tasks" % len(pks))
+
+
+retry_download_task.short_description = "Retry import"
 
 
 class NullableTimestampFilter(admin.SimpleListFilter):
@@ -80,6 +95,7 @@ class ImportItemAssetAdmin(admin.ModelAdmin):
         FailedFilter,
     )
     search_fields = ("url", "status")
+    actions = (retry_download_task,)
 
 
 admin.site.register(ImportJob, ImportJobAdmin)
