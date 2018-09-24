@@ -62,7 +62,7 @@ tx_urlpatterns = (
             name="report campaign",
         ),
         path(
-            "campaigns/<slug:campaign_slug>/<slug:project_slug>/<slug:item_slug>/<slug:slug>",
+            "<slug:campaign_slug>/<slug:project_slug>/<slug:item_slug>/<slug:slug>",
             views.ConcordiaAssetView.as_view(),
             name="asset-detail",
         ),
