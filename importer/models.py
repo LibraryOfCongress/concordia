@@ -12,23 +12,23 @@ class TaskStatusModel(models.Model):
     modified = models.DateTimeField(auto_now=True)
 
     last_started = models.DateTimeField(
-        "Last time when a worker started processing this job", null=True, blank=True
+        help_text="Last time when a worker started processing this job",
+        null=True,
+        blank=True,
     )
     completed = models.DateTimeField(
-        "Time when the job completed processing", null=True, blank=True
+        help_text="Time when the job completed without error", null=True, blank=True
     )
     failed = models.DateTimeField(
-        "Time when the job failed and will not be restarted", null=True, blank=True
+        help_text="Time when the job failed due to an error", null=True, blank=True
     )
 
     status = models.TextField(
-        verbose_name="Status message, if any, from the last worker",
-        blank=True,
-        default="",
+        help_text="Status message, if any, from the last worker", blank=True, default=""
     )
 
     task_id = models.UUIDField(
-        verbose_name="UUID of the last Celery task to process this record",
+        help_text="UUID of the last Celery task to process this record",
         null=True,
         blank=True,
     )
