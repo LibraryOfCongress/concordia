@@ -99,7 +99,7 @@ IMPORTER = {
     "S3_BUCKET_NAME": S3_BUCKET_NAME,
 }
 
-MEDIA_URL = "https://concordia-staticpages.s3.amazonaws.com/"
+MEDIA_URL = "https://%s.s3.amazonaws.com/" % S3_BUCKET_NAME
 
 AWS_S3 = {
     "AWS_ACCESS_KEY_ID": AWS_ACCESS_KEY_ID,
