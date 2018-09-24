@@ -147,10 +147,8 @@ class Asset(models.Model):
         max_length=4, choices=MediaType.CHOICES, db_index=True
     )
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
-    project = models.ForeignKey(
-        Project, on_delete=models.CASCADE, blank=True, null=True
-    )
-    item = models.ForeignKey(Item, blank=True, null=True, on_delete=models.CASCADE)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
+    item = models.ForeignKey(Item, on_delete=models.CASCADE)
     sequence = models.PositiveIntegerField(default=1)
 
     # The original ID of the image resource on loc.gov
