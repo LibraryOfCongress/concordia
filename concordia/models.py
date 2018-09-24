@@ -5,6 +5,7 @@ from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.utils import timezone
 from django_prometheus_metrics.models import MetricsModelMixin
+from django.urls import reverse
 
 metadata_default = dict
 
@@ -66,6 +67,10 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
     def __str__(self):
         return self.title
 
+    def get_absolute_url(self):
+        # FIXME: change this with https://github.com/LibraryOfCongress/concordia/issues/242
+        return reverse("transcriptions:campaign", args=(self.slug,))
+
 
 class Project(models.Model):
     title = models.CharField(max_length=80)
@@ -84,6 +89,12 @@ class Project(models.Model):
 
     def __str__(self):
         return self.title
+
+    def get_absolute_url(self):
+        return reverse(
+            "transcriptions:project-detail",
+            kwargs={"campaign_slug": self.campaign.slug, "slug": self.slug},
+        )
 
 
 class Item(models.Model):
@@ -111,6 +122,18 @@ class Item(models.Model):
 
     def __str__(self):
         return self.item_id
+
+    def get_absolute_url(self):
+        # FIXME: change this with https://github.com/LibraryOfCongress/concordia/issues/242
+
+        return reverse(
+            "transcriptions:item",
+            kwargs={
+                "campaign_slug": self.project.campaign.slug,
+                "project_slug": self.project.slug,
+                "slug": self.slug,
+            },
+        )
 
 
 class Asset(models.Model):
