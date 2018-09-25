@@ -801,17 +801,13 @@ class ContactUsView(FormView):
         return res
 
     def get_initial(self):
-        if self.request.GET.get("pre_populate", None) is None:
-            return None
-        else:
+        if self.request.GET.get("pre_populate"):
             return {
                 "email": (
                     None if self.request.user.is_anonymous else self.request.user.email
                 ),
                 "link": (
                     self.request.META.get("HTTP_REFERER")
-                    if self.request.META.get("HTTP_REFERER")
-                    else None
                 ),
             }
 
