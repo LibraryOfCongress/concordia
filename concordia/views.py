@@ -877,6 +877,7 @@ class DeleteCampaignView(TemplateView):
         if not self.request.user.is_superuser:
             return HttpResponseRedirect("/")
         else:
+            raise NotImplementedError("Remove or fix this untested code")
             requests.delete(
                 "%s://%s/ws/campaign_delete/%s/"
                 % (self.request.scheme, self.request.get_host(), self.args[0]),
