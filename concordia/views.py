@@ -26,12 +26,22 @@ from registration.backends.hmac.views import RegistrationView
 from rest_framework import generics, status
 from rest_framework.test import APIRequestFactory
 
-from concordia.forms import (AssetFilteringForm, CaptchaEmbedForm,
-                             ConcordiaContactUsForm, ConcordiaUserEditForm,
-                             ConcordiaUserForm)
+from concordia.forms import (
+    AssetFilteringForm,
+    CaptchaEmbedForm,
+    ConcordiaContactUsForm,
+    ConcordiaUserEditForm,
+    ConcordiaUserForm,
+)
 from concordia.models import (
-    Campaign, Asset, Item, Project, Status, 
-    Transcription, UserProfile, UserAssetTagCollection
+    Asset,
+    Campaign,
+    Item,
+    Project,
+    Status,
+    Transcription,
+    UserAssetTagCollection,
+    UserProfile,
 )
 from concordia.views_ws import PageInUseCreate
 
@@ -456,10 +466,10 @@ class ConcordiaAssetView(DetailView):
         """
 
         ctx = super().get_context_data(**kwargs)
-        asset = ctx['asset']
-        ctx['item'] = item = asset.item
-        ctx['project'] = project = item.project
-        ctx['campaign'] = project.campaign
+        asset = ctx["asset"]
+        ctx["item"] = item = asset.item
+        ctx["project"] = project = item.project
+        ctx["campaign"] = project.campaign
 
         in_use_url = reverse(
             "transcriptions:asset-detail",
@@ -595,6 +605,7 @@ class ConcordiaAssetView(DetailView):
 
         redirect_path = self.request.path
 
+		# TODO: error handling for this lookup failing
         asset = Asset.objects.get(id=self.request.POST["asset_id"])
 
         if "tx" in self.request.POST and "tagging" not in self.request.POST:
