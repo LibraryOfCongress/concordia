@@ -477,8 +477,6 @@ class ConcordiaAssetView(DetailView):
 
         page_in_use = self.check_page_in_use(in_use_url, current_user_id)
 
-        discussion_hide = True
-
         # Get all transcriptions, they are no longer tied to a specific user
         response = requests.get(
             "%s://%s/ws/transcription/%s/"
@@ -560,7 +558,6 @@ class ConcordiaAssetView(DetailView):
                 "transcription": transcription_json,
                 "tags": json_tags,
                 "captcha_form": captcha_form,
-                "discussion_hide": discussion_hide,
             }
         )
 
