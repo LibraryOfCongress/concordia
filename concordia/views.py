@@ -799,24 +799,6 @@ class ConcordiaPageInUse(View):
         return HttpResponse("ok")
 
 
-class TranscriptionView(TemplateView):
-    # TODO: Is this class still used??
-    template_name = "transcriptions/transcription.html"
-
-    def get_context_data(self, **kws):
-        transcription = Transcription.objects.get(id=self.args[0])
-        transcription_user = get_user_model().objects.get(id=transcription.id)
-        return super().get_context_data(
-            **dict(
-                kws, transcription=transcription, transcription_user=transcription_user
-            )
-        )
-
-
-class ToDoView(TemplateView):
-    template_name = "todo.html"
-
-
 class ContactUsView(FormView):
     template_name = "contact.html"
     form_class = ConcordiaContactUsForm
