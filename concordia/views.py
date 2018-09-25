@@ -29,8 +29,10 @@ from rest_framework.test import APIRequestFactory
 from concordia.forms import (AssetFilteringForm, CaptchaEmbedForm,
                              ConcordiaContactUsForm, ConcordiaUserEditForm,
                              ConcordiaUserForm)
-from concordia.models import (Asset, Campaign, Item, Project, Status, Transcription,
-                              UserProfile)
+from concordia.models import (
+    Campaign, Asset, Item, Project, Status, 
+    Transcription, UserProfile, UserAssetTagCollection
+)
 from concordia.views_ws import PageInUseCreate
 
 logger = getLogger(__name__)
@@ -353,12 +355,12 @@ class ConcordiaAssetView(DetailView):
         """
         response = requests.get(
             "%s://%s/ws/asset/%s/"
-            % (self.request.scheme, self.request.get_host(), self.args[0]),
+            % (self.request.scheme, self.request.get_host(), self.kwargs["campaign_slug"]),
             cookies=self.request.COOKIES,
         )
         return json.loads(response.content.decode("utf-8"))
 
-    def submitted_page(self, url, asset_json):
+    def submitted_page(self, url, asset):
         """
         when the transcription state is SUBMITTED, return a page that does not have a transcription started.
         If all pages are started, return the url passed in
@@ -375,20 +377,20 @@ class ConcordiaAssetView(DetailView):
         for asset_item in asset_list_json["results"]:
             response = requests.get(
                 "%s://%s/ws/transcription/%s/"
-                % (self.request.scheme, self.request.get_host(), asset_item["id"]),
+                % (self.request.scheme, self.request.get_host(), asset.id),
                 cookies=self.request.COOKIES,
             )
             transcription_json = json.loads(response.content.decode("utf-8"))
             if transcription_json["text"] == "":
                 return_path = "/campaigns/%s/asset/%s/" % (
-                    self.args[0],
-                    asset_item["slug"],
+                    self.kwargs["campaign_slug"],
+                    asset.slug,
                 )
                 break
 
         return return_path
 
-    def completed_page(self, url, asset_json):
+    def completed_page(self, url, asset):
         """
         when the transcription state is COMPLETED, return the next page in sequence that needs work
         If all pages are completed, return the url passed in
@@ -403,27 +405,27 @@ class ConcordiaAssetView(DetailView):
         def get_transcription(asset_item):
             response = requests.get(
                 "%s://%s/ws/transcription/%s/"
-                % (self.request.scheme, self.request.get_host(), asset_item["id"]),
+                % (self.request.scheme, self.request.get_host(), asset.id),
                 cookies=self.request.COOKIES,
             )
             return json.loads(response.content.decode("utf-8"))
 
-        for asset_item in asset_list_json["results"][asset_json["sequence"] :]:
+        for asset_item in asset_list_json["results"][asset.sequence :]:
             transcription_json = get_transcription(asset_item)
             if transcription_json["status"] != Status.COMPLETED:
                 return_path = "/campaigns/%s/asset/%s/" % (
-                    self.args[0],
+                    self.kwargs["campaign_slug"],
                     asset_item["slug"],
                 )
                 break
 
         # no asset found, iterate the asset_list_json from beginning to this asset's sequence
         if return_path == url:
-            for asset_item in asset_list_json["results"][: asset_json["sequence"]]:
+            for asset_item in asset_list_json["results"][: asset.sequence]:
                 transcription_json = get_transcription(asset_item)
                 if transcription_json["status"] != Status.COMPLETED:
                     return_path = "/campaigns/%s/asset/%s/" % (
-                        self.args[0],
+                        self.kwargs["campaign_slug"],
                         asset_item["slug"],
                     )
                     break
@@ -477,24 +479,22 @@ class ConcordiaAssetView(DetailView):
 
         page_in_use = self.check_page_in_use(in_use_url, current_user_id)
 
-        # Get all transcriptions, they are no longer tied to a specific user
-        response = requests.get(
-            "%s://%s/ws/transcription/%s/"
-            % (self.request.scheme, self.request.get_host(), asset.id),
-            cookies=self.request.COOKIES,
-        )
-        transcription_json = json.loads(response.content.decode("utf-8"))
+        # Get the most recent transcription
+        latest_transcriptions = \
+            Transcription.objects.filter(asset__slug=asset.slug)\
+            .order_by('-updated_on')
 
-        response = requests.get(
-            "%s://%s/ws/tags/%s/"
-            % (self.request.scheme, self.request.get_host(), asset.id),
-            cookies=self.request.COOKIES,
-        )
-        json_tags = []
-        if response.status_code == status.HTTP_200_OK:
-            json_tags_response = json.loads(response.content.decode("utf-8"))
-            for json_tag in json_tags_response["results"]:
-                json_tags.append(json_tag["value"])
+        if latest_transcriptions:
+            transcription = latest_transcriptions[0]
+        else:
+            transcription = None
+
+        tag_groups = UserAssetTagCollection.objects.filter(asset__slug=asset.slug)
+        tags = []
+
+        for tag_group in tag_groups:
+            for tag in tag_group.tags.all():
+                tags.append(tag)
 
         captcha_form = CaptchaEmbedForm()
 
@@ -555,8 +555,8 @@ class ConcordiaAssetView(DetailView):
         ctx.update(
             {
                 "page_in_use": page_in_use,
-                "transcription": transcription_json,
-                "tags": json_tags,
+                "transcription": transcription,
+                "tags": tags,
                 "captcha_form": captcha_form,
             }
         )
@@ -579,23 +579,6 @@ class ConcordiaAssetView(DetailView):
         :param kwargs:
         :return: redirect back to same page
         """
-        # don't know why this would be called here
-        # self.get_context_data()
-
-        if self.request.POST.get("action").lower() == "contact a manager":
-            return redirect(reverse("contact") + "?pre_populate=true")
-
-        response = requests.get(
-            "%s://%s/ws/asset_by_slug/%s/%s/"
-            % (
-                self.request.scheme,
-                self.request.get_host(),
-                self.args[0],
-                self.args[1],
-            ),
-            cookies=self.request.COOKIES,
-        )
-        asset_json = json.loads(response.content.decode("utf-8"))
 
         if self.request.user.is_anonymous and not (
             self.is_anonymous_user_captcha_validated()
@@ -612,6 +595,8 @@ class ConcordiaAssetView(DetailView):
 
         redirect_path = self.request.path
 
+        asset = Asset.objects.get(id=self.request.POST["asset_id"])
+
         if "tx" in self.request.POST and "tagging" not in self.request.POST:
             tx = self.request.POST.get("tx")
             tx_status = self.state_dictionary[self.request.POST.get("action")]
@@ -619,7 +604,7 @@ class ConcordiaAssetView(DetailView):
                 "%s://%s/ws/transcription_create/"
                 % (self.request.scheme, self.request.get_host()),
                 data={
-                    "asset": asset_json["id"],
+                    "asset": asset,
                     "user_id": self.request.user.id
                     if self.request.user.id is not None
                     else get_anonymous_user(self.request),
@@ -645,14 +630,14 @@ class ConcordiaAssetView(DetailView):
             elif tx_status == Status.COMPLETED:
                 messages.success(self.request, "The transcription is completed.")
 
-            redirect_path = next_page_dictionary[tx_status](redirect_path, asset_json)
+            redirect_path = next_page_dictionary[tx_status](redirect_path, asset)
 
         elif "tags" in self.request.POST and self.request.user.is_authenticated:
             tags = self.request.POST.get("tags").split(",")
             # get existing tags
             response = requests.get(
                 "%s://%s/ws/tags/%s/"
-                % (self.request.scheme, self.request.get_host(), asset_json["id"]),
+                % (self.request.scheme, self.request.get_host(), self.request.POST["asset_id"]),
                 cookies=self.request.COOKIES,
             )
             existing_tags_json_val = json.loads(response.content.decode("utf-8"))
@@ -665,12 +650,11 @@ class ConcordiaAssetView(DetailView):
                     "%s://%s/ws/tag_create/"
                     % (self.request.scheme, self.request.get_host()),
                     data={
-                        "campaign": asset_json["campaign"]["slug"],
-                        "asset": asset_json["slug"],
+                        "campaign": asset.campaign.slug,
+                        "asset": asset.slug,
                         "user_id": self.request.user.id
                         if self.request.user.id is not None
                         else get_anonymous_user(self.request),
-                        "name": tag,
                         "value": tag,
                     },
                     cookies=self.request.COOKIES,

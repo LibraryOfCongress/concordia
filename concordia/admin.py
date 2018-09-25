@@ -319,10 +319,10 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
-    list_display = ("id", "name", "value")
-    list_display_links = ("id", "name", "value")
+    list_display = ("id", "value")
+    list_display_links = ("id", "value")
 
-    search_fields = ["name", "value"]
+    search_fields = ["value"]
 
 
 @admin.register(UserAssetTagCollection)
