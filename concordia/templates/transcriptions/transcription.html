@@ -2,10 +2,10 @@
 {% block title %}Make Your Mark - {{ transcription.asset.title }}{% endblock title %}
 {% block head_content %}{% endblock head_content %}
 {% block main_content %} {% with transcription.asset as asset %}
-    <div class="container-fluid">
-      <div class="row">
+<div class="container-fluid">
+    <div class="row">
         <div class="col-12 d-flex align-items-middle py-1 bg-darkest-gray">
-          <h6 class="offwhite-text pl-default mb-0"><a class="offwhite-text " href="{% url 'transcriptions:campaign' asset.campaign.slug %}">{{ asset.campaign.title }} ></a>{{ asset.title }}</h6>
+            <h6 class="offwhite-text pl-default mb-0"><a class="offwhite-text " href="{% url 'transcriptions:campaign' asset.campaign.slug %}">{{ asset.campaign.title }} ></a>{{ asset.title }}</h6>
             <div class="col-12">
                 <div id="asset-image" class="asset-image">
                     <!-- <script>
@@ -20,42 +20,42 @@
                     </script> -->
                 </div>
             </div>
-              <div class="col-6">
+            <div class="col-6">
                 <nav>
                     <div class="nav nav-pills" id="nav-tab" role="tablist">
                         <a class="nav-item nav-link active" id="nav-tx-tab" data-toggle="tab" href="#nav-tx" role="tab" aria-controls="nav-tx" aria-selected="true">Transcription</a>
                         <a class="nav-item nav-link" id="nav-tags-tab" data-toggle="tab" href="#nav-tags" role="tab" aria-controls="nav-tags" aria-selected="false">Tags</a>
                         <a class="nav-item nav-link" id="nav-disc-tab" data-toggle="tab" href="#nav-disc" role="tab" aria-controls="nav-disc" aria-selected="false">Discussion</a>
                     </div>
-                  </nav>
-                  <form method="post">
-                      <div class="tab-content" id="nav-tabContent">
-                          <div class="tab-pane fade show active" id="nav-tx" role="tabpanel" aria-labelledby="nav-tx-tab">
-                              <textarea class="w-100" name="tx" id="tx" placeholder="Transcription">{{ transcription.text }}</textarea>
-                          </div>
-                          <div class="tab-pane fade" id="nav-tags" role="tabpanel" aria-labelledby="nav-tag-tab"></div>
-                          <div class="tab-pane fade" id="nav-disc" role="tabpanel" aria-labelledby="nav-disc-tab"></div>
-                      </div>
+                </nav>
+                <form method="post">
+                    <div class="tab-content" id="nav-tabContent">
+                        <div class="tab-pane fade show active" id="nav-tx" role="tabpanel" aria-labelledby="nav-tx-tab">
+                            <textarea class="w-100" name="tx" id="tx" placeholder="Transcription">{{ transcription.text }}</textarea>
+                        </div>
+                        <div class="tab-pane fade" id="nav-tags" role="tabpanel" aria-labelledby="nav-tag-tab"></div>
+                        <div class="tab-pane fade" id="nav-disc" role="tabpanel" aria-labelledby="nav-disc-tab"></div>
+                    </div>
 
-                      <p>
-                          <label for="status_id">Transcription Status:</label>
-                          <select name="" id="status_id">
-                              <option value="0">0%</option>
-                              <option value="25">25%</option>
-                              <option value="50">50%</option>
-                              <option value="75">75%</option>
-                              <option value="100">100%</option>
-                          </select>
-                          <input type="submit" class="btn btn-primary" value="Save">
-                      </p>
-                  </form>
-              </div>
-      </div>
+                    <p>
+                        <label for="status_id">Transcription Status:</label>
+                        <select name="" id="status_id">
+                            <option value="0">0%</option>
+                            <option value="25">25%</option>
+                            <option value="50">50%</option>
+                            <option value="75">75%</option>
+                            <option value="100">100%</option>
+                        </select>
+                        <input type="submit" class="btn btn-primary" value="Save">
+                    </p>
+                </form>
+            </div>
+        </div>
     </div>
-{% endwith %}
-{% endblock main_content %}
+    {% endwith %}
+    {% endblock main_content %}
 
-{% block body_scripts %}
-<script src="{% static "vendor/openseadragon/openseadragon.min.js" %}"></script>
-<script src="{% static "js/contribute.js" %}"></script>
-{% endblock body_scripts %}
+    {% block body_scripts %}
+    <script src="{% static 'vendor/openseadragon/openseadragon.min.js' %}"></script>
+    <script src="{% static 'js/contribute.js' %}"></script>
+    {% endblock body_scripts %}

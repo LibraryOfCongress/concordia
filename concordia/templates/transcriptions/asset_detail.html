@@ -174,9 +174,9 @@ Crowd: {{ asset.title }} ({{ asset.project.campaign.title }} — {{ asset.projec
 {% endblock main_content %}
 
 {% block body_scripts %}
-<script src="{% static " js/contribute.js" %}"></script>
-<script src="{% static " vendor/jquery.cookie.js" %}"></script>
-<script src="{% static " vendor/openseadragon/openseadragon.min.js" %}"></script>
+<script src="{% static 'js/contribute.js' %}"></script>
+<script src="{% static 'vendor/jquery.cookie.js' %}"></script>
+<script src="{% static 'vendor/openseadragon/openseadragon.min.js' %}"></script>
 <script type="text/javascript">
     var viewer = OpenSeadragon({
         id: 'asset-image',
