@@ -5,19 +5,15 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('concordia', '0019_auto_20180920_1503'),
-    ]
+    dependencies = [("concordia", "0019_auto_20180920_1503")]
 
     operations = [
         migrations.AddField(
-            model_name='item',
-            name='visible',
-            field=models.BooleanField(default=False),
+            model_name="item", name="visible", field=models.BooleanField(default=False)
         ),
         migrations.AlterField(
-            model_name='item',
-            name='thumbnail_url',
+            model_name="item",
+            name="thumbnail_url",
             field=models.URLField(blank=True, max_length=255, null=True),
         ),
     ]

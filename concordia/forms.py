@@ -1,13 +1,11 @@
 from logging import getLogger
 
-from django.db.models.signals import post_save
-from django.dispatch import receiver
-
 from captcha.fields import CaptchaField
 from django import forms
-from django.contrib.auth.models import Group
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from django.db.models import Count
+from django.db.models.signals import post_save
 from registration.forms import RegistrationForm
 
 from concordia.models import Status

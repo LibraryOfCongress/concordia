@@ -26,11 +26,22 @@ from registration.backends.hmac.views import RegistrationView
 from rest_framework import generics, status
 from rest_framework.test import APIRequestFactory
 
-from concordia.forms import (AssetFilteringForm, CaptchaEmbedForm,
-                             ConcordiaContactUsForm, ConcordiaUserEditForm,
-                             ConcordiaUserForm)
-from concordia.models import (Asset, Campaign, Item, Project, Status, Transcription,
-                              UserProfile)
+from concordia.forms import (
+    AssetFilteringForm,
+    CaptchaEmbedForm,
+    ConcordiaContactUsForm,
+    ConcordiaUserEditForm,
+    ConcordiaUserForm,
+)
+from concordia.models import (
+    Asset,
+    Campaign,
+    Item,
+    Project,
+    Status,
+    Transcription,
+    UserProfile,
+)
 from concordia.views_ws import PageInUseCreate
 
 logger = getLogger(__name__)
@@ -454,10 +465,10 @@ class ConcordiaAssetView(DetailView):
         """
 
         ctx = super().get_context_data(**kwargs)
-        asset = ctx['asset']
-        ctx['item'] = item = asset.item
-        ctx['project'] = project = item.project
-        ctx['campaign'] = project.campaign
+        asset = ctx["asset"]
+        ctx["item"] = item = asset.item
+        ctx["project"] = project = item.project
+        ctx["campaign"] = project.campaign
 
         in_use_url = reverse(
             "transcriptions:asset-detail",

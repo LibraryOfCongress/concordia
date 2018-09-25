@@ -6,17 +6,19 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('concordia', '0024_auto_20180924_1529'),
-        ('importer', '0013_auto_20180924_1318'),
+        ("concordia", "0024_auto_20180924_1529"),
+        ("importer", "0013_auto_20180924_1318"),
     ]
 
     operations = [
         migrations.AlterUniqueTogether(
-            name='importitem',
-            unique_together={('job', 'item')},
+            name="importitem", unique_together={("job", "item")}
         ),
         migrations.AlterUniqueTogether(
-            name='importitemasset',
-            unique_together={('import_item', 'sequence_number'), ('import_item', 'asset')},
+            name="importitemasset",
+            unique_together={
+                ("import_item", "sequence_number"),
+                ("import_item", "asset"),
+            },
         ),
     ]

@@ -732,7 +732,9 @@ class ViewWSTest_Concordia(TestCase):
         )
 
         # Assert
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN) # user is not superuser
+        self.assertEqual(
+            response.status_code, status.HTTP_403_FORBIDDEN
+        )  # user is not superuser
 
     def test_Asset_Update_admin_put(self):
         """
@@ -783,7 +785,7 @@ class ViewWSTest_Concordia(TestCase):
                 "start_date": None,
                 "end_date": None,
                 "status": "Edit",
-                'projects': [],
+                "projects": [],
                 "assets": [
                     {
                         "title": "TestAsset3",
