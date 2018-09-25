@@ -81,7 +81,6 @@ INSTALLED_APPS = [
     "rest_framework",
     "concordia",
     "exporter",
-    "faq",
     "importer",
     "concordia.experiments.wireframes",
     "captcha",

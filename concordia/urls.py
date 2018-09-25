@@ -5,12 +5,10 @@ from django.contrib import admin
 from django.contrib.auth import views as auth_views
 from django.urls import include, path, re_path
 from django.views.generic import TemplateView
-from django.views.static import serve
 from machina.app import board
 
 from concordia.admin import admin_bulk_import_view
 from exporter import views as exporter_views
-from faq.views import FAQView
 
 from . import trans_urls, views, views_ws
 
@@ -126,7 +124,7 @@ urlpatterns = [
         TemplateView.as_view(template_name="policy.html"),
         name="cookie-policy",
     ),
-    re_path(r"^faq/$", FAQView.as_view(), name="faq"),
+    path("faq/", views.static_page, name="faq-page"),
     re_path(
         r"^legal/$", TemplateView.as_view(template_name="legal.html"), name="legal"
     ),
