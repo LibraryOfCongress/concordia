@@ -99,9 +99,7 @@ tx_urlpatterns = (
 urlpatterns = [
     re_path(r"^$", TemplateView.as_view(template_name="home.html"), name="homepage"),
     path(r"healthz", views.healthz, name="health-check"),
-    re_path(
-        r"^about/$", TemplateView.as_view(template_name="about.html"), name="about"
-    ),
+    path("about/", views.static_page, name="about"),
     re_path(r"^contact/$", views.ContactUsView.as_view(), name="contact"),
     re_path(r"^campaigns/", include(tx_urlpatterns, namespace="transcriptions")),
     re_path(r"^api/v1/", include(trans_urls)),

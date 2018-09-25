@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock title %}
+
+{% block main_content %}
+<div class="container-fluid py-default">
+    <div class="row">
+        <div class="col-md-10 mx-auto bg-offwhite rounded">
+            <div class="mxy-default">
+                <h2 class="my-default ml-half">{{ title }}</h2>
+                <div>
+                    {{ body|safe }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock main_content %}
