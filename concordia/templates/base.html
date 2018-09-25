@@ -53,7 +53,7 @@
                         <a class="nav-link {% if PATH_LEVEL_1 == 'about'%}active{% endif %}" href="{% url 'about' %}">About</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if PATH_LEVEL_1 == 'faq'%}active{% endif %}" href="{% url 'faq' %}">FAQ</a>
+                        <a class="nav-link {% if PATH_LEVEL_1 == 'faq'%}active{% endif %}" href="{% url 'faq-page' %}">FAQ</a>
                     </li>
                     {% comment %} FIXME: this should be replaced with JS so we can cache pages {% endcomment %}
                     {% if user.is_authenticated %}

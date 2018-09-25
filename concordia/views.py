@@ -6,6 +6,7 @@ from datetime import datetime
 from logging import getLogger
 from warnings import warn
 
+import markdown
 import requests
 from django.conf import settings
 from django.contrib import messages
@@ -81,6 +82,41 @@ def healthz(request):
     status["database_has_data"] = Campaign.objects.count() > 0
 
     return HttpResponse(content=json.dumps(status), content_type="application/json")
+
+
+def static_page(request, base_name=None):
+    """
+    Serve static content from Markdown files
+
+    Expects the request path with the addition of ".md" to match a file under
+    the top-level static-pages directory or the url dispatcher configuration to
+    pass a base_name parameter:
+
+    path("foobar/", static_page, {"base_name": "some-weird-filename.md"})
+    """
+
+    if not base_name:
+        base_name = request.path.strip("/")
+
+    filename = os.path.join(settings.SITE_ROOT_DIR, "static-pages", f"{base_name}.md")
+
+    if not os.path.exists(filename):
+        raise Http404
+
+    md = markdown.Markdown(extensions=["meta"])
+    with open(filename) as f:
+        html = md.convert(f.read())
+
+    page_title = md.Meta.get("title")
+
+    if page_title:
+        page_title = "\n".join(i.strip() for i in page_title)
+    else:
+        page_title = base_name.replace("-", " ").replace("/", " — ").title()
+
+    ctx = {"body": html, "title": page_title}
+
+    return render(request, "static-page.html", ctx)
 
 
 class ConcordiaRegistrationView(RegistrationView):
