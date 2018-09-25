@@ -4,7 +4,7 @@ Hi {{ user }},
 Thank you for joining Make Your Mark! Please verify your email address in the next {{ expiration_days |multiply:24 }} hours.
 
 To complete activation, please click the following link:
-http://{{ site }}{% url "registration_activate" activation_key %}
+https://{{ site }}{% url "registration_activate" activation_key %}
 
 Once you confirm your email, you'll be able to add tags and complete transcriptions by reviewing text - plus see a history of your work in your account page.
 
