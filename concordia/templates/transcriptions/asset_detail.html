@@ -35,8 +35,8 @@ Crowd: {{ asset.title }} ({{ asset.project.campaign.title }} — {{ asset.projec
         <div class="col-6 bg-darkest-gray contribute-box" id="contribute-box">
             <nav class="px-half py-1">
                 <div class="nav nav-pills" id="nav-pill-contribute-box" role="tablist">
-                    <a class="nav-item nav-link active" id="nav-pill-transcription" data-toggle="tab" href="#tab-transcription" role="tab" aria-controls="tab-transcription" aria-selected="true" onclick="return show_buttons()">Transcription</a>
-                    <a class="nav-item nav-link" id="nav-pill-tag" data-toggle="tab" href="#tab-tag" role="tab" aria-controls="tab-tag" aria-selected="false" onclick="return hide_buttons('tags')">Tags</a>
+                    <a class="nav-item nav-link active" id="nav-pill-transcription" data-toggle="tab" href="#tab-transcription" role="tab" aria-controls="tab-transcription" aria-selected="true">Transcription</a>
+                    <a class="nav-item nav-link" id="nav-pill-tag" data-toggle="tab" href="#tab-tag" role="tab" aria-controls="tab-tag" aria-selected="false">Tags</a>
                 </div>
             </nav>
             {% if transcription and transcription.status %}
@@ -62,40 +62,55 @@ Crowd: {{ asset.title }} ({{ asset.project.campaign.title }} — {{ asset.projec
                 <h5 class="offwhite-text d-inline small" id="transcription-state" name="transcription-state">Open for edit</h5>
             </div>
             {% endif %}
-            <form class="mx-half" id="contribute-form" method="post">
-                {% csrf_token %}
-                <div class="tab-content" id="nav-tabContent">
-                    <div class="tab-pane fade show active rounded" id="tab-transcription" role="tabpanel" aria-labelledby="nav-pill-transcription">
-                        <textarea class="w-100 rounded" name="tx" id="transcription-input" placeholder="Go ahead, start typing. You got this!" aria-label="Transcription input">{% if transcription %}{{transcription.text}}{% endif %}</textarea>
-                    </div>
-                    <div class="tab-pane fade rounded" id="tab-tag" role="tabpanel" aria-labelledby="nav-pill-tag">
-                        {% if user.is_authenticated %}
-                        <input type="text" id="tag-input" class="rounded" name="tags" data-role="tagsinput" value="{%for tag in tags %}{{tag}},{% endfor %}" aria-label="Tag input">
-                        {% else %}
-                        <input type="text" id="tag-input" class="rounded" name="tags" data-role="tagsinput" value="{%for tag in tags %}{{tag}},{% endfor %}" aria-label="Tag input" disabled="true">
-                        {% endif %}
-                    </div>
-                </div>
 
-                <div class="my-half d-flex justify-content-around align-items-center btn-row">
-                    <input name="asset_id" value="{{ asset.id }}" type="hidden" />
-                    <input id="save-button" name="action" type="submit" class="btn btn-primary" value="Save">
-                    <input id="review-button" name="action" type="submit" class="btn btn-primary" value="Submit for Review">
+            <div class="tab-content" id="nav-tabContent">
+                <div class="tab-pane fade show active rounded" id="tab-transcription" role="tabpanel" aria-labelledby="nav-pill-transcription">
+                    <form class="mx-half" method="post" action="{% url 'ws:submit-transcription' pk=asset.pk %}">
+                        {% csrf_token %}
+
+                        <textarea class="w-100 rounded" name="tx" id="transcription-input" placeholder="Go ahead, start typing. You got this!" aria-label="Transcription input">
+                            {{transcription.text}}
+                        </textarea>
+
+                        {% if user.is_anonymous %}
+                            <div class="d-none my-quarter col-12 col-md-10 col-lg-8 mx-auto" id="captcha_container">
+                                <div class="text-center mt-half" id="captcha_div">
+                                    {{ captcha_form.captcha }}
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <div class="my-half d-flex justify-content-around align-items-center btn-row">
+                            <input id="save-button" name="action" type="submit" class="btn btn-primary" value="Save">
+                            <input id="review-button" name="action" type="submit" class="btn btn-primary" value="Submit for Review">
+                            {% if user.is_authenticated %}
+                            <input id="complete-button" name="action" type="submit" class="btn btn-primary" value="Mark Completed">
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+                <div class="tab-pane fade rounded" id="tab-tag" role="tabpanel" aria-labelledby="nav-pill-tag">
                     {% if user.is_authenticated %}
-                    <input id="complete-button" name="action" type="submit" class="btn btn-primary" value="Mark Completed">
+                        <form class="mx-half" method="post" action="{% url 'ws:submit-tags' pk=asset.pk %}">
+                            <div>
+                                <input type="text" id="tag-input" class="rounded" name="tags" data-role="tagsinput" value="{%for tag in tags %}{{tag}},{% endfor %}" aria-label="Tag input">
+                            </div>
+
+                            <div class="my-half d-flex justify-content-around align-items-center btn-row">
+                                <input id="save-button" name="action" type="submit" class="btn btn-primary" value="Save">
+                            </div>
+                        </form>
+                    {% else %}
+                        FIXME: this should be a simple pill list!
+                        <input type="text" id="tag-input" class="rounded" name="tags" data-role="tagsinput" value="{%for tag in tags %}{{tag}},{% endfor %}" aria-label="Tag input" disabled="true">
                     {% endif %}
                 </div>
-                {% if user.is_anonymous %}
-                <div class="d-none my-quarter col-12 col-md-10 col-lg-8 mx-auto" id="captcha_container">
-                    <div class="text-center mt-half" id="captcha_div">
-                        {{ captcha_form.captcha }}
-                    </div>
-                </div>
-                {% endif %}
-                <a id="contact-button" class="btn btn-minimal-secondary" href="{% url 'contact' %}?pre_populate=1">
-                    Contact a Manager
-                    </a>
-            </form>
+            </div>
+
+            <a id="contact-button" class="btn btn-minimal-secondary" href="{% url 'contact' %}?pre_populate=1">
+                Contact a Manager
+            </a>
+
             <div>
                 <h5 class="mx-half offwhite-text" id="register-login-reminder">Only registered users can tag.
                     <a class="primary-text" href="/account/register/">Register</a> or <a class="primary-text" href="/account/login">Login</a></h5>
@@ -187,62 +202,6 @@ Crowd: {{ asset.title }} ({{ asset.project.campaign.title }} — {{ asset.projec
         }
     }
 
-    function hide_buttons(tab_name) {
-        $("#review-button, #complete-button").hide();
-
-        {% if not user.is_authenticated %}
-        $("#register-login-reminder").show();
-
-        if (tab_name == 'tags') {
-            $("#tag-input").attr('disabled', true);
-            $("#save-button").hide();
-        }
-        {% else %}
-        $("#register-login-reminder").hide();
-        if (tab_name == 'tags') {
-            $('<input />').attr({
-                type: 'hidden',
-                class: 'tagging-hidden-input',
-                value: 'true',
-                name: 'tagging'
-            }).appendTo('form#contribute-form');
-        }
-
-        {% if transcription and transcription.status == 'Completed' %}
-        if (tab_name == "transcription")
-            $("#save-button").hide();
-        else
-            $("#save-button").show();
-        {% endif %}
-        {% endif %}
-        return true;
-    }
-    function show_buttons() {
-        $("#save-button, #review-button").show();
-        $("#complete-button").hide();
-        $("#register-login-reminder").hide();
-
-        $("#transcription-input").attr('disabled', false);
-
-        {% if not transcription or not transcription.status and not user.is_authenticated %}
-        $("#save-button, #review-button").show();
-        {% elif not user.is_authenticated and transcription and transcription.status != 'Edit' %}
-        $("#save-button, #review-button").hide();
-        $("#transcription-input").attr('disabled', true);
-        {% else %}
-        {% if transcription and transcription.status == 'Submitted' %}
-        $("#review-button").hide();
-        $("#complete-button").show();
-        {% elif transcription and transcription.status == 'Completed' %}
-        $("#save-button").show();
-        $("#review-button").hide();
-        $("#save-button").hide();
-        {% endif %}
-        {% endif %}
-
-        return true;
-    }
-
     $("document").ready(function () {
         setTimeout(checkin_page_in_use, 5000);
         {% if page_in_use %}
@@ -263,50 +222,6 @@ Crowd: {{ asset.title }} ({{ asset.project.campaign.title }} — {{ asset.projec
             {% endif %}
         }
 
-        show_buttons();
-
-        var target = null;
-        $('a[data-toggle="tab"]').on('show.bs.tab', function (e) {
-            target = $(e.target).attr("href") // activated tab
-            if (target == "#tab-tag") {
-                hide_buttons("tags");
-            } else {
-                $('input.tagging-hidden-input').remove();
-            }
-        });
-
-        var url = window.location.href;
-        var lastPart = url.substr(url.lastIndexOf('/') + 1);
-        if (lastPart == "#tab-tag") {
-            hide_buttons("tags");
-        }
-
-        {% if user.is_anonymous %}
-        $("#save-button").click(function (e) {
-            {% if not is_anonymous_user_captcha_validated %}
-            if ($("#captcha_container").hasClass('d-none')) {
-                e.preventDefault();
-                $(this).attr("disabled", "disabled");
-                $("#captcha_container").removeClass('d-none');
-                $("#captcha_container").show();
-                $("#review-button").prop("disabled", true);
-            }
-            {% endif %}
-        });
-        $("#review-button").click(function (e) {
-            {% if not is_anonymous_user_captcha_validated %}
-            if ($("#captcha_container").hasClass('d-none')) {
-                e.preventDefault();
-                $(this).attr("disabled", "disabled");
-                $("#captcha_container").removeClass('d-none');
-                $("#captcha_container").show();
-                $("#save-button").prop("disabled", true);
-                // need to pass in button value to captcha enter button
-                $("#input_group_for_captcha > .input-group-append > button").attr("value", $("#review-button").attr("value"));
-            }
-            {% endif %}
-        });
-
         $(".js-captcha-refresh").click(function (e) {
             e.preventDefault();
             $.getJSON("{% url 'captcha-refresh' %}", function (result) {
@@ -315,7 +230,6 @@ Crowd: {{ asset.title }} ({{ asset.project.campaign.title }} — {{ asset.projec
                 sessionStorage.setItem('show_message', 'true');
             });
         })
-        {% endif %}
     });
 </script>
 {% endblock body_scripts %}
