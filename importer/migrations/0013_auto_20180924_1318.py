@@ -5,14 +5,10 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('importer', '0012_auto_20180923_0231'),
-    ]
+    dependencies = [("importer", "0012_auto_20180923_0231")]
 
     operations = [
         migrations.RenameField(
-            model_name='importjob',
-            old_name='source_url',
-            new_name='url',
-        ),
+            model_name="importjob", old_name="source_url", new_name="url"
+        )
     ]
