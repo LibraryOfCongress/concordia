@@ -92,7 +92,9 @@ Crowd: {{ asset.title }} ({{ asset.project.campaign.title }} — {{ asset.projec
                     </div>
                 </div>
                 {% endif %}
-                <input id="contact-button" name="action" type="submit" class="btn btn-minimal-secondary" value="Contact a Manager">
+                <a id="contact-button" class="btn btn-minimal-secondary" href="{% url 'contact' %}?pre_populate=1">
+                    Contact a Manager
+                    </a>
             </form>
             <div>
                 <h5 class="mx-half offwhite-text" id="register-login-reminder">Only registered users can tag.
