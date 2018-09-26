@@ -483,7 +483,7 @@ class ViewTest_Concordia(TestCase):
             title="item-slug",
             slug="item-slug",
             item_id="item-slug",
-            visible=True,
+            published=True,
             campaign=self.campaign,
             project=self.project,
         )
@@ -497,7 +497,7 @@ class ViewTest_Concordia(TestCase):
             "title": self.item.title,
             "description": "Item Description",
             "assets": [],
-            "visible": True,
+            "published": True,
             "campaign": self.campaign.id,
             "project": self.project.id,
         }
@@ -2023,7 +2023,7 @@ class ViewTest_Concordia(TestCase):
             description="Campaign Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
-            is_publish=True,
+            published=True,
         )
         self.campaign.save()
 
@@ -2033,7 +2033,7 @@ class ViewTest_Concordia(TestCase):
             metadata={"key": "val1"},
             status=Status.EDIT,
             campaign=self.campaign,
-            is_publish=True,
+            published=True,
         )
         self.project.save()
 
@@ -2043,7 +2043,7 @@ class ViewTest_Concordia(TestCase):
             metadata={"key": "val1"},
             status=Status.EDIT,
             campaign=self.campaign,
-            is_publish=True,
+            published=True,
         )
         self.project1.save()
 
@@ -2104,7 +2104,7 @@ class ViewTest_Concordia(TestCase):
             description="Campaign Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
-            is_publish=True,
+            published=True,
         )
         self.campaign.save()
 
@@ -2114,7 +2114,7 @@ class ViewTest_Concordia(TestCase):
             metadata={"key": "val1"},
             status=Status.EDIT,
             campaign=self.campaign,
-            is_publish=True,
+            published=True,
         )
         self.project.save()
 
@@ -2124,7 +2124,7 @@ class ViewTest_Concordia(TestCase):
             metadata={"key": "val1"},
             status=Status.EDIT,
             campaign=self.campaign,
-            is_publish=True,
+            published=True,
         )
         self.project1.save()
 
@@ -2167,7 +2167,7 @@ class ViewTest_Concordia(TestCase):
             metadata={"key": "val1"},
             status=Status.EDIT,
             collection=self.collection,
-            is_publish=True,
+            published=True,
         )
         self.subcollection1.save()
 

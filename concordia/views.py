@@ -243,8 +243,9 @@ class ConcordiaProjectView(ListView):
         )
 
         item_qs = self.project.item_set.order_by("item_id")
+
         if not self.request.user.is_staff:
-            item_qs = item_qs.exclude(visible=False)
+            item_qs = item_qs.exclude(published=False)
 
         return item_qs
 
@@ -275,7 +276,7 @@ class ConcordiaItemView(ListView):
         item_qs = Item.objects.select_related("project", "project__campaign")
 
         if not self.request.user.is_staff:
-            item_qs = item_qs.filter(visible=True)
+            item_qs = item_qs.filter(published=True)
 
         self.item = get_object_or_404(
             item_qs,
