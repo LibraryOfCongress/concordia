@@ -16,11 +16,11 @@ We ask you to transcribe a document the same way you would read it aloud. We are
 6. Illegible: Illegible text is anything you can’t read because a page is damaged, text is heavily crossed out or you can’t tell what the author has written. If there is a word or a string of words you cannot read use a pair of square brackets around an empty space [ ]. 
 
 Example:
-    > I have [ ] loved coffee ice cream
+    - "I have [ ] loved coffee ice cream"
 
 If you can read any letters or parts of words transcribe what you can and use question marks for the remaining letters or words. Examples:
-    > I have [a?????] loved coffee ice cream
-    > I have [a?] loved coffee ice cream
+    - "I have [a?????] loved coffee ice cream"
+    - "I have [a?] loved coffee ice cream"
 
 If you cannot read a word or phrase that’s ok. Another volunteer may be able to identify the missing letters and update your transcription. If there is a lot of text you cannot read consider looking for another page that you can decipher better.
 
@@ -28,8 +28,7 @@ If you cannot read a word or phrase that’s ok. Another volunteer may be able t
     - “I have always loved [vanilla] coffee ice cream.”
 
 8. Marginalia: Marginalia is text written in the white space around the main block of text. It usually is a comment on the main body text but can also be unrelated. It is different from an insertion because it cannot be directly inserted into the main text and still make sense when read aloud. Use a pair of square brackets and asterisk (*)around marginalia text and order it within the transcription where it makes the most sense (or at the end of the transcription if it appears unrelated). Example:
-
-> I have always loved coffee ice cream. Last summer I made my own using a recipe from the 1970s. It was the creamiest coffee ice cream I ever ate. No one else in my family likes that flavor. Oh well, more for me! [*Brazil was the largest coffee producing country in the world in 2017*]
+    - I have always loved coffee ice cream. Last summer I made my own using a recipe from the 1970s. It was the creamiest coffee ice cream I ever ate. No one else in my family likes that flavor. Oh well, more for me! [*Brazil was the largest coffee producing country in the world in 2017*]
 
 9. Printed and typed text: Some material in Make Your Mark was created on a typewriter or printed. If we have included it here it is because the text is not machine-readable. A computer using Optical Character Recognition (OCR) technology cannot create an accurate word-searchable transcription.
 10. When not to transcribe printed text: Some calendars and diaries contain many pages of pre-printed almanacs or other text that is probably machine-readable and therefore should not be transcribed as part of this project.
