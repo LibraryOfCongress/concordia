@@ -4,10 +4,8 @@ import os
 import time
 from datetime import datetime
 from logging import getLogger
-from warnings import warn
 
 import markdown
-import requests
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model, update_session_auth_hash
@@ -52,37 +50,17 @@ PROJECTS_PER_PAGE = 36
 ITEMS_PER_PAGE = 36
 
 
-def concordia_api(relative_path):
-    warn(
-        f"Internal API call for {relative_path} should be refactored",
-        category=DeprecationWarning,
-    )
-    abs_path = "{}/api/v1/{}".format(settings.CONCORDIA["netloc"], relative_path)
-    logger.debug("Calling API path %s", abs_path)
-    data = requests.get(abs_path).json()
-
-    logger.debug("Received %s", data)
-    return data
-
-
-def get_anonymous_user(request, user_id=True):
+def get_anonymous_user():
     """
-    Get the user called "anonymous" if it exist. Create the user if it doesn't exist
-    This is the default concordia user if someone is working on the site without logging in first.
-
-    :parameter: request django request object
-    :parameter: user_id Boolean defaults to True, if true returns user id, otherwise return user object
-    :return: User id or User
+    Get the user called "anonymous" if it exist. Create the user if it doesn't
+    exist This is the default concordia user if someone is working on the site
+    without logging in first.
     """
-    response = requests.get(
-        "%s://%s/ws/anonymous_user/" % (request.scheme, request.get_host()),
-        cookies=request.COOKIES,
-    )
-    anonymous_json_val = json.loads(response.content.decode("utf-8"))
-    if user_id:
-        return anonymous_json_val["id"]
-    else:
-        return anonymous_json_val
+
+    try:
+        return User.objects.get(username="anonymous")
+    except User.DoesNotExist:
+        return User.objects.create_user(username="anonymous")
 
 
 @never_cache
@@ -484,7 +462,7 @@ class ConcordiaAssetView(DetailView):
         current_user_id = (
             self.request.user.id
             if self.request.user.id is not None
-            else get_anonymous_user(self.request)
+            else get_anonymous_user().id
         )
 
         page_in_use = self.check_page_in_use(in_use_url, current_user_id)
@@ -618,7 +596,7 @@ class ConcordiaAssetView(DetailView):
                     "asset": asset,
                     "user_id": self.request.user.id
                     if self.request.user.id is not None
-                    else get_anonymous_user(self.request),
+                    else get_anonymous_user().id,
                     "status": tx_status,
                     "text": tx,
                 },
@@ -665,7 +643,7 @@ class ConcordiaAssetView(DetailView):
                         "asset": asset.slug,
                         "user_id": self.request.user.id
                         if self.request.user.id is not None
-                        else get_anonymous_user(self.request),
+                        else get_anonymous_user().id,
                         "value": tag,
                     },
                     cookies=self.request.COOKIES,
@@ -861,71 +839,6 @@ class CampaignView(TemplateView):
             return render(self.request, self.template_name)
 
 
-class DeleteCampaignView(TemplateView):
-    """
-    deletes the campaign
-    """
-
-    def get(self, request, *args, **kwargs):
-        """
-        GET request to delete a collection. Only allow admin access
-        :param request:
-        :param args:
-        :param kwargs:
-        :return: redirect to home (/) or redirect to /campaigns/
-        """
-        if not self.request.user.is_superuser:
-            return HttpResponseRedirect("/")
-        else:
-            raise NotImplementedError("Remove or fix this untested code")
-            requests.delete(
-                "%s://%s/ws/campaign_delete/%s/"
-                % (self.request.scheme, self.request.get_host(), self.args[0]),
-                cookies=self.request.COOKIES,
-            )
-            # FIXME: this needs error handling or being replaced outright (and has never been tested)
-            os.system(
-                "rm -rf {0}".format(
-                    settings.MEDIA_ROOT + "/concordia/" + collection.slug
-                )
-            )
-            return redirect("/campaigns/")
-
-
-class DeleteAssetView(TemplateView):
-    """
-    Hides an asset with status inactive. Hidden assets do not display in
-    asset view. After hiding an asset, page redirects to campaign view.
-    """
-
-    def get(self, request, *args, **kwargs):
-        """
-        GET request to delete an asset. Only allow admin access
-        :param request:
-        :param args:
-        :param kwargs:
-        :return: redirect to home (/) or redirect to /campaigns
-        :return:
-        """
-        if not self.request.user.is_superuser:
-            return HttpResponseRedirect("/")
-        else:
-            asset_update = {"campaign": self.args[0], "slug": self.args[1]}
-
-            requests.put(
-                "%s://%s/ws/asset_update/%s/%s/"
-                % (
-                    self.request.scheme,
-                    self.request.get_host(),
-                    self.args[0],
-                    self.args[1],
-                ),
-                data=asset_update,
-                cookies=self.request.COOKIES,
-            )
-            return redirect("/campaigns/" + self.args[0] + "/")
-
-
 class ReportCampaignView(TemplateView):
     """
     Report about campaign resources and status
@@ -1007,80 +920,3 @@ class FilterCampaigns(generics.ListAPIView):
         return JsonResponse(list(queryset), safe=False)
 
 
-def publish_campaign(request, campaign, is_publish):
-    """ Publish/Unpublish a campaign to otherr users. On un/publishing campaign,
-    it will get does the same effect for all its projects. """
-
-    try:
-        campaign = Campaign.objects.get(slug=campaign)
-    except Campaign.DoesNotExist:
-        raise Http404
-
-    if is_publish == "true":
-        campaign.is_publish = True
-    else:
-        campaign.is_publish = False
-
-    projects = campaign.project_set.all()
-
-    for sc in projects:
-        sc.is_publish = True if is_publish == "true" else False
-        sc.save()
-
-    campaign.save()
-
-    return JsonResponse(
-        {
-            "message": "Campaign has been %s."
-            % ("published" if is_publish == "true" else "unpublished"),
-            "state": True if is_publish == "true" else False,
-        },
-        safe=True,
-    )
-
-
-def publish_project(request, campaign, project, is_publish):
-    """ Publish/Unpublish a project to other users. """
-
-    try:
-        project = Project.objects.get(campaign__slug=campaign, slug=project)
-    except Project.DoesNotExist:
-        raise Http404
-
-    if is_publish == "true":
-        project.is_publish = True
-    else:
-        project.is_publish = False
-
-    project.save()
-
-    return JsonResponse(
-        {
-            "message": "Project has been %s."
-            % ("published" if is_publish == "true" else "unpublished"),
-            "state": True if is_publish == "true" else False,
-        },
-        safe=True,
-    )
-
-
-class DeleteProjectView(TemplateView):
-    """
-    deletes the project
-    """
-
-    def get(self, request, *args, **kwargs):
-        collection = Campaign.objects.get(slug=self.args[0])
-        subcollection = Project.objects.get(slug=self.args[1])
-        subcollection.asset_set.all().delete()
-        subcollection.delete()
-        os.system(
-            "rm -rf {0}".format(
-                settings.MEDIA_ROOT
-                + "/concordia/"
-                + collection.slug
-                + "/"
-                + subcollection.slug
-            )
-        )
-        return redirect("/campaigns/" + collection.slug + "/")

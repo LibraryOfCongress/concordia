@@ -7,7 +7,6 @@ from django.http import QueryDict
 from django.shortcuts import get_object_or_404
 from rest_framework import exceptions, generics, status, permissions
 from rest_framework.authentication import BasicAuthentication
-from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 
 from .models import (
@@ -70,27 +69,6 @@ class ConcordiaAdminPermission(permissions.BasePermission):
             return user.is_superuser
         except ObjectDoesNotExist:
             return False
-
-
-class AnonymousUserGet(generics.RetrieveAPIView):
-    """
-    GET: Return anonymous user, Create it if needed (this is not the AnonymousUser django user)
-    """
-
-    model = User
-    authentication_classes = (ConcordiaAPIAuth,)
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-
-    def get_object(self):
-        anon_user = User.objects.filter(username="anonymous").first()
-        if anon_user is None:
-            anon_user = User.objects.create_user(
-                username="anonymous",
-                email="anonymous@anonymous.com",
-                password="concanonymous",
-            )
-        return anon_user
 
 
 class UserProfileGet(generics.RetrieveAPIView):
@@ -279,19 +257,6 @@ class CampaignAssetsGet(generics.RetrieveAPIView):
     authentication_classes = (ConcordiaAPIAuth,)
     serializer_class = CampaignDetailSerializer
     queryset = Campaign.objects.all()
-    lookup_field = "slug"
-
-
-class CampaignDelete(generics.DestroyAPIView):
-    """
-    DELETE: Delete a Campaign
-    """
-
-    model = Campaign
-    authentication_classes = (ConcordiaAPIAuth,)
-    permission_classes = (ConcordiaAdminPermission,)
-    queryset = Campaign.objects.all()
-    serializer_class = CampaignDetailSerializer
     lookup_field = "slug"
 
 
@@ -576,40 +541,11 @@ class TagCreate(generics.ListCreateAPIView):
             asset=asset, user_id=request_data["user_id"]
         )
 
-        tag_ob, t_status = Tag.objects.get_or_create(
-            value=request_data["value"]
-        )
+        tag_ob, t_status = Tag.objects.get_or_create(value=request_data["value"])
         if tag_ob not in utags.tags.all():
             utags.tags.add(tag_ob)
 
         serializer = TagSerializer(data=request_data)
-        if serializer.is_valid():
-            pass
-        return Response(serializer.data)
-
-
-class TagDelete(generics.DestroyAPIView):
-    """
-    DELETE: delete a tag
-    """
-
-    model = UserAssetTagCollection
-    authentication_classes = (ConcordiaAPIAuth,)
-    serializer_class = UserAssetTagSerializer
-    queryset = UserAssetTagCollection.objects.all()
-
-    def delete(self, request, *args, **kwargs):
-        asset = Asset.objects.get(
-            campaign__slug=kwargs["campaign"], slug=kwargs["asset"]
-        )
-
-        user_asset_collection = get_object_or_404(
-            UserAssetTagCollection, asset=asset, user_id=kwargs["user_id"]
-        )
-
-        user_asset_collection.tags.filter(name=kwargs["name"]).delete()
-
-        serializer = UserAssetTagSerializer(data=kwargs)
         if serializer.is_valid():
             pass
         return Response(serializer.data)

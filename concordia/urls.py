@@ -40,21 +40,6 @@ tx_urlpatterns = (
             name="exportBagit campaign",
         ),
         re_path(
-            r"delete/([^/]+)/$",
-            views.DeleteCampaignView.as_view(),
-            name="delete campaign",
-        ),
-        re_path(
-            r"delete/project/([^/]+)/([^/]+)/$",
-            views.DeleteProjectView.as_view(),
-            name="delete project",
-        ),
-        re_path(
-            r"^([^/]+)/delete/asset/([^/]+)/$",
-            views.DeleteAssetView.as_view(),
-            name="delete_asset",
-        ),
-        re_path(
             r"report/([^/]+)/$",
             views.ReportCampaignView.as_view(),
             name="report campaign",
@@ -74,16 +59,6 @@ tx_urlpatterns = (
             views.ConcordiaItemView.as_view(),
             name="item",
         ),
-        re_path(
-            r"publish/campaign/(?P<campaign>[a-zA-Z0-9-]+)/(?P<is_publish>[a-zA-Z]+)/$",
-            views.publish_campaign,
-            name="publish campaign",
-        ),
-        re_path(
-            r"publish/project/(?P<campaign>[a-zA-Z0-9-]+)/(?P<project>[a-zA-Z0-9-]+)/(?P<is_publish>[a-zA-Z]+)/$",
-            views.publish_project,
-            name="publish project",
-        ),
     ],
     "transcriptions",
 )
@@ -91,8 +66,6 @@ tx_urlpatterns = (
 ws_urlpatterns = (
     [
         # Web Services
-        # FIXME: remove the unused views and review naming and correct URL coordinates for the rest:
-        re_path(r"^anonymous_user/$", views_ws.AnonymousUserGet.as_view()),
         re_path(
             r"^user_profile/(?P<user_id>(.*?))/$", views_ws.UserProfileGet.as_view()
         ),
@@ -111,10 +84,8 @@ ws_urlpatterns = (
             r"^page_in_use_user/(?P<user>(.*?))/(?P<page_url>(.*?))/$",
             views_ws.PageInUseUserGet.as_view(),
         ),
+        # FIXME: replace this with a standard DRF ViewSet
         re_path(r"^campaign/(?P<slug>(.*?))/$", views_ws.CampaignGet().as_view()),
-        re_path(
-            r"^campaign_delete/(?P<slug>(.*?))/$", views_ws.CampaignDelete.as_view()
-        ),
         re_path(
             r"^campaign_by_id/(?P<id>(.*?))/$", views_ws.CampaignGetById().as_view()
         ),
@@ -164,7 +135,6 @@ ws_urlpatterns = (
             views_ws.TagCreate.as_view(),
             name="submit-tags",
         ),
-        path("assets/<int:pk>/tags/delete", views_ws.TagDelete.as_view()),
     ],
     "ws",
 )
