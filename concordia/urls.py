@@ -18,8 +18,8 @@ for key, value in getattr(settings, "ADMIN_SITE", {}).items():
 
 tx_urlpatterns = (
     [
-        re_path(r"^$", views.ConcordiaView.as_view(), name="campaigns"),
-        re_path(r"^create/$", views.CampaignView.as_view(), name="create"),
+        path("", views.CampaignListView.as_view(), name="campaigns"),
+        path("<slug:slug>/", views.CampaignDetailView.as_view(), name="campaign"),
         re_path(
             r"^pageinuse/$", views.ConcordiaPageInUse.as_view(), name="page in use"
         ),
@@ -28,7 +28,6 @@ tx_urlpatterns = (
             views.ConcordiaAlternateAssetView.as_view(),
             name="alternate asset",
         ),
-        re_path(r"^([^/]+)/$", views.ConcordiaCampaignView.as_view(), name="campaign"),
         re_path(
             r"exportCSV/([^/]+)/$",
             exporter_views.ExportCampaignToCSV.as_view(),

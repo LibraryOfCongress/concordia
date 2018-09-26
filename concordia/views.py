@@ -14,7 +14,7 @@ from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
 from django.db.models import Count
-from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import Http404, get_object_or_404, redirect, render
 from django.template import loader
 from django.urls import reverse
@@ -202,34 +202,22 @@ class AccountProfileView(LoginRequiredMixin, TemplateView):
         )
 
 
-class ConcordiaView(TemplateView):
-    template_name = "transcriptions/campaigns.html"
+class CampaignListView(ListView):
+    template_name = "transcriptions/campaign_list.html"
+    paginate_by = 10
 
-    def get_context_data(self, **kws):
-        response = concordia_api("campaigns/")
-        return dict(super().get_context_data(**kws), response=response)
+    queryset = Campaign.objects.published().order_by("title")
+    context_object_name = "campaigns"
 
 
-class ConcordiaCampaignView(TemplateView):
-    template_name = "transcriptions/campaign.html"
+class CampaignDetailView(DetailView):
+    template_name = "transcriptions/campaign_detail.html"
 
-    def get_context_data(self, **kws):
-        from .serializers import CampaignDetailSerializer
+    queryset = Campaign.objects.published().order_by("title")
+    context_object_name = "campaign"
 
-        campaign = get_object_or_404(Campaign, slug=self.args[0])
-
-        serialized = CampaignDetailSerializer(campaign).data
-
-        for sub_col in serialized["projects"]:
-            sub_col["campaign"] = campaign
-
-        project_sorted_list = sorted(serialized["projects"], key=lambda k: (k["title"]))
-
-        return dict(
-            super().get_context_data(**kws),
-            campaign=serialized,
-            projects=project_sorted_list,
-        )
+    def get_queryset(self):
+        return Campaign.objects.filter(slug=self.kwargs["slug"])
 
 
 class ConcordiaProjectView(ListView):
