@@ -124,7 +124,6 @@ urlpatterns = [
         TemplateView.as_view(template_name="policy.html"),
         name="cookie-policy",
     ),
-    path("faq/", views.static_page, name="faq-page"),
     re_path(
         r"^legal/$", TemplateView.as_view(template_name="legal.html"), name="legal"
     ),
