@@ -13,18 +13,19 @@ We ask you to transcribe a document the same way you would read it aloud. We are
 3. Insertions: When text has been inserted or added later, but should be read as part of a sentence, type it in the order you would read it aloud.
 4. Line-breaks: Do not reproduce dashes indicating words broken between two lines. Write library rather than li-brary, kitten rather than kit-ten.
 5. _Emphasis_: The Library catalog cannot search for bold, italic, underlined or superscript text, so even when you see these features please transcribe the words without any styling.
-6. Illegible: Illegible text is anything you can’t read because a page is damaged, text is heavily crossed out or you can’t tell what the author has written. If there is a word or a string of words you cannot read use a pair of square brackets around an empty space [ ]. 
+6. Illegible: Illegible text is anything you can’t read because a page is damaged, text is heavily crossed out or you can’t tell what the author has written. If there is a word or a string of words you cannot read use a pair of square brackets around an empty space [ ]. Example:
 
-Example:
     - "I have [ ] loved coffee ice cream"
 
 If you can read any letters or parts of words transcribe what you can and use question marks for the remaining letters or words. Examples:
+
     - "I have [a?????] loved coffee ice cream"
     - "I have [a?] loved coffee ice cream"
 
 If you cannot read a word or phrase that’s ok. Another volunteer may be able to identify the missing letters and update your transcription. If there is a lot of text you cannot read consider looking for another page that you can decipher better.
 
 7. Deletions: If you can read crossed out or otherwise deleted text, transcribe the deleted words within a pair of square brackets. Example:
+
     - “I have always loved [vanilla] coffee ice cream.”
 
 8. Marginalia: Marginalia is text written in the white space around the main block of text. It usually is a comment on the main body text but can also be unrelated. It is different from an insertion because it cannot be directly inserted into the main text and still make sense when read aloud. Use a pair of square brackets and asterisk (*)around marginalia text and order it within the transcription where it makes the most sense (or at the end of the transcription if it appears unrelated). Example:
