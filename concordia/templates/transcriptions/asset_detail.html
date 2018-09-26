@@ -13,13 +13,21 @@ Crowd: {{ asset.title }} ({{ asset.project.campaign.title }} — {{ asset.projec
 
 {% block main_content %}
 <div class="container-fluid px-0">
-    <div class="row">
-        <div id="show_message">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb bg-offwhite my-0">
+            <li class="breadcrumb-item"><a class="primary-text" href="/">Home</a></li>
+            <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaign' slug=campaign.slug %}">{{ campaign.title }}</a></li>
+            <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:project-detail' campaign_slug=campaign.slug slug=project.slug %}">{{ project.title }}</a></li>
+            <li class="breadcrumb-item active">{{ asset.title }}</li>
+        </ol>
+    </nav>
 
-        </div>
-        <div class="col-12 d-flex align-items-middle py-1 bg-darkest-gray">
-            <h2 class="contribute-breadcrumb pl-default mb-0"><a class="offwhite-text" href="{% url 'transcriptions:campaign' asset.campaign.slug %}"> Go back to {{ asset.campaign.title }}</a> > {{ asset.title }}</h2>
-        </div>
+    <div id="show_message" class="row">
+
+    </div>
+
+    <div class="row bg-darkest-gray px-2 py-2">
+
         <div class="col-6">
             <div id="asset-image" class="asset-image bg-offwhite">
             </div>
@@ -32,7 +40,7 @@ Crowd: {{ asset.title }} ({{ asset.project.campaign.title }} — {{ asset.projec
             </div>
         </div>
 
-        <div class="col-6 bg-darkest-gray contribute-box" id="contribute-box">
+        <div class="col-6 contribute-box" id="contribute-box">
             <nav class="px-half py-1">
                 <div class="nav nav-pills" id="nav-pill-contribute-box" role="tablist">
                     <a class="nav-item nav-link active" id="nav-pill-transcription" data-toggle="tab" href="#tab-transcription" role="tab" aria-controls="tab-transcription" aria-selected="true">Transcription</a>
