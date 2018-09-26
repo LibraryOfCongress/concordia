@@ -12,8 +12,8 @@ def asset_media_url(asset):
         settings.MEDIA_URL,
         "/".join(
             (
-                asset.project.campaign.slug,
-                asset.project.slug,
+                asset.item.project.campaign.slug,
+                asset.item.project.slug,
                 asset.item.item_id,
                 asset.media_url,
             )

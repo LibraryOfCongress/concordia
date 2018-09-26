@@ -261,19 +261,17 @@ class ConcordiaItemView(ListView):
     http_method_names = ["get", "options", "head"]
 
     def get_queryset(self):
-        item_qs = Item.objects.select_related("project", "project__campaign")
-
-        if not self.request.user.is_staff:
-            item_qs = item_qs.filter(published=True)
-
         self.item = get_object_or_404(
-            item_qs,
+            Item.objects.published().select_related('project__campaign'),
             campaign__slug=self.kwargs["campaign_slug"],
             project__slug=self.kwargs["project_slug"],
             slug=self.kwargs["slug"],
         )
 
         asset_qs = self.item.asset_set.all()
+        asset_qs = asset_qs.select_related(
+            "item__project__campaign", "item__project", "item"
+        )
         return self.apply_asset_filters(asset_qs)
 
     def apply_asset_filters(self, asset_qs):
@@ -292,7 +290,7 @@ class ConcordiaItemView(ListView):
 
         res.update(
             {
-                "campaign": self.item.campaign,
+                "campaign": self.item.project.campaign,
                 "project": self.item.project,
                 "item": self.item,
                 "filter_form": self.filter_form,
