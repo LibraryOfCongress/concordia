@@ -888,22 +888,3 @@ class ReportCampaignView(TemplateView):
                 0, ("Not Started", project.asset_count - total_statuses)
             )
 
-
-class FilterCampaigns(generics.ListAPIView):
-    def get_queryset(self):
-        name_query = self.request.query_params.get("name")
-        if name_query:
-            queryset = Campaign.objects.filter(slug__contains=name_query).values_list(
-                "slug", flat=True
-            )
-        else:
-            queryset = Campaign.objects.all().values_list("slug", flat=True)
-        return queryset
-
-    def list(self, request):
-        queryset = self.get_queryset()
-        from django.http import JsonResponse
-
-        return JsonResponse(list(queryset), safe=False)
-
-
