@@ -534,6 +534,7 @@ class ConcordiaAssetView(DetailView):
             {
                 "page_in_use": page_in_use,
                 "transcription": transcription,
+                "transcription_status": transcription.status if transcription else Status.EDIT,
                 "tags": tags,
                 "captcha_form": captcha_form,
             }
