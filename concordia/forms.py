@@ -2,6 +2,7 @@ from logging import getLogger
 
 from captcha.fields import CaptchaField
 from django import forms
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.db.models import Count
@@ -16,7 +17,7 @@ logger = getLogger(__name__)
 
 def add_user_to_newsletter_group(sender, instance, created, **kwargs):
     if created:
-        newsletter_group = Group.objects.get(name="Newsletter")
+        newsletter_group = Group.objects.get(name=settings.NEWSLETTER_GROUP_NAME)
         newsletter_group.user_set.add(instance)
 
 
