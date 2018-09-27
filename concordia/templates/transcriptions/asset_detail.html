@@ -40,7 +40,7 @@ Crowd: {{ asset.title }} ({{ asset.project.campaign.title }} — {{ asset.projec
             </div>
         </div>
 
-        <div class="col-6 contribute-box d-flex flex-column flex-nowrap justify-content-between" id="contribute-box">
+        <div class="col-6 p-2 contribute-box d-flex flex-column flex-nowrap justify-content-between" id="contribute-box">
             <table class="table-dark table-compact table-striped offwhite-text small">
                 <tr>
                     <th>Status</th>
@@ -61,36 +61,38 @@ Crowd: {{ asset.title }} ({{ asset.project.campaign.title }} — {{ asset.projec
                 </tr>
             </table>
 
-            <div class="rounded" id="transcription-editor">
-                <form class="mx-half" method="post" action="{% url 'ws:submit-transcription' asset_pk=asset.pk %}">
+            <div id="transcription-editor" class="flex-grow-1 d-flex flex-column">
+                <form class="ajax-submission h-100 d-flex flex-column" method="post" action="{% url 'ws:submit-transcription' asset_pk=asset.pk %}">
                     {% csrf_token %}
 
-                    <textarea class="w-100 rounded" name="text" id="transcription-input" placeholder="Go ahead, start typing. You got this!" aria-label="Transcription input">
-                        {{ transcription.text }}
-                    </textarea>
+                    {% spaceless %}
+                        <textarea class="form-control w-100 rounded flex-grow-1" name="text" id="transcription-input" placeholder="Go ahead, start typing. You got this!" aria-label="Transcription input">
+                            {{ transcription.text }}
+                        </textarea>
 
-                    {% if user.is_anonymous %}
-                        <div class="d-none my-quarter col-12 col-md-10 col-lg-8 mx-auto" id="captcha_container">
-                            <div class="text-center mt-half" id="captcha_div">
-                                {{ captcha_form.captcha }}
+                        {% if user.is_anonymous %}
+                            <div class="d-none my-quarter col-12 col-md-10 col-lg-8 mx-auto" id="captcha_container">
+                                <div class="text-center mt-half" id="captcha_div">
+                                    {{ captcha_form.captcha }}
+                                </div>
                             </div>
-                        </div>
-                    {% endif %}
-
-                    <div class="my-half d-flex justify-content-around align-items-center btn-row">
-                        <button id="save-button" name="status" type="submit" class="btn btn-primary" value="Edit">Save</button>
-                        <button id="review-button" name="status" type="submit" class="btn btn-primary" value="Submitted">Submit for Review</button>
-                        {% if user.is_authenticated %}
-                        <button id="complete-button" name="status" type="submit" class="btn btn-primary" value="Completed">Mark Completed</button>
                         {% endif %}
-                    </div>
+
+                        <div class="my-half d-flex justify-content-around align-items-center btn-row">
+                            <button id="save-button" name="status" type="submit" class="btn btn-primary" value="Edit">Save</button>
+                            <button id="review-button" name="status" type="submit" class="btn btn-primary" value="Submitted">Submit for Review</button>
+                            {% if user.is_authenticated %}
+                            <button id="complete-button" name="status" type="submit" class="btn btn-primary" value="Completed">Mark Completed</button>
+                            {% endif %}
+                        </div>
+                    {% endspaceless %}
                 </form>
             </div>
-            <div id="tag-editor">
+            <div id="tag-editor" class="flex-shrink-1">
                 {% if user.is_authenticated %}
-                    <form class="mx-half" method="post" action="{% url 'ws:submit-tags' pk=asset.pk %}">
-                        <div>
-                            <input type="text" id="tag-input" class="rounded" name="tags" data-role="tagsinput" value="{%for tag in tags %}{{tag}},{% endfor %}" aria-label="Tag input">
+                    <form method="post" action="{% url 'ws:submit-tags' pk=asset.pk %}">
+                        <div class="row">
+                            <input type="text" id="tag-input" class="form-control rounded" name="tags" data-role="tagsinput" value="{%for tag in tags %}{{tag}},{% endfor %}" aria-label="Tag input">
                         </div>
 
                         <div class="my-half d-flex justify-content-around align-items-center btn-row">
@@ -99,7 +101,6 @@ Crowd: {{ asset.title }} ({{ asset.project.campaign.title }} — {{ asset.projec
                     </form>
                 {% else %}
                     FIXME: this should be a simple pill list!
-                    <input type="text" id="tag-input" class="rounded" name="tags" data-role="tagsinput" value="{%for tag in tags %}{{tag}},{% endfor %}" aria-label="Tag input" disabled="true">
 
                     <p class="help-text primary-text">
                         Only registered users can tag.
