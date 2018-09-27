@@ -1,84 +1,54 @@
+{% spaceless %}
+{% load staticfiles %}
+{% endspaceless %}
 <!DOCTYPE html>
 <html lang="en">
-{% load staticfiles %}
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <title>{% block title %}500 error{% endblock title %}</title>
   <link rel="shortcut icon" href="{% static 'img/favicon.ico' %}">
-  <!-- Stylesheets -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.2/css/bootstrap.min.css" integrity="sha384-Smlep5jCw/wG7hdkwQ/Z5nLIefveQRIY9nfy6xoR1uRYBtpZgI6339F5dgvm/e9B" crossorigin="anonymous">
   <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,600,700|Roboto+Slab" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'css/base.css' %}">
-  <style type="text/css">
-    #fof {
-      display: block;
-      width: 100%;
-      margin: 100px 0;
-      line-height: 1.6em;
-      text-align: center;
-    }
-
-    #fof .hgroup {
-      text-transform: uppercase;
-    }
-
-    #fof .hgroup h1 {
-      margin-bottom: 25px;
-      font-size: 80px;
-    }
-
-    #fof .hgroup h1 span {
-      display: inline-block;
-      margin-left: 5px;
-      padding: 2px;
-      border: 1px solid #CCCCCC;
-      overflow: hidden;
-    }
-
-    #fof .hgroup h1 span strong {
-      display: inline-block;
-      padding: 0 20px 20px;
-      border: 1px solid #CCCCCC;
-      font-weight: normal;
-    }
-
-    #fof .hgroup h2 {
-      font-size: 60px;
-    }
-
-    #fof .hgroup h2 span {
-      display: block;
-      font-size: 30px;
-    }
-
-    #fof p {
-      margin: 25px 0 0 0;
+  <style>
+    body {
+      height: 100vh;
+      width: 100vw;
+      margin: 0;
       padding: 0;
-      font-size: 16px;
     }
 
-    #fof p:first-child {
-      margin-top: 0;
+    #error-message {
+      max-width: 30em;
     }
   </style>
 </head>
 
-<body>
-  <div class="wrapper row2">
-    <div id="container" class="clear">
-      <section id="fof" class="clear">
-        <div class="hgroup">
-          <h1><span><strong>5</strong></span><span><strong>0</strong></span><span><strong>0</strong></span></h1>
-          <h2>Error ! <span>internal server error</span></h2>
-        </div>
-        <p>The server encountered an unexpected condition which prevented it from fulfilling the request.</p>
-        <p><a href="javascript:history.go(-1)">&laquo; Go Back</a> / <a href="/">Go Home &raquo;</a></p>
-      </section>
-    </div>
+<body class="d-flex justify-content-center align-items-center text-center">
+  <div id="error-message">
+    <h1>HTTP 500 Error</h1>
+
+    <p>
+      The server encountered an unexpected condition which prevented it from fulfilling the request.
+      Our staff have been notified about the failure.
+    </p>
+
+    <nav>
+      <ul class="nav justify-content-center">
+        <li class="nav-item">
+          <a class="nav-link" href="{{ request.META.HTTP_REFERER }}">
+            &laquo; Go Back
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/">Go Home &raquo;</a>
+        </li>
+      </ul>
+    </nav>
   </div>
-  <!-- JS includes -->
+
   <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.2/js/bootstrap.min.js" integrity="sha384-o+RDsa0aLu++PJvFqy8fFScvbHFLtbvScb8AjopnFD+iEQ7wo/CG0xlczd+2O/em" crossorigin="anonymous"></script>

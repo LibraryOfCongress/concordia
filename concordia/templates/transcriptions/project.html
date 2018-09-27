@@ -8,17 +8,16 @@
 {% block head_content %}
 {% endblock head_content %}
 
+{% block breadcrumbs %}
+    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaigns' %}">Campaigns</a></li>
+    <li class="breadcrumb-item">
+        <a class="primary-text" href="{% url 'transcriptions:campaign' campaign.slug %}">{{ campaign.title }}</a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page">{{ project.title }}</li>
+{% endblock breadcrumbs %}
+
 {% block main_content %}
 <div class="container-fluid py-default">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb bg-offwhite">
-            <li class="breadcrumb-item"><a class="primary-text" href="/">Home</a></li>
-            <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaigns' %}">Campaigns</a></li>
-            <li class="breadcrumb-item">
-                <a class="primary-text" href="{% url 'transcriptions:campaign' campaign.slug %}">{{ campaign.title }}</a></li>
-            <li class="breadcrumb-item active" aria-current="page">{{ project.title }}</li>
-        </ol>
-    </nav>
     <div class="row">
         <div class="col-12">
             <h1 class="my-default ml-half">{{ project.title }}</h1>
