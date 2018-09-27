@@ -505,7 +505,7 @@ class TranscriptionCreate(generics.CreateAPIView):
         else:
             request_data = request.data
 
-        asset = get_object_or_404(Asset, id=request_data["asset"])
+        asset = get_object_or_404(Asset, slug=request_data["asset"])
 
         transcription = Transcription.objects.create(
             asset=asset,
@@ -577,7 +577,7 @@ class TagCreate(generics.ListCreateAPIView):
         )
 
         tag_ob, t_status = Tag.objects.get_or_create(
-            name=request_data["name"], value=request_data["value"]
+            value=request_data["value"]
         )
         if tag_ob not in utags.tags.all():
             utags.tags.add(tag_ob)

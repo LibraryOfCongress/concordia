@@ -37,12 +37,9 @@ Crowd: {{ asset.title }} ({{ asset.project.campaign.title }} — {{ asset.projec
                 <div class="nav nav-pills" id="nav-pill-contribute-box" role="tablist">
                     <a class="nav-item nav-link active" id="nav-pill-transcription" data-toggle="tab" href="#tab-transcription" role="tab" aria-controls="tab-transcription" aria-selected="true" onclick="return show_buttons()">Transcription</a>
                     <a class="nav-item nav-link" id="nav-pill-tag" data-toggle="tab" href="#tab-tag" role="tab" aria-controls="tab-tag" aria-selected="false" onclick="return hide_buttons('tags')">Tags</a>
-                    {% if not discussion_hide %}
-                    <a class="nav-item nav-link" id="nav-pill-discussion" data-toggle="tab" href="#tab-discussion" role="tab" aria-controls="tab-discussion" aria-selected="false" onclick="return hide_buttons('discussion')">Discussion</a>
-                    {% endif %}
                 </div>
             </nav>
-            {% if transcription.status %}
+            {% if transcription and transcription.status %}
             {% if transcription.status == 'Edit' %}
             <div id="transcription-state-div" class="mx-default w-100">
                 <i class="fas fa-edit tx-edit pr-quarter"></i>
@@ -69,7 +66,7 @@ Crowd: {{ asset.title }} ({{ asset.project.campaign.title }} — {{ asset.projec
                 {% csrf_token %}
                 <div class="tab-content" id="nav-tabContent">
                     <div class="tab-pane fade show active rounded" id="tab-transcription" role="tabpanel" aria-labelledby="nav-pill-transcription">
-                        <textarea class="w-100 rounded" name="tx" id="transcription-input" placeholder="Go ahead, start typing. You got this!" aria-label="Transcription input">{{transcription.text}}</textarea>
+                        <textarea class="w-100 rounded" name="tx" id="transcription-input" placeholder="Go ahead, start typing. You got this!" aria-label="Transcription input">{% if transcription %}{{transcription.text}}{% endif %}</textarea>
                     </div>
                     <div class="tab-pane fade rounded" id="tab-tag" role="tabpanel" aria-labelledby="nav-pill-tag">
                         {% if user.is_authenticated %}
@@ -78,77 +75,10 @@ Crowd: {{ asset.title }} ({{ asset.project.campaign.title }} — {{ asset.projec
                         <input type="text" id="tag-input" class="rounded" name="tags" data-role="tagsinput" value="{%for tag in tags %}{{tag}},{% endfor %}" aria-label="Tag input" disabled="true">
                         {% endif %}
                     </div>
-                    {% if not discussion_hide %}
-                    <div class="tab-pane fade pxy-quarter rounded" id="tab-discussion" role="tabpanel" aria-labelledby="nav-pill-discussion">
-                        <div class="row">
-                            <div class="comments col-md-9" id="comments">
-                                <!-- individual comment -->
-                                <div class="comment mb-quarter row">
-                                    <div class="comment-avatar col-md-1 col-sm-2 text-center pr-1">
-                                        <a href=""><img class="mx-auto rounded-circle img-fluid" src="http://demos.themes.guide/bodeo/assets/images/users/m103.jpg" alt="admin's avatar"></a>
-                                    </div>
-                                    <div class="comment-content col-md-11 col-sm-10">
-                                        <h6 class="small comment-meta"><a href="#" class="primary-text">admin</a> Today, 2:38</h6>
-                                        <div class="comment-body">
-                                            <p>
-                                                Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
-                                                <br>
-                                                <a href="" class="text-right small"><i class="ion-reply"></i> Reply</a>
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    <!-- reply is indented -->
-                                    <div class="comment-reply col-md-11 offset-md-1 col-sm-10 offset-sm-2">
-                                        <div class="row">
-                                            <div class="comment-avatar col-md-1 col-sm-2 text-center pr-1">
-                                                <a href=""><img class="mx-auto rounded-circle img-fluid" src="http://demos.themes.guide/bodeo/assets/images/users/m101.jpg" alt="phildowney's avatar"></a>
-                                            </div>
-                                            <div class="comment-content col-md-11 col-sm-10 col-12">
-                                                <h6 class="small comment-meta"><a href="#" class="primary-text">phildownney</a> Today, 12:31</h6>
-                                                <div class="comment-body">
-                                                    <p>Really?? Consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-                                                        <br>
-                                                        <a href="" class="text-right small"><i class="ion-reply"></i> Reply</a>
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <!-- /reply is indented -->
-                                </div>
-                                <!-- /comment -->
-                                <!-- comment -->
-                                <div class="comment mb-quarter row">
-                                    <div class="comment-avatar col-md-1 col-sm-2 text-center pr-1">
-                                        <a href=""><img class="mx-auto rounded-circle img-fluid" src="http://demos.themes.guide/bodeo/assets/images/users/w102.jpg" alt="maslarino's avatar"></a>
-                                    </div>
-                                    <div class="comment-content col-md-11 col-sm-10">
-                                        <h6 class="small comment-meta"><a href="#" class="primary-text">maslarino</a> Yesterday, 5:03 PM</h6>
-                                        <div class="comment-body">
-                                            <p>Sit amet, consectetur adipisicing elit, sed do eiusmod tempor.
-                                                <br>
-                                                <a href="" class="text-right small"><i class="ion-reply"></i> Reply</a>
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <!-- /comment -->
-                                {% if user.is_authenticated %}
-                                <div class="row pt-quarter">
-                                    <div class="col-12">
-                                        <a href="" class="btn btn-sm btn-primary">Comment</a>
-                                    </div>
-                                </div>
-                                {% endif %}
-
-                            </div>
-                        </div>
-                    </div>
-                    {% endif %}
                 </div>
 
                 <div class="my-half d-flex justify-content-around align-items-center btn-row">
+                    <input name="asset_id" value="{{ asset.id }}" type="hidden" />
                     <input id="save-button" name="action" type="submit" class="btn btn-primary" value="Save">
                     <input id="review-button" name="action" type="submit" class="btn btn-primary" value="Submit for Review">
                     {% if user.is_authenticated %}
@@ -276,7 +206,7 @@ Crowd: {{ asset.title }} ({{ asset.project.campaign.title }} — {{ asset.projec
             }).appendTo('form#contribute-form');
         }
 
-        {% if transcription.status == 'Completed' %}
+        {% if transcription and transcription.status == 'Completed' %}
         if (tab_name == "transcription")
             $("#save-button").hide();
         else
@@ -292,16 +222,16 @@ Crowd: {{ asset.title }} ({{ asset.project.campaign.title }} — {{ asset.projec
 
         $("#transcription-input").attr('disabled', false);
 
-        {% if not user.is_authenticated and not transcription.status %}
+        {% if not transcription or not transcription.status and not user.is_authenticated %}
         $("#save-button, #review-button").show();
-        {% elif not user.is_authenticated and transcription.status != 'Edit' %}
+        {% elif not user.is_authenticated and transcription and transcription.status != 'Edit' %}
         $("#save-button, #review-button").hide();
         $("#transcription-input").attr('disabled', true);
         {% else %}
-        {% if transcription.status == 'Submitted' %}
+        {% if transcription and transcription.status == 'Submitted' %}
         $("#review-button").hide();
         $("#complete-button").show();
-        {% elif transcription.status == 'Completed' %}
+        {% elif transcription and transcription.status == 'Completed' %}
         $("#save-button").show();
         $("#review-button").hide();
         $("#save-button").hide();

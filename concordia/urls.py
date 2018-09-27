@@ -65,11 +65,6 @@ tx_urlpatterns = (
             name="asset-detail",
         ),
         re_path(
-            r"transcription/(\d+)/$",
-            views.TranscriptionView.as_view(),
-            name="transcription",
-        ),
-        re_path(
             r"^(?P<campaign_slug>[^/]+)/(?P<slug>[^/]+)/$",
             views.ConcordiaProjectView.as_view(),
             name="project-detail",
@@ -230,5 +225,8 @@ urlpatterns += [url(r"^maintenance-mode/", include("maintenance_mode.urls"))]
 
 if settings.DEBUG:
     import debug_toolbar
+    from django.conf.urls.static import static
 
     urlpatterns = [path("__debug__/", include(debug_toolbar.urls))] + urlpatterns
+
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
