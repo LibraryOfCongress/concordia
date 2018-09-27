@@ -1,12 +1,24 @@
 from django.db import migrations
+from django.conf import settings
 
 
 def create_groups(apps, schema_editor):
     Group = apps.get_model("auth", "Group")
 
-    Group.objects.create(name="CM")
+    cm_group_exists = False
+    newsletter_group_exists = False
 
-    Group.objects.create(name="Newsletter")
+    try:
+        cm_group_exists = Group.objects.get(name=settings.COMMUNITY_MANAGER_GROUP_NAME)
+    except:
+        if not cm_group_exists:
+            Group.objects.create(name=settings.COMMUNITY_MANAGER_GROUP_NAME)
+
+    try:
+        newsletter_group_exists = Group.objects.get(name=settings.NEWSLETTER_GROUP_NAME)
+    except:
+        if not newsletter_group_exists:
+            Group.objects.create(name=settings.NEWSLETTER_GROUP_NAME)
 
 
 class Migration(migrations.Migration):

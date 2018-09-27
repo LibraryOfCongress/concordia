@@ -21,11 +21,11 @@ To use these templates:
     sudo systemctl enable docker
     sudo systemctl start docker
     ```
-    1. AWS Configure: `sudo aws configure`
+    1. AWS Configure: `aws configure`
     1. Login to ECR: `sudo $(aws ecr get-login --no-include-email --region us-east-1)`
     1. Pull the latest image: `sudo docker pull $(aws sts get-caller-identity --output=text --query "Account").dkr.ecr.us-east-1.amazonaws.com/concordia:latest`
     1. Add the bastion host security group to the database security group to allow inbound postgresql traffic
-    1. Run the image:  `sudo docker run -e ENV_NAME=test -e AWS=1 351149051428.dkr.ecr.us-east-1.amazonaws.com/concordia`
+    1. Run the image:  `sudo docker run -e ENV_NAME=stage -e AWS=1 351149051428.dkr.ecr.us-east-1.amazonaws.com/concordia`
     1. `sudo docker exec -it <container name> bash`
     1. Run the create admin command: `python3 ./manage.py shell -c "from django.contrib.auth.models import User;from django.contrib.auth.models import Group; User.objects.create_superuser('admin', 'crowd@loc.gov', ‘PASSWORD_HERE’);Group.objects.create(name='CM')"`
     1. Delete the bastion host stack.
