@@ -5,20 +5,18 @@
 {% load concordia_media_tags %}
 
 {% block title %}Concordia - {{ campaign.title }}{% endblock title %}
-{% block head_content %}
 
-{% endblock head_content %}
+{% block head_content %}{% endblock head_content %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaigns' %}">Campaigns</a></li>
+    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaign' campaign.slug %}">{{ campaign.title }}</a></li>
+    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:project-detail' campaign.slug project.slug %}">{{ project.title }}</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ item.title|truncatechars:40 }}</li>
+{% endblock breadcrumbs%}
+
 {% block main_content %}
 <div class="container-fluid py-default">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb bg-offwhite">
-            <li class="breadcrumb-item"><a class="primary-text" href="/">Home</a></li>
-            <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaigns' %}">Campaigns</a></li>
-            <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaign' campaign.slug %}">{{ campaign.title }}</a></li>
-            <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:project-detail' campaign.slug project.slug %}">{{ project.title }}</a></li>
-            <li class="breadcrumb-item active" aria-current="page">{{ item.title }}</li>
-        </ol>
-    </nav>
     <div class="row">
         <div class="col-md-12">
             <h1 class="mt-default mb-half ml-half">{{ item.title }}</h1>
@@ -39,7 +37,7 @@
         </form>
         <div class="d-flex flex-wrap col-12 justify-content-around">
             {% for a in assets %}
-                {% url 'transcriptions:asset-detail' a.project.campaign.slug a.project.slug a.item.slug a.slug as asset_detail_url %}
+                {% url 'transcriptions:asset-detail' a.item.project.campaign.slug a.item.project.slug a.item.slug a.slug as asset_detail_url %}
 
                 <div class="col-12 col-md-4 col-lg-3 px-quarter mb-default" data-asset-status="{{ a.status|lower }}">
                     {% if a.status == 'Submitted' %}

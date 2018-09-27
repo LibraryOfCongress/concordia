@@ -27,6 +27,30 @@ from .models import (
 )
 
 
+def publish_action(modeladmin, request, queryset):
+    """
+    Mark all of the selected objects as published
+    """
+
+    count = queryset.filter(published=False).update(published=True)
+    messages.add_message(request, messages.INFO, f"Published {count} objects")
+
+
+publish_action.short_description = "Publish selected"
+
+
+def unpublish_action(modeladmin, request, queryset):
+    """
+    Mark all of the selected objects as unpublished
+    """
+
+    count = queryset.filter(published=True).update(published=False)
+    messages.add_message(request, messages.INFO, f"Unpublished {count} objects")
+
+
+unpublish_action.short_description = "Unpublish selected"
+
+
 @never_cache
 @staff_member_required
 @permission_required("concordia.add_campaign")
@@ -174,6 +198,8 @@ class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     search_fields = ["title", "description"]
     list_filter = ("status", "is_active")
 
+    actions = (publish_action, unpublish_action)
+
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
@@ -192,6 +218,8 @@ class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     prepopulated_fields = {"slug": ("title",)}
     search_fields = ["title", "campaign__title"]
     list_filter = ("status", "category", "campaign")
+
+    actions = (publish_action, unpublish_action)
 
     def get_urls(self):
         urls = super().get_urls()
@@ -270,12 +298,14 @@ class ItemAdmin(admin.ModelAdmin):
         "campaign_title",
         "project",
         "status",
-        "visible",
+        "published",
     )
     list_display_links = ("title", "slug", "item_id")
     prepopulated_fields = {"slug": ("title",)}
     search_fields = ["title", "project__campaign__title", "project__title"]
     list_filter = ("status", "project__campaign", "project")
+
+    actions = (publish_action, unpublish_action)
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -319,10 +349,10 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
-    list_display = ("id", "name", "value")
-    list_display_links = ("id", "name", "value")
+    list_display = ("id", "value")
+    list_display_links = ("id", "value")
 
-    search_fields = ["name", "value"]
+    search_fields = ["value"]
 
 
 @admin.register(UserAssetTagCollection)

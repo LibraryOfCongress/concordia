@@ -4,19 +4,17 @@ import os
 import time
 from datetime import datetime
 from logging import getLogger
-from warnings import warn
 
 import markdown
-import requests
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth import get_user_model, update_session_auth_hash
+from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
 from django.db.models import Count
-from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import Http404, get_object_or_404, redirect, render
 from django.template import loader
 from django.urls import reverse
@@ -24,7 +22,6 @@ from django.views.decorators.cache import never_cache
 from django.views.generic import DetailView, FormView, ListView, TemplateView, View
 from registration.backends.hmac.views import RegistrationView
 from rest_framework import generics, status
-from rest_framework.test import APIRequestFactory
 
 from concordia.forms import (
     AssetFilteringForm,
@@ -40,9 +37,9 @@ from concordia.models import (
     Project,
     Status,
     Transcription,
+    UserAssetTagCollection,
     UserProfile,
 )
-from concordia.views_ws import PageInUseCreate
 
 logger = getLogger(__name__)
 
@@ -51,37 +48,17 @@ PROJECTS_PER_PAGE = 36
 ITEMS_PER_PAGE = 36
 
 
-def concordia_api(relative_path):
-    warn(
-        f"Internal API call for {relative_path} should be refactored",
-        category=DeprecationWarning,
-    )
-    abs_path = "{}/api/v1/{}".format(settings.CONCORDIA["netloc"], relative_path)
-    logger.debug("Calling API path %s", abs_path)
-    data = requests.get(abs_path).json()
-
-    logger.debug("Received %s", data)
-    return data
-
-
-def get_anonymous_user(request, user_id=True):
+def get_anonymous_user():
     """
-    Get the user called "anonymous" if it exist. Create the user if it doesn't exist
-    This is the default concordia user if someone is working on the site without logging in first.
-
-    :parameter: request django request object
-    :parameter: user_id Boolean defaults to True, if true returns user id, otherwise return user object
-    :return: User id or User
+    Get the user called "anonymous" if it exist. Create the user if it doesn't
+    exist This is the default concordia user if someone is working on the site
+    without logging in first.
     """
-    response = requests.get(
-        "%s://%s/ws/anonymous_user/" % (request.scheme, request.get_host()),
-        cookies=request.COOKIES,
-    )
-    anonymous_json_val = json.loads(response.content.decode("utf-8"))
-    if user_id:
-        return anonymous_json_val["id"]
-    else:
-        return anonymous_json_val
+
+    try:
+        return User.objects.get(username="anonymous")
+    except User.DoesNotExist:
+        return User.objects.create_user(username="anonymous")
 
 
 @never_cache
@@ -223,34 +200,22 @@ class AccountProfileView(LoginRequiredMixin, TemplateView):
         )
 
 
-class ConcordiaView(TemplateView):
-    template_name = "transcriptions/campaigns.html"
+class CampaignListView(ListView):
+    template_name = "transcriptions/campaign_list.html"
+    paginate_by = 10
 
-    def get_context_data(self, **kws):
-        response = concordia_api("campaigns/")
-        return dict(super().get_context_data(**kws), response=response)
+    queryset = Campaign.objects.published().order_by("title")
+    context_object_name = "campaigns"
 
 
-class ConcordiaCampaignView(TemplateView):
-    template_name = "transcriptions/campaign.html"
+class CampaignDetailView(DetailView):
+    template_name = "transcriptions/campaign_detail.html"
 
-    def get_context_data(self, **kws):
-        from .serializers import CampaignDetailSerializer
+    queryset = Campaign.objects.published().order_by("title")
+    context_object_name = "campaign"
 
-        campaign = get_object_or_404(Campaign, slug=self.args[0])
-
-        serialized = CampaignDetailSerializer(campaign).data
-
-        for sub_col in serialized["projects"]:
-            sub_col["campaign"] = campaign
-
-        project_sorted_list = sorted(serialized["projects"], key=lambda k: (k["title"]))
-
-        return dict(
-            super().get_context_data(**kws),
-            campaign=serialized,
-            projects=project_sorted_list,
-        )
+    def get_queryset(self):
+        return Campaign.objects.filter(slug=self.kwargs["slug"])
 
 
 class ConcordiaProjectView(ListView):
@@ -264,8 +229,9 @@ class ConcordiaProjectView(ListView):
         )
 
         item_qs = self.project.item_set.order_by("item_id")
+
         if not self.request.user.is_staff:
-            item_qs = item_qs.exclude(visible=False)
+            item_qs = item_qs.exclude(published=False)
 
         return item_qs
 
@@ -293,19 +259,17 @@ class ConcordiaItemView(ListView):
     http_method_names = ["get", "options", "head"]
 
     def get_queryset(self):
-        item_qs = Item.objects.select_related("project", "project__campaign")
-
-        if not self.request.user.is_staff:
-            item_qs = item_qs.filter(visible=True)
-
         self.item = get_object_or_404(
-            item_qs,
+            Item.objects.published().select_related('project__campaign'),
             campaign__slug=self.kwargs["campaign_slug"],
             project__slug=self.kwargs["project_slug"],
             slug=self.kwargs["slug"],
         )
 
         asset_qs = self.item.asset_set.all()
+        asset_qs = asset_qs.select_related(
+            "item__project__campaign", "item__project", "item"
+        )
         return self.apply_asset_filters(asset_qs)
 
     def apply_asset_filters(self, asset_qs):
@@ -324,7 +288,7 @@ class ConcordiaItemView(ListView):
 
         res.update(
             {
-                "campaign": self.item.campaign,
+                "campaign": self.item.project.campaign,
                 "project": self.item.project,
                 "item": self.item,
                 "filter_form": self.filter_form,
@@ -364,12 +328,12 @@ class ConcordiaAssetView(DetailView):
         """
         response = requests.get(
             "%s://%s/ws/asset/%s/"
-            % (self.request.scheme, self.request.get_host(), self.args[0]),
+            % (self.request.scheme, self.request.get_host(), self.kwargs["campaign_slug"]),
             cookies=self.request.COOKIES,
         )
         return json.loads(response.content.decode("utf-8"))
 
-    def submitted_page(self, url, asset_json):
+    def submitted_page(self, url, asset):
         """
         when the transcription state is SUBMITTED, return a page that does not have a transcription started.
         If all pages are started, return the url passed in
@@ -386,20 +350,20 @@ class ConcordiaAssetView(DetailView):
         for asset_item in asset_list_json["results"]:
             response = requests.get(
                 "%s://%s/ws/transcription/%s/"
-                % (self.request.scheme, self.request.get_host(), asset_item["id"]),
+                % (self.request.scheme, self.request.get_host(), asset.id),
                 cookies=self.request.COOKIES,
             )
             transcription_json = json.loads(response.content.decode("utf-8"))
             if transcription_json["text"] == "":
                 return_path = "/campaigns/%s/asset/%s/" % (
-                    self.args[0],
-                    asset_item["slug"],
+                    self.kwargs["campaign_slug"],
+                    asset.slug,
                 )
                 break
 
         return return_path
 
-    def completed_page(self, url, asset_json):
+    def completed_page(self, url, asset):
         """
         when the transcription state is COMPLETED, return the next page in sequence that needs work
         If all pages are completed, return the url passed in
@@ -414,27 +378,27 @@ class ConcordiaAssetView(DetailView):
         def get_transcription(asset_item):
             response = requests.get(
                 "%s://%s/ws/transcription/%s/"
-                % (self.request.scheme, self.request.get_host(), asset_item["id"]),
+                % (self.request.scheme, self.request.get_host(), asset.id),
                 cookies=self.request.COOKIES,
             )
             return json.loads(response.content.decode("utf-8"))
 
-        for asset_item in asset_list_json["results"][asset_json["sequence"] :]:
+        for asset_item in asset_list_json["results"][asset.sequence :]:
             transcription_json = get_transcription(asset_item)
             if transcription_json["status"] != Status.COMPLETED:
                 return_path = "/campaigns/%s/asset/%s/" % (
-                    self.args[0],
+                    self.kwargs["campaign_slug"],
                     asset_item["slug"],
                 )
                 break
 
         # no asset found, iterate the asset_list_json from beginning to this asset's sequence
         if return_path == url:
-            for asset_item in asset_list_json["results"][: asset_json["sequence"]]:
+            for asset_item in asset_list_json["results"][: asset.sequence]:
                 transcription_json = get_transcription(asset_item)
                 if transcription_json["status"] != Status.COMPLETED:
                     return_path = "/campaigns/%s/asset/%s/" % (
-                        self.args[0],
+                        self.kwargs["campaign_slug"],
                         asset_item["slug"],
                     )
                     break
@@ -448,6 +412,9 @@ class ConcordiaAssetView(DetailView):
         :param user: user object
         :return: True or False
         """
+
+        return False
+
         response = requests.get(
             "%s://%s/ws/page_in_use_count/%s/%s/"
             % (self.request.scheme, self.request.get_host(), user, url),
@@ -483,82 +450,80 @@ class ConcordiaAssetView(DetailView):
         current_user_id = (
             self.request.user.id
             if self.request.user.id is not None
-            else get_anonymous_user(self.request)
+            else get_anonymous_user().id
         )
 
+        # FIXME: move this into the front-end JavaScript!
         page_in_use = self.check_page_in_use(in_use_url, current_user_id)
 
-        discussion_hide = True
+        # Get the most recent transcription
+        latest_transcriptions = \
+            Transcription.objects.filter(asset__slug=asset.slug)\
+            .order_by('-updated_on')
 
-        # Get all transcriptions, they are no longer tied to a specific user
-        response = requests.get(
-            "%s://%s/ws/transcription/%s/"
-            % (self.request.scheme, self.request.get_host(), asset.id),
-            cookies=self.request.COOKIES,
-        )
-        transcription_json = json.loads(response.content.decode("utf-8"))
+        if latest_transcriptions:
+            transcription = latest_transcriptions[0]
+        else:
+            transcription = None
 
-        response = requests.get(
-            "%s://%s/ws/tags/%s/"
-            % (self.request.scheme, self.request.get_host(), asset.id),
-            cookies=self.request.COOKIES,
-        )
-        json_tags = []
-        if response.status_code == status.HTTP_200_OK:
-            json_tags_response = json.loads(response.content.decode("utf-8"))
-            for json_tag in json_tags_response["results"]:
-                json_tags.append(json_tag["value"])
+        tag_groups = UserAssetTagCollection.objects.filter(asset__slug=asset.slug)
+        tags = []
+
+        for tag_group in tag_groups:
+            for tag in tag_group.tags.all():
+                tags.append(tag)
 
         captcha_form = CaptchaEmbedForm()
 
-        response = requests.get(
-            "%s://%s/ws/page_in_use_user/%s/%s/"
-            % (
-                self.request.scheme,
-                self.request.get_host(),
-                current_user_id,
-                in_use_url,
-            ),
-            cookies=self.request.COOKIES,
-        )
-        page_in_use_json = json.loads(response.content.decode("utf-8"))
-
-        if page_in_use_json["user"] is None:
-            same_page_count_for_this_user = 0
-        else:
-            same_page_count_for_this_user = 1
-
-        page_dict = {
-            "page_url": in_use_url,
-            "user": current_user_id,
-            "updated_on": datetime.now(),
-        }
-
-        if page_in_use is False and same_page_count_for_this_user == 0:
-            # add this page as being in use by this user
-            # call the web service which will use the serializer to insert the value.
-            # this takes care of deleting old entries in PageInUse table
-
-            factory = APIRequestFactory()
-            request = factory.post("/ws/page_in_use%s/" % (in_use_url,), page_dict)
-            request.session = self.request.session
-
-            PageInUseCreate.as_view()(request)
-        elif same_page_count_for_this_user == 1:
-            # update the PageInUse
-            change_page_in_use = {"page_url": in_use_url, "user": current_user_id}
-
-            requests.put(
-                "%s://%s/ws/page_in_use_update/%s/%s/"
-                % (
-                    self.request.scheme,
-                    self.request.get_host(),
-                    current_user_id,
-                    in_use_url,
-                ),
-                data=change_page_in_use,
-                cookies=self.request.COOKIES,
-            )
+        # FIXME: move this into front-end JavaScript
+        # response = requests.get(
+        #     "%s://%s/ws/page_in_use_user/%s/%s/"
+        #     % (
+        #         self.request.scheme,
+        #         self.request.get_host(),
+        #         current_user_id,
+        #         in_use_url,
+        #     ),
+        #     cookies=self.request.COOKIES,
+        # )
+        # page_in_use_json = json.loads(response.content.decode("utf-8"))
+        #
+        # if page_in_use_json["user"] is None:
+        #     same_page_count_for_this_user = 0
+        # else:
+        #     same_page_count_for_this_user = 1
+        #
+        # page_dict = {
+        #     "page_url": in_use_url,
+        #     "user": current_user_id,
+        #     "updated_on": datetime.now(),
+        # }
+        #
+        # if page_in_use is False and same_page_count_for_this_user == 0:
+        #     # add this page as being in use by this user
+        #     # call the web service which will use the serializer to insert the value.
+        #     # this takes care of deleting old entries in PageInUse table
+        #
+        #     factory = APIRequestFactory()
+        #     request = factory.post("/ws/page_in_use%s/" % (in_use_url,), page_dict)
+        #     request.session = self.request.session
+        #
+        #     PageInUseCreate.as_view()(request)
+        # elif same_page_count_for_this_user == 1:
+        #     # update the PageInUse
+        #     change_page_in_use = {"page_url": in_use_url, "user": current_user_id}
+        #
+        #     requests.put(
+        #         "%s://%s/ws/page_in_use_update/%s/%s/"
+        #         % (
+        #             self.request.scheme,
+        #             self.request.get_host(),
+        #             current_user_id,
+        #             in_use_url,
+        #         ),
+        #         data=change_page_in_use,
+        #         cookies=self.request.COOKIES,
+        #     )
 
         if self.request.user.is_anonymous:
             ctx[
@@ -568,10 +533,10 @@ class ConcordiaAssetView(DetailView):
         ctx.update(
             {
                 "page_in_use": page_in_use,
-                "transcription": transcription_json,
-                "tags": json_tags,
+                "transcription": transcription,
+                "transcription_status": transcription.status if transcription else Status.EDIT,
+                "tags": tags,
                 "captcha_form": captcha_form,
-                "discussion_hide": discussion_hide,
             }
         )
 
@@ -593,23 +558,6 @@ class ConcordiaAssetView(DetailView):
         :param kwargs:
         :return: redirect back to same page
         """
-        # don't know why this would be called here
-        # self.get_context_data()
-
-        if self.request.POST.get("action").lower() == "contact a manager":
-            return redirect(reverse("contact") + "?pre_populate=true")
-
-        response = requests.get(
-            "%s://%s/ws/asset_by_slug/%s/%s/"
-            % (
-                self.request.scheme,
-                self.request.get_host(),
-                self.args[0],
-                self.args[1],
-            ),
-            cookies=self.request.COOKIES,
-        )
-        asset_json = json.loads(response.content.decode("utf-8"))
 
         if self.request.user.is_anonymous and not (
             self.is_anonymous_user_captcha_validated()
@@ -626,6 +574,9 @@ class ConcordiaAssetView(DetailView):
 
         redirect_path = self.request.path
 
+		# TODO: error handling for this lookup failing
+        asset = Asset.objects.get(id=self.request.POST["asset_id"])
+
         if "tx" in self.request.POST and "tagging" not in self.request.POST:
             tx = self.request.POST.get("tx")
             tx_status = self.state_dictionary[self.request.POST.get("action")]
@@ -633,10 +584,10 @@ class ConcordiaAssetView(DetailView):
                 "%s://%s/ws/transcription_create/"
                 % (self.request.scheme, self.request.get_host()),
                 data={
-                    "asset": asset_json["id"],
+                    "asset": asset,
                     "user_id": self.request.user.id
                     if self.request.user.id is not None
-                    else get_anonymous_user(self.request),
+                    else get_anonymous_user().id,
                     "status": tx_status,
                     "text": tx,
                 },
@@ -659,14 +610,14 @@ class ConcordiaAssetView(DetailView):
             elif tx_status == Status.COMPLETED:
                 messages.success(self.request, "The transcription is completed.")
 
-            redirect_path = next_page_dictionary[tx_status](redirect_path, asset_json)
+            redirect_path = next_page_dictionary[tx_status](redirect_path, asset)
 
         elif "tags" in self.request.POST and self.request.user.is_authenticated:
             tags = self.request.POST.get("tags").split(",")
             # get existing tags
             response = requests.get(
                 "%s://%s/ws/tags/%s/"
-                % (self.request.scheme, self.request.get_host(), asset_json["id"]),
+                % (self.request.scheme, self.request.get_host(), self.request.POST["asset_id"]),
                 cookies=self.request.COOKIES,
             )
             existing_tags_json_val = json.loads(response.content.decode("utf-8"))
@@ -679,12 +630,11 @@ class ConcordiaAssetView(DetailView):
                     "%s://%s/ws/tag_create/"
                     % (self.request.scheme, self.request.get_host()),
                     data={
-                        "campaign": asset_json["campaign"]["slug"],
-                        "asset": asset_json["slug"],
+                        "campaign": asset.campaign.slug,
+                        "asset": asset.slug,
                         "user_id": self.request.user.id
                         if self.request.user.id is not None
-                        else get_anonymous_user(self.request),
-                        "name": tag,
+                        else get_anonymous_user().id,
                         "value": tag,
                     },
                     cookies=self.request.COOKIES,
@@ -810,24 +760,6 @@ class ConcordiaPageInUse(View):
         return HttpResponse("ok")
 
 
-class TranscriptionView(TemplateView):
-    # TODO: Is this class still used??
-    template_name = "transcriptions/transcription.html"
-
-    def get_context_data(self, **kws):
-        transcription = Transcription.objects.get(id=self.args[0])
-        transcription_user = get_user_model().objects.get(id=transcription.id)
-        return super().get_context_data(
-            **dict(
-                kws, transcription=transcription, transcription_user=transcription_user
-            )
-        )
-
-
-class ToDoView(TemplateView):
-    template_name = "todo.html"
-
-
 class ContactUsView(FormView):
     template_name = "contact.html"
     form_class = ConcordiaContactUsForm
@@ -838,17 +770,13 @@ class ContactUsView(FormView):
         return res
 
     def get_initial(self):
-        if self.request.GET.get("pre_populate", None) is None:
-            return None
-        else:
+        if self.request.GET.get("pre_populate"):
             return {
                 "email": (
                     None if self.request.user.is_anonymous else self.request.user.email
                 ),
                 "link": (
                     self.request.META.get("HTTP_REFERER")
-                    if self.request.META.get("HTTP_REFERER")
-                    else None
                 ),
             }
 
@@ -900,70 +828,6 @@ class CampaignView(TemplateView):
             return HttpResponseRedirect("/")
         else:
             return render(self.request, self.template_name)
-
-
-class DeleteCampaignView(TemplateView):
-    """
-    deletes the campaign
-    """
-
-    def get(self, request, *args, **kwargs):
-        """
-        GET request to delete a collection. Only allow admin access
-        :param request:
-        :param args:
-        :param kwargs:
-        :return: redirect to home (/) or redirect to /campaigns/
-        """
-        if not self.request.user.is_superuser:
-            return HttpResponseRedirect("/")
-        else:
-            requests.delete(
-                "%s://%s/ws/campaign_delete/%s/"
-                % (self.request.scheme, self.request.get_host(), self.args[0]),
-                cookies=self.request.COOKIES,
-            )
-            # FIXME: this needs error handling or being replaced outright (and has never been tested)
-            os.system(
-                "rm -rf {0}".format(
-                    settings.MEDIA_ROOT + "/concordia/" + collection.slug
-                )
-            )
-            return redirect("/campaigns/")
-
-
-class DeleteAssetView(TemplateView):
-    """
-    Hides an asset with status inactive. Hidden assets do not display in
-    asset view. After hiding an asset, page redirects to campaign view.
-    """
-
-    def get(self, request, *args, **kwargs):
-        """
-        GET request to delete an asset. Only allow admin access
-        :param request:
-        :param args:
-        :param kwargs:
-        :return: redirect to home (/) or redirect to /campaigns
-        :return:
-        """
-        if not self.request.user.is_superuser:
-            return HttpResponseRedirect("/")
-        else:
-            asset_update = {"campaign": self.args[0], "slug": self.args[1]}
-
-            requests.put(
-                "%s://%s/ws/asset_update/%s/%s/"
-                % (
-                    self.request.scheme,
-                    self.request.get_host(),
-                    self.args[0],
-                    self.args[1],
-                ),
-                data=asset_update,
-                cookies=self.request.COOKIES,
-            )
-            return redirect("/campaigns/" + self.args[0] + "/")
 
 
 class ReportCampaignView(TemplateView):
@@ -1028,99 +892,3 @@ class ReportCampaignView(TemplateView):
                 0, ("Not Started", project.asset_count - total_statuses)
             )
 
-
-class FilterCampaigns(generics.ListAPIView):
-    def get_queryset(self):
-        name_query = self.request.query_params.get("name")
-        if name_query:
-            queryset = Campaign.objects.filter(slug__contains=name_query).values_list(
-                "slug", flat=True
-            )
-        else:
-            queryset = Campaign.objects.all().values_list("slug", flat=True)
-        return queryset
-
-    def list(self, request):
-        queryset = self.get_queryset()
-        from django.http import JsonResponse
-
-        return JsonResponse(list(queryset), safe=False)
-
-
-def publish_campaign(request, campaign, is_publish):
-    """ Publish/Unpublish a campaign to otherr users. On un/publishing campaign,
-    it will get does the same effect for all its projects. """
-
-    try:
-        campaign = Campaign.objects.get(slug=campaign)
-    except Campaign.DoesNotExist:
-        raise Http404
-
-    if is_publish == "true":
-        campaign.is_publish = True
-    else:
-        campaign.is_publish = False
-
-    projects = campaign.project_set.all()
-
-    for sc in projects:
-        sc.is_publish = True if is_publish == "true" else False
-        sc.save()
-
-    campaign.save()
-
-    return JsonResponse(
-        {
-            "message": "Campaign has been %s."
-            % ("published" if is_publish == "true" else "unpublished"),
-            "state": True if is_publish == "true" else False,
-        },
-        safe=True,
-    )
-
-
-def publish_project(request, campaign, project, is_publish):
-    """ Publish/Unpublish a project to other users. """
-
-    try:
-        project = Project.objects.get(campaign__slug=campaign, slug=project)
-    except Project.DoesNotExist:
-        raise Http404
-
-    if is_publish == "true":
-        project.is_publish = True
-    else:
-        project.is_publish = False
-
-    project.save()
-
-    return JsonResponse(
-        {
-            "message": "Project has been %s."
-            % ("published" if is_publish == "true" else "unpublished"),
-            "state": True if is_publish == "true" else False,
-        },
-        safe=True,
-    )
-
-
-class DeleteProjectView(TemplateView):
-    """
-    deletes the project
-    """
-
-    def get(self, request, *args, **kwargs):
-        collection = Campaign.objects.get(slug=self.args[0])
-        subcollection = Project.objects.get(slug=self.args[1])
-        subcollection.asset_set.all().delete()
-        subcollection.delete()
-        os.system(
-            "rm -rf {0}".format(
-                settings.MEDIA_ROOT
-                + "/concordia/"
-                + collection.slug
-                + "/"
-                + subcollection.slug
-            )
-        )
-        return redirect("/campaigns/" + collection.slug + "/")

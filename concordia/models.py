@@ -3,9 +3,9 @@ from logging import getLogger
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import JSONField
 from django.db import models
+from django.urls import reverse
 from django.utils import timezone
 from django_prometheus_metrics.models import MetricsModelMixin
-from django.urls import reverse
 
 metadata_default = dict
 
@@ -50,7 +50,17 @@ class MediaType:
     CHOICES = ((IMAGE, "Image"), (AUDIO, "Audio"), (VIDEO, "Video"))
 
 
+class PublicationManager(models.Manager):
+    def published(self):
+        return self.get_queryset().filter(published=True)
+
+    def unpublished(self):
+        return self.get_queryset().filter(published=False)
+
+
 class Campaign(MetricsModelMixin("campaign"), models.Model):
+    objects = PublicationManager()
+
     title = models.CharField(max_length=80)
     slug = models.SlugField(max_length=80, unique=True)
     description = models.TextField(blank=True)
@@ -62,7 +72,7 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
     status = models.CharField(
         max_length=10, choices=Status.CHOICES, default=Status.DEFAULT
     )
-    is_publish = models.BooleanField(default=False, blank=True)
+    published = models.BooleanField(default=False, blank=True)
 
     def __str__(self):
         return self.title
@@ -73,6 +83,8 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
 
 
 class Project(models.Model):
+    objects = PublicationManager()
+
     title = models.CharField(max_length=80)
     slug = models.SlugField(max_length=80)
     category = models.CharField(max_length=12, blank=True)
@@ -81,7 +93,7 @@ class Project(models.Model):
     status = models.CharField(
         max_length=10, choices=Status.CHOICES, default=Status.DEFAULT
     )
-    is_publish = models.BooleanField(default=False, blank=True)
+    published = models.BooleanField(default=False, blank=True)
 
     class Meta:
         unique_together = (("slug", "campaign"),)
@@ -98,7 +110,9 @@ class Project(models.Model):
 
 
 class Item(models.Model):
-    visible = models.BooleanField(default=False, blank=True)
+    objects = PublicationManager()
+
+    published = models.BooleanField(default=False, blank=True)
 
     title = models.CharField(max_length=300)
     slug = models.SlugField(max_length=300)
@@ -119,7 +133,6 @@ class Item(models.Model):
     status = models.CharField(
         max_length=10, choices=Status.CHOICES, default=Status.DEFAULT
     )
-    is_publish = models.BooleanField(default=False, blank=True)
 
     class Meta:
         unique_together = (("item_id", "campaign"),)
@@ -175,8 +188,7 @@ class Asset(models.Model):
 
 
 class Tag(models.Model):
-    name = models.CharField(max_length=50, unique=True)
-    value = models.CharField(max_length=50, unique=True)
+    value = models.CharField(max_length=50)
 
     def __str__(self):
         return self.value
@@ -198,12 +210,17 @@ class UserAssetTagCollection(models.Model):
 
 class Transcription(models.Model):
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
+
+    # TODO: document whether we need this field:
     parent = models.ForeignKey("self", blank=True, null=True, on_delete=models.SET_NULL)
+
     user_id = models.PositiveIntegerField(db_index=True)
+
     text = models.TextField(blank=True)
     status = models.CharField(
         max_length=10, choices=Status.CHOICES, default=Status.DEFAULT
     )
+
     created_on = models.DateTimeField(auto_now_add=True)
     updated_on = models.DateTimeField(auto_now=True)
 

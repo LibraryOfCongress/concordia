@@ -1,8 +1,7 @@
 import boto3
-from rest_framework import serializers
-from django.contrib.auth.models import User
 from django.conf import settings
-
+from django.contrib.auth.models import User
+from rest_framework import serializers
 
 from . import models
 
@@ -46,7 +45,7 @@ class CampaignListSerializer(serializers.ModelSerializer):
             "end_date",
             "status",
             "asset_count",
-            "is_publish",
+            "published",
         )
 
 
@@ -81,7 +80,7 @@ class AssetSetSerializer(serializers.HyperlinkedModelSerializer):
 class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Project
-        fields = ("id", "title", "slug", "metadata", "status", "is_publish")
+        fields = ("id", "title", "slug", "metadata", "status", "published")
 
 
 class CampaignDetailSerializer(serializers.HyperlinkedModelSerializer):
@@ -152,26 +151,22 @@ class PageInUseSerializer(serializers.ModelSerializer):
         )
         page_in_use.save()
 
+        # On every insertion, delete any entries not updated in the last 5 minutes
+        self.delete_old()
+
+        return page_in_use
+
     def delete_old(self):
         from datetime import datetime, timedelta
 
+        # FIXME: use a setting for the threshold
         time_threshold = datetime.now() - timedelta(minutes=5)
+        # FIXME: is there any reason such as a signal which means we can't just call delete on this queryset?
         old_page_entries = models.PageInUse.objects.filter(
             updated_on__lt=time_threshold
         )
         for old_page in old_page_entries:
             old_page.delete()
-
-    def create(self, validated_data):
-        page_in_use = models.PageInUse(
-            page_url=validated_data["page_url"], user=validated_data["user"]
-        )
-        page_in_use.save()
-
-        # On every insertion, delete any entries not updated in the last 5 minutes
-        self.delete_old()
-
-        return page_in_use
 
     def update(self, instance, validated_data):
         instance.save()
@@ -194,7 +189,7 @@ class TranscriptionSerializer(serializers.HyperlinkedModelSerializer):
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Tag
-        fields = ("name", "value")
+        fields = ("value",)
 
 
 class UserAssetTagSerializer(serializers.ModelSerializer):

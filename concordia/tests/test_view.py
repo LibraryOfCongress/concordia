@@ -483,7 +483,7 @@ class ViewTest_Concordia(TestCase):
             title="item-slug",
             slug="item-slug",
             item_id="item-slug",
-            visible=True,
+            published=True,
             campaign=self.campaign,
             project=self.project,
         )
@@ -497,7 +497,7 @@ class ViewTest_Concordia(TestCase):
             "title": self.item.title,
             "description": "Item Description",
             "assets": [],
-            "visible": True,
+            "published": True,
             "campaign": self.campaign.id,
             "project": self.project.id,
         }
@@ -1901,79 +1901,6 @@ class ViewTest_Concordia(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, template_name="transcriptions/project.html")
 
-    def test_FilterCampaigns_get(self):
-        """Test list of filer campaign get API"""
-
-        # Arrange
-        self.campaign = Campaign(
-            title="TextCampaign",
-            slug="slug1",
-            description="Campaign Description",
-            metadata={"key": "val1"},
-            status=Status.EDIT,
-        )
-        self.campaign.save()
-
-        self.campaign = Campaign(
-            title="Text Campaign",
-            slug="slug2",
-            description="Campaign Description",
-            metadata={"key": "val1"},
-            status=Status.EDIT,
-        )
-        self.campaign.save()
-
-        # Act
-        response = self.client.get("/filter/campaigns/")
-
-        # Assert
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.json()), 2)
-        self.assertEqual(response.json()[0], "slug1")
-        self.assertEqual(response.json()[1], "slug2")
-
-    def test_FilterCampaignsWithParams_get(self):
-        """Test list of filer campaign get API"""
-
-        # Arrange
-        self.campaign = Campaign(
-            title="TextCampaign",
-            slug="slug1",
-            description="Campaign Description",
-            metadata={"key": "val1"},
-            status=Status.EDIT,
-        )
-        self.campaign.save()
-
-        self.campaign = Campaign(
-            title="Text Campaign",
-            slug="slug2",
-            description="Campaign Description",
-            metadata={"key": "val1"},
-            status=Status.EDIT,
-        )
-        self.campaign.save()
-
-        # Act
-        response = self.client.get("/filter/campaigns/?name=sl")
-
-        # Assert
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.json()), 2)
-        self.assertEqual(response.json()[0], "slug1")
-        self.assertEqual(response.json()[1], "slug2")
-
-    def test_FilterCampaignsEmpty_get(self):
-        """Test list of filer campaign get API"""
-
-        # Arrange, to test empty filter campaigns. No need of arranging data
-
-        # Act
-        response = self.client.get("/filter/campaigns/")
-
-        # Assert
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.json()), 0)
 
     def test_PublishCampaignView(self):
         """Test for updating status of a campaign"""
@@ -2023,7 +1950,7 @@ class ViewTest_Concordia(TestCase):
             description="Campaign Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
-            is_publish=True,
+            published=True,
         )
         self.campaign.save()
 
@@ -2033,7 +1960,7 @@ class ViewTest_Concordia(TestCase):
             metadata={"key": "val1"},
             status=Status.EDIT,
             campaign=self.campaign,
-            is_publish=True,
+            published=True,
         )
         self.project.save()
 
@@ -2043,7 +1970,7 @@ class ViewTest_Concordia(TestCase):
             metadata={"key": "val1"},
             status=Status.EDIT,
             campaign=self.campaign,
-            is_publish=True,
+            published=True,
         )
         self.project1.save()
 
@@ -2104,7 +2031,7 @@ class ViewTest_Concordia(TestCase):
             description="Campaign Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
-            is_publish=True,
+            published=True,
         )
         self.campaign.save()
 
@@ -2114,7 +2041,7 @@ class ViewTest_Concordia(TestCase):
             metadata={"key": "val1"},
             status=Status.EDIT,
             campaign=self.campaign,
-            is_publish=True,
+            published=True,
         )
         self.project.save()
 
@@ -2124,7 +2051,7 @@ class ViewTest_Concordia(TestCase):
             metadata={"key": "val1"},
             status=Status.EDIT,
             campaign=self.campaign,
-            is_publish=True,
+            published=True,
         )
         self.project1.save()
 
@@ -2166,7 +2093,7 @@ class ViewTest_Concordia(TestCase):
             metadata={"key": "val1"},
             status=Status.EDIT,
             collection=self.collection,
-            is_publish=True,
+            published=True,
         )
         self.subcollection1.save()
 

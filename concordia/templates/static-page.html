@@ -2,6 +2,10 @@
 
 {% block title %}{{ title }}{% endblock title %}
 
+{% block breadcrumbs %}
+    <li class="breadcrumb-item active">{{ PATH_LEVEL_1|title }}</li>
+{% endblock breadcrumbs %}
+
 {% block main_content %}
 <div class="container-fluid py-default">
     <div class="row">

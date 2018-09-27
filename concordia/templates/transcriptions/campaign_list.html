@@ -1,0 +1,56 @@
+{% extends "transcriptions/base.html" %}
+{% block title %}Crowd — Campaigns{% endblock title %}
+
+{% load staticfiles %}
+{% load concordia_auth_tags %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item active" aria-current="page">Campaigns</li>
+{% endblock breadcrumbs %}
+
+{% block main_content %}
+<div class="container-fluid py-default">
+    <div class="row">
+        <div class="d-flex flex-wrap col-12 mb-default justify-content-around">
+            {% for campaign in campaigns %}
+                <div class="bg-lightest-gray w-100 mb-default">
+                    <div class="row">
+                        <div class="col-12 col-md-8 px-half">
+                            <a href="{% url 'transcriptions:campaign' campaign.slug %}">
+                                <h1 class="campaign-title">{{ campaign.title }}</h1>
+                            </a>
+                            {{ campaign.description }}
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <!-- TODO: Swap this out -->
+                            <a href="{% url 'transcriptions:campaign' campaign.slug %}">
+                                {% if 'Lincoln' in campaign.title %}
+                                    <img src="{% static  'img/AbrahamLincoln.svg' %}" class="img-fluid" alt="{{ campaign.title }} image">
+                                {% elif 'Rosa Parks' in campaign.title %}
+                                    <img src="{% static  'img/rosa-parks-campaign.svg' %}" class="img-fluid" alt="{{ campaign.title }} image">
+                                {% elif 'Civil War' in campaign.title %}
+                                    <!-- <img class="img-fluid" alt="{{ campaign.title }} image" src="{% if campaign.s3_storage %}{{ campaign.media_url }}{% else %}{{ MEDIA_URL }}{{campaign.media_url }}{% endif %}"> -->
+                                {% elif 'Clara Barton' in campaign.title %}
+                                    <img src="{% static  'img/clara-barton-campaign.svg' %}" class="img-fluid" alt="{{ campaign.title }} image">
+                                {% elif 'Branch Rickey' in campaign.title %}
+                                    <img src="{% static 'img/branch-rickey-campaign.svg' %}" class="img-fluid" alt="{{ campaign.title }} image">
+                                {% elif 'Mary Church Terrell' in campaign.title %}
+                                    <img src="{% static  'img/MaryChurchTerrell.svg' %}" class="img-fluid" alt="{{ campaign.title }} image">
+                                {% elif 'Frederick Law Olmstead' in campaign.title %}
+                                    <!-- <img class="img-fluid" alt="{{ campaign.title }} image" src="{% if campaign.s3_storage %}{{ campaign.media_url }}{% else %}{{ MEDIA_URL }}{{campaign.media_url }}{% endif %}"> -->
+                                {% else %}
+                                    {% comment %} FIXME: when we implement campaign media, we also want a simple way to get the MEDIA_URL-relative thumbnail {% endcomment %}
+                                    <img class="img-fluid" alt="{{ campaign.title }} image" src="{% if campaign.s3_storage %}{{ campaign.media_url }}{% else %}{{ MEDIA_URL }}{{ campaign.media_url }}{% endif %}">
+                                {% endif %}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="row">
+        {% include "standard-pagination.html" %}
+    </div>
+</div>
+{% endblock main_content %}
