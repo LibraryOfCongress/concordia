@@ -11,16 +11,15 @@ Crowd: {{ asset.title }} ({{ asset.project.campaign.title }} — {{ asset.projec
 {% block head_content %}
 {% endblock head_content %}
 
+{% block breadcrumbs %}
+    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaign' slug=campaign.slug %}">{{ campaign.title }}</a></li>
+    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:project-detail' campaign_slug=campaign.slug slug=project.slug %}">{{ project.title }}</a></li>
+    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:item' campaign_slug=campaign.slug project_slug=project.slug slug=item.slug %}">{{ item.title }}</a></li>
+    <li class="breadcrumb-item active">{{ asset.title }}</li>
+{% endblock breadcrumbs %}
+
 {% block main_content %}
 <div class="container-fluid px-0">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb bg-offwhite my-0">
-            <li class="breadcrumb-item"><a class="primary-text" href="/">Home</a></li>
-            <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaign' slug=campaign.slug %}">{{ campaign.title }}</a></li>
-            <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:project-detail' campaign_slug=campaign.slug slug=project.slug %}">{{ project.title }}</a></li>
-            <li class="breadcrumb-item active">{{ asset.title }}</li>
-        </ol>
-    </nav>
     <div class="row bg-darkest-gray px-2 py-2">
 
         <div class="col-6">

@@ -4,16 +4,13 @@
 
 {% block title %}Crowd — {{ campaign.title }} Projects{% endblock title %}
 
-{% block main_content %}
+{% block breadcrumbs %}
+    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaigns' %}">Campaigns</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ campaign.title }}</li>
+{% endblock breadcrumbs %}
 
+{% block main_content %}
 <div class="container-fluid py-default">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb bg-offwhite">
-            <li class="breadcrumb-item"><a class="primary-text" href="/">Home</a></li>
-            <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaigns' %}">Campaigns</a></li>
-            <li class="breadcrumb-item active" aria-current="page">{{ campaign.title }}</li>
-        </ol>
-    </nav>
     <div class="row">
         <div class="col-12">
             <h1 class="my-default ml-half">{{ campaign.title }}</h1>

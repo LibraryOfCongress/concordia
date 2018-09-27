@@ -4,14 +4,12 @@
 {% load staticfiles %}
 {% load concordia_auth_tags %}
 
+{% block breadcrumbs %}
+    <li class="breadcrumb-item active" aria-current="page">Campaigns</li>
+{% endblock breadcrumbs %}
+
 {% block main_content %}
 <div class="container-fluid py-default">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb bg-offwhite">
-            <li class="breadcrumb-item"><a class="primary-text" href="/">Home</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Campaigns</li>
-        </ol>
-    </nav>
     <div class="row">
         <div class="d-flex flex-wrap col-12 mb-default justify-content-around">
             {% for campaign in campaigns %}
