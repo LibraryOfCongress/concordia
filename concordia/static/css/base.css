@@ -1375,10 +1375,6 @@ div.nav-secondary {
     border: 0px solid transparent;
 }
 
-#test-percent {
-    height: 0;
-}
-
 .contribute-box {
     height: calc(100vh - (8.0625rem + 1.59375rem));
 }
