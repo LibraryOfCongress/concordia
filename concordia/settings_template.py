@@ -79,7 +79,7 @@ INSTALLED_APPS = [
     "raven.contrib.django.raven_compat",
     "maintenance_mode",
     "rest_framework",
-    "concordia",
+    "concordia.apps.ConcordiaAppConfig",
     "exporter",
     "importer",
     "concordia.experiments.wireframes",
@@ -265,8 +265,6 @@ AUTH_PASSWORD_VALIDATORS = [
 AUTHENTICATION_BACKENDS = [
     "concordia.email_username_backend.EmailOrUsernameModelBackend"
 ]
-
-REGISTRATION_URLS = "registration.backends.simple.urls"
 
 CAPTCHA_CHALLENGE_FUNCT = "captcha.helpers.random_char_challenge"
 CAPTCHA_FIELD_TEMPLATE = "captcha/field.html"

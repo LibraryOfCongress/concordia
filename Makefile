@@ -24,7 +24,7 @@ firstup: increase-elk-max-map-count create-docker-sentry-network
 
 .PHONY: adminuser
 adminuser:
-	docker-compose -f docker-compose.yml run --rm app ./manage.py shell -c "from django.contrib.auth.models import User;from django.contrib.auth.models import Group; User.objects.create_superuser('admin', 'crowd@loc.gov', '${CONCORDIA_ADMIN_PW}')"
+	docker-compose -f docker-compose.yml run --rm app ./manage.py shell -c "from django.contrib.auth.models import User; User.objects.create_superuser('admin', 'crowd@loc.gov', '${CONCORDIA_ADMIN_PW}')"
 
 .PHONY: allup
 allup:	create-docker-sentry-network

@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "c54b1efecfbaad30052a5b5c9bc0cf89a136c4d3f88c8ef948bf2f66e01c52c4"
+            "sha256": "096f25c0abd5254c0ead4bf3d86fee04bde80dae4144db8dfd4956b9e5290227"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -16,9 +16,6 @@
         ]
     },
     "default": {
-        "5c736a0": {
-            "path": "./vendor/django-registration.zip"
-        },
         "amqp": {
             "hashes": [
                 "sha256:073dd02fdd73041bffc913b767866015147b61f2a9bc104daef172fc1a0066eb",
@@ -179,6 +176,14 @@
             ],
             "version": "==0.2.0"
         },
+        "django-registration": {
+            "hashes": [
+                "sha256:0527be82f3f62233c7b7a4fe6b0217832cbde2c6d8ea5008e8233a764f9a2543",
+                "sha256:8f1960d1780804b67afb6b202c98cdfaca030a202bc7a263bf80e32f9c8a6984"
+            ],
+            "index": "pypi",
+            "version": "==3.0"
+        },
         "django-simple-captcha": {
             "hashes": [
                 "sha256:0c30a14f02502119fd1a4d308dd5d2b899d0f4284825a396bbb010afd904754a"
@@ -223,7 +228,7 @@
                 "sha256:7546cc08e3899716e12fe67d12d7cfe9a64647014d1134b014c3c392b63cad42",
                 "sha256:aada5cfdc4a543c47098eb3aca6663848ef5d04b4324935ced441debc11ec98b"
             ],
-            "markers": "python_version != '3.1.*' and python_version != '3.2.*' and python_version >= '2.6' and python_version < '4' and python_version != '3.3.*' and python_version != '3.0.*'",
+            "markers": "python_version >= '2.6' and python_version != '3.1.*' and python_version != '3.2.*' and python_version != '3.0.*' and python_version != '3.3.*' and python_version < '4'",
             "version": "==6.3.1"
         },
         "elasticsearch-dsl": {
@@ -357,7 +362,7 @@
                 "sha256:f8b3d413c5a8f84b12cd4c5df1d8e211777c9852c6be3ee9c094b626644d3eab"
             ],
             "index": "pypi",
-            "markers": "python_version != '3.1.*' and python_version != '3.2.*' and python_version != '3.3.*' and python_version != '3.0.*' and python_version >= '2.7'",
+            "markers": "python_version >= '2.7' and python_version != '3.1.*' and python_version != '3.2.*' and python_version != '3.3.*' and python_version != '3.0.*'",
             "version": "==5.2.0"
         },
         "prometheus-client": {
@@ -519,7 +524,7 @@
                 "sha256:a68ac5e15e76e7e5dd2b8f94007233e01effe3e50e8daddf69acfd81cb686baf",
                 "sha256:b5725a0bd4ba422ab0e66e89e030c806576753ea3ee08554382c14e685d117b5"
             ],
-            "markers": "python_version != '3.0.*' and python_version >= '2.6' and python_version != '3.2.*' and python_version != '3.3.*' and python_version < '4' and python_version != '3.1.*'",
+            "markers": "python_version != '3.0.*' and python_version >= '2.6' and python_version != '3.2.*' and python_version < '4' and python_version != '3.3.*' and python_version != '3.1.*'",
             "version": "==1.23"
         },
         "vine": {
@@ -575,7 +580,7 @@
                 "sha256:2335065e6395b9e67ca716de5f7526736bfa6ceead690adf616d925bdc622b13",
                 "sha256:5b94b49521f6456670fdb30cd82a4eca9412788a93fa6dd6df72c94d5a8ff2d7"
             ],
-            "markers": "python_version >= '2.7' and python_version != '3.1.*' and python_version != '3.2.*' and python_version != '3.0.*' and python_version != '3.3.*'",
+            "markers": "python_version >= '2.7' and python_version != '3.1.*' and python_version != '3.3.*' and python_version != '3.2.*' and python_version != '3.0.*'",
             "version": "==7.0"
         },
         "django": {

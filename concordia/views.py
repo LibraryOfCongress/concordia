@@ -20,7 +20,7 @@ from django.template import loader
 from django.urls import reverse
 from django.views.decorators.cache import never_cache
 from django.views.generic import DetailView, FormView, ListView, TemplateView, View
-from registration.backends.hmac.views import RegistrationView
+from django_registration.backends.activation.views import RegistrationView
 from rest_framework import generics, status
 
 from concordia.forms import (

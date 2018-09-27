@@ -20,7 +20,7 @@ Pillow = "*"
 confusable_homoglyphs = ">=3.1.1"
 Whoosh = "*"
 bagit = "*"
-"5c736a0" = {path = "./vendor/django-registration.zip"}
+django-registration = "*"
 django-prometheus-metrics = "*"
 django-widget-tweaks = "*"
 django-simple-captcha = "*"
