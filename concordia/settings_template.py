@@ -79,7 +79,7 @@ INSTALLED_APPS = [
     "raven.contrib.django.raven_compat",
     "maintenance_mode",
     "rest_framework",
-    "concordia",
+    "concordia.apps.ConcordiaAppConfig",
     "exporter",
     "importer",
     "concordia.experiments.wireframes",

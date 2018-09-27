@@ -4,7 +4,6 @@ from captcha.fields import CaptchaField
 from django import forms
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group
 from django.db.models import Count
 from django.db.models.signals import post_save
 from django_registration.forms import RegistrationForm
@@ -13,12 +12,6 @@ from concordia.models import Status
 
 User = get_user_model()
 logger = getLogger(__name__)
-
-
-def add_user_to_newsletter_group(sender, instance, created, **kwargs):
-    if created:
-        newsletter_group = Group.objects.get(name=settings.NEWSLETTER_GROUP_NAME)
-        newsletter_group.user_set.add(instance)
 
 
 class ConcordiaUserForm(RegistrationForm):
@@ -69,10 +62,6 @@ class ConcordiaUserForm(RegistrationForm):
             setattr(instance, role_dict[role], 1)
         if commit:
             instance.save()
-
-        if "newsletterOptIn" in self.data and self.data["newsletterOptIn"]:
-            # Add this user to the Newsletter group if they opted in.
-            post_save.connect(add_user_to_newsletter_group, sender=User)
 
         return instance
 
