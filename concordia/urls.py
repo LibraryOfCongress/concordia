@@ -1,9 +1,10 @@
-
 from django.conf import settings
 from django.conf.urls import url
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
+from django.http import Http404, HttpResponseForbidden
 from django.urls import include, path, re_path
+from django.views.defaults import page_not_found, permission_denied, server_error
 from django.views.generic import TemplateView
 from machina.app import board
 
@@ -174,13 +175,11 @@ urlpatterns = [
     # TODO: when we upgrade to Django 2.1 we can use the admin site override
     # mechanism (the old one is broken in 2.0): see https://code.djangoproject.com/ticket/27887
     path("admin/bulk-import", admin_bulk_import_view, name="admin-bulk-import"),
-    re_path(r"^admin/", admin.site.urls),
+    path("admin/", admin.site.urls),
     # Apps
-    re_path(r"^forum/", include(board.urls)),
+    path("forum/", include(board.urls)),
+    path("captcha/", include("captcha.urls")),
     path("ws/", include(ws_urlpatterns, namespace="ws")),
-]
-
-urlpatterns += [
     re_path(r"^password_reset/$", auth_views.password_reset, name="password_reset"),
     re_path(
         r"^password_reset/done/$",
@@ -197,13 +196,13 @@ urlpatterns += [
         auth_views.password_reset_complete,
         name="password_reset_complete",
     ),
+    # Internal support assists:
+    path("maintenance-mode/", include("maintenance_mode.urls")),
+    path("error/500/", server_error),
+    path("error/404/", page_not_found, {"exception": Http404()}),
+    path("error/403/", permission_denied, {"exception": HttpResponseForbidden()}),
+    url("", include("django_prometheus_metrics.urls")),
 ]
-
-urlpatterns += [url("", include("django_prometheus_metrics.urls"))]
-
-urlpatterns += [url(r"^captcha/", include("captcha.urls"))]
-
-urlpatterns += [url(r"^maintenance-mode/", include("maintenance_mode.urls"))]
 
 if settings.DEBUG:
     import debug_toolbar
