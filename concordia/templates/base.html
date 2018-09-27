@@ -165,6 +165,19 @@
 
     {% block body_scripts %}{% endblock body_scripts %}
 
+    {% if messages %}
+        <script>
+            {% for message in messages %}
+                displayMessage(
+                    "{% if message.level >= DEFAULT_MESSAGE_LEVELS.WARNING %}error{% else %}info{% endif %}",
+                    "{{ message|escapejs }}"
+                );
+            {% endfor %}
+        </script>
+    {% endif %}
+
+
+
     <script type="text/javascript">
         if (typeof _satellite == "undefined") {
             if (typeof raven != "undefined") {

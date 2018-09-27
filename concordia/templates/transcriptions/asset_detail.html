@@ -186,15 +186,6 @@ Crowd: {{ asset.title }} ({{ asset.project.campaign.title }} — {{ asset.projec
         showalert();
         {% endif %}
 
-        {% if messages %}
-            {% for message in messages %}
-                displayMessage(
-                    "{% if message.level >= DEFAULT_MESSAGE_LEVELS.WARNING %}error{% else %}info{% endif %}",
-                    "{{ message|escapejs }}"
-                );
-            {% endfor %}
-        {% endif %}
-
         $(".js-captcha-refresh").click(function (e) {
             e.preventDefault();
             $.getJSON("{% url 'captcha-refresh' %}", function (result) {
