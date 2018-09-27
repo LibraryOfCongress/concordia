@@ -145,6 +145,14 @@
 
     {% block body_scripts %}{% endblock body_scripts %}
 
-    <script type="text/javascript">_satellite.pageBottom();</script>
+    <script type="text/javascript">
+        if (typeof _satellite == "undefined") {
+            if (typeof raven != "undefined") {
+                raven.captureMessage("Adobe Analytics did not load");
+            }
+        } else {
+            _satellite.pageBottom();
+        }
+    </script>
 </body>
 </html>
