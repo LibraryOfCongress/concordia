@@ -210,12 +210,17 @@ class UserAssetTagCollection(models.Model):
 
 class Transcription(models.Model):
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
+
+    # TODO: document whether we need this field:
     parent = models.ForeignKey("self", blank=True, null=True, on_delete=models.SET_NULL)
+
     user_id = models.PositiveIntegerField(db_index=True)
+
     text = models.TextField(blank=True)
     status = models.CharField(
         max_length=10, choices=Status.CHOICES, default=Status.DEFAULT
     )
+
     created_on = models.DateTimeField(auto_now_add=True)
     updated_on = models.DateTimeField(auto_now=True)
 

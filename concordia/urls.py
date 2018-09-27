@@ -44,7 +44,7 @@ tx_urlpatterns = (
             name="report campaign",
         ),
         path(
-            "<slug:campaign_slug>/<slug:project_slug>/<slug:item_slug>/<slug:slug>",
+            "<slug:campaign_slug>/<slug:project_slug>/<slug:item_slug>/<slug:slug>/",
             views.ConcordiaAssetView.as_view(),
             name="asset-detail",
         ),
@@ -123,7 +123,7 @@ ws_urlpatterns = (
             views_ws.TranscriptionByAsset().as_view(),
         ),
         path(
-            "assets/<int:pk>/transcriptions/submit/",
+            "assets/<int:asset_pk>/transcriptions/submit/",
             views_ws.TranscriptionCreate().as_view(),
             name="submit-transcription",
         ),

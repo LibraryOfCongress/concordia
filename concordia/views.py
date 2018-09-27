@@ -8,7 +8,7 @@ from logging import getLogger
 import markdown
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth import get_user_model, update_session_auth_hash
+from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
@@ -22,7 +22,6 @@ from django.views.decorators.cache import never_cache
 from django.views.generic import DetailView, FormView, ListView, TemplateView, View
 from registration.backends.hmac.views import RegistrationView
 from rest_framework import generics, status
-from rest_framework.test import APIRequestFactory
 
 from concordia.forms import (
     AssetFilteringForm,
@@ -41,7 +40,6 @@ from concordia.models import (
     UserAssetTagCollection,
     UserProfile,
 )
-from concordia.views_ws import PageInUseCreate
 
 logger = getLogger(__name__)
 
@@ -414,6 +412,9 @@ class ConcordiaAssetView(DetailView):
         :param user: user object
         :return: True or False
         """
+
+        return False
+
         response = requests.get(
             "%s://%s/ws/page_in_use_count/%s/%s/"
             % (self.request.scheme, self.request.get_host(), user, url),
@@ -452,6 +453,7 @@ class ConcordiaAssetView(DetailView):
             else get_anonymous_user().id
         )
 
+        # FIXME: move this into the front-end JavaScript!
         page_in_use = self.check_page_in_use(in_use_url, current_user_id)
 
         # Get the most recent transcription
@@ -473,54 +475,55 @@ class ConcordiaAssetView(DetailView):
 
         captcha_form = CaptchaEmbedForm()
 
-        response = requests.get(
-            "%s://%s/ws/page_in_use_user/%s/%s/"
-            % (
-                self.request.scheme,
-                self.request.get_host(),
-                current_user_id,
-                in_use_url,
-            ),
-            cookies=self.request.COOKIES,
-        )
-        page_in_use_json = json.loads(response.content.decode("utf-8"))
-
-        if page_in_use_json["user"] is None:
-            same_page_count_for_this_user = 0
-        else:
-            same_page_count_for_this_user = 1
-
-        page_dict = {
-            "page_url": in_use_url,
-            "user": current_user_id,
-            "updated_on": datetime.now(),
-        }
-
-        if page_in_use is False and same_page_count_for_this_user == 0:
-            # add this page as being in use by this user
-            # call the web service which will use the serializer to insert the value.
-            # this takes care of deleting old entries in PageInUse table
-
-            factory = APIRequestFactory()
-            request = factory.post("/ws/page_in_use%s/" % (in_use_url,), page_dict)
-            request.session = self.request.session
-
-            PageInUseCreate.as_view()(request)
-        elif same_page_count_for_this_user == 1:
-            # update the PageInUse
-            change_page_in_use = {"page_url": in_use_url, "user": current_user_id}
-
-            requests.put(
-                "%s://%s/ws/page_in_use_update/%s/%s/"
-                % (
-                    self.request.scheme,
-                    self.request.get_host(),
-                    current_user_id,
-                    in_use_url,
-                ),
-                data=change_page_in_use,
-                cookies=self.request.COOKIES,
-            )
+        # FIXME: move this into front-end JavaScript
+        # response = requests.get(
+        #     "%s://%s/ws/page_in_use_user/%s/%s/"
+        #     % (
+        #         self.request.scheme,
+        #         self.request.get_host(),
+        #         current_user_id,
+        #         in_use_url,
+        #     ),
+        #     cookies=self.request.COOKIES,
+        # )
+        # page_in_use_json = json.loads(response.content.decode("utf-8"))
+        #
+        # if page_in_use_json["user"] is None:
+        #     same_page_count_for_this_user = 0
+        # else:
+        #     same_page_count_for_this_user = 1
+        #
+        # page_dict = {
+        #     "page_url": in_use_url,
+        #     "user": current_user_id,
+        #     "updated_on": datetime.now(),
+        # }
+        #
+        # if page_in_use is False and same_page_count_for_this_user == 0:
+        #     # add this page as being in use by this user
+        #     # call the web service which will use the serializer to insert the value.
+        #     # this takes care of deleting old entries in PageInUse table
+        #
+        #     factory = APIRequestFactory()
+        #     request = factory.post("/ws/page_in_use%s/" % (in_use_url,), page_dict)
+        #     request.session = self.request.session
+        #
+        #     PageInUseCreate.as_view()(request)
+        # elif same_page_count_for_this_user == 1:
+        #     # update the PageInUse
+        #     change_page_in_use = {"page_url": in_use_url, "user": current_user_id}
+        #
+        #     requests.put(
+        #         "%s://%s/ws/page_in_use_update/%s/%s/"
+        #         % (
+        #             self.request.scheme,
+        #             self.request.get_host(),
+        #             current_user_id,
+        #             in_use_url,
+        #         ),
+        #         data=change_page_in_use,
+        #         cookies=self.request.COOKIES,
+        #     )
 
         if self.request.user.is_anonymous:
             ctx[
@@ -531,6 +534,7 @@ class ConcordiaAssetView(DetailView):
             {
                 "page_in_use": page_in_use,
                 "transcription": transcription,
+                "transcription_status": transcription.status if transcription else Status.EDIT,
                 "tags": tags,
                 "captcha_form": captcha_form,
             }
