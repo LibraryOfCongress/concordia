@@ -5,14 +5,14 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('concordia', '0020_auto_20180922_0139'),
-    ]
+    dependencies = [("concordia", "0020_auto_20180922_0139")]
 
     operations = [
         migrations.AlterField(
-            model_name='asset',
-            name='media_url',
-            field=models.TextField(max_length=255, verbose_name='Path component of the URL'),
-        ),
+            model_name="asset",
+            name="media_url",
+            field=models.TextField(
+                max_length=255, verbose_name="Path component of the URL"
+            ),
+        )
     ]

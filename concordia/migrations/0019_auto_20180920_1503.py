@@ -6,29 +6,35 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('concordia', '0018_auto_20180917_1654'),
-    ]
+    dependencies = [("concordia", "0018_auto_20180917_1654")]
 
     operations = [
         migrations.AlterField(
-            model_name='asset',
-            name='metadata',
-            field=django.contrib.postgres.fields.jsonb.JSONField(blank=True, default=dict, null=True),
+            model_name="asset",
+            name="metadata",
+            field=django.contrib.postgres.fields.jsonb.JSONField(
+                blank=True, default=dict, null=True
+            ),
         ),
         migrations.AlterField(
-            model_name='campaign',
-            name='metadata',
-            field=django.contrib.postgres.fields.jsonb.JSONField(blank=True, default=dict, null=True),
+            model_name="campaign",
+            name="metadata",
+            field=django.contrib.postgres.fields.jsonb.JSONField(
+                blank=True, default=dict, null=True
+            ),
         ),
         migrations.AlterField(
-            model_name='item',
-            name='metadata',
-            field=django.contrib.postgres.fields.jsonb.JSONField(blank=True, default=dict, null=True),
+            model_name="item",
+            name="metadata",
+            field=django.contrib.postgres.fields.jsonb.JSONField(
+                blank=True, default=dict, null=True
+            ),
         ),
         migrations.AlterField(
-            model_name='project',
-            name='metadata',
-            field=django.contrib.postgres.fields.jsonb.JSONField(blank=True, default=dict, null=True),
+            model_name="project",
+            name="metadata",
+            field=django.contrib.postgres.fields.jsonb.JSONField(
+                blank=True, default=dict, null=True
+            ),
         ),
     ]

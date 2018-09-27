@@ -122,7 +122,7 @@ ELASTICSEARCH_DSL = {
 
 # HMAC activation flow provide the two-step registration process,
 # the user signs up and then completes activation via email instructions.
-REGISTRATION_URLS = "registration.backends.hmac.urls"
-REGISTRATION_SALT = "registration"  # doesn't need to be secret
+
+REGISTRATION_SALT = "django_registration"  # doesn't need to be secret
 
 ACCOUNT_ACTIVATION_DAYS = 1  # required for HMAC registration two-step-flow
