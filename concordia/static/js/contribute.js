@@ -77,7 +77,7 @@ $('form.ajax-submission').each(function(idx, formElement) {
     });
 });
 
-$('#transcription-editor')
+var $transcriptionEditor = $('#transcription-editor')
     .on('form-submit-success', function(evt, extra) {
         var status = extra.responseData.status;
         if (status == 'Edit') {
@@ -110,3 +110,15 @@ $('#transcription-editor')
             'transcription-save-result'
         );
     });
+
+$transcriptionEditor
+    .find('textarea')
+    .on('change input', function() {
+        var $submitButtons = $transcriptionEditor.find('[type="submit"]');
+        if (!this.value) {
+            $submitButtons.attr('disabled', 'disabled');
+        } else {
+            $submitButtons.removeAttr('disabled');
+        }
+    })
+    .trigger('change');
