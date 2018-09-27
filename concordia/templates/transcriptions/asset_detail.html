@@ -95,10 +95,6 @@ Crowd: {{ asset.title }} ({{ asset.project.campaign.title }} — {{ asset.projec
                                 </div>
                             </div>
                         </div>
-
-                        <div class="form-row btn-row my-half">
-                            <button id="save-tags-button" type="submit" class="btn btn-primary mx-auto">Save Tags</button>
-                        </div>
                     {% else %}
                         <p class="help-text primary-text">
                             Only registered users can tag.
@@ -127,6 +123,12 @@ Crowd: {{ asset.title }} ({{ asset.project.campaign.title }} — {{ asset.projec
                             </li>
                         {% endfor %}
                     </ul>
+
+                    {% if request.user.is_authenticated %}
+                        <div class="form-row btn-row my-half">
+                            <button id="save-tags-button" type="submit" class="btn btn-primary mx-auto">Save Tags</button>
+                        </div>
+                    {% endif %}
                 </form>
             </div>
 
