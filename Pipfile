@@ -34,7 +34,7 @@ django-debug-toolbar = "*"
 whitenoise = "*"
 openpyxl = "*"
 django-storages = "*"
-markdown = "<3"
+markdown = ">=3.0.1"
 
 [dev-packages]
 invoke = "*"
