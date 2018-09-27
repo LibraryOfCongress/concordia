@@ -5,8 +5,7 @@ from datetime import datetime, timedelta
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import QueryDict
 from django.shortcuts import get_object_or_404
-from rest_framework import exceptions, generics, status, permissions
-from rest_framework.authentication import BasicAuthentication
+from rest_framework import exceptions, generics, permissions, status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 
@@ -462,26 +461,31 @@ class TranscriptionCreate(generics.CreateAPIView):
     serializer_class = TranscriptionSerializer
     queryset = Transcription.objects.all()
 
-    def post(self, request, *args, **kwargs):
-        if type(request.data) == QueryDict:
-            # when using APIFactory to submit post, data must be converted from QueryDict
-            request_data = request.data.dict()
-        else:
-            request_data = request.data
+    def post(self, request, *, asset_pk):
+        asset = get_object_or_404(Asset, pk=asset_pk)
 
-        asset = get_object_or_404(Asset, slug=request_data["asset"])
+        partial_data = {
+            k: v
+            for k, v in request.data.items()
+            if k in ("text", "status", "csrftoken")
+        }
 
-        transcription = Transcription.objects.create(
-            asset=asset,
-            user_id=request_data["user_id"],
-            text=request_data["text"],
-            status=request_data["status"],
-        )
-
-        serializer = TranscriptionSerializer(data=request_data)
+        serializer = TranscriptionSerializer(data=partial_data, partial=True)
         if serializer.is_valid():
-            pass
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+            transcription = Transcription(
+                asset=asset,
+                user_id=request.user.pk,
+                text=request.data["text"],
+                status=request.data["status"],
+            )
+            transcription.full_clean()
+            transcription.save()
+        else:
+            raise exceptions.ValidationError(serializer.errors)
+
+        full_serialization = TranscriptionSerializer(transcription).data
+
+        return Response(full_serialization, status=status.HTTP_201_CREATED)
 
 
 class UserAssetTagsGet(generics.ListAPIView):

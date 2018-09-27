@@ -62,7 +62,7 @@ Crowd: {{ asset.title }} ({{ asset.project.campaign.title }} — {{ asset.projec
             </table>
 
             <div class="rounded" id="transcription-editor">
-                <form class="mx-half" method="post" action="{% url 'ws:submit-transcription' pk=asset.pk %}">
+                <form class="mx-half" method="post" action="{% url 'ws:submit-transcription' asset_pk=asset.pk %}">
                     {% csrf_token %}
 
                     <textarea class="w-100 rounded" name="tx" id="transcription-input" placeholder="Go ahead, start typing. You got this!" aria-label="Transcription input">
