@@ -407,22 +407,6 @@ class ConcordiaAssetView(DetailView):
 
         return return_path
 
-    def check_page_in_use(self, url, user):
-        """
-        Check the page in use for the asset, return true if in use within the last 5 minutes, otherwise false
-        :param url: url to test if in use
-        :param user: user object
-        :return: True or False
-        """
-        response = requests.get(
-            "%s://%s/ws/page_in_use_count/%s/%s/"
-            % (self.request.scheme, self.request.get_host(), user, url),
-            cookies=self.request.COOKIES,
-        )
-        json_val = json.loads(response.content.decode("utf-8"))
-
-        return json_val["page_in_use"]
-
     def get_context_data(self, **kwargs):
         """
         Handle the GET request
@@ -451,8 +435,6 @@ class ConcordiaAssetView(DetailView):
             if self.request.user.id is not None
             else get_anonymous_user().id
         )
-
-        # page_in_use = self.check_page_in_use(in_use_url, current_user_id)
 
         # Get the most recent transcription
         latest_transcriptions = \
@@ -489,7 +471,7 @@ class ConcordiaAssetView(DetailView):
 
         ctx.update(
             {
-                "page_in_use": page_in_use,
+                "page_in_use": False,
                 "transcription": transcription,
                 "tags": tags,
                 "captcha_form": captcha_form,
