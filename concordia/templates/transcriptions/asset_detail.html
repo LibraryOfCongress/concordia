@@ -56,7 +56,7 @@ Crowd: {{ asset.title }} ({{ asset.project.campaign.title }} — {{ asset.projec
             </table>
 
             <div id="transcription-editor" class="flex-grow-1 d-flex flex-column">
-                <form class="ajax-submission h-100 d-flex flex-column" method="post" action="{% url 'ws:submit-transcription' asset_pk=asset.pk %}">
+                <form class="ajax-submission h-100 d-flex flex-column" method="post" action="{% url 'ws:submit-transcription' asset_pk=asset.pk %}" data-submit-name="status" data-submit-value="Edit">
                     {% csrf_token %}
 
                     {% spaceless %}
