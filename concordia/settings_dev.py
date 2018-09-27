@@ -16,10 +16,10 @@ DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": "concordia",
-        "USER": "postgres",
-        "PASSWORD": "concordia",
+        "USER": "concordia",
+        "PASSWORD": "${POSTGRESQL_PW}",
         "HOST": "0.0.0.0",
-        "PORT": "5432",
+        "PORT": "54323",
     }
 }
 

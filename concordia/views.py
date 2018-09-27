@@ -454,7 +454,7 @@ class ConcordiaAssetView(DetailView):
         )
 
         # FIXME: move this into the front-end JavaScript!
-        page_in_use = self.check_page_in_use(in_use_url, current_user_id)
+        # page_in_use = self.check_page_in_use(in_use_url, current_user_id)
 
         # Get the most recent transcription
         latest_transcriptions = \
