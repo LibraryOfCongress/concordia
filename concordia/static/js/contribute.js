@@ -125,3 +125,69 @@ $transcriptionEditor
         }
     })
     .trigger('change');
+
+var $tagEditor = $('#tag-editor'),
+    $currentTagList = $tagEditor.find('#current-tags'),
+    $newTagInput = $('#new-tag-input');
+
+function addNewTag() {
+    var val = $.trim($newTagInput.val());
+    if (val) {
+        // Prevent adding tags which are already present:
+        var dupeCount = $currentTagList
+            .find('input[name="tags"]')
+            .filter(function(idx, input) {
+                return (
+                    input.value.toLocaleLowerCase() == val.toLocaleLowerCase()
+                );
+            }).length;
+
+        if (!dupeCount) {
+            var $newTag = $tagEditor
+                .find('#tag-template')
+                .clone()
+                .removeAttr('id')
+                .removeAttr('hidden');
+            $newTag
+                .find('input')
+                .removeAttr('disabled')
+                .val(val);
+            $newTag.find('label').append(document.createTextNode(val));
+            $currentTagList.append($newTag);
+        }
+        $newTagInput.val('');
+    }
+}
+
+$tagEditor.find('#new-tag-button').on('click', addNewTag);
+$newTagInput.on('change', addNewTag);
+$newTagInput.on('keydown', function(evt) {
+    if (evt.which == '13') {
+        // Enter key
+        evt.preventDefault();
+        addNewTag();
+    } else if (evt.which == '32') {
+        // Spacebar
+        addNewTag();
+    }
+});
+
+$currentTagList.on('click', '.close', function() {
+    $(this)
+        .parents('li')
+        .remove();
+});
+
+$tagEditor
+    .on('form-submit-success', function() {
+        unlockControls($tagEditor);
+        displayMessage('info', 'Your tags have been saved', 'tags-save-result');
+    })
+    .on('form-submit-failure', function(evt, info) {
+        unlockControls($tagEditor);
+        displayMessage(
+            'error',
+            'Unable to save your tags: ' + info.textStatus + info.errorThrown,
+            'tag-save-result'
+        );
+    });

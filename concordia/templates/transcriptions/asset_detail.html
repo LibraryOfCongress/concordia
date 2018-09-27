@@ -83,24 +83,53 @@ Crowd: {{ asset.title }} ({{ asset.project.campaign.title }} — {{ asset.projec
                 </form>
             </div>
             <div id="tag-editor" class="flex-shrink-1">
-                {% if user.is_authenticated %}
-                    <form method="post" action="{% url 'ws:submit-tags' pk=asset.pk %}">
+                <form class="ajax-submission" method="post" action="{% url 'ws:submit-tags' pk=asset.pk %}">
+                    {% csrf_token %}
+
+                    {% if request.user.is_authenticated %}
                         <div class="row">
-                            <input type="text" id="tag-input" class="form-control rounded" name="tags" data-role="tagsinput" value="{%for tag in tags %}{{tag}},{% endfor %}" aria-label="Tag input">
+                            <div class="input-group">
+                                <input type="text" id="new-tag-input" class="form-control" placeholder="Add a new tag…" aria-label="Add a new tag" minlength="1">
+                                <div class="input-group-append">
+                                    <button id="new-tag-button" class="btn btn-primary" type="button">Add</button>
+                                </div>
+                            </div>
                         </div>
+                    {% else %}
+                        <p class="help-text primary-text">
+                            Only registered users can tag.
+                            <a class="primary-text" href="/account/register/">Register</a> or <a class="primary-text" href="/account/login">Login</a>
+                        </p>
+                    {% endif %}
 
-                        <div class="my-half d-flex justify-content-around align-items-center btn-row">
-                            <input id="save-button" name="action" type="submit" class="btn btn-primary" value="Save">
+                    <ul id="current-tags" class="d-flex flex-wrap m-0 p-1 offwhite-text">
+                        <li id="tag-template" hidden>
+                            <label>
+                                <input type="hidden" name="tags" value="" disabled />
+                            </label>
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </li>
+                        {% for tag in tags %}
+                            <li>
+                                <label>
+                                    <input type="hidden" name="tags" value="{{ tag }}" />
+                                    {{ tag }}
+                                </label>
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </li>
+                        {% endfor %}
+                    </ul>
+
+                    {% if request.user.is_authenticated %}
+                        <div class="form-row btn-row my-half">
+                            <button id="save-tags-button" type="submit" class="btn btn-primary mx-auto">Save Tags</button>
                         </div>
-                    </form>
-                {% else %}
-                    FIXME: this should be a simple pill list!
-
-                    <p class="help-text primary-text">
-                        Only registered users can tag.
-                        <a class="primary-text" href="/account/register/">Register</a> or <a class="primary-text" href="/account/login">Login</a>
-                    </p>
-                {% endif %}
+                    {% endif %}
+                </form>
             </div>
 
             <a id="contact-button" class="btn btn-minimal-secondary" href="{% url 'contact' %}?pre_populate=1">

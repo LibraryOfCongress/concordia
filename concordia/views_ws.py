@@ -2,7 +2,8 @@
 
 from datetime import datetime, timedelta
 
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
+from django.db.transaction import atomic
 from django.http import QueryDict
 from django.shortcuts import get_object_or_404
 from rest_framework import exceptions, generics, permissions, status
@@ -28,7 +29,6 @@ from .serializers import (
     PageInUseSerializer,
     TagSerializer,
     TranscriptionSerializer,
-    UserAssetTagSerializer,
     UserProfileSerializer,
     UserSerializer,
 )
@@ -529,26 +529,40 @@ class TagCreate(generics.ListCreateAPIView):
     serializer_class = TagSerializer
     queryset = Tag.objects.all()
 
-    def post(self, request, *args, **kwargs):
-        if type(request.data) == QueryDict:
-            # when using APIFactory to submit post, data must be converted from QueryDict
-            request_data = request.data.dict()
-        else:
-            request_data = request.data
+    @atomic
+    def post(self, request, *, pk):
+        asset = get_object_or_404(Asset, pk=pk)
 
-        asset = Asset.objects.get(
-            campaign__slug=request_data["campaign"], slug=request_data["asset"]
+        if request.user.username == "anonymous":
+            raise PermissionDenied()
+
+        user_tags, created = UserAssetTagCollection.objects.get_or_create(
+            asset=asset, user_id=request.user.pk
         )
 
-        utags, status = UserAssetTagCollection.objects.get_or_create(
-            asset=asset, user_id=request_data["user_id"]
-        )
+        tags = set(request.data.getlist("tags"))
+        existing_tags = Tag.objects.filter(value__in=tags)
+        new_tag_values = tags.difference(i.value for i in existing_tags)
+        new_tags = [Tag(value=i) for i in new_tag_values]
+        Tag.objects.bulk_create(new_tags)
 
-        tag_ob, t_status = Tag.objects.get_or_create(value=request_data["value"])
-        if tag_ob not in utags.tags.all():
-            utags.tags.add(tag_ob)
+        # At this point we now have Tag objects for everything in the POSTed
+        # request. We'll add anything which wasn't previously in this user's tag
+        # collection and remove anything which is no longer present.
 
-        serializer = TagSerializer(data=request_data)
-        if serializer.is_valid():
-            pass
-        return Response(serializer.data)
+        all_submitted_tags = list(existing_tags) + new_tags
+
+        existing_user_tags = user_tags.tags.all()
+
+        for tag in all_submitted_tags:
+            if tag not in existing_user_tags:
+                user_tags.tags.add(tag)
+
+        for tag in existing_user_tags:
+            if tag not in all_submitted_tags:
+                user_tags.tags.remove(tag)
+
+        all_tags_qs = Tag.objects.filter(userassettagcollection__asset__pk=pk)
+        all_tags = all_tags_qs.values_list("value", flat=True)
+
+        return Response({"user_tags": tags, "all_tags": all_tags})
