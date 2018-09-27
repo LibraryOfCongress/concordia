@@ -302,5 +302,5 @@ MAINTENANCE_MODE_TEMPLATE = "maintenance-mode.html"
 
 # Names of special django.auth Groups
 
-COMMUNITY_MANAGER_GROUP_NAME = "CM"
+COMMUNITY_MANAGER_GROUP_NAME = "Community Managers"
 NEWSLETTER_GROUP_NAME = "Newsletter"
