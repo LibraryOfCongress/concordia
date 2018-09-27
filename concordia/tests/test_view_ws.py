@@ -1024,7 +1024,7 @@ class ViewWSTest_Concordia(TestCase):
                 "project": {
                     "metadata": None,
                     "slug": "",
-                    "is_publish": False,
+                    "published": False,
                     "status": None,
                     "title": "",
                 },

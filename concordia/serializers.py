@@ -1,8 +1,7 @@
 import boto3
-from rest_framework import serializers
-from django.contrib.auth.models import User
 from django.conf import settings
-
+from django.contrib.auth.models import User
+from rest_framework import serializers
 
 from . import models
 
@@ -46,7 +45,7 @@ class CampaignListSerializer(serializers.ModelSerializer):
             "end_date",
             "status",
             "asset_count",
-            "is_publish",
+            "published",
         )
 
 
@@ -81,7 +80,7 @@ class AssetSetSerializer(serializers.HyperlinkedModelSerializer):
 class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Project
-        fields = ("id", "title", "slug", "metadata", "status", "is_publish")
+        fields = ("id", "title", "slug", "metadata", "status", "published")
 
 
 class CampaignDetailSerializer(serializers.HyperlinkedModelSerializer):
