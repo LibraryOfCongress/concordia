@@ -22,7 +22,6 @@ ENV DJANGO_SETTINGS_MODULE=concordia.settings_prod
 
 RUN pip3 install pipenv
 
-COPY vendor /vendor
 WORKDIR /app
 COPY . /app
 RUN pipenv install --system --dev --deploy
