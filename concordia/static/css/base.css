@@ -1488,6 +1488,9 @@ div.nav-secondary {
     border-radius: 0.25rem;
     max-height: var(--height-contribute-input);
     list-style-type: none;
+
+    max-height: 15vh;
+    overflow-y: scroll;
 }
 
 #current-tags li {
