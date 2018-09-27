@@ -113,6 +113,9 @@ var $transcriptionEditor = $('#transcription-editor')
 
 $transcriptionEditor
     .find('textarea')
+    .each(function(idx, textarea) {
+        textarea.value = $.trim(textarea.value);
+    })
     .on('change input', function() {
         var $submitButtons = $transcriptionEditor.find('[type="submit"]');
         if (!this.value) {
