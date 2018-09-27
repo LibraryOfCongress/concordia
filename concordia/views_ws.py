@@ -2,7 +2,7 @@
 
 from datetime import datetime, timedelta
 
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db.transaction import atomic
 from django.http import QueryDict
 from django.shortcuts import get_object_or_404
@@ -532,6 +532,9 @@ class TagCreate(generics.ListCreateAPIView):
     @atomic
     def post(self, request, *, pk):
         asset = get_object_or_404(Asset, pk=pk)
+
+        if request.user.username == "anonymous":
+            raise PermissionDenied()
 
         user_tags, created = UserAssetTagCollection.objects.get_or_create(
             asset=asset, user_id=request.user.pk
