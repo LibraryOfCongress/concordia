@@ -452,7 +452,7 @@ class ConcordiaAssetView(DetailView):
             else get_anonymous_user().id
         )
 
-        page_in_use = self.check_page_in_use(in_use_url, current_user_id)
+        # page_in_use = self.check_page_in_use(in_use_url, current_user_id)
 
         # Get the most recent transcription
         latest_transcriptions = \
@@ -473,54 +473,14 @@ class ConcordiaAssetView(DetailView):
 
         captcha_form = CaptchaEmbedForm()
 
-        response = requests.get(
-            "%s://%s/ws/page_in_use_user/%s/%s/"
-            % (
-                self.request.scheme,
-                self.request.get_host(),
-                current_user_id,
-                in_use_url,
-            ),
-            cookies=self.request.COOKIES,
-        )
-        page_in_use_json = json.loads(response.content.decode("utf-8"))
-
-        if page_in_use_json["user"] is None:
-            same_page_count_for_this_user = 0
-        else:
-            same_page_count_for_this_user = 1
+        in_use_url = ""
+        page_in_use = False
 
         page_dict = {
             "page_url": in_use_url,
             "user": current_user_id,
             "updated_on": datetime.now(),
         }
-
-        if page_in_use is False and same_page_count_for_this_user == 0:
-            # add this page as being in use by this user
-            # call the web service which will use the serializer to insert the value.
-            # this takes care of deleting old entries in PageInUse table
-
-            factory = APIRequestFactory()
-            request = factory.post("/ws/page_in_use%s/" % (in_use_url,), page_dict)
-            request.session = self.request.session
-
-            PageInUseCreate.as_view()(request)
-        elif same_page_count_for_this_user == 1:
-            # update the PageInUse
-            change_page_in_use = {"page_url": in_use_url, "user": current_user_id}
-
-            requests.put(
-                "%s://%s/ws/page_in_use_update/%s/%s/"
-                % (
-                    self.request.scheme,
-                    self.request.get_host(),
-                    current_user_id,
-                    in_use_url,
-                ),
-                data=change_page_in_use,
-                cookies=self.request.COOKIES,
-            )
 
         if self.request.user.is_anonymous:
             ctx[
