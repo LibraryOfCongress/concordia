@@ -266,8 +266,6 @@ AUTHENTICATION_BACKENDS = [
     "concordia.email_username_backend.EmailOrUsernameModelBackend"
 ]
 
-REGISTRATION_URLS = "registration.backends.simple.urls"
-
 CAPTCHA_CHALLENGE_FUNCT = "captcha.helpers.random_char_challenge"
 CAPTCHA_FIELD_TEMPLATE = "captcha/field.html"
 CAPTCHA_TEXT_FIELD_TEMPLATE = "captcha/text_field.html"

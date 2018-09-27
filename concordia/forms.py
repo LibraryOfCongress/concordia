@@ -7,7 +7,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.db.models import Count
 from django.db.models.signals import post_save
-from registration.forms import RegistrationForm
+from django_registration.forms import RegistrationForm
 
 from concordia.models import Status
 

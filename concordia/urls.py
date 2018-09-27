@@ -154,7 +154,8 @@ urlpatterns = [
     re_path(
         r"^account/profile/$", views.AccountProfileView.as_view(), name="user-profile"
     ),
-    re_path(r"^account/", include(settings.REGISTRATION_URLS)),
+    url(r"^accounts/", include("django_registration.backends.activation.urls")),
+    url(r"^accounts/", include("django.contrib.auth.urls")),
     re_path(
         r"^experiments/(.+)/$", views.ExperimentsView.as_view(), name="experiments"
     ),

@@ -48,8 +48,7 @@ ELASTICSEARCH_DSL = {"default": {"hosts": "localhost:9200"}}
 
 INSTALLED_APPS += ["django_elasticsearch_dsl"]
 
-REGISTRATION_URLS = "registration.backends.hmac.urls"
-REGISTRATION_SALT = "registration"  # doesn't need to be secret
+REGISTRATION_SALT = "django_registration"  # doesn't need to be secret
 
 ACCOUNT_ACTIVATION_DAYS = 1  # required for HMAC registration two-step-flow
 
