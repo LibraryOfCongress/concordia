@@ -2064,7 +2064,6 @@ class ViewTest_Concordia(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["state"], False)
 
-
     @patch("concordia.views.requests")
     def test_DeleteProject_get(self, mock_requests):
         """
@@ -2113,7 +2112,9 @@ class ViewTest_Concordia(TestCase):
 
         # Act
 
-        response = self.client.get("/campaigns/delete/project/test-slug2/test-slug2-proj1/", follow=True)
+        response = self.client.get(
+            "/campaigns/delete/project/test-slug2/test-slug2-proj1/", follow=True
+        )
 
         # Assert
         self.assertEqual(response.status_code, 200)

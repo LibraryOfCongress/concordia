@@ -97,7 +97,7 @@ Resources:
                   Essential: true
                   Image: 351149051428.dkr.ecr.us-east-1.amazonaws.com/concordia/importer:latest
                   Memory: 512
-                  Cpu: 512
+                  Cpu: 256
                   Links:
                     - rabbit
                   Environment: 
@@ -125,7 +125,7 @@ Resources:
                 - Name: rabbit
                   Essential: true
                   Memory: 512
-                  Cpu: 512                  
+                  Cpu: 256                  
                   Image: 351149051428.dkr.ecr.us-east-1.amazonaws.com/rabbitmq:latest
                   Hostname: rabbit
                   PortMappings:

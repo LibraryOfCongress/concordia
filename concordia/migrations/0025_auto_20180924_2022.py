@@ -6,14 +6,17 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('concordia', '0024_auto_20180924_1529'),
-    ]
+    dependencies = [("concordia", "0024_auto_20180924_1529")]
 
     operations = [
         migrations.AlterField(
-            model_name='item',
-            name='metadata',
-            field=django.contrib.postgres.fields.jsonb.JSONField(blank=True, default=dict, help_text='Raw metadata returned by the remote API', null=True),
-        ),
+            model_name="item",
+            name="metadata",
+            field=django.contrib.postgres.fields.jsonb.JSONField(
+                blank=True,
+                default=dict,
+                help_text="Raw metadata returned by the remote API",
+                null=True,
+            ),
+        )
     ]

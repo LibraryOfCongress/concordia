@@ -79,7 +79,7 @@ INSTALLED_APPS = [
     "raven.contrib.django.raven_compat",
     "maintenance_mode",
     "rest_framework",
-    "concordia",
+    "concordia.apps.ConcordiaAppConfig",
     "exporter",
     "importer",
     "concordia.experiments.wireframes",
@@ -266,8 +266,6 @@ AUTHENTICATION_BACKENDS = [
     "concordia.email_username_backend.EmailOrUsernameModelBackend"
 ]
 
-REGISTRATION_URLS = "registration.backends.simple.urls"
-
 CAPTCHA_CHALLENGE_FUNCT = "captcha.helpers.random_char_challenge"
 CAPTCHA_FIELD_TEMPLATE = "captcha/field.html"
 CAPTCHA_TEXT_FIELD_TEMPLATE = "captcha/text_field.html"
@@ -299,3 +297,8 @@ if SENTRY_DSN:
 # When the MAINTENANCE_MODE setting is true, this template will be used to
 # generate a 503 response:
 MAINTENANCE_MODE_TEMPLATE = "maintenance-mode.html"
+
+# Names of special django.auth Groups
+
+COMMUNITY_MANAGER_GROUP_NAME = "CM"
+NEWSLETTER_GROUP_NAME = "Newsletter"

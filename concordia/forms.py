@@ -2,9 +2,11 @@ from logging import getLogger
 
 from captcha.fields import CaptchaField
 from django import forms
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import Count
-from registration.forms import RegistrationForm
+from django.db.models.signals import post_save
+from django_registration.forms import RegistrationForm
 
 from concordia.models import Status
 
@@ -42,6 +44,10 @@ class ConcordiaUserForm(RegistrationForm):
         ),
     )
 
+    newsletterOptIn = forms.BooleanField(
+        required=False, widget=forms.CheckboxInput(attrs={"class": "form-check-input"})
+    )
+
     class Meta:
         model = User
         fields = ["username", "email"]
@@ -56,11 +62,11 @@ class ConcordiaUserForm(RegistrationForm):
             setattr(instance, role_dict[role], 1)
         if commit:
             instance.save()
+
         return instance
 
 
 class ConcordiaUserEditForm(ConcordiaUserForm):
-    myfile = forms.FileField(required=False)
     username = forms.CharField(
         label="Username",
         required=False,
