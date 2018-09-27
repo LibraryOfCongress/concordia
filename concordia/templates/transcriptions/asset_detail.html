@@ -21,11 +21,6 @@ Crowd: {{ asset.title }} ({{ asset.project.campaign.title }} — {{ asset.projec
             <li class="breadcrumb-item active">{{ asset.title }}</li>
         </ol>
     </nav>
-
-    <div id="show_message" class="row">
-
-    </div>
-
     <div class="row bg-darkest-gray px-2 py-2">
 
         <div class="col-6">
@@ -192,26 +187,20 @@ Crowd: {{ asset.title }} ({{ asset.project.campaign.title }} — {{ asset.projec
         showalert();
         {% endif %}
 
-        var show_message = sessionStorage.getItem('show_message');
-        var status = sessionStorage.getItem('status');
-
-        if (show_message == 'true') {
-            {% if messages %}
+        {% if messages %}
             {% for message in messages %}
-            $('#show_message').html('<div class="col-12 alert alert-{{ message.tags }} alert-dismissible alert-contribute py-half fade show text-center" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button><strong>{% if message.tags %}{% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}Error{% else %}Success{% endif %}{% endif %}!</strong> {{ message }}</div>');
-            setTimeout(function () {
-                $('.alert-contribute').fadeOut(500);
-            }, 3000);
+                displayMessage(
+                    "{% if message.level >= DEFAULT_MESSAGE_LEVELS.WARNING %}error{% else %}info{% endif %}",
+                    "{{ message|escapejs }}"
+                );
             {% endfor %}
-            {% endif %}
-        }
+        {% endif %}
 
         $(".js-captcha-refresh").click(function (e) {
             e.preventDefault();
             $.getJSON("{% url 'captcha-refresh' %}", function (result) {
                 $('.captcha').attr('src', result['image_url']);
                 $('#id_captcha_0').val(result['key']);
-                sessionStorage.setItem('show_message', 'true');
             });
         })
     });

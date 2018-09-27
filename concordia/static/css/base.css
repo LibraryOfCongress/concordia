@@ -1369,13 +1369,6 @@ div.nav-secondary {
 * Contribute page CSS
 */
 
-.alert-contribute {
-    display: block;
-    position: absolute;
-    top: var(--height-top-nav);
-    z-index: 100;
-}
-
 .asset-image {
     height: var(--height-contribute-image);
     min-height: calc(100vh - 9.625rem);
