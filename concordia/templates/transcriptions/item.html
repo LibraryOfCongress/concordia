@@ -59,7 +59,7 @@
                 </div>
                 {% endif %}
 
-                <a href="{ asset_detail_url }">
+                <a href="{{ asset_detail_url }}">
                     <img class="img-fluid card-img-campaign" alt="{{ a.slug }}" src="{% asset_media_url a %}">
                     <h5 class="pl-half project-title text-color-primary py-quarter">Image {{ a.sequence }}</h5>
                 </a>

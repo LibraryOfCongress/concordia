@@ -4,8 +4,8 @@ set -eu
 
 # DEV ENVIRONMENT
 
-# CLUSTER_NAME=crowd-dev
-# SERVICE_NAME=crowd-dev-app2-Service-FJM8LRJNL7HN
+CLUSTER_NAME=crowd-dev
+SERVICE_NAME=crowd-dev-app2-Service-FJM8LRJNL7HN
 
 # TEST ENVIRONMENT
 
@@ -15,8 +15,8 @@ set -eu
 
 # SEC ENVIRONMENT
  
- CLUSTER_NAME=concordia2
- SERVICE_NAME=crowd-isso-app-Service-1MO5VJL0CGDBM
+# CLUSTER_NAME=concordia2
+# SERVICE_NAME=crowd-isso-app-Service-1MO5VJL0CGDBM
 
 # STAGE ENVIRONMENT
 
