@@ -258,18 +258,6 @@ p.hero-secondary.offwhite-text {
     color: var(--text-color-offwhite);
 }
 
-thead td {
-    font-weight: bold;
-}
-
-table td {
-    color: var(--text-color-primary);
-}
-
-table.table-dark td {
-    color: inherit;
-}
-
 .bg-offwhite {
     background-color: var(--bg-offwhite);
 }
