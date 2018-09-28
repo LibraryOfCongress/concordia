@@ -56,9 +56,7 @@ h1 {
 h1.header-text {
     font-family: 'Open Sans', sans-serif;
     font-size: 2.5rem;
-    line-height: 125%;
     font-weight: normal;
-    text-transform: uppercase;
     color: black;
 }
 
@@ -76,20 +74,10 @@ h2 {
 }
 
 h2.offwhite {
-    font-family: 'Roboto Slab', serif;
-    font-size: 1.5rem;
-    line-height: 125%;
-    font-weight: bold;
-    text-transform: uppercase;
     color: var(--text-color-offwhite);
 }
 
 h2 small {
-    font-family: 'Roboto Slab', serif;
-    font-size: 1.5rem;
-    line-height: 125%;
-    font-weight: normal;
-    text-transform: uppercase;
     color: var(--text-color-primary);
 }
 
@@ -120,7 +108,6 @@ h5 {
 h5.small {
     font-family: 'Open Sans', sans-serif;
     font-size: 0.75rem;
-    line-height: 125%;
     font-weight: normal;
     text-transform: uppercase;
 }
@@ -157,12 +144,6 @@ h6 {
     color: var(--text-color-primary);
 }
 
-h2.contribute-breadcrumb {
-    font-family: 'Open Sans', sans-serif;
-    font-size: 0.875rem;
-    font-weight: normal;
-    color: var(--text-color-offwhite);
-}
 
 a:hover {
     color: var(--text-color-primary);
