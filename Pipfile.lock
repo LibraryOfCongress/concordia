@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "096f25c0abd5254c0ead4bf3d86fee04bde80dae4144db8dfd4956b9e5290227"
+            "sha256": "beafd076267c93bd4783c40710def0d5252fc56ad0b7525eee4911be3f46dcf5"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -39,19 +39,19 @@
         },
         "boto3": {
             "hashes": [
-                "sha256:4bfa8cab5d1fa695aba8ac3fa0036766660f3f18457e9c00a4656e02c1bc53d9",
-                "sha256:b03d4301d9e06157ce597031ecb0c387e89b7a8d66a6b174bb212c0c22b78d75"
+                "sha256:1309725c0223e25c78231af96fe28802e3804b847e58ba451c5d7379eead0614",
+                "sha256:67e89880fceedab0dc922b42206affd19bc52dd8bc113e56e1354b40fff4f4ea"
             ],
             "index": "pypi",
-            "version": "==1.9.12"
+            "version": "==1.9.13"
         },
         "botocore": {
             "hashes": [
-                "sha256:0380303eb7fdcd0fb40f602ba1271a8259b7e4776a6cd89968451f20be187fc6",
-                "sha256:16f6efdd2c6fbba633480db5a2564ff713627c655fa79b37395d6d15719ba573"
+                "sha256:1d437f7d584d4d28e5a28577bc7fc5607a8bdb832d8571d97c45a5510671c01d",
+                "sha256:d3a286aaa63c3388afb49feb36b61992dd37c735462c8b40add79c48bd845bc7"
             ],
             "index": "pypi",
-            "version": "==1.12.12"
+            "version": "==1.12.13"
         },
         "celery": {
             "hashes": [
@@ -111,6 +111,13 @@
             ],
             "index": "pypi",
             "version": "==2.0.8"
+        },
+        "django-bootstrap4": {
+            "hashes": [
+                "sha256:32ffee49c4c8ca7df543aac8733a5d45ad304078f920a0167819525bd33a955a"
+            ],
+            "index": "pypi",
+            "version": "==0.0.7"
         },
         "django-debug-toolbar": {
             "hashes": [
@@ -228,7 +235,7 @@
                 "sha256:7546cc08e3899716e12fe67d12d7cfe9a64647014d1134b014c3c392b63cad42",
                 "sha256:aada5cfdc4a543c47098eb3aca6663848ef5d04b4324935ced441debc11ec98b"
             ],
-            "markers": "python_version >= '2.6' and python_version != '3.1.*' and python_version != '3.2.*' and python_version != '3.0.*' and python_version != '3.3.*' and python_version < '4'",
+            "markers": "python_version != '3.1.*' and python_version != '3.2.*' and python_version >= '2.6' and python_version < '4' and python_version != '3.3.*' and python_version != '3.0.*'",
             "version": "==6.3.1"
         },
         "elasticsearch-dsl": {
@@ -362,7 +369,7 @@
                 "sha256:f8b3d413c5a8f84b12cd4c5df1d8e211777c9852c6be3ee9c094b626644d3eab"
             ],
             "index": "pypi",
-            "markers": "python_version >= '2.7' and python_version != '3.1.*' and python_version != '3.2.*' and python_version != '3.3.*' and python_version != '3.0.*'",
+            "markers": "python_version != '3.1.*' and python_version != '3.2.*' and python_version != '3.3.*' and python_version != '3.0.*' and python_version >= '2.7'",
             "version": "==5.2.0"
         },
         "prometheus-client": {
@@ -524,7 +531,7 @@
                 "sha256:a68ac5e15e76e7e5dd2b8f94007233e01effe3e50e8daddf69acfd81cb686baf",
                 "sha256:b5725a0bd4ba422ab0e66e89e030c806576753ea3ee08554382c14e685d117b5"
             ],
-            "markers": "python_version != '3.0.*' and python_version >= '2.6' and python_version != '3.2.*' and python_version < '4' and python_version != '3.3.*' and python_version != '3.1.*'",
+            "markers": "python_version != '3.0.*' and python_version >= '2.6' and python_version != '3.2.*' and python_version != '3.3.*' and python_version < '4' and python_version != '3.1.*'",
             "version": "==1.23"
         },
         "vine": {
@@ -580,7 +587,7 @@
                 "sha256:2335065e6395b9e67ca716de5f7526736bfa6ceead690adf616d925bdc622b13",
                 "sha256:5b94b49521f6456670fdb30cd82a4eca9412788a93fa6dd6df72c94d5a8ff2d7"
             ],
-            "markers": "python_version >= '2.7' and python_version != '3.1.*' and python_version != '3.3.*' and python_version != '3.2.*' and python_version != '3.0.*'",
+            "markers": "python_version >= '2.7' and python_version != '3.1.*' and python_version != '3.2.*' and python_version != '3.0.*' and python_version != '3.3.*'",
             "version": "==7.0"
         },
         "django": {
