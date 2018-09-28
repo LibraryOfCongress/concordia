@@ -18,19 +18,6 @@ class ConcordiaUserForm(RegistrationForm):
     )
 
 
-    def save(self, commit=True):
-        instance = super(ConcordiaUserForm, self).save(commit=False)
-        role_dict = {"admin": "is_superuser", "cm": "is_staff", "user": "is_active"}
-        if "role" in self.data and self.data["role"] in role_dict:
-            role = self.data["role"]
-            if role == "admin":
-                setattr(instance, "is_staff", 1)
-            setattr(instance, role_dict[role], 1)
-        if commit:
-            instance.save()
-
-        return instance
-
 class ConcordiaContactUsForm(forms.Form):
     email = forms.CharField(
         label="Your email",
