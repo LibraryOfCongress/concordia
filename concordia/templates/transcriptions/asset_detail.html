@@ -89,9 +89,12 @@ Crowd: {{ asset.title }} ({{ asset.project.campaign.title }} — {{ asset.projec
                     {% if request.user.is_authenticated %}
                         <div class="row">
                             <div class="input-group">
-                                <input type="text" id="new-tag-input" class="form-control" placeholder="Add a new tag…" aria-label="Add a new tag" minlength="1">
+                                <input type="text" id="new-tag-input" class="form-control" placeholder="Add a new tag…" aria-label="Add a new tag" pattern="[- _'\w]{1,50}">
                                 <div class="input-group-append">
                                     <button id="new-tag-button" class="btn btn-primary" type="button">Add</button>
+                                </div>
+                                <div class="invalid-feedback">
+                                    Tags must be between 1-50 characters and may contain only letters, numbers, dashes, underscores, apostrophes, and spaces
                                 </div>
                             </div>
                         </div>

@@ -2,7 +2,7 @@
 
 from datetime import datetime, timedelta
 
-from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied, ValidationError
 from django.db.transaction import atomic
 from django.http import QueryDict
 from django.shortcuts import get_object_or_404
@@ -544,6 +544,12 @@ class TagCreate(generics.ListCreateAPIView):
         existing_tags = Tag.objects.filter(value__in=tags)
         new_tag_values = tags.difference(i.value for i in existing_tags)
         new_tags = [Tag(value=i) for i in new_tag_values]
+        try:
+            for i in new_tags:
+                i.full_clean()
+        except ValidationError as exc:
+            return Response({"error": exc.messages}, status=400)
+
         Tag.objects.bulk_create(new_tags)
 
         # At this point we now have Tag objects for everything in the POSTed

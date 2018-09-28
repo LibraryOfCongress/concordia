@@ -69,7 +69,8 @@ $('form.ajax-submission').each(function(idx, formElement) {
                     textStatus: textStatus,
                     errorThrown: errorThrown,
                     requestData: formData,
-                    $form: $form
+                    $form: $form,
+                    jqXHR: jqXHR
                 });
             });
 
@@ -131,6 +132,11 @@ var $tagEditor = $('#tag-editor'),
     $newTagInput = $('#new-tag-input');
 
 function addNewTag() {
+    if (!$newTagInput.get(0).checkValidity()) {
+        $newTagInput.closest('form').addClass('was-validated');
+        return;
+    }
+
     var val = $.trim($newTagInput.val());
     if (val) {
         // Prevent adding tags which are already present:
@@ -162,12 +168,14 @@ function addNewTag() {
 $tagEditor.find('#new-tag-button').on('click', addNewTag);
 $newTagInput.on('change', addNewTag);
 $newTagInput.on('keydown', function(evt) {
+    // See https://github.com/LibraryOfCongress/concordia/issues/159 for the source of these values:
     if (evt.which == '13') {
         // Enter key
         evt.preventDefault();
         addNewTag();
-    } else if (evt.which == '32') {
-        // Spacebar
+    } else if (evt.which == '188') {
+        // Comma
+        evt.preventDefault();
         addNewTag();
     }
 });
@@ -185,9 +193,15 @@ $tagEditor
     })
     .on('form-submit-failure', function(evt, info) {
         unlockControls($tagEditor);
-        displayMessage(
-            'error',
-            'Unable to save your tags: ' + info.textStatus + info.errorThrown,
-            'tag-save-result'
-        );
+
+        var message = 'Unable to save your tags';
+        var jqXHR = info.jqXHR;
+        if (jqXHR.responseJSON) {
+            var error = jqXHR.responseJSON.error;
+            if (error) {
+                message += ': ' + ('join' in error ? error.join(' ') : error);
+            }
+        }
+
+        displayMessage('error', message, 'tags-save-result');
     });
