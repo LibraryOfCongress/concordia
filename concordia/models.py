@@ -7,6 +7,9 @@ from django.urls import reverse
 from django.utils import timezone
 from django_prometheus_metrics.models import MetricsModelMixin
 
+
+logger = getLogger(__name__)
+
 metadata_default = dict
 
 User._meta.get_field("email").__dict__["_unique"] = True
@@ -14,10 +17,6 @@ User._meta.get_field("email").__dict__["_unique"] = True
 
 class UserProfile(MetricsModelMixin("userprofile"), models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    myfile = models.FileField(upload_to="profile_pics/")
-
-
-logger = getLogger(__name__)
 
 
 class Status:
