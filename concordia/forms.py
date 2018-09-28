@@ -39,17 +39,10 @@ class UserProfileForm(forms.Form):
 
 
 class ContactUsForm(forms.Form):
-    email = forms.CharField(
-        label="Your email",
-        required=True,
-        widget=forms.EmailInput(attrs={"class": "form-control"}),
-    )
+    referrer = forms.CharField(label="Referring Page", widget=forms.HiddenInput())
 
-    subject = forms.CharField(
-        label="Subject",
-        required=False,
-        widget=forms.TextInput(attrs={"class": "form-control"}),
-    )
+    email = forms.EmailField(label="Your email", required=True)
+    subject = forms.CharField(label="Subject", required=False)
 
     category = forms.CharField(
         label="Category",
@@ -59,21 +52,16 @@ class ContactUsForm(forms.Form):
                 ("General", "General"),
                 ("Campaign", "Question about campaign"),
                 ("Problem", "Something is not working"),
-            ),
-            attrs={"class": "form-control"},
+            )
         ),
     )
 
-    link = forms.CharField(
-        label="Link to the page you need support with",
-        required=False,
-        widget=forms.URLInput(attrs={"class": "form-control"}),
+    link = forms.URLField(
+        label="Link to the page you need support with", required=False
     )
 
     story = forms.CharField(
-        label="Why are you contacting us",
-        required=True,
-        widget=forms.Textarea(attrs={"class": "form-control"}),
+        label="Why are you contacting us", required=True, widget=forms.Textarea
     )
 
 

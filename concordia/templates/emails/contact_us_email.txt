@@ -1,9 +1,9 @@
-Hello:
+Contact request from {{ email }}:
 
-  We got an email from {{ from_email }}:
-   
-  Subject: {{ subject }}
-  Category: {{ category }}
-  Link:  {{ link }}
-  Story: 
-    {{ story }}
+Subject: {{ subject }}
+Category: {{ category }}
+Link:  {{ link }}
+Referring Page: {{ referrer|default:"Unspecified" }}
+
+Story:
+{{ story }}
