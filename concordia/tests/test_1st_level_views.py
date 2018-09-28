@@ -33,9 +33,7 @@ class ViewTest_1st_level(TestCase):
         test_http_referrer = "http://foo/bar"
 
         # Act
-        response = self.client.get(
-            reverse("contact") + "?pre_populate=true", HTTP_REFERER=test_http_referrer
-        )
+        response = self.client.get(reverse("contact"), HTTP_REFERER=test_http_referrer)
 
         # Assert:
         self.assertEqual(response.status_code, 200)
