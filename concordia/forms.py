@@ -18,6 +18,26 @@ class UserRegistrationForm(RegistrationForm):
     )
 
 
+class UserProfileForm(forms.Form):
+    email = forms.CharField(
+        label="Email address", required=True, widget=forms.EmailInput()
+    )
+
+    def __init__(self, *, request, **kwargs):
+        self.request = request
+        return super().__init__(**kwargs)
+
+    def clean_email(self):
+        data = self.cleaned_data["email"]
+        if (
+            User.objects.exclude(pk=self.request.user.pk)
+            .filter(email__iexact=data)
+            .exists()
+        ):
+            raise forms.ValidationError("That email address is not available")
+        return data
+
+
 class ContactUsForm(forms.Form):
     email = forms.CharField(
         label="Your email",
