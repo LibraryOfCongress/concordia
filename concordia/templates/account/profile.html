@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% load staticfiles %}
+
+{% load bootstrap4 %}
+
+{% block title %}User Profile Page{% endblock title %}
+
+{% block main_content %}
+<div class="container bg-main">
+    <div class="row">
+        <div class="col-12 col-md-10 bg-offwhite mx-auto mt-default pxy-default rounded">
+            <form class="form-horizontal" action="{% url 'user-profile' %}" method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                {% comment %} We want to list the username but it's not an editable field {% endcomment %}
+
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" readonly class="form-control-plaintext" value="{{ user.username }}">
+                    <small class="form-text text-muted">
+                        Member since {{ user.date_joined|date:"SHORT_DATE_FORMAT" }}
+                    </small>
+                </div>
+
+                {% bootstrap_form form %}
+
+                {% buttons %}
+                    <button type="submit" class="btn btn-primary">
+                        Save
+                    </button>
+                {% endbuttons %}
+            </form>
+        </div>
+    </div>
+    <div class="col-10 my-default mx-auto">
+        <hr>
+    </div>
+    <div class="row justify-content-center">
+        <div class="btn-row">
+            <a class="btn btn-secondary" href="{% url 'password_change' %}">Change Password</a>
+        </div>
+    </div>
+    <div class="col-10 my-default mx-auto">
+        <hr>
+    </div>
+    {% if transcriptions %}
+        <div class="col-12 col-md-10 bg-offwhite mx-auto pxy-default mb-default rounded">
+            <h2 class="mb-default">My Contributions</h2>
+            <table class="table mb-default">
+                <thead class="bg-lightest-gray">
+                    <tr>
+                        <td>Campaign</td>
+                        <td>Project</td>
+                        <td>Item</td>
+                        <td>Asset Name</td>
+                        <td>Current Status</td>
+                        <td>Date</td>
+                    </tr>
+                </thead>
+
+                {% for t in transcriptions %}
+                    {% with asset=t.asset item=t.asset.item project=t.asset.item.project campaign=t.asset.item.project.campaign %}
+                        <tr>
+                            <td>{{ campaign.title }}</td>
+                            <td>{{ project.title }}</td>
+                            <td>{{ item.title }}</td>
+                            <td>
+                                <a class="primary-text" href="{% url 'transcriptions:asset-detail' campaign.slug project.slug item.slug asset.slug %}">
+                                    {{ asset.title }}
+                                </a>
+                            </td>
+                            <td>{{ t.status }}</td>
+                            <td>{{ t.updated_on|date:'SHORT_DATE_FORMAT' }}</td>
+                        </tr>
+                    {% endwith %}
+                {% endfor %}
+            </table>
+        </div>
+    {% endif %}
+</div>
+{% endblock main_content %}
+

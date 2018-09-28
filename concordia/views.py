@@ -8,7 +8,6 @@ from logging import getLogger
 import markdown
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
@@ -17,18 +16,17 @@ from django.db.models import Count
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import Http404, get_object_or_404, redirect, render
 from django.template import loader
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.views.decorators.cache import never_cache
 from django.views.generic import DetailView, FormView, ListView, TemplateView, View
 from django_registration.backends.activation.views import RegistrationView
-from rest_framework import generics, status
 
 from concordia.forms import (
     AssetFilteringForm,
     CaptchaEmbedForm,
-    ConcordiaContactUsForm,
-    ConcordiaUserEditForm,
-    ConcordiaUserForm,
+    ContactUsForm,
+    UserProfileForm,
+    UserRegistrationForm,
 )
 from concordia.models import (
     Asset,
@@ -108,96 +106,43 @@ def static_page(request, base_name=None):
 
 
 class ConcordiaRegistrationView(RegistrationView):
-    form_class = ConcordiaUserForm
+    form_class = UserRegistrationForm
 
 
-class AccountProfileView(LoginRequiredMixin, TemplateView):
-    template_name = "profile.html"
+class AccountProfileView(LoginRequiredMixin, FormView):
+    template_name = "account/profile.html"
+    form_class = UserProfileForm
+    success_url = reverse_lazy("user-profile")
 
-    def post(self, *args, **kwargs):
-        instance = get_object_or_404(User, pk=self.request.user.id)
-        form = ConcordiaUserEditForm(
-            self.request.POST, self.request.FILES, instance=instance
+    def get_context_data(self, *args, **kwargs):
+        ctx = super().get_context_data(*args, **kwargs)
+        ctx["transcriptions"] = (
+            Transcription.objects.filter(user_id=self.request.user.pk)
+            .select_related("asset__item__project__campaign")
+            .order_by("asset__pk", "-pk")
+            .distinct("asset")
         )
-        if form.is_valid():
-            obj = form.save(commit=True)
-            obj.id = self.request.user.id
-            if (
-                "password1" not in self.request.POST
-                and "password2" not in self.request.POST
-            ):
-                obj.password = self.request.user.password
-            else:
-                update_session_auth_hash(self.request, obj)
-            obj.save()
+        return ctx
 
-            if "myfile" in self.request.FILES:
-                myfile = self.request.FILES["myfile"]
-                profile, created = UserProfile.objects.update_or_create(
-                    user=obj, defaults={"myfile": myfile}
-                )
+    def get_initial(self):
+        initial = super().get_initial()
+        initial["email"] = self.request.user.email
+        return initial
 
-            messages.success(self.request, "User profile information changed!")
-        else:
-            messages.error(self.request, form.errors)
-            return HttpResponseRedirect("/account/profile/")
-        return redirect(reverse("user-profile"))
+    def get_form_kwargs(self):
+        # We'll expose the request object to the form so we can validate that an
+        # email is not in use by a *different* user:
+        kwargs = super().get_form_kwargs()
+        kwargs["request"] = self.request
+        return kwargs
 
-    def get_context_data(self, **kws):
-        last_name = self.request.user.last_name
-        if last_name:
-            last_name = " " + last_name
-        else:
-            last_name = ""
+    def form_valid(self, form):
+        user = self.request.user
+        user.email = form.cleaned_data["email"]
+        user.full_clean()
+        user.save()
 
-        data = {
-            "username": self.request.user.username,
-            "email": self.request.user.email,
-            "first_name": self.request.user.first_name + last_name,
-        }
-
-        response = requests.get(
-            "%s://%s/ws/user_profile/%s/"
-            % (self.request.scheme, self.request.get_host(), self.request.user.id),
-            cookies=self.request.COOKIES,
-        )
-        user_profile_json_val = json.loads(response.content.decode("utf-8"))
-
-        if "myfile" in user_profile_json_val:
-            data["myfile"] = user_profile_json_val["myfile"]
-
-        response = requests.get(
-            "%s://%s/ws/transcription_by_user/%s/"
-            % (self.request.scheme, self.request.get_host(), self.request.user.id),
-            cookies=self.request.COOKIES,
-        )
-
-        transcription_json_val = json.loads(response.content.decode("utf-8"))
-
-        for trans in transcription_json_val["results"]:
-            campaign_response = requests.get(
-                "%s://%s/ws/campaign_by_id/%s/"
-                % (
-                    self.request.scheme,
-                    self.request.get_host(),
-                    trans["asset"]["campaign"]["id"],
-                ),
-                cookies=self.request.COOKIES,
-            )
-            trans["campaign_name"] = json.loads(
-                campaign_response.content.decode("utf-8")
-            )["slug"]
-            trans["updated_on"] = datetime.strptime(
-                trans["updated_on"], "%Y-%m-%dT%H:%M:%S.%fZ"
-            )
-
-        return super().get_context_data(
-            **dict(
-                kws,
-                transcriptions=transcription_json_val["results"],
-                form=ConcordiaUserEditForm(initial=data),
-            )
-        )
+        return super().form_valid(form)
 
 
 class CampaignListView(ListView):
@@ -762,7 +707,7 @@ class ConcordiaPageInUse(View):
 
 class ContactUsView(FormView):
     template_name = "contact.html"
-    form_class = ConcordiaContactUsForm
+    form_class = ContactUsForm
 
     def get_context_data(self, *args, **kwargs):
         res = super().get_context_data(*args, **kwargs)
