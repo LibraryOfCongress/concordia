@@ -1083,39 +1083,6 @@ div.nav-secondary {
 }
 
 /*
-* Registration and login styling
-*/
-
-.container-registration {
-    --height-difference: calc(var(--height-main) - 28.9375rem);
-    margin-top: calc(var(--height-difference) / 2);
-    margin-bottom: calc(var(--height-difference) / 2);
-}
-
-.container-login {
-    --height-difference: calc(var(--height-main) - 21.1875rem);
-    margin-top: calc(var(--height-difference) / 2);
-    margin-bottom: calc(var(--height-difference) / 2);
-}
-
-.form-register input[type='password'],
-.form-register input[type='text'],
-.form-register input[type='email'],
-.form-login input[type='password'],
-.form-login input[type='text'] {
-    min-width: 50%;
-    border-radius: 0.25rem;
-}
-
-.form-register label {
-    padding-right: 0.5rem;
-}
-
-.form-register .helptext {
-    display: none;
-}
-
-/*
 * CAPTCHA styling
 */
 
@@ -1397,4 +1364,9 @@ div.nav-secondary {
 }
 .image-icon.itunes {
     background-position: -114px 0;
+}
+
+/* Registration page */
+#registration-form-container > .col-md-6 {
+    max-width: 30rem;
 }
