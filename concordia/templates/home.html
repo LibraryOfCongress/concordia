@@ -52,22 +52,9 @@
             <h2 class="px-default px-md-0 ml-md-default">Campaigns: <small>Choose what to transcribe</small></h2>
         </div>
 
-
-
         <div class="d-flex flex-wrap col-12 justify-content-around">
             {% for campaign in campaigns %}
-            {% if forloop.counter == 1 or forloop.counter == column_count|add:"1" %}
-            {% if forloop.counter > 1 %}
-        </div>
-        {% endif %}
-        <div class="d-flex flex-wrap col-12 justify-content-around">
-            {% comment %}
-            FIXME: col-md-6 when there are 4 campaigns to display, col-md-4 when there are 6
-            {% endcomment %}
-            <div class="col-12 col-md-6 mb-default text-center">
-                {% else %}
-                <div class="col-12 col-md-6 mb-default text-center border-left-home-contribute">
-                    {% endif %}
+                <div class="text-center campaign m-1">
                     <a href="{% url 'transcriptions:campaign' campaign.slug %}">
                         {% if 'Lincoln' in campaign.title %}
                         <img class="img-home-contribute d-block mx-auto img-fluid" src="{% static 'img/AbrahamLincoln.svg' %}" alt="{{ campaign.title }} image">
@@ -87,12 +74,13 @@
                         {% endif %}
 
                         <h3 class="mt-half">{{ campaign.title }}</h3>
+                    </a>
                 </div>
-                {% endfor %}
-            </div>
-            <div class="col mx-auto d-flex justify-content-center my-default">
-                <a class="btn btn-primary" href="{% url 'transcriptions:campaigns' %}" role="button">Browse All Campaigns</a>
-            </div>
+            {% endfor %}
         </div>
     </div>
-    {% endblock main_content %}
+    <div class="row mx-auto d-flex justify-content-center my-default">
+        <a class="btn btn-primary" href="{% url 'transcriptions:campaigns' %}" role="button">Browse All Campaigns</a>
+    </div>
+</div>
+{% endblock main_content %}
