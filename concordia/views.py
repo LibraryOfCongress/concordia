@@ -266,7 +266,7 @@ class ConcordiaItemView(ListView):
             slug=self.kwargs["slug"],
         )
 
-        asset_qs = self.item.asset_set.all()
+        asset_qs = self.item.asset_set.all().order_by("sequence")
         asset_qs = asset_qs.select_related(
             "item__project__campaign", "item__project", "item"
         )
