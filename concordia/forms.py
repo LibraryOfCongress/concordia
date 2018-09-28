@@ -12,13 +12,13 @@ User = get_user_model()
 logger = getLogger(__name__)
 
 
-class ConcordiaUserForm(RegistrationForm):
+class UserRegistrationForm(RegistrationForm):
     newsletterOptIn = forms.BooleanField(
         required=False, widget=forms.CheckboxInput(attrs={"class": "form-check-input"})
     )
 
 
-class ConcordiaContactUsForm(forms.Form):
+class ContactUsForm(forms.Form):
     email = forms.CharField(
         label="Your email",
         required=True,

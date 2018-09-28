@@ -26,9 +26,9 @@ from rest_framework import generics, status
 from concordia.forms import (
     AssetFilteringForm,
     CaptchaEmbedForm,
-    ConcordiaContactUsForm,
     ConcordiaUserEditForm,
-    ConcordiaUserForm,
+    ContactUsForm,
+    UserRegistrationForm,
 )
 from concordia.models import (
     Asset,
@@ -108,7 +108,7 @@ def static_page(request, base_name=None):
 
 
 class ConcordiaRegistrationView(RegistrationView):
-    form_class = ConcordiaUserForm
+    form_class = UserRegistrationForm
 
 
 class AccountProfileView(LoginRequiredMixin, TemplateView):
@@ -762,7 +762,7 @@ class ConcordiaPageInUse(View):
 
 class ContactUsView(FormView):
     template_name = "contact.html"
-    form_class = ConcordiaContactUsForm
+    form_class = ContactUsForm
 
     def get_context_data(self, *args, **kwargs):
         res = super().get_context_data(*args, **kwargs)
