@@ -2,6 +2,7 @@ from logging import getLogger
 
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import JSONField
+from django.core.validators import RegexValidator
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
@@ -188,7 +189,8 @@ class Asset(models.Model):
 
 
 class Tag(models.Model):
-    value = models.CharField(max_length=50)
+    TAG_VALIDATOR = RegexValidator(r"^[- _'\w]{1,50}$")
+    value = models.CharField(max_length=50, validators=[TAG_VALIDATOR])
 
     def __str__(self):
         return self.value
