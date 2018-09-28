@@ -2,10 +2,8 @@ from logging import getLogger
 
 from captcha.fields import CaptchaField
 from django import forms
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import Count
-from django.db.models.signals import post_save
 from django_registration.forms import RegistrationForm
 
 from concordia.models import Status
@@ -15,42 +13,10 @@ logger = getLogger(__name__)
 
 
 class ConcordiaUserForm(RegistrationForm):
-    username = forms.CharField(
-        label="Username",
-        required=True,
-        widget=forms.TextInput(
-            attrs={"class": "form-control", "placeholder": "Username"}
-        ),
-    )
-    email = forms.CharField(
-        label="Email",
-        required=True,
-        widget=forms.EmailInput(
-            attrs={"class": "form-control", "placeholder": "Email"}
-        ),
-    )
-    password1 = forms.CharField(
-        label="Password",
-        required=True,
-        widget=forms.PasswordInput(
-            attrs={"class": "form-control", "placeholder": "Password"}
-        ),
-    )
-    password2 = forms.CharField(
-        label="Confirm",
-        required=True,
-        widget=forms.PasswordInput(
-            attrs={"class": "form-control", "placeholder": "Confirm"}
-        ),
-    )
-
     newsletterOptIn = forms.BooleanField(
         required=False, widget=forms.CheckboxInput(attrs={"class": "form-check-input"})
     )
 
-    class Meta:
-        model = User
-        fields = ["username", "email"]
 
     def save(self, commit=True):
         instance = super(ConcordiaUserForm, self).save(commit=False)
@@ -64,38 +30,6 @@ class ConcordiaUserForm(RegistrationForm):
             instance.save()
 
         return instance
-
-
-class ConcordiaUserEditForm(ConcordiaUserForm):
-    username = forms.CharField(
-        label="Username",
-        required=False,
-        widget=forms.TextInput(
-            attrs={"class": "form-control", "placeholder": "Username"}
-        ),
-    )
-    email = forms.CharField(
-        label="Email",
-        required=False,
-        widget=forms.EmailInput(
-            attrs={"class": "form-control", "placeholder": "Email"}
-        ),
-    )
-    password1 = forms.CharField(
-        label="Password",
-        required=False,
-        widget=forms.PasswordInput(
-            attrs={"class": "form-control", "placeholder": "Password"}
-        ),
-    )
-    password2 = forms.CharField(
-        label="Confirm",
-        required=False,
-        widget=forms.PasswordInput(
-            attrs={"class": "form-control", "placeholder": "Confirm"}
-        ),
-    )
-
 
 class ConcordiaContactUsForm(forms.Form):
     email = forms.CharField(
