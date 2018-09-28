@@ -136,7 +136,6 @@ h6 {
     color: var(--text-color-primary);
 }
 
-
 a:hover {
     color: var(--text-color-primary);
 }
@@ -216,7 +215,6 @@ a.campaign-image-link {
 a.campaign-image-link:hover {
     color: var(--primary-color);
 }
-
 
 i.tx-edit {
     color: var(--text-color-offwhite);
@@ -313,6 +311,7 @@ p.hero-secondary.offwhite-text {
     background-color: var(--primary-color);
 }
 
+/* FIXME: stop fighting Bootstrap's model for containers and rows */
 .row {
     margin-right: 0;
     margin-left: 0;
@@ -474,76 +473,6 @@ div.nav-secondary {
     margin-left: 2rem !important;
 }
 
-.margin-half,
-.mxy-half {
-    margin: 1rem !important;
-}
-
-.mx-half {
-    margin-right: 1rem !important;
-    margin-left: 1rem !important;
-}
-
-.my-half {
-    margin-top: 1rem !important;
-    margin-bottom: 1rem !important;
-}
-
-.margin-top-half,
-.mt-half {
-    margin-top: 1rem !important;
-}
-
-.margin-right-half,
-.mr-half {
-    margin-right: 1rem !important;
-}
-
-.margin-bottom-half,
-.mb-half {
-    margin-bottom: 1rem !important;
-}
-
-.margin-left-half,
-.ml-half {
-    margin-left: 1rem !important;
-}
-
-.margin-quarter,
-.mxy-quarter {
-    margin: 0.5rem !important;
-}
-
-.mx-quarter {
-    margin-right: 0.5rem !important;
-    margin-left: 0.5rem !important;
-}
-
-.my-quarter {
-    margin-top: 0.5rem !important;
-    margin-bottom: 0.5rem !important;
-}
-
-.margin-top-quarter,
-.mt-quarter {
-    margin-top: 0.5rem !important;
-}
-
-.margin-right-quarter,
-.mr-quarter {
-    margin-right: 0.5rem !important;
-}
-
-.margin-bottom-quarter,
-.mb-quarter {
-    margin-bottom: 0.5rem !important;
-}
-
-.margin-left-quarter,
-.ml-quarter {
-    margin-left: 0.5rem !important;
-}
-
 .padding-default,
 .pxy-default {
     padding: 2rem !important;
@@ -577,76 +506,6 @@ div.nav-secondary {
 .padding-left-default,
 .pl-default {
     padding-left: 2rem !important;
-}
-
-.padding-half,
-.pxy-half {
-    padding: 1rem !important;
-}
-
-.px-half {
-    padding-right: 1rem !important;
-    padding-left: 1rem !important;
-}
-
-.py-half {
-    padding-top: 1rem !important;
-    padding-bottom: 1rem !important;
-}
-
-.padding-top-half,
-.pt-half {
-    padding-top: 1rem !important;
-}
-
-.padding-right-half,
-.pr-half {
-    padding-right: 1rem !important;
-}
-
-.padding-bottom-half,
-.pb-half {
-    padding-bottom: 1rem !important;
-}
-
-.padding-left-half,
-.pl-half {
-    padding-left: 1rem !important;
-}
-
-.padding-quarter,
-.pxy-quarter {
-    padding: 0.5rem !important;
-}
-
-.px-quarter {
-    padding-right: 0.5rem !important;
-    padding-left: 0.5rem !important;
-}
-
-.py-quarter {
-    padding-top: 0.5rem !important;
-    padding-bottom: 0.5rem !important;
-}
-
-.padding-top-quarter,
-.pt-quarter {
-    padding-top: 0.5rem !important;
-}
-
-.padding-right-quarter,
-.pr-quarter {
-    padding-right: 0.5rem !important;
-}
-
-.padding-bottom-quarter,
-.pb-quarter {
-    padding-bottom: 0.5rem !important;
-}
-
-.padding-left-quarter,
-.pl-quarter {
-    padding-left: 0.5rem !important;
 }
 
 /* Responsive header behavior for XS devices */
@@ -783,66 +642,6 @@ div.nav-secondary {
         margin-left: 2rem !important;
     }
 
-    .mxy-md-half {
-        margin: 1rem !important;
-    }
-
-    .mx-md-half {
-        margin-right: 1rem !important;
-        margin-left: 1rem !important;
-    }
-
-    .my-md-half {
-        margin-top: 1rem !important;
-        margin-bottom: 1rem !important;
-    }
-
-    .mt-md-half {
-        margin-top: 1rem !important;
-    }
-
-    .mr-md-half {
-        margin-right: 1rem !important;
-    }
-
-    .mb-md-half {
-        margin-bottom: 1rem !important;
-    }
-
-    .ml-md-half {
-        margin-left: 1rem !important;
-    }
-
-    .mxy-md-quarter {
-        margin: 0.5rem !important;
-    }
-
-    .mx-md-quarter {
-        margin-right: 0.5rem !important;
-        margin-left: 0.5rem !important;
-    }
-
-    .my-md-quarter {
-        margin-top: 0.5rem !important;
-        margin-bottom: 0.5rem !important;
-    }
-
-    .mt-md-quarter {
-        margin-top: 0.5rem !important;
-    }
-
-    .mr-md-quarter {
-        margin-right: 0.5rem !important;
-    }
-
-    .mb-md-quarter {
-        margin-bottom: 0.5rem !important;
-    }
-
-    .ml-md-quarter {
-        margin-left: 0.5rem !important;
-    }
-
     .pxy-md-default {
         padding: 2rem !important;
     }
@@ -871,66 +670,6 @@ div.nav-secondary {
 
     .pl-md-default {
         padding-left: 2rem !important;
-    }
-
-    .pxy-md-half {
-        padding: 1rem !important;
-    }
-
-    .px-md-half {
-        padding-right: 1rem !important;
-        padding-left: 1rem !important;
-    }
-
-    .py-md-half {
-        padding-top: 1rem !important;
-        padding-bottom: 1rem !important;
-    }
-
-    .pt-md-half {
-        padding-top: 1rem !important;
-    }
-
-    .pr-md-half {
-        padding-right: 1rem !important;
-    }
-
-    .pb-md-half {
-        padding-bottom: 1rem !important;
-    }
-
-    .pl-md-half {
-        padding-left: 1rem !important;
-    }
-
-    .pxy-md-quarter {
-        padding: 0.5rem !important;
-    }
-
-    .px-md-quarter {
-        padding-right: 0.5rem !important;
-        padding-left: 0.5rem !important;
-    }
-
-    .py-md-quarter {
-        padding-top: 0.5rem !important;
-        padding-bottom: 0.5rem !important;
-    }
-
-    .pt-md-quarter {
-        padding-top: 0.5rem !important;
-    }
-
-    .pr-md-quarter {
-        padding-right: 0.5rem !important;
-    }
-
-    .pb-md-quarter {
-        padding-bottom: 0.5rem !important;
-    }
-
-    .pl-md-quarter {
-        padding-left: 0.5rem !important;
     }
 }
 
