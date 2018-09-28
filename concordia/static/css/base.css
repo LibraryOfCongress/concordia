@@ -120,14 +120,6 @@ h6 {
     color: var(--text-color-primary);
 }
 
-.p-latestblog {
-    font-size: 0.875rem;
-}
-
-.font-weight-bolder {
-    font-weight: 600;
-}
-
 .offwhite-text {
     color: var(--text-color-offwhite);
 }
@@ -225,9 +217,6 @@ a.campaign-image-link:hover {
     color: var(--primary-color);
 }
 
-#transcription-state-div i {
-    font-size: 0.75rem;
-}
 
 i.tx-edit {
     color: var(--text-color-offwhite);
@@ -267,27 +256,6 @@ p.hero-secondary.offwhite-text {
     font-family: 'Open Sans', sans-serif;
     font-size: 1.125rem;
     color: var(--text-color-offwhite);
-}
-
-.profile_edit {
-    color: var(--primary-color);
-    cursor: pointer;
-}
-
-.profile_edit:hover {
-    color: var(--primary-color-hover);
-}
-
-.profile-label {
-    font-family: 'Roboto Slab', serif;
-    font-size: 1.25rem;
-    line-height: 125%;
-    font-weight: bold;
-    color: var(--secondary-color);
-}
-
-.profile-attribute {
-    border-bottom: 1px solid rgba(153, 153, 153, 1);
 }
 
 thead td {
