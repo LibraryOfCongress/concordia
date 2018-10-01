@@ -11,5 +11,6 @@ install:
   - pipenv install --dev --deploy
 # command to run tests
 script:
+  - touch ./logs/concordia-celery.log
   - ./manage.py test concordia
   - ./manage.py test importer
