@@ -20,20 +20,20 @@
 <div class="container-fluid py-default">
     <div class="row">
         <div class="col-12">
-            <h1 class="my-default ml-half">{{ project.title }}</h1>
+            <h1 class="my-default ml-3">{{ project.title }}</h1>
             <p class="ml-default mb-default hero-text">{{ project.description }}</p>
         </div>
     </div>
     <div class="row">
         <div class="d-flex flex-wrap col-12 justify-content-around">
             {% for i in items %}
-            <div class="col-12 col-md-4 col-lg-3 mx-quarter mb-default card bg-lightest-gray shadow-regular">
+            <div class="col-12 col-md-4 col-lg-3 mx-2 mb-default card bg-lightest-gray shadow-regular">
                 <a href="{% url 'transcriptions:item' campaign.slug project.slug i.slug %}">
                     <img class="card-img card-img-campaign" alt="{{ i.slug }}" src="{{ i.thumbnail_url }}">
                 </a>
 
                 <a href="{% url 'transcriptions:item' campaign.slug project.slug i.slug %}" class="campaign-image-link">
-                    <h6 class="text-center primary-text my-half">{{ i.title }}</h6>
+                    <h6 class="text-center primary-text my-3">{{ i.title }}</h6>
                 </a>
             </div>
             {% endfor %}
