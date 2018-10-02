@@ -210,45 +210,6 @@ class ViewTest_Concordia(TestCase):
 
         self.assertTrue(login2)
 
-    def test_AccountProfileView_post_with_image(self):
-        """
-        This unit test tests the post entry for the
-        route account/profile with new image file
-        :param self:
-        :return:
-        """
-
-        self.login_user()
-
-        pw = "!Abc12345"
-
-        existing_userprofile_count = UserProfile.objects.all().count()
-
-        image = Image.new("RGBA", size=(50, 50), color=(155, 0, 0))
-        file = tempfile.NamedTemporaryFile(suffix=".png")
-        image.save(file)
-
-        with open(file.name, encoding="ISO-8859-1") as fp:
-
-            response = self.client.post(
-                "/account/profile/",
-                {
-                    "myfile": fp,
-                    "email": "tester@foo.com",
-                    "username": "tester",
-                    "password1": pw,
-                    "password2": pw,
-                },
-            )
-
-            self.assertEqual(response.status_code, 302)
-            self.assertEqual(response.url, "/account/profile/")
-
-            # Verify the UserProfile was correctly updated, a new entry in db exists
-            profile = UserProfile.objects.all()
-
-            self.assertEqual(len(profile), existing_userprofile_count + 1)
-
     def test_concordiaView(self):
         """
         Test the GET method for route /campaigns
