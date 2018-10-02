@@ -72,7 +72,7 @@ class ViewTest_Exporter(TestCase):
 
         # add a Transcription object
         self.transcription1 = Transcription(
-            asset=self.asset1, user_id=self.user.id, status=Status.EDIT, text="Sample"
+            asset=self.asset1, user=self.user, status=Status.EDIT, text="Sample"
         )
         self.transcription1.save()
 
@@ -111,7 +111,7 @@ class ViewTest_Exporter(TestCase):
 
         # add a Transcription object
         self.transcription2 = Transcription(
-            asset=self.asset2, user_id=self.user.id, status=Status.EDIT, text="Sample"
+            asset=self.asset2, user=self.user, status=Status.EDIT, text="Sample"
         )
         self.transcription2.save()
 

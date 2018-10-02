@@ -1,5 +1,6 @@
 from logging import getLogger
 
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import JSONField
 from django.core.validators import RegexValidator
@@ -198,15 +199,14 @@ class Tag(models.Model):
 class UserAssetTagCollection(models.Model):
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
 
-    # FIXME: why is this not a foreignkey on User?
-    user_id = models.PositiveIntegerField(db_index=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
     tags = models.ManyToManyField(Tag, blank=True)
     created_on = models.DateTimeField(auto_now_add=True)
     updated_on = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return "{} - {}".format(self.asset, self.user_id)
+        return "{} - {}".format(self.asset, self.user)
 
 
 class Transcription(models.Model):
@@ -215,7 +215,7 @@ class Transcription(models.Model):
     # TODO: document whether we need this field:
     parent = models.ForeignKey("self", blank=True, null=True, on_delete=models.SET_NULL)
 
-    user_id = models.PositiveIntegerField(db_index=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
     text = models.TextField(blank=True)
     status = models.CharField(

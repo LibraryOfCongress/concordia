@@ -183,7 +183,7 @@ class TranscriptionSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = models.Transcription
-        fields = ("id", "asset", "user_id", "text", "status", "updated_on")
+        fields = ("id", "asset", "user", "text", "status", "updated_on")
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -195,4 +195,4 @@ class TagSerializer(serializers.ModelSerializer):
 class UserAssetTagSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.UserAssetTagCollection
-        fields = ("asset", "user_id", "tags")
+        fields = ("asset", "user", "tags")

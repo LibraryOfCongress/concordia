@@ -35,14 +35,14 @@ class ExportCampaignToCSV(TemplateView):
         )
         for asset in asset_list:
             transcription = Transcription.objects.filter(
-                asset=asset, user_id=self.request.user.id
+                asset=asset, user=self.request.user
             )
             if transcription:
                 transcription = transcription[0].text
             else:
                 transcription = ""
             tags = UserAssetTagCollection.objects.filter(
-                asset=asset, user_id=self.request.user.id
+                asset=asset, user=self.request.user
             )
             if tags:
                 tags = list(tags[0].tags.all().values_list("name", flat=True))
@@ -119,7 +119,7 @@ class ExportCampaignToBagit(TemplateView):
 
             # Get transcription data
             transcription_obj = Transcription.objects.filter(
-                asset=asset, user_id=self.request.user.id
+                asset=asset, user=self.request.user
             )
             if transcription_obj:
                 transcription = transcription_obj[0].text

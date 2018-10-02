@@ -425,7 +425,7 @@ class TranscriptionByUser(generics.ListAPIView):
         Return the user's transcriptions
         :return: Transcription object list
         """
-        return Transcription.objects.filter(user_id=self.kwargs["user"]).order_by(
+        return Transcription.objects.filter(user=self.request.user).order_by(
             "-updated_on"
         )
 
@@ -474,7 +474,7 @@ class TranscriptionCreate(generics.CreateAPIView):
         if serializer.is_valid():
             transcription = Transcription(
                 asset=asset,
-                user_id=request.user.pk,
+                user=request.user,
                 text=request.data["text"],
                 status=request.data["status"],
             )
@@ -537,7 +537,7 @@ class TagCreate(generics.ListCreateAPIView):
             raise PermissionDenied()
 
         user_tags, created = UserAssetTagCollection.objects.get_or_create(
-            asset=asset, user_id=request.user.pk
+            asset=asset, user=request.user
         )
 
         tags = set(request.data.getlist("tags"))

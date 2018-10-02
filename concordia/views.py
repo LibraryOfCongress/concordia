@@ -117,7 +117,7 @@ class AccountProfileView(LoginRequiredMixin, FormView):
     def get_context_data(self, *args, **kwargs):
         ctx = super().get_context_data(*args, **kwargs)
         ctx["transcriptions"] = (
-            Transcription.objects.filter(user_id=self.request.user.pk)
+            Transcription.objects.filter(user=self.request.user)
             .select_related("asset__item__project__campaign")
             .order_by("asset__pk", "-pk")
             .distinct("asset")
@@ -212,7 +212,7 @@ class ConcordiaItemView(ListView):
 
     def get_queryset(self):
         self.item = get_object_or_404(
-            Item.objects.published().select_related('project__campaign'),
+            Item.objects.published().select_related("project__campaign"),
             campaign__slug=self.kwargs["campaign_slug"],
             project__slug=self.kwargs["project_slug"],
             slug=self.kwargs["slug"],
@@ -280,7 +280,11 @@ class ConcordiaAssetView(DetailView):
         """
         response = requests.get(
             "%s://%s/ws/asset/%s/"
-            % (self.request.scheme, self.request.get_host(), self.kwargs["campaign_slug"]),
+            % (
+                self.request.scheme,
+                self.request.get_host(),
+                self.kwargs["campaign_slug"],
+            ),
             cookies=self.request.COOKIES,
         )
         return json.loads(response.content.decode("utf-8"))
@@ -409,9 +413,9 @@ class ConcordiaAssetView(DetailView):
         # page_in_use = self.check_page_in_use(in_use_url, current_user_id)
 
         # Get the most recent transcription
-        latest_transcriptions = \
-            Transcription.objects.filter(asset__slug=asset.slug)\
-            .order_by('-updated_on')
+        latest_transcriptions = Transcription.objects.filter(
+            asset__slug=asset.slug
+        ).order_by("-updated_on")
 
         if latest_transcriptions:
             transcription = latest_transcriptions[0]
@@ -486,7 +490,9 @@ class ConcordiaAssetView(DetailView):
             {
                 "page_in_use": False,
                 "transcription": transcription,
-                "transcription_status": transcription.status if transcription else Status.EDIT,
+                "transcription_status": transcription.status
+                if transcription
+                else Status.EDIT,
                 "tags": tags,
                 "captcha_form": captcha_form,
             }
@@ -526,7 +532,7 @@ class ConcordiaAssetView(DetailView):
 
         redirect_path = self.request.path
 
-		# TODO: error handling for this lookup failing
+        # TODO: error handling for this lookup failing
         asset = Asset.objects.get(id=self.request.POST["asset_id"])
 
         if "tx" in self.request.POST and "tagging" not in self.request.POST:
@@ -569,7 +575,11 @@ class ConcordiaAssetView(DetailView):
             # get existing tags
             response = requests.get(
                 "%s://%s/ws/tags/%s/"
-                % (self.request.scheme, self.request.get_host(), self.request.POST["asset_id"]),
+                % (
+                    self.request.scheme,
+                    self.request.get_host(),
+                    self.request.POST["asset_id"],
+                ),
                 cookies=self.request.COOKIES,
             )
             existing_tags_json_val = json.loads(response.content.decode("utf-8"))
@@ -817,7 +827,7 @@ class ReportCampaignView(TemplateView):
         )
         projects_qs = projects_qs.annotate(
             contributor_count=Count(
-                "asset__userassettagcollection__user_id", distinct=True
+                "asset__userassettagcollection__user", distinct=True
             )
         )
 
