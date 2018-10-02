@@ -2,8 +2,6 @@
 
 set -e -u # Exit immediately for unhandled errors or undefined variables
 
-source ./.env
-
 mkdir -p /app/logs
 touch /app/logs/concordia.log
 

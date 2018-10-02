@@ -56,9 +56,10 @@ Resources:
 
     TaskDefinition:
         Type: AWS::ECS::TaskDefinition
-        Memory: 2048
-        Cpu: 1024
         Properties:
+            Memory: 2048
+            Cpu: 1024
+            TaskRoleArn: !GetAtt TaskRole.Arn
             Family: !Sub concordia-${EnvName}
             Volumes:
                 - Name: images_volume
@@ -162,6 +163,48 @@ Resources:
                 - TargetGroupArn: !Ref TargetGroup
                   Type: forward
 
+    TaskRole:
+        Type: AWS::IAM::Role
+        Properties:
+            Path: /
+            RoleName: !Sub ecs-concordia-taskrole-${AWS::StackName}
+            AssumeRolePolicyDocument: |
+                {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                        "Sid": "",
+                        "Effect": "Allow",
+                        "Principal": {
+                            "Service": "ecs-tasks.amazonaws.com"
+                        },
+                        "Action": "sts:AssumeRole"
+                        }
+                    ]
+                }
+            Policies:
+                - PolicyName: !Sub ecs-concordia-taskpolicy-${AWS::StackName}
+                  PolicyDocument: |
+                    {
+                        "Statement": [{
+                            "Effect": "Allow",
+                            "Action": [
+                                "s3:PutObject",
+                                "s3:GetObject",
+                                "s3:AbortMultipartUpload",
+                                "s3:ListMultipartUploadParts",
+                                "s3:ListBucket",
+                                "s3:ListBucketMultipartUploads",
+                                "secretsmanager:GetResourcePolicy",
+                                "secretsmanager:GetSecretValue",
+                                "secretsmanager:DescribeSecret",
+                                "secretsmanager:ListSecretVersionIds"
+                            ],
+                            "Resource": "*"
+                        }]
+                    }
+    
+    
     # This IAM Role grants the service access to register/unregister with the 
     # Application Load Balancer (ALB). It is based on the default documented here:
     # http://docs.aws.amazon.com/AmazonECS/latest/developerguide/service_IAM_role.html
