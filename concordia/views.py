@@ -145,6 +145,13 @@ class AccountProfileView(LoginRequiredMixin, FormView):
         return super().form_valid(form)
 
 
+class HomeView(ListView):
+    template_name = "home.html"
+
+    queryset = Campaign.objects.published().order_by("title")
+    context_object_name = "campaigns"
+
+
 class CampaignListView(ListView):
     template_name = "transcriptions/campaign_list.html"
     paginate_by = 10

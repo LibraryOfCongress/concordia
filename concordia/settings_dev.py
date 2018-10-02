@@ -12,16 +12,7 @@ LOGGING["loggers"]["celery"]["level"] = "DEBUG"
 
 DEBUG = True
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "concordia",
-        "USER": "concordia",
-        "PASSWORD": "${POSTGRESQL_PW}",
-        "HOST": "0.0.0.0",
-        "PORT": "54323",
-    }
-}
+DATABASES["default"]["PORT"] = "54323"
 
 ALLOWED_HOSTS = ["127.0.0.1", "0.0.0.0", "*"]
 

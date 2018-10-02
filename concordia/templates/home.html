@@ -24,7 +24,7 @@
         </div>
     </div>
     <div class="row my-5">
-        <div class="row bg-home-contribute pxy-default">
+        <div class="row bg-home-contribute pxy-default mx-auto">
             <div class="col-12 mb-default">
                 <h2 class="px-default offwhite-text px-md-0 ml-md-default">Anyone Can Contribute</h2>
             </div>
@@ -52,48 +52,33 @@
             <h2 class="px-default px-md-0 ml-md-default">Campaigns: <small>Choose what to transcribe</small></h2>
         </div>
         <div class="d-flex flex-wrap col-12 justify-content-around">
-            <div class="col-12 col-md-4 mb-default text-center">
-                <img class="img-home-contribute d-block mx-auto img-fluid" src="{% static 'img/rosa-parks-campaign.svg' %}"
-                    alt="Rosa Parks Papers">
-                <h3 class="mt-3">Rosa Parks Papers</h3>
-                <a class="btn btn-outline-primary" href="#" role="button">Get Started!</a>
-            </div>
-            <div class="col-12 col-md-4 mb-default text-center border-left-home-contribute">
-                <img class="img-home-contribute d-block mx-auto img-fluid" src="{% static 'img/branch-rickey-campaign.svg' %}"
-                    alt="Branch Rickey Papers">
-                <h3 class="mt-3">Branch Rickey Papers</h3>
-                <a class="btn btn-outline-primary" href="#" role="button">Get Started!</a>
-            </div>
-            <div class="col-12 col-md-4 mb-default text-center border-left-home-contribute">
-                <img class="img-home-contribute d-block mx-auto img-fluid" src="{% static 'img/clara-barton-campaign.svg' %}"
-                    alt="Clara Barton Papers">
-                <h3 class="mt-3">Clara Barton Papers</h3>
-                <a class="btn btn-outline-primary" href="#" role="button">Get Started!</a>
-            </div>
+            {% for campaign in campaigns|slice:":6" %}
+                <div class="text-center campaign m-1">
+                    <a href="{% url 'transcriptions:campaign' campaign.slug %}">
+                        {% if 'Lincoln' in campaign.title %}
+                        <img class="img-home-contribute d-block mx-auto img-fluid" src="{% static 'img/AbrahamLincoln.svg' %}" alt="{{ campaign.title }} image">
+                        {% elif 'Rosa Parks' in campaign.title %}
+                        <img class="img-home-contribute d-block mx-auto img-fluid" src="{% static 'img/rosa-parks-campaign.svg' %}" alt="{{ campaign.title }} image">
+                        {% elif 'Clara Barton' in campaign.title %}
+                        <img class="img-home-contribute d-block mx-auto img-fluid" src="{% static 'img/clara-barton-campaign.svg' %}" alt="{{ campaign.title }} image">
+                        {% elif 'Branch Rickey' in campaign.title %}
+                        <img class="img-home-contribute d-block mx-auto img-fluid" src="{% static 'img/branch-rickey-campaign.svg' %}" alt="{{ campaign.title }} image">
+                        {% elif 'Mary Church Terrell' in campaign.title %}
+                        <img class="img-home-contribute d-block mx-auto img-fluid" src="{% static 'img/MaryChurchTerrell.svg' %}" alt="{{ campaign.title }} image">
+                        {% elif 'Bourne' in campaign.title %}
+                        <img class="img-home-contribute d-block mx-auto img-fluid" src="{% static 'img/WilliamOlandBourne.svg' %}" alt="{{ campaign.title }} image">
+                        {% else %}
+                        {% comment %} FIXME: when we implement campaign media, we also want a simple way to get the MEDIA_URL-relative thumbnail {% endcomment %}
+                        <img class="img-fluid" alt="{{ campaign.title }} image" src="{% if campaign.s3_storage %}{{ campaign.media_url }}{% else %}{{ MEDIA_URL }}{{ campaign.media_url }}{% endif %}">
+                        {% endif %}
+                        <h3 class="mt-half">{{ campaign.title }}</h3>
+                    </a>
+                </div>
+            {% endfor %}
         </div>
-        <div class="d-flex flex-wrap col-12 justify-content-around">
-            <div class="col-12 col-md-4 mb-default text-center">
-                <img class="img-home-contribute d-block mx-auto img-fluid" src="{% static 'img/AbrahamLincoln.svg' %}"
-                    alt="Abraham Lincoln Papers">
-                <h3 class="mt-3">Abraham Lincoln Papers</h3>
-                <a class="btn btn-outline-primary" href="#" role="button">Get Started!</a>
-            </div>
-            <div class="col-12 col-md-4 mb-default text-center border-left-home-contribute">
-                <img class="img-home-contribute d-block mx-auto img-fluid" src="{% static 'img/MaryChurchTerrell.svg' %}"
-                    alt="Mary Church Terrell Papers">
-                <h3 class="mt-3">Mary Church Terrell Papers</h3>
-                <a class="btn btn-outline-primary" href="#" role="button">Get Started!</a>
-            </div>
-            <div class="col-12 col-md-4 mb-default text-center border-left-home-contribute">
-                <img class="img-home-contribute d-block mx-auto img-fluid" src="{% static 'img/WilliamOlandBourne.svg' %}"
-                    alt="William Oland Bourne Papers">
-                <h3 class="mt-3">William Oland Bourne Papers</h3>
-                <a class="btn btn-outline-primary" href="#" role="button">Get Started!</a>
-            </div>
-        </div>
-        <div class="col mx-auto d-flex justify-content-center my-default">
-            <a class="btn btn-primary" href="{% url 'transcriptions:campaigns' %}" role="button">Browse More Campaigns</a>
-        </div>
+    </div>
+    <div class="row mx-auto d-flex justify-content-center my-default">
+        <a class="btn btn-primary" href="{% url 'transcriptions:campaigns' %}" role="button">Browse All Campaigns</a>
     </div>
 </div>
 {% endblock main_content %}

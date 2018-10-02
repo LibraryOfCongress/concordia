@@ -15,6 +15,9 @@ DATABASES["default"] = {
     "NAME": "concordia-tests",
 }
 
+# If you're running a docker db container, use this:
+# DATABASES["default"]["PORT"] = "54323"
+
 DEFAULT_TO_EMAIL = "rstorey@loc.gov"
 
 ALLOWED_HOSTS = ["127.0.0.1", "0.0.0.0"]

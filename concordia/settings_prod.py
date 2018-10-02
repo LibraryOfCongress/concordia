@@ -36,8 +36,10 @@ if os.getenv("AWS"):
 
     postgres_secret_json = get_secret("crowd/%s/DB/MasterUserPassword" % ENV_NAME)
     postgres_secret = json.loads(postgres_secret_json)
-    POSTGRESQL_PW = postgres_secret["password"]
-    POSTGRESQL_HOST = postgres_secret["host"]
+
+    DATABASES["default"].update(
+        {"PASSWORD": postgres_secret["password"], "HOST": postgres_secret["host"]}
+    )
 
     sentry_secret_json = get_secret("crowd/SentryDSN")
     sentry_secret = json.loads(sentry_secret_json)
@@ -52,8 +54,6 @@ if os.getenv("AWS"):
 
 else:
     DJANGO_SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "changeme")
-    POSTGRESQL_PW = os.getenv("POSTGRESQL_PW")
-    POSTGRESQL_HOST = os.getenv("POSTGRESQL_HOST", "db")
     EMAIL_HOST = os.environ.get("EMAIL_HOST", "localhost")
     EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
     EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
@@ -65,21 +65,9 @@ EMAIL_PORT = 587
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "crowd@loc.gov")
 DEFAULT_TO_EMAIL = DEFAULT_FROM_EMAIL
 
-
 # TODO: For final deployment to production,
 # when we are running https, uncomment this next line
 # CSRF_COOKIE_SECURE = True
-
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "concordia",
-        "USER": "concordia",
-        "PASSWORD": POSTGRESQL_PW,
-        "HOST": POSTGRESQL_HOST,
-        "PORT": "5432",
-    }
-}
 
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "pyamqp://guest@rabbit:5672")
 CELERY_RESULT_BACKEND = "rpc://"

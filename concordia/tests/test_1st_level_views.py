@@ -1,6 +1,6 @@
 # TODO: Add correct copyright header
 
-from django.test import Client, TestCase
+from django.test import TestCase
 from django.urls import reverse
 
 
@@ -11,38 +11,26 @@ class ViewTest_1st_level(TestCase):
 
     """
 
-    def setUp(self):
-        """
-        setUp is called before the execution of each test below
-        :return:
-        """
-        self.client = Client()
-
     def test_contact_us_get(self):
-        # Arrange
 
-        # Act
         response = self.client.get(reverse("contact"))
 
-        # Assert:
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "contact.html")
 
     def test_contact_us_get_pre_populate(self):
-        # Arrange
         test_http_referrer = "http://foo/bar"
 
-        # Act
         response = self.client.get(reverse("contact"), HTTP_REFERER=test_http_referrer)
 
-        # Assert:
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "contact.html")
-        # Assert Link has been populated
-        self.assertTrue(test_http_referrer, response.content)
+
+        self.assertEqual(
+            response.context["form"].initial["referrer"], test_http_referrer
+        )
 
     def test_contact_us_post(self):
-        # Arrange
         post_data = {
             "email": "nobody@example.com",
             "subject": "Problem found",
@@ -51,9 +39,6 @@ class ViewTest_1st_level(TestCase):
             "story": "Houston, we got a problem",
         }
 
-        # Act
         response = self.client.post(reverse("contact"), post_data)
 
-        # Assert:
-        # redirected to contact us page.
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 200)
