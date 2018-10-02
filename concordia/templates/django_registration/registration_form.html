@@ -1,109 +1,52 @@
 {% extends "base.html" %}
-{% block title %}Make Your Mark Registration{% endblock title %}
-{% block head_content %}
-<style>
-    input#id_captcha_1 {
-  padding: .375rem .75rem;
-}
 
-</style>
-{% endblock head_content %}
+{% load bootstrap4 %}
+
+{% block title %}Make Your Mark Registration{% endblock title %}
+
 {% block main_content %}
 <div class="container-fluid">
-    <div class="row">
-        <div class="col-8 col-md-8 col-lg-6 mx-auto bg-offwhite rounded shadow-regular container-registration">
-            <div class="row">
-                <div class="left-pane col-6 padding-default">
-                    <p class="text-left">
-                        Create an account to be able to track your work, add tags
-                        and review transcriptions. Please provide a username, your
-                        email address and a strong password.
-                    </p>
-                    <hr />
-                    <p class="text-left">
-                        Why do we need your email? Your email address gives us the
-                        ability to support you. Community managers are here to help
-                        with account administration like changes to your profile,
-                        troubleshooting any issues with contributing to a
-                        transcription, or to answer general questions. You have the
-                        additional option to receive email updates by opting to
-                        subscribe. We will never share your information with other
-                        institutions or individuals.
-                    </p>
-                    <hr />
-                    <p class="text-left">
-                        Once you click register, we will send you a link to confirm
-                        your email address.
-                    </p>
-                </div>
-                <div class="right-pane col-6">
-                    <h2 class="mt-3 mb-2 text-center">Make Your Mark</h2>
-                    <h3 class="mb-default text-center">Registration</h3>
-                    {% if form.errors %}
-                    {% for error in form.non_field_errors %}
-                    <div class="alert alert-danger">
-                        <strong>{{ error|escape }}</strong>
-                    </div>
-                    {% endfor %}
-                    {% endif %}
-                    <form method="post" id="registration-form" class="col-10 mx-auto form-register">{% csrf_token %} {{ form.non_field_errors }}
-                        <div class="form-group form-row">
-                            {% if form.username.errors %}
-                            <div class="text-danger">
-                                {% for error in form.username.errors %}{{ error }} {% endfor %}
-                            </div>
-                            {% endif %}
-                            <label class="sr-only" for="id_username">Username</label>
-                            {{ form.username }}
-                        </div>
-                        <div class="form-group form-row">
-                            {% if form.email.errors %}
-                            <div class="text-danger">
-                                {% for error in form.email.errors %}{{ error }} {% endfor %}
-                            </div>
-                            {% endif %}
-                            <label class="sr-only" for="id_email">Email</label>
-                            {{ form.email }}
-                        </div>
-                        <div class="form-group form-row">
-                            {% if form.password1.errors %}
-                            <div class="text-danger">
-                                {% for error in form.password1.errors %}{{ error }} {% endfor %}
-                            </div>
-                            {% endif %}
-                            <label class="sr-only" for="id_password1">Password</label>
-                            {{ form.password1 }}
-                        </div>
-                        <div class="form-group form-row">
-                            {% if form.password2.errors %}
-                            <div class="text-danger">
-                                {% for error in form.password2.errors %}{{ error }} {% endfor %}
-                            </div>
-                            {% endif %}
-                            <label class="sr-only" for="id_password2">Confirm password</label>
-                            {{ form.password2 }}
-                            <div class="form-text text-muted mx-2" id="password_req">
-                                Password Requirements:
-                                <ul id="req1" class="nocheckmark"><i class="far fa-square mr-2"></i>At least 8 characters long</ul>
-                                <ul id="req2" class="nocheckmark"><i class="far fa-square mr-2"></i>1 or more unique uppercase characters</ul>
-                                <ul id="req3" class="nocheckmark"><i class="far fa-square mr-2"></i>1 or more unique digits</ul>
-                                <ul id="req4" class="nocheckmark"><i class="far fa-square mr-2"></i>1 or more non-unique special characters</ul>
-                            </div>
-                        </div>
-                        <div class="form-check">
-                            {{ form.newsletterOptIn }}
-                            <label class="form-check-label" for="id_newsletterOptIn">
-                                I would like to receive email updates about new campaigns, upcoming events, and feature improvements.
-                            </label>
-                        </div>
-                        <div class="d-flex col mx-auto justify-content-center pt-3">
-                            <a href="{% url 'login' %}" class="text-center blue-text">I already have an account</a>
-                        </div>
-                        <div class="d-flex mx-auto justify-content-center mb-default mt-3">
-                            <input class="btn btn-primary" type="submit" value="Register" id="registration-submit">
-                        </div>
-                    </form>
-                </div>
+    <div id="registration-form-container" class="row flex-md-row justify-content-center">
+        <div class="col-md-6 p-3">
+            <p>
+                Create an account to be able to track your work, add tags
+                and review transcriptions. Please provide a username, your
+                email address and a strong password.
+            </p>
+            <hr />
+            <p>
+                Why do we need your email? Your email address gives us the
+                ability to support you. Community managers are here to help
+                with account administration like changes to your profile,
+                troubleshooting any issues with contributing to a
+                transcription, or to answer general questions. You have the
+                additional option to receive email updates by opting to
+                subscribe. We will never share your information with other
+                institutions or individuals.
+            </p>
+            <hr />
+            <p>
+                Once you click register, we will send you a link to confirm
+                your email address.
+            </p>
+        </div>
+        <div class="col-md-6 p-3">
+            <h2 class="mt-0 text-center">Make Your Mark</h2>
+            <h3 class="mb-default text-center">Registration</h3>
+            <form method="post" id="registration-form" class="form-register">
+                {% csrf_token %}
+
+                {% bootstrap_form form %}
+
+                {% buttons %}
+                    <button type="submit" class="btn btn-primary">
+                        Register
+                    </button>
+                {% endbuttons %}
+            </form>
+
+            <div class="d-flex col mx-auto justify-content-center pt-3">
+                <a href="{% url 'login' %}" class="text-center blue-text">I already have an account</a>
             </div>
         </div>
     </div>
@@ -120,6 +63,17 @@
                 $('#id_captcha_0').val(result['key'])
             });
         });
+
+        {% comment %}
+        FIXME: implement this!
+         <div class="form-text text-muted mx-2" id="password_req">
+            Password Requirements:
+            <ul id="req1" class="nocheckmark"><i class="far fa-square mr-2"></i>At least 8 characters long</ul>
+            <ul id="req2" class="nocheckmark"><i class="far fa-square mr-2"></i>1 or more unique uppercase characters</ul>
+            <ul id="req3" class="nocheckmark"><i class="far fa-square mr-2"></i>1 or more unique digits</ul>
+            <ul id="req4" class="nocheckmark"><i class="far fa-square mr-2"></i>1 or more non-unique special characters</ul>
+        </div> {% endcomment %}
+
 
         $("form input[name='password1']").on('keyup change blur keypress', function () {
             var input_value = $('#id_password1').val();

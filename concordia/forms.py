@@ -14,7 +14,9 @@ logger = getLogger(__name__)
 
 class UserRegistrationForm(RegistrationForm):
     newsletterOptIn = forms.BooleanField(
-        required=False, widget=forms.CheckboxInput(attrs={"class": "form-check-input"})
+        label="Newsletter",
+        required=False,
+        help_text="I would like to receive email updates about new campaigns, upcoming events, and feature improvements.",
     )
 
 
