@@ -1,6 +1,7 @@
 ### Before running any Compose services, make sure you have an .env file
 # inside your current folder and that it has been populated with the following content:
 #   CONCORDIA_ADMIN_PW=<concordia-admin-pw>
+#   POSTGRESQL_HOST=<localhost or a valid DNS name>
 #   POSTGRESQL_PW=<postgres-pw>
 #   EMAIL_HOST=<your_smtp_email_host_here>
 #   EMAIL_HOST_USER=<your_smtp_email_host_user_here>
@@ -17,7 +18,6 @@ version: '3.6'
 services:
     db:
         image: postgres
-        env_file: ./.env
         environment:
             POSTGRES_PASSWORD: ${POSTGRESQL_PW}
             POSTGRES_USER: concordia
@@ -36,7 +36,6 @@ services:
             - 15672:15672
 
     app:
-        env_file: ./.env
         build: .
         environment:
             # The concordia app needs to wait for the db to completely start. Use docker-compose-wait
