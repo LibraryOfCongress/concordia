@@ -300,8 +300,14 @@ class ItemAdmin(admin.ModelAdmin):
         "published",
     )
     list_display_links = ("title", "item_id")
-    search_fields = ["title", "project__campaign__title", "project__title"]
     list_filter = ("status", "project__campaign", "project")
+    search_fields = [
+        "title",
+        "item_id",
+        "item_url",
+        "project__campaign__title",
+        "project__title",
+    ]
 
     actions = (publish_action, unpublish_action)
 
