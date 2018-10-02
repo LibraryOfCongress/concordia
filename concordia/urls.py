@@ -140,7 +140,7 @@ ws_urlpatterns = (
 )
 
 urlpatterns = [
-    re_path(r"^$", TemplateView.as_view(template_name="home.html"), name="homepage"),
+    re_path(r"^$", views.HomeView.as_view(), name="homepage"),
     path(r"healthz", views.healthz, name="health-check"),
     path("about/", views.static_page, name="about"),
     re_path(r"^contact/$", views.ContactUsView.as_view(), name="contact"),
