@@ -196,7 +196,7 @@ class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     list_display_links = ("id", "title", "slug")
     prepopulated_fields = {"slug": ("title",)}
     search_fields = ["title", "description"]
-    list_filter = ("status", "is_active")
+    list_filter = ("published", "status", "is_active")
 
     actions = (publish_action, unpublish_action)
 
@@ -217,7 +217,7 @@ class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     list_display_links = ("id", "title", "slug")
     prepopulated_fields = {"slug": ("title",)}
     search_fields = ["title", "campaign__title"]
-    list_filter = ("status", "category", "campaign")
+    list_filter = ("published", "status", "category", "campaign")
 
     actions = (publish_action, unpublish_action)
 
@@ -300,7 +300,6 @@ class ItemAdmin(admin.ModelAdmin):
         "published",
     )
     list_display_links = ("title", "item_id")
-    list_filter = ("status", "project__campaign", "project")
     search_fields = [
         "title",
         "item_id",
@@ -308,6 +307,7 @@ class ItemAdmin(admin.ModelAdmin):
         "project__campaign__title",
         "project__title",
     ]
+    list_filter = ("published", "status", "project__campaign", "project")
 
     actions = (publish_action, unpublish_action)
 
