@@ -37,8 +37,8 @@ class WebServiceViewTests(TestCase):
     def login_user(self):
         """
         Create a user and log the user in
-        :return:
         """
+
         # create user and login
         self.user = User.objects.create(username="tester", email="tester@foo.com")
         self.user.set_password("top_secret")
@@ -53,7 +53,6 @@ class WebServiceViewTests(TestCase):
         """
         This unit test tests the get  route ws/anonymous_user/
         :param self:
-        :return:
         """
 
         self.login_user()
@@ -68,7 +67,6 @@ class WebServiceViewTests(TestCase):
         """
         This unit test tests the post entry for the route ws/page_in_use
         :param self:
-        :return:
         """
 
         self.login_user()
@@ -89,7 +87,6 @@ class WebServiceViewTests(TestCase):
         This unit test tests the post entry for the route ws/page_in_use
         the database has two items added the created_on timestamp of now - 10 minutes
         :param self:
-        :return:
         """
 
         self.login_user()
@@ -126,7 +123,6 @@ class WebServiceViewTests(TestCase):
         """
         This unit test tests the post entry for the route ws/page_in_use without logging in
         :param self:
-        :return:
         """
 
         # create user
@@ -153,7 +149,6 @@ class WebServiceViewTests(TestCase):
         This unit test tests the post entry for the route ws/page_in_use without logging
         and the user is anonymous
         :param self:
-        :return:
         """
 
         # create user
@@ -176,8 +171,8 @@ class WebServiceViewTests(TestCase):
         """
         Check the results of a successful post and insert of a PageInUse database item
         :param response:
-        :return:
         """
+
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         # Verify the entry is in the PagInUse table
@@ -188,7 +183,6 @@ class WebServiceViewTests(TestCase):
         """
         This unit test tests the get entry for the route ws/page_in_use/url
         :param self:
-        :return:
         """
 
         self.login_user()
@@ -214,7 +208,6 @@ class WebServiceViewTests(TestCase):
         """
         This unit test tests the get entry for the route ws/page_in_use_user/user/url/
         :param self:
-        :return:
         """
 
         self.login_user()
@@ -247,7 +240,6 @@ class WebServiceViewTests(TestCase):
     def test_PageInUse_put(self):
         """
         This unit test tests the update of an existing PageInUse using PUT on route ws/page_in_use/url
-        :return:
         """
 
         self.login_user()
@@ -279,7 +271,6 @@ class WebServiceViewTests(TestCase):
     def test_PageInUse_delete(self):
         """
         This unit test tests the delete of an existing PageInUse using DELETE on route ws/page_in_use_delete/
-        :return:
         """
 
         self.login_user()
@@ -304,7 +295,6 @@ class WebServiceViewTests(TestCase):
         """
         Test the route ws/page_in_use_filter/user/page_url/
         It should return a list of PageInUse updated in last 5 minutes by user other than self.user
-        :return:
         """
 
         self.login_user()
@@ -334,7 +324,6 @@ class WebServiceViewTests(TestCase):
         """
         Test the route ws/page_in_use_filter/user/page_url/
         It should return an empty list
-        :return:
         """
 
         self.login_user()
@@ -358,7 +347,6 @@ class WebServiceViewTests(TestCase):
     def test_Transcriptions_latest_get(self):
         """
         Test getting latest transcription for an asset. route ws/transcriptions/asset/
-        :return:
         """
 
         self.login_user()
@@ -427,7 +415,6 @@ class WebServiceViewTests(TestCase):
     def test_Transcriptions_by_user(self):
         """
         Test getting the user's transcriptions. route ws/transcription_by_user/<userid>/
-        :return:
         """
 
         self.login_user()
@@ -510,7 +497,6 @@ class WebServiceViewTests(TestCase):
     def test_Transcriptions_create_post(self):
         """
         Test creating a transcription. route ws/transcription_create/
-        :return:
         """
 
         self.login_user()
@@ -572,7 +558,6 @@ class WebServiceViewTests(TestCase):
     def test_Tag_create_post(self):
         """
         Test creating a tag. route ws/tag_create/
-        :return:
         """
 
         self.login_user()
@@ -616,7 +601,6 @@ class WebServiceViewTests(TestCase):
     def test_GetTags_get(self):
         """
         Test getting the tags for an asset, route /ws/tags/<asset>
-        :return:
         """
 
         self.login_user()
@@ -683,7 +667,6 @@ class WebServiceViewTests(TestCase):
     def test_GetTags_notags_get(self):
         """
         Test getting the tags for an asset when no tags exist, route /ws/tags/<asset>
-        :return:
         """
 
         self.login_user()

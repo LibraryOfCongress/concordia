@@ -2,7 +2,6 @@ import csv
 import io
 import os
 import shutil
-import sys
 import zipfile
 
 import boto3
@@ -22,8 +21,8 @@ class ViewTest_Exporter(TestCase):
     def login_user(self):
         """
         Create a user and log the user in
-        :return:
         """
+
         # create user and login
         self.user = User.objects.create(username="tester", email="tester@foo.com")
         self.user.set_password("top_secret")
@@ -32,12 +31,12 @@ class ViewTest_Exporter(TestCase):
     def test_ExportCampaignToBagit_get(self):
         """
         Test the http GET on route /campaigns/exportBagit/<campaignname>/
-        :return:
         """
 
         self.login_user()
 
-        ## Build test data for local storage campaign ##
+        # Build test data for local storage campaign #
+
         # Campaign Info (local storage)
         locstor_media_url_str = "/locstorcampaign/testasset/asset.jpg"
         locstor_campaign_name_str = "locstorcampaign"
@@ -75,7 +74,7 @@ class ViewTest_Exporter(TestCase):
         )
         self.transcription1.save()
 
-        ## Build test data for S3 Storage Campaign ##
+        # Build test data for S3 Storage Campaign #
         # Campaign Info (S3 storage)
         s3_media_url_str = "https://s3.us-east-2.amazonaws.com/chc-collections/test_s3/mss859430177/0.jpg"
         s3_campaign_name_str = "test_s3"
