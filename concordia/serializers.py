@@ -97,7 +97,7 @@ class ItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Item
-        fields = ("title", "slug", "thumbnail_url", "assets", "project")
+        fields = ("title", "item_id", "thumbnail_url", "assets", "project")
 
 
 class AssetSerializer(serializers.HyperlinkedModelSerializer):
