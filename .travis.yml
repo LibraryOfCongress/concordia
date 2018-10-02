@@ -4,6 +4,7 @@ env:
 python:
   - "3.6"
   - "3.6-dev"  # 3.6 development branch
+  - "3.7"
   - "3.7-dev"  # 3.7 development branch
 # command to install dependencies
 install:
@@ -11,8 +12,6 @@ install:
   - pipenv install --dev --deploy
 # command to run tests
 script:
-  - mkdir logs
-  - touch ./logs/concordia-celery.log
   - ./manage.py collectstatic --no-input
   - ./manage.py test concordia
   - ./manage.py test importer
