@@ -350,9 +350,6 @@ def populate_item_from_url(item, item_info):
         if v:
             setattr(item, k, v)
 
-    if not item.slug:
-        item.slug = slugify(item.title)
-
     # FIXME: this was never set before so we don't have selection logic:
     thumb_urls = [i for i in item_info["image_url"] if ".jpg" in i]
     if thumb_urls:

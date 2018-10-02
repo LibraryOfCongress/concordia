@@ -45,17 +45,17 @@ tx_urlpatterns = (
             name="report campaign",
         ),
         path(
-            "<slug:campaign_slug>/<slug:project_slug>/<slug:item_slug>/<slug:slug>/",
+            "<slug:campaign_slug>/<slug:project_slug>/<slug:item_id>/<slug:slug>/",
             views.ConcordiaAssetView.as_view(),
             name="asset-detail",
         ),
-        re_path(
-            r"^(?P<campaign_slug>[^/]+)/(?P<slug>[^/]+)/$",
+        path(
+            "<slug:campaign_slug>/<slug:slug>/",
             views.ConcordiaProjectView.as_view(),
             name="project-detail",
         ),
-        re_path(
-            r"^(?P<campaign_slug>[^/]+)/(?P<project_slug>[^/]+)/(?P<slug>[^/]+)/$",
+        path(
+            "<slug:campaign_slug>/<slug:project_slug>/<slug:item_id>/",
             views.ConcordiaItemView.as_view(),
             name="item",
         ),

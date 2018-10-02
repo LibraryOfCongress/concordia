@@ -122,7 +122,9 @@ class Item(models.Model):
 
     title = models.CharField(max_length=300)
     item_url = models.URLField(max_length=255)
-    item_id = models.CharField(max_length=100, blank=True)
+    item_id = models.CharField(
+        max_length=100, help_text="Unique item ID assigned by the upstream source"
+    )
     description = models.TextField(blank=True)
     metadata = JSONField(
         default=metadata_default,
@@ -137,20 +139,17 @@ class Item(models.Model):
 
     class Meta:
         unique_together = (("item_id", "project"),)
-        ordering = ["item_id"]
 
     def __str__(self):
-        return self.item_id
+        return f"{self.item_id}: {self.title}"
 
     def get_absolute_url(self):
-        # FIXME: change this with https://github.com/LibraryOfCongress/concordia/issues/242
-
         return reverse(
             "transcriptions:item",
             kwargs={
                 "campaign_slug": self.project.campaign.slug,
                 "project_slug": self.project.slug,
-                "slug": self.slug,
+                "item_id": self.item_id,
             },
         )
 

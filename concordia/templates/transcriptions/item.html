@@ -37,7 +37,7 @@
         </form>
         <div class="d-flex flex-wrap col-12 justify-content-around">
             {% for a in assets %}
-                {% url 'transcriptions:asset-detail' a.item.project.campaign.slug a.item.project.slug a.item.slug a.slug as asset_detail_url %}
+                {% url 'transcriptions:asset-detail' a.item.project.campaign.slug a.item.project.slug a.item.item_id a.slug as asset_detail_url %}
 
                 <div class="col-12 col-md-4 col-lg-3 px-2 mb-default" data-asset-status="{{ a.status|lower }}">
                     {% if a.status == 'Submitted' %}
