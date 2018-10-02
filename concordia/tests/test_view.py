@@ -7,7 +7,7 @@ from unittest.mock import Mock, patch
 
 import responses
 from captcha.models import CaptchaStore
-from django.test import Client, TestCase
+from django.test import TestCase
 from PIL import Image
 
 from concordia.models import (
@@ -33,12 +33,6 @@ class ViewTest_Concordia(TestCase):
     Make sure the postgresql db is available. Run docker-compose up db
     """
 
-    def setUp(self):
-        """
-        setUp is called before the execution of each test below
-        :return:
-        """
-        self.client = Client()
 
     def login_user(self):
         """

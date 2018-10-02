@@ -7,17 +7,9 @@ import zipfile
 
 import boto3
 from django.conf import settings
-from django.test import Client, TestCase
+from django.test import TestCase
 
 from concordia.models import Asset, Campaign, MediaType, Status, Transcription, User
-
-PACKAGE_PARENT = ".."
-SCRIPT_DIR = os.path.dirname(
-    os.path.realpath(os.path.join(os.getcwd(), os.path.expanduser(__file__)))
-)
-sys.path.append(os.path.normpath(os.path.join(SCRIPT_DIR, PACKAGE_PARENT)))
-sys.path.append(os.path.join(SCRIPT_DIR, "../"))
-sys.path.append(os.path.join(SCRIPT_DIR, "../../config"))
 
 
 class ViewTest_Exporter(TestCase):
@@ -26,14 +18,6 @@ class ViewTest_Exporter(TestCase):
 
     Make sure the postgresql db is available. Run docker-compose up db
     """
-
-    def setUp(self):
-        """
-        setUp is called before the execution of each test below
-        :return:
-        """
-
-        self.client = Client()
 
     def login_user(self):
         """
