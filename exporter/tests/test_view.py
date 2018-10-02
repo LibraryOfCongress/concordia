@@ -51,7 +51,6 @@ class ViewTest_Exporter(TestCase):
         :return:
         """
 
-        # Arrange
         self.login_user()
 
         ## Build test data for local storage campaign ##

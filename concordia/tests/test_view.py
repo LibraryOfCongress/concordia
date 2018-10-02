@@ -110,15 +110,13 @@ class ViewTest_Concordia(TestCase):
         Test the login is successful with email
         :return:
         """
-        # Arrange
+
         user = User.objects.create(username="etester", email="etester@foo.com")
         user.set_password("top_secret")
         user.save()
 
-        # Act
         user = self.client.login(username="etester@foo.com", password="top_secret")
 
-        # Assert
         self.assertTrue(user)
 
     @patch("concordia.views.requests")
@@ -128,7 +126,6 @@ class ViewTest_Concordia(TestCase):
         :return:
         """
 
-        # Arrange
         mock_requests.get.return_value.status_code = 200
         mock_requests.get.return_value.json.return_value = {
             "concordia_data": "abc123456"
@@ -168,12 +165,7 @@ class ViewTest_Concordia(TestCase):
         )
         self.transcription.save()
 
-        # Act
-
-        # Act
         response = self.client.get("/account/profile/")
-
-        # Assert
 
         # validate the web page has the "tester" and "tester@foo.com" as values
         self.assertEqual(response.status_code, 200)
@@ -189,7 +181,6 @@ class ViewTest_Concordia(TestCase):
 
         test_email = "tester@foo.com"
 
-        # Arrange
         self.login_user()
 
         mock_requests.get.return_value.status_code = 200
@@ -200,7 +191,6 @@ class ViewTest_Concordia(TestCase):
             b'{"count":0,"next":null,"previous":null,"results":[]}'
         )
 
-        # Act
         response = self.client.post(
             "/account/profile/",
             {
@@ -211,7 +201,6 @@ class ViewTest_Concordia(TestCase):
             },
         )
 
-        # Assert
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, "/account/profile/")
 
@@ -227,7 +216,6 @@ class ViewTest_Concordia(TestCase):
         :return:
         """
 
-        # Arrange
         self.login_user()
         mock_requests.get.return_value.status_code = 200
         mock_requests.get.return_value.json.return_value = {
@@ -237,10 +225,8 @@ class ViewTest_Concordia(TestCase):
             b'{"count":0,"next":null,"previous":null,"results":[]}'
         )
 
-        # Act
         response = self.client.post("/account/profile/", {"first_name": "Jimmy"})
 
-        # Assert
         self.assertEqual(response.status_code, 302)
 
         # Verify the User was not changed
@@ -255,7 +241,6 @@ class ViewTest_Concordia(TestCase):
         :return:
         """
 
-        # Arrange
         self.login_user()
         mock_requests.get.return_value.status_code = 200
         mock_requests.get.return_value.json.return_value = {
@@ -267,7 +252,6 @@ class ViewTest_Concordia(TestCase):
 
         test_email = "tester@foo.com"
 
-        # Act
         response = self.client.post(
             "/account/profile/",
             {
@@ -278,7 +262,6 @@ class ViewTest_Concordia(TestCase):
             },
         )
 
-        # Assert
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, "/account/profile/")
 
@@ -301,7 +284,6 @@ class ViewTest_Concordia(TestCase):
         :return:
         """
 
-        # Arrange
         self.login_user()
         mock_requests.get.return_value.status_code = 200
         mock_requests.get.return_value.json.return_value = {
@@ -315,7 +297,6 @@ class ViewTest_Concordia(TestCase):
 
         existing_userprofile_count = UserProfile.objects.all().count()
 
-        # Act
         image = Image.new("RGBA", size=(50, 50), color=(155, 0, 0))
         file = tempfile.NamedTemporaryFile(suffix=".png")
         image.save(file)
@@ -333,7 +314,6 @@ class ViewTest_Concordia(TestCase):
                 },
             )
 
-            # Assert
             self.assertEqual(response.status_code, 302)
             self.assertEqual(response.url, "/account/profile/")
 
@@ -348,17 +328,14 @@ class ViewTest_Concordia(TestCase):
         Test the GET method for route /campaigns
         :return:
         """
-        # Arrange
 
         mock_requests.get.return_value.status_code = 200
         mock_requests.get.return_value.json.return_value = {
             "concordia_data": "abc123456"
         }
 
-        # Act
         response = self.client.get("/campaigns/")
 
-        # Assert
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, template_name="transcriptions/campaigns.html")
 
@@ -369,8 +346,6 @@ class ViewTest_Concordia(TestCase):
         :return:
         """
 
-        # Arrange
-
         # add an item to Campaign
         self.campaign = Campaign(
             title="TextCampaign",
@@ -403,10 +378,8 @@ class ViewTest_Concordia(TestCase):
             status=200,
         )
 
-        # Act
         response = self.client.get("/campaigns/test-slug2/")
 
-        # Assert
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, template_name="transcriptions/campaign.html")
 
@@ -417,8 +390,6 @@ class ViewTest_Concordia(TestCase):
         :return:
         """
 
-        # Arrange
-
         # add an item to Campaign
         self.campaign = Campaign(
             title="TextCampaign",
@@ -451,10 +422,8 @@ class ViewTest_Concordia(TestCase):
             status=200,
         )
 
-        # Act
         response = self.client.get("/campaigns/test-slug2/", {"page": 2})
 
-        # Assert
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, template_name="transcriptions/campaign.html")
 
@@ -464,8 +433,6 @@ class ViewTest_Concordia(TestCase):
         Test GET on route /campaigns/<campaign-slug>/<project-slug>/<item-slug>
         :return:
         """
-
-        # Arrange
 
         # add an item to Campaign
         self.campaign = Campaign(
@@ -509,12 +476,10 @@ class ViewTest_Concordia(TestCase):
             status=200,
         )
 
-        # Act
         response = self.client.get(
             "/campaigns/test-slug/project-slug/item-slug", follow=True
         )
 
-        # Assert
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, template_name="transcriptions/item.html")
 
@@ -523,8 +488,6 @@ class ViewTest_Concordia(TestCase):
         Test GET route /campaigns/export/<slug-value>/ (campaign)
         :return:
         """
-
-        # Arrange
 
         self.campaign = Campaign(
             title="TextCampaign",
@@ -547,10 +510,8 @@ class ViewTest_Concordia(TestCase):
         )
         self.asset.save()
 
-        # Act
         response = self.client.get("/campaigns/exportCSV/slug2/")
 
-        # Assert
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             str(response.content),
@@ -565,8 +526,6 @@ class ViewTest_Concordia(TestCase):
         Test GET route /campaigns/delete/<slug-value>/ (campaign)
         :return:
         """
-
-        # Arrange
 
         # add an item to Campaign
         self.campaign = Campaign(
@@ -597,11 +556,8 @@ class ViewTest_Concordia(TestCase):
             status=200,
         )
 
-        # Act
-
         response = self.client.get("/campaigns/delete/test-slug2", follow=False)
 
-        # Assert
         self.assertEqual(response.status_code, 301)
 
     @responses.activate
@@ -610,8 +566,6 @@ class ViewTest_Concordia(TestCase):
         Test GET route /campaigns/delete/asset/<slug-value>/ (asset)
         :return:
         """
-
-        # Arrange
 
         # add an item to Campaign
         self.campaign = Campaign(
@@ -674,14 +628,11 @@ class ViewTest_Concordia(TestCase):
             status=200,
         )
 
-        # Act
-
         response = self.client.get(
             "/campaigns/%s/delete/asset/%s/" % (self.campaign.slug, self.asset.slug),
             ollow=True,
         )
 
-        # Assert
         self.assertEqual(response.status_code, 302)
 
     @responses.activate
@@ -690,7 +641,7 @@ class ViewTest_Concordia(TestCase):
         This unit test test the POST route /campaigns/<campaign>/asset/<Asset_name>/
         :return:
         """
-        # Arrange
+
         self.login_user()
 
         # create a campaign
@@ -806,13 +757,11 @@ class ViewTest_Concordia(TestCase):
         )
         responses.add(responses.POST, "http://testserver/ws/tag_create/", status=200)
 
-        # Act
         response = self.client.post(
             "/campaigns/Campaign1/asset/Asset1/",
             {"tx": "First Test Transcription", "tags": tag_name, "action": "Save"},
         )
 
-        # Assert
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, "/campaigns/Campaign1/asset/Asset1/")
 
@@ -822,7 +771,7 @@ class ViewTest_Concordia(TestCase):
         This unit test test the POST route /campaigns/<campaign>/asset/<Asset_name>/
         :return:
         """
-        # Arrange
+
         self.login_user()
 
         # create a campaign
@@ -938,13 +887,11 @@ class ViewTest_Concordia(TestCase):
         )
         responses.add(responses.POST, "http://testserver/ws/tag_create/", status=200)
 
-        # Act
         response = self.client.post(
             "/campaigns/Campaign1/asset/Asset1/",
             {"tags": tag_name, "action": "Save", "tagging": "true"},
         )
 
-        # Assert
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, "/campaigns/Campaign1/asset/Asset1/#tab-tag")
 
@@ -956,7 +903,6 @@ class ViewTest_Concordia(TestCase):
         should redirect to the contact us page.
         :return:
         """
-        # Arrange
 
         # create a campaign
         self.campaign = Campaign(
@@ -1105,7 +1051,6 @@ class ViewTest_Concordia(TestCase):
             status=200,
         )
 
-        # Act
         response = self.client.get("/campaigns/Campaign1/asset/Asset1/")
         self.assertEqual(response.status_code, 200)
 
@@ -1123,7 +1068,6 @@ class ViewTest_Concordia(TestCase):
             },
         )
 
-        # Assert
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, "/contact/")
 
@@ -1134,7 +1078,6 @@ class ViewTest_Concordia(TestCase):
         for an anonymous user. This user should not be able to tag
         :return:
         """
-        # Arrange
 
         # create a campaign
         self.campaign = Campaign(
@@ -1283,7 +1226,6 @@ class ViewTest_Concordia(TestCase):
             status=200,
         )
 
-        # Act
         response = self.client.get("/campaigns/Campaign1/asset/Asset1/")
         self.assertEqual(response.status_code, 200)
         hash_ = re.findall(r'value="([0-9a-f]+)"', str(response.content))[0]
@@ -1300,7 +1242,6 @@ class ViewTest_Concordia(TestCase):
             },
         )
 
-        # Assert
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, "/campaigns/Campaign1/asset/Asset1/")
 
@@ -1312,7 +1253,6 @@ class ViewTest_Concordia(TestCase):
         also
         :return:
         """
-        # Arrange
 
         # create a campaign
         self.campaign = Campaign(
@@ -1461,14 +1401,12 @@ class ViewTest_Concordia(TestCase):
 
         tag_name = "Test tag 1"
 
-        # Act
         # post as anonymous user without captcha data
         response = self.client.post(
             "/campaigns/Campaign1/asset/Asset1/",
             {"tx": "First Test Transcription", "tags": tag_name, "action": "Save"},
         )
 
-        # Assert
         self.assertEqual(response.status_code, 200)
 
     @responses.activate
@@ -1480,7 +1418,6 @@ class ViewTest_Concordia(TestCase):
         """
         asset_slug = "Asset1"
 
-        # Arrange
         self.login_user()
 
         # create a campaign
@@ -1602,10 +1539,8 @@ class ViewTest_Concordia(TestCase):
 
         url = "/campaigns/Campaign1/asset/Asset1/"
 
-        # Act
         response = self.client.get(url)
 
-        # Assert
         self.assertEqual(response.status_code, 200)
 
     @responses.activate
@@ -1614,7 +1549,7 @@ class ViewTest_Concordia(TestCase):
         Test the GET route for /campaigns/<campaign>/alternateasset/<Asset_name>/
         :return:
         """
-        # Arrange
+
         self.login_user()
 
         # create a campaign
@@ -1684,13 +1619,11 @@ class ViewTest_Concordia(TestCase):
             status=200,
         )
 
-        # Act
         response = self.client.post(
             "/campaigns/alternateasset/",
             {"campaign": self.campaign.slug, "asset": self.asset.slug},
         )
 
-        # Assert
         self.assertEqual(response.status_code, 200)
 
     @responses.activate
@@ -1703,7 +1636,6 @@ class ViewTest_Concordia(TestCase):
         :return:
         """
 
-        # Arrange
         self.login_user()
         url = "foo.com/bar"
 
@@ -1761,12 +1693,10 @@ class ViewTest_Concordia(TestCase):
             status=200,
         )
 
-        # Act
         response = self.client.post(
             "/campaigns/pageinuse/", {"page_url": url, "user": self.user}
         )
 
-        # Assert
         self.assertEqual(response.status_code, 200)
 
     @responses.activate
@@ -1775,8 +1705,6 @@ class ViewTest_Concordia(TestCase):
         Test GET on route /campaigns/<slug-value> (campaign)
         :return:
         """
-
-        # Arrange
 
         # add an item to Campaign
         self.campaign = Campaign(
@@ -1827,10 +1755,8 @@ class ViewTest_Concordia(TestCase):
             status=200,
         )
 
-        # Act
         response = self.client.get("/campaigns/test-slug2/test-slug2-proj1/")
 
-        # Assert
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, template_name="transcriptions/project.html")
 
@@ -1841,8 +1767,6 @@ class ViewTest_Concordia(TestCase):
         :return:
         """
 
-        # Arrange
-
         # add an item to Campaign
         self.campaign = Campaign(
             title="TextCampaign",
@@ -1892,20 +1816,16 @@ class ViewTest_Concordia(TestCase):
             status=200,
         )
 
-        # Act
         response = self.client.get(
             "/campaigns/test-slug2/test-slug2-proj1/", {"page": 2}
         )
 
-        # Assert
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, template_name="transcriptions/project.html")
-
 
     def test_PublishCampaignView(self):
         """Test for updating status of a campaign"""
 
-        # Arrange
         self.campaign = Campaign(
             title="TextCampaign",
             slug="slug1",
@@ -1933,17 +1853,14 @@ class ViewTest_Concordia(TestCase):
         )
         self.project1.save()
 
-        # Act
         response = self.client.get("/campaigns/publish/campaign/slug1/true/")
 
-        # Assert
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["state"], True)
 
     def test_UnpublishCampaignView(self):
         """Test for updating status of a campaign"""
 
-        # Arrange
         self.campaign = Campaign(
             title="TextCampaign",
             slug="slug1",
@@ -1974,17 +1891,14 @@ class ViewTest_Concordia(TestCase):
         )
         self.project1.save()
 
-        # Act
         response = self.client.get("/campaigns/publish/campaign/slug1/false/")
 
-        # Assert
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["state"], False)
 
     def test_PublishProjectView(self):
         """Test for updating status of a project"""
 
-        # Arrange
         self.campaign = Campaign(
             title="TextCampaign",
             slug="slug1",
@@ -2012,19 +1926,16 @@ class ViewTest_Concordia(TestCase):
         )
         self.project1.save()
 
-        # Act
         response = self.client.get(
             "/campaigns/publish/project/slug1/test-slug2-proj/true/"
         )
 
-        # Assert
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["state"], True)
 
     def test_UnpublishProjectView(self):
         """Test for updating status of a project"""
 
-        # Arrange
         self.campaign = Campaign(
             title="TextCampaign",
             slug="slug1",
@@ -2055,12 +1966,10 @@ class ViewTest_Concordia(TestCase):
         )
         self.project1.save()
 
-        # Act
         response = self.client.get(
             "/campaigns/publish/project/slug1/test-slug2-proj/false/"
         )
 
-        # Assert
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["state"], False)
 
@@ -2071,7 +1980,6 @@ class ViewTest_Concordia(TestCase):
         :return:
         """
 
-        # Arrange
         mock_requests.get.return_value.status_code = 200
         mock_requests.get.return_value.json.return_value = {
             "concordia_data": "abc123456"
@@ -2110,13 +2018,10 @@ class ViewTest_Concordia(TestCase):
         )
         self.asset.save()
 
-        # Act
-
         response = self.client.get(
             "/campaigns/delete/project/test-slug2/test-slug2-proj1/", follow=True
         )
 
-        # Assert
         self.assertEqual(response.status_code, 200)
 
         # verify the collection is not in db

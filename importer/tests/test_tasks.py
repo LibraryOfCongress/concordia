@@ -47,4 +47,3 @@ class CollectionURLNormalizationTests(TestCase):
             ),
             "https://www.loc.gov/collections/branch-rickey-papers/?fo=json&foo=bar",
         )
-

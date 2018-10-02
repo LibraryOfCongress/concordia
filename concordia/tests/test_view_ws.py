@@ -63,14 +63,11 @@ class ViewWSTest_Concordia(TestCase):
         :return:
         """
 
-        # Arrange
         self.login_user()
 
-        # Act
         response = self.client.get("/ws/anonymous_user/")
         response2 = self.client.get("/ws/anonymous_user/")
 
-        # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.content, response2.content)
 
@@ -81,16 +78,13 @@ class ViewWSTest_Concordia(TestCase):
         :return:
         """
 
-        # Arrange
         self.login_user()
 
         profile = UserProfile(user_id=self.user.id)
         profile.save()
 
-        # Act
         response = self.client.get("/ws/user_profile/%s/" % self.user.id)
 
-        # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_PageInUse_post(self):
@@ -100,10 +94,8 @@ class ViewWSTest_Concordia(TestCase):
         :return:
         """
 
-        # Arrange
         self.login_user()
 
-        # Act
         response = self.client.post(
             "/ws/page_in_use/",
             {
@@ -113,7 +105,6 @@ class ViewWSTest_Concordia(TestCase):
             },
         )
 
-        # Assert
         self.assert_post_successful(response)
 
     def test_PageInUse_delete_old_entries_post(self):
@@ -124,7 +115,6 @@ class ViewWSTest_Concordia(TestCase):
         :return:
         """
 
-        # Arrange
         self.login_user()
 
         time_threshold = datetime.now() - timedelta(minutes=10)
@@ -144,7 +134,6 @@ class ViewWSTest_Concordia(TestCase):
         )
         page2.save()
 
-        # Act
         response = self.client.post(
             "/ws/page_in_use/",
             {
@@ -154,7 +143,6 @@ class ViewWSTest_Concordia(TestCase):
             },
         )
 
-        # Assert
         self.assert_post_successful(response)
 
     def test_PageInUse_nologin_post(self):
@@ -164,13 +152,11 @@ class ViewWSTest_Concordia(TestCase):
         :return:
         """
 
-        # Arrange
         # create user
         self.user = User.objects.create(username="foo", email="tester@foo.com")
         self.user.set_password("top_secret")
         self.user.save()
 
-        # Act
         response = self.client.post(
             "/ws/page_in_use/",
             {
@@ -179,7 +165,6 @@ class ViewWSTest_Concordia(TestCase):
             },
         )
 
-        # Assert
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
         # Verify the entry is not in the PagInUse table
@@ -194,13 +179,11 @@ class ViewWSTest_Concordia(TestCase):
         :return:
         """
 
-        # Arrange
         # create user
         self.user = User.objects.create(username="anonymous", email="tester@foo.com")
         self.user.set_password("top_secret")
         self.user.save()
 
-        # Act
         response = self.client.post(
             "/ws/page_in_use/",
             {
@@ -210,7 +193,6 @@ class ViewWSTest_Concordia(TestCase):
             },
         )
 
-        # Assert
         self.assert_post_successful(response)
 
     def assert_post_successful(self, response):
@@ -232,7 +214,6 @@ class ViewWSTest_Concordia(TestCase):
         :return:
         """
 
-        # Arrange
         self.login_user()
 
         # Add two values to database
@@ -240,10 +221,8 @@ class ViewWSTest_Concordia(TestCase):
 
         page_in_use = PageInUse.objects.create(page_url="bar.com/blah", user=self.user)
 
-        # Act
         response = self.client.get("/ws/page_in_use/bar.com/blah/")
 
-        # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertJSONEqual(
             str(response.content, encoding="utf8"),
@@ -261,7 +240,6 @@ class ViewWSTest_Concordia(TestCase):
         :return:
         """
 
-        # Arrange
         self.login_user()
 
         # create second user
@@ -275,12 +253,10 @@ class ViewWSTest_Concordia(TestCase):
 
         PageInUse.objects.create(page_url="bar.com/blah", user=self.user2)
 
-        # Act
         response = self.client.get(
             "/ws/page_in_use_user/%s/%s/" % (self.user.id, test_page_url)
         )
 
-        # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertJSONEqual(
             str(response.content, encoding="utf8"),
@@ -296,7 +272,7 @@ class ViewWSTest_Concordia(TestCase):
         This unit test tests the update of an existing PageInUse using PUT on route ws/page_in_use/url
         :return:
         """
-        # Arrange
+
         self.login_user()
 
         # Add a value to database
@@ -310,14 +286,12 @@ class ViewWSTest_Concordia(TestCase):
 
         change_page_in_use = {"page_url": "foo.com/blah", "user": self.user.id}
 
-        # Act
         response = self.client.put(
             "/ws/page_in_use_update/foo.com/blah/",
             data=json.dumps(change_page_in_use),
             content_type="application/json",
         )
 
-        # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         updated_page = PageInUse.objects.filter(page_url="foo.com/blah")
@@ -330,7 +304,7 @@ class ViewWSTest_Concordia(TestCase):
         This unit test tests the delete of an existing PageInUse using DELETE on route ws/page_in_use_delete/
         :return:
         """
-        # Arrange
+
         self.login_user()
 
         # Add a value to database
@@ -339,10 +313,8 @@ class ViewWSTest_Concordia(TestCase):
 
         current_page_in_use_count = PageInUse.objects.all().count()
 
-        # Act
         response = self.client.delete("/ws/page_in_use_delete/%s/" % "foo.com/blah")
 
-        # Assert
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
         deleted_page_in_use_count = PageInUse.objects.all().count()
@@ -356,7 +328,7 @@ class ViewWSTest_Concordia(TestCase):
         Test getting a Campaign object
         :return:
         """
-        # Arrange
+
         self.login_user()
 
         # create 2 campaigns
@@ -378,10 +350,8 @@ class ViewWSTest_Concordia(TestCase):
         )
         self.campaign2.save()
 
-        # Act
         response = self.client.get("/ws/campaign/slug2/")
 
-        # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertJSONEqual(
             str(response.content, encoding="utf8"),
@@ -404,7 +374,7 @@ class ViewWSTest_Concordia(TestCase):
         Test deleting a Campaign object
         :return:
         """
-        # Arrange
+
         self.login_user()
         self.user.is_superuser = True
         self.user.save()
@@ -430,10 +400,8 @@ class ViewWSTest_Concordia(TestCase):
 
         current_campaign_count = Campaign.objects.all().count()
 
-        # Act
         response = self.client.delete("/ws/campaign_delete/slug2/")
 
-        # Assert
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
         deleted_campaign_count = Campaign.objects.all().count()
@@ -444,7 +412,7 @@ class ViewWSTest_Concordia(TestCase):
         Test getting a Campaign object by id
         :return:
         """
-        # Arrange
+
         self.login_user()
 
         # create 2 campaigns
@@ -466,10 +434,8 @@ class ViewWSTest_Concordia(TestCase):
         )
         self.campaign2.save()
 
-        # Act
         response = self.client.get("/ws/campaign_by_id/%s/" % self.campaign2.id)
 
-        # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertJSONEqual(
             str(response.content, encoding="utf8"),
@@ -570,12 +536,10 @@ class ViewWSTest_Concordia(TestCase):
         )
         self.asset3.save()
 
-        # Act
         response = self.client.get("/ws/item_by_id/item1/")
 
         json_resp = json.loads(response.content)
 
-        # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(json_resp["assets"]), 2)
 
@@ -585,7 +549,6 @@ class ViewWSTest_Concordia(TestCase):
         :return:
         """
 
-        # Arrange
         self.login_user()
 
         # create 2 campaigns
@@ -644,12 +607,10 @@ class ViewWSTest_Concordia(TestCase):
         )
         self.asset3.save()
 
-        # Act
         response = self.client.get("/ws/asset/slug2/")
 
         json_resp = json.loads(response.content)
 
-        # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(json_resp["results"]), 2)
 
@@ -659,7 +620,6 @@ class ViewWSTest_Concordia(TestCase):
         :return:
         """
 
-        # Arrange
         self.login_user()
         self.maxDiff = None
 
@@ -720,18 +680,14 @@ class ViewWSTest_Concordia(TestCase):
             "status": "Edit",
         }
 
-        # Act
-
         asset_update = {"campaign": self.campaign.slug, "slug": self.asset.slug}
 
-        # Act
         response = self.client.put(
             "/ws/asset_update/%s/%s/" % (self.campaign.slug, self.asset.slug),
             data=json.dumps(asset_update),
             content_type="application/json",
         )
 
-        # Assert
         self.assertEqual(
             response.status_code, status.HTTP_403_FORBIDDEN
         )  # user is not superuser
@@ -742,7 +698,6 @@ class ViewWSTest_Concordia(TestCase):
         :return:
         """
 
-        # Arrange
         self.login_user()
         self.user.is_superuser = True
         self.user.save()
@@ -805,18 +760,14 @@ class ViewWSTest_Concordia(TestCase):
             "status": "Edit",
         }
 
-        # Act
-
         asset_update = {"campaign": self.campaign.slug, "slug": self.asset.slug}
 
-        # Act
         response = self.client.put(
             "/ws/asset_update/%s/%s/" % (self.campaign.slug, self.asset.slug),
             data=json.dumps(asset_update),
             content_type="application/json",
         )
 
-        # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         updated_asset = Asset.objects.get(slug=self.asset.slug)
         self.assertEqual(updated_asset.status, Status.INACTIVE)
@@ -827,7 +778,6 @@ class ViewWSTest_Concordia(TestCase):
         :return:
         """
 
-        # Arrange
         self.login_user()
         self.maxDiff = None
 
@@ -924,10 +874,8 @@ class ViewWSTest_Concordia(TestCase):
             "status": "Edit",
         }
 
-        # Act
         response = self.client.get("/ws/asset_by_slug/slug1/Asset3/")
 
-        # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertJSONEqual(force_text(response.content), expected_response)
 
@@ -937,7 +885,6 @@ class ViewWSTest_Concordia(TestCase):
         :return:
         """
 
-        # Arrange
         self.login_user()
 
         # create 2 campaigns
@@ -996,10 +943,8 @@ class ViewWSTest_Concordia(TestCase):
         )
         self.asset3.save()
 
-        # Act
         response = self.client.get("/ws/asset_by_slug/slugxxx/Asset3xxx/")
 
-        # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         self.assertJSONEqual(
@@ -1041,7 +986,6 @@ class ViewWSTest_Concordia(TestCase):
         :return:
         """
 
-        # Arrange
         self.login_user()
 
         # create a second user
@@ -1056,14 +1000,12 @@ class ViewWSTest_Concordia(TestCase):
 
         PageInUse.objects.create(page_url=test_url, user=self.user2)
 
-        # Act
         response = self.client.get(
             "/ws/page_in_use_filter/%s/%s/" % (self.user.username, test_url)
         )
 
         json_resp = json.loads(response.content)
 
-        # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(len(json_resp["results"]) > 0)
 
@@ -1074,7 +1016,6 @@ class ViewWSTest_Concordia(TestCase):
         :return:
         """
 
-        # Arrange
         self.login_user()
 
         # create a second user
@@ -1084,14 +1025,12 @@ class ViewWSTest_Concordia(TestCase):
         self.user2.set_password("top_secret")
         self.user2.save()
 
-        # Act
         response = self.client.get(
             "/ws/page_in_use_filter/%s/%s/" % (self.user.username, test_url)
         )
 
         json_resp = json.loads(response.content)
 
-        # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(json_resp["results"]), 0)
 
@@ -1101,7 +1040,6 @@ class ViewWSTest_Concordia(TestCase):
         :return:
         """
 
-        # Arrange
         self.login_user()
 
         # create a second user
@@ -1158,13 +1096,10 @@ class ViewWSTest_Concordia(TestCase):
         )
         self.transcription2.save()
 
-        # Act
-
         response = self.client.get("/ws/transcription/%s/" % self.asset.id)
 
         json_resp = json.loads(response.content)
 
-        # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(json_resp["text"], t2_text)
 
@@ -1174,7 +1109,6 @@ class ViewWSTest_Concordia(TestCase):
         :return:
         """
 
-        # Arrange
         self.login_user()
 
         # create a second user
@@ -1239,8 +1173,6 @@ class ViewWSTest_Concordia(TestCase):
         )
         self.transcription3.save()
 
-        # Act
-
         response = self.client.get("/ws/transcription_by_user/%s/" % self.user.id)
 
         json_resp = json.loads(response.content)
@@ -1248,7 +1180,6 @@ class ViewWSTest_Concordia(TestCase):
         for trans in json_resp["results"]:
             transcriptions_array.append(trans["text"])
 
-        # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(json_resp["count"], 2)
         self.assertTrue("T3" in transcriptions_array)
@@ -1260,7 +1191,7 @@ class ViewWSTest_Concordia(TestCase):
         Test creating a transcription. route ws/transcription_create/
         :return:
         """
-        # Arrange
+
         self.login_user()
 
         # create a campaign
@@ -1286,7 +1217,6 @@ class ViewWSTest_Concordia(TestCase):
         )
         self.asset.save()
 
-        # Act
         response = self.client.post(
             "/ws/transcription_create/",
             {
@@ -1297,7 +1227,6 @@ class ViewWSTest_Concordia(TestCase):
             },
         )
 
-        # Assert
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         # Get all Transcriptions for the asset
@@ -1324,7 +1253,7 @@ class ViewWSTest_Concordia(TestCase):
         Test creating a tag. route ws/tag_create/
         :return:
         """
-        # Arrange
+
         self.login_user()
 
         # create a campaign
@@ -1350,7 +1279,6 @@ class ViewWSTest_Concordia(TestCase):
         )
         self.asset.save()
 
-        # Act
         response = self.client.post(
             "/ws/tag_create/",
             {
@@ -1362,7 +1290,6 @@ class ViewWSTest_Concordia(TestCase):
             },
         )
 
-        # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_Tag_delete(self):
@@ -1370,7 +1297,7 @@ class ViewWSTest_Concordia(TestCase):
         Test deleting a tag. route ws/tag_/
         :return:
         """
-        # Arrange
+
         self.login_user()
 
         # create a campaign
@@ -1409,7 +1336,6 @@ class ViewWSTest_Concordia(TestCase):
         self.asset_tag_collection.save()
         self.asset_tag_collection.tags.add(self.tag1, self.tag2)
 
-        # Act
         url = "/ws/tag_delete/%s/%s/%s/%s/" % (
             self.campaign.slug,
             self.asset.slug,
@@ -1418,7 +1344,6 @@ class ViewWSTest_Concordia(TestCase):
         )
         response = self.client.delete(url, follow=True)
 
-        # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         # verify only 1 tag in db
@@ -1430,7 +1355,7 @@ class ViewWSTest_Concordia(TestCase):
         Test creating a tag, adding to an asset that already has a tag. route ws/tag_create/
         :return:
         """
-        # Arrange
+
         self.login_user()
 
         # create a campaign
@@ -1456,7 +1381,6 @@ class ViewWSTest_Concordia(TestCase):
         )
         self.asset.save()
 
-        # Act
         response = self.client.post(
             "/ws/tag_create/",
             {
@@ -1479,7 +1403,6 @@ class ViewWSTest_Concordia(TestCase):
             },
         )
 
-        # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_GetTags_get(self):
@@ -1488,7 +1411,6 @@ class ViewWSTest_Concordia(TestCase):
         :return:
         """
 
-        # Arrange
         self.login_user()
 
         # create a second user
@@ -1543,12 +1465,10 @@ class ViewWSTest_Concordia(TestCase):
         self.asset_tag_collection2.save()
         self.asset_tag_collection2.tags.add(self.tag3)
 
-        # Act
         response = self.client.get("/ws/tags/%s/" % self.asset.id)
 
         json_resp = json.loads(response.content)
 
-        # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(json_resp["results"]), 3)
 
@@ -1558,7 +1478,6 @@ class ViewWSTest_Concordia(TestCase):
         :return:
         """
 
-        # Arrange
         self.login_user()
 
         # create a second user
@@ -1590,11 +1509,9 @@ class ViewWSTest_Concordia(TestCase):
         )
         self.asset.save()
 
-        # Act
         response = self.client.get("/ws/tags/%s/" % self.asset.id)
 
         json_resp = json.loads(response.content)
 
-        # Assert
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(json_resp["results"]), 0)
