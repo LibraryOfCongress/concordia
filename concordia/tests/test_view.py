@@ -3,7 +3,6 @@
 import logging
 import re
 import tempfile
-from unittest.mock import Mock, patch
 
 import responses
 from captcha.models import CaptchaStore
@@ -32,7 +31,6 @@ class ViewTest_Concordia(TestCase):
 
     Make sure the postgresql db is available. Run docker-compose up db
     """
-
 
     def login_user(self):
         """
@@ -90,20 +88,11 @@ class ViewTest_Concordia(TestCase):
 
         self.assertTrue(user)
 
-    @patch("concordia.views.requests")
-    def test_AccountProfileView_get(self, mock_requests):
+    def test_AccountProfileView_get(self):
         """
         Test the http GET on route account/profile
         :return:
         """
-
-        mock_requests.get.return_value.status_code = 200
-        mock_requests.get.return_value.json.return_value = {
-            "concordia_data": "abc123456"
-        }
-        mock_requests.get.return_value.content = (
-            b'{"count":0,"next":null,"previous":null,"results":[]}'
-        )
 
         self.login_user()
 
@@ -142,8 +131,7 @@ class ViewTest_Concordia(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, template_name="profile.html")
 
-    @patch("concordia.views.requests")
-    def test_AccountProfileView_post(self, mock_requests):
+    def test_AccountProfileView_post(self):
         """
         This unit test tests the post entry for the route account/profile
         :param self:
@@ -153,14 +141,6 @@ class ViewTest_Concordia(TestCase):
         test_email = "tester@foo.com"
 
         self.login_user()
-
-        mock_requests.get.return_value.status_code = 200
-        mock_requests.get.return_value.json.return_value = {
-            "concordia_data": "abc123456"
-        }
-        mock_requests.get.return_value.content = (
-            b'{"count":0,"next":null,"previous":null,"results":[]}'
-        )
 
         response = self.client.post(
             "/account/profile/",
@@ -179,8 +159,7 @@ class ViewTest_Concordia(TestCase):
         updated_user = User.objects.get(email=test_email)
         self.assertEqual(updated_user.email, test_email)
 
-    @patch("concordia.views.requests")
-    def test_AccountProfileView_post_invalid_form(self, mock_requests):
+    def test_AccountProfileView_post_invalid_form(self):
         """
         This unit test tests the post entry for the route account/profile but submits an invalid form
         :param self:
@@ -188,13 +167,6 @@ class ViewTest_Concordia(TestCase):
         """
 
         self.login_user()
-        mock_requests.get.return_value.status_code = 200
-        mock_requests.get.return_value.json.return_value = {
-            "concordia_data": "abc123456"
-        }
-        mock_requests.get.return_value.content = (
-            b'{"count":0,"next":null,"previous":null,"results":[]}'
-        )
 
         response = self.client.post("/account/profile/", {"first_name": "Jimmy"})
 
@@ -204,8 +176,7 @@ class ViewTest_Concordia(TestCase):
         updated_user = User.objects.get(id=self.user.id)
         self.assertEqual(updated_user.first_name, "")
 
-    @patch("concordia.views.requests")
-    def test_AccountProfileView_post_new_password(self, mock_requests):
+    def test_AccountProfileView_post_new_password(self):
         """
         This unit test tests the post entry for the route account/profile with new password
         :param self:
@@ -213,13 +184,6 @@ class ViewTest_Concordia(TestCase):
         """
 
         self.login_user()
-        mock_requests.get.return_value.status_code = 200
-        mock_requests.get.return_value.json.return_value = {
-            "concordia_data": "abc123456"
-        }
-        mock_requests.get.return_value.content = (
-            b'{"count":0,"next":null,"previous":null,"results":[]}'
-        )
 
         test_email = "tester@foo.com"
 
@@ -246,8 +210,7 @@ class ViewTest_Concordia(TestCase):
 
         self.assertTrue(login2)
 
-    @patch("concordia.views.requests")
-    def test_AccountProfileView_post_with_image(self, mock_requests):
+    def test_AccountProfileView_post_with_image(self):
         """
         This unit test tests the post entry for the
         route account/profile with new image file
@@ -256,13 +219,6 @@ class ViewTest_Concordia(TestCase):
         """
 
         self.login_user()
-        mock_requests.get.return_value.status_code = 200
-        mock_requests.get.return_value.json.return_value = {
-            "concordia_data": "abc123456"
-        }
-        mock_requests.get.return_value.content = (
-            b'{"count":0,"next":null,"previous":null,"results":[]}'
-        )
 
         pw = "!Abc12345"
 
@@ -293,17 +249,11 @@ class ViewTest_Concordia(TestCase):
 
             self.assertEqual(len(profile), existing_userprofile_count + 1)
 
-    @patch("concordia.views.requests")
-    def test_concordiaView(self, mock_requests):
+    def test_concordiaView(self):
         """
         Test the GET method for route /campaigns
         :return:
         """
-
-        mock_requests.get.return_value.status_code = 200
-        mock_requests.get.return_value.json.return_value = {
-            "concordia_data": "abc123456"
-        }
 
         response = self.client.get("/campaigns/")
 
@@ -352,7 +302,9 @@ class ViewTest_Concordia(TestCase):
         response = self.client.get("/campaigns/test-slug2/")
 
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, template_name="transcriptions/campaign.html")
+        self.assertTemplateUsed(
+            response, template_name="transcriptions/campaign_detail.html"
+        )
 
     @responses.activate
     def test_concordiaCampaignView_get_page2(self):
@@ -396,7 +348,9 @@ class ViewTest_Concordia(TestCase):
         response = self.client.get("/campaigns/test-slug2/", {"page": 2})
 
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, template_name="transcriptions/campaign.html")
+        self.assertTemplateUsed(
+            response, template_name="transcriptions/campaign_detail.html"
+        )
 
     @responses.activate
     def test_ConcordiaItemView_get(self):
@@ -490,557 +444,6 @@ class ViewTest_Concordia(TestCase):
             "TextCampaign,TestAsset,Asset Description,"
             "http://www.foo.com/1/2/3,,\\r\\n'",
         )
-
-    @responses.activate
-    def test_DeleteCampaign_get(self):
-        """
-        Test GET route /campaigns/delete/<slug-value>/ (campaign)
-        :return:
-        """
-
-        # add an item to Campaign
-        self.campaign = Campaign(
-            title="TextCampaign",
-            slug="test-slug2",
-            description="Campaign Description",
-            metadata={"key": "val1"},
-            status=Status.EDIT,
-        )
-        self.campaign.save()
-
-        self.asset = Asset(
-            title="TestAsset",
-            slug="test-slug2",
-            description="Asset Description",
-            media_url="http://www.foo.com/1/2/3",
-            media_type=MediaType.IMAGE,
-            campaign=self.campaign,
-            metadata={"key": "val2"},
-            status=Status.EDIT,
-        )
-        self.asset.save()
-
-        # Mock REST api calls
-        responses.add(
-            responses.DELETE,
-            "http://testserver/ws/campaign_delete/%s/" % (self.campaign.slug,),
-            status=200,
-        )
-
-        response = self.client.get("/campaigns/delete/test-slug2", follow=False)
-
-        self.assertEqual(response.status_code, 301)
-
-    @responses.activate
-    def test_DeleteAsset_get(self):
-        """
-        Test GET route /campaigns/delete/asset/<slug-value>/ (asset)
-        :return:
-        """
-
-        # add an item to Campaign
-        self.campaign = Campaign(
-            title="TextCampaign",
-            slug="test-campaign-slug",
-            description="Campaign Description",
-            metadata={"key": "val1"},
-            status=Status.EDIT,
-        )
-        self.campaign.save()
-
-        self.asset = Asset(
-            title="TestAsset",
-            slug="test-asset-slug",
-            description="Asset Description",
-            media_url="http://www.foo.com/1/2/3",
-            media_type=MediaType.IMAGE,
-            campaign=self.campaign,
-            metadata={"key": "val2"},
-            status=Status.EDIT,
-        )
-        self.asset.save()
-
-        self.asset = Asset(
-            title="TestAsset1",
-            slug="test-asset-slug1",
-            description="Asset Description1",
-            media_url="http://www.foo1.com/1/2/3",
-            media_type=MediaType.IMAGE,
-            campaign=self.campaign,
-            metadata={"key": "val1"},
-            status=Status.EDIT,
-        )
-        self.asset.save()
-
-        # Mock REST calls
-        campaign_json = {
-            "id": self.campaign.id,
-            "slug": self.campaign.slug,
-            "title": "TextCampaign",
-            "description": "Campaign Description",
-            "s3_storage": True,
-            "start_date": None,
-            "end_date": None,
-            "status": Status.EDIT,
-            "assets": [],
-        }
-
-        responses.add(
-            responses.GET,
-            "http://testserver/ws/campaign/%s/" % (self.campaign.slug,),
-            json=campaign_json,
-            status=200,
-        )
-
-        responses.add(
-            responses.PUT,
-            "http://testserver/ws/asset_update/%s/%s/"
-            % (self.campaign.slug, self.asset.slug),
-            status=200,
-        )
-
-        response = self.client.get(
-            "/campaigns/%s/delete/asset/%s/" % (self.campaign.slug, self.asset.slug),
-            ollow=True,
-        )
-
-        self.assertEqual(response.status_code, 302)
-
-    @responses.activate
-    def test_ConcordiaAssetView_post(self):
-        """
-        This unit test test the POST route /campaigns/<campaign>/asset/<Asset_name>/
-        :return:
-        """
-
-        self.login_user()
-
-        # create a campaign
-        self.campaign = Campaign(
-            title="TestCampaign",
-            slug="Campaign1",
-            description="Campaign Description",
-            metadata={"key": "val1"},
-            status=Status.EDIT,
-        )
-        self.campaign.save()
-
-        # create an Asset
-        asset_slug = "Asset1"
-
-        self.asset = Asset(
-            title="TestAsset",
-            slug=asset_slug,
-            description="Asset Description",
-            media_url="http://www.foo.com/1/2/3",
-            media_type=MediaType.IMAGE,
-            campaign=self.campaign,
-            metadata={"key": "val2"},
-            status=Status.EDIT,
-        )
-        self.asset.save()
-
-        # add a Transcription object
-        self.transcription = Transcription(
-            asset=self.asset,
-            user_id=self.user.id,
-            text="Test transcription 1",
-            status=Status.EDIT,
-        )
-        self.transcription.save()
-
-        tag_name = "Test tag 1"
-
-        # mock REST requests
-        asset_by_slug_response = {
-            "id": self.asset.id,
-            "title": "TestAsset",
-            "slug": asset_slug,
-            "description": "mss859430177",
-            "media_url": "https://s3.us-east-2.amazonaws.com/chc-collections/test_s3/mss859430177/1.jpg",
-            "media_type": MediaType.IMAGE,
-            "campaign": {"slug": "Campaign1"},
-            "project": None,
-            "sequence": 1,
-            "metadata": {"key": "val2"},
-            "status": Status.EDIT,
-        }
-
-        transcription_json = {
-            "asset": {
-                "title": "",
-                "slug": "",
-                "description": "",
-                "media_url": "",
-                "media_type": None,
-                "campaign": {
-                    "slug": "",
-                    "title": "",
-                    "description": "",
-                    "s3_storage": False,
-                    "start_date": None,
-                    "end_date": None,
-                    "status": None,
-                    "assets": [],
-                },
-                "project": None,
-                "sequence": None,
-                "metadata": None,
-                "status": None,
-            },
-            "user_id": None,
-            "text": "",
-            "status": None,
-        }
-
-        tag_json = {"results": []}
-
-        responses.add(
-            responses.GET,
-            "http://testserver/ws/page_in_use_filter/tester//campaigns/Campaign1/asset/Asset1//",
-            json={"count": 0, "results": []},
-            status=200,
-        )
-
-        responses.add(
-            responses.GET,
-            "http://testserver/ws/asset_by_slug/Campaign1/Asset1/",
-            json=asset_by_slug_response,
-            status=200,
-        )
-
-        responses.add(
-            responses.GET,
-            "http://testserver/ws/transcription/%s/" % (self.asset.id,),
-            json=transcription_json,
-            status=200,
-        )
-
-        responses.add(
-            responses.GET,
-            "http://testserver/ws/tags/%s/" % (self.asset.id,),
-            json=tag_json,
-            status=200,
-        )
-
-        responses.add(
-            responses.POST, "http://testserver/ws/transcription_create/", status=200
-        )
-        responses.add(responses.POST, "http://testserver/ws/tag_create/", status=200)
-
-        response = self.client.post(
-            "/campaigns/Campaign1/asset/Asset1/",
-            {"tx": "First Test Transcription", "tags": tag_name, "action": "Save"},
-        )
-
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, "/campaigns/Campaign1/asset/Asset1/")
-
-    @responses.activate
-    def test_ConcordiaAssetView_post_with_just_tagging(self):
-        """
-        This unit test test the POST route /campaigns/<campaign>/asset/<Asset_name>/
-        :return:
-        """
-
-        self.login_user()
-
-        # create a campaign
-        self.campaign = Campaign(
-            title="TestCampaign",
-            slug="Campaign1",
-            description="Campaign Description",
-            metadata={"key": "val1"},
-            status=Status.EDIT,
-        )
-        self.campaign.save()
-
-        # create an Asset
-        asset_slug = "Asset1"
-
-        self.asset = Asset(
-            title="TestAsset",
-            slug=asset_slug,
-            description="Asset Description",
-            media_url="http://www.foo.com/1/2/3",
-            media_type=MediaType.IMAGE,
-            campaign=self.campaign,
-            metadata={"key": "val2"},
-            status=Status.EDIT,
-        )
-        self.asset.save()
-
-        # add a Transcription object
-        self.transcription = Transcription(
-            asset=self.asset,
-            user_id=self.user.id,
-            text="Test transcription 1",
-            status=Status.EDIT,
-        )
-        self.transcription.save()
-
-        tag_name = "Test tag 1"
-
-        # mock REST requests
-        asset_by_slug_response = {
-            "id": self.asset.id,
-            "title": "TestAsset",
-            "slug": asset_slug,
-            "description": "mss859430177",
-            "media_url": "https://s3.us-east-2.amazonaws.com/chc-collections/test_s3/mss859430177/1.jpg",
-            "media_type": MediaType.IMAGE,
-            "campaign": {"slug": "Campaign1"},
-            "project": None,
-            "sequence": 1,
-            "metadata": {"key": "val2"},
-            "status": Status.EDIT,
-        }
-
-        transcription_json = {
-            "asset": {
-                "title": "",
-                "slug": "",
-                "description": "",
-                "media_url": "",
-                "media_type": None,
-                "campaign": {
-                    "slug": "",
-                    "title": "",
-                    "description": "",
-                    "s3_storage": False,
-                    "start_date": None,
-                    "end_date": None,
-                    "status": None,
-                    "assets": [],
-                },
-                "project": None,
-                "sequence": None,
-                "metadata": None,
-                "status": None,
-            },
-            "user_id": None,
-            "text": "",
-            "status": None,
-        }
-
-        tag_json = {"results": []}
-
-        responses.add(
-            responses.GET,
-            "http://testserver/ws/page_in_use_filter/tester//campaigns/Campaign1/asset/Asset1//",
-            json={"count": 0, "results": []},
-            status=200,
-        )
-
-        responses.add(
-            responses.GET,
-            "http://testserver/ws/asset_by_slug/Campaign1/Asset1/",
-            json=asset_by_slug_response,
-            status=200,
-        )
-
-        responses.add(
-            responses.GET,
-            "http://testserver/ws/transcription/%s/" % (self.asset.id,),
-            json=transcription_json,
-            status=200,
-        )
-
-        responses.add(
-            responses.GET,
-            "http://testserver/ws/tags/%s/" % (self.asset.id,),
-            json=tag_json,
-            status=200,
-        )
-
-        responses.add(
-            responses.POST, "http://testserver/ws/transcription_create/", status=200
-        )
-        responses.add(responses.POST, "http://testserver/ws/tag_create/", status=200)
-
-        response = self.client.post(
-            "/campaigns/Campaign1/asset/Asset1/",
-            {"tags": tag_name, "action": "Save", "tagging": "true"},
-        )
-
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, "/campaigns/Campaign1/asset/Asset1/#tab-tag")
-
-    @responses.activate
-    def test_ConcordiaAssetView_post_contact_community_manager(self):
-        """
-        This unit test test the POST route /campaigns/<campaign>/asset/<Asset_name>/
-        for an anonymous user. Clicking the contact community manager button
-        should redirect to the contact us page.
-        :return:
-        """
-
-        # create a campaign
-        self.campaign = Campaign(
-            title="TestCampaign",
-            slug="Campaign1",
-            description="Campaign Description",
-            metadata={"key": "val1"},
-            status=Status.EDIT,
-        )
-        self.campaign.save()
-
-        asset_slug = "Asset1"
-
-        self.asset = Asset(
-            title="TestAsset",
-            slug=asset_slug,
-            description="Asset Description",
-            media_url="http://www.foo.com/1/2/3",
-            media_type=MediaType.IMAGE,
-            campaign=self.campaign,
-            metadata={"key": "val2"},
-            status=Status.EDIT,
-        )
-        self.asset.save()
-
-        # create anonymous user
-        self.anon_user = User.objects.create(
-            username="anonymous", email="tester@foo.com"
-        )
-        self.anon_user.set_password("blah_anonymous!")
-        self.anon_user.save()
-
-        # add a Transcription object
-        self.transcription = Transcription(
-            asset=self.asset,
-            user_id=self.anon_user.id,
-            text="Test transcription 1",
-            status=Status.EDIT,
-        )
-        self.transcription.save()
-
-        tag_name = "Test tag 1"
-
-        # mock REST requests
-        asset_by_slug_response = {
-            "id": self.asset.id,
-            "title": "TestAsset",
-            "slug": asset_slug,
-            "description": "mss859430177",
-            "media_url": "https://s3.us-east-2.amazonaws.com/chc-collections/test_s3/mss859430177/1.jpg",
-            "media_type": MediaType.IMAGE,
-            "campaign": {"slug": "Campaign1"},
-            "project": None,
-            "sequence": 1,
-            "metadata": {"key": "val2"},
-            "status": Status.EDIT,
-        }
-
-        transcription_json = {
-            "asset": {
-                "title": "",
-                "slug": "",
-                "description": "",
-                "media_url": "",
-                "media_type": None,
-                "campaign": {
-                    "slug": "",
-                    "title": "",
-                    "description": "",
-                    "s3_storage": False,
-                    "start_date": None,
-                    "end_date": None,
-                    "status": None,
-                    "assets": [],
-                },
-                "project": None,
-                "sequence": None,
-                "metadata": None,
-                "status": None,
-            },
-            "user_id": None,
-            "text": "",
-            "status": None,
-        }
-
-        anonymous_json = {
-            "id": self.anon_user.id,
-            "username": "anonymous",
-            "password": "pbkdf2_sha256$100000$6lht1V74YYXZ$fagq9FeSFlDfqqikuBRGMcxl1GaBvC7tIO7fiiAkReo=",
-            "first_name": "",
-            "last_name": "",
-            "email": "anonymous@anonymous.com",
-            "is_staff": False,
-            "is_active": True,
-            "date_joined": "2018-08-28T19:05:45.653687Z",
-        }
-
-        tag_json = {"results": []}
-
-        self.add_page_in_use_mocks(responses)
-
-        responses.add(
-            responses.GET,
-            "http://testserver/ws/page_in_use_filter/AnonymousUser//campaigns/Campaign1/asset/Asset1//",
-            json={"count": 0, "results": []},
-            status=200,
-        )
-
-        responses.add(
-            responses.GET,
-            "http://testserver/ws/asset_by_slug/Campaign1/Asset1/",
-            json=asset_by_slug_response,
-            status=200,
-        )
-
-        responses.add(
-            responses.GET,
-            "http://testserver/ws/transcription/%s/" % (self.asset.id,),
-            json=transcription_json,
-            status=200,
-        )
-
-        responses.add(
-            responses.GET,
-            "http://testserver/ws/tags/%s/" % (self.asset.id,),
-            json=tag_json,
-            status=200,
-        )
-
-        responses.add(
-            responses.POST, "http://testserver/ws/transcription_create/", status=200
-        )
-        responses.add(responses.POST, "http://testserver/ws/tag_create/", status=200)
-
-        responses.add(
-            responses.PUT,
-            "http://testserver/ws/page_in_use_update/%s//campaigns/Campaign1/asset/Asset1//"
-            % (self.anon_user.id,),
-            status=200,
-        )
-
-        responses.add(
-            responses.GET,
-            "http:////testserver/ws/anonymous_user/",
-            json=anonymous_json,
-            status=200,
-        )
-
-        response = self.client.get("/campaigns/Campaign1/asset/Asset1/")
-        self.assertEqual(response.status_code, 200)
-
-        hash_ = re.findall(r'value="([0-9a-f]+)"', str(response.content))[0]
-        captcha_response = CaptchaStore.objects.get(hashkey=hash_).response
-
-        response = self.client.post(
-            "/campaigns/Campaign1/asset/Asset1/",
-            {
-                "tx": "First Test Transcription 1",
-                "tags": "",
-                "action": "contact a manager",
-                "captcha_0": hash_,
-                "captcha_1": captcha_response,
-            },
-        )
-
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, "/contact/")
 
     @responses.activate
     def test_ConcordiaAssetView_post_anonymous_happy_path(self):
@@ -1828,173 +1231,3 @@ class ViewTest_Concordia(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["state"], True)
-
-    def test_UnpublishCampaignView(self):
-        """Test for updating status of a campaign"""
-
-        self.campaign = Campaign(
-            title="TextCampaign",
-            slug="slug1",
-            description="Campaign Description",
-            metadata={"key": "val1"},
-            status=Status.EDIT,
-            published=True,
-        )
-        self.campaign.save()
-
-        self.project = Project(
-            title="TextCampaign project",
-            slug="test-slug2-proj",
-            metadata={"key": "val1"},
-            status=Status.EDIT,
-            campaign=self.campaign,
-            published=True,
-        )
-        self.project.save()
-
-        self.project1 = Project(
-            title="TextCampaign project 1",
-            slug="test-slug2-proj1",
-            metadata={"key": "val1"},
-            status=Status.EDIT,
-            campaign=self.campaign,
-            published=True,
-        )
-        self.project1.save()
-
-        response = self.client.get("/campaigns/publish/campaign/slug1/false/")
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["state"], False)
-
-    def test_PublishProjectView(self):
-        """Test for updating status of a project"""
-
-        self.campaign = Campaign(
-            title="TextCampaign",
-            slug="slug1",
-            description="Campaign Description",
-            metadata={"key": "val1"},
-            status=Status.EDIT,
-        )
-        self.campaign.save()
-
-        self.project = Project(
-            title="TextCampaign project",
-            slug="test-slug2-proj",
-            metadata={"key": "val1"},
-            status=Status.EDIT,
-            campaign=self.campaign,
-        )
-        self.project.save()
-
-        self.project1 = Project(
-            title="TextCampaign project1",
-            slug="test-slug2-proj1",
-            metadata={"key": "val1"},
-            status=Status.EDIT,
-            campaign=self.campaign,
-        )
-        self.project1.save()
-
-        response = self.client.get(
-            "/campaigns/publish/project/slug1/test-slug2-proj/true/"
-        )
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["state"], True)
-
-    def test_UnpublishProjectView(self):
-        """Test for updating status of a project"""
-
-        self.campaign = Campaign(
-            title="TextCampaign",
-            slug="slug1",
-            description="Campaign Description",
-            metadata={"key": "val1"},
-            status=Status.EDIT,
-            published=True,
-        )
-        self.campaign.save()
-
-        self.project = Project(
-            title="TextCampaign project",
-            slug="test-slug2-proj",
-            metadata={"key": "val1"},
-            status=Status.EDIT,
-            campaign=self.campaign,
-            published=True,
-        )
-        self.project.save()
-
-        self.project1 = Project(
-            title="TextCampaign project1",
-            slug="test-slug2-proj1",
-            metadata={"key": "val1"},
-            status=Status.EDIT,
-            campaign=self.campaign,
-            published=True,
-        )
-        self.project1.save()
-
-        response = self.client.get(
-            "/campaigns/publish/project/slug1/test-slug2-proj/false/"
-        )
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["state"], False)
-
-    @patch("concordia.views.requests")
-    def test_DeleteProject_get(self, mock_requests):
-        """
-        Test GET route /transcribe/delete/<slug-value>/<slug-value>/ (project)
-        :return:
-        """
-
-        mock_requests.get.return_value.status_code = 200
-        mock_requests.get.return_value.json.return_value = {
-            "concordia_data": "abc123456"
-        }
-
-        # add an item to Collection
-        self.collection = Campaign(
-            title="TextCollection",
-            slug="test-slug2",
-            description="Collection Description",
-            metadata={"key": "val1"},
-            status=Status.EDIT,
-        )
-        self.collection.save()
-
-        self.subcollection1 = Project(
-            title="TextCollection sub collection1",
-            slug="test-slug2-proj1",
-            metadata={"key": "val1"},
-            status=Status.EDIT,
-            collection=self.collection,
-            published=True,
-        )
-        self.subcollection1.save()
-
-        self.asset = Asset(
-            title="TestAsset",
-            slug="test-slug2",
-            description="Asset Description",
-            media_url="http://www.foo.com/1/2/3",
-            media_type=MediaType.IMAGE,
-            collection=self.collection,
-            subcollection=self.subcollection1,
-            metadata={"key": "val2"},
-            status=Status.EDIT,
-        )
-        self.asset.save()
-
-        response = self.client.get(
-            "/campaigns/delete/project/test-slug2/test-slug2-proj1/", follow=True
-        )
-
-        self.assertEqual(response.status_code, 200)
-
-        # verify the collection is not in db
-        subcollections = Project.objects.all()
-        self.assertEqual(len(subcollections), 0)
