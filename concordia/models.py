@@ -231,7 +231,7 @@ class Transcription(models.Model):
 
 class PageInUse(models.Model):
     page_url = models.CharField(max_length=256)
-    user = models.ForeignKey(User, models.DO_NOTHING)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     created_on = models.DateTimeField(editable=False)
     updated_on = models.DateTimeField()
 
