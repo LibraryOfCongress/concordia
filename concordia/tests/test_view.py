@@ -1125,7 +1125,7 @@ class ViewTest_Concordia(TestCase):
 
         # Assert
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, "/contact/?pre_populate=true")
+        self.assertEqual(response.url, "/contact/")
 
     @responses.activate
     def test_ConcordiaAssetView_post_anonymous_happy_path(self):

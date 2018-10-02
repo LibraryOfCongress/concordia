@@ -1,9 +1,9 @@
-import html
 import json
 import os
 import time
 from datetime import datetime
 from logging import getLogger
+from smtplib import SMTPException
 
 import markdown
 from django.conf import settings
@@ -218,7 +218,7 @@ class ConcordiaItemView(ListView):
             slug=self.kwargs["slug"],
         )
 
-        asset_qs = self.item.asset_set.all()
+        asset_qs = self.item.asset_set.all().order_by("sequence")
         asset_qs = asset_qs.select_related(
             "item__project__campaign", "item__project", "item"
         )
@@ -722,41 +722,47 @@ class ContactUsView(FormView):
         return res
 
     def get_initial(self):
-        if self.request.GET.get("pre_populate"):
-            return {
-                "email": (
-                    None if self.request.user.is_anonymous else self.request.user.email
-                ),
-                "link": (
-                    self.request.META.get("HTTP_REFERER")
-                ),
-            }
+        initial = super().get_initial()
 
-    def post(self, *args, **kwargs):
-        email = html.escape(self.request.POST.get("email") or "")
-        subject = html.escape(self.request.POST.get("subject") or "")
-        category = html.escape(self.request.POST.get("category") or "")
-        link = html.escape(self.request.POST.get("link") or "")
-        story = html.escape(self.request.POST.get("story") or "")
+        if (
+            self.request.user.is_authenticated
+            and self.request.user.username != "anonymous"
+        ):
+            initial["email"] = self.request.user.email
 
-        t = loader.get_template("emails/contact_us_email.txt")
-        send_mail(
-            subject,
-            t.render(
-                {
-                    "from_email": email,
-                    "subject": subject,
-                    "category": category,
-                    "link": link,
-                    "story": story,
-                }
-            ),
-            getattr(settings, "DEFAULT_FROM_EMAIL"),
-            [getattr(settings, "DEFAULT_TO_EMAIL")],
-            fail_silently=True,
-        )
+        initial["referrer"] = self.request.META.get("HTTP_REFERER")
 
-        messages.success(self.request, "Your contact message has been sent...")
+        return initial
+
+    def form_valid(self, form):
+        text_template = loader.get_template("emails/contact_us_email.txt")
+        text_message = text_template.render(form.cleaned_data)
+
+        html_template = loader.get_template("emails/contact_us_email.html")
+        html_message = html_template.render(form.cleaned_data)
+
+        try:
+            send_mail(
+                "Contact Us: %(subject)s" % form.cleaned_data,
+                message=text_message,
+                html_message=html_message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[settings.DEFAULT_TO_EMAIL],
+            )
+
+            messages.success(self.request, "Your contact message has been sent...")
+        except SMTPException as exc:
+            logger.error(
+                "Unable to send contact message to %s: %s",
+                settings.DEFAULT_TO_EMAIL,
+                exc,
+                exc_info=True,
+                extra={"data": form.cleaned_data},
+            )
+            messages.error(
+                self.request,
+                "Your message could not be sent. Our support team has been notified.",
+            )
 
         return redirect("contact")
 
@@ -843,4 +849,3 @@ class ReportCampaignView(TemplateView):
             project.transcription_statuses.insert(
                 0, ("Not Started", project.asset_count - total_statuses)
             )
-

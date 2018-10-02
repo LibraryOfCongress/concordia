@@ -56,9 +56,7 @@ h1 {
 h1.header-text {
     font-family: 'Open Sans', sans-serif;
     font-size: 2.5rem;
-    line-height: 125%;
     font-weight: normal;
-    text-transform: uppercase;
     color: black;
 }
 
@@ -67,7 +65,6 @@ h1.header-text a {
 }
 
 h2 {
-    font-family: 'Roboto Slab', serif;
     font-size: 1.5rem;
     line-height: 125%;
     font-weight: bold;
@@ -76,25 +73,14 @@ h2 {
 }
 
 h2.offwhite {
-    font-family: 'Roboto Slab', serif;
-    font-size: 1.5rem;
-    line-height: 125%;
-    font-weight: bold;
-    text-transform: uppercase;
     color: var(--text-color-offwhite);
 }
 
 h2 small {
-    font-family: 'Roboto Slab', serif;
-    font-size: 1.5rem;
-    line-height: 125%;
-    font-weight: normal;
-    text-transform: uppercase;
     color: var(--text-color-primary);
 }
 
 h3 {
-    font-family: 'Roboto Slab', serif;
     font-size: 1.25rem;
     line-height: 125%;
     font-weight: bold;
@@ -120,7 +106,6 @@ h5 {
 h5.small {
     font-family: 'Open Sans', sans-serif;
     font-size: 0.75rem;
-    line-height: 125%;
     font-weight: normal;
     text-transform: uppercase;
 }
@@ -131,14 +116,6 @@ h6 {
     line-height: 125%;
     font-weight: bold;
     color: var(--text-color-primary);
-}
-
-.p-latestblog {
-    font-size: 0.875rem;
-}
-
-.font-weight-bolder {
-    font-weight: 600;
 }
 
 .offwhite-text {
@@ -155,13 +132,6 @@ h6 {
 
 .gray-text {
     color: var(--text-color-primary);
-}
-
-h2.contribute-breadcrumb {
-    font-family: 'Open Sans', sans-serif;
-    font-size: 0.875rem;
-    font-weight: normal;
-    color: var(--text-color-offwhite);
 }
 
 a:hover {
@@ -244,10 +214,6 @@ a.campaign-image-link:hover {
     color: var(--primary-color);
 }
 
-#transcription-state-div i {
-    font-size: 0.75rem;
-}
-
 i.tx-edit {
     color: var(--text-color-offwhite);
 }
@@ -286,39 +252,6 @@ p.hero-secondary.offwhite-text {
     font-family: 'Open Sans', sans-serif;
     font-size: 1.125rem;
     color: var(--text-color-offwhite);
-}
-
-.profile_edit {
-    color: var(--primary-color);
-    cursor: pointer;
-}
-
-.profile_edit:hover {
-    color: var(--primary-color-hover);
-}
-
-.profile-label {
-    font-family: 'Roboto Slab', serif;
-    font-size: 1.25rem;
-    line-height: 125%;
-    font-weight: bold;
-    color: var(--secondary-color);
-}
-
-.profile-attribute {
-    border-bottom: 1px solid rgba(153, 153, 153, 1);
-}
-
-thead td {
-    font-weight: bold;
-}
-
-table td {
-    color: var(--text-color-primary);
-}
-
-table.table-dark td {
-    color: inherit;
 }
 
 .bg-offwhite {
@@ -376,6 +309,7 @@ table.table-dark td {
     background-color: var(--primary-color);
 }
 
+/* FIXME: stop fighting Bootstrap's model for containers and rows */
 .row {
     margin-right: 0;
     margin-left: 0;
@@ -537,76 +471,6 @@ div.nav-secondary {
     margin-left: 2rem !important;
 }
 
-.margin-half,
-.mxy-half {
-    margin: 1rem !important;
-}
-
-.mx-half {
-    margin-right: 1rem !important;
-    margin-left: 1rem !important;
-}
-
-.my-half {
-    margin-top: 1rem !important;
-    margin-bottom: 1rem !important;
-}
-
-.margin-top-half,
-.mt-half {
-    margin-top: 1rem !important;
-}
-
-.margin-right-half,
-.mr-half {
-    margin-right: 1rem !important;
-}
-
-.margin-bottom-half,
-.mb-half {
-    margin-bottom: 1rem !important;
-}
-
-.margin-left-half,
-.ml-half {
-    margin-left: 1rem !important;
-}
-
-.margin-quarter,
-.mxy-quarter {
-    margin: 0.5rem !important;
-}
-
-.mx-quarter {
-    margin-right: 0.5rem !important;
-    margin-left: 0.5rem !important;
-}
-
-.my-quarter {
-    margin-top: 0.5rem !important;
-    margin-bottom: 0.5rem !important;
-}
-
-.margin-top-quarter,
-.mt-quarter {
-    margin-top: 0.5rem !important;
-}
-
-.margin-right-quarter,
-.mr-quarter {
-    margin-right: 0.5rem !important;
-}
-
-.margin-bottom-quarter,
-.mb-quarter {
-    margin-bottom: 0.5rem !important;
-}
-
-.margin-left-quarter,
-.ml-quarter {
-    margin-left: 0.5rem !important;
-}
-
 .padding-default,
 .pxy-default {
     padding: 2rem !important;
@@ -640,76 +504,6 @@ div.nav-secondary {
 .padding-left-default,
 .pl-default {
     padding-left: 2rem !important;
-}
-
-.padding-half,
-.pxy-half {
-    padding: 1rem !important;
-}
-
-.px-half {
-    padding-right: 1rem !important;
-    padding-left: 1rem !important;
-}
-
-.py-half {
-    padding-top: 1rem !important;
-    padding-bottom: 1rem !important;
-}
-
-.padding-top-half,
-.pt-half {
-    padding-top: 1rem !important;
-}
-
-.padding-right-half,
-.pr-half {
-    padding-right: 1rem !important;
-}
-
-.padding-bottom-half,
-.pb-half {
-    padding-bottom: 1rem !important;
-}
-
-.padding-left-half,
-.pl-half {
-    padding-left: 1rem !important;
-}
-
-.padding-quarter,
-.pxy-quarter {
-    padding: 0.5rem !important;
-}
-
-.px-quarter {
-    padding-right: 0.5rem !important;
-    padding-left: 0.5rem !important;
-}
-
-.py-quarter {
-    padding-top: 0.5rem !important;
-    padding-bottom: 0.5rem !important;
-}
-
-.padding-top-quarter,
-.pt-quarter {
-    padding-top: 0.5rem !important;
-}
-
-.padding-right-quarter,
-.pr-quarter {
-    padding-right: 0.5rem !important;
-}
-
-.padding-bottom-quarter,
-.pb-quarter {
-    padding-bottom: 0.5rem !important;
-}
-
-.padding-left-quarter,
-.pl-quarter {
-    padding-left: 0.5rem !important;
 }
 
 /* Responsive header behavior for XS devices */
@@ -846,66 +640,6 @@ div.nav-secondary {
         margin-left: 2rem !important;
     }
 
-    .mxy-md-half {
-        margin: 1rem !important;
-    }
-
-    .mx-md-half {
-        margin-right: 1rem !important;
-        margin-left: 1rem !important;
-    }
-
-    .my-md-half {
-        margin-top: 1rem !important;
-        margin-bottom: 1rem !important;
-    }
-
-    .mt-md-half {
-        margin-top: 1rem !important;
-    }
-
-    .mr-md-half {
-        margin-right: 1rem !important;
-    }
-
-    .mb-md-half {
-        margin-bottom: 1rem !important;
-    }
-
-    .ml-md-half {
-        margin-left: 1rem !important;
-    }
-
-    .mxy-md-quarter {
-        margin: 0.5rem !important;
-    }
-
-    .mx-md-quarter {
-        margin-right: 0.5rem !important;
-        margin-left: 0.5rem !important;
-    }
-
-    .my-md-quarter {
-        margin-top: 0.5rem !important;
-        margin-bottom: 0.5rem !important;
-    }
-
-    .mt-md-quarter {
-        margin-top: 0.5rem !important;
-    }
-
-    .mr-md-quarter {
-        margin-right: 0.5rem !important;
-    }
-
-    .mb-md-quarter {
-        margin-bottom: 0.5rem !important;
-    }
-
-    .ml-md-quarter {
-        margin-left: 0.5rem !important;
-    }
-
     .pxy-md-default {
         padding: 2rem !important;
     }
@@ -934,66 +668,6 @@ div.nav-secondary {
 
     .pl-md-default {
         padding-left: 2rem !important;
-    }
-
-    .pxy-md-half {
-        padding: 1rem !important;
-    }
-
-    .px-md-half {
-        padding-right: 1rem !important;
-        padding-left: 1rem !important;
-    }
-
-    .py-md-half {
-        padding-top: 1rem !important;
-        padding-bottom: 1rem !important;
-    }
-
-    .pt-md-half {
-        padding-top: 1rem !important;
-    }
-
-    .pr-md-half {
-        padding-right: 1rem !important;
-    }
-
-    .pb-md-half {
-        padding-bottom: 1rem !important;
-    }
-
-    .pl-md-half {
-        padding-left: 1rem !important;
-    }
-
-    .pxy-md-quarter {
-        padding: 0.5rem !important;
-    }
-
-    .px-md-quarter {
-        padding-right: 0.5rem !important;
-        padding-left: 0.5rem !important;
-    }
-
-    .py-md-quarter {
-        padding-top: 0.5rem !important;
-        padding-bottom: 0.5rem !important;
-    }
-
-    .pt-md-quarter {
-        padding-top: 0.5rem !important;
-    }
-
-    .pr-md-quarter {
-        padding-right: 0.5rem !important;
-    }
-
-    .pb-md-quarter {
-        padding-bottom: 0.5rem !important;
-    }
-
-    .pl-md-quarter {
-        padding-left: 0.5rem !important;
     }
 }
 
@@ -1206,63 +880,6 @@ div.nav-secondary {
     color: var(--text-color-offwhite) !important;
 }
 
-.btn-prev {
-    position: relative;
-    z-index: 99;
-    width: 32px;
-    height: 32px;
-    float: left;
-    border: 1px solid #000;
-    border-radius: 16px;
-    background-color: #fff;
-    -webkit-transition: all 300ms ease-in-out;
-    transition: all 300ms ease-in-out;
-    font-family: Lato, sans-serif;
-    color: #2e2e2e;
-    font-size: 28px;
-    line-height: 28px;
-    font-weight: 300;
-    letter-spacing: 2px;
-    text-decoration: none;
-}
-
-.btn-prev:hover {
-    background-color: #686868;
-    color: #fff;
-    text-decoration: none;
-}
-
-.btn-next {
-    margin-left: auto;
-    float: right;
-    letter-spacing: -1px;
-}
-
-.tooltip {
-    position: relative;
-    display: inline-block;
-    border-bottom: 1px dotted black; /* If you want dots under the hoverable text */
-}
-
-/* Tooltip text */
-.tooltip .tooltiptext {
-    visibility: hidden;
-    width: 120px;
-    background-color: black;
-    color: #fff;
-    text-align: center;
-    padding: 5px 0;
-    border-radius: 6px;
-    /* Position the tooltip text - see examples below! */
-    position: absolute;
-    z-index: 1;
-}
-
-/* Show the tooltip text when you mouse over the tooltip container */
-.tooltip:hover .tooltiptext {
-    visibility: visible;
-}
-
 .card-body {
     padding: 1rem 0.5rem;
 }
@@ -1304,65 +921,6 @@ div.nav-secondary {
 
 .shadow-regular {
     box-shadow: 0 0 0.25rem var(--shadow-color);
-}
-
-.loading {
-    position: fixed;
-    width: 100%;
-    height: 100%;
-    z-index: 1000;
-    background-color: var(--bg-loading);
-    top: 0;
-    left: 0;
-    padding-top: 18%;
-}
-
-.loading-pulse {
-    position: relative;
-    z-index: 2000;
-    width: 0.375rem;
-    height: 1.5rem;
-    background: rgba(0, 97, 142, 0.4);
-    -webkit-animation: pulse 750ms infinite;
-    animation: pulse 750ms infinite;
-    -webkit-animation-delay: 250ms;
-    animation-delay: 250ms;
-}
-
-.loading-pulse:before,
-.loading-pulse:after {
-    content: '';
-    position: absolute;
-    display: block;
-    height: 1rem;
-    width: 0.375rem;
-    background: rgba(0, 97, 142, 0.3);
-    top: 50%;
-    -webkit-transform: translateY(-50%);
-    transform: translateY(-50%);
-    -webkit-animation: pulse 750ms infinite;
-    animation: pulse 750ms infinite;
-}
-
-.loading-pulse:before {
-    left: -0.75rem;
-}
-
-.loading-pulse:after {
-    left: 0.75rem;
-    -webkit-animation-delay: 500ms;
-    animation-delay: 500ms;
-}
-
-@keyframes pulse {
-    50% {
-        background: var(--primary-color);
-    }
-}
-@-webkit-keyframes pulse {
-    50% {
-        background: var(--primary-color);
-    }
 }
 
 /*
@@ -1805,65 +1363,7 @@ div.nav-secondary {
         box-sizing: border-box;
     }
 }
-.intersites-links-wrapper {
-    margin: 0 14px;
-}
-@media (max-width: 992px) {
-    .intersites-links-wrapper {
-        -webkit-box-sizing: border-box;
-        -moz-box-sizing: border-box;
-        -ms-box-sizing: border-box;
-        -o-box-sizing: border-box;
-        box-sizing: border-box;
-        width: 100%;
-        margin: 0;
-        padding: 0 28px;
-    }
-}
-.intersites-links {
-    padding-left: 0;
-    list-style: none;
-    margin: 0 -1rem;
-}
-.intersites-links > li {
-    display: inline-block;
-    margin: 0 1rem;
-}
-.intersites-links > li > a {
-    display: block;
-}
-.intersites-links > li > a span {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    margin: -1px;
-    padding: 0;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    border: 0;
-}
-@media (max-width: 992px) {
-    .intersites-links > li > a {
-        margin: 5px 0;
-    }
-}
-.intersites-links > li.intersites-link-congress > a {
-    width: 125px;
-    height: 30px;
-    background-size: 125px 30px;
-    background: url('../img/congress-gov.svg') no-repeat;
-}
-.intersites-links > li.intersites-link-copyright > a {
-    width: 175px;
-    height: 30px;
-    background-size: 175px 30px;
-    background: url('../img/copyright-gov.svg') no-repeat;
-}
-@media (max-width: 992px) {
-    .intersites-links {
-        text-align: center;
-    }
-}
+
 .image-icon {
     display: inline-block;
     width: 16px;
