@@ -1,11 +1,14 @@
 language: python
 env:
   - DJANGO_SETTINGS_MODULE=concordia.settings_test
-python:
-  - "3.6"
-  - "3.6-dev"  # 3.6 development branch
-  - "3.7"
-  - "3.7-dev"  # 3.7 development branch
+matrix:
+  include:
+    - python: "3.6"
+    - python: "3.6-dev"
+    - python: "3.7-dev"
+    - python: "3.7"
+      dist: xenial
+      sudo: true
 # command to install dependencies
 install:
   - pip install pipenv
