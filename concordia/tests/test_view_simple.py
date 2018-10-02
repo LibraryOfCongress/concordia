@@ -20,34 +20,28 @@ class ViewTest1(TestCase):
         pass
 
     def test_addition(self):
-        # Arrange
+
         x = 1
         y = 2
 
-        # Act
         sum = x + y
 
-        # Assert
         self.assertEqual(sum, 3)
 
     def test_addition2(self):
-        # Arrange
+
         x = 4
         y = 2
 
-        # Act
         sum = x + y
 
-        # Assert
         self.assertEqual(sum, 6)
 
     def test_addition3(self):
-        # Arrange
+
         x = 5
         y = 2
 
-        # Act
         sum = x + y
 
-        # Assert
         self.assertEqual(sum, 7)

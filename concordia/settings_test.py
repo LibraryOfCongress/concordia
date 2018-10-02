@@ -10,16 +10,7 @@ LOGGING["loggers"]["celery"]["level"] = "DEBUG"
 
 DEBUG = True
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "concordia",
-        "USER": "postgres",
-        "PASSWORD": "concordia",
-        "HOST": "0.0.0.0",
-        "PORT": "5432",
-    }
-}
+DATABASES["default"]["PORT"] = "54323"
 
 DEFAULT_TO_EMAIL = "rstorey@loc.gov"
 
