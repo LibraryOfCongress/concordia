@@ -13,5 +13,6 @@ install:
 script:
   - mkdir logs
   - touch ./logs/concordia-celery.log
+  - ./manage.py collectstatic --no-input
   - ./manage.py test concordia
   - ./manage.py test importer
