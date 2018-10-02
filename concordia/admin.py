@@ -190,7 +190,6 @@ class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         "end_date",
         "truncated_metadata",
         "is_active",
-        "s3_storage",
         "status",
     )
     list_display_links = ("id", "title", "slug")

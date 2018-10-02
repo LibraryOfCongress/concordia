@@ -1,15 +1,14 @@
 import csv
 import os
 import shutil
-from shutil import copyfile
 
 import bagit
-import boto3
 from django.conf import settings
 from django.http import HttpResponse
 from django.views.generic import TemplateView
 
 from concordia.models import Campaign, Transcription, UserAssetTagCollection
+from concordia.storage import ASSET_STORAGE
 
 
 class ExportCampaignToCSV(TemplateView):
@@ -97,25 +96,14 @@ class ExportCampaignToBagit(TemplateView):
             src_folder = item_folder.replace("exporter/", "")
             src_name = asset.media_url.rsplit("/")[-1]
             src_root = src_name.rsplit(".")[0]
+            src = os.path.join(src_folder, src_name)
             dest = "%s/%s" % (item_folder, src_name)
 
             if self.include_images:
-                if campaign.s3_storage:
-                    s3 = boto3.client(
-                        "s3",
-                        aws_access_key_id=settings.AWS_S3["AWS_ACCESS_KEY_ID"],
-                        aws_secret_access_key=settings.AWS_S3["AWS_SECRET_ACCESS_KEY"],
-                    )
-                    bucket_name = settings.AWS_S3["S3_COLLECTION_BUCKET"]
-                    s3_path = "{0}/{1}/{2}".format(
-                        campaign.slug, item_folder_name, src_name
-                    )
-                    # Copy asset image from S3 into temp asset folder
-                    s3.download_file(bucket_name, s3_path, dest)
-                else:
-                    src = "%s/%s" % (src_folder, src_name)
-                    # Copy asset image from local storage into temp asset folder
-                    copyfile(src, dest)
+                with open(dest, mode="xb") as dest_file:
+                    with ASSET_STORAGE.open(src, mode="rb") as src_file:
+                        for chunk in src_file.read(1048576):
+                            dest_file.write(chunk)
 
             # Get transcription data
             transcription_obj = Transcription.objects.filter(

@@ -83,7 +83,6 @@ class CampaignDetailSerializer(serializers.HyperlinkedModelSerializer):
             "slug",
             "title",
             "description",
-            "s3_storage",
             "start_date",
             "end_date",
             "status",
