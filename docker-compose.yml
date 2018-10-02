@@ -15,58 +15,57 @@
 
 version: '3.6'
 services:
-  db:
-    image: postgres
-    env_file: ./.env
-    environment:
-      POSTGRES_PASSWORD: ${POSTGRESQL_PW}
-      POSTGRES_USER: concordia
-    ports:
-      - 54323:5432
-    volumes:
-      - ./postgresql:/docker-entrypoint-initdb.d
-      - db_volume:/var/lib/postgresl/data/
-    environment:
-        - POSTGRES_MULTIPLE_DATABASES=concordia
+    db:
+        image: postgres
+        env_file: ./.env
+        environment:
+            POSTGRES_PASSWORD: ${POSTGRESQL_PW}
+            POSTGRES_USER: concordia
+            POSTGRES_MULTIPLE_DATABASES: concordia
+        ports:
+            - 54323:5432
+        volumes:
+            - ./postgresql:/docker-entrypoint-initdb.d
+            - db_volume:/var/lib/postgresl/data/
 
-  rabbit:
-    hostname: rabbit
-    image: rabbitmq:latest
-    ports:
-      - 5672:5672
-      - 15672:15672
-      
-  app:
-    env_file: ./.env
-    build: .
-    environment:
-      # The concordia app needs to wait for the db to completely start. Use docker-compose-wait
-      # as defined at https://github.com/ufoscout/docker-compose-wait
-      WAIT_HOSTS: db:5432
-      POSTGRESQL_HOST: db
-    depends_on:
-      - db
-    volumes:
-      - .:/app
-      - images_volume:/concordia_images
-    links:
-      - rabbit
+    rabbit:
+        hostname: rabbit
+        image: rabbitmq:latest
+        ports:
+            - 5672:5672
+            - 15672:15672
 
-    ports:
-      - 80:80
+    app:
+        env_file: ./.env
+        build: .
+        environment:
+            # The concordia app needs to wait for the db to completely start. Use docker-compose-wait
+            # as defined at https://github.com/ufoscout/docker-compose-wait
+            WAIT_HOSTS: db:5432
+            POSTGRESQL_HOST: db
+        depends_on:
+            - db
+        volumes:
+            - .:/app
+            - images_volume:/concordia_images
+        links:
+            - rabbit
 
-  importer:
-    build:
-       context: .
-       dockerfile: importer/Dockerfile
-    environment:
-      POSTGRESQL_HOST: db
-    depends_on:
-      - rabbit
-      - db
-    volumes:
-      - images_volume:/concordia_images
+        ports:
+            - 80:80
+
+    importer:
+        build:
+            context: .
+            dockerfile: importer/Dockerfile
+        environment:
+            POSTGRESQL_HOST: db
+        depends_on:
+            - rabbit
+            - db
+        volumes:
+            - images_volume:/concordia_images
 
 volumes:
-  db_volume:
-  images_volume:
+    ? db_volume
+    ? images_volume
