@@ -293,15 +293,13 @@ class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
 class ItemAdmin(admin.ModelAdmin):
     list_display = (
         "title",
-        "slug",
         "item_id",
         "campaign_title",
         "project",
         "status",
         "published",
     )
-    list_display_links = ("title", "slug", "item_id")
-    prepopulated_fields = {"slug": ("title",)}
+    list_display_links = ("title", "item_id")
     search_fields = ["title", "project__campaign__title", "project__title"]
     list_filter = ("status", "project__campaign", "project")
 

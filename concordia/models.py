@@ -121,10 +121,9 @@ class Item(models.Model):
     published = models.BooleanField(default=False, blank=True)
 
     title = models.CharField(max_length=300)
-    slug = models.SlugField(max_length=300)
-    description = models.TextField(blank=True)
     item_url = models.URLField(max_length=255)
     item_id = models.CharField(max_length=100, blank=True)
+    description = models.TextField(blank=True)
     metadata = JSONField(
         default=metadata_default,
         blank=True,
