@@ -212,9 +212,6 @@ class UserAssetTagCollection(models.Model):
 class Transcription(models.Model):
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
 
-    # TODO: document whether we need this field:
-    parent = models.ForeignKey("self", blank=True, null=True, on_delete=models.SET_NULL)
-
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
     text = models.TextField(blank=True)

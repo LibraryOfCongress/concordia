@@ -373,7 +373,6 @@ class TranscriptionAdmin(admin.ModelAdmin):
     list_display = (
         "id",
         "asset",
-        "parent",
         "user",
         "truncated_text",
         "status",
