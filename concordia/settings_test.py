@@ -10,13 +10,7 @@ LOGGING["loggers"]["celery"]["level"] = "INFO"
 
 DEBUG = False
 
-DATABASES["default"] = {
-    "ENGINE": "django.db.backends.sqlite3",
-    "NAME": "concordia-tests",
-}
-
-# If you're running a docker db container, use this:
-# DATABASES["default"]["PORT"] = "54323"
+DATABASES["default"].update({"PASSWORD": "", "USER": "postgres"})
 
 DEFAULT_TO_EMAIL = "rstorey@loc.gov"
 
