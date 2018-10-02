@@ -262,7 +262,6 @@ def create_item_import_task(self, import_job_pk, item_url):
     item, item_created = import_job.project.item_set.get_or_create(
         item_id=get_item_id_from_item_url(item_data["item"]["id"]),
         item_url=item_url,
-        campaign=import_job.project.campaign,
         project=import_job.project,
     )
 
@@ -305,8 +304,6 @@ def import_item(self, import_item):
     for idx, asset_url in enumerate(asset_urls, start=1):
         asset_title = f"{import_item.item.item_id}-{idx}"
         item_asset = Asset(
-            project=import_item.item.project,
-            campaign=import_item.item.project.campaign,
             item=import_item.item,
             title=asset_title,
             slug=slugify(asset_title),

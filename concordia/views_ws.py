@@ -483,7 +483,9 @@ class TranscriptionCreate(generics.CreateAPIView):
         else:
             raise exceptions.ValidationError(serializer.errors)
 
-        full_serialization = TranscriptionSerializer(transcription).data
+        full_serialization = TranscriptionSerializer(
+            transcription, context={"request": request}
+        ).data
 
         return Response(full_serialization, status=status.HTTP_201_CREATED)
 

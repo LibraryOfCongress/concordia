@@ -12,17 +12,7 @@ S3_CLIENT = boto3.client("s3", settings.AWS_S3.get("REGION", ""))
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = (
-            "id",
-            "username",
-            "password",
-            "first_name",
-            "last_name",
-            "email",
-            "is_staff",
-            "is_active",
-            "date_joined",
-        )
+        fields = ("id", "username")
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -84,7 +74,6 @@ class ProjectSerializer(serializers.ModelSerializer):
 
 
 class CampaignDetailSerializer(serializers.HyperlinkedModelSerializer):
-    assets = AssetSetSerializer(source="asset_set", many=True)
     projects = ProjectSerializer(source="project_set", many=True)
 
     class Meta:
@@ -99,23 +88,20 @@ class CampaignDetailSerializer(serializers.HyperlinkedModelSerializer):
             "end_date",
             "status",
             "projects",
-            "assets",
         )
 
 
 class ItemSerializer(serializers.ModelSerializer):
     assets = AssetSetSerializer(source="asset_set", many=True)
-    campaign = CampaignDetailSerializer()
     project = ProjectSerializer()
 
     class Meta:
         model = models.Item
-        fields = ("title", "slug", "thumbnail_url", "assets", "project", "campaign")
+        fields = ("title", "slug", "thumbnail_url", "assets", "project")
 
 
 class AssetSerializer(serializers.HyperlinkedModelSerializer):
-    campaign = CampaignDetailSerializer()
-    project = ProjectSerializer()
+    item = ItemSerializer()
     media_url = serializers.SerializerMethodField()
 
     def get_media_url(self, obj):
@@ -136,8 +122,7 @@ class AssetSerializer(serializers.HyperlinkedModelSerializer):
             "description",
             "media_url",
             "media_type",
-            "campaign",
-            "project",
+            "item",
             "sequence",
             "metadata",
             "status",
@@ -180,6 +165,7 @@ class PageInUseSerializer(serializers.ModelSerializer):
 
 class TranscriptionSerializer(serializers.HyperlinkedModelSerializer):
     asset = AssetSerializer()
+    user = UserSerializer()
 
     class Meta:
         model = models.Transcription

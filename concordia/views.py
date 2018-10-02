@@ -213,7 +213,7 @@ class ConcordiaItemView(ListView):
     def get_queryset(self):
         self.item = get_object_or_404(
             Item.objects.published().select_related("project__campaign"),
-            campaign__slug=self.kwargs["campaign_slug"],
+            project__campaign__slug=self.kwargs["campaign_slug"],
             project__slug=self.kwargs["project_slug"],
             slug=self.kwargs["slug"],
         )

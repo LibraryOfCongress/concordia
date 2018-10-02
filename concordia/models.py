@@ -86,10 +86,11 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
 class Project(models.Model):
     objects = PublicationManager()
 
+    campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
     title = models.CharField(max_length=80)
     slug = models.SlugField(max_length=80)
+
     category = models.CharField(max_length=12, blank=True)
-    campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
     metadata = JSONField(default=metadata_default, blank=True, null=True)
     status = models.CharField(
         max_length=10, choices=Status.CHOICES, default=Status.DEFAULT
@@ -113,16 +114,16 @@ class Project(models.Model):
 class Item(models.Model):
     objects = PublicationManager()
 
+    project = models.ForeignKey(
+        Project, on_delete=models.CASCADE, blank=True, null=True
+    )
+
     published = models.BooleanField(default=False, blank=True)
 
     title = models.CharField(max_length=300)
     slug = models.SlugField(max_length=300)
     description = models.TextField(blank=True)
     item_url = models.URLField(max_length=255)
-    campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
-    project = models.ForeignKey(
-        Project, on_delete=models.CASCADE, blank=True, null=True
-    )
     item_id = models.CharField(max_length=100, blank=True)
     metadata = JSONField(
         default=metadata_default,
@@ -136,7 +137,7 @@ class Item(models.Model):
     )
 
     class Meta:
-        unique_together = (("item_id", "campaign"),)
+        unique_together = (("item_id", "project"),)
         ordering = ["item_id"]
 
     def __str__(self):
@@ -156,8 +157,11 @@ class Item(models.Model):
 
 
 class Asset(models.Model):
+    item = models.ForeignKey(Item, on_delete=models.CASCADE)
+
     title = models.CharField(max_length=100)
     slug = models.SlugField(max_length=100)
+
     description = models.TextField(blank=True)
     # TODO: do we really need this given that we import in lock-step sequence
     #       numbers with a fixed extension?
@@ -165,9 +169,6 @@ class Asset(models.Model):
     media_type = models.CharField(
         max_length=4, choices=MediaType.CHOICES, db_index=True
     )
-    campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
-    project = models.ForeignKey(Project, on_delete=models.CASCADE)
-    item = models.ForeignKey(Item, on_delete=models.CASCADE)
     sequence = models.PositiveIntegerField(default=1)
 
     # The original ID of the image resource on loc.gov
@@ -181,7 +182,7 @@ class Asset(models.Model):
     )
 
     class Meta:
-        unique_together = (("slug", "campaign"),)
+        unique_together = (("slug", "item"),)
         ordering = ["title", "sequence"]
 
     def __str__(self):

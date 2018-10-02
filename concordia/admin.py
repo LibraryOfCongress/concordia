@@ -325,8 +325,6 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         "truncated_description",
         "truncated_media_url",
         "media_type",
-        "campaign",
-        "project",
         "sequence",
         "truncated_metadata",
         "status",
@@ -334,7 +332,7 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     list_display_links = ("id", "title", "slug")
     prepopulated_fields = {"slug": ("title",)}
     search_fields = ["title", "media_url", "campaign__title", "project__title"]
-    list_filter = ("status", "campaign", "project", "media_type")
+    list_filter = ("status", "item__project__campaign", "item__project", "media_type")
 
     def truncated_media_url(self, obj):
         return format_html(
