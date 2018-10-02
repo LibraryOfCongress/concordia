@@ -3,11 +3,9 @@
 import logging
 import re
 import tempfile
-import time
 from unittest.mock import Mock, patch
 
 import responses
-import views
 from captcha.models import CaptchaStore
 from django.test import Client, TestCase
 from PIL import Image
@@ -20,10 +18,8 @@ from concordia.models import (
     PageInUse,
     Project,
     Status,
-    Tag,
     Transcription,
     User,
-    UserAssetTagCollection,
     UserProfile,
 )
 
@@ -85,25 +81,6 @@ class ViewTest_Concordia(TestCase):
             json={"user": self.user.id if hasattr(self, "user") else self.anon_user.id},
             status=200,
         )
-
-    def test_concordia_api(self):
-        """
-        Test the tracribr_api. Provide a mock of requests
-        :return:
-        """
-
-        # Arrange
-
-        with patch("views.requests") as mock_requests:
-            mock_requests.get.return_value = mock_response = Mock()
-            mock_response.status_code = 200
-            mock_response.json.return_value = {"concordia_data": "abc123456"}
-
-            # Act
-            results = views.concordia_api("relative_path")
-
-            # Assert
-            self.assertEqual(results["concordia_data"], "abc123456")
 
     def test_login_with_email(self):
         """
