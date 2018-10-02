@@ -25,8 +25,10 @@ class ViewTest_1st_level(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "contact.html")
-        # Assert Link has been populated
-        self.assertTrue(test_http_referrer, response.content)
+
+        self.assertEqual(
+            response.context["form"].initial["referrer"], test_http_referrer
+        )
 
     def test_contact_us_post(self):
         post_data = {
@@ -39,5 +41,4 @@ class ViewTest_1st_level(TestCase):
 
         response = self.client.post(reverse("contact"), post_data)
 
-        # redirected to contact us page.
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 200)
