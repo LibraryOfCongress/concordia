@@ -182,22 +182,25 @@ Resources:
                 - PolicyName: !Sub ecs-concordia-taskpolicy-${AWS::StackName}
                   PolicyDocument: |
                       {
-                          "Statement": [{
-                              "Effect": "Allow",
-                              "Action": [
-                                  "s3:PutObject",
-                                  "s3:GetObject",
-                                  "s3:AbortMultipartUpload",
-                                  "s3:ListMultipartUploadParts",
-                                  "s3:ListBucket",
-                                  "s3:ListBucketMultipartUploads",
-                                  "secretsmanager:GetResourcePolicy",
-                                  "secretsmanager:GetSecretValue",
-                                  "secretsmanager:DescribeSecret",
-                                  "secretsmanager:ListSecretVersionIds"
-                              ],
-                              "Resource": "*"
-                          }]
+                          "Version": "2012-10-17",
+                          "Statement": [
+                              {
+                                  "Action": [
+                                      "s3:PutObject",
+                                      "s3:GetObject",
+                                      "s3:AbortMultipartUpload",
+                                      "s3:ListMultipartUploadParts",
+                                      "s3:ListBucket",
+                                      "s3:ListBucketMultipartUploads",
+                                      "secretsmanager:GetResourcePolicy",
+                                      "secretsmanager:GetSecretValue",
+                                      "secretsmanager:DescribeSecret",
+                                      "secretsmanager:ListSecretVersionIds"
+                                  ],
+                                  "Effect": "Allow",
+                                  "Resource": "*"
+                              }
+                          ]
                       }
 
     # This IAM Role grants the service access to register/unregister with the
