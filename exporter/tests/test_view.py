@@ -50,7 +50,6 @@ class ViewTest_Exporter(TestCase):
             slug=locstor_campaign_name_str,
             description="Campaign Description",
             metadata={"key": "val1"},
-            is_active=True,
             s3_storage=False,
             status=Status.EDIT,
         )
@@ -89,8 +88,6 @@ class ViewTest_Exporter(TestCase):
             slug=s3_campaign_name_str,
             description="Campaign Description",
             metadata={"key": "val1"},
-            is_active=True,
-            s3_storage=True,
             status=Status.EDIT,
         )
         self.campaign2.save()

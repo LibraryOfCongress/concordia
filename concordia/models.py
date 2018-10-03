@@ -62,17 +62,19 @@ class PublicationManager(models.Manager):
 class Campaign(MetricsModelMixin("campaign"), models.Model):
     objects = PublicationManager()
 
-    title = models.CharField(max_length=80)
-    slug = models.SlugField(max_length=80, unique=True)
-    description = models.TextField(blank=True)
-    start_date = models.DateTimeField(null=True, blank=True)
-    end_date = models.DateTimeField(null=True, blank=True)
-    metadata = JSONField(default=metadata_default, blank=True, null=True)
-    is_active = models.BooleanField(default=False)
+    published = models.BooleanField(default=False, blank=True)
     status = models.CharField(
         max_length=10, choices=Status.CHOICES, default=Status.DEFAULT
     )
-    published = models.BooleanField(default=False, blank=True)
+
+    title = models.CharField(max_length=80)
+    slug = models.SlugField(max_length=80, unique=True)
+    description = models.TextField(blank=True)
+
+    start_date = models.DateTimeField(null=True, blank=True)
+    end_date = models.DateTimeField(null=True, blank=True)
+
+    metadata = JSONField(default=metadata_default, blank=True, null=True)
 
     def __str__(self):
         return self.title

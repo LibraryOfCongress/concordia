@@ -189,13 +189,12 @@ class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         "start_date",
         "end_date",
         "truncated_metadata",
-        "is_active",
         "status",
     )
     list_display_links = ("id", "title", "slug")
     prepopulated_fields = {"slug": ("title",)}
     search_fields = ["title", "description"]
-    list_filter = ("published", "status", "is_active")
+    list_filter = ("published", "status")
 
     actions = (publish_action, unpublish_action)
 
