@@ -28,6 +28,8 @@ class ViewTest_Exporter(TestCase):
         self.user.set_password("top_secret")
         self.user.save()
 
+        self.client.login(username="tester", password="top_secret")
+
     def test_ExportCampaignToBagit_get(self):
         """
         Test the http GET on route /campaigns/exportBagit/<campaignname>/
@@ -59,7 +61,7 @@ class ViewTest_Exporter(TestCase):
             title="TestAsset",
             slug=locstor_asset_folder_name_str,
             description="Asset Description",
-            media_url=locstor_media_url_str,
+            media_url="1.jpg",
             media_type=MediaType.IMAGE,
             campaign=self.campaign1,
             sequence=0,
@@ -149,53 +151,9 @@ class ViewTest_Exporter(TestCase):
             f = io.BytesIO(response.content)
             zipped_file = zipfile.ZipFile(f, "r")
 
-            # self.assertIsNone(zipped_file.testzip())
-            self.assertIn("bagit.txt", zipped_file.namelist())
-            self.assertIn("bag-info.txt", zipped_file.namelist())
-            self.assertIn("data/testasset/asset.txt", zipped_file.namelist())
-
-        finally:
-            zipped_file.close()
-            f.close()
-
-        # Act (s3 campaign)
-        response2 = self.client.get("/campaigns/exportBagit/test_s3/")
-
-        # Assert for s3 Campaign
-
-        self.assertEqual(response2.status_code, 200)
-        self.assertEquals(
-            response2.get("Content-Disposition"), "attachment; filename=test_s3.zip"
+        self.assertIn("bagit.txt", zipped_file.namelist())
+        self.assertIn("bag-info.txt", zipped_file.namelist())
+        self.assertIn(
+            "data/test-project/testitem0123456789/testasset/1.jpg",
+            zipped_file.namelist(),
         )
-        try:
-            f = io.BytesIO(response2.content)
-            zipped_file = zipfile.ZipFile(f, "r")
-
-            self.assertIn("bagit.txt", zipped_file.namelist())
-            self.assertIn("bag-info.txt", zipped_file.namelist())
-            self.assertIn("data/mss859430177/0.txt", zipped_file.namelist())
-            self.assertIn("data/mss859430177/0.jpg", zipped_file.namelist())
-
-        finally:
-            zipped_file.close()
-            f.close()
-
-        # Clean up temp folders
-        try:
-            shutil.rmtree(campaign_folder)
-        except Exception as e:
-            pass
-
-
-class AWS_S3_ConnectionTest(TestCase):
-    """
-    This class contains the test for the AWS S3 Connection
-    """
-
-    def test_connection(self):
-        connection = boto3.client(
-            "s3",
-            aws_access_key_id=settings.AWS_S3["AWS_ACCESS_KEY_ID"],
-            aws_secret_access_key=settings.AWS_S3["AWS_SECRET_ACCESS_KEY"],
-        )
-        self.assertIsNotNone(connection)
