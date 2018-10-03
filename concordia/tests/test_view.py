@@ -1,6 +1,6 @@
 # TODO: Add correct copyright header
-
 import re
+from datetime import datetime, timedelta
 
 from captcha.models import CaptchaStore
 from django.test import TestCase
@@ -100,7 +100,7 @@ class ViewTest_Concordia(TestCase):
         """
         c = create_campaign(title="GET Campaign", slug="get-campaign")
 
-        response = self.client.get(reverse("transcriptions:campaign", c.slug))
+        response = self.client.get(reverse("transcriptions:campaign", args=(c.slug,)))
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(
@@ -115,7 +115,7 @@ class ViewTest_Concordia(TestCase):
         c = create_campaign()
 
         response = self.client.get(
-            reverse("transcriptions:campaign", c.slug), {"page": 2}
+            reverse("transcriptions:campaign", args=(c.slug,)), {"page": 2}
         )
 
         self.assertEqual(response.status_code, 200)
@@ -132,9 +132,7 @@ class ViewTest_Concordia(TestCase):
         response = self.client.get(
             reverse(
                 "transcriptions:item",
-                i.project.campaign.slug,
-                i.project.slug,
-                i.item_id,
+                args=(i.project.campaign.slug, i.project.slug, i.item_id),
             )
         )
 
@@ -217,9 +215,17 @@ class ViewTest_Concordia(TestCase):
         )
         self.transcription.save()
 
-        url = "/campaigns/Campaign1/asset/Asset1/"
-
-        response = self.client.get(url)
+        response = self.client.get(
+            reverse(
+                "transcriptions:asset-detail",
+                kwargs={
+                    "campaign_slug": asset.item.project.campaign.slug,
+                    "project_slug": asset.item.project.slug,
+                    "item_id": asset.item.item_id,
+                    "slug": asset.slug,
+                },
+            )
+        )
 
         self.assertEqual(response.status_code, 200)
 
@@ -239,8 +245,6 @@ class ViewTest_Concordia(TestCase):
 
         page1 = PageInUse(page_url=url, user=user2)
         page1.save()
-
-        from datetime import datetime, timedelta
 
         time_threshold = datetime.now() - timedelta(minutes=20)
 

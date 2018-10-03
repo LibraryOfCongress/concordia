@@ -5,6 +5,7 @@ import time
 from datetime import datetime, timedelta
 
 from django.test import TestCase
+from django.urls import reverse
 from rest_framework import status
 
 from concordia.models import (
@@ -396,13 +397,8 @@ class WebServiceViewTests(TestCase):
         )
 
         response = self.client.post(
-            "/ws/transcription_create/",
-            {
-                "asset": asset.id,
-                "user_id": self.user.id,
-                "status": Status.EDIT,
-                "text": "T1",
-            },
+            reverse("ws:submit-transcription", kwargs={"asset_pk": asset.pk}),
+            {"user_id": self.user.id, "status": Status.EDIT, "text": "T1"},
         )
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -425,33 +421,6 @@ class WebServiceViewTests(TestCase):
         # Get all Transcriptions for the asset, should be another one
         transcriptions_count = Transcription.objects.filter(asset=asset).count()
         self.assertEqual(transcriptions_count, 2)
-
-    def test_Tag_create_post(self):
-        """
-        Test creating a tag. route ws/tag_create/
-        """
-
-        self.login_user()
-
-        asset = create_asset(
-            title="TestAsset",
-            media_url="http://www.example.com/1/2/3",
-            media_type=MediaType.IMAGE,
-            status=Status.EDIT,
-        )
-
-        response = self.client.post(
-            "/ws/tag_create/",
-            {
-                "campaign": asset.item.project.campaign.slug,
-                "asset": asset.pk,
-                "user_id": self.user.id,
-                "name": "T1",
-                "value": "T1",
-            },
-        )
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_GetTags_get(self):
         """
@@ -483,9 +452,7 @@ class WebServiceViewTests(TestCase):
         asset_tag_collection.tags.add(tag1, tag2)
 
         # Save for User2
-        asset_tag_collection2 = UserAssetTagCollection(
-            asset=asset, user_id=self.user2.id
-        )
+        asset_tag_collection2 = UserAssetTagCollection(asset=asset, user_id=user2.id)
         asset_tag_collection2.save()
         asset_tag_collection2.tags.add(tag3)
 
@@ -511,7 +478,9 @@ class WebServiceViewTests(TestCase):
 
         asset = create_asset()
 
-        response = self.client.get("/ws/tags/%s/" % asset.id)
+        response = self.client.get(
+            reverse("ws:submit-tags", kwargs={"pk": asset.id})
+        )
 
         json_resp = json.loads(response.content)
 
