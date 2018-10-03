@@ -203,6 +203,7 @@ urlpatterns = [
     path("error/404/", page_not_found, {"exception": Http404()}),
     path("error/403/", permission_denied, {"exception": HttpResponseForbidden()}),
     url("", include("django_prometheus_metrics.urls")),
+    url(r"^robots\.txt", include("robots.urls")),
 ]
 
 if settings.DEBUG:

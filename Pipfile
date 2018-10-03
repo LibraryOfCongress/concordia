@@ -36,6 +36,7 @@ openpyxl = "*"
 django-storages = "*"
 markdown = ">=3.0.1"
 "django-bootstrap4" = "*"
+django-robots = "*"
 
 [dev-packages]
 invoke = "*"
