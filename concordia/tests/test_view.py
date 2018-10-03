@@ -4,10 +4,12 @@ import re
 
 from captcha.models import CaptchaStore
 from django.test import TestCase
+from django.urls import reverse
 
 from concordia.models import PageInUse, Status, User
 from concordia.views import get_anonymous_user
-from .utils import create_campaign, create_project, create_item, create_asset
+
+from .utils import create_asset, create_campaign, create_item, create_project
 
 
 class ViewTest_Concordia(TestCase):
@@ -23,7 +25,9 @@ class ViewTest_Concordia(TestCase):
         """
 
         # create user and login
-        self.user = User.objects.create_user(username="tester", email="tester@example.com")
+        self.user = User.objects.create_user(
+            username="tester", email="tester@example.com"
+        )
         self.user.set_password("top_secret")
         self.user.save()
 
@@ -36,7 +40,7 @@ class ViewTest_Concordia(TestCase):
 
         self.login_user()
 
-        response = self.client.get("/account/profile/")
+        response = self.client.get(reverse("user-profile"))
 
         # validate the web page has the "tester" and "tester@example.com" as values
         self.assertEqual(response.status_code, 200)
@@ -52,11 +56,11 @@ class ViewTest_Concordia(TestCase):
         self.login_user()
 
         response = self.client.post(
-            "/account/profile/", {"email": test_email, "username": "tester"}
+            reverse("user-profile"), {"email": test_email, "username": "tester"}
         )
 
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, "/account/profile/")
+        self.assertEqual(response.url, reverse("user-profile"))
 
         # Verify the User was correctly updated
         updated_user = User.objects.get(email=test_email)
@@ -69,7 +73,7 @@ class ViewTest_Concordia(TestCase):
         """
         self.login_user()
 
-        response = self.client.post("/account/profile/", {"first_name": "Jimmy"})
+        response = self.client.post(reverse("user-profile"), {"first_name": "Jimmy"})
 
         self.assertEqual(response.status_code, 200)
 
@@ -81,7 +85,7 @@ class ViewTest_Concordia(TestCase):
         """
         Test the GET method for route /campaigns
         """
-        response = self.client.get("/campaigns/")
+        response = self.client.get(reverse("transcriptions:campaigns"))
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(
@@ -96,7 +100,7 @@ class ViewTest_Concordia(TestCase):
         """
         c = create_campaign(title="GET Campaign", slug="get-campaign")
 
-        response = self.client.get("/campaigns/get-campaign/")
+        response = self.client.get(reverse("transcriptions:campaign", c.slug))
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(
@@ -110,7 +114,9 @@ class ViewTest_Concordia(TestCase):
         """
         c = create_campaign()
 
-        response = self.client.get("/campaigns/%s/" % c.slug, {"page": 2})
+        response = self.client.get(
+            reverse("transcriptions:campaign", c.slug), {"page": 2}
+        )
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(
@@ -124,7 +130,12 @@ class ViewTest_Concordia(TestCase):
         i = create_item()
 
         response = self.client.get(
-            "/campaigns/%s/%s/%s/" % (i.project.campaign.slug, i.project.slug, i.slug)
+            reverse(
+                "transcriptions:item",
+                i.project.campaign.slug,
+                i.project.slug,
+                i.item_id,
+            )
         )
 
         self.assertEqual(response.status_code, 200)
@@ -251,7 +262,7 @@ class ViewTest_Concordia(TestCase):
         page3.save()
 
         response = self.client.post(
-            "/campaigns/pageinuse/", {"page_url": url, "user": self.user}
+            reverse("transcriptions:page-in-use"), {"page_url": url, "user": self.user}
         )
 
         self.assertEqual(response.status_code, 200)

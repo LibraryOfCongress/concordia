@@ -1,5 +1,7 @@
 from functools import wraps
+
 from django.template.defaultfilters import slugify
+
 from concordia.models import Campaign, MediaType
 
 

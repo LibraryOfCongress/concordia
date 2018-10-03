@@ -22,12 +22,12 @@ tx_urlpatterns = (
         path("", views.CampaignListView.as_view(), name="campaigns"),
         path("<slug:slug>/", views.CampaignDetailView.as_view(), name="campaign"),
         re_path(
-            r"^pageinuse/$", views.ConcordiaPageInUse.as_view(), name="page in use"
+            r"^pageinuse/$", views.ConcordiaPageInUse.as_view(), name="page-in-use"
         ),
         re_path(
             r"^alternateasset/$",
             views.ConcordiaAlternateAssetView.as_view(),
-            name="alternate asset",
+            name="alternate-asset",
         ),
         re_path(
             r"exportCSV/([^/]+)/$",
@@ -42,7 +42,7 @@ tx_urlpatterns = (
         re_path(
             r"report/([^/]+)/$",
             views.ReportCampaignView.as_view(),
-            name="report campaign",
+            name="campaign-report",
         ),
         path(
             "<slug:campaign_slug>/<slug:project_slug>/<slug:item_id>/<slug:slug>/",

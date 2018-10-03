@@ -16,6 +16,7 @@ from concordia.models import (
     User,
     UserAssetTagCollection,
 )
+
 from .utils import create_asset
 
 
