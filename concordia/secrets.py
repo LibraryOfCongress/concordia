@@ -9,6 +9,7 @@ AWS_DEFAULT_REGION = os.getenv("AWS_DEFAULT_REGION", "us-east-1")
 def get_secret(secret_name):
     endpoint_url = "https://secretsmanager.%s.amazonaws.com" % AWS_DEFAULT_REGION
     region_name = AWS_DEFAULT_REGION
+    secret = None
 
     session = boto3.session.Session()
     client = session.client(

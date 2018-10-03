@@ -188,6 +188,13 @@ Resources:
                                 - 'secretsmanager:GetSecretValue'
                                 - 'secretsmanager:DescribeSecret'
                                 - 'secretsmanager:ListSecretVersionIds'
+                                - 'kms:GetParametersForImport'
+                                - 'kms:GetKeyRotationStatus'
+                                - 'kms:GetKeyPolicy'
+                                - 'kms:DescribeKey'
+                                - 'kms:ListResourceTags'
+                                - 'kms:Decrypt'
+                                - 'kms:GenerateDataKey'
                             Effect: 'Allow'
                             Resource: '*'
 
