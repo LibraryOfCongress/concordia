@@ -57,7 +57,6 @@ Resources:
             Memory: '2048'
             Cpu: '1024'
             TaskRoleArn: !GetAtt TaskRole.Arn
-            ExecutionRoleArn: !GetAtt TaskRole.Arn
             Family: !Sub concordia-${EnvName}
             Volumes:
                 - Name: images_volume
