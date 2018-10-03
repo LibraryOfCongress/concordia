@@ -1,4 +1,15 @@
-# concordia
+# Welcome to Concordia 
+
+Concordia is a crowdsourcing platform hosted by the Library of Congress. The first iteration of Concordia will be used to launch Make Your Mark, a crowdsourcing program that invites members of the public, non-specialists and specialists alike, to engage with collections. This program enables volunteers to explore collections while gaining new skills, like reading handwriting and parsing primary sources, while helping institutions process data and make collections more usable.
+
+## Want to help?
+
+We are so excited that you want to jump right in. To get started:
+
+1. Check out our [CONTRIBUTING page](concordia/docs/CONTRIBUTING.md) and see the different ways you can help out. 
+2. Next, take a look at [How we work](concordia/docs/how-we-work.md), there you'll learn more about how we use GitHub and what we are looking for if you are contributing code.  
+3. Continue reading our README. On this page are our technical requirements on setting up the application on your computer. 
+
 
 ## Prerequisites
 
@@ -104,35 +115,6 @@ Then, Click on Campaigns and then Add Campaign. Enter a name for the campaign
 and project and a loc.gov item URL such as 
 [https://www.loc.gov/item/mss859430011](https://www.loc.gov/item/mss859430011) and click Create.
 
-#### Code Quality
-
-Install [black](https://pypi.org/project/black/) and integrate it
-with your editor of choice. Run [flake8](http://flake8.pycqa.org/en/latest/) 
-to ensure you don't increase
-the warning count or introduce errors with your commits. This project
-uses [EditorConfig](https://editorconfig.org) for code consistency.
-
-Django projects should extend the standard Django settings model for
-project configuration. Django projects should also make use of the
-Django test framework for unit tests.
-
-[setup.cfg](setup.cfg) contains configuration for 
-pycodestyle, [isort](https://pypi.org/project/isort/) and flake8.
-
-The virtual env directory should be named `.venv` and it's preferred to
-use Pipenv to manage the virtual environment.
-
-Configure your editor to run black and isort on each file at save time.
-
-If you can't modify your editor, here is how to run the code quality
-tools manually:
-
-    $ black .
-    $ isort --recursive .
-
-Black should be run prior to isort. It's recommended to commit your code
-before running black, after running black, and after running isort so
-the changes from each step are visible.
 
 #### Data Model Graph
 
