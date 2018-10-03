@@ -9,9 +9,6 @@ from django.test import TestCase
 from concordia.models import Campaign, MediaType, PageInUse, Status, Transcription, User
 from concordia.views import get_anonymous_user
 
-logging.disable(logging.CRITICAL)
-
-
 class ViewTest_Concordia(TestCase):
     """
     This class contains the unit tests for the view in the concordia app.

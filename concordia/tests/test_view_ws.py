@@ -24,8 +24,6 @@ from concordia.models import (
     UserProfile,
 )
 
-logging.disable(logging.CRITICAL)
-
 
 class WebServiceViewTests(TestCase):
     """
