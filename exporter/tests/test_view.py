@@ -24,7 +24,7 @@ class ViewTest_Exporter(TestCase):
         """
 
         # create user and login
-        self.user = User.objects.create(username="tester", email="tester@foo.com")
+        self.user = User.objects.create(username="tester", email="tester@example.com")
         self.user.set_password("top_secret")
         self.user.save()
 

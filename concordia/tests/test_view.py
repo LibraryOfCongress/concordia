@@ -23,7 +23,7 @@ class ViewTest_Concordia(TestCase):
         """
 
         # create user and login
-        self.user = User.objects.create_user(username="tester", email="tester@foo.com")
+        self.user = User.objects.create_user(username="tester", email="tester@example.com")
         self.user.set_password("top_secret")
         self.user.save()
 
@@ -38,7 +38,7 @@ class ViewTest_Concordia(TestCase):
 
         response = self.client.get("/account/profile/")
 
-        # validate the web page has the "tester" and "tester@foo.com" as values
+        # validate the web page has the "tester" and "tester@example.com" as values
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, template_name="account/profile.html")
 
@@ -47,7 +47,7 @@ class ViewTest_Concordia(TestCase):
         This unit test tests the post entry for the route account/profile
         :param self:
         """
-        test_email = "tester@foo.com"
+        test_email = "tester@example.com"
 
         self.login_user()
 
@@ -144,7 +144,7 @@ class ViewTest_Concordia(TestCase):
             str(response.content),
             "b'Campaign,Title,Description,MediaUrl,Transcription,Tags\\r\\n"
             "TextCampaign,TestAsset,Asset Description,"
-            "http://www.foo.com/1/2/3,,\\r\\n'",
+            "http://www.example.com/1/2/3,,\\r\\n'",
         )
 
     def test_ConcordiaAssetView_post_anonymous_happy_path(self):
@@ -236,9 +236,9 @@ class ViewTest_Concordia(TestCase):
         test that old entries in PageInUse table are removed
         """
         self.login_user()
-        url = "foo.com/bar"
+        url = "example.com/bar"
 
-        user2 = User.objects.create(username="tester2", email="tester2@foo.com")
+        user2 = User.objects.create(username="tester2", email="tester2@example.com")
         user2.set_password("top_secret")
         user2.save()
 
@@ -251,7 +251,7 @@ class ViewTest_Concordia(TestCase):
 
         # add two entries with old timestamps
         page2 = PageInUse(
-            page_url="foo.com/blah",
+            page_url="example.com/blah",
             user=self.user,
             created_on=time_threshold,
             updated_on=time_threshold,

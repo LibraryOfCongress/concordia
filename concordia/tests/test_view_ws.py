@@ -38,7 +38,7 @@ class WebServiceViewTests(TestCase):
         """
 
         # create user and login
-        self.user = User.objects.create(username="tester", email="tester@foo.com")
+        self.user = User.objects.create(username="tester", email="tester@example.com")
         self.user.set_password("top_secret")
         self.user.save()
 
@@ -91,7 +91,7 @@ class WebServiceViewTests(TestCase):
 
         time_threshold = datetime.now() - timedelta(minutes=10)
         page1 = PageInUse(
-            page_url="foo.com/blah",
+            page_url="example.com/blah",
             user=self.user,
             created_on=time_threshold,
             updated_on=time_threshold,
@@ -124,7 +124,7 @@ class WebServiceViewTests(TestCase):
         """
 
         # create user
-        self.user = User.objects.create(username="foo", email="tester@foo.com")
+        self.user = User.objects.create(username="foo", email="tester@example.com")
         self.user.set_password("top_secret")
         self.user.save()
 
@@ -150,7 +150,7 @@ class WebServiceViewTests(TestCase):
         """
 
         # create user
-        self.user = User.objects.create(username="anonymous", email="tester@foo.com")
+        self.user = User.objects.create(username="anonymous", email="tester@example.com")
         self.user.set_password("top_secret")
         self.user.save()
 
@@ -186,7 +186,7 @@ class WebServiceViewTests(TestCase):
         self.login_user()
 
         # Add two values to database
-        PageInUse.objects.create(page_url="foo.com/blah", user=self.user)
+        PageInUse.objects.create(page_url="example.com/blah", user=self.user)
 
         page_in_use = PageInUse.objects.create(page_url="bar.com/blah", user=self.user)
 
@@ -211,11 +211,11 @@ class WebServiceViewTests(TestCase):
         self.login_user()
 
         # create second user
-        self.user2 = User.objects.create(username="bar", email="tester2@foo.com")
+        self.user2 = User.objects.create(username="bar", email="tester2@example.com")
         self.user2.set_password("top_secret")
         self.user2.save()
 
-        test_page_url = "foo.com/blah"
+        test_page_url = "example.com/blah"
         # Add two values to database
         page_in_use = PageInUse.objects.create(page_url=test_page_url, user=self.user)
 
@@ -243,7 +243,7 @@ class WebServiceViewTests(TestCase):
         self.login_user()
 
         # Add a value to database
-        page = PageInUse(page_url="foo.com/blah", user=self.user)
+        page = PageInUse(page_url="example.com/blah", user=self.user)
         page.save()
 
         min_update_time = page.created_on + timedelta(seconds=2)
@@ -251,17 +251,17 @@ class WebServiceViewTests(TestCase):
         # sleep so update time can be tested against original time
         time.sleep(2)
 
-        change_page_in_use = {"page_url": "foo.com/blah", "user": self.user.id}
+        change_page_in_use = {"page_url": "example.com/blah", "user": self.user.id}
 
         response = self.client.put(
-            "/ws/page_in_use_update/foo.com/blah/",
+            "/ws/page_in_use_update/example.com/blah/",
             data=json.dumps(change_page_in_use),
             content_type="application/json",
         )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        updated_page = PageInUse.objects.filter(page_url="foo.com/blah")
+        updated_page = PageInUse.objects.filter(page_url="example.com/blah")
         self.assertTrue(len(updated_page), 1)
         self.assertEqual(page.id, updated_page[0].id)
         self.assertTrue(updated_page[0].updated_on > min_update_time)
@@ -274,18 +274,18 @@ class WebServiceViewTests(TestCase):
         self.login_user()
 
         # Add a value to database
-        page = PageInUse(page_url="foo.com/blah", user=self.user)
+        page = PageInUse(page_url="example.com/blah", user=self.user)
         page.save()
 
         current_page_in_use_count = PageInUse.objects.all().count()
 
-        response = self.client.delete("/ws/page_in_use_delete/%s/" % "foo.com/blah")
+        response = self.client.delete("/ws/page_in_use_delete/%s/" % "example.com/blah")
 
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
         deleted_page_in_use_count = PageInUse.objects.all().count()
 
-        deleted_page = PageInUse.objects.filter(page_url="foo.com/blah")
+        deleted_page = PageInUse.objects.filter(page_url="example.com/blah")
         self.assertEqual(len(deleted_page), 0)
         self.assertEqual(current_page_in_use_count - 1, deleted_page_in_use_count)
 
@@ -300,12 +300,12 @@ class WebServiceViewTests(TestCase):
         # create a second user
         username = "tester2"
         test_url = "bar.com/blah"
-        self.user2 = User.objects.create(username=username, email="tester2@foo.com")
+        self.user2 = User.objects.create(username=username, email="tester2@example.com")
         self.user2.set_password("top_secret")
         self.user2.save()
 
         # Add values to database
-        PageInUse.objects.create(page_url="foo.com/blah", user=self.user)
+        PageInUse.objects.create(page_url="example.com/blah", user=self.user)
 
         PageInUse.objects.create(page_url=test_url, user=self.user2)
 
@@ -329,7 +329,7 @@ class WebServiceViewTests(TestCase):
         # create a second user
         username = "tester2"
         test_url = "bar.com/blah"
-        self.user2 = User.objects.create(username=username, email="tester2@foo.com")
+        self.user2 = User.objects.create(username=username, email="tester2@example.com")
         self.user2.set_password("top_secret")
         self.user2.save()
 
@@ -351,14 +351,14 @@ class WebServiceViewTests(TestCase):
 
         # create a second user
         username = "tester2"
-        self.user2 = User.objects.create(username=username, email="tester2@foo.com")
+        self.user2 = User.objects.create(username=username, email="tester2@example.com")
         self.user2.set_password("top_secret")
         self.user2.save()
 
         # create a campaign
         self.campaign = Campaign(
             title="TextCampaign",
-            slug="www.foo.com/slug2",
+            slug="www.example.com/slug2",
             description="Campaign Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
@@ -368,9 +368,9 @@ class WebServiceViewTests(TestCase):
         # create Assets
         self.asset = Asset(
             title="TestAsset",
-            slug="www.foo.com/slug1",
+            slug="www.example.com/slug1",
             description="Asset Description",
-            media_url="http://www.foo.com/1/2/3",
+            media_url="http://www.example.com/1/2/3",
             media_type=MediaType.IMAGE,
             campaign=self.campaign,
             metadata={"key": "val2"},
@@ -380,9 +380,9 @@ class WebServiceViewTests(TestCase):
 
         self.asset2 = Asset(
             title="TestAsset2",
-            slug="www.foo.com/slug2",
+            slug="www.example.com/slug2",
             description="Asset Description",
-            media_url="http://www.foo.com/1/2/3",
+            media_url="http://www.example.com/1/2/3",
             media_type=MediaType.IMAGE,
             campaign=self.campaign,
             metadata={"key": "val2"},
@@ -419,14 +419,14 @@ class WebServiceViewTests(TestCase):
 
         # create a second user
         username = "tester2"
-        self.user2 = User.objects.create(username=username, email="tester2@foo.com")
+        self.user2 = User.objects.create(username=username, email="tester2@example.com")
         self.user2.set_password("top_secret")
         self.user2.save()
 
         # create a campaign
         self.campaign = Campaign(
             title="TextCampaign",
-            slug="www.foo.com/slug2",
+            slug="www.example.com/slug2",
             description="Campaign Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
@@ -436,9 +436,9 @@ class WebServiceViewTests(TestCase):
         # create Assets
         self.asset = Asset(
             title="TestAsset",
-            slug="www.foo.com/slug1",
+            slug="www.example.com/slug1",
             description="Asset Description",
-            media_url="http://www.foo.com/1/2/3",
+            media_url="http://www.example.com/1/2/3",
             media_type=MediaType.IMAGE,
             campaign=self.campaign,
             metadata={"key": "val2"},
@@ -448,9 +448,9 @@ class WebServiceViewTests(TestCase):
 
         self.asset2 = Asset(
             title="TestAsset2",
-            slug="www.foo.com/slug2",
+            slug="www.example.com/slug2",
             description="Asset Description",
-            media_url="http://www.foo.com/1/2/3",
+            media_url="http://www.example.com/1/2/3",
             media_type=MediaType.IMAGE,
             campaign=self.campaign,
             metadata={"key": "val2"},
@@ -502,7 +502,7 @@ class WebServiceViewTests(TestCase):
         # create a campaign
         self.campaign = Campaign(
             title="TextCampaign",
-            slug="www.foo.com/slug2",
+            slug="www.example.com/slug2",
             description="Campaign Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
@@ -512,9 +512,9 @@ class WebServiceViewTests(TestCase):
         # create Assets
         self.asset = Asset(
             title="TestAsset",
-            slug="www.foo.com/slug1",
+            slug="www.example.com/slug1",
             description="Asset Description",
-            media_url="http://www.foo.com/1/2/3",
+            media_url="http://www.example.com/1/2/3",
             media_type=MediaType.IMAGE,
             campaign=self.campaign,
             metadata={"key": "val2"},
@@ -563,7 +563,7 @@ class WebServiceViewTests(TestCase):
         # create a campaign
         self.campaign = Campaign(
             title="TextCampaign",
-            slug="www.foo.com/slug2",
+            slug="www.example.com/slug2",
             description="Campaign Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
@@ -573,9 +573,9 @@ class WebServiceViewTests(TestCase):
         # create Assets
         self.asset = Asset(
             title="TestAsset",
-            slug="www.foo.com/slug1",
+            slug="www.example.com/slug1",
             description="Asset Description",
-            media_url="http://www.foo.com/1/2/3",
+            media_url="http://www.example.com/1/2/3",
             media_type=MediaType.IMAGE,
             campaign=self.campaign,
             metadata={"key": "val2"},
@@ -605,14 +605,14 @@ class WebServiceViewTests(TestCase):
 
         # create a second user
         username = "tester2"
-        self.user2 = User.objects.create(username=username, email="tester2@foo.com")
+        self.user2 = User.objects.create(username=username, email="tester2@example.com")
         self.user2.set_password("top_secret")
         self.user2.save()
 
         # create a campaign
         self.campaign = Campaign(
             title="TextCampaign",
-            slug="www.foo.com/slug2",
+            slug="www.example.com/slug2",
             description="Campaign Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
@@ -622,9 +622,9 @@ class WebServiceViewTests(TestCase):
         # create Assets
         self.asset = Asset(
             title="TestAsset",
-            slug="www.foo.com/slug1",
+            slug="www.example.com/slug1",
             description="Asset Description",
-            media_url="http://www.foo.com/1/2/3",
+            media_url="http://www.example.com/1/2/3",
             media_type=MediaType.IMAGE,
             campaign=self.campaign,
             metadata={"key": "val2"},
@@ -671,14 +671,14 @@ class WebServiceViewTests(TestCase):
 
         # create a second user
         username = "tester2"
-        self.user2 = User.objects.create(username=username, email="tester2@foo.com")
+        self.user2 = User.objects.create(username=username, email="tester2@example.com")
         self.user2.set_password("top_secret")
         self.user2.save()
 
         # create a campaign
         self.campaign = Campaign(
             title="TextCampaign",
-            slug="www.foo.com/slug2",
+            slug="www.example.com/slug2",
             description="Campaign Description",
             metadata={"key": "val1"},
             status=Status.EDIT,
@@ -688,9 +688,9 @@ class WebServiceViewTests(TestCase):
         # create Assets
         self.asset = Asset(
             title="TestAsset",
-            slug="www.foo.com/slug1",
+            slug="www.example.com/slug1",
             description="Asset Description",
-            media_url="http://www.foo.com/1/2/3",
+            media_url="http://www.example.com/1/2/3",
             media_type=MediaType.IMAGE,
             campaign=self.campaign,
             metadata={"key": "val2"},
