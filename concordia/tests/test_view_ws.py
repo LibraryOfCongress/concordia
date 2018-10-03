@@ -1,28 +1,22 @@
 # TODO: Add correct copyright header
 
 import json
-import logging
 import time
 from datetime import datetime, timedelta
 
 from django.test import TestCase
-from django.utils.encoding import force_text
 from rest_framework import status
 
 from concordia.models import (
-    Asset,
-    Campaign,
-    Item,
     MediaType,
     PageInUse,
-    Project,
     Status,
     Tag,
     Transcription,
     User,
     UserAssetTagCollection,
-    UserProfile,
 )
+from .utils import create_asset
 
 
 class WebServiceViewTests(TestCase):
@@ -42,7 +36,7 @@ class WebServiceViewTests(TestCase):
         self.user.set_password("top_secret")
         self.user.save()
 
-        login_result = self.client.login(username="tester", password="top_secret")
+        self.client.login(username="tester", password="top_secret")
 
         # create a session cookie
         self.client.session["foo"] = 123  # HACK: needed for django Client
@@ -119,8 +113,8 @@ class WebServiceViewTests(TestCase):
 
     def test_PageInUse_nologin_post(self):
         """
-        This unit test tests the post entry for the route ws/page_in_use without logging in
-        :param self:
+        This unit test tests the post entry for the route ws/page_in_use without
+        logging in
         """
 
         # create user
@@ -150,7 +144,9 @@ class WebServiceViewTests(TestCase):
         """
 
         # create user
-        self.user = User.objects.create(username="anonymous", email="tester@example.com")
+        self.user = User.objects.create(
+            username="anonymous", email="tester@example.com"
+        )
         self.user.set_password("top_secret")
         self.user.save()
 
@@ -237,7 +233,8 @@ class WebServiceViewTests(TestCase):
 
     def test_PageInUse_put(self):
         """
-        This unit test tests the update of an existing PageInUse using PUT on route ws/page_in_use/url
+        This unit test tests the update of an existing PageInUse using PUT on
+        route ws/page_in_use/url
         """
 
         self.login_user()
@@ -268,7 +265,8 @@ class WebServiceViewTests(TestCase):
 
     def test_PageInUse_delete(self):
         """
-        This unit test tests the delete of an existing PageInUse using DELETE on route ws/page_in_use_delete/
+        This unit test tests the delete of an existing PageInUse using DELETE on
+        route ws/page_in_use_delete/
         """
 
         self.login_user()
@@ -291,8 +289,8 @@ class WebServiceViewTests(TestCase):
 
     def test_PageInUse_filter_get(self):
         """
-        Test the route ws/page_in_use_filter/user/page_url/
-        It should return a list of PageInUse updated in last 5 minutes by user other than self.user
+        Test the route ws/page_in_use_filter/user/page_url/ It should return a
+        list of PageInUse updated in last 5 minutes by user other than self.user
         """
 
         self.login_user()
@@ -355,142 +353,32 @@ class WebServiceViewTests(TestCase):
         self.user2.set_password("top_secret")
         self.user2.save()
 
-        # create a campaign
-        self.campaign = Campaign(
-            title="TextCampaign",
-            slug="www.example.com/slug2",
-            description="Campaign Description",
-            metadata={"key": "val1"},
-            status=Status.EDIT,
-        )
-        self.campaign.save()
-
-        # create Assets
-        self.asset = Asset(
-            title="TestAsset",
-            slug="www.example.com/slug1",
-            description="Asset Description",
+        asset1 = create_asset(
+            title="Test Asset 1",
             media_url="http://www.example.com/1/2/3",
             media_type=MediaType.IMAGE,
-            campaign=self.campaign,
-            metadata={"key": "val2"},
             status=Status.EDIT,
         )
-        self.asset.save()
-
-        self.asset2 = Asset(
-            title="TestAsset2",
-            slug="www.example.com/slug2",
-            description="Asset Description",
-            media_url="http://www.example.com/1/2/3",
-            media_type=MediaType.IMAGE,
-            campaign=self.campaign,
-            metadata={"key": "val2"},
-            status=Status.EDIT,
-        )
-        self.asset2.save()
 
         # add Transcription objects
-        self.transcription = Transcription(
-            asset=self.asset, user_id=self.user.id, status=Status.EDIT, text="T1"
+        transcription1 = Transcription(
+            asset=asset1, user_id=self.user.id, status=Status.EDIT, text="T1"
         )
-        self.transcription.save()
+        transcription1.full_clean()
+        transcription1.save()
 
-        t2_text = "T2"
-
-        self.transcription2 = Transcription(
-            asset=self.asset, user_id=self.user2.id, status=Status.EDIT, text=t2_text
+        transcription2 = Transcription(
+            asset=asset1, user_id=self.user2.id, status=Status.EDIT, text="T2"
         )
-        self.transcription2.save()
+        transcription2.full_clean()
+        transcription2.save()
 
-        response = self.client.get("/ws/transcription/%s/" % self.asset.id)
+        response = self.client.get("/ws/transcription/%s/" % asset1.id)
 
         json_resp = json.loads(response.content)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(json_resp["text"], t2_text)
-
-    def test_Transcriptions_by_user(self):
-        """
-        Test getting the user's transcriptions. route ws/transcription_by_user/<userid>/
-        """
-
-        self.login_user()
-
-        # create a second user
-        username = "tester2"
-        self.user2 = User.objects.create(username=username, email="tester2@example.com")
-        self.user2.set_password("top_secret")
-        self.user2.save()
-
-        # create a campaign
-        self.campaign = Campaign(
-            title="TextCampaign",
-            slug="www.example.com/slug2",
-            description="Campaign Description",
-            metadata={"key": "val1"},
-            status=Status.EDIT,
-        )
-        self.campaign.save()
-
-        # create Assets
-        self.asset = Asset(
-            title="TestAsset",
-            slug="www.example.com/slug1",
-            description="Asset Description",
-            media_url="http://www.example.com/1/2/3",
-            media_type=MediaType.IMAGE,
-            campaign=self.campaign,
-            metadata={"key": "val2"},
-            status=Status.EDIT,
-        )
-        self.asset.save()
-
-        self.asset2 = Asset(
-            title="TestAsset2",
-            slug="www.example.com/slug2",
-            description="Asset Description",
-            media_url="http://www.example.com/1/2/3",
-            media_type=MediaType.IMAGE,
-            campaign=self.campaign,
-            metadata={"key": "val2"},
-            status=Status.EDIT,
-        )
-        self.asset2.save()
-
-        # add Transcription objects
-        t1_text = "T1"
-        self.transcription = Transcription(
-            asset=self.asset, user_id=self.user.id, status=Status.EDIT, text=t1_text
-        )
-        self.transcription.save()
-
-        t2_text = "T2"
-
-        self.transcription2 = Transcription(
-            asset=self.asset, user_id=self.user2.id, status=Status.EDIT, text=t2_text
-        )
-        self.transcription2.save()
-
-        t3_text = "T3"
-
-        self.transcription3 = Transcription(
-            asset=self.asset, user_id=self.user.id, status=Status.EDIT, text=t3_text
-        )
-        self.transcription3.save()
-
-        response = self.client.get("/ws/transcription_by_user/%s/" % self.user.id)
-
-        json_resp = json.loads(response.content)
-        transcriptions_array = []
-        for trans in json_resp["results"]:
-            transcriptions_array.append(trans["text"])
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(json_resp["count"], 2)
-        self.assertTrue("T3" in transcriptions_array)
-        self.assertTrue("T1" in transcriptions_array)
-        self.assertFalse("T2" in transcriptions_array)
+        self.assertEqual(json_resp["text"], transcription2.text)
 
     def test_Transcriptions_create_post(self):
         """
@@ -499,33 +387,17 @@ class WebServiceViewTests(TestCase):
 
         self.login_user()
 
-        # create a campaign
-        self.campaign = Campaign(
-            title="TextCampaign",
-            slug="www.example.com/slug2",
-            description="Campaign Description",
-            metadata={"key": "val1"},
-            status=Status.EDIT,
-        )
-        self.campaign.save()
-
-        # create Assets
-        self.asset = Asset(
+        asset = create_asset(
             title="TestAsset",
-            slug="www.example.com/slug1",
-            description="Asset Description",
             media_url="http://www.example.com/1/2/3",
             media_type=MediaType.IMAGE,
-            campaign=self.campaign,
-            metadata={"key": "val2"},
             status=Status.EDIT,
         )
-        self.asset.save()
 
         response = self.client.post(
             "/ws/transcription_create/",
             {
-                "asset": self.asset.id,
+                "asset": asset.id,
                 "user_id": self.user.id,
                 "status": Status.EDIT,
                 "text": "T1",
@@ -535,14 +407,14 @@ class WebServiceViewTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         # Get all Transcriptions for the asset
-        transcriptions_count = Transcription.objects.filter(asset=self.asset).count()
+        transcriptions_count = Transcription.objects.filter(asset=asset).count()
         self.assertEqual(transcriptions_count, 1)
 
         # Add Another transcription
         response = self.client.post(
             "/ws/transcription_create/",
             {
-                "asset": self.asset.id,
+                "asset": asset.id,
                 "user_id": self.user.id,
                 "status": Status.EDIT,
                 "text": "T2",
@@ -550,7 +422,7 @@ class WebServiceViewTests(TestCase):
         )
 
         # Get all Transcriptions for the asset, should be another one
-        transcriptions_count = Transcription.objects.filter(asset=self.asset).count()
+        transcriptions_count = Transcription.objects.filter(asset=asset).count()
         self.assertEqual(transcriptions_count, 2)
 
     def test_Tag_create_post(self):
@@ -560,34 +432,18 @@ class WebServiceViewTests(TestCase):
 
         self.login_user()
 
-        # create a campaign
-        self.campaign = Campaign(
-            title="TextCampaign",
-            slug="www.example.com/slug2",
-            description="Campaign Description",
-            metadata={"key": "val1"},
-            status=Status.EDIT,
-        )
-        self.campaign.save()
-
-        # create Assets
-        self.asset = Asset(
+        asset = create_asset(
             title="TestAsset",
-            slug="www.example.com/slug1",
-            description="Asset Description",
             media_url="http://www.example.com/1/2/3",
             media_type=MediaType.IMAGE,
-            campaign=self.campaign,
-            metadata={"key": "val2"},
             status=Status.EDIT,
         )
-        self.asset.save()
 
         response = self.client.post(
             "/ws/tag_create/",
             {
-                "campaign": self.campaign.slug,
-                "asset": self.asset.slug,
+                "campaign": asset.item.project.campaign.slug,
+                "asset": asset.pk,
                 "user_id": self.user.id,
                 "name": "T1",
                 "value": "T1",
@@ -605,57 +461,34 @@ class WebServiceViewTests(TestCase):
 
         # create a second user
         username = "tester2"
-        self.user2 = User.objects.create(username=username, email="tester2@example.com")
-        self.user2.set_password("top_secret")
-        self.user2.save()
+        user2 = User.objects.create(username=username, email="tester2@example.com")
+        user2.set_password("top_secret")
+        user2.save()
 
-        # create a campaign
-        self.campaign = Campaign(
-            title="TextCampaign",
-            slug="www.example.com/slug2",
-            description="Campaign Description",
-            metadata={"key": "val1"},
-            status=Status.EDIT,
-        )
-        self.campaign.save()
-
-        # create Assets
-        self.asset = Asset(
+        asset = create_asset(
             title="TestAsset",
-            slug="www.example.com/slug1",
-            description="Asset Description",
             media_url="http://www.example.com/1/2/3",
             media_type=MediaType.IMAGE,
-            campaign=self.campaign,
-            metadata={"key": "val2"},
             status=Status.EDIT,
         )
-        self.asset.save()
 
-        self.tag1 = Tag(name="Tag1", value="Tag1")
-        self.tag1.save()
-
-        self.tag2 = Tag(name="Tag2", value="Tag2")
-        self.tag2.save()
-
-        self.tag3 = Tag(name="Tag3", value="Tag3")
-        self.tag3.save()
+        tag1 = Tag.objects.create(value="Tag1")
+        tag2 = Tag.objects.create(value="Tag2")
+        tag3 = Tag.objects.create(value="Tag3")
 
         # Save for User1
-        self.asset_tag_collection = UserAssetTagCollection(
-            asset=self.asset, user_id=self.user.id
-        )
-        self.asset_tag_collection.save()
-        self.asset_tag_collection.tags.add(self.tag1, self.tag2)
+        asset_tag_collection = UserAssetTagCollection(asset=asset, user_id=self.user.id)
+        asset_tag_collection.save()
+        asset_tag_collection.tags.add(tag1, tag2)
 
         # Save for User2
-        self.asset_tag_collection2 = UserAssetTagCollection(
-            asset=self.asset, user_id=self.user2.id
+        asset_tag_collection2 = UserAssetTagCollection(
+            asset=asset, user_id=self.user2.id
         )
-        self.asset_tag_collection2.save()
-        self.asset_tag_collection2.tags.add(self.tag3)
+        asset_tag_collection2.save()
+        asset_tag_collection2.tags.add(tag3)
 
-        response = self.client.get("/ws/tags/%s/" % self.asset.id)
+        response = self.client.get("/ws/tags/%s/" % asset.pk)
 
         json_resp = json.loads(response.content)
 
@@ -671,34 +504,13 @@ class WebServiceViewTests(TestCase):
 
         # create a second user
         username = "tester2"
-        self.user2 = User.objects.create(username=username, email="tester2@example.com")
-        self.user2.set_password("top_secret")
-        self.user2.save()
+        user2 = User.objects.create(username=username, email="tester2@example.com")
+        user2.set_password("top_secret")
+        user2.save()
 
-        # create a campaign
-        self.campaign = Campaign(
-            title="TextCampaign",
-            slug="www.example.com/slug2",
-            description="Campaign Description",
-            metadata={"key": "val1"},
-            status=Status.EDIT,
-        )
-        self.campaign.save()
+        asset = create_asset()
 
-        # create Assets
-        self.asset = Asset(
-            title="TestAsset",
-            slug="www.example.com/slug1",
-            description="Asset Description",
-            media_url="http://www.example.com/1/2/3",
-            media_type=MediaType.IMAGE,
-            campaign=self.campaign,
-            metadata={"key": "val2"},
-            status=Status.EDIT,
-        )
-        self.asset.save()
-
-        response = self.client.get("/ws/tags/%s/" % self.asset.id)
+        response = self.client.get("/ws/tags/%s/" % asset.id)
 
         json_resp = json.loads(response.content)
 

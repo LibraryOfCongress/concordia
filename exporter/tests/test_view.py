@@ -1,14 +1,19 @@
-import csv
+from django.core.files.base import ContentFile
 import io
 import os
-import shutil
 import zipfile
 
-import boto3
 from django.conf import settings
 from django.test import TestCase
+from django.core.files.storage import default_storage
 
-from concordia.models import Asset, Campaign, MediaType, Status, Transcription, User
+from concordia.models import MediaType, Status, Transcription, User
+from concordia.tests.utils import (
+    create_asset,
+    create_campaign,
+    create_item,
+    create_project,
+)
 
 
 class ViewTest_Exporter(TestCase):
@@ -37,123 +42,48 @@ class ViewTest_Exporter(TestCase):
 
         self.login_user()
 
-        # Build test data for local storage campaign #
+        campaign = create_campaign(status=Status.EDIT, published=True)
+        project = create_project(campaign=campaign, published=True)
+        item = create_item(project=project, published=True)
 
-        # Campaign Info (local storage)
-        locstor_media_url_str = "/locstorcampaign/testasset/asset.jpg"
-        locstor_campaign_name_str = "locstorcampaign"
-        locstor_asset_folder_name_str = "testasset"
-        locstor_asset_name_str = "asset.jpg"
-
-        # create a campaign (local Storage)
-        self.campaign1 = Campaign(
-            title="LocStorCampaign",
-            slug=locstor_campaign_name_str,
-            description="Campaign Description",
-            metadata={"key": "val1"},
-            s3_storage=False,
-            status=Status.EDIT,
-        )
-        self.campaign1.save()
-
-        # create an Asset (local Storage)
-        self.asset1 = Asset(
+        asset = create_asset(
+            item=item,
             title="TestAsset",
-            slug=locstor_asset_folder_name_str,
             description="Asset Description",
-            media_url="1.jpg",
+            media_url="foo/1.jpg",
             media_type=MediaType.IMAGE,
-            campaign=self.campaign1,
-            sequence=0,
-            metadata={"key": "val2"},
+            sequence=1,
             status=Status.EDIT,
         )
-        self.asset1.save()
 
         # add a Transcription object
-        self.transcription1 = Transcription(
-            asset=self.asset1, user=self.user, status=Status.EDIT, text="Sample"
+        transcription1 = Transcription(
+            asset=asset, user=self.user, status=Status.EDIT, text="Sample"
         )
-        self.transcription1.save()
+        transcription1.full_clean()
+        transcription1.save()
 
-        # Build test data for S3 Storage Campaign #
-        # Campaign Info (S3 storage)
-        s3_media_url_str = "https://s3.us-east-2.amazonaws.com/chc-collections/test_s3/mss859430177/0.jpg"
-        s3_campaign_name_str = "test_s3"
-        s3_asset_folder_name_str = "testasset"
-        s3_asset_name_str = "asset.jpg"
-
-        # create a campaign (local Storage)
-        self.campaign2 = Campaign(
-            title="Test S3",
-            slug=s3_campaign_name_str,
-            description="Campaign Description",
-            metadata={"key": "val1"},
-            status=Status.EDIT,
+        item_dir = os.path.join(
+            settings.MEDIA_ROOT, campaign.slug, project.slug, item.item_id, asset.slug
         )
-        self.campaign2.save()
 
-        # create an Asset (local Storage)
-        self.asset2 = Asset(
-            title="TestAsset",
-            slug=s3_asset_folder_name_str,
-            description="Asset Description",
-            media_url=s3_media_url_str,
-            media_type=MediaType.IMAGE,
-            campaign=self.campaign2,
-            sequence=0,
-            metadata={"key": "val2"},
-            status=Status.EDIT,
+        asset_file = ContentFile(b"Not a real JPEG")
+        default_storage.save(
+            os.path.join(item_dir, f"{asset.sequence}.jpg"), asset_file
         )
-        self.asset2.save()
 
-        # add a Transcription object
-        self.transcription2 = Transcription(
-            asset=self.asset2, user=self.user, status=Status.EDIT, text="Sample"
-        )
-        self.transcription2.save()
-
-        # Make sure correct folders structure exists for Local Storage Campaign
-        campaign_folder = "{0}/{1}".format(
-            settings.MEDIA_ROOT, locstor_campaign_name_str
-        )
-        if not os.path.exists(campaign_folder):
-            os.makedirs(campaign_folder)
-        item_dir = "{0}/{1}".format(campaign_folder, locstor_asset_folder_name_str)
-        if not os.path.exists(item_dir):
-            os.makedirs(item_dir)
-
-        # create source asset file for Local Storage Campaign
-        with open("{0}/{1}".format(item_dir, locstor_asset_name_str), "w+") as csv_file:
-            writer = csv.writer(csv_file)
-            writer.writerow(
-                [
-                    "Campaign",
-                    "Title",
-                    "Description",
-                    "MediaUrl",
-                    "Transcription",
-                    "Tags",
-                ]
-            )
-
-        # Act (local storage campaign)
-        response = self.client.get("/campaigns/exportBagit/locstorcampaign/")
-
-        # Assert for Local Storage Campaign
+        response = self.client.get("/campaigns/exportBagit/%s/" % campaign.slug)
 
         self.assertEqual(response.status_code, 200)
         self.assertEquals(
             response.get("Content-Disposition"),
-            "attachment; filename=locstorcampaign.zip",
+            "attachment; filename=%s.zip" % campaign.slug,
         )
-        try:
-            f = io.BytesIO(response.content)
-            zipped_file = zipfile.ZipFile(f, "r")
 
+        f = io.BytesIO(response.content)
+        zipped_file = zipfile.ZipFile(f, "r")
+
+        # self.assertIsNone(zipped_file.testzip())
         self.assertIn("bagit.txt", zipped_file.namelist())
         self.assertIn("bag-info.txt", zipped_file.namelist())
-        self.assertIn(
-            "data/test-project/testitem0123456789/testasset/1.jpg",
-            zipped_file.namelist(),
-        )
+        self.assertIn("data/testasset/asset.txt", zipped_file.namelist())
