@@ -13,12 +13,11 @@ Our basic principles are those familiar to anybody who has contributed to a prom
 
 There is a cross functional product team for Concordia comprised of Library Services, policy, security, and technical specialists who are working together. This product team will be comprised of the following roles
 
--   Product owner – Library
--   Product manager(s) – Library
--   Scrum Master (or equivalent) – Library
--   User Experience designer – Vendor
--   Developers (Front-end, Back-end, Full-stack) – Vendor
--   Technical lead – Vendor
+-   Product owner
+-   Product manager
+-   Technical lead
+-   User Experience designer
+-   Developers (Front-end, Back-end, Full-stack)
 
 This team will participate in all stand ups, backlog grooming and retrospectives in service of prioritizing, defining and delivering value to the department and the public it serves.
 
@@ -26,36 +25,31 @@ This team will participate in all stand ups, backlog grooming and retrospectives
 
 Each sprint is two weeks long. We have a sprint kick off the first day of the new sprint. There are three basic meeting rhythms:
 
--   Daily standups at 10:00 – 10:30 am
+-   Daily standups at 10:30 - 10:45 am
     -   Structure: Each team member talks says what they completed yesterday, what they will work on today, and any blockers
 -   Weekly backlog grooming on Thursday at 3:00 – 4:30 pm
     -   Structure: tickets in the backlog are sorted by priority, the team adds acceptance criteria, story points and assigns the tasks to a team member
 -   Sprint demo and retrospectives are held every two weeks
-    -   At the end of each sprint, Artemis demos work completed in the sprint for the larger library stakeholders followed by a retrospective of just the product team. These are held back-to-back, on the same day
+    -   At the end of each sprint, the PM demos work completed in the sprint for the larger library stakeholders followed by a retrospective of just the product team. These are held back-to-back, on the same day
 
-All meetings are held via WebEx, a video teleconference application.
+All meetings are held in person, on Slack or WebEx, a video teleconference application.
 
 ## Definition of Done
 
 So that we can work more efficiently and be confident in the quality of the work we are delivering, we have a clear definition of what it means for a user story to be done, or production-ready.
 
--   for delivering a user story to the product team
-    -   Story needs to be written in a way that is clear from both a development and a testing standpoint. Stories will need to be reviewed by the product team during creation.
-    -   Acceptance criteria should include the relevant tests needed (unit, security, performance, acceptance, etc) - Acceptance criteria should include the objective of the story, for use in approval by PO or tech team or both - The delivered functionality should match the acceptance criteria of the user story - All tests must pass in the Artemis stage environment (unit, integration, feature) - The delivered functionality should be 508 compliant - Security requirements must be met - All documentation must be up to date (diagrams, training documentation, API documentation, help text, etc) - The delivered functionality should be compatible with the latest versions of IE, Firefox, Chrome and Safari
--   for product team to accept the user story and ship it - The product team has verified the functionality in staging
+-   **For delivering a user story to the product team:**
+    -  Story needs to be written in a way that is clear from both a development and a testing standpoint. Stories will need to be reviewed by the product team during creation.
+    -  Acceptance criteria should include the relevant tests needed (unit, security, performance, acceptance, etc) 
+    - Acceptance criteria should include the objective of the story, for use in approval by PO or tech team or both - The delivered functionality should match the acceptance criteria of the user story 
+-  **for product team to accept the user story and ship it** 
+    - The functionality meets the acceptance criteria
+    - The product team has verified the functionality in staging
+    - All tests must pass in the the stage environment (unit, integration, feature) 
+    - The delivered functionality should be 508 compliant 
+    - Security requirements must be met - All documentation must be up to date (diagrams, training documentation, API documentation, help text, etc) 
+    - The delivered functionality should be compatible with the latest versions of IE, Firefox, Chrome and Safari
 
-## Accepting Vendor Work
-
-Acceptance of work happens through the sprint as work is completed. The procedure is as follows:
-
--   Development team completes work - See "for for delivering a user story to the product team" in Definition of Done above
--   Development team creates pull request to Artemis `master` - See Pull Request Process
--   The product team has verified the functionality against acceptance criteria in a deployed instance for a feature level pull request
--   Code review takes place - See Code Review Process
--   Pull request merged to Artemis `master`
--   User testing happens - See "for product team to accept the user story and ship it" in Definition of Done above, and Testing Strategy
--   Product team creates pull request to LOC `master` after each sprint
--   Library's technical lead merges pull request to master
 
 ## Processes
 
@@ -63,60 +57,89 @@ Acceptance of work happens through the sprint as work is completed. The procedur
 
 We practice testing at three levels: unit tests, integration tests, and feature tests. For details about how we create and maintain unit, integration and feature tests.
 
--   Unit - Unit tests must be created for all new code, during the sprint in which the code is written, with coverage of at least 90%.
+-   Unit - Unit tests must be created for all new code, during the sprint in which the code is written, with coverage of at least 90%.
 -   Integration - Code must include tests that verify that interfaces are functioning as designed.
--   Feature - New features must have functional definitions of the thing that they are to perform, and a description of human-performable actions to verify that they perform that thing.
+-   Feature - New features must have functional definitions of the thing that they are to perform, and a description of human-performable actions to verify that they perform that thing.
 
 ## Branch strategy and Pull Request Process
+# Git branching strategy
 
-We have two long lived git branches Artemis `master` and LOC `master`
+We will have two long-lived git branches, `master` and `staging`.
 
-Artemis `master` will continuously deploy to our staging site `chc-stage.artemisconsultinginc.com` and is the main repository for development
+`master` will continuously deploy to our production environment.
 
-LOC `master` will be updated at the end of each sprint. This is the main repository for production (Once ATO is approved)
+`staging` will continuously deploy to our staging environment.
+Our staging environment will be on AWS and only accessible through the library's network.
 
-#### Starting new work
+## Starting new work
 
-When someone begins new work, they cut a branch from Artemis `master` and name it after their work and the ticket number corresponding to Jira. Here is the format: `name-ticketnumber-task` example `tim-chc-167-tests-comments`. New changes are pushed to the feature branch of its origin often.
+When someone begins new work, they cut a new branch from `staging` and name it after their work, perhaps `feature1`.  New changes are pushed to the feature branch origin. Continuous Integration (CI) will be triggered on PR to `staging`. 
 
-#### Merging to Artemis `master`
+## Merging to `staging`
 
-When new work is complete, we set up a Pull Request (PR) from `name-ticketnumber-task` to Artemis `master`. Discussion and approval changes happens in the PR in the GitHub interface. In each Pull Request, in the description box should include:
+When new work is complete, we set up a Pull Request (PR) from `feature1` to `staging`. Discussion about, and approval of changes by either the technical lead, Product Owner or both happens in the PR interface in GitHub
 
--   details of the new work
--   Ticket numbers the PR addresses
--   Provide directions on how to test and review the PR
--   Assign a reviewer
+Once this new work is approved we close the PR, which merges the code.
+From here, our CI pipeline will build the new changes on the `staging` branch.  Next, our CD pipeline will deploy the new work to our staging environment.
 
-Once this new work is approved we closed the PR, which merges the code. From here, a Jenkis job will run the build and deploy the new work at the end of the day.
+## Merging to `master`
 
-#### Merging to LOC `master`
+Once a new body of work is merged to `staging` (likely via multiple PRs) and any manual QA work has finished in the staging environment, we set up a PR from `staging` to `master`.
 
-At the end of each sprint, a PR will be made from the Artemis repo to LOC's `master`. All PR to LOC `master` should include:
+This constitutes a new production release.  Any last-minute discussion, as well as approval happens in the PR interface. Once approved by the technical lead, product owner or both and merged, CI runs for `master` branch to the production environments.  
 
--   Sprint number
--   Description of all new features
+## Race conditions on merges to staging
 
-All code at this point has been reviewed and approved but the product team.
+Imagine two PRs called A and B are open against the `staging` branch. The two PRs both change code in the same file. Now, we merge PR A to staging.  After this merge PR B will report that it is "unmergeable" in GitHub.  This is because `staging` contains the changes from PR A, but PR B does not contain those changes -- git doesn't know what to do.
 
-**Here is a table mapping out the full process**
+In this case we have a couple options.
 
-| Stage                        | To Do                                             | In Progress                                                                                               | Artemis Review                                                        | LOC Review                                                    | Complete                                                                   |
-| ---------------------------- | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------- | -------------------------------------------------------------------------- |
-|                              |                                                   |                                                                                                           |                                                                       |                                                               |                                                                            |
-| **Actions**                  | Queue of tickets in to be completed in the sprint | Developer creates feature branch from [Artemis/Concorida](https://github.com/ArtemisConsulting/concordia) | Upon Completion developer submits pull request to Artemis/Concordia   | After passing Artemis Review ticket is moved to Review (Jira) | After passing Project Review ticket is moved to Done (Jira)                |
-|                              |                                                   |                                                                                                           | Moves ticket to Artemis Review column                                 | Moves ticket to LOC Review Column                             |                                                                            |
-|                              |                                                   |                                                                                                           | Pull Request is reviewed to meet coding standards                     | Feature Branch is merged with Artemis/Concordia/Master        | Artemis/Concordia/Master is merged with LibraryOfCongress/Concordia/Master |
-|                              |                                                   |                                                                                                           | Pull Request is reviewed to for functionality and acceptance criteria | Pull Request is submitted to LibraryOfCongress/Concordia      |                                                                            |
-|                              |                                                   |                                                                                                           |                                                                       |                                                               |                                                                            |
-| **Artemis Hosting Location** |                                                   | AWS or Local Dev Environment [Artemis/Concordia/branch]                                                   | AWS or Local Dev Environment [Artemis/Concordia/branch]               | chc-stage [Artemis/Concordia/Master]                          | chc-test [LibraryOfCongress/Concordia/Master]                              |
+1. Rebase: `git rebase B_branch staging`.  Rebasing the branch replays all of the commits from B on top of the _new_ `staging` branch (which now contains changes from A). **Rebasing is the preferred method for handling these issues.**  Push the `B_branch` and you'll be able to use GitHub to close the PR.
+2. Manual conflict resolution. Instead of using the GitHub UI to merge the PR, execute the merge locally. `git checkout staging && git merge B_branch`. Git will report merge conflicts, which you can resolve locally, manually, using your editor.  When you're done push the `staging` branch and close the PR in GitHub
 
-## Code Review Process
+## Patching production/master
 
-TBD
+Imagine that many PRs have been merged to `staging`, and you find a problem in production that needs a quick fix. At this point `staging` has moved far past `master`.  In this case we code the fix to production in a new branch cut from `master`, maybe called `prod_fix`. We set up a PR against `master` for reiew and discussion.
 
-## Tools
+Any QA or manual testing will take place in a one-off environment deployed from the `prod_fix` branch; with the Azure PaaS we could manually deploy to an empty Deployment Slot. Once the PR on `master` is merged CI/CD takes care of deployment to the production environment.
 
--   GitHub - We use our GitHub organization for storing both software and collaboratively-maintained text.
--   Slack - We use the Slack for communication that falls outside of the structure of Jira or GitHub, but that doesn’t rise to the level of email, or for communication that it’s helpful for everybody else to be able to observe.
+Now we have to bring those new changes in master back into staging.  We use rebase again: `git rebase staging master`.
+
+## Code quality and review process
+
+Code reviews are about keeping code clean and limiting technical debt. We will look for things that increase technical debt or create an environment where technical debt can be introduced easily later.  Each pull request will be reviewed by the technical lead or assigend reviewer. As a reviewer, they will look closely to untested code, if there are tests that they are testing what they're supposed to, that they are following the Library's code standards. 
+
+### Ensuring your work follows the Library's coding standards
+
+The project extends the standard Django settings model for project configuration and the Django test framework for unit tests.
+
+#### Configuring your virtual env
+Name your virtual env directory `.venv` and it's preferred to use Pipenv to manage the virtual environment.
+
+#### Configure your editor with helpful tools: 
+
+[setup.cfg](setup.cfg) contains configuration for  pycodestyle, [isort](https://pypi.org/project/isort/) and flake8.
+
+Configure your editor to run black and isort on each file at save time.
+
+1. Install [black](https://pypi.org/project/black/) and integrate it with your editor of choice.
+2. Run [flake8](http://flake8.pycqa.org/en/latest/) to ensure you don't increase the warning count or introduce errors with your commits. 
+3. This project uses [EditorConfig](https://editorconfig.org) for code consistency.
+
+If you can't modify your editor, here is how to run the code quality
+tools manually:
+
+```
+    $ black .
+    $ isort --recursive
+```
+
+Black should be run prior to isort. It's recommended to commit your code
+before running black, after running black, and after running isort so
+the changes from each step are visible.
+
+## Tools we use
+
+-   GitHub - We use our GitHub organization for storing both software and collaboratively-maintained text.
+-   Slack - We use the Slack for communication that falls outside of the structure of Jira or GitHub, but that doesn’t rise to the level of email, or for communication that it’s helpful for everybody else to be able to observe.
 -   WebEx - We use WebEx for video conferencing in all our meetings
