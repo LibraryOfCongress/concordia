@@ -134,13 +134,7 @@ class ExportCampaignToBagit(TemplateView):
         response["Content-Disposition"] = "attachment; filename=%s.zip" % campaign.slug
 
         # Clean up temp folders & zipfile once exported
-        try:
-            shutil.rmtree(campaign_folder)
-        except Exception as e:
-            pass
-        try:
-            os.remove("%s.zip" % campaign_folder)
-        except Exception as e:
-            pass
+        shutil.rmtree(campaign_folder)
+        os.remove("%s.zip" % campaign_folder)
 
         return response
