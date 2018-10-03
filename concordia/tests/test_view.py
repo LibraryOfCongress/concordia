@@ -1,13 +1,14 @@
 # TODO: Add correct copyright header
 
-import logging
 import re
 
 from captcha.models import CaptchaStore
 from django.test import TestCase
 
-from concordia.models import Campaign, MediaType, PageInUse, Status, Transcription, User
+from concordia.models import PageInUse, Status, User
 from concordia.views import get_anonymous_user
+from .utils import create_campaign, create_project, create_item, create_asset
+
 
 class ViewTest_Concordia(TestCase):
     """
@@ -15,49 +16,6 @@ class ViewTest_Concordia(TestCase):
 
     Make sure the postgresql db is available. Run docker-compose up db
     """
-
-    def create_campaign(
-        self,
-        title="Test Campaign",
-        slug="test-campaign",
-        description="Test Description",
-        published=True,
-    ):
-        campaign = Campaign(
-            title=title, slug=slug, description=description, published=published
-        )
-        campaign.full_clean()
-        campaign.save()
-        return campaign
-
-    def create_project(
-        self,
-        title="Test Project",
-        slug="test-project",
-        description="Test Description",
-        published=True,
-    ):
-        campaign = self.create_campaign()
-
-        project = campaign.project_set.create(title=title, slug=slug, published=True)
-        project.full_clean()
-        project.save()
-        return project
-
-    def create_item(self, title="Test Item", slug="test-item", published=True):
-        project = self.create_project()
-
-        item = project.item_set.create(title=title, slug=slug, published=True)
-        item.full_clean()
-        item.save()
-        return item
-
-    def create_asset(self, title="Test Asset", slug="test-asset", **kwargs):
-        item = self.create_item()
-        asset = item.asset_set.create(title=title, slug=slug, **kwargs)
-        asset.full_clean()
-        asset.save()
-        return asset
 
     def login_user(self):
         """
@@ -106,8 +64,8 @@ class ViewTest_Concordia(TestCase):
 
     def test_AccountProfileView_post_invalid_form(self):
         """
-        This unit test tests the post entry for the route account/profile but submits an invalid form
-        :param self:
+        This unit test tests the post entry for the route account/profile but
+        submits an invalid form
         """
         self.login_user()
 
@@ -136,7 +94,7 @@ class ViewTest_Concordia(TestCase):
         """
         Test GET on route /campaigns/<slug-value> (campaign)
         """
-        c = self.create_campaign(title="GET Campaign", slug="get-campaign")
+        c = create_campaign(title="GET Campaign", slug="get-campaign")
 
         response = self.client.get("/campaigns/get-campaign/")
 
@@ -150,7 +108,7 @@ class ViewTest_Concordia(TestCase):
         """
         Test GET on route /campaigns/<slug-value>/ (campaign) on page 2
         """
-        c = self.create_campaign()
+        c = create_campaign()
 
         response = self.client.get("/campaigns/%s/" % c.slug, {"page": 2})
 
@@ -163,7 +121,7 @@ class ViewTest_Concordia(TestCase):
         """
         Test GET on route /campaigns/<campaign-slug>/<project-slug>/<item-slug>
         """
-        i = self.create_item()
+        i = create_item()
 
         response = self.client.get(
             "/campaigns/%s/%s/%s/" % (i.project.campaign.slug, i.project.slug, i.slug)
@@ -177,7 +135,7 @@ class ViewTest_Concordia(TestCase):
         """
         Test GET route /campaigns/export/<slug-value>/ (campaign)
         """
-        asset = self.create_asset()
+        asset = create_asset()
 
         response = self.client.get("/campaigns/exportCSV/%s/" % asset.campaign.slug)
 
@@ -194,7 +152,7 @@ class ViewTest_Concordia(TestCase):
         This unit test test the POST route /campaigns/<campaign>/asset/<Asset_name>/
         for an anonymous user. This user should not be able to tag
         """
-        asset = self.create_asset()
+        asset = create_asset()
         anonymous_user = get_anonymous_user()
 
         transcription = asset.transcription_set.create(
@@ -231,7 +189,7 @@ class ViewTest_Concordia(TestCase):
         also
         """
 
-        asset = self.create_asset()
+        asset = create_asset()
         anonymous_user = get_anonymous_user()
 
         transcription = asset.transcription_set.create(
@@ -257,7 +215,7 @@ class ViewTest_Concordia(TestCase):
         """
         self.login_user()
 
-        asset = self.create_asset()
+        asset = create_asset()
 
         self.transcription = asset.transcription_set.create(
             user_id=self.user.id, text="Test transcription 1", status=Status.EDIT
@@ -318,7 +276,7 @@ class ViewTest_Concordia(TestCase):
         """
         Test GET on route /campaigns/<slug-value> (campaign)
         """
-        project = self.create_project()
+        project = create_project()
 
         response = self.client.get(
             "/campaigns/%s/%s/" % (project.campaign.slug, project.slug)
