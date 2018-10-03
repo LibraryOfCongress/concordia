@@ -6,7 +6,8 @@ import bagit
 from django.conf import settings
 from django.http import HttpResponse
 from django.views.generic import TemplateView
-
+from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
 from concordia.models import Asset, Campaign, Transcription, UserAssetTagCollection
 from concordia.storage import ASSET_STORAGE
 
@@ -19,9 +20,12 @@ class ExportCampaignToCSV(TemplateView):
 
     template_name = "transcriptions/campaign.html"
 
+    @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
         campaign = Campaign.objects.get(slug=self.args[0])
-        asset_list = campaign.asset_set.all().order_by("title", "sequence")
+        asset_list = Asset.objects.filter(item__project__campaign=campaign).order_by(
+            "title", "sequence"
+        )
         # Create the HttpResponse object with the appropriate CSV header.
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = 'attachment; filename="{0}.csv"'.format(
@@ -69,6 +73,7 @@ class ExportCampaignToBagit(TemplateView):
     include_images = True
     template_name = "transcriptions/campaign.html"
 
+    @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
         campaign = Campaign.objects.get(slug=self.args[0])
         asset_list = Asset.objects.filter(item__project__campaign=campaign).order_by(

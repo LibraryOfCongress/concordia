@@ -131,22 +131,6 @@ class ViewTest_Concordia(TestCase):
         self.assertTemplateUsed(response, template_name="transcriptions/item.html")
         self.assertIn(i.title, response.content)
 
-    def test_ExportCampaignView_get(self):
-        """
-        Test GET route /campaigns/export/<slug-value>/ (campaign)
-        """
-        asset = create_asset()
-
-        response = self.client.get("/campaigns/exportCSV/%s/" % asset.campaign.slug)
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(
-            str(response.content),
-            "b'Campaign,Title,Description,MediaUrl,Transcription,Tags\\r\\n"
-            "TextCampaign,TestAsset,Asset Description,"
-            "http://www.example.com/1/2/3,,\\r\\n'",
-        )
-
     def test_ConcordiaAssetView_post_anonymous_happy_path(self):
         """
         This unit test test the POST route /campaigns/<campaign>/asset/<Asset_name>/

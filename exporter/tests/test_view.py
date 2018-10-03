@@ -1,11 +1,12 @@
-from django.core.files.base import ContentFile
 import io
 import os
 import zipfile
 
 from django.conf import settings
-from django.test import TestCase
+from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
+from django.test import TestCase
+from django.urls import reverse
 
 from concordia.models import MediaType, Status, Transcription, User
 from concordia.tests.utils import (
@@ -28,14 +29,34 @@ class ViewTest_Exporter(TestCase):
         Create a user and log the user in
         """
 
-        # create user and login
         self.user = User.objects.create(username="tester", email="tester@example.com")
         self.user.set_password("top_secret")
         self.user.save()
 
-        self.client.login(username="tester", password="top_secret")
+        self.assertTrue(self.client.login(username="tester", password="top_secret"))
 
-    def test_ExportCampaignToBagit_get(self):
+    def test_csv_export(self):
+        """
+        Test GET route /campaigns/export/<slug-value>/ (campaign)
+        """
+        self.login_user()
+
+        asset = create_asset()
+
+        response = self.client.get(
+            reverse(
+                "transcriptions:export-csv", args=(asset.item.project.campaign.slug,)
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.content.decode("utf-8"),
+            "Campaign,Title,Description,MediaUrl,Transcription,Tags\r\n"
+            "Test Campaign,Test Asset,,1.jpg,,\r\n",
+        )
+
+    def test_bagit_export(self):
         """
         Test the http GET on route /campaigns/exportBagit/<campaignname>/
         """
@@ -50,7 +71,7 @@ class ViewTest_Exporter(TestCase):
             item=item,
             title="TestAsset",
             description="Asset Description",
-            media_url="foo/1.jpg",
+            media_url="1.jpg",
             media_type=MediaType.IMAGE,
             sequence=1,
             status=Status.EDIT,
@@ -72,7 +93,9 @@ class ViewTest_Exporter(TestCase):
             os.path.join(item_dir, f"{asset.sequence}.jpg"), asset_file
         )
 
-        response = self.client.get("/campaigns/exportBagit/%s/" % campaign.slug)
+        response = self.client.get(
+            reverse("transcriptions:export-bagit", args=(campaign.slug,))
+        )
 
         self.assertEqual(response.status_code, 200)
         self.assertEquals(
@@ -86,4 +109,7 @@ class ViewTest_Exporter(TestCase):
         # self.assertIsNone(zipped_file.testzip())
         self.assertIn("bagit.txt", zipped_file.namelist())
         self.assertIn("bag-info.txt", zipped_file.namelist())
-        self.assertIn("data/testasset/asset.txt", zipped_file.namelist())
+        self.assertIn(
+            "data/test-project/testitem0123456789/testasset/1.jpg",
+            zipped_file.namelist(),
+        )

@@ -32,12 +32,12 @@ tx_urlpatterns = (
         re_path(
             r"exportCSV/([^/]+)/$",
             exporter_views.ExportCampaignToCSV.as_view(),
-            name="exportCSV campaign",
+            name="export-csv",
         ),
         re_path(
-            r"exportBagit/([^/]+)/$",
+            r"exportBagIt/([^/]+)/$",
             exporter_views.ExportCampaignToBagit.as_view(),
-            name="exportBagit campaign",
+            name="export-bagit",
         ),
         re_path(
             r"report/([^/]+)/$",
