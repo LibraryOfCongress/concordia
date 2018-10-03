@@ -165,44 +165,32 @@ Resources:
         Properties:
             Path: /
             RoleName: !Sub ecs-concordia-taskrole-${AWS::StackName}
-            AssumeRolePolicyDocument: |
-                {
-                    "Version": "2012-10-17",
-                    "Statement": [
-                        {
-                        "Sid": "",
-                        "Effect": "Allow",
-                        "Principal": {
-                            "Service": "ecs-tasks.amazonaws.com"
-                        },
-                        "Action": "sts:AssumeRole"
-                        }
-                    ]
-                }
+            AssumeRolePolicyDocument:
+                Version: '2012-10-17'
+                Statement:
+                    - Sid: ''
+                      Effect: 'Allow'
+                      Principal:
+                          Service: 'ecs-tasks.amazonaws.com'
+                      Action: 'sts:AssumeRole'
             Policies:
                 - PolicyName: !Sub ecs-concordia-taskpolicy-${AWS::StackName}
-                  PolicyDocument: |
-                      {
-                          "Version": "2012-10-17",
-                          "Statement": [
-                              {
-                                  "Action": [
-                                      "s3:PutObject",
-                                      "s3:GetObject",
-                                      "s3:AbortMultipartUpload",
-                                      "s3:ListMultipartUploadParts",
-                                      "s3:ListBucket",
-                                      "s3:ListBucketMultipartUploads",
-                                      "secretsmanager:GetResourcePolicy",
-                                      "secretsmanager:GetSecretValue",
-                                      "secretsmanager:DescribeSecret",
-                                      "secretsmanager:ListSecretVersionIds"
-                                  ],
-                                  "Effect": "Allow",
-                                  "Resource": "*"
-                              }
-                          ]
-                      }
+                  PolicyDocument:
+                      Version: '2012-10-17'
+                      Statement:
+                          - Action:
+                                - 's3:PutObject'
+                                - 's3:GetObject'
+                                - 's3:AbortMultipartUpload'
+                                - 's3:ListMultipartUploadParts'
+                                - 's3:ListBucket'
+                                - 's3:ListBucketMultipartUploads'
+                                - 'secretsmanager:GetResourcePolicy'
+                                - 'secretsmanager:GetSecretValue'
+                                - 'secretsmanager:DescribeSecret'
+                                - 'secretsmanager:ListSecretVersionIds'
+                            Effect: 'Allow'
+                            Resource: '*'
 
     # This IAM Role grants the service access to register/unregister with the
     # Application Load Balancer (ALB). It is based on the default documented here:
@@ -212,37 +200,31 @@ Resources:
         Properties:
             RoleName: !Sub ecs-concordia-service-${AWS::StackName}
             Path: /
-            AssumeRolePolicyDocument: |
-                {
-                    "Statement": [{
-                        "Effect": "Allow",
-                        "Principal": { "Service": [ "ecs.amazonaws.com" ]},
-                        "Action": [ "sts:AssumeRole" ]
-                    }]
-                }
+            AssumeRolePolicyDocument:
+                Statement:
+                    - Effect: 'Allow'
+                      Principal:
+                          Service:
+                              - 'ecs.amazonaws.com'
+                      Action:
+                          - 'sts:AssumeRole'
             Policies:
                 - PolicyName: !Sub ecs-concordia-service-${AWS::StackName}
-                  PolicyDocument: |
-                      {
-                          "Version": "2012-10-17",
-                          "Statement": [
-                              {
-                                  "Action": [
-                                      "ec2:AuthorizeSecurityGroupIngress",
-                                      "ec2:Describe*",
-                                      "elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
-                                      "elasticloadbalancing:Describe*",
-                                      "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
-                                      "elasticloadbalancing:DeregisterTargets",
-                                      "elasticloadbalancing:DescribeTargetGroups",
-                                      "elasticloadbalancing:DescribeTargetHealth",
-                                      "elasticloadbalancing:RegisterTargets"
-                                  ],
-                                  "Effect": "Allow",
-                                  "Resource": "*"
-                              }
-                          ]
-                      }
+                  PolicyDocument:
+                      Version: '2012-10-17'
+                      Statement:
+                          - Action:
+                                - 'ec2:AuthorizeSecurityGroupIngress'
+                                - 'ec2:Describe*'
+                                - 'elasticloadbalancing:DeregisterInstancesFromLoadBalancer'
+                                - 'elasticloadbalancing:Describe*'
+                                - 'elasticloadbalancing:RegisterInstancesWithLoadBalancer'
+                                - 'elasticloadbalancing:DeregisterTargets'
+                                - 'elasticloadbalancing:DescribeTargetGroups'
+                                - 'elasticloadbalancing:DescribeTargetHealth'
+                                - 'elasticloadbalancing:RegisterTargets'
+                            Effect: 'Allow'
+                            Resource: '*'
 
     ServiceScalableTarget:
         Type: 'AWS::ApplicationAutoScaling::ScalableTarget'
