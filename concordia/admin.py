@@ -189,14 +189,12 @@ class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         "start_date",
         "end_date",
         "truncated_metadata",
-        "is_active",
-        "s3_storage",
         "status",
     )
     list_display_links = ("id", "title", "slug")
     prepopulated_fields = {"slug": ("title",)}
     search_fields = ["title", "description"]
-    list_filter = ("status", "is_active")
+    list_filter = ("published", "status")
 
     actions = (publish_action, unpublish_action)
 
@@ -217,7 +215,7 @@ class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     list_display_links = ("id", "title", "slug")
     prepopulated_fields = {"slug": ("title",)}
     search_fields = ["title", "campaign__title"]
-    list_filter = ("status", "category", "campaign")
+    list_filter = ("published", "status", "category", "campaign")
 
     actions = (publish_action, unpublish_action)
 
@@ -293,17 +291,21 @@ class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
 class ItemAdmin(admin.ModelAdmin):
     list_display = (
         "title",
-        "slug",
         "item_id",
         "campaign_title",
         "project",
         "status",
         "published",
     )
-    list_display_links = ("title", "slug", "item_id")
-    prepopulated_fields = {"slug": ("title",)}
-    search_fields = ["title", "project__campaign__title", "project__title"]
-    list_filter = ("status", "project__campaign", "project")
+    list_display_links = ("title", "item_id")
+    search_fields = [
+        "title",
+        "item_id",
+        "item_url",
+        "project__campaign__title",
+        "project__title",
+    ]
+    list_filter = ("published", "status", "project__campaign", "project")
 
     actions = (publish_action, unpublish_action)
 
@@ -325,8 +327,6 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         "truncated_description",
         "truncated_media_url",
         "media_type",
-        "campaign",
-        "project",
         "sequence",
         "truncated_metadata",
         "status",
@@ -334,7 +334,7 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     list_display_links = ("id", "title", "slug")
     prepopulated_fields = {"slug": ("title",)}
     search_fields = ["title", "media_url", "campaign__title", "project__title"]
-    list_filter = ("status", "campaign", "project", "media_type")
+    list_filter = ("status", "item__project__campaign", "item__project", "media_type")
 
     def truncated_media_url(self, obj):
         return format_html(
@@ -357,11 +357,15 @@ class TagAdmin(admin.ModelAdmin):
 
 @admin.register(UserAssetTagCollection)
 class UserAssetTagCollectionAdmin(admin.ModelAdmin):
-    list_display = ("id", "asset", "user_id", "created_on", "updated_on")
+    list_display = ("id", "asset", "user", "created_on", "updated_on")
     list_display_links = ("id", "asset")
     date_hierarchy = "created_on"
     search_fields = ["asset__title", "asset__campaign__title", "asset__project__title"]
-    # FIXME: after fixing the user_id relationship add filtering on user attributes
+    list_filter = (
+        "asset__item__project__campaign",
+        "asset__item__project",
+        "user__is_staff",
+    )
 
 
 @admin.register(Transcription)
@@ -369,8 +373,7 @@ class TranscriptionAdmin(admin.ModelAdmin):
     list_display = (
         "id",
         "asset",
-        "parent",
-        "user_id",
+        "user",
         "truncated_text",
         "status",
         "created_on",

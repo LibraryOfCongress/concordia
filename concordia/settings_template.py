@@ -90,6 +90,8 @@ INSTALLED_APPS = [
     "haystack",
     "widget_tweaks",
     "django_prometheus_metrics",
+    "django.contrib.sites",
+    "robots",
 ] + get_machina_apps()
 
 
@@ -300,6 +302,10 @@ if SENTRY_DSN:
 MAINTENANCE_MODE_TEMPLATE = "maintenance-mode.html"
 
 # Names of special django.auth Groups
-
 COMMUNITY_MANAGER_GROUP_NAME = "Community Managers"
 NEWSLETTER_GROUP_NAME = "Newsletter"
+
+# Django sites framework setting
+SITE_ID = 1
+ROBOTS_USE_SITEMAP = False
+ROBOTS_USE_HOST = False

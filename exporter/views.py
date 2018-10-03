@@ -1,15 +1,15 @@
 import csv
 import os
 import shutil
-from shutil import copyfile
 
 import bagit
-import boto3
 from django.conf import settings
 from django.http import HttpResponse
 from django.views.generic import TemplateView
-
-from concordia.models import Campaign, Transcription, UserAssetTagCollection
+from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
+from concordia.models import Asset, Campaign, Transcription, UserAssetTagCollection
+from concordia.storage import ASSET_STORAGE
 
 
 class ExportCampaignToCSV(TemplateView):
@@ -20,9 +20,12 @@ class ExportCampaignToCSV(TemplateView):
 
     template_name = "transcriptions/campaign.html"
 
+    @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
         campaign = Campaign.objects.get(slug=self.args[0])
-        asset_list = campaign.asset_set.all().order_by("title", "sequence")
+        asset_list = Asset.objects.filter(item__project__campaign=campaign).order_by(
+            "title", "sequence"
+        )
         # Create the HttpResponse object with the appropriate CSV header.
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = 'attachment; filename="{0}.csv"'.format(
@@ -35,14 +38,14 @@ class ExportCampaignToCSV(TemplateView):
         )
         for asset in asset_list:
             transcription = Transcription.objects.filter(
-                asset=asset, user_id=self.request.user.id
+                asset=asset, user=self.request.user
             )
             if transcription:
                 transcription = transcription[0].text
             else:
                 transcription = ""
             tags = UserAssetTagCollection.objects.filter(
-                asset=asset, user_id=self.request.user.id
+                asset=asset, user=self.request.user
             )
             if tags:
                 tags = list(tags[0].tags.all().values_list("name", flat=True))
@@ -70,89 +73,69 @@ class ExportCampaignToBagit(TemplateView):
     include_images = True
     template_name = "transcriptions/campaign.html"
 
+    @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
         campaign = Campaign.objects.get(slug=self.args[0])
-        asset_list = campaign.asset_set.all().order_by("title", "sequence")
+        asset_list = Asset.objects.filter(item__project__campaign=campaign).order_by(
+            "title", "sequence"
+        )
 
-        # Make sure export folder exists (media/exporter)
-        export_folder = "%s/exporter" % (settings.MEDIA_ROOT)
-        if not os.path.exists(export_folder):
-            os.makedirs(export_folder)
-
-        # Create temp exporter folder structure in media for bagit
-        campaign_folder = "%s/exporter/%s" % (settings.MEDIA_ROOT, campaign.slug)
-
-        # Create campaign folder (media/exporter/<campaign>)
-        if not os.path.exists(campaign_folder):
-            os.mkdir(campaign_folder)
+        # FIXME: this code should be working in a separate path than the media root!
+        # FIXME: we should be able to export at the project and item level, too
+        export_base_dir = os.path.join(settings.MEDIA_ROOT, "exporter", campaign.slug)
 
         for asset in asset_list:
-            item_folder_name = asset.media_url.rsplit("/")[-2]
-            item_folder = "%s/%s" % (campaign_folder, item_folder_name)
-
-            # Create asset folders (media/exporter/<campaign>/<asset>
-            if not os.path.exists(item_folder):
-                os.mkdir(item_folder)
-
-            src_folder = item_folder.replace("exporter/", "")
-            src_name = asset.media_url.rsplit("/")[-1]
-            src_root = src_name.rsplit(".")[0]
-            dest = "%s/%s" % (item_folder, src_name)
+            src = os.path.join(
+                settings.MEDIA_ROOT,
+                asset.item.project.campaign.slug,
+                asset.item.project.slug,
+                asset.item.item_id,
+                asset.slug,
+                asset.media_url,
+            )
+            dest_folder = os.path.join(
+                export_base_dir, asset.item.project.slug, asset.item.item_id, asset.slug
+            )
+            os.makedirs(dest_folder, exist_ok=True)
+            dest = os.path.join(dest_folder, asset.media_url)
 
             if self.include_images:
-                if campaign.s3_storage:
-                    s3 = boto3.client(
-                        "s3",
-                        aws_access_key_id=settings.AWS_S3["AWS_ACCESS_KEY_ID"],
-                        aws_secret_access_key=settings.AWS_S3["AWS_SECRET_ACCESS_KEY"],
-                    )
-                    bucket_name = settings.AWS_S3["S3_COLLECTION_BUCKET"]
-                    s3_path = "{0}/{1}/{2}".format(
-                        campaign.slug, item_folder_name, src_name
-                    )
-                    # Copy asset image from S3 into temp asset folder
-                    s3.download_file(bucket_name, s3_path, dest)
-                else:
-                    src = "%s/%s" % (src_folder, src_name)
-                    # Copy asset image from local storage into temp asset folder
-                    copyfile(src, dest)
+                with open(dest, mode="wb") as dest_file:
+                    with ASSET_STORAGE.open(src, mode="rb") as src_file:
+                        for chunk in src_file.chunks(1048576):
+                            dest_file.write(chunk)
 
             # Get transcription data
-            transcription_obj = Transcription.objects.filter(
-                asset=asset, user_id=self.request.user.id
-            )
-            if transcription_obj:
-                transcription = transcription_obj[0].text
-            else:
+            # FIXME: if we're not including all transcriptions, we should pick the completed or latest versions!
+
+            try:
+                transcription = Transcription.objects.get(
+                    asset=asset, user=self.request.user
+                ).text
+            except Transcription.DoesNotExist:
                 transcription = ""
 
             # Build transcription output text file
-            tran_output_path = "{0}/{1}.txt".format(item_folder, src_root)
-            tran_out_file = open(tran_output_path, "w")
-            tran_out_file.write(transcription)
-            tran_out_file.close()
+            tran_output_path = os.path.join(
+                dest_folder, "%s.txt" % os.path.basename(asset.media_url)
+            )
+            with open(tran_output_path, "w") as f:
+                f.write(transcription)
 
         # Turn Structure into bagit format
-        bagit.make_bag(campaign_folder, {"Contact-Name": request.user.username})
+        bagit.make_bag(export_base_dir, {"Contact-Name": request.user.username})
 
-        # Build .zipfile of bagit formatted Campaign Folder
-        archive_name = campaign_folder
-        shutil.make_archive(archive_name, "zip", campaign_folder)
+        # Build .zip file of bagit formatted Campaign Folder
+        archive_name = export_base_dir
+        shutil.make_archive(archive_name, "zip", export_base_dir)
 
         # Download zip
-        with open("%s.zip" % campaign_folder, "rb") as file:
-            outfile = file.read()
-        response = HttpResponse(outfile, content_type="application/zip")
+        with open("%s.zip" % export_base_dir, "rb") as zip_file:
+            response = HttpResponse(zip_file, content_type="application/zip")
         response["Content-Disposition"] = "attachment; filename=%s.zip" % campaign.slug
 
         # Clean up temp folders & zipfile once exported
-        try:
-            shutil.rmtree(campaign_folder)
-        except Exception as e:
-            pass
-        try:
-            os.remove("%s.zip" % campaign_folder)
-        except Exception as e:
-            pass
+        shutil.rmtree(export_base_dir)
+        os.remove("%s.zip" % export_base_dir)
 
         return response

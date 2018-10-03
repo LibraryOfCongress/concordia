@@ -1,5 +1,6 @@
 from logging import getLogger
 
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import JSONField
 from django.core.validators import RegexValidator
@@ -61,18 +62,19 @@ class PublicationManager(models.Manager):
 class Campaign(MetricsModelMixin("campaign"), models.Model):
     objects = PublicationManager()
 
-    title = models.CharField(max_length=80)
-    slug = models.SlugField(max_length=80, unique=True)
-    description = models.TextField(blank=True)
-    start_date = models.DateTimeField(null=True, blank=True)
-    end_date = models.DateTimeField(null=True, blank=True)
-    metadata = JSONField(default=metadata_default, blank=True, null=True)
-    is_active = models.BooleanField(default=False)
-    s3_storage = models.BooleanField(default=False)
+    published = models.BooleanField(default=False, blank=True)
     status = models.CharField(
         max_length=10, choices=Status.CHOICES, default=Status.DEFAULT
     )
-    published = models.BooleanField(default=False, blank=True)
+
+    title = models.CharField(max_length=80)
+    slug = models.SlugField(max_length=80, unique=True)
+    description = models.TextField(blank=True)
+
+    start_date = models.DateTimeField(null=True, blank=True)
+    end_date = models.DateTimeField(null=True, blank=True)
+
+    metadata = JSONField(default=metadata_default, blank=True, null=True)
 
     def __str__(self):
         return self.title
@@ -85,10 +87,11 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
 class Project(models.Model):
     objects = PublicationManager()
 
+    campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
     title = models.CharField(max_length=80)
     slug = models.SlugField(max_length=80)
+
     category = models.CharField(max_length=12, blank=True)
-    campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
     metadata = JSONField(default=metadata_default, blank=True, null=True)
     status = models.CharField(
         max_length=10, choices=Status.CHOICES, default=Status.DEFAULT
@@ -112,17 +115,18 @@ class Project(models.Model):
 class Item(models.Model):
     objects = PublicationManager()
 
-    published = models.BooleanField(default=False, blank=True)
-
-    title = models.CharField(max_length=300)
-    slug = models.SlugField(max_length=300)
-    description = models.TextField(blank=True)
-    item_url = models.URLField(max_length=255)
-    campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
     project = models.ForeignKey(
         Project, on_delete=models.CASCADE, blank=True, null=True
     )
-    item_id = models.CharField(max_length=100, blank=True)
+
+    published = models.BooleanField(default=False, blank=True)
+
+    title = models.CharField(max_length=300)
+    item_url = models.URLField(max_length=255)
+    item_id = models.CharField(
+        max_length=100, help_text="Unique item ID assigned by the upstream source"
+    )
+    description = models.TextField(blank=True)
     metadata = JSONField(
         default=metadata_default,
         blank=True,
@@ -135,28 +139,28 @@ class Item(models.Model):
     )
 
     class Meta:
-        unique_together = (("item_id", "campaign"),)
-        ordering = ["item_id"]
+        unique_together = (("item_id", "project"),)
 
     def __str__(self):
-        return self.item_id
+        return f"{self.item_id}: {self.title}"
 
     def get_absolute_url(self):
-        # FIXME: change this with https://github.com/LibraryOfCongress/concordia/issues/242
-
         return reverse(
             "transcriptions:item",
             kwargs={
                 "campaign_slug": self.project.campaign.slug,
                 "project_slug": self.project.slug,
-                "slug": self.slug,
+                "item_id": self.item_id,
             },
         )
 
 
 class Asset(models.Model):
+    item = models.ForeignKey(Item, on_delete=models.CASCADE)
+
     title = models.CharField(max_length=100)
     slug = models.SlugField(max_length=100)
+
     description = models.TextField(blank=True)
     # TODO: do we really need this given that we import in lock-step sequence
     #       numbers with a fixed extension?
@@ -164,9 +168,6 @@ class Asset(models.Model):
     media_type = models.CharField(
         max_length=4, choices=MediaType.CHOICES, db_index=True
     )
-    campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
-    project = models.ForeignKey(Project, on_delete=models.CASCADE)
-    item = models.ForeignKey(Item, on_delete=models.CASCADE)
     sequence = models.PositiveIntegerField(default=1)
 
     # The original ID of the image resource on loc.gov
@@ -180,7 +181,7 @@ class Asset(models.Model):
     )
 
     class Meta:
-        unique_together = (("slug", "campaign"),)
+        unique_together = (("slug", "item"),)
         ordering = ["title", "sequence"]
 
     def __str__(self):
@@ -198,24 +199,20 @@ class Tag(models.Model):
 class UserAssetTagCollection(models.Model):
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
 
-    # FIXME: why is this not a foreignkey on User?
-    user_id = models.PositiveIntegerField(db_index=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
     tags = models.ManyToManyField(Tag, blank=True)
     created_on = models.DateTimeField(auto_now_add=True)
     updated_on = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return "{} - {}".format(self.asset, self.user_id)
+        return "{} - {}".format(self.asset, self.user)
 
 
 class Transcription(models.Model):
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
 
-    # TODO: document whether we need this field:
-    parent = models.ForeignKey("self", blank=True, null=True, on_delete=models.SET_NULL)
-
-    user_id = models.PositiveIntegerField(db_index=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
     text = models.TextField(blank=True)
     status = models.CharField(
@@ -231,7 +228,7 @@ class Transcription(models.Model):
 
 class PageInUse(models.Model):
     page_url = models.CharField(max_length=256)
-    user = models.ForeignKey(User, models.DO_NOTHING)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     created_on = models.DateTimeField(editable=False)
     updated_on = models.DateTimeField()
 

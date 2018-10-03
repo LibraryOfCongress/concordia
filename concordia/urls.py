@@ -22,40 +22,40 @@ tx_urlpatterns = (
         path("", views.CampaignListView.as_view(), name="campaigns"),
         path("<slug:slug>/", views.CampaignDetailView.as_view(), name="campaign"),
         re_path(
-            r"^pageinuse/$", views.ConcordiaPageInUse.as_view(), name="page in use"
+            r"^pageinuse/$", views.ConcordiaPageInUse.as_view(), name="page-in-use"
         ),
         re_path(
             r"^alternateasset/$",
             views.ConcordiaAlternateAssetView.as_view(),
-            name="alternate asset",
+            name="alternate-asset",
         ),
         re_path(
             r"exportCSV/([^/]+)/$",
             exporter_views.ExportCampaignToCSV.as_view(),
-            name="exportCSV campaign",
+            name="export-csv",
         ),
         re_path(
-            r"exportBagit/([^/]+)/$",
+            r"exportBagIt/([^/]+)/$",
             exporter_views.ExportCampaignToBagit.as_view(),
-            name="exportBagit campaign",
+            name="export-bagit",
         ),
         re_path(
             r"report/([^/]+)/$",
             views.ReportCampaignView.as_view(),
-            name="report campaign",
+            name="campaign-report",
         ),
         path(
-            "<slug:campaign_slug>/<slug:project_slug>/<slug:item_slug>/<slug:slug>/",
+            "<slug:campaign_slug>/<slug:project_slug>/<slug:item_id>/<slug:slug>/",
             views.ConcordiaAssetView.as_view(),
             name="asset-detail",
         ),
-        re_path(
-            r"^(?P<campaign_slug>[^/]+)/(?P<slug>[^/]+)/$",
+        path(
+            "<slug:campaign_slug>/<slug:slug>/",
             views.ConcordiaProjectView.as_view(),
             name="project-detail",
         ),
-        re_path(
-            r"^(?P<campaign_slug>[^/]+)/(?P<project_slug>[^/]+)/(?P<slug>[^/]+)/$",
+        path(
+            "<slug:campaign_slug>/<slug:project_slug>/<slug:item_id>/",
             views.ConcordiaItemView.as_view(),
             name="item",
         ),
@@ -203,6 +203,7 @@ urlpatterns = [
     path("error/404/", page_not_found, {"exception": Http404()}),
     path("error/403/", permission_denied, {"exception": HttpResponseForbidden()}),
     url("", include("django_prometheus_metrics.urls")),
+    url(r"^robots\.txt", include("robots.urls")),
 ]
 
 if settings.DEBUG:

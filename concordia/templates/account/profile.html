@@ -66,7 +66,7 @@
                             <td>{{ project.title }}</td>
                             <td>{{ item.title }}</td>
                             <td>
-                                <a class="primary-text" href="{% url 'transcriptions:asset-detail' campaign.slug project.slug item.slug asset.slug %}">
+                                <a class="primary-text" href="{% url 'transcriptions:asset-detail' campaign.slug project.slug item.item_id asset.slug %}">
                                     {{ asset.title }}
                                 </a>
                             </td>

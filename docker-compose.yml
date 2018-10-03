@@ -21,7 +21,7 @@ services:
         environment:
             POSTGRES_PASSWORD: ${POSTGRESQL_PW}
             POSTGRES_USER: concordia
-            POSTGRES_MULTIPLE_DATABASES: concordia
+            POSTGRES_MULTIPLE_DATABASES: test_concordia
         ports:
             - 54323:5432
         volumes:

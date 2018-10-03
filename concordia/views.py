@@ -117,7 +117,7 @@ class AccountProfileView(LoginRequiredMixin, FormView):
     def get_context_data(self, *args, **kwargs):
         ctx = super().get_context_data(*args, **kwargs)
         ctx["transcriptions"] = (
-            Transcription.objects.filter(user_id=self.request.user.pk)
+            Transcription.objects.filter(user=self.request.user)
             .select_related("asset__item__project__campaign")
             .order_by("asset__pk", "-pk")
             .distinct("asset")
@@ -212,10 +212,10 @@ class ConcordiaItemView(ListView):
 
     def get_queryset(self):
         self.item = get_object_or_404(
-            Item.objects.published().select_related('project__campaign'),
-            campaign__slug=self.kwargs["campaign_slug"],
+            Item.objects.published().select_related("project__campaign"),
+            project__campaign__slug=self.kwargs["campaign_slug"],
             project__slug=self.kwargs["project_slug"],
-            slug=self.kwargs["slug"],
+            item_id=self.kwargs["item_id"],
         )
 
         asset_qs = self.item.asset_set.all().order_by("sequence")
@@ -264,9 +264,9 @@ class ConcordiaAssetView(DetailView):
 
     def get_queryset(self):
         asset_qs = Asset.objects.filter(
-            item__slug=self.kwargs["item_slug"],
-            item__project__slug=self.kwargs["project_slug"],
             item__project__campaign__slug=self.kwargs["campaign_slug"],
+            item__project__slug=self.kwargs["project_slug"],
+            item__item_id=self.kwargs["item_id"],
             slug=self.kwargs["slug"],
         )
         asset_qs = asset_qs.select_related("item__project__campaign")
@@ -280,7 +280,11 @@ class ConcordiaAssetView(DetailView):
         """
         response = requests.get(
             "%s://%s/ws/asset/%s/"
-            % (self.request.scheme, self.request.get_host(), self.kwargs["campaign_slug"]),
+            % (
+                self.request.scheme,
+                self.request.get_host(),
+                self.kwargs["campaign_slug"],
+            ),
             cookies=self.request.COOKIES,
         )
         return json.loads(response.content.decode("utf-8"))
@@ -389,29 +393,10 @@ class ConcordiaAssetView(DetailView):
         ctx["project"] = project = item.project
         ctx["campaign"] = project.campaign
 
-        in_use_url = reverse(
-            "transcriptions:asset-detail",
-            kwargs={
-                "campaign_slug": self.kwargs["campaign_slug"],
-                "project_slug": self.kwargs["project_slug"],
-                "item_slug": self.kwargs["item_slug"],
-                "slug": self.kwargs["slug"],
-            },
-        )
-
-        current_user_id = (
-            self.request.user.id
-            if self.request.user.id is not None
-            else get_anonymous_user().id
-        )
-
-        # FIXME: move this into the front-end JavaScript!
-        # page_in_use = self.check_page_in_use(in_use_url, current_user_id)
-
         # Get the most recent transcription
-        latest_transcriptions = \
-            Transcription.objects.filter(asset__slug=asset.slug)\
-            .order_by('-updated_on')
+        latest_transcriptions = Transcription.objects.filter(
+            asset__slug=asset.slug
+        ).order_by("-updated_on")
 
         if latest_transcriptions:
             transcription = latest_transcriptions[0]
@@ -427,56 +412,6 @@ class ConcordiaAssetView(DetailView):
 
         captcha_form = CaptchaEmbedForm()
 
-        # FIXME: move this into front-end JavaScript
-        # response = requests.get(
-        #     "%s://%s/ws/page_in_use_user/%s/%s/"
-        #     % (
-        #         self.request.scheme,
-        #         self.request.get_host(),
-        #         current_user_id,
-        #         in_use_url,
-        #     ),
-        #     cookies=self.request.COOKIES,
-        # )
-        # page_in_use_json = json.loads(response.content.decode("utf-8"))
-        #
-        # if page_in_use_json["user"] is None:
-        #     same_page_count_for_this_user = 0
-        # else:
-        #     same_page_count_for_this_user = 1
-        #
-        # page_dict = {
-        #     "page_url": in_use_url,
-        #     "user": current_user_id,
-        #     "updated_on": datetime.now(),
-        # }
-        #
-        # if page_in_use is False and same_page_count_for_this_user == 0:
-        #     # add this page as being in use by this user
-        #     # call the web service which will use the serializer to insert the value.
-        #     # this takes care of deleting old entries in PageInUse table
-        #
-        #     factory = APIRequestFactory()
-        #     request = factory.post("/ws/page_in_use%s/" % (in_use_url,), page_dict)
-        #     request.session = self.request.session
-        #
-        #     PageInUseCreate.as_view()(request)
-        # elif same_page_count_for_this_user == 1:
-        #     # update the PageInUse
-        #     change_page_in_use = {"page_url": in_use_url, "user": current_user_id}
-        #
-        #     requests.put(
-        #         "%s://%s/ws/page_in_use_update/%s/%s/"
-        #         % (
-        #             self.request.scheme,
-        #             self.request.get_host(),
-        #             current_user_id,
-        #             in_use_url,
-        #         ),
-        #         data=change_page_in_use,
-        #         cookies=self.request.COOKIES,
-        #     )
-
         if self.request.user.is_anonymous:
             ctx[
                 "is_anonymous_user_captcha_validated"
@@ -486,7 +421,9 @@ class ConcordiaAssetView(DetailView):
             {
                 "page_in_use": False,
                 "transcription": transcription,
-                "transcription_status": transcription.status if transcription else Status.EDIT,
+                "transcription_status": transcription.status
+                if transcription
+                else Status.EDIT,
                 "tags": tags,
                 "captcha_form": captcha_form,
             }
@@ -526,7 +463,7 @@ class ConcordiaAssetView(DetailView):
 
         redirect_path = self.request.path
 
-		# TODO: error handling for this lookup failing
+        # TODO: error handling for this lookup failing
         asset = Asset.objects.get(id=self.request.POST["asset_id"])
 
         if "tx" in self.request.POST and "tagging" not in self.request.POST:
@@ -569,7 +506,11 @@ class ConcordiaAssetView(DetailView):
             # get existing tags
             response = requests.get(
                 "%s://%s/ws/tags/%s/"
-                % (self.request.scheme, self.request.get_host(), self.request.POST["asset_id"]),
+                % (
+                    self.request.scheme,
+                    self.request.get_host(),
+                    self.request.POST["asset_id"],
+                ),
                 cookies=self.request.COOKIES,
             )
             existing_tags_json_val = json.loads(response.content.decode("utf-8"))
@@ -817,7 +758,7 @@ class ReportCampaignView(TemplateView):
         )
         projects_qs = projects_qs.annotate(
             contributor_count=Count(
-                "asset__userassettagcollection__user_id", distinct=True
+                "asset__userassettagcollection__user", distinct=True
             )
         )
 

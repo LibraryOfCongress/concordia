@@ -5,7 +5,8 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 
-from . import models, serializers
+from .models import Campaign, Status
+from .serializers import CampaignDetailSerializer, CampaignListSerializer
 
 logger = getLogger(__name__)
 
@@ -18,10 +19,10 @@ def api_root(request, format=None):
 
 
 class CampaignList(viewsets.ModelViewSet):
-    queryset = models.Campaign.objects.filter(is_active=1).order_by("title")
-    serializer_class = serializers.CampaignListSerializer
+    queryset = Campaign.objects.filter(status=Status.ACTIVE).order_by("title")
+    serializer_class = CampaignListSerializer
 
 
 class CampaignDetail(viewsets.ModelViewSet):
-    queryset = models.Campaign.objects.order_by("title")
-    serializer_class = serializers.CampaignDetailSerializer
+    queryset = Campaign.objects.order_by("title")
+    serializer_class = CampaignDetailSerializer
