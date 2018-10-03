@@ -54,8 +54,8 @@ Resources:
     TaskDefinition:
         Type: AWS::ECS::TaskDefinition
         Properties:
-            Memory: 2048
-            Cpu: 1024
+            Memory: "2048"
+            Cpu: "1024"
             TaskRoleArn: !GetAtt TaskRole.Arn
             Family: !Sub concordia-${EnvName}
             Volumes:
@@ -68,7 +68,7 @@ Resources:
                       - rabbit
                   Environment:
                       - Name: AWS
-                        Value: 1
+                        Value: "1"
                       - Name: ENV_NAME
                         Value: !Ref EnvName
                       - Name: S3_BUCKET_NAME
@@ -98,7 +98,7 @@ Resources:
                       - rabbit
                   Environment:
                       - Name: AWS
-                        Value: 1
+                        Value: "1"
                       - Name: ENV_NAME
                         Value: !Ref EnvName
                       - Name: S3_BUCKET_NAME
@@ -297,9 +297,9 @@ Resources:
                 - Name: ServiceName
                   Value: !GetAtt Service.Name
             Statistic: Maximum
-            Period: '60'
-            EvaluationPeriods: '3'
-            Threshold: '90'
+            Period: 60
+            EvaluationPeriods: 3
+            Threshold: 90
             ComparisonOperator: GreaterThanThreshold
             AlarmActions:
                 - !Ref ServiceScaleOutPolicy
@@ -317,9 +317,9 @@ Resources:
                 - Name: ServiceName
                   Value: !GetAtt Service.Name
             Statistic: Maximum
-            Period: '60'
-            EvaluationPeriods: '10'
-            Threshold: '70'
+            Period: 60
+            EvaluationPeriods: 10
+            Threshold: 70
             ComparisonOperator: LessThanThreshold
             AlarmActions:
                 - !Ref ServiceScaleInPolicy
