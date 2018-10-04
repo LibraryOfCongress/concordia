@@ -186,28 +186,6 @@ class WebServiceViewTests(TestCase):
             },
         )
 
-    def test_PageInUseUser_get(self):
-        """
-        This unit test tests the get entry for the route ws/page_in_use_user/user/url/
-        :param self:
-        """
-
-        self.login_user()
-
-        # create second user
-        self.user2 = User.objects.create(username="bar", email="tester2@example.com")
-        self.user2.set_password("top_secret")
-        self.user2.save()
-
-        test_page_url = "example.com/blah"
-        # Add two values to database
-        page_in_use = PageInUse.objects.create(page_url=test_page_url, user=self.user)
-
-        PageInUse.objects.create(page_url="bar.com/blah", user=self.user2)
-
-        response = self.client.get(
-            "/ws/page_in_use_user/%s/%s/" % (self.user.id, test_page_url)
-        )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertJSONEqual(
@@ -250,83 +228,6 @@ class WebServiceViewTests(TestCase):
         self.assertTrue(len(updated_page), 1)
         self.assertEqual(page.id, updated_page[0].id)
         self.assertTrue(updated_page[0].updated_on > min_update_time)
-
-    def test_PageInUse_delete(self):
-        """
-        This unit test tests the delete of an existing PageInUse using DELETE on
-        route ws/page_in_use_delete/
-        """
-
-        self.login_user()
-
-        # Add a value to database
-        page = PageInUse(page_url="example.com/blah", user=self.user)
-        page.save()
-
-        current_page_in_use_count = PageInUse.objects.all().count()
-
-        response = self.client.delete("/ws/page_in_use_delete/%s/" % "example.com/blah")
-
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-
-        deleted_page_in_use_count = PageInUse.objects.all().count()
-
-        deleted_page = PageInUse.objects.filter(page_url="example.com/blah")
-        self.assertEqual(len(deleted_page), 0)
-        self.assertEqual(current_page_in_use_count - 1, deleted_page_in_use_count)
-
-    def test_PageInUse_filter_get(self):
-        """
-        Test the route ws/page_in_use_filter/user/page_url/ It should return a
-        list of PageInUse updated in last 5 minutes by user other than self.user
-        """
-
-        self.login_user()
-
-        # create a second user
-        username = "tester2"
-        test_url = "bar.com/blah"
-        self.user2 = User.objects.create(username=username, email="tester2@example.com")
-        self.user2.set_password("top_secret")
-        self.user2.save()
-
-        # Add values to database
-        PageInUse.objects.create(page_url="example.com/blah", user=self.user)
-
-        PageInUse.objects.create(page_url=test_url, user=self.user2)
-
-        response = self.client.get(
-            "/ws/page_in_use_filter/%s/%s/" % (self.user.username, test_url)
-        )
-
-        json_resp = json.loads(response.content)
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertTrue(len(json_resp["results"]) > 0)
-
-    def test_PageInUse_filter_no_pages_get(self):
-        """
-        Test the route ws/page_in_use_filter/user/page_url/
-        It should return an empty list
-        """
-
-        self.login_user()
-
-        # create a second user
-        username = "tester2"
-        test_url = "bar.com/blah"
-        self.user2 = User.objects.create(username=username, email="tester2@example.com")
-        self.user2.set_password("top_secret")
-        self.user2.save()
-
-        response = self.client.get(
-            "/ws/page_in_use_filter/%s/%s/" % (self.user.username, test_url)
-        )
-
-        json_resp = json.loads(response.content)
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(json_resp["results"]), 0)
 
     def test_Transcriptions_latest_get(self):
         """

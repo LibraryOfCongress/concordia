@@ -164,33 +164,6 @@ class PageInUseUserGet(generics.RetrieveUpdateAPIView):
         )
 
 
-class PageInUseCount(generics.RetrieveAPIView):
-    """
-    GET: Return True if the page is in use by a different user, otherwise False
-    """
-
-    model = PageInUse
-    authentication_classes = (ConcordiaAPIAuth,)
-    serializer_class = PageInUseSerializer
-    queryset = PageInUse.objects.all()
-    lookup_fields = ("page_url", "user")
-
-    def get(self, request, *args, **kwargs):
-        time_threshold = datetime.now() - timedelta(minutes=5)
-        page_in_use_count = (
-            PageInUse.objects.filter(
-                page_url=self.kwargs["page_url"], updated_on__gt=time_threshold
-            )
-            .exclude(user__id=self.kwargs["user"])
-            .count()
-        )
-
-        if page_in_use_count > 0:
-            return Response(data={"page_in_use": True})
-        else:
-            return Response(data={"page_in_use": False})
-
-
 class PageInUsePut(generics.UpdateAPIView):
     """
     PUT: Update an existing PageInUse

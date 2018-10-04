@@ -77,14 +77,6 @@ ws_urlpatterns = (
             views_ws.PageInUsePut.as_view(),
         ),
         re_path(r"^page_in_use/$", views_ws.PageInUseCreate.as_view()),
-        re_path(
-            r"^page_in_use_delete/(?P<page_url>(.*?))/$",
-            views_ws.PageInUseDelete.as_view(),
-        ),
-        re_path(
-            r"^page_in_use_user/(?P<user>(.*?))/(?P<page_url>(.*?))/$",
-            views_ws.PageInUseUserGet.as_view(),
-        ),
         # FIXME: replace this with a standard DRF ViewSet
         re_path(r"^campaign/(?P<slug>(.*?))/$", views_ws.CampaignGet().as_view()),
         re_path(
@@ -103,14 +95,6 @@ ws_urlpatterns = (
         re_path(
             r"^campaign_asset_random/(?P<campaign>(.*?))/(?P<slug>(.*?))/$",
             views_ws.AssetRandomInCampaign().as_view(),
-        ),
-        re_path(
-            r"^page_in_use_filter/(?P<user>(.*?))/(?P<page_url>(.*?))/$",
-            views_ws.PageInUseFilteredGet.as_view(),
-        ),
-        re_path(
-            r"^page_in_use_count/(?P<user>(.*?))/(?P<page_url>(.*?))/$",
-            views_ws.PageInUseCount.as_view(),
         ),
         re_path(
             r"^transcription/(?P<asset>(.*?))/$",
