@@ -187,6 +187,17 @@ class Asset(models.Model):
     def __str__(self):
         return self.title
 
+    def get_absolute_url(self):
+        return reverse(
+            "transcriptions:asset-detail",
+            kwargs={
+                "campaign_slug": self.item.project.campaign.slug,
+                "project_slug": self.item.project.slug,
+                "item_id": self.item.item_id,
+                "slug": self.slug,
+            },
+        )
+
 
 class Tag(models.Model):
     TAG_VALIDATOR = RegexValidator(r"^[- _'\w]{1,50}$")
