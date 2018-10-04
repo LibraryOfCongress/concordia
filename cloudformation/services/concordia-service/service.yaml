@@ -171,7 +171,6 @@ Resources:
         Type: AWS::IAM::Role
         Properties:
             Path: /
-            RoleName: !Sub ecs-concordia-taskrole-${AWS::StackName}
             AssumeRolePolicyDocument:
                 Version: '2012-10-17'
                 Statement:
