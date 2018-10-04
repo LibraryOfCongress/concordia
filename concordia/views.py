@@ -20,24 +20,12 @@ from django.urls import reverse, reverse_lazy
 from django.views.decorators.cache import never_cache
 from django.views.generic import DetailView, FormView, ListView, TemplateView, View
 from django_registration.backends.activation.views import RegistrationView
+from setuptools_scm import get_version
 
-from concordia.forms import (
-    AssetFilteringForm,
-    CaptchaEmbedForm,
-    ContactUsForm,
-    UserProfileForm,
-    UserRegistrationForm,
-)
-from concordia.models import (
-    Asset,
-    Campaign,
-    Item,
-    Project,
-    Status,
-    Transcription,
-    UserAssetTagCollection,
-    UserProfile,
-)
+from concordia.forms import (AssetFilteringForm, CaptchaEmbedForm, ContactUsForm,
+                             UserProfileForm, UserRegistrationForm)
+from concordia.models import (Asset, Campaign, Item, Project, Status, Transcription,
+                              UserAssetTagCollection, UserProfile)
 
 logger = getLogger(__name__)
 
@@ -66,6 +54,8 @@ def healthz(request):
     # We don't want to query a large table but we do want to hit the database
     # at last once:
     status["database_has_data"] = Campaign.objects.count() > 0
+
+    status["application_version"] = get_version()
 
     return HttpResponse(content=json.dumps(status), content_type="application/json")
 
