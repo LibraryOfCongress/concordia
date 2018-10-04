@@ -20,7 +20,7 @@ from django.urls import reverse, reverse_lazy
 from django.views.decorators.cache import never_cache
 from django.views.generic import DetailView, FormView, ListView, TemplateView, View
 from django_registration.backends.activation.views import RegistrationView
-from setuptools_scm import get_version
+from concordia.version import get_concordia_version
 
 from concordia.forms import (AssetFilteringForm, CaptchaEmbedForm, ContactUsForm,
                              UserProfileForm, UserRegistrationForm)
@@ -55,7 +55,7 @@ def healthz(request):
     # at last once:
     status["database_has_data"] = Campaign.objects.count() > 0
 
-    status["application_version"] = get_version()
+    status["application_version"] = get_concordia_version()
 
     return HttpResponse(content=json.dumps(status), content_type="application/json")
 
