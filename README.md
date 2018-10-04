@@ -6,8 +6,8 @@ Concordia is a crowdsourcing platform hosted by the Library of Congress. The fir
 
 We are so excited that you want to jump right in. To get started:
 
-1. Check out our [CONTRIBUTING page](concordia/docs/CONTRIBUTING.md) and see the different ways you can help out. 
-2. Next, take a look at [How we work](concordia/docs/how-we-work.md), there you'll learn more about how we use GitHub and what we are looking for if you are contributing code.  
+1. Check out our [CONTRIBUTING page](docs/CONTRIBUTING.md) and see the different ways you can help out. 
+2. Next, take a look at [How we work](docs/how-we-work.md), there you'll learn more about how we use GitHub and what we are looking for if you are contributing code.  
 3. Continue reading our README. On this page are our technical requirements on setting up the application on your computer. 
 
 ## Prerequisites
