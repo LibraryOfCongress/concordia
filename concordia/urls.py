@@ -21,7 +21,6 @@ tx_urlpatterns = (
     [
         path("", views.CampaignListView.as_view(), name="campaigns"),
         path("<slug:slug>/", views.CampaignDetailView.as_view(), name="campaign"),
-        path("pageinuse/", views.ConcordiaPageInUse.as_view(), name="page-in-use"),
         re_path(
             r"^alternateasset/$",
             views.ConcordiaAlternateAssetView.as_view(),

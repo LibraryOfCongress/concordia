@@ -237,8 +237,13 @@ class Transcription(models.Model):
         return str(self.asset)
 
 
-class PageInUse(models.Model):
-    page_url = models.URLField(max_length=768)
+class AssetTranscriptionReservation(models.Model):
+    """
+    Records a user's reservation to transcribe a particular asset
+    """
+
+    asset = models.OneToOneField(Asset, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+
     created_on = models.DateTimeField(editable=False, auto_now_add=True)
     updated_on = models.DateTimeField(auto_now=True)

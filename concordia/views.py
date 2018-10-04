@@ -393,12 +393,6 @@ class ConcordiaAlternateAssetView(View):
             )
 
 
-class ConcordiaPageInUse(View):
-    """
-    Class to handle AJAX calls from the transcription page
-    """
-
-
 class ContactUsView(FormView):
     template_name = "contact.html"
     form_class = ContactUsForm

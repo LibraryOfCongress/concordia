@@ -165,41 +165,6 @@ class ViewTest_Concordia(TestCase):
 
         self.assertEqual(response.status_code, 200)
 
-    def test_pageinuse_post(self):
-        """
-        Test the POST method on /campaigns/pageinuse/ route
-
-        test that matching PageInUse entries with same page_url are deleted
-        test that old entries in PageInUse table are removed
-        """
-        self.login_user()
-        url = "http://example.com/bar"
-
-        user2 = User.objects.create(username="tester2", email="tester2@example.com")
-        user2.set_password("top_secret")
-        user2.save()
-
-        page1 = PageInUse(page_url=url, user=user2)
-        page1.save()
-
-        time_threshold = datetime.now() - timedelta(minutes=20)
-
-        # add two entries with old timestamps
-        page2 = PageInUse(
-            page_url=url,
-            user=self.user,
-            created_on=time_threshold,
-            updated_on=time_threshold,
-        )
-        page2.save()
-
-        response = self.client.post(
-            reverse("transcriptions:page-in-use"), {"page_url": url, "user": self.user}
-        )
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(1, PageInUse.objects.filter(url=url).count())
-
     def test_project_detail_view(self):
         """
         Test GET on route /campaigns/<slug-value> (campaign)
