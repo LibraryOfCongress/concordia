@@ -43,20 +43,6 @@ class WebServiceViewTests(TestCase):
         # create a session cookie
         self.client.session["foo"] = 123  # HACK: needed for django Client
 
-    def test_AnonymousUser_get(self):
-        """
-        This unit test tests the get  route ws/anonymous_user/
-        :param self:
-        """
-
-        self.login_user()
-
-        response = self.client.get("/ws/anonymous_user/")
-        response2 = self.client.get("/ws/anonymous_user/")
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.content, response2.content)
-
     def test_PageInUse_post(self):
         """
         This unit test tests the post entry for the route ws/page_in_use
@@ -409,14 +395,10 @@ class WebServiceViewTests(TestCase):
 
         # Add Another transcription
         response = self.client.post(
-            "/ws/transcription_create/",
-            {
-                "asset": asset.id,
-                "user_id": self.user.id,
-                "status": Status.EDIT,
-                "text": "T2",
-            },
+            reverse("ws:submit-transcription", kwargs={"asset_pk": asset.pk}),
+            {"user_id": self.user.id, "status": Status.EDIT, "text": "T2"},
         )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         # Get all Transcriptions for the asset, should be another one
         transcriptions_count = Transcription.objects.filter(asset=asset).count()
@@ -456,7 +438,7 @@ class WebServiceViewTests(TestCase):
         asset_tag_collection2.save()
         asset_tag_collection2.tags.add(tag3)
 
-        response = self.client.get("/ws/tags/%s/" % asset.pk)
+        response = self.client.get(reverse("ws:get-tags", args=(asset.pk,)))
 
         json_resp = json.loads(response.content)
 
@@ -479,7 +461,7 @@ class WebServiceViewTests(TestCase):
         asset = create_asset()
 
         response = self.client.get(
-            reverse("ws:submit-tags", kwargs={"pk": asset.id})
+            reverse("ws:submit-tags", kwargs={"asset_pk": asset.id})
         )
 
         json_resp = json.loads(response.content)
