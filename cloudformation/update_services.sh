@@ -21,23 +21,14 @@ set -eu
 # arn:aws:elasticloadbalancing:us-east-1:351149051428:listener/app/crowd-test2/3d7aa00aa454c0c7/1560db455f58ceb2	
 
 
-# SEC ENVIRONMENT
- 
-# CLUSTER_NAME=concordia2
-# SERVICE_NAME=crowd-isso-app-Service-1MO5VJL0CGDBM
-# ECS AutoScaling role ARN
-# arn:aws:iam::351149051428:role/concordia2-ECS-121WQ9X8QD-ECSServiceAutoScalingRol-P4BKQ062R74J
-# Load Balancer Listener
-# arn:aws:elasticloadbalancing:us-east-1:351149051428:listener/app/concordia2/f89ed8d66573aeb4/ee2446092143046f	
-
 # STAGE ENVIRONMENT
 
 # ECS AutoScaling role ARN
 # arn:aws:iam::351149051428:role/crowd-stage-ECS-BU57ZZJOQ-ECSServiceAutoScalingRol-1EK5KYLQQTVVU
 # Load Balancer Listener
 # arn:aws:elasticloadbalancing:us-east-1:351149051428:listener/app/crowd-stage/53c19bcd76f00cb2/3d0c172d811b4926
-# CLUSTER_NAME=crowd-stage
-# SERVICE_NAME=crowd-stage-app-Service-MYJFKU3PS5OM
+CLUSTER_NAME=crowd-stage
+SERVICE_NAME=crowd-stage-app-Service-EV9ZR04V07M1
 
 # PROD ENVIRONMENT
 
