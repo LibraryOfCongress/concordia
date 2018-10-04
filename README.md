@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/LibraryOfCongress/concordia.svg?branch=master)](https://travis-ci.org/LibraryOfCongress/concordia)
+
 # Welcome to Concordia 
 
 Concordia is a crowdsourcing platform hosted by the Library of Congress. The first iteration of Concordia will be used to launch Make Your Mark, a crowdsourcing program that invites members of the public, non-specialists and specialists alike, to engage with collections. This program enables volunteers to explore collections while gaining new skills, like reading handwriting and parsing primary sources, while helping institutions process data and make collections more usable.
