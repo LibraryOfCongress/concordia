@@ -502,7 +502,9 @@ class UserAssetTagsGet(generics.ListAPIView):
     lookup_field = "asset"
 
     def get_queryset(self):
-        db_tags = UserAssetTagCollection.objects.filter(asset__id=self.kwargs["asset"])
+        db_tags = UserAssetTagCollection.objects.filter(
+            asset__pk=self.kwargs["asset_pk"]
+        )
 
         tags = all_tags = None
         if db_tags:

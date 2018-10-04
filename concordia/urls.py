@@ -64,6 +64,7 @@ tx_urlpatterns = (
 )
 
 ws_urlpatterns = (
+    # FIXME: these should be a regular DRF ViewSets rather than a bunch of inconsistent one-off views
     [
         # Web Services
         re_path(
@@ -128,10 +129,13 @@ ws_urlpatterns = (
             views_ws.TranscriptionCreate().as_view(),
             name="submit-transcription",
         ),
-        # FIXME: these should be a regular DRF ViewSets rather than a bunch of inconsistent one-off views
-        path("assets/<int:pk>/tags/", views_ws.UserAssetTagsGet().as_view()),
         path(
-            "assets/<int:pk>/tags/submit/",
+            "assets/<int:asset_pk>/tags/",
+            views_ws.UserAssetTagsGet().as_view(),
+            name="get-tags",
+        ),
+        path(
+            "assets/<int:asset_pk>/tags/submit/",
             views_ws.TagCreate.as_view(),
             name="submit-tags",
         ),

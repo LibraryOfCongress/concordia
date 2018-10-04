@@ -83,7 +83,7 @@ Crowd: {{ asset.title }} ({{ asset.project.campaign.title }} — {{ asset.projec
                 </form>
             </div>
             <div id="tag-editor" class="flex-shrink-1">
-                <form class="ajax-submission" method="post" action="{% url 'ws:submit-tags' pk=asset.pk %}">
+                <form class="ajax-submission" method="post" action="{% url 'ws:submit-tags' asset_pk=asset.pk %}">
                     {% csrf_token %}
 
                     {% if request.user.is_authenticated %}
