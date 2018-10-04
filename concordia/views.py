@@ -38,6 +38,7 @@ from concordia.models import (
     UserAssetTagCollection,
     UserProfile,
 )
+from concordia.version import get_concordia_version
 
 logger = getLogger(__name__)
 
@@ -66,6 +67,8 @@ def healthz(request):
     # We don't want to query a large table but we do want to hit the database
     # at last once:
     status["database_has_data"] = Campaign.objects.count() > 0
+
+    status["application_version"] = get_concordia_version()
 
     return HttpResponse(content=json.dumps(status), content_type="application/json")
 

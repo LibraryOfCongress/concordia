@@ -1,5 +1,7 @@
 from django.conf import settings
 
+from concordia.version import get_concordia_version
+
 
 def system_configuration(request):
     """
@@ -10,6 +12,7 @@ def system_configuration(request):
         "SENTRY_PUBLIC_DSN": getattr(settings, "SENTRY_PUBLIC_DSN", None),
         "CONCORDIA_ENVIRONMENT": settings.CONCORDIA_ENVIRONMENT,
         "S3_BUCKET_NAME": getattr(settings, "S3_BUCKET_NAME", None),
+        "APPLICATION_VERSION": get_concordia_version(),
     }
 
 

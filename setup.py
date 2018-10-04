@@ -2,7 +2,7 @@
 from setuptools import find_packages, setup
 
 VERSION = __import__("concordia").get_version()
-INSTALL_REQUIREMENTS = ["<2.1,>=2.0.9"]
+INSTALL_REQUIREMENTS = ["boto3", "Django<2.1,>=2.0.9"]
 SCRIPTS = ["manage.py"]
 DESCRIPTION = "Transcription crowdsourcing"
 CLASSIFIERS = """\
@@ -12,7 +12,7 @@ Programming Language :: Python
 Programming Language :: Python :: 3.6
 """.splitlines()
 
-with open("README.rst", "r") as f:
+with open("README.md", "r") as f:
     LONG_DESCRIPTION = f.read()
 
 
@@ -26,4 +26,9 @@ setup(
     scripts=SCRIPTS,
     install_requires=INSTALL_REQUIREMENTS,
     classifiers=CLASSIFIERS,
+    use_scm_version={
+        "write_to": "version.txt",
+        "tag_regex": r"^(?P<prefix>v)?(?P<version>[^\+]+)(?P<suffix>.*)?$",
+    },
+    setup_requires=["setuptools_scm"],
 )

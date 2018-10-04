@@ -1,4 +1,4 @@
-include README.rst
+include README.md
 include MANIFEST.in
 recursive-include concordia *
 recursive-include tests *.py
