@@ -106,7 +106,6 @@ class ViewTest_Exporter(TestCase):
         f = io.BytesIO(response.content)
         zipped_file = zipfile.ZipFile(f, "r")
 
-        # self.assertIsNone(zipped_file.testzip())
         self.assertIn("bagit.txt", zipped_file.namelist())
         self.assertIn("bag-info.txt", zipped_file.namelist())
         self.assertIn(

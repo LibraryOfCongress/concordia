@@ -35,6 +35,16 @@ Crowd: {{ asset.title }} ({{ asset.project.campaign.title }} — {{ asset.projec
         </div>
 
         <div class="col-6 p-2 contribute-box d-flex flex-column flex-nowrap justify-content-between" id="contribute-box">
+            <nav id="asset-navigation" class="d-flex justify-content-end">
+                <div class="btn-group btn-group-sm" role="navigation" aria-label="Links to related pages">
+                {% if previous_asset_url %}
+                    <a class="btn btn-secondary" href="{{ previous_asset_url }}">&larr; Previous Page</a>
+                {% endif %}
+                {% if next_asset_url %}
+                    <a class="btn btn-secondary" href="{{ next_asset_url }}">Next Page &rarr;</a>
+                {% endif %}
+                </div>
+            </nav>
             <table class="table-dark table-compact table-striped offwhite-text small">
                 <tr>
                     <th>Status</th>
@@ -83,7 +93,7 @@ Crowd: {{ asset.title }} ({{ asset.project.campaign.title }} — {{ asset.projec
                 </form>
             </div>
             <div id="tag-editor" class="flex-shrink-1">
-                <form class="ajax-submission" method="post" action="{% url 'ws:submit-tags' pk=asset.pk %}">
+                <form class="ajax-submission" method="post" action="{% url 'ws:submit-tags' asset_pk=asset.pk %}">
                     {% csrf_token %}
 
                     {% if request.user.is_authenticated %}

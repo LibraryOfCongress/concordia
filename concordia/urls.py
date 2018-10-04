@@ -64,6 +64,7 @@ tx_urlpatterns = (
 )
 
 ws_urlpatterns = (
+    # FIXME: these should be a regular DRF ViewSets rather than a bunch of inconsistent one-off views
     [
         # Web Services
         re_path(
@@ -76,14 +77,6 @@ ws_urlpatterns = (
             views_ws.PageInUsePut.as_view(),
         ),
         re_path(r"^page_in_use/$", views_ws.PageInUseCreate.as_view()),
-        re_path(
-            r"^page_in_use_delete/(?P<page_url>(.*?))/$",
-            views_ws.PageInUseDelete.as_view(),
-        ),
-        re_path(
-            r"^page_in_use_user/(?P<user>(.*?))/(?P<page_url>(.*?))/$",
-            views_ws.PageInUseUserGet.as_view(),
-        ),
         # FIXME: replace this with a standard DRF ViewSet
         re_path(r"^campaign/(?P<slug>(.*?))/$", views_ws.CampaignGet().as_view()),
         re_path(
@@ -104,14 +97,6 @@ ws_urlpatterns = (
             views_ws.AssetRandomInCampaign().as_view(),
         ),
         re_path(
-            r"^page_in_use_filter/(?P<user>(.*?))/(?P<page_url>(.*?))/$",
-            views_ws.PageInUseFilteredGet.as_view(),
-        ),
-        re_path(
-            r"^page_in_use_count/(?P<user>(.*?))/(?P<page_url>(.*?))/$",
-            views_ws.PageInUseCount.as_view(),
-        ),
-        re_path(
             r"^transcription/(?P<asset>(.*?))/$",
             views_ws.TranscriptionLastGet().as_view(),
         ),
@@ -128,10 +113,13 @@ ws_urlpatterns = (
             views_ws.TranscriptionCreate().as_view(),
             name="submit-transcription",
         ),
-        # FIXME: these should be a regular DRF ViewSets rather than a bunch of inconsistent one-off views
-        path("assets/<int:pk>/tags/", views_ws.UserAssetTagsGet().as_view()),
         path(
-            "assets/<int:pk>/tags/submit/",
+            "assets/<int:asset_pk>/tags/",
+            views_ws.UserAssetTagsGet().as_view(),
+            name="get-tags",
+        ),
+        path(
+            "assets/<int:asset_pk>/tags/submit/",
             views_ws.TagCreate.as_view(),
             name="submit-tags",
         ),

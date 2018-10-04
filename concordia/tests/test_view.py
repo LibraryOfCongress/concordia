@@ -1,13 +1,11 @@
 # TODO: Add correct copyright header
-import re
 from datetime import datetime, timedelta
+from unittest import expectedFailure
 
-from captcha.models import CaptchaStore
 from django.test import TestCase
 from django.urls import reverse
 
 from concordia.models import PageInUse, Status, User
-from concordia.views import get_anonymous_user
 
 from .utils import create_asset, create_campaign, create_item, create_project
 
@@ -106,7 +104,7 @@ class ViewTest_Concordia(TestCase):
         self.assertTemplateUsed(
             response, template_name="transcriptions/campaign_detail.html"
         )
-        self.assertIn(c.title, response.content)
+        self.assertContains(response, c.title)
 
     def test_concordiaCampaignView_get_page2(self):
         """
@@ -138,68 +136,7 @@ class ViewTest_Concordia(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, template_name="transcriptions/item.html")
-        self.assertIn(i.title, response.content)
-
-    def test_ConcordiaAssetView_post_anonymous_happy_path(self):
-        """
-        This unit test test the POST route /campaigns/<campaign>/asset/<Asset_name>/
-        for an anonymous user. This user should not be able to tag
-        """
-        asset = create_asset()
-        anonymous_user = get_anonymous_user()
-
-        transcription = asset.transcription_set.create(
-            user_id=anonymous_user.pk, text="Test transcription 1", status=Status.EDIT
-        )
-        transcription.full_clean()
-        transcription.save()
-
-        tag_name = "Test tag 1"
-
-        response = self.client.get("/campaigns/Campaign1/asset/Asset1/")
-        self.assertEqual(response.status_code, 200)
-        hash_ = re.findall(r'value="([0-9a-f]+)"', str(response.content))[0]
-        captcha_response = CaptchaStore.objects.get(hashkey=hash_).response
-
-        response = self.client.post(
-            "/campaigns/Campaign1/asset/Asset1/",
-            {
-                "tx": "First Test Transcription 1",
-                "tags": tag_name,
-                "action": "Save",
-                "captcha_0": hash_,
-                "captcha_1": captcha_response,
-            },
-        )
-
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, "/campaigns/Campaign1/asset/Asset1/")
-
-    def test_ConcordiaAssetView_post_anonymous_invalid_captcha(self):
-        """
-        This unit test test the POST route /campaigns/<campaign>/asset/<Asset_name>/
-        for an anonymous user with missing captcha. This user should not be able to tag
-        also
-        """
-
-        asset = create_asset()
-        anonymous_user = get_anonymous_user()
-
-        transcription = asset.transcription_set.create(
-            user_id=anonymous_user.pk, text="Test transcription 1", status=Status.EDIT
-        )
-        transcription.full_clean()
-        transcription.save()
-
-        tag_name = "Test tag 1"
-
-        # post as anonymous user without captcha data
-        response = self.client.post(
-            "/campaigns/Campaign1/asset/Asset1/",
-            {"tx": "First Test Transcription", "tags": tag_name, "action": "Save"},
-        )
-
-        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, i.title)
 
     def test_ConcordiaAssetView_get(self):
         """
@@ -229,6 +166,7 @@ class ViewTest_Concordia(TestCase):
 
         self.assertEqual(response.status_code, 200)
 
+    @expectedFailure
     def test_pageinuse_post(self):
         """
         Test the POST method on /campaigns/pageinuse/ route
@@ -237,7 +175,7 @@ class ViewTest_Concordia(TestCase):
         test that old entries in PageInUse table are removed
         """
         self.login_user()
-        url = "example.com/bar"
+        url = "http://example.com/bar"
 
         user2 = User.objects.create(username="tester2", email="tester2@example.com")
         user2.set_password("top_secret")
@@ -250,26 +188,19 @@ class ViewTest_Concordia(TestCase):
 
         # add two entries with old timestamps
         page2 = PageInUse(
-            page_url="example.com/blah",
+            page_url=url,
             user=self.user,
             created_on=time_threshold,
             updated_on=time_threshold,
         )
         page2.save()
 
-        page3 = PageInUse(
-            page_url="bar.com/blah",
-            user=self.user,
-            created_on=time_threshold,
-            updated_on=time_threshold,
-        )
-        page3.save()
-
         response = self.client.post(
             reverse("transcriptions:page-in-use"), {"page_url": url, "user": self.user}
         )
 
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(1, PageInUse.objects.filter(url=url).count())
 
     def test_project_detail_view(self):
         """
@@ -278,7 +209,10 @@ class ViewTest_Concordia(TestCase):
         project = create_project()
 
         response = self.client.get(
-            "/campaigns/%s/%s/" % (project.campaign.slug, project.slug)
+            reverse(
+                "transcriptions:project-detail",
+                args=(project.campaign.slug, project.slug),
+            )
         )
 
         self.assertEqual(response.status_code, 200)
