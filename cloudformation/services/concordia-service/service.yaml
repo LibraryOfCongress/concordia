@@ -22,27 +22,28 @@ Parameters:
         Type: Number
         Default: 3
 
-    VPC:
-        Description: The VPC that the ECS cluster is deployed to
-        Type: AWS::EC2::VPC::Id
-
 Mappings:
     ClusterMapping:
         AutoScalingServiceRoleMap:
             dev: 'arn:aws:iam::351149051428:role/crowd-dev-ECS-RQZSJ89GYY4-ECSServiceAutoScalingRol-KJ5SO8E1KIWF'
             test: 'arn:aws:iam::351149051428:role/crowd-test2-ECS-1I34ZK7Z3-ECSServiceAutoScalingRol-U5GIQOZ1RQ8Z'
             stage: 'arn:aws:iam::351149051428:role/crowd-stage-ECS-BU57ZZJOQ-ECSServiceAutoScalingRol-1EK5KYLQQTVVU'
-            prod: 'notavailable'
+            prod: 'arn:aws:iam::351149051428:role/crowd-prod-ECS-1501XCPSDM-ECSServiceAutoScalingRol-JUB3TZXYH65T'
         ListenerMap:
             dev: 'arn:aws:elasticloadbalancing:us-east-1:351149051428:listener/app/crowd-dev/8b148c019a172548/3744cde523a62f96'
-            test: 'arn:aws:elasticloadbalancing:us-east-1:351149051428:listener/app/crowd-test2/3d7aa00aa454c0c7/1560db455f58ceb2s'
+            test: 'arn:aws:elasticloadbalancing:us-east-1:351149051428:listener/app/crowd-test2/3d7aa00aa454c0c7/1560db455f58ceb2'
             stage: 'arn:aws:elasticloadbalancing:us-east-1:351149051428:listener/app/crowd-stage/53c19bcd76f00cb2/3d0c172d811b4926'
-            prod: 'notavailable'
+            prod: 'arn:aws:elasticloadbalancing:us-east-1:351149051428:listener/app/crowd-prod/56f99d946d14d887/0955e71fcb8e2f67'
         ClusterNameMap:
-            dev: 'crowd-dev'
-            test: 'crowd-test2'
-            stage: 'crowd-stage'
-            prod: 'crowd-prod'
+            dev: crowd-dev
+            test: crowd-test2
+            stage: crowd-stage
+            prod: crowd-prod
+        VpcIdMap:
+            dev: vpc-017fd2b202f2b6495
+            test: vpc-0a9c4c1672305c7d7
+            stage: vpc-07bb7696546e2f94d
+            prod: vpc-017fd2b202f2b6495
 
 Resources:
     Service:
@@ -142,7 +143,7 @@ Resources:
     TargetGroup:
         Type: AWS::ElasticLoadBalancingV2::TargetGroup
         Properties:
-            VpcId: !Ref VPC
+            VpcId: !FindInMap [ClusterMapping, VPCIdMap, !Ref EnvName]
             Port: 80
             Protocol: HTTP
             Matcher:
