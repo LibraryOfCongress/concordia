@@ -250,7 +250,7 @@ class ViewTest_Concordia(TestCase):
 
         # add two entries with old timestamps
         page2 = PageInUse(
-            page_url="example.com/blah",
+            page_url="http://example.com/foo",
             user=self.user,
             created_on=time_threshold,
             updated_on=time_threshold,
@@ -258,7 +258,7 @@ class ViewTest_Concordia(TestCase):
         page2.save()
 
         page3 = PageInUse(
-            page_url="bar.com/blah",
+            page_url="http://example.com/bar",
             user=self.user,
             created_on=time_threshold,
             updated_on=time_threshold,

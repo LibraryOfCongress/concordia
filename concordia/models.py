@@ -227,24 +227,7 @@ class Transcription(models.Model):
 
 
 class PageInUse(models.Model):
-    page_url = models.CharField(max_length=256)
+    page_url = models.URLField(max_length=768)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    created_on = models.DateTimeField(editable=False)
-    updated_on = models.DateTimeField()
-
-    def save(self, force_insert=False, *args, **kwargs):
-        updated = False
-        if self.pk and not force_insert:
-            updated = self.custom_update()
-        if not updated:
-            self.custom_insert()
-        return super(PageInUse, self).save(*args, **kwargs)
-
-    def custom_update(self):
-        self.updated_on = timezone.now()
-        return True
-
-    def custom_insert(self):
-        self.created_on = timezone.now()
-        if not self.updated_on:
-            self.updated_on = timezone.now()
+    created_on = models.DateTimeField(editable=False, auto_now_add=True)
+    updated_on = models.DateTimeField(auto_now=True)
