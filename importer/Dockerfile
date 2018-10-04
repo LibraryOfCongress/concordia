@@ -23,6 +23,10 @@ RUN pip3 install pipenv
 
 WORKDIR /app
 COPY . /app
+
+# Needed for application version number
+COPY .git /app/.git
+
 RUN pipenv install --system --dev --deploy
 
 CMD [ "/bin/bash", "importer/entrypoint.sh" ]
