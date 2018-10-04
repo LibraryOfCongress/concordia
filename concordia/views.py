@@ -20,12 +20,25 @@ from django.urls import reverse, reverse_lazy
 from django.views.decorators.cache import never_cache
 from django.views.generic import DetailView, FormView, ListView, TemplateView, View
 from django_registration.backends.activation.views import RegistrationView
-from concordia.version import get_concordia_version
 
-from concordia.forms import (AssetFilteringForm, CaptchaEmbedForm, ContactUsForm,
-                             UserProfileForm, UserRegistrationForm)
-from concordia.models import (Asset, Campaign, Item, Project, Status, Transcription,
-                              UserAssetTagCollection, UserProfile)
+from concordia.forms import (
+    AssetFilteringForm,
+    CaptchaEmbedForm,
+    ContactUsForm,
+    UserProfileForm,
+    UserRegistrationForm,
+)
+from concordia.models import (
+    Asset,
+    Campaign,
+    Item,
+    Project,
+    Status,
+    Transcription,
+    UserAssetTagCollection,
+    UserProfile,
+)
+from concordia.version import get_concordia_version
 
 logger = getLogger(__name__)
 

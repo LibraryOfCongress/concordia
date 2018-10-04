@@ -1,4 +1,5 @@
 from django.conf import settings
+
 from concordia.version import get_concordia_version
 
 
