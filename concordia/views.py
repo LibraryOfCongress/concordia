@@ -286,6 +286,21 @@ class ConcordiaAssetView(DetailView):
         ctx["project"] = project = item.project
         ctx["campaign"] = project.campaign
 
+        previous_asset = (
+            item.asset_set.filter(sequence__lt=asset.sequence)
+            .order_by("sequence")
+            .last()
+        )
+        next_asset = (
+            item.asset_set.filter(sequence__gt=asset.sequence)
+            .order_by("sequence")
+            .first()
+        )
+        if previous_asset:
+            ctx["previous_asset_url"] = previous_asset.get_absolute_url()
+        if next_asset:
+            ctx["next_asset_url"] = next_asset.get_absolute_url()
+
         # Get the most recent transcription
         latest_transcriptions = Transcription.objects.filter(
             asset__slug=asset.slug
