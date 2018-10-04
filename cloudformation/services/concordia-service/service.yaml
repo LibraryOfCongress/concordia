@@ -6,10 +6,10 @@ Parameters:
         Type: String
         Description: which environment to target
         AllowedValues:
-            - dev  
-            - test
-            - stage
-            - prod
+            - 'dev'  
+            - 'test'
+            - 'stage'
+            - 'prod'
         ConstraintDescription: Must match a location for secret storage in secretsmanager
 
     DesiredCount:
@@ -27,28 +27,29 @@ Parameters:
         Type: AWS::EC2::VPC::Id
 
 Mappings:
-    AutoScalingServiceRoleMap:
-        dev: 'arn:aws:iam::351149051428:role/crowd-dev-ECS-RQZSJ89GYY4-ECSServiceAutoScalingRol-KJ5SO8E1KIWF'
-        test: 'arn:aws:iam::351149051428:role/crowd-test2-ECS-1I34ZK7Z3-ECSServiceAutoScalingRol-U5GIQOZ1RQ8Z'
-        stage: 'arn:aws:iam::351149051428:role/crowd-stage-ECS-BU57ZZJOQ-ECSServiceAutoScalingRol-1EK5KYLQQTVVU'
-        prod: ''
-    ALBListenerMap:
-        dev: 'arn:aws:elasticloadbalancing:us-east-1:351149051428:listener/app/crowd-dev/8b148c019a172548/3744cde523a62f96'
-        test: 'arn:aws:elasticloadbalancing:us-east-1:351149051428:listener/app/crowd-test2/3d7aa00aa454c0c7/1560db455f58ceb2s'
-        stage: 'arn:aws:elasticloadbalancing:us-east-1:351149051428:listener/app/crowd-stage/53c19bcd76f00cb2/3d0c172d811b4926'
-        prod: ''
-    ClusterMap:
-        dev: 'crowd-dev'
-        test: 'crowd-test2'
-        stage: 'crowd-stage'
-        prod: 'crowd-prod'
+    ClusterMapping:
+        AutoScalingServiceRoleMap:
+            dev: 'arn:aws:iam::351149051428:role/crowd-dev-ECS-RQZSJ89GYY4-ECSServiceAutoScalingRol-KJ5SO8E1KIWF'
+            test: 'arn:aws:iam::351149051428:role/crowd-test2-ECS-1I34ZK7Z3-ECSServiceAutoScalingRol-U5GIQOZ1RQ8Z'
+            stage: 'arn:aws:iam::351149051428:role/crowd-stage-ECS-BU57ZZJOQ-ECSServiceAutoScalingRol-1EK5KYLQQTVVU'
+            prod: 'notavailable'
+        ListenerMap:
+            dev: 'arn:aws:elasticloadbalancing:us-east-1:351149051428:listener/app/crowd-dev/8b148c019a172548/3744cde523a62f96'
+            test: 'arn:aws:elasticloadbalancing:us-east-1:351149051428:listener/app/crowd-test2/3d7aa00aa454c0c7/1560db455f58ceb2s'
+            stage: 'arn:aws:elasticloadbalancing:us-east-1:351149051428:listener/app/crowd-stage/53c19bcd76f00cb2/3d0c172d811b4926'
+            prod: 'notavailable'
+        ClusterNameMap:
+            dev: 'crowd-dev'
+            test: 'crowd-test2'
+            stage: 'crowd-stage'
+            prod: 'crowd-prod'
 
 Resources:
     Service:
         Type: AWS::ECS::Service
         DependsOn: ListenerRule
         Properties:
-            Cluster: !FindInMap [ClusterMap, !Ref EnvName]
+            Cluster: !FindInMap [ClusterMapping, ClusterNameMap, !Ref EnvName]
             Role: !Ref ServiceRole
             DesiredCount: !Ref DesiredCount
             TaskDefinition: !Ref TaskDefinition
@@ -155,7 +156,7 @@ Resources:
     ListenerRule:
         Type: AWS::ElasticLoadBalancingV2::ListenerRule
         Properties:
-            ListenerArn: !FindInMap [ListenerMap, !Ref EnvName]
+            ListenerArn: !FindInMap [ClusterMapping, ListenerMap, !Ref EnvName]
             Priority: 1
             Conditions:
                 - Field: path-pattern
@@ -246,9 +247,9 @@ Resources:
             ResourceId: !Join
                 - /
                 - - service
-                  - !FindInMap [ClusterMap, !Ref EnvName]
+                  - !FindInMap [ClusterMapping, ClusterNameMap, !Ref EnvName]
                   - !GetAtt Service.Name
-            RoleARN: !FindInMap [AutoScalingServiceRoleMap, !Ref EnvName]
+            RoleARN: !FindInMap [ClusterMapping, AutoScalingServiceRoleMap, !Ref EnvName]
             ScalableDimension: ecs:service:DesiredCount
             ServiceNamespace: ecs
 
@@ -289,7 +290,7 @@ Resources:
             MetricName: CPUUtilization
             Dimensions:
                 - Name: ClusterName
-                  Value: !FindInMap [ClusterMap, !Ref EnvName]
+                  Value: !FindInMap [ClusterMapping, ClusterNameMap, !Ref EnvName]
                 - Name: ServiceName
                   Value: !GetAtt Service.Name
             Statistic: Maximum
@@ -309,7 +310,7 @@ Resources:
             MetricName: CPUUtilization
             Dimensions:
                 - Name: ClusterName
-                  Value: !FindInMap [ClusterMap, !Ref EnvName]
+                  Value: !FindInMap [ClusterMapping, ClusterNameMap, !Ref EnvName]
                 - Name: ServiceName
                   Value: !GetAtt Service.Name
             Statistic: Maximum
