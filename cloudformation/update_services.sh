@@ -4,8 +4,8 @@ set -eu
 
 # DEV ENVIRONMENT
 
-CLUSTER_NAME=crowd-dev
-SERVICE_NAME=crowd-dev-app-Service-PPFPP27E26LE
+# CLUSTER_NAME=crowd-dev
+# SERVICE_NAME=crowd-dev-app-Service-PPFPP27E26LE
 # ECS AutoScaling role ARN
 # arn:aws:iam::351149051428:role/crowd-dev-ECS-RQZSJ89GYY4-ECSServiceAutoScalingRol-KJ5SO8E1KIWF	
 # Load Balancer Listener
@@ -14,7 +14,7 @@ SERVICE_NAME=crowd-dev-app-Service-PPFPP27E26LE
 # TEST ENVIRONMENT
 
 # CLUSTER_NAME=crowd-test2
-# SERVICE_NAME=crowd-test2-app-Service-FKAYXTF9E7SW
+# SERVICE_NAME=crowd-test-app-Service-KRK54VT16MJN
 # ECS AutoScaling role ARN
 # arn:aws:iam::351149051428:role/crowd-test2-ECS-1I34ZK7Z3-ECSServiceAutoScalingRol-U5GIQOZ1RQ8Z	
 # Load Balancer Listener
