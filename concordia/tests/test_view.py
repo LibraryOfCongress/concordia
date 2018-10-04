@@ -1,11 +1,10 @@
 # TODO: Add correct copyright header
 from datetime import datetime, timedelta
-from unittest import expectedFailure
 
 from django.test import TestCase
 from django.urls import reverse
 
-from concordia.models import PageInUse, Status, User
+from concordia.models import Status, User
 
 from .utils import create_asset, create_campaign, create_item, create_project
 
@@ -141,7 +140,7 @@ class ViewTest_Concordia(TestCase):
     def test_ConcordiaAssetView_get(self):
         """
         This unit test test the GET route /campaigns/<campaign>/asset/<Asset_name>/
-        with already in use. Verify the updated_on time is updated on PageInUse
+        with already in use.
         """
         self.login_user()
 
@@ -166,7 +165,6 @@ class ViewTest_Concordia(TestCase):
 
         self.assertEqual(response.status_code, 200)
 
-    @expectedFailure
     def test_pageinuse_post(self):
         """
         Test the POST method on /campaigns/pageinuse/ route

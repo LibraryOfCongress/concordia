@@ -128,40 +128,6 @@ class AssetSerializer(serializers.HyperlinkedModelSerializer):
         )
 
 
-class PageInUseSerializer(serializers.ModelSerializer):
-    def create(self, validated_data):
-        page_in_use = models.PageInUse(
-            page_url=validated_data["page_url"], user=validated_data["user"]
-        )
-        page_in_use.save()
-
-        # On every insertion, delete any entries not updated in the last 5 minutes
-        self.delete_old()
-
-        return page_in_use
-
-    def delete_old(self):
-        from datetime import datetime, timedelta
-
-        # FIXME: use a setting for the threshold
-        time_threshold = datetime.now() - timedelta(minutes=5)
-        # FIXME: is there any reason such as a signal which means we can't just call delete on this queryset?
-        old_page_entries = models.PageInUse.objects.filter(
-            updated_on__lt=time_threshold
-        )
-        for old_page in old_page_entries:
-            old_page.delete()
-
-    def update(self, instance, validated_data):
-        instance.save()
-        self.delete_old()
-        return instance
-
-    class Meta:
-        model = models.PageInUse
-        fields = ("page_url", "user", "updated_on")
-
-
 class TranscriptionSerializer(serializers.HyperlinkedModelSerializer):
     asset = AssetSerializer()
     user = UserSerializer()

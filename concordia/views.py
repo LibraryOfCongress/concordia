@@ -16,7 +16,7 @@ from django.db.models import Count
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import Http404, get_object_or_404, redirect, render
 from django.template import loader
-from django.urls import reverse, reverse_lazy
+from django.urls import reverse_lazy
 from django.views.decorators.cache import never_cache
 from django.views.generic import DetailView, FormView, ListView, TemplateView, View
 from django_registration.backends.activation.views import RegistrationView
@@ -36,7 +36,6 @@ from concordia.models import (
     Status,
     Transcription,
     UserAssetTagCollection,
-    UserProfile,
 )
 from concordia.version import get_concordia_version
 
@@ -398,52 +397,6 @@ class ConcordiaPageInUse(View):
     """
     Class to handle AJAX calls from the transcription page
     """
-
-    def post(self, *args, **kwargs):
-        """
-        handle the post request from the periodic AJAX call from the transcription page
-        The primary purpose is to update the entry in PageInUse
-        :param args:
-        :param kwargs:
-        :return: "ok"
-        """
-
-        if self.request.is_ajax():
-            json_dict = json.loads(self.request.body)
-            user_name = json_dict["user"]
-            page_url = json_dict["page_url"]
-        else:
-            user_name = self.request.POST.get("user", None)
-            page_url = self.request.POST.get("page_url", None)
-
-        if user_name == "AnonymousUser":
-            user_name = "anonymous"
-
-        if user_name and page_url:
-            response = requests.get(
-                "%s://%s/ws/user/%s/"
-                % (self.request.scheme, self.request.get_host(), user_name),
-                cookies=self.request.COOKIES,
-            )
-            user_json_val = json.loads(response.content.decode("utf-8"))
-
-            # update the PageInUse
-
-            change_page_in_use = {"page_url": page_url, "user": user_json_val["id"]}
-
-            requests.put(
-                "%s://%s/ws/page_in_use_update/%s/%s/"
-                % (
-                    self.request.scheme,
-                    self.request.get_host(),
-                    user_json_val["id"],
-                    page_url,
-                ),
-                data=change_page_in_use,
-                cookies=self.request.COOKIES,
-            )
-
-        return HttpResponse("ok")
 
 
 class ContactUsView(FormView):

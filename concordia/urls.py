@@ -21,9 +21,7 @@ tx_urlpatterns = (
     [
         path("", views.CampaignListView.as_view(), name="campaigns"),
         path("<slug:slug>/", views.CampaignDetailView.as_view(), name="campaign"),
-        re_path(
-            r"^pageinuse/$", views.ConcordiaPageInUse.as_view(), name="page-in-use"
-        ),
+        path("pageinuse/", views.ConcordiaPageInUse.as_view(), name="page-in-use"),
         re_path(
             r"^alternateasset/$",
             views.ConcordiaAlternateAssetView.as_view(),
@@ -71,13 +69,6 @@ ws_urlpatterns = (
             r"^user_profile/(?P<user_id>(.*?))/$", views_ws.UserProfileGet.as_view()
         ),
         re_path(r"^user/(?P<user_name>(.*?))/$", views_ws.UserGet.as_view()),
-        re_path(r"^page_in_use/(?P<page_url>(.*?))/$", views_ws.PageInUseGet.as_view()),
-        re_path(
-            r"^page_in_use_update/(?P<page_url>(.*?))/$",
-            views_ws.PageInUsePut.as_view(),
-        ),
-        re_path(r"^page_in_use/$", views_ws.PageInUseCreate.as_view()),
-        # FIXME: replace this with a standard DRF ViewSet
         re_path(r"^campaign/(?P<slug>(.*?))/$", views_ws.CampaignGet().as_view()),
         re_path(
             r"^campaign_by_id/(?P<id>(.*?))/$", views_ws.CampaignGetById().as_view()
