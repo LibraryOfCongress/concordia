@@ -99,6 +99,11 @@ ws_urlpatterns = (
             views_ws.TranscriptionByAsset().as_view(),
         ),
         path(
+            "reserve-asset-for-transcription/<int:asset_pk>/",
+            views.reserve_asset_transcription,
+            name="reserve-asset-for-transcription",
+        ),
+        path(
             "assets/<int:asset_pk>/transcriptions/submit/",
             views_ws.TranscriptionCreate().as_view(),
             name="submit-transcription",

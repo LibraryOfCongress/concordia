@@ -1,7 +1,7 @@
 import json
 import os
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from logging import getLogger
 from smtplib import SMTPException
 
@@ -12,12 +12,15 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
+from django.db import IntegrityError
 from django.db.models import Count
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import Http404, get_object_or_404, redirect, render
 from django.template import loader
 from django.urls import reverse_lazy
+from django.utils.timezone import now
 from django.views.decorators.cache import never_cache
+from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, FormView, ListView, TemplateView, View
 from django_registration.backends.activation.views import RegistrationView
 
@@ -30,6 +33,7 @@ from concordia.forms import (
 )
 from concordia.models import (
     Asset,
+    AssetTranscriptionReservation,
     Campaign,
     Item,
     Project,
@@ -530,3 +534,48 @@ class ReportCampaignView(TemplateView):
             project.transcription_statuses.insert(
                 0, ("Not Started", project.asset_count - total_statuses)
             )
+
+
+@require_POST
+def reserve_asset_transcription(request, *, asset_pk):
+    """
+    Receives an asset PK and attempts to create/update a reservation for it
+
+    Returns HTTP 204 on success and HTTP 409 when the record is in use
+    """
+
+    if not request.user.is_authenticated:
+        user = get_anonymous_user()
+    else:
+        user = request.user
+
+    timestamp = now()
+
+    # First clear old reservations, with a grace period:
+    cutoff = timestamp - (
+        timedelta(seconds=2 * settings.TRANSCRIPTION_RESERVATION_SECONDS)
+    )
+    AssetTranscriptionReservation.objects.filter(updated_on__lt=cutoff).delete()
+
+    # We're relying on the database to meet our integrity requirements and since
+    # this is called periodically we want to be fairly fast until we switch to
+    # something like Redis.
+    #
+    # We'll try an UPDATE first since this will be updated regularly as people
+    # work and a single operation can handle that. If that fails to match a
+    # single record we'll fall back to INSERT and catch the integrity check.
+
+    updated = AssetTranscriptionReservation.objects.filter(
+        user=user, asset__pk=asset_pk
+    ).update(updated_on=timestamp)
+
+    if updated:
+        return HttpResponse(status=204)
+
+    try:
+        i = AssetTranscriptionReservation(user=user, asset_id=asset_pk)
+        i.save()
+        return HttpResponse(status=204)
+    except IntegrityError:
+        return HttpResponse("Another user is currently editing this record", status=409)
+

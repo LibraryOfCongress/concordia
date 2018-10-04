@@ -156,6 +156,7 @@ Crowd: {{ asset.title }} ({{ asset.project.campaign.title }} — {{ asset.projec
 {% block body_scripts %}
 <script src="{% static 'vendor/openseadragon/openseadragon.min.js' %}"></script>
 <script src="{% static 'js/contribute.js' %}"></script>
+<script src="{% static 'js/asset-reservation.js' %}"></script>
 <script type="text/javascript">
     var viewer = OpenSeadragon({
         id: 'asset-image',
@@ -169,5 +170,8 @@ Crowd: {{ asset.title }} ({{ asset.project.campaign.title }} — {{ asset.projec
             pinchRotate: true
         }
     });
+</script>
+<script>
+    attemptToReserveAsset("{% url 'ws:reserve-asset-for-transcription' asset.pk %}");
 </script>
 {% endblock body_scripts %}
