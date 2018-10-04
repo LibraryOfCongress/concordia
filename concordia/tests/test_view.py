@@ -1,5 +1,6 @@
 # TODO: Add correct copyright header
 from datetime import datetime, timedelta
+from unittest import expectedFailure
 
 from django.test import TestCase
 from django.urls import reverse
@@ -165,6 +166,7 @@ class ViewTest_Concordia(TestCase):
 
         self.assertEqual(response.status_code, 200)
 
+    @expectedFailure
     def test_pageinuse_post(self):
         """
         Test the POST method on /campaigns/pageinuse/ route
@@ -173,7 +175,7 @@ class ViewTest_Concordia(TestCase):
         test that old entries in PageInUse table are removed
         """
         self.login_user()
-        url = "example.com/bar"
+        url = "http://example.com/bar"
 
         user2 = User.objects.create(username="tester2", email="tester2@example.com")
         user2.set_password("top_secret")
@@ -186,26 +188,19 @@ class ViewTest_Concordia(TestCase):
 
         # add two entries with old timestamps
         page2 = PageInUse(
-            page_url="http://example.com/foo",
+            page_url=url,
             user=self.user,
             created_on=time_threshold,
             updated_on=time_threshold,
         )
         page2.save()
 
-        page3 = PageInUse(
-            page_url="http://example.com/bar",
-            user=self.user,
-            created_on=time_threshold,
-            updated_on=time_threshold,
-        )
-        page3.save()
-
         response = self.client.post(
             reverse("transcriptions:page-in-use"), {"page_url": url, "user": self.user}
         )
 
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(1, PageInUse.objects.filter(url=url).count())
 
     def test_project_detail_view(self):
         """
@@ -214,7 +209,10 @@ class ViewTest_Concordia(TestCase):
         project = create_project()
 
         response = self.client.get(
-            reverse("project", args=(project.campaign.slug, project.slug))
+            reverse(
+                "transcriptions:project-detail",
+                args=(project.campaign.slug, project.slug),
+            )
         )
 
         self.assertEqual(response.status_code, 200)
