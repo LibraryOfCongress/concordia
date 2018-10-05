@@ -15,41 +15,42 @@ Description: >
 Mappings:
     EnvironmentMapping:
         AvailabilityZoneMap:
-            - dev: [0, 1]
-            - test: [0, 1]
-            - stage: [4, 5]
-            - prod: [2, 3]
+            dev: [0, 1]
+            test: [0, 1]
+            stage: [4, 5]
+            prod: [2, 3]
         VPCCIDRMap:
-            - dev: 10.192.0.0/16
-            - test: 10.193.0.0/16
-            - stage: 10.194.0.0/16
-            - prod: 10.195.0.0/16
+            dev: 10.192.0.0/16
+            test: 10.193.0.0/16
+            stage: 10.194.0.0/16
+            prod: 10.195.0.0/16
         PublicSubnet1CIDRMap:
-            - dev: 10.192.10.0/24
-            - test: 10.193.10.0/24
-            - stage: 10.194.10.0/24
-            - prod: 10.195.10.0/24
+            dev: 10.192.10.0/24
+            test: 10.193.10.0/24
+            stage: 10.194.10.0/24
+            prod: 10.195.10.0/24
         PublicSubnet2CIDRMap:
-            - dev: 10.192.11.0/24
-            - test: 10.193.11.0/24
-            - stage: 10.194.11.0/24
-            - prod: 10.195.11.0/24
+            dev: 10.192.11.0/24
+            test: 10.193.11.0/24
+            stage: 10.194.11.0/24
+            prod: 10.195.11.0/24
         PrivateSubnet1CIDRMap:
-            - dev: 10.192.20.0/24
-            - test: 10.193.20.0/24
-            - stage: 10.194.20.0/24
-            - prod: 10.195.20.0/24
+            dev: 10.192.20.0/24
+            test: 10.193.20.0/24
+            stage: 10.194.20.0/24
+            prod: 10.195.20.0/24
         PrivateSubnet2CIDRMap:
-            - dev: 10.192.21.0/24
-            - test: 10.193.21.0/24
-            - stage: 10.194.21.0/24
-            - prod: 10.195.21.0/24
+            dev: 10.192.21.0/24
+            test: 10.193.21.0/24
+            stage: 10.194.21.0/24
+            prod: 10.195.21.0/24
 
 Parameters:
 
     MyDbPassword:
         Description: Master database password to use for RDS
         Type: String
+        NoEcho: true
 
     KeyPairName:
         Description: key pair within this region for ECS access
@@ -146,7 +147,7 @@ Resources:
             Parameters:
                 VPC: !GetAtt VPC.Outputs.VPC
                 Cluster: !GetAtt ECS.Outputs.Cluster
-                DesiredCount: 2
+                DesiredCount: "2"
                 PostgresHost: !GetAtt RDS.Outputs.DatabaseHostName
                 Listener: !GetAtt ALB.Outputs.Listener
                 Path: /*

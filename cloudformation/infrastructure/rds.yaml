@@ -1,15 +1,5 @@
----
 AWSTemplateFormatVersion: '2010-09-09'
 Parameters:
-    
-    EnvironmentName:
-        Description: An environment name that will be prefixed to resource names
-        Type: String
-    
-    VPC:
-        Type: AWS::EC2::VPC::Id
-        Description: Choose which VPC the security groups should be deployed to
-
     DatabaseSecurityGroup:
         Description: Sets the security group to use for RDS database access
         Type: AWS::EC2::SecurityGroup::Id
@@ -25,6 +15,7 @@ Parameters:
     DbPassword:
         Description: The password to use for the database
         Type: String
+        NoEcho: true
 
 Resources:
   dbsubnetdefaultvpc0ca0aaf8357f808b6:

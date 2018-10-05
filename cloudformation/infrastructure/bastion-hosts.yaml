@@ -32,7 +32,7 @@ Mappings:
 
 Resources:
 
-    Ec2Instance: 
+    Bastion1:
         Type: AWS::EC2::Instance
         Properties: 
             ImageId: 
@@ -44,7 +44,7 @@ Resources:
             KeyName: 
                 Ref: KeyPairName
             NetworkInterfaces: 
-                - AssociatePublicIpAddress: "true"
+                - AssociatePublicIpAddress: true
                   DeviceIndex: "0"
                   GroupSet: 
                     - Ref: BastionHostsSecurityGroup
@@ -54,7 +54,7 @@ Resources:
                 - Key: Name
                   Value: !Sub ${EnvironmentName}-BastionHost-1     
 
-    Ec2Instance: 
+    Bastion2:
         Type: AWS::EC2::Instance
         Properties: 
             ImageId: 
@@ -66,7 +66,7 @@ Resources:
             KeyName: 
                 Ref: KeyPairName
             NetworkInterfaces: 
-                - AssociatePublicIpAddress: "true"
+                - AssociatePublicIpAddress: true
                   DeviceIndex: "0"
                   GroupSet: 
                     - Ref: BastionHostsSecurityGroup
