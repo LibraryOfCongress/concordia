@@ -540,18 +540,20 @@ class ReportCampaignView(TemplateView):
         ctx = {
             "title": campaign.title,
             "campaign_slug": campaign.slug,
-            "total_asset_count": campaign.asset_set.count(),
+            "total_asset_count": Asset.objects.filter(
+                item__project__campaign=campaign
+            ).count(),
         }
 
         projects_qs = campaign.project_set.order_by("title")
 
-        projects_qs = projects_qs.annotate(asset_count=Count("asset"))
+        projects_qs = projects_qs.annotate(asset_count=Count("item__asset"))
         projects_qs = projects_qs.annotate(
-            tag_count=Count("asset__userassettagcollection__tags", distinct=True)
+            tag_count=Count("item__asset__userassettagcollection__tags", distinct=True)
         )
         projects_qs = projects_qs.annotate(
             contributor_count=Count(
-                "asset__userassettagcollection__user", distinct=True
+                "item__asset__userassettagcollection__user", distinct=True
             )
         )
 
@@ -568,8 +570,8 @@ class ReportCampaignView(TemplateView):
         return render(self.request, self.template_name, ctx)
 
     def add_transcription_status_summary_to_projects(self, projects):
-        status_qs = Transcription.objects.filter(asset__project__in=projects)
-        status_qs = status_qs.values_list("asset__project__id", "status")
+        status_qs = Transcription.objects.filter(asset__item__project__in=projects)
+        status_qs = status_qs.values_list("asset__item__project__id", "status")
         status_qs = status_qs.annotate(Count("status"))
         project_statuses = {}
 
