@@ -16,7 +16,7 @@ Parameters:
     ClusterSizeDesired:
         Description: How many ECS hosts do you want to initially deploy?
         Type: Number
-        Default: 2
+        Default: 3
 
     ClusterSizeMin:
         Description: How many ECS hosts do you want to deploy at a minimum?
