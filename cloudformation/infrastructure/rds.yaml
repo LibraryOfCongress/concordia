@@ -15,6 +15,7 @@ Parameters:
     DbPassword:
         Description: The password to use for the database
         Type: String
+        NoEcho: true
 
 Resources:
   dbsubnetdefaultvpc0ca0aaf8357f808b6:
