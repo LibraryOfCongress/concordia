@@ -557,6 +557,14 @@ def reserve_asset_transcription(request, *, asset_pk):
     )
     AssetTranscriptionReservation.objects.filter(updated_on__lt=cutoff).delete()
 
+    user_reservation_qs = AssetTranscriptionReservation.objects.filter(
+        user=user, asset__pk=asset_pk
+    )
+
+    if request.POST.get("release"):
+        user_reservation_qs.delete()
+        return HttpResponse(status=204)
+
     # We're relying on the database to meet our integrity requirements and since
     # this is called periodically we want to be fairly fast until we switch to
     # something like Redis.
@@ -565,9 +573,7 @@ def reserve_asset_transcription(request, *, asset_pk):
     # work and a single operation can handle that. If that fails to match a
     # single record we'll fall back to INSERT and catch the integrity check.
 
-    updated = AssetTranscriptionReservation.objects.filter(
-        user=user, asset__pk=asset_pk
-    ).update(updated_on=timestamp)
+    updated = user_reservation_qs.update(updated_on=timestamp)
 
     if updated:
         return HttpResponse(status=204)

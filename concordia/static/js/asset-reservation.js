@@ -35,4 +35,25 @@ function attemptToReserveAsset(reservationURL) {
         .always(function() {
             window.setTimeout(attemptToReserveAsset, 60000, reservationURL);
         });
+
+    window.addEventListener('beforeunload', function() {
+        var payload = {
+            release: true,
+            csrfmiddlewaretoken: jQuery(
+                'input[name="csrfmiddlewaretoken"]'
+            ).val()
+        };
+
+        // We'll try Beacon since that's reliable but until we can drop support for IE11 we need a fallback:
+        if ('sendBeacon' in navigator) {
+            navigator.sendBeacon(
+                reservationURL,
+                new Blob([jQuery.param(payload)], {
+                    type: 'application/x-www-form-urlencoded'
+                })
+            );
+        } else {
+            jQuery.ajax({url: reservationURL, type: 'POST', data: payload});
+        }
+    });
 }
