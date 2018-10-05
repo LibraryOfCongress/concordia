@@ -76,8 +76,7 @@ Resources:
             ContainerDefinitions:
                 - Name: app
                   Essential: true
-                  Image: !Sub 351149051428.dkr.ecr.us-east-1.amazonaws.com/concordia:${ConcordiaVersion}
-                    latest
+                  Image: !Join [ ":", ["351149051428.dkr.ecr.us-east-1.amazonaws.com/concordia", !Ref ConcordiaVersion]]
                   Links:
                       - rabbit
                   Environment:
@@ -107,7 +106,7 @@ Resources:
                           awslogs-stream-prefix: concordia-app-
                 - Name: importer
                   Essential: true
-                  Image: !Sub 351149051428.dkr.ecr.us-east-1.amazonaws.com/concordia/importer:${ConcordiaVersion}
+                  Image: !Join [ ":", [ "351149051428.dkr.ecr.us-east-1.amazonaws.com/concordia/importer", !Ref ConcordiaVersion]]
                   Links:
                       - rabbit
                   Environment:
@@ -134,7 +133,7 @@ Resources:
                           awslogs-stream-prefix: concordia-importer-
                 - Name: rabbit
                   Essential: true
-                  Image: 351149051428.dkr.ecr.us-east-1.amazonaws.com/rabbitmq:${ConcordiaVersion}
+                  Image: !Join [ ":", ["351149051428.dkr.ecr.us-east-1.amazonaws.com/rabbitmq", !Ref ConcordiaVersion]]
                   Hostname: rabbit
                   PortMappings:
                       - ContainerPort: 5672
