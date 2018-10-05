@@ -1,7 +1,7 @@
 import json
 import os
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from logging import getLogger
 from smtplib import SMTPException
 
@@ -12,12 +12,15 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
+from django.db import IntegrityError, connection
 from django.db.models import Count
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import Http404, get_object_or_404, redirect, render
 from django.template import loader
-from django.urls import reverse, reverse_lazy
+from django.urls import reverse_lazy
+from django.utils.timezone import now
 from django.views.decorators.cache import never_cache
+from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, FormView, ListView, TemplateView, View
 from django_registration.backends.activation.views import RegistrationView
 
@@ -30,13 +33,13 @@ from concordia.forms import (
 )
 from concordia.models import (
     Asset,
+    AssetTranscriptionReservation,
     Campaign,
     Item,
     Project,
     Status,
     Transcription,
     UserAssetTagCollection,
-    UserProfile,
 )
 from concordia.version import get_concordia_version
 
@@ -394,58 +397,6 @@ class ConcordiaAlternateAssetView(View):
             )
 
 
-class ConcordiaPageInUse(View):
-    """
-    Class to handle AJAX calls from the transcription page
-    """
-
-    def post(self, *args, **kwargs):
-        """
-        handle the post request from the periodic AJAX call from the transcription page
-        The primary purpose is to update the entry in PageInUse
-        :param args:
-        :param kwargs:
-        :return: "ok"
-        """
-
-        if self.request.is_ajax():
-            json_dict = json.loads(self.request.body)
-            user_name = json_dict["user"]
-            page_url = json_dict["page_url"]
-        else:
-            user_name = self.request.POST.get("user", None)
-            page_url = self.request.POST.get("page_url", None)
-
-        if user_name == "AnonymousUser":
-            user_name = "anonymous"
-
-        if user_name and page_url:
-            response = requests.get(
-                "%s://%s/ws/user/%s/"
-                % (self.request.scheme, self.request.get_host(), user_name),
-                cookies=self.request.COOKIES,
-            )
-            user_json_val = json.loads(response.content.decode("utf-8"))
-
-            # update the PageInUse
-
-            change_page_in_use = {"page_url": page_url, "user": user_json_val["id"]}
-
-            requests.put(
-                "%s://%s/ws/page_in_use_update/%s/%s/"
-                % (
-                    self.request.scheme,
-                    self.request.get_host(),
-                    user_json_val["id"],
-                    page_url,
-                ),
-                data=change_page_in_use,
-                cookies=self.request.COOKIES,
-            )
-
-        return HttpResponse("ok")
-
-
 class ContactUsView(FormView):
     template_name = "contact.html"
     form_class = ContactUsForm
@@ -585,3 +536,68 @@ class ReportCampaignView(TemplateView):
             project.transcription_statuses.insert(
                 0, ("Not Started", project.asset_count - total_statuses)
             )
+
+
+@require_POST
+def reserve_asset_transcription(request, *, asset_pk):
+    """
+    Receives an asset PK and attempts to create/update a reservation for it
+
+    Returns HTTP 204 on success and HTTP 409 when the record is in use
+    """
+
+    if not request.user.is_authenticated:
+        user = get_anonymous_user()
+    else:
+        user = request.user
+
+    timestamp = now()
+
+    # First clear old reservations, with a grace period:
+    cutoff = timestamp - (
+        timedelta(seconds=2 * settings.TRANSCRIPTION_RESERVATION_SECONDS)
+    )
+
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "DELETE FROM concordia_assettranscriptionreservation WHERE updated_on < %s",
+            [cutoff],
+        )
+
+    if request.POST.get("release"):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                DELETE FROM concordia_assettranscriptionreservation
+                WHERE user_id = %s AND asset_id = %s
+                """,
+                [user.pk, asset_pk],
+            )
+        return HttpResponse(status=204)
+
+    # We're relying on the database to meet our integrity requirements and since
+    # this is called periodically we want to be fairly fast until we switch to
+    # something like Redis.
+    #
+    #
+
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            INSERT INTO concordia_assettranscriptionreservation AS atr
+                (user_id, asset_id, created_on, updated_on)
+                VALUES (%s, %s, current_timestamp, current_timestamp)
+            ON CONFLICT (asset_id) DO UPDATE
+                SET updated_on = current_timestamp
+                WHERE (
+                    atr.user_id = excluded.user_id
+                    AND atr.asset_id = excluded.asset_id
+                )
+            """.strip(),
+            [user.pk, asset_pk],
+        )
+
+        if cursor.rowcount != 1:
+            return HttpResponse(status=409)
+
+    return HttpResponse(status=204)

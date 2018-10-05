@@ -19,3 +19,5 @@ ALLOWED_HOSTS = ["127.0.0.1", "0.0.0.0"]
 CONCORDIA = {"netloc": "http://0.0.0.0:8000"}
 
 EMAIL_BACKEND = "django.core.mail.backends.dummy.EmailBackend"
+
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
