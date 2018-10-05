@@ -12,6 +12,11 @@ Parameters:
             - 'prod'
         ConstraintDescription: Must match a location for secret storage in secretsmanager
 
+    ConcordiaVersion:
+        Type: String
+        Description: version of concordia, concordia/importer, and rabbitmq docker images to pull and deploy
+        Default: latest
+
     DesiredCount:
         Description: How many instances of this task should we run across our cluster?
         Type: Number
@@ -71,7 +76,8 @@ Resources:
             ContainerDefinitions:
                 - Name: app
                   Essential: true
-                  Image: 351149051428.dkr.ecr.us-east-1.amazonaws.com/concordia:latest
+                  Image: !Sub 351149051428.dkr.ecr.us-east-1.amazonaws.com/concordia:${ConcordiaVersion}
+                    latest
                   Links:
                       - rabbit
                   Environment:
@@ -101,7 +107,7 @@ Resources:
                           awslogs-stream-prefix: concordia-app-
                 - Name: importer
                   Essential: true
-                  Image: 351149051428.dkr.ecr.us-east-1.amazonaws.com/concordia/importer:latest
+                  Image: !Sub 351149051428.dkr.ecr.us-east-1.amazonaws.com/concordia/importer:${ConcordiaVersion}
                   Links:
                       - rabbit
                   Environment:
@@ -128,7 +134,7 @@ Resources:
                           awslogs-stream-prefix: concordia-importer-
                 - Name: rabbit
                   Essential: true
-                  Image: 351149051428.dkr.ecr.us-east-1.amazonaws.com/rabbitmq:latest
+                  Image: 351149051428.dkr.ecr.us-east-1.amazonaws.com/rabbitmq:${ConcordiaVersion}
                   Hostname: rabbit
                   PortMappings:
                       - ContainerPort: 5672
