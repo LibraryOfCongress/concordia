@@ -39,16 +39,20 @@ Resources:
     # it further if you want.
     LoadBalancerSecurityGroup:
         Type: AWS::EC2::SecurityGroup
-        Properties: 
+        Properties:
             VpcId: !Ref VPC
             GroupDescription: Access to the load balancer that sits in front of ECS
             SecurityGroupIngress:
-                # Allow access from anywhere to our ECS services
+                # Allow access from the LC network to our ECS services
                 - CidrIp: 140.147.0.0/16
                   IpProtocol: tcp
                   FromPort: 80
-                  ToPort: 80                  
-            Tags: 
+                  ToPort: 80
+                - CidrIp: 140.147.0.0/16
+                  IpProtocol: tcp
+                  FromPort: 443
+                  ToPort: 443
+            Tags:
                 - Key: Name
                   Value: !Sub ${EnvironmentName}-LoadBalancers
 
