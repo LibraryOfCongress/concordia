@@ -11,7 +11,7 @@ Parameters:
     InstanceType:
         Description: Which instance type should we use to build the ECS cluster?
         Type: String
-        Default: c5.2xlarge
+        Default: c5.xlarge
 
     ClusterSizeDesired:
         Description: How many ECS hosts do you want to initially deploy?

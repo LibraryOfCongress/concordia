@@ -155,6 +155,12 @@ Resources:
 #                MaxCount: 3
 #                Memory: 4096
 #                Cpu: 2048
+#                VPC: !GetAtt VPC.Outputs.VPC
+#                Cluster: !GetAtt ECS.Outputs.Cluster	              
+#                PostgresHost: !GetAtt RDS.Outputs.DatabaseHostName	
+#                Listener: !GetAtt ALB.Outputs.Listener	
+#                Path: /*	
+#                ECSServiceAutoScalingRoleARN: !GetAtt ECS.Outputs.ECSServiceAutoScalingRole
 
     LifecycleHook:
         Type: AWS::CloudFormation::Stack

@@ -30,12 +30,12 @@ Parameters:
     Memory:
         Description: How much memory to use for the three tasks combined
         Type: Number
-        Default: 2048
+        Default: 4096
 
     Cpu:
         Description: How much CPU to use for the three tasks combined
         Type: Number
-        Default: 1024
+        Default: 2048
 
 Mappings:
     ClusterMapping:
