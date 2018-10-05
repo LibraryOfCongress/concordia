@@ -1,7 +1,5 @@
 # TODO: Add copyright header
 
-from datetime import datetime, timedelta
-
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied, ValidationError
 from django.db.transaction import atomic
 from django.http import QueryDict
@@ -14,7 +12,6 @@ from .models import (
     Asset,
     Campaign,
     Item,
-    PageInUse,
     Status,
     Tag,
     Transcription,
@@ -26,7 +23,6 @@ from .serializers import (
     AssetSerializer,
     CampaignDetailSerializer,
     ItemSerializer,
-    PageInUseSerializer,
     TagSerializer,
     TranscriptionSerializer,
     UserProfileSerializer,
@@ -104,95 +100,6 @@ class UserGet(generics.RetrieveAPIView):
             return User.objects.get(username=self.kwargs["user_name"])
         except ObjectDoesNotExist:
             return None
-
-
-class PageInUseCreate(generics.CreateAPIView):
-    """
-    POST: Create a PageInUse value
-    """
-
-    model = PageInUse
-    authentication_classes = (ConcordiaAPIAuth,)
-    queryset = PageInUse.objects.all()
-    serializer_class = PageInUseSerializer
-
-
-class PageInUseDelete(generics.DestroyAPIView):
-    """
-    DELETE: Delete a PageInUse value
-    """
-
-    model = PageInUse
-    authentication_classes = (ConcordiaAPIAuth,)
-    queryset = PageInUse.objects.all()
-    serializer_class = PageInUseSerializer
-    lookup_field = "page_url"
-
-
-class PageInUseGet(generics.RetrieveUpdateAPIView):
-    """
-    GET: Get a PageInUse value
-    PUT: Update a PageInUse value
-    """
-
-    model = PageInUse
-    authentication_classes = (ConcordiaAPIAuth,)
-    serializer_class = PageInUseSerializer
-    lookup_field = "page_url"
-
-    def get_queryset(self):
-        return PageInUse.objects.all().filter(page_url=self.kwargs["page_url"])
-
-
-class PageInUseUserGet(generics.RetrieveUpdateAPIView):
-    """
-    GET: Get a PageInUse value for user
-    PUT: Update a PageInUse value
-    """
-
-    model = PageInUse
-    authentication_classes = (ConcordiaAPIAuth,)
-    serializer_class = PageInUseSerializer
-    #    queryset = PageInUse.objects.all()
-    lookup_fields = ("page_url", "user")
-
-    def get_object(self):
-        return (
-            PageInUse.objects.all()
-            .filter(page_url=self.kwargs["page_url"], user__id=self.kwargs["user"])
-            .last()
-        )
-
-
-class PageInUsePut(generics.UpdateAPIView):
-    """
-    PUT: Update an existing PageInUse
-    """
-
-    model = PageInUse
-    authentication_classes = (ConcordiaAPIAuth,)
-    serializer_class = PageInUseSerializer
-    queryset = PageInUse.objects.all()
-    lookup_field = "page_url"
-
-    def put(self, request, *args, **kwargs):
-        if type(request.data) == QueryDict:
-            # when using APIFactory to submit post, data must be converted from QueryDict
-            request_data = request.data.dict()
-        else:
-            request_data = request.data
-
-        request_data["updated_on"] = datetime.now()
-        page_in_use = PageInUse.objects.get(
-            page_url=request_data["page_url"], user_id=request_data["user"]
-        )
-        page_in_use.updated_on = datetime.now()
-        page_in_use.save()
-
-        serializer = PageInUseSerializer(data=request_data)
-        if serializer.is_valid():
-            pass
-        return Response(serializer.data)
 
 
 class CampaignGet(generics.RetrieveAPIView):
@@ -338,28 +245,6 @@ class AssetUpdate(generics.UpdateAPIView):
             pass
 
         return Response(serializer.data)
-
-
-class PageInUseFilteredGet(generics.ListAPIView):
-    """
-    GET: Retrieve all existing PageInUse with filtered values
-    """
-
-    model = PageInUse
-    authentication_classes = (ConcordiaAPIAuth,)
-    serializer_class = PageInUseSerializer
-    lookup_field = "page_url"
-
-    def get_queryset(self):
-        """
-        This view should return a list of all the PageInUse updated in the last 5 minutes
-        by users other than the user arg
-        """
-        time_threshold = datetime.now() - timedelta(minutes=5)
-        page = PageInUse.objects.filter(
-            page_url=self.kwargs["page_url"], updated_on__gt=time_threshold
-        ).exclude(user__username=self.kwargs["user"])
-        return page
 
 
 class TranscriptionLastGet(generics.RetrieveAPIView):

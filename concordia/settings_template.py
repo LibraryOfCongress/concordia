@@ -309,3 +309,9 @@ NEWSLETTER_GROUP_NAME = "Newsletter"
 SITE_ID = 1
 ROBOTS_USE_SITEMAP = False
 ROBOTS_USE_HOST = False
+
+# Transcription-related settings
+
+#: Number of seconds an asset reservation is valid for
+TRANSCRIPTION_RESERVATION_SECONDS = 5 * 60
+

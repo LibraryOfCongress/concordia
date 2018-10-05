@@ -70,7 +70,7 @@ Crowd: {{ asset.title }} ({{ asset.project.campaign.title }} — {{ asset.projec
                     {% csrf_token %}
 
                     {% spaceless %}
-                        <textarea class="form-control w-100 rounded flex-grow-1" name="text" id="transcription-input" placeholder="Go ahead, start typing. You got this!" aria-label="Transcription input">
+                        <textarea readonly class="form-control w-100 rounded flex-grow-1" name="text" id="transcription-input" placeholder="Go ahead, start typing. You got this!" aria-label="Transcription input">
                             {{ transcription.text }}
                         </textarea>
 
@@ -83,10 +83,10 @@ Crowd: {{ asset.title }} ({{ asset.project.campaign.title }} — {{ asset.projec
                         {% endif %}
 
                         <div class="my-3 d-flex justify-content-around align-items-center btn-row">
-                            <button id="save-button" name="status" type="submit" class="btn btn-primary" value="Edit">Save</button>
-                            <button id="review-button" name="status" type="submit" class="btn btn-primary" value="Submitted">Submit for Review</button>
+                            <button id="save-button" disabled name="status" type="submit" class="btn btn-primary" value="Edit">Save</button>
+                            <button id="review-button" disabled name="status" type="submit" class="btn btn-primary" value="Submitted">Submit for Review</button>
                             {% if user.is_authenticated %}
-                            <button id="complete-button" name="status" type="submit" class="btn btn-primary" value="Completed">Mark Completed</button>
+                                <button id="complete-button" disabled name="status" type="submit" class="btn btn-primary" value="Completed">Mark Completed</button>
                             {% endif %}
                         </div>
                     {% endspaceless %}
@@ -156,6 +156,7 @@ Crowd: {{ asset.title }} ({{ asset.project.campaign.title }} — {{ asset.projec
 {% block body_scripts %}
 <script src="{% static 'vendor/openseadragon/openseadragon.min.js' %}"></script>
 <script src="{% static 'js/contribute.js' %}"></script>
+<script src="{% static 'js/asset-reservation.js' %}"></script>
 <script type="text/javascript">
     var viewer = OpenSeadragon({
         id: 'asset-image',
@@ -170,71 +171,7 @@ Crowd: {{ asset.title }} ({{ asset.project.campaign.title }} — {{ asset.projec
         }
     });
 </script>
-<script type="text/javascript">
-    function checkin_page_in_use() {
-        $.ajax({
-            url: "/campaigns/pageinuse/",
-            type: "post",
-            data: JSON.stringify({
-                'page_url': window.location.pathname,
-                'user': '{{ user }}'
-            }),
-            processData: false,
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            },
-            success: function (data, textStatus, jqXHR) {
-                $.noop(); // alert('POST success!');//data - response from server
-            },
-            error: function (jqXHR, textStatus, errorThrown) {
-                $.noop(); // alert('POST failed!');//data - response from server
-            }
-        });
-        setTimeout(checkin_page_in_use, 30000);
-    }
-    function showalert() {
-        var optsel = confirm("This transcription is being worked on by another user.\nYou may lose your work.\nDo you want to work on another page in this campaign?");
-        if (optsel == true) {
-            $.ajax({
-                url: "/campaigns/alternateasset/",
-                type: "post",
-                data: JSON.stringify({
-                    'campaign': '{{ asset.campaign.slug }}',
-                    'asset': '{{ asset.slug }}'
-                }),
-                processData: false,
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                },
-                success: function (data, textStatus, jqXHR) {
-                    // switch to new page
-                    window.location = data;
-                },
-                error: function (jqXHR, textStatus, errorThrown) {
-                    $.noop();
-                }
-            });
-        }
-        else {
-            $.noop();
-        }
-    }
-
-    $("document").ready(function () {
-        setTimeout(checkin_page_in_use, 5000);
-        {% if page_in_use %}
-        showalert();
-        {% endif %}
-
-        $(".js-captcha-refresh").click(function (e) {
-            e.preventDefault();
-            $.getJSON("{% url 'captcha-refresh' %}", function (result) {
-                $('.captcha').attr('src', result['image_url']);
-                $('#id_captcha_0').val(result['key']);
-            });
-        })
-    });
+<script>
+    attemptToReserveAsset("{% url 'ws:reserve-asset-for-transcription' asset.pk %}");
 </script>
 {% endblock body_scripts %}

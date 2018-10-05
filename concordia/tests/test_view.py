@@ -1,20 +1,17 @@
-# TODO: Add correct copyright header
 from datetime import datetime, timedelta
-from unittest import expectedFailure
 
-from django.test import TestCase
+from django.test import TestCase, TransactionTestCase
 from django.urls import reverse
 
-from concordia.models import PageInUse, Status, User
+from concordia.models import AssetTranscriptionReservation, Status, User
+from concordia.views import get_anonymous_user
 
 from .utils import create_asset, create_campaign, create_item, create_project
 
 
-class ViewTest_Concordia(TestCase):
+class ConcordiaViewTests(TestCase):
     """
     This class contains the unit tests for the view in the concordia app.
-
-    Make sure the postgresql db is available. Run docker-compose up db
     """
 
     def login_user(self):
@@ -141,7 +138,7 @@ class ViewTest_Concordia(TestCase):
     def test_ConcordiaAssetView_get(self):
         """
         This unit test test the GET route /campaigns/<campaign>/asset/<Asset_name>/
-        with already in use. Verify the updated_on time is updated on PageInUse
+        with already in use.
         """
         self.login_user()
 
@@ -166,42 +163,6 @@ class ViewTest_Concordia(TestCase):
 
         self.assertEqual(response.status_code, 200)
 
-    @expectedFailure
-    def test_pageinuse_post(self):
-        """
-        Test the POST method on /campaigns/pageinuse/ route
-
-        test that matching PageInUse entries with same page_url are deleted
-        test that old entries in PageInUse table are removed
-        """
-        self.login_user()
-        url = "http://example.com/bar"
-
-        user2 = User.objects.create(username="tester2", email="tester2@example.com")
-        user2.set_password("top_secret")
-        user2.save()
-
-        page1 = PageInUse(page_url=url, user=user2)
-        page1.save()
-
-        time_threshold = datetime.now() - timedelta(minutes=20)
-
-        # add two entries with old timestamps
-        page2 = PageInUse(
-            page_url=url,
-            user=self.user,
-            created_on=time_threshold,
-            updated_on=time_threshold,
-        )
-        page2.save()
-
-        response = self.client.post(
-            reverse("transcriptions:page-in-use"), {"page_url": url, "user": self.user}
-        )
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(1, PageInUse.objects.filter(url=url).count())
-
     def test_project_detail_view(self):
         """
         Test GET on route /campaigns/<slug-value> (campaign)
@@ -217,3 +178,132 @@ class ViewTest_Concordia(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, template_name="transcriptions/project.html")
+
+
+class TransactionalViewTests(TransactionTestCase):
+    def login_user(self):
+        """
+        Create a user and log the user in
+        """
+
+        # create user and login
+        self.user = User.objects.create_user(
+            username="tester", email="tester@example.com"
+        )
+        self.user.set_password("top_secret")
+        self.user.save()
+
+        self.client.login(username="tester", password="top_secret")
+
+    def test_asset_reservation(self):
+        """
+        Test the basic Asset reservation process
+        """
+
+        self.login_user()
+        self._asset_reservation_test_payload(self.user.pk)
+
+    def test_asset_reservation_anonymously(self):
+        """
+        Test the basic Asset reservation process as an anonymous user
+        """
+
+        anon_user = get_anonymous_user()
+        self._asset_reservation_test_payload(anon_user.pk)
+
+    def _asset_reservation_test_payload(self, user_id):
+        asset = create_asset()
+
+        # Acquire the reservation:
+        with self.assertNumQueries(3):  # 1 auth query + 1 expiry + 1 acquire
+            resp = self.client.post(
+                reverse("ws:reserve-asset-for-transcription", args=(asset.pk,))
+            )
+        self.assertEqual(204, resp.status_code)
+
+        reservation = AssetTranscriptionReservation.objects.get()
+        self.assertEqual(reservation.user_id, user_id)
+        self.assertEqual(reservation.asset, asset)
+
+        # Confirm that an update did not change the pk when it updated the timestamp:
+
+        with self.assertNumQueries(3):  # 1 auth query + 1 expiry + 1 acquire
+            resp = self.client.post(
+                reverse("ws:reserve-asset-for-transcription", args=(asset.pk,))
+            )
+        self.assertEqual(204, resp.status_code)
+
+        self.assertEqual(1, AssetTranscriptionReservation.objects.count())
+        updated_reservation = AssetTranscriptionReservation.objects.get()
+        self.assertEqual(updated_reservation.user_id, user_id)
+        self.assertEqual(updated_reservation.asset, asset)
+        self.assertEqual(reservation.created_on, updated_reservation.created_on)
+        self.assertLess(reservation.updated_on, updated_reservation.updated_on)
+
+        # Release the reservation now that we're done:
+
+        # 3 = 1 auth query + 1 expiry + 1 delete
+        with self.assertNumQueries(3):
+            resp = self.client.post(
+                reverse("ws:reserve-asset-for-transcription", args=(asset.pk,)),
+                data={"release": True},
+            )
+        self.assertEqual(204, resp.status_code)
+
+        self.assertEqual(0, AssetTranscriptionReservation.objects.count())
+
+    def test_asset_reservation_competition(self):
+        """
+        Confirm that two users cannot reserve the same asset at the same time
+        """
+
+        asset = create_asset()
+
+        # We'll reserve the test asset as the anonymous user and then attempt
+        # to edit it after logging in
+
+        # 4 queries = 1 auth query + 1 anonymous user creation + 1 expiry + 1 acquire
+        with self.assertNumQueries(4):
+            resp = self.client.post(
+                reverse("ws:reserve-asset-for-transcription", args=(asset.pk,))
+            )
+        self.assertEqual(204, resp.status_code)
+        self.assertEqual(1, AssetTranscriptionReservation.objects.count())
+
+        self.login_user()
+
+        with self.assertNumQueries(3):  # 1 auth query + 1 expiry + 1 acquire
+            resp = self.client.post(
+                reverse("ws:reserve-asset-for-transcription", args=(asset.pk,))
+            )
+        self.assertEqual(409, resp.status_code)
+        self.assertEqual(1, AssetTranscriptionReservation.objects.count())
+
+    def test_asset_reservation_expiration(self):
+        """
+        Simulate an expired reservation which should not cause the request to fail
+        """
+        asset = create_asset()
+
+        stale_reservation = AssetTranscriptionReservation(
+            user=get_anonymous_user(), asset=asset
+        )
+        stale_reservation.full_clean()
+        stale_reservation.save()
+        # Backdate the object as if it happened 15 minutes ago:
+        old_timestamp = datetime.now() - timedelta(minutes=15)
+        AssetTranscriptionReservation.objects.update(
+            created_on=old_timestamp, updated_on=old_timestamp
+        )
+
+        self.login_user()
+
+        with self.assertNumQueries(3):  # 1 auth query + 1 expiry + 1 acquire
+            resp = self.client.post(
+                reverse("ws:reserve-asset-for-transcription", args=(asset.pk,))
+            )
+        self.assertEqual(204, resp.status_code)
+
+        self.assertEqual(1, AssetTranscriptionReservation.objects.count())
+        reservation = AssetTranscriptionReservation.objects.get()
+        self.assertEqual(reservation.user_id, self.user.pk)
