@@ -39,8 +39,8 @@ tx_urlpatterns = (
             exporter_views.ExportCampaignToBagit.as_view(),
             name="export-bagit",
         ),
-        re_path(
-            r"report/([^/]+)/$",
+        path(
+            "<slug:campaign_slug>/report/",
             views.ReportCampaignView.as_view(),
             name="campaign-report",
         ),
