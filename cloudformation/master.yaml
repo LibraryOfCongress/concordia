@@ -50,6 +50,7 @@ Parameters:
     MyDbPassword:
         Description: Master database password to use for RDS
         Type: String
+        NoEcho: true
 
     KeyPairName:
         Description: key pair within this region for ECS access
