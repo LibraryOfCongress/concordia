@@ -7,7 +7,7 @@ set -euox pipefail
 VENV=".venv-$BUILD_NUMBER"
 
 # Initialize new venv
-virtualenv "$VENV"
+python3 -m venv "$VENV"
 
 # Update pip
 source "$VENV/bin/activate"
