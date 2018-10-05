@@ -2,13 +2,20 @@ Description: >
     This is the main app plus the importer and RabbitMQ service for crowd.loc.gov.
 
 Parameters:
-    VPC:
-        Description: The VPC that the ECS cluster is deployed to
-        Type: AWS::EC2::VPC::Id
-
-    Cluster:
-        Description: Please provide the ECS Cluster ID that this service should run on
+    EnvName:
         Type: String
+        Description: which environment to target
+        AllowedValues:
+            - 'dev'  
+            - 'test'
+            - 'stage'
+            - 'prod'
+        ConstraintDescription: Must match a location for secret storage in secretsmanager
+
+    ConcordiaVersion:
+        Type: String
+        Description: version of concordia, concordia/importer, and rabbitmq docker images to pull and deploy
+        Default: latest
 
     DesiredCount:
         Description: How many instances of this task should we run across our cluster?
@@ -20,29 +27,35 @@ Parameters:
         Type: Number
         Default: 3
 
-    Listener:
-        Description: The Application Load Balancer listener to register with
-        Type: String
-
-    Path:
-        Description: The path to register with the Application Load Balancer
-        Type: String
-        Default: /*
-
-    ECSServiceAutoScalingRoleARN:
-        Description: The ECS service auto scaling role ARN
-        Type: String
-
-    EnvName:
-        Type: String
-        Description: dev, test, stage or prod
+Mappings:
+    ClusterMapping:
+        AutoScalingServiceRoleMap:
+            dev: 'arn:aws:iam::351149051428:role/crowd-dev-ECS-RQZSJ89GYY4-ECSServiceAutoScalingRol-KJ5SO8E1KIWF'
+            test: 'arn:aws:iam::351149051428:role/crowd-test2-ECS-1I34ZK7Z3-ECSServiceAutoScalingRol-U5GIQOZ1RQ8Z'
+            stage: 'arn:aws:iam::351149051428:role/crowd-stage-ECS-BU57ZZJOQ-ECSServiceAutoScalingRol-1EK5KYLQQTVVU'
+            prod: 'arn:aws:iam::351149051428:role/crowd-prod-ECS-1501XCPSDM-ECSServiceAutoScalingRol-JUB3TZXYH65T'
+        ListenerMap:
+            dev: 'arn:aws:elasticloadbalancing:us-east-1:351149051428:listener/app/crowd-dev/8b148c019a172548/3744cde523a62f96'
+            test: 'arn:aws:elasticloadbalancing:us-east-1:351149051428:listener/app/crowd-test2/3d7aa00aa454c0c7/1560db455f58ceb2'
+            stage: 'arn:aws:elasticloadbalancing:us-east-1:351149051428:listener/app/crowd-stage/53c19bcd76f00cb2/3d0c172d811b4926'
+            prod: 'arn:aws:elasticloadbalancing:us-east-1:351149051428:listener/app/crowd-prod/56f99d946d14d887/0955e71fcb8e2f67'
+        ClusterNameMap:
+            dev: crowd-dev
+            test: crowd-test2
+            stage: crowd-stage
+            prod: crowd-prod
+        VPCIdMap:
+            dev: vpc-017fd2b202f2b6495
+            test: vpc-0a9c4c1672305c7d7
+            stage: vpc-07bb7696546e2f94d
+            prod: vpc-017fd2b202f2b6495
 
 Resources:
     Service:
         Type: AWS::ECS::Service
         DependsOn: ListenerRule
         Properties:
-            Cluster: !Ref Cluster
+            Cluster: !FindInMap [ClusterMapping, ClusterNameMap, !Ref EnvName]
             Role: !Ref ServiceRole
             DesiredCount: !Ref DesiredCount
             TaskDefinition: !Ref TaskDefinition
@@ -63,7 +76,8 @@ Resources:
             ContainerDefinitions:
                 - Name: app
                   Essential: true
-                  Image: 351149051428.dkr.ecr.us-east-1.amazonaws.com/concordia:latest
+                  Image: !Sub 351149051428.dkr.ecr.us-east-1.amazonaws.com/concordia:${ConcordiaVersion}
+                    latest
                   Links:
                       - rabbit
                   Environment:
@@ -93,7 +107,7 @@ Resources:
                           awslogs-stream-prefix: concordia-app-
                 - Name: importer
                   Essential: true
-                  Image: 351149051428.dkr.ecr.us-east-1.amazonaws.com/concordia/importer:latest
+                  Image: !Sub 351149051428.dkr.ecr.us-east-1.amazonaws.com/concordia/importer:${ConcordiaVersion}
                   Links:
                       - rabbit
                   Environment:
@@ -120,7 +134,7 @@ Resources:
                           awslogs-stream-prefix: concordia-importer-
                 - Name: rabbit
                   Essential: true
-                  Image: 351149051428.dkr.ecr.us-east-1.amazonaws.com/rabbitmq:latest
+                  Image: 351149051428.dkr.ecr.us-east-1.amazonaws.com/rabbitmq:${ConcordiaVersion}
                   Hostname: rabbit
                   PortMappings:
                       - ContainerPort: 5672
@@ -135,13 +149,13 @@ Resources:
     TargetGroup:
         Type: AWS::ElasticLoadBalancingV2::TargetGroup
         Properties:
-            VpcId: !Ref VPC
+            VpcId: !FindInMap [ClusterMapping, VPCIdMap, !Ref EnvName]
             Port: 80
             Protocol: HTTP
             Matcher:
                 HttpCode: 200-299
             HealthCheckIntervalSeconds: 10
-            HealthCheckPath: /
+            HealthCheckPath: /healthz
             HealthCheckProtocol: HTTP
             HealthCheckTimeoutSeconds: 5
             HealthyThresholdCount: 2
@@ -149,12 +163,12 @@ Resources:
     ListenerRule:
         Type: AWS::ElasticLoadBalancingV2::ListenerRule
         Properties:
-            ListenerArn: !Ref Listener
+            ListenerArn: !FindInMap [ClusterMapping, ListenerMap, !Ref EnvName]
             Priority: 1
             Conditions:
                 - Field: path-pattern
                   Values:
-                      - !Ref Path
+                      - /*
             Actions:
                 - TargetGroupArn: !Ref TargetGroup
                   Type: forward
@@ -163,7 +177,6 @@ Resources:
         Type: AWS::IAM::Role
         Properties:
             Path: /
-            RoleName: !Sub ecs-concordia-taskrole-${AWS::StackName}
             AssumeRolePolicyDocument:
                 Version: '2012-10-17'
                 Statement:
@@ -240,9 +253,9 @@ Resources:
             ResourceId: !Join
                 - /
                 - - service
-                  - !Ref Cluster
+                  - !FindInMap [ClusterMapping, ClusterNameMap, !Ref EnvName]
                   - !GetAtt Service.Name
-            RoleARN: !Ref ECSServiceAutoScalingRoleARN
+            RoleARN: !FindInMap [ClusterMapping, AutoScalingServiceRoleMap, !Ref EnvName]
             ScalableDimension: ecs:service:DesiredCount
             ServiceNamespace: ecs
 
@@ -283,7 +296,7 @@ Resources:
             MetricName: CPUUtilization
             Dimensions:
                 - Name: ClusterName
-                  Value: !Ref Cluster
+                  Value: !FindInMap [ClusterMapping, ClusterNameMap, !Ref EnvName]
                 - Name: ServiceName
                   Value: !GetAtt Service.Name
             Statistic: Maximum
@@ -303,7 +316,7 @@ Resources:
             MetricName: CPUUtilization
             Dimensions:
                 - Name: ClusterName
-                  Value: !Ref Cluster
+                  Value: !FindInMap [ClusterMapping, ClusterNameMap, !Ref EnvName]
                 - Name: ServiceName
                   Value: !GetAtt Service.Name
             Statistic: Maximum
@@ -313,3 +326,8 @@ Resources:
             ComparisonOperator: LessThanThreshold
             AlarmActions:
                 - !Ref ServiceScaleInPolicy
+
+Outputs:
+    ServiceName:
+        Description: Name of the ECS service that was created
+        Value: !GetAtt Service.Name

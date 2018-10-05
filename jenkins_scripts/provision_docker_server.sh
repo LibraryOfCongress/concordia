@@ -21,5 +21,4 @@ sudo chmod +x /usr/local/bin/docker-compose
 
 git clone https://github.com/LibraryOfCongress/concordia.git
 cd concordia
-cp example_env_file .env
 sudo /usr/local/bin/docker-compose up -d

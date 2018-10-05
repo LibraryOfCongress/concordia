@@ -23,6 +23,7 @@ RUN pip3 install pipenv
 
 WORKDIR /app
 COPY . /app
+
 RUN pipenv install --system --dev --deploy
 
 CMD [ "/bin/bash", "importer/entrypoint.sh" ]

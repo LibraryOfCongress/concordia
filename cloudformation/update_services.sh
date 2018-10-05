@@ -3,38 +3,20 @@
 set -eu
 
 # DEV ENVIRONMENT
-
 # CLUSTER_NAME=crowd-dev
 # SERVICE_NAME=crowd-dev-app-Service-PPFPP27E26LE
-# ECS AutoScaling role ARN
-# arn:aws:iam::351149051428:role/crowd-dev-ECS-RQZSJ89GYY4-ECSServiceAutoScalingRol-KJ5SO8E1KIWF	
-# Load Balancer Listener
-# arn:aws:elasticloadbalancing:us-east-1:351149051428:listener/app/crowd-dev/8b148c019a172548/3744cde523a62f96	
 
 # TEST ENVIRONMENT
-
 # CLUSTER_NAME=crowd-test2
 # SERVICE_NAME=crowd-test-app-Service-KRK54VT16MJN
-# ECS AutoScaling role ARN
-# arn:aws:iam::351149051428:role/crowd-test2-ECS-1I34ZK7Z3-ECSServiceAutoScalingRol-U5GIQOZ1RQ8Z	
-# Load Balancer Listener
-# arn:aws:elasticloadbalancing:us-east-1:351149051428:listener/app/crowd-test2/3d7aa00aa454c0c7/1560db455f58ceb2	
-
 
 # STAGE ENVIRONMENT
-
-# ECS AutoScaling role ARN
-# arn:aws:iam::351149051428:role/crowd-stage-ECS-BU57ZZJOQ-ECSServiceAutoScalingRol-1EK5KYLQQTVVU
-# Load Balancer Listener
-# arn:aws:elasticloadbalancing:us-east-1:351149051428:listener/app/crowd-stage/53c19bcd76f00cb2/3d0c172d811b4926
 CLUSTER_NAME=crowd-stage
 SERVICE_NAME=crowd-stage-app-Service-EV9ZR04V07M1
 
 # PROD ENVIRONMENT
-
 # CLUSTER_NAME=crowd-prod
 # SERVICE_NAME=crowd-prod-app-Service
-
 
 AWS_REGION=us-east-1
 
