@@ -32,7 +32,6 @@ services:
       - 9090:9090
 
   grafana:
-    env_file: ./.env
     restart: always
     image: grafana/grafana:latest
     container_name: concordia_grafana
