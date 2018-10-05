@@ -12,7 +12,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
-from django.db import IntegrityError
+from django.db import IntegrityError, connection
 from django.db.models import Count
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import Http404, get_object_or_404, redirect, render
@@ -555,33 +555,47 @@ def reserve_asset_transcription(request, *, asset_pk):
     cutoff = timestamp - (
         timedelta(seconds=2 * settings.TRANSCRIPTION_RESERVATION_SECONDS)
     )
-    AssetTranscriptionReservation.objects.filter(updated_on__lt=cutoff).delete()
 
-    user_reservation_qs = AssetTranscriptionReservation.objects.filter(
-        user=user, asset__pk=asset_pk
-    )
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "DELETE FROM concordia_assettranscriptionreservation WHERE updated_on < %s",
+            [cutoff],
+        )
 
     if request.POST.get("release"):
-        user_reservation_qs.delete()
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                DELETE FROM concordia_assettranscriptionreservation
+                WHERE user_id = %s AND asset_id = %s
+                """,
+                [user.pk, asset_pk],
+            )
         return HttpResponse(status=204)
 
     # We're relying on the database to meet our integrity requirements and since
     # this is called periodically we want to be fairly fast until we switch to
     # something like Redis.
     #
-    # We'll try an UPDATE first since this will be updated regularly as people
-    # work and a single operation can handle that. If that fails to match a
-    # single record we'll fall back to INSERT and catch the integrity check.
+    #
 
-    updated = user_reservation_qs.update(updated_on=timestamp)
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            INSERT INTO concordia_assettranscriptionreservation AS atr
+                (user_id, asset_id, created_on, updated_on)
+                VALUES (%s, %s, current_timestamp, current_timestamp)
+            ON CONFLICT (asset_id) DO UPDATE
+                SET updated_on = current_timestamp
+                WHERE (
+                    atr.user_id = excluded.user_id
+                    AND atr.asset_id = excluded.asset_id
+                )
+            """.strip(),
+            [user.pk, asset_pk],
+        )
 
-    if updated:
-        return HttpResponse(status=204)
+        if cursor.rowcount != 1:
+            return HttpResponse(status=409)
 
-    try:
-        i = AssetTranscriptionReservation(user=user, asset_id=asset_pk)
-        i.save()
-        return HttpResponse(status=204)
-    except IntegrityError:
-        return HttpResponse("Another user is currently editing this record", status=409)
-
+    return HttpResponse(status=204)

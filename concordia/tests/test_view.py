@@ -215,10 +215,10 @@ class TransactionalViewTests(TransactionTestCase):
         asset = create_asset()
 
         # Acquire the reservation:
-
-        resp = self.client.post(
-            reverse("ws:reserve-asset-for-transcription", args=(asset.pk,))
-        )
+        with self.assertNumQueries(3):  # 1 auth query + 1 expiry + 1 acquire
+            resp = self.client.post(
+                reverse("ws:reserve-asset-for-transcription", args=(asset.pk,))
+            )
         self.assertEqual(204, resp.status_code)
 
         reservation = AssetTranscriptionReservation.objects.get()
@@ -227,9 +227,10 @@ class TransactionalViewTests(TransactionTestCase):
 
         # Confirm that an update did not change the pk when it updated the timestamp:
 
-        resp = self.client.post(
-            reverse("ws:reserve-asset-for-transcription", args=(asset.pk,))
-        )
+        with self.assertNumQueries(3):  # 1 auth query + 1 expiry + 1 acquire
+            resp = self.client.post(
+                reverse("ws:reserve-asset-for-transcription", args=(asset.pk,))
+            )
         self.assertEqual(204, resp.status_code)
 
         self.assertEqual(1, AssetTranscriptionReservation.objects.count())
@@ -241,10 +242,12 @@ class TransactionalViewTests(TransactionTestCase):
 
         # Release the reservation now that we're done:
 
-        resp = self.client.post(
-            reverse("ws:reserve-asset-for-transcription", args=(asset.pk,)),
-            data={"release": True},
-        )
+        # 3 = 1 auth query + 1 expiry + 1 delete
+        with self.assertNumQueries(3):
+            resp = self.client.post(
+                reverse("ws:reserve-asset-for-transcription", args=(asset.pk,)),
+                data={"release": True},
+            )
         self.assertEqual(204, resp.status_code)
 
         self.assertEqual(0, AssetTranscriptionReservation.objects.count())
@@ -259,17 +262,20 @@ class TransactionalViewTests(TransactionTestCase):
         # We'll reserve the test asset as the anonymous user and then attempt
         # to edit it after logging in
 
-        resp = self.client.post(
-            reverse("ws:reserve-asset-for-transcription", args=(asset.pk,))
-        )
+        # 4 queries = 1 auth query + 1 anonymous user creation + 1 expiry + 1 acquire
+        with self.assertNumQueries(4):
+            resp = self.client.post(
+                reverse("ws:reserve-asset-for-transcription", args=(asset.pk,))
+            )
         self.assertEqual(204, resp.status_code)
         self.assertEqual(1, AssetTranscriptionReservation.objects.count())
 
         self.login_user()
 
-        resp = self.client.post(
-            reverse("ws:reserve-asset-for-transcription", args=(asset.pk,))
-        )
+        with self.assertNumQueries(3):  # 1 auth query + 1 expiry + 1 acquire
+            resp = self.client.post(
+                reverse("ws:reserve-asset-for-transcription", args=(asset.pk,))
+            )
         self.assertEqual(409, resp.status_code)
         self.assertEqual(1, AssetTranscriptionReservation.objects.count())
 
@@ -292,9 +298,10 @@ class TransactionalViewTests(TransactionTestCase):
 
         self.login_user()
 
-        resp = self.client.post(
-            reverse("ws:reserve-asset-for-transcription", args=(asset.pk,))
-        )
+        with self.assertNumQueries(3):  # 1 auth query + 1 expiry + 1 acquire
+            resp = self.client.post(
+                reverse("ws:reserve-asset-for-transcription", args=(asset.pk,))
+            )
         self.assertEqual(204, resp.status_code)
 
         self.assertEqual(1, AssetTranscriptionReservation.objects.count())
