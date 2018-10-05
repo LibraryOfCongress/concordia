@@ -23,6 +23,8 @@ VERSION_NUMBER=$(echo $FULL_VERSION_NUMBER| cut -d '+' -f 1)
 
 eval "$(aws ecr get-login --no-include-email --region us-east-1)"
 
+python3 setup.py build
+
 docker build -t concordia .
 docker tag concordia:latest ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia:${VERSION_NUMBER}
 docker push ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia:${VERSION_NUMBER}
