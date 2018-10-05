@@ -70,7 +70,7 @@ Crowd: {{ asset.title }} ({{ asset.project.campaign.title }} — {{ asset.projec
                     {% csrf_token %}
 
                     {% spaceless %}
-                        <textarea class="form-control w-100 rounded flex-grow-1" name="text" id="transcription-input" placeholder="Go ahead, start typing. You got this!" aria-label="Transcription input">
+                        <textarea readonly class="form-control w-100 rounded flex-grow-1" name="text" id="transcription-input" placeholder="Go ahead, start typing. You got this!" aria-label="Transcription input">
                             {{ transcription.text }}
                         </textarea>
 
@@ -83,10 +83,10 @@ Crowd: {{ asset.title }} ({{ asset.project.campaign.title }} — {{ asset.projec
                         {% endif %}
 
                         <div class="my-3 d-flex justify-content-around align-items-center btn-row">
-                            <button id="save-button" name="status" type="submit" class="btn btn-primary" value="Edit">Save</button>
-                            <button id="review-button" name="status" type="submit" class="btn btn-primary" value="Submitted">Submit for Review</button>
+                            <button id="save-button" disabled name="status" type="submit" class="btn btn-primary" value="Edit">Save</button>
+                            <button id="review-button" disabled name="status" type="submit" class="btn btn-primary" value="Submitted">Submit for Review</button>
                             {% if user.is_authenticated %}
-                            <button id="complete-button" name="status" type="submit" class="btn btn-primary" value="Completed">Mark Completed</button>
+                                <button id="complete-button" disabled name="status" type="submit" class="btn btn-primary" value="Completed">Mark Completed</button>
                             {% endif %}
                         </div>
                     {% endspaceless %}

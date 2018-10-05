@@ -1,21 +1,20 @@
-/* global jQuery displayMessage */
+/* global jQuery displayMessage lockControls unlockControls */
 /* exported attemptToReserveAsset */
 
 function attemptToReserveAsset(reservationURL) {
+    var $transcriptionEditor = jQuery('#transcription-editor');
+
     jQuery
         .ajax({
             url: reservationURL,
             type: 'POST'
         })
         .done(function() {
-            displayMessage(
-                'info',
-                'You have exclusive permission to transcribe this page',
-                'transcription-reservation'
-            );
+            unlockControls($transcriptionEditor);
         })
         .fail(function(jqXHR, textStatus, errorThrown) {
             if (jqXHR.status == 409) {
+                lockControls($transcriptionEditor);
                 displayMessage(
                     'warning',
                     'Someone else is currently transcribing this page',
