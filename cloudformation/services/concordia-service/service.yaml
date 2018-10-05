@@ -26,6 +26,16 @@ Parameters:
         Description: Maximum number of instances of this task we can run across our cluster
         Type: Number
         Default: 3
+    
+    Memory:
+        Description: How much memory to use for the three tasks combined
+        Type: Number
+        Default: 2048
+
+    Cpu:
+        Description: How much CPU to use for the three tasks combined
+        Type: Number
+        Default: 1024
 
 Mappings:
     ClusterMapping:
@@ -67,8 +77,8 @@ Resources:
     TaskDefinition:
         Type: AWS::ECS::TaskDefinition
         Properties:
-            Memory: '2048'
-            Cpu: '1024'
+            Memory: !Ref Memory
+            Cpu: !Ref Cpu
             TaskRoleArn: !GetAtt TaskRole.Arn
             Family: !Sub concordia-${EnvName}
             Volumes:

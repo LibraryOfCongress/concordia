@@ -14,11 +14,16 @@ Description: >
     Amazon EC2 Container Registry (Amazon ECR).
 Mappings:
     EnvironmentMapping:
-        AvailabilityZoneMap:
-            dev: [0, 1]
-            test: [0, 1]
-            stage: [4, 5]
-            prod: [2, 3]
+        AvailabilityZone1Map:
+            dev: 2
+            test: 2
+            stage: 2
+            prod: 2
+        AvailabilityZone2Map:
+            dev: 3
+            test: 3
+            stage: 3
+            prod: 3
         VPCCIDRMap:
             dev: 10.192.0.0/16
             test: 10.193.0.0/16
@@ -79,7 +84,8 @@ Resources:
                 PublicSubnet2CIDR:  !FindInMap [EnvironmentMapping, PublicSubnet2CIDRMap, !Ref EnvName]
                 PrivateSubnet1CIDR: !FindInMap [EnvironmentMapping, PrivateSubnet1CIDRMap, !Ref EnvName]
                 PrivateSubnet2CIDR: !FindInMap [EnvironmentMapping, PrivateSubnet2CIDRMap, !Ref EnvName]
-
+                AvailabilityZone1:  !FindInMap [EnvironmentMapping, AvailabilityZone1Map, !Ref EnvName]
+                AvailabilityZone2:  !FindInMap [EnvironmentMapping, AvailabilityZone2Map, !Ref EnvName]
 
     NetworkACL:
         Type: AWS::CloudFormation::Stack
@@ -134,24 +140,21 @@ Resources:
 #            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/ecs-cluster.yaml" ]]
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
-                VPC: !GetAtt VPC.Outputs.VPC
                 KeyPairName: !Ref KeyPairName
                 SecurityGroup: !GetAtt SecurityGroups.Outputs.ECSHostSecurityGroup
                 Subnets: !GetAtt VPC.Outputs.PrivateSubnets
 
-    ConcordiaService:
-        Type: AWS::CloudFormation::Stack
-        Properties:
-            TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/services/concordia-service/service.yaml"
+#    ConcordiaService:
+#        Type: AWS::CloudFormation::Stack
+#        Properties:
+#            TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/services/concordia-service/service.yaml"
 #            TemplateURL: !Join [ "/", [ !Ref BasePath, "/services/concordia-service/service.yaml" ]]
-            Parameters:
-                VPC: !GetAtt VPC.Outputs.VPC
-                Cluster: !GetAtt ECS.Outputs.Cluster
-                DesiredCount: "2"
-                PostgresHost: !GetAtt RDS.Outputs.DatabaseHostName
-                Listener: !GetAtt ALB.Outputs.Listener
-                Path: /*
-                ECSServiceAutoScalingRoleARN: !GetAtt ECS.Outputs.ECSServiceAutoScalingRole
+#            Parameters:
+#                EnvName: !Ref EnvName
+#                DesiredCount: 2
+#                MaxCount: 3
+#                Memory: 4096
+#                Cpu: 2048
 
     LifecycleHook:
         Type: AWS::CloudFormation::Stack
