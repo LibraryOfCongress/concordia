@@ -51,6 +51,7 @@ h1 {
     font-weight: bold;
     text-transform: uppercase;
     color: var(--text-color-primary);
+    margin-bottom: 1em;
 }
 
 h1.header-text {

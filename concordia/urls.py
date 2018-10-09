@@ -126,6 +126,9 @@ urlpatterns = [
     re_path(r"^$", views.HomeView.as_view(), name="homepage"),
     path(r"healthz", views.healthz, name="health-check"),
     path("about/", views.static_page, name="about"),
+    path("instructions/", views.static_page, name="instructions"),
+    path("for-educators/", views.static_page, name="for-educators"),
+    path("latest/", views.static_page, name="latest"),
     re_path(r"^contact/$", views.ContactUsView.as_view(), name="contact"),
     re_path(r"^campaigns/", include(tx_urlpatterns, namespace="transcriptions")),
     re_path(r"^api/v1/", include(trans_urls)),
@@ -143,19 +146,7 @@ urlpatterns = [
         r"^experiments/(.+)/$", views.ExperimentsView.as_view(), name="experiments"
     ),
     re_path(r"^wireframes/", include("concordia.experiments.wireframes.urls")),
-    re_path(
-        r"^privacy-policy/$",
-        TemplateView.as_view(template_name="policy.html"),
-        name="privacy-policy",
-    ),
-    re_path(
-        r"^cookie-policy/$",
-        TemplateView.as_view(template_name="policy.html"),
-        name="cookie-policy",
-    ),
-    re_path(
-        r"^legal/$", TemplateView.as_view(template_name="legal.html"), name="legal"
-    ),
+
     # TODO: when we upgrade to Django 2.1 we can use the admin site override
     # mechanism (the old one is broken in 2.0): see https://code.djangoproject.com/ticket/27887
     path("admin/bulk-import", admin_bulk_import_view, name="admin-bulk-import"),

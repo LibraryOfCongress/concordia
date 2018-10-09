@@ -1,3 +1,5 @@
+title: Instructions
+
 ## How to transcribe:
 
 We transcribe to improve search functionality. Our goal is to make documents word-searchable in the Library of Congress catalog, which means typing transcriptions that can be read by that computer system, as well as by humans. Most handwriting and even some typed text cannot be automatically and accurately translated into machine-readable text using current technologies -- that’s why we need your help!.
