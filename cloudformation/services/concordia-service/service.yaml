@@ -63,7 +63,7 @@ Mappings:
             dev: vpc-017fd2b202f2b6495
             test: vpc-0a9c4c1672305c7d7
             stage: vpc-07bb7696546e2f94d
-            prod: vpc-017fd2b202f2b6495
+            prod: vpc-0577524823c936d60
 
 Resources:
     Service:
