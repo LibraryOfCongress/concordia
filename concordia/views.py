@@ -14,7 +14,13 @@ from django.core.mail import send_mail
 from django.core.paginator import Paginator
 from django.db import connection
 from django.db.models import Count
-from django.http import HttpResponse, HttpResponseRedirect
+from django.db.transaction import atomic
+from django.http import (
+    HttpResponse,
+    HttpResponseBadRequest,
+    HttpResponseRedirect,
+    JsonResponse,
+)
 from django.shortcuts import Http404, get_object_or_404, redirect, render
 from django.template import loader
 from django.urls import reverse_lazy
@@ -284,6 +290,8 @@ class ConcordiaAssetView(DetailView):
         ctx["project"] = project = item.project
         ctx["campaign"] = project.campaign
 
+        ctx["transcription"] = asset.transcription_set.order_by("-pk").first()
+
         previous_asset = (
             item.asset_set.filter(sequence__lt=asset.sequence)
             .order_by("sequence")
@@ -299,16 +307,6 @@ class ConcordiaAssetView(DetailView):
         if next_asset:
             ctx["next_asset_url"] = next_asset.get_absolute_url()
 
-        # Get the most recent transcription
-        latest_transcriptions = Transcription.objects.filter(
-            asset__slug=asset.slug
-        ).order_by("-updated_on")
-
-        if latest_transcriptions:
-            transcription = latest_transcriptions[0]
-        else:
-            transcription = None
-
         tag_groups = UserAssetTagCollection.objects.filter(asset__slug=asset.slug)
         tags = []
 
@@ -318,19 +316,13 @@ class ConcordiaAssetView(DetailView):
 
         captcha_form = CaptchaEmbedForm()
 
+        # TODO: we need to move this into JavaScript to allow caching the page
         if self.request.user.is_anonymous:
             ctx[
                 "is_anonymous_user_captcha_validated"
             ] = self.is_anonymous_user_captcha_validated()
 
-        ctx.update(
-            {
-                "page_in_use": False,
-                "transcription": transcription,
-                "tags": tags,
-                "captcha_form": captcha_form,
-            }
-        )
+        ctx.update({"tags": tags, "captcha_form": captcha_form})
 
         return ctx
 
@@ -344,12 +336,70 @@ class ConcordiaAssetView(DetailView):
         return False
 
 
+@require_POST
+@atomic
 def save_transcription(request, *, asset_pk):
-    raise NotImplementedError
+    asset = get_object_or_404(Asset, pk=asset_pk)
+
+    if request.user.is_anonymous:
+        user = get_anonymous_user()
+    else:
+        user = request.user
+
+    supersedes_pk = request.POST.get("supersedes")
+    if not supersedes_pk:
+        superseded = None
+        if asset.transcription_set.filter(supersedes=None).exists():
+            return JsonResponse(
+                {"error": "An open transcription already exists"}, status=409
+            )
+    else:
+        if asset.transcription_set.filter(supersedes=supersedes_pk).exists():
+            return JsonResponse(
+                {"error": "This transcription has been superseded"}, status=409
+            )
+
+        try:
+            superseded = asset.transcription_set.get(pk=supersedes_pk)
+        except Transcription.DoesNotExist:
+            return JsonResponse({"error": "Invalid supersedes value"}, status=400)
+
+    transcription = Transcription(
+        asset=asset, user=user, supersedes=superseded, text=request.POST["text"]
+    )
+    transcription.full_clean()
+    transcription.save()
+
+    return JsonResponse({"id": transcription.pk}, status=201)
 
 
-def submit_transcription(request, *, asset_pk):
-    raise NotImplementedError
+@require_POST
+def submit_transcription(request, *, pk):
+    transcription = get_object_or_404(Transcription, pk=pk)
+
+    if (
+        transcription.submitted
+        or transcription.asset.transcription_set.filter(supersedes=pk).exists()
+    ):
+        return HttpResponseBadRequest()
+
+    transcription.submitted = now()
+    transcription.full_clean()
+    transcription.save()
+
+    return JsonResponse({"id": transcription.pk}, status=200)
+
+
+@require_POST
+def review_transcription(request, *, pk):
+    transcription = get_object_or_404(pk=pk)
+
+    raise NotImplementedError()
+
+    transcription.full_clean()
+    transcription.save()
+
+    return JsonResponse({"id": transcription.pk}, status=200)
 
 
 class ConcordiaAlternateAssetView(View):

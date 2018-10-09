@@ -81,12 +81,12 @@ urlpatterns = [
         name="save-transcription",
     ),
     path(
-        "transcriptions/<int:transcription_pk>/submit/",
+        "transcriptions/<int:pk>/submit/",
         views.submit_transcription,
         name="submit-transcription",
     ),
     path(
-        "transcriptions/<int:transcription_pk>/review/",
+        "transcriptions/<int:pk>/review/",
         views.review_transcription,
         name="review-transcription",
     ),
