@@ -207,7 +207,9 @@ class Tag(MetricsModelMixin("tag"), models.Model):
         return self.value
 
 
-class UserAssetTagCollection(models.Model):
+class UserAssetTagCollection(
+    MetricsModelMixin("user_asset_tag_collection"), models.Model
+):
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
