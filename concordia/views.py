@@ -290,7 +290,16 @@ class ConcordiaAssetView(DetailView):
         ctx["project"] = project = item.project
         ctx["campaign"] = project.campaign
 
-        ctx["transcription"] = asset.transcription_set.order_by("-pk").first()
+        transcription = asset.transcription_set.order_by("-pk").first()
+        ctx["transcription"] = transcription
+
+        # We'll handle the case where an item with no transcriptions should be shown as status=edit here
+        # so the logic doesn't need to be repeated in templates:
+        if transcription:
+            transcription_status = transcription.status.lower()
+        else:
+            transcription_status = "edit"
+        ctx["transcription_status"] = transcription_status
 
         previous_asset = (
             item.asset_set.filter(sequence__lt=asset.sequence)
