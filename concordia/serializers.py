@@ -33,7 +33,6 @@ class CampaignListSerializer(serializers.ModelSerializer):
             "description",
             "start_date",
             "end_date",
-            "status",
             "asset_count",
             "published",
         )
@@ -63,14 +62,13 @@ class AssetSetSerializer(serializers.HyperlinkedModelSerializer):
             "media_type",
             "sequence",
             "metadata",
-            "status",
         )
 
 
 class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Project
-        fields = ("id", "title", "slug", "metadata", "status", "published")
+        fields = ("id", "title", "slug", "metadata", "published")
 
 
 class CampaignDetailSerializer(serializers.HyperlinkedModelSerializer):
@@ -85,7 +83,6 @@ class CampaignDetailSerializer(serializers.HyperlinkedModelSerializer):
             "description",
             "start_date",
             "end_date",
-            "status",
             "projects",
         )
 
@@ -124,7 +121,6 @@ class AssetSerializer(serializers.HyperlinkedModelSerializer):
             "item",
             "sequence",
             "metadata",
-            "status",
         )
 
 
@@ -134,7 +130,17 @@ class TranscriptionSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = models.Transcription
-        fields = ("id", "asset", "user", "text", "status", "updated_on")
+        fields = (
+            "id",
+            "asset",
+            "user",
+            "text",
+            "created_on",
+            "updated_on",
+            "submitted",
+            "accepted",
+            "rejected",
+        )
 
 
 class TagSerializer(serializers.ModelSerializer):

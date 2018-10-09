@@ -189,12 +189,11 @@ class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         "start_date",
         "end_date",
         "truncated_metadata",
-        "status",
     )
     list_display_links = ("id", "title", "slug")
     prepopulated_fields = {"slug": ("title",)}
     search_fields = ["title", "description"]
-    list_filter = ("published", "status")
+    list_filter = ("published",)
 
     actions = (publish_action, unpublish_action)
 
@@ -202,20 +201,12 @@ class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     # todo: add foreignKey link for campaign
-    list_display = (
-        "id",
-        "title",
-        "slug",
-        "category",
-        "campaign",
-        "truncated_metadata",
-        "status",
-    )
+    list_display = ("id", "title", "slug", "category", "campaign", "truncated_metadata")
 
     list_display_links = ("id", "title", "slug")
     prepopulated_fields = {"slug": ("title",)}
     search_fields = ["title", "campaign__title"]
-    list_filter = ("published", "status", "category", "campaign")
+    list_filter = ("published", "category", "campaign")
 
     actions = (publish_action, unpublish_action)
 
@@ -289,14 +280,7 @@ class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
 
 @admin.register(Item)
 class ItemAdmin(admin.ModelAdmin):
-    list_display = (
-        "title",
-        "item_id",
-        "campaign_title",
-        "project",
-        "status",
-        "published",
-    )
+    list_display = ("title", "item_id", "campaign_title", "project", "published")
     list_display_links = ("title", "item_id")
     search_fields = [
         "title",
@@ -305,7 +289,7 @@ class ItemAdmin(admin.ModelAdmin):
         "project__campaign__title",
         "project__title",
     ]
-    list_filter = ("published", "status", "project__campaign", "project")
+    list_filter = ("published", "project__campaign", "project")
 
     actions = (publish_action, unpublish_action)
 
@@ -329,12 +313,11 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         "media_type",
         "sequence",
         "truncated_metadata",
-        "status",
     )
     list_display_links = ("id", "title", "slug")
     prepopulated_fields = {"slug": ("title",)}
     search_fields = ["title", "media_url", "campaign__title", "project__title"]
-    list_filter = ("status", "item__project__campaign", "item__project", "media_type")
+    list_filter = ("item__project__campaign", "item__project", "media_type")
 
     def truncated_media_url(self, obj):
         return format_html(
@@ -370,18 +353,8 @@ class UserAssetTagCollectionAdmin(admin.ModelAdmin):
 
 @admin.register(Transcription)
 class TranscriptionAdmin(admin.ModelAdmin):
-    list_display = (
-        "id",
-        "asset",
-        "user",
-        "truncated_text",
-        "status",
-        "created_on",
-        "updated_on",
-    )
+    list_display = ("id", "asset", "user", "truncated_text", "created_on", "updated_on")
     list_display_links = ("id", "asset")
-
-    list_filter = ("status",)
 
     search_fields = ["text"]
 

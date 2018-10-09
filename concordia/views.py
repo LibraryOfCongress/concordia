@@ -12,7 +12,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
-from django.db import IntegrityError, connection
+from django.db import connection
 from django.db.models import Count
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import Http404, get_object_or_404, redirect, render
@@ -33,11 +33,9 @@ from concordia.forms import (
 )
 from concordia.models import (
     Asset,
-    AssetTranscriptionReservation,
     Campaign,
     Item,
     Project,
-    Status,
     Transcription,
     UserAssetTagCollection,
 )
@@ -262,12 +260,6 @@ class ConcordiaAssetView(DetailView):
 
     template_name = "transcriptions/asset_detail.html"
 
-    state_dictionary = {
-        "Save": Status.EDIT,
-        "Submit for Review": Status.SUBMITTED,
-        "Mark Completed": Status.COMPLETED,
-    }
-
     def get_queryset(self):
         asset_qs = Asset.objects.filter(
             item__project__campaign__slug=self.kwargs["campaign_slug"],
@@ -331,13 +323,13 @@ class ConcordiaAssetView(DetailView):
                 "is_anonymous_user_captcha_validated"
             ] = self.is_anonymous_user_captcha_validated()
 
+        transcription_status = "FIXME: finish transcription status implementation"
+
         ctx.update(
             {
                 "page_in_use": False,
                 "transcription": transcription,
-                "transcription_status": transcription.status
-                if transcription
-                else Status.EDIT,
+                "transcription_status": transcription_status,
                 "tags": tags,
                 "captcha_form": captcha_form,
             }
@@ -481,6 +473,7 @@ class ReportCampaignView(TemplateView):
     template_name = "transcriptions/report.html"
 
     def get(self, request, campaign_slug):
+        raise NotImplementedError("FIXME: reimplement campaign reporting")
         campaign = get_object_or_404(Campaign, slug=campaign_slug)
 
         try:
