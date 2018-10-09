@@ -2,7 +2,6 @@
 
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied, ValidationError
 from django.db.transaction import atomic
-from django.http import QueryDict
 from django.shortcuts import get_object_or_404
 from rest_framework import exceptions, generics, permissions, status
 from rest_framework.authentication import SessionAuthentication
@@ -12,7 +11,6 @@ from .models import (
     Asset,
     Campaign,
     Item,
-    Status,
     Tag,
     Transcription,
     User,
@@ -186,65 +184,6 @@ class AssetBySlug(generics.RetrieveAPIView):
             return asset[0]
         else:
             return None
-
-
-class AssetRandomInCampaign(generics.RetrieveAPIView):
-    """
-    GET: Return a random asset from the campaign excluding the passed in asset slug
-    """
-
-    model = Asset
-    authentication_classes = (ConcordiaAPIAuth,)
-    serializer_class = AssetSerializer
-    lookup_fields = ("campaign", "slug")
-
-    def get_object(self):
-        try:
-            return (
-                Asset.objects.filter(
-                    campaign__slug=self.kwargs["campaign"], status=Status.EDIT
-                )
-                .exclude(slug=self.kwargs["slug"])
-                .order_by("?")
-                .first()
-            )
-        except ObjectDoesNotExist:
-            return None
-
-
-class AssetUpdate(generics.UpdateAPIView):
-    """
-    PUT: Update an Asset
-    """
-
-    model = Campaign
-    authentication_classes = (ConcordiaAPIAuth,)
-    permission_classes = (ConcordiaAdminPermission,)
-    queryset = Campaign.objects.all()
-    serializer_class = CampaignDetailSerializer
-    lookup_fields = ("campaign", "slug")
-
-    def put(self, request, *args, **kwargs):
-        if type(request.data) == QueryDict:
-            # when using APIFactory to submit post, data must be converted from QueryDict
-            request_data = request.data.dict()
-        else:
-            request_data = request.data
-
-        campaign = Campaign.objects.get(slug=request_data["campaign"])
-
-        # FIXME: use .update for performance
-        # FIXME: do validation before updating
-        asset = Asset.objects.get(slug=request_data["slug"], campaign=campaign)
-        asset.status = Status.INACTIVE
-        asset.save()
-
-        serializer = CampaignDetailSerializer(data=request_data)
-        # FIXME: do something when validation fails
-        if serializer.is_valid():
-            pass
-
-        return Response(serializer.data)
 
 
 class TranscriptionLastGet(generics.RetrieveAPIView):

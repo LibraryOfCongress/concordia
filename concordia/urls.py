@@ -11,7 +11,7 @@ from machina.app import board
 from concordia.admin import admin_bulk_import_view
 from exporter import views as exporter_views
 
-from . import trans_urls, views, views_ws
+from . import views, views_ws
 
 for key, value in getattr(settings, "ADMIN_SITE", {}).items():
     setattr(admin.site, key, value)
@@ -79,14 +79,6 @@ ws_urlpatterns = (
             views_ws.AssetBySlug().as_view(),
         ),
         re_path(
-            r"^asset_update/(?P<campaign>(.*?))/(?P<slug>(.*?))/$",
-            views_ws.AssetUpdate().as_view(),
-        ),
-        re_path(
-            r"^campaign_asset_random/(?P<campaign>(.*?))/(?P<slug>(.*?))/$",
-            views_ws.AssetRandomInCampaign().as_view(),
-        ),
-        re_path(
             r"^transcription/(?P<asset>(.*?))/$",
             views_ws.TranscriptionLastGet().as_view(),
         ),
@@ -131,7 +123,6 @@ urlpatterns = [
     path("latest/", views.static_page, name="latest"),
     re_path(r"^contact/$", views.ContactUsView.as_view(), name="contact"),
     re_path(r"^campaigns/", include(tx_urlpatterns, namespace="transcriptions")),
-    re_path(r"^api/v1/", include(trans_urls)),
     re_path(
         r"^account/register/$",
         views.ConcordiaRegistrationView.as_view(),
