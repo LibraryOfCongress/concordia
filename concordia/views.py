@@ -23,7 +23,7 @@ from django.http import (
 )
 from django.shortcuts import Http404, get_object_or_404, redirect, render
 from django.template import loader
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.utils.timezone import now
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
@@ -370,7 +370,13 @@ def save_transcription(request, *, asset_pk):
     transcription.full_clean()
     transcription.save()
 
-    return JsonResponse({"id": transcription.pk}, status=201)
+    return JsonResponse(
+        {
+            "id": transcription.pk,
+            "submissionUrl": reverse("submit-transcription", args=(transcription.pk,)),
+        },
+        status=201,
+    )
 
 
 @require_POST
