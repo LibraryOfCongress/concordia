@@ -68,7 +68,7 @@ Crowd: {{ asset.title }} ({{ asset.project.campaign.title }} — {{ asset.projec
             </table>
 
             <div id="transcription-editor" class="flex-grow-1 d-flex flex-column">
-                <form class="ajax-submission h-100 d-flex flex-column" method="post" action="{% url 'ws:submit-transcription' asset_pk=asset.pk %}" data-submit-name="status" data-submit-value="Edit">
+                <form class="ajax-submission h-100 d-flex flex-column" method="post" action="{% url 'submit-transcription' asset_pk=asset.pk %}" data-submit-name="status" data-submit-value="Edit">
                     {% csrf_token %}
 
                     {% spaceless %}
@@ -95,7 +95,7 @@ Crowd: {{ asset.title }} ({{ asset.project.campaign.title }} — {{ asset.projec
                 </form>
             </div>
             <div id="tag-editor" class="flex-shrink-1">
-                <form class="ajax-submission" method="post" action="{% url 'ws:submit-tags' asset_pk=asset.pk %}">
+                <form class="ajax-submission" method="post" action="{% url 'submit-tags' asset_pk=asset.pk %}">
                     {% csrf_token %}
 
                     {% if request.user.is_authenticated %}
@@ -174,6 +174,6 @@ Crowd: {{ asset.title }} ({{ asset.project.campaign.title }} — {{ asset.projec
     });
 </script>
 <script>
-    attemptToReserveAsset("{% url 'ws:reserve-asset-for-transcription' asset.pk %}");
+    attemptToReserveAsset("{% url 'reserve-asset-for-transcription' asset.pk %}");
 </script>
 {% endblock body_scripts %}

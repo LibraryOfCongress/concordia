@@ -344,6 +344,14 @@ class ConcordiaAssetView(DetailView):
         return False
 
 
+def save_transcription(request, *, asset_pk):
+    raise NotImplementedError
+
+
+def submit_transcription(request, *, asset_pk):
+    raise NotImplementedError
+
+
 class ConcordiaAlternateAssetView(View):
     """
     Class to handle when user opts to work on an alternate asset because another user is already working
