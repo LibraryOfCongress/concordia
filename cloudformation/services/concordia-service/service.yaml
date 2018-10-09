@@ -26,6 +26,16 @@ Parameters:
         Description: Maximum number of instances of this task we can run across our cluster
         Type: Number
         Default: 3
+    
+    Memory:
+        Description: How much memory to use for the three tasks combined
+        Type: Number
+        Default: 4096
+
+    Cpu:
+        Description: How much CPU to use for the three tasks combined
+        Type: Number
+        Default: 2048
 
 Mappings:
     ClusterMapping:
@@ -39,6 +49,11 @@ Mappings:
             test: 'arn:aws:elasticloadbalancing:us-east-1:351149051428:listener/app/crowd-test2/3d7aa00aa454c0c7/1560db455f58ceb2'
             stage: 'arn:aws:elasticloadbalancing:us-east-1:351149051428:listener/app/crowd-stage/53c19bcd76f00cb2/3d0c172d811b4926'
             prod: 'arn:aws:elasticloadbalancing:us-east-1:351149051428:listener/app/crowd-prod/56f99d946d14d887/0955e71fcb8e2f67'
+        SSLListenerMap:
+            dev: 'arn:aws:elasticloadbalancing:us-east-1:351149051428:listener/app/crowd-dev/8b148c019a172548/b587f6c4a3dea36b'
+            test: 'arn:aws:elasticloadbalancing:us-east-1:351149051428:listener/app/crowd-test2/3d7aa00aa454c0c7/00175835d64e823e'
+            stage: 'arn:aws:elasticloadbalancing:us-east-1:351149051428:listener/app/crowd-stage/53c19bcd76f00cb2/8d05b9b29c420614'
+            prod: 'arn:aws:elasticloadbalancing:us-east-1:351149051428:listener/app/crowd-prod/56f99d946d14d887/2d1e0c1c38f8d018'
         ClusterNameMap:
             dev: crowd-dev
             test: crowd-test2
@@ -48,7 +63,7 @@ Mappings:
             dev: vpc-017fd2b202f2b6495
             test: vpc-0a9c4c1672305c7d7
             stage: vpc-07bb7696546e2f94d
-            prod: vpc-017fd2b202f2b6495
+            prod: vpc-0577524823c936d60
 
 Resources:
     Service:
@@ -67,8 +82,8 @@ Resources:
     TaskDefinition:
         Type: AWS::ECS::TaskDefinition
         Properties:
-            Memory: '2048'
-            Cpu: '1024'
+            Memory: !Ref Memory
+            Cpu: !Ref Cpu
             TaskRoleArn: !GetAtt TaskRole.Arn
             Family: !Sub concordia-${EnvName}
             Volumes:
@@ -163,6 +178,19 @@ Resources:
         Type: AWS::ElasticLoadBalancingV2::ListenerRule
         Properties:
             ListenerArn: !FindInMap [ClusterMapping, ListenerMap, !Ref EnvName]
+            Priority: 1
+            Conditions:
+                - Field: path-pattern
+                  Values:
+                      - /*
+            Actions:
+                - TargetGroupArn: !Ref TargetGroup
+                  Type: forward
+    
+    SSLListenerRule:
+        Type: AWS::ElasticLoadBalancingV2::ListenerRule
+        Properties:
+            ListenerArn: !FindInMap [ClusterMapping, SSLListenerMap, !Ref EnvName]
             Priority: 1
             Conditions:
                 - Field: path-pattern
