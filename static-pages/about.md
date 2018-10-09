@@ -4,8 +4,6 @@ The Library of Congress launched Make Your Mark in the autumn of 2018. Everyone 
 
 Make Your Mark runs on Concordia, new open source software developed by the Library of Congress to power crowdsourced transcription projects. The code is visible and free to reuse: [Visit our Github repository](https://github.com/LibraryOfCongress/concordia) for more information. The platform was built utilizing user-centered design principles based around building trust and approachability. This project is a partnership between the Library and a growing community of volunteers who help us to iteratively improve the platform. Everyone is welcome to take part in transcription and tagging and to give feedback about how we can improve the code base and the project itself. Be in touch! The data produced by volunteers is also free to reuse. If you need help accessing the data or want to share news of your research with the Make Your Mark community, please contact the Community Managers at [crowd@loc.gov](mailto:crowd@lov.goc).
 
-The Library of Congress has long invested in building digitized collections and making them searchable. The Library’s first attempt recruiting members of the public to increase findability on our website began in 2008 when the Photography and Prints Division published thousands of photographs on [Flickr Commons](https://www.flickr.com/photos/library_of_congress). This long-running project invites visitors to help identify people and places in the photographs and, once verified, this rich information is used to enhance the online catalog and improve access for all users. Two additional crowdsourcing efforts within the Library include [Roll the Credits](https://www.zooniverse.org/projects/sroosa/roll-the-credits) and [Beyond Words](http://beyondwords.labs.loc.gov/#/), projects that invited people to transcribe credit captions from television programs, and identify cartoons and photographs in the Library's historic newspaper collections respectively.
-
 In addition to the Library of Congress’ own history of varied participatory projects, other cultural heritage institutions with established transcription programs have paved the way for Make Your Mark. Projects at the National Archives and Records Administration (NARA), the Smithsonian, the New York Public Library, Zooniverse.org, From the Page, and others have developed workflows and user engagement strategies that this platform leverages and builds upon. Concordia deploys a different architecture to these existing models of crowdsourced transcription, and aims to provide simple data structures and easier project implementation for cultural heritage institutions and other people who want to set up their own crowdsourced transcription projects.
 
 Concordia and Make Your Mark are supported by the National Digital Trust. The project results from collaboration between numerous divisions at the Library, including library services, curatorial and content specialists, digital preservation and web development specialists, digital innovation and strategy specialists.
@@ -14,9 +12,13 @@ Concordia and Make Your Mark are supported by the National Digital Trust. The pr
 
 ## What is Make Your Mark and what is crowdsourcing?
 
-Make Your Mark [link] is an online transcription platform where anyone with an internet connection can transcribe documents from the Library of Congress’ digitized collections. We welcome anyone interested in making non-machine readable resources fully word searchable to contribute.
+Make Your Mark is an online transcription platform where anyone with an internet connection can transcribe documents from the Library of Congress’ digitized collections. We welcome anyone interested in making non-machine readable resources fully word searchable to contribute.
 
 Crowdsourcing invites members of the public, non-specialists and specialists alike, to help make data more usable and discoverable. Crowdsourcing at the Library of Congress invites volunteers to explore collections while gaining new skills, for example, learning to read older forms of handwriting such as cursive.
+
+## What are past crowdsourcing projects at the Library? 
+
+The Library of Congress has long invested in building digitized collections and making them searchable. The Library’s first attempt recruiting members of the public to increase findability on our website began in 2008 when the Photography and Prints Division published thousands of photographs on [Flickr Commons](https://www.flickr.com/photos/library_of_congress). This long-running project invites visitors to help identify people and places in the photographs and, once verified, this rich information is used to enhance the online catalog and improve access for all users. Two additional crowdsourcing efforts within the Library include [Roll the Credits](https://www.zooniverse.org/projects/sroosa/roll-the-credits) and [Beyond Words](http://beyondwords.labs.loc.gov/#/), projects that invited people to transcribe credit captions from television programs, and identify cartoons and photographs in the Library's historic newspaper collections respectively.
 
 ## Who can take part?
 
@@ -26,11 +28,8 @@ Anyone who wants to help the Library make its collections more discoverable onli
 
 The data contributed by volunteers like you can be used in many different ways. We are giving back to our community by making this data public. All contributions to this application are released into the public domain. Anyone is free to use this data set in any way they want.
 
-## Can I Share the Page I’m Working on With My Friends?
 
-Yes, please do! You find the social share buttons for Facebook, Twitter, Pinterest, and LinkedIn at the bottom of the webpage.
-
-## Devices and browsers
+## What devices and browsers are supported by Make Your Mark?
 
 Because Make York Mark invites you to transcribe documents, it is best experienced on a device with a large or full sized keyboard. A desktop computer or laptop is best, a tablet should work, but phones are not yet supported. The site will not work as designed on the Internet Explorer browser, but should work on Chrome, Firefox, and Safari browsers.
 
@@ -38,11 +37,13 @@ Because Make York Mark invites you to transcribe documents, it is best experienc
 
 For a detailed description of how to transcribe, review, tag, and more read the [Long Form Instructions link] available on the transcription page. Remember, our goal is to make transcriptions that are readable to computers and humans, with minimal markup, not attempting to recreate the layout of the original images.
 
-## Registration and accounts
+## Do I have to register for an account? 
 
-Registering for an account is optional, but gives you access to the tagging and reviewing features of Make Your Mark. Go to the [Register] link on the top right of the home page [link]. Click “Register”. Create a username, which will be visible to other volunteers and users of the site. Enter your email address in the “Email” field (this will not be visible to or shared with other users), and in the password field create a unique password with a combination of capital and lowercase letters, numbers and special characters such as #, $, !, or %.
+Registering for an account is optional, but gives you access to the tagging and reviewing features of Make Your Mark. Go to the [Register](/account/register) to make an account. Create a username, which will be visible to other volunteers and users of the site. Enter your email address in the “Email” field (this will not be visible to or shared with other users), and in the password field create a unique password with a combination of capital and lowercase letters, numbers and special characters such as #, $, !, or %.
 
-If you've forgotten your password click Login, then "Forgot my password". You will receive an email with a link asking you to reset your password. You may also change your password in you are logged in from within your profile.
+If you've forgotten your password click Login, then "Forgot my password". You will receive an email with a link asking you to reset your password. You may also change your password within your profile.
+
+Why do we ask for your email? Your email address gives us the ability to support you. Community managers are here to help with account administration like changes to your profile, troubleshooting any issues with contributing to a transcription, or to answer general questions. We will never share your information with other institutions or individuals. At registration you can opt in to receive email updates on Make Your Mark campaigns and features – you can also [register for emails from us here](https://updates.loc.gov/accounts/USLOC/subscriber/new?topic_id=USLOC_175).
 
 ## Privacy and cookies
 
