@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 
-# TODO: move this into Ansible or at least use Boto
-
-import json
-import subprocess
+import boto3
 import requests
+from botocore.exceptions import ClientError
+
+SECURITY_GROUP_ID = "sg-0e07161e54ca34212"
+
+ec2 = boto3.client("ec2")
 
 ipv4_cidrs = requests.get("https://www.cloudflare.com/ips-v4").text.splitlines()
 ipv6_cidrs = requests.get("https://www.cloudflare.com/ips-v6").text.splitlines()
@@ -21,16 +23,10 @@ request_payload = {
     ],
 }
 
-json_payload = json.dumps([request_payload])
-
-subprocess.check_call(
-    [
-        "aws",
-        "ec2",
-        "authorize-security-group-ingress",
-        "--group-id",
-        "sg-0e07161e54ca34212",
-        "--ip-permissions",
-        json_payload,
-    ]
-)
+try:
+    data = ec2.authorize_security_group_ingress(
+        GroupId=SECURITY_GROUP_ID, IpPermissions=[request_payload]
+    )
+    print("Ingress Successfully Set %s" % data)
+except ClientError as e:
+    print(e)
