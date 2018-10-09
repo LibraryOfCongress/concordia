@@ -84,7 +84,7 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
         return reverse("transcriptions:campaign", args=(self.slug,))
 
 
-class Project(models.Model):
+class Project(MetricsModelMixin("project"), models.Model):
     objects = PublicationManager()
 
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
@@ -112,7 +112,7 @@ class Project(models.Model):
         )
 
 
-class Item(models.Model):
+class Item(MetricsModelMixin("item"), models.Model):
     objects = PublicationManager()
 
     project = models.ForeignKey(
@@ -155,7 +155,7 @@ class Item(models.Model):
         )
 
 
-class Asset(models.Model):
+class Asset(MetricsModelMixin("asset"), models.Model):
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
 
     title = models.CharField(max_length=100)
@@ -199,7 +199,7 @@ class Asset(models.Model):
         )
 
 
-class Tag(models.Model):
+class Tag(MetricsModelMixin("tag"), models.Model):
     TAG_VALIDATOR = RegexValidator(r"^[- _'\w]{1,50}$")
     value = models.CharField(max_length=50, validators=[TAG_VALIDATOR])
 
@@ -207,7 +207,9 @@ class Tag(models.Model):
         return self.value
 
 
-class UserAssetTagCollection(models.Model):
+class UserAssetTagCollection(
+    MetricsModelMixin("user_asset_tag_collection"), models.Model
+):
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
@@ -220,7 +222,7 @@ class UserAssetTagCollection(models.Model):
         return "{} - {}".format(self.asset, self.user)
 
 
-class Transcription(models.Model):
+class Transcription(MetricsModelMixin("transcription"), models.Model):
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
