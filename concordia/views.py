@@ -323,13 +323,10 @@ class ConcordiaAssetView(DetailView):
                 "is_anonymous_user_captcha_validated"
             ] = self.is_anonymous_user_captcha_validated()
 
-        transcription_status = "FIXME: finish transcription status implementation"
-
         ctx.update(
             {
                 "page_in_use": False,
                 "transcription": transcription,
-                "transcription_status": transcription_status,
                 "tags": tags,
                 "captcha_form": captcha_form,
             }

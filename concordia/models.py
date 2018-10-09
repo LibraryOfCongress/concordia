@@ -264,6 +264,15 @@ class Transcription(MetricsModelMixin("transcription"), models.Model):
             raise ValidationError("Transcriptions cannot be both accepted and rejected")
         return super().clean()
 
+    @property
+    def status(self):
+        if self.accepted:
+            return "Completed"
+        elif self.submitted and not self.rejected:
+            return "Submitted"
+        else:
+            return "Edit"
+
 
 class AssetTranscriptionReservation(models.Model):
     """
