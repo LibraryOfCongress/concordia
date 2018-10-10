@@ -79,7 +79,8 @@ def admin_bulk_import_view(request):
             rows = slurp_excel(request.FILES["spreadsheet_file"])
             required_fields = [
                 "Campaign",
-                "Campaign Description",
+                "Campaign Short Description",
+                "Campaign Long Description",
                 "Project",
                 "Project Description",
                 "Import URLs",
@@ -110,7 +111,8 @@ def admin_bulk_import_view(request):
                     title=campaign_title,
                     defaults={
                         "slug": slugify(campaign_title),
-                        "description": row["Campaign Description"] or "",
+                        "description": row["Campaign Long Description"] or "",
+                        "short_description": row["Campaign Short Description"] or "",
                     },
                 )
                 if created:
@@ -185,10 +187,11 @@ class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         "id",
         "title",
         "slug",
-        "truncated_description",
+        "short_description",
         "start_date",
         "end_date",
         "truncated_metadata",
+        "published",
     )
     list_display_links = ("id", "title", "slug")
     prepopulated_fields = {"slug": ("title",)}
@@ -201,7 +204,15 @@ class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     # todo: add foreignKey link for campaign
-    list_display = ("id", "title", "slug", "category", "campaign", "truncated_metadata")
+    list_display = (
+        "id",
+        "title",
+        "slug",
+        "category",
+        "campaign",
+        "truncated_metadata",
+        "published",
+    )
 
     list_display_links = ("id", "title", "slug")
     prepopulated_fields = {"slug": ("title",)}

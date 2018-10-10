@@ -23,6 +23,7 @@ def create_campaign(
     *,
     title="Test Campaign",
     slug="test-campaign",
+    short_description="Short Description",
     description="Test Description",
     published=True,
     **kwargs,
