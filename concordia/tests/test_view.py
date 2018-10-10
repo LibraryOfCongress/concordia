@@ -1,9 +1,11 @@
+import json
 from datetime import datetime, timedelta
 
 from django.test import TestCase, TransactionTestCase
 from django.urls import reverse
+from django.utils.timezone import now
 
-from concordia.models import AssetTranscriptionReservation, Status, User
+from concordia.models import AssetTranscriptionReservation, User, Transcription
 from concordia.views import get_anonymous_user
 
 from .utils import create_asset, create_campaign, create_item, create_project
@@ -145,7 +147,7 @@ class ConcordiaViewTests(TestCase):
         asset = create_asset()
 
         self.transcription = asset.transcription_set.create(
-            user_id=self.user.id, text="Test transcription 1", status=Status.EDIT
+            user_id=self.user.id, text="Test transcription 1"
         )
         self.transcription.save()
 
@@ -217,7 +219,7 @@ class TransactionalViewTests(TransactionTestCase):
         # Acquire the reservation:
         with self.assertNumQueries(3):  # 1 auth query + 1 expiry + 1 acquire
             resp = self.client.post(
-                reverse("ws:reserve-asset-for-transcription", args=(asset.pk,))
+                reverse("reserve-asset-for-transcription", args=(asset.pk,))
             )
         self.assertEqual(204, resp.status_code)
 
@@ -229,7 +231,7 @@ class TransactionalViewTests(TransactionTestCase):
 
         with self.assertNumQueries(3):  # 1 auth query + 1 expiry + 1 acquire
             resp = self.client.post(
-                reverse("ws:reserve-asset-for-transcription", args=(asset.pk,))
+                reverse("reserve-asset-for-transcription", args=(asset.pk,))
             )
         self.assertEqual(204, resp.status_code)
 
@@ -245,7 +247,7 @@ class TransactionalViewTests(TransactionTestCase):
         # 3 = 1 auth query + 1 expiry + 1 delete
         with self.assertNumQueries(3):
             resp = self.client.post(
-                reverse("ws:reserve-asset-for-transcription", args=(asset.pk,)),
+                reverse("reserve-asset-for-transcription", args=(asset.pk,)),
                 data={"release": True},
             )
         self.assertEqual(204, resp.status_code)
@@ -265,7 +267,7 @@ class TransactionalViewTests(TransactionTestCase):
         # 4 queries = 1 auth query + 1 anonymous user creation + 1 expiry + 1 acquire
         with self.assertNumQueries(4):
             resp = self.client.post(
-                reverse("ws:reserve-asset-for-transcription", args=(asset.pk,))
+                reverse("reserve-asset-for-transcription", args=(asset.pk,))
             )
         self.assertEqual(204, resp.status_code)
         self.assertEqual(1, AssetTranscriptionReservation.objects.count())
@@ -274,7 +276,7 @@ class TransactionalViewTests(TransactionTestCase):
 
         with self.assertNumQueries(3):  # 1 auth query + 1 expiry + 1 acquire
             resp = self.client.post(
-                reverse("ws:reserve-asset-for-transcription", args=(asset.pk,))
+                reverse("reserve-asset-for-transcription", args=(asset.pk,))
             )
         self.assertEqual(409, resp.status_code)
         self.assertEqual(1, AssetTranscriptionReservation.objects.count())
@@ -300,10 +302,181 @@ class TransactionalViewTests(TransactionTestCase):
 
         with self.assertNumQueries(3):  # 1 auth query + 1 expiry + 1 acquire
             resp = self.client.post(
-                reverse("ws:reserve-asset-for-transcription", args=(asset.pk,))
+                reverse("reserve-asset-for-transcription", args=(asset.pk,))
             )
         self.assertEqual(204, resp.status_code)
 
         self.assertEqual(1, AssetTranscriptionReservation.objects.count())
         reservation = AssetTranscriptionReservation.objects.get()
         self.assertEqual(reservation.user_id, self.user.pk)
+
+    def assertValidJSON(self, response, expected_status=200):
+        """
+        Assert that a response contains valid JSON and return the decoded JSON
+        """
+        self.assertEqual(response.status_code, expected_status)
+
+        try:
+            data = json.loads(response.content.decode("utf-8"))
+        except json.JSONDecodeError as exc:
+            self.fail(msg=f"response content failed to decode: {exc}")
+            raise
+
+        return data
+
+    def test_transcription_save(self):
+        asset = create_asset()
+
+        resp = self.client.post(
+            reverse("save-transcription", args=(asset.pk,)), data={"text": "test"}
+        )
+        data = self.assertValidJSON(resp, expected_status=201)
+        self.assertIn("submissionUrl", data)
+
+        # Test attempts to create a second transcription without marking that it
+        # supersedes the previous one:
+        resp = self.client.post(
+            reverse("save-transcription", args=(asset.pk,)), data={"text": "test"}
+        )
+        data = self.assertValidJSON(resp, expected_status=409)
+        self.assertIn("error", data)
+
+        # This should work with the chain specified:
+        resp = self.client.post(
+            reverse("save-transcription", args=(asset.pk,)),
+            data={"text": "test", "supersedes": asset.transcription_set.get().pk},
+        )
+        data = self.assertValidJSON(resp, expected_status=201)
+        self.assertIn("submissionUrl", data)
+
+        # We should see an error if you attempt to supersede a transcription
+        # which has already been superseded:
+        resp = self.client.post(
+            reverse("save-transcription", args=(asset.pk,)),
+            data={
+                "text": "test",
+                "supersedes": asset.transcription_set.order_by("pk").first().pk,
+            },
+        )
+        data = self.assertValidJSON(resp, expected_status=409)
+        self.assertIn("error", data)
+
+        # A logged in user can take over from an anonymous user:
+        self.login_user()
+        resp = self.client.post(
+            reverse("save-transcription", args=(asset.pk,)),
+            data={
+                "text": "test",
+                "supersedes": asset.transcription_set.order_by("pk").last().pk,
+            },
+        )
+        data = self.assertValidJSON(resp, expected_status=201)
+        self.assertIn("submissionUrl", data)
+
+    def test_transcription_submission(self):
+        asset = create_asset()
+
+        resp = self.client.post(
+            reverse("save-transcription", args=(asset.pk,)), data={"text": "test"}
+        )
+        data = self.assertValidJSON(resp, expected_status=201)
+
+        transcription = Transcription.objects.get()
+        self.assertEqual(None, transcription.submitted)
+
+        resp = self.client.post(
+            reverse("submit-transcription", args=(transcription.pk,))
+        )
+        data = self.assertValidJSON(resp, expected_status=200)
+        self.assertIn("id", data)
+        self.assertEqual(data["id"], transcription.pk)
+
+        transcription = Transcription.objects.get()
+        self.assertTrue(transcription.submitted)
+
+    def test_stale_transcription_submission(self):
+        asset = create_asset()
+
+        anon = get_anonymous_user()
+
+        t1 = Transcription(asset=asset, user=anon, text="test")
+        t1.full_clean()
+        t1.save()
+
+        t2 = Transcription(asset=asset, user=anon, text="test", supersedes=t1)
+        t2.full_clean()
+        t2.save()
+
+        resp = self.client.post(reverse("submit-transcription", args=(t1.pk,)))
+        data = self.assertValidJSON(resp, expected_status=400)
+        self.assertIn("error", data)
+
+    def test_transcription_review(self):
+        asset = create_asset()
+
+        anon = get_anonymous_user()
+
+        t1 = Transcription(asset=asset, user=anon, text="test", submitted=now())
+        t1.full_clean()
+        t1.save()
+
+        self.login_user()
+
+        resp = self.client.post(
+            reverse("review-transcription", args=(t1.pk,)), data={"action": "foobar"}
+        )
+        data = self.assertValidJSON(resp, expected_status=400)
+        self.assertIn("error", data)
+
+        self.assertEqual(
+            1, Transcription.objects.filter(pk=t1.pk, accepted__isnull=True).count()
+        )
+
+        resp = self.client.post(
+            reverse("review-transcription", args=(t1.pk,)), data={"action": "accept"}
+        )
+        data = self.assertValidJSON(resp, expected_status=200)
+
+        self.assertEqual(
+            1, Transcription.objects.filter(pk=t1.pk, accepted__isnull=False).count()
+        )
+
+    def test_transcription_self_review(self):
+        asset = create_asset()
+
+        self.login_user()
+
+        t1 = Transcription(asset=asset, user=self.user, text="test", submitted=now())
+        t1.full_clean()
+        t1.save()
+
+        resp = self.client.post(
+            reverse("review-transcription", args=(t1.pk,)), data={"action": "accept"}
+        )
+        data = self.assertValidJSON(resp, expected_status=400)
+        self.assertIn("error", data)
+        self.assertEqual("You cannot review your own transcription", data["error"])
+
+    def test_transcription_double_review(self):
+        asset = create_asset()
+
+        anon = get_anonymous_user()
+
+        t1 = Transcription(asset=asset, user=anon, text="test", submitted=now())
+        t1.full_clean()
+        t1.save()
+
+        self.login_user()
+
+        resp = self.client.post(
+            reverse("review-transcription", args=(t1.pk,)), data={"action": "accept"}
+        )
+        data = self.assertValidJSON(resp, expected_status=200)
+
+        resp = self.client.post(
+            reverse("review-transcription", args=(t1.pk,)), data={"action": "reject"}
+        )
+        data = self.assertValidJSON(resp, expected_status=400)
+        self.assertIn("error", data)
+        self.assertEqual("This transcription has already been reviewed", data["error"])
+

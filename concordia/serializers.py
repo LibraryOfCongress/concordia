@@ -30,16 +30,42 @@ class CampaignListSerializer(serializers.ModelSerializer):
             "description",
             "start_date",
             "end_date",
-            "status",
             "asset_count",
             "published",
+        )
+
+
+class AssetSetSerializer(serializers.HyperlinkedModelSerializer):
+
+    media_url = serializers.SerializerMethodField()
+
+    def get_media_url(self, obj):
+        if S3_BUCKET_NAME and obj:
+            url = "{}/{}/{}".format(
+                S3_CLIENT.meta.endpoint_url, S3_BUCKET_NAME, obj.media_url
+            )
+            return url
+        else:
+            return obj.media_url
+
+    class Meta:
+        model = models.Asset
+        fields = (
+            "id",
+            "title",
+            "slug",
+            "description",
+            "media_url",
+            "media_type",
+            "sequence",
+            "metadata",
         )
 
 
 class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Project
-        fields = ("id", "title", "slug", "metadata", "status", "published")
+        fields = ("id", "title", "slug", "metadata", "published")
 
 
 class CampaignDetailSerializer(serializers.HyperlinkedModelSerializer):
@@ -54,7 +80,6 @@ class CampaignDetailSerializer(serializers.HyperlinkedModelSerializer):
             "description",
             "start_date",
             "end_date",
-            "status",
             "projects",
         )
 
@@ -68,13 +93,52 @@ class ItemSerializer(serializers.ModelSerializer):
         fields = ("title", "item_id", "thumbnail_url", "assets", "project")
 
 
+
+class AssetSerializer(serializers.HyperlinkedModelSerializer):
+    item = ItemSerializer()
+    media_url = serializers.SerializerMethodField()
+
+    def get_media_url(self, obj):
+        if S3_BUCKET_NAME and obj:
+            url = "{}/{}/{}".format(
+                S3_CLIENT.meta.endpoint_url, S3_BUCKET_NAME, obj.media_url
+            )
+            return url
+        else:
+            return obj.media_url
+
+    class Meta:
+        model = models.Asset
+        fields = (
+            "id",
+            "title",
+            "slug",
+            "description",
+            "media_url",
+            "media_type",
+            "item",
+            "sequence",
+            "metadata",
+        )
+
+
 class TranscriptionSerializer(serializers.HyperlinkedModelSerializer):
     asset = AssetSerializer()
     user = UserSerializer()
 
     class Meta:
         model = models.Transcription
-        fields = ("id", "asset", "user", "text", "status", "updated_on")
+        fields = (
+            "id",
+            "asset",
+            "user",
+            "text",
+            "created_on",
+            "updated_on",
+            "submitted",
+            "accepted",
+            "rejected",
+        )
 
 
 class TagSerializer(serializers.ModelSerializer):

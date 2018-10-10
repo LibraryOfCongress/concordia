@@ -3,12 +3,11 @@ from logging import getLogger
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import JSONField
+from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
 from django.urls import reverse
-from django.utils import timezone
 from django_prometheus_metrics.models import MetricsModelMixin
-
 
 logger = getLogger(__name__)
 
@@ -21,25 +20,21 @@ class UserProfile(MetricsModelMixin("userprofile"), models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
 
-class Status:
-    # FIXME: determine whether this is actually universally applicable to all of
-    # our models or should be split into subsets
-    EDIT = "Edit"
-    SUBMITTED = "Submitted"
-    COMPLETED = "Completed"
-    INACTIVE = "Inactive"
-    ACTIVE = "Active"
+class TranscriptionStatus(object):
+    """
+    Status values used for rollup summaries of an asset's transcription status
+    to avoid needing to do nested queries in views
+    """
 
-    DEFAULT = EDIT
+    EDIT = "edit"
+    SUBMITTED = "submitted"
+    COMPLETED = "completed"
+
     CHOICES = (
         (EDIT, "Open for Edit"),
         (SUBMITTED, "Submitted for Review"),
-        (COMPLETED, "Transcription Completed"),
-        (INACTIVE, "Inactive"),
-        (ACTIVE, "Active"),
+        (COMPLETED, "Completed"),
     )
-
-    #: Convenience lookup dictionary for CHOICES:
     CHOICE_MAP = dict(CHOICES)
 
 
@@ -63,9 +58,6 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
     objects = PublicationManager()
 
     published = models.BooleanField(default=False, blank=True)
-    status = models.CharField(
-        max_length=10, choices=Status.CHOICES, default=Status.DEFAULT
-    )
 
     title = models.CharField(max_length=80)
     slug = models.SlugField(max_length=80, unique=True)
@@ -92,6 +84,9 @@ class Project(MetricsModelMixin("project"), models.Model):
     objects = PublicationManager()
 
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
+
+    published = models.BooleanField(default=False, blank=True)
+
     title = models.CharField(max_length=80)
     slug = models.SlugField(max_length=80)
     thumbnail_image = models.ImageField(
@@ -100,10 +95,6 @@ class Project(MetricsModelMixin("project"), models.Model):
 
     category = models.CharField(max_length=12, blank=True)
     metadata = JSONField(default=metadata_default, blank=True, null=True)
-    status = models.CharField(
-        max_length=10, choices=Status.CHOICES, default=Status.DEFAULT
-    )
-    published = models.BooleanField(default=False, blank=True)
 
     class Meta:
         unique_together = (("slug", "campaign"),)
@@ -141,9 +132,6 @@ class Item(MetricsModelMixin("item"), models.Model):
         help_text="Raw metadata returned by the remote API",
     )
     thumbnail_url = models.URLField(max_length=255, blank=True, null=True)
-    status = models.CharField(
-        max_length=10, choices=Status.CHOICES, default=Status.DEFAULT
-    )
 
     class Meta:
         unique_together = (("item_id", "project"),)
@@ -163,7 +151,11 @@ class Item(MetricsModelMixin("item"), models.Model):
 
 
 class Asset(MetricsModelMixin("asset"), models.Model):
+    objects = PublicationManager()
+
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
+
+    published = models.BooleanField(default=False, blank=True)
 
     title = models.CharField(max_length=100)
     slug = models.SlugField(max_length=100)
@@ -183,13 +175,18 @@ class Asset(MetricsModelMixin("asset"), models.Model):
     download_url = models.CharField(max_length=255, blank=True, null=True)
 
     metadata = JSONField(default=metadata_default, blank=True, null=True)
-    status = models.CharField(
-        max_length=10, choices=Status.CHOICES, default=Status.DEFAULT
+
+    # This is computed from the Transcription records and should never
+    # be directly modified except by the Transcription signal handler:
+    transcription_status = models.CharField(
+        editable=False,
+        max_length=10,
+        default=TranscriptionStatus.EDIT,
+        choices=TranscriptionStatus.CHOICES,
     )
 
     class Meta:
         unique_together = (("slug", "item"),)
-        ordering = ["title", "sequence"]
 
     def __str__(self):
         return self.title
@@ -234,16 +231,54 @@ class Transcription(MetricsModelMixin("transcription"), models.Model):
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
-    text = models.TextField(blank=True)
-    status = models.CharField(
-        max_length=10, choices=Status.CHOICES, default=Status.DEFAULT
-    )
-
     created_on = models.DateTimeField(auto_now_add=True)
     updated_on = models.DateTimeField(auto_now=True)
 
+    supersedes = models.ForeignKey(
+        "self",
+        blank=True,
+        null=True,
+        on_delete=models.CASCADE,
+        help_text="A previous transcription record which is replaced by this one",
+    )
+
+    submitted = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text="Timestamp when the creator submitted this for review",
+    )
+
+    # Review tracking:
+    accepted = models.DateTimeField(blank=True, null=True)
+    rejected = models.DateTimeField(blank=True, null=True)
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name="transcription_reviewers",
+    )
+
+    text = models.TextField(blank=True)
+
     def __str__(self):
-        return str(self.asset)
+        return f"Transcription #{self.pk}"
+
+    def clean(self):
+        if self.user and self.reviewed_by and self.user == self.reviewed_by:
+            raise ValidationError("Transcriptions cannot be self-reviewed")
+        if self.accepted and self.rejected:
+            raise ValidationError("Transcriptions cannot be both accepted and rejected")
+        return super().clean()
+
+    @property
+    def status(self):
+        if self.accepted:
+            return "Completed"
+        elif self.submitted and not self.rejected:
+            return "Submitted"
+        else:
+            return "Edit"
 
 
 class AssetTranscriptionReservation(models.Model):

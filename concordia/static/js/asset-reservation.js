@@ -1,4 +1,4 @@
-/* global jQuery displayMessage lockControls unlockControls */
+/* global jQuery displayMessage */
 /* exported attemptToReserveAsset */
 
 function attemptToReserveAsset(reservationURL) {
@@ -10,16 +10,20 @@ function attemptToReserveAsset(reservationURL) {
             type: 'POST'
         })
         .done(function() {
-            unlockControls($transcriptionEditor);
+            $transcriptionEditor
+                .data('hasReservation', true)
+                .trigger('update-ui-state');
         })
         .fail(function(jqXHR, textStatus, errorThrown) {
             if (jqXHR.status == 409) {
-                lockControls($transcriptionEditor);
                 displayMessage(
                     'warning',
                     'Someone else is currently transcribing this page',
                     'transcription-reservation'
                 );
+                $transcriptionEditor
+                    .data('hasReservation', false)
+                    .trigger('update-ui-state');
             } else {
                 displayMessage(
                     'error',
