@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from django.test import TestCase, TransactionTestCase
 from django.urls import reverse
 
-from concordia.models import AssetTranscriptionReservation, Status, User
+from concordia.models import AssetTranscriptionReservation, User
 from concordia.views import get_anonymous_user
 
 from .utils import create_asset, create_campaign, create_item, create_project
