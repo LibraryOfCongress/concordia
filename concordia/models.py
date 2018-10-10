@@ -35,6 +35,7 @@ class TranscriptionStatus(object):
         (SUBMITTED, "Submitted for Review"),
         (COMPLETED, "Completed"),
     )
+    CHOICE_MAP = dict(CHOICES)
 
 
 class MediaType:
