@@ -143,7 +143,7 @@ $submitButton.on('click', function(evt) {
         url: $transcriptionEditor.data('submitUrl'),
         method: 'POST'
     })
-        .done(function(jqXHR) {
+        .done(function() {
             displayMessage(
                 'info',
                 'The transcription has been submitted. Go to the next page when you are done tagging.',
@@ -172,6 +172,57 @@ $transcriptionEditor
     .on('change input', function() {
         $transcriptionEditor.data('unsavedChanges', true);
         $transcriptionEditor.trigger('update-ui-state');
+    });
+
+function submitReview(status) {
+    var reviewUrl = $transcriptionEditor.data('reviewUrl');
+    $.ajax({
+        url: reviewUrl,
+        method: 'POST',
+        data: {
+            action: status
+        }
+    })
+        .done(function() {
+            displayMessage(
+                'info',
+                'Your transcription review has been saved',
+                'transcription-review-result'
+            );
+            if (status == 'accept') {
+                $('.tx-status-display')
+                    .children()
+                    .attr('hidden', 'hidden')
+                    .filter('.tx-completed')
+                    .removeAttr('hidden');
+            }
+            lockControls($transcriptionEditor);
+        })
+        .fail(function(jqXHR, textStatus, errorThrown) {
+            var errMessage = textStatus + ' ' + errorThrown;
+            if (jqXHR.responseJSON && jqXHR.responseJSON.error) {
+                errMessage = jqXHR.responseJSON.error;
+            }
+            displayMessage(
+                'error',
+                'Unable to save your review: ' + errMessage,
+                'transcription-review-result'
+            );
+        });
+}
+
+$('#accept-transcription-button')
+    .removeAttr('disabled')
+    .on('click', function(evt) {
+        evt.preventDefault();
+        submitReview('accept');
+    });
+
+$('#reject-transcription-button')
+    .removeAttr('disabled')
+    .on('click', function(evt) {
+        evt.preventDefault();
+        submitReview('reject');
     });
 
 var $tagEditor = $('#tag-editor'),

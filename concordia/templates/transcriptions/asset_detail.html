@@ -66,7 +66,7 @@ Crowd: {{ asset.title }} ({{ asset.item.project.campaign.title }} — {{ asset.i
             </table>
 
             <div class="flex-grow-1 d-flex flex-column">
-                <form id="transcription-editor" class="ajax-submission h-100 d-flex flex-column" method="post" action="{% url 'save-transcription' asset_pk=asset.pk %}" data-transcription-status="{{ transcription_status }}" {% if transcription %}data-transcription-id="{{ transcription.pk|default:'' }}" data-submit-url="{% url 'submit-transcription' pk=transcription.pk %}"{% endif %}>
+                <form id="transcription-editor" class="ajax-submission h-100 d-flex flex-column" method="post" action="{% url 'save-transcription' asset_pk=asset.pk %}" data-transcription-status="{{ transcription_status }}" {% if transcription %}data-transcription-id="{{ transcription.pk|default:'' }}" data-submit-url="{% url 'submit-transcription' pk=transcription.pk %}" data-review-url="{% url 'review-transcription' pk=transcription.pk %}"{% endif %}>
                     {% csrf_token %}
 
                     <input type="hidden" name="supersedes" value="{{ transcription.pk|default:'' }}" />
@@ -85,8 +85,13 @@ Crowd: {{ asset.title }} ({{ asset.item.project.campaign.title }} — {{ asset.i
                         {% endif %}
 
                         <div class="my-3 d-flex justify-content-around align-items-center btn-row">
-                            <button id="save-transcription-button" disabled type="submit" class="btn btn-primary">Save</button>
-                            <button id="submit-transcription-button" disabled type="button" class="btn btn-primary">Submit for Review</button>
+                            {% if transcription_status == 'edit' %}
+                                <button id="save-transcription-button" disabled type="submit" class="btn btn-primary">Save</button>
+                                <button id="submit-transcription-button" disabled type="button" class="btn btn-primary">Submit for Review</button>
+                            {% elif transcription_status == 'submitted' and user.is_authenticated and transcription.user.pk != user.pk %}
+                                <button id="accept-transcription-button" disabled type="button" class="btn btn-primary">Accept</button>
+                                <button id="reject-transcription-button" disabled type="button" class="btn btn-primary">Request Changes</button>
+                            {% endif %}
                         </div>
                     {% endspaceless %}
                 </form>
@@ -95,7 +100,7 @@ Crowd: {{ asset.title }} ({{ asset.item.project.campaign.title }} — {{ asset.i
                 <form class="ajax-submission" method="post" action="{% url 'submit-tags' asset_pk=asset.pk %}">
                     {% csrf_token %}
 
-                    {% if request.user.is_authenticated %}
+                    {% if user.is_authenticated %}
                         <div class="row">
                             <div class="input-group">
                                 <input type="text" id="new-tag-input" class="form-control" placeholder="Add a new tag…" aria-label="Add a new tag" pattern="[- _'\w]{1,50}">
@@ -136,7 +141,7 @@ Crowd: {{ asset.title }} ({{ asset.item.project.campaign.title }} — {{ asset.i
                         {% endfor %}
                     </ul>
 
-                    {% if request.user.is_authenticated %}
+                    {% if user.is_authenticated %}
                         <div class="form-row btn-row my-3">
                             <button id="save-tags-button" type="submit" class="btn btn-primary mx-auto">Save Tags</button>
                         </div>
