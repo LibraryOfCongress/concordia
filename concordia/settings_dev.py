@@ -32,13 +32,6 @@ AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 
 MEDIA_URL = "https://%s.s3.amazonaws.com/" % S3_BUCKET_NAME
 
-AWS_S3 = {
-    "AWS_ACCESS_KEY_ID": AWS_ACCESS_KEY_ID,
-    "AWS_SECRET_ACCESS_KEY": AWS_SECRET_ACCESS_KEY,
-    "S3_COLLECTION_BUCKET": S3_BUCKET_NAME,
-    "REGION": os.getenv("AWS_REGION"),
-}
-
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 EMAIL_FILE_PATH = "/tmp/concordia-messages"  # change this to a proper location
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "")

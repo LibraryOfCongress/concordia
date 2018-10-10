@@ -5,9 +5,6 @@ from rest_framework import serializers
 
 from . import models
 
-S3_BUCKET_NAME = settings.AWS_S3.get("S3_COLLECTION_BUCKET", "")
-S3_CLIENT = boto3.client("s3", settings.AWS_S3.get("REGION", ""))
-
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -36,34 +33,6 @@ class CampaignListSerializer(serializers.ModelSerializer):
             "status",
             "asset_count",
             "published",
-        )
-
-
-class AssetSetSerializer(serializers.HyperlinkedModelSerializer):
-
-    media_url = serializers.SerializerMethodField()
-
-    def get_media_url(self, obj):
-        if S3_BUCKET_NAME and obj:
-            url = "{}/{}/{}".format(
-                S3_CLIENT.meta.endpoint_url, S3_BUCKET_NAME, obj.media_url
-            )
-            return url
-        else:
-            return obj.media_url
-
-    class Meta:
-        model = models.Asset
-        fields = (
-            "id",
-            "title",
-            "slug",
-            "description",
-            "media_url",
-            "media_type",
-            "sequence",
-            "metadata",
-            "status",
         )
 
 
@@ -97,35 +66,6 @@ class ItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Item
         fields = ("title", "item_id", "thumbnail_url", "assets", "project")
-
-
-class AssetSerializer(serializers.HyperlinkedModelSerializer):
-    item = ItemSerializer()
-    media_url = serializers.SerializerMethodField()
-
-    def get_media_url(self, obj):
-        if S3_BUCKET_NAME and obj:
-            url = "{}/{}/{}".format(
-                S3_CLIENT.meta.endpoint_url, S3_BUCKET_NAME, obj.media_url
-            )
-            return url
-        else:
-            return obj.media_url
-
-    class Meta:
-        model = models.Asset
-        fields = (
-            "id",
-            "title",
-            "slug",
-            "description",
-            "media_url",
-            "media_type",
-            "item",
-            "sequence",
-            "metadata",
-            "status",
-        )
 
 
 class TranscriptionSerializer(serializers.HyperlinkedModelSerializer):
