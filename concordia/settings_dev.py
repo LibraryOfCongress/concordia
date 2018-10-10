@@ -30,12 +30,6 @@ AWS_DEFAULT_ACL = None  # Don't set an ACL on the files, inherit the bucket ACLs
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 
-IMPORTER = {
-    # /concordia_images is a docker volume shared by importer and concordia
-    "IMAGES_FOLDER": "/concordia_images/",
-    "S3_BUCKET_NAME": S3_BUCKET_NAME,
-}
-
 MEDIA_URL = "https://%s.s3.amazonaws.com/" % S3_BUCKET_NAME
 
 AWS_S3 = {
