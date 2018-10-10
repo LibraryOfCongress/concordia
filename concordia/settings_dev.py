@@ -27,9 +27,6 @@ DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 AWS_STORAGE_BUCKET_NAME = S3_BUCKET_NAME
 AWS_DEFAULT_ACL = None  # Don't set an ACL on the files, inherit the bucket ACLs
 
-AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
-AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
-
 MEDIA_URL = "https://%s.s3.amazonaws.com/" % S3_BUCKET_NAME
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
