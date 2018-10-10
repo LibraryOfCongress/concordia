@@ -6,14 +6,7 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
 
-from concordia.models import (
-    MediaType,
-    Status,
-    Tag,
-    Transcription,
-    User,
-    UserAssetTagCollection,
-)
+from concordia.models import MediaType, Tag, Transcription, User, UserAssetTagCollection
 
 from .utils import create_asset
 
@@ -40,46 +33,6 @@ class WebServiceViewTests(TestCase):
         # create a session cookie
         self.client.session["foo"] = 123  # HACK: needed for django Client
 
-    def test_Transcriptions_latest_get(self):
-        """
-        Test getting latest transcription for an asset. route ws/transcriptions/asset/
-        """
-
-        self.login_user()
-
-        # create a second user
-        username = "tester2"
-        self.user2 = User.objects.create(username=username, email="tester2@example.com")
-        self.user2.set_password("top_secret")
-        self.user2.save()
-
-        asset1 = create_asset(
-            title="Test Asset 1",
-            media_url="http://www.example.com/1/2/3",
-            media_type=MediaType.IMAGE,
-            status=Status.EDIT,
-        )
-
-        # add Transcription objects
-        transcription1 = Transcription(
-            asset=asset1, user_id=self.user.id, status=Status.EDIT, text="T1"
-        )
-        transcription1.full_clean()
-        transcription1.save()
-
-        transcription2 = Transcription(
-            asset=asset1, user_id=self.user2.id, status=Status.EDIT, text="T2"
-        )
-        transcription2.full_clean()
-        transcription2.save()
-
-        response = self.client.get("/ws/transcription/%s/" % asset1.id)
-
-        json_resp = json.loads(response.content)
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(json_resp["text"], transcription2.text)
-
     def test_Transcriptions_create_post(self):
         """
         Test creating a transcription. route ws/transcription_create/
@@ -91,12 +44,11 @@ class WebServiceViewTests(TestCase):
             title="TestAsset",
             media_url="http://www.example.com/1/2/3",
             media_type=MediaType.IMAGE,
-            status=Status.EDIT,
         )
 
         response = self.client.post(
-            reverse("ws:submit-transcription", kwargs={"asset_pk": asset.pk}),
-            {"user_id": self.user.id, "status": Status.EDIT, "text": "T1"},
+            reverse("save-transcription", kwargs={"asset_pk": asset.pk}),
+            {"user_id": self.user.id, "text": "T1"},
         )
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -107,8 +59,12 @@ class WebServiceViewTests(TestCase):
 
         # Add Another transcription
         response = self.client.post(
-            reverse("ws:submit-transcription", kwargs={"asset_pk": asset.pk}),
-            {"user_id": self.user.id, "status": Status.EDIT, "text": "T2"},
+            reverse("save-transcription", kwargs={"asset_pk": asset.pk}),
+            {
+                "user_id": self.user.id,
+                "text": "T2",
+                "supersedes": Transcription.objects.get().pk,
+            },
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
@@ -133,7 +89,6 @@ class WebServiceViewTests(TestCase):
             title="TestAsset",
             media_url="http://www.example.com/1/2/3",
             media_type=MediaType.IMAGE,
-            status=Status.EDIT,
         )
 
         tag1 = Tag.objects.create(value="Tag1")
@@ -150,7 +105,7 @@ class WebServiceViewTests(TestCase):
         asset_tag_collection2.save()
         asset_tag_collection2.tags.add(tag3)
 
-        response = self.client.get(reverse("ws:get-tags", args=(asset.pk,)))
+        response = self.client.get(reverse("get-tags", args=(asset.pk,)))
 
         json_resp = json.loads(response.content)
 
@@ -173,7 +128,7 @@ class WebServiceViewTests(TestCase):
         asset = create_asset()
 
         response = self.client.get(
-            reverse("ws:submit-tags", kwargs={"asset_pk": asset.id})
+            reverse("submit-tags", kwargs={"asset_pk": asset.id})
         )
 
         json_resp = json.loads(response.content)

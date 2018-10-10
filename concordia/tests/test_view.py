@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from django.test import TestCase, TransactionTestCase
 from django.urls import reverse
 
-from concordia.models import AssetTranscriptionReservation, Status, User
+from concordia.models import AssetTranscriptionReservation, User
 from concordia.views import get_anonymous_user
 
 from .utils import create_asset, create_campaign, create_item, create_project
@@ -145,7 +145,7 @@ class ConcordiaViewTests(TestCase):
         asset = create_asset()
 
         self.transcription = asset.transcription_set.create(
-            user_id=self.user.id, text="Test transcription 1", status=Status.EDIT
+            user_id=self.user.id, text="Test transcription 1"
         )
         self.transcription.save()
 
@@ -217,7 +217,7 @@ class TransactionalViewTests(TransactionTestCase):
         # Acquire the reservation:
         with self.assertNumQueries(3):  # 1 auth query + 1 expiry + 1 acquire
             resp = self.client.post(
-                reverse("ws:reserve-asset-for-transcription", args=(asset.pk,))
+                reverse("reserve-asset-for-transcription", args=(asset.pk,))
             )
         self.assertEqual(204, resp.status_code)
 
@@ -229,7 +229,7 @@ class TransactionalViewTests(TransactionTestCase):
 
         with self.assertNumQueries(3):  # 1 auth query + 1 expiry + 1 acquire
             resp = self.client.post(
-                reverse("ws:reserve-asset-for-transcription", args=(asset.pk,))
+                reverse("reserve-asset-for-transcription", args=(asset.pk,))
             )
         self.assertEqual(204, resp.status_code)
 
@@ -245,7 +245,7 @@ class TransactionalViewTests(TransactionTestCase):
         # 3 = 1 auth query + 1 expiry + 1 delete
         with self.assertNumQueries(3):
             resp = self.client.post(
-                reverse("ws:reserve-asset-for-transcription", args=(asset.pk,)),
+                reverse("reserve-asset-for-transcription", args=(asset.pk,)),
                 data={"release": True},
             )
         self.assertEqual(204, resp.status_code)
@@ -265,7 +265,7 @@ class TransactionalViewTests(TransactionTestCase):
         # 4 queries = 1 auth query + 1 anonymous user creation + 1 expiry + 1 acquire
         with self.assertNumQueries(4):
             resp = self.client.post(
-                reverse("ws:reserve-asset-for-transcription", args=(asset.pk,))
+                reverse("reserve-asset-for-transcription", args=(asset.pk,))
             )
         self.assertEqual(204, resp.status_code)
         self.assertEqual(1, AssetTranscriptionReservation.objects.count())
@@ -274,7 +274,7 @@ class TransactionalViewTests(TransactionTestCase):
 
         with self.assertNumQueries(3):  # 1 auth query + 1 expiry + 1 acquire
             resp = self.client.post(
-                reverse("ws:reserve-asset-for-transcription", args=(asset.pk,))
+                reverse("reserve-asset-for-transcription", args=(asset.pk,))
             )
         self.assertEqual(409, resp.status_code)
         self.assertEqual(1, AssetTranscriptionReservation.objects.count())
@@ -300,7 +300,7 @@ class TransactionalViewTests(TransactionTestCase):
 
         with self.assertNumQueries(3):  # 1 auth query + 1 expiry + 1 acquire
             resp = self.client.post(
-                reverse("ws:reserve-asset-for-transcription", args=(asset.pk,))
+                reverse("reserve-asset-for-transcription", args=(asset.pk,))
             )
         self.assertEqual(204, resp.status_code)
 
