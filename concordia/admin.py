@@ -352,6 +352,19 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     truncated_media_url.allow_tags = True
     truncated_media_url.short_description = "Media URL"
 
+    def change_view(self, request, object_id, extra_context=None, **kwargs):
+        if object_id:
+            if extra_context is None:
+                extra_context = {}
+            extra_context["transcriptions"] = (
+                Transcription.objects.filter(asset__pk=object_id)
+                .select_related("user", "reviewed_by")
+                .order_by("-pk")
+            )
+        return super().change_view(
+            request, object_id, extra_context=extra_context, **kwargs
+        )
+
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
@@ -376,10 +389,32 @@ class UserAssetTagCollectionAdmin(admin.ModelAdmin):
 
 @admin.register(Transcription)
 class TranscriptionAdmin(admin.ModelAdmin):
-    list_display = ("id", "asset", "user", "truncated_text", "created_on", "updated_on")
+    list_display = (
+        "id",
+        "asset",
+        "user",
+        "truncated_text",
+        "created_on",
+        "updated_on",
+        "accepted",
+        "rejected",
+    )
     list_display_links = ("id", "asset")
 
     search_fields = ["text"]
+
+    readonly_fields = (
+        "asset",
+        "user",
+        "created_on",
+        "updated_on",
+        "submitted",
+        "accepted",
+        "rejected",
+        "reviewed_by",
+        "supersedes",
+        "text",
+    )
 
     def truncated_text(self, obj):
         return truncatechars(obj.text, 100)
