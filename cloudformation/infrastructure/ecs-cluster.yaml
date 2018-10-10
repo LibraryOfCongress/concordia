@@ -11,12 +11,12 @@ Parameters:
     InstanceType:
         Description: Which instance type should we use to build the ECS cluster?
         Type: String
-        Default: c5.large
+        Default: c5.xlarge
 
     ClusterSizeDesired:
         Description: How many ECS hosts do you want to initially deploy?
         Type: Number
-        Default: 2
+        Default: 3
 
     ClusterSizeMin:
         Description: How many ECS hosts do you want to deploy at a minimum?
@@ -27,10 +27,6 @@ Parameters:
         Description: How many ECS hosts do you want to deploy at a maximum?
         Type: Number
         Default: 5
-
-    VPC:
-        Description: Choose which VPC this ECS cluster should be deployed to
-        Type: AWS::EC2::VPC::Id
 
     Subnets:
         Description: Choose which subnets this ECS cluster should be deployed to
@@ -66,28 +62,6 @@ Mappings:
             AMI: ami-92e06fea
         us-west-1:
             AMI: ami-9ad4dcfa
-        eu-west-3:
-            AMI: ami-698b3d14
-        eu-west-2:
-            AMI: ami-f4e20693
-        eu-west-1:
-            AMI: ami-0693ed7f
-        eu-central-1:
-            AMI: ami-0799fa68
-        ap-northeast-2:
-            AMI: ami-a5dd70cb
-        ap-northeast-1:
-            AMI: ami-68ef940e
-        ap-southeast-2:
-            AMI: ami-ee884f8c
-        ap-southeast-1:
-            AMI: ami-0a622c76
-        ca-central-1:
-            AMI: ami-5ac94e3e
-        ap-south-1:
-            AMI: ami-2e461a41
-        sa-east-1:
-            AMI: ami-d44008b8	
 
 Resources:
 
@@ -245,78 +219,70 @@ Resources:
         Properties:
             Path: /
             RoleName: !Sub ${EnvironmentName}-ECSRole-${AWS::Region}
-            AssumeRolePolicyDocument: |
-                {
-                    "Statement": [{
-                        "Action": "sts:AssumeRole",
-                        "Effect": "Allow",
-                        "Principal": {
-                            "Service": "ec2.amazonaws.com"
-                        }
-                    }]
-                }
+            AssumeRolePolicyDocument:
+                    Statement: 
+                        Action: "sts:AssumeRole"
+                        Effect: "Allow"
+                        Principal: 
+                            Service: "ec2.amazonaws.com" 
             Policies:
                 - PolicyName: ecs-service
-                  PolicyDocument: |
-                    {
-                        "Statement": [{
-                            "Effect": "Allow",
-                            "Action": [
-                                "ecs:CreateCluster",
-                                "ecs:DeregisterContainerInstance",
-                                "ecs:DiscoverPollEndpoint",
-                                "ecs:Poll",
-                                "ecs:RegisterContainerInstance",
-                                "ecs:StartTelemetrySession",
-                                "ecs:Submit*",
-                                "logs:CreateLogStream",
-                                "logs:PutLogEvents",
-                                "ecr:BatchCheckLayerAvailability",
-                                "ecr:BatchGetImage",
-                                "ecr:GetDownloadUrlForLayer",
-                                "ecr:GetAuthorizationToken",
-                                "ssm:DescribeAssociation",
-                                "ssm:GetDeployablePatchSnapshotForInstance",
-                                "ssm:GetDocument",
-                                "ssm:GetManifest",
-                                "ssm:GetParameters",
-                                "ssm:ListAssociations",
-                                "ssm:ListInstanceAssociations",
-                                "ssm:PutInventory",
-                                "ssm:PutComplianceItems",
-                                "ssm:PutConfigurePackageResult",
-                                "ssm:UpdateAssociationStatus",
-                                "ssm:UpdateInstanceAssociationStatus",
-                                "ssm:UpdateInstanceInformation",
-                                "ec2messages:AcknowledgeMessage",
-                                "ec2messages:DeleteMessage",
-                                "ec2messages:FailMessage",
-                                "ec2messages:GetEndpoint",
-                                "ec2messages:GetMessages",
-                                "ec2messages:SendReply",
-                                "cloudwatch:PutMetricData",
-                                "ec2:DescribeInstanceStatus",
-                                "ds:CreateComputer",
-                                "ds:DescribeDirectories",
-                                "logs:CreateLogGroup",
-                                "logs:CreateLogStream",
-                                "logs:DescribeLogGroups",
-                                "logs:DescribeLogStreams",
-                                "logs:PutLogEvents",
-                                "s3:PutObject",
-                                "s3:GetObject",
-                                "s3:AbortMultipartUpload",
-                                "s3:ListMultipartUploadParts",
-                                "s3:ListBucket",
-                                "s3:ListBucketMultipartUploads",
-                                "secretsmanager:GetResourcePolicy",
-                                "secretsmanager:GetSecretValue",
-                                "secretsmanager:DescribeSecret",
-                                "secretsmanager:ListSecretVersionIds"
-                            ],
-                            "Resource": "*"
-                        }]
-                    }
+                  PolicyDocument:
+                        Statement:
+                            - Effect: Allow
+                              Action: 
+                              - "ecs:CreateCluster"
+                              - "ecs:DeregisterContainerInstance"
+                              - "ecs:DiscoverPollEndpoint"
+                              - "ecs:Poll"
+                              - "ecs:RegisterContainerInstance"
+                              - "ecs:StartTelemetrySession"
+                              - "ecs:Submit*"
+                              - "logs:CreateLogStream"
+                              - "logs:PutLogEvents"
+                              - "ecr:BatchCheckLayerAvailability"
+                              - "ecr:BatchGetImage"
+                              - "ecr:GetDownloadUrlForLayer"
+                              - "ecr:GetAuthorizationToken"
+                              - "ssm:DescribeAssociation"
+                              - "ssm:GetDeployablePatchSnapshotForInstance"
+                              - "ssm:GetDocument"
+                              - "ssm:GetManifest"
+                              - "ssm:GetParameters"
+                              - "ssm:ListAssociations"
+                              - "ssm:ListInstanceAssociations"
+                              - "ssm:PutInventory"
+                              - "ssm:PutComplianceItems"
+                              - "ssm:PutConfigurePackageResult"
+                              - "ssm:UpdateAssociationStatus"
+                              - "ssm:UpdateInstanceAssociationStatus"
+                              - "ssm:UpdateInstanceInformation"
+                              - "ec2messages:AcknowledgeMessage"
+                              - "ec2messages:DeleteMessage"
+                              - "ec2messages:FailMessage"
+                              - "ec2messages:GetEndpoint"
+                              - "ec2messages:GetMessages"
+                              - "ec2messages:SendReply"
+                              - "cloudwatch:PutMetricData"
+                              - "ec2:DescribeInstanceStatus"
+                              - "ds:CreateComputer"
+                              - "ds:DescribeDirectories"
+                              - "logs:CreateLogGroup"
+                              - "logs:CreateLogStream"
+                              - "logs:DescribeLogGroups"
+                              - "logs:DescribeLogStreams"
+                              - "logs:PutLogEvents"
+                              - "s3:PutObject"
+                              - "s3:GetObject"
+                              - "s3:AbortMultipartUpload"
+                              - "s3:ListMultipartUploadParts"
+                              - "s3:ListBucket"
+                              - "s3:ListBucketMultipartUploads"
+                              - "secretsmanager:GetResourcePolicy"
+                              - "secretsmanager:GetSecretValue"
+                              - "secretsmanager:DescribeSecret"
+                              - "secretsmanager:ListSecretVersionIds"
+                              Resource: "*"
 
     ECSInstanceProfile:
         Type: AWS::IAM::InstanceProfile
@@ -342,14 +308,14 @@ Resources:
             - PolicyName: ecs-service-autoscaling
               PolicyDocument:
                   Statement:
-                      Effect: Allow
-                      Action:
-                      - application-autoscaling:*
-                      - cloudwatch:DescribeAlarms
-                      - cloudwatch:PutMetricAlarm
-                      - ecs:DescribeServices
-                      - ecs:UpdateService
-                      Resource: "*"
+                      - Effect: Allow
+                        Action:
+                        - application-autoscaling:*
+                        - cloudwatch:DescribeAlarms
+                        - cloudwatch:PutMetricAlarm
+                        - ecs:DescribeServices
+                        - ecs:UpdateService
+                        Resource: "*"
 
 
 Outputs:

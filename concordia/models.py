@@ -73,6 +73,7 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
     thumbnail_image = models.ImageField(
         upload_to="campaign-thumbnails", blank=True, null=True
     )
+    short_description = models.TextField(blank=True)
 
     start_date = models.DateTimeField(null=True, blank=True)
     end_date = models.DateTimeField(null=True, blank=True)

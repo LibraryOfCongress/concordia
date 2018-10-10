@@ -16,7 +16,6 @@ version: '3.6'
 services:
   sentrydb:
     image: postgres
-    env_file: ./.env
     environment:
       POSTGRES_PASSWORD: ${POSTGRESQL_PW}
       POSTGRES_USER: concordia
@@ -29,7 +28,6 @@ services:
         - POSTGRES_MULTIPLE_DATABASES=sentry,concordia
 
   sentry:
-    env_file: ./.env
     image: sentry:9
     restart: unless-stopped
     ports:
@@ -42,7 +40,6 @@ services:
       - SENTRY_DB_PASSWORD=${POSTGRESQL_PW}
 
   cron:
-    env_file: ./.env
     image: sentry:9
     restart: unless-stopped
     environment:
@@ -54,7 +51,6 @@ services:
     command: run cron
 
   worker:
-    env_file: ./.env
     image: sentry:9
     restart: unless-stopped
     environment:

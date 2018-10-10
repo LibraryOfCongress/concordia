@@ -1,5 +1,3 @@
-include .env
-
 .PHONY: create-docker-sentry-network
 create-docker-sentry-network:
 	docker network create sentry 2>>/dev/null || true
