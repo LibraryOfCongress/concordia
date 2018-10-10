@@ -21,12 +21,6 @@ LOGGING["loggers"]["celery"]["level"] = "INFO"
 # S3_BUCKET_NAME
 # ELASTICSEARCH_ENDPOINT
 
-# If you want the AWS config to work in your local Docker container then
-# add your AWS credentials to .env
-#    AWS_ACCESS_KEY_ID
-#    AWS_SECRET_ACCESS_KEY
-
-
 if os.getenv("AWS"):
     ENV_NAME = os.getenv("ENV_NAME")
 
@@ -65,9 +59,7 @@ EMAIL_PORT = 587
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "crowd@loc.gov")
 DEFAULT_TO_EMAIL = DEFAULT_FROM_EMAIL
 
-# TODO: For final deployment to production,
-# when we are running https, uncomment this next line
-# CSRF_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
 
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "pyamqp://guest@rabbit:5672")
 CELERY_RESULT_BACKEND = "rpc://"

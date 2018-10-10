@@ -70,6 +70,7 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
     title = models.CharField(max_length=80)
     slug = models.SlugField(max_length=80, unique=True)
     description = models.TextField(blank=True)
+    thumbnail_image = models.ImageField(upload_to="campaign-thumbs")
 
     start_date = models.DateTimeField(null=True, blank=True)
     end_date = models.DateTimeField(null=True, blank=True)
@@ -90,6 +91,7 @@ class Project(MetricsModelMixin("project"), models.Model):
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
     title = models.CharField(max_length=80)
     slug = models.SlugField(max_length=80)
+    thumbnail_image = models.ImageField(upload_to="project-thumbs")
 
     category = models.CharField(max_length=12, blank=True)
     metadata = JSONField(default=metadata_default, blank=True, null=True)
