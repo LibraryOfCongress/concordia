@@ -192,12 +192,11 @@ class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         "end_date",
         "truncated_metadata",
         "published",
-        "status",
     )
     list_display_links = ("id", "title", "slug")
     prepopulated_fields = {"slug": ("title",)}
     search_fields = ["title", "description"]
-    list_filter = ("published", "status")
+    list_filter = ("published",)
 
     actions = (publish_action, unpublish_action)
 
@@ -213,13 +212,12 @@ class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         "campaign",
         "truncated_metadata",
         "published",
-        "status",
     )
 
     list_display_links = ("id", "title", "slug")
     prepopulated_fields = {"slug": ("title",)}
     search_fields = ["title", "campaign__title"]
-    list_filter = ("published", "status", "category", "campaign")
+    list_filter = ("published", "category", "campaign")
 
     actions = (publish_action, unpublish_action)
 
@@ -293,14 +291,7 @@ class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
 
 @admin.register(Item)
 class ItemAdmin(admin.ModelAdmin):
-    list_display = (
-        "title",
-        "item_id",
-        "campaign_title",
-        "project",
-        "status",
-        "published",
-    )
+    list_display = ("title", "item_id", "campaign_title", "project", "published")
     list_display_links = ("title", "item_id")
     search_fields = [
         "title",
@@ -309,9 +300,11 @@ class ItemAdmin(admin.ModelAdmin):
         "project__campaign__title",
         "project__title",
     ]
-    list_filter = ("published", "status", "project__campaign", "project")
+    list_filter = ("published", "project__campaign", "project")
 
     actions = (publish_action, unpublish_action)
+
+    readonly_fields = ("project",)
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -325,20 +318,40 @@ class ItemAdmin(admin.ModelAdmin):
 @admin.register(Asset)
 class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     list_display = (
-        "id",
-        "title",
-        "slug",
-        "truncated_description",
+        "transcription_status",
+        "item_id",
+        "sequence",
         "truncated_media_url",
         "media_type",
-        "sequence",
         "truncated_metadata",
-        "status",
     )
-    list_display_links = ("id", "title", "slug")
+    list_display_links = ("item_id", "sequence")
     prepopulated_fields = {"slug": ("title",)}
-    search_fields = ["title", "media_url", "campaign__title", "project__title"]
-    list_filter = ("status", "item__project__campaign", "item__project", "media_type")
+    search_fields = [
+        "title",
+        "media_url",
+        "campaign__title",
+        "project__title",
+        "item__item_id",
+    ]
+    list_filter = (
+        "item__project__campaign",
+        "item__project",
+        "media_type",
+        "transcription_status",
+    )
+    actions = (publish_action, unpublish_action)
+
+    readonly_fields = ("item",)
+
+    ordering = ("item__item_id", "sequence")
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related("item").order_by("item__item_id", "sequence")
+
+    def item_id(self, obj):
+        return obj.item.item_id
 
     def truncated_media_url(self, obj):
         return format_html(
@@ -349,6 +362,19 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
 
     truncated_media_url.allow_tags = True
     truncated_media_url.short_description = "Media URL"
+
+    def change_view(self, request, object_id, extra_context=None, **kwargs):
+        if object_id:
+            if extra_context is None:
+                extra_context = {}
+            extra_context["transcriptions"] = (
+                Transcription.objects.filter(asset__pk=object_id)
+                .select_related("user", "reviewed_by")
+                .order_by("-pk")
+            )
+        return super().change_view(
+            request, object_id, extra_context=extra_context, **kwargs
+        )
 
 
 @admin.register(Tag)
@@ -379,15 +405,27 @@ class TranscriptionAdmin(admin.ModelAdmin):
         "asset",
         "user",
         "truncated_text",
-        "status",
         "created_on",
         "updated_on",
+        "accepted",
+        "rejected",
     )
     list_display_links = ("id", "asset")
 
-    list_filter = ("status",)
-
     search_fields = ["text"]
+
+    readonly_fields = (
+        "asset",
+        "user",
+        "created_on",
+        "updated_on",
+        "submitted",
+        "accepted",
+        "rejected",
+        "reviewed_by",
+        "supersedes",
+        "text",
+    )
 
     def truncated_text(self, obj):
         return truncatechars(obj.text, 100)

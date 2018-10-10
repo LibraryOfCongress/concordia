@@ -8,7 +8,7 @@ from django.core.files.storage import default_storage
 from django.test import TestCase
 from django.urls import reverse
 
-from concordia.models import MediaType, Status, Transcription, User
+from concordia.models import MediaType, Transcription, User
 from concordia.tests.utils import (
     create_asset,
     create_campaign,
@@ -63,7 +63,7 @@ class ViewTest_Exporter(TestCase):
 
         self.login_user()
 
-        campaign = create_campaign(status=Status.EDIT, published=True)
+        campaign = create_campaign(published=True)
         project = create_project(campaign=campaign, published=True)
         item = create_item(project=project, published=True)
 
@@ -74,13 +74,10 @@ class ViewTest_Exporter(TestCase):
             media_url="1.jpg",
             media_type=MediaType.IMAGE,
             sequence=1,
-            status=Status.EDIT,
         )
 
         # add a Transcription object
-        transcription1 = Transcription(
-            asset=asset, user=self.user, status=Status.EDIT, text="Sample"
-        )
+        transcription1 = Transcription(asset=asset, user=self.user, text="Sample")
         transcription1.full_clean()
         transcription1.save()
 

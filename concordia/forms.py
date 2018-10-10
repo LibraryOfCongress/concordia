@@ -6,7 +6,7 @@ from django.contrib.auth import get_user_model
 from django.db.models import Count
 from django_registration.forms import RegistrationForm
 
-from concordia.models import Status
+from .models import TranscriptionStatus
 
 User = get_user_model()
 logger = getLogger(__name__)
@@ -72,8 +72,8 @@ class CaptchaEmbedForm(forms.Form):
 
 
 class AssetFilteringForm(forms.Form):
-    status = forms.ChoiceField(
-        choices=Status.CHOICES,
+    transcription_status = forms.ChoiceField(
+        choices=TranscriptionStatus.CHOICES,
         required=False,
         label="Image Status",
         widget=forms.Select(attrs={"class": "form-control"}),
@@ -85,19 +85,24 @@ class AssetFilteringForm(forms.Form):
         # We want to get a list of all of the available asset states in this
         # item's assets and will return that with the preferred display labels
         # including the asset count to be displayed in the filter UI
-        asset_state_qs = asset_qs.values_list("status")
-        asset_state_qs = asset_state_qs.annotate(Count("status")).order_by()
+        asset_state_qs = asset_qs.values_list("transcription_status")
+        asset_state_qs = asset_state_qs.annotate(
+            Count("transcription_status")
+        ).order_by()
 
-        asset_states = {
-            i: "%s (%d)" % (Status.CHOICE_MAP[i], j) for i, j in asset_state_qs
+        status_counts = dict(asset_state_qs)
+
+        asset_statuses = {
+            status: "%s (%d)" % (TranscriptionStatus.CHOICE_MAP[status], count)
+            for status, count in status_counts.items()
         }
 
-        filtered_choices = [("", "All Images")]
-        for val, label in self.fields["status"].choices:
-            if val in asset_states:
-                filtered_choices.append((val, asset_states[val]))
+        filtered_choices = [("", f"All Images ({sum(status_counts.values())})")]
+        for val, label in self.fields["transcription_status"].choices:
+            if val in asset_statuses:
+                filtered_choices.append((val, asset_statuses[val]))
 
-        self.fields["status"].choices = filtered_choices
+        self.fields["transcription_status"].choices = filtered_choices
 
 
 class AdminItemImportForm(forms.Form):

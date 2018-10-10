@@ -11,7 +11,7 @@ from machina.app import board
 from concordia.admin import admin_bulk_import_view
 from exporter import views as exporter_views
 
-from . import trans_urls, views, views_ws
+from . import views, views_ws
 
 for key, value in getattr(settings, "ADMIN_SITE", {}).items():
     setattr(admin.site, key, value)
@@ -60,78 +60,45 @@ tx_urlpatterns = (
     "transcriptions",
 )
 
-ws_urlpatterns = (
-    # FIXME: these should be a regular DRF ViewSets rather than a bunch of inconsistent one-off views
-    [
-        # Web Services
-        re_path(
-            r"^user_profile/(?P<user_id>(.*?))/$", views_ws.UserProfileGet.as_view()
-        ),
-        re_path(r"^user/(?P<user_name>(.*?))/$", views_ws.UserGet.as_view()),
-        re_path(r"^campaign/(?P<slug>(.*?))/$", views_ws.CampaignGet().as_view()),
-        re_path(
-            r"^campaign_by_id/(?P<id>(.*?))/$", views_ws.CampaignGetById().as_view()
-        ),
-        re_path(r"^item_by_id/(?P<item_id>(.*?))/$", views_ws.ItemGetById().as_view()),
-        re_path(r"^asset/(?P<campaign>(.*?))/$", views_ws.AssetsList().as_view()),
-        re_path(
-            r"^asset_by_slug/(?P<campaign>(.*?))/(?P<slug>(.*?))/$",
-            views_ws.AssetBySlug().as_view(),
-        ),
-        re_path(
-            r"^asset_update/(?P<campaign>(.*?))/(?P<slug>(.*?))/$",
-            views_ws.AssetUpdate().as_view(),
-        ),
-        re_path(
-            r"^campaign_asset_random/(?P<campaign>(.*?))/(?P<slug>(.*?))/$",
-            views_ws.AssetRandomInCampaign().as_view(),
-        ),
-        re_path(
-            r"^transcription/(?P<asset>(.*?))/$",
-            views_ws.TranscriptionLastGet().as_view(),
-        ),
-        re_path(
-            r"^transcription_by_user/(?P<user>(.*?))/$",
-            views_ws.TranscriptionByUser().as_view(),
-        ),
-        re_path(
-            r"^transcription_by_asset/(?P<asset_slug>(.*?))/$",
-            views_ws.TranscriptionByAsset().as_view(),
-        ),
-        path(
-            "reserve-asset-for-transcription/<int:asset_pk>/",
-            views.reserve_asset_transcription,
-            name="reserve-asset-for-transcription",
-        ),
-        path(
-            "assets/<int:asset_pk>/transcriptions/submit/",
-            views_ws.TranscriptionCreate().as_view(),
-            name="submit-transcription",
-        ),
-        path(
-            "assets/<int:asset_pk>/tags/",
-            views_ws.UserAssetTagsGet().as_view(),
-            name="get-tags",
-        ),
-        path(
-            "assets/<int:asset_pk>/tags/submit/",
-            views_ws.TagCreate.as_view(),
-            name="submit-tags",
-        ),
-    ],
-    "ws",
-)
-
 urlpatterns = [
-    re_path(r"^$", views.HomeView.as_view(), name="homepage"),
-    path(r"healthz", views.healthz, name="health-check"),
+    path("", views.HomeView.as_view(), name="homepage"),
+    path("healthz", views.healthz, name="health-check"),
     path("about/", views.static_page, name="about"),
     path("instructions/", views.static_page, name="instructions"),
     path("for-educators/", views.static_page, name="for-educators"),
     path("latest/", views.static_page, name="latest"),
-    re_path(r"^contact/$", views.ContactUsView.as_view(), name="contact"),
-    re_path(r"^campaigns/", include(tx_urlpatterns, namespace="transcriptions")),
-    re_path(r"^api/v1/", include(trans_urls)),
+    path("contact/", views.ContactUsView.as_view(), name="contact"),
+    path("campaigns/", include(tx_urlpatterns, namespace="transcriptions")),
+    path(
+        "reserve-asset-for-transcription/<int:asset_pk>/",
+        views.reserve_asset_transcription,
+        name="reserve-asset-for-transcription",
+    ),
+    path(
+        "assets/<int:asset_pk>/transcriptions/save/",
+        views.save_transcription,
+        name="save-transcription",
+    ),
+    path(
+        "transcriptions/<int:pk>/submit/",
+        views.submit_transcription,
+        name="submit-transcription",
+    ),
+    path(
+        "transcriptions/<int:pk>/review/",
+        views.review_transcription,
+        name="review-transcription",
+    ),
+    path(
+        "assets/<int:asset_pk>/tags/",
+        views_ws.UserAssetTagsGet().as_view(),
+        name="get-tags",
+    ),
+    path(
+        "assets/<int:asset_pk>/tags/submit/",
+        views_ws.TagCreate.as_view(),
+        name="submit-tags",
+    ),
     re_path(
         r"^account/register/$",
         views.ConcordiaRegistrationView.as_view(),
@@ -142,11 +109,6 @@ urlpatterns = [
     ),
     url(r"^accounts/", include("django_registration.backends.activation.urls")),
     url(r"^accounts/", include("django.contrib.auth.urls")),
-    re_path(
-        r"^experiments/(.+)/$", views.ExperimentsView.as_view(), name="experiments"
-    ),
-    re_path(r"^wireframes/", include("concordia.experiments.wireframes.urls")),
-
     # TODO: when we upgrade to Django 2.1 we can use the admin site override
     # mechanism (the old one is broken in 2.0): see https://code.djangoproject.com/ticket/27887
     path("admin/bulk-import", admin_bulk_import_view, name="admin-bulk-import"),
@@ -154,7 +116,6 @@ urlpatterns = [
     # Apps
     path("forum/", include(board.urls)),
     path("captcha/", include("captcha.urls")),
-    path("ws/", include(ws_urlpatterns, namespace="ws")),
     re_path(r"^password_reset/$", auth_views.password_reset, name="password_reset"),
     re_path(
         r"^password_reset/done/$",
