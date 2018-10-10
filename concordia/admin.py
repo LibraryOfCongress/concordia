@@ -293,6 +293,8 @@ class ItemAdmin(admin.ModelAdmin):
 
     actions = (publish_action, unpublish_action)
 
+    readonly_fields = ("project",)
+
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         qs = qs.select_related("project", "project__campaign")
@@ -305,20 +307,40 @@ class ItemAdmin(admin.ModelAdmin):
 @admin.register(Asset)
 class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     list_display = (
-        "id",
-        "title",
-        "slug",
-        "truncated_description",
+        "transcription_status",
+        "item_id",
+        "sequence",
         "truncated_media_url",
         "media_type",
-        "sequence",
         "truncated_metadata",
     )
-    list_display_links = ("id", "title", "slug")
+    list_display_links = ("item_id", "sequence")
     prepopulated_fields = {"slug": ("title",)}
-    search_fields = ["title", "media_url", "campaign__title", "project__title"]
-    list_filter = ("item__project__campaign", "item__project", "media_type")
+    search_fields = [
+        "title",
+        "media_url",
+        "campaign__title",
+        "project__title",
+        "item__item_id",
+    ]
+    list_filter = (
+        "item__project__campaign",
+        "item__project",
+        "media_type",
+        "transcription_status",
+    )
     actions = (publish_action, unpublish_action)
+
+    readonly_fields = ("item",)
+
+    ordering = ("item__item_id", "sequence")
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        return qs.select_related("item").order_by("item__item_id", "sequence")
+
+    def item_id(self, obj):
+        return obj.item.item_id
 
     def truncated_media_url(self, obj):
         return format_html(

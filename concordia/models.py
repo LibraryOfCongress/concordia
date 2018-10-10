@@ -180,7 +180,6 @@ class Asset(MetricsModelMixin("asset"), models.Model):
 
     class Meta:
         unique_together = (("slug", "item"),)
-        ordering = ["title", "sequence"]
 
     def __str__(self):
         return self.title
