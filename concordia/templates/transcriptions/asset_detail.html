@@ -170,7 +170,11 @@ Crowd: {{ asset.title }} ({{ asset.item.project.campaign.title }} — {{ asset.i
         }
     });
 </script>
-<script>
-    attemptToReserveAsset("{% url 'reserve-asset-for-transcription' asset.pk %}");
-</script>
+
+{% if transcription_status == "edit" %}
+    <script>
+        attemptToReserveAsset("{% url 'reserve-asset-for-transcription' asset.pk %}");
+    </script>
+{% endif %}
+
 {% endblock body_scripts %}
