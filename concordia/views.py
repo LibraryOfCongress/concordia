@@ -39,6 +39,7 @@ from concordia.models import (
     Item,
     Project,
     Transcription,
+    TranscriptionStatus,
     UserAssetTagCollection,
 )
 from concordia.version import get_concordia_version
@@ -567,7 +568,6 @@ class ReportCampaignView(TemplateView):
     template_name = "transcriptions/report.html"
 
     def get(self, request, campaign_slug):
-        raise NotImplementedError("FIXME: reimplement campaign reporting")
         campaign = get_object_or_404(Campaign, slug=campaign_slug)
 
         try:
@@ -608,21 +608,25 @@ class ReportCampaignView(TemplateView):
         return render(self.request, self.template_name, ctx)
 
     def add_transcription_status_summary_to_projects(self, projects):
-        status_qs = Transcription.objects.filter(asset__item__project__in=projects)
-        status_qs = status_qs.values_list("asset__item__project__id", "status")
-        status_qs = status_qs.annotate(Count("status"))
+        status_qs = Asset.objects.filter(item__project__in=projects)
+        status_qs = status_qs.values_list("item__project__id", "transcription_status")
+        status_qs = status_qs.annotate(Count("transcription_status"))
         project_statuses = {}
 
         for project_id, status_value, count in status_qs:
-            status_name = Status.CHOICE_MAP[status_value]
+            status_name = TranscriptionStatus.CHOICE_MAP[status_value]
             project_statuses.setdefault(project_id, []).append((status_name, count))
 
+        # We'll sort the statuses in the same order they're presented in the choices
+        # list so the display order will be both stable and consistent with the way
+        # we talk about the workflow:
+        sort_order = [j for i, j in TranscriptionStatus.CHOICES]
+
         for project in projects:
-            project.transcription_statuses = project_statuses.get(project.id, [])
-            total_statuses = sum(j for i, j in project.transcription_statuses)
-            project.transcription_statuses.insert(
-                0, ("Not Started", project.asset_count - total_statuses)
-            )
+            statuses = project_statuses.get(project.id, [])
+            statuses.sort(key=lambda i: sort_order.index(i[0]))
+            project.transcription_statuses = statuses
+            project.transcription_statuses
 
 
 @require_POST
