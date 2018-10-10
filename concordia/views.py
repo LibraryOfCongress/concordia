@@ -539,27 +539,6 @@ class ContactUsView(FormView):
         return redirect("contact")
 
 
-class ExperimentsView(TemplateView):
-    def get_template_names(self):
-        return ["experiments/{}.html".format(self.args[0])]
-
-
-class CampaignView(TemplateView):
-    template_name = "transcriptions/create.html"
-
-    def get(self, *args, **kwargs):
-        """
-        GET request to create a collection. Only allow admin access
-        :param args:
-        :param kwargs:
-        :return: redirect to home (/) or render template create.html
-        """
-        if not self.request.user.is_superuser:
-            return HttpResponseRedirect("/")
-        else:
-            return render(self.request, self.template_name)
-
-
 class ReportCampaignView(TemplateView):
     """
     Report about campaign resources and status

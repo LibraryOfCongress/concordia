@@ -83,7 +83,6 @@ INSTALLED_APPS = [
     "concordia.apps.ConcordiaAppConfig",
     "exporter",
     "importer",
-    "concordia.experiments.wireframes",
     "captcha",
     # Machina related apps:
     "mptt",

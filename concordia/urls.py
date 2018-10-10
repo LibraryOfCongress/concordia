@@ -63,7 +63,6 @@ tx_urlpatterns = (
 urlpatterns = [
     path("", views.HomeView.as_view(), name="homepage"),
     path("healthz", views.healthz, name="health-check"),
-
     path("about/", views.static_page, name="about"),
     path("instructions/", views.static_page, name="instructions"),
     path("for-educators/", views.static_page, name="for-educators"),
@@ -110,11 +109,6 @@ urlpatterns = [
     ),
     url(r"^accounts/", include("django_registration.backends.activation.urls")),
     url(r"^accounts/", include("django.contrib.auth.urls")),
-    re_path(
-        r"^experiments/(.+)/$", views.ExperimentsView.as_view(), name="experiments"
-    ),
-    re_path(r"^wireframes/", include("concordia.experiments.wireframes.urls")),
-
     # TODO: when we upgrade to Django 2.1 we can use the admin site override
     # mechanism (the old one is broken in 2.0): see https://code.djangoproject.com/ticket/27887
     path("admin/bulk-import", admin_bulk_import_view, name="admin-bulk-import"),
