@@ -5,14 +5,14 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [("concordia", "0005_auto_20181010_1714")]
+    dependencies = [("concordia", "0003_auto_20181004_2103")]
 
     operations = [
         migrations.AddField(
             model_name="campaign",
             name="thumbnail_image",
             field=models.ImageField(
-                blank=True, null=True, default="", upload_to="campaign-thumbs"
+                blank=True, null=True, default="", upload_to="campaign-thumbnails"
             ),
             preserve_default=False,
         ),
@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
             model_name="project",
             name="thumbnail_image",
             field=models.ImageField(
-                blank=True, null=True, default="", upload_to="project-thumbs"
+                blank=True, null=True, default="", upload_to="project-thumbnails"
             ),
             preserve_default=False,
         ),
