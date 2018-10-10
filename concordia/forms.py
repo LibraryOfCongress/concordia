@@ -16,7 +16,7 @@ class UserRegistrationForm(RegistrationForm):
     newsletterOptIn = forms.BooleanField(
         label="Newsletter",
         required=False,
-        help_text="I would like to receive email updates about new campaigns, upcoming events, and feature improvements.",
+        help_text="Email me about campaign updates, upcoming events, and new features.",
     )
 
 
