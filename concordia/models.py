@@ -85,6 +85,21 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
         return reverse("transcriptions:campaign", args=(self.slug,))
 
 
+class Resource(MetricsModelMixin("resource"), models.Model):
+    sequence = models.PositiveIntegerField(default=1)
+    title = models.TextField(blank=False, max_length=255)
+    resource_url = models.URLField()
+
+    campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = (("sequence", "campaign"),)
+        ordering = ["sequence"]
+
+    def __str__(self):
+        return self.title
+
+
 class Project(MetricsModelMixin("project"), models.Model):
     objects = PublicationManager()
 

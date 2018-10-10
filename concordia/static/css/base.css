@@ -1083,6 +1083,25 @@ div.nav-secondary {
     box-shadow: inset 0 0.1875rem 0.3125rem rgba(0, 0, 0, 0.125);
 }
 
+/* 
+# Campaign Resources Panel
+*/
+
+div.related-links  {
+    background-color:#ddd;
+    border: #000 1px solid;
+    padding:1.5em;
+}
+
+.related-links ul {
+    list-style-type:none;
+    padding-left: unset;
+}
+
+.related-links ul li {
+    padding-top:0.5em;
+}
+
 /*
 * CAPTCHA styling
 */
