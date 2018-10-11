@@ -337,8 +337,8 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     search_fields = [
         "title",
         "media_url",
-        "campaign__title",
-        "project__title",
+        "item__project__campaign__title",
+        "item__project__title",
         "item__item_id",
     ]
     list_filter = (
