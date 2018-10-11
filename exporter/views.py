@@ -4,10 +4,11 @@ import shutil
 
 import bagit
 from django.conf import settings
-from django.http import HttpResponse
-from django.views.generic import TemplateView
 from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse
 from django.utils.decorators import method_decorator
+from django.views.generic import TemplateView
+
 from concordia.models import Asset, Campaign, Transcription, UserAssetTagCollection
 from concordia.storage import ASSET_STORAGE
 
@@ -22,7 +23,7 @@ class ExportCampaignToCSV(TemplateView):
 
     @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
-        campaign = Campaign.objects.get(slug=self.args[0])
+        campaign = Campaign.objects.get(slug=self.kwargs["campaign_slug"])
         asset_list = Asset.objects.filter(item__project__campaign=campaign).order_by(
             "title", "sequence"
         )
@@ -75,7 +76,7 @@ class ExportCampaignToBagit(TemplateView):
 
     @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
-        campaign = Campaign.objects.get(slug=self.args[0])
+        campaign = Campaign.objects.get(slug=self.kwargs["campaign_slug"])
         asset_list = Asset.objects.filter(item__project__campaign=campaign).order_by(
             "title", "sequence"
         )

@@ -26,13 +26,13 @@ tx_urlpatterns = (
             views.ConcordiaAlternateAssetView.as_view(),
             name="alternate-asset",
         ),
-        re_path(
-            r"exportCSV/([^/]+)/$",
+        path(
+            "exportCSV/<slug:campaign_slug>/",
             exporter_views.ExportCampaignToCSV.as_view(),
             name="export-csv",
         ),
-        re_path(
-            r"exportBagIt/([^/]+)/$",
+        path(
+            "exportBagIt/<slug:campaign_slug>/",
             exporter_views.ExportCampaignToBagit.as_view(),
             name="export-bagit",
         ),

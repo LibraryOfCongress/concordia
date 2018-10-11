@@ -1,0 +1,24 @@
+{% extends "admin/change_form.html" %}
+
+{% load i18n admin_urls %}
+
+{% block object-tools-items %}
+    {% if original.pk %}
+        <li>
+            <a href="{% url 'admin:concordia_campaign_export-csv' original.slug %}" class="viewsitelink">
+                Export CSV
+            </a>
+        </li>
+        <li>
+            <a href="{% url 'admin:concordia_campaign_export-bagit' original.slug %}" class="viewsitelink">
+                Export BagIt
+            </a>
+        </li>
+        <li>
+            <a href="{% url 'admin:concordia_campaign_report' original.slug %}" class="viewsitelink">
+                Report
+            </a>
+        </li>
+    {% endif %}
+    {{ block.super }}
+{% endblock %}
