@@ -1,16 +1,3 @@
-### Before running any Compose services, make sure you have an .env file
-# inside your current folder and that it has been populated with the following content:
-#   CONCORDIA_ADMIN_PW=<concordia-admin-pw>
-#   POSTGRESQL_HOST=<localhost or a valid DNS name>
-#   POSTGRESQL_PW=<postgres-pw>
-#   EMAIL_HOST=<your_smtp_email_host_here>
-#   EMAIL_HOST_USER=<your_smtp_email_host_user_here>
-#   EMAIL_HOST_PASSWORD=<your_smtp_email_host_password_here>
-#   DEFAULT_FROM_EMAIL=<your_email_from_address_here>
-#   AWS_ACCESS_KEY_ID=<Refer_confluence_page>
-#   AWS_SECRET_ACCESS_KEY=<Refer_confluence_page>
-#   AWS_REGION=us-east-2
-
 ### Start Docker containers with the following command :
 #  sudo make up
 

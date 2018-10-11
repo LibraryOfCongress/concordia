@@ -22,26 +22,8 @@
                             {{ campaign.short_description }}
                         </div>
                         <div class="col-12 col-md-4">
-                            <!-- TODO: Swap this out -->
                             <a href="{% url 'transcriptions:campaign' campaign.slug %}">
-                                {% if 'Lincoln' in campaign.title %}
-                                    <img src="{% static  'img/AbrahamLincoln.svg' %}" class="img-fluid" alt="{{ campaign.title }} image">
-                                {% elif 'Rosa Parks' in campaign.title %}
-                                    <img src="{% static  'img/rosa-parks-campaign.svg' %}" class="img-fluid" alt="{{ campaign.title }} image">
-                                {% elif 'Civil War' in campaign.title %}
-                                    <!-- <img class="img-fluid" alt="{{ campaign.title }} image" src="{{ MEDIA_URL }}{{campaign.media_url }}"> -->
-                                {% elif 'Clara Barton' in campaign.title %}
-                                    <img src="{% static  'img/clara-barton-campaign.svg' %}" class="img-fluid" alt="{{ campaign.title }} image">
-                                {% elif 'Branch Rickey' in campaign.title %}
-                                    <img src="{% static 'img/branch-rickey-campaign.svg' %}" class="img-fluid" alt="{{ campaign.title }} image">
-                                {% elif 'Mary Church Terrell' in campaign.title %}
-                                    <img src="{% static  'img/MaryChurchTerrell.svg' %}" class="img-fluid" alt="{{ campaign.title }} image">
-                                {% elif 'Frederick Law Olmstead' in campaign.title %}
-                                    <!-- <img class="img-fluid" alt="{{ campaign.title }} image" src="{{ MEDIA_URL }}{{campaign.media_url }}"> -->
-                                {% else %}
-                                    {% comment %} FIXME: when we implement campaign media, we also want a simple way to get the MEDIA_URL-relative thumbnail {% endcomment %}
-                                    <img class="img-fluid" alt="{{ campaign.title }} image" src="{{ MEDIA_URL }}{{ campaign.media_url }}">
-                                {% endif %}
+                            <img src="{{ MEDIA_URL }}{{ campaign.thumbnail_image }}" class="img-fluid" alt="{{ campaign.title }} image">
                             </a>
                         </div>
                     </div>

@@ -1,0 +1,49 @@
+{% extends "admin/change_form.html" %}
+
+{% load i18n admin_urls humanize %}
+
+{% block content %}
+    {{ block.super }}
+
+    {% if transcriptions %}
+        <table>
+            <caption>Transcription History</caption>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Creator</th>
+                    <th>Created</th>
+                    <th>Updated</th>
+                    <th>Submitted</th>
+                    <th>Review Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in transcriptions %}
+                    <tr>
+                        <th><a href="{% url 'admin:concordia_transcription_change' t.id %}">{{ t.id }}</a></th>
+                        <th>{{ t.user }}</th>
+                        <td>{{ t.created_on|naturaltime }}</td>
+                        <td>{{ t.updated_on|naturaltime }}</td>
+                        <td>{{ t.submitted|naturaltime|default:'' }}</td>
+                        <td>
+                            {% if t.rejected %}
+                                Rejected
+                            {% elif t.accepted %}
+                                Accepted
+                            {% endif %}
+                            {% if t.rejected or t.accepted %}
+                                by {{ t.reviewed_by }}
+                            {% endif %}
+                            {% if t.rejected %}
+                                {{ t.rejected|naturaltime }}
+                            {% elif t.accepted %}
+                                {{ t.accepted|naturaltime }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+{% endblock content %}

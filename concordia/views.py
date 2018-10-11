@@ -8,16 +8,18 @@ from smtplib import SMTPException
 import markdown
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
-from django.db import IntegrityError, connection
+from django.db import connection
 from django.db.models import Count
-from django.http import HttpResponse, HttpResponseRedirect
+from django.db.transaction import atomic
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import Http404, get_object_or_404, redirect, render
 from django.template import loader
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.utils.timezone import now
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
@@ -33,12 +35,11 @@ from concordia.forms import (
 )
 from concordia.models import (
     Asset,
-    AssetTranscriptionReservation,
     Campaign,
     Item,
     Project,
-    Status,
     Transcription,
+    TranscriptionStatus,
     UserAssetTagCollection,
 )
 from concordia.version import get_concordia_version
@@ -262,12 +263,6 @@ class ConcordiaAssetView(DetailView):
 
     template_name = "transcriptions/asset_detail.html"
 
-    state_dictionary = {
-        "Save": Status.EDIT,
-        "Submit for Review": Status.SUBMITTED,
-        "Mark Completed": Status.COMPLETED,
-    }
-
     def get_queryset(self):
         asset_qs = Asset.objects.filter(
             item__project__campaign__slug=self.kwargs["campaign_slug"],
@@ -292,6 +287,17 @@ class ConcordiaAssetView(DetailView):
         ctx["project"] = project = item.project
         ctx["campaign"] = project.campaign
 
+        transcription = asset.transcription_set.order_by("-pk").first()
+        ctx["transcription"] = transcription
+
+        # We'll handle the case where an item with no transcriptions should be shown as status=edit here
+        # so the logic doesn't need to be repeated in templates:
+        if transcription:
+            transcription_status = transcription.status.lower()
+        else:
+            transcription_status = "edit"
+        ctx["transcription_status"] = transcription_status
+
         previous_asset = (
             item.asset_set.filter(sequence__lt=asset.sequence)
             .order_by("sequence")
@@ -307,16 +313,6 @@ class ConcordiaAssetView(DetailView):
         if next_asset:
             ctx["next_asset_url"] = next_asset.get_absolute_url()
 
-        # Get the most recent transcription
-        latest_transcriptions = Transcription.objects.filter(
-            asset__slug=asset.slug
-        ).order_by("-updated_on")
-
-        if latest_transcriptions:
-            transcription = latest_transcriptions[0]
-        else:
-            transcription = None
-
         tag_groups = UserAssetTagCollection.objects.filter(asset__slug=asset.slug)
         tags = []
 
@@ -326,22 +322,13 @@ class ConcordiaAssetView(DetailView):
 
         captcha_form = CaptchaEmbedForm()
 
+        # TODO: we need to move this into JavaScript to allow caching the page
         if self.request.user.is_anonymous:
             ctx[
                 "is_anonymous_user_captcha_validated"
             ] = self.is_anonymous_user_captcha_validated()
 
-        ctx.update(
-            {
-                "page_in_use": False,
-                "transcription": transcription,
-                "transcription_status": transcription.status
-                if transcription
-                else Status.EDIT,
-                "tags": tags,
-                "captcha_form": captcha_form,
-            }
-        )
+        ctx.update({"tags": tags, "captcha_form": captcha_form})
 
         return ctx
 
@@ -353,6 +340,106 @@ class ConcordiaAssetView(DetailView):
             ) <= getattr(settings, "CAPTCHA_SESSION_VALID_TIME", 24 * 60 * 60):
                 return True
         return False
+
+
+@require_POST
+@atomic
+def save_transcription(request, *, asset_pk):
+    asset = get_object_or_404(Asset, pk=asset_pk)
+
+    if request.user.is_anonymous:
+        user = get_anonymous_user()
+    else:
+        user = request.user
+
+    supersedes_pk = request.POST.get("supersedes")
+    if not supersedes_pk:
+        superseded = None
+        if asset.transcription_set.filter(supersedes=None).exists():
+            return JsonResponse(
+                {"error": "An open transcription already exists"}, status=409
+            )
+    else:
+        if asset.transcription_set.filter(supersedes=supersedes_pk).exists():
+            return JsonResponse(
+                {"error": "This transcription has been superseded"}, status=409
+            )
+
+        try:
+            superseded = asset.transcription_set.get(pk=supersedes_pk)
+        except Transcription.DoesNotExist:
+            return JsonResponse({"error": "Invalid supersedes value"}, status=400)
+
+    transcription = Transcription(
+        asset=asset, user=user, supersedes=superseded, text=request.POST["text"]
+    )
+    transcription.full_clean()
+    transcription.save()
+
+    return JsonResponse(
+        {
+            "id": transcription.pk,
+            "submissionUrl": reverse("submit-transcription", args=(transcription.pk,)),
+        },
+        status=201,
+    )
+
+
+@require_POST
+def submit_transcription(request, *, pk):
+    transcription = get_object_or_404(Transcription, pk=pk)
+
+    if (
+        transcription.submitted
+        or transcription.asset.transcription_set.filter(supersedes=pk).exists()
+    ):
+        return JsonResponse(
+            {
+                "error": "This transcription has already been updated."
+                " Reload the current status before continuing."
+            },
+            status=400,
+        )
+
+    transcription.submitted = now()
+    transcription.full_clean()
+    transcription.save()
+
+    return JsonResponse({"id": transcription.pk}, status=200)
+
+
+@require_POST
+@login_required
+def review_transcription(request, *, pk):
+    action = request.POST.get("action")
+
+    if action not in ("accept", "reject"):
+        return JsonResponse({"error": "Invalid action"}, status=400)
+
+    transcription = get_object_or_404(Transcription, pk=pk)
+
+    if transcription.accepted or transcription.rejected:
+        return JsonResponse(
+            {"error": "This transcription has already been reviewed"}, status=400
+        )
+
+    if transcription.user.pk == request.user.pk:
+        logger.warning("Attempted self-review for transcription %s", transcription)
+        return JsonResponse(
+            {"error": "You cannot review your own transcription"}, status=400
+        )
+
+    transcription.reviewed_by = request.user
+
+    if action == "accept":
+        transcription.accepted = now()
+    else:
+        transcription.rejected = now()
+
+    transcription.full_clean()
+    transcription.save()
+
+    return JsonResponse({"id": transcription.pk}, status=200)
 
 
 class ConcordiaAlternateAssetView(View):
@@ -452,27 +539,6 @@ class ContactUsView(FormView):
         return redirect("contact")
 
 
-class ExperimentsView(TemplateView):
-    def get_template_names(self):
-        return ["experiments/{}.html".format(self.args[0])]
-
-
-class CampaignView(TemplateView):
-    template_name = "transcriptions/create.html"
-
-    def get(self, *args, **kwargs):
-        """
-        GET request to create a collection. Only allow admin access
-        :param args:
-        :param kwargs:
-        :return: redirect to home (/) or render template create.html
-        """
-        if not self.request.user.is_superuser:
-            return HttpResponseRedirect("/")
-        else:
-            return render(self.request, self.template_name)
-
-
 class ReportCampaignView(TemplateView):
     """
     Report about campaign resources and status
@@ -521,21 +587,25 @@ class ReportCampaignView(TemplateView):
         return render(self.request, self.template_name, ctx)
 
     def add_transcription_status_summary_to_projects(self, projects):
-        status_qs = Transcription.objects.filter(asset__item__project__in=projects)
-        status_qs = status_qs.values_list("asset__item__project__id", "status")
-        status_qs = status_qs.annotate(Count("status"))
+        status_qs = Asset.objects.filter(item__project__in=projects)
+        status_qs = status_qs.values_list("item__project__id", "transcription_status")
+        status_qs = status_qs.annotate(Count("transcription_status"))
         project_statuses = {}
 
         for project_id, status_value, count in status_qs:
-            status_name = Status.CHOICE_MAP[status_value]
+            status_name = TranscriptionStatus.CHOICE_MAP[status_value]
             project_statuses.setdefault(project_id, []).append((status_name, count))
 
+        # We'll sort the statuses in the same order they're presented in the choices
+        # list so the display order will be both stable and consistent with the way
+        # we talk about the workflow:
+        sort_order = [j for i, j in TranscriptionStatus.CHOICES]
+
         for project in projects:
-            project.transcription_statuses = project_statuses.get(project.id, [])
-            total_statuses = sum(j for i, j in project.transcription_statuses)
-            project.transcription_statuses.insert(
-                0, ("Not Started", project.asset_count - total_statuses)
-            )
+            statuses = project_statuses.get(project.id, [])
+            statuses.sort(key=lambda i: sort_order.index(i[0]))
+            project.transcription_statuses = statuses
+            project.transcription_statuses
 
 
 @require_POST

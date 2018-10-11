@@ -55,22 +55,7 @@
             {% for campaign in campaigns|slice:":6" %}
                 <div class="text-center campaign m-1">
                     <a href="{% url 'transcriptions:campaign' campaign.slug %}">
-                        {% if 'Lincoln' in campaign.title %}
-                        <img class="img-home-contribute d-block mx-auto img-fluid" src="{% static 'img/AbrahamLincoln.svg' %}" alt="{{ campaign.title }} image">
-                        {% elif 'Rosa Parks' in campaign.title %}
-                        <img class="img-home-contribute d-block mx-auto img-fluid" src="{% static 'img/rosa-parks-campaign.svg' %}" alt="{{ campaign.title }} image">
-                        {% elif 'Clara Barton' in campaign.title %}
-                        <img class="img-home-contribute d-block mx-auto img-fluid" src="{% static 'img/clara-barton-campaign.svg' %}" alt="{{ campaign.title }} image">
-                        {% elif 'Branch Rickey' in campaign.title %}
-                        <img class="img-home-contribute d-block mx-auto img-fluid" src="{% static 'img/branch-rickey-campaign.svg' %}" alt="{{ campaign.title }} image">
-                        {% elif 'Mary Church Terrell' in campaign.title %}
-                        <img class="img-home-contribute d-block mx-auto img-fluid" src="{% static 'img/MaryChurchTerrell.svg' %}" alt="{{ campaign.title }} image">
-                        {% elif 'Bourne' in campaign.title %}
-                        <img class="img-home-contribute d-block mx-auto img-fluid" src="{% static 'img/WilliamOlandBourne.svg' %}" alt="{{ campaign.title }} image">
-                        {% else %}
-                        {% comment %} FIXME: when we implement campaign media, we also want a simple way to get the MEDIA_URL-relative thumbnail {% endcomment %}
-                        <img class="img-fluid" alt="{{ campaign.title }} image" src="{{ MEDIA_URL }}{{ campaign.media_url }}">
-                        {% endif %}
+                        <img src="{{ MEDIA_URL }}{{ campaign.thumbnail_image }}" class="img-home-contribute d-block mx-auto img-fluid" alt="{{ campaign.title }} image">
                         <h3 class="mt-half">{{ campaign.title }}</h3>
                     </a>
                 </div>
