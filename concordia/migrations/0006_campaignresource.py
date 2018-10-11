@@ -6,7 +6,7 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    dependencies = [("concordia", "0005_thumbnail_images")]
+    dependencies = [("concordia", "0005_campaign_short_description")]
 
     operations = [
         migrations.CreateModel(

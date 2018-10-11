@@ -5,14 +5,12 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('concordia', '0003_auto_20181004_2103'),
-    ]
+    dependencies = [("concordia", "0004_auto_20181010_1715")]
 
     operations = [
         migrations.AddField(
-            model_name='campaign',
-            name='short_description',
+            model_name="campaign",
+            name="short_description",
             field=models.TextField(blank=True),
-        ),
+        )
     ]
