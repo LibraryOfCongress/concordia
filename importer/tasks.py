@@ -16,7 +16,7 @@ from django.template.defaultfilters import slugify
 from django.utils.timezone import now
 from requests.exceptions import HTTPError
 
-from concordia.models import Asset, MediaType
+from concordia.models import Asset, Item, MediaType
 from concordia.storage import ASSET_STORAGE
 from importer.models import ImportItem, ImportItemAsset, ImportJob
 
@@ -259,10 +259,9 @@ def create_item_import_task(self, import_job_pk, item_url):
     resp.raise_for_status()
     item_data = resp.json()
 
-    item, item_created = import_job.project.item_set.get_or_create(
+    item, item_created = Item.objects.get_or_create(
         item_id=get_item_id_from_item_url(item_data["item"]["id"]),
-        item_url=item_url,
-        project=import_job.project,
+        defaults={"item_url": item_url, "project": import_job.project},
     )
 
     import_item, import_item_created = import_job.items.get_or_create(
