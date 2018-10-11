@@ -16,7 +16,7 @@ from django.core.paginator import Paginator
 from django.db import connection
 from django.db.models import Count
 from django.db.transaction import atomic
-from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import Http404, get_object_or_404, redirect, render
 from django.template import loader
 from django.urls import reverse, reverse_lazy
