@@ -215,18 +215,6 @@ a.campaign-image-link:hover {
     color: var(--primary-color);
 }
 
-i.tx-edit {
-    color: var(--text-color-offwhite);
-}
-
-i.tx-submitted {
-    color: var(--secondary-color);
-}
-
-i.tx-completed {
-    color: rgba(22, 201, 74, 1);
-}
-
 a.nav-secondary:first-of-type {
     border-right: solid 0.0675rem var(--bg-darkest-gray);
 }
@@ -1386,4 +1374,9 @@ div.related-links  {
 /* Registration page */
 #registration-form-container > .col-md-6 {
     max-width: 30rem;
+}
+
+.card-deck .card.asset-card {
+    width: 200px;
+    flex-basis: 200px;
 }
