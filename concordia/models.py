@@ -156,7 +156,7 @@ class Item(MetricsModelMixin("item"), models.Model):
 
     def get_absolute_url(self):
         return reverse(
-            "transcriptions:item",
+            "transcriptions:item-detail",
             kwargs={
                 "campaign_slug": self.project.campaign.slug,
                 "project_slug": self.project.slug,

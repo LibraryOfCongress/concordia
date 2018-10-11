@@ -128,7 +128,7 @@ class ConcordiaViewTests(TestCase):
 
         response = self.client.get(
             reverse(
-                "transcriptions:item",
+                "transcriptions:item-detail",
                 args=(i.project.campaign.slug, i.project.slug, i.item_id),
             )
         )

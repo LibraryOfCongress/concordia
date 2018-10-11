@@ -5,7 +5,6 @@ from django.contrib.auth import views as auth_views
 from django.http import Http404, HttpResponseForbidden
 from django.urls import include, path, re_path
 from django.views.defaults import page_not_found, permission_denied, server_error
-from django.views.generic import TemplateView
 from machina.app import board
 
 from concordia.admin import admin_bulk_import_view
@@ -53,8 +52,8 @@ tx_urlpatterns = (
         ),
         path(
             "<slug:campaign_slug>/<slug:project_slug>/<slug:item_id>/",
-            views.ConcordiaItemView.as_view(),
-            name="item",
+            views.ItemDetailView.as_view(),
+            name="item-detail",
         ),
     ],
     "transcriptions",
