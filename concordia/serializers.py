@@ -5,9 +5,6 @@ from rest_framework import serializers
 
 from . import models
 
-S3_BUCKET_NAME = settings.AWS_S3.get("S3_COLLECTION_BUCKET", "")
-S3_CLIENT = boto3.client("s3", settings.AWS_S3.get("REGION", ""))
-
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -94,6 +91,7 @@ class ItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Item
         fields = ("title", "item_id", "thumbnail_url", "assets", "project")
+
 
 
 class AssetSerializer(serializers.HyperlinkedModelSerializer):

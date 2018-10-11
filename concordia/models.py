@@ -62,6 +62,9 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
     title = models.CharField(max_length=80)
     slug = models.SlugField(max_length=80, unique=True)
     description = models.TextField(blank=True)
+    thumbnail_image = models.ImageField(
+        upload_to="campaign-thumbnails", blank=True, null=True
+    )
     short_description = models.TextField(blank=True)
 
     start_date = models.DateTimeField(null=True, blank=True)
@@ -86,6 +89,9 @@ class Project(MetricsModelMixin("project"), models.Model):
 
     title = models.CharField(max_length=80)
     slug = models.SlugField(max_length=80)
+    thumbnail_image = models.ImageField(
+        upload_to="project-thumbnails", blank=True, null=True
+    )
 
     category = models.CharField(max_length=12, blank=True)
     metadata = JSONField(default=metadata_default, blank=True, null=True)
