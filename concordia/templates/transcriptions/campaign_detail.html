@@ -20,15 +20,15 @@
         <div class="col-9">
             <p class="ml-default mb-default hero-text">{{ campaign.description }}</p>
         </div>
-        <div class="col-3 related-links">
-            <h4>Related Links</h4>
-            <ul>
-            {% for resource in campaign.resource_set.all %}
-            <li>
-            <a href="{{ resource.resource_url }}" target="_blank">{{ resource.title }} &raquo;</a>
-            </li>
-            {% endfor %}
-            </ul>
+        <div class="col-3">
+            <div class="related-links">
+                <h4>Related Links</h4>
+                <div class="list-group">
+                    {% for resource in campaign.resource_set.all %}
+                        <a class="list-group-item" href="{{ resource.resource_url }}" target="_blank">{{ resource.title }} <i class="fa fa-external-link-alt"></i></a>
+                    {% endfor %}
+                </div>
+            </div>
         </div>
     </div>
     <div class="row">

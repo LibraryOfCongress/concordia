@@ -1093,13 +1093,10 @@ div.related-links  {
     padding:1.5em;
 }
 
-.related-links ul {
-    list-style-type:none;
-    padding-left: unset;
-}
-
-.related-links ul li {
-    padding-top:0.5em;
+.related-links .list-group-item {
+    background-color:#ddd;
+    border:0;
+    padding-left:unset;
 }
 
 /*

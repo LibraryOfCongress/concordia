@@ -88,8 +88,8 @@ class Resource(MetricsModelMixin("resource"), models.Model):
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
 
     class Meta:
-        unique_together = (("sequence", "campaign"),)
-        ordering = ["sequence"]
+        unique_together = (("campaign", "sequence"),)
+        ordering = ["campaign", "sequence"]
 
     def __str__(self):
         return self.title
