@@ -173,9 +173,6 @@ class CampaignDetailView(DetailView):
     queryset = Campaign.objects.published().order_by("title")
     context_object_name = "campaign"
 
-    def get_queryset(self):
-        return Campaign.objects.filter(slug=self.kwargs["slug"])
-
 
 class ConcordiaProjectView(ListView):
     template_name = "transcriptions/project.html"
@@ -183,11 +180,13 @@ class ConcordiaProjectView(ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        self.project = Project.objects.select_related("campaign").get(
-            slug=self.kwargs["slug"], campaign__slug=self.kwargs["campaign_slug"]
+        self.project = get_object_or_404(
+            Project.objects.published().select_related("campaign"),
+            slug=self.kwargs["slug"],
+            campaign__slug=self.kwargs["campaign_slug"],
         )
 
-        item_qs = self.project.item_set.order_by("item_id")
+        item_qs = self.project.item_set.published().order_by("item_id")
 
         if not self.request.user.is_staff:
             item_qs = item_qs.exclude(published=False)
@@ -225,7 +224,7 @@ class ConcordiaItemView(ListView):
             item_id=self.kwargs["item_id"],
         )
 
-        asset_qs = self.item.asset_set.all().order_by("sequence")
+        asset_qs = self.item.asset_set.published().order_by("sequence")
         asset_qs = asset_qs.select_related(
             "item__project__campaign", "item__project", "item"
         )
@@ -264,7 +263,7 @@ class ConcordiaAssetView(DetailView):
     template_name = "transcriptions/asset_detail.html"
 
     def get_queryset(self):
-        asset_qs = Asset.objects.filter(
+        asset_qs = Asset.objects.published().filter(
             item__project__campaign__slug=self.kwargs["campaign_slug"],
             item__project__slug=self.kwargs["project_slug"],
             item__item_id=self.kwargs["item_id"],
@@ -299,12 +298,14 @@ class ConcordiaAssetView(DetailView):
         ctx["transcription_status"] = transcription_status
 
         previous_asset = (
-            item.asset_set.filter(sequence__lt=asset.sequence)
+            item.asset_set.published()
+            .filter(sequence__lt=asset.sequence)
             .order_by("sequence")
             .last()
         )
         next_asset = (
-            item.asset_set.filter(sequence__gt=asset.sequence)
+            item.asset_set.published()
+            .filter(sequence__gt=asset.sequence)
             .order_by("sequence")
             .first()
         )
@@ -547,22 +548,24 @@ class ReportCampaignView(TemplateView):
     template_name = "transcriptions/report.html"
 
     def get(self, request, campaign_slug):
-        campaign = get_object_or_404(Campaign, slug=campaign_slug)
+        campaign = get_object_or_404(Campaign.objects.published(), slug=campaign_slug)
 
         try:
             page = int(self.request.GET.get("page", "1"))
         except ValueError:
             return redirect(self.request.path)
 
+        campaign_assets = Asset.objects.published().filter(
+            item__project__campaign=campaign
+        )
+
         ctx = {
             "title": campaign.title,
             "campaign_slug": campaign.slug,
-            "total_asset_count": Asset.objects.filter(
-                item__project__campaign=campaign
-            ).count(),
+            "total_asset_count": campaign_assets.count(),
         }
 
-        projects_qs = campaign.project_set.order_by("title")
+        projects_qs = campaign.project_set.published().order_by("title")
 
         projects_qs = projects_qs.annotate(asset_count=Count("item__asset"))
         projects_qs = projects_qs.annotate(
