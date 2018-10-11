@@ -134,7 +134,7 @@ class ConcordiaViewTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, template_name="transcriptions/item.html")
+        self.assertTemplateUsed(response, template_name="transcriptions/item_detail.html")
         self.assertContains(response, i.title)
 
     def test_ConcordiaAssetView_get(self):
