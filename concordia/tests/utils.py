@@ -91,7 +91,12 @@ def create_asset(
     if item is None:
         item = create_item()
     asset = item.asset_set.create(
-        title=title, slug=slug, media_type=media_type, media_url=media_url, **kwargs
+        title=title,
+        slug=slug,
+        media_type=media_type,
+        published=published,
+        media_url=media_url,
+        **kwargs,
     )
     asset.full_clean()
     asset.save()
