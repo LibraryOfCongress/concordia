@@ -318,6 +318,7 @@ class ItemAdmin(admin.ModelAdmin):
 @admin.register(Asset)
 class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     list_display = (
+        "published",
         "transcription_status",
         "item_id",
         "sequence",
@@ -335,6 +336,7 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         "item__item_id",
     ]
     list_filter = (
+        "published",
         "item__project__campaign",
         "item__project",
         "media_type",
