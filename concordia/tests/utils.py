@@ -85,6 +85,7 @@ def create_asset(
     slug="test-asset",
     media_type=MediaType.IMAGE,
     media_url="1.jpg",
+    published=True,
     **kwargs,
 ):
     if item is None:
