@@ -12,6 +12,7 @@ from django.utils.decorators import method_decorator
 from django.utils.html import format_html
 from django.views.decorators.cache import never_cache
 
+from exporter import views as exporter_views
 from importer.tasks import import_items_into_project_from_url
 from importer.utils.excel import slurp_excel
 
@@ -26,6 +27,7 @@ from .models import (
     Transcription,
     UserAssetTagCollection,
 )
+from .views import ReportCampaignView
 
 
 def publish_action(modeladmin, request, queryset):
@@ -200,6 +202,32 @@ class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     list_filter = ("published",)
 
     actions = (publish_action, unpublish_action)
+
+    def get_urls(self):
+        urls = super().get_urls()
+
+        app_label = self.model._meta.app_label
+        model_name = self.model._meta.model_name
+
+        custom_urls = [
+            path(
+                "exportCSV/<path:campaign_slug>",
+                exporter_views.ExportCampaignToCSV.as_view(),
+                name=f"{app_label}_{model_name}_export-csv",
+            ),
+            path(
+                "exportBagIt/<path:campaign_slug>",
+                exporter_views.ExportCampaignToBagit.as_view(),
+                name=f"{app_label}_{model_name}_export-bagit",
+            ),
+            path(
+                "report/<path:campaign_slug>",
+                ReportCampaignView.as_view(),
+                name=f"{app_label}_{model_name}_report",
+            ),
+        ]
+
+        return custom_urls + urls
 
 
 @admin.register(Resource)
