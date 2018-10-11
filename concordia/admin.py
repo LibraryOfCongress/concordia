@@ -21,6 +21,7 @@ from .models import (
     Campaign,
     Item,
     Project,
+    Resource,
     Tag,
     Transcription,
     UserAssetTagCollection,
@@ -199,6 +200,11 @@ class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     list_filter = ("published",)
 
     actions = (publish_action, unpublish_action)
+
+
+@admin.register(Resource)
+class ResourceAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
+    list_display = ("campaign", "sequence", "title", "resource_url")
 
 
 @admin.register(Project)
