@@ -298,22 +298,6 @@ p.hero-secondary.offwhite-text {
     background-color: var(--primary-color);
 }
 
-/* FIXME: stop fighting Bootstrap's model for containers and rows */
-.row {
-    margin-right: 0;
-    margin-left: 0;
-}
-
-.container-fluid {
-    padding-left: 0;
-    padding-right: 0;
-}
-
-.container {
-    margin-left: 2rem;
-    margin-right: 2rem;
-}
-
 main {
     min-height: var(--height-main);
 }
