@@ -16,7 +16,7 @@
 {% endblock breadcrumbs%}
 
 {% block main_content %}
-<div class="container-fluid py-default">
+<div class="container py-default">
     <div class="row">
         <div class="col-md-12">
             <h1 class="mt-default mb-3 ml-3">{{ item.title }}</h1>
@@ -35,28 +35,31 @@
                 </div>
             </div>
         </form>
-        <div class="card-deck flex-wrap">
+        <div class="card-deck justify-content-center">
             {% for a in assets %}
                 {% url 'transcriptions:asset-detail' a.item.project.campaign.slug a.item.project.slug a.item.item_id a.slug as asset_detail_url %}
 
-                <div class="card asset-card text-center" data-transcription-status="{{ a.transcription_status }}">
+                <div class="card asset-card" data-transcription-status="{{ a.transcription_status }}">
                     <img class="card-img" alt="{{ a.slug }}" src="{% asset_media_url a %}">
 
-                    <div class="card-img-overlay d-flex flex-column justify-content-between mb-0">
-                        <a class="card-title" href="{{ asset_detail_url }}">
-                            <h5 class="pl-3 project-title text-color-primary py-2">#{{ a.sequence }}</h5>
+                    <a class="card-title" href="{{ asset_detail_url }}">
+                        #{{ a.sequence }}
+                    </a>
+
+                    <div class="card-actions">
+                        <a class="btn btn-sm btn-block btn-default">
+                            {% if a.transcription_status == 'submitted' %}
+                                <span class="fas fa-list tx-submitted"></span>
+                                Review
+                            {% elif a.transcription_status == 'completed' %}
+                                <span class="fas fa-check tx-completed"></span>
+                                Complete
+                            {% else %}
+                                <span class="fas fa-edit tx-edit"></span>
+                                Transcribe
+                            {% endif %}
                         </a>
                     </div>
-
-                        <div class="card-footer">
-                            {% if a.transcription_status == 'submitted' %}
-                                <h6><i class="fas fa-list tx-submitted"></i> Review</h6>
-                            {% elif a.transcription_status == 'completed' %}
-                                <h6><i class="fas fa-check tx-completed"></i> Complete</h6>
-                            {% else %}
-                                <h6><i class="fas fa-edit tx-edit"></i> Transcribe</h6>
-                            {% endif %}
-                        </div>
                 </div>
             {% endfor %}
         </div>

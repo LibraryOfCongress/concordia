@@ -21,6 +21,7 @@
     --bg-card-title: rgba(51, 51, 51, 0.7); /* #333333 */
     --bg-loading: rgba(51, 51, 51, 0.5); /* #333333 */
     --shadow-color: rgba(51, 51, 51, 0.8); /* #333333 */
+    --light-shadow-color: rgba(51, 51, 51, 0.4); /* #333333 */
     --height-top-nav: 8.0625rem;
     --height-main: calc(100vh - 8.0625rem); /* Subtract height of navbar */
 
@@ -194,25 +195,6 @@ a .campaign-title:hover,
 a .hero-text:hover {
     color: var(--text-color-primary);
     text-decoration: underline;
-}
-
-a h5.project-title,
-a h5.item-title {
-    color: var(--text-color-primary);
-}
-
-a h5.project-title:hover,
-a h5.item-title {
-    color: var(--text-color-primary);
-    text-decoration: underline;
-}
-
-a.campaign-image-link {
-    z-index: 2;
-}
-
-a.campaign-image-link:hover {
-    color: var(--primary-color);
 }
 
 a.nav-secondary:first-of-type {
@@ -897,6 +879,53 @@ div.nav-secondary {
 }
 
 /*
+ * List-like displays for items and assets
+ */
+
+.card-deck .card.asset-card {
+    position: relative;
+    flex-grow: 0;
+    flex-basis: 200px;
+
+    margin: 0.25rem;
+
+    justify-content: center;
+    align-items: center;
+
+    background-color: var(--bg-lightest-gray);
+}
+
+.asset-card .card-title,
+.asset-card .card-actions {
+    position: absolute;
+    left: 0;
+    right: 0;
+
+    color: var(--text-color-offwhite);
+}
+
+.asset-card .card-title {
+    top: 0;
+    padding: 2px;
+
+    font-weight: bold;
+    color: var(--text-color-offwhite);
+    background-color: var(--light-shadow-color);
+}
+
+.asset-card .card-title:hover {
+    background-color: var(--shadow-color);
+}
+
+.asset-card .card-actions {
+    bottom: 0;
+}
+
+.asset-card .card-actions .btn-default:not(:hover) {
+    background-color: var(--light-shadow-color);
+}
+
+/*
 * Contribute page CSS
 */
 
@@ -1358,9 +1387,4 @@ div.related-links  {
 /* Registration page */
 #registration-form-container > .col-md-6 {
     max-width: 30rem;
-}
-
-.card-deck .card.asset-card {
-    width: 200px;
-    flex-basis: 200px;
 }
