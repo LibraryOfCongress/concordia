@@ -25,14 +25,14 @@
         </div>
     </div>
     <div class="row">
-        <div class="d-flex flex-wrap col-12 justify-content-around">
+        <div class="card-deck">
             {% for item in items %}
             <div class="col-12 col-md-4 col-lg-3 mx-2 mb-default card bg-lightest-gray shadow-regular">
-                <a href="{% url 'transcriptions:item' campaign.slug project.slug item.item_id %}">
+                <a href="{% url 'transcriptions:item-detail' campaign.slug project.slug item.item_id %}">
                     <img class="card-img card-img-campaign" alt="{{ item.title }}" src="{{ item.thumbnail_url }}">
                 </a>
 
-                <a href="{% url 'transcriptions:item' campaign.slug project.slug item.item_id %}" class="campaign-image-link">
+                <a href="{% url 'transcriptions:item-detail' campaign.slug project.slug item.item_id %}" class="campaign-image-link">
                     <h6 class="text-center primary-text my-3">{{ item.title }}</h6>
                 </a>
             </div>

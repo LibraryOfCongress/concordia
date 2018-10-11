@@ -201,14 +201,14 @@ class ConcordiaProjectView(ListView):
         )
 
 
-class ConcordiaItemView(ListView):
-    # FIXME: review naming – we treat these as list views for sub-components and
-    # might want to change / combine some views
+class ItemDetailView(ListView):
     """
     Handle GET requests on /campaign/<campaign>/<project>/<item>
+
+    This uses a ListView to paginate the item's assets
     """
 
-    template_name = "transcriptions/item.html"
+    template_name = "transcriptions/item_detail.html"
     context_object_name = "assets"
     paginate_by = 10
 

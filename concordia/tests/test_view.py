@@ -128,13 +128,13 @@ class ConcordiaViewTests(TestCase):
 
         response = self.client.get(
             reverse(
-                "transcriptions:item",
+                "transcriptions:item-detail",
                 args=(i.project.campaign.slug, i.project.slug, i.item_id),
             )
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, template_name="transcriptions/item.html")
+        self.assertTemplateUsed(response, template_name="transcriptions/item_detail.html")
         self.assertContains(response, i.title)
 
     def test_ConcordiaAssetView_get(self):

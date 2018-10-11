@@ -4,7 +4,9 @@
 {% load staticfiles %}
 {% load concordia_media_tags %}
 
-{% block title %}Concordia - {{ campaign.title }}{% endblock title %}
+{% block title %}
+Crowd: {{ item.title }} ({{ campaign.title }} — {{ project.title }})
+{% endblock title %}
 
 {% block head_content %}{% endblock head_content %}
 
@@ -16,7 +18,7 @@
 {% endblock breadcrumbs%}
 
 {% block main_content %}
-<div class="container-fluid py-default">
+<div class="container py-default">
     <div class="row">
         <div class="col-md-12">
             <h1 class="mt-default mb-3 ml-3">{{ item.title }}</h1>
@@ -35,32 +37,31 @@
                 </div>
             </div>
         </form>
-        <div class="d-flex flex-wrap col-12 justify-content-around">
+        <div class="card-deck justify-content-center">
             {% for a in assets %}
                 {% url 'transcriptions:asset-detail' a.item.project.campaign.slug a.item.project.slug a.item.item_id a.slug as asset_detail_url %}
 
-                <div class="col-12 col-md-4 col-lg-3 px-2 mb-default" data-asset-status="{{ a.status|lower }}">
-                    {% if a.status == 'Submitted' %}
-                        <div class="w-100 pt-2 bg-primary-color">
-                            <i class="fas fa-list tx-submitted px-2 offwhite-text"></i>
-                            <h6 class="offwhite-text d-inline">Review</h6>
-                        </div>
-                    {% elif a.status == 'Completed' %}
-                        <div class="w-100 pt-2 bg-primary-color">
-                            <i class="fas fa-check tx-completed px-2 offwhite-text"></i>
-                            <h6 class="offwhite-text d-inline">Complete</h6>
-                        </div>
-                    {% else %}
-                        <div class="w-100 pt-2 bg-primary-color">
-                            <i class="fas fa-edit tx-edit px-2 offwhite-text"></i>
-                            <h6 class="offwhite-text d-inline">Transcribe</h6>
-                        </div>
-                    {% endif %}
+                <div class="card asset-card" data-transcription-status="{{ a.transcription_status }}">
+                    <img class="card-img" alt="{{ a.slug }}" src="{% asset_media_url a %}">
 
-                    <a href="{{ asset_detail_url }}">
-                        <img class="img-fluid card-img-campaign" alt="{{ a.slug }}" src="{% asset_media_url a %}">
-                        <h5 class="pl-3 project-title text-color-primary py-2">Image {{ a.sequence }}</h5>
+                    <a class="card-title" href="{{ asset_detail_url }}">
+                        #{{ a.sequence }}
                     </a>
+
+                    <div class="card-actions">
+                        <a class="btn btn-sm btn-block btn-default">
+                            {% if a.transcription_status == 'submitted' %}
+                                <span class="fas fa-list tx-submitted"></span>
+                                Review
+                            {% elif a.transcription_status == 'completed' %}
+                                <span class="fas fa-check tx-completed"></span>
+                                Complete
+                            {% else %}
+                                <span class="fas fa-edit tx-edit"></span>
+                                Transcribe
+                            {% endif %}
+                        </a>
+                    </div>
                 </div>
             {% endfor %}
         </div>
