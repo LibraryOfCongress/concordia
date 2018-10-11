@@ -271,7 +271,10 @@ def create_item_import_task(self, import_job_pk, item_url):
     if not item_created:
         logger.warning("Not reprocessing existing item %s", item)
         import_item.status = "Not reprocessing existing item %s" % item
-        import_item.completed = now()
+        import_item.completed = import_item.last_started = now()
+        import_item.task_id = self.request.id
+        import_item.full_clean()
+        import_item.save()
         return
 
     import_item.item.metadata.update(item_data)
