@@ -49,12 +49,14 @@ Crowd: {{ asset.title }} ({{ asset.item.project.campaign.title }} — {{ asset.i
     <div id="navigation-container" class="row py-2">
         <nav id="asset-navigation" class="d-flex col justify-content-between">
             <div class="btn-group btn-group-sm" role="navigation" aria-label="Links to related pages">
-                {% if previous_asset_url %}
-                    <a class="btn btn-default" href="{{ previous_asset_url }}">&larr; Previous Page</a>
-                {% endif %}
-                {% if next_asset_url %}
-                    <a class="btn btn-default" href="{{ next_asset_url }}">Next Page &rarr;</a>
-                {% endif %}
+                <a class="btn btn-default {% if not previous_asset_url %}disabled{% endif %}" {% if previous_asset_url %}href="{{ previous_asset_url }}"{% else %}aria-disabled="true"{% endif %}>
+                    <span class="fas fa-chevron-left"></span>
+                    <span class="sr-only">Previous Page</span>
+                </a>
+                <a class="btn btn-default {% if not next_asset_url %}disabled{% endif %}" {% if next_asset_url %}href="{{ next_asset_url }}"{% else %}aria-disabled="true"{% endif %}>
+                    <span class="fas fa-chevron-right"></span>
+                    <span class="sr-only">Next Page</span>
+                </a>
             </div>
             <div class="btn-group btn-group-sm" role="navigation" aria-label="Link to the next editable page">
                 <a class="btn btn-default" href="{{ next_asset_url }}">Next Page &rarr;</a>
