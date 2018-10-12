@@ -254,6 +254,19 @@ class ItemDetailView(ListView):
     def get_context_data(self, **kwargs):
         res = super().get_context_data(**kwargs)
 
+        # We'll collect some extra stats for the progress bar. We can reuse the values
+        # which are calculated for the transcription status filters but that displays
+        # items as open for edit whether or not anyone has started transcribing them.
+        # For the progress bar, we'll only count the records which have at least one
+        # transcription, no matter how far along it is:
+
+        contributors = Transcription.objects.filter(asset__item=self.item).aggregate(
+            Count("user", distinct=True),
+            Count("asset", distinct=True),
+        )
+
+        in_progress_percent = round(100 * (contributors["asset__count"] / len(self.object_list)))
+
         res.update(
             {
                 "campaign": self.item.project.campaign,
@@ -261,6 +274,8 @@ class ItemDetailView(ListView):
                 "item": self.item,
                 "filter_form": self.filter_form,
                 "transcription_status_counts": self.transcription_status_counts,
+                "contributor_count": contributors["user__count"],
+                "in_progress_percent": in_progress_percent
             }
         )
         return res
