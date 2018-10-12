@@ -345,6 +345,12 @@ class ConcordiaAssetView(DetailView):
         if next_asset:
             ctx["next_asset_url"] = next_asset.get_absolute_url()
 
+        ctx["asset_navigation"] = (
+            item.asset_set.published()
+            .order_by("sequence")
+            .values_list("sequence", "slug")
+        )
+
         tag_groups = UserAssetTagCollection.objects.filter(asset__slug=asset.slug)
         tags = []
 
