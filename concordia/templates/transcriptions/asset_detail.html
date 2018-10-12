@@ -78,7 +78,7 @@ Crowd: {{ asset.title }} ({{ asset.item.project.campaign.title }} — {{ asset.i
             </div>
 
             <div class="btn-group btn-group-sm align-self-end" role="navigation" aria-label="Link to the next editable page">
-                <a class="btn btn-default" href="{{ next_asset_url }}">Next Page &rarr;</a>
+                <a class="btn btn-default" href="{% url "transcriptions:redirect-to-next-transcribable-asset" campaign.slug project.slug %}">Go to next page needing to be transcribed &rarr;</a>
             </div>
         </nav>
     </div>
@@ -113,8 +113,8 @@ Crowd: {{ asset.title }} ({{ asset.item.project.campaign.title }} — {{ asset.i
                                 <button id="save-transcription-button" disabled type="submit" class="btn btn-primary">Save</button>
                                 <button id="submit-transcription-button" disabled type="button" class="btn btn-primary">Submit for Review</button>
                             {% elif transcription_status == 'submitted' and user.is_authenticated and transcription.user.pk != user.pk %}
+                                <button id="reject-transcription-button" disabled type="button" class="btn btn-primary">Edit</button>
                                 <button id="accept-transcription-button" disabled type="button" class="btn btn-primary">Accept</button>
-                                <button id="reject-transcription-button" disabled type="button" class="btn btn-primary">Request Changes</button>
                             {% endif %}
                         </div>
                     {% endspaceless %}
