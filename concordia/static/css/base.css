@@ -50,7 +50,6 @@ h1 {
     font-size: 3rem;
     line-height: 125%;
     font-weight: bold;
-    text-transform: uppercase;
     color: var(--text-color-primary);
     margin-bottom: 1em;
 }
@@ -70,7 +69,6 @@ h2 {
     font-size: 1.5rem;
     line-height: 125%;
     font-weight: bold;
-    text-transform: uppercase;
     color: var(--text-color-primary);
 }
 
@@ -916,6 +914,15 @@ div.nav-secondary {
 
 .asset-card .card-actions .btn-default:not(:hover) {
     background-color: var(--light-shadow-color);
+}
+
+/*
+ * Homeage customizations
+ */
+
+.view-homepage h1,
+.view-homepage h2 {
+    text-transform: uppercase;
 }
 
 /*
