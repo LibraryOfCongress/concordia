@@ -105,13 +105,6 @@ h5 {
     font-weight: normal;
 }
 
-h5.small {
-    font-family: 'Open Sans', sans-serif;
-    font-size: 0.75rem;
-    font-weight: normal;
-    text-transform: uppercase;
-}
-
 h6 {
     font-family: 'Open Sans', sans-serif;
     font-size: 0.875rem;
