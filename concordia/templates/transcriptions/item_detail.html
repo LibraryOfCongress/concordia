@@ -26,8 +26,8 @@ Crowd: {{ item.title }} ({{ campaign.title }} — {{ project.title }})
         </div>
         <div class="col-md-4">
             {% widthratio in_progress_percent paginator.count 100 as edit_percent %}
-            {% widthratio transcription_status_counts.submitted paginator.count 100 as submitted_percent %}
-            {% widthratio transcription_status_counts.completed paginator.count 100 as completed_percent %}
+            {% widthratio transcription_status_counts.submitted|default:0 paginator.count 100 as submitted_percent %}
+            {% widthratio transcription_status_counts.completed|default:0 paginator.count 100 as completed_percent %}
             <div class="row text-center">
                 <div class="col-md-4">
                     {{ in_progress_percent }}% in progress
