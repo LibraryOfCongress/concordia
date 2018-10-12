@@ -37,10 +37,7 @@
 }
 
 body {
-    top: 0;
-    left: 0;
     color: var(--text-color-primary);
-    overflow-x: hidden;
     border-top: 0.25rem solid var(--primary-color);
     background-color: var(--bg-offwhite);
 }
@@ -284,18 +281,6 @@ hr {
     color: var(--bg-dark-gray);
 }
 
-.navbar {
-    padding: 0;
-}
-
-.navbar-toggler {
-    margin: 0;
-}
-
-.navbar-toggler-icon:focus {
-    outline: none;
-}
-
 .navbar-brand {
     padding-top: 0;
     padding-bottom: 0;
@@ -325,10 +310,6 @@ div.nav-secondary {
 
 .border-login-register {
     border-left: solid 0.0675 var(--bg-darkest-gray);
-}
-
-.border-bottom-artifacts {
-    border-bottom: solid 0.125rem var(--bg-divider);
 }
 
 .border-left-home-contribute {
@@ -373,13 +354,6 @@ div.nav-secondary {
     width: 100%;
     overflow: hidden;
     align-self: flex-end !important;
-}
-
-.padding-header {
-    padding-top: calc(
-        (28.125rem - 9.1875rem) / 2
-    ); /* vertically center text and button */
-    padding-bottom: calc((28.125rem - 9.1875rem) / 2);
 }
 
 .margin-default,
@@ -505,9 +479,6 @@ div.nav-secondary {
 
 /* MD breakpoint and below */
 @media (max-width: 991.98px) {
-    .border-bottom-artifacts {
-        border-bottom: solid 0px transparent;
-    }
     .border-left-home-contribute {
         border-left: solid 0px transparent;
     }
