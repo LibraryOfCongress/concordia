@@ -233,7 +233,17 @@ class ItemDetailView(ListView):
     def apply_asset_filters(self, asset_qs):
         """Use optional GET parameters to filter the asset list"""
 
-        self.filter_form = form = self.form_class(asset_qs, self.request.GET)
+        # We want to get a list of all of the available asset states in this
+        # item's assets and will return that with the preferred display labels
+        # including the asset count to be displayed in the filter UI
+        asset_state_qs = asset_qs.values_list("transcription_status")
+        asset_state_qs = asset_state_qs.annotate(
+            Count("transcription_status")
+        ).order_by()
+
+        self.transcription_status_counts = status_counts = dict(asset_state_qs)
+
+        self.filter_form = form = self.form_class(status_counts, self.request.GET)
         if form.is_valid():
             asset_qs = asset_qs.filter(
                 **{k: v for k, v in form.cleaned_data.items() if v}
@@ -244,12 +254,33 @@ class ItemDetailView(ListView):
     def get_context_data(self, **kwargs):
         res = super().get_context_data(**kwargs)
 
+        # We'll collect some extra stats for the progress bar. We can reuse the values
+        # which are calculated for the transcription status filters but that displays
+        # items as open for edit whether or not anyone has started transcribing them.
+        # For the progress bar, we'll only count the records which have at least one
+        # transcription, no matter how far along it is:
+
+        contributors = Transcription.objects.filter(asset__item=self.item).aggregate(
+            Count("user", distinct=True), Count("asset", distinct=True)
+        )
+
+        asset_count = len(self.object_list)
+        if asset_count:
+            in_progress_percent = round(
+                100 * (contributors["asset__count"] / asset_count)
+            )
+        else:
+            in_progress_percent = 0
+
         res.update(
             {
                 "campaign": self.item.project.campaign,
                 "project": self.item.project,
                 "item": self.item,
                 "filter_form": self.filter_form,
+                "transcription_status_counts": self.transcription_status_counts,
+                "contributor_count": contributors["user__count"],
+                "in_progress_percent": in_progress_percent,
             }
         )
         return res

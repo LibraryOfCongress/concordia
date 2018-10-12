@@ -20,9 +20,33 @@ Crowd: {{ item.title }} ({{ campaign.title }} — {{ project.title }})
 {% block main_content %}
 <div class="container py-default">
     <div class="row">
-        <div class="col-md-12">
+        <div class="col-md-8">
             <h1 class="mt-default mb-3 ml-3">{{ item.title }}</h1>
             <p class="ml-default mb-default hero-text">{{ item.description }}</p>
+        </div>
+        <div class="col-md-4">
+            {% widthratio in_progress_percent paginator.count 100 as edit_percent %}
+            {% widthratio transcription_status_counts.submitted|default:0 paginator.count 100 as submitted_percent %}
+            {% widthratio transcription_status_counts.completed|default:0 paginator.count 100 as completed_percent %}
+            <div class="row text-center">
+                <div class="col-md-4">
+                    {{ in_progress_percent }}% in progress
+                </div>
+                <div class="col-md-4">
+                    {{ completed_percent }}% complete
+                </div>
+                <div class="col-md-4">
+                    {{ contributor_count|intcomma }} contributors
+                </div>
+            </div>
+            <div class="progress" style="height: 2rem">
+                <div title="In Progress" class="progress-bar progress-bar-striped progress-bar-animated bg-warning" role="progressbar" style="width: {{ edit_percent }}%" aria-valuenow="{{ edit_percent }}" aria-valuemin="0" aria-valuemax="100">
+                </div>
+                <div title="Submitted for Review" class="progress-bar bg-info" role="progressbar" style="width: {{ submitted_percent }}%" aria-valuenow="{{ submitted_percent }}" aria-valuemin="0" aria-valuemax="100">
+                </div>
+                <div title="Completed" class="progress-bar bg-success" role="progressbar" style="width: {{ completed_percent }}%" aria-valuenow="{{ completed_percent }}" aria-valuemin="0" aria-valuemax="100">
+                </div>
+            </div>
         </div>
     </div>
     <div class="row">
