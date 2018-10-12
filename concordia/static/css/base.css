@@ -30,7 +30,7 @@
         100vh - (8.0625rem + 1.59375rem + 2.375rem)
     );
 
-    /* Subtract height of navbar, breadcrumd, and nav pills */
+    /* Subtract height of navbar, breadcrumbs, and nav pills */
     --height-contribute-input: calc(50vh - 5.96875rem);
     --height-tags-input: calc(50vh - 2.625rem);
     --top-tags-input: calc(50vh - 0.75rem);
@@ -867,6 +867,25 @@ div.nav-secondary {
 
 .shadow-regular {
     box-shadow: 0 0 0.25rem var(--shadow-color);
+}
+
+/*
+ * Common navigational elements
+ */
+
+.breadcrumb {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: start;
+    align-items: start;
+}
+
+.breadcrumb-item {
+    max-width: 20em;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
 }
 
 /*
