@@ -79,18 +79,8 @@ class AssetFilteringForm(forms.Form):
         widget=forms.Select(attrs={"class": "form-control"}),
     )
 
-    def __init__(self, asset_qs, *args, **kwargs):
+    def __init__(self, status_counts, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        # We want to get a list of all of the available asset states in this
-        # item's assets and will return that with the preferred display labels
-        # including the asset count to be displayed in the filter UI
-        asset_state_qs = asset_qs.values_list("transcription_status")
-        asset_state_qs = asset_state_qs.annotate(
-            Count("transcription_status")
-        ).order_by()
-
-        status_counts = dict(asset_state_qs)
 
         asset_statuses = {
             status: "%s (%d)" % (TranscriptionStatus.CHOICE_MAP[status], count)

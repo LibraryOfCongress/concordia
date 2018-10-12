@@ -233,7 +233,17 @@ class ItemDetailView(ListView):
     def apply_asset_filters(self, asset_qs):
         """Use optional GET parameters to filter the asset list"""
 
-        self.filter_form = form = self.form_class(asset_qs, self.request.GET)
+        # We want to get a list of all of the available asset states in this
+        # item's assets and will return that with the preferred display labels
+        # including the asset count to be displayed in the filter UI
+        asset_state_qs = asset_qs.values_list("transcription_status")
+        asset_state_qs = asset_state_qs.annotate(
+            Count("transcription_status")
+        ).order_by()
+
+        self.transcription_status_counts = status_counts = dict(asset_state_qs)
+
+        self.filter_form = form = self.form_class(status_counts, self.request.GET)
         if form.is_valid():
             asset_qs = asset_qs.filter(
                 **{k: v for k, v in form.cleaned_data.items() if v}
@@ -250,6 +260,7 @@ class ItemDetailView(ListView):
                 "project": self.item.project,
                 "item": self.item,
                 "filter_form": self.filter_form,
+                "transcription_status_counts": self.transcription_status_counts,
             }
         )
         return res
