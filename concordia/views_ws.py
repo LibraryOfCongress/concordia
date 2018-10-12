@@ -70,8 +70,8 @@ class TagCreate(generics.ListCreateAPIView):
     queryset = Tag.objects.all()
 
     @atomic
-    def post(self, request, *, pk):
-        asset = get_object_or_404(Asset, pk=pk)
+    def post(self, request, *, asset_pk):
+        asset = get_object_or_404(Asset, pk=asset_pk)
 
         if request.user.username == "anonymous":
             raise PermissionDenied()
@@ -108,7 +108,7 @@ class TagCreate(generics.ListCreateAPIView):
             if tag not in all_submitted_tags:
                 user_tags.tags.remove(tag)
 
-        all_tags_qs = Tag.objects.filter(userassettagcollection__asset__pk=pk)
+        all_tags_qs = Tag.objects.filter(userassettagcollection__asset__pk=asset_pk)
         all_tags = all_tags_qs.values_list("value", flat=True)
 
         return Response({"user_tags": tags, "all_tags": all_tags})
