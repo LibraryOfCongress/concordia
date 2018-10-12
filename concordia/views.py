@@ -35,6 +35,7 @@ from concordia.forms import (
 )
 from concordia.models import (
     Asset,
+    AssetTranscriptionReservation,
     Campaign,
     Item,
     Project,
@@ -345,6 +346,12 @@ class ConcordiaAssetView(DetailView):
         if next_asset:
             ctx["next_asset_url"] = next_asset.get_absolute_url()
 
+        ctx["asset_navigation"] = (
+            item.asset_set.published()
+            .order_by("sequence")
+            .values_list("sequence", "slug")
+        )
+
         tag_groups = UserAssetTagCollection.objects.filter(asset__slug=asset.slug)
         tags = []
 
@@ -472,48 +479,6 @@ def review_transcription(request, *, pk):
     transcription.save()
 
     return JsonResponse({"id": transcription.pk}, status=200)
-
-
-class ConcordiaAlternateAssetView(View):
-    """
-    Class to handle when user opts to work on an alternate asset because another user is already working
-    on the original page
-    """
-
-    def post(self, *args, **kwargs):
-        """
-        handle the POST request from the AJAX call in the template when user opts to work on alternate page
-        :param request:
-        :param args:
-        :param kwargs:
-        :return: alternate url the client will use to redirect to
-        """
-
-        if self.request.is_ajax():
-            json_dict = json.loads(self.request.body)
-            campaign_slug = json_dict["campaign"]
-            asset_slug = json_dict["asset"]
-        else:
-            campaign_slug = self.request.POST.get("campaign", None)
-            asset_slug = self.request.POST.get("asset", None)
-
-        if campaign_slug and asset_slug:
-            response = requests.get(
-                "%s://%s/ws/campaign_asset_random/%s/%s"
-                % (
-                    self.request.scheme,
-                    self.request.get_host(),
-                    campaign_slug,
-                    asset_slug,
-                ),
-                cookies=self.request.COOKIES,
-            )
-            random_asset_json_val = json.loads(response.content.decode("utf-8"))
-
-            return HttpResponse(
-                "/campaigns/%s/asset/%s/"
-                % (campaign_slug, random_asset_json_val["slug"])
-            )
 
 
 class ContactUsView(FormView):
@@ -682,8 +647,6 @@ def reserve_asset_transcription(request, *, asset_pk):
     # We're relying on the database to meet our integrity requirements and since
     # this is called periodically we want to be fairly fast until we switch to
     # something like Redis.
-    #
-    #
 
     with connection.cursor() as cursor:
         cursor.execute(
@@ -705,3 +668,40 @@ def reserve_asset_transcription(request, *, asset_pk):
             return HttpResponse(status=409)
 
     return HttpResponse(status=204)
+
+
+@atomic
+def redirect_to_next_transcribable_asset(request, *, campaign_slug, project_slug):
+    project = get_object_or_404(
+        Project.objects.published(), campaign__slug=campaign_slug, slug=project_slug
+    )
+
+    if not request.user.is_authenticated:
+        user = get_anonymous_user()
+    else:
+        user = request.user
+
+    potential_assets = Asset.objects.select_for_update(skip_locked=True, of=("self",))
+    potential_assets = potential_assets.filter(
+        item__project=project, transcription_status=TranscriptionStatus.EDIT
+    )
+    potential_assets = potential_assets.filter(assettranscriptionreservation=None)
+
+    for potential_asset in potential_assets:
+        res = AssetTranscriptionReservation(user=user, asset=potential_asset)
+        res.full_clean()
+        res.save()
+        return redirect(
+            "transcriptions:asset-detail",
+            project.campaign.slug,
+            project.slug,
+            potential_asset.item.item_id,
+            potential_asset.slug,
+        )
+    else:
+        messages.info(
+            request, "There are no remaining pages to be transcribed in this project!"
+        )
+        return redirect(
+            "transcriptions:project-detail", project.campaign.slug, project.slug
+        )

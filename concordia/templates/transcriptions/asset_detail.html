@@ -18,34 +18,14 @@ Crowd: {{ asset.title }} ({{ asset.item.project.campaign.title }} — {{ asset.i
     <li class="breadcrumb-item active">{{ asset.title }}</li>
 {% endblock breadcrumbs %}
 
+{% block extra_body_classes %}d-flex flex-column{% endblock %}
+{% block extra_main_classes %}flex-grow-1 d-flex flex-column{% endblock %}
+
 {% block main_content %}
-<div class="container-fluid px-0">
-    <div class="row bg-darkest-gray px-2 py-2">
-
-        <div class="col-6">
-            <div id="asset-image" class="asset-image bg-offwhite">
-            </div>
-            <div class="contribute-instructions col-12" id="contribute-instructions">
-                <div class="instruction-window bg-offwhite shadow-regular collapse" id="instruction-window">
-                    <p class="px-3 px-md-default py-2 py-md-3">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-                    </p>
-                </div>
-                <button class="btn btn-default w-100" type="button" id="instruction-button" data-toggle="collapse" data-target="#instruction-window" aria-expanded="false" aria-controls="instruction-window">Instructions</button>
-            </div>
-        </div>
-
-        <div class="col-6 p-2 contribute-box d-flex flex-column flex-nowrap justify-content-between" id="contribute-box">
-            <nav id="asset-navigation" class="d-flex justify-content-end">
-                <div class="btn-group btn-group-sm" role="navigation" aria-label="Links to related pages">
-                {% if previous_asset_url %}
-                    <a class="btn btn-secondary" href="{{ previous_asset_url }}">&larr; Previous Page</a>
-                {% endif %}
-                {% if next_asset_url %}
-                    <a class="btn btn-secondary" href="{{ next_asset_url }}">Next Page &rarr;</a>
-                {% endif %}
-                </div>
-            </nav>
-            <table class="table-dark table-compact table-striped offwhite-text small">
+<div id="contribute-main-content" class="container-fluid flex-grow-1 d-flex flex-column">
+    <div id="metadata-container" class="row">
+        <table class="d-inline table table-sm mx-3">
+            <tbody>
                 <tr>
                     <th>Status</th>
                     <td class="tx-status-display">
@@ -63,13 +43,57 @@ Crowd: {{ asset.title }} ({{ asset.item.project.campaign.title }} — {{ asset.i
                         </div>
                     </td>
                 </tr>
-            </table>
+            </tbody>
+        </table>
+    </div>
+    <div id="navigation-container" class="row py-2">
+        <nav id="asset-navigation" class="d-flex flex-grow-1 justify-content-between align-items-center" role="navigation">
+            <div class="d-flex align-items-center">
+                <form onsubmit="document.location.href = document.getElementById('asset-selection').value; return false">
+                    <div class="input-group input-group-sm">
+                        <div class="input-group-prepend">
+                            <label class="input-group-text" for="asset-selection">Page</a>
+                        </div>
+                        <select id="asset-selection" class="custom-select custom-select-sm">
+                            {% for sequence, slug in asset_navigation %}
+                                <option {% if sequence == asset.sequence %}selected{% endif %} value="{% url 'transcriptions:asset-detail' campaign.slug project.slug item.item_id slug %}">{{ sequence }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="input-group-append">
+                            <button type="submit" class="btn btn-outline-default">Go</button>
+                        </div>
+                    </div>
+                </form>
 
+                <div class="btn-group btn-group-sm ml-2">
+                    <a class="btn btn-default {% if not previous_asset_url %}disabled{% endif %}" {% if previous_asset_url %}href="{{ previous_asset_url }}"{% else %}aria-disabled="true"{% endif %}>
+                        <span class="fas fa-chevron-left"></span>
+                        <span class="sr-only">Previous Page</span>
+                    </a>
+                    <a class="btn btn-default {% if not next_asset_url %}disabled{% endif %}" {% if next_asset_url %}href="{{ next_asset_url }}"{% else %}aria-disabled="true"{% endif %}>
+                        <span class="fas fa-chevron-right"></span>
+                        <span class="sr-only">Next Page</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="btn-group btn-group-sm align-self-end" role="navigation" aria-label="Link to the next editable page">
+                <a class="btn btn-default" href="{% url "transcriptions:redirect-to-next-transcribable-asset" campaign.slug project.slug %}">Go to next page needing to be transcribed &rarr;</a>
+            </div>
+        </nav>
+    </div>
+    <div id="contribute-container" class="row flex-grow-1 pb-2">
+        <div class="col-6">
+            <div id="asset-image" class="h-100 bg-dark"></div>
+        </div>
+
+        <div class="col-6 d-flex flex-column flex-nowrap justify-content-between">
             <div class="flex-grow-1 d-flex flex-column">
-                <form id="transcription-editor" class="ajax-submission h-100 d-flex flex-column" method="post" action="{% url 'save-transcription' asset_pk=asset.pk %}" data-transcription-status="{{ transcription_status }}" {% if transcription %}data-transcription-id="{{ transcription.pk|default:'' }}" data-submit-url="{% url 'submit-transcription' pk=transcription.pk %}" data-review-url="{% url 'review-transcription' pk=transcription.pk %}"{% endif %}>
+                <form id="transcription-editor" class="ajax-submission flex-grow-1 d-flex flex-column" method="post" action="{% url 'save-transcription' asset_pk=asset.pk %}" data-transcription-status="{{ transcription_status }}" {% if transcription %}data-transcription-id="{{ transcription.pk|default:'' }}" data-submit-url="{% url 'submit-transcription' pk=transcription.pk %}" data-review-url="{% url 'review-transcription' pk=transcription.pk %}"{% endif %}>
                     {% csrf_token %}
-
                     <input type="hidden" name="supersedes" value="{{ transcription.pk|default:'' }}" />
+
+                    <h2>Transcription</h2>
 
                     {% spaceless %}
                         <textarea readonly class="form-control w-100 rounded flex-grow-1" name="text" id="transcription-input" placeholder="Go ahead, start typing. You got this!" aria-label="Transcription input">
@@ -89,23 +113,25 @@ Crowd: {{ asset.title }} ({{ asset.item.project.campaign.title }} — {{ asset.i
                                 <button id="save-transcription-button" disabled type="submit" class="btn btn-primary">Save</button>
                                 <button id="submit-transcription-button" disabled type="button" class="btn btn-primary">Submit for Review</button>
                             {% elif transcription_status == 'submitted' and user.is_authenticated and transcription.user.pk != user.pk %}
+                                <button id="reject-transcription-button" disabled type="button" class="btn btn-primary">Edit</button>
                                 <button id="accept-transcription-button" disabled type="button" class="btn btn-primary">Accept</button>
-                                <button id="reject-transcription-button" disabled type="button" class="btn btn-primary">Request Changes</button>
                             {% endif %}
                         </div>
                     {% endspaceless %}
                 </form>
             </div>
-            <div id="tag-editor" class="flex-shrink-1">
+            <div id="tag-editor" class="flex-shrink-1 container">
                 <form class="ajax-submission" method="post" action="{% url 'submit-tags' asset_pk=asset.pk %}">
                     {% csrf_token %}
 
+                    <h2>Tags</h2>
+
                     {% if user.is_authenticated %}
-                        <div class="row">
+                        <div class="form-row">
                             <div class="input-group">
                                 <input type="text" id="new-tag-input" class="form-control" placeholder="Add a new tag…" aria-label="Add a new tag" pattern="[- _'\w]{1,50}">
                                 <div class="input-group-append">
-                                    <button id="new-tag-button" class="btn btn-primary" type="button">Add</button>
+                                    <button id="new-tag-button" class="btn btn-outline-primary" type="button">Add</button>
                                 </div>
                                 <div class="invalid-feedback">
                                     Tags must be between 1-50 characters and may contain only letters, numbers, dashes, underscores, apostrophes, and spaces
@@ -119,7 +145,7 @@ Crowd: {{ asset.title }} ({{ asset.item.project.campaign.title }} — {{ asset.i
                         </p>
                     {% endif %}
 
-                    <ul id="current-tags" class="d-flex flex-wrap m-0 p-1 offwhite-text">
+                    <ul id="current-tags" class="d-flex flex-wrap list-unstyled mb-0">
                         <li id="tag-template" hidden>
                             <label>
                                 <input type="hidden" name="tags" value="" disabled />
@@ -142,16 +168,30 @@ Crowd: {{ asset.title }} ({{ asset.item.project.campaign.title }} — {{ asset.i
                     </ul>
 
                     {% if user.is_authenticated %}
-                        <div class="form-row btn-row my-3">
+                        <div class="form-row btn-row">
                             <button id="save-tags-button" type="submit" class="btn btn-primary mx-auto">Save Tags</button>
                         </div>
                     {% endif %}
                 </form>
             </div>
+        </div>
+    </div>
+    <div id="help-container" class="row">
+        <p>Need help?</p>
 
-            <a id="contact-button" class="btn btn-minimal-secondary" href="{% url 'contact' %}">
-                Contact a Manager
-            </a>
+        <button id="instruction-button" class="btn btn-secondary" type="button" data-toggle="collapse" data-target="#instruction-window" aria-expanded="false" aria-controls="instruction-window">Instructions</button>
+
+        <a id="contact-button" class="btn btn-secondary" href="{% url 'contact' %}">
+            Contact Us
+        </a>
+
+        <div class="collapse" id="instruction-window">
+            <button type="button" class="close pull-right" aria-label="Close" data-toggle="collapse" data-target="#instruction-window">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            <p>
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+            </p>
         </div>
     </div>
 </div>

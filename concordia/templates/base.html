@@ -26,9 +26,9 @@
     {% endif %}
 </head>
 
-<body class="view-{{ VIEW_NAME_FOR_CSS }} section-{{ PATH_LEVEL_1|default:'homepage' }} environment-{{ CONCORDIA_ENVIRONMENT }}">
+<body class="view-{{ VIEW_NAME_FOR_CSS }} section-{{ PATH_LEVEL_1|default:'homepage' }} environment-{{ CONCORDIA_ENVIRONMENT }} {% block extra_body_classes %}{% endblock %}">
     <header>
-        <nav class="navbar navbar-expand-lg flex-row navbar-offwhite bg-offwhite justify-content-between align-items-end py-3 px-md-default pl-2">
+        <nav class="navbar navbar-expand-lg flex-row navbar-offwhite bg-offwhite justify-content-between align-items-end">
             <div class="d-flex navbar-brand">
                 <a class="my-auto" href="https://www.loc.gov">
                     <img src="{% static 'img/LoC-logo.svg' %}" alt="Library of Congress logo"></a>
@@ -85,7 +85,7 @@
             {% endif %}
         </nav>
     </header>
-    <main>
+    <main class="{% block extra_main_classes %}{% endblock %}">
         {% block breadcrumbs-container %}
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb bg-offwhite my-0">

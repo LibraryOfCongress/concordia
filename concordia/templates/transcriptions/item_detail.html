@@ -66,7 +66,9 @@ Crowd: {{ item.title }} ({{ campaign.title }} — {{ project.title }})
                 {% url 'transcriptions:asset-detail' a.item.project.campaign.slug a.item.project.slug a.item.item_id a.slug as asset_detail_url %}
 
                 <div class="card asset-card" data-transcription-status="{{ a.transcription_status }}">
-                    <img class="card-img" alt="{{ a.slug }}" src="{% asset_media_url a %}">
+                    <a href="{{ asset_detail_url }}">
+                        <img class="card-img" alt="{{ a.slug }}" src="{% asset_media_url a %}">
+                    </a>
 
                     <a class="card-title" href="{{ asset_detail_url }}">
                         #{{ a.sequence }}
