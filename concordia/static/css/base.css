@@ -268,10 +268,6 @@ p.hero-secondary.offwhite-text {
     background-color: var(--primary-color);
 }
 
-main {
-    min-height: var(--height-main);
-}
-
 input {
     color: var(--text-color-primary);
     background-color: var(--bg-offwhite);
