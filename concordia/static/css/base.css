@@ -945,7 +945,7 @@ div.nav-secondary {
 }
 
 /*
-* Contribute page CSS
+* Asset detail page CSS
 */
 
 .asset-image {
@@ -965,19 +965,6 @@ div.nav-secondary {
 .contribute-box .dropdown-menu.active {
     color: var(--text-color-offwhite);
     background: var(--primary-color);
-}
-
-.nav-pills .nav-link {
-    color: var(--text-color-offwhite);
-    border-radius: 1rem;
-    text-decoration: underline;
-    font-size: 0.875rem;
-}
-
-.nav-pills .nav-link.active {
-    color: var(--text-color-offwhite);
-    background-color: var(--primary-color);
-    text-decoration: none;
 }
 
 #transcription-editor textarea {
@@ -1060,8 +1047,9 @@ div.nav-secondary {
 }
 
 /*
-* tag-input
-*/
+ * Tag input on the asset detail page
+ */
+
 #current-tags {
     border: 0px solid #ccc;
     border-radius: 0.25rem;
