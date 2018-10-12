@@ -261,11 +261,16 @@ class ItemDetailView(ListView):
         # transcription, no matter how far along it is:
 
         contributors = Transcription.objects.filter(asset__item=self.item).aggregate(
-            Count("user", distinct=True),
-            Count("asset", distinct=True),
+            Count("user", distinct=True), Count("asset", distinct=True)
         )
 
-        in_progress_percent = round(100 * (contributors["asset__count"] / len(self.object_list)))
+        asset_count = len(self.object_list)
+        if asset_count:
+            in_progress_percent = round(
+                100 * (contributors["asset__count"] / asset_count)
+            )
+        else:
+            in_progress_percent = 0
 
         res.update(
             {
@@ -275,7 +280,7 @@ class ItemDetailView(ListView):
                 "filter_form": self.filter_form,
                 "transcription_status_counts": self.transcription_status_counts,
                 "contributor_count": contributors["user__count"],
-                "in_progress_percent": in_progress_percent
+                "in_progress_percent": in_progress_percent,
             }
         )
         return res
