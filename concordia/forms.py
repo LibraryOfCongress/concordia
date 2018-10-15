@@ -3,7 +3,6 @@ from logging import getLogger
 from captcha.fields import CaptchaField
 from django import forms
 from django.contrib.auth import get_user_model
-from django.db.models import Count
 from django_registration.forms import RegistrationForm
 
 from .models import TranscriptionStatus
