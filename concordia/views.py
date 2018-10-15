@@ -287,7 +287,7 @@ class ItemDetailView(ListView):
         return res
 
 
-class ConcordiaAssetView(DetailView):
+class AssetDetailView(DetailView):
     """
     Class to handle GET ansd POST requests on route /campaigns/<campaign>/asset/<asset>
     """
