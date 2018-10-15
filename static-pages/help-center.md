@@ -6,7 +6,7 @@ title: Welcome to the Help Center
           <div class="card-body pxy-default">
             <h2 class="card-title">Welcome to Make Your Mark!</h2>
             <h5> Here you will find a guide to help you get started. 
-            <a href="quick-start-guide/" class="btn btn-primary">Learn more</a>
+            <a href="welcome-guide/" class="btn btn-primary">Learn more</a>
           </div>
         </div>
     </div>
