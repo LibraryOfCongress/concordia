@@ -40,14 +40,6 @@
 {% block body_scripts %}
 <script type="text/javascript">
     $(document).ready(function () {
-        $(".js-captcha-refresh").click(function (e) {
-            e.preventDefault();
-            $.getJSON("{% url 'captcha-refresh' %}", function (result) {
-                $('.captcha').attr('src', result['image_url']);
-                $('#id_captcha_0').val(result['key'])
-            });
-        });
-
         {% comment %}
         FIXME: implement this!
          <div class="form-text text-muted mx-2" id="password_req">
