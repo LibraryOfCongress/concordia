@@ -981,18 +981,6 @@ div.related-links {
     height: auto;
 }
 
-#password_req ul {
-    margin-bottom: 0.5rem;
-}
-
-.nocheckmark i {
-    color: var(--text-color-primary);
-}
-
-.checkmark i {
-    color: var(--color-success);
-}
-
 /*
 * Alerts
 */
