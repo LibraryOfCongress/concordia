@@ -119,6 +119,9 @@ $transcriptionEditor
                 // We have a transcription ID and it's not stale, so we can submit the transcription for review:
                 $saveButton.attr('disabled', 'disabled');
                 $submitButton.removeAttr('disabled');
+                if (!$textarea.val()) {
+                    $nothingToTranscribeCheckbox.prop('checked', true);
+                }
             } else {
                 $submitButton.attr('disabled', 'disabled');
 
