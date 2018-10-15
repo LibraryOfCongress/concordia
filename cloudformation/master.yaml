@@ -133,58 +133,19 @@ Resources:
                 Subnets: !GetAtt VPC.Outputs.PublicSubnets
                 SecurityGroup: !GetAtt SecurityGroups.Outputs.LoadBalancerSecurityGroup
 
-    ECS:
+    FargateCluster:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/ecs-cluster.yaml"
-#            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/ecs-cluster.yaml" ]]
+            TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/fargate-cluster.yaml"
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 KeyPairName: !Ref KeyPairName
+                VpcId: !GetAtt VPC.Outputs.VPC
                 SecurityGroup: !GetAtt SecurityGroups.Outputs.ECSHostSecurityGroup
                 Subnets: !GetAtt VPC.Outputs.PrivateSubnets
-
-#    ConcordiaService:
-#        Type: AWS::CloudFormation::Stack
-#        Properties:
-#            TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/services/concordia-service/service.yaml"
-#            TemplateURL: !Join [ "/", [ !Ref BasePath, "/services/concordia-service/service.yaml" ]]
-#            Parameters:
-#                EnvName: !Ref EnvName
-#                DesiredCount: 2
-#                MaxCount: 3
-#                Memory: 4096
-#                Cpu: 2048
-#                VPC: !GetAtt VPC.Outputs.VPC
-#                Cluster: !GetAtt ECS.Outputs.Cluster	              
-#                PostgresHost: !GetAtt RDS.Outputs.DatabaseHostName	
-#                Listener: !GetAtt ALB.Outputs.Listener	
-#                Path: /*	
-#                ECSServiceAutoScalingRoleARN: !GetAtt ECS.Outputs.ECSServiceAutoScalingRole
-
-    LifecycleHook:
-        Type: AWS::CloudFormation::Stack
-        Properties:
-            TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/lifecyclehook.yaml"
-#            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/lifecyclehook.yaml" ]]
-            Parameters:
-                Cluster: !GetAtt ECS.Outputs.Cluster
-                ECSAutoScalingGroupName: !GetAtt ECS.Outputs.ECSAutoScalingGroupName
 
 Outputs:
 
     WebsiteServiceUrl: 
         Description: The URL endpoint for the concordia website service
         Value: !Join ["", [ !GetAtt ALB.Outputs.LoadBalancerUrl, "/" ]]
-    
-    ALBListener:
-        Description: The listener to register with for the ECS service 
-        Value: !GetAtt ALB.Outputs.Listener
-
-    ClusterId:
-        Description: Id of the ECS Cluster 
-        Value: !GetAtt ECS.Outputs.Cluster
-
-    ECSServiceAutoScalingRoleARN:
-        Description: ARN of the ECS AutoScaling IAM Role 
-        Value: !GetAtt ECS.Outputs.ECSServiceAutoScalingRole
