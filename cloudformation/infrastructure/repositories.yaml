@@ -1,0 +1,10 @@
+Resources:
+  ConcordiaContainerRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: concordia
+
+  ImporterContainerRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: concordia/importer

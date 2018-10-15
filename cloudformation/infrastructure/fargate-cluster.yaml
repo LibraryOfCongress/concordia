@@ -93,7 +93,7 @@ Resources:
     Type: AWS::IAM::InstanceProfile
     Properties:
       Path: /
-      InstanceProfileName: ConcordiaInstanceProfile
+      InstanceProfileName: !Sub ConcordiaInstanceProfile-${AWS::StackName}
       Roles:
         - !Ref 'ConcordiaEC2Role'
   
@@ -154,33 +154,10 @@ Resources:
       Protocol: HTTP
     Type: AWS::ElasticLoadBalancingV2::Listener
 
-  ExternalLoadBalancerListenerSSL:
-    Properties:
-      DefaultActions:
-        - TargetGroupArn: !Ref 'ConcordiaExternalTargetGroup'
-          Type: forward
-      LoadBalancerArn:  !Ref LoadBalancer
-      Port: 443
-      Protocol: HTTPS
-    Type: AWS::ElasticLoadBalancingV2::Listener    
-
   HttpListenerRule:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
     Properties:
       ListenerArn: !Ref ExternalLoadBalancerListener
-      Priority: 1
-      Conditions:
-          - Field: path-pattern
-            Values:
-                - /*
-      Actions:
-          - TargetGroupArn: !Ref ConcordiaExternalTargetGroup
-            Type: forward
-    
-  HttpsListenerRule:
-    Type: AWS::ElasticLoadBalancingV2::ListenerRule
-    Properties:
-      ListenerArn: !Ref ExternalLoadBalancerListenerSSL
       Priority: 1
       Conditions:
           - Field: path-pattern
@@ -199,8 +176,8 @@ Resources:
     Type: AWS::ECS::TaskDefinition
     Properties:
       Family: !Sub concordia-${EnvName}
-      Cpu: 6144
-      Memory: 12288
+      Cpu: 4096
+      Memory: 16384
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE
@@ -210,7 +187,7 @@ Resources:
         - Name: images_volume
       ContainerDefinitions:
         - Name: app
-          Cpu: 4096
+          Cpu: 2048
           Memory: 8192
           Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/concordia:${ConcordiaVersion}'
           LogConfiguration:
@@ -238,8 +215,8 @@ Resources:
           PortMappings:
               - ContainerPort: 80
         - Name: rabbit
-          Cpu: 512
-          Memory: 1024
+          Cpu: 1024
+          Memory: 2048
           Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/rabbitmq:${ConcordiaVersion}'
           PortMappings:
             - ContainerPort: 5672
@@ -250,8 +227,8 @@ Resources:
               awslogs-region: !Ref 'AWS::Region'
               awslogs-stream-prefix: ConcordiaCron
         - Name: importer
-          Cpu: 512
-          Memory: 1024
+          Cpu: 1024
+          Memory: 2048
           Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/concordia/importer:${ConcordiaVersion}'
           LogConfiguration:
             LogDriver: awslogs

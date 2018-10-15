@@ -52,6 +52,11 @@ Mappings:
 
 Parameters:
 
+    ConcordiaVersion:
+        Description: which version of the docker images to deploy
+        Type: String
+        Default: latest
+
     MyDbPassword:
         Description: Master database password to use for RDS
         Type: String
@@ -131,6 +136,7 @@ Resources:
                 SecurityGroup: !GetAtt SecurityGroups.Outputs.ECSHostSecurityGroup
                 LoadBalancerSecurityGroup: !GetAtt SecurityGroups.Outputs.LoadBalancerSecurityGroup
                 Subnets: !GetAtt VPC.Outputs.PrivateSubnets
+                ConcordiaVersion: !Ref ConcordiaVersion
 
 Outputs:
 
