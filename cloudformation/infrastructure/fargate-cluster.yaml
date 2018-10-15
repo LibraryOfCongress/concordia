@@ -15,6 +15,10 @@ Parameters:
         Description: Select the Security Group to use for the ECS cluster hosts
         Type: AWS::EC2::SecurityGroup::Id
     
+    LoadBalancerSecurityGroup:
+        Description: The SecurityGroup for load balancer
+        Type: AWS::EC2::SecurityGroup::Id
+
     VpcId:
         Description: The Id of the VPC for this cluster
         Type: AWS::EC2::VPC::Id
@@ -108,22 +112,12 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
         - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
-
-  ConcordiaContainerRepository:
-    Type: AWS::ECR::Repository
-    Properties:
-      RepositoryName: concordia
-
-  ImporterContainerRepository:
-    Type: AWS::ECR::Repository
-    Properties:
-      RepositoryName: concordia/importer
   
   ConcordiaAppLogsGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Ref AWS::StackName
-      RetentionInDays: 31
+      RetentionInDays: 30
 
   ConcordiaExternalTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
@@ -139,13 +133,23 @@ Resources:
       Protocol: HTTP
       VpcId: !Ref VpcId
 
+  LoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+        Name: !Ref EnvironmentName
+        Subnets: !Ref Subnets
+        SecurityGroups: 
+            - !Ref LoadBalancerSecurityGroup
+        Tags: 
+            - Key: Name
+              Value: !Ref EnvironmentName
+
   ExternalLoadBalancerListener:
     Properties:
       DefaultActions:
         - TargetGroupArn: !Ref 'ConcordiaExternalTargetGroup'
           Type: forward
-      LoadBalancerArn: !ImportValue
-        Fn::Sub: ${EnvironmentName}
+      LoadBalancerArn:  !Ref LoadBalancer
       Port: 80
       Protocol: HTTP
     Type: AWS::ElasticLoadBalancingV2::Listener
@@ -155,8 +159,7 @@ Resources:
       DefaultActions:
         - TargetGroupArn: !Ref 'ConcordiaExternalTargetGroup'
           Type: forward
-      LoadBalancerArn: !ImportValue
-        Fn::Sub: ${EnvironmentName}
+      LoadBalancerArn:  !Ref LoadBalancer
       Port: 443
       Protocol: HTTPS
     Type: AWS::ElasticLoadBalancingV2::Listener    
@@ -210,8 +213,6 @@ Resources:
           Cpu: 4096
           Memory: 8192
           Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/concordia:${ConcordiaVersion}'
-          Links:
-            - rabbit
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -236,15 +237,12 @@ Resources:
                 ContainerPath: /concordia_images
           PortMappings:
               - ContainerPort: 80
-                HostPort: 80
         - Name: rabbit
           Cpu: 512
           Memory: 1024
           Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/rabbitmq:${ConcordiaVersion}'
-          Hostname: rabbit
           PortMappings:
             - ContainerPort: 5672
-              HostPort: 5672
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -261,8 +259,6 @@ Resources:
               awslogs-group: !Ref 'ConcordiaAppLogsGroup'
               awslogs-region: !Ref 'AWS::Region'
               awslogs-stream-prefix: ConcordiaWorker
-          Links:
-            - rabbit
           Environment:
               - Name: AWS
                 Value: '1'
@@ -301,4 +297,9 @@ Resources:
         - ContainerName: 'app'
           ContainerPort: 80
           TargetGroupArn: !Ref ConcordiaExternalTargetGroup
- 
+
+Outputs:
+
+  LoadBalancerUrl:
+    Description: The URL of the ALB
+    Value: !GetAtt LoadBalancer.DNSName

@@ -120,29 +120,20 @@ Resources:
                 PrivateSubnet1: !GetAtt VPC.Outputs.PrivateSubnet1
                 PrivateSubnet2: !GetAtt VPC.Outputs.PrivateSubnet2
 
-    ALB:
-        Type: AWS::CloudFormation::Stack
-        Properties:
-            TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/load-balancers.yaml"
-#            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/load-balancers.yaml" ]]
-            Parameters:
-                EnvironmentName: !Ref AWS::StackName
-                Subnets: !GetAtt VPC.Outputs.PublicSubnets
-                SecurityGroup: !GetAtt SecurityGroups.Outputs.LoadBalancerSecurityGroup
-
     FargateCluster:
         Type: AWS::CloudFormation::Stack
         Properties:
             TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/fargate-cluster.yaml"
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
-                KeyPairName: !Ref KeyPairName
+                EnvName: !Ref EnvName
                 VpcId: !GetAtt VPC.Outputs.VPC
                 SecurityGroup: !GetAtt SecurityGroups.Outputs.ECSHostSecurityGroup
+                LoadBalancerSecurityGroup: !GetAtt SecurityGroups.Outputs.LoadBalancerSecurityGroup
                 Subnets: !GetAtt VPC.Outputs.PrivateSubnets
 
 Outputs:
 
     WebsiteServiceUrl: 
         Description: The URL endpoint for the concordia website service
-        Value: !Join ["", [ !GetAtt ALB.Outputs.LoadBalancerUrl, "/" ]]
+        Value: !Join ["", [ !GetAtt FargateCluster.Outputs.LoadBalancerUrl, "/" ]]
