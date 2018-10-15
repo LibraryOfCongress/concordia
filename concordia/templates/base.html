@@ -44,13 +44,19 @@
             <div class="collapse navbar-collapse text-center" id="nav-menu">
                 <ul class="navbar-nav ml-auto">
                     <li class="nav-item">
-                        <a class="nav-link {% if PATH_LEVEL_1 == '' %}active{% endif %}" href="{% url 'homepage' %}">Home</a>
+                        <a class="nav-link {% if PATH_LEVEL_1 == 'about'%}active{% endif %}" href="{% url 'about' %}">About</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if PATH_LEVEL_1 == 'campaigns' %}active{% endif %}" href="{% url 'transcriptions:campaigns' %}">Campaigns</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if PATH_LEVEL_1 == 'about'%}active{% endif %}" href="{% url 'about' %}">About</a>
+                        <a class="nav-link {% if PATH_LEVEL_1 == 'latest' %}active{% endif %}" href="{% url 'latest' %}">Latest</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="https://historyhub.history.gov/community/make-your-mark/">Discuss</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if PATH_LEVEL_1 == 'help-center' %}active{% endif %}" href="{% url 'help-center' %}">Help</a>
                     </li>
                     {% comment %} FIXME: this should be replaced with JS so we can cache pages {% endcomment %}
                     {% if user.is_authenticated %}
