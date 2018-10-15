@@ -236,12 +236,12 @@ Crowd: {{ asset.title }} ({{ asset.item.project.campaign.title }} — {{ asset.i
                     </p>
                 </div>
                 <div class="modal-footer">
-                    <a class="btn btn-primary" href="{% url "transcriptions:redirect-to-next-transcribable-asset" campaign.slug project.slug %}">
-                        Find a new page
-                    </a>
                     <button type="button" class="btn btn-primary" data-dismiss="modal">
                         Continue Tagging
                     </button>
+                    <a class="btn btn-primary" href="{% url "transcriptions:redirect-to-next-transcribable-asset" campaign.slug project.slug %}">
+                        Find a new page
+                    </a>
                 </div>
             </div>
         </div>
