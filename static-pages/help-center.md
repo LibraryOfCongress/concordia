@@ -12,7 +12,7 @@ title: Welcome to the Help Center
     </div>
 </div>
 
-# Guides
+## Guides
 <div class="row my-default">
   <div class="col-sm-4">
     <div class="card text center mx-default">
@@ -124,18 +124,18 @@ Because Make York Mark invites you to transcribe documents, it is best experienc
 ### What is the technology behind Make Your Mark?
 
 
-Make Your Mark runs on Concordia, new open source software developed by the Library of Congress to power crowdsourced transcription projects. The code is visible and free to reuse: Visit our Github repository for more information. The platform was built utilizing user-centered design principles based around building trust and approachability. This project is a partnership between the Library and a growing community of volunteers who help us to iteratively improve the platform. Everyone is welcome to take part in transcription and tagging and to give feedback about how we can improve the code base and the project itself. Be in touch!
+Make Your Mark runs on Concordia, new open source software developed by the Library of Congress to power crowdsourced transcription projects. The code is visible and free to reuse: [Visit our Github repository](https://github.com/LibraryOfCongress/concordia) for more information. The platform was built utilizing user-centered design principles based around building trust and approachability. This project is a partnership between the Library and a growing community of volunteers who help us to iteratively improve the platform. Everyone is welcome to take part in transcription and tagging and to give feedback about how we can improve the code base and the project itself. Be in touch!
 
 
 
 ### How do you protect my privacy?
 
 
-A detailed explanation of the Library’s Privacy Policy including what kinds of data we collect and store, and what we use to track your session while you are on a Library website is available at this link, and in the footer of this page under the “Legal” link button.
+A detailed explanation of the Library’s [Privacy Policy](https://www.loc.gov/legal/) including what kinds of data we collect and store, and what we use to track your session while you are on a Library website is available at this link, and in the footer of this page under the “Legal” link button.
 
 You do not have to register an account on Make Your Mark in order to transcribe, but you can register if you would like to review or tag. In order to make sure a transcription is submitted by a real human, anonymous users will be prompted to fill in a captcha before their first submission will be accepted. The Library’s captcha is an image of a few letters and numbers that you need to transcribe into the box below the image.
 
-A session cookie will be used in your browser while you are transcribing so that you do not need to enter a captcha every time you work on a page. Session cookies are limited to (X AMOUNT OF TIME) hours, so you will be prompted to enter a captcha as you transcribe anonymously more than (X AMOUNT OF TIME) after your last submission.
+A session cookie will be used in your browser while you are transcribing so that you do not need to enter a captcha every time you work on a page. Session cookies are limited to 24 hours, so you will be prompted to enter a captcha as you transcribe anonymously more than (X AMOUNT OF TIME) after your last submission.
 
 Session cookies are used for registered users too, so that your contributions can be saved to your account. Check out your user profile to see how many pages you have transcribed, tagged and reviewed.
 
@@ -143,7 +143,7 @@ Session cookies are used for registered users too, so that your contributions ca
 ### What are past crowdsourcing projects at the Library?
 
 
-The Library of Congress has long invested in building digitized collections and making them searchable. The Library’s first attempt recruiting members of the public to increase findability on our website began in 2008 when the Photography and Prints Division published thousands of photographs on Flickr Commons. This long-running project invites visitors to help identify people and places in the photographs and, once verified, this rich information is used to enhance the online catalog and improve access for all users. Two additional crowdsourcing efforts within the Library include Roll the Credits and Beyond Words, projects that invited people to transcribe credit captions from television programs, and identify cartoons and photographs in the Library's historic newspaper collections respectively.
+The Library of Congress has long invested in building digitized collections and making them searchable. The Library’s first attempt recruiting members of the public to increase findability on our website began in 2008 when the Photography and Prints Division published thousands of photographs on [Flickr Commons](https://www.flickr.com/photos/library_of_congress). This long-running project invites visitors to help identify people and places in the photographs and, once verified, this rich information is used to enhance the online catalog and improve access for all users. Two additional crowdsourcing efforts within the Library include [Roll the Credits](https://www.zooniverse.org/projects/sroosa/roll-the-credits) and [Beyond Words](http://beyondwords.labs.loc.gov/), projects that invited people to transcribe credit captions from television programs, and identify cartoons and photographs in the Library's historic newspaper collections respectively.
 
 
 
@@ -152,6 +152,6 @@ The Library of Congress has long invested in building digitized collections and 
 
 In addition to the Library of Congress’ own history of varied participatory projects, other cultural heritage institutions with established transcription programs have paved the way for Make Your Mark. Projects at the National Archives and Records Administration (NARA), the Smithsonian, the New York Public Library, Zooniverse.org, From the Page, and others have developed workflows and user engagement strategies that this platform leverages and builds upon. Concordia deploys a different architecture to these existing models of crowdsourced transcription, and aims to provide simple data structures and easier project implementation for cultural heritage institutions and other people who want to set up their own crowdsourced transcription projects.
 
+---
 
-
-Concordia and Make Your Mark are supported by the National Digital Trust. The project results from collaboration between numerous divisions at the Library, including library services, curatorial and content specialists, digital preservation and web development specialists, digital innovation and strategy specialists.
+_Concordia and Make Your Mark are supported by the National Digital Trust. The project results from collaboration between numerous divisions at the Library, including library services, curatorial and content specialists, digital preservation and web development specialists, digital innovation and strategy specialists._
