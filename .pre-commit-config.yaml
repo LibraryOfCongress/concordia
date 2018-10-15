@@ -16,3 +16,4 @@ repos:
       rev: 1.14.3
       hooks:
           - id: prettier
+            files: \.(css|less|scss|ts|tsx|graphql|gql|json|js|jsx|md)$
