@@ -56,5 +56,5 @@ Resources:
 Outputs:
     DatabaseHostName:
         Description : "Hostname for the relational database service"
-        Value : !GetAtt rdsconcordia.Endpoint.Address
+        Value : !GetAtt PostgresService.Endpoint.Address
     

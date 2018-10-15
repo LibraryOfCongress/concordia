@@ -15,12 +15,12 @@ Description: >
 Mappings:
     EnvironmentMapping:
         AvailabilityZone1Map:
-            dev: 2
+            dev: 4
             test: 2
             stage: 2
             prod: 2
         AvailabilityZone2Map:
-            dev: 3
+            dev: 5
             test: 3
             stage: 3
             prod: 3
@@ -115,8 +115,6 @@ Resources:
             TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/rds.yaml"
 #            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/rds.yaml" ]]
             Parameters:
-                EnvironmentName: !Ref AWS::StackName
-                VPC: !GetAtt VPC.Outputs.VPC
                 DbPassword: !Ref MyDbPassword
                 DatabaseSecurityGroup: !GetAtt SecurityGroups.Outputs.DatabaseSecurityGroup
                 PrivateSubnet1: !GetAtt VPC.Outputs.PrivateSubnet1
@@ -129,7 +127,6 @@ Resources:
 #            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/load-balancers.yaml" ]]
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
-                VPC: !GetAtt VPC.Outputs.VPC
                 Subnets: !GetAtt VPC.Outputs.PublicSubnets
                 SecurityGroup: !GetAtt SecurityGroups.Outputs.LoadBalancerSecurityGroup
 

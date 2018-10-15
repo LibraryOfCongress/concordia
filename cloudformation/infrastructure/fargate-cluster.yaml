@@ -19,16 +19,6 @@ Parameters:
         Description: The Id of the VPC for this cluster
         Type: AWS::EC2::VPC::Id
 
-    Memory:
-        Description: How much memory to use for the three tasks combined
-        Type: Number
-        Default: 4096
-
-    Cpu:
-        Description: How much CPU to use for the three tasks combined
-        Type: Number
-        Default: 2048
-
     ConcordiaVersion:
         Type: String
         Description: version of concordia, concordia/importer, and rabbitmq docker images to pull and deploy
@@ -171,31 +161,31 @@ Resources:
       Protocol: HTTPS
     Type: AWS::ElasticLoadBalancingV2::Listener    
 
-    ListenerRule:
-        Type: AWS::ElasticLoadBalancingV2::ListenerRule
-        Properties:
-            ListenerArn: !Ref ExternalLoadBalancerListener
-            Priority: 1
-            Conditions:
-                - Field: path-pattern
-                  Values:
-                      - /*
-            Actions:
-                - TargetGroupArn: !Ref TargetGroup
-                  Type: forward
+  HttpListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref ExternalLoadBalancerListener
+      Priority: 1
+      Conditions:
+          - Field: path-pattern
+            Values:
+                - /*
+      Actions:
+          - TargetGroupArn: !Ref ConcordiaExternalTargetGroup
+            Type: forward
     
-    SSLListenerRule:
-        Type: AWS::ElasticLoadBalancingV2::ListenerRule
-        Properties:
-            ListenerArn: !Ref ExternalLoadBalancerListenerSSL
-            Priority: 1
-            Conditions:
-                - Field: path-pattern
-                  Values:
-                      - /*
-            Actions:
-                - TargetGroupArn: !Ref TargetGroup
-                  Type: forward
+  HttpsListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref ExternalLoadBalancerListenerSSL
+      Priority: 1
+      Conditions:
+          - Field: path-pattern
+            Values:
+                - /*
+      Actions:
+          - TargetGroupArn: !Ref ConcordiaExternalTargetGroup
+            Type: forward
 
   ECSCluster:
     Type: AWS::ECS::Cluster
