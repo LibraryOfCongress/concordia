@@ -104,8 +104,14 @@ Crowd: {{ asset.title }} ({{ asset.item.project.campaign.title }} — {{ asset.i
                             </div>
                         {% endif %}
 
-                        <div class="my-3 d-flex justify-content-around align-items-center btn-row">
+                        <div class="my-3 d-flex flex-wrap justify-content-around align-items-center btn-row">
                             {% if transcription_status == 'edit' %}
+                                <div class="form-check w-100 text-center mt-0 mb-3">
+                                    <input id="nothing-to-transcribe" type="checkbox" class="form-check-input" />
+                                    <label class="form-check-label" for="nothing-to-transcribe">
+                                        Nothing to transcribe
+                                    </label>
+                                </div>
                                 <button id="save-transcription-button" disabled type="submit" class="btn btn-primary">Save</button>
                                 <button id="submit-transcription-button" disabled type="button" class="btn btn-primary">Submit for Review</button>
                             {% elif transcription_status == 'submitted' and user.is_authenticated and transcription.user.pk != user.pk %}

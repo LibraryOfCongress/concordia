@@ -72,6 +72,11 @@ var $saveButton = $transcriptionEditor
 var $submitButton = $transcriptionEditor
     .find('#submit-transcription-button')
     .first();
+var $nothingToTranscribeCheckbox = $transcriptionEditor
+    .find('#nothing-to-transcribe')
+    .on('change', function() {
+        $transcriptionEditor.trigger('update-ui-state');
+    });
 
 $transcriptionEditor
     .on('update-ui-state', function() {
@@ -101,7 +106,10 @@ $transcriptionEditor
             } else {
                 $submitButton.attr('disabled', 'disabled');
 
-                if ($textarea.val()) {
+                if (
+                    $textarea.val() ||
+                    $nothingToTranscribeCheckbox.prop('checked')
+                ) {
                     $saveButton.removeAttr('disabled');
                 } else {
                     $saveButton.attr('disabled', 'disabled');
@@ -145,8 +153,20 @@ $transcriptionEditor
         $transcriptionEditor.trigger('update-ui-state');
     });
 
+$saveButton.on('click', function(evt) {
+    if (
+        !confirm(
+            'You have entered text but the “Nothing to transcribe” box is checked and that text will not be saved. Do you want to continue?'
+        )
+    ) {
+        evt.preventDefault();
+        return false;
+    }
+});
+
 $submitButton.on('click', function(evt) {
     evt.preventDefault();
+
     $.ajax({
         url: $transcriptionEditor.data('submitUrl'),
         method: 'POST'
