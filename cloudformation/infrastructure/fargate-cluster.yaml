@@ -7,7 +7,11 @@ Parameters:
         Description: An environment name that will be prefixed to resource names
         Type: String
 
-    Subnets:
+    PublicSubnets:
+        Description: The subnets for the load balancer
+        Type: List<AWS::EC2::Subnet::Id>
+
+    PrivateSubnets:
         Description: Choose which subnets this ECS cluster should be deployed to
         Type: List<AWS::EC2::Subnet::Id>
 
@@ -134,7 +138,7 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
         Name: !Ref EnvironmentName
-        Subnets: !Ref Subnets
+        Subnets: !Ref PublicSubnets
         SecurityGroups: 
             - !Ref LoadBalancerSecurityGroup
         Tags: 
@@ -264,7 +268,7 @@ Resources:
         AwsvpcConfiguration:
           SecurityGroups:
             - !Ref SecurityGroup
-          Subnets: !Ref Subnets
+          Subnets: !Ref PrivateSubnets
       TaskDefinition: !Ref ConcordiaTask
       LoadBalancers:
         - ContainerName: 'app'
