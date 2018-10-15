@@ -172,10 +172,12 @@ Crowd: {{ asset.title }} ({{ asset.item.project.campaign.title }} — {{ asset.i
             </div>
         </div>
     </div>
-    <div id="help-container" class="row">
+    <div id="help-container" class="row justify-content-center">
         <p>Need help?</p>
 
-        <button id="instruction-button" class="btn btn-secondary" type="button" data-toggle="collapse" data-target="#instruction-window" aria-expanded="false" aria-controls="instruction-window">Instructions</button>
+        <button id="instruction-button" class="btn btn-secondary" type="button" data-toggle="collapse" data-target="#instruction-window" aria-expanded="false" aria-controls="instruction-window">
+            Quick Tips
+        </button>
 
         <a id="contact-button" class="btn btn-secondary" href="{% url 'contact' %}">
             Contact Us
