@@ -42,27 +42,27 @@ class UserProfileForm(forms.Form):
 class ContactUsForm(forms.Form):
     referrer = forms.CharField(label="Referring Page", widget=forms.HiddenInput())
 
-    email = forms.EmailField(label="Your email", required=True)
-    subject = forms.CharField(label="Subject", required=False)
+    email = forms.EmailField(label="Your email:", required=True)
+    subject = forms.CharField(label="Subject:", required=False)
 
     category = forms.CharField(
-        label="Category",
+        label="Please select a topic:",
         required=True,
         widget=forms.Select(
             choices=(
-                ("General", "General"),
-                ("Campaign", "Question about campaign"),
-                ("Problem", "Something is not working"),
+                ("General", "General Question"),
+                ("Campaign", "Campaign or Reference Question"),
+                ("Problem", "Technical Support"),
             )
         ),
     )
 
     link = forms.URLField(
-        label="Link to the page you need support with", required=False
+        label="Got a specific page you need help with? Add the link below:", required=False
     )
 
     story = forms.CharField(
-        label="Why are you contacting us", required=True, widget=forms.Textarea
+        label="Let us know how we can help:", required=True, widget=forms.Textarea
     )
 
 
