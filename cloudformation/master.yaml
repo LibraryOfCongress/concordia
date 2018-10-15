@@ -74,6 +74,7 @@ Parameters:
             - "test"
             - "stage"
             - "prod"
+            - "dev-fg"
             
 Resources:
 

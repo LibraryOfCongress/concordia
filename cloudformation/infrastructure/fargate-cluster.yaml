@@ -36,6 +36,7 @@ Parameters:
             - 'test'
             - 'stage'
             - 'prod'
+            - 'dev-fg'
         ConstraintDescription: Must match a location for secret storage in secretsmanager
 
 
