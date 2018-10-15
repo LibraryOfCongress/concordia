@@ -133,18 +133,11 @@ Make Your Mark runs on Concordia, new open source software developed by the Libr
 
 A detailed explanation of the Library’s Privacy Policy including what kinds of data we collect and store, and what we use to track your session while you are on a Library website is available at this link, and in the footer of this page under the “Legal” link button.
 
-
-
 You do not have to register an account on Make Your Mark in order to transcribe, but you can register if you would like to review or tag. In order to make sure a transcription is submitted by a real human, anonymous users will be prompted to fill in a captcha before their first submission will be accepted. The Library’s captcha is an image of a few letters and numbers that you need to transcribe into the box below the image.
-
-
 
 A session cookie will be used in your browser while you are transcribing so that you do not need to enter a captcha every time you work on a page. Session cookies are limited to (X AMOUNT OF TIME) hours, so you will be prompted to enter a captcha as you transcribe anonymously more than (X AMOUNT OF TIME) after your last submission.
 
-
-
 Session cookies are used for registered users too, so that your contributions can be saved to your account. Check out your user profile to see how many pages you have transcribed, tagged and reviewed.
-
 
 
 ### What are past crowdsourcing projects at the Library?
