@@ -180,16 +180,16 @@ $submitButton.on('click', function(evt) {
         method: 'POST'
     })
         .done(function() {
-            displayMessage(
-                'info',
-                'The transcription has been submitted. Go to the next page when you are done tagging.',
-                'transcription-submit-result'
-            );
             $('.tx-status-display')
                 .children()
                 .attr('hidden', 'hidden')
                 .has('.tx-submitted')
                 .removeAttr('hidden');
+            $('#successful-submission-modal')
+                .modal()
+                .on('hidden.bs.modal', function() {
+                    window.location.reload(true);
+                });
         })
         .fail(function(jqXHR, textStatus, errorThrown) {
             displayMessage(
