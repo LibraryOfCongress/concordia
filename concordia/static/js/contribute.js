@@ -75,6 +75,18 @@ var $submitButton = $transcriptionEditor
 var $nothingToTranscribeCheckbox = $transcriptionEditor
     .find('#nothing-to-transcribe')
     .on('change', function() {
+        var $textarea = $transcriptionEditor.find('textarea');
+        if (this.checked && $textarea.val()) {
+            if (
+                confirm(
+                    'You currently have entered text which will not be saved because “Nothing to transcribe” is checked. Do you want to discard that text?'
+                )
+            ) {
+                $textarea.val('');
+            } else {
+                this.checked = false;
+            }
+        }
         $transcriptionEditor.trigger('update-ui-state');
     });
 
@@ -95,9 +107,13 @@ $transcriptionEditor
         if (!data.hasReservation || data.transcriptionStatus != 'edit') {
             lockControls($transcriptionEditor);
         } else {
-            var $textarea = $transcriptionEditor
-                .find('textarea')
-                .removeAttr('readonly');
+            var $textarea = $transcriptionEditor.find('textarea');
+
+            if ($nothingToTranscribeCheckbox.prop('checked')) {
+                $textarea.attr('readonly', 'readonly');
+            } else {
+                $textarea.removeAttr('readonly');
+            }
 
             if (data.transcriptionId && !data.unsavedChanges) {
                 // We have a transcription ID and it's not stale, so we can submit the transcription for review:
@@ -152,17 +168,6 @@ $transcriptionEditor
         );
         $transcriptionEditor.trigger('update-ui-state');
     });
-
-$saveButton.on('click', function(evt) {
-    if (
-        !confirm(
-            'You have entered text but the “Nothing to transcribe” box is checked and that text will not be saved. Do you want to continue?'
-        )
-    ) {
-        evt.preventDefault();
-        return false;
-    }
-});
 
 $submitButton.on('click', function(evt) {
     evt.preventDefault();
