@@ -16,14 +16,10 @@ function attemptToReserveAsset(reservationURL) {
         })
         .fail(function(jqXHR, textStatus, errorThrown) {
             if (jqXHR.status == 409) {
-                displayMessage(
-                    'warning',
-                    'Someone else is currently transcribing this page',
-                    'transcription-reservation'
-                );
                 $transcriptionEditor
                     .data('hasReservation', false)
                     .trigger('update-ui-state');
+                $('#asset-reservation-failure-modal').modal();
             } else {
                 displayMessage(
                     'error',

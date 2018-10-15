@@ -5,7 +5,7 @@ from django.test import TestCase, TransactionTestCase
 from django.urls import reverse
 from django.utils.timezone import now
 
-from concordia.models import AssetTranscriptionReservation, User, Transcription
+from concordia.models import AssetTranscriptionReservation, Transcription, User
 from concordia.views import get_anonymous_user
 
 from .utils import create_asset, create_campaign, create_item, create_project
@@ -134,10 +134,12 @@ class ConcordiaViewTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, template_name="transcriptions/item_detail.html")
+        self.assertTemplateUsed(
+            response, template_name="transcriptions/item_detail.html"
+        )
         self.assertContains(response, i.title)
 
-    def test_ConcordiaAssetView_get(self):
+    def test_asset_detail_view(self):
         """
         This unit test test the GET route /campaigns/<campaign>/asset/<Asset_name>/
         with already in use.
@@ -479,4 +481,3 @@ class TransactionalViewTests(TransactionTestCase):
         data = self.assertValidJSON(resp, expected_status=400)
         self.assertIn("error", data)
         self.assertEqual("This transcription has already been reviewed", data["error"])
-
