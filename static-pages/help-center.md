@@ -4,34 +4,34 @@ title: Welcome to the Help Center
     <div class="col-sm-12">
         <div class="card text center mx-default">
           <div class="card-body pxy-default">
-            <h2 class="card-title">Quick Get Started Guide</h2>
-            <a href="quick-start-guide/" class="btn btn-primary">Button</a>
+            <h2 class="card-title">Welcome to Make Your Mark!</h2>
+            <h5> Here you will find a guide to help you get started. 
+            <a href="quick-start-guide/" class="btn btn-primary">Learn more</a>
           </div>
         </div>
     </div>
 </div>
+
+# Guides
 <div class="row my-default">
   <div class="col-sm-4">
     <div class="card text center mx-default">
       <div class="card-body pxy-default">
-        <h2 class="card-title">How to Transcribe</h2>
-        <a href="how-to-transcribe/" class="btn btn-primary">Go somewhere</a>
+        <h2 class="card-title"><a href="how-to-transcribe/">How to Transcribe</a></h2>
       </div>
     </div>
   </div>
   <div class="col-sm-4">
     <div class="card text center mx-default">
       <div class="card-body pxy-default">
-        <h2 class="card-title">How to Review</h2>
-        <a href="how-to-review/" class="btn btn-primary">Go somewhere</a>
+        <h2 class="card-title"><a href="how-to-review/">How to Review</a></h2>
       </div>
     </div>
   </div>
   <div class="col-sm-4">
     <div class="card text center mx-default">
       <div class="card-body pxy-default">
-        <h2 class="card-title">How to Tag</h2>
-        <a href="how-to-tag/" class="btn btn-primary">Go somewhere</a>
+        <h2 class="card-title"><a href="how-to-tag/">How to Tag</a></h2>
       </div>
     </div>
   </div>
