@@ -44,7 +44,6 @@ Resources:
   ConcordiaServiceSecretAccessPolicy:
       Type: AWS::IAM::Policy
       Properties:
-        PolicyName: ReadOnlyAccessToConcordiaSecrets
         Roles:
           - !Ref 'ConcordiaTaskRole'
           - !Ref 'ConcordiaEC2Role'
@@ -76,7 +75,6 @@ Resources:
   ConcordiaEC2Role:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: ConcordiaServerEC2Role
       Path: /
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
@@ -93,14 +91,12 @@ Resources:
     Type: AWS::IAM::InstanceProfile
     Properties:
       Path: /
-      InstanceProfileName: !Sub ConcordiaInstanceProfile-${AWS::StackName}
       Roles:
         - !Ref 'ConcordiaEC2Role'
   
   ConcordiaTaskRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: ConcordiaServerTaskRole
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -257,7 +253,6 @@ Resources:
     Type: AWS::ECS::Service
     DependsOn: ExternalLoadBalancerListener
     Properties:
-      ServiceName: concordia
       Cluster: !Ref ECSCluster
       LaunchType: FARGATE
       DeploymentConfiguration:
