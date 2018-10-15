@@ -246,7 +246,33 @@ Crowd: {{ asset.title }} ({{ asset.item.project.campaign.title }} — {{ asset.i
             </div>
         </div>
     </div>
-
+    <div id="successful-review-modal" class="modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nice Job!</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>
+                        Your review decision has been saved. You can continue
+                        workong on this page or go to the next page needing
+                        transcription.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <a class="btn btn-primary" href="{% url "transcriptions:redirect-to-next-transcribable-asset" campaign.slug project.slug %}">
+                        Find a new page
+                    </a>
+                    <button type="button" class="btn btn-primary" data-dismiss="modal">
+                        Continue Working
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock main_content %}
 

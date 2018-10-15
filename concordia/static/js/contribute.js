@@ -232,19 +232,11 @@ function submitReview(status) {
         }
     })
         .done(function() {
-            displayMessage(
-                'info',
-                'Your transcription review has been saved',
-                'transcription-review-result'
-            );
-            if (status == 'accept') {
-                $('.tx-status-display')
-                    .children()
-                    .attr('hidden', 'hidden')
-                    .filter('.tx-completed')
-                    .removeAttr('hidden');
-            }
-            lockControls($transcriptionEditor);
+            $('#successful-review-modal')
+                .modal()
+                .on('hidden.bs.modal', function() {
+                    window.location.reload(true);
+                });
         })
         .fail(function(jqXHR, textStatus, errorThrown) {
             displayMessage(
