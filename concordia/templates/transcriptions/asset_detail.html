@@ -23,29 +23,6 @@ Crowd: {{ asset.title }} ({{ asset.item.project.campaign.title }} — {{ asset.i
 
 {% block main_content %}
 <div id="contribute-main-content" class="container-fluid flex-grow-1 d-flex flex-column">
-    <div id="metadata-container" class="row">
-        <table class="d-inline table table-sm mx-3">
-            <tbody>
-                <tr>
-                    <th>Status</th>
-                    <td class="tx-status-display">
-                        <div class="tx-submitted" {% if transcription_status != 'submitted' %}hidden{% endif %}>
-                            <i class="fas fa-list tx-submitted"></i>
-                            Submitted for Review
-                        </div>
-                        <div class="tx-completed" {% if transcription_status != 'completed' %}hidden{% endif %}>
-                            <i class="fas fa-check"></i>
-                            Completed
-                        </div>
-                        <div class="tx-edit" {% if transcription_status != "edit" %}hidden{% endif %}>
-                            <i class="fas fa-edit tx-edit"></i>
-                            Open for edit
-                        </div>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
     <div id="navigation-container" class="row py-2">
         <nav id="asset-navigation" class="d-flex flex-grow-1 justify-content-between align-items-center" role="navigation">
             <div class="d-flex align-items-center">
@@ -89,6 +66,25 @@ Crowd: {{ asset.title }} ({{ asset.item.project.campaign.title }} — {{ asset.i
 
         <div class="col-6 d-flex flex-column flex-nowrap justify-content-between">
             <div class="flex-grow-1 d-flex flex-column">
+                <div class="tx-status-display">
+                    <span class="tx-submitted" {% if transcription_status != 'submitted' %}hidden{% endif %}>
+                        <span class="fas fa-list"></span>
+                        Submitted for Review
+                    </span>
+                    <span class="tx-completed" {% if transcription_status != 'completed' %}hidden{% endif %}>
+                        <span class="fas fa-check"></span>
+                        Completed
+                    </span>
+                    <span class="tx-edit" {% if transcription_status != "edit" %}hidden{% endif %}>
+                        <span class="fas fa-edit"></span>
+                        Open for edit
+                    </span>
+                    <span class="tx-edit-conflict" hidden>
+                        <span class="fas fa-exclamation-triangle"></span>
+                        Another user is transcribing this page
+                    </span>
+                </div>
+
                 <form id="transcription-editor" class="ajax-submission flex-grow-1 d-flex flex-column" method="post" action="{% url 'save-transcription' asset_pk=asset.pk %}" data-transcription-status="{{ transcription_status }}" {% if transcription %}data-transcription-id="{{ transcription.pk|default:'' }}" data-submit-url="{% url 'submit-transcription' pk=transcription.pk %}" data-review-url="{% url 'review-transcription' pk=transcription.pk %}"{% endif %}>
                     {% csrf_token %}
                     <input type="hidden" name="supersedes" value="{{ transcription.pk|default:'' }}" />

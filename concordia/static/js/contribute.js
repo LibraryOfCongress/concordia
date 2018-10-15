@@ -108,6 +108,14 @@ $transcriptionEditor
                 }
             }
         }
+
+        if (!data.hasReservation && data.transcriptionStatus == 'edit') {
+            $('.tx-status-display')
+                .children()
+                .attr('hidden', 'hidden')
+                .filter('.tx-edit-conflict')
+                .removeAttr('hidden');
+        }
     })
     .on('form-submit-success', function(evt, extra) {
         displayMessage(
