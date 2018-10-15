@@ -25,7 +25,7 @@
         },
         {
             id: 'pw-special',
-            text: '1 or more non-unique special characters',
+            text: '1 or more special characters',
             test: function(i) {
                 return i.match(/[^\s\da-z]/i);
             }
@@ -66,7 +66,7 @@
         } else {
             this.setAttribute('aria-invalid', 'true');
             this.setCustomValidity(
-                'Your password does not meet our requirements'
+                'Your password does not meet the requirements'
             );
         }
     });
