@@ -12,6 +12,17 @@ function unlockControls($container) {
     $container.find('button').removeAttr('disabled');
 }
 
+function buildErrorMessage(jqXHR, textStatus, errorThrown) {
+    /* Construct a nice error message using optional JSON response context */
+    var errMessage;
+    if (jqXHR.responseJSON && jqXHR.responseJSON.error) {
+        errMessage = jqXHR.responseJSON.error;
+    } else {
+        errMessage = textStatus + ' ' + errorThrown;
+    }
+    return errMessage;
+}
+
 $('form.ajax-submission').each(function(idx, formElement) {
     /*
     Generic AJAX submission logic which takes a form and POSTs its data to the
@@ -194,7 +205,8 @@ $submitButton.on('click', function(evt) {
         .fail(function(jqXHR, textStatus, errorThrown) {
             displayMessage(
                 'error',
-                'Unable to save your work: ' + textStatus + ' ' + errorThrown,
+                'Unable to save your work: ' +
+                    buildErrorMessage(jqXHR, textStatus, errorThrown),
                 'transcription-submit-result'
             );
         });
@@ -235,13 +247,10 @@ function submitReview(status) {
             lockControls($transcriptionEditor);
         })
         .fail(function(jqXHR, textStatus, errorThrown) {
-            var errMessage = textStatus + ' ' + errorThrown;
-            if (jqXHR.responseJSON && jqXHR.responseJSON.error) {
-                errMessage = jqXHR.responseJSON.error;
-            }
             displayMessage(
                 'error',
-                'Unable to save your review: ' + errMessage,
+                'Unable to save your review: ' +
+                    buildErrorMessage(jqXHR, textStatus, errorThrown),
                 'transcription-review-result'
             );
         });
