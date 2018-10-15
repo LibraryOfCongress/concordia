@@ -6,7 +6,7 @@
             id: 'pw-length',
             text: 'At least 8 characters long',
             test: function(i) {
-                return i.match(/.{8,}/);
+                return i.length >= 8;
             }
         },
         {
