@@ -791,7 +791,7 @@ div.nav-secondary {
  * List-like displays for items and assets
  */
 
-.card-deck .card.asset-card {
+.card-deck .card.concordia-object-card {
     position: relative;
     flex-grow: 0;
     flex-basis: 200px;
@@ -804,8 +804,8 @@ div.nav-secondary {
     background-color: var(--bg-lightest-gray);
 }
 
-.asset-card .card-title,
-.asset-card .card-actions {
+.concordia-object-card .card-title,
+.concordia-object-card .card-actions {
     position: absolute;
     left: 0;
     right: 0;
@@ -813,7 +813,7 @@ div.nav-secondary {
     color: var(--text-color-offwhite);
 }
 
-.asset-card .card-title {
+.concordia-object-card .card-title {
     top: 0;
     padding: 2px;
 
@@ -822,15 +822,15 @@ div.nav-secondary {
     background-color: var(--light-shadow-color);
 }
 
-.asset-card .card-title:hover {
+.concordia-object-card .card-title:hover {
     background-color: var(--shadow-color);
 }
 
-.asset-card .card-actions {
+.concordia-object-card .card-actions {
     bottom: 0;
 }
 
-.asset-card .card-actions .btn-default:not(:hover) {
+.concordia-object-card .card-actions .btn-default:not(:hover) {
     background-color: var(--light-shadow-color);
 }
 
