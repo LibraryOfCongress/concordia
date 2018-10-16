@@ -3,14 +3,13 @@
 {% block title %}{{ title }}{% endblock title %}
 
 {% block breadcrumbs %}
-    {% if parent_page_url and parent_page_title %}
-        <li class="breadcrumb-item"><a class="primary-text" href="{{ parent_page_url }}">{{ parent_page_title }}</a></li>
-    {% endif %}
-    {% if breadcrumb %}
-        <li class="breadcrumb-item active">{{ breadcrumb }}</li>
-    {% else %}
-        <li class="breadcrumb-item active">{{ PATH_LEVEL_1|title }}</li>
-    {% endif %}
+    {% for link, title in breadcrumbs %}
+        {% if forloop.last %}
+            <li class="breadcrumb-item active" title="{{ title }}">{{ title }}</li>
+        {% else %}
+            <li class="breadcrumb-item"><a class="primary-text" href="{{ link }}" title="{{ title }}">{{ title }}</a></li>
+        {% endif %}
+    {% endfor %}
 {% endblock breadcrumbs %}
 
 {% block main_content %}

@@ -101,35 +101,20 @@ def static_page(request, base_name=None):
     with open(filename) as f:
         html = md.convert(f.read())
 
-    parent_page_url = None
-    parent_page_title = None
-    breadcrumb = None
-
-    parent_page_url = md.Meta.get("parent_page_url")
-    if parent_page_url:
-        parent_page_url = parent_page_url[0]
-
-    parent_page_title = md.Meta.get("parent_page_title")
-    if parent_page_title:
-        parent_page_title = parent_page_title[0]
-
-    breadcrumb = md.Meta.get("breadcrumb")
-    if breadcrumb:
-        breadcrumb = breadcrumb[0]
-
     page_title = md.Meta.get("title")
     if page_title:
         page_title = "\n".join(i.strip() for i in page_title)
     else:
         page_title = base_name.replace("-", " ").replace("/", " — ").title()
 
-    ctx = {
-        "body": html,
-        "title": page_title,
-        "parent_page_url": parent_page_url,
-        "parent_page_title": parent_page_title,
-        "breadcrumb": breadcrumb,
-    }
+    breadcrumbs = []
+    path_components = request.path.strip("/").split("/")
+    for i, segment in enumerate(path_components, start=1):
+        breadcrumbs.append(
+            ("/%s/" % "/".join(path_components[0:i]), segment.replace("-", " ").title())
+        )
+
+    ctx = {"body": html, "title": page_title, "breadcrumbs": breadcrumbs}
 
     return render(request, "static-page.html", ctx)
 
@@ -342,9 +327,9 @@ class AssetDetailView(DetailView):
         transcription = asset.transcription_set.order_by("-pk").first()
         ctx["transcription"] = transcription
 
-        # We'll handle the case where an item with
-        #  no transcriptions should be shown as status=edit here
-        # so the logic doesn't need to be repeated in templates:
+        # We'll handle the case where an item with no transcriptions should be
+        # shown as status=edit here so the logic doesn't need to be repeated in
+        # templates:
         if transcription:
             transcription_status = transcription.status.lower()
         else:

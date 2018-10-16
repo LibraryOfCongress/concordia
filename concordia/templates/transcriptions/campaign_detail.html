@@ -6,7 +6,7 @@
 
 {% block breadcrumbs %}
     <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaigns' %}">Campaigns</a></li>
-    <li class="breadcrumb-item active" aria-current="page">{{ campaign.title }}</li>
+    <li class="breadcrumb-item active" aria-current="page" title="{{ campaign.title }}">{{ campaign.title }}</li>
 {% endblock breadcrumbs %}
 
 {% block main_content %}

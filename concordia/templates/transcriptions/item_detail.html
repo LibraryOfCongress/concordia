@@ -12,9 +12,9 @@ Crowd: {{ item.title }} ({{ campaign.title }} — {{ project.title }})
 
 {% block breadcrumbs %}
     <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaigns' %}">Campaigns</a></li>
-    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaign' campaign.slug %}">{{ campaign.title }}</a></li>
-    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:project-detail' campaign.slug project.slug %}">{{ project.title }}</a></li>
-    <li class="breadcrumb-item active" aria-current="page">{{ item.title|truncatechars:40 }}</li>
+    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaign' campaign.slug %}" title="{{ campaign.title }}">{{ campaign.title }}</a></li>
+    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:project-detail' campaign.slug project.slug %}" title="{{ project.title }}">{{ project.title }}</a></li>
+    <li class="breadcrumb-item active" aria-current="page" title="{{ item.title }}">{{ item.title|truncatechars:40 }}</li>
 {% endblock breadcrumbs%}
 
 {% block main_content %}

@@ -28,8 +28,10 @@
     --control-bg-default: #d8d8d8;
     --control-label-color: #333333;
 
-    --height-top-nav: 8.0625rem;
-    --height-main: calc(100vh - 8.0625rem); /* Subtract height of navbar */
+    --height-top-nav: 113px; /* Height of logo image plus padding */
+    --height-main: calc(
+        100vh - var(--height-top-nav)
+    ); /* Subtract height of navbar */
 
     /* Making room for instructions button on bottom and breadcrumb and nav on top */
     --height-contribute-image: calc(
@@ -798,7 +800,7 @@ div.nav-secondary {
 
     margin: 0.25rem;
 
-    justify-content: center;
+    justify-content: start;
     align-items: center;
 
     background-color: var(--bg-lightest-gray);
@@ -849,12 +851,19 @@ div.nav-secondary {
  * This page wants to display as much as possible and so the entire page is a flex column
  */
 
-body.view-transcriptions--asset-detail {
-    height: 100vh;
+body.view-transcriptions--asset-detail main {
+    height: var(--height-main);
+    background-color: inherit;
 }
 
 #contribute-main-content {
     position: relative;
+}
+
+body.view-transcriptions--asset-detail main,
+#contribute-main-content {
+    /* This avoids browser inconsistencies when using the fullscreen API */
+    background-color: inherit;
 }
 
 #contribute-main-content h2 {

@@ -11,9 +11,9 @@
 {% block breadcrumbs %}
     <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaigns' %}">Campaigns</a></li>
     <li class="breadcrumb-item">
-        <a class="primary-text" href="{% url 'transcriptions:campaign' campaign.slug %}">{{ campaign.title }}</a>
+        <a class="primary-text" href="{% url 'transcriptions:campaign' campaign.slug %}" title="{{ campaign.title }}">{{ campaign.title }}</a>
     </li>
-    <li class="breadcrumb-item active" aria-current="page">{{ project.title }}</li>
+    <li class="breadcrumb-item active" aria-current="page" title="{{ project.title }}">{{ project.title }}</li>
 {% endblock breadcrumbs %}
 
 {% block main_content %}
@@ -25,10 +25,10 @@
         </div>
     </div>
     <div class="row">
-        <div class="card-deck">
+        <div class="card-deck justify-content-center">
             {% for item in items %}
-                <div class="col-12 col-md-4 col-lg-3 mx-2 mb-default concordia-object-card card bg-lightest-gray shadow-regular">
                     <a href="{% url 'transcriptions:item-detail' campaign.slug project.slug item.item_id %}">
+                <div class="col-12 col-md-4 col-lg-3 m-2 p-1 concordia-object-card card bg-lightest-gray shadow-regular justify-content-start align-items-stretch">
                         <img class="card-img card-img-campaign" alt="{{ item.title }}" src="{{ item.thumbnail_url }}">
                     </a>
 
