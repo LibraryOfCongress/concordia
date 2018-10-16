@@ -885,6 +885,41 @@ body.view-transcriptions--asset-detail {
     margin: 0.6rem;
 }
 
+.help-center-overlay {
+    opacity: 0.25;
+    background-color: #000000;
+}
+
+.help-center-card {
+    color: #fff;
+    background-color: var(--primary-color);
+}
+
+.help-center-card a {
+    color: #fff;
+}
+
+#faqAccordion {
+    padding-bottom: 20px;
+}
+
+#faqAccordion button {
+    color: #333;
+}
+
+#faqAccordion .card {
+    border-left: 0;
+    border-right: 0;
+}
+
+#faqAccordion .card-header {
+    padding-left: 0;
+}
+
+#faqAccordion .card-header button {
+    padding-left: 0;
+}
+
 #instruction-window {
     position: absolute;
     bottom: 0;
