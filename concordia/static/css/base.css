@@ -1100,16 +1100,7 @@ div.related-links {
 .footer-social-links li i {
     font-size: 17.5px;
 }
-.footer-social-links > li span {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    margin: -1px;
-    padding: 0;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    border: 0;
-}
+
 .footer-social-links > li a .icon-external-link {
     font-size: 12.6px;
     color: #666;
