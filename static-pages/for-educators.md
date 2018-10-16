@@ -1,4 +1,4 @@
-title: Make your Mark - Educators Resources
+title: Make your Mark - Resources for Educators
 
 Make Your Mark provides students of all ages with opportunities to explore unique historical documents from the collections of the Library of Congress.
 
