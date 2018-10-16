@@ -65,10 +65,12 @@ h1.header-text {
     font-size: 2.5rem;
     font-weight: normal;
     color: black;
+    text-transform: uppercase;
 }
 
-h1.header-text a {
-    display: inline;
+.header-text .beta-label {
+    font-size: x-small;
+    color: var(--primary-color);
 }
 
 h2 {
