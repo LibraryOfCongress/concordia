@@ -12,10 +12,10 @@ Crowd: {{ asset.title }} ({{ asset.item.project.campaign.title }} — {{ asset.i
 {% endblock head_content %}
 
 {% block breadcrumbs %}
-    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaign' slug=campaign.slug %}">{{ campaign.title }}</a></li>
-    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:project-detail' campaign_slug=campaign.slug slug=project.slug %}">{{ project.title }}</a></li>
-    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:item-detail' campaign_slug=campaign.slug project_slug=project.slug item_id=item.item_id %}">{{ item.title }}</a></li>
-    <li class="breadcrumb-item active">{{ asset.title }}</li>
+    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaign' slug=campaign.slug %}" title="{{ campaign.title }}">{{ campaign.title }}</a></li>
+    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:project-detail' campaign_slug=campaign.slug slug=project.slug %}" title="{{ project.title }}">{{ project.title }}</a></li>
+    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:item-detail' campaign_slug=campaign.slug project_slug=project.slug item_id=item.item_id %}" title="{{ item.title }}">{{ item.title }}</a></li>
+    <li class="breadcrumb-item active" title="{{ asset.title }}">{{ asset.title }}</li>
 {% endblock breadcrumbs %}
 
 {% block extra_body_classes %}d-flex flex-column{% endblock %}
