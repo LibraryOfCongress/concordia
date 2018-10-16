@@ -1086,11 +1086,18 @@ div.related-links {
     list-style: none;
     margin-bottom: 0;
 }
-.footer-social-links > li {
-    display: inline-block;
+
+.footer-social-links li {
+    display: flex;
     margin: 0 7px;
 }
-.footer-social-links > li i {
+
+.footer-social-links a {
+    display: flex;
+    align-items: center;
+}
+
+.footer-social-links li i {
     font-size: 17.5px;
 }
 .footer-social-links > li span {
@@ -1112,6 +1119,8 @@ div.related-links {
 }
 .footer-social-links > li.footer-social-link-email a {
     color: var(--footer-links-color);
+    display: flex;
+    align-items: center;
 }
 .footer-social-links > li.footer-social-link-survey {
     padding-left: 28px;
