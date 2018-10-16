@@ -12,10 +12,10 @@ Crowd: {{ asset.title }} ({{ asset.item.project.campaign.title }} — {{ asset.i
 {% endblock head_content %}
 
 {% block breadcrumbs %}
-    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaign' slug=campaign.slug %}">{{ campaign.title }}</a></li>
-    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:project-detail' campaign_slug=campaign.slug slug=project.slug %}">{{ project.title }}</a></li>
-    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:item-detail' campaign_slug=campaign.slug project_slug=project.slug item_id=item.item_id %}">{{ item.title }}</a></li>
-    <li class="breadcrumb-item active">{{ asset.title }}</li>
+    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaign' slug=campaign.slug %}" title="{{ campaign.title }}">{{ campaign.title }}</a></li>
+    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:project-detail' campaign_slug=campaign.slug slug=project.slug %}" title="{{ project.title }}">{{ project.title }}</a></li>
+    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:item-detail' campaign_slug=campaign.slug project_slug=project.slug item_id=item.item_id %}" title="{{ item.title }}">{{ item.title }}</a></li>
+    <li class="breadcrumb-item active" title="{{ asset.title }}">{{ asset.title }}</li>
 {% endblock breadcrumbs %}
 
 {% block extra_body_classes %}d-flex flex-column{% endblock %}
@@ -23,7 +23,7 @@ Crowd: {{ asset.title }} ({{ asset.item.project.campaign.title }} — {{ asset.i
 
 {% block main_content %}
 <div id="contribute-main-content" class="container-fluid flex-grow-1 d-flex flex-column">
-    <div id="navigation-container" class="row py-2">
+    <div id="navigation-container" class="row p-2">
         <nav id="asset-navigation" class="d-flex flex-grow-1 justify-content-between align-items-center" role="navigation">
             <div class="d-flex align-items-center">
                 <form onsubmit="document.location.href = document.getElementById('asset-selection').value; return false">
@@ -54,13 +54,20 @@ Crowd: {{ asset.title }} ({{ asset.item.project.campaign.title }} — {{ asset.i
                 </div>
             </div>
 
+            <div class="btn-group btn-group-sm ml-2">
+                <button id="go-fullscreen" class="btn btn-default" data-target="contribute-main-content">
+                    <span class="fas fa-arrows-alt"></span>
+                    Fullscreen
+                </button>
+            </div>
+
             <div class="btn-group btn-group-sm align-self-end" role="navigation" aria-label="Link to the next editable page">
                 <a class="btn btn-default" href="{% url "transcriptions:redirect-to-next-transcribable-asset" campaign.slug project.slug %}">Find a new page &rarr;</a>
             </div>
         </nav>
     </div>
     <div id="contribute-container" class="row flex-grow-1 pb-2">
-        <div class="col-6">
+        <div class="col-6 pl-0">
             <div id="asset-image" class="h-100 bg-dark"></div>
         </div>
 
@@ -214,7 +221,7 @@ Crowd: {{ asset.title }} ({{ asset.item.project.campaign.title }} — {{ asset.i
                     <a class="btn btn-primary" href="{% url "transcriptions:redirect-to-next-transcribable-asset" campaign.slug project.slug %}">
                         Find a new page
                     </a>
-                    <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
@@ -230,14 +237,15 @@ Crowd: {{ asset.title }} ({{ asset.item.project.campaign.title }} — {{ asset.i
                 </div>
                 <div class="modal-body">
                     <p>
-                        This page has been submitted for review. You can
-                        continue to add tags for this page or go to the next
-                        page needing transcription.
+                        This page has been submitted for review.
+                        <br>
+                         You can stay on this page to add tags or go to the next
+                         page needing transcription.
                     </p>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" data-dismiss="modal">
-                        Continue Tagging
+                <div class="modal-footer justify-content-around">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">
+                        Add Tags
                     </button>
                     <a class="btn btn-primary" href="{% url "transcriptions:redirect-to-next-transcribable-asset" campaign.slug project.slug %}">
                         Find a new page
@@ -257,18 +265,19 @@ Crowd: {{ asset.title }} ({{ asset.item.project.campaign.title }} — {{ asset.i
                 </div>
                 <div class="modal-body">
                     <p>
-                        Your review decision has been saved. You can continue
-                        workong on this page or go to the next page needing
-                        transcription.
+                        Your review decision has been saved.
+                        <br>
+                        You can stay on this page to add tags or go to the next
+                        page needing transcription.
                     </p>
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer justify-content-around">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">
+                        Add Tags
+                    </button>
                     <a class="btn btn-primary" href="{% url "transcriptions:redirect-to-next-transcribable-asset" campaign.slug project.slug %}">
                         Find a new page
                     </a>
-                    <button type="button" class="btn btn-primary" data-dismiss="modal">
-                        Continue Working
-                    </button>
                 </div>
             </div>
         </div>
