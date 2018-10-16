@@ -54,6 +54,13 @@ Crowd: {{ asset.title }} ({{ asset.item.project.campaign.title }} — {{ asset.i
                 </div>
             </div>
 
+            <div class="btn-group btn-group-sm ml-2">
+                <button id="go-fullscreen" class="btn btn-default" data-target="contribute-main-content">
+                    <span class="fas fa-arrows-alt"></span>
+                    Fullscreen
+                </button>
+            </div>
+
             <div class="btn-group btn-group-sm align-self-end" role="navigation" aria-label="Link to the next editable page">
                 <a class="btn btn-default" href="{% url "transcriptions:redirect-to-next-transcribable-asset" campaign.slug project.slug %}">Find a new page &rarr;</a>
             </div>

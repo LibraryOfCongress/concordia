@@ -853,10 +853,17 @@ div.nav-secondary {
 
 body.view-transcriptions--asset-detail main {
     height: var(--height-main);
+    background-color: inherit;
 }
 
 #contribute-main-content {
     position: relative;
+}
+
+body.view-transcriptions--asset-detail main,
+#contribute-main-content {
+    /* This avoids browser inconsistencies when using the fullscreen API */
+    background-color: inherit;
 }
 
 #contribute-main-content h2 {
