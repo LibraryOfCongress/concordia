@@ -2,7 +2,7 @@ title: How to Review
 
 <div class="row">
   <div class="col-3">
-    <div class="nav flex-column">
+    <div class="nav flex-column help-center">
     <h4>Instructions</h4>
      <a class="nav-link" href="/help-center/welcome-guide/">Welcome to Make Your Mark</a>
   <a class="nav-link" href="/help-center/how-to-transcribe/">How to transcribe</a>
