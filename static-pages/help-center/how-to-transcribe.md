@@ -1,5 +1,17 @@
 title: How to transcribe
 
+<div class="row">
+  <div class="col-3">
+    <div class="nav flex-column">
+      <h4>Instructions</h4>
+     <a class="nav-link" href="/help-center/welcome-guide/">Welcome to Make Your Mark</a>
+  <a class="nav-link active" href="/help-center/how-to-transcribe/">How to transcribe</a>
+  <a class="nav-link" href="/help-center/how-to-review/">How to review</a>
+  <a class="nav-link" href="/help-center/how-to-tag">How to tag</a>
+    </div>
+  </div>
+  <div class="col-9">
+
 We transcribe to improve search functionality. Our goal is to make documents word-searchable in the Library of Congress catalog, which means typing transcriptions that can be read by that computer system, as well as by humans. Most handwriting and even some typed text cannot be automatically and accurately translated into machine-readable text using current technologies -- that’s why we need your help!.
 
 We ask you to transcribe a document the same way you would read it aloud. We are not trying to recreate the appearance of the words on the original pages. The completed transcripts will be viewable beside the original images in the catalog, ensuring the physical layout of the page will always be available to readers.
@@ -58,3 +70,6 @@ Some material in Make Your Mark was created on a typewriter or printed. If we ha
 ### When not to transcribe printed text:
 
 Some calendars and diaries contain many pages of pre-printed almanacs or other text that is probably machine-readable and therefore should not be transcribed as part of this project.
+
+</div>
+</div>

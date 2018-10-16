@@ -894,6 +894,8 @@ body.view-transcriptions--asset-detail main,
     margin: 0.6rem;
 }
 
+/* Help Center */
+
 .help-center-overlay {
     opacity: 0.25;
     background-color: #000000;
@@ -901,6 +903,8 @@ body.view-transcriptions--asset-detail main,
 
 .help-center-card {
     color: #fff;
+    width: 300px;
+    height: 225px;
     background-color: var(--primary-color);
 }
 
@@ -928,6 +932,8 @@ body.view-transcriptions--asset-detail main,
 #faqAccordion .card-header button {
     padding-left: 0;
 }
+
+/* End of help center stuff */
 
 #instruction-window {
     position: absolute;

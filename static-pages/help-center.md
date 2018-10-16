@@ -1,5 +1,4 @@
-title: Make Your Mark Help Center
-breadcrumb: Help Center
+title: Help Center
 
 <div class="row my-default">
     <div class="col-sm-12">
