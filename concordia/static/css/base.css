@@ -1192,12 +1192,6 @@ div.related-links {
     padding: 10px 0 0 0;
 }
 
-ul.intersites-links {
-    padding-top: 10px;
-    padding-left: 0;
-    margin: 0 -1rem;
-}
-
 ul.intersites-links,
 ul.legal-links {
     color: var(--footer-links-color);
@@ -1222,24 +1216,22 @@ ul.legal-links li {
 .legal-links {
     padding-left: 0;
     list-style: none;
-    margin: 0 -1rem;
+}
+
+.legal-links .vl {
+    display: block;
+    width: 1px;
+    height: 0.8em;
+    background-color: var(--footer-links-color);
+}
+
+.legal-links li {
+    margin: 0 0.2rem;
 }
 
 .intersites-links > li,
 .legal-links > li {
     display: inline-block;
-    margin: 0 1rem;
-}
-
-.intersites-links > li > a span {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    margin: -1px;
-    padding: 0;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    border: 0;
 }
 
 .intersites-links > li.intersites-link-congress > a {
