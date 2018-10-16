@@ -29,13 +29,16 @@
 <body class="view-{{ VIEW_NAME_FOR_CSS }} section-{{ PATH_LEVEL_1|default:'homepage' }} environment-{{ CONCORDIA_ENVIRONMENT }} {% block extra_body_classes %}{% endblock %}">
     <header>
         <nav class="navbar navbar-expand-lg flex-row navbar-offwhite bg-offwhite justify-content-between align-items-end">
-            <div class="d-flex navbar-brand">
-                <a class="my-auto" href="https://www.loc.gov">
-                    <img src="{% static 'img/LoC-logo.svg' %}" alt="Library of Congress logo"></a>
-                <span class="vl mx-2 my-auto"></span>
-
-                <h1 class="header-text align-self-end">
-                    <a class="gray-text align-baseline" href="/">crowd</a>
+            <div class="navbar-brand d-flex align-items-stretch">
+                <a href="https://www.loc.gov">
+                    <img src="{% static 'img/LoC-logo.svg' %}" alt="Library of Congress logo">
+                </a>
+                <span class="vl mx-2"></span>
+                <h1 class="header-text m-0 d-flex align-items-center">
+                    <div>
+                        <a class="gray-text" href="/">Crowd</a>
+                        <span class="beta-label">beta</span>
+                    </div>
                 </h1>
             </div>
             <button class="navbar-toggler navbar-light" type="button" data-toggle="collapse" data-target="#nav-menu" aria-controls="nav-menu" aria-expanded="false" aria-label="Toggle navigation">
