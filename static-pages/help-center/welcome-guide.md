@@ -1,7 +1,4 @@
 title: Welcome Guide
-breadcrumb: Welcome
-parent_page_url: /help-center/
-parent_page_title: Help Center
 
 Welcome to Make Your Mark! Our goal is to make documents word-searchable in the Library of Congress catalog. Help us transcribe original items, many of which have never been transcribed before. Anyone can transcribe, you don’t need an account, but registered volunteers can access the review and tag features. You can choose which tasks you want to do, and what pages you want to work on. To create an account, [go to our registration page](/account/register). Let's get started!
 

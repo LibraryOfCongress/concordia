@@ -1,7 +1,4 @@
 title: How to Tag
-breadcrumb: Tag
-parent_page_url: /help-center/
-parent_page_title: Help Center
 
 You can use tags however you like, so long as you avoid using offensive, degrading or hurtful language about other individuals or groups of people. Read the [Library’s commenting policy here](https://www.loc.gov/legal/comment-and-posting-policy/). Here are some ways you might consider tagging:
 

@@ -1,7 +1,4 @@
 title: How to Review
-breadcrumb: Review
-parent_page_url: /help-center/
-parent_page_title: Help Center
 
 In addition to transcribing, you can review and edit transcripts created by your fellow volunteers. A reviewer’s task is to read the entire transcription and carefully compare it against the image of the document. Only registered users can review.
 
