@@ -2,7 +2,7 @@ title: Welcome Guide
 
 Welcome to Make Your Mark! Our goal is to make documents word-searchable in the Library of Congress catalog. Help us transcribe original items, many of which have never been transcribed before. Anyone can transcribe, you don’t need an account, but registered volunteers can access the review and tag features. You can choose which tasks you want to do, and what pages you want to work on. To create an account, [go to our registration page](/account/register). Let's get started!
 
-1. Choose a what to transcribe. You can either click the "Get Started" button on the homepage or [explore are various campaigns](/campaigns).
+1. Choose a what to transcribe. You can either click the "Get Started" button on the homepage or [explore our various campaigns](/campaigns).
 
 2. Transcribe what you can into the white box on the right. Transcribe lines in the order they appear and preserve line breaks. This will make the transcriptions useful for researchers. If you see multiple pages, such as an open notebook with two pages, just transcribe in the order you would read the text.
 
