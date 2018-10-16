@@ -16,7 +16,7 @@ We are so excited that you want to jump right in. To get started:
 
 This application can run on a single Docker host using docker-compose. 
 (recommended for development environments). For production, see the 
-[cloudformation](concordia/cloudformation/) directory for AWS Elastic Container Service stack templates.
+[cloudformation](cloudformation/) directory for AWS Elastic Container Service stack templates.
 
 ## Running Concordia
 
