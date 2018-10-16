@@ -14,7 +14,7 @@ breadcrumb: Help Center
     </div>
 </div>
 
-## Guides
+# Guides
 
 <div class="help-center-cards text-white row my-default">
   <div class="col-sm-4">
