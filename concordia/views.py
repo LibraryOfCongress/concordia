@@ -23,7 +23,7 @@ from django.urls import reverse, reverse_lazy
 from django.utils.timezone import now
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
-from django.views.generic import DetailView, FormView, ListView, TemplateView, View
+from django.views.generic import DetailView, FormView, ListView, TemplateView
 from django_registration.backends.activation.views import RegistrationView
 
 from concordia.forms import (
@@ -101,14 +101,35 @@ def static_page(request, base_name=None):
     with open(filename) as f:
         html = md.convert(f.read())
 
-    page_title = md.Meta.get("title")
+    parent_page_url = None
+    parent_page_title = None
+    breadcrumb = None
 
+    parent_page_url = md.Meta.get("parent_page_url")
+    if parent_page_url:
+        parent_page_url = parent_page_url[0]
+
+    parent_page_title = md.Meta.get("parent_page_title")
+    if parent_page_title:
+        parent_page_title = parent_page_title[0]
+
+    breadcrumb = md.Meta.get("breadcrumb")
+    if breadcrumb:
+        breadcrumb = breadcrumb[0]
+
+    page_title = md.Meta.get("title")
     if page_title:
         page_title = "\n".join(i.strip() for i in page_title)
     else:
         page_title = base_name.replace("-", " ").replace("/", " — ").title()
 
-    ctx = {"body": html, "title": page_title}
+    ctx = {
+        "body": html,
+        "title": page_title,
+        "parent_page_url": parent_page_url,
+        "parent_page_title": parent_page_title,
+        "breadcrumb": breadcrumb,
+    }
 
     return render(request, "static-page.html", ctx)
 
@@ -321,7 +342,8 @@ class AssetDetailView(DetailView):
         transcription = asset.transcription_set.order_by("-pk").first()
         ctx["transcription"] = transcription
 
-        # We'll handle the case where an item with no transcriptions should be shown as status=edit here
+        # We'll handle the case where an item with
+        #  no transcriptions should be shown as status=edit here
         # so the logic doesn't need to be repeated in templates:
         if transcription:
             transcription_status = transcription.status.lower()

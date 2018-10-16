@@ -1,4 +1,5 @@
 title: Welcome to the Help Center
+breadcrumb: Help Center
 
 <div class="row my-default">
     <div class="col-sm-12">
