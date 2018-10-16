@@ -214,7 +214,7 @@ Crowd: {{ asset.title }} ({{ asset.item.project.campaign.title }} — {{ asset.i
                     <a class="btn btn-primary" href="{% url "transcriptions:redirect-to-next-transcribable-asset" campaign.slug project.slug %}">
                         Find a new page
                     </a>
-                    <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
@@ -230,14 +230,15 @@ Crowd: {{ asset.title }} ({{ asset.item.project.campaign.title }} — {{ asset.i
                 </div>
                 <div class="modal-body">
                     <p>
-                        This page has been submitted for review. You can
-                        continue to add tags for this page or go to the next
-                        page needing transcription.
+                        This page has been submitted for review.
+                        <br>
+                         You can stay on this page to add tags or go to the next
+                         page needing transcription.
                     </p>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" data-dismiss="modal">
-                        Continue Tagging
+                <div class="modal-footer justify-content-around">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">
+                        Add Tags
                     </button>
                     <a class="btn btn-primary" href="{% url "transcriptions:redirect-to-next-transcribable-asset" campaign.slug project.slug %}">
                         Find a new page
@@ -257,18 +258,19 @@ Crowd: {{ asset.title }} ({{ asset.item.project.campaign.title }} — {{ asset.i
                 </div>
                 <div class="modal-body">
                     <p>
-                        Your review decision has been saved. You can continue
-                        workong on this page or go to the next page needing
-                        transcription.
+                        Your review decision has been saved.
+                        <br>
+                        You can stay on this page to add tags or go to the next
+                        page needing transcription.
                     </p>
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer justify-content-around">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">
+                        Add Tags
+                    </button>
                     <a class="btn btn-primary" href="{% url "transcriptions:redirect-to-next-transcribable-asset" campaign.slug project.slug %}">
                         Find a new page
                     </a>
-                    <button type="button" class="btn btn-primary" data-dismiss="modal">
-                        Continue Working
-                    </button>
                 </div>
             </div>
         </div>
