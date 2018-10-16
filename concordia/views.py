@@ -102,7 +102,6 @@ def static_page(request, base_name=None):
         html = md.convert(f.read())
 
     page_title = md.Meta.get("title")
-
     if page_title:
         page_title = "\n".join(i.strip() for i in page_title)
     else:
