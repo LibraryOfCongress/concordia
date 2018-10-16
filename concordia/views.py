@@ -108,7 +108,14 @@ def static_page(request, base_name=None):
     else:
         page_title = base_name.replace("-", " ").replace("/", " — ").title()
 
-    ctx = {"body": html, "title": page_title}
+    breadcrumbs = []
+    path_components = request.path.strip("/").split("/")
+    for i, segment in enumerate(path_components, start=1):
+        breadcrumbs.append(
+            ("/%s/" % "/".join(path_components[0:i]), segment.replace("-", " ").title())
+        )
+
+    ctx = {"body": html, "title": page_title, "breadcrumbs": breadcrumbs}
 
     return render(request, "static-page.html", ctx)
 
