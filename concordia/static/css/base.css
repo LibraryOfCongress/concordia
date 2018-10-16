@@ -1323,6 +1323,13 @@ ul.legal-links li {
     background-position: -114px 0;
 }
 
+.image-icon.github {
+    background-image: url('../img/GitHub-Mark-16px.png');
+    background-position: 0;
+    width: 16px;
+    height: 16px;
+}
+
 /* Registration page */
 #registration-form-container > .col-md-6 {
     max-width: 30rem;
