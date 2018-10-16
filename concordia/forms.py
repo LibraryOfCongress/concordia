@@ -45,20 +45,9 @@ class ContactUsForm(forms.Form):
     email = forms.EmailField(label="Your email:", required=True)
     subject = forms.CharField(label="Subject:", required=False)
 
-    category = forms.CharField(
-        label="Please select a topic:",
-        required=True,
-        widget=forms.Select(
-            choices=(
-                ("General", "General Question"),
-                ("Campaign", "Campaign or Reference Question"),
-                ("Problem", "Technical Support"),
-            )
-        ),
-    )
 
     link = forms.URLField(
-        label="Got a specific page you need help with? Add the link below:", required=False
+        label="Have a specific page you need help with? Add the link below:", required=False
     )
 
     story = forms.CharField(
