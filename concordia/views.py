@@ -23,7 +23,7 @@ from django.urls import reverse, reverse_lazy
 from django.utils.timezone import now
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
-from django.views.generic import DetailView, FormView, ListView, TemplateView, View
+from django.views.generic import DetailView, FormView, ListView, TemplateView
 from django_registration.backends.activation.views import RegistrationView
 
 from concordia.forms import (
@@ -321,8 +321,9 @@ class AssetDetailView(DetailView):
         transcription = asset.transcription_set.order_by("-pk").first()
         ctx["transcription"] = transcription
 
-        # We'll handle the case where an item with no transcriptions should be shown as status=edit here
-        # so the logic doesn't need to be repeated in templates:
+        # We'll handle the case where an item with no transcriptions should be
+        # shown as status=edit here so the logic doesn't need to be repeated in
+        # templates:
         if transcription:
             transcription_status = transcription.status.lower()
         else:
