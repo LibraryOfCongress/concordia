@@ -21,14 +21,16 @@
             <p class="hero-text">{{ campaign.description }}</p>
         </div>
         <div class="col-3">
-            <div class="related-links">
-                <h4>Related Links</h4>
-                <div class="list-group">
-                    {% for resource in campaign.resource_set.all %}
-                        <a class="list-group-item" href="{{ resource.resource_url }}" target="_blank">{{ resource.title }} <i class="fa fa-external-link-alt"></i></a>
-                    {% endfor %}
+            {% if campaign.resource_set.all|length %}
+                <div class="related-links">
+                    <h4>Related Links</h4>
+                    <div class="list-group">
+                        {% for resource in campaign.resource_set.all %}
+                            <a class="list-group-item" href="{{ resource.resource_url }}" target="_blank">{{ resource.title }} <i class="fa fa-external-link-alt"></i></a>
+                        {% endfor %}
+                    </div>
                 </div>
-            </div>
+            {% endif %}
         </div>
     </div>
     <div class="row">
