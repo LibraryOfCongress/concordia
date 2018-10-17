@@ -21,8 +21,8 @@ Crowd: {{ item.title }} ({{ campaign.title }} — {{ project.title }})
 <div class="container py-default">
     <div class="row">
         <div class="col-md-8">
-            <h1 class="mt-default mb-3 ml-3">{{ item.title }}</h1>
-            <p class="ml-default mb-default hero-text">{{ item.description }}</p>
+            <h1 class="m-3">{{ item.title }}</h1>
+            <p class="m-3 hero-text">{{ item.description }}</p>
         </div>
         <div class="col-md-4">
             {% widthratio in_progress_percent paginator.count 100 as edit_percent %}
