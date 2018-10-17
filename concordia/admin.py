@@ -1,17 +1,18 @@
 import re
 from urllib.parse import urljoin
 
+from bittersweet.models import validated_get_or_create
 from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import permission_required
+from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, render
 from django.template.defaultfilters import slugify, truncatechars
 from django.urls import path
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html
 from django.views.decorators.cache import never_cache
-from django.core.exceptions import ValidationError
 
 from exporter import views as exporter_views
 from importer.tasks import import_items_into_project_from_url
@@ -91,40 +92,6 @@ def unpublish_action(modeladmin, request, queryset):
 unpublish_action.short_description = "Unpublish selected"
 
 
-def campaign_get_or_create(campaign_title, row):
-    created = False
-    try:
-        campaign = Campaign.objects.get(title=campaign_title)
-    except Campaign.DoesNotExist:
-        campaign = Campaign(
-            title=campaign_title,
-            slug=slugify(campaign_title),
-            description=row["Campaign Long Description"] or "",
-            short_description=row["Campaign Short Description"] or "",
-        )
-        campaign.full_clean()
-        campaign.save()
-        created = True
-    return campaign, created
-
-
-def project_get_or_create(project_title, campaign, row):
-    created = False
-    try:
-        project = campaign.project_set.get(title=project_title)
-    except Project.DoesNotExist:
-        project = Project(
-            title=project_title,
-            slug=slugify(project_title),
-            description=row["Project Description"] or "",
-            campaign=campaign,
-        )
-        project.full_clean()
-        project.save()
-        created = True
-    return project, created
-
-
 @never_cache
 @staff_member_required
 @permission_required("concordia.add_campaign")
@@ -182,8 +149,17 @@ def admin_bulk_import_view(request):
                     continue
 
                 try:
-                    campaign, created = campaign_get_or_create(campaign_title, row)
-                except ValidationError:
+                    campaign, created = validated_get_or_create(
+                        Campaign,
+                        title=campaign_title,
+                        defaults={
+                            "slug": slugify(campaign_title),
+                            "description": row["Campaign Long Description"] or "",
+                            "short_description": row["Campaign Short Description"]
+                            or "",
+                        },
+                    )
+                except ValidationError as exc:
                     messages.add_message(
                         request,
                         messages.ERROR,
@@ -202,10 +178,17 @@ def admin_bulk_import_view(request):
                     )
 
                 try:
-                    project, created = project_get_or_create(
-                        project_title, campaign, row
+                    project, created = validated_get_or_create(
+                        Project,
+                        title=project_title,
+                        campaign=campaign,
+                        defaults={
+                            "slug": slugify(project_title),
+                            "description": row["Project Description"] or "",
+                            "campaign": campaign,
+                        },
                     )
-                except ValidationError:
+                except ValidationError as exc:
                     messages.add_message(
                         request,
                         messages.ERROR,

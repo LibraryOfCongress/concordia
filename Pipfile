@@ -37,6 +37,7 @@ markdown = ">=3.0.1"
 "django-bootstrap4" = "*"
 django-robots = "*"
 setuptools-scm = "*"
+django-bittersweet = "*"
 
 [dev-packages]
 invoke = "*"
