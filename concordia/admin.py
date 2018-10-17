@@ -30,6 +30,46 @@ from .models import (
 from .views import ReportCampaignView
 
 
+def publish_item_action(modeladmin, request, queryset):
+    """
+    Mark all of the selected items and their related assets as published
+    """
+
+    count = queryset.filter(published=False).update(published=True)
+    asset_count = 0
+    for item in queryset:
+        asset_count += Asset.objects.filter(item=item, published=False).update(
+            published=True
+        )
+
+    messages.add_message(
+        request, messages.INFO, f"Published {count} items and {asset_count} assets"
+    )
+
+
+publish_item_action.short_description = "Publish selected items and assets"
+
+
+def unpublish_item_action(modeladmin, request, queryset):
+    """
+    Mark all of the selected items and their related assets as unpublished
+    """
+
+    count = queryset.filter(published=True).update(published=False)
+    asset_count = 0
+    for item in queryset:
+        asset_count += Asset.objects.filter(item=item, published=True).update(
+            published=False
+        )
+
+    messages.add_message(
+        request, messages.INFO, f"Unpublished {count} items and {asset_count} assets"
+    )
+
+
+unpublish_item_action.short_description = "Unpublish selected items and assets"
+
+
 def publish_action(modeladmin, request, queryset):
     """
     Mark all of the selected objects as published
@@ -340,7 +380,7 @@ class ItemAdmin(admin.ModelAdmin):
     ]
     list_filter = ("published", "project__campaign", "project")
 
-    actions = (publish_action, unpublish_action)
+    actions = (publish_item_action, unpublish_item_action)
 
     readonly_fields = ("project",)
 
