@@ -61,37 +61,38 @@ Crowd: {{ item.title }} ({{ campaign.title }} — {{ project.title }})
                 </div>
             </div>
         </form>
-        <div class="card-deck justify-content-center">
-            {% for a in assets %}
-                {% url 'transcriptions:asset-detail' a.item.project.campaign.slug a.item.project.slug a.item.item_id a.slug as asset_detail_url %}
+    </div>
+    <div class="card-deck justify-content-center">
+        {% for a in assets %}
+            {% url 'transcriptions:asset-detail' a.item.project.campaign.slug a.item.project.slug a.item.item_id a.slug as asset_detail_url %}
 
-                <div class="card concordia-object-card" data-transcription-status="{{ a.transcription_status }}">
-                    <a href="{{ asset_detail_url }}">
-                        <img class="card-img" alt="{{ a.slug }}" src="{% asset_media_url a %}">
+            <div class="card concordia-object-card" data-transcription-status="{{ a.transcription_status }}">
+                <a href="{{ asset_detail_url }}">
+                    <img class="card-img" alt="{{ a.slug }}" src="{% asset_media_url a %}">
+                </a>
+
+                <a class="card-title" href="{{ asset_detail_url }}">
+                    #{{ a.sequence }}
+                </a>
+
+                <div class="card-actions">
+                    <a class="btn btn-sm btn-block btn-default">
+                        {% if a.transcription_status == 'submitted' %}
+                            <span class="fas fa-list tx-submitted"></span>
+                            Review
+                        {% elif a.transcription_status == 'completed' %}
+                            <span class="fas fa-check tx-completed"></span>
+                            Complete
+                        {% else %}
+                            <span class="fas fa-edit tx-edit"></span>
+                            Transcribe
+                        {% endif %}
                     </a>
-
-                    <a class="card-title" href="{{ asset_detail_url }}">
-                        #{{ a.sequence }}
-                    </a>
-
-                    <div class="card-actions">
-                        <a class="btn btn-sm btn-block btn-default">
-                            {% if a.transcription_status == 'submitted' %}
-                                <span class="fas fa-list tx-submitted"></span>
-                                Review
-                            {% elif a.transcription_status == 'completed' %}
-                                <span class="fas fa-check tx-completed"></span>
-                                Complete
-                            {% else %}
-                                <span class="fas fa-edit tx-edit"></span>
-                                Transcribe
-                            {% endif %}
-                        </a>
-                    </div>
                 </div>
-            {% endfor %}
-        </div>
-
+            </div>
+        {% endfor %}
+    </div>
+    <div class="row">
         {% include "standard-pagination.html" %}
     </div>
 </div>
