@@ -801,6 +801,9 @@ div.nav-secondary {
     flex-grow: 0;
     flex-basis: 200px;
 
+    width: 200px;
+    min-height: 300px;
+
     margin: 0.25rem;
 
     justify-content: start;
