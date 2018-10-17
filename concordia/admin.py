@@ -103,11 +103,12 @@ def admin_bulk_import_view(request):
                 import_url_blob = row["Import URLs"]
 
                 if not all((campaign_title, project_title, import_url_blob)):
-                    messages.add_message(
-                        request,
-                        messages.WARNING,
-                        f"Skipping row {idx}: at least one required field (Campaign, Project, Import URLs) is empty",
+                    warning_message = (
+                        f"Skipping row {idx}: at least one required field \
+                        (Campaign, Project, Import URLs) is empty",
                     )
+
+                    messages.add_message(request, messages.WARNING, warning_message)
                     continue
 
                 campaign, created = Campaign.objects.get_or_create(
@@ -130,7 +131,11 @@ def admin_bulk_import_view(request):
                     )
 
                 project, created = campaign.project_set.get_or_create(
-                    title=project_title, defaults={"slug": slugify(project_title)}
+                    title=project_title,
+                    defaults={
+                        "slug": slugify(project_title),
+                        "description": row["Project Description"] or "",
+                    },
                 )
                 if created:
                     messages.add_message(

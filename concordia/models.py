@@ -76,7 +76,8 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
         return self.title
 
     def get_absolute_url(self):
-        # FIXME: change this with https://github.com/LibraryOfCongress/concordia/issues/242
+        # FIXME: change this with
+        # https://github.com/LibraryOfCongress/concordia/issues/242
         return reverse("transcriptions:campaign", args=(self.slug,))
 
 
@@ -108,6 +109,7 @@ class Project(MetricsModelMixin("project"), models.Model):
         upload_to="project-thumbnails", blank=True, null=True
     )
 
+    description = models.TextField(blank=True)
     category = models.CharField(max_length=12, blank=True)
     metadata = JSONField(default=metadata_default, blank=True, null=True)
 
