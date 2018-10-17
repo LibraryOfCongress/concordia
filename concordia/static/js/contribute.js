@@ -177,7 +177,12 @@ $transcriptionEditor
     .on('form-submit-failure', function(evt, info) {
         displayMessage(
             'error',
-            'Unable to save your work: ' + info.textStatus + info.errorThrown,
+            'Unable to save your work: ' +
+                buildErrorMessage(
+                    info.jqXHR,
+                    info.textStatus,
+                    info.errorThrown
+                ),
             'transcription-save-result'
         );
         $transcriptionEditor.trigger('update-ui-state');
