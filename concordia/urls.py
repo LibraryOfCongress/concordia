@@ -118,6 +118,7 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     # Apps
     path("forum/", include(board.urls)),
+    path("captcha/ajax/", views.ajax_captcha, name="ajax-captcha"),
     path("captcha/", include("captcha.urls")),
     re_path(r"^password_reset/$", auth_views.password_reset, name="password_reset"),
     re_path(

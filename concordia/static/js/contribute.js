@@ -23,6 +23,30 @@ function buildErrorMessage(jqXHR, textStatus, errorThrown) {
     return errMessage;
 }
 
+var $captchaModal = $('#captcha-modal');
+var $captchaForm = $captchaModal.find('form').on('submit', function(evt) {
+    evt.preventDefault();
+
+    var formData = $captchaForm.serializeArray();
+
+    $.ajax({
+        url: $captchaForm.attr('action'),
+        method: 'POST',
+        data: $.param(formData)
+    })
+        .done(function() {
+            $captchaModal.modal('hide');
+        })
+        .fail(function(jqXHR) {
+            if (jqXHR.status == 401) {
+                $captchaModal.find('[name=key]').val(jqXHR.responseJSON.key);
+                $captchaModal
+                    .find('#captcha-image')
+                    .attr('src', jqXHR.responseJSON.image);
+            }
+        });
+});
+
 $('form.ajax-submission').each(function(idx, formElement) {
     /*
     Generic AJAX submission logic which takes a form and POSTs its data to the
@@ -63,6 +87,15 @@ $('form.ajax-submission').each(function(idx, formElement) {
                 });
             })
             .fail(function(jqXHR, textStatus, errorThrown) {
+                if (jqXHR.status == 401) {
+                    $captchaModal
+                        .find('[name=key]')
+                        .val(jqXHR.responseJSON.key);
+                    $captchaModal
+                        .find('#captcha-image')
+                        .attr('src', jqXHR.responseJSON.image);
+                    $captchaModal.modal();
+                }
                 $form.trigger('form-submit-failure', {
                     textStatus: textStatus,
                     errorThrown: errorThrown,

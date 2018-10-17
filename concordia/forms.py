@@ -1,6 +1,5 @@
 from logging import getLogger
 
-from captcha.fields import CaptchaField
 from django import forms
 from django.contrib.auth import get_user_model
 from django_registration.forms import RegistrationForm
@@ -53,10 +52,6 @@ class ContactUsForm(forms.Form):
     story = forms.CharField(
         label="Let us know how we can help:", required=True, widget=forms.Textarea
     )
-
-
-class CaptchaEmbedForm(forms.Form):
-    captcha = CaptchaField()
 
 
 class AssetFilteringForm(forms.Form):
