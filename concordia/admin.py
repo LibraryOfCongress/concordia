@@ -11,6 +11,7 @@ from django.urls import path
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html
 from django.views.decorators.cache import never_cache
+from django.core.exceptions import ValidationError
 
 from exporter import views as exporter_views
 from importer.tasks import import_items_into_project_from_url
@@ -36,11 +37,9 @@ def publish_item_action(modeladmin, request, queryset):
     """
 
     count = queryset.filter(published=False).update(published=True)
-    asset_count = 0
-    for item in queryset:
-        asset_count += Asset.objects.filter(item=item, published=False).update(
-            published=True
-        )
+    asset_count = Asset.objects.filter(item__in=queryset, published=False).update(
+        published=True
+    )
 
     messages.add_message(
         request, messages.INFO, f"Published {count} items and {asset_count} assets"
@@ -56,11 +55,9 @@ def unpublish_item_action(modeladmin, request, queryset):
     """
 
     count = queryset.filter(published=True).update(published=False)
-    asset_count = 0
-    for item in queryset:
-        asset_count += Asset.objects.filter(item=item, published=True).update(
-            published=False
-        )
+    asset_count = Asset.objects.filter(item__in=queryset, published=True).update(
+        published=False
+    )
 
     messages.add_message(
         request, messages.INFO, f"Unpublished {count} items and {asset_count} assets"
@@ -92,6 +89,40 @@ def unpublish_action(modeladmin, request, queryset):
 
 
 unpublish_action.short_description = "Unpublish selected"
+
+
+def campaign_get_or_create(campaign_title, row):
+    created = False
+    try:
+        campaign = Campaign.objects.get(title=campaign_title)
+    except Campaign.DoesNotExist:
+        campaign = Campaign(
+            title=campaign_title,
+            slug=slugify(campaign_title),
+            description=row["Campaign Long Description"] or "",
+            short_description=row["Campaign Short Description"] or "",
+        )
+        campaign.full_clean()
+        campaign.save()
+        created = True
+    return campaign, created
+
+
+def project_get_or_create(project_title, campaign, row):
+    created = False
+    try:
+        project = campaign.project_set.get(title=project_title)
+    except Project.DoesNotExist:
+        project = Project(
+            title=project_title,
+            slug=slugify(project_title),
+            description=row["Project Description"] or "",
+            campaign=campaign,
+        )
+        project.full_clean()
+        project.save()
+        created = True
+    return project, created
 
 
 @never_cache
@@ -150,14 +181,15 @@ def admin_bulk_import_view(request):
                     messages.add_message(request, messages.WARNING, warning_message)
                     continue
 
-                campaign, created = Campaign.objects.get_or_create(
-                    title=campaign_title,
-                    defaults={
-                        "slug": slugify(campaign_title),
-                        "description": row["Campaign Long Description"] or "",
-                        "short_description": row["Campaign Short Description"] or "",
-                    },
-                )
+                try:
+                    campaign, created = campaign_get_or_create(campaign_title, row)
+                except ValidationError:
+                    messages.add_message(
+                        request,
+                        messages.ERROR,
+                        f"Validation error occurred creating campaign {campaign_title}",
+                    )
+
                 if created:
                     messages.add_message(
                         request, messages.INFO, f"Created new campaign {campaign_title}"
@@ -169,13 +201,17 @@ def admin_bulk_import_view(request):
                         f"Reusing campaign {campaign_title} without modification",
                     )
 
-                project, created = campaign.project_set.get_or_create(
-                    title=project_title,
-                    defaults={
-                        "slug": slugify(project_title),
-                        "description": row["Project Description"] or "",
-                    },
-                )
+                try:
+                    project, created = project_get_or_create(
+                        project_title, campaign, row
+                    )
+                except ValidationError:
+                    messages.add_message(
+                        request,
+                        messages.ERROR,
+                        f"Validation error occurred creating project {project_title}",
+                    )
+
                 if created:
                     messages.add_message(
                         request, messages.INFO, f"Created new project {project_title}"
