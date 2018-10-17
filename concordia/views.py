@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import time
 from datetime import datetime, timedelta
 from logging import getLogger
@@ -50,6 +51,9 @@ logger = getLogger(__name__)
 ASSETS_PER_PAGE = 36
 PROJECTS_PER_PAGE = 36
 ITEMS_PER_PAGE = 36
+URL_REGEX = (
+    "http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+"
+)
 
 
 def get_anonymous_user():
@@ -398,6 +402,19 @@ def save_transcription(request, *, asset_pk):
     else:
         user = request.user
 
+    # Check whether this transcription text contains any URLs
+    # If so, ask the user to correct the transcription by removing the URLs
+    transcription_text = request.POST["text"]
+    urls = re.findall(URL_REGEX, transcription_text)
+    if urls:
+        return JsonResponse(
+            {
+                "error": "It looks like your text contains URLs. "
+                "Please remove the URLs and try again."
+            },
+            status=400,
+        )
+
     supersedes_pk = request.POST.get("supersedes")
     if not supersedes_pk:
         superseded = None
@@ -417,7 +434,7 @@ def save_transcription(request, *, asset_pk):
             return JsonResponse({"error": "Invalid supersedes value"}, status=400)
 
     transcription = Transcription(
-        asset=asset, user=user, supersedes=superseded, text=request.POST["text"]
+        asset=asset, user=user, supersedes=superseded, text=transcription_text
     )
     transcription.full_clean()
     transcription.save()
