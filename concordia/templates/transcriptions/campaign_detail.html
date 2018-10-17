@@ -2,7 +2,7 @@
 {% load staticfiles %}
 {% load concordia_auth_tags %}
 
-{% block title %}Crowd — {{ campaign.title }} Projects{% endblock title %}
+{% block title %}{{ campaign.title }}{% endblock title %}
 
 {% block breadcrumbs %}
     <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaigns' %}">Campaigns</a></li>

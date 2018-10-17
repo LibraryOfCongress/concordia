@@ -5,7 +5,7 @@
 {% load concordia_media_tags %}
 
 {% block title %}
-Crowd: {{ asset.title }} ({{ asset.item.project.campaign.title }} — {{ asset.item.project.title }})
+{{ asset.title }} ({{ asset.item.project.campaign.title }}: {{ asset.item.project.title }})
 {% endblock title %}
 
 {% block head_content %}
