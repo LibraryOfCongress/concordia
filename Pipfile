@@ -36,6 +36,7 @@ markdown = ">=3.0.1"
 "django-bootstrap4" = "*"
 django-robots = "*"
 setuptools-scm = "*"
+"beautifulsoup4" = "*"
 
 [dev-packages]
 invoke = "*"

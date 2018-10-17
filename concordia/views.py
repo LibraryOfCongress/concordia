@@ -6,6 +6,7 @@ from logging import getLogger
 from smtplib import SMTPException
 
 import markdown
+from bs4 import UnicodeDammit
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -416,8 +417,13 @@ def save_transcription(request, *, asset_pk):
         except Transcription.DoesNotExist:
             return JsonResponse({"error": "Invalid supersedes value"}, status=400)
 
+    # Convert windows-1252 (Microsoft smart quotes) characters to ascii equivalents
+    transcription_text = UnicodeDammit(
+        request.POST["text"], ["windows-1252"], smart_quotes_to="ascii"
+    ).unicode_markup
+
     transcription = Transcription(
-        asset=asset, user=user, supersedes=superseded, text=request.POST["text"]
+        asset=asset, user=user, supersedes=superseded, text=transcription_text
     )
     transcription.full_clean()
     transcription.save()
