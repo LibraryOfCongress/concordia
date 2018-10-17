@@ -53,11 +53,13 @@ body {
 
 h1 {
     font-family: 'Roboto Slab', serif;
-    font-size: 3rem;
-    line-height: 125%;
     font-weight: bold;
     color: var(--text-color-primary);
-    margin-bottom: 1em;
+}
+
+.view-homepage h1 {
+    font-size: 3rem;
+    line-height: 125%;
 }
 
 h1.header-text {
@@ -200,15 +202,13 @@ a.nav-secondary:first-of-type {
     border-right: solid 0.0675rem var(--bg-darkest-gray);
 }
 
-p.hero-text {
+.view-homepage p.hero-text {
     font-family: 'Open Sans', sans-serif;
     font-size: 1.5rem;
     color: var(--text-color-primary);
 }
 
-p.hero-text.offwhite-text {
-    font-family: 'Open Sans', sans-serif;
-    font-size: 1.5rem;
+.view-homepage p.hero-text.offwhite-text {
     color: var(--text-color-offwhite);
 }
 
