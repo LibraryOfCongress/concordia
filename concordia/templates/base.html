@@ -68,7 +68,7 @@
                         </div>
                     </li>
                     <li class="nav-item anonymous-only">
-                        <a class="nav-link d-lg-none" href="{% url 'login' %}">Login</a>
+                        <a class="nav-link d-lg-none" href="{% url 'login' %}?next={{ request.path|urlencode }}">Login</a>
                     </li>
                     <li class="nav-item anonymous-only">
                         <a class="nav-link d-lg-none" href="{% url 'registration_register' %}">Register</a>
@@ -78,7 +78,7 @@
 
             <ul class="nav-secondary anonymous-only list-unstyled d-none d-lg-flex">
                 <li class="nav-item">
-                    <a class="nav-link nav-secondary nav-link-login" href="{% url 'login' %}">Login</a>
+                    <a class="nav-link nav-secondary nav-link-login" href="{% url 'login' %}?next={{ request.path|urlencode }}">Login</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link nav-secondary nav-link-register" href="{% url 'registration_register' %}">Register</a>

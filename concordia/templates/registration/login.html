@@ -14,6 +14,10 @@
                 <form method="post" action="{% url 'login' %}" class="col-10 my-3 mx-auto">
                     {% csrf_token %}
 
+                    {% if next %}
+                        <input type="hidden" name="next" value="{{ next }}" />
+                    {% endif %}
+
                     {% bootstrap_form form %}
 
                     {% buttons %}
