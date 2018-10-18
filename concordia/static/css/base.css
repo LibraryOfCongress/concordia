@@ -846,8 +846,8 @@ div.nav-secondary {
  * Homepage customizations
  */
 
-.view-homepage h1,
-.view-homepage h2 {
+.view-homepage main h1,
+.view-homepage main h2 {
     text-transform: uppercase;
 }
 
