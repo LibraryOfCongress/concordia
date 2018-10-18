@@ -40,9 +40,23 @@ Parameters:
             - 'test'
             - 'stage'
             - 'prod'
-            - 'dev-fg'
         ConstraintDescription: Must match a location for secret storage in secretsmanager
 
+    RedisAddress:
+        Type: String
+        Description: Redis endpoint address
+
+    RedisPort:
+        Type: String
+        Description: Redis endpoint port
+  
+    MemcachedAddress:
+        Type: String
+        Description: memcached endpoint address
+  
+    MemcachedPort:
+        Type: String
+        Description: memcached endpoint port
 
 Resources:
 
@@ -198,6 +212,14 @@ Resources:
                 Value: !Ref AWS::Region
               - Name: SENTRY_PUBLIC_DSN
                 Value: http://f69265b381a44ceb89e9bd467f86fbdd@devops-sentry-public-lb-718357739.us-east-1.elb.amazonaws.com/3
+              - Name: REDIS_ADDRESS
+                Value: !Ref RedisAddress
+              - Name: REDIS_PORT
+                Value: !Ref RedisPort
+              - Name: MEMCACHED_ADDRESS
+                Value: !Ref MemcachedAddress
+              - Name: MEMCACHED_PORT
+                Value: !Ref MemcachedPort
           MountPoints:
               - SourceVolume: images_volume
                 ContainerPath: /concordia_images
@@ -238,6 +260,14 @@ Resources:
                 Value: !Ref AWS::Region
               - Name: SENTRY_PUBLIC_DSN
                 Value: http://f69265b381a44ceb89e9bd467f86fbdd@devops-sentry-public-lb-718357739.us-east-1.elb.amazonaws.com/3
+              - Name: REDIS_ADDRESS
+                Value: !Ref RedisAddress
+              - Name: REDIS_PORT
+                Value: !Ref RedisPort
+              - Name: MEMCACHED_ADDRESS
+                Value: !Ref MemcachedAddress
+              - Name: MEMCACHED_PORT
+                Value: !Ref MemcachedPort
           MountPoints:
               - SourceVolume: images_volume
                 ContainerPath: /concordia_images

@@ -141,6 +141,10 @@ Resources:
                 PrivateSubnets: !GetAtt VPC.Outputs.PrivateSubnets
                 PublicSubnets: !GetAtt VPC.Outputs.PublicSubnets
                 ConcordiaVersion: !Ref ConcordiaVersion
+                RedisAddress: !Ref Cache.Outputs.RedisAddress
+                RedisPort: !Ref Cache.Outputs.RedisPort
+                MemcachedAddress: !Ref Cache.Outputs.MemcachedAddress
+                MemcachedPort: !Ref Cache.Outputs.MemcachedPort
 
 Outputs:
 
