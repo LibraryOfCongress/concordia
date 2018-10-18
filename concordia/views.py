@@ -3,7 +3,7 @@ import os
 import re
 import time
 from datetime import timedelta
-from functools import partial, wraps
+from functools import wraps
 from logging import getLogger
 from smtplib import SMTPException
 
@@ -30,6 +30,7 @@ from django.utils.timezone import now
 from django.views.decorators.cache import cache_control, never_cache
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+from django.views.decorators.vary import vary_on_headers
 from django.views.generic import DetailView, FormView, ListView, TemplateView
 from django_registration.backends.activation.views import RegistrationView
 
@@ -65,10 +66,18 @@ MESSAGE_LEVEL_NAMES = dict(
 )
 
 
-# Decorator for views which use our default cache control policy
-default_cache_control = partial(
-    cache_control, max_age=settings.DEFAULT_PAGE_TTL, public=True
-)
+def default_cache_control(view_function):
+    """
+    Decorator for views which use our default cache control policy for public pages
+    """
+
+    @vary_on_headers("Accept-Encoding")
+    @cache_control(public=True, no_transform=True, max_age=settings.DEFAULT_PAGE_TTL)
+    @wraps(view_function)
+    def inner(*args, **kwargs):
+        return view_function(*args, **kwargs)
+
+    return inner
 
 
 def get_anonymous_user():
