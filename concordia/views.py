@@ -403,7 +403,7 @@ def save_transcription(request, *, asset_pk):
     # Check whether this transcription text contains any URLs
     # If so, ask the user to correct the transcription by removing the URLs
     transcription_text = request.POST["text"]
-    urls = re.search(URL_REGEX, transcription_text)
+    url_match = re.search(URL_REGEX, transcription_text)
     if urls:
         return JsonResponse(
             {
