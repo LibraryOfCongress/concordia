@@ -51,7 +51,7 @@ logger = getLogger(__name__)
 ASSETS_PER_PAGE = 36
 PROJECTS_PER_PAGE = 36
 ITEMS_PER_PAGE = 36
-URL_REGEX = "http[s]?://"
+URL_REGEX = r"http[s]?://"
 
 
 def get_anonymous_user():
