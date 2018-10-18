@@ -2,6 +2,11 @@
 
 {% load bootstrap4 %}
 
+{% block head_content %}
+    <meta name="robots" content="noindex">
+    {{ block.super }}
+{% endblock head_content %}
+
 {% block title %}Login{% endblock title %}
 
 {% block main_content %}
