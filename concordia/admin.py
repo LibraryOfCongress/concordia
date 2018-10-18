@@ -1,10 +1,12 @@
 import re
 from urllib.parse import urljoin
 
+from bittersweet.models import validated_get_or_create
 from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import permission_required
+from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, render
 from django.template.defaultfilters import slugify, truncatechars
 from django.urls import path
@@ -28,6 +30,42 @@ from .models import (
     UserAssetTagCollection,
 )
 from .views import ReportCampaignView
+
+
+def publish_item_action(modeladmin, request, queryset):
+    """
+    Mark all of the selected items and their related assets as published
+    """
+
+    count = queryset.filter(published=False).update(published=True)
+    asset_count = Asset.objects.filter(item__in=queryset, published=False).update(
+        published=True
+    )
+
+    messages.add_message(
+        request, messages.INFO, f"Published {count} items and {asset_count} assets"
+    )
+
+
+publish_item_action.short_description = "Publish selected items and assets"
+
+
+def unpublish_item_action(modeladmin, request, queryset):
+    """
+    Mark all of the selected items and their related assets as unpublished
+    """
+
+    count = queryset.filter(published=True).update(published=False)
+    asset_count = Asset.objects.filter(item__in=queryset, published=True).update(
+        published=False
+    )
+
+    messages.add_message(
+        request, messages.INFO, f"Unpublished {count} items and {asset_count} assets"
+    )
+
+
+unpublish_item_action.short_description = "Unpublish selected items and assets"
 
 
 def publish_action(modeladmin, request, queryset):
@@ -103,21 +141,31 @@ def admin_bulk_import_view(request):
                 import_url_blob = row["Import URLs"]
 
                 if not all((campaign_title, project_title, import_url_blob)):
-                    messages.add_message(
-                        request,
-                        messages.WARNING,
-                        f"Skipping row {idx}: at least one required field (Campaign, Project, Import URLs) is empty",
+                    warning_message = (
+                        f"Skipping row {idx}: at least one required field "
+                        "(Campaign, Project, Import URLs) is empty",
                     )
+                    messages.add_message(request, messages.WARNING, warning_message)
                     continue
 
-                campaign, created = Campaign.objects.get_or_create(
-                    title=campaign_title,
-                    defaults={
-                        "slug": slugify(campaign_title),
-                        "description": row["Campaign Long Description"] or "",
-                        "short_description": row["Campaign Short Description"] or "",
-                    },
-                )
+                try:
+                    campaign, created = validated_get_or_create(
+                        Campaign,
+                        title=campaign_title,
+                        defaults={
+                            "slug": slugify(campaign_title),
+                            "description": row["Campaign Long Description"] or "",
+                            "short_description": row["Campaign Short Description"]
+                            or "",
+                        },
+                    )
+                except ValidationError as exc:
+                    messages.add_message(
+                        request,
+                        messages.ERROR,
+                        f"Validation error occurred creating campaign {campaign_title}",
+                    )
+
                 if created:
                     messages.add_message(
                         request, messages.INFO, f"Created new campaign {campaign_title}"
@@ -129,9 +177,24 @@ def admin_bulk_import_view(request):
                         f"Reusing campaign {campaign_title} without modification",
                     )
 
-                project, created = campaign.project_set.get_or_create(
-                    title=project_title, defaults={"slug": slugify(project_title)}
-                )
+                try:
+                    project, created = validated_get_or_create(
+                        Project,
+                        title=project_title,
+                        campaign=campaign,
+                        defaults={
+                            "slug": slugify(project_title),
+                            "description": row["Project Description"] or "",
+                            "campaign": campaign,
+                        },
+                    )
+                except ValidationError as exc:
+                    messages.add_message(
+                        request,
+                        messages.ERROR,
+                        f"Validation error occurred creating project {project_title}",
+                    )
+
                 if created:
                     messages.add_message(
                         request, messages.INFO, f"Created new project {project_title}"
@@ -336,7 +399,7 @@ class ItemAdmin(admin.ModelAdmin):
     ]
     list_filter = ("published", "project__campaign", "project")
 
-    actions = (publish_action, unpublish_action)
+    actions = (publish_item_action, unpublish_item_action)
 
     readonly_fields = ("project",)
 

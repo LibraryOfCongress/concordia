@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "0903825d1909f4e38547cd543fc5bfee094527688c191f0a2508c60a748fbc38"
+            "sha256": "9a514d780de1668a9b1d1e291c48a0a7866e17bf7e5eece1a1576360947d36cc"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -103,6 +103,14 @@
             ],
             "index": "pypi",
             "version": "==2.0.9"
+        },
+        "django-bittersweet": {
+            "hashes": [
+                "sha256:0d14ee9f533647b8c325703d2d778b868ba046dc0e065920c100d8418013dec0",
+                "sha256:3e7b1b6b242a71c273ff41d097b80d5fd558b791f541424726c20a646084fe1a"
+            ],
+            "index": "pypi",
+            "version": "==1.0.0"
         },
         "django-bootstrap4": {
             "hashes": [
@@ -234,7 +242,7 @@
                 "sha256:7546cc08e3899716e12fe67d12d7cfe9a64647014d1134b014c3c392b63cad42",
                 "sha256:aada5cfdc4a543c47098eb3aca6663848ef5d04b4324935ced441debc11ec98b"
             ],
-            "markers": "python_version != '3.1.*' and python_version != '3.2.*' and python_version >= '2.6' and python_version < '4' and python_version != '3.3.*' and python_version != '3.0.*'",
+            "markers": "python_version >= '2.6' and python_version != '3.1.*' and python_version != '3.2.*' and python_version != '3.0.*' and python_version != '3.3.*' and python_version < '4'",
             "version": "==6.3.1"
         },
         "elasticsearch-dsl": {
@@ -368,7 +376,7 @@
                 "sha256:ff8cff01582fa1a7e533cb97f628531c4014af4b5f38e33cdcfe5eec29b6d888"
             ],
             "index": "pypi",
-            "markers": "python_version != '3.3.*' and python_version != '3.1.*' and python_version >= '2.7' and python_version != '3.2.*' and python_version != '3.0.*'",
+            "markers": "python_version >= '2.7' and python_version != '3.1.*' and python_version != '3.3.*' and python_version != '3.0.*' and python_version != '3.2.*'",
             "version": "==5.3.0"
         },
         "prometheus-client": {
@@ -530,7 +538,7 @@
                 "sha256:a68ac5e15e76e7e5dd2b8f94007233e01effe3e50e8daddf69acfd81cb686baf",
                 "sha256:b5725a0bd4ba422ab0e66e89e030c806576753ea3ee08554382c14e685d117b5"
             ],
-            "markers": "python_version != '3.0.*' and python_version >= '2.6' and python_version != '3.2.*' and python_version != '3.3.*' and python_version < '4' and python_version != '3.1.*'",
+            "markers": "python_version != '3.0.*' and python_version >= '2.6' and python_version != '3.2.*' and python_version < '4' and python_version != '3.3.*' and python_version != '3.1.*'",
             "version": "==1.23"
         },
         "vine": {
@@ -586,7 +594,7 @@
                 "sha256:2335065e6395b9e67ca716de5f7526736bfa6ceead690adf616d925bdc622b13",
                 "sha256:5b94b49521f6456670fdb30cd82a4eca9412788a93fa6dd6df72c94d5a8ff2d7"
             ],
-            "markers": "python_version >= '2.7' and python_version != '3.1.*' and python_version != '3.2.*' and python_version != '3.0.*' and python_version != '3.3.*'",
+            "markers": "python_version >= '2.7' and python_version != '3.1.*' and python_version != '3.3.*' and python_version != '3.2.*' and python_version != '3.0.*'",
             "version": "==7.0"
         },
         "coverage": {
