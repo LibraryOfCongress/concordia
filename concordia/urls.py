@@ -2,9 +2,8 @@ from django.conf import settings
 from django.conf.urls import url
 from django.contrib import admin
 from django.http import Http404, HttpResponseForbidden
-from django.urls import include, path, re_path
+from django.urls import include, path
 from django.views.defaults import page_not_found, permission_denied, server_error
-from machina.app import board
 
 from concordia.admin import admin_bulk_import_view
 from exporter import views as exporter_views
@@ -101,32 +100,29 @@ urlpatterns = [
         views_ws.TagCreate.as_view(),
         name="submit-tags",
     ),
-    re_path(
-        r"^account/register/$",
+    path("account/ajax-status/", views.ajax_session_status, name="ajax-session-status"),
+    path(
+        "account/register/",
         views.ConcordiaRegistrationView.as_view(),
         name="registration_register",
     ),
-    re_path(
-        r"^account/profile/$", views.AccountProfileView.as_view(), name="user-profile"
-    ),
-    url(r"^accounts/", include("django_registration.backends.activation.urls")),
-    url(r"^accounts/", include("django.contrib.auth.urls")),
+    path("account/profile/", views.AccountProfileView.as_view(), name="user-profile"),
+    path("account/", include("django_registration.backends.activation.urls")),
+    path("account/", include("django.contrib.auth.urls")),
+    path("captcha/ajax/", views.ajax_captcha, name="ajax-captcha"),
+    path("captcha/", include("captcha.urls")),
     # TODO: when we upgrade to Django 2.1 we can use the admin site override
     # mechanism (the old one is broken in 2.0): see
     # https://code.djangoproject.com/ticket/27887
     path("admin/bulk-import", admin_bulk_import_view, name="admin-bulk-import"),
     path("admin/", admin.site.urls),
-    # Apps
-    path("forum/", include(board.urls)),
-    path("captcha/ajax/", views.ajax_captcha, name="ajax-captcha"),
-    path("captcha/", include("captcha.urls")),
     # Internal support assists:
     path("maintenance-mode/", include("maintenance_mode.urls")),
     path("error/500/", server_error),
     path("error/404/", page_not_found, {"exception": Http404()}),
     path("error/403/", permission_denied, {"exception": HttpResponseForbidden()}),
     url("", include("django_prometheus_metrics.urls")),
-    url(r"^robots\.txt", include("robots.urls")),
+    path("robots.txt", include("robots.urls")),
 ]
 
 if settings.DEBUG:

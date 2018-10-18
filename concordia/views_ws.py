@@ -3,6 +3,8 @@
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db.transaction import atomic
 from django.shortcuts import get_object_or_404
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import never_cache
 from rest_framework import generics
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
@@ -26,6 +28,7 @@ class ConcordiaAPIAuth(SessionAuthentication):
             return res
 
 
+@method_decorator(never_cache, name="dispatch")
 class UserAssetTagsGet(generics.ListAPIView):
     """
     Get all tags for an asset
@@ -59,6 +62,7 @@ class UserAssetTagsGet(generics.ListAPIView):
             return UserAssetTagCollection.objects.filter(asset__id=-1)
 
 
+@method_decorator(never_cache, name="dispatch")
 class TagCreate(generics.ListCreateAPIView):
     """
     POST: create or retrieve a tag

@@ -2,6 +2,11 @@
 
 {% block title %}Registration is closed{% endblock title %}
 
+{% block head_content %}
+    <meta name="robots" content="noindex">
+    {{ block.super }}
+{% endblock head_content %}
+
 {% block main_content %}
 <div class="container">
     <div class="row">
