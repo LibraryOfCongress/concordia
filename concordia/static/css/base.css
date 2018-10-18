@@ -22,14 +22,17 @@
     --bg-loading: rgba(51, 51, 51, 0.5); /* #333333 */
     --shadow-color: rgba(51, 51, 51, 0.8); /* #333333 */
     --light-shadow-color: rgba(51, 51, 51, 0.4); /* #333333 */
+    --footer-links-color: #00618e;
 
     /* Colors used to build complex interface widgets */
     --control-bg-light: #efefef;
     --control-bg-default: #d8d8d8;
     --control-label-color: #333333;
 
-    --height-top-nav: 8.0625rem;
-    --height-main: calc(100vh - 8.0625rem); /* Subtract height of navbar */
+    --height-top-nav: 113px; /* Height of logo image plus padding */
+    --height-main: calc(
+        100vh - var(--height-top-nav)
+    ); /* Subtract height of navbar */
 
     /* Making room for instructions button on bottom and breadcrumb and nav on top */
     --height-contribute-image: calc(
@@ -50,11 +53,13 @@ body {
 
 h1 {
     font-family: 'Roboto Slab', serif;
-    font-size: 3rem;
-    line-height: 125%;
     font-weight: bold;
     color: var(--text-color-primary);
-    margin-bottom: 1em;
+}
+
+.view-homepage h1 {
+    font-size: 3rem;
+    line-height: 125%;
 }
 
 h1.header-text {
@@ -62,10 +67,12 @@ h1.header-text {
     font-size: 2.5rem;
     font-weight: normal;
     color: black;
+    text-transform: uppercase;
 }
 
-h1.header-text a {
-    display: inline;
+.header-text .beta-label {
+    font-size: x-small;
+    color: var(--primary-color);
 }
 
 h2 {
@@ -195,15 +202,13 @@ a.nav-secondary:first-of-type {
     border-right: solid 0.0675rem var(--bg-darkest-gray);
 }
 
-p.hero-text {
+.view-homepage p.hero-text {
     font-family: 'Open Sans', sans-serif;
     font-size: 1.5rem;
     color: var(--text-color-primary);
 }
 
-p.hero-text.offwhite-text {
-    font-family: 'Open Sans', sans-serif;
-    font-size: 1.5rem;
+.view-homepage p.hero-text.offwhite-text {
     color: var(--text-color-offwhite);
 }
 
@@ -796,9 +801,12 @@ div.nav-secondary {
     flex-grow: 0;
     flex-basis: 200px;
 
+    width: 200px;
+    min-height: 300px;
+
     margin: 0.25rem;
 
-    justify-content: center;
+    justify-content: start;
     align-items: center;
 
     background-color: var(--bg-lightest-gray);
@@ -849,12 +857,19 @@ div.nav-secondary {
  * This page wants to display as much as possible and so the entire page is a flex column
  */
 
-body.view-transcriptions--asset-detail {
-    height: 100vh;
+body.view-transcriptions--asset-detail main {
+    height: var(--height-main);
+    background-color: inherit;
 }
 
 #contribute-main-content {
     position: relative;
+}
+
+body.view-transcriptions--asset-detail main,
+#contribute-main-content {
+    /* This avoids browser inconsistencies when using the fullscreen API */
+    background-color: inherit;
 }
 
 #contribute-main-content h2 {
@@ -884,6 +899,60 @@ body.view-transcriptions--asset-detail {
 #help-container > * {
     margin: 0.6rem;
 }
+
+/* Help Center */
+
+.help-center-overlay {
+    opacity: 0.25;
+    background-color: #000000;
+}
+
+.help-center-card {
+    color: #fff;
+    width: 300px;
+    height: 225px;
+    background-color: var(--primary-color);
+}
+
+.help-center-card a {
+    color: #fff;
+}
+
+#faqAccordion {
+    padding-bottom: 20px;
+}
+
+#faqAccordion button {
+    color: #333;
+}
+
+#faqAccordion .card {
+    border-left: 0;
+    border-right: 0;
+}
+
+#faqAccordion .card-header {
+    padding-left: 0;
+}
+
+#faqAccordion .card-header button {
+    padding-left: 0;
+}
+
+.help-center .nav-link {
+    padding: 0.5rem 0.5rem;
+}
+
+.help-center a.nav-link {
+    color: #333;
+    font-weight: bold;
+}
+
+.help-center a.nav-link.active {
+    color: var(--primary-color);
+}
+
+/* End of help center stuff */
 
 #instruction-window {
     position: absolute;
@@ -973,15 +1042,6 @@ div.related-links {
 }
 
 /*
-* CAPTCHA styling
-*/
-
-.captcha {
-    width: 10rem;
-    height: auto;
-}
-
-/*
 * Alerts
 */
 
@@ -1032,7 +1092,7 @@ div.related-links {
 .footer {
     background-color: #f5f5f5;
     border-top: 1px solid #999;
-    padding: 35px 0 20px;
+    padding: 20px;
 }
 .footer a {
     color: #666;
@@ -1047,6 +1107,7 @@ div.related-links {
         display: none;
     }
 }
+
 .footer-container {
     max-width: 1200px;
     width: 100%;
@@ -1065,18 +1126,13 @@ div.related-links {
         padding-right: 1rem;
     }
 }
-.footer-social-links-wrapper {
-    border-bottom: 1px solid #999;
-    padding-bottom: 21px;
-    margin-bottom: 21px;
-    text-align: center;
-}
+
 .footer-social-title {
     font-size: 18px;
     font-weight: normal;
-    color: #666;
+    color: #000;
     display: inline-block;
-    margin: 0 28px 0 0;
+    margin: 0 0 10px 0;
 }
 @media (max-width: 992px) {
     .footer-social-title {
@@ -1087,27 +1143,23 @@ div.related-links {
 .footer-social-links {
     padding-left: 0;
     list-style: none;
-    margin: 0 -7px;
-    display: inline-block;
     margin-bottom: 0;
 }
-.footer-social-links > li {
-    display: inline-block;
+
+.footer-social-links li {
+    display: flex;
     margin: 0 7px;
 }
-.footer-social-links > li i {
+
+.footer-social-links a {
+    display: flex;
+    align-items: center;
+}
+
+.footer-social-links li i {
     font-size: 17.5px;
 }
-.footer-social-links > li span {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    margin: -1px;
-    padding: 0;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    border: 0;
-}
+
 .footer-social-links > li a .icon-external-link {
     font-size: 12.6px;
     color: #666;
@@ -1116,16 +1168,17 @@ div.related-links {
     color: #f47f65;
 }
 .footer-social-links > li.footer-social-link-email a {
-    color: #00618e;
+    color: var(--footer-links-color);
+    display: flex;
+    align-items: center;
 }
 .footer-social-links > li.footer-social-link-survey {
-    border-left: 1px solid #999;
     padding-left: 28px;
     margin-left: 14px;
     font-size: 13px;
 }
 .footer-social-links > li.footer-social-link-survey a {
-    color: #00618e;
+    color: var(--footer-links-color);
 }
 @media (max-width: 992px) {
     .footer-social-links > li.footer-social-link-survey {
@@ -1139,7 +1192,7 @@ div.related-links {
     font-size: 13px;
 }
 .footer-social-links > li.footer-social-link-itunesu a {
-    color: #00618e;
+    color: var(--footer-links-color);
 }
 @media (max-width: 992px) {
     .footer-social-links {
@@ -1166,25 +1219,102 @@ div.related-links {
         margin: 0 -1rem;
     }
 }
+
+.footer-links-wrapper {
+    border-right: 1px solid #999;
+    border-left: 1px solid #999;
+    padding-right: 21px;
+    margin-right: 21px;
+    padding-left: 21px;
+    margin-left: 21px;
+}
+
 .footer-links-wrapper .footer-links {
     padding-left: 0;
     list-style: none;
-    margin: 0 -8.75px;
     margin-bottom: 0;
     font-size: 12px;
 }
 .footer-links-wrapper .footer-links > li {
-    display: inline-block;
     margin: 0 8.75px;
 }
 .footer-links-wrapper .footer-links > li {
     margin-top: 3px;
     margin-bottom: 3px;
 }
+
+.footer-links-wrapper .footer-links a {
+    color: var(--footer-links-color);
+}
+
+.intersites-links-wrapper {
+    padding: 10px 0 0 0;
+}
+
+ul.intersites-links,
+ul.legal-links {
+    color: var(--footer-links-color);
+    font-size: 12px;
+}
+
+ul.intersites-links a,
+ul.legal-links a {
+    color: var(--footer-links-color);
+}
+
+ul.intersites-links li,
+ul.legal-links li {
+    list-style-type: none;
+    display: inline;
+}
+
+.intersites-links a {
+    display: inline-block;
+}
+
+.legal-links {
+    padding-left: 0;
+    list-style: none;
+}
+
+.legal-links .vl {
+    display: block;
+    width: 1px;
+    height: 0.8em;
+    background-color: var(--footer-links-color);
+}
+
+.legal-links li {
+    margin: 0 0.2rem;
+}
+
+.intersites-links > li,
+.legal-links > li {
+    display: inline-block;
+}
+
+.intersites-links > li.intersites-link-congress > a {
+    width: 125px;
+    height: 30px;
+    background-size: 125px 30px;
+    background: url(/static/img/congress-gov.svg) no-repeat;
+}
+
+.intersites-links > li.intersites-link-copyright > a {
+    width: 175px;
+    height: 30px;
+    background-size: 175px 30px;
+    background: url(/static/img/copyright-gov.svg) no-repeat;
+}
+
 @media (max-width: 992px) {
     .footer-links-wrapper {
         text-align: center;
         margin-bottom: 21px;
+        border: 0;
+    }
+    .intersites-links-wrapper {
+        text-align: center;
     }
 }
 @media (min-width: 993px) {
@@ -1242,6 +1372,13 @@ div.related-links {
 }
 .image-icon.itunes {
     background-position: -114px 0;
+}
+
+.image-icon.github {
+    background-image: url('../img/GitHub-Mark-16px.png');
+    background-position: 0;
+    width: 16px;
+    height: 16px;
 }
 
 /* Registration page */

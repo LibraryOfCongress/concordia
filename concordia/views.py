@@ -1,11 +1,14 @@
 import json
 import os
 import time
-from datetime import datetime, timedelta
+from datetime import timedelta
+from functools import wraps
 from logging import getLogger
 from smtplib import SMTPException
 
 import markdown
+from captcha.helpers import captcha_image_url
+from captcha.models import CaptchaStore
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -23,12 +26,11 @@ from django.urls import reverse, reverse_lazy
 from django.utils.timezone import now
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
-from django.views.generic import DetailView, FormView, ListView, TemplateView, View
+from django.views.generic import DetailView, FormView, ListView, TemplateView
 from django_registration.backends.activation.views import RegistrationView
 
 from concordia.forms import (
     AssetFilteringForm,
-    CaptchaEmbedForm,
     ContactUsForm,
     UserProfileForm,
     UserRegistrationForm,
@@ -102,13 +104,19 @@ def static_page(request, base_name=None):
         html = md.convert(f.read())
 
     page_title = md.Meta.get("title")
-
     if page_title:
         page_title = "\n".join(i.strip() for i in page_title)
     else:
         page_title = base_name.replace("-", " ").replace("/", " — ").title()
 
-    ctx = {"body": html, "title": page_title}
+    breadcrumbs = []
+    path_components = request.path.strip("/").split("/")
+    for i, segment in enumerate(path_components, start=1):
+        breadcrumbs.append(
+            ("/%s/" % "/".join(path_components[0:i]), segment.replace("-", " ").title())
+        )
+
+    ctx = {"body": html, "title": page_title, "breadcrumbs": breadcrumbs}
 
     return render(request, "static-page.html", ctx)
 
@@ -287,7 +295,7 @@ class ItemDetailView(ListView):
         return res
 
 
-class ConcordiaAssetView(DetailView):
+class AssetDetailView(DetailView):
     """
     Class to handle GET ansd POST requests on route /campaigns/<campaign>/asset/<asset>
     """
@@ -321,8 +329,9 @@ class ConcordiaAssetView(DetailView):
         transcription = asset.transcription_set.order_by("-pk").first()
         ctx["transcription"] = transcription
 
-        # We'll handle the case where an item with no transcriptions should be shown as status=edit here
-        # so the logic doesn't need to be repeated in templates:
+        # We'll handle the case where an item with no transcriptions should be
+        # shown as status=edit here so the logic doesn't need to be repeated in
+        # templates:
         if transcription:
             transcription_status = transcription.status.lower()
         else:
@@ -353,35 +362,58 @@ class ConcordiaAssetView(DetailView):
         )
 
         tag_groups = UserAssetTagCollection.objects.filter(asset__slug=asset.slug)
-        tags = []
+        ctx["tags"] = tags = []
 
         for tag_group in tag_groups:
             for tag in tag_group.tags.all():
                 tags.append(tag)
 
-        captcha_form = CaptchaEmbedForm()
-
-        # TODO: we need to move this into JavaScript to allow caching the page
-        if self.request.user.is_anonymous:
-            ctx[
-                "is_anonymous_user_captcha_validated"
-            ] = self.is_anonymous_user_captcha_validated()
-
-        ctx.update({"tags": tags, "captcha_form": captcha_form})
-
         return ctx
 
-    def is_anonymous_user_captcha_validated(self):
-        if "captcha_validated_at" in self.request.session:
-            if (
-                datetime.now().timestamp()
-                - self.request.session["captcha_validated_at"]
-            ) <= getattr(settings, "CAPTCHA_SESSION_VALID_TIME", 24 * 60 * 60):
-                return True
-        return False
+
+def ajax_captcha(request):
+    if request.method == "POST":
+        response = request.POST.get("response")
+        key = request.POST.get("key")
+
+        if response and key:
+            CaptchaStore.remove_expired()
+
+            # Note that CaptchaStore displays the response in uppercase in the
+            # image and in the string representation of the object but the
+            # actual value stored in the database is lowercase!
+            deleted, _ = CaptchaStore.objects.filter(
+                response=response.lower(), hashkey=key
+            ).delete()
+
+            if deleted > 0:
+                request.session["captcha_validation_time"] = time.time()
+                return JsonResponse({"valid": True})
+
+    key = CaptchaStore.generate_key()
+    return JsonResponse(
+        {"key": key, "image": request.build_absolute_uri(captcha_image_url(key))},
+        status=401,
+        content_type="application/json",
+    )
+
+
+def validate_anonymous_captcha(view):
+    @wraps(view)
+    def inner(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            captcha_last_validated = request.session.get("captcha_validation_time", 0)
+            age = time.time() - captcha_last_validated
+            if age > settings.ANONYMOUS_CAPTCHA_VALIDATION_INTERVAL:
+                return ajax_captcha(request)
+
+        return view(request, *args, **kwargs)
+
+    return inner
 
 
 @require_POST
+@validate_anonymous_captcha
 @atomic
 def save_transcription(request, *, asset_pk):
     asset = get_object_or_404(Asset, pk=asset_pk)
@@ -425,6 +457,7 @@ def save_transcription(request, *, asset_pk):
 
 
 @require_POST
+@validate_anonymous_captcha
 def submit_transcription(request, *, pk):
     transcription = get_object_or_404(Transcription, pk=pk)
 

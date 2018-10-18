@@ -12,6 +12,41 @@ function unlockControls($container) {
     $container.find('button').removeAttr('disabled');
 }
 
+function buildErrorMessage(jqXHR, textStatus, errorThrown) {
+    /* Construct a nice error message using optional JSON response context */
+    var errMessage;
+    if (jqXHR.responseJSON && jqXHR.responseJSON.error) {
+        errMessage = jqXHR.responseJSON.error;
+    } else {
+        errMessage = textStatus + ' ' + errorThrown;
+    }
+    return errMessage;
+}
+
+var $captchaModal = $('#captcha-modal');
+var $captchaForm = $captchaModal.find('form').on('submit', function(evt) {
+    evt.preventDefault();
+
+    var formData = $captchaForm.serializeArray();
+
+    $.ajax({
+        url: $captchaForm.attr('action'),
+        method: 'POST',
+        data: $.param(formData)
+    })
+        .done(function() {
+            $captchaModal.modal('hide');
+        })
+        .fail(function(jqXHR) {
+            if (jqXHR.status == 401) {
+                $captchaModal.find('[name=key]').val(jqXHR.responseJSON.key);
+                $captchaModal
+                    .find('#captcha-image')
+                    .attr('src', jqXHR.responseJSON.image);
+            }
+        });
+});
+
 $('form.ajax-submission').each(function(idx, formElement) {
     /*
     Generic AJAX submission logic which takes a form and POSTs its data to the
@@ -52,6 +87,15 @@ $('form.ajax-submission').each(function(idx, formElement) {
                 });
             })
             .fail(function(jqXHR, textStatus, errorThrown) {
+                if (jqXHR.status == 401) {
+                    $captchaModal
+                        .find('[name=key]')
+                        .val(jqXHR.responseJSON.key);
+                    $captchaModal
+                        .find('#captcha-image')
+                        .attr('src', jqXHR.responseJSON.image);
+                    $captchaModal.modal();
+                }
                 $form.trigger('form-submit-failure', {
                     textStatus: textStatus,
                     errorThrown: errorThrown,
@@ -72,6 +116,23 @@ var $saveButton = $transcriptionEditor
 var $submitButton = $transcriptionEditor
     .find('#submit-transcription-button')
     .first();
+var $nothingToTranscribeCheckbox = $transcriptionEditor
+    .find('#nothing-to-transcribe')
+    .on('change', function() {
+        var $textarea = $transcriptionEditor.find('textarea');
+        if (this.checked && $textarea.val()) {
+            if (
+                confirm(
+                    'You currently have entered text which will not be saved because “Nothing to transcribe” is checked. Do you want to discard that text?'
+                )
+            ) {
+                $textarea.val('');
+            } else {
+                this.checked = false;
+            }
+        }
+        $transcriptionEditor.trigger('update-ui-state');
+    });
 
 $transcriptionEditor
     .on('update-ui-state', function() {
@@ -90,23 +151,41 @@ $transcriptionEditor
         if (!data.hasReservation || data.transcriptionStatus != 'edit') {
             lockControls($transcriptionEditor);
         } else {
-            var $textarea = $transcriptionEditor
-                .find('textarea')
-                .removeAttr('readonly');
+            var $textarea = $transcriptionEditor.find('textarea');
+
+            if ($nothingToTranscribeCheckbox.prop('checked')) {
+                $textarea.attr('readonly', 'readonly');
+            } else {
+                $textarea.removeAttr('readonly');
+            }
 
             if (data.transcriptionId && !data.unsavedChanges) {
                 // We have a transcription ID and it's not stale, so we can submit the transcription for review:
                 $saveButton.attr('disabled', 'disabled');
                 $submitButton.removeAttr('disabled');
+                if (!$textarea.val()) {
+                    $nothingToTranscribeCheckbox.prop('checked', true);
+                }
             } else {
                 $submitButton.attr('disabled', 'disabled');
 
-                if ($textarea.val()) {
+                if (
+                    $textarea.val() ||
+                    $nothingToTranscribeCheckbox.prop('checked')
+                ) {
                     $saveButton.removeAttr('disabled');
                 } else {
                     $saveButton.attr('disabled', 'disabled');
                 }
             }
+        }
+
+        if (!data.hasReservation && data.transcriptionStatus == 'edit') {
+            $('.tx-status-display')
+                .children()
+                .attr('hidden', 'hidden')
+                .filter('.tx-edit-conflict')
+                .removeAttr('hidden');
         }
     })
     .on('form-submit-success', function(evt, extra) {
@@ -131,7 +210,12 @@ $transcriptionEditor
     .on('form-submit-failure', function(evt, info) {
         displayMessage(
             'error',
-            'Unable to save your work: ' + info.textStatus + info.errorThrown,
+            'Unable to save your work: ' +
+                buildErrorMessage(
+                    info.jqXHR,
+                    info.textStatus,
+                    info.errorThrown
+                ),
             'transcription-save-result'
         );
         $transcriptionEditor.trigger('update-ui-state');
@@ -139,26 +223,28 @@ $transcriptionEditor
 
 $submitButton.on('click', function(evt) {
     evt.preventDefault();
+
     $.ajax({
         url: $transcriptionEditor.data('submitUrl'),
         method: 'POST'
     })
         .done(function() {
-            displayMessage(
-                'info',
-                'The transcription has been submitted. Go to the next page when you are done tagging.',
-                'transcription-submit-result'
-            );
             $('.tx-status-display')
                 .children()
                 .attr('hidden', 'hidden')
                 .has('.tx-submitted')
                 .removeAttr('hidden');
+            $('#successful-submission-modal')
+                .modal()
+                .on('hidden.bs.modal', function() {
+                    window.location.reload(true);
+                });
         })
         .fail(function(jqXHR, textStatus, errorThrown) {
             displayMessage(
                 'error',
-                'Unable to save your work: ' + textStatus + ' ' + errorThrown,
+                'Unable to save your work: ' +
+                    buildErrorMessage(jqXHR, textStatus, errorThrown),
                 'transcription-submit-result'
             );
         });
@@ -184,28 +270,17 @@ function submitReview(status) {
         }
     })
         .done(function() {
-            displayMessage(
-                'info',
-                'Your transcription review has been saved',
-                'transcription-review-result'
-            );
-            if (status == 'accept') {
-                $('.tx-status-display')
-                    .children()
-                    .attr('hidden', 'hidden')
-                    .filter('.tx-completed')
-                    .removeAttr('hidden');
-            }
-            lockControls($transcriptionEditor);
+            $('#successful-review-modal')
+                .modal()
+                .on('hidden.bs.modal', function() {
+                    window.location.reload(true);
+                });
         })
         .fail(function(jqXHR, textStatus, errorThrown) {
-            var errMessage = textStatus + ' ' + errorThrown;
-            if (jqXHR.responseJSON && jqXHR.responseJSON.error) {
-                errMessage = jqXHR.responseJSON.error;
-            }
             displayMessage(
                 'error',
-                'Unable to save your review: ' + errMessage,
+                'Unable to save your review: ' +
+                    buildErrorMessage(jqXHR, textStatus, errorThrown),
                 'transcription-review-result'
             );
         });

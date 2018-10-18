@@ -87,7 +87,6 @@ INSTALLED_APPS = [
     # Machina related apps:
     "mptt",
     "haystack",
-    "widget_tweaks",
     "django_prometheus_metrics",
     "django.contrib.sites",
     "robots",
@@ -269,8 +268,8 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 CAPTCHA_CHALLENGE_FUNCT = "captcha.helpers.random_char_challenge"
-CAPTCHA_FIELD_TEMPLATE = "captcha/field.html"
-CAPTCHA_TEXT_FIELD_TEMPLATE = "captcha/text_field.html"
+#: Anonymous sessions require captcha validation every day by default:
+ANONYMOUS_CAPTCHA_VALIDATION_INTERVAL = 86400
 
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 WHITENOISE_ROOT = STATIC_ROOT
@@ -306,4 +305,3 @@ ROBOTS_USE_HOST = False
 
 #: Number of seconds an asset reservation is valid for
 TRANSCRIPTION_RESERVATION_SECONDS = 5 * 60
-

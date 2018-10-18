@@ -1,11 +1,12 @@
 import json
 from datetime import datetime, timedelta
 
+from captcha.models import CaptchaStore
 from django.test import TestCase, TransactionTestCase
 from django.urls import reverse
 from django.utils.timezone import now
 
-from concordia.models import AssetTranscriptionReservation, User, Transcription
+from concordia.models import AssetTranscriptionReservation, Transcription, User
 from concordia.views import get_anonymous_user
 
 from .utils import create_asset, create_campaign, create_item, create_project
@@ -134,10 +135,12 @@ class ConcordiaViewTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, template_name="transcriptions/item_detail.html")
+        self.assertTemplateUsed(
+            response, template_name="transcriptions/item_detail.html"
+        )
         self.assertContains(response, i.title)
 
-    def test_ConcordiaAssetView_get(self):
+    def test_asset_detail_view(self):
         """
         This unit test test the GET route /campaigns/<campaign>/asset/<Asset_name>/
         with already in use.
@@ -196,6 +199,27 @@ class TransactionalViewTests(TransactionTestCase):
         self.user.save()
 
         self.client.login(username="tester", password="top_secret")
+
+    def completeCaptcha(self, key=None):
+        """Submit a CAPTCHA response using the provided challenge key"""
+
+        if key is None:
+            challenge_data = self.assertValidJSON(
+                self.client.get(reverse("ajax-captcha")), expected_status=401
+            )
+            self.assertIn("key", challenge_data)
+            self.assertIn("image", challenge_data)
+            key = challenge_data["key"]
+
+        self.assertValidJSON(
+            self.client.post(
+                reverse("ajax-captcha"),
+                data={
+                    "key": key,
+                    "response": CaptchaStore.objects.get(hashkey=key).response,
+                },
+            )
+        )
 
     def test_asset_reservation(self):
         """
@@ -324,8 +348,28 @@ class TransactionalViewTests(TransactionTestCase):
 
         return data
 
+    def test_anonymous_transcription_save_captcha(self):
+        asset = create_asset()
+
+        resp = self.client.post(
+            reverse("save-transcription", args=(asset.pk,)), data={"text": "test"}
+        )
+        data = self.assertValidJSON(resp, expected_status=401)
+        self.assertIn("key", data)
+        self.assertIn("image", data)
+
+        self.completeCaptcha(data["key"])
+
+        resp = self.client.post(
+            reverse("save-transcription", args=(asset.pk,)), data={"text": "test"}
+        )
+        data = self.assertValidJSON(resp, expected_status=201)
+
     def test_transcription_save(self):
         asset = create_asset()
+
+        # We're not testing the CAPTCHA here so we'll complete it:
+        self.completeCaptcha()
 
         resp = self.client.post(
             reverse("save-transcription", args=(asset.pk,)), data={"text": "test"}
@@ -373,8 +417,32 @@ class TransactionalViewTests(TransactionTestCase):
         data = self.assertValidJSON(resp, expected_status=201)
         self.assertIn("submissionUrl", data)
 
+    def test_anonymous_transcription_submission(self):
+        asset = create_asset()
+        anon = get_anonymous_user()
+
+        transcription = Transcription(asset=asset, user=anon, text="previous entry")
+        transcription.full_clean()
+        transcription.save()
+
+        resp = self.client.post(
+            reverse("submit-transcription", args=(transcription.pk,))
+        )
+        data = self.assertValidJSON(resp, expected_status=401)
+        self.assertIn("key", data)
+        self.assertIn("image", data)
+
+        self.assertFalse(Transcription.objects.filter(submitted__isnull=False).exists())
+
+        self.completeCaptcha(data["key"])
+        self.client.post(reverse("submit-transcription", args=(transcription.pk,)))
+        self.assertTrue(Transcription.objects.filter(submitted__isnull=False).exists())
+
     def test_transcription_submission(self):
         asset = create_asset()
+
+        # We're not testing the CAPTCHA here so we'll complete it:
+        self.completeCaptcha()
 
         resp = self.client.post(
             reverse("save-transcription", args=(asset.pk,)), data={"text": "test"}
@@ -396,6 +464,9 @@ class TransactionalViewTests(TransactionTestCase):
 
     def test_stale_transcription_submission(self):
         asset = create_asset()
+
+        # We're not testing the CAPTCHA here so we'll complete it:
+        self.completeCaptcha()
 
         anon = get_anonymous_user()
 
@@ -479,4 +550,3 @@ class TransactionalViewTests(TransactionTestCase):
         data = self.assertValidJSON(resp, expected_status=400)
         self.assertIn("error", data)
         self.assertEqual("This transcription has already been reviewed", data["error"])
-

@@ -1,4 +1,4 @@
-/* global $ Cookies */
+/* global $ Cookies screenfull */
 /* exported displayMessage */
 
 (function() {
@@ -56,3 +56,14 @@ function displayMessage(level, message, uniqueId) {
 
     $messages.append($newMessage);
 }
+
+$('#go-fullscreen').on('click', function(evt) {
+    evt.preventDefault();
+    var targetElement = document.getElementById(this.dataset.target);
+
+    if (screenfull.isFullscreen) {
+        screenfull.exit();
+    } else {
+        screenfull.request(targetElement);
+    }
+});

@@ -5,17 +5,17 @@
 {% load concordia_media_tags %}
 
 {% block title %}
-Crowd: {{ asset.title }} ({{ asset.item.project.campaign.title }} — {{ asset.item.project.title }})
+{{ asset.title }} ({{ asset.item.project.campaign.title }}: {{ asset.item.project.title }})
 {% endblock title %}
 
 {% block head_content %}
 {% endblock head_content %}
 
 {% block breadcrumbs %}
-    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaign' slug=campaign.slug %}">{{ campaign.title }}</a></li>
-    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:project-detail' campaign_slug=campaign.slug slug=project.slug %}">{{ project.title }}</a></li>
-    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:item-detail' campaign_slug=campaign.slug project_slug=project.slug item_id=item.item_id %}">{{ item.title }}</a></li>
-    <li class="breadcrumb-item active">{{ asset.title }}</li>
+    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaign' slug=campaign.slug %}" title="{{ campaign.title }}">{{ campaign.title }}</a></li>
+    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:project-detail' campaign_slug=campaign.slug slug=project.slug %}" title="{{ project.title }}">{{ project.title }}</a></li>
+    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:item-detail' campaign_slug=campaign.slug project_slug=project.slug item_id=item.item_id %}" title="{{ item.title }}">{{ item.title }}</a></li>
+    <li class="breadcrumb-item active" title="{{ asset.title }}">{{ asset.title }}</li>
 {% endblock breadcrumbs %}
 
 {% block extra_body_classes %}d-flex flex-column{% endblock %}
@@ -23,30 +23,7 @@ Crowd: {{ asset.title }} ({{ asset.item.project.campaign.title }} — {{ asset.i
 
 {% block main_content %}
 <div id="contribute-main-content" class="container-fluid flex-grow-1 d-flex flex-column">
-    <div id="metadata-container" class="row">
-        <table class="d-inline table table-sm mx-3">
-            <tbody>
-                <tr>
-                    <th>Status</th>
-                    <td class="tx-status-display">
-                        <div class="tx-submitted" {% if transcription_status != 'submitted' %}hidden{% endif %}>
-                            <i class="fas fa-list tx-submitted"></i>
-                            Submitted for Review
-                        </div>
-                        <div class="tx-completed" {% if transcription_status != 'completed' %}hidden{% endif %}>
-                            <i class="fas fa-check"></i>
-                            Completed
-                        </div>
-                        <div class="tx-edit" {% if transcription_status != "edit" %}hidden{% endif %}>
-                            <i class="fas fa-edit tx-edit"></i>
-                            Open for edit
-                        </div>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-    <div id="navigation-container" class="row py-2">
+    <div id="navigation-container" class="row p-2">
         <nav id="asset-navigation" class="d-flex flex-grow-1 justify-content-between align-items-center" role="navigation">
             <div class="d-flex align-items-center">
                 <form onsubmit="document.location.href = document.getElementById('asset-selection').value; return false">
@@ -77,19 +54,45 @@ Crowd: {{ asset.title }} ({{ asset.item.project.campaign.title }} — {{ asset.i
                 </div>
             </div>
 
+            <div class="btn-group btn-group-sm ml-2">
+                <button id="go-fullscreen" class="btn btn-default" data-target="contribute-main-content">
+                    <span class="fas fa-arrows-alt"></span>
+                    Fullscreen
+                </button>
+            </div>
+
             <div class="btn-group btn-group-sm align-self-end" role="navigation" aria-label="Link to the next editable page">
-                <a class="btn btn-default" href="{% url "transcriptions:redirect-to-next-transcribable-asset" campaign.slug project.slug %}">Go to next page needing to be transcribed &rarr;</a>
+                <a class="btn btn-default" href="{% url "transcriptions:redirect-to-next-transcribable-asset" campaign.slug project.slug %}">Find a new page &rarr;</a>
             </div>
         </nav>
     </div>
     <div id="contribute-container" class="row flex-grow-1 pb-2">
-        <div class="col-6">
+        <div class="col-6 pl-0">
             <div id="asset-image" class="h-100 bg-dark"></div>
         </div>
 
         <div class="col-6 d-flex flex-column flex-nowrap justify-content-between">
             <div class="flex-grow-1 d-flex flex-column">
-                <form id="transcription-editor" class="ajax-submission flex-grow-1 d-flex flex-column" method="post" action="{% url 'save-transcription' asset_pk=asset.pk %}" data-transcription-status="{{ transcription_status }}" {% if transcription %}data-transcription-id="{{ transcription.pk|default:'' }}" data-submit-url="{% url 'submit-transcription' pk=transcription.pk %}" data-review-url="{% url 'review-transcription' pk=transcription.pk %}"{% endif %}>
+                <div class="tx-status-display">
+                    <span class="tx-submitted" {% if transcription_status != 'submitted' %}hidden{% endif %}>
+                        <span class="fas fa-list"></span>
+                        Submitted for Review
+                    </span>
+                    <span class="tx-completed" {% if transcription_status != 'completed' %}hidden{% endif %}>
+                        <span class="fas fa-check"></span>
+                        Completed
+                    </span>
+                    <span class="tx-edit" {% if transcription_status != "edit" %}hidden{% endif %}>
+                        <span class="fas fa-edit"></span>
+                        Open for edit
+                    </span>
+                    <span class="tx-edit-conflict" hidden>
+                        <span class="fas fa-exclamation-triangle"></span>
+                        Another user is transcribing this page
+                    </span>
+                </div>
+
+                <form id="transcription-editor" class="ajax-submission flex-grow-1 d-flex flex-column" method="post" action="{% url 'save-transcription' asset_pk=asset.pk %}" data-transcription-status="{{ transcription_status }}" {% if transcription %}data-transcription-id="{{ transcription.pk|default:'' }}" {% if transcription.submitted %}data-unsaved-changes="true"{% endif %} data-submit-url="{% url 'submit-transcription' pk=transcription.pk %}" data-review-url="{% url 'review-transcription' pk=transcription.pk %}"{% endif %}>
                     {% csrf_token %}
                     <input type="hidden" name="supersedes" value="{{ transcription.pk|default:'' }}" />
 
@@ -100,16 +103,14 @@ Crowd: {{ asset.title }} ({{ asset.item.project.campaign.title }} — {{ asset.i
                             {{ transcription.text }}
                         </textarea>
 
-                        {% if user.is_anonymous %}
-                            <div class="d-none my-2 col-12 col-md-10 col-lg-8 mx-auto" id="captcha_container">
-                                <div class="text-center mt-3" id="captcha_div">
-                                    {{ captcha_form.captcha }}
-                                </div>
-                            </div>
-                        {% endif %}
-
-                        <div class="my-3 d-flex justify-content-around align-items-center btn-row">
+                        <div class="my-3 d-flex flex-wrap justify-content-around align-items-center btn-row">
                             {% if transcription_status == 'edit' %}
+                                <div class="form-check w-100 text-center mt-0 mb-3">
+                                    <input id="nothing-to-transcribe" type="checkbox" class="form-check-input" />
+                                    <label class="form-check-label" for="nothing-to-transcribe">
+                                        Nothing to transcribe
+                                    </label>
+                                </div>
                                 <button id="save-transcription-button" disabled type="submit" class="btn btn-primary">Save</button>
                                 <button id="submit-transcription-button" disabled type="button" class="btn btn-primary">Submit for Review</button>
                             {% elif transcription_status == 'submitted' and user.is_authenticated and transcription.user.pk != user.pk %}
@@ -176,13 +177,15 @@ Crowd: {{ asset.title }} ({{ asset.item.project.campaign.title }} — {{ asset.i
             </div>
         </div>
     </div>
-    <div id="help-container" class="row">
+    <div id="help-container" class="row justify-content-center">
         <p>Need help?</p>
 
-        <button id="instruction-button" class="btn btn-secondary" type="button" data-toggle="collapse" data-target="#instruction-window" aria-expanded="false" aria-controls="instruction-window">Instructions</button>
+        <button id="instruction-button" class="btn btn-secondary" type="button" data-toggle="collapse" data-target="#instruction-window" aria-expanded="false" aria-controls="instruction-window">
+            Quick Tips
+        </button>
 
-        <a id="contact-button" class="btn btn-secondary" href="{% url 'contact' %}">
-            Contact Us
+        <a class="btn btn-secondary" href="{% url 'help-center' %}">
+            Questions?
         </a>
 
         <div class="collapse" id="instruction-window">
@@ -193,6 +196,114 @@ Crowd: {{ asset.title }} ({{ asset.item.project.campaign.title }} — {{ asset.i
                 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
             </p>
         </div>
+    </div>
+    <div id="asset-reservation-failure-modal" class="modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Someone else is already transcribing this page</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>You can help by transcribing a new page, adding tags to this page, or coming back later to review this page's transcription.</p>
+                </div>
+                <div class="modal-footer">
+                    <a class="btn btn-primary" href="{% url "transcriptions:redirect-to-next-transcribable-asset" campaign.slug project.slug %}">
+                        Find a new page
+                    </a>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="successful-submission-modal" class="modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nice Job!</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>
+                        This page has been submitted for review.
+                        <br>
+                         You can stay on this page to add tags or go to the next
+                         page needing transcription.
+                    </p>
+                </div>
+                <div class="modal-footer justify-content-around">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">
+                        Add Tags
+                    </button>
+                    <a class="btn btn-primary" href="{% url "transcriptions:redirect-to-next-transcribable-asset" campaign.slug project.slug %}">
+                        Find a new page
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="successful-review-modal" class="modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nice Job!</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>
+                        Your review decision has been saved.
+                        <br>
+                        You can stay on this page to add tags or go to the next
+                        page needing transcription.
+                    </p>
+                </div>
+                <div class="modal-footer justify-content-around">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">
+                        Add Tags
+                    </button>
+                    <a class="btn btn-primary" href="{% url "transcriptions:redirect-to-next-transcribable-asset" campaign.slug project.slug %}">
+                        Find a new page
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="captcha-modal" class="modal" tabindex="-1" role="dialog">
+        <form action="{% url 'ajax-captcha' %}" class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Please confirm you are not a robot</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-row">
+                        <div class="help-text">
+                            Before continuing please enter the letters in the image
+                            below so we know you are a human:
+                        </div>
+                        <img id="captcha-image" class="d-block my-3 mx-auto border rounded">
+
+                    </div>
+                    <div class="form-row">
+                        <input name="response" class="form-control" autocomplete="off">
+                    </div>
+                    <input type="hidden" name="key"/>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">
+                        Continue
+                    </button>
+                </div>
+            </div>
+        </form>
     </div>
 </div>
 {% endblock main_content %}

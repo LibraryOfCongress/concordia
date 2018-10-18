@@ -1,9 +1,5 @@
 exclude: '.*/vendor/.*'
 repos:
-    - repo: https://github.com/pre-commit/mirrors-isort
-      rev: v4.3.4
-      hooks:
-          - id: isort
     - repo: https://github.com/ambv/black
       rev: stable
       hooks:
@@ -16,3 +12,4 @@ repos:
       rev: 1.14.3
       hooks:
           - id: prettier
+            files: \.(css|less|scss|ts|tsx|graphql|gql|json|js|jsx|md)$
