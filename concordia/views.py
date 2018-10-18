@@ -106,7 +106,7 @@ def healthz(request):
     return HttpResponse(content=json.dumps(status), content_type="application/json")
 
 
-@never_cache
+@default_cache_control
 def static_page(request, base_name=None):
     """
     Serve static content from Markdown files
@@ -221,7 +221,7 @@ class AccountProfileView(LoginRequiredMixin, FormView):
         return super().form_valid(form)
 
 
-@method_decorator(never_cache, name="dispatch")
+@method_decorator(default_cache_control, name="dispatch")
 class HomeView(ListView):
     template_name = "home.html"
 
@@ -229,7 +229,7 @@ class HomeView(ListView):
     context_object_name = "campaigns"
 
 
-@method_decorator(never_cache, name="dispatch")
+@method_decorator(default_cache_control, name="dispatch")
 class CampaignListView(ListView):
     template_name = "transcriptions/campaign_list.html"
     paginate_by = 10
@@ -238,7 +238,7 @@ class CampaignListView(ListView):
     context_object_name = "campaigns"
 
 
-@method_decorator(never_cache, name="dispatch")
+@method_decorator(default_cache_control, name="dispatch")
 class CampaignDetailView(DetailView):
     template_name = "transcriptions/campaign_detail.html"
 
@@ -246,7 +246,7 @@ class CampaignDetailView(DetailView):
     context_object_name = "campaign"
 
 
-@method_decorator(never_cache, name="dispatch")
+@method_decorator(default_cache_control, name="dispatch")
 class ConcordiaProjectView(ListView):
     template_name = "transcriptions/project.html"
     context_object_name = "items"
@@ -274,7 +274,7 @@ class ConcordiaProjectView(ListView):
         )
 
 
-@method_decorator(never_cache, name="dispatch")
+@method_decorator(default_cache_control, name="dispatch")
 class ItemDetailView(ListView):
     """
     Handle GET requests on /campaign/<campaign>/<project>/<item>
@@ -652,7 +652,7 @@ class ContactUsView(FormView):
         return redirect("contact")
 
 
-@method_decorator(never_cache, name="dispatch")
+@method_decorator(default_cache_control, name="dispatch")
 class ReportCampaignView(TemplateView):
     """
     Report about campaign resources and status
