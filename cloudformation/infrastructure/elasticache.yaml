@@ -55,23 +55,15 @@ Outputs:
   RedisAddress:
     Description: Redis endpoint address
     Value: !GetAtt 'RedisService.RedisEndpoint.Address'
-    Export:
-      Name: !Sub '${EnvironmentName}-RedisAddress'
 
   RedisPort:
     Description: Redis endpoint port
     Value: !GetAtt 'RedisService.RedisEndpoint.Port'
-    Export:
-      Name: !Sub '${EnvironmentName}-RedisPort'
-  
+
   MemcachedAddress:
     Description: memcached endpoint address
     Value: !GetAtt 'MemcachedService.ConfigurationEndpoint.Address'
-    Export:
-      Name: !Sub '${EnvironmentName}-MemcachedAddress'
-  
+
   MemcachedPort:
     Description: memcached endpoint port
     Value: !GetAtt 'MemcachedService.ConfigurationEndpoint.Port'
-    Export:
-      Name: !Sub '${EnvironmentName}-MemcachedPort'
