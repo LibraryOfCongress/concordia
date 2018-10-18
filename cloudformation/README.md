@@ -6,15 +6,19 @@ The sample templates have been modified and new templates have been added. For t
 
 To use these templates:
 
-1.  Upload this directory to an S3 bucket.
-2.  Read [how to get started with AWS ECR](https://docs.aws.amazon.com/AmazonECR/latest/userguide/ECR_GetStarted.html) and follow the instructions to create an AWS ECR repository.
-3.  Look at `configure-ecs-cli.sh` for command line examples for the following steps.
-4.  Build the `concordia_app` and `concordia_importer` docker images (see `build_containers.sh`).
-5.  Tag and push the docker images according to the instructions in the AWS ECR get started guide.
-6.  Update the docker image URL for your images in the appropriate `service.yaml` files.
-7.  Use CloudFormation to create a stack, using the `master.yaml` in the S3 bucket you uploaded in step 1 as the initial template.
-8. run the `services/concordia-service/service.yaml` app template which registers the task definitions, creates the service, attach to load balancer
-9. Deploy a bastion host - use `infrastructure/bastion_host.yaml` CF template
+1.  Upload this directory to an S3 bucket:
+
+```
+cd cloudformation
+./sync_templates.sh
+```
+
+2.  Read [how to get started with AWS ECR](https://docs.aws.amazon.com/AmazonECR/latest/userguide/ECR_GetStarted.html) and follow the instructions to create three ECR repositories named `concordia`, `concordia/importer` and `rabbitmq`.
+3.  Set a BUILD_NUMBER in your environment and run `./build_containers.sh`
+4.  Use CloudFormation to create a stack, using the `master.yaml` in the S3 bucket you uploaded in step 1 as the initial template.
+5.  Once the RDS CloudFormation template has finished, populate the secrets in `create_secrets.sh` and run that script to create a new set of secrets (if you are not using the standard dev, test, stage or prod environments).
+6.  After the secrets have been created, create a new revision of the task definition, changing the ENV_NAME variable to point to the correct secret storage location (N/A if you use the predefined dev, test, stage, or prod values). Update the service to use the newest task definition version.
+7.  Deploy a bastion host - use `infrastructure/bastion_host.yaml` CF template
     1. Install docker, configure aws CLI, log in to AWS and pull the latest concordia docker image from ECR:
     ```
     sudo yum install -y docker
@@ -25,11 +29,10 @@ To use these templates:
     1. Login to ECR: `sudo $(aws ecr get-login --no-include-email --region us-east-1)`
     1. Pull the latest image: `sudo docker pull $(aws sts get-caller-identity --output=text --query "Account").dkr.ecr.us-east-1.amazonaws.com/concordia:latest`
     1. Add the bastion host security group to the database security group to allow inbound postgresql traffic
-    1. Run the image:  `sudo docker run -e ENV_NAME=stage -e AWS=1 351149051428.dkr.ecr.us-east-1.amazonaws.com/concordia`
+    1. Run the image: `sudo docker run -e ENV_NAME=stage -e AWS=1 351149051428.dkr.ecr.us-east-1.amazonaws.com/concordia`
     1. `sudo docker exec -it <container name> bash`
     1. Run the create admin command: `python3 ./manage.py createsuperuser`
     1. Delete the bastion host stack.
-
 
 ![build-status](https://codebuild.eu-west-1.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiKzBuNjJCUFk2STRvbDZENXlMUFJOenF2V2EyQ3FMbEtuWDlQeVp6TWlxdXhNMGVOZGo5bG9jdTl1YU16RmZIVVNxa3VqTVg3V3drSnJxOUQwSmhqV2g0PSIsIml2UGFyYW1ldGVyU3BlYyI6IlJJRE4wZGJaS25LL0s0dzkiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master)
 

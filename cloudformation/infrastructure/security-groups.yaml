@@ -29,7 +29,7 @@ Resources:
                 - SourceSecurityGroupId: !Ref BastionHostSecurityGroup
                   IpProtocol: tcp
                   FromPort: 22
-                  ToPort: 22   
+                  ToPort: 22
             Tags: 
                 - Key: Name
                   Value: !Sub ${EnvironmentName}-ECS-Hosts
@@ -81,6 +81,21 @@ Resources:
                 - Key: Name
                   Value: !Sub ${EnvironmentName}-BastionHosts
 
+    CacheServiceSecurityGroup:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+            VpcId: !Ref VPC
+            GroupDescription: Access to cache services for ECS hosts
+            SecurityGroupIngress:
+                - SourceSecurityGroupId: !Ref 'ECSHostSecurityGroup'
+                  IpProtocol: tcp
+                  FromPort: 6379
+                  ToPort: 6379
+                - SourceSecurityGroupId: !Ref 'ECSHostSecurityGroup'
+                  IpProtocol: tcp
+                  FromPort: 11211
+                  ToPort: 11211    
+
 Outputs:
 
     ECSHostSecurityGroup: 
@@ -98,3 +113,7 @@ Outputs:
     BastionHostSecurityGroup:
         Description: A reference to the security group for bastion hosts
         Value: !Ref BastionHostSecurityGroup
+    
+    CacheServiceSecurityGroup:
+        Description: A reference to the security group for cache services
+        Value: !Ref CacheServiceSecurityGroup

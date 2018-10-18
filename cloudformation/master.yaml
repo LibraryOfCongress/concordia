@@ -15,15 +15,15 @@ Description: >
 Mappings:
     EnvironmentMapping:
         AvailabilityZone1Map:
-            dev: 2
+            dev: 0
             test: 2
             stage: 2
-            prod: 2
+            prod: 0
         AvailabilityZone2Map:
-            dev: 3
+            dev: 1
             test: 3
             stage: 3
-            prod: 3
+            prod: 1
         VPCCIDRMap:
             dev: 10.192.0.0/16
             test: 10.193.0.0/16
@@ -52,14 +52,15 @@ Mappings:
 
 Parameters:
 
+    ConcordiaVersion:
+        Description: which version of the docker images to deploy
+        Type: String
+        Default: latest
+
     MyDbPassword:
         Description: Master database password to use for RDS
         Type: String
         NoEcho: true
-
-    KeyPairName:
-        Description: key pair within this region for ECS access
-        Type: String
     
     EnvName:
         Description: which type of environment we are setting up
@@ -104,7 +105,6 @@ Resources:
         Type: AWS::CloudFormation::Stack
         Properties:
             TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/security-groups.yaml"
-#            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/security-groups.yaml" ]]
             Parameters: 
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
@@ -113,78 +113,41 @@ Resources:
         Type: AWS::CloudFormation::Stack
         Properties:
             TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/rds.yaml"
-#            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/rds.yaml" ]]
             Parameters:
-                EnvironmentName: !Ref AWS::StackName
-                VPC: !GetAtt VPC.Outputs.VPC
                 DbPassword: !Ref MyDbPassword
                 DatabaseSecurityGroup: !GetAtt SecurityGroups.Outputs.DatabaseSecurityGroup
                 PrivateSubnet1: !GetAtt VPC.Outputs.PrivateSubnet1
                 PrivateSubnet2: !GetAtt VPC.Outputs.PrivateSubnet2
 
-    ALB:
+    Cache:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/load-balancers.yaml"
-#            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/load-balancers.yaml" ]]
+            TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/elasticache.yaml"
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
-                VPC: !GetAtt VPC.Outputs.VPC
-                Subnets: !GetAtt VPC.Outputs.PublicSubnets
-                SecurityGroup: !GetAtt SecurityGroups.Outputs.LoadBalancerSecurityGroup
+                SecurityGroup: !GetAtt SecurityGroups.Outputs.CacheServiceSecurityGroup
+                PrivateSubnets: !GetAtt VPC.Outputs.PrivateSubnets
 
-    ECS:
+    FargateCluster:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/ecs-cluster.yaml"
-#            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/ecs-cluster.yaml" ]]
+            TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/fargate-cluster.yaml"
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
-                KeyPairName: !Ref KeyPairName
+                EnvName: !Ref EnvName
+                VpcId: !GetAtt VPC.Outputs.VPC
                 SecurityGroup: !GetAtt SecurityGroups.Outputs.ECSHostSecurityGroup
-                Subnets: !GetAtt VPC.Outputs.PrivateSubnets
-
-#    ConcordiaService:
-#        Type: AWS::CloudFormation::Stack
-#        Properties:
-#            TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/services/concordia-service/service.yaml"
-#            TemplateURL: !Join [ "/", [ !Ref BasePath, "/services/concordia-service/service.yaml" ]]
-#            Parameters:
-#                EnvName: !Ref EnvName
-#                DesiredCount: 2
-#                MaxCount: 3
-#                Memory: 4096
-#                Cpu: 2048
-#                VPC: !GetAtt VPC.Outputs.VPC
-#                Cluster: !GetAtt ECS.Outputs.Cluster	              
-#                PostgresHost: !GetAtt RDS.Outputs.DatabaseHostName	
-#                Listener: !GetAtt ALB.Outputs.Listener	
-#                Path: /*	
-#                ECSServiceAutoScalingRoleARN: !GetAtt ECS.Outputs.ECSServiceAutoScalingRole
-
-    LifecycleHook:
-        Type: AWS::CloudFormation::Stack
-        Properties:
-            TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/lifecyclehook.yaml"
-#            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/lifecyclehook.yaml" ]]
-            Parameters:
-                Cluster: !GetAtt ECS.Outputs.Cluster
-                ECSAutoScalingGroupName: !GetAtt ECS.Outputs.ECSAutoScalingGroupName
+                LoadBalancerSecurityGroup: !GetAtt SecurityGroups.Outputs.LoadBalancerSecurityGroup
+                PrivateSubnets: !GetAtt VPC.Outputs.PrivateSubnets
+                PublicSubnets: !GetAtt VPC.Outputs.PublicSubnets
+                ConcordiaVersion: !Ref ConcordiaVersion
+                RedisAddress: !Ref Cache.Outputs.RedisAddress
+                RedisPort: !Ref Cache.Outputs.RedisPort
+                MemcachedAddress: !Ref Cache.Outputs.MemcachedAddress
+                MemcachedPort: !Ref Cache.Outputs.MemcachedPort
 
 Outputs:
 
     WebsiteServiceUrl: 
         Description: The URL endpoint for the concordia website service
-        Value: !Join ["", [ !GetAtt ALB.Outputs.LoadBalancerUrl, "/" ]]
-    
-    ALBListener:
-        Description: The listener to register with for the ECS service 
-        Value: !GetAtt ALB.Outputs.Listener
-
-    ClusterId:
-        Description: Id of the ECS Cluster 
-        Value: !GetAtt ECS.Outputs.Cluster
-
-    ECSServiceAutoScalingRoleARN:
-        Description: ARN of the ECS AutoScaling IAM Role 
-        Value: !GetAtt ECS.Outputs.ECSServiceAutoScalingRole
+        Value: !Join ["", [ !GetAtt FargateCluster.Outputs.LoadBalancerUrl, "/" ]]

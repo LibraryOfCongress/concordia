@@ -1,0 +1,300 @@
+Description: >
+    This template deploys a fargate cluster to the provided VPC and subnets
+    
+Parameters:
+
+    EnvironmentName:
+        Description: An environment name that will be prefixed to resource names
+        Type: String
+
+    PublicSubnets:
+        Description: The subnets for the load balancer
+        Type: List<AWS::EC2::Subnet::Id>
+
+    PrivateSubnets:
+        Description: Choose which subnets this ECS cluster should be deployed to
+        Type: List<AWS::EC2::Subnet::Id>
+
+    SecurityGroup:
+        Description: Select the Security Group to use for the ECS cluster hosts
+        Type: AWS::EC2::SecurityGroup::Id
+    
+    LoadBalancerSecurityGroup:
+        Description: The SecurityGroup for load balancer
+        Type: AWS::EC2::SecurityGroup::Id
+
+    VpcId:
+        Description: The Id of the VPC for this cluster
+        Type: AWS::EC2::VPC::Id
+
+    ConcordiaVersion:
+        Type: String
+        Description: version of concordia, concordia/importer, and rabbitmq docker images to pull and deploy
+        Default: latest        
+
+    EnvName:
+        Type: String
+        Description: which environment to target
+        AllowedValues:
+            - 'dev'  
+            - 'test'
+            - 'stage'
+            - 'prod'
+        ConstraintDescription: Must match a location for secret storage in secretsmanager
+
+    RedisAddress:
+        Type: String
+        Description: Redis endpoint address
+
+    RedisPort:
+        Type: String
+        Description: Redis endpoint port
+  
+    MemcachedAddress:
+        Type: String
+        Description: memcached endpoint address
+  
+    MemcachedPort:
+        Type: String
+        Description: memcached endpoint port
+
+Resources:
+
+  ConcordiaServiceSecretAccessPolicy:
+      Type: AWS::IAM::Policy
+      Properties:
+        PolicyName: !Sub ReadOnlyAccessToConcordiaSecrets-${EnvironmentName}
+        Roles:
+          - !Ref 'ConcordiaTaskRole'
+          - !Ref 'ConcordiaEC2Role'
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action: 
+              - 'secretsmanager:GetResourcePolicy'
+              - 'secretsmanager:GetSecretValue'
+              - 'secretsmanager:DescribeSecret'
+              - 'secretsmanager:ListSecretVersionIds'
+              - 'kms:GetParametersForImport'
+              - 'kms:GetKeyRotationStatus'
+              - 'kms:GetKeyPolicy'
+              - 'kms:DescribeKey'
+              - 'kms:ListResourceTags'
+              - 'kms:Decrypt'
+              - 'kms:GenerateDataKey'
+              - 's3:PutObject'
+              - 's3:GetObject'
+              - 's3:AbortMultipartUpload'
+              - 's3:ListMultipartUploadParts'
+              - 's3:ListBucket'
+              - 's3:ListBucketMultipartUploads'              
+              Resource:
+                - "*"
+
+  ConcordiaEC2Role:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+  
+  ConcordiaInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /
+      Roles:
+        - !Ref 'ConcordiaEC2Role'
+  
+  ConcordiaTaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action:
+              - sts:AssumeRole              
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+  
+  ConcordiaAppLogsGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Ref AWS::StackName
+      RetentionInDays: 30
+
+  ConcordiaExternalTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 30
+      HealthCheckPath: /healthz
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 10
+      TargetType: ip
+      Port: 80
+      Protocol: HTTP
+      VpcId: !Ref VpcId
+
+  LoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+        Name: !Ref EnvironmentName
+        Subnets: !Ref PublicSubnets
+        SecurityGroups: 
+            - !Ref LoadBalancerSecurityGroup
+        Tags: 
+            - Key: Name
+              Value: !Ref EnvironmentName
+
+  ExternalLoadBalancerListener:
+    Properties:
+      DefaultActions:
+        - TargetGroupArn: !Ref 'ConcordiaExternalTargetGroup'
+          Type: forward
+      LoadBalancerArn:  !Ref LoadBalancer
+      Port: 80
+      Protocol: HTTP
+    Type: AWS::ElasticLoadBalancingV2::Listener
+
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Ref EnvironmentName
+
+  ConcordiaTask:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub concordia-${EnvName}
+      Cpu: 4096
+      Memory: 16384
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      ExecutionRoleArn: ecsTaskExecutionRole
+      TaskRoleArn: !Sub 'arn:aws:iam::${AWS::AccountId}:role/ConcordiaServerTaskRole'
+      Volumes:
+        - Name: images_volume
+      ContainerDefinitions:
+        - Name: app
+          Cpu: 2048
+          Memory: 8192
+          Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/concordia:${ConcordiaVersion}'
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref 'ConcordiaAppLogsGroup'
+              awslogs-region: !Ref 'AWS::Region'
+              awslogs-stream-prefix: ConcordiaServer
+          Environment:
+              - Name: AWS
+                Value: '1'
+              - Name: ENV_NAME
+                Value: !Ref EnvName
+              - Name: S3_BUCKET_NAME
+                Value: concordia-staticpages
+              - Name: CELERY_BROKER_URL
+                Value: pyamqp://guest@localhost:5672
+              - Name: AWS_DEFAULT_REGION
+                Value: !Ref AWS::Region
+              - Name: SENTRY_PUBLIC_DSN
+                Value: http://f69265b381a44ceb89e9bd467f86fbdd@devops-sentry-public-lb-718357739.us-east-1.elb.amazonaws.com/3
+              - Name: REDIS_ADDRESS
+                Value: !Ref RedisAddress
+              - Name: REDIS_PORT
+                Value: !Ref RedisPort
+              - Name: MEMCACHED_ADDRESS
+                Value: !Ref MemcachedAddress
+              - Name: MEMCACHED_PORT
+                Value: !Ref MemcachedPort
+          MountPoints:
+              - SourceVolume: images_volume
+                ContainerPath: /concordia_images
+          PortMappings:
+              - ContainerPort: 80
+        - Name: rabbit
+          Cpu: 1024
+          Memory: 2048
+          Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/rabbitmq:${ConcordiaVersion}'
+          PortMappings:
+            - ContainerPort: 5672
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref 'ConcordiaAppLogsGroup'
+              awslogs-region: !Ref 'AWS::Region'
+              awslogs-stream-prefix: ConcordiaCron
+        - Name: importer
+          Cpu: 1024
+          Memory: 2048
+          Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/concordia/importer:${ConcordiaVersion}'
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref 'ConcordiaAppLogsGroup'
+              awslogs-region: !Ref 'AWS::Region'
+              awslogs-stream-prefix: ConcordiaWorker
+          Environment:
+              - Name: AWS
+                Value: '1'
+              - Name: ENV_NAME
+                Value: !Ref EnvName
+              - Name: S3_BUCKET_NAME
+                Value: concordia-staticpages
+              - Name: CELERY_BROKER_URL
+                Value: pyamqp://guest@localhost:5672
+              - Name: AWS_DEFAULT_REGION
+                Value: !Ref AWS::Region
+              - Name: SENTRY_PUBLIC_DSN
+                Value: http://f69265b381a44ceb89e9bd467f86fbdd@devops-sentry-public-lb-718357739.us-east-1.elb.amazonaws.com/3
+              - Name: REDIS_ADDRESS
+                Value: !Ref RedisAddress
+              - Name: REDIS_PORT
+                Value: !Ref RedisPort
+              - Name: MEMCACHED_ADDRESS
+                Value: !Ref MemcachedAddress
+              - Name: MEMCACHED_PORT
+                Value: !Ref MemcachedPort
+          MountPoints:
+              - SourceVolume: images_volume
+                ContainerPath: /concordia_images
+  
+  ConcordiaExternalService:
+    Type: AWS::ECS::Service
+    DependsOn: ExternalLoadBalancerListener
+    Properties:
+      Cluster: !Ref ECSCluster
+      LaunchType: FARGATE
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 75
+      DesiredCount: 1
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          SecurityGroups:
+            - !Ref SecurityGroup
+          Subnets: !Ref PrivateSubnets
+      TaskDefinition: !Ref ConcordiaTask
+      LoadBalancers:
+        - ContainerName: 'app'
+          ContainerPort: 80
+          TargetGroupArn: !Ref ConcordiaExternalTargetGroup
+
+Outputs:
+
+  LoadBalancerUrl:
+    Description: The URL of the ALB
+    Value: !GetAtt LoadBalancer.DNSName
