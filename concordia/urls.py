@@ -108,8 +108,8 @@ urlpatterns = [
         name="registration_register",
     ),
     path("account/profile/", views.AccountProfileView.as_view(), name="user-profile"),
-    path("accounts/", include("django_registration.backends.activation.urls")),
-    path("accounts/", include("django.contrib.auth.urls")),
+    path("account/", include("django_registration.backends.activation.urls")),
+    path("account/", include("django.contrib.auth.urls")),
     # TODO: when we upgrade to Django 2.1 we can use the admin site override
     # mechanism (the old one is broken in 2.0): see
     # https://code.djangoproject.com/ticket/27887
