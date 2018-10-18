@@ -404,7 +404,7 @@ def save_transcription(request, *, asset_pk):
     # If so, ask the user to correct the transcription by removing the URLs
     transcription_text = request.POST["text"]
     url_match = re.search(URL_REGEX, transcription_text)
-    if urls:
+    if url_match:
         return JsonResponse(
             {
                 "error": "It looks like your text contains URLs. "
