@@ -61,37 +61,29 @@
                     <li class="nav-item">
                         <a class="nav-link {% if PATH_LEVEL_1 == 'help-center' %}active{% endif %}" href="{% url 'help-center' %}">Help</a>
                     </li>
-                    {% comment %} FIXME: this should be replaced with JS so we can cache pages {% endcomment %}
-                    {% if user.is_authenticated %}
-                    <li class="nav-item dropdown nav-dropdown">
-                        <a class="nav-link dropdown-toggle {% if PATH_LEVEL_1 == 'account'%}active{% endif %}" href="{% url 'user-profile' %}" id="topnav-account-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Account</a>
-                        <div class="dropdown-menu" aria-labelledby="topnav-account-dropdown">
-                            <a class="dropdown-item" href="{% url 'user-profile' %}">{{ user }} profile</a>
-                            {% if user.is_superuser %}
-                            <a class="dropdown-item" href="{% url 'admin:index' %}">Admin pages</a>
-                            {% endif %}
+                    <li id="topnav-account-dropdown" class="nav-item dropdown nav-dropdown authenticated-only" hidden>
+                        <a id="topnav-account-dropdown-toggle" class="nav-link dropdown-toggle {% if PATH_LEVEL_1 == 'account'%}active{% endif %}" href="{% url 'user-profile' %}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Account</a>
+                        <div class="dropdown-menu" aria-labelledby="topnav-account-dropdown-toggle">
                             <a class="dropdown-item" href="{% url 'logout' %}">Logout</a>
                         </div>
                     </li>
-                    {% else %}
-                    <li class="nav-item">
+                    <li class="nav-item anonymous-only">
                         <a class="nav-link d-lg-none" href="{% url 'login' %}">Login</a>
                     </li>
-                    <li class="nav-item">
+                    <li class="nav-item anonymous-only">
                         <a class="nav-link d-lg-none" href="{% url 'registration_register' %}">Register</a>
                     </li>
-                    {% endif %}
                 </ul>
             </div>
 
-            {% comment %} FIXME: this should be replaced with JS so we can cache pages {% endcomment %}
-            {% if not user.is_authenticated %}
-                <div class="nav-secondary">
-                    <a class="nav-link nav-secondary d-none d-lg-inline nav-link-login" href="{% url 'login' %}">Login</a>
-                    <a class="nav-link nav-secondary d-none d-lg-inline nav-link-register" href="{% url 'registration_register' %}">Register</a>
-                    </ul>
-                </div>
-            {% endif %}
+            <ul class="nav-secondary anonymous-only list-unstyled d-none d-lg-flex">
+                <li class="nav-item">
+                    <a class="nav-link nav-secondary nav-link-login" href="{% url 'login' %}">Login</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link nav-secondary nav-link-register" href="{% url 'registration_register' %}">Register</a>
+                </ul>
+            </ul>
         </nav>
     </header>
     <main class="{% block extra_main_classes %}{% endblock %}">

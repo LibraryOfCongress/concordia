@@ -198,7 +198,7 @@ a .hero-text:hover {
     text-decoration: underline;
 }
 
-a.nav-secondary:first-of-type {
+ul.nav-secondary li:first-of-type {
     border-right: solid 0.0675rem var(--bg-darkest-gray);
 }
 
@@ -299,7 +299,7 @@ hr {
     height: auto;
 }
 
-div.nav-secondary {
+ul.nav-secondary {
     position: absolute;
     right: 1.5rem;
     top: 1.5rem;
@@ -336,10 +336,10 @@ div.nav-secondary {
     color: var(--text-color-primary);
 }
 
-#topnav-account-dropdown ~ .dropdown-menu {
+#topnav-account-dropdown .dropdown-menu {
     /* Our custom styling conflicts with the Bootstrap defaults */
-    top: 3.375rem;
-    left: -4rem;
+    top: 2.8rem;
+    left: -5rem;
 }
 
 .carousel {
