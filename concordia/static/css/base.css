@@ -1140,16 +1140,16 @@ div.related-links {
 }
 
 .footer-crowd-social .links-social {
-    padding-left: 0;
-    list-style: none;
     margin: 0 -6.5px;
     display: inline-block;
     margin-bottom: 0;
 }
+
 .footer-crowd-social .links-social > li {
     display: inline-block;
     margin: 0 6.5px;
 }
+
 .footer-crowd-links {
     border-top: 1px solid #999;
     border-bottom: 1px solid #999;
@@ -1172,8 +1172,6 @@ div.related-links {
     }
 }
 .footer-crowd-links > ul {
-    padding-left: 0;
-    list-style: none;
     font-size: 14px;
     font-weight: bold;
     margin: 0;
