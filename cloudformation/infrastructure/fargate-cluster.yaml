@@ -117,6 +117,7 @@ Resources:
   ConcordiaTaskRole:
     Type: AWS::IAM::Role
     Properties:
+      RoleName: !Sub ConcordiaServerTaskRole-${EnvironmentName}
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -185,7 +186,7 @@ Resources:
       RequiresCompatibilities:
         - FARGATE
       ExecutionRoleArn: ecsTaskExecutionRole
-      TaskRoleArn: !Sub 'arn:aws:iam::${AWS::AccountId}:role/ConcordiaServerTaskRole'
+      TaskRoleArn: !Sub 'arn:aws:iam::${AWS::AccountId}:role/ConcordiaServerTaskRole-${EnvironmentName}'
       Volumes:
         - Name: images_volume
       ContainerDefinitions:

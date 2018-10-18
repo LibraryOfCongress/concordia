@@ -119,7 +119,7 @@ Resources:
                 PrivateSubnet1: !GetAtt VPC.Outputs.PrivateSubnet1
                 PrivateSubnet2: !GetAtt VPC.Outputs.PrivateSubnet2
 
-    Cache:
+    ElastiCache:
         Type: AWS::CloudFormation::Stack
         Properties:
             TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/elasticache.yaml"
@@ -141,10 +141,10 @@ Resources:
                 PrivateSubnets: !GetAtt VPC.Outputs.PrivateSubnets
                 PublicSubnets: !GetAtt VPC.Outputs.PublicSubnets
                 ConcordiaVersion: !Ref ConcordiaVersion
-                RedisAddress: !Ref Cache.Outputs.RedisAddress
-                RedisPort: !Ref Cache.Outputs.RedisPort
-                MemcachedAddress: !Ref Cache.Outputs.MemcachedAddress
-                MemcachedPort: !Ref Cache.Outputs.MemcachedPort
+                RedisAddress: !GetAtt ElastiCache.Outputs.RedisAddress
+                RedisPort: !GetAtt ElastiCache.Outputs.RedisPort
+                MemcachedAddress: !GetAtt ElastiCache.Outputs.MemcachedAddress
+                MemcachedPort: !GetAtt ElastiCache.Outputs.MemcachedPort
 
 Outputs:
 
