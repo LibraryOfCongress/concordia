@@ -155,19 +155,6 @@ Resources:
       Protocol: HTTP
     Type: AWS::ElasticLoadBalancingV2::Listener
 
-  HttpListenerRule:
-    Type: AWS::ElasticLoadBalancingV2::ListenerRule
-    Properties:
-      ListenerArn: !Ref ExternalLoadBalancerListener
-      Priority: 1
-      Conditions:
-          - Field: path-pattern
-            Values:
-                - /*
-      Actions:
-          - TargetGroupArn: !Ref ConcordiaExternalTargetGroup
-            Type: forward
-
   ECSCluster:
     Type: AWS::ECS::Cluster
     Properties:
@@ -205,7 +192,7 @@ Resources:
               - Name: S3_BUCKET_NAME
                 Value: concordia-staticpages
               - Name: CELERY_BROKER_URL
-                Value: pyamqp://guest@rabbit:5672
+                Value: pyamqp://guest@localhost:5672
               - Name: AWS_DEFAULT_REGION
                 Value: !Ref AWS::Region
               - Name: SENTRY_PUBLIC_DSN
@@ -245,7 +232,7 @@ Resources:
               - Name: S3_BUCKET_NAME
                 Value: concordia-staticpages
               - Name: CELERY_BROKER_URL
-                Value: pyamqp://guest@rabbit:5672
+                Value: pyamqp://guest@localhost:5672
               - Name: AWS_DEFAULT_REGION
                 Value: !Ref AWS::Region
               - Name: SENTRY_PUBLIC_DSN
