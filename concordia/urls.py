@@ -101,6 +101,7 @@ urlpatterns = [
         views_ws.TagCreate.as_view(),
         name="submit-tags",
     ),
+    path("account/ajax-status/", views.ajax_session_status, name="ajax-session-status"),
     path(
         "account/register/",
         views.ConcordiaRegistrationView.as_view(),

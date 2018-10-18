@@ -67,3 +67,24 @@ $('#go-fullscreen').on('click', function(evt) {
         screenfull.request(targetElement);
     }
 });
+
+$.ajax({url: '/account/ajax-status/', method: 'GET', cache: true}).done(
+    function(data) {
+        if (!data.username) {
+            return;
+        }
+
+        $('.anonymous-only').remove();
+        $('.authenticated-only').removeAttr('hidden');
+        if (data.links) {
+            var $accountMenu = $('#topnav-account-dropdown .dropdown-menu');
+            data.links.forEach(function(i) {
+                $('<a>')
+                    .addClass('dropdown-item')
+                    .attr('href', i.url)
+                    .text(i.title)
+                    .prependTo($accountMenu);
+            });
+        }
+    }
+);

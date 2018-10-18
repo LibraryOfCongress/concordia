@@ -131,6 +131,32 @@ def static_page(request, base_name=None):
     return render(request, "static-page.html", ctx)
 
 
+@cache_control(private=True, max_age=300)
+def ajax_session_status(request):
+    user = request.user
+    if user.is_anonymous:
+        res = {}
+    else:
+        links = [
+            {
+                "title": f"{user.username} Profile",
+                "url": request.build_absolute_uri(reverse("user-profile")),
+            }
+        ]
+        if user.is_superuser:
+            links.append(
+                {
+                    "title": "Admin Area",
+                    "url": request.build_absolute_uri(reverse("admin:index")),
+                }
+            )
+        # TODO: do we want to incorporate notifications like updates to items
+        # which they've contributed to?
+        res = {"username": user.username, "links": links}
+
+    return JsonResponse(res)
+
+
 @method_decorator(never_cache, name="dispatch")
 class ConcordiaRegistrationView(RegistrationView):
     form_class = UserRegistrationForm
