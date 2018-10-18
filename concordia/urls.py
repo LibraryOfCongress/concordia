@@ -113,7 +113,8 @@ urlpatterns = [
     url(r"^accounts/", include("django_registration.backends.activation.urls")),
     url(r"^accounts/", include("django.contrib.auth.urls")),
     # TODO: when we upgrade to Django 2.1 we can use the admin site override
-    # mechanism (the old one is broken in 2.0): see https://code.djangoproject.com/ticket/27887
+    # mechanism (the old one is broken in 2.0): see
+    # https://code.djangoproject.com/ticket/27887
     path("admin/bulk-import", admin_bulk_import_view, name="admin-bulk-import"),
     path("admin/", admin.site.urls),
     # Apps
