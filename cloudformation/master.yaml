@@ -61,10 +61,6 @@ Parameters:
         Description: Master database password to use for RDS
         Type: String
         NoEcho: true
-
-    KeyPairName:
-        Description: key pair within this region for ECS access
-        Type: String
     
     EnvName:
         Description: which type of environment we are setting up
@@ -110,7 +106,6 @@ Resources:
         Type: AWS::CloudFormation::Stack
         Properties:
             TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/security-groups.yaml"
-#            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/security-groups.yaml" ]]
             Parameters: 
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
@@ -119,12 +114,20 @@ Resources:
         Type: AWS::CloudFormation::Stack
         Properties:
             TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/rds.yaml"
-#            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/rds.yaml" ]]
             Parameters:
                 DbPassword: !Ref MyDbPassword
                 DatabaseSecurityGroup: !GetAtt SecurityGroups.Outputs.DatabaseSecurityGroup
                 PrivateSubnet1: !GetAtt VPC.Outputs.PrivateSubnet1
                 PrivateSubnet2: !GetAtt VPC.Outputs.PrivateSubnet2
+
+    Cache:
+        Type: AWS::CloudFormation::Stack
+        Properties:
+            TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/elasticache.yaml"
+            Parameters:
+                EnvironmentName: !Ref AWS::StackName
+                SecurityGroup: !GetAtt SecurityGroups.Outputs.CacheServiceSecurityGroup
+                PrivateSubnets: !GetAtt VPC.Outputs.PrivateSubnets
 
     FargateCluster:
         Type: AWS::CloudFormation::Stack
