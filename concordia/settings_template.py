@@ -305,3 +305,6 @@ ROBOTS_USE_HOST = False
 
 #: Number of seconds an asset reservation is valid for
 TRANSCRIPTION_RESERVATION_SECONDS = 5 * 60
+
+#: Web cache policy settings
+DEFAULT_PAGE_TTL = 5 * 60

@@ -3,7 +3,7 @@ import os
 import re
 import time
 from datetime import timedelta
-from functools import wraps
+from functools import partial, wraps
 from logging import getLogger
 from smtplib import SMTPException
 
@@ -24,8 +24,9 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import Http404, get_object_or_404, redirect, render
 from django.template import loader
 from django.urls import reverse, reverse_lazy
+from django.utils.decorators import method_decorator
 from django.utils.timezone import now
-from django.views.decorators.cache import never_cache
+from django.views.decorators.cache import cache_control, never_cache
 from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, FormView, ListView, TemplateView
 from django_registration.backends.activation.views import RegistrationView
@@ -56,6 +57,12 @@ ITEMS_PER_PAGE = 36
 URL_REGEX = r"http[s]?://"
 
 
+# Decorator for views which use our default cache control policy
+default_cache_control = partial(
+    cache_control, max_age=settings.DEFAULT_PAGE_TTL, public=True
+)
+
+
 def get_anonymous_user():
     """
     Get the user called "anonymous" if it exist. Create the user if it doesn't
@@ -82,6 +89,7 @@ def healthz(request):
     return HttpResponse(content=json.dumps(status), content_type="application/json")
 
 
+@never_cache
 def static_page(request, base_name=None):
     """
     Serve static content from Markdown files
@@ -123,10 +131,12 @@ def static_page(request, base_name=None):
     return render(request, "static-page.html", ctx)
 
 
+@method_decorator(never_cache, name="dispatch")
 class ConcordiaRegistrationView(RegistrationView):
     form_class = UserRegistrationForm
 
 
+@method_decorator(never_cache, name="dispatch")
 class AccountProfileView(LoginRequiredMixin, FormView):
     template_name = "account/profile.html"
     form_class = UserProfileForm
@@ -163,6 +173,7 @@ class AccountProfileView(LoginRequiredMixin, FormView):
         return super().form_valid(form)
 
 
+@method_decorator(never_cache, name="dispatch")
 class HomeView(ListView):
     template_name = "home.html"
 
@@ -170,6 +181,7 @@ class HomeView(ListView):
     context_object_name = "campaigns"
 
 
+@method_decorator(never_cache, name="dispatch")
 class CampaignListView(ListView):
     template_name = "transcriptions/campaign_list.html"
     paginate_by = 10
@@ -178,6 +190,7 @@ class CampaignListView(ListView):
     context_object_name = "campaigns"
 
 
+@method_decorator(never_cache, name="dispatch")
 class CampaignDetailView(DetailView):
     template_name = "transcriptions/campaign_detail.html"
 
@@ -185,6 +198,7 @@ class CampaignDetailView(DetailView):
     context_object_name = "campaign"
 
 
+@method_decorator(never_cache, name="dispatch")
 class ConcordiaProjectView(ListView):
     template_name = "transcriptions/project.html"
     context_object_name = "items"
@@ -212,6 +226,7 @@ class ConcordiaProjectView(ListView):
         )
 
 
+@method_decorator(never_cache, name="dispatch")
 class ItemDetailView(ListView):
     """
     Handle GET requests on /campaign/<campaign>/<project>/<item>
@@ -297,6 +312,7 @@ class ItemDetailView(ListView):
         return res
 
 
+@method_decorator(never_cache, name="dispatch")
 class AssetDetailView(DetailView):
     """
     Class to handle GET ansd POST requests on route /campaigns/<campaign>/asset/<asset>
@@ -373,6 +389,7 @@ class AssetDetailView(DetailView):
         return ctx
 
 
+@never_cache
 def ajax_captcha(request):
     if request.method == "POST":
         response = request.POST.get("response")
@@ -402,6 +419,7 @@ def ajax_captcha(request):
 
 def validate_anonymous_captcha(view):
     @wraps(view)
+    @never_cache
     def inner(request, *args, **kwargs):
         if not request.user.is_authenticated:
             captcha_last_validated = request.session.get("captcha_validation_time", 0)
@@ -497,6 +515,7 @@ def submit_transcription(request, *, pk):
 
 @require_POST
 @login_required
+@never_cache
 def review_transcription(request, *, pk):
     action = request.POST.get("action")
 
@@ -529,6 +548,7 @@ def review_transcription(request, *, pk):
     return JsonResponse({"id": transcription.pk}, status=200)
 
 
+@method_decorator(never_cache, name="dispatch")
 class ContactUsView(FormView):
     template_name = "contact.html"
     form_class = ContactUsForm
@@ -584,6 +604,7 @@ class ContactUsView(FormView):
         return redirect("contact")
 
 
+@method_decorator(never_cache, name="dispatch")
 class ReportCampaignView(TemplateView):
     """
     Report about campaign resources and status
@@ -656,6 +677,7 @@ class ReportCampaignView(TemplateView):
 
 
 @require_POST
+@never_cache
 def reserve_asset_transcription(request, *, asset_pk):
     """
     Receives an asset PK and attempts to create/update a reservation for it
@@ -718,6 +740,7 @@ def reserve_asset_transcription(request, *, asset_pk):
     return HttpResponse(status=204)
 
 
+@never_cache
 @atomic
 def redirect_to_next_transcribable_asset(request, *, campaign_slug, project_slug):
     project = get_object_or_404(
