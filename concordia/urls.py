@@ -69,6 +69,7 @@ urlpatterns = [
     path("help-center/how-to-tag/", views.static_page, name="how-to-tag"),
     path("for-educators/", views.static_page, name="for-educators"),
     path("latest/", views.static_page, name="latest"),
+    path("questions/", views.static_page, name="questions"),
     path("contact/", views.ContactUsView.as_view(), name="contact"),
     path("campaigns/", include(tx_urlpatterns, namespace="transcriptions")),
     path(
