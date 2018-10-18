@@ -86,5 +86,11 @@ $.ajax({url: '/account/ajax-status/', method: 'GET', cache: true}).done(
                     .prependTo($accountMenu);
             });
         }
+
+        if (data.messages) {
+            data.messages.forEach(function(message) {
+                displayMessage(message.level, message.message);
+            });
+        }
     }
 );

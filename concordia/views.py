@@ -15,6 +15,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
+from django.contrib.messages import get_messages
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
 from django.db import connection
@@ -55,6 +56,12 @@ ASSETS_PER_PAGE = 36
 PROJECTS_PER_PAGE = 36
 ITEMS_PER_PAGE = 36
 URL_REGEX = r"http[s]?://"
+
+MESSAGE_LEVEL_NAMES = dict(
+    zip(
+        messages.DEFAULT_LEVELS.values(), map(str.lower, messages.DEFAULT_LEVELS.keys())
+    )
+)
 
 
 # Decorator for views which use our default cache control policy
@@ -150,9 +157,13 @@ def ajax_session_status(request):
                     "url": request.build_absolute_uri(reverse("admin:index")),
                 }
             )
-        # TODO: do we want to incorporate notifications like updates to items
-        # which they've contributed to?
-        res = {"username": user.username, "links": links}
+
+        messages = [
+            {"level": MESSAGE_LEVEL_NAMES[i.level], "message": i.message}
+            for i in get_messages(request)
+        ]
+
+        res = {"username": user.username, "links": links, "messages": messages}
 
     return JsonResponse(res)
 
