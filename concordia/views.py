@@ -28,6 +28,7 @@ from django.urls import reverse, reverse_lazy
 from django.utils.decorators import method_decorator
 from django.utils.timezone import now
 from django.views.decorators.cache import cache_control, never_cache
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, FormView, ListView, TemplateView
 from django_registration.backends.activation.views import RegistrationView
@@ -139,6 +140,7 @@ def static_page(request, base_name=None):
 
 
 @cache_control(private=True, max_age=300)
+@csrf_exempt
 def ajax_session_status(request):
     user = request.user
     if user.is_anonymous:
