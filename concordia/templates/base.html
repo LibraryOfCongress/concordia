@@ -62,26 +62,26 @@
                         <a class="nav-link {% if PATH_LEVEL_1 == 'help-center' %}active{% endif %}" href="{% url 'help-center' %}">Help</a>
                     </li>
                     <li id="topnav-account-dropdown" class="nav-item dropdown nav-dropdown authenticated-only" hidden>
-                        <a id="topnav-account-dropdown-toggle" class="nav-link dropdown-toggle {% if PATH_LEVEL_1 == 'account'%}active{% endif %}" href="{% url 'user-profile' %}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Account</a>
+                        <a id="topnav-account-dropdown-toggle" class="nav-link dropdown-toggle {% if PATH_LEVEL_1 == 'account'%}active{% endif %}" href="{% url 'user-profile' %}" rel="nofollow" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Account</a>
                         <div class="dropdown-menu" aria-labelledby="topnav-account-dropdown-toggle">
-                            <a class="dropdown-item" href="{% url 'logout' %}">Logout</a>
+                            <a class="dropdown-item" href="{% url 'logout' %}" rel="nofollow">Logout</a>
                         </div>
                     </li>
                     <li class="nav-item anonymous-only">
-                        <a class="nav-link d-lg-none" href="{% url 'login' %}?next={{ request.path|urlencode }}">Login</a>
+                        <a class="nav-link d-lg-none" href="{% url 'login' %}?next={{ request.path|urlencode }}" rel="nofollow">Login</a>
                     </li>
                     <li class="nav-item anonymous-only">
-                        <a class="nav-link d-lg-none" href="{% url 'registration_register' %}">Register</a>
+                        <a class="nav-link d-lg-none" href="{% url 'registration_register' %}" rel="nofollow">Register</a>
                     </li>
                 </ul>
             </div>
 
             <ul class="nav-secondary anonymous-only list-unstyled d-none d-lg-flex">
                 <li class="nav-item">
-                    <a class="nav-link nav-secondary nav-link-login" href="{% url 'login' %}?next={{ request.path|urlencode }}">Login</a>
+                    <a class="nav-link nav-secondary nav-link-login" href="{% url 'login' %}?next={{ request.path|urlencode }}" rel="nofollow">Login</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link nav-secondary nav-link-register" href="{% url 'registration_register' %}">Register</a>
+                    <a class="nav-link nav-secondary nav-link-register" href="{% url 'registration_register' %}" rel="nofollow">Register</a>
                 </ul>
             </ul>
         </nav>
