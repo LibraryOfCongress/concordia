@@ -3,8 +3,6 @@ import os
 
 from django.contrib import messages
 from dotenv import load_dotenv
-from machina import MACHINA_MAIN_STATIC_DIR, MACHINA_MAIN_TEMPLATE_DIR
-from machina import get_apps as get_machina_apps
 
 # Build paths inside the project like this: os.path.join(SITE_ROOT_DIR, ...)
 CONCORDIA_APP_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -45,7 +43,7 @@ STATICFILES_DIRS = [
     os.path.join(CONCORDIA_APP_DIR, "static"),
     os.path.join("/".join(CONCORDIA_APP_DIR.split("/")[:-1]), "concordia/static"),
 ]
-STATICFILES_DIRS = [os.path.join(CONCORDIA_APP_DIR, "static"), MACHINA_MAIN_STATIC_DIR]
+STATICFILES_DIRS = [os.path.join(CONCORDIA_APP_DIR, "static")]
 TEMPLATE_DEBUG = False
 TIME_ZONE = "UTC"
 USE_I18N = True
@@ -75,6 +73,7 @@ INSTALLED_APPS = [
     "django.contrib.humanize",
     "django.contrib.sessions",
     "django.contrib.messages",
+    "django.contrib.sites",
     "django.contrib.staticfiles",
     "raven.contrib.django.raven_compat",
     "maintenance_mode",
@@ -84,14 +83,9 @@ INSTALLED_APPS = [
     "exporter",
     "importer",
     "captcha",
-    # Machina related apps:
-    "mptt",
-    "haystack",
     "django_prometheus_metrics",
-    "django.contrib.sites",
     "robots",
-] + get_machina_apps()
-
+]
 
 if DEBUG:
     INSTALLED_APPS += ["django_extensions"]
@@ -110,8 +104,6 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "maintenance_mode.middleware.MaintenanceModeMiddleware",
-    # Machina
-    "machina.apps.forum_permission.middleware.ForumPermissionMiddleware",
 ]
 
 TEMPLATES = [
@@ -120,7 +112,6 @@ TEMPLATES = [
         "DIRS": [
             os.path.join(SITE_ROOT_DIR, "templates"),
             os.path.join(CONCORDIA_APP_DIR, "templates"),
-            MACHINA_MAIN_TEMPLATE_DIR,
         ],
         "OPTIONS": {
             "context_processors": [
@@ -132,8 +123,6 @@ TEMPLATES = [
                 # Concordia
                 "concordia.context_processors.system_configuration",
                 "concordia.context_processors.site_navigation",
-                # Machina
-                "machina.core.context_processors.metadata",
             ],
             "loaders": [
                 "django.template.loaders.filesystem.Loader",
@@ -143,13 +132,7 @@ TEMPLATES = [
     }
 ]
 
-CACHES = {
-    "default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"},
-    "machina_attachments": {
-        "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
-        "LOCATION": "/tmp",
-    },
-}
+CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
 
 HAYSTACK_CONNECTIONS = {
     "default": {

@@ -10,7 +10,6 @@ gunicorn = "*"
 djangorestframework = "*"
 celery = "*"
 coreapi = "*"
-django-machina = "*"
 django-haystack = "*"
 "boto3" = ">=1.9.16"
 botocore = '>=1.12.16'
