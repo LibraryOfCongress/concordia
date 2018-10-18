@@ -1139,14 +1139,6 @@ div.related-links {
     color: #333;
 }
 
-.footer-crowd-social > h2 small.block,
-.footer-crowd-social > h2 .small.block {
-    display: block;
-    margin-bottom: 2px;
-}
-a .footer-crowd-social > h2 {
-    color: inherit !important;
-}
 .footer-crowd-social .links-social {
     padding-left: 0;
     list-style: none;
