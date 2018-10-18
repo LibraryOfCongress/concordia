@@ -103,14 +103,6 @@
                             {{ transcription.text }}
                         </textarea>
 
-                        {% if user.is_anonymous %}
-                            <div class="d-none my-2 col-12 col-md-10 col-lg-8 mx-auto" id="captcha_container">
-                                <div class="text-center mt-3" id="captcha_div">
-                                    {{ captcha_form.captcha }}
-                                </div>
-                            </div>
-                        {% endif %}
-
                         <div class="my-3 d-flex flex-wrap justify-content-around align-items-center btn-row">
                             {% if transcription_status == 'edit' %}
                                 <div class="form-check w-100 text-center mt-0 mb-3">
@@ -281,6 +273,37 @@
                 </div>
             </div>
         </div>
+    </div>
+    <div id="captcha-modal" class="modal" tabindex="-1" role="dialog">
+        <form action="{% url 'ajax-captcha' %}" class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Please confirm you are not a robot</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-row">
+                        <div class="help-text">
+                            Before continuing please enter the letters in the image
+                            below so we know you are a human:
+                        </div>
+                        <img id="captcha-image" class="d-block my-3 mx-auto border rounded">
+
+                    </div>
+                    <div class="form-row">
+                        <input name="response" class="form-control" autocomplete="off">
+                    </div>
+                    <input type="hidden" name="key"/>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">
+                        Continue
+                    </button>
+                </div>
+            </div>
+        </form>
     </div>
 </div>
 {% endblock main_content %}

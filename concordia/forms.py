@@ -1,6 +1,5 @@
 from logging import getLogger
 
-from captcha.fields import CaptchaField
 from django import forms
 from django.contrib.auth import get_user_model
 from django_registration.forms import RegistrationForm
@@ -45,18 +44,14 @@ class ContactUsForm(forms.Form):
     email = forms.EmailField(label="Your email:", required=True)
     subject = forms.CharField(label="Subject:", required=False)
 
-
     link = forms.URLField(
-        label="Have a specific page you need help with? Add the link below:", required=False
+        label="Have a specific page you need help with? Add the link below:",
+        required=False,
     )
 
     story = forms.CharField(
         label="Let us know how we can help:", required=True, widget=forms.Textarea
     )
-
-
-class CaptchaEmbedForm(forms.Form):
-    captcha = CaptchaField()
 
 
 class AssetFilteringForm(forms.Form):
