@@ -1254,13 +1254,13 @@ a .footer-crowd-social > h2 {
     width: 125px;
     height: 30px;
     background-size: 125px 30px;
-    background: url(congress-gov.svg) no-repeat;
+    background: url(../img/congress-gov.svg) no-repeat;
 }
 .footer-crowd-links-aside .links-intersites > li.intersites-link-copyright > a {
     width: 175px;
     height: 30px;
     background-size: 175px 30px;
-    background: url(copyright-gov.svg) no-repeat;
+    background: url(../img/copyright-gov.svg) no-repeat;
 }
 @media (max-width: 768px) {
     .footer-crowd-links-aside .links-intersites {
@@ -1272,7 +1272,7 @@ a .footer-crowd-social > h2 {
     width: 24px;
     height: 24px;
     vertical-align: text-top;
-    background-image: url(img/social-icons-sprite.png);
+    background-image: url(../img/social-icons-sprite.png);
     background-position: -200px 0;
     background-repeat: no-repeat;
 }
