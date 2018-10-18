@@ -1130,15 +1130,6 @@ div.related-links {
     margin: 0 0 0.75rem;
 }
 
-.footer-crowd-social > h2 small,
-.footer-crowd-social > h2 .small {
-    font-family: 'Open Sans', Arial, Helvetica, sans-serif;
-    font-size: 1rem;
-    font-weight: normal;
-    line-height: 1;
-    color: #333;
-}
-
 .footer-crowd-social .links-social {
     margin: 0 -6.5px;
     display: inline-block;
