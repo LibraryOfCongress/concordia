@@ -49,6 +49,7 @@ Resources:
   ConcordiaServiceSecretAccessPolicy:
       Type: AWS::IAM::Policy
       Properties:
+        PolicyName: !Sub ReadOnlyAccessToConcordiaSecrets-${EnvironmentName}
         Roles:
           - !Ref 'ConcordiaTaskRole'
           - !Ref 'ConcordiaEC2Role'
