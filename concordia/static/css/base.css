@@ -1094,11 +1094,7 @@ div.related-links {
     border-top: 1px solid #999;
     padding: 22px 0;
 }
-@media print {
-    .footer-crowd {
-        display: none;
-    }
-}
+
 .footer-crowd-row {
     max-width: 1200px;
     padding: 0 1rem;
@@ -1135,6 +1131,7 @@ div.related-links {
     margin: 0 0 0.75rem;
     font-weight: normal;
 }
+
 .footer-crowd-social > h2 small,
 .footer-crowd-social > h2 .small {
     font-family: 'Open Sans', Arial, Helvetica, sans-serif;
@@ -1143,6 +1140,7 @@ div.related-links {
     line-height: 1;
     color: #333;
 }
+
 .footer-crowd-social > h2 small.block,
 .footer-crowd-social > h2 .small.block {
     display: block;
