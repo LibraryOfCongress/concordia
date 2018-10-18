@@ -51,9 +51,7 @@ logger = getLogger(__name__)
 ASSETS_PER_PAGE = 36
 PROJECTS_PER_PAGE = 36
 ITEMS_PER_PAGE = 36
-URL_REGEX = (
-    "http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+"
-)
+URL_REGEX = "http[s]?://"
 
 
 def get_anonymous_user():
@@ -405,7 +403,7 @@ def save_transcription(request, *, asset_pk):
     # Check whether this transcription text contains any URLs
     # If so, ask the user to correct the transcription by removing the URLs
     transcription_text = request.POST["text"]
-    urls = re.findall(URL_REGEX, transcription_text)
+    urls = re.search(URL_REGEX, transcription_text)
     if urls:
         return JsonResponse(
             {

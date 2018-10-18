@@ -15,7 +15,7 @@ function unlockControls($container) {
 function buildErrorMessage(jqXHR, textStatus, errorThrown) {
     /* Construct a nice error message using optional JSON response context */
     var errMessage;
-    if (jqXHR && jqXHR.responseJSON && jqXHR.responseJSON.error) {
+    if (jqXHR.responseJSON && jqXHR.responseJSON.error) {
         errMessage = jqXHR.responseJSON.error;
     } else {
         errMessage = textStatus + ' ' + errorThrown;
@@ -178,7 +178,11 @@ $transcriptionEditor
         displayMessage(
             'error',
             'Unable to save your work: ' +
-                buildErrorMessage(info, info.textStatus, info.errorThrown),
+                buildErrorMessage(
+                    info.jqXHR,
+                    info.textStatus,
+                    info.errorThrown
+                ),
             'transcription-save-result'
         );
         $transcriptionEditor.trigger('update-ui-state');
