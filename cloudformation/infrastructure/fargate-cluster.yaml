@@ -138,12 +138,12 @@ Resources:
   ConcordiaExternalTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      HealthCheckIntervalSeconds: 10
+      HealthCheckIntervalSeconds: 30
       HealthCheckPath: /healthz/
       HealthCheckProtocol: HTTP
       HealthCheckTimeoutSeconds: 5
       HealthyThresholdCount: 2
-      UnhealthyThresholdCount: 8
+      UnhealthyThresholdCount: 10
       TargetType: ip
       Port: 80
       Protocol: HTTP
