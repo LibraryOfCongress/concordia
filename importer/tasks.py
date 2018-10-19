@@ -22,6 +22,24 @@ from importer.models import ImportItem, ImportItemAsset, ImportJob
 
 logger = getLogger(__name__)
 
+#: P1 has generic search / item pages and a number of top-level format-specific
+#: “context portals” which expose the same JSON interface.
+#: jq 'to_entries[] | select(.value.type == "context-portal") | .key' < manifest.json
+ACCEPTED_P1_URL_PREFIXES = [
+    "collections",
+    "search",
+    "item",
+    "audio",
+    "books",
+    "film-and-videos",
+    "manuscripts",
+    "maps",
+    "newspapers",
+    "notated-music",
+    "photos",
+    "websites",
+]
+
 
 def update_task_status(f):
     """
@@ -202,7 +220,9 @@ def import_items_into_project_from_url(requesting_user, project, import_url):
 
     parsed_url = urlparse(import_url)
 
-    m = re.match(r"^/(collections|search|item)/", parsed_url.path)
+    m = re.match(
+        r"^/(%s)/" % "|".join(map(re.escape, ACCEPTED_P1_URL_PREFIXES)), parsed_url.path
+    )
     if not m:
         raise ValueError(
             f"{import_url} doesn't match one of the known importable patterns"

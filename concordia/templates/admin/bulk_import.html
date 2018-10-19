@@ -4,6 +4,23 @@
     {% comment %} This is displayed elswhere {% endcomment %}
 {% endblock messages %}
 
+{% block extrahead %}
+    {{ block.super }}
+    <style>
+        .message-error, .message-warning {
+            font-weight: bold;
+        }
+
+        .message-error {
+            color: #dc3545;
+        }
+
+        .message-warning {
+            color: #ffc107;
+        }
+    </style>
+{% endblock %}
+
 {% block content %}
     <div id="content-main">
         {% if import_jobs %}
@@ -62,7 +79,7 @@
             <h4>Messages</h4>
             <ul>
                 {% for message in messages %}
-                    <li>{{ message }}</li>
+                    <li class="message {% if message.level >= DEFAULT_MESSAGE_LEVELS.error %}message-error{% elif message.level >= DEFAULT_MESSAGE_LEVELS.warning %}message-warning{% endif %}">{{ message }}</li>
                 {% endfor %}
             </ul>
         {% endif %}

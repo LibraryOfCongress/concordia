@@ -550,3 +550,76 @@ class TransactionalViewTests(TransactionTestCase):
         data = self.assertValidJSON(resp, expected_status=400)
         self.assertIn("error", data)
         self.assertEqual("This transcription has already been reviewed", data["error"])
+
+    def test_anonymous_tag_submission(self):
+        """Confirm that anonymous users cannot submit tags"""
+        asset = create_asset()
+        submit_url = reverse("submit-tags", kwargs={"asset_pk": asset.pk})
+
+        resp = self.client.post(submit_url, data={"tags": ["foo", "bar"]})
+        self.assertRedirects(resp, "%s?next=%s" % (reverse("login"), submit_url))
+
+    def test_tag_submission(self):
+        asset = create_asset()
+
+        self.login_user()
+
+        test_tags = ["foo", "bar"]
+
+        resp = self.client.post(
+            reverse("submit-tags", kwargs={"asset_pk": asset.pk}),
+            data={"tags": test_tags},
+        )
+        data = self.assertValidJSON(resp, expected_status=200)
+        self.assertIn("user_tags", data)
+        self.assertIn("all_tags", data)
+
+        self.assertEqual(sorted(test_tags), data["user_tags"])
+        self.assertEqual(sorted(test_tags), data["all_tags"])
+
+    def test_tag_submission_with_multiple_users(self):
+        asset = create_asset()
+        self.login_user()
+
+        test_tags = ["foo", "bar"]
+
+        resp = self.client.post(
+            reverse("submit-tags", kwargs={"asset_pk": asset.pk}),
+            data={"tags": test_tags},
+        )
+        data = self.assertValidJSON(resp, expected_status=200)
+        self.assertIn("user_tags", data)
+        self.assertIn("all_tags", data)
+
+        self.assertEqual(sorted(test_tags), data["user_tags"])
+        self.assertEqual(sorted(test_tags), data["all_tags"])
+
+    def test_duplicate_tag_submission(self):
+        """Confirm that tag values cannot be duplicated"""
+        asset = create_asset()
+
+        self.login_user()
+
+        resp = self.client.post(
+            reverse("submit-tags", kwargs={"asset_pk": asset.pk}),
+            data={"tags": ["foo", "bar", "baaz"]},
+        )
+        data = self.assertValidJSON(resp, expected_status=200)
+
+        second_user = User.objects.create_user(
+            username="second_tester", email="second_tester@example.com"
+        )
+        second_user.set_password("secret")
+        second_user.save()
+        self.client.login(username="second_tester", password="secret")
+
+        resp = self.client.post(
+            reverse("submit-tags", kwargs={"asset_pk": asset.pk}),
+            data={"tags": ["foo", "bar", "quux"]},
+        )
+        data = self.assertValidJSON(resp, expected_status=200)
+
+        # Even though the user submitted (through some horrible bug) duplicate
+        # values, they should not be stored:
+        self.assertEqual(["bar", "foo", "quux"], data["user_tags"])
+        self.assertEqual(["baaz", "bar", "foo", "quux"], data["all_tags"])

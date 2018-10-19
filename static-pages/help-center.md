@@ -57,7 +57,7 @@ title: Help Center
        The application is an online transcription platform where anyone with an internet connection can transcribe documents from the Library of Congress’ digitized collections. We welcome anyone interested in making non-machine readable resources fully word searchable to contribute.
       </p>
       <p>
-      Crowdsourcing invites members of the public, non-specialists and specialists alike, to help make data more usable and discoverable. Crowdsourcing at the Library of Congress invites volunteers to explore collections while gaining new skills, for example, learning to read older forms of handwriting such as cursive.
+      Crowdsourcing invites members of the public, non-specialists and specialists alike, to help make data more usable and discoverable. Crowdsourcing at the Library of Congress invites unpaid volunteers to explore collections while gaining new skills, for example, learning to read older forms of handwriting such as cursive.
       </p>
       </div>
     </div>

@@ -78,7 +78,6 @@ INSTALLED_APPS = [
     "raven.contrib.django.raven_compat",
     "maintenance_mode",
     "bootstrap4",
-    "rest_framework",
     "concordia.apps.ConcordiaAppConfig",
     "exporter",
     "importer",
@@ -215,16 +214,6 @@ LOGGING = {
 
 ACCOUNT_ACTIVATION_DAYS = 7
 
-REST_FRAMEWORK = {
-    "PAGE_SIZE": 10,
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
-    "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework.authentication.BasicAuthentication",
-        "rest_framework.authentication.SessionAuthentication",
-    ),
-}
-
-CONCORDIA = {"netloc": "http://0:80"}
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(SITE_ROOT_DIR, "media")
 
