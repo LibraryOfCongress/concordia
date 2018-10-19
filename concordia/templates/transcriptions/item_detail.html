@@ -51,9 +51,12 @@
     </div>
     <div class="row">
         <form method="get" class="w-50 mx-auto">
-            <h6>Filter Assets:</h6>
             <div class="form-group row">
+            
                 <div class="input-group input-group-sm">
+              <div class="input-group-prepend">
+    <span class="input-group-text" id="inputGroup-sizing-sm">Filter:</span>
+          </div>
                     {{ filter_form.transcription_status }}
                     <div class="input-group-append">
                         <button type="submit" class="btn btn-sm btn-outline-primary">Go</button>
