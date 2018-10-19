@@ -330,23 +330,32 @@ class ItemDetailView(ListView):
     def get_context_data(self, **kwargs):
         res = super().get_context_data(**kwargs)
 
+        asset_count = self.item.asset_set.published().count()
+
         # We'll collect some extra stats for the progress bar. We can reuse the values
         # which are calculated for the transcription status filters but that displays
         # items as open for edit whether or not anyone has started transcribing them.
         # For the progress bar, we'll only count the records which have at least one
-        # transcription, no matter how far along it is:
+        # transcription, no matter how far along it is, so we need to make a separate
+        # query to get the number of transcriptions along with unique users:
 
-        contributors = Transcription.objects.filter(asset__item=self.item).aggregate(
-            Count("user", distinct=True), Count("asset", distinct=True)
+        trans_counts = Transcription.objects.filter(asset__item=self.item).aggregate(
+            user=Count("user", distinct=True), asset=Count("asset", distinct=True)
         )
 
-        asset_count = len(self.object_list)
         if asset_count:
-            in_progress_percent = round(
-                100 * (contributors["asset__count"] / asset_count)
+            edit_percent = round(100 * trans_counts["asset"] / asset_count)
+            status_counts = self.transcription_status_counts
+            submitted_percent = round(
+                100 * status_counts.get("submitted", 0) / asset_count
+            )
+            completed_percent = round(
+                100 * status_counts.get("completed", 0) / asset_count
             )
         else:
-            in_progress_percent = 0
+            edit_percent = 0
+            submitted_percent = 0
+            completed_percent = 0
 
         res.update(
             {
@@ -355,8 +364,11 @@ class ItemDetailView(ListView):
                 "item": self.item,
                 "filter_form": self.filter_form,
                 "transcription_status_counts": self.transcription_status_counts,
-                "contributor_count": contributors["user__count"],
-                "in_progress_percent": in_progress_percent,
+                "contributor_count": trans_counts["user"],
+                "total_asset_count": asset_count,
+                "edit_percent": edit_percent,
+                "submitted_percent": submitted_percent,
+                "completed_percent": completed_percent,
             }
         )
         return res
