@@ -721,7 +721,7 @@ class ReportCampaignView(TemplateView):
     Report about campaign resources and status
     """
 
-    template_name = "transcriptions/report.html"
+    template_name = "transcriptions/campaign_report.html"
 
     def get(self, request, campaign_slug):
         campaign = get_object_or_404(Campaign.objects.published(), slug=campaign_slug)

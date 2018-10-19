@@ -237,6 +237,32 @@ class ConcordiaViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, template_name="transcriptions/project.html")
 
+    def test_campaign_report(self):
+        """
+        Test campaign reporting
+        """
+
+        item = create_item()
+        # We'll create 10 assets and transcriptions for some of them so we can
+        # confirm that the math is working correctly:
+        for i in range(1, 11):
+            create_asset(item=item, sequence=i, slug=f"test-{i}")
+
+        response = self.client.get(
+            reverse(
+                "transcriptions:campaign-report",
+                kwargs={"campaign_slug": item.project.campaign.slug},
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "transcriptions/campaign_report.html")
+
+        ctx = response.context
+
+        self.assertEqual(ctx["title"], item.project.campaign.title)
+        self.assertEqual(ctx["total_asset_count"], 10)
+
 
 class TransactionalViewTests(TransactionTestCase):
     def login_user(self):
