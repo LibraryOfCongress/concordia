@@ -169,6 +169,7 @@ def admin_bulk_import_view(request):
                         messages.ERROR,
                         f"Validation error occurred creating campaign {campaign_title}",
                     )
+                    continue
 
                 if created:
                     messages.add_message(
@@ -198,6 +199,7 @@ def admin_bulk_import_view(request):
                         messages.ERROR,
                         f"Validation error occurred creating project {project_title}",
                     )
+                    continue
 
                 if created:
                     messages.add_message(
