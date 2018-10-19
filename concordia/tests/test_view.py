@@ -263,6 +263,15 @@ class ConcordiaViewTests(TestCase):
         self.assertEqual(ctx["title"], item.project.campaign.title)
         self.assertEqual(ctx["total_asset_count"], 10)
 
+    def test_static_page(self):
+        resp = self.client.get(reverse("help-center"))
+        self.assertEqual(200, resp.status_code)
+        self.assertEqual("Help Center", resp.context["title"])
+        self.assertEqual(
+            [(reverse("help-center"), "Help Center")], resp.context["breadcrumbs"]
+        )
+        self.assertIn("body", resp.context)
+
 
 class TransactionalViewTests(TransactionTestCase):
     def login_user(self):
