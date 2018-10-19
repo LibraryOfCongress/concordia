@@ -25,12 +25,9 @@
             <p class="m-3 hero-text">{{ item.description }}</p>
         </div>
         <div class="col-md-4">
-            {% widthratio in_progress_percent paginator.count 100 as edit_percent %}
-            {% widthratio transcription_status_counts.submitted|default:0 paginator.count 100 as submitted_percent %}
-            {% widthratio transcription_status_counts.completed|default:0 paginator.count 100 as completed_percent %}
             <div class="row text-center font-weight-light">
                 <div class="col-md-4">
-                    <small>In progress: {{ in_progress_percent }}%</small>
+                    <small>In progress: {{ edit_percent }}%</small>
                 </div>
                 <div class="col-md-4">
                     <small>Complete: {{ completed_percent }}%</small>
