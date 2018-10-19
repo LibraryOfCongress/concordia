@@ -13,7 +13,7 @@ title: Help Center
     </div>
 </div>
 
-## Guides
+# Guides
 
 <div class="help-center-cards text-white row my-default">
   <div class="col-sm-4">
@@ -39,7 +39,7 @@ title: Help Center
   </div>
 </div>
 
-## FAQs
+# FAQs
 
 <div class="accordion" id="faqAccordion">
   <div class="card">
