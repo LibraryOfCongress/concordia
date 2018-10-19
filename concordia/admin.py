@@ -42,9 +42,7 @@ def publish_item_action(modeladmin, request, queryset):
         published=True
     )
 
-    messages.add_message(
-        request, messages.INFO, f"Published {count} items and {asset_count} assets"
-    )
+    messages.info(request, f"Published {count} items and {asset_count} assets")
 
 
 publish_item_action.short_description = "Publish selected items and assets"
@@ -60,9 +58,7 @@ def unpublish_item_action(modeladmin, request, queryset):
         published=False
     )
 
-    messages.add_message(
-        request, messages.INFO, f"Unpublished {count} items and {asset_count} assets"
-    )
+    messages.info(request, f"Unpublished {count} items and {asset_count} assets")
 
 
 unpublish_item_action.short_description = "Unpublish selected items and assets"
@@ -74,7 +70,7 @@ def publish_action(modeladmin, request, queryset):
     """
 
     count = queryset.filter(published=False).update(published=True)
-    messages.add_message(request, messages.INFO, f"Published {count} objects")
+    messages.info(request, f"Published {count} objects")
 
 
 publish_action.short_description = "Publish selected"
@@ -86,7 +82,7 @@ def unpublish_action(modeladmin, request, queryset):
     """
 
     count = queryset.filter(published=True).update(published=False)
-    messages.add_message(request, messages.INFO, f"Unpublished {count} objects")
+    messages.info(request, f"Unpublished {count} objects")
 
 
 unpublish_action.short_description = "Unpublish selected"
@@ -129,10 +125,8 @@ def admin_bulk_import_view(request):
             for idx, row in enumerate(rows):
                 missing_fields = [i for i in required_fields if i not in row]
                 if missing_fields:
-                    messages.add_message(
-                        request,
-                        messages.WARNING,
-                        f"Skipping row {idx}: missing fields {missing_fields}",
+                    messages.warning(
+                        request, f"Skipping row {idx}: missing fields {missing_fields}"
                     )
                     continue
 
@@ -149,7 +143,7 @@ def admin_bulk_import_view(request):
                         f"Skipping row {idx}: at least one required field "
                         "(Campaign, Project, Import URLs) is empty"
                     )
-                    messages.add_message(request, messages.WARNING, warning_message)
+                    messages.warning(request, warning_message)
                     continue
 
                 try:
@@ -164,21 +158,17 @@ def admin_bulk_import_view(request):
                         },
                     )
                 except ValidationError as exc:
-                    messages.add_message(
+                    messages.error(
                         request,
-                        messages.ERROR,
                         f"Validation error occurred creating campaign {campaign_title}",
                     )
                     continue
 
                 if created:
-                    messages.add_message(
-                        request, messages.INFO, f"Created new campaign {campaign_title}"
-                    )
+                    messages.info(request, f"Created new campaign {campaign_title}")
                 else:
-                    messages.add_message(
+                    messages.info(
                         request,
-                        messages.INFO,
                         f"Reusing campaign {campaign_title} without modification",
                     )
 
@@ -194,31 +184,23 @@ def admin_bulk_import_view(request):
                         },
                     )
                 except ValidationError as exc:
-                    messages.add_message(
-                        request,
-                        messages.ERROR,
-                        f"Validation error occurred creating project {project_title}",
+                    messages.error(
+                        f"Validation error occurred creating project {project_title}"
                     )
                     continue
 
                 if created:
-                    messages.add_message(
-                        request, messages.INFO, f"Created new project {project_title}"
-                    )
+                    messages.info(request, f"Created new project {project_title}")
                 else:
-                    messages.add_message(
-                        request,
-                        messages.INFO,
-                        f"Reusing project {project_title} without modification",
+                    messages.info(
+                        request, f"Reusing project {project_title} without modification"
                     )
 
                 potential_urls = filter(None, re.split(r"[\s]+", import_url_blob))
                 for url in potential_urls:
                     if not url.startswith("http"):
-                        messages.add_message(
-                            request,
-                            messages.WARNING,
-                            f"Skipping unrecognized URL value: {url}",
+                        messages.warning(
+                            request, f"Skipping unrecognized URL value: {url}"
                         )
                         continue
 
@@ -229,15 +211,13 @@ def admin_bulk_import_view(request):
                             )
                         )
 
-                        messages.add_message(
+                        messages.info(
                             request,
-                            messages.INFO,
                             f"Queued {campaign_title} {project_title} import for {url}",
                         )
                     except Exception as exc:
-                        messages.add_message(
+                        messages.error(
                             request,
-                            messages.ERROR,
                             f"Unhandled error attempting to import {url}: {exc}",
                         )
     else:
