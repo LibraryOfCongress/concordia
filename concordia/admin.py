@@ -143,7 +143,7 @@ def admin_bulk_import_view(request):
                 if not all((campaign_title, project_title, import_url_blob)):
                     warning_message = (
                         f"Skipping row {idx}: at least one required field "
-                        "(Campaign, Project, Import URLs) is empty",
+                        "(Campaign, Project, Import URLs) is empty"
                     )
                     messages.add_message(request, messages.WARNING, warning_message)
                     continue
