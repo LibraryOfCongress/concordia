@@ -91,11 +91,6 @@ urlpatterns = [
         name="review-transcription",
     ),
     path(
-        "assets/<int:asset_pk>/tags/",
-        views_ws.UserAssetTagsGet().as_view(),
-        name="get-tags",
-    ),
-    path(
         "assets/<int:asset_pk>/tags/submit/",
         views_ws.TagCreate.as_view(),
         name="submit-tags",

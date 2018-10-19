@@ -29,40 +29,6 @@ class ConcordiaAPIAuth(SessionAuthentication):
 
 
 @method_decorator(never_cache, name="dispatch")
-class UserAssetTagsGet(generics.ListAPIView):
-    """
-    Get all tags for an asset
-    """
-
-    model = UserAssetTagCollection
-    authentication_classes = (ConcordiaAPIAuth,)
-    serializer_class = TagSerializer
-    queryset = UserAssetTagCollection.objects.all()
-    lookup_field = "asset"
-
-    def get_queryset(self):
-        db_tags = UserAssetTagCollection.objects.filter(
-            asset__pk=self.kwargs["asset_pk"]
-        )
-
-        tags = all_tags = None
-        if db_tags:
-            for tags_in_db in db_tags:
-                if tags is None:
-                    tags = tags_in_db.tags.all()
-                    all_tags = tags
-                else:
-                    all_tags = (
-                        tags | tags_in_db.tags.all()
-                    ).distinct()  # merge the querysets
-
-        if all_tags:
-            return all_tags
-        else:
-            return UserAssetTagCollection.objects.filter(asset__id=-1)
-
-
-@method_decorator(never_cache, name="dispatch")
 class TagCreate(generics.ListCreateAPIView):
     """
     POST: create or retrieve a tag
@@ -113,6 +79,7 @@ class TagCreate(generics.ListCreateAPIView):
                 user_tags.tags.remove(tag)
 
         all_tags_qs = Tag.objects.filter(userassettagcollection__asset__pk=asset_pk)
-        all_tags = all_tags_qs.values_list("value", flat=True)
+        all_tags = all_tags_qs.order_by("value")
+        all_tags = all_tags.values_list("value", flat=True)
 
         return Response({"user_tags": tags, "all_tags": all_tags})
