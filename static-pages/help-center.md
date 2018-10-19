@@ -312,4 +312,4 @@ In addition to the Library of Congress’ own history of varied participatory pr
   </div>
 </div>
 
-_Concordia and crowd.loc.gov are supported by the National Digital Trust. The project results from collaboration between numerous divisions at the Library, including library services, curatorial and content specialists, digital preservation and web development specialists, digital innovation and strategy specialists._
+_Concordia and crowd.loc.gov are supported by the National Digital Library Trust Fund. They are the result of collaboration between numerous divisions, expertise, and teams at the Library of Congress._
