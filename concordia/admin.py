@@ -141,6 +141,10 @@ def admin_bulk_import_view(request):
                 import_url_blob = row["Import URLs"]
 
                 if not all((campaign_title, project_title, import_url_blob)):
+                    if not any(row.values()):
+                        # No messages for completely blank rows
+                        continue
+
                     warning_message = (
                         f"Skipping row {idx}: at least one required field "
                         "(Campaign, Project, Import URLs) is empty"
