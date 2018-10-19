@@ -6,7 +6,7 @@ title: Help Center
         <img class="help-center-overlay" src="/static/img/help-center.jpg" alt="Placeholder Help Image">
           <div class="card-body pxy-default card-img-overlay">
             <h2 class="card-title text-white">Welcome to Make Your Mark!</h2>
-            <h5 class="card-text"> Here you will find a guide to help you get started. </h5>
+            <h5 class="card-text">Here you will find a guide to help you get started.</h5>
             <a href="welcome-guide/" class="btn btn-primary">Learn more &raquo;</a>
           </div>
         </div>

@@ -142,7 +142,7 @@
                     {% else %}
                         <p class="help-text primary-text">
                             Only registered users can tag.
-                            <a class="primary-text" href="/account/register/">Register</a> or <a class="primary-text" href="/account/login">Login</a>
+                            <a class="primary-text" href="{% url 'registration_register' %}">Register</a> or <a class="primary-text" href="{% url 'login' %}?next={{ request.path|urlencode }}">Login</a>
                         </p>
                     {% endif %}
 
@@ -184,7 +184,7 @@
             Quick Tips
         </button>
 
-        <a class="btn btn-secondary" href="{% url 'help-center' %}">
+        <a class="btn btn-secondary" href="{% url 'questions' %}">
             Questions?
         </a>
 
@@ -192,9 +192,16 @@
             <button type="button" class="close pull-right" aria-label="Close" data-toggle="collapse" data-target="#instruction-window">
                 <span aria-hidden="true">&times;</span>
             </button>
-            <p>
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-            </p>
+            <div>
+                <ul>
+                    <li>Type what you see. Preserve original spelling, punctuation, and line breaks.</li>
+                    <li>Use brackets [ ] around deleted, illegible or partially legible text.</li>
+                    <li>Transcribe any words or letters you can't identify as ?.</li>
+                    <li>Use square brackets and asterisks around text from margins [ * * ].</li>
+                    <li>Include insertions where you would read them in the text.</li>
+                </ul>
+                Find more detailed instructions in the <a href="{% url 'help-center' %}">Help Center</a>
+            </div>
         </div>
     </div>
     <div id="asset-reservation-failure-modal" class="modal" tabindex="-1" role="dialog">
