@@ -8,7 +8,7 @@ from django.views.defaults import page_not_found, permission_denied, server_erro
 from concordia.admin import admin_bulk_import_view
 from exporter import views as exporter_views
 
-from . import views, views_ws
+from . import views
 
 for key, value in getattr(settings, "ADMIN_SITE", {}).items():
     setattr(admin.site, key, value)
@@ -90,16 +90,7 @@ urlpatterns = [
         views.review_transcription,
         name="review-transcription",
     ),
-    path(
-        "assets/<int:asset_pk>/tags/",
-        views_ws.UserAssetTagsGet().as_view(),
-        name="get-tags",
-    ),
-    path(
-        "assets/<int:asset_pk>/tags/submit/",
-        views_ws.TagCreate.as_view(),
-        name="submit-tags",
-    ),
+    path("assets/<int:asset_pk>/tags/submit/", views.submit_tags, name="submit-tags"),
     path("account/ajax-status/", views.ajax_session_status, name="ajax-session-status"),
     path(
         "account/register/",

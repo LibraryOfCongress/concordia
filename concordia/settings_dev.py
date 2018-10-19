@@ -19,8 +19,6 @@ ALLOWED_HOSTS = ["127.0.0.1", "0.0.0.0", "*"]
 CELERY_BROKER_URL = "pyamqp://guest@localhost"
 CELERY_RESULT_BACKEND = "rpc://"
 
-CONCORDIA = {"netloc": "http://0.0.0.0:8000"}
-
 S3_BUCKET_NAME = "concordia-staticpages"
 
 DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
