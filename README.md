@@ -8,7 +8,7 @@ The application asks volunteers to transcribe and tag digitized images of manusc
 
 Concordia leverages the [LOC’s API](https://libraryofcongress.github.io/data-exploration/) to pull materials from the Library's catalog. In future developments, completed transcriptions will be exported as a single document, in bulk by item, project or campaign, or as BagIt bags. 
 
-_Concordia and crowd.loc.gov are supported by the National Digital Trust._
+_Concordia and crowd.loc.gov are supported by the National Digital Library Trust Fund._
 
 ## Want to help?
 
