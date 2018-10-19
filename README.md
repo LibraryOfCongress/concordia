@@ -2,7 +2,7 @@
 
 # Welcome to Concordia 
 
-Concordia is a platform developed by the Library of Congress (LOC) for crowdsourcing transcription and tagging of text in digitized images. The first iteration of Concordia was created by the LOC on crowd.loc.gov, launching in the autumn of 2018. 
+Concordia is a platform developed by the Library of Congress (LOC) for crowdsourcing transcription and tagging of text in digitized images. The first iteration of Concordia was launched as crowd.loc.gov in the autumn of 2018. 
 
 The application asks volunteers to transcribe and tag digitized images of manuscripts and typed materials from the Library’s collections that cannot be translated well by optical character recognition (OCR). All transcriptions are made by volunteers and reviewed by volunteers. The completed transcriptions will be returned to back to [loc.gov](https://www.loc.gov/) to improve search, readability, and access to handwritten and typed documents.
 
