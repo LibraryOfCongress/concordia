@@ -277,6 +277,26 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
         )
         self.assertIn("body", resp.context)
 
+    def test_ajax_session_status_anon(self):
+        resp = self.client.get(reverse("ajax-session-status"))
+        data = self.assertValidJSON(resp)
+        self.assertEqual(data, {})
+
+    def test_ajax_session_status(self):
+        self.login_user()
+
+        resp = self.client.get(reverse("ajax-session-status"))
+        data = self.assertValidJSON(resp)
+
+        self.assertIn("links", data)
+        self.assertIn("username", data)
+        self.assertIn("messages", data)
+
+        self.assertEqual(data["username"], self.user.username)
+
+        # The inclusion of messages means that this view cannot currently be cached:
+        self.assertIn("no-cache", resp["Cache-Control"])
+
 
 class TransactionalViewTests(JSONAssertMixin, TransactionTestCase):
     def login_user(self):
