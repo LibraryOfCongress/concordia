@@ -2,13 +2,13 @@
 
 # Welcome to Concordia 
 
-Concordia is a platform developed by the Library of Congress (LOC) for crowdsourcing transcription and tagging of text in digitized images. The first iteration of Concordia was created by the LOC for its Make Your Mark program, launching in the autumn of 2018. 
+Concordia is a platform developed by the Library of Congress (LOC) for crowdsourcing transcription and tagging of text in digitized images. The first iteration of Concordia was created by the LOC on crowd.loc.gov, launching in the autumn of 2018. 
 
-Make Your Mark asks volunteers to transcribe and tag digitized images of manuscripts and typed materials from the Library’s collections that cannot be translated well by optical character recognition (OCR). All transcriptions are made by volunteers and reviewed by volunteers. The completed transcriptions will be returned to back to [loc.gov](https://www.loc.gov/) to improve search, readability, and access to handwritten and typed documents.
+The application asks volunteers to transcribe and tag digitized images of manuscripts and typed materials from the Library’s collections that cannot be translated well by optical character recognition (OCR). All transcriptions are made by volunteers and reviewed by volunteers. The completed transcriptions will be returned to back to [loc.gov](https://www.loc.gov/) to improve search, readability, and access to handwritten and typed documents.
 
 Concordia leverages the [LOC’s API](https://libraryofcongress.github.io/data-exploration/) to pull materials from the Library's catalog. In future developments, completed transcriptions will be exported as a single document, in bulk by item, project or campaign, or as BagIt bags. 
 
-_Concordia and Make Your Mark are supported by the National Digital Trust._
+_Concordia and crowd.loc.gov are supported by the National Digital Trust._
 
 ## Want to help?
 

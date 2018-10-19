@@ -3,20 +3,19 @@
 {% load static %}
 {% load bootstrap4 %}
 
-{% block title %}Make Your Mark Registration{% endblock title %}
+{% block title %}Registration{% endblock title %}
 
 {% block main_content %}
 <div class="container-fluid">
     <div id="registration-form-container" class="row flex-md-row justify-content-center">
         <div class="col-md-6 p-3">
-            <h2 class="mt-0 text-center">Make Your Mark</h2>
-            <h3 class="mb-default text-center">Registration</h3>
+            <h2 class="mb-default text-center">Registration</h2>
             <p>
                 Register for an account to track your work, add tags and review transcriptions. To sign up, please provide a username, email address and a strong password.
                 Once you click register, we will send you an email to confirm your address.
             </p>
             <p>
-                Learn more about why we ask you to register in the <a href="{% url 'about' %}">Make Your Mark FAQ</a>
+                Learn more about why we ask you to register in the <a href="{% url 'about' %}">FAQ</a>
             </p>
             <hr />
             <form method="post" id="registration-form" class="form-register">
