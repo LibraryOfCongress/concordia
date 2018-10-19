@@ -28,15 +28,15 @@
             {% widthratio in_progress_percent paginator.count 100 as edit_percent %}
             {% widthratio transcription_status_counts.submitted|default:0 paginator.count 100 as submitted_percent %}
             {% widthratio transcription_status_counts.completed|default:0 paginator.count 100 as completed_percent %}
-            <div class="row text-center">
+            <div class="row text-center font-weight-light">
                 <div class="col-md-4">
-                    {{ in_progress_percent }}% in progress
+                    <small>In progress: {{ in_progress_percent }}%</small>
                 </div>
                 <div class="col-md-4">
-                    {{ completed_percent }}% complete
+                    <small>Complete: {{ completed_percent }}%</small>
                 </div>
                 <div class="col-md-4">
-                    {{ contributor_count|intcomma }} contributors
+                    <small>Contributors: {{ contributor_count|intcomma }}</small>
                 </div>
             </div>
             <div class="progress" style="height: 2rem">
@@ -51,9 +51,11 @@
     </div>
     <div class="row">
         <form method="get" class="w-50 mx-auto">
-            <h6>Filter Assets:</h6>
             <div class="form-group row">
                 <div class="input-group input-group-sm">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text">Filter:</span>
+                    </div>
                     {{ filter_form.transcription_status }}
                     <div class="input-group-append">
                         <button type="submit" class="btn btn-sm btn-outline-primary">Go</button>
