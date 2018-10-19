@@ -121,16 +121,17 @@ class ConcordiaViewTests(TestCase):
             response, template_name="transcriptions/campaign_detail.html"
         )
 
-    def test_ConcordiaItemView_get(self):
+    def test_empty_item_detail_view(self):
         """
-        Test GET on route /campaigns/<campaign-slug>/<project-slug>/<item-slug>
+        Test item detail display with no assets
         """
-        i = create_item()
+
+        item = create_item()
 
         response = self.client.get(
             reverse(
                 "transcriptions:item-detail",
-                args=(i.project.campaign.slug, i.project.slug, i.item_id),
+                args=(item.project.campaign.slug, item.project.slug, item.item_id),
             )
         )
 
@@ -138,7 +139,59 @@ class ConcordiaViewTests(TestCase):
         self.assertTemplateUsed(
             response, template_name="transcriptions/item_detail.html"
         )
-        self.assertContains(response, i.title)
+        self.assertContains(response, item.title)
+
+        self.assertEqual(0, response.context["edit_percent"])
+        self.assertEqual(0, response.context["submitted_percent"])
+        self.assertEqual(0, response.context["completed_percent"])
+
+    def test_item_detail_view(self):
+        """
+        Test item detail display with assets
+        """
+
+        self.login_user()  # Implicitly create the test account
+        anon = get_anonymous_user()
+
+        item = create_item()
+        # We'll create 10 assets and transcriptions for some of them so we can
+        # confirm that the math is working correctly:
+        for i in range(1, 11):
+            asset = create_asset(item=item, sequence=i, slug=f"test-{i}")
+            if i > 9:
+                t = asset.transcription_set.create(asset=asset, user=anon)
+                t.submitted = now()
+                t.accepted = now()
+                t.reviewed_by = self.user
+            elif i > 7:
+                t = asset.transcription_set.create(asset=asset, user=anon)
+                t.submitted = now()
+            elif i > 4:
+                t = asset.transcription_set.create(asset=asset, user=anon)
+            else:
+                continue
+
+            t.full_clean()
+            t.save()
+
+        response = self.client.get(
+            reverse(
+                "transcriptions:item-detail",
+                args=(item.project.campaign.slug, item.project.slug, item.item_id),
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, template_name="transcriptions/item_detail.html"
+        )
+        self.assertContains(response, item.title)
+
+        # We have 10 total, 6 of which have transcription records and of those
+        # 6, 3 have been submitted and one of those was accepted:
+        self.assertEqual(60, response.context["edit_percent"])
+        self.assertEqual(20, response.context["submitted_percent"])
+        self.assertEqual(10, response.context["completed_percent"])
 
     def test_asset_detail_view(self):
         """
