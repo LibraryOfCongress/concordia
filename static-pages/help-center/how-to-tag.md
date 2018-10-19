@@ -4,7 +4,7 @@ title: How to Tag
   <div class="col-3">
     <div class="nav flex-column help-center">
    <h4>Instructions</h4>
-        <a class="nav-link" href="/help-center/welcome-guide/">Welcome to Make Your Mark</a>
+        <a class="nav-link" href="/help-center/welcome-guide/">Welcome to crowd.loc.gov</a>
   <a class="nav-link" href="/help-center/how-to-transcribe/">How to transcribe</a>
   <a class="nav-link" href="/help-center/how-to-review/">How to review</a>
   <a class="nav-link active" href="/help-center/how-to-tag">How to tag</a>
@@ -23,7 +23,7 @@ Sometimes writers use nicknames or code words. If you know or can correctly iden
 </li>
 <li>  Are you interested in documents mentioning cats? Use the “Tag” button to tag all pages that mention cats. Other examples include “Civil War”, “Cooking”, “Sports”. You can apply whatever tags you like. </li>
 <li>  Keep tags as short as you can and use whole words instead of abbreviations. This will make it easier for other people to understand your tags and to reuse them elsewhere in the collection. </li>
-<li> Tagging is an experimental feature. Tags might one day go back into the Library catalog website, but for now they will only be used as a method to explore items within Make Your Mark.
+<li> Tagging is an experimental feature. Tags might one day go back into the Library catalog website, but for now they will only be used as a method to explore items within crowd.loc.gov.
 </li>
 </ul>
 </div>

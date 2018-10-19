@@ -4,7 +4,7 @@ title: How to transcribe
   <div class="col-3">
     <div class="nav flex-column help-center">
       <h4>Instructions</h4>
-     <a class="nav-link" href="/help-center/welcome-guide/">Welcome to Make Your Mark</a>
+     <a class="nav-link" href="/help-center/welcome-guide/">Welcome to crowd.loc.gov</a>
   <a class="nav-link active" href="/help-center/how-to-transcribe/">How to transcribe</a>
   <a class="nav-link" href="/help-center/how-to-review/">How to review</a>
   <a class="nav-link" href="/help-center/how-to-tag">How to tag</a>
@@ -75,7 +75,7 @@ If you can read crossed out or otherwise deleted text, transcribe the deleted wo
 <h3>Marginalia:</h3>
 
 <p>
-Marginalia is text written in the space around the main block of text. It is usually a comment on the main body text but can also be unrelated. It is different from an insertion, because it cannot be directly inserted into the main text and still make sense when read aloud. Use a pair of square brackets and asterisk (\*)around marginalia text and order it within the transcription where it makes the most sense (or at the end of the transcription if it appears unrelated). Example:
+Marginalia is text written in the space around the main block of text. It is usually a comment on the main body text but can also be unrelated. It is different from an insertion, because it cannot be directly inserted into the main text and still make sense when read aloud. Use a pair of square brackets and asterisk (\*) around marginalia text and order it within the transcription where it makes the most sense (or at the end of the transcription if it appears unrelated). Example:
 </p>
 <ul><li>
    I have always loved coffee ice cream. Last summer I made my own using a recipe from the 1970s. It was the creamiest coffee ice cream I ever ate. No one else in my family likes that flavor. Oh well, more for me! [*Brazil was the largest coffee producing country in the world in 2017*]</li>
@@ -83,7 +83,7 @@ Marginalia is text written in the space around the main block of text. It is usu
 
 <h3>Printed and typed text:</h3>
 <p>
-Some material in Make Your Mark was created on a typewriter or printed. If we have included it here it is because the text is not machine-readable. A computer using Optical Character Recognition (OCR) technology cannot create an accurate word-searchable transcription.
+Some material in crowd.loc.gov was created on a typewriter or printed. If we have included it here it is because the text is not machine-readable. A computer using Optical Character Recognition (OCR) technology cannot create an accurate word-searchable transcription.
 </p>
 
 <h3>When not to transcribe printed text:</h3>
@@ -91,9 +91,9 @@ Some material in Make Your Mark was created on a typewriter or printed. If we ha
 Some calendars and diaries contain many pages of pre-printed almanacs or other text that is probably machine-readable and therefore should not be transcribed as part of this project. However, if you want to transcribe it, feel free. Alternatively, click "Nothing to transcribe".
 </p>
     
-<h3>Tables etc:</h3>
+<h3>Tables, graphics, images:</h3>
 <p>
-Some documents will contain tables. Transcribe these in a way that will make them relatively easy for a reviewer to check over, but don't try to capture the exact layout of the data. The material will go back into the catalog without styling. 
+Some documents will contain tables. Transcribe these in a way that will make them relatively easy for a reviewer to check over, but don't try to capture the exact layout of the data. The material will go back into the catalog without styling. Don't include notes or descriptions of visual features. If you would like to describe images, watermarks, stamps, or any other non-text features, feel free to use the tagging function. Remember, only registered users can add tags.
     </p>
 </div>
 </div>

@@ -1,6 +1,6 @@
-title: Make your Mark - Resources for Educators
+title: Resources for Educators
 
-Make Your Mark provides students of all ages with opportunities to explore unique historical documents from the collections of the Library of Congress.
+crowd.loc.gov provides students of all ages with opportunities to explore unique historical documents from the collections of the Library of Congress.
 
 Deciphering and transcribing these documents can build students’ skills in close reading, examining historical context, and building interpretive consensus.
 
@@ -20,8 +20,8 @@ Deciphering and transcribing these documents can build students’ skills in clo
 
 ## Primary Source Analysis
 
-The documents in Make Your Mark are _primary sources_ — the raw materials of history and culture. Analyzing primary sources like these can give students a powerful sense of the complexity of the past, and can guide them toward higher-order thinking and better critical thinking skills.
+The documents in crowd.loc.gov are _primary sources_ — the raw materials of history and culture. Analyzing primary sources like these can give students a powerful sense of the complexity of the past, and can guide them toward higher-order thinking and better critical thinking skills.
 
-Use the Library’s [primary source analysis tool and teacher’s guide to analyzing manuscripts](http://www.loc.gov/teachers/usingprimarysources/guides.html) to guide your students through an analysis of any of the documents in Make Your Mark.
+Use the Library’s [primary source analysis tool and teacher’s guide to analyzing manuscripts](http://www.loc.gov/teachers/usingprimarysources/guides.html) to guide your students through an analysis of any of the documents in crowd.loc.gov.
 
 **A note about content**: The historical documents in the Library’s collections may include language or topics that aren’t appropriate for your students, or that your students might find especially difficult to engage with. You may want to review documents before assigning them, or to use some of the strategies explored here.
