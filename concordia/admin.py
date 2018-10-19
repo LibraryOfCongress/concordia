@@ -209,15 +209,31 @@ def admin_bulk_import_view(request):
                 potential_urls = filter(None, re.split(r"[\s]+", import_url_blob))
                 for url in potential_urls:
                     if not url.startswith("http"):
+                        messages.add_message(
+                            request,
+                            messages.WARNING,
+                            f"Skipping unrecognized URL value: {url}",
+                        )
                         continue
-                    import_jobs.append(
-                        import_items_into_project_from_url(request.user, project, url)
-                    )
-                    messages.add_message(
-                        request,
-                        messages.INFO,
-                        f"Queued {campaign_title} {project_title} import for {url}",
-                    )
+
+                    try:
+                        import_jobs.append(
+                            import_items_into_project_from_url(
+                                request.user, project, url
+                            )
+                        )
+
+                        messages.add_message(
+                            request,
+                            messages.INFO,
+                            f"Queued {campaign_title} {project_title} import for {url}",
+                        )
+                    except Exception as exc:
+                        messages.add_message(
+                            request,
+                            messages.ERROR,
+                            f"Unhandled error attempting to import {url}: {exc}",
+                        )
     else:
         form = AdminProjectBulkImportForm()
 
