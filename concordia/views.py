@@ -16,6 +16,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.contrib.messages import get_messages
+from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
 from django.db import connection
@@ -49,6 +50,7 @@ from concordia.models import (
     Transcription,
     TranscriptionStatus,
     UserAssetTagCollection,
+    Tag,
 )
 from concordia.version import get_concordia_version
 
@@ -594,6 +596,55 @@ def review_transcription(request, *, pk):
     transcription.save()
 
     return JsonResponse({"id": transcription.pk}, status=200)
+
+
+@require_POST
+@login_required
+@atomic
+def submit_tags(request, *, asset_pk):
+    asset = get_object_or_404(Asset, pk=asset_pk)
+
+    user_tags, created = UserAssetTagCollection.objects.get_or_create(
+        asset=asset, user=request.user
+    )
+
+    tags = set(request.POST.getlist("tags"))
+    existing_tags = Tag.objects.filter(value__in=tags)
+    new_tag_values = tags.difference(i.value for i in existing_tags)
+    new_tags = [Tag(value=i) for i in new_tag_values]
+    try:
+        for i in new_tags:
+            i.full_clean()
+    except ValidationError as exc:
+        return JsonResponse({"error": exc.messages}, status=400)
+
+    Tag.objects.bulk_create(new_tags)
+
+    # At this point we now have Tag objects for everything in the POSTed
+    # request. We'll add anything which wasn't previously in this user's tag
+    # collection and remove anything which is no longer present.
+
+    all_submitted_tags = list(existing_tags) + new_tags
+
+    existing_user_tags = user_tags.tags.all()
+
+    for tag in all_submitted_tags:
+        if tag not in existing_user_tags:
+            user_tags.tags.add(tag)
+
+    for tag in existing_user_tags:
+        if tag not in all_submitted_tags:
+            user_tags.tags.remove(tag)
+
+    all_tags_qs = Tag.objects.filter(userassettagcollection__asset__pk=asset_pk)
+    all_tags = all_tags_qs.order_by("value")
+
+    final_user_tags = user_tags.tags.order_by("value").values_list("value", flat=True)
+    all_tags = all_tags.values_list("value", flat=True).distinct()
+
+    return JsonResponse(
+        {"user_tags": list(final_user_tags), "all_tags": list(all_tags)}
+    )
 
 
 @method_decorator(never_cache, name="dispatch")
