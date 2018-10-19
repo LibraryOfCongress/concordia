@@ -1,4 +1,3 @@
-import json
 from datetime import datetime, timedelta
 
 from captcha.models import CaptchaStore
@@ -9,10 +8,16 @@ from django.utils.timezone import now
 from concordia.models import AssetTranscriptionReservation, Transcription, User
 from concordia.views import get_anonymous_user
 
-from .utils import create_asset, create_campaign, create_item, create_project
+from .utils import (
+    JSONAssertMixin,
+    create_asset,
+    create_campaign,
+    create_item,
+    create_project,
+)
 
 
-class ConcordiaViewTests(TestCase):
+class ConcordiaViewTests(JSONAssertMixin, TestCase):
     """
     This class contains the unit tests for the view in the concordia app.
     """
@@ -273,7 +278,7 @@ class ConcordiaViewTests(TestCase):
         self.assertIn("body", resp.context)
 
 
-class TransactionalViewTests(TransactionTestCase):
+class TransactionalViewTests(JSONAssertMixin, TransactionTestCase):
     def login_user(self):
         """
         Create a user and log the user in
@@ -421,20 +426,6 @@ class TransactionalViewTests(TransactionTestCase):
         self.assertEqual(1, AssetTranscriptionReservation.objects.count())
         reservation = AssetTranscriptionReservation.objects.get()
         self.assertEqual(reservation.user_id, self.user.pk)
-
-    def assertValidJSON(self, response, expected_status=200):
-        """
-        Assert that a response contains valid JSON and return the decoded JSON
-        """
-        self.assertEqual(response.status_code, expected_status)
-
-        try:
-            data = json.loads(response.content.decode("utf-8"))
-        except json.JSONDecodeError as exc:
-            self.fail(msg=f"response content failed to decode: {exc}")
-            raise
-
-        return data
 
     def test_anonymous_transcription_save_captcha(self):
         asset = create_asset()
