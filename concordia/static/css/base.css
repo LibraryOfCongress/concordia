@@ -177,7 +177,7 @@ a.gray-text {
 
 a.gray-text:hover {
     color: var(--primary-color);
-    text-decoration: underline;
+    text-decoration: none;
 }
 
 a.nav-secondary {
