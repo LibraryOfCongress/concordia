@@ -1,3 +1,4 @@
+import json
 from functools import wraps
 
 from django.template.defaultfilters import slugify
@@ -101,3 +102,19 @@ def create_asset(
     asset.full_clean()
     asset.save()
     return asset
+
+
+class JSONAssertMixin(object):
+    def assertValidJSON(self, response, expected_status=200):
+        """
+        Assert that a response contains valid JSON and return the decoded JSON
+        """
+        self.assertEqual(response.status_code, expected_status)
+
+        try:
+            data = json.loads(response.content.decode("utf-8"))
+        except json.JSONDecodeError as exc:
+            self.fail(msg=f"response content failed to decode: {exc}")
+            raise
+
+        return data

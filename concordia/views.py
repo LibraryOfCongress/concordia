@@ -150,9 +150,14 @@ def static_page(request, base_name=None):
     return render(request, "static-page.html", ctx)
 
 
-@cache_control(private=True, max_age=300)
+@never_cache
 @csrf_exempt
 def ajax_session_status(request):
+    """
+    Returns the user-specific information which would otherwise make many pages
+    uncacheable
+    """
+
     user = request.user
     if user.is_anonymous:
         res = {}
@@ -171,6 +176,9 @@ def ajax_session_status(request):
                 }
             )
 
+        # TODO: we should determine whether there's enough performance impact
+        # that it would be better to make this view cacheable and move messages
+        # into a separate view:
         messages = [
             {"level": MESSAGE_LEVEL_NAMES[i.level], "message": i.message}
             for i in get_messages(request)
@@ -721,7 +729,7 @@ class ReportCampaignView(TemplateView):
     Report about campaign resources and status
     """
 
-    template_name = "transcriptions/report.html"
+    template_name = "transcriptions/campaign_report.html"
 
     def get(self, request, campaign_slug):
         campaign = get_object_or_404(Campaign.objects.published(), slug=campaign_slug)

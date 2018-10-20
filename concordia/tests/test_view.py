@@ -1,4 +1,3 @@
-import json
 from datetime import datetime, timedelta
 
 from captcha.models import CaptchaStore
@@ -9,10 +8,16 @@ from django.utils.timezone import now
 from concordia.models import AssetTranscriptionReservation, Transcription, User
 from concordia.views import get_anonymous_user
 
-from .utils import create_asset, create_campaign, create_item, create_project
+from .utils import (
+    JSONAssertMixin,
+    create_asset,
+    create_campaign,
+    create_item,
+    create_project,
+)
 
 
-class ConcordiaViewTests(TestCase):
+class ConcordiaViewTests(JSONAssertMixin, TestCase):
     """
     This class contains the unit tests for the view in the concordia app.
     """
@@ -121,16 +126,17 @@ class ConcordiaViewTests(TestCase):
             response, template_name="transcriptions/campaign_detail.html"
         )
 
-    def test_ConcordiaItemView_get(self):
+    def test_empty_item_detail_view(self):
         """
-        Test GET on route /campaigns/<campaign-slug>/<project-slug>/<item-slug>
+        Test item detail display with no assets
         """
-        i = create_item()
+
+        item = create_item()
 
         response = self.client.get(
             reverse(
                 "transcriptions:item-detail",
-                args=(i.project.campaign.slug, i.project.slug, i.item_id),
+                args=(item.project.campaign.slug, item.project.slug, item.item_id),
             )
         )
 
@@ -138,7 +144,59 @@ class ConcordiaViewTests(TestCase):
         self.assertTemplateUsed(
             response, template_name="transcriptions/item_detail.html"
         )
-        self.assertContains(response, i.title)
+        self.assertContains(response, item.title)
+
+        self.assertEqual(0, response.context["edit_percent"])
+        self.assertEqual(0, response.context["submitted_percent"])
+        self.assertEqual(0, response.context["completed_percent"])
+
+    def test_item_detail_view(self):
+        """
+        Test item detail display with assets
+        """
+
+        self.login_user()  # Implicitly create the test account
+        anon = get_anonymous_user()
+
+        item = create_item()
+        # We'll create 10 assets and transcriptions for some of them so we can
+        # confirm that the math is working correctly:
+        for i in range(1, 11):
+            asset = create_asset(item=item, sequence=i, slug=f"test-{i}")
+            if i > 9:
+                t = asset.transcription_set.create(asset=asset, user=anon)
+                t.submitted = now()
+                t.accepted = now()
+                t.reviewed_by = self.user
+            elif i > 7:
+                t = asset.transcription_set.create(asset=asset, user=anon)
+                t.submitted = now()
+            elif i > 4:
+                t = asset.transcription_set.create(asset=asset, user=anon)
+            else:
+                continue
+
+            t.full_clean()
+            t.save()
+
+        response = self.client.get(
+            reverse(
+                "transcriptions:item-detail",
+                args=(item.project.campaign.slug, item.project.slug, item.item_id),
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, template_name="transcriptions/item_detail.html"
+        )
+        self.assertContains(response, item.title)
+
+        # We have 10 total, 6 of which have transcription records and of those
+        # 6, 3 have been submitted and one of those was accepted:
+        self.assertEqual(60, response.context["edit_percent"])
+        self.assertEqual(20, response.context["submitted_percent"])
+        self.assertEqual(10, response.context["completed_percent"])
 
     def test_asset_detail_view(self):
         """
@@ -184,8 +242,63 @@ class ConcordiaViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, template_name="transcriptions/project.html")
 
+    def test_campaign_report(self):
+        """
+        Test campaign reporting
+        """
 
-class TransactionalViewTests(TransactionTestCase):
+        item = create_item()
+        # We'll create 10 assets and transcriptions for some of them so we can
+        # confirm that the math is working correctly:
+        for i in range(1, 11):
+            create_asset(item=item, sequence=i, slug=f"test-{i}")
+
+        response = self.client.get(
+            reverse(
+                "transcriptions:campaign-report",
+                kwargs={"campaign_slug": item.project.campaign.slug},
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "transcriptions/campaign_report.html")
+
+        ctx = response.context
+
+        self.assertEqual(ctx["title"], item.project.campaign.title)
+        self.assertEqual(ctx["total_asset_count"], 10)
+
+    def test_static_page(self):
+        resp = self.client.get(reverse("help-center"))
+        self.assertEqual(200, resp.status_code)
+        self.assertEqual("Help Center", resp.context["title"])
+        self.assertEqual(
+            [(reverse("help-center"), "Help Center")], resp.context["breadcrumbs"]
+        )
+        self.assertIn("body", resp.context)
+
+    def test_ajax_session_status_anon(self):
+        resp = self.client.get(reverse("ajax-session-status"))
+        data = self.assertValidJSON(resp)
+        self.assertEqual(data, {})
+
+    def test_ajax_session_status(self):
+        self.login_user()
+
+        resp = self.client.get(reverse("ajax-session-status"))
+        data = self.assertValidJSON(resp)
+
+        self.assertIn("links", data)
+        self.assertIn("username", data)
+        self.assertIn("messages", data)
+
+        self.assertEqual(data["username"], self.user.username)
+
+        # The inclusion of messages means that this view cannot currently be cached:
+        self.assertIn("no-cache", resp["Cache-Control"])
+
+
+class TransactionalViewTests(JSONAssertMixin, TransactionTestCase):
     def login_user(self):
         """
         Create a user and log the user in
@@ -333,20 +446,6 @@ class TransactionalViewTests(TransactionTestCase):
         self.assertEqual(1, AssetTranscriptionReservation.objects.count())
         reservation = AssetTranscriptionReservation.objects.get()
         self.assertEqual(reservation.user_id, self.user.pk)
-
-    def assertValidJSON(self, response, expected_status=200):
-        """
-        Assert that a response contains valid JSON and return the decoded JSON
-        """
-        self.assertEqual(response.status_code, expected_status)
-
-        try:
-            data = json.loads(response.content.decode("utf-8"))
-        except json.JSONDecodeError as exc:
-            self.fail(msg=f"response content failed to decode: {exc}")
-            raise
-
-        return data
 
     def test_anonymous_transcription_save_captcha(self):
         asset = create_asset()
