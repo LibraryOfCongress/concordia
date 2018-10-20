@@ -39,31 +39,34 @@ Parameters:
 
 Mappings:
     ClusterMapping:
+        RedisEndpointMap:
+            dev: 'crowd-dev-redis.hfkoms.0001.use1.cache.amazonaws.com'
+            test: 'crowd-test-redis.hfkoms.0001.use1.cache.amazonaws.com'
+            stage: 'crowd-stage-redis.hfkoms.0001.use1.cache.amazonaws.com'
+        MemcachedEndpointMap:
+            dev: 'crowd-dev-cache.hfkoms.cfg.use1.cache.amazonaws.com'
+            test: 'crowd-test-cache.hfkoms.cfg.use1.cache.amazonaws.com'
+            stage: 'crowd-stage-cache.hfkoms.cfg.use1.cache.amazonaws.com'
         AutoScalingServiceRoleMap:
             dev: 'arn:aws:iam::351149051428:role/crowd-dev-ECS-RQZSJ89GYY4-ECSServiceAutoScalingRol-KJ5SO8E1KIWF'
             test: 'arn:aws:iam::351149051428:role/crowd-test2-ECS-1I34ZK7Z3-ECSServiceAutoScalingRol-U5GIQOZ1RQ8Z'
             stage: 'arn:aws:iam::351149051428:role/crowd-stage-ECS-BU57ZZJOQ-ECSServiceAutoScalingRol-1EK5KYLQQTVVU'
-            prod: 'arn:aws:iam::351149051428:role/crowd-prod-ECS-1501XCPSDM-ECSServiceAutoScalingRol-JUB3TZXYH65T'
         ListenerMap:
             dev: 'arn:aws:elasticloadbalancing:us-east-1:351149051428:listener/app/crowd-dev/8b148c019a172548/3744cde523a62f96'
             test: 'arn:aws:elasticloadbalancing:us-east-1:351149051428:listener/app/crowd-test2/3d7aa00aa454c0c7/1560db455f58ceb2'
             stage: 'arn:aws:elasticloadbalancing:us-east-1:351149051428:listener/app/crowd-stage/53c19bcd76f00cb2/3d0c172d811b4926'
-            prod: 'arn:aws:elasticloadbalancing:us-east-1:351149051428:listener/app/crowd-prod/56f99d946d14d887/0955e71fcb8e2f67'
         SSLListenerMap:
             dev: 'arn:aws:elasticloadbalancing:us-east-1:351149051428:listener/app/crowd-dev/8b148c019a172548/b587f6c4a3dea36b'
             test: 'arn:aws:elasticloadbalancing:us-east-1:351149051428:listener/app/crowd-test2/3d7aa00aa454c0c7/00175835d64e823e'
             stage: 'arn:aws:elasticloadbalancing:us-east-1:351149051428:listener/app/crowd-stage/53c19bcd76f00cb2/8d05b9b29c420614'
-            prod: 'arn:aws:elasticloadbalancing:us-east-1:351149051428:listener/app/crowd-prod/56f99d946d14d887/2d1e0c1c38f8d018'
         ClusterNameMap:
             dev: crowd-dev
             test: crowd-test2
             stage: crowd-stage
-            prod: crowd-prod
         VPCIdMap:
             dev: vpc-017fd2b202f2b6495
             test: vpc-0a9c4c1672305c7d7
             stage: vpc-07bb7696546e2f94d
-            prod: vpc-0577524823c936d60
 
 Resources:
     Service:
@@ -107,6 +110,14 @@ Resources:
                         Value: !Ref AWS::Region
                       - Name: SENTRY_PUBLIC_DSN
                         Value: http://f69265b381a44ceb89e9bd467f86fbdd@devops-sentry-public-lb-718357739.us-east-1.elb.amazonaws.com/3
+                      - Name: REDIS_ADDRESS
+                        Value: !FindInMap [ClusterMapping, RedisEndpointMap, !Ref EnvName]
+                      - Name: REDIS_PORT
+                        Value: 6379
+                      - Name: MEMCACHED_ADDRESS
+                        Value: !FindInMap [ClusterMapping, MemcachedEndpointMap, !Ref EnvName]
+                      - Name: MEMCACHED_PORT
+                        Value: 11211
                   MountPoints:
                       - SourceVolume: images_volume
                         ContainerPath: /concordia_images
@@ -137,6 +148,14 @@ Resources:
                         Value: !Ref AWS::Region
                       - Name: SENTRY_PUBLIC_DSN
                         Value: http://f69265b381a44ceb89e9bd467f86fbdd@devops-sentry-public-lb-718357739.us-east-1.elb.amazonaws.com/3
+                      - Name: REDIS_ADDRESS
+                        Value: !FindInMap [ClusterMapping, RedisEndpointMap, !Ref EnvName]
+                      - Name: REDIS_PORT
+                        Value: 6379
+                      - Name: MEMCACHED_ADDRESS
+                        Value: !FindInMap [ClusterMapping, MemcachedEndpointMap, !Ref EnvName]
+                      - Name: MEMCACHED_PORT
+                        Value: 11211                        
                   MountPoints:
                       - SourceVolume: images_volume
                         ContainerPath: /concordia_images
@@ -178,19 +197,6 @@ Resources:
         Type: AWS::ElasticLoadBalancingV2::ListenerRule
         Properties:
             ListenerArn: !FindInMap [ClusterMapping, ListenerMap, !Ref EnvName]
-            Priority: 1
-            Conditions:
-                - Field: path-pattern
-                  Values:
-                      - /*
-            Actions:
-                - TargetGroupArn: !Ref TargetGroup
-                  Type: forward
-    
-    SSLListenerRule:
-        Type: AWS::ElasticLoadBalancingV2::ListenerRule
-        Properties:
-            ListenerArn: !FindInMap [ClusterMapping, SSLListenerMap, !Ref EnvName]
             Priority: 1
             Conditions:
                 - Field: path-pattern
