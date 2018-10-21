@@ -52,6 +52,12 @@
                         <span class="sr-only">Next Page</span>
                     </a>
                 </div>
+
+                {% if asset.resource_url %}
+                    <div class="px-default">
+                        <a class="btn btn-default btn-sm" target="_blank" href="{{ asset.resource_url }}?sp={{ asset.sequence }}">View on www.loc.gov</a>
+                    </div>
+                {% endif %}
             </div>
 
             <div class="btn-group btn-group-sm ml-2">
