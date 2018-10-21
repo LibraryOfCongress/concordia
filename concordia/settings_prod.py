@@ -12,15 +12,6 @@ LOGGING["handlers"]["celery"]["filename"] = "./logs/concordia-celery.log"
 LOGGING["loggers"]["django"]["level"] = "INFO"
 LOGGING["loggers"]["celery"]["level"] = "INFO"
 
-# Pass the following environment into the stack when creating an AWS service:
-# SENTRY_PUBLIC_DSN=http://f69265b381a44ceb89e9bd467f86fbdd@devops-sentry-public-lb-718357739.us-east-1.elb.amazonaws.com/3
-# CELERY_BROKER_URL=pyamqp://guest@rabbit:5672
-# AWS_DEFAULT_REGION=us-east-1
-# AWS=1
-# ENV_NAME=dev (or test, or stage, or prod)
-# S3_BUCKET_NAME
-# ELASTICSEARCH_ENDPOINT
-
 if os.getenv("AWS"):
     ENV_NAME = os.getenv("ENV_NAME")
 
@@ -31,9 +22,7 @@ if os.getenv("AWS"):
     postgres_secret_json = get_secret("crowd/%s/DB/MasterUserPassword" % ENV_NAME)
     postgres_secret = json.loads(postgres_secret_json)
 
-    DATABASES["default"].update(
-        {"PASSWORD": postgres_secret["password"], "HOST": postgres_secret["host"]}
-    )
+    DATABASES["default"].update({"PASSWORD": postgres_secret["password"]})
 
     sentry_secret_json = get_secret("crowd/SentryDSN")
     sentry_secret = json.loads(sentry_secret_json)

@@ -57,6 +57,19 @@ Parameters:
     MemcachedPort:
         Type: String
         Description: memcached endpoint port
+      
+    CanonicalHostName:
+        Type: String
+        Description: canonical host name of the application, e.g. crowd-test.loc.gov
+    
+    DatabaseEndpoint:
+        Type: String
+        Description: Host name of the Postgres RDS service
+
+    CertificateArn:
+        Type: String
+        Description: ARN of the certificate to use for https Listener
+        Default: arn:aws:iam::${AWS::Account}:server-certificate/${CanonicalHostName}
 
 Resources:
 
@@ -164,11 +177,25 @@ Resources:
   ExternalLoadBalancerListener:
     Properties:
       DefaultActions:
-        - TargetGroupArn: !Ref 'ConcordiaExternalTargetGroup'
+        # FIXME: When AWS CF supports it, redirect to https 
+        # instead of forward to target group
+        - TargetGroupArn: !Ref ConcordiaExternalTargetGroup
           Type: forward
       LoadBalancerArn:  !Ref LoadBalancer
       Port: 80
       Protocol: HTTP
+    Type: AWS::ElasticLoadBalancingV2::Listener
+  
+  SecureExternalLoadBalancerListener:
+    Properties:
+      Certificates:
+        - CertificateArn: !Ref CertificateArn
+      DefaultActions:
+        - TargetGroupArn: !Ref ConcordiaExternalTargetGroup
+          Type: forward
+      LoadBalancerArn:  !Ref LoadBalancer
+      Port: 443
+      Protocol: HTTPS
     Type: AWS::ElasticLoadBalancingV2::Listener
 
   ECSCluster:
@@ -180,8 +207,8 @@ Resources:
     Type: AWS::ECS::TaskDefinition
     Properties:
       Family: !Sub concordia-${EnvName}
-      Cpu: 4096
-      Memory: 16384
+      Cpu: '4096'
+      Memory: '16384'
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE
@@ -221,6 +248,10 @@ Resources:
                 Value: !Ref MemcachedAddress
               - Name: MEMCACHED_PORT
                 Value: !Ref MemcachedPort
+              - Name: POSTGRESQL_HOST
+                Value: !Ref DatabaseEndpoint
+              - Name: HOST_NAME
+                Value: !Ref CanonicalHostName
           MountPoints:
               - SourceVolume: images_volume
                 ContainerPath: /concordia_images
@@ -269,6 +300,10 @@ Resources:
                 Value: !Ref MemcachedAddress
               - Name: MEMCACHED_PORT
                 Value: !Ref MemcachedPort
+              - Name: POSTGRESQL_HOST
+                Value: !Ref DatabaseEndpoint
+              - Name: HOST_NAME
+                Value: !Ref CanonicalHostName
           MountPoints:
               - SourceVolume: images_volume
                 ContainerPath: /concordia_images
