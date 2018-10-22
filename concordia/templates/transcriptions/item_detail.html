@@ -20,13 +20,13 @@
 {% block main_content %}
 <div class="container py-default">
     <div class="row">
-        
+
             <h1 class="m-3">{{ item.title }}</h1>
             <p class="m-3 hero-text">{{ item.description }}</p>
-        
-        
+
+
             <a href="{{ item.item_url }}" class="btn btn-default" target="_blank">View this item on www.loc.gov</a>
-        
+
     </div>
     <div class="row py-default">
         <form method="get" class="col-md-4 mx-auto">
@@ -43,7 +43,7 @@
             </div>
         </form>
         <div class="col-md-4 mx-auto">
-            
+
             <div class="progress" style="height: 2rem">
                 <div title="In Progress" class="progress-bar progress-bar-striped progress-bar-animated bg-warning" role="progressbar" style="width: {{ edit_percent }}%" aria-valuenow="{{ edit_percent }}" aria-valuemin="0" aria-valuemax="100">
                 </div>
@@ -62,7 +62,7 @@
                 <div class="col-md-4">
                     <small>Contributors: {{ contributor_count|intcomma }}</small>
                 </div>
-            </div>            
+            </div>
         </div>
     </div>
     <div class="card-deck justify-content-center">
