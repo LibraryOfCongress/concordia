@@ -133,7 +133,7 @@ title: Help Center
     <div class="card-header" id="headingSix">
       <h5 class="mb-0">
         <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#collapseSix" aria-expanded="false" aria-controls="collapseSix">
-          Do I have to register for an account?
+          Do I have to register for an account to participate or join in the discussion?
         </button>
       </h5>
     </div>
@@ -141,6 +141,8 @@ title: Help Center
       <div class="card-body">
       
 Registering for an account is optional, but gives you access to the tagging and reviewing features of crowd.loc.gov. Go to Register at the top of the homepage to make an account. Create a username, which will be visible to other volunteers and users of the site. Enter your email address in the “Email” field (this will not be visible to or shared with other users), and in the password field create a unique password with a combination of capital and lowercase letters, numbers and special characters such as #, $, !, or %.
+
+You can also register for a separate account on the <a href="https://historyhub.history.gov/community/crowd-loc">History Hub discussion forum</a>, where you can discuss the material you are transcribing or your experience of encountering primary sources. Feel free to raise questions or concerns, especially if you think other volunteers might be able to respond or benefit from your post. History Hub is a moderated forum. The Community Managers will check in regularly to approve comments and engage in discussion, and will try to answer questions about the project or the collections within 3-5 business days. Reference Librarians and curators will also answer some questions.
       </div>
     </div>
   </div>
@@ -215,7 +217,7 @@ The data contributed by volunteers like you can be used in many different ways. 
     </div>
     <div id="collapseEleven" class="collapse" aria-labelledby="headingEleven" data-parent="#faqAccordion">
       <div class="card-body">
-The language and terminology used in the historical materials on this site reflect the context and culture of their creators, and may include words, phrases, and attitudes that would now be deemed insensitive, inappropriate or factually inaccurate, or may not be appropriate for all ages. Views expressed in historical documents do not reflect the views of the Library of Congress. Because the purpose of crowd.loc.gov is to make the Library’s collections searchable, we ask that all original content be transcribed as it appears in the original material. If you find some material offensive or upsetting, please choose something else to transcribe. If you have questions or comments regarding the material you encounter during your participation here, please contact a Community Manager via <a href="mailto:crowd.loc.gov@loc.gov">crowd.loc.gov@loc.gov</a>, the <a href="/contact/">Contact Us</a> or join and start a new conversation on the <a href="https://historyhub.history.gov/community/make-your-mark/">History Hub discussion forum</a>.
+The language and terminology used in the historical materials on this site reflect the context and culture of their creators, and may include words, phrases, and attitudes that would now be deemed insensitive, inappropriate or factually inaccurate, or may not be appropriate for all ages. Views expressed in historical documents do not reflect the views of the Library of Congress. Because the purpose of crowd.loc.gov is to make the Library’s collections searchable, we ask that all original content be transcribed as it appears in the original material. If you find some material offensive or upsetting, please choose something else to transcribe. If you have questions or comments regarding the material you encounter during your participation here, please contact a Community Manager via <a href="mailto:crowd.loc.gov@loc.gov">crowd.loc.gov@loc.gov</a>, the <a href="/contact/">Contact Us</a> or join and start a new conversation on the <a href="https://historyhub.history.gov/community/crowd-loc">History Hub discussion forum</a>.
 
       </div>
     </div>
