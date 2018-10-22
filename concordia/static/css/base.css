@@ -842,6 +842,12 @@ ul.nav-secondary {
     background-color: var(--light-shadow-color);
 }
 
+.concordia-object-card .card-img-container {
+    display: block;
+    height: 100%;
+    width: 100%;
+}
+
 /*
  * Homepage customizations
  */
