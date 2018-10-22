@@ -78,6 +78,7 @@ INSTALLED_APPS = [
     "raven.contrib.django.raven_compat",
     "maintenance_mode",
     "bootstrap4",
+    "bittersweet",
     "concordia.apps.ConcordiaAppConfig",
     "exporter",
     "importer",
