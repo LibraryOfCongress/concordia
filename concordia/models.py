@@ -130,9 +130,7 @@ class Project(MetricsModelMixin("project"), models.Model):
 class Item(MetricsModelMixin("item"), models.Model):
     objects = PublicationManager()
 
-    project = models.ForeignKey(
-        Project, on_delete=models.CASCADE, blank=True, null=True
-    )
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
 
     published = models.BooleanField(default=False, blank=True)
 
