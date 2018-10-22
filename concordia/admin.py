@@ -404,8 +404,6 @@ class ItemAdmin(admin.ModelAdmin):
 
     actions = (publish_item_action, unpublish_item_action)
 
-    readonly_fields = ("project",)
-
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         qs = qs.select_related("project", "project__campaign")
@@ -443,8 +441,6 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         "transcription_status",
     )
     actions = (publish_action, unpublish_action)
-
-    readonly_fields = ("item",)
 
     ordering = ("item__item_id", "sequence")
 
