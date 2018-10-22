@@ -18,6 +18,6 @@ ALLOWED_HOSTS = ["127.0.0.1", "0.0.0.0"]
 
 EMAIL_BACKEND = "django.core.mail.backends.dummy.EmailBackend"
 
-CACHES = {"default": {"BACKEND": "django.core.cache.backends.dummy.DummyCache"}}
+CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"

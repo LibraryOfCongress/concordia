@@ -34,6 +34,7 @@ markdown = ">=3.0.1"
 django-robots = "*"
 setuptools-scm = "*"
 django-bittersweet = "*"
+django-ratelimit = "*"
 
 [dev-packages]
 invoke = "*"
