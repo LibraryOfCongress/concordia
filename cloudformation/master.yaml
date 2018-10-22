@@ -70,7 +70,16 @@ Parameters:
             - "test"
             - "stage"
             - "prod"
-    
+
+    FullEnvironmentName:
+        Type: String
+        Description: Full name of deployment environment
+        AllowedValues:
+            - 'development'
+            - 'test'
+            - 'staging'
+            - 'production'
+
     CanonicalHostName:
         Description: the canonical host name for this environment
         Type: String
@@ -157,6 +166,7 @@ Resources:
                 MemcachedPort: !GetAtt ElastiCache.Outputs.MemcachedPort
                 CanonicalHostName: !Ref CanonicalHostName
                 DatabaseEndpoint: !GetAtt RDS.Outputs.DatabaseHostName
+                FullEnvironmentName: !Ref FullEnvironmentName
 
 Outputs:
 

@@ -42,6 +42,15 @@ Parameters:
             - 'prod'
         ConstraintDescription: Must match a location for secret storage in secretsmanager
 
+    FullEnvironmentName:
+        Type: String
+        Description: Full name of deployment environment
+        AllowedValues:
+            - 'development'
+            - 'test'
+            - 'staging'
+            - 'production'
+
     RedisAddress:
         Type: String
         Description: Redis endpoint address
@@ -232,6 +241,8 @@ Resources:
                 Value: '1'
               - Name: ENV_NAME
                 Value: !Ref EnvName
+              - Name: CONCORDIA_ENVIRONMENT
+                Value: !Ref FullEnvironmentName
               - Name: S3_BUCKET_NAME
                 Value: concordia-staticpages
               - Name: CELERY_BROKER_URL
@@ -284,6 +295,8 @@ Resources:
                 Value: '1'
               - Name: ENV_NAME
                 Value: !Ref EnvName
+              - Name: CONCORDIA_ENVIRONMENT
+                Value: !Ref FullEnvironmentName
               - Name: S3_BUCKET_NAME
                 Value: concordia-staticpages
               - Name: CELERY_BROKER_URL
