@@ -130,9 +130,7 @@ class Project(MetricsModelMixin("project"), models.Model):
 class Item(MetricsModelMixin("item"), models.Model):
     objects = PublicationManager()
 
-    project = models.ForeignKey(
-        Project, on_delete=models.CASCADE, blank=True, null=True
-    )
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
 
     published = models.BooleanField(default=False, blank=True)
 
@@ -187,7 +185,7 @@ class Asset(MetricsModelMixin("asset"), models.Model):
     sequence = models.PositiveIntegerField(default=1)
 
     # The original ID of the image resource on loc.gov
-    resource_id = models.CharField(max_length=100, blank=True, null=True)
+    resource_url = models.URLField(max_length=255, blank=True, null=True)
     # The URL used to download this image from loc.gov
     download_url = models.CharField(max_length=255, blank=True, null=True)
 

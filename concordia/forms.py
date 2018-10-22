@@ -39,7 +39,9 @@ class UserProfileForm(forms.Form):
 
 
 class ContactUsForm(forms.Form):
-    referrer = forms.CharField(label="Referring Page", widget=forms.HiddenInput())
+    referrer = forms.CharField(
+        label="Referring Page", widget=forms.HiddenInput(), required=False
+    )
 
     email = forms.EmailField(label="Your email:", required=True)
     subject = forms.CharField(label="Subject:", required=False)

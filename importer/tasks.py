@@ -318,8 +318,9 @@ def import_item_task(self, import_item_pk):
 def import_item(self, import_item):
     item_assets = []
     import_assets = []
+    item_resource_url = None
 
-    asset_urls = get_asset_urls_from_item_resources(
+    asset_urls, item_resource_url = get_asset_urls_from_item_resources(
         import_item.item.metadata.get("resources", [])
     )
 
@@ -333,6 +334,7 @@ def import_item(self, import_item):
             media_url=f"{idx}.jpg",
             media_type=MediaType.IMAGE,
             download_url=asset_url,
+            resource_url=item_resource_url,
         )
         item_asset.full_clean()
         item_assets.append(item_asset)
@@ -385,6 +387,7 @@ def get_asset_urls_from_item_resources(resources):
     """
 
     assets = []
+    item_resource_url = resources[0]["url"] or ""
 
     for resource in resources:
         # The JSON response for each file is a list of available image versions
@@ -408,7 +411,7 @@ def get_asset_urls_from_item_resources(resources):
                 candidates.sort(key=lambda i: i[1], reverse=True)
                 assets.append(candidates[0][0])
 
-    return assets
+    return assets, item_resource_url
 
 
 @task(
