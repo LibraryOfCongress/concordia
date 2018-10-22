@@ -503,7 +503,8 @@ def validate_anonymous_captcha(view):
     return inner
 
 
-save_rate = lambda g, r: None if r.user.is_authenticated else "1/m"
+def save_rate(g, r):
+    return None if r.user.is_authenticated else "1/m"
 
 
 @ratelimit(key="ip", rate=save_rate)
@@ -564,7 +565,8 @@ def save_transcription(request, *, asset_pk):
     )
 
 
-submit_rate = lambda g, r: None if r.user.is_authenticated else "1/m"
+def submit_rate(g, r):
+    return None if r.user.is_authenticated else "1/m"
 
 
 @ratelimit(key="ip", rate=submit_rate)
@@ -804,7 +806,8 @@ class ReportCampaignView(TemplateView):
             project.transcription_statuses
 
 
-reserve_rate = lambda g, r: None if r.user.is_authenticated else "1/m"
+def reserve_rate(g, r):
+    return None if r.user.is_authenticated else "12/m"
 
 
 @ratelimit(key="ip", rate=reserve_rate)
