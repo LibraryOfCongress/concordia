@@ -2,15 +2,10 @@
 import os
 
 from django.contrib import messages
-from dotenv import load_dotenv
 
 # Build paths inside the project like this: os.path.join(SITE_ROOT_DIR, ...)
 CONCORDIA_APP_DIR = os.path.abspath(os.path.dirname(__file__))
 SITE_ROOT_DIR = os.path.dirname(CONCORDIA_APP_DIR)
-
-# Build path for and load .env file.
-dotenv_path = os.path.join(SITE_ROOT_DIR, ".env")
-load_dotenv(dotenv_path)
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = "django-secret-key"
@@ -132,7 +127,15 @@ TEMPLATES = [
     }
 ]
 
-CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
+MEMCACHED_ADDRESS = os.getenv("MEMCACHED_ADDRESS", "")
+MEMCACHED_PORT = os.getenv("MEMCACHED_PORT", "")
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.memcached.MemcachedCache",
+        "LOCATION": "{}:{}".format(MEMCACHED_ADDRESS, MEMCACHED_PORT),
+    }
+}
 
 HAYSTACK_CONNECTIONS = {
     "default": {

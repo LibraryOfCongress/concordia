@@ -72,10 +72,11 @@ ELASTICSEARCH_DSL = {
     "default": {"hosts": os.getenv("ELASTICSEARCH_ENDPOINT", "elk:9200")}
 }
 
-
 # HMAC activation flow provide the two-step registration process,
 # the user signs up and then completes activation via email instructions.
 
 REGISTRATION_SALT = "django_registration"  # doesn't need to be secret
 
 ACCOUNT_ACTIVATION_DAYS = 1  # required for HMAC registration two-step-flow
+
+SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
