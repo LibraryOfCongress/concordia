@@ -20,34 +20,18 @@
 {% block main_content %}
 <div class="container py-default">
     <div class="row">
-        <div class="col-md-8">
+        <div class="col-md-10">
             <h1 class="m-3">{{ item.title }}</h1>
             <p class="m-3 hero-text">{{ item.description }}</p>
         </div>
-        <div class="col-md-4">
-            <div class="row text-center font-weight-light">
-                <div class="col-md-4">
-                    <small>In progress: {{ edit_percent }}%</small>
-                </div>
-                <div class="col-md-4">
-                    <small>Complete: {{ completed_percent }}%</small>
-                </div>
-                <div class="col-md-4">
-                    <small>Contributors: {{ contributor_count|intcomma }}</small>
-                </div>
-            </div>
-            <div class="progress" style="height: 2rem">
-                <div title="In Progress" class="progress-bar progress-bar-striped progress-bar-animated bg-warning" role="progressbar" style="width: {{ edit_percent }}%" aria-valuenow="{{ edit_percent }}" aria-valuemin="0" aria-valuemax="100">
-                </div>
-                <div title="Submitted for Review" class="progress-bar bg-info" role="progressbar" style="width: {{ submitted_percent }}%" aria-valuenow="{{ submitted_percent }}" aria-valuemin="0" aria-valuemax="100">
-                </div>
-                <div title="Completed" class="progress-bar bg-success" role="progressbar" style="width: {{ completed_percent }}%" aria-valuenow="{{ completed_percent }}" aria-valuemin="0" aria-valuemax="100">
-                </div>
+        <div class="col-md-2 align-bottom">
+            <div class="m-3">
+            <a href="{{ item.item_url }}" class="btn btn-default" target="_blank">View this item on www.loc.gov</a>
             </div>
         </div>
     </div>
-    <div class="row">
-        <form method="get" class="w-50 mx-auto">
+    <div class="row py-default">
+        <form method="get" class="col-md-4 mx-auto">
             <div class="form-group row">
                 <div class="input-group input-group-sm">
                     <div class="input-group-prepend">
@@ -60,6 +44,27 @@
                 </div>
             </div>
         </form>
+        <div class="col-md-4 mx-auto">
+            <div class="progress" style="height: 2rem">
+                <div title="In Progress" class="progress-bar progress-bar-striped progress-bar-animated bg-warning" role="progressbar" style="width: {{ edit_percent }}%" aria-valuenow="{{ edit_percent }}" aria-valuemin="0" aria-valuemax="100">
+                </div>
+                <div title="Submitted for Review" class="progress-bar bg-info" role="progressbar" style="width: {{ submitted_percent }}%" aria-valuenow="{{ submitted_percent }}" aria-valuemin="0" aria-valuemax="100">
+                </div>
+                <div title="Completed" class="progress-bar bg-success" role="progressbar" style="width: {{ completed_percent }}%" aria-valuenow="{{ completed_percent }}" aria-valuemin="0" aria-valuemax="100">
+                </div>
+            </div>
+            <div class="row text-center font-weight-light">
+                <div class="col-md-4">
+                    <small>In progress: {{ edit_percent }}%</small>
+                </div>
+                <div class="col-md-4">
+                    <small>Complete: {{ completed_percent }}%</small>
+                </div>
+                <div class="col-md-4">
+                    <small>Contributors: {{ contributor_count|intcomma }}</small>
+                </div>
+            </div>            
+        </div>
     </div>
     <div class="card-deck justify-content-center">
         {% for a in assets %}
