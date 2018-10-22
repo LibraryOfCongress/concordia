@@ -1,3 +1,5 @@
+{% load bittersweet_querystring %}
+
 {% comment %}
 This template fragment assumes that you are using Bootstrap's default pagination
 with a Django ListView CBV or equivalent which has the default is_paginated,
@@ -9,7 +11,7 @@ paginator, and page_obj variables defined.
         <ul class="pagination mx-auto justify-content-center">
             {% if page_obj.has_previous %}
                 <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-title="Previous Page">&larr;</a>
+                    <a class="page-link" href="?{% qs_alter request.GET page=page_obj.previous_page_number %}" aria-title="Previous Page">&larr;</a>
                 </li>
             {% else %}
                 <li class="page-item disabled" aria-hidden="true">
@@ -19,7 +21,7 @@ paginator, and page_obj variables defined.
 
             {% if page_obj.number > 1 %}
                 <li class="page-item">
-                    <a class="page-link" href="?page=1">1</a>
+                    <a class="page-link" href="?{% qs_alter request.GET page=1 %}">1</a>
                 </li>
             {% endif %}
 
@@ -31,7 +33,7 @@ paginator, and page_obj variables defined.
                 {% with page_obj.previous_page_number|add:-1 as second_previous_page %}
                     {% if second_previous_page > 1 %}
                         <li class="page-item">
-                            <a class="page-link" href="?page={{ second_previous_page }}">{{ second_previous_page }}</a>
+                            <a class="page-link" href="?{% qs_alter request.GET page=second_previous_page %}">{{ second_previous_page }}</a>
                         </li>
                     {% endif %}
                 {% endwith %}
@@ -39,19 +41,19 @@ paginator, and page_obj variables defined.
 
             {% if page_obj.previous_page_number > 1 %}
                 <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">{{ page_obj.previous_page_number }}</a>
+                    <a class="page-link" href="?{% qs_alter request.GET page=page_obj.previous_page_number %}">{{ page_obj.previous_page_number }}</a>
                 </li>
             {% endif %}
 
             <li class="page-item active">
-                <a class="page-link" href="?page={{ page_obj.number }}">
+                <a class="page-link" href="?{% qs_alter request.GET page=page_obj.number %}">
                     {{ page_obj.number }}
                 </a>
             </li>
 
             {% if page_obj.next_page_number < paginator.num_pages %}
                 <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">{{ page_obj.next_page_number }}</a>
+                    <a class="page-link" href="?{% qs_alter request.GET page=page_obj.next_page_number %}">{{ page_obj.next_page_number }}</a>
                 </li>
             {% endif %}
 
@@ -59,7 +61,7 @@ paginator, and page_obj variables defined.
                 {% with page_obj.next_page_number|add:1 as second_next_page %}
                     {% if second_next_page < paginator.num_pages %}
                         <li class="page-item">
-                            <a class="page-link" href="?page={{ second_next_page }}">{{ second_next_page }}</a>
+                            <a class="page-link" href="?{% qs_alter request.GET page=second_next_page %}">{{ second_next_page }}</a>
                         </li>
                     {% endif %}
                 {% endwith %}
@@ -71,13 +73,13 @@ paginator, and page_obj variables defined.
 
             {% if page_obj.number < paginator.num_pages %}
                 <li class="page-item">
-                    <a class="page-link" href="?page={{ paginator.num_pages }}">{{ paginator.num_pages }}</a>
+                    <a class="page-link" href="?{% qs_alter request.GET page=paginator.num_pages %}">{{ paginator.num_pages }}</a>
                 </li>
             {% endif %}
 
             {% if page_obj.has_next %}
                 <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">&rarr;</a>
+                    <a class="page-link" href="?{% qs_alter request.GET page=page_obj.next_page_number %}">&rarr;</a>
                 </li>
             {% else %}
                 <li class="page-item disabled" aria-hidden="true">
