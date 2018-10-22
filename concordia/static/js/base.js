@@ -1,5 +1,5 @@
 /* global $ Cookies screenfull */
-/* exported displayMessage */
+/* exported displayMessage buildErrorMessage */
 
 (function() {
     /*
@@ -26,6 +26,17 @@
         }
     });
 })();
+
+function buildErrorMessage(jqXHR, textStatus, errorThrown) {
+    /* Construct a nice error message using optional JSON response context */
+    var errMessage;
+    if (jqXHR.responseJSON && jqXHR.responseJSON.error) {
+        errMessage = jqXHR.responseJSON.error;
+    } else {
+        errMessage = textStatus + ' ' + errorThrown;
+    }
+    return errMessage;
+}
 
 function displayMessage(level, message, uniqueId) {
     /*
