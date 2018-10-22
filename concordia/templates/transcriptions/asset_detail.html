@@ -107,7 +107,7 @@
                     <h2>Transcription</h2>
 
                     {% spaceless %}
-                        <textarea readonly class="form-control w-100 rounded flex-grow-1" name="text" id="transcription-input" placeholder="Go ahead, start typing. You got this!" aria-label="Transcription input">
+                        <textarea readonly class="form-control w-100 rounded flex-grow-1" name="text" id="transcription-input" placeholder="{% if transcription_status == 'edit' %}Go ahead, start typing. You got this!{% else %}Nothing to transcribe{% endif %}" aria-label="Transcription input">
                             {{ transcription.text }}
                         </textarea>
 
