@@ -70,6 +70,16 @@ Parameters:
             - "test"
             - "stage"
             - "prod"
+    
+    CanonicalHostName:
+        Description: the canonical host name for this environment
+        Type: String
+        AllowedValues:
+            - "crowd-dev.loc.gov"
+            - "crowd-test.loc.gov"
+            - "crowd-stage.loc.gov"
+            - "crowd-prod.loc.gov"
+            - "crowd.loc.gov"
             
 Resources:
 
@@ -145,6 +155,8 @@ Resources:
                 RedisPort: !GetAtt ElastiCache.Outputs.RedisPort
                 MemcachedAddress: !GetAtt ElastiCache.Outputs.MemcachedAddress
                 MemcachedPort: !GetAtt ElastiCache.Outputs.MemcachedPort
+                CanonicalHostName: !Ref CanonicalHostName
+                DatabaseEndpoint: !GetAtt RDS.Outputs.DatabaseHostName
 
 Outputs:
 

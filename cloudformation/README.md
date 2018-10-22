@@ -15,10 +15,12 @@ cd cloudformation
 
 2.  Read [how to get started with AWS ECR](https://docs.aws.amazon.com/AmazonECR/latest/userguide/ECR_GetStarted.html) and follow the instructions to create three ECR repositories named `concordia`, `concordia/importer` and `rabbitmq`.
 3.  Set a BUILD_NUMBER in your environment and run `./build_containers.sh`
-4.  Use CloudFormation to create a stack, using the `master.yaml` in the S3 bucket you uploaded in step 1 as the initial template.
-5.  Once the RDS CloudFormation template has finished, populate the secrets in `create_secrets.sh` and run that script to create a new set of secrets (if you are not using the standard dev, test, stage or prod environments).
-6.  After the secrets have been created, create a new revision of the task definition, changing the ENV_NAME variable to point to the correct secret storage location (N/A if you use the predefined dev, test, stage, or prod values). Update the service to use the newest task definition version.
-7.  Deploy a bastion host - use `infrastructure/bastion_host.yaml` CF template
+4.  Create a KMS key for this project.
+5.  Populate the secrets in `create_secrets.sh` and run that script to create a new set of secrets.
+6.  Upload a certificate for the environment to IAM using the canonical host name.
+7.  Use CloudFormation to create a stack, using the `master.yaml` in the S3 bucket you uploaded in step 1 as the initial template.
+8.  If your environment name is not dev, test, stage or prod: Create a new revision of the task definition, changing the ENV_NAME variable to point to the correct secret storage location. Update the service to use the newest task definition version.
+9.  Deploy a bastion host - use `infrastructure/bastion_host.yaml` CF template
     1. Install docker, configure aws CLI, log in to AWS and pull the latest concordia docker image from ECR:
     ```
     sudo yum install -y docker
@@ -29,7 +31,7 @@ cd cloudformation
     1. Login to ECR: `sudo $(aws ecr get-login --no-include-email --region us-east-1)`
     1. Pull the latest image: `sudo docker pull $(aws sts get-caller-identity --output=text --query "Account").dkr.ecr.us-east-1.amazonaws.com/concordia:latest`
     1. Add the bastion host security group to the database security group to allow inbound postgresql traffic
-    1. Run the image: `sudo docker run -e ENV_NAME=stage -e AWS=1 351149051428.dkr.ecr.us-east-1.amazonaws.com/concordia`
+    1. Run the image: `sudo docker run -e ENV_NAME=prod -e AWS=1 351149051428.dkr.ecr.us-east-1.amazonaws.com/concordia`
     1. `sudo docker exec -it <container name> bash`
     1. Run the create admin command: `python3 ./manage.py createsuperuser`
     1. Delete the bastion host stack.
@@ -42,23 +44,12 @@ This reference architecture provides a set of YAML templates for deploying micro
 
 You can launch this CloudFormation stack in your account:
 
-| AWS Region                | Short name     |                                                                                                                                                                                                                                                                  |
-| ------------------------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| US East (Ohio)            | us-east-2      | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-2#/stacks/new?stackName=Production&templateURL=https://s3.amazonaws.com/ecs-refarch-cloudformation/master.yaml)      |
-| US East (N. Virginia)     | us-east-1      | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=Production&templateURL=https://s3.amazonaws.com/ecs-refarch-cloudformation/master.yaml)      |
-| US West (N. California)   | us-west-2      | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=Production&templateURL=https://s3.amazonaws.com/ecs-refarch-cloudformation/master.yaml)      |
-| US West (Oregon)          | us-west-1      | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-1#/stacks/new?stackName=Production&templateURL=https://s3.amazonaws.com/ecs-refarch-cloudformation/master.yaml)      |
-| Canada (Central)          | ca-central-1   | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=ca-central-1#/stacks/new?stackName=Production&templateURL=https://s3.amazonaws.com/ecs-refarch-cloudformation/master.yaml)   |
-| EU (Paris)                | eu-west-3      | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=eu-west-3#/stacks/new?stackName=Production&templateURL=https://s3.amazonaws.com/ecs-refarch-cloudformation/master.yaml)      |
-| EU (London)               | eu-west-2      | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=eu-west-2#/stacks/new?stackName=Production&templateURL=https://s3.amazonaws.com/ecs-refarch-cloudformation/master.yaml)      |
-| EU (Ireland)              | eu-west-1      | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=eu-west-1#/stacks/new?stackName=Production&templateURL=https://s3.amazonaws.com/ecs-refarch-cloudformation/master.yaml)      |
-| EU (Frankfurt)            | eu-central-1   | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=eu-central-1#/stacks/new?stackName=Production&templateURL=https://s3.amazonaws.com/ecs-refarch-cloudformation/master.yaml)   |
-| Asia Pacific (Seoul)      | ap-northeast-2 | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-northeast-2#/stacks/new?stackName=Production&templateURL=https://s3.amazonaws.com/ecs-refarch-cloudformation/master.yaml) |
-| Asia Pacific (Tokyo)      | ap-northeast-1 | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-northeast-1#/stacks/new?stackName=Production&templateURL=https://s3.amazonaws.com/ecs-refarch-cloudformation/master.yaml) |
-| Asia Pacific (Sydney)     | ap-southeast-2 | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-southeast-2#/stacks/new?stackName=Production&templateURL=https://s3.amazonaws.com/ecs-refarch-cloudformation/master.yaml) |
-| Asia Pacific (Singapore)  | ap-southeast-1 | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-southeast-1#/stacks/new?stackName=Production&templateURL=https://s3.amazonaws.com/ecs-refarch-cloudformation/master.yaml) |
-| Asia Pacific (Mumbai)     | ap-south-1     | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-south-1#/stacks/new?stackName=Production&templateURL=https://s3.amazonaws.com/ecs-refarch-cloudformation/master.yaml)     |
-| South America (São Paulo) | sa-east-1      | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=sa-east-1#/stacks/new?stackName=Production&templateURL=https://s3.amazonaws.com/ecs-refarch-cloudformation/master.yaml)      |
+| AWS Region              | Short name |                                                                                                                                                                                                                                                             |
+| ----------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| US East (Ohio)          | us-east-2  | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-2#/stacks/new?stackName=Production&templateURL=https://s3.amazonaws.com/ecs-refarch-cloudformation/master.yaml) |
+| US East (N. Virginia)   | us-east-1  | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=Production&templateURL=https://s3.amazonaws.com/ecs-refarch-cloudformation/master.yaml) |
+| US West (N. California) | us-west-2  | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=Production&templateURL=https://s3.amazonaws.com/ecs-refarch-cloudformation/master.yaml) |
+| US West (Oregon)        | us-west-1  | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-1#/stacks/new?stackName=Production&templateURL=https://s3.amazonaws.com/ecs-refarch-cloudformation/master.yaml) |
 
 ## Overview
 
@@ -120,23 +111,12 @@ The ECS instances should also appear in the Managed Instances section of the EC2
 
 You can launch this CloudFormation stack in your account:
 
-| AWS Region                | Short name     |                                                                                                                                                                                                                                                                  |
-| ------------------------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| US East (Ohio)            | us-east-2      | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-2#/stacks/new?stackName=Production&templateURL=https://s3.amazonaws.com/ecs-refarch-cloudformation/master.yaml)      |
-| US East (N. Virginia)     | us-east-1      | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=Production&templateURL=https://s3.amazonaws.com/ecs-refarch-cloudformation/master.yaml)      |
-| US West (N. California)   | us-west-2      | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=Production&templateURL=https://s3.amazonaws.com/ecs-refarch-cloudformation/master.yaml)      |
-| US West (Oregon)          | us-west-1      | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-1#/stacks/new?stackName=Production&templateURL=https://s3.amazonaws.com/ecs-refarch-cloudformation/master.yaml)      |
-| Canada (Central)          | ca-central-1   | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=ca-central-1#/stacks/new?stackName=Production&templateURL=https://s3.amazonaws.com/ecs-refarch-cloudformation/master.yaml)   |
-| EU (Frankfurt)            | eu-west-3      | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=eu-west-3#/stacks/new?stackName=Production&templateURL=https://s3.amazonaws.com/ecs-refarch-cloudformation/master.yaml)      |
-| EU (London)               | eu-west-2      | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=eu-west-2#/stacks/new?stackName=Production&templateURL=https://s3.amazonaws.com/ecs-refarch-cloudformation/master.yaml)      |
-| EU (Ireland)              | eu-west-1      | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=eu-west-1#/stacks/new?stackName=Production&templateURL=https://s3.amazonaws.com/ecs-refarch-cloudformation/master.yaml)      |
-| EU (Frankfurt)            | eu-central-1   | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=eu-central-1#/stacks/new?stackName=Production&templateURL=https://s3.amazonaws.com/ecs-refarch-cloudformation/master.yaml)   |
-| Asia Pacific (Seoul)      | ap-northeast-2 | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-northeast-2#/stacks/new?stackName=Production&templateURL=https://s3.amazonaws.com/ecs-refarch-cloudformation/master.yaml) |
-| Asia Pacific (Tokyo)      | ap-northeast-1 | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-northeast-1#/stacks/new?stackName=Production&templateURL=https://s3.amazonaws.com/ecs-refarch-cloudformation/master.yaml) |
-| Asia Pacific (Sydney)     | ap-southeast-2 | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-southeast-2#/stacks/new?stackName=Production&templateURL=https://s3.amazonaws.com/ecs-refarch-cloudformation/master.yaml) |
-| Asia Pacific (Singapore)  | ap-southeast-1 | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-southeast-1#/stacks/new?stackName=Production&templateURL=https://s3.amazonaws.com/ecs-refarch-cloudformation/master.yaml) |
-| Asia Pacific (Mumbai)     | ap-south-1     | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=ap-south-1#/stacks/new?stackName=Production&templateURL=https://s3.amazonaws.com/ecs-refarch-cloudformation/master.yaml)     |
-| South America (São Paulo) | sa-east-1      | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=sa-east-1#/stacks/new?stackName=Production&templateURL=https://s3.amazonaws.com/ecs-refarch-cloudformation/master.yaml)      |
+| AWS Region              | Short name |                                                                                                                                                                                                                                                             |
+| ----------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| US East (Ohio)          | us-east-2  | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-2#/stacks/new?stackName=Production&templateURL=https://s3.amazonaws.com/ecs-refarch-cloudformation/master.yaml) |
+| US East (N. Virginia)   | us-east-1  | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=Production&templateURL=https://s3.amazonaws.com/ecs-refarch-cloudformation/master.yaml) |
+| US West (N. California) | us-west-2  | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=Production&templateURL=https://s3.amazonaws.com/ecs-refarch-cloudformation/master.yaml) |
+| US West (Oregon)        | us-west-1  | [![cloudformation-launch-button](images/cloudformation-launch-stack.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-1#/stacks/new?stackName=Production&templateURL=https://s3.amazonaws.com/ecs-refarch-cloudformation/master.yaml) |
 
 ### Customize the templates
 
