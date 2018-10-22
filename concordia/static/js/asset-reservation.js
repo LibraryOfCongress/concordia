@@ -1,4 +1,4 @@
-/* global jQuery displayMessage */
+/* global jQuery displayMessage buildErrorMessage */
 /* exported attemptToReserveAsset */
 
 function attemptToReserveAsset(reservationURL) {
@@ -19,14 +19,12 @@ function attemptToReserveAsset(reservationURL) {
                 $transcriptionEditor
                     .data('hasReservation', false)
                     .trigger('update-ui-state');
-                $('#asset-reservation-failure-modal').modal();
+                jQuery('#asset-reservation-failure-modal').modal();
             } else {
                 displayMessage(
                     'error',
                     'Unable to reserve this page: ' +
-                        textStatus +
-                        ' ' +
-                        errorThrown,
+                        buildErrorMessage(jqXHR, textStatus, errorThrown),
                     'transcription-reservation'
                 );
             }
