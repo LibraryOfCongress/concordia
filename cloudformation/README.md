@@ -31,7 +31,7 @@ cd cloudformation
     1. Login to ECR: `sudo $(aws ecr get-login --no-include-email --region us-east-1)`
     1. Pull the latest image: `sudo docker pull $(aws sts get-caller-identity --output=text --query "Account").dkr.ecr.us-east-1.amazonaws.com/concordia:latest`
     1. Add the bastion host security group to the database security group to allow inbound postgresql traffic
-    1. Run the image: `sudo docker run -e ENV_NAME=prod -e AWS=1 351149051428.dkr.ecr.us-east-1.amazonaws.com/concordia`
+    1. Run the image: `sudo docker run -e ENV_NAME=prod -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_KEY -e AWS=1 351149051428.dkr.ecr.us-east-1.amazonaws.com/concordia`
     1. `sudo docker exec -it <container name> bash`
     1. Run the create admin command: `python3 ./manage.py createsuperuser`
     1. Delete the bastion host stack.
