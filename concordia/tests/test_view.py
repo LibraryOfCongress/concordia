@@ -290,11 +290,21 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
 
         self.assertIn("links", data)
         self.assertIn("username", data)
-        self.assertIn("messages", data)
 
         self.assertEqual(data["username"], self.user.username)
 
-        # The inclusion of messages means that this view cannot currently be cached:
+        self.assertIn("private", resp["Cache-Control"])
+
+    def test_ajax_messages(self):
+        self.login_user()
+
+        resp = self.client.get(reverse("ajax-messages"))
+        data = self.assertValidJSON(resp)
+
+        self.assertIn("messages", data)
+
+        # This view cannot be cached because the messages would be displayed
+        # multiple times:
         self.assertIn("no-cache", resp["Cache-Control"])
 
 

@@ -150,7 +150,7 @@ def static_page(request, base_name=None):
     return render(request, "static-page.html", ctx)
 
 
-@never_cache
+@cache_control(private=True, no_transform=True, max_age=settings.DEFAULT_PAGE_TTL)
 @csrf_exempt
 def ajax_session_status(request):
     """
@@ -176,17 +176,27 @@ def ajax_session_status(request):
                 }
             )
 
-        # TODO: we should determine whether there's enough performance impact
-        # that it would be better to make this view cacheable and move messages
-        # into a separate view:
-        messages = [
-            {"level": MESSAGE_LEVEL_NAMES[i.level], "message": i.message}
-            for i in get_messages(request)
-        ]
-
-        res = {"username": user.username, "links": links, "messages": messages}
+        res = {"username": user.username, "links": links}
 
     return JsonResponse(res)
+
+
+@never_cache
+@login_required
+@csrf_exempt
+def ajax_messages(request):
+    """
+    Returns any messages queued for the current user
+    """
+
+    return JsonResponse(
+        {
+            "messages": [
+                {"level": MESSAGE_LEVEL_NAMES[i.level], "message": i.message}
+                for i in get_messages(request)
+            ]
+        }
+    )
 
 
 @method_decorator(never_cache, name="dispatch")
