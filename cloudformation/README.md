@@ -18,9 +18,10 @@ cd cloudformation
 4.  Create a KMS key for this project.
 5.  Populate the secrets in `create_secrets.sh` and run that script to create a new set of secrets.
 6.  Upload a certificate for the environment to IAM using the canonical host name.
-7.  Use CloudFormation to create a stack, using the `master.yaml` in the S3 bucket you uploaded in step 1 as the initial template.
-8.  If your environment name is not dev, test, stage or prod: Create a new revision of the task definition, changing the ENV_NAME variable to point to the correct secret storage location. Update the service to use the newest task definition version.
-9.  Deploy a bastion host - use `infrastructure/bastion_host.yaml` CF template
+7.  If you don't already have the ECS service linked role in your AWS account, run: `aws iam create-service-linked-role --aws-service-name ecs.amazonaws.com`
+8.  Use CloudFormation to create a stack, using the `master.yaml` in the S3 bucket you uploaded in step 1 as the initial template.
+9.  If your environment name is not dev, test, stage or prod: Create a new revision of the task definition, changing the ENV_NAME variable to point to the correct secret storage location. Update the service to use the newest task definition version.
+10. Deploy a bastion host - use `infrastructure/bastion_host.yaml` CF template
     1. Install docker, configure aws CLI, log in to AWS and pull the latest concordia docker image from ECR:
     ```
     sudo yum install -y docker
