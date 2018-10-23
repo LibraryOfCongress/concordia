@@ -75,10 +75,9 @@ Parameters:
         Type: String
         Description: Host name of the Postgres RDS service
 
-    CertificateArn:
+    S3BucketName:
         Type: String
-        Description: ARN of the certificate to use for https Listener
-        Default: arn:aws:iam::${AWS::Account}:server-certificate/${CanonicalHostName}
+        Description: name of the S3 bucket (public) where collection images will be stored
 
 Resources:
 
@@ -198,7 +197,7 @@ Resources:
   SecureExternalLoadBalancerListener:
     Properties:
       Certificates:
-        - CertificateArn: !Ref CertificateArn
+        - CertificateArn: !Sub 'arn:aws:iam::${AWS::AccountId}:server-certificate/${CanonicalHostName}'
       DefaultActions:
         - TargetGroupArn: !Ref ConcordiaExternalTargetGroup
           Type: forward
@@ -244,13 +243,15 @@ Resources:
               - Name: CONCORDIA_ENVIRONMENT
                 Value: !Ref FullEnvironmentName
               - Name: S3_BUCKET_NAME
-                Value: concordia-staticpages
+                Value: !Ref S3BucketName
               - Name: CELERY_BROKER_URL
                 Value: pyamqp://guest@localhost:5672
               - Name: AWS_DEFAULT_REGION
                 Value: !Ref AWS::Region
-              - Name: SENTRY_PUBLIC_DSN
-                Value: http://f69265b381a44ceb89e9bd467f86fbdd@devops-sentry-public-lb-718357739.us-east-1.elb.amazonaws.com/3
+              - Name: SENTRY_BACKEND_DSN
+                Value: http://34db819263f34c28809da045f841f045@sentry-internal.devops.cloud/2
+#              - Name: SENTRY_FRONTEND_DSN
+#                Value: https://crowd-sentry.loc.gov/3
               - Name: REDIS_ADDRESS
                 Value: !Ref RedisAddress
               - Name: REDIS_PORT
@@ -298,13 +299,15 @@ Resources:
               - Name: CONCORDIA_ENVIRONMENT
                 Value: !Ref FullEnvironmentName
               - Name: S3_BUCKET_NAME
-                Value: concordia-staticpages
+                Value: !Ref S3BucketName
               - Name: CELERY_BROKER_URL
                 Value: pyamqp://guest@localhost:5672
               - Name: AWS_DEFAULT_REGION
                 Value: !Ref AWS::Region
-              - Name: SENTRY_PUBLIC_DSN
-                Value: http://f69265b381a44ceb89e9bd467f86fbdd@devops-sentry-public-lb-718357739.us-east-1.elb.amazonaws.com/3
+              - Name: SENTRY_BACKEND_DSN
+                Value: http://34db819263f34c28809da045f841f045@sentry-internal.devops.cloud/2
+#              - Name: SENTRY_FRONTEND_DSN
+#                Value: https://crowd-sentry.loc.gov/3
               - Name: REDIS_ADDRESS
                 Value: !Ref RedisAddress
               - Name: REDIS_PORT
