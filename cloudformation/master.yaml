@@ -49,6 +49,11 @@ Mappings:
             test: 10.193.21.0/24
             stage: 10.194.21.0/24
             prod: 10.195.21.0/24
+        S3BucketNameMap:
+            dev: crowd-dev-content
+            test: crowd-test-content
+            stage: crowd-stage-content
+            prod: crowd-content
 
 Parameters:
 
@@ -96,7 +101,7 @@ Resources:
         Type: AWS::CloudFormation::Stack
         Properties:
 #            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/vpc.yaml" ]]
-            TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/vpc.yaml"
+            TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/vpc.yaml"
             Parameters:
                 EnvironmentName:    !Ref AWS::StackName
                 VpcCIDR:            !FindInMap [EnvironmentMapping, VPCCIDRMap, !Ref EnvName]
@@ -111,7 +116,7 @@ Resources:
         Type: AWS::CloudFormation::Stack
         Properties:
 #            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/network-acl.yaml" ]]
-            TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/network-acl.yaml"
+            TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/network-acl.yaml"
             Parameters: 
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
@@ -123,7 +128,7 @@ Resources:
     SecurityGroups:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/security-groups.yaml"
+            TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/security-groups.yaml"
             Parameters: 
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
@@ -131,7 +136,7 @@ Resources:
     RDS:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/rds.yaml"
+            TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/rds.yaml"
             Parameters:
                 DbPassword: !Ref MyDbPassword
                 DatabaseSecurityGroup: !GetAtt SecurityGroups.Outputs.DatabaseSecurityGroup
@@ -141,7 +146,7 @@ Resources:
     ElastiCache:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/elasticache.yaml"
+            TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/elasticache.yaml"
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 SecurityGroup: !GetAtt SecurityGroups.Outputs.CacheServiceSecurityGroup
@@ -150,7 +155,7 @@ Resources:
     FargateCluster:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/fargate-cluster.yaml"
+            TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/fargate-cluster.yaml"
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 EnvName: !Ref EnvName
@@ -167,6 +172,7 @@ Resources:
                 CanonicalHostName: !Ref CanonicalHostName
                 DatabaseEndpoint: !GetAtt RDS.Outputs.DatabaseHostName
                 FullEnvironmentName: !Ref FullEnvironmentName
+                S3BucketName: !FindInMap [EnvironmentMapping, S3BucketNameMap, !Ref EnvName]
 
 Outputs:
 

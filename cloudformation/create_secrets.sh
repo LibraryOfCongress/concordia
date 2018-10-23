@@ -17,3 +17,7 @@ aws secretsmanager create-secret --name "crowd/${ENV_NAME}/Django/SecretKey" --k
 aws secretsmanager create-secret --name "crowd/${ENV_NAME}/DB/MasterUserPassword" --kms-key-id "${KMS_KEY_ARN}" --secret-string "{\"username\": \"concordia\",\"engine\": \"postgres\",\"port\": 5432,\"dbname\": \"concordia\",\"password\": \"${DB_PASSWORD}\"}"
 
 # aws acm import-certificate --certificate ${CERTIFICATE} --certificate-chain ${CERTIFICATE_CHAIN}
+
+aws secretsmanager create-secret --name "concordia/SMTP" --kms-key-id "${KMS_KEY_ARN}" --secret-string '{"Hostname": "email-smtp.us-east-1.amazonaws.com","Username": "","Password": ""}'
+
+aws secretsmanager create-secret --name "crowd/SentryDSN" --kms-key-id "${KMS_KEY_ARN}" --secret-string '{"SentryDSN": "http://:@devops-sentry-public-lb-718357739.us-east-1.elb.amazonaws.com/2"}'

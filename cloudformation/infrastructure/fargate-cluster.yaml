@@ -75,10 +75,9 @@ Parameters:
         Type: String
         Description: Host name of the Postgres RDS service
 
-    CertificateArn:
+    S3BucketName:
         Type: String
-        Description: ARN of the certificate to use for https Listener
-        Default: arn:aws:iam::${AWS::Account}:server-certificate/${CanonicalHostName}
+        Description: name of the S3 bucket (public) where collection images will be stored
 
 Resources:
 
@@ -198,7 +197,7 @@ Resources:
   SecureExternalLoadBalancerListener:
     Properties:
       Certificates:
-        - CertificateArn: !Ref CertificateArn
+        - CertificateArn: !Sub 'arn:aws:iam::${AWS::AccountId}:server-certificate/${CanonicalHostName}'
       DefaultActions:
         - TargetGroupArn: !Ref ConcordiaExternalTargetGroup
           Type: forward
@@ -244,7 +243,7 @@ Resources:
               - Name: CONCORDIA_ENVIRONMENT
                 Value: !Ref FullEnvironmentName
               - Name: S3_BUCKET_NAME
-                Value: concordia-staticpages
+                Value: !Ref S3BucketName
               - Name: CELERY_BROKER_URL
                 Value: pyamqp://guest@localhost:5672
               - Name: AWS_DEFAULT_REGION
