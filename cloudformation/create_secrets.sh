@@ -20,4 +20,4 @@ aws secretsmanager create-secret --name "crowd/${ENV_NAME}/DB/MasterUserPassword
 
 aws secretsmanager create-secret --name "concordia/SMTP" --kms-key-id "${KMS_KEY_ARN}" --secret-string '{"Hostname": "email-smtp.us-east-1.amazonaws.com","Username": "","Password": ""}'
 
-aws secretsmanager create-secret --name "crowd/SentryDSN" --kms-key-id "${KMS_KEY_ARN}" --secret-string '{"SentryDSN": "http://:@devops-sentry-public-lb-718357739.us-east-1.elb.amazonaws.com/2"}'
+aws secretsmanager create-secret --name "crowd/SentryDSN" --kms-key-id "${KMS_KEY_ARN}" --secret-string '{"SentryDSN": "http://34db819263f34c28809da045f841f045@devops-sentry-public-lb-1114947433.us-east-1.elb.amazonaws.com/2"}'
