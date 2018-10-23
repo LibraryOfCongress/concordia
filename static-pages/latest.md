@@ -1,9 +1,10 @@
 title: Latest News
 
-![Cover of yellow envelope with drawn portrait of Lincoln in the top left corner and a depiction of Lincoln chopping wood in the middle](/static/img/LincolnCampaign.jpg)
 
 ## Letters to Lincoln Challenge 
 ---
+
+![Cover of yellow envelope with drawn portrait of Lincoln in the top left corner and a depiction of Lincoln chopping wood in the middle](/static/img/LincolnCampaign.jpg)
 
 ### Help us transcribe 10,000+ items from the Abraham Lincoln Papers by the end of 2018!
 
