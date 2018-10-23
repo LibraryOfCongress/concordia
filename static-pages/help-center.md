@@ -234,7 +234,7 @@ The language and terminology used in the historical materials on this site refle
     </div>
     <div id="collapseTwelve" class="collapse" aria-labelledby="headingTwelve" data-parent="#faqAccordion">
       <div class="card-body">
-Because Make York Mark invites you to transcribe documents, it is best experienced on a device with a large or full sized keyboard. A desktop computer or laptop is best; a tablet with keyboard should work. Unfortunately, phones are not yet supported. We recommend an external mouse for most precise zoom. We support the two most recent versions of major browsers. You’ll have the best experience if you use Chrome, Firefox, Edge, and Safari browsers. The site will not work as designed on the Internet Explorer browser.
+Because crowd.loc.gov invites you to transcribe documents, it is best experienced on a device with a large or full sized keyboard. A desktop computer or laptop is best; a tablet with keyboard should work. Unfortunately, phones are not yet supported. We recommend an external mouse for most precise zoom. We support the two most recent versions of major browsers. You’ll have the best experience if you use Chrome, Firefox, Edge, and Safari browsers. The site will not work as designed on the Internet Explorer browser.
 
       </div>
     </div>
@@ -250,7 +250,7 @@ Because Make York Mark invites you to transcribe documents, it is best experienc
     </div>
     <div id="collapseThirteen" class="collapse" aria-labelledby="headingThirteen" data-parent="#faqAccordion">
       <div class="card-body">
-crowd.loc.gov runs on Concordia, new open source software developed by the Library of Congress to power crowd.loc.govsourced transcription projects. The code is visible and free to reuse: <a href="https://github.com/LibraryOfCongress/concordia">Visit our Github repository</a> for more information. The platform was built utilizing user-centered design principles based around building trust and approachability. This project is a partnership between the Library and a growing community of volunteers who help us to iteratively improve the platform. Everyone is welcome to take part in transcription and tagging and to give feedback about how we can improve the code base and the project itself. Be in touch!
+Crowd.loc.gov runs on Concordia, new open source software developed by the Library of Congress to power crowdsourced transcription projects. The code is visible and free to reuse: <a href="https://github.com/LibraryOfCongress/concordia">Visit our Github repository</a> for more information. The platform was built utilizing user-centered design principles based around building trust and approachability. This project is a partnership between the Library and a growing community of volunteers who help us to iteratively improve the platform. Everyone is welcome to take part in transcription and tagging and to give feedback about how we can improve the code base and the project itself. Be in touch!
 
       </div>
     </div>
@@ -308,7 +308,7 @@ The Library of Congress has long invested in building digitized collections and 
     </div>
     <div id="collapseSixteen" class="collapse" aria-labelledby="headingSixteen" data-parent="#faqAccordion">
       <div class="card-body">
-In addition to the Library of Congress’ own history of varied participatory projects, other cultural heritage institutions with established transcription programs have paved the way for crowd.loc.gov. Projects at the National Archives and Records Administration (NARA), the Smithsonian, the New York Public Library, Zooniverse.org, From the Page, and others have developed workflows and user engagement strategies that this platform leverages and builds upon. Concordia deploys a different architecture to these existing models of crowd.loc.govsourced transcription, and aims to provide simple data structures and easier project implementation for cultural heritage institutions and other people who want to set up their own crowd.loc.govsourced transcription projects.
+In addition to the Library of Congress’ own history of varied participatory projects, other cultural heritage institutions with established transcription programs have paved the way for crowd.loc.gov. Projects at the National Archives and Records Administration (NARA), the Smithsonian, the New York Public Library, Zooniverse.org, From the Page, and others have developed workflows and user engagement strategies that this platform leverages and builds upon. Concordia deploys a different architecture to these existing models of crowdsourced transcription, and aims to provide simple data structures and easier project implementation for cultural heritage institutions and other people who want to set up their own crowdsourced transcription projects.
       </div>
     </div>
   </div>
