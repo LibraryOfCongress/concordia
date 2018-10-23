@@ -4,7 +4,7 @@ import boto3
 import requests
 from botocore.exceptions import ClientError
 
-SECURITY_GROUP_ID = "sg-0e07161e54ca34212"
+SECURITY_GROUP_ID = "sg-0cf16b045e14f5fad"
 
 ec2 = boto3.client("ec2")
 
