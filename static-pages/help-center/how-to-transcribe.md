@@ -12,13 +12,13 @@ title: How to transcribe
   </div>
   <div class="col-9">
 <p>
-We transcribe to improve search functionality. Our goal is to make documents word-searchable in the Library of Congress catalog, which means typing transcriptions that can be read by that computer system, as well as by humans. Most handwriting and some typed text cannot be automatically and accurately translated into machine-readable text using current technologies -- that’s why we need your help!.
+We transcribe to improve search functionality. Our goal is to make documents word-searchable in the Library of Congress catalog, which means typing transcriptions that can be read by that computer system, as well as by humans. Most handwriting and some typed text cannot be automatically and accurately translated into machine-readable text using current technologies -- that’s why we need your help!
 </p>
 <p>
 We ask you to transcribe a document roughly as it appears on the page, but without much styling. We are not trying to recreate the appearance of the words on the original pages. The completed transcripts will be viewable beside the original images in the catalog, ensuring the physical layout of the page will always be available to readers.
 </p>
 
-<h3>Making sense:</h3>
+<h3>All in order:</h3>
 <p>
 Transcribe text in the order it appears.
 </p>
@@ -75,7 +75,7 @@ If you can read crossed out or otherwise deleted text, transcribe the deleted wo
 <h3>Marginalia:</h3>
 
 <p>
-Marginalia is text written in the space around the main block of text. It is usually a comment on the main body text but can also be unrelated. It is different from an insertion, because it cannot be directly inserted into the main text and still make sense when read aloud. Use a pair of square brackets and asterisk (\*) around marginalia text and order it within the transcription where it makes the most sense (or at the end of the transcription if it appears unrelated). Example:
+Marginalia is text written in the space around the main block of text. It is usually a comment on the main body text but can also be unrelated. It is different from an insertion, because it cannot be directly inserted into the main text and still make sense when read aloud. Use a pair of square brackets and asterisk [*] around marginalia text and order it within the transcription where it makes the most sense (or at the end of the transcription if it appears unrelated). Example:
 </p>
 <ul><li>
    I have always loved coffee ice cream. Last summer I made my own using a recipe from the 1970s. It was the creamiest coffee ice cream I ever ate. No one else in my family likes that flavor. Oh well, more for me! [*Brazil was the largest coffee producing country in the world in 2017*]</li>
@@ -83,17 +83,17 @@ Marginalia is text written in the space around the main block of text. It is usu
 
 <h3>Printed and typed text:</h3>
 <p>
-Some material in crowd.loc.gov was created on a typewriter or printed. If we have included it here it is because the text is not machine-readable. A computer using Optical Character Recognition (OCR) technology cannot create an accurate word-searchable transcription.
+Some material in crowd.loc.gov was created on a typewriter or printed. If we have included it here it is because the text is not machine-readable. A computer using Optical Character Recognition (OCR) technology cannot create an accurate word-searchable transcription. Examples include the scouting reports of Branch Rickey, which are typed on thin paper and are often too fuzzy for successful OCR. Similarly, mixed materials containing manuscript and print have not been run through OCR, so please transcribe letterhead and any other printed features that will shed light on where a document was created.
 </p>
 
 <h3>When not to transcribe printed text:</h3>
 <p>
-Some calendars and diaries contain many pages of pre-printed almanacs or other text that is probably machine-readable and therefore should not be transcribed as part of this project. However, if you want to transcribe it, feel free. Alternatively, click "Nothing to transcribe".
+Some calendars and diaries contain many pages of pre-printed almanacs or other text that is probably machine-readable and therefore should not be transcribed as part of this project. It might be interesting to copy the first page from a repeating template in a diary or journal, but this is not the core text we are aiming to capture. However, if you want to transcribe it, feel free. Alternatively, click "Nothing to transcribe". This button should also be used for archival folders, blank pages, and pictorial images.
 </p>
     
 <h3>Tables, graphics, images:</h3>
 <p>
-Some documents will contain tables. Transcribe these in a way that will make them relatively easy for a reviewer to check over, but don't try to capture the exact layout of the data. The material will go back into the catalog without styling. Don't include notes or descriptions of visual features. If you would like to describe images, watermarks, stamps, or any other non-text features, feel free to use the tagging function. Remember, only registered users can add tags.
+Some documents will contain tables. Transcribe these in a way that will make them relatively easy for a reviewer to check over, but don't try to capture the exact layout of the data. The material will go back into the catalog without styling. Don't include notes or descriptions of visual features. If you would like to describe images, watermarks, stamps, or any other non-text features, feel free to use the tagging function. Register for an account if you want to add tags!
     </p>
 </div>
 </div>
