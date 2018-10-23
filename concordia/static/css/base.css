@@ -908,10 +908,6 @@ body.view-transcriptions--asset-detail main,
 
 /* Help Center */
 
-.help-center-overlay {
-    opacity: 0.25;
-    background-color: #000000;
-}
 
 .help-center-card {
     color: #fff;

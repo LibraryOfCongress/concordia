@@ -3,7 +3,7 @@ title: Help Center
 <div class="row my-default">
     <div class="col-sm-12">
         <div class="card bg-dark text-white text center mx-default">
-        <img class="help-center-overlay" src="/static/img/help-center.jpg" alt="Placeholder Help Image">
+        <img src="/static/img/help-center.jpg" alt="Spread of Branch Rickey papers">
           <div class="card-body pxy-default card-img-overlay">
             <h2 class="card-title text-white">Welcome to crowd.loc.gov</h2>
             <h5 class="card-text"> Here you will find a guide to help you get started. </h5>
