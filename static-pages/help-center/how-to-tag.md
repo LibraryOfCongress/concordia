@@ -23,7 +23,7 @@ Sometimes writers use nicknames or code words. If you know or can correctly iden
 </li>
 <li>  Are you interested in documents mentioning cats? Use the “Tag” button to tag all pages that mention cats. Other examples include “Civil War”, “Cooking”, “Sports”. You can apply whatever tags you like. </li>
 <li>  Keep tags as short as you can and use whole words instead of abbreviations. This will make it easier for other people to understand your tags and to reuse them elsewhere in the collection. </li>
-<li> Tagging is an experimental feature. Tags might one day go back into the Library catalog website, but for now they will only be used as a method to explore items within crowd.loc.gov.
+<li> Tagging is an experimental feature. Tags might one day go back into the Library website, but for now they will only be used as a method to explore items within crowd.loc.gov.
 </li>
 </ul>
 </div>
