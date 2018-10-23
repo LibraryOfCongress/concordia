@@ -297,7 +297,7 @@ Resources:
               - Name: CONCORDIA_ENVIRONMENT
                 Value: !Ref FullEnvironmentName
               - Name: S3_BUCKET_NAME
-                Value: concordia-staticpages
+                Value: !Ref S3BucketName
               - Name: CELERY_BROKER_URL
                 Value: pyamqp://guest@localhost:5672
               - Name: AWS_DEFAULT_REGION
