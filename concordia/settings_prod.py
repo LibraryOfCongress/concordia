@@ -37,10 +37,10 @@ else:
     EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 
 
-SENTRY_DSN = os.environ.get("SENTRY_BACKEND_DSN")
+SENTRY_DSN = os.environ.get("SENTRY_BACKEND_DSN", "")
 RAVEN_CONFIG = {"dsn": SENTRY_DSN, "environment": CONCORDIA_ENVIRONMENT}
 
-SENTRY_PUBLIC_DSN = os.environ.get("SENTRY_FRONTEND_DSN")
+SENTRY_PUBLIC_DSN = os.environ.get("SENTRY_FRONTEND_DSN", "")
 
 EMAIL_USE_TLS = True
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
