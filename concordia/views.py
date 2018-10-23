@@ -34,6 +34,7 @@ from django.views.decorators.http import require_POST
 from django.views.decorators.vary import vary_on_headers
 from django.views.generic import DetailView, FormView, ListView, TemplateView
 from django_registration.backends.activation.views import RegistrationView
+from ratelimit.decorators import ratelimit
 
 from concordia.forms import (
     AssetFilteringForm,
@@ -47,10 +48,10 @@ from concordia.models import (
     Campaign,
     Item,
     Project,
+    Tag,
     Transcription,
     TranscriptionStatus,
     UserAssetTagCollection,
-    Tag,
 )
 from concordia.version import get_concordia_version
 
@@ -512,6 +513,11 @@ def validate_anonymous_captcha(view):
     return inner
 
 
+def save_rate(g, r):
+    return None if r.user.is_authenticated else "1/m"
+
+
+@ratelimit(key="ip", rate=save_rate)
 @require_POST
 @validate_anonymous_captcha
 @atomic
@@ -569,6 +575,11 @@ def save_transcription(request, *, asset_pk):
     )
 
 
+def submit_rate(g, r):
+    return None if r.user.is_authenticated else "1/m"
+
+
+@ratelimit(key="ip", rate=submit_rate)
 @require_POST
 @validate_anonymous_captcha
 def submit_transcription(request, *, pk):
@@ -716,7 +727,7 @@ class ContactUsView(FormView):
                 recipient_list=[settings.DEFAULT_TO_EMAIL],
             )
 
-            messages.success(self.request, "Your contact message has been sent...")
+            messages.success(self.request, "Your contact message has been sent.")
         except SMTPException as exc:
             logger.error(
                 "Unable to send contact message to %s: %s",
@@ -805,6 +816,11 @@ class ReportCampaignView(TemplateView):
             project.transcription_statuses
 
 
+def reserve_rate(g, r):
+    return None if r.user.is_authenticated else "12/m"
+
+
+@ratelimit(key="ip", rate=reserve_rate)
 @require_POST
 @never_cache
 def reserve_asset_transcription(request, *, asset_pk):
