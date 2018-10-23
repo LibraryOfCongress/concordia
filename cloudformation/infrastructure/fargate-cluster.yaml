@@ -248,7 +248,9 @@ Resources:
                 Value: pyamqp://guest@localhost:5672
               - Name: AWS_DEFAULT_REGION
                 Value: !Ref AWS::Region
-              - Name: SENTRY_PUBLIC_DSN
+              - Name: SENTRY_BACKEND_DSN
+                Value: http://34db819263f34c28809da045f841f045@sentry-internal.devops.cloud/2
+              - Name: SENTRY_FRONTEND_DSN
                 Value: http://48ec47f15e484502a29879e40ed2e0c3@devops-sentry-public-lb-1114947433.us-east-1.elb.amazonaws.com/3
               - Name: REDIS_ADDRESS
                 Value: !Ref RedisAddress
@@ -302,7 +304,9 @@ Resources:
                 Value: pyamqp://guest@localhost:5672
               - Name: AWS_DEFAULT_REGION
                 Value: !Ref AWS::Region
-              - Name: SENTRY_PUBLIC_DSN
+              - Name: SENTRY_BACKEND_DSN
+                Value: http://34db819263f34c28809da045f841f045@sentry-internal.devops.cloud/2
+              - Name: SENTRY_FRONTEND_DSN
                 Value: http://48ec47f15e484502a29879e40ed2e0c3@devops-sentry-public-lb-1114947433.us-east-1.elb.amazonaws.com/3
               - Name: REDIS_ADDRESS
                 Value: !Ref RedisAddress

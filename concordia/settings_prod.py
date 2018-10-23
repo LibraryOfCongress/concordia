@@ -24,11 +24,6 @@ if os.getenv("AWS"):
 
     DATABASES["default"].update({"PASSWORD": postgres_secret["password"]})
 
-    sentry_secret_json = get_secret("crowd/SentryDSN")
-    sentry_secret = json.loads(sentry_secret_json)
-    SENTRY_DSN = sentry_secret["SentryDSN"]
-    RAVEN_CONFIG = {"dsn": SENTRY_DSN, "environment": CONCORDIA_ENVIRONMENT}
-
     smtp_secret_json = get_secret("concordia/SMTP")
     smtp_secret = json.loads(smtp_secret_json)
     EMAIL_HOST = smtp_secret["Hostname"]
@@ -41,6 +36,11 @@ else:
     EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
     EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 
+
+SENTRY_DSN = os.environ.get("SENTRY_BACKEND_DSN")
+RAVEN_CONFIG = {"dsn": SENTRY_DSN, "environment": CONCORDIA_ENVIRONMENT}
+
+SENTRY_PUBLIC_DSN = os.environ.get("SENTRY_FRONTEND_DSN")
 
 EMAIL_USE_TLS = True
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
