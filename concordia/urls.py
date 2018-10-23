@@ -93,6 +93,7 @@ urlpatterns = [
     ),
     path("assets/<int:asset_pk>/tags/submit/", views.submit_tags, name="submit-tags"),
     path("account/ajax-status/", views.ajax_session_status, name="ajax-session-status"),
+    path("account/ajax-messages/", views.ajax_messages, name="ajax-messages"),
     path(
         "account/register/",
         views.ConcordiaRegistrationView.as_view(),

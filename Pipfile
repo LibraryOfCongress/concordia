@@ -35,6 +35,7 @@ django-robots = "*"
 setuptools-scm = "*"
 django-bittersweet = "*"
 django-ratelimit = "*"
+python-memcached = "*"
 
 [dev-packages]
 invoke = "*"

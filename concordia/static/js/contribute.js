@@ -1,4 +1,4 @@
-/* global $ displayMessage */
+/* global $ displayMessage buildErrorMessage */
 
 function lockControls($container) {
     // Locks all of the controls in the provided jQuery element
@@ -10,17 +10,6 @@ function unlockControls($container) {
     // Locks all of the controls in the provided jQuery element
     $container.find('input, textarea').removeAttr('readonly');
     $container.find('button').removeAttr('disabled');
-}
-
-function buildErrorMessage(jqXHR, textStatus, errorThrown) {
-    /* Construct a nice error message using optional JSON response context */
-    var errMessage;
-    if (jqXHR.responseJSON && jqXHR.responseJSON.error) {
-        errMessage = jqXHR.responseJSON.error;
-    } else {
-        errMessage = textStatus + ' ' + errorThrown;
-    }
-    return errMessage;
 }
 
 var $captchaModal = $('#captcha-modal');
@@ -367,14 +356,12 @@ $tagEditor
     .on('form-submit-failure', function(evt, info) {
         unlockControls($tagEditor);
 
-        var message = 'Unable to save your tags';
-        var jqXHR = info.jqXHR;
-        if (jqXHR.responseJSON) {
-            var error = jqXHR.responseJSON.error;
-            if (error) {
-                message += ': ' + ('join' in error ? error.join(' ') : error);
-            }
-        }
+        var message = 'Unable to save your tags: ';
+        message += buildErrorMessage(
+            info.jqXHR,
+            info.textStatus,
+            info.errorThrown
+        );
 
         displayMessage('error', message, 'tags-save-result');
     });
