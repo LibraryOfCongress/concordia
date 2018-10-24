@@ -21,7 +21,7 @@ Welcome to crowd.loc.gov! Our goal is to make documents word-searchable in the L
 Transcribe what you can into the white box on the right. Transcribe lines in the order they appear and preserve line breaks. This will make the transcriptions useful for researchers. If you see multiple pages, such as an open notebook with two pages, just transcribe the content in the order it appears.
 </li>
 <li>
-Don’t reproduce features such as underlining, bold text, line breaks or indentation in your transcription. Only words will be searchable in these transcriptions--not formatting. See the <a href="how-to-transcribe/">How to transcribe</a> section for more information.
+Don’t reproduce features such as underlining, bold text, line breaks or indentation in your transcription. Only words will be searchable in these transcriptions--not formatting. See the <a href="../how-to-transcribe/">How to transcribe</a> section for more information.
 </li>
 <li>
 Click “Save” as you go to save your work in progress. Always click “Save” before you move from transcribing to tagging or moving to another page.
