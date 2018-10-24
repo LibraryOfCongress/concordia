@@ -38,7 +38,7 @@ else:
 
 
 SENTRY_DSN = os.environ.get("SENTRY_BACKEND_DSN", "")
-RAVEN_CONFIG = {"dsn": SENTRY_DSN, "environment": CONCORDIA_ENVIRONMENT}
+RAVEN_CONFIG.update({"dsn": SENTRY_DSN, "environment": CONCORDIA_ENVIRONMENT})
 
 SENTRY_PUBLIC_DSN = os.environ.get("SENTRY_FRONTEND_DSN", "")
 

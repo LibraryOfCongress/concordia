@@ -13,6 +13,7 @@ def system_configuration(request):
         "CONCORDIA_ENVIRONMENT": settings.CONCORDIA_ENVIRONMENT,
         "S3_BUCKET_NAME": getattr(settings, "S3_BUCKET_NAME", None),
         "APPLICATION_VERSION": get_concordia_version(),
+        "RAVEN_CONFIG": settings.RAVEN_CONFIG,
     }
 
 
