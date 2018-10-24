@@ -1,6 +1,11 @@
 {% extends "base.html" %}
 {% load staticfiles %}
 
+{% block prefetch %}
+    <link href="https://crowd-content.s3.amazonaws.com" rel="preconnect" crossorigin>
+    {{ block.super }}
+{% endblock prefetch %}
+
 {% block title %}Home{% endblock title %}
 
 {% block breadcrumbs-container %}{% endblock breadcrumbs-container %}

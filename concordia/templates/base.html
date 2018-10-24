@@ -13,6 +13,11 @@
     <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,600,700|Roboto+Slab" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/base.css' %}">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.2.0/css/all.css" integrity="sha384-hWVjflwFxL6sNzntih27bfxkr27PmbbK/iSvJ+a4+0owXq79v+lsFkW54bOGbiDQ" crossorigin="anonymous">
+    {% block prefetch %}
+        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link href="https://thelibraryofcongress.tt.omtrdc.net" rel="preconnect" crossorigin>
+        <link href="https://smon.loc.gov" rel="preconnect" crossorigin>
+    {% endblock prefetch %}
     {% block head_content %}{% endblock head_content %}
     {% comment %}
     Adobe's tag manager requires this script to be placed at the top even though it's bad for performance:
