@@ -462,7 +462,7 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         "transcription_status",
     )
     actions = (publish_action, unpublish_action)
-
+    autocomplete_fields = ("item",)
     ordering = ("item__item_id", "sequence")
 
     def get_queryset(self, request):
@@ -481,6 +481,11 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
 
     truncated_media_url.allow_tags = True
     truncated_media_url.short_description = "Media URL"
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj:
+            return self.readonly_fields + ("item",)
+        return self.readonly_fields
 
     def change_view(self, request, object_id, extra_context=None, **kwargs):
         if object_id:
