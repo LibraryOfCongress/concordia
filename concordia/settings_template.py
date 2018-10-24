@@ -3,6 +3,8 @@ import os
 
 from django.contrib import messages
 
+import raven
+
 # Build paths inside the project like this: os.path.join(SITE_ROOT_DIR, ...)
 CONCORDIA_APP_DIR = os.path.abspath(os.path.dirname(__file__))
 SITE_ROOT_DIR = os.path.dirname(CONCORDIA_APP_DIR)
@@ -260,8 +262,11 @@ MESSAGE_TAGS = {messages.ERROR: "danger"}
 SENTRY_DSN = os.environ.get("SENTRY_DSN", "")
 SENTRY_PUBLIC_DSN = os.environ.get("SENTRY_PUBLIC_DSN", "")
 
-if SENTRY_DSN:
-    RAVEN_CONFIG = {"dsn": SENTRY_DSN, "environment": CONCORDIA_ENVIRONMENT}
+RAVEN_CONFIG = {
+    "dsn": SENTRY_DSN,
+    "environment": CONCORDIA_ENVIRONMENT,
+    "release": raven.fetch_git_sha(SITE_ROOT_DIR),
+}
 
 # When the MAINTENANCE_MODE setting is true, this template will be used to
 # generate a 503 response:
