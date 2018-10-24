@@ -12,7 +12,7 @@ title: Have a question? We're here to help!
   <div class="col-sm-4">
     <div class="help-center-card card text center mx-default">
       <div class="card-body pxy-default">
-        <h4 class="card-title"><a target="_blank" href="https://historyhub.history.gov/community/make-your-mark/">Discuss &raquo;</a></h4>
+        <h4 class="card-title"><a target="_blank" href="https://historyhub.history.gov/community/crowd-loc">Discuss &raquo;</a></h4>
         <h5 class="card-text"> Join the conversation on History Hub. We'll take you there in a new tab.</h5>
       </div>
     </div>
