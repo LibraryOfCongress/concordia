@@ -22,6 +22,8 @@ You might guess that Abraham Lincoln Papers include materials written in his own
 ---
 Enabling Discovery of unique treasures at the Library of Congress [Press release](https://www.loc.gov/item/prn-18-134/crowdsourcing-tool-enables-discovery-of-unique-treasures-at-the-library-of-congress/2018-10-24/)
 
+Announcing crowd.loc.gov: [Here we go!](https://blogs.loc.gov/thesignal/2018/10/lets-go-explore-transcribe-and-tag-at-crowd-loc-gov/)
+
 [Connecting crowdsourcing](https://blogs.loc.gov/thesignal/2018/10/new-strategy-new-crowd-new-team/) to the new Library of Congress 2019-2023 Strategic Plan and Digital Strategy
 
 
