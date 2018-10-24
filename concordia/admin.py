@@ -5,8 +5,11 @@ from bittersweet.models import validated_get_or_create
 from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.decorators import permission_required
+from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
+from django.db.models import Count
 from django.shortcuts import get_object_or_404, render
 from django.template.defaultfilters import slugify, truncatechars
 from django.urls import path
@@ -86,6 +89,24 @@ def unpublish_action(modeladmin, request, queryset):
 
 
 unpublish_action.short_description = "Unpublish selected"
+
+
+class ConcordiaUserAdmin(UserAdmin):
+    list_display = UserAdmin.list_display + ("date_joined", "transcription_count")
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        qs = qs.annotate(Count("transcription"))
+        return qs
+
+    def transcription_count(self, obj):
+        return obj.transcription__count
+
+    transcription_count.admin_order_field = "transcription__count"
+
+
+admin.site.unregister(User)
+admin.site.register(User, ConcordiaUserAdmin)
 
 
 @never_cache
@@ -441,7 +462,7 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         "transcription_status",
     )
     actions = (publish_action, unpublish_action)
-
+    autocomplete_fields = ("item",)
     ordering = ("item__item_id", "sequence")
 
     def get_queryset(self, request):
@@ -460,6 +481,11 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
 
     truncated_media_url.allow_tags = True
     truncated_media_url.short_description = "Media URL"
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj:
+            return self.readonly_fields + ("item",)
+        return self.readonly_fields
 
     def change_view(self, request, object_id, extra_context=None, **kwargs):
         if object_id:

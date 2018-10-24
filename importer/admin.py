@@ -83,6 +83,7 @@ class TaskStatusModelAdmin(admin.ModelAdmin):
                 return value
 
         inner.short_description = field_name.replace("_", " ").title()
+        inner.admin_order_field = field_name
         return inner
 
     def __init__(self, *args, **kwargs):
