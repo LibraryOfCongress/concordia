@@ -281,6 +281,9 @@ SITE_ID = 1
 ROBOTS_USE_SITEMAP = False
 ROBOTS_USE_HOST = False
 
+# django-bootstrap4 customization:
+BOOTSTRAP4 = {"required_css_class": "form-group-required"}
+
 # Transcription-related settings
 
 #: Number of seconds an asset reservation is valid for

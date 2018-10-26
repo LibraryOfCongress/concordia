@@ -730,6 +730,14 @@ ul.nav-secondary {
     color: var(--text-color-offwhite) !important;
 }
 
+/* Forms */
+
+.form-group-required label {
+    font-weight: bold;
+}
+
+/* Cards */
+
 .card-body {
     padding: 1rem 0.5rem;
 }
@@ -907,7 +915,6 @@ body.view-transcriptions--asset-detail main,
 }
 
 /* Help Center */
-
 
 .help-center-card {
     color: #fff;
