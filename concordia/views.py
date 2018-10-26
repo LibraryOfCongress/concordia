@@ -720,7 +720,9 @@ class ContactUsView(FormView):
 
         try:
             send_mail(
-                "Contact Us: %(subject)s" % form.cleaned_data,
+                "Contact {}: {}".format(
+                    self.request.get_host(), form.cleaned_data["subject"]
+                ),
                 message=text_message,
                 html_message=html_message,
                 from_email=settings.DEFAULT_FROM_EMAIL,
