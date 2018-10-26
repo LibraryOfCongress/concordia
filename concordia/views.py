@@ -718,6 +718,11 @@ class ContactUsView(FormView):
         html_template = loader.get_template("emails/contact_us_email.html")
         html_message = html_template.render(form.cleaned_data)
 
+        confirmation_template = loader.get_template(
+            "emails/contact_us_confirmation_email.txt"
+        )
+        confirmation_message = confirmation_template.render(form.cleaned_data)
+
         try:
             send_mail(
                 "Contact {}: {}".format(
@@ -741,6 +746,24 @@ class ContactUsView(FormView):
             messages.error(
                 self.request,
                 "Your message could not be sent. Our support team has been notified.",
+            )
+
+        try:
+            send_mail(
+                "Contact {}: {}".format(
+                    self.request.get_host(), form.cleaned_data["subject"]
+                ),
+                message=confirmation_message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[form.cleaned_data['email']],
+            )
+        except SMTPException as exc:
+            logger.error(
+                "Unable to send contact message to %s: %s",
+                form.cleaned_data['email'],
+                exc,
+                exc_info=True,
+                extra={"data": form.cleaned_data},
             )
 
         return redirect("contact")
