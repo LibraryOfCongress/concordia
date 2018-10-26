@@ -34,13 +34,12 @@ LANGUAGE_CODE = "en-us"
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
 ROOT_URLCONF = "concordia.urls"
-STATIC_ROOT = "static"
+STATIC_ROOT = "static-files"
 STATIC_URL = "/static/"
 STATICFILES_DIRS = [
     os.path.join(CONCORDIA_APP_DIR, "static"),
-    os.path.join("/".join(CONCORDIA_APP_DIR.split("/")[:-1]), "concordia/static"),
+    os.path.join(SITE_ROOT_DIR, "static"),
 ]
-STATICFILES_DIRS = [os.path.join(CONCORDIA_APP_DIR, "static")]
 TEMPLATE_DEBUG = False
 TIME_ZONE = "UTC"
 USE_I18N = True
@@ -249,7 +248,7 @@ CAPTCHA_CHALLENGE_FUNCT = "captcha.helpers.random_char_challenge"
 ANONYMOUS_CAPTCHA_VALIDATION_INTERVAL = 86400
 
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
-WHITENOISE_ROOT = STATIC_ROOT
+WHITENOISE_ROOT = os.path.join(SITE_ROOT_DIR, "static")
 
 PASSWORD_RESET_TIMEOUT_DAYS = 1
 ACCOUNT_ACTIVATION_DAYS = 1
