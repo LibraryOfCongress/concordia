@@ -86,9 +86,13 @@ function detectOldIE() {
 }
 
 $(function() {
-    if(detectOldIE()) {
-        displayMessage("danger", "Internet Explorer 11 and older are not fully supported by this website. Please use a different browser such as Chrome or Firefox.")
-    }    
+    if (detectOldIE()) {
+        displayMessage(
+            'danger',
+            'Internet Explorer 11 and older are not fully supported by this website. ' +
+                'Please use a different browser such as Chrome or Firefox.'
+        );
+    }
 });
 
 if (screenfull.enabled) {
