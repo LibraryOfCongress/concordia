@@ -194,7 +194,8 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
 
         # We have 10 total, 6 of which have transcription records and of those
         # 6, 3 have been submitted and one of those was accepted:
-        self.assertEqual(60, response.context["edit_percent"])
+        self.assertEqual(10, response.context["total_asset_count"])
+        self.assertEqual(30, response.context["edit_percent"])
         self.assertEqual(20, response.context["submitted_percent"])
         self.assertEqual(10, response.context["completed_percent"])
 

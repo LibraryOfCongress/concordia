@@ -10,7 +10,7 @@
 </div>
 <div class="row text-center font-weight-light">
     <div class="col-md-4">
-        <small>In progress: {{ edit_percent }}%</small>
+        <small>In progress: {{ edit_percent|add:submitted_percent }}%</small>
     </div>
     <div class="col-md-4">
         <small>Complete: {{ completed_percent }}%</small>

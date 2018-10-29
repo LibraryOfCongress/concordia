@@ -349,7 +349,8 @@ class ItemDetailView(ListView):
     def get_context_data(self, **kwargs):
         res = super().get_context_data(**kwargs)
 
-        asset_count = self.item.asset_set.published().count()
+        asset_qs = self.item.asset_set.published()
+        asset_count = asset_qs.count()
 
         # We'll collect some extra stats for the progress bar. We can reuse the values
         # which are calculated for the transcription status filters but that displays
@@ -363,14 +364,17 @@ class ItemDetailView(ListView):
         )
 
         if asset_count:
-            edit_percent = round(100 * trans_counts["asset"] / asset_count)
             status_counts = self.transcription_status_counts
-            submitted_percent = round(
-                100 * status_counts.get("submitted", 0) / asset_count
-            )
-            completed_percent = round(
-                100 * status_counts.get("completed", 0) / asset_count
-            )
+            edit_count = status_counts.get(TranscriptionStatus.EDIT, 0)
+            submitted_count = status_counts.get(TranscriptionStatus.SUBMITTED, 0)
+            completed_count = status_counts.get(TranscriptionStatus.COMPLETED, 0)
+
+            no_progress_count = asset_qs.filter(transcription=None).count()
+
+            edit_percent = round(100 * ((edit_count - no_progress_count) / asset_count))
+            submitted_percent = round(100 * (submitted_count / asset_count))
+            completed_percent = round(100 * (completed_count / asset_count))
+
         else:
             edit_percent = 0
             submitted_percent = 0
