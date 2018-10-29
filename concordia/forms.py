@@ -44,7 +44,7 @@ class ContactUsForm(forms.Form):
     )
 
     email = forms.EmailField(label="Your email:", required=True)
-    subject = forms.CharField(label="Subject:", required=False)
+    subject = forms.CharField(label="Subject:", required=True)
 
     link = forms.URLField(
         label="Have a specific page you need help with? Add the link below:",

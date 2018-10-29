@@ -8,8 +8,10 @@
         <div class="col-md-10 mx-auto">
             <h1 class="text-center">Contact Us</h1>
             <div class="col-md-7 mx-auto">
-                <p><b>Found something you want to discuss with other volunteers and Community Managers?</b>
-                    <a href="https://historyhub.history.gov/community/crowd-loc">Join the conversation on History Hub.</a></p>
+                <p>
+                    <b>Found something you want to discuss with other volunteers and Community Managers?</b>
+                    <a href="https://historyhub.history.gov/community/crowd-loc">Join the conversation on History Hub.</a>
+                </p>
                 <p>Experiencing a technical issue? Send us a message using the form below.</p>
             </div>
             <form method="post" action="{% url 'contact' %}" id="contact-form" class="col-10 mx-auto">
@@ -19,7 +21,7 @@
 
                 {% buttons %}
                     <button type="submit" class="btn btn-primary">
-                        Save
+                        Send Message
                     </button>
                 {% endbuttons %}
             </form>
@@ -27,3 +29,12 @@
     </div>
 </div>
 {% endblock main_content %}
+
+{% block body_scripts %}
+<script>
+    var $contactForm = $("#contact-form");
+    $contactForm.on("submit", function () {
+        $contactForm.addClass("was-validated");
+    });
+</script>
+{% endblock body_scripts %}
