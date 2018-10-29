@@ -68,6 +68,29 @@ function displayMessage(level, message, uniqueId) {
     $messages.append($newMessage);
 }
 
+function detectOldIE() {
+    /* 
+        Returns true if user is running IE 11 or older. 
+        Returns false if user is running Edge or non-IE browser.
+    */
+
+    var ua = window.navigator.userAgent;
+    var msie = ua.indexOf('MSIE ');
+    var trident = ua.indexOf('Trident/');
+
+    if (msie > 0 || trident > 0) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+$(function() {
+    if(detectOldIE()) {
+        displayMessage("danger", "Internet Explorer 11 and older are not fully supported by this website. Please use a different browser such as Chrome or Firefox.")
+    }    
+});
+
 if (screenfull.enabled) {
     $('#go-fullscreen')
         .removeAttr('hidden')
