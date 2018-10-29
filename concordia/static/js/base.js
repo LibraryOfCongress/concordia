@@ -38,9 +38,9 @@ function buildErrorMessage(jqXHR, textStatus, errorThrown) {
     return errMessage;
 }
 
-function displayMessage(level, message, uniqueId) {
+function displayTextMessage(level, message, uniqueId) {
     /*
-        Display a dismissable message at a level which will match one of the
+        Display a plain text dismissable message at a level which will match one of the
         Bootstrap alert classes
         (https://getbootstrap.com/docs/4.1/components/alerts/)
 
@@ -68,6 +68,44 @@ function displayMessage(level, message, uniqueId) {
     $messages.append($newMessage);
 }
 
+function displayHTMLMessage(level, message, uniqueId) {
+    /*
+        Display an HTML dismissable message at a level which will match one of the
+        Bootstrap alert classes
+        (https://getbootstrap.com/docs/4.1/components/alerts/)
+
+        If provided, uniqueId will be used to remove any existing elements which
+        have that ID, allowing old messages to be replaced automatically.
+    */
+    var $messages = $('#messages');
+    $messages.removeAttr('hidden');
+
+    var $newMessage = $messages
+        .find('#message-template .alert')
+        .clone()
+        .removeAttr('hidden')
+        .removeAttr('id');
+
+    $newMessage.addClass('alert-' + level);
+
+    if (uniqueId) {
+        $('#' + uniqueId).remove();
+        $newMessage.attr('id', uniqueId);
+    }
+
+    $newMessage.prepend(message);
+
+    $messages.append($newMessage);
+}
+
+function displayMessage(level, message, uniqueId, isText = true) {
+    if (isText) {
+        displayTextMessage(level, message, uniqueId);
+    } else {
+        displayHTMLMessage(level, message, uniqueId);
+    }
+}
+
 function isOutdatedBrowser() {
     if (typeof CSS == 'undefined' || !CSS.supports) {
         return true;
@@ -77,13 +115,14 @@ function isOutdatedBrowser() {
 
 $(function() {
     if (isOutdatedBrowser()) {
-        displayMessage(
-            'danger',
+        theMessage =
             'You are using an outdated browser. This website fully supports the current ' +
-                'version of every major browser ' +
-                '(Microsoft Edge, Google Chrome, Mozilla Firefox, and Apple Safari). See ' +
-                ' our browser support policy in the Help Center for more information.'
-        );
+            'version of every major browser ' +
+            '(Microsoft Edge, Google Chrome, Mozilla Firefox, and Apple Safari). See ' +
+            'our <a href="/help-center/">browser support policy</a> in the Help Center ' +
+            'for more information.';
+
+        displayHTMLMessage('danger', theMessage);
     }
 });
 
