@@ -41,7 +41,7 @@ STATICFILES_DIRS = [
     os.path.join(SITE_ROOT_DIR, "static"),
 ]
 TEMPLATE_DEBUG = False
-TIME_ZONE = "UTC"
+TIME_ZONE = "US" # aka America/New_York
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
