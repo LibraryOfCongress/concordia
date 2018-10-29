@@ -83,11 +83,6 @@ INSTALLED_APPS = [
     "robots",
 ]
 
-if DEBUG:
-    INSTALLED_APPS += ["django_extensions"]
-    INSTALLED_APPS += ["kombu.transport"]
-
-
 MIDDLEWARE = [
     "django_prometheus_metrics.middleware.PrometheusBeforeMiddleware",
     "django.middleware.security.SecurityMiddleware",
