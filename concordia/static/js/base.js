@@ -68,29 +68,21 @@ function displayMessage(level, message, uniqueId) {
     $messages.append($newMessage);
 }
 
-function detectOldIE() {
-    /* 
-        Returns true if user is running IE 11 or older. 
-        Returns false if user is running Edge or non-IE browser.
-    */
-
-    var ua = window.navigator.userAgent;
-    var msie = ua.indexOf('MSIE ');
-    var trident = ua.indexOf('Trident/');
-
-    if (msie > 0 || trident > 0) {
+function isOutdatedBrowser() {
+    if (typeof CSS == 'undefined' || !CSS.supports) {
         return true;
-    } else {
-        return false;
     }
+    return !CSS.supports('display: flex');
 }
 
 $(function() {
-    if (detectOldIE()) {
+    if (isOutdatedBrowser()) {
         displayMessage(
             'danger',
-            'Internet Explorer 11 and older are not fully supported by this website. ' +
-                'Please use a different browser such as Chrome or Firefox.'
+            'You are using an outdated browser. This website fully supports the current ' +
+                'version of every major browser ' +
+                '(Microsoft Edge, Google Chrome, Mozilla Firefox, and Apple Safari). See ' +
+                ' our browser support policy in the Help Center for more information.'
         );
     }
 });
