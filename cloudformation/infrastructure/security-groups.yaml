@@ -55,6 +55,8 @@ Resources:
             Tags:
                 - Key: Name
                   Value: !Sub ${EnvironmentName}-LoadBalancers
+                - Key: AllowCloudFlareIngress
+                  Value: true
 
     DatabaseSecurityGroup:
         Type: AWS::EC2::SecurityGroup
