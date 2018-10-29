@@ -15,7 +15,7 @@ title: How to transcribe
 We transcribe to improve search functionality. Our goal is to make documents word-searchable in the Library of Congress catalog, which means typing transcriptions that can be read by that computer system, as well as by humans. Most handwriting and some typed text cannot be automatically and accurately translated into machine-readable text using current technologies -- that’s why we need your help!
 </p>
 <p>
-We ask you to transcribe a document roughly as it appears on the page, but without much styling. We are not trying to recreate the appearance of the words on the original pages. The completed transcripts will be viewable beside the original images in the catalog, ensuring the physical layout of the page will always be available to readers.
+We ask you to transcribe a document roughly as it appears on the page. Preserve line breaks, except in cases where words are broken over two lines. Our main goal is to capture all of the words on these pages, so broken words are not helpful for search. Using line breaks to roughly capture the layout of the page helps reviewers (other volunteers) check transcriptions. These will be viewable beside the original images in the catalog, so anyone who is interested in the physical layout of the original document will be able to see it.
 </p>
 
 <h3>All in order:</h3>
@@ -39,7 +39,7 @@ When text has been inserted or added later, but should be read as part of a sent
 <h3>
 Line-breaks:</h3>
 <p>
-Do not reproduce words broken between two lines. Write library rather than li-brary, kitten rather than kit-ten.
+Do not reproduce words broken between two lines. Write library rather than li-brary, kitten rather than kit-ten. Otherwise hit "enter" or "return" at the end of a line, to roughly mirror the layout of the original document. This will help reviewers in crowd.loc.gov to easily compare your transcription with the image.
 </p>
 <h3>
 Emphasis:
