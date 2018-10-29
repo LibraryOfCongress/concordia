@@ -109,14 +109,18 @@ var $nothingToTranscribeCheckbox = $transcriptionEditor
     .find('#nothing-to-transcribe')
     .on('change', function() {
         var $textarea = $transcriptionEditor.find('textarea');
-        if (this.checked && $textarea.val()) {
-            if (
-                confirm(
-                    'You currently have entered text which will not be saved because “Nothing to transcribe” is checked. Do you want to discard that text?'
-                )
-            ) {
-                $textarea.val('');
-            } else {
+        if (this.checked) {
+            if ($textarea.val()) {
+                if (
+                    confirm(
+                        'You currently have entered text which will not be saved because “Nothing to transcribe” is checked. Do you want to discard that text?'
+                    )
+                ) {
+                    $textarea.val('');
+                } else {
+                    this.checked = false;
+                }
+            } else if (!confirm('Are you sure?')) {
                 this.checked = false;
             }
         }
