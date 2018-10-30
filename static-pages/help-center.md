@@ -45,7 +45,7 @@ title: Help Center
   <div class="card">
     <div class="card-header" id="whatIsCrowd">
       <h5 class="mb-0">
-        <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#whatIsCrowdCollapse" aria-expanded="true" aria-controls="whatIsCrowdCollapse">
+        <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#whatIsCrowdCollapse" aria-expanded="false" aria-controls="whatIsCrowdCollapse">
           What is crowd.loc.gov and what is crowdsourcing?
         </button>
       </h5>
