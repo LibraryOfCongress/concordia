@@ -807,9 +807,8 @@ class ReportCampaignView(TemplateView):
             tag_count=Count("item__asset__userassettagcollection__tags", distinct=True)
         )
         projects_qs = projects_qs.annotate(
-            contributor_count=Count(
-                "item__asset__userassettagcollection__user", distinct=True
-            )
+            transcriber_count=Count("item__asset__transcription__user", distinct=True),
+            reviewer_count=Count("item__asset__transcription__reviewed_by", distinct=True)
         )
 
         paginator = Paginator(projects_qs, ASSETS_PER_PAGE)
