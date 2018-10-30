@@ -14,18 +14,13 @@
     <div class="row">
         <div class="col-md-9">
             <h1>{{ campaign.title }}</h1>
+            <p class="hero-text">{{ campaign.description }}</p>
         </div>
         <div class="col-md-3">
             {% include "fragments/transcription-progress-bar.html" %}
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-9">
-            <p class="hero-text">{{ campaign.description }}</p>
-        </div>
-        <div class="col-3">
+
             {% if campaign.resource_set.all|length %}
-                <div class="related-links mb-3">
+                <div class="related-links mb-3 p-1 p-sm-2 p-lg-3">
                     <h4>Related Links</h4>
                     <div class="list-group">
                         {% for resource in campaign.resource_set.all %}
