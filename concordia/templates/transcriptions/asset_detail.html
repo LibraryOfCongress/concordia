@@ -75,11 +75,11 @@
         </nav>
     </div>
     <div id="contribute-container" class="row flex-grow-1 pb-2">
-        <div class="col-6 pl-0">
+        <div id="viewer-column" class="pl-0">
             <div id="asset-image" class="h-100 bg-dark"></div>
         </div>
 
-        <div class="col-6 d-flex flex-column flex-nowrap justify-content-between">
+        <div id="editor-column" class="d-flex flex-column flex-nowrap justify-content-between">
             <div class="flex-grow-1 d-flex flex-column">
                 <div class="tx-status-display">
                     <span class="tx-submitted" {% if transcription_status != 'submitted' %}hidden{% endif %}>
@@ -324,10 +324,11 @@
 {% endblock main_content %}
 
 {% block body_scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/split.js/1.5.7/split.min.js" integrity="sha256-5yDKs5ugoDk4mCCvU/PO5w9hf69jESN2hzbEuMCq0hk=" crossorigin="anonymous"></script>
 <script src="{% static 'vendor/openseadragon/openseadragon.min.js' %}"></script>
 <script src="{% static 'js/contribute.js' %}"></script>
 <script src="{% static 'js/asset-reservation.js' %}"></script>
-<script type="text/javascript">
+<script>
     var viewer = OpenSeadragon({
         id: 'asset-image',
         prefixUrl: '{% static "vendor/openseadragon/images/" %}',
@@ -340,6 +341,20 @@
             pinchRotate: true
         }
     });
+</script>
+
+<script>
+    Split(['#viewer-column', '#editor-column'], {
+        sizes: [50, 50],
+        minSize: 300,
+        gutterSize: 8,
+        elementStyle: (dimension, size, gutterSize) => ({
+            'flex-basis': `calc(${size}% - ${gutterSize}px)`,
+        }),
+        gutterStyle: (dimension, gutterSize) => ({
+            'flex-basis':  `${gutterSize}px`,
+        }),
+    })
 </script>
 
 {% if transcription_status == "edit" %}

@@ -900,6 +900,11 @@ body.view-transcriptions--asset-detail main,
     border: solid var(--control-bg-default) 1px;
 }
 
+.gutter.gutter-horizontal {
+    cursor: ew-resize;
+    background-color: var(--control-bg-default);
+}
+
 #transcription-editor textarea {
     resize: none;
 }
