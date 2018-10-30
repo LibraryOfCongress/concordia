@@ -85,7 +85,7 @@ $(function() {
             'You are using an outdated browser. This website fully supports the current ' +
             'version of every major browser ' +
             '(Microsoft Edge, Google Chrome, Mozilla Firefox, and Apple Safari). See ' +
-            'our <a href="/help-center/#headingTwelve">browser support policy</a> ' +
+            'our <a href="/help-center/#browserSupport">browser support policy</a> ' +
             'for more information.';
 
         displayHtmlMessage('danger', theMessage);
