@@ -282,9 +282,6 @@ class ProjectDetailView(ListView):
 
         item_qs = self.project.item_set.published().order_by("item_id")
 
-        if not self.request.user.is_staff:
-            item_qs = item_qs.exclude(published=False)
-
         return item_qs
 
     def get_context_data(self, **kws):
