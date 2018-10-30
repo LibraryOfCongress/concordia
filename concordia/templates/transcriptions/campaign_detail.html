@@ -12,8 +12,11 @@
 {% block main_content %}
 <div class="container-fluid py-default">
     <div class="row">
-        <div class="col-12">
+        <div class="col-md-9">
             <h1>{{ campaign.title }}</h1>
+        </div>
+        <div class="col-md-3">
+            {% include "fragments/transcription-progress-bar.html" %}
         </div>
     </div>
     <div class="row">

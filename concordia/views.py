@@ -266,6 +266,44 @@ class CampaignDetailView(DetailView):
     queryset = Campaign.objects.published().order_by("title")
     context_object_name = "campaign"
 
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+
+        campaign_assets = Asset.objects.filter(
+            item__project__campaign=self.object,
+            item__project__published=True,
+            item__published=True,
+            published=True,
+        )
+        asset_count = campaign_assets.count()
+
+        trans_qs = Transcription.objects.filter(asset__in=campaign_assets)
+        ctx["contributor_count"] = User.objects.filter(
+            Q(transcription__in=trans_qs) | Q(transcription_reviewers__in=trans_qs)
+        ).distinct().count()
+
+        asset_state_qs = campaign_assets.values_list("transcription_status")
+        asset_state_qs = asset_state_qs.annotate(
+            Count("transcription_status")
+        ).order_by()
+        state_counts = dict(asset_state_qs)
+
+        if "edit" in state_counts:
+            # Correct semantic difference between our normal “open for edit”
+            # including assets with no progress at all:
+            state_counts["edit"] -= campaign_assets.filter(transcription=None).count()
+
+        for state in TranscriptionStatus.CHOICE_MAP.keys():
+            value = state_counts.get(state, 0)
+            if value:
+                pct = round(100 * (value / asset_count))
+            else:
+                pct = 0
+
+            ctx[f"{state}_percent"] = pct
+
+        return ctx
+
 
 @method_decorator(default_cache_control, name="dispatch")
 class ProjectDetailView(ListView):
