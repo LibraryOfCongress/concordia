@@ -40,7 +40,7 @@ tx_urlpatterns = (
         ),
         path(
             "<slug:campaign_slug>/<slug:slug>/",
-            views.ConcordiaProjectView.as_view(),
+            views.ProjectDetailView.as_view(),
             name="project-detail",
         ),
         path(

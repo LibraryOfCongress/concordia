@@ -45,25 +45,7 @@
             </div>
         </form>
         <div class="col-md-4 mx-auto">
-            <div class="progress" style="height: 2rem">
-                <div title="In Progress" class="progress-bar progress-bar-striped progress-bar-animated bg-warning" role="progressbar" style="width: {{ edit_percent }}%" aria-valuenow="{{ edit_percent }}" aria-valuemin="0" aria-valuemax="100">
-                </div>
-                <div title="Submitted for Review" class="progress-bar bg-info" role="progressbar" style="width: {{ submitted_percent }}%" aria-valuenow="{{ submitted_percent }}" aria-valuemin="0" aria-valuemax="100">
-                </div>
-                <div title="Completed" class="progress-bar bg-success" role="progressbar" style="width: {{ completed_percent }}%" aria-valuenow="{{ completed_percent }}" aria-valuemin="0" aria-valuemax="100">
-                </div>
-            </div>
-            <div class="row text-center font-weight-light">
-                <div class="col-md-4">
-                    <small>In progress: {{ edit_percent }}%</small>
-                </div>
-                <div class="col-md-4">
-                    <small>Complete: {{ completed_percent }}%</small>
-                </div>
-                <div class="col-md-4">
-                    <small>Contributors: {{ contributor_count|intcomma }}</small>
-                </div>
-            </div>
+            {% include "fragments/transcription-progress-bar.html" %}
         </div>
     </div>
     <div class="card-deck justify-content-center">
@@ -97,7 +79,7 @@
         {% endfor %}
     </div>
     <div class="row">
-        {% include "standard-pagination.html" %}
+        {% include "fragments/standard-pagination.html" %}
     </div>
 </div>
 {% endblock main_content %}

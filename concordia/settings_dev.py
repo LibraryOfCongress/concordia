@@ -51,4 +51,10 @@ INSTALLED_APPS += ["debug_toolbar"]
 MIDDLEWARE += ["debug_toolbar.middleware.DebugToolbarMiddleware"]
 INTERNAL_IPS = ("127.0.0.1",)
 
+INSTALLED_APPS += ("django_extensions",)
+SHELL_PLUS_PRE_IMPORTS = [
+    ("concordia.views", "get_anonymous_user"),
+    ("concordia.models", "TranscriptionStatus"),
+]
+
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"

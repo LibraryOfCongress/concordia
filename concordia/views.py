@@ -259,6 +259,37 @@ class CampaignListView(ListView):
     context_object_name = "campaigns"
 
 
+def calculate_asset_stats(asset_qs, ctx):
+    asset_count = asset_qs.count()
+
+    trans_qs = Transcription.objects.filter(asset__in=asset_qs)
+    ctx["contributor_count"] = (
+        User.objects.filter(
+            Q(transcription__in=trans_qs) | Q(transcription_reviewers__in=trans_qs)
+        )
+        .distinct()
+        .count()
+    )
+
+    asset_state_qs = asset_qs.values_list("transcription_status")
+    asset_state_qs = asset_state_qs.annotate(Count("transcription_status")).order_by()
+    state_counts = dict(asset_state_qs)
+
+    if "edit" in state_counts:
+        # Correct semantic difference between our normal “open for edit”
+        # including assets with no progress at all:
+        state_counts["edit"] -= asset_qs.filter(transcription=None).count()
+
+    for state in TranscriptionStatus.CHOICE_MAP.keys():
+        value = state_counts.get(state, 0)
+        if value:
+            pct = round(100 * (value / asset_count))
+        else:
+            pct = 0
+
+        ctx[f"{state}_percent"] = pct
+
+
 @method_decorator(default_cache_control, name="dispatch")
 class CampaignDetailView(DetailView):
     template_name = "transcriptions/campaign_detail.html"
@@ -266,10 +297,24 @@ class CampaignDetailView(DetailView):
     queryset = Campaign.objects.published().order_by("title")
     context_object_name = "campaign"
 
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+
+        campaign_assets = Asset.objects.filter(
+            item__project__campaign=self.object,
+            item__project__published=True,
+            item__published=True,
+            published=True,
+        )
+
+        calculate_asset_stats(campaign_assets, ctx)
+
+        return ctx
+
 
 @method_decorator(default_cache_control, name="dispatch")
-class ConcordiaProjectView(ListView):
-    template_name = "transcriptions/project.html"
+class ProjectDetailView(ListView):
+    template_name = "transcriptions/project_detail.html"
     context_object_name = "items"
     paginate_by = 10
 
@@ -282,17 +327,20 @@ class ConcordiaProjectView(ListView):
 
         item_qs = self.project.item_set.published().order_by("item_id")
 
-        if not self.request.user.is_staff:
-            item_qs = item_qs.exclude(published=False)
-
         return item_qs
 
     def get_context_data(self, **kws):
-        return dict(
-            super().get_context_data(**kws),
-            campaign=self.project.campaign,
-            project=self.project,
+        ctx = super().get_context_data(**kws)
+        ctx["project"] = project = self.project
+        ctx["campaign"] = project.campaign
+
+        project_assets = Asset.objects.filter(
+            item__project=project, published=True, item__published=True
         )
+
+        calculate_asset_stats(project_assets, ctx)
+
+        return ctx
 
 
 @method_decorator(default_cache_control, name="dispatch")
@@ -347,50 +395,23 @@ class ItemDetailView(ListView):
         return asset_qs
 
     def get_context_data(self, **kwargs):
-        res = super().get_context_data(**kwargs)
+        ctx = super().get_context_data(**kwargs)
 
-        asset_count = self.item.asset_set.published().count()
-
-        # We'll collect some extra stats for the progress bar. We can reuse the values
-        # which are calculated for the transcription status filters but that displays
-        # items as open for edit whether or not anyone has started transcribing them.
-        # For the progress bar, we'll only count the records which have at least one
-        # transcription, no matter how far along it is, so we need to make a separate
-        # query to get the number of transcriptions along with unique users:
-
-        trans_counts = Transcription.objects.filter(asset__item=self.item).aggregate(
-            user=Count("user", distinct=True), asset=Count("asset", distinct=True)
-        )
-
-        if asset_count:
-            edit_percent = round(100 * trans_counts["asset"] / asset_count)
-            status_counts = self.transcription_status_counts
-            submitted_percent = round(
-                100 * status_counts.get("submitted", 0) / asset_count
-            )
-            completed_percent = round(
-                100 * status_counts.get("completed", 0) / asset_count
-            )
-        else:
-            edit_percent = 0
-            submitted_percent = 0
-            completed_percent = 0
-
-        res.update(
+        ctx.update(
             {
                 "campaign": self.item.project.campaign,
                 "project": self.item.project,
                 "item": self.item,
                 "filter_form": self.filter_form,
                 "transcription_status_counts": self.transcription_status_counts,
-                "contributor_count": trans_counts["user"],
-                "total_asset_count": asset_count,
-                "edit_percent": edit_percent,
-                "submitted_percent": submitted_percent,
-                "completed_percent": completed_percent,
             }
         )
-        return res
+
+        item_assets = self.item.asset_set.published()
+
+        calculate_asset_stats(item_assets, ctx)
+
+        return ctx
 
 
 @method_decorator(never_cache, name="dispatch")
