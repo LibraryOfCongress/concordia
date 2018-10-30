@@ -241,7 +241,7 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, template_name="transcriptions/project.html")
+        self.assertTemplateUsed(response, template_name="transcriptions/project_detail.html")
 
     def test_campaign_report(self):
         """

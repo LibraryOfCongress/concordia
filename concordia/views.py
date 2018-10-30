@@ -268,8 +268,8 @@ class CampaignDetailView(DetailView):
 
 
 @method_decorator(default_cache_control, name="dispatch")
-class ConcordiaProjectView(ListView):
-    template_name = "transcriptions/project.html"
+class ProjectDetailView(ListView):
+    template_name = "transcriptions/project_detail.html"
     context_object_name = "items"
     paginate_by = 10
 
