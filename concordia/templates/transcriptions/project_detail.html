@@ -19,9 +19,12 @@
 {% block main_content %}
 <div class="container py-default">
     <div class="row">
-        <div class="col-12">
+        <div class="col-md-9">
             <h1 class="m-3">{{ project.title }}</h1>
             <p class="m-3 hero-text">{{ project.description }}</p>
+        </div>
+        <div class="col-md-3">
+            {% include "fragments/transcription-progress-bar.html" %}
         </div>
     </div>
     <div class="row">
