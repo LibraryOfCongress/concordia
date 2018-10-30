@@ -755,12 +755,12 @@ class ContactUsView(FormView):
                 ),
                 message=confirmation_message,
                 from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[form.cleaned_data['email']],
+                recipient_list=[form.cleaned_data["email"]],
             )
         except SMTPException as exc:
             logger.error(
                 "Unable to send contact message to %s: %s",
-                form.cleaned_data['email'],
+                form.cleaned_data["email"],
                 exc,
                 exc_info=True,
                 extra={"data": form.cleaned_data},
