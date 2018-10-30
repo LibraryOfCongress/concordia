@@ -38,7 +38,7 @@ function buildErrorMessage(jqXHR, textStatus, errorThrown) {
     return errMessage;
 }
 
-function displayMessage(level, message, uniqueId, isText = true) {
+function displayHtmlMessage(level, message, uniqueId) {
     /*
         Display a dismissable message at a level which will match one of the
         Bootstrap alert classes
@@ -63,13 +63,13 @@ function displayMessage(level, message, uniqueId, isText = true) {
         $newMessage.attr('id', uniqueId);
     }
 
-    if (isText == true) {
-        $newMessage.prepend(document.createTextNode(message));
-    } else {
-        $newMessage.prepend(message);
-    }
+    $newMessage.prepend(message);
 
     $messages.append($newMessage);
+}
+
+function displayMessage(level, message, uniqueId) {
+    displayHtmlMessage(level, document.createTextNode(message), uniqueId);
 }
 
 function isOutdatedBrowser() {
@@ -88,7 +88,7 @@ $(function() {
             'our <a href="/help-center/#headingTwelve">browser support policy</a> ' +
             'for more information.';
 
-        displayMessage('danger', theMessage, false, false);
+        displayHtmlMessage('danger', theMessage);
     }
 });
 
