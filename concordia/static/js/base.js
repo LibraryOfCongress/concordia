@@ -38,7 +38,7 @@ function buildErrorMessage(jqXHR, textStatus, errorThrown) {
     return errMessage;
 }
 
-function displayMessage(level, message, uniqueId) {
+function displayHtmlMessage(level, message, uniqueId) {
     /*
         Display a dismissable message at a level which will match one of the
         Bootstrap alert classes
@@ -63,10 +63,34 @@ function displayMessage(level, message, uniqueId) {
         $newMessage.attr('id', uniqueId);
     }
 
-    $newMessage.prepend(document.createTextNode(message));
+    $newMessage.prepend(message);
 
     $messages.append($newMessage);
 }
+
+function displayMessage(level, message, uniqueId) {
+    displayHtmlMessage(level, document.createTextNode(message), uniqueId);
+}
+
+function isOutdatedBrowser() {
+    if (typeof CSS == 'undefined' || !CSS.supports) {
+        return true;
+    }
+    return !CSS.supports('display: flex');
+}
+
+$(function() {
+    if (isOutdatedBrowser()) {
+        theMessage =
+            'You are using an outdated browser. This website fully supports the current ' +
+            'version of every major browser ' +
+            '(Microsoft Edge, Google Chrome, Mozilla Firefox, and Apple Safari). See ' +
+            'our <a href="/help-center/#headingTwelve">browser support policy</a> ' +
+            'for more information.';
+
+        displayHtmlMessage('danger', theMessage);
+    }
+});
 
 if (screenfull.enabled) {
     $('#go-fullscreen')
