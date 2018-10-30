@@ -1,6 +1,6 @@
 {% load humanize %}
 
-<div class="progress" style="height: 2rem">
+<div id="progress-bar" class="progress">
     <div title="Completed" class="progress-bar bg-success" role="progressbar" style="width: {{ completed_percent }}%" aria-valuenow="{{ completed_percent }}" aria-valuemin="0" aria-valuemax="100">
     </div>
     <div title="Submitted for Review" class="progress-bar bg-info" role="progressbar" style="width: {{ submitted_percent }}%" aria-valuenow="{{ submitted_percent }}" aria-valuemin="0" aria-valuemax="100">
@@ -8,14 +8,21 @@
     <div title="In Progress" class="progress-bar progress-bar-striped progress-bar-animated bg-warning" role="progressbar" style="width: {{ edit_percent }}%" aria-valuenow="{{ edit_percent }}" aria-valuemin="0" aria-valuemax="100">
     </div>
 </div>
-<div class="row text-center font-weight-light">
-    <div class="col-md-4">
-        <small>Complete: {{ completed_percent }}%</small>
-    </div>
-    <div class="col-md-4">
-        <small>In progress: {{ edit_percent|add:submitted_percent }}%</small>
-    </div>
-    <div class="col-md-4">
-        <small>Contributors: {{ contributor_count|intcomma }}</small>
-    </div>
+<div class="table-responsive-md">
+    <table id="progress-stats" class="table table-sm font-weight-light">
+        <tr>
+            <th class="text-nowrap">Complete:</th>
+            <td class="text-right">{{ completed_percent }}%</td>
+        </tr>
+        <tr>
+            <th class="text-nowrap">In progress:</th>
+            <td class="text-right">
+                {{ edit_percent|add:submitted_percent }}%
+            </td>
+        </tr>
+        <tr>
+            <th class="text-nowrap">Contributors:</th>
+            <td class="text-right">{{ contributor_count|intcomma }}</td>
+        <tr>
+    </table>
 </div>

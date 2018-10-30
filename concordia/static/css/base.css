@@ -857,6 +857,23 @@ ul.nav-secondary {
 }
 
 /*
+ * Progress displays
+ */
+
+#progress-bar {
+    height: 2rem;
+}
+
+#progress-stats {
+    font-size: smaller;
+}
+
+#progress-stats th {
+    font-size: inherit;
+    font-weight: inherit;
+}
+
+/*
  * Homepage customizations
  */
 
