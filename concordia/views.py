@@ -20,7 +20,7 @@ from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
 from django.db import connection
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.db.transaction import atomic
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import Http404, get_object_or_404, redirect, render
@@ -755,12 +755,12 @@ class ContactUsView(FormView):
                 ),
                 message=confirmation_message,
                 from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[form.cleaned_data['email']],
+                recipient_list=[form.cleaned_data["email"]],
             )
         except SMTPException as exc:
             logger.error(
                 "Unable to send contact message to %s: %s",
-                form.cleaned_data['email'],
+                form.cleaned_data["email"],
                 exc,
                 exc_info=True,
                 extra={"data": form.cleaned_data},
@@ -797,7 +797,12 @@ class ReportCampaignView(TemplateView):
 
         projects_qs = campaign.project_set.published().order_by("title")
 
-        projects_qs = projects_qs.annotate(asset_count=Count("item__asset"))
+        projects_qs = projects_qs.annotate(
+            asset_count=Count(
+                "item__asset",
+                filter=Q(item__published=True, item__asset__published=True),
+            )
+        )
         projects_qs = projects_qs.annotate(
             tag_count=Count("item__asset__userassettagcollection__tags", distinct=True)
         )
@@ -820,7 +825,9 @@ class ReportCampaignView(TemplateView):
         return render(self.request, self.template_name, ctx)
 
     def add_transcription_status_summary_to_projects(self, projects):
-        status_qs = Asset.objects.filter(item__project__in=projects)
+        status_qs = Asset.objects.filter(
+            item__published=True, item__project__in=projects, published=True
+        )
         status_qs = status_qs.values_list("item__project__id", "transcription_status")
         status_qs = status_qs.annotate(Count("transcription_status"))
         project_statuses = {}
