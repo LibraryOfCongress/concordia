@@ -1,6 +1,6 @@
 Description: >
     This template deploys a fargate cluster to the provided VPC and subnets
-    
+
 Parameters:
 
     EnvironmentName:
@@ -18,7 +18,7 @@ Parameters:
     SecurityGroup:
         Description: Select the Security Group to use for the ECS cluster hosts
         Type: AWS::EC2::SecurityGroup::Id
-    
+
     LoadBalancerSecurityGroup:
         Description: The SecurityGroup for load balancer
         Type: AWS::EC2::SecurityGroup::Id
@@ -30,13 +30,13 @@ Parameters:
     ConcordiaVersion:
         Type: String
         Description: version of concordia, concordia/importer, and rabbitmq docker images to pull and deploy
-        Default: latest        
+        Default: latest
 
     EnvName:
         Type: String
         Description: which environment to target
         AllowedValues:
-            - 'dev'  
+            - 'dev'
             - 'test'
             - 'stage'
             - 'prod'
@@ -58,19 +58,19 @@ Parameters:
     RedisPort:
         Type: String
         Description: Redis endpoint port
-  
+
     MemcachedAddress:
         Type: String
         Description: memcached endpoint address
-  
+
     MemcachedPort:
         Type: String
         Description: memcached endpoint port
-      
+
     CanonicalHostName:
         Type: String
         Description: canonical host name of the application, e.g. crowd-test.loc.gov
-    
+
     DatabaseEndpoint:
         Type: String
         Description: Host name of the Postgres RDS service
@@ -92,7 +92,7 @@ Resources:
           Version: '2012-10-17'
           Statement:
             - Effect: Allow
-              Action: 
+              Action:
               - 'secretsmanager:GetResourcePolicy'
               - 'secretsmanager:GetSecretValue'
               - 'secretsmanager:DescribeSecret'
@@ -109,7 +109,7 @@ Resources:
               - 's3:AbortMultipartUpload'
               - 's3:ListMultipartUploadParts'
               - 's3:ListBucket'
-              - 's3:ListBucketMultipartUploads'              
+              - 's3:ListBucketMultipartUploads'
               Resource:
                 - "*"
 
@@ -127,14 +127,14 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
         - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
-  
+
   ConcordiaInstanceProfile:
     Type: AWS::IAM::InstanceProfile
     Properties:
       Path: /
       Roles:
         - !Ref 'ConcordiaEC2Role'
-  
+
   ConcordiaTaskRole:
     Type: AWS::IAM::Role
     Properties:
@@ -146,11 +146,11 @@ Resources:
             Principal:
               Service: ecs-tasks.amazonaws.com
             Action:
-              - sts:AssumeRole              
+              - sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
         - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
-  
+
   ConcordiaAppLogsGroup:
     Type: AWS::Logs::LogGroup
     Properties:
@@ -176,16 +176,16 @@ Resources:
     Properties:
         Name: !Ref EnvironmentName
         Subnets: !Ref PublicSubnets
-        SecurityGroups: 
+        SecurityGroups:
             - !Ref LoadBalancerSecurityGroup
-        Tags: 
+        Tags:
             - Key: Name
               Value: !Ref EnvironmentName
 
   ExternalLoadBalancerListener:
     Properties:
       DefaultActions:
-        # FIXME: When AWS CF supports it, redirect to https 
+        # FIXME: When AWS CF supports it, redirect to https
         # instead of forward to target group
         - TargetGroupArn: !Ref ConcordiaExternalTargetGroup
           Type: forward
@@ -193,7 +193,7 @@ Resources:
       Port: 80
       Protocol: HTTP
     Type: AWS::ElasticLoadBalancingV2::Listener
-  
+
   SecureExternalLoadBalancerListener:
     Properties:
       Certificates:
@@ -250,8 +250,8 @@ Resources:
                 Value: !Ref AWS::Region
               - Name: SENTRY_BACKEND_DSN
                 Value: http://34db819263f34c28809da045f841f045@sentry-internal.devops.cloud/2
-#              - Name: SENTRY_FRONTEND_DSN
-#                Value: https://crowd-sentry.loc.gov/3
+              - Name: SENTRY_FRONTEND_DSN
+                Value: https://48ec47f15e484502a29879e40ed2e0c3@crowd-sentry.loc.gov/3
               - Name: REDIS_ADDRESS
                 Value: !Ref RedisAddress
               - Name: REDIS_PORT
@@ -306,8 +306,8 @@ Resources:
                 Value: !Ref AWS::Region
               - Name: SENTRY_BACKEND_DSN
                 Value: http://34db819263f34c28809da045f841f045@sentry-internal.devops.cloud/2
-#              - Name: SENTRY_FRONTEND_DSN
-#                Value: https://crowd-sentry.loc.gov/3
+              - Name: SENTRY_FRONTEND_DSN
+                Value: https://48ec47f15e484502a29879e40ed2e0c3@crowd-sentry.loc.gov/3
               - Name: REDIS_ADDRESS
                 Value: !Ref RedisAddress
               - Name: REDIS_PORT
@@ -323,7 +323,7 @@ Resources:
           MountPoints:
               - SourceVolume: images_volume
                 ContainerPath: /concordia_images
-  
+
   ConcordiaExternalService:
     Type: AWS::ECS::Service
     DependsOn: ExternalLoadBalancerListener
