@@ -4,4 +4,4 @@ The Library of Congress launched crowd.loc.gov in the autumn of 2018. The applic
 
 Crowd.loc.gov runs on Concordia, new open source software developed by the Library of Congress to power crowdsourced transcription projects. The code is visible and free to reuse: [Visit our Github repository](https://github.com/LibraryOfCongress/concordia) for more information. The platform was built utilizing user-centered design principles based around building trust and approachability. This project is a partnership between the Library and a growing community of volunteers who help us to iteratively improve the platform. Everyone is welcome to take part in transcription and tagging and to give feedback about how we can improve the code base and the project itself. Be in touch!
 
-This program is generously supported by the National Digital Library Trust Fund. This application is the result of collaboration between numerous divisions, expertise, and teams at the Library of Congress.
+This program is generously supported by the National Digital Library Trust Fund. This application is the result of collaboration between numerous divisions and teams at the Library of Congress.
