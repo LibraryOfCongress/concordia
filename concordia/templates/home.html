@@ -23,7 +23,7 @@
                 </div>
             </div>
             <div class="col-8 col-md-6 carousel-text text-center py-md-3">
-                <h1 class=" px-md-default">Get Involved:</h1>
+                <h1 class="px-md-3">Get Involved:</h1>
                 <p class="hero-text d-none d-md-block mb-0 mx-2">Volunteer to uncover our shared history and make documents more searchable for everyone.</p>
                 <a class="btn btn-primary btn-lg my-2 mb-md-3" href="{% url 'transcriptions:campaigns' %}">LET'S GO!</a>
             </div>
@@ -38,12 +38,12 @@
                 <div class="mb-default text-center">
                     <a href="{% url 'how-to-transcribe' %}"><img class="img-responsive d-block mx-auto" alt="Transcribe" src="{% static 'img/homepage-pencil.svg' %}"></a>
                     <h4 class="mt-3"><a class="offwhite-text" href="{% url 'how-to-transcribe' %}">TRANSCRIBE</a></h4>
-                    <p class="offwhite-text px-default">Type what you see on the page.</p>
+                    <p class="offwhite-text px-3">Type what you see on the page.</p>
                 </div>
                 <div class="mb-default text-center border-left-home-contribute">
                     <a class="offwhite-text" href="{% url 'how-to-review' %}"><img class="img-responsive d-block mx-auto" src="{% static 'img/homepage-checkmark.svg' %}"></a>
                     <h4 class="offwhite-text mt-3"><a class="offwhite-text" href="{% url 'how-to-review' %}">REVIEW</a></h4>
-                    <p class="offwhite-text px-default">Register to edit and complete transcriptions.</p>
+                    <p class="offwhite-text px-3">Register to edit and complete transcriptions.</p>
                 </div>
                 <div class="mb-default text-center border-left-home-contribute">
                     <a class="offwhite-text" href="{% url 'how-to-tag' %}"><img class="img-responsive d-block mx-auto" src="{% static 'img/homepage-tag.svg' %}"></a>
@@ -55,7 +55,7 @@
     </div>
     <div class="row my-5">
         <div class="col-12 mb-3">
-            <h2 class="px-default px-md-0 ml-md-default">Campaigns: <small>Choose what to transcribe</small></h2>
+            <h2 class="px-default px-md-0 ml-md-3">Campaigns: <small>Choose what to transcribe</small></h2>
         </div>
         <div class="d-flex flex-wrap col-12 justify-content-around">
             {% for campaign in campaigns|slice:":6" %}
@@ -68,7 +68,7 @@
             {% endfor %}
         </div>
     </div>
-    <div class="row mx-auto d-flex justify-content-center my-default">
+    <div class="row mx-auto d-flex justify-content-center my-3">
         <a class="btn btn-primary" href="{% url 'transcriptions:campaigns' %}" role="button">Browse All Campaigns</a>
     </div>
 {% endblock main_content %}
