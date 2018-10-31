@@ -18,7 +18,7 @@
 {% endblock breadcrumbs%}
 
 {% block main_content %}
-<div class="container py-default">
+<div class="container py-3">
     <div class="row">
         <div class="col-md-10">
             <h1 class="m-3">{{ item.title }}</h1>
@@ -26,11 +26,11 @@
         </div>
         <div class="col-md-2 align-bottom">
             <div class="m-3">
-            <a href="{{ item.item_url }}" class="btn btn-default" target="_blank">View this item on www.loc.gov</a>
+            <a href="{{ item.item_url }}" class="btn btn-3" target="_blank">View this item on www.loc.gov</a>
             </div>
         </div>
     </div>
-    <div class="row py-default">
+    <div class="row py-3">
         <form method="get" class="col-md-4 mx-auto">
             <div class="form-group row">
                 <div class="input-group input-group-sm">
@@ -62,7 +62,7 @@
                 </a>
 
                 <div class="card-actions">
-                    <a class="btn btn-sm btn-block btn-default" href="{{ asset_detail_url }}">
+                    <a class="btn btn-sm btn-block btn-3" href="{{ asset_detail_url }}">
                         {% if a.transcription_status == 'submitted' %}
                             <span class="fas fa-list tx-submitted"></span>
                             Review
