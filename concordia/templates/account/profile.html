@@ -9,7 +9,7 @@
 {% block main_content %}
 <div class="container bg-main">
     <div class="row">
-        <div class="col-12 col-md-10 bg-offwhite mx-auto mt-default pxy-default rounded">
+        <div class="col-12 col-md-10 bg-offwhite mx-auto mt-3 pxy-3 rounded">
             <form class="form-horizontal" action="{% url 'user-profile' %}" method="POST" enctype="multipart/form-data">
                 {% csrf_token %}
 
@@ -33,7 +33,7 @@
             </form>
         </div>
     </div>
-    <div class="col-10 my-default mx-auto">
+    <div class="col-10 my-3 mx-auto">
         <hr>
     </div>
     <div class="row justify-content-center">
@@ -41,13 +41,13 @@
             <a class="btn btn-secondary" href="{% url 'password_change' %}">Change Password</a>
         </div>
     </div>
-    <div class="col-10 my-default mx-auto">
+    <div class="col-10 my-3 mx-auto">
         <hr>
     </div>
     {% if transcriptions %}
-        <div class="col-12 col-md-10 bg-offwhite mx-auto pxy-default mb-default rounded">
-            <h2 class="mb-default">My Contributions</h2>
-            <table class="table mb-default">
+        <div class="col-12 col-md-10 bg-offwhite mx-auto pxy-3 mb-3 rounded">
+            <h2 class="mb-3">My Contributions</h2>
+            <table class="table mb-3">
                 <thead class="bg-lightest-gray">
                     <tr>
                         <th>Campaign</th>

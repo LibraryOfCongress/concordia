@@ -10,11 +10,11 @@
 {% endblock breadcrumbs %}
 
 {% block main_content %}
-<div class="container-fluid py-default">
+<div class="container-fluid py-3">
     <div class="row">
-        <div class="d-flex flex-wrap col-12 mb-default justify-content-around">
+        <div class="d-flex flex-wrap col-12 mb-3 justify-content-around">
             {% for campaign in campaigns %}
-                <div class="bg-lightest-gray w-100 mb-default">
+                <div class="bg-lightest-gray w-100 mb-3">
                     <div class="row">
                         <div class="col-12 col-md-8 px-3">
                             <a href="{% url 'transcriptions:campaign' campaign.slug %}">
