@@ -15,6 +15,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
+from django.contrib.auth.views import LoginView
 from django.contrib.messages import get_messages
 from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
@@ -200,9 +201,23 @@ def ajax_messages(request):
     )
 
 
+registration_rate = "6/h"
+
+
+@ratelimit(key="ip", rate=registration_rate)
+@ratelimit(key="post:username", rate=registration_rate)
 @method_decorator(never_cache, name="dispatch")
 class ConcordiaRegistrationView(RegistrationView):
     form_class = UserRegistrationForm
+
+
+login_rate = "6/h"
+
+
+@ratelimit(key="ip", rate=login_rate)
+@ratelimit(key="post:username", rate=login_rate)
+class ConcordiaLoginView(LoginView):
+    template_name = "registration/login.html"
 
 
 @method_decorator(never_cache, name="dispatch")
@@ -829,7 +844,9 @@ class ReportCampaignView(TemplateView):
         )
         projects_qs = projects_qs.annotate(
             transcriber_count=Count("item__asset__transcription__user", distinct=True),
-            reviewer_count=Count("item__asset__transcription__reviewed_by", distinct=True)
+            reviewer_count=Count(
+                "item__asset__transcription__reviewed_by", distinct=True
+            ),
         )
 
         paginator = Paginator(projects_qs, ASSETS_PER_PAGE)
