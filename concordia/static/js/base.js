@@ -74,10 +74,7 @@ function displayMessage(level, message, uniqueId) {
 
 function isOutdatedBrowser() {
     /* See https://caniuse.com/#feat=css-supports-api */
-    if (typeof CSS == 'undefined' || !CSS.supports) {
-        return true;
-    }
-    return false;
+    return typeof CSS == 'undefined' || !CSS.supports;
 }
 
 $(function() {
