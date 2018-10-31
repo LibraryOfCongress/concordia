@@ -822,6 +822,7 @@ class ReportCampaignView(TemplateView):
             asset_count=Count(
                 "item__asset",
                 filter=Q(item__published=True, item__asset__published=True),
+                distinct=True
             )
         )
         projects_qs = projects_qs.annotate(
