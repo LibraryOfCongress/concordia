@@ -83,7 +83,7 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
 
 class Resource(MetricsModelMixin("resource"), models.Model):
     sequence = models.PositiveIntegerField(default=1)
-    title = models.TextField(blank=False, max_length=255)
+    title = models.CharField(blank=False, max_length=255)
     resource_url = models.URLField()
 
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)

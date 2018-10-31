@@ -73,10 +73,8 @@ function displayMessage(level, message, uniqueId) {
 }
 
 function isOutdatedBrowser() {
-    if (typeof CSS == 'undefined' || !CSS.supports) {
-        return true;
-    }
-    return !CSS.supports('display: flex');
+    /* See https://caniuse.com/#feat=css-supports-api */
+    return typeof CSS == 'undefined' || !CSS.supports;
 }
 
 $(function() {
