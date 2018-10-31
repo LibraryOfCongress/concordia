@@ -33,21 +33,21 @@
             <div class="col-12 mb-default">
                 <h2 class="px-default offwhite-text px-md-0 ml-md-default">Anyone Can Contribute</h2>
             </div>
-            <div class="d-flex flex-wrap col-12 justify-content-around">
-                <div class="col-12 col-md-4 mb-default text-center">
-                    <img class="img-home-contribute d-block mx-auto" src="{% static 'img/homepage-pencil.svg' %}">
-                    <h4 class="offwhite-text mt-3">TRANSCRIBE</h4>
+            <div class="col-12 w-100 d-flex flex-wrap justify-content-around">
+                <div class="mb-default text-center">
+                    <a href="{% url 'how-to-transcribe' %}"><img class="img-responsive d-block mx-auto" alt="Transcribe" src="{% static 'img/homepage-pencil.svg' %}"></a>
+                    <h4 class="mt-3"><a class="offwhite-text" href="{% url 'how-to-transcribe' %}">TRANSCRIBE</a></h4>
                     <p class="offwhite-text px-default">Type what you see on the page.</p>
                 </div>
-                <div class="col-12 col-md-4 mb-default text-center border-left-home-contribute">
-                    <img class="img-home-contribute d-block mx-auto" src="{% static 'img/homepage-tag.svg' %}">
-                    <h4 class="offwhite-text mt-3">TAG</h4>
-                    <p class="offwhite-text px-default">Register to add tags and share what you find.</p>
-                </div>
-                <div class="col-12 col-md-4 mb-default text-center border-left-home-contribute">
-                    <img class="img-home-contribute d-block mx-auto" src="{% static 'img/homepage-checkmark.svg' %}">
-                    <h4 class="offwhite-text mt-3">REVIEW</h4>
+                <div class="mb-default text-center border-left-home-contribute">
+                    <a class="offwhite-text" href="{% url 'how-to-review' %}"><img class="img-responsive d-block mx-auto" src="{% static 'img/homepage-checkmark.svg' %}"></a>
+                    <h4 class="offwhite-text mt-3"><a class="offwhite-text" href="{% url 'how-to-review' %}">REVIEW</a></h4>
                     <p class="offwhite-text px-default">Register to edit and complete transcriptions.</p>
+                </div>
+                <div class="mb-default text-center border-left-home-contribute">
+                    <a class="offwhite-text" href="{% url 'how-to-tag' %}"><img class="img-responsive d-block mx-auto" src="{% static 'img/homepage-tag.svg' %}"></a>
+                    <h4 class="offwhite-text mt-3"><a class="offwhite-text" href="{% url 'how-to-tag' %}">TAG</h4>
+                    <p class="offwhite-text px-default">Register to add tags and share what you find.</p>
                 </div>
             </div>
         </div>
