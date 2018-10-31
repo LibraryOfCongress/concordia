@@ -10,8 +10,9 @@
 
 {% block breadcrumbs-container %}{% endblock breadcrumbs-container %}
 
+{% block extra_main_classes %}container-fluid{% endblock %}
+
 {% block main_content %}
-<div class="container-fluid">
     <div class="row">
         <div class="col-12 ">
             <div id="homepage-carousel" class="carousel slide" data-ride="carousel">
@@ -70,5 +71,4 @@
     <div class="row mx-auto d-flex justify-content-center my-default">
         <a class="btn btn-primary" href="{% url 'transcriptions:campaigns' %}" role="button">Browse All Campaigns</a>
     </div>
-</div>
 {% endblock main_content %}
