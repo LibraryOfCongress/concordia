@@ -629,6 +629,30 @@ ul.nav-secondary {
     text-transform: uppercase;
 }
 
+#homepage-contribute-activities {
+    max-width: 100%;
+    margin: auto;
+}
+
+.homepage-activity {
+    max-width: calc(33% - 8px);
+    flex-shrink: 0;
+    flex-grow: 0;
+}
+
+.homepage-activity a {
+    display: block;
+}
+
+@media screen and (max-width: 575px) {
+    .homepage-activity h4 {
+        font-size: 95%;
+    }
+    .homepage-activity p {
+        font-size: 85%;
+    }
+}
+
 /*
  * Asset detail page
  *
