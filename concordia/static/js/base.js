@@ -83,10 +83,17 @@ $(function() {
             'You are using an outdated browser. This website fully supports the current ' +
             'version of every major browser ' +
             '(Microsoft Edge, Google Chrome, Mozilla Firefox, and Apple Safari). See ' +
-            'our <a href="/help-center/#headingTwelve">browser support policy</a> ' +
+            'our <a href="/help-center/#browserSupport">browser support policy</a> ' +
             'for more information.';
 
         displayHtmlMessage('danger', theMessage);
+    }
+
+    if (location.hash && $('#faqAccordion').length > 0) {
+        $(location.hash).on('shown.bs.collapse', function() {
+            window.location = location.hash;
+        });
+        $(location.hash).collapse('show');
     }
 });
 
