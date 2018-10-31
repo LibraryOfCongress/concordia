@@ -10,7 +10,7 @@
 
 {% block breadcrumbs-container %}{% endblock breadcrumbs-container %}
 
-{% block extra_main_classes %}container-fluid{% endblock %}
+{% block extra_main_classes %}container{% endblock %}
 
 {% block main_content %}
     <div class="row">
@@ -30,25 +30,25 @@
         </div>
     </div>
     <div class="row my-5">
-        <div class="row bg-home-contribute pxy-default mx-auto">
-            <div class="col-12 mb-default">
-                <h2 class="px-default offwhite-text px-md-0 ml-md-default">Anyone Can Contribute</h2>
+        <div id="homepage-contribute-container" class="w-100 bg-home-contribute p-1 p-md-2 p-lg-3">
+            <div class="mb-3">
+                <h2 class="px-default offwhite-text px-md-0 ml-md-3">Anyone Can Contribute</h2>
             </div>
-            <div class="col-12 w-100 d-flex flex-wrap justify-content-around">
-                <div class="mb-default text-center">
-                    <a href="{% url 'how-to-transcribe' %}"><img class="img-responsive d-block mx-auto" alt="Transcribe" src="{% static 'img/homepage-pencil.svg' %}"></a>
+            <div id="homepage-contribute-activities" class="d-flex justify-content-around text-center">
+                <div class="homepage-activity px-1 pl-mx-2 px-lg-3">
+                    <a href="{% url 'how-to-transcribe' %}"><img class="img-fluid" alt="Transcribe" src="{% static 'img/homepage-pencil.svg' %}"></a>
                     <h4 class="mt-3"><a class="offwhite-text" href="{% url 'how-to-transcribe' %}">TRANSCRIBE</a></h4>
-                    <p class="offwhite-text px-3">Type what you see on the page.</p>
+                    <p class="offwhite-text">Type what you see on the page.</p>
                 </div>
-                <div class="mb-default text-center border-left-home-contribute">
-                    <a class="offwhite-text" href="{% url 'how-to-review' %}"><img class="img-responsive d-block mx-auto" src="{% static 'img/homepage-checkmark.svg' %}"></a>
+                <div class="homepage-activity px-1 pl-mx-2 px-lg-3">
+                    <a class="offwhite-text" href="{% url 'how-to-review' %}"><img class="img-fluid" src="{% static 'img/homepage-checkmark.svg' %}"></a>
                     <h4 class="offwhite-text mt-3"><a class="offwhite-text" href="{% url 'how-to-review' %}">REVIEW</a></h4>
-                    <p class="offwhite-text px-3">Register to edit and complete transcriptions.</p>
+                    <p class="offwhite-text">Register to edit and complete transcriptions.</p>
                 </div>
-                <div class="mb-default text-center border-left-home-contribute">
-                    <a class="offwhite-text" href="{% url 'how-to-tag' %}"><img class="img-responsive d-block mx-auto" src="{% static 'img/homepage-tag.svg' %}"></a>
-                    <h4 class="offwhite-text mt-3"><a class="offwhite-text" href="{% url 'how-to-tag' %}">TAG</h4>
-                    <p class="offwhite-text px-default">Register to add tags and share what you find.</p>
+                <div class="homepage-activity px-1 pl-mx-2 px-lg-3">
+                    <a class="offwhite-text" href="{% url 'how-to-tag' %}"><img class="img-fluid" src="{% static 'img/homepage-tag.svg' %}"></a>
+                    <h4 class="offwhite-text mt-3"><a class="offwhite-text" href="{% url 'how-to-tag' %}">TAG</a></h4>
+                    <p class="offwhite-text">Register to add tags and share what you find.</p>
                 </div>
             </div>
         </div>
