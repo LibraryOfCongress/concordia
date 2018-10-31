@@ -43,15 +43,15 @@ title: Help Center
 
 <div class="accordion" id="faqAccordion">
   <div class="card">
-    <div class="card-header" id="whatIsCrowd">
+    <div class="card-header" id="whatIsCrowdHeader">
       <h5 class="mb-0">
-        <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#whatIsCrowdCollapse" aria-expanded="false" aria-controls="whatIsCrowdCollapse">
+        <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#whatIsCrowd" aria-expanded="false" aria-controls="whatIsCrowd">
           What is crowd.loc.gov and what is crowdsourcing?
         </button>
       </h5>
     </div>
 
-    <div id="whatIsCrowdCollapse" class="collapse show" aria-labelledby="whatIsCrowd" data-parent="#faqAccordion">
+    <div id="whatIsCrowd" class="collapse" aria-labelledby="whatIsCrowdHeader" data-parent="#faqAccordion">
       <div class="card-body">
       <p>
        crowd.loc.gov is an online transcription platform where anyone with an internet connection can transcribe documents from the Library of Congress’ digitized collections. We welcome anyone interested in making non-machine readable resources fully word searchable to contribute.
@@ -64,14 +64,14 @@ title: Help Center
 
   </div>
   <div class="card">
-    <div class="card-header" id="takePart">
+    <div class="card-header" id="takePartHeader">
       <h5 class="mb-0">
-        <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#takePartCollapse" aria-expanded="false" aria-controls="takePartCollapse">
+        <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#takePart" aria-expanded="false" aria-controls="takePart">
           Who can take part?
         </button>
       </h5>
     </div>
-    <div id="takePartCollapse" class="collapse" aria-labelledby="takePart" data-parent="#faqAccordion">
+    <div id="takePart" class="collapse" aria-labelledby="takePartHeader" data-parent="#faqAccordion">
       <div class="card-body">
         Anyone who wants to help the Library make its collections more discoverable online. Anyone who is interested in history, cultural heritage, literature, languages, art, sciences, and much more. Anyone who wants to be a virtual volunteer, exploring collections and transcribing at their own pace and at times that are convenient for them. Students of all ages who want to help the Library and learn new skills.
 
@@ -80,14 +80,14 @@ title: Help Center
 
   </div>
   <div class="card">
-    <div class="card-header" id="volunteers">
+    <div class="card-header" id="volunteersHeader">
       <h5 class="mb-0">
-        <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#volunteersCollapse" aria-expanded="false" aria-controls="volunteersCollapse">
+        <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#volunteersTogether" aria-expanded="false" aria-controls="volunteersTogether">
           How do volunteers work together?
         </button>
       </h5>
     </div>
-    <div id="volunteersCollapse" class="collapse" aria-labelledby="volunteers" data-parent="#faqAccordion">
+    <div id="volunteersTogether" class="collapse" aria-labelledby="volunteersHeader" data-parent="#faqAccordion">
       <div class="card-body">
        You'll collaborate with other volunteers to transcribe and review collections. We ask for at least one person to transcribe and a different person to review each transcription. If you find that a transcription needs a few corrections while you're reviewing, you can edit that page. Another person will then review your new edits. Sometimes more than one person will contribute to transcribe an image; such as if you find an image with a transcription that needs more work. We think of this negotiated editing process as a way to get the best version of a transcription and help solve different challenges for each image.
 
@@ -97,14 +97,14 @@ title: Help Center
   </div>
 
  <div class="card">
-    <div class="card-header" id="materials">
+    <div class="card-header" id="materialsHeader">
       <h5 class="mb-0">
-        <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#materialsCollapse" aria-expanded="false" aria-controls="materialsCollapse">
+        <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#materials" aria-expanded="false" aria-controls="materials">
           What kinds of materials can I transcribe?
         </button>
       </h5>
     </div>
-    <div id="materialsCollapse" class="collapse" aria-labelledby="materials" data-parent="#faqAccordion">
+    <div id="materials" class="collapse" aria-labelledby="materialsHeader" data-parent="#faqAccordion">
       <div class="card-body">
        Materials in crowd.loc.gov represent the diversity of the Library’s collections and are selected from across the Library of Congress’s curatorial divisions. You’ll encounter presidential papers, materials from the women's suffrage, abolition and other movements, the work of American poets, such as Walt Whitman, and much more. We will add new content regularly: <a href="https://updates.loc.gov/accounts/USLOC/subscriber/new?topic_id=USLOC_175">sign up for our newsletter</a> to hear about new Campaigns and Challenges.
 
@@ -114,14 +114,14 @@ title: Help Center
   </div>
 
  <div class="card">
-    <div class="card-header" id="transcriptionGoals">
+    <div class="card-header" id="transcriptionGoalsHeader">
       <h5 class="mb-0">
-        <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#transcriptionGoalsCollapse" aria-expanded="false" aria-controls="transcriptionGoalsCollapse">
+        <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#transcriptionGoals" aria-expanded="false" aria-controls="transcriptionGoals">
           How do I know if I’m transcribing, tagging or reviewing correctly?
         </button>
       </h5>
     </div>
-    <div id="transcriptionGoalsCollapse" class="collapse" aria-labelledby="transcriptionGoals" data-parent="#faqAccordion">
+    <div id="transcriptionGoals" class="collapse" aria-labelledby="transcriptionGoalsHeader" data-parent="#faqAccordion">
       <div class="card-body">
        Follow the transcribe, review, or tag links at the top of the page. Our goal is to make transcriptions that are readable to computers and humans, with minimal markup, not attempting to recreate the layout of the original images. Quick tips are available within the transcription interface.
 
@@ -130,14 +130,14 @@ title: Help Center
 
   </div>
  <div class="card">
-    <div class="card-header" id="register">
+    <div class="card-header" id="registerHeader">
       <h5 class="mb-0">
-        <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#registerCollapse" aria-expanded="false" aria-controls="registerCollapse">
+        <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#register" aria-expanded="false" aria-controls="register">
           Do I have to register for an account to participate or join in the discussion?
         </button>
       </h5>
     </div>
-    <div id="registerCollapse" class="collapse" aria-labelledby="register" data-parent="#faqAccordion">
+    <div id="register" class="collapse" aria-labelledby="registerHeader" data-parent="#faqAccordion">
       <div class="card-body">
       
 Registering for an account is optional, but gives you access to the tagging and reviewing features of crowd.loc.gov. Go to Register at the top of the homepage to make an account. Create a username, which will be visible to other volunteers and users of the site. Enter your email address in the “Email” field (this will not be visible to or shared with other users), and in the password field create a unique password with a combination of capital and lowercase letters, numbers and special characters such as #, $, !, or %.
@@ -149,14 +149,14 @@ You can also register for a separate account on the <a href="https://historyhub.
 
   </div>
  <div class="card">
-    <div class="card-header" id="forgotPassword">
+    <div class="card-header" id="forgotPasswordHeader">
       <h5 class="mb-0">
-        <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#forgotPasswordCollapse" aria-expanded="false" aria-controls="forgotPasswordCollapse">
+        <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#forgotPassword" aria-expanded="false" aria-controls="forgotPassword">
           What if I forget my password?
         </button>
       </h5>
     </div>
-    <div id="forgotPasswordCollapse" class="collapse" aria-labelledby="forgotPassword" data-parent="#faqAccordion">
+    <div id="forgotPassword" class="collapse" aria-labelledby="forgotPasswordHeader" data-parent="#faqAccordion">
       <div class="card-body">
       
 If you've forgotten your password click Login, then "Forgot my password". You will receive an email with a link asking you to reset your password. You may also change your password within your profile.
@@ -164,14 +164,14 @@ If you've forgotten your password click Login, then "Forgot my password". You wi
     </div>
   </div>
  <div class="card">
-    <div class="card-header" id="whyEmail">
+    <div class="card-header" id="whyEmailHeader">
       <h5 class="mb-0">
-        <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#whyEmailCollapse" aria-expanded="false" aria-controls="whyEmailCollapse">
+        <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#whyEmail" aria-expanded="false" aria-controls="whyEmail">
           Why do we ask for your email?
         </button>
       </h5>
     </div>
-    <div id="whyEmailCollapse" class="collapse" aria-labelledby="whyEmail" data-parent="#faqAccordion">
+    <div id="whyEmail" class="collapse" aria-labelledby="whyEmailHeader" data-parent="#faqAccordion">
       <div class="card-body">
       
 Your email address gives us the ability to support you. Community managers are here to help with account administration like changes to your profile, troubleshooting any issues with contributing to a transcription, or to answer general questions. We will never share your information with other institutions or individuals. At registration you can opt in to receive email updates on crowd.loc.gov campaigns and features – you can also <a href="https://updates.loc.gov/accounts/USLOC/subscriber/new?topic_id=USLOC_175">register for emails from us here</a>.
@@ -179,14 +179,14 @@ Your email address gives us the ability to support you. Community managers are h
     </div>
   </div>
  <div class="card">
-    <div class="card-header" id="transcriptionUse">
+    <div class="card-header" id="transcriptionUseHeader">
       <h5 class="mb-0">
-        <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#transcriptionUseCollapse" aria-expanded="false" aria-controls="transcriptionUseCollapse">
+        <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#transcriptionUse" aria-expanded="false" aria-controls="transcriptionUse">
           How will the transcriptions I create be used?
         </button>
       </h5>
     </div>
-    <div id="transcriptionUseCollapse" class="collapse" aria-labelledby="transcriptionUse" data-parent="#faqAccordion">
+    <div id="transcriptionUse" class="collapse" aria-labelledby="transcriptionUseHeader" data-parent="#faqAccordion">
       <div class="card-body">
       
 The data contributed by volunteers like you can be used in many different ways. We are giving back to our community by making this data public. All contributions to this application are released into the public domain. Anyone is free to use this data set in any way they want. The data produced by volunteers is also free to reuse. If you need help accessing the data or want to share news of your research with the crowd.loc.gov community, please contact the Community Managers at <a href="mailto:crowd@loc.gov">crowd@loc.gov</a>. The transcriptions produced on crowd.loc.gov will typically be published in the Library catalog on loc.gov within a year of a Campaign's completion. 
@@ -194,14 +194,14 @@ The data contributed by volunteers like you can be used in many different ways. 
     </div>
   </div>
  <div class="card">
-    <div class="card-header" id="tagUse">
+    <div class="card-header" id="tagUseHeader">
       <h5 class="mb-0">
-        <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#tagUseCollapse" aria-expanded="false" aria-controls="tagUseCollapse">
+        <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#tagUse" aria-expanded="false" aria-controls="tagUse">
           What are tags for?
         </button>
       </h5>
     </div>
-    <div id="tagUseCollapse" class="collapse" aria-labelledby="tagUse" data-parent="#faqAccordion">
+    <div id="tagUse" class="collapse" aria-labelledby="tagUseHeader" data-parent="#faqAccordion">
       <div class="card-body">
  Tags are an experimental feature. Tags can be used to identify people, places or things in documents that are not already identified in the page or asset’s metadata on <a href="https://loc.gov">loc.gov</a>. We want to understand how volunteers like to use tags. We also want to understand whether tags can someday be included in the metadata on the Library catalog to make items discoverable through search terms that are not represented in the existing metadata or the transcriptions we will produce on crowd.loc.gov.
 
@@ -210,14 +210,14 @@ The data contributed by volunteers like you can be used in many different ways. 
 
   </div>
  <div class="card">
-    <div class="card-header" id="offensiveContent">
+    <div class="card-header" id="offensiveContentHeader">
       <h5 class="mb-0">
-        <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#offensiveContentCollapse" aria-expanded="false" aria-controls="offensiveContentCollapse">
+        <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#offensiveContent" aria-expanded="false" aria-controls="offensiveContent">
           What if I find offensive content while I’m transcribing and reviewing?
         </button>
       </h5>
     </div>
-    <div id="offensiveContentCollapse" class="collapse" aria-labelledby="offensiveContent" data-parent="#faqAccordion">
+    <div id="offensiveContent" class="collapse" aria-labelledby="offensiveContentHeader" data-parent="#faqAccordion">
       <div class="card-body">
 The language and terminology used in the historical materials on this site reflect the context and culture of their creators, and may include words, phrases, and attitudes that would now be deemed insensitive, inappropriate or factually inaccurate, or may not be appropriate for all ages. Views expressed in historical documents do not reflect the views of the Library of Congress. Because the purpose of crowd.loc.gov is to make the Library’s collections searchable, we ask that all original content be transcribed as it appears in the original material. If you find some material offensive or upsetting, please choose something else to transcribe. If you have questions or comments regarding the material you encounter during your participation here, please contact a Community Manager via <a href="mailto:crowd.loc.gov@loc.gov">crowd.loc.gov@loc.gov</a>, the <a href="/contact/">Contact Us</a> or join and start a new conversation on the <a href="https://historyhub.history.gov/community/crowd-loc">History Hub discussion forum</a>.
 
@@ -227,14 +227,14 @@ The language and terminology used in the historical materials on this site refle
   </div>
 
  <div class="card">
-    <div class="card-header" id="browserSupport">
+    <div class="card-header" id="browserSupportHeader">
       <h5 class="mb-0">
-        <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#browserSupportCollapse" aria-expanded="false" aria-controls="browserSupportCollapse">
+        <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#browserSupport" aria-expanded="false" aria-controls="browserSupport">
          What devices and browsers are supported by crowd.loc.gov?
         </button>
       </h5>
     </div>
-    <div id="browserSupportCollapse" class="collapse" aria-labelledby="browserSupport" data-parent="#faqAccordion">
+    <div id="browserSupport" class="collapse" aria-labelledby="browserSupportHeader" data-parent="#faqAccordion">
       <div class="card-body">
 Because crowd.loc.gov invites you to transcribe documents, it is best experienced on a device with a large or full sized keyboard. A desktop computer or laptop is best; a tablet with keyboard should work. Unfortunately, phones are not yet supported. We recommend an external mouse for most precise zoom. We support the two most recent versions of major browsers. You’ll have the best experience if you use Chrome, Firefox, Edge, and Safari browsers. The site will not work as designed on the Internet Explorer browser.
 
@@ -243,14 +243,14 @@ Because crowd.loc.gov invites you to transcribe documents, it is best experience
 
   </div>
   <div class="card">
-    <div class="card-header" id="technology">
+    <div class="card-header" id="technologyHeader">
       <h5 class="mb-0">
-        <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#technologyCollapse" aria-expanded="false" aria-controls="technologyCollapse">
+        <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#technology" aria-expanded="false" aria-controls="technology">
          What is the technology behind crowd.loc.gov?
         </button>
       </h5>
     </div>
-    <div id="technologyCollapse" class="collapse" aria-labelledby="technology" data-parent="#faqAccordion">
+    <div id="technology" class="collapse" aria-labelledby="technologyHeader" data-parent="#faqAccordion">
       <div class="card-body">
 Crowd.loc.gov runs on Concordia, new open source software developed by the Library of Congress to power crowdsourced transcription projects. The code is visible and free to reuse: <a href="https://github.com/LibraryOfCongress/concordia">Visit our Github repository</a> for more information. The platform was built utilizing user-centered design principles based around building trust and approachability. This project is a partnership between the Library and a growing community of volunteers who help us to iteratively improve the platform. Everyone is welcome to take part in transcription and tagging and to give feedback about how we can improve the code base and the project itself. Be in touch!
 
@@ -259,14 +259,14 @@ Crowd.loc.gov runs on Concordia, new open source software developed by the Libra
 
   </div>
   <div class="card">
-    <div class="card-header" id="privacy">
+    <div class="card-header" id="privacyHeader">
       <h5 class="mb-0">
-        <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#privacyCollapse" aria-expanded="false" aria-controls="privacyCollapse">
+        <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#privacy" aria-expanded="false" aria-controls="privacy">
          How do you protect my privacy?
         </button>
       </h5>
     </div>
-    <div id="privacyCollapse" class="collapse" aria-labelledby="privacy" data-parent="#faqAccordion">
+    <div id="privacy" class="collapse" aria-labelledby="privacyHeader" data-parent="#faqAccordion">
       <div class="card-body">
 <p>
 A detailed explanation of the Library’s <a href="https://www.loc.gov/legal/">Privacy Policy</a> including what kinds of data we collect and store, and what we use to track your session while you are on a Library website is available at this link, and in the footer of this page under the “Legal” link button.
@@ -285,14 +285,14 @@ Session cookies are used for registered users too, so that your contributions ca
 
   </div>
     <div class="card">
-    <div class="card-header" id="pastProjects">
+    <div class="card-header" id="pastProjectsHeader">
       <h5 class="mb-0">
-        <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#pastProjectsCollapse" aria-expanded="false" aria-controls="pastProjectsCollapse">
+        <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#pastProjects" aria-expanded="false" aria-controls="pastProjects">
          What are past crowdsourcing projects at the Library?
         </button>
       </h5>
     </div>
-    <div id="pastProjectsCollapse" class="collapse" aria-labelledby="pastProjects" data-parent="#faqAccordion">
+    <div id="pastProjects" class="collapse" aria-labelledby="pastProjectsHeader" data-parent="#faqAccordion">
       <div class="card-body">
 The Library of Congress has long invested in building digitized collections and making them searchable. The Library’s first attempt recruiting members of the public to increase findability on our website began in 2008 when the Photography and Prints Division published thousands of photographs on <a href="https://www.flickr.com/photos/library_of_congress">Flickr Commons</a>. This long-running project invites visitors to help identify people and places in the photographs and, once verified, this rich information is used to enhance the online catalog and improve access for all users. Two additional crowdsourcing efforts within the Library include <a href="https://www.zooniverse.org/projects/sroosa/roll-the-credits">Roll the Credits</a> and <a href="http://beyondwords.labs.loc.gov/">Beyond Words</a>, projects that invited people to transcribe credit captions from television programs, and identify cartoons and photographs in the Library's historic newspaper collections respectively.
 
@@ -301,14 +301,14 @@ The Library of Congress has long invested in building digitized collections and 
 
   </div>
     <div class="card">
-    <div class="card-header" id="otherProjects">
+    <div class="card-header" id="otherProjectsHeader">
       <h5 class="mb-0">
-        <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#otherProjectsCollapse" aria-expanded="false" aria-controls="otherProjectsCollapse">
+        <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#otherProjects" aria-expanded="false" aria-controls="otherProjects">
          Do other libraries and cultural institutions have crowdsourcing projects?
         </button>
       </h5>
     </div>
-    <div id="otherProjectsCollapse" class="collapse" aria-labelledby="otherProjects" data-parent="#faqAccordion">
+    <div id="otherProjects" class="collapse" aria-labelledby="otherProjectsHeader" data-parent="#faqAccordion">
       <div class="card-body">
 In addition to the Library of Congress’ own history of varied participatory projects, other cultural heritage institutions with established transcription programs have paved the way for crowd.loc.gov. Projects at the National Archives and Records Administration (NARA), the Smithsonian, the New York Public Library, Zooniverse.org, From the Page, and others have developed workflows and user engagement strategies that this platform leverages and builds upon. Concordia deploys a different architecture to these existing models of crowdsourced transcription, and aims to provide simple data structures and easier project implementation for cultural heritage institutions and other people who want to set up their own crowdsourced transcription projects.
       </div>

@@ -90,6 +90,10 @@ $(function() {
 
         displayHtmlMessage('danger', theMessage);
     }
+
+    if (location.hash && $('#faqAccordion')) {
+        $(location.hash).collapse('show');
+    }
 });
 
 if (screenfull.enabled) {
