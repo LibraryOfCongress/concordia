@@ -25,3 +25,35 @@ The documents in crowd.loc.gov are _primary sources_ — the raw materials of hi
 Use the Library’s [primary source analysis tool and teacher’s guide to analyzing manuscripts](http://www.loc.gov/teachers/usingprimarysources/guides.html) to guide your students through an analysis of any of the documents in crowd.loc.gov.
 
 **A note about content**: The historical documents in the Library’s collections may include language or topics that aren’t appropriate for your students, or that your students might find especially difficult to engage with. You may want to review documents before assigning them, or to use some of the strategies explored here.
+
+## Campaign Specific Resources
+
+### Letters to Lincoln (Featured Challenge for 2018!)
+
+- ["I Do Solemnly Swear..."  Presidential Inaugurations](https://www.loc.gov/rr/program/bib/inaugurations/index.html)
+- [The Library of Congress Celebrates the Songs of America](https://www.loc.gov/collections/songs-of-america/about-this-collection/)
+- [Additional Primary Materials](http://www.loc.gov/teachers/classroommaterials/primarysourcesets/lincoln/)
+
+### Branch Rickey: Changing the Game
+
+- Lesson Plan: [Baseball, Race and Ethnicity: Rounding the Bases](http://www.loc.gov/teachers/classroommaterials/lessons/bases/)
+- Lesson Plan: [Baseball, Race Relations and Jackie Robinson](http://www.loc.gov/teachers/classroommaterials/lessons/robinson/)
+- Primary Source Set: [Baseball Across a Divided Society](http://www.loc.gov/teachers/classroommaterials/primarysourcesets/baseball/)
+
+### Civil War Soldiers: "Disabled but not disheartened"
+
+- Lesson plan: [The Civil War Through a Child's Eye](http://www.loc.gov/teachers/classroommaterials/lessons/childs-eye/)
+- Teacher's guide: [The Civil War: The Nation Moves Towards War, 1850-61](http://www.loc.gov/teachers/classroommaterials/primarysourcesets/civil-war-approach/)
+
+### Clara Barton: "Angel of the Battlefield"
+
+- [Clara Barton Missing Soldiers Office Museum External additional resources](http://www.clarabartonmuseum.org/learn/studentresearch/)
+
+### Mary Church Terrell: Advocate for African Americans and Women
+
+- Lesson plan: [Suffrage Strategies: Voices for Votes](http://www.loc.gov/teachers/classroommaterials/lessons/suffrage/)
+- [http://www.loc.gov/teachers/classroommaterials/lessons/strivings/](http://www.loc.gov/teachers/classroommaterials/lessons/strivings/)
+- [Votes for Women: Selections from the National American Woman Suffrage Association Collection, 1848 to 1921](https://www.loc.gov/teachers/classroommaterials/connections/votes-women/)
+- [Civil Rights, information for Students](http://www.loc.gov/teachers/classroommaterials/themes/civil-rights/students.html)
+- [From Slavery to Civil Rights: A Timeline of African American History](https://www.loc.gov/teachers/classroommaterials/presentationsandactivities/presentations/civil-rights/) 
+- [Segregation: From Jim Crow to Linda Brown](http://www.loc.gov/teachers/classroommaterials/lessons/jimcrow/)
