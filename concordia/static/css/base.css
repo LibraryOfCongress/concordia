@@ -656,6 +656,21 @@ ul.nav-secondary {
     }
 }
 
+@media screen and (min-width: 720px) {
+    #homepage-carousel {
+        position: relative;
+    }
+
+    .carousel-overlay {
+        position: absolute;
+        top: 30px;
+        left: 30px;
+        width: 442px;
+        background-color: var(--bg-offwhite);
+        padding: 1rem 1rem 1.3rem 1rem;
+    }
+}
+
 /*
  * Asset detail page
  *
