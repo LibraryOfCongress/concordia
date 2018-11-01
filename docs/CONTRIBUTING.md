@@ -12,9 +12,9 @@ Report bugs by [submitting an issue](https://github.com/LibraryOfCongress/concor
 
 If you are reporting a bug, please include:
 
-* Your operating system name and version.
-* Any details about your local setup that might be helpful in troubleshooting.
-* Detailed steps to reproduce the bug.
+-   Your operating system name and version.
+-   Any details about your local setup that might be helpful in troubleshooting.
+-   Detailed steps to reproduce the bug.
 
 ### Submit a pull request to fix bugs
 
@@ -26,73 +26,75 @@ Look through the GitHub issues for features. Anything tagged with "feature" is o
 
 ### Write Documentation
 
-
-Concordia could always use more documentation. If you have worked in the tool and found any of our documentation in accurate or requires more specificity, submit an issue or a pull request. 
+Concordia could always use more documentation. If you have worked in the tool and found any of our documentation in accurate or requires more specificity, submit an issue or a pull request.
 
 ### How to submit Feedback
-
 
 The best way to send feedback is to file an issue at https://github.com/LibraryOfCongress/concordia/issues.
 
 If you are proposing a feature:
 
-* Explain in detail how it would work.
-* Keep the scope as narrow as possible, to make it easier to implement.
-* Remember that this is a volunteer-driven project, and that contributions
-  are welcome :)
+-   Explain in detail how it would work.
+-   Keep the scope as narrow as possible, to make it easier to implement.
+-   Remember that this is a volunteer-driven project, and that contributions
+    are welcome :)
 
 ### Get Started!
 
-Ready to contribute? Check out our [README](https://github.com/LibraryOfCongress/concordia#concordia) on how to set up your machine for local development.
+Ready to contribute? Check out our [Developers Guide](https://github.com/LibraryOfCongress/docs/for-developers.md) on how to set up your machine for local development. You'll need Docker and Python 3 with pip and pipenv.
 
 1. Fork the `concordia` repo on GitHub.
 2. Clone your fork locally:
-    
-    #### Git Bash ####
+
+    #### Git Bash
+
     ```
     $ git clone git@github.com:YOUR_USERNAME/concordia.git
     ```
-    #### GitHub Desktop ####
-    
+
+    #### GitHub Desktop
+
     File > Clone Repository > YOUR_USERNAME/concordia
 
-3. Install your local copy to your virtual environment. Follow the instructions on [installing pipenv in our README](https://github.com/LibraryOfCongress/concordia/blob/2b211d3054fb681edb28adfab37928ad80ff859c/README.rst#serve)
+3. Install your local copy to your virtual environment. Follow the instructions in the [Developers Guide](https://github.com/LibraryOfCongress/docs/for-developers.md).
 
 4. Create a branch for local development:
-    
-    #### Git Bash ####
+
+    #### Git Bash
+
     ```
-   `$ git checkout -b name-of-your-bugfix-or-feature`
+    `$ git checkout -b name-of-your-bugfix-or-feature`
     ```
-    #### GitHub Desktop ####
-    
+
+    #### GitHub Desktop
+
     Branch > New Branch > NAME_OF_BRANCH > Create new branch
-    
-   Now you can make your changes locally.
 
-5. When you're done making changes, run your code through the Library's coding standards. You can find step by step instructions in the [README](https://github.com/LibraryOfCongress/concordia#code-quality):
+    Now you can make your changes locally.
 
-6. Commit your changes and push your branch to GitHub:
-    
-    #### Git Bash ####
+5. Commit your changes and push your branch to GitHub:
+
+    #### Git Bash
+
     ```
     $ git add .
     $ git commit -m "Your detailed description of your changes."
     $ git push origin name-of-your-bugfix-or-feature
     ```
+
     #### GitHub Desktop
+
     I. Enter Commit Message
-    
+
     II. Enter in optional extended description
-    
+
     III. Select commit to YOUR_BRANCH
-    
+
     IV. Click Push to Origin
 
-7. Submit a pull request through the GitHub website.
+6. Submit a pull request through the GitHub website.
 
-Pull Request Guidelines
------------------------
+## Pull Request Guidelines
 
 Before you submit a pull request, check that it meets these guidelines:
 

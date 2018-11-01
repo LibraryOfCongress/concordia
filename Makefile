@@ -36,8 +36,7 @@ allup:	create-docker-sentry-network
 
 .PHONY: devup
 devup:
-	docker-compose -f docker-compose.yml -f docker-compose-elk.yml up -d elk
-	docker-compose -f docker-compose.yml -f docker-compose-elk.yml up -d
+	docker-compose -f docker-compose.yml up -d
 
 .PHONY: down
 down:
