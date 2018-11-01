@@ -10,27 +10,27 @@
 
 {% block breadcrumbs-container %}{% endblock breadcrumbs-container %}
 
-{% block extra_main_classes %}container{% endblock %}
+{% block extra_main_classes %}{% endblock %}
 
 {% block main_content %}
-    <div class="row">
-        <div class="col-12 ">
+    <div class="row no-gutters px-sm-3">
+        <div class="col-12">
             <div id="homepage-carousel" class="carousel slide" data-ride="carousel">
                 <div class="carousel-inner">
-                    <div class="carousel-item text-right active">
-                        <img class="d-block" src="{% static  'img/crowd-home.jpg' %}" alt="a crowd of girls waving handkerchiefs and smiling; possibly cheering">
+                    <div class="carousel-item active">
+                        <img class="d-block w-100" src="{% static  'img/crowd-home.jpg' %}" alt="a crowd of girls waving handkerchiefs and smiling; possibly cheering">
                     </div>
                 </div>
-            </div>
-            <div class="col-8 col-md-6 carousel-text text-center py-md-3">
-                <h1 class="px-md-3">Get Involved:</h1>
-                <p class="hero-text d-none d-md-block mb-0 mx-2">Volunteer to uncover our shared history and make documents more searchable for everyone.</p>
-                <a class="btn btn-primary btn-lg my-2 mb-md-3" href="{% url 'transcriptions:campaigns' %}">LET'S GO!</a>
+                <div class="carousel-overlay text-center py-md-3">
+                    <h1>Get Involved:</h1>
+                    <p class="hero-text">Volunteer to uncover our shared history and make documents more searchable for everyone.</p>
+                    <a class="btn btn-primary btn-lg" href="{% url 'transcriptions:campaigns' %}">LET'S GO!</a>
+                </div>
             </div>
         </div>
     </div>
-    <div class="row my-5">
-        <div id="homepage-contribute-container" class="w-100 bg-home-contribute p-1 p-md-2 p-lg-3">
+    <div class="row no-gutters my-5 px-sm-3">
+        <div id="homepage-contribute-container" class="col-12 bg-home-contribute p-1 p-md-2 p-lg-3">
             <div class="mb-3">
                 <h2 class="px-default offwhite-text px-md-0 ml-md-3">Anyone Can Contribute</h2>
             </div>
@@ -53,22 +53,24 @@
             </div>
         </div>
     </div>
-    <div class="row my-5">
-        <div class="col-12 mb-3">
-            <h2 class="px-default px-md-0 ml-md-3">Campaigns: <small>Choose what to transcribe</small></h2>
+    <div class="container my-5">
+        <div class="row">
+            <div class="col-12 mb-3">
+                <h2 class="px-default px-md-0 ml-md-3">Campaigns: <small>Choose what to transcribe</small></h2>
+            </div>
+            <div class="d-flex flex-wrap col-12 justify-content-around">
+                {% for campaign in campaigns|slice:":6" %}
+                    <div class="text-center campaign m-1">
+                        <a href="{% url 'transcriptions:campaign' campaign.slug %}">
+                            <img src="{{ MEDIA_URL }}{{ campaign.thumbnail_image }}" class="img-home-contribute d-block mx-auto img-fluid" alt="{{ campaign.title }} image">
+                            <h3 class="mt-half">{{ campaign.title }}</h3>
+                        </a>
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="col-12 d-flex justify-content-center my-3">
+                <a class="btn btn-primary" href="{% url 'transcriptions:campaigns' %}" role="button">Browse All Campaigns</a>
+            </div>
         </div>
-        <div class="d-flex flex-wrap col-12 justify-content-around">
-            {% for campaign in campaigns|slice:":6" %}
-                <div class="text-center campaign m-1">
-                    <a href="{% url 'transcriptions:campaign' campaign.slug %}">
-                        <img src="{{ MEDIA_URL }}{{ campaign.thumbnail_image }}" class="img-home-contribute d-block mx-auto img-fluid" alt="{{ campaign.title }} image">
-                        <h3 class="mt-half">{{ campaign.title }}</h3>
-                    </a>
-                </div>
-            {% endfor %}
-        </div>
-    </div>
-    <div class="row mx-auto d-flex justify-content-center my-3">
-        <a class="btn btn-primary" href="{% url 'transcriptions:campaigns' %}" role="button">Browse All Campaigns</a>
     </div>
 {% endblock main_content %}
