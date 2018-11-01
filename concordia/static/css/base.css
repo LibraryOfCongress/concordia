@@ -583,7 +583,7 @@ ul.nav-secondary {
 }
 
 .homepage-activity {
-    max-width: calc(33% - 8px);
+    width: calc(33% - 8px);
     flex-shrink: 0;
     flex-grow: 0;
 }
