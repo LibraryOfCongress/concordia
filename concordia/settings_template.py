@@ -212,8 +212,6 @@ LOGGING = {
 # Django-specific settings above
 ################################################################################
 
-ACCOUNT_ACTIVATION_DAYS = 7
-
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(SITE_ROOT_DIR, "media")
 
@@ -245,8 +243,8 @@ ANONYMOUS_CAPTCHA_VALIDATION_INTERVAL = 86400
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 WHITENOISE_ROOT = os.path.join(SITE_ROOT_DIR, "static")
 
-PASSWORD_RESET_TIMEOUT_DAYS = 1
-ACCOUNT_ACTIVATION_DAYS = 1
+PASSWORD_RESET_TIMEOUT_DAYS = 2
+ACCOUNT_ACTIVATION_DAYS = 2
 REGISTRATION_OPEN = True  # set to false to temporarily disable registrations
 
 MESSAGE_STORAGE = "django.contrib.messages.storage.session.SessionStorage"

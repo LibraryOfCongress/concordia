@@ -82,6 +82,4 @@ ELASTICSEARCH_DSL = {
 
 REGISTRATION_SALT = "django_registration"  # doesn't need to be secret
 
-ACCOUNT_ACTIVATION_DAYS = 1  # required for HMAC registration two-step-flow
-
 SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
