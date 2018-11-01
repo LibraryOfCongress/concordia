@@ -638,6 +638,10 @@ ul.nav-secondary {
     display: block;
 }
 
+#homepage-campaign-list a {
+    color: inherit;
+}
+
 @media screen and (max-width: 575px) {
     .view-homepage h1 {
         font-size: 2rem;
