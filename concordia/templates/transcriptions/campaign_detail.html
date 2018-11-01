@@ -32,13 +32,14 @@
         </div>
     </div>
     <div class="row">
-        <div class="d-flex flex-wrap col-12 my-3 justify-content-around">
+        <div class="d-flex flex-wrap col-12 my-3 justify-content-around align-items-center text-center">
             {% for project in campaign.project_set.published %}
                 <div class="col-12 col-md-4 col-lg-3 mb-3 px-3">
-                    <a href="{% url 'transcriptions:project-detail' campaign.slug project.slug %}" class="">
-                        <img src="{{ MEDIA_URL }}{{ project.thumbnail_image }}" class="img-fluid" alt="{{ project.title }} image">
-                        <h5 class="card-title pl-3 w-100 bg-lightest-gray">{{ project.title }}</h5>
+                    {% url 'transcriptions:project-detail' campaign.slug project.slug as project_url %}
+                    <a href="{{ project_url }}" aria-hidden="true">
+                        <img src="{{ MEDIA_URL }}{{ project.thumbnail_image }}" class="img-fluid" alt="{{ project.title }}">
                     </a>
+                    <h5 class="card-title pl-3 w-100 bg-lightest-gray"><a href="{{ project_url }}">{{ project.title }}</a></h5>
                 </div>
             {% endfor %}
         </div>
