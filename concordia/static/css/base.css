@@ -506,6 +506,12 @@ ul.nav-secondary {
     background-color: var(--bg-lightest-gray);
 }
 
+@media screen and (max-width: 576px) {
+    .card-deck .card.concordia-object-card {
+        flex-basis: auto;
+    }
+}
+
 .concordia-object-card .card-title,
 .concordia-object-card .card-actions {
     position: absolute;
