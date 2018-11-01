@@ -48,7 +48,7 @@
             {% include "fragments/transcription-progress-bar.html" %}
         </div>
     </div>
-    <div class="card-deck justify-content-center">
+    <div class="card-deck justify-content-center align-items-center align-items-sm-stretch">
         {% for a in assets %}
             {% url 'transcriptions:asset-detail' a.item.project.campaign.slug a.item.project.slug a.item.item_id a.slug as asset_detail_url %}
 
