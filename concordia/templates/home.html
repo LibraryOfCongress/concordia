@@ -60,12 +60,14 @@
             </div>
             <div class="d-flex flex-wrap col-12 justify-content-around">
                 {% for campaign in campaigns|slice:":6" %}
-                    <div class="text-center campaign m-1">
+                    <div class="text-center campaign m-1 d-flex flex-column flex-wrap justify-content-between align-items-center">
                         {% url 'transcriptions:campaign' campaign.slug as campaign_url %}
-                        <a href="{{ campaign_url }}">
-                            <img src="{{ MEDIA_URL }}{{ campaign.thumbnail_image }}" class="img-home-contribute d-block mx-auto img-fluid" alt="{{ campaign.title }} image">
-                        </a>
-                        <h3 class="mt-half"><a href="{{ campaign_url }}">{{ campaign.title }}</a></h3>
+                        <div>
+                            <a href="{{ campaign_url }}" aria-hidden="true">
+                                <img src="{{ MEDIA_URL }}{{ campaign.thumbnail_image }}" class="img-fluid" alt="{{ campaign.title }}">
+                            </a>
+                            <h3 class="mt-half"><a href="{{ campaign_url }}">{{ campaign.title }}</a></h3>
+                        </div>
                         <a class="btn btn-outline-primary" href="{{ campaign_url }}">Get Started</a>
                     </div>
                 {% endfor %}

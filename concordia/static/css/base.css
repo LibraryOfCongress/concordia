@@ -642,6 +642,22 @@ ul.nav-secondary {
     color: inherit;
 }
 
+#homepage-campaign-list .campaign {
+    width: 380px;
+}
+
+#homepage-campaign-list img {
+    width: 368px;
+    height: 262px;
+    display: block;
+    object-fit: cover;
+}
+
+#homepage-campaign-list h3 {
+    /* avoid the text below the images overhanging the image */
+    max-width: 360px;
+}
+
 @media screen and (max-width: 575px) {
     .view-homepage h1 {
         font-size: 2rem;
@@ -671,6 +687,10 @@ ul.nav-secondary {
         width: 442px;
         background-color: var(--bg-offwhite);
         padding: 1rem 1rem 1.3rem 1rem;
+    }
+
+    #homepage-campaign-list .campaign {
+        max-width: 30%;
     }
 }
 
