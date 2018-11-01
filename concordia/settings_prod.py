@@ -62,7 +62,7 @@ AWS_STORAGE_BUCKET_NAME = S3_BUCKET_NAME
 AWS_DEFAULT_ACL = None  # Don't set an ACL on the files, inherit the bucket ACLs
 
 if CONCORDIA_ENVIRONMENT == "production":
-    MEDIA_URL = "https://crowd-media.loc.gov"
+    MEDIA_URL = "https://crowd-media.loc.gov/"
 else:
     MEDIA_URL = "https://%s.s3.amazonaws.com/" % S3_BUCKET_NAME
 
