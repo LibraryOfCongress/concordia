@@ -45,6 +45,7 @@ isort = "*"
 django-debug-toolbar = "*"
 "flake8" = "*"
 coverage = "*"
+pre-commit = "*"
 
 [requires]
 python_version = "3.6"
