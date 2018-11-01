@@ -60,7 +60,7 @@
             </div>
             <div class="d-flex flex-wrap col-12 justify-content-around">
                 {% for campaign in campaigns|slice:":6" %}
-                    <div class="text-center campaign m-1 d-flex flex-column flex-wrap justify-content-between align-items-center">
+                    <div class="text-center campaign m-1 mb-4 mb-md-5 d-flex flex-column flex-wrap justify-content-between align-items-center">
                         {% url 'transcriptions:campaign' campaign.slug as campaign_url %}
                         <div>
                             <a href="{{ campaign_url }}" aria-hidden="true">
