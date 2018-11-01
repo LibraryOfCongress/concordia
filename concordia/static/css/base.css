@@ -614,8 +614,7 @@ ul.nav-secondary {
     line-height: 125%;
 }
 
-.view-homepage main h1,
-.view-homepage main h2 {
+.view-homepage .carousel-overlay h1 {
     text-transform: uppercase;
 }
 
