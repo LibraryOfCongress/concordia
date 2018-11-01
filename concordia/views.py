@@ -36,6 +36,7 @@ from django.views.decorators.vary import vary_on_headers
 from django.views.generic import DetailView, FormView, ListView, TemplateView
 from django_registration.backends.activation.views import RegistrationView
 from ratelimit.decorators import ratelimit
+from ratelimit.mixins import RatelimitMixin
 
 from concordia.forms import (
     AssetFilteringForm,
@@ -201,23 +202,39 @@ def ajax_messages(request):
     )
 
 
-registration_rate = "6/h"
+def registration_rate(self, group, request):
+    registration_form = UserRegistrationForm(request.POST)
+    if registration_form.is_valid():
+        return None
+    else:
+        return "3/15m"
 
 
-@ratelimit(key="ip", rate=registration_rate)
-@ratelimit(key="post:username", rate=registration_rate)
 @method_decorator(never_cache, name="dispatch")
-class ConcordiaRegistrationView(RegistrationView):
+class ConcordiaRegistrationView(RatelimitMixin, RegistrationView):
     form_class = UserRegistrationForm
+    ratelimit_key = "ip"
+    ratelimit_rate = registration_rate
+    ratelimit_method = "POST"
+    ratelimit_block = True
 
 
-login_rate = "6/h"
+def login_rate(self, group, request):
+    if request.user.is_authenticated:
+        return None
+    return "3/15m"
 
 
-@ratelimit(key="ip", rate=login_rate)
-@ratelimit(key="post:username", rate=login_rate)
-class ConcordiaLoginView(LoginView):
-    template_name = "registration/login.html"
+@method_decorator(never_cache, name="dispatch")
+class ConcordiaLoginView(RatelimitMixin, LoginView):
+    ratelimit_key = "ip"
+    ratelimit_rate = login_rate
+    ratelimit_method = "POST"
+    ratelimit_block = True
+
+
+def ratelimit_view(request, exception):
+    return HttpResponse("Stop it", status=429)
 
 
 @method_decorator(never_cache, name="dispatch")

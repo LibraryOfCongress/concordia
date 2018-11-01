@@ -99,6 +99,9 @@ urlpatterns = [
         views.ConcordiaRegistrationView.as_view(),
         name="registration_register",
     ),
+    path(
+        "account/login/", views.ConcordiaLoginView.as_view(), name="registration_login"
+    ),
     path("account/profile/", views.AccountProfileView.as_view(), name="user-profile"),
     path("account/", include("django_registration.backends.activation.urls")),
     path("account/", include("django.contrib.auth.urls")),

@@ -95,7 +95,10 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "maintenance_mode.middleware.MaintenanceModeMiddleware",
+    "ratelimit.middleware.RatelimitMiddleware",
 ]
+
+RATELIMIT_VIEW = "concordia.views.ratelimit_view"
 
 TEMPLATES = [
     {
