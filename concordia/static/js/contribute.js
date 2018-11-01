@@ -201,6 +201,7 @@ $transcriptionEditor
         $transcriptionEditor.trigger('update-ui-state');
     })
     .on('form-submit-failure', function(evt, info) {
+        /* TODO: handle 429 rate limited error */
         displayMessage(
             'error',
             'Unable to save your work: ' +
@@ -234,6 +235,7 @@ $submitButton.on('click', function(evt) {
                 });
         })
         .fail(function(jqXHR, textStatus, errorThrown) {
+            /* TODO: handle 429 rate limited error */
             displayMessage(
                 'error',
                 'Unable to save your work: ' +

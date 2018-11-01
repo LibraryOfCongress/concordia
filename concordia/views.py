@@ -219,21 +219,16 @@ class ConcordiaRegistrationView(RatelimitMixin, RegistrationView):
     ratelimit_block = True
 
 
-def login_rate(self, group, request):
-    if request.user.is_authenticated:
-        return None
-    return "3/15m"
-
-
 @method_decorator(never_cache, name="dispatch")
 class ConcordiaLoginView(RatelimitMixin, LoginView):
     ratelimit_key = "ip"
-    ratelimit_rate = login_rate
+    ratelimit_rate = "3/15m"
     ratelimit_method = "POST"
     ratelimit_block = True
 
 
 def ratelimit_view(request, exception):
+    # TODO: return a nicer message here.
     return HttpResponse("Stop it", status=429)
 
 
