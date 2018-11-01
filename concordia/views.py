@@ -207,7 +207,7 @@ def registration_rate(self, group, request):
     if registration_form.is_valid():
         return None
     else:
-        return "3/15m"
+        return "10/h"
 
 
 @method_decorator(never_cache, name="dispatch")
