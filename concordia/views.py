@@ -77,7 +77,7 @@ def default_cache_control(view_function):
     """
 
     @vary_on_headers("Accept-Encoding")
-    @cache_control(public=True, no_transform=True, max_age=settings.DEFAULT_PAGE_TTL)
+    @cache_control(public=True, max_age=settings.DEFAULT_PAGE_TTL)
     @wraps(view_function)
     def inner(*args, **kwargs):
         return view_function(*args, **kwargs)
@@ -153,7 +153,7 @@ def static_page(request, base_name=None):
     return render(request, "static-page.html", ctx)
 
 
-@cache_control(private=True, no_transform=True, max_age=settings.DEFAULT_PAGE_TTL)
+@cache_control(private=True, max_age=settings.DEFAULT_PAGE_TTL)
 @csrf_exempt
 def ajax_session_status(request):
     """
