@@ -790,10 +790,11 @@ body.view-transcriptions--asset-detail main,
 #current-tags {
     border: 0px solid #ccc;
     border-radius: 0.25rem;
-    max-height: var(--height-contribute-input);
     list-style-type: none;
 
+    max-height: var(--height-contribute-input);
     max-height: 15vh;
+
     overflow-y: scroll;
 }
 
