@@ -172,15 +172,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/screenfull.js/3.3.3/screenfull.min.js" integrity="sha256-ULK0G2N+co+TT4C60EB0nElSM1e+tI2EFVa+bR/4juU=" crossorigin="anonymous"></script>
     <script src="{% static 'js/base.js' %}"></script>
 
-    {% comment %} These can be conditionally loaded later for IE11 {% endcomment %}
-    <script type="legacy-browser-polyfill" src="https://cdn.jsdelivr.net/npm/css-vars-ponyfill@1.12.0/dist/css-vars-ponyfill.min.js" crossorigin="anonymous"></script>
-    <script type="legacy-browser-polyfill">
-        cssVars({
-            onlyLegacy: true,
-            include: 'style,link[rel="stylesheet"][href*="/static/"]'
-        });
-    </script>
-
     {% block body_scripts %}{% endblock body_scripts %}
 
     <script type="text/javascript">

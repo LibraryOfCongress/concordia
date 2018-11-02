@@ -77,6 +77,15 @@ function isOutdatedBrowser() {
     return typeof CSS == 'undefined' || !CSS.supports;
 }
 
+function loadLegacyPolyfill(scriptUrl, callback) {
+    var script = document.createElement('script');
+    script.type = 'text/javascript';
+    script.async = false;
+    script.onload = callback;
+    script.src = scriptUrl;
+    document.body.appendChild(script);
+}
+
 $(function() {
     if (isOutdatedBrowser()) {
         var theMessage =
@@ -87,9 +96,16 @@ $(function() {
             'for more information.';
 
         displayHtmlMessage('danger', theMessage);
-        $('script[type="legacy-browser-polyfill"]').attr(
-            'type',
-            'text/javascript'
+
+        loadLegacyPolyfill(
+            'https://cdn.jsdelivr.net/npm/css-vars-ponyfill@1.12.0/dist/css-vars-ponyfill.min.js',
+            function() {
+                /* global cssVars */
+                cssVars({
+                    onlyLegacy: true,
+                    include: 'style,link[rel="stylesheet"][href*="/static/"]'
+                });
+            }
         );
     }
 
