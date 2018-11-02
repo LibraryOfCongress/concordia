@@ -66,10 +66,16 @@ function displayHtmlMessage(level, message, uniqueId) {
     $newMessage.prepend(message);
 
     $messages.append($newMessage);
+
+    return $newMessage;
 }
 
 function displayMessage(level, message, uniqueId) {
-    displayHtmlMessage(level, document.createTextNode(message), uniqueId);
+    return displayHtmlMessage(
+        level,
+        document.createTextNode(message),
+        uniqueId
+    );
 }
 
 function isOutdatedBrowser() {
