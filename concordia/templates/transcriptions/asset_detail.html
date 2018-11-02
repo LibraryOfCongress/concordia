@@ -325,13 +325,13 @@
 
 {% block body_scripts %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/split.js/1.5.7/split.min.js" integrity="sha256-5yDKs5ugoDk4mCCvU/PO5w9hf69jESN2hzbEuMCq0hk=" crossorigin="anonymous"></script>
-<script src="{% static 'vendor/openseadragon/openseadragon.min.js' %}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/openseadragon/2.4.0/openseadragon.min.js" integrity="sha256-grVJpqgDSGBx1q2llmvY+J5zU9hEHbO7UvftFY2bK1w=" crossorigin="anonymous"></script>
 <script src="{% static 'js/contribute.js' %}"></script>
 <script src="{% static 'js/asset-reservation.js' %}"></script>
 <script>
     var viewer = OpenSeadragon({
         id: 'asset-image',
-        prefixUrl: '{% static "vendor/openseadragon/images/" %}',
+        prefixUrl: 'https://cdnjs.cloudflare.com/ajax/libs/openseadragon/2.4.0/images/',
         tileSources: {
             type: 'image',
             url: "{% asset_media_url asset %}"
