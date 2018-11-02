@@ -227,9 +227,11 @@ class ConcordiaLoginView(RatelimitMixin, LoginView):
     ratelimit_block = True
 
 
-def ratelimit_view(request, exception):
-    # TODO: return a nicer message here.
-    return HttpResponse("Stop it", status=429)
+def ratelimit_view(request, exception=None):
+    template_name = "429.html"
+    status_code = 429
+    template = loader.get_template(template_name)
+    return HttpResponse(template.render(), status=status_code)
 
 
 @method_decorator(never_cache, name="dispatch")

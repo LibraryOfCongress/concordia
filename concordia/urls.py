@@ -116,6 +116,7 @@ urlpatterns = [
     path("maintenance-mode/", include("maintenance_mode.urls")),
     path("error/500/", server_error),
     path("error/404/", page_not_found, {"exception": Http404()}),
+    path("error/429/", views.ratelimit_view),
     path("error/403/", permission_denied, {"exception": HttpResponseForbidden()}),
     url("", include("django_prometheus_metrics.urls")),
     path("robots.txt", include("robots.urls")),
