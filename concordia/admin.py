@@ -16,6 +16,7 @@ from django.urls import path
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html
 from django.views.decorators.cache import never_cache
+from tabular_export.admin import export_to_csv_action, export_to_excel_action
 
 from exporter import views as exporter_views
 from importer.tasks import import_items_into_project_from_url
@@ -33,8 +34,6 @@ from .models import (
     UserAssetTagCollection,
 )
 from .views import ReportCampaignView
-
-from tabular_export.admin import export_to_csv_action, export_to_excel_action
 
 
 def publish_item_action(modeladmin, request, queryset):
