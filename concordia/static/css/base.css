@@ -506,6 +506,11 @@ ul.nav-secondary {
     background-color: var(--bg-lightest-gray);
 }
 
+.card-deck .card.concordia-object-card > * {
+    /* This is only necessary for IE11 */
+    max-width: 100%;
+}
+
 @media screen and (max-width: 576px) {
     .card-deck .card.concordia-object-card {
         flex-basis: auto;
