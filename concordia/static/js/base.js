@@ -87,6 +87,17 @@ $(function() {
             'for more information.';
 
         displayHtmlMessage('danger', theMessage);
+
+        $.getScript(
+            'https://cdn.jsdelivr.net/npm/css-vars-ponyfill@1.12.0/dist/css-vars-ponyfill.min.js',
+            function() {
+                /* global cssVars */
+                cssVars({
+                    onlyLegacy: true,
+                    include: 'style,link[rel="stylesheet"][href*="/static/"]'
+                });
+            }
+        );
     }
 
     if (location.hash && $('#faqAccordion').length > 0) {
