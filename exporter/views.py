@@ -21,16 +21,6 @@ class ExportCampaignToCSV(TemplateView):
 
     @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
-        headers = [
-            "Campaign",
-            "Project",
-            "Item",
-            "ItemId",
-            "Asset",
-            "AssetStatus",
-            "DownloadUrl",
-            "Transcription",
-        ]
         qs = Campaign.objects.filter(slug=self.kwargs["campaign_slug"]).select_related()
         headers, data = flatten_queryset(
             qs,
@@ -44,6 +34,16 @@ class ExportCampaignToCSV(TemplateView):
                 "project__item__asset__download_url",
                 "project__item__asset__transcription__text",
             ],
+            extra_verbose_names={
+                "title": "Campaign",
+                "project__title": "Project",
+                "project__item__title": "Item",
+                "project__item__item_id": "ItemId",
+                "project__item__asset__title": "Asset",
+                "project__item__asset__transcription_status": "AssetStatus",
+                "project__item__asset__download_url": "DownloadUrl",
+                "project__item__asset__transcription__text": "Transcription",
+            },
         )
 
         return export_to_csv_response(
