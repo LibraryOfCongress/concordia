@@ -1,4 +1,4 @@
-/* global $ Cookies screenfull */
+/* global $ Cookies screenfull raven */
 /* exported displayMessage buildErrorMessage */
 
 (function() {
@@ -101,7 +101,25 @@ $(function() {
             'our <a href="/help-center/#browserSupport">browser support policy</a> ' +
             'for more information.';
 
-        displayHtmlMessage('danger', theMessage);
+        var warningCookie = 'outdated-browser-message-hidden';
+        var warningLastShown = 0;
+        try {
+            var cookie = Cookies.get(warningCookie);
+            if (cookie) {
+                warningLastShown = parseInt(cookie, 10);
+            }
+        } catch (e) {
+            raven.captureMessage(e);
+        }
+
+        if (Date.now() - warningLastShown > 7 * 86400) {
+            displayHtmlMessage('danger', theMessage).on(
+                'closed.bs.alert',
+                function() {
+                    Cookies.set(warningCookie, Date.now());
+                }
+            );
+        }
 
         loadLegacyPolyfill(
             'https://cdn.jsdelivr.net/npm/css-vars-ponyfill@1.12.0/dist/css-vars-ponyfill.min.js',
