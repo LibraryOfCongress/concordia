@@ -34,6 +34,8 @@ from .models import (
 )
 from .views import ReportCampaignView
 
+from tabular_export.admin import export_to_csv_action, export_to_excel_action
+
 
 def publish_item_action(modeladmin, request, queryset):
     """
@@ -103,6 +105,7 @@ class ConcordiaUserAdmin(UserAdmin):
         return obj.transcription__count
 
     transcription_count.admin_order_field = "transcription__count"
+    actions = (export_to_excel_action, export_to_csv_action)
 
 
 admin.site.unregister(User)
