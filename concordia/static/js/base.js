@@ -79,7 +79,7 @@ function isOutdatedBrowser() {
 
 $(function() {
     if (isOutdatedBrowser()) {
-        theMessage =
+        var theMessage =
             'You are using an outdated browser. This website fully supports the current ' +
             'version of every major browser ' +
             '(Microsoft Edge, Google Chrome, Mozilla Firefox, and Apple Safari). See ' +
@@ -87,6 +87,10 @@ $(function() {
             'for more information.';
 
         displayHtmlMessage('danger', theMessage);
+        $('script[type="legacy-browser-polyfill"]').attr(
+            'type',
+            'text/javascript'
+        );
     }
 
     if (location.hash && $('#faqAccordion').length > 0) {
