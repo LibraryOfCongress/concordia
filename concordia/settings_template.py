@@ -56,7 +56,7 @@ DATABASES = {
         "USER": "concordia",
         "PASSWORD": os.getenv("POSTGRESQL_PW"),
         "HOST": os.getenv("POSTGRESQL_HOST", "localhost"),
-        "PORT": "5432",
+        "PORT": os.getenv("POSTGRESQL_PORT", "5432"),
         "CONN_MAX_AGE": 15 * 60,  # Keep database connections open for 15 minutes
     }
 }
@@ -95,7 +95,10 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "maintenance_mode.middleware.MaintenanceModeMiddleware",
+    "ratelimit.middleware.RatelimitMiddleware",
 ]
+
+RATELIMIT_VIEW = "concordia.views.ratelimit_view"
 
 TEMPLATES = [
     {

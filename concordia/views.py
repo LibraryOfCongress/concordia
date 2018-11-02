@@ -15,6 +15,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
+from django.contrib.auth.views import LoginView
 from django.contrib.messages import get_messages
 from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
@@ -35,6 +36,7 @@ from django.views.decorators.vary import vary_on_headers
 from django.views.generic import DetailView, FormView, ListView, TemplateView
 from django_registration.backends.activation.views import RegistrationView
 from ratelimit.decorators import ratelimit
+from ratelimit.mixins import RatelimitMixin
 
 from concordia.forms import (
     AssetFilteringForm,
@@ -200,9 +202,36 @@ def ajax_messages(request):
     )
 
 
+def registration_rate(self, group, request):
+    registration_form = UserRegistrationForm(request.POST)
+    if registration_form.is_valid():
+        return None
+    else:
+        return "10/h"
+
+
 @method_decorator(never_cache, name="dispatch")
-class ConcordiaRegistrationView(RegistrationView):
+class ConcordiaRegistrationView(RatelimitMixin, RegistrationView):
     form_class = UserRegistrationForm
+    ratelimit_key = "ip"
+    ratelimit_rate = registration_rate
+    ratelimit_method = "POST"
+    ratelimit_block = True
+
+
+@method_decorator(never_cache, name="dispatch")
+class ConcordiaLoginView(RatelimitMixin, LoginView):
+    ratelimit_key = "ip"
+    ratelimit_rate = "3/15m"
+    ratelimit_method = "POST"
+    ratelimit_block = True
+
+
+def ratelimit_view(request, exception=None):
+    template_name = "429.html"
+    status_code = 429
+    template = loader.get_template(template_name)
+    return HttpResponse(template.render(), status=status_code)
 
 
 @method_decorator(never_cache, name="dispatch")
@@ -538,7 +567,7 @@ def save_rate(g, r):
     return None if r.user.is_authenticated else "1/m"
 
 
-@ratelimit(key="ip", rate=save_rate)
+@ratelimit(key="ip", rate=save_rate, block=True)
 @require_POST
 @validate_anonymous_captcha
 @atomic
@@ -600,7 +629,7 @@ def submit_rate(g, r):
     return None if r.user.is_authenticated else "1/m"
 
 
-@ratelimit(key="ip", rate=submit_rate)
+@ratelimit(key="ip", rate=submit_rate, block=True)
 @require_POST
 @validate_anonymous_captcha
 def submit_transcription(request, *, pk):
@@ -830,7 +859,9 @@ class ReportCampaignView(TemplateView):
         )
         projects_qs = projects_qs.annotate(
             transcriber_count=Count("item__asset__transcription__user", distinct=True),
-            reviewer_count=Count("item__asset__transcription__reviewed_by", distinct=True)
+            reviewer_count=Count(
+                "item__asset__transcription__reviewed_by", distinct=True
+            ),
         )
 
         paginator = Paginator(projects_qs, ASSETS_PER_PAGE)
@@ -873,7 +904,7 @@ def reserve_rate(g, r):
     return None if r.user.is_authenticated else "12/m"
 
 
-@ratelimit(key="ip", rate=reserve_rate)
+@ratelimit(key="ip", rate=reserve_rate, block=True)
 @require_POST
 @never_cache
 def reserve_asset_transcription(request, *, asset_pk):

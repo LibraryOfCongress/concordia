@@ -99,6 +99,9 @@ urlpatterns = [
         views.ConcordiaRegistrationView.as_view(),
         name="registration_register",
     ),
+    path(
+        "account/login/", views.ConcordiaLoginView.as_view(), name="registration_login"
+    ),
     path("account/profile/", views.AccountProfileView.as_view(), name="user-profile"),
     path("account/", include("django_registration.backends.activation.urls")),
     path("account/", include("django.contrib.auth.urls")),
@@ -113,6 +116,7 @@ urlpatterns = [
     path("maintenance-mode/", include("maintenance_mode.urls")),
     path("error/500/", server_error),
     path("error/404/", page_not_found, {"exception": Http404()}),
+    path("error/429/", views.ratelimit_view),
     path("error/403/", permission_denied, {"exception": HttpResponseForbidden()}),
     url("", include("django_prometheus_metrics.urls")),
     path("robots.txt", include("robots.urls")),
