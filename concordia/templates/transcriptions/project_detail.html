@@ -35,9 +35,11 @@
                         <img class="card-img card-img-campaign" alt="{{ item.title }}" src="{{ item.thumbnail_url }}">
                     </a>
 
-                    <a href="{% url 'transcriptions:item-detail' campaign.slug project.slug item.item_id %}" class="campaign-image-link">
-                        <h6 class="text-center primary-text my-3">{{ item.title }}</h6>
-                    </a>
+                    <h6 class="text-center primary-text my-3">
+                        <a href="{% url 'transcriptions:item-detail' campaign.slug project.slug item.item_id %}" class="campaign-image-link">
+                            {{ item.title }}
+                        </a>
+                    </h6>
                 </div>
             {% endfor %}
         </div>
