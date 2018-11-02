@@ -15,7 +15,6 @@ function attemptToReserveAsset(reservationURL) {
                 .trigger('update-ui-state');
         })
         .fail(function(jqXHR, textStatus, errorThrown) {
-            /* TODO: add handling for 429 rate limited error */
             if (jqXHR.status == 409) {
                 $transcriptionEditor
                     .data('hasReservation', false)
