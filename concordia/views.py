@@ -567,7 +567,7 @@ def save_rate(g, r):
     return None if r.user.is_authenticated else "1/m"
 
 
-@ratelimit(key="ip", rate=save_rate)
+@ratelimit(key="ip", rate=save_rate, block=True)
 @require_POST
 @validate_anonymous_captcha
 @atomic
@@ -629,7 +629,7 @@ def submit_rate(g, r):
     return None if r.user.is_authenticated else "1/m"
 
 
-@ratelimit(key="ip", rate=submit_rate)
+@ratelimit(key="ip", rate=submit_rate, block=True)
 @require_POST
 @validate_anonymous_captcha
 def submit_transcription(request, *, pk):
@@ -903,7 +903,7 @@ def reserve_rate(g, r):
     return None if r.user.is_authenticated else "12/m"
 
 
-@ratelimit(key="ip", rate=reserve_rate)
+@ratelimit(key="ip", rate=reserve_rate, block=True)
 @require_POST
 @never_cache
 def reserve_asset_transcription(request, *, asset_pk):
