@@ -666,6 +666,7 @@ ul.nav-secondary {
  */
 
 body.view-transcriptions--asset-detail main {
+    min-height: 740px;
     height: var(--height-main);
     background-color: inherit;
 }
