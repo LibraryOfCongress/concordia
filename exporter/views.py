@@ -4,6 +4,7 @@ import shutil
 import bagit
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.db.models import Subquery, OuterRef
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
@@ -21,28 +22,40 @@ class ExportCampaignToCSV(TemplateView):
 
     @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
-        qs = Campaign.objects.filter(slug=self.kwargs["campaign_slug"]).select_related()
+        latest_trans_subquery = (
+            Transcription.objects.filter(asset=OuterRef("pk"))
+            .order_by("-pk")
+            .values("text")
+        )
+        assets = Asset.objects.annotate(
+            latest_transcription=Subquery(latest_trans_subquery[:1])
+        )
+        assets = assets.filter(
+            item__project__campaign__slug=self.kwargs["campaign_slug"]
+        )
+
         headers, data = flatten_queryset(
-            qs,
+            assets,
             field_names=[
+                "item__project__campaign__title",
+                "item__project__title",
+                "item__title",
+                "item__item_id",
                 "title",
-                "project__title",
-                "project__item__title",
-                "project__item__item_id",
-                "project__item__asset__title",
-                "project__item__asset__transcription_status",
-                "project__item__asset__download_url",
-                "project__item__asset__transcription__text",
+                "transcription_status",
+                "download_url",
+                "latest_transcription",
             ],
             extra_verbose_names={
-                "title": "Campaign",
-                "project__title": "Project",
-                "project__item__title": "Item",
-                "project__item__item_id": "ItemId",
-                "project__item__asset__title": "Asset",
-                "project__item__asset__transcription_status": "AssetStatus",
-                "project__item__asset__download_url": "DownloadUrl",
-                "project__item__asset__transcription__text": "Transcription",
+                "item__project__campaign__title": "Campaign",
+                "item__project__title": "Project",
+                "item__title": "Item",
+                "item__item_id": "ItemId",
+                "item_id": "ItemId",
+                "title": "Asset",
+                "transcription_status": "AssetStatus",
+                "download_url": "DownloadUrl",
+                "latest_transcription": "Transcription",
             },
         )
 
