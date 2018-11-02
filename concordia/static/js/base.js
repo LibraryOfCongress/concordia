@@ -126,8 +126,9 @@ $(function() {
             function() {
                 /* global cssVars */
                 cssVars({
-                    onlyLegacy: true,
-                    include: 'style,link[rel="stylesheet"][href*="/static/"]'
+                    legacyOnly: true,
+                    onlyVars: true,
+                    include: 'link[rel="stylesheet"][href^="/static/"]'
                 });
             }
         );
