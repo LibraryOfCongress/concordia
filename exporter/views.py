@@ -1,4 +1,3 @@
-import csv
 import os
 import shutil
 
@@ -8,57 +7,48 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
+from tabular_export.core import export_to_csv_response, flatten_queryset
 
-from concordia.models import Asset, Campaign, Transcription, UserAssetTagCollection
+from concordia.models import Asset, Campaign, Transcription
 from concordia.storage import ASSET_STORAGE
 
 
 class ExportCampaignToCSV(TemplateView):
     """
-    Exports the transcription and tags to csv file
+    Exports the most recent transcription for each asset in a campaign
 
     """
 
-    template_name = "transcriptions/campaign.html"
-
     @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
-        campaign = Campaign.objects.get(slug=self.kwargs["campaign_slug"])
-        asset_list = Asset.objects.filter(item__project__campaign=campaign).order_by(
-            "title", "sequence"
+        headers = [
+            "Campaign",
+            "Project",
+            "Item",
+            "ItemId",
+            "Asset",
+            "AssetStatus",
+            "DownloadUrl",
+            "Transcription",
+        ]
+        qs = Campaign.objects.filter(slug=self.kwargs["campaign_slug"]).select_related()
+        headers, data = flatten_queryset(
+            qs,
+            field_names=[
+                "title",
+                "project__title",
+                "project__item__title",
+                "project__item__item_id",
+                "project__item__asset__title",
+                "project__item__asset__transcription_status",
+                "project__item__asset__download_url",
+                "project__item__asset__transcription__text",
+            ],
         )
-        # Create the HttpResponse object with the appropriate CSV header.
-        response = HttpResponse(content_type="text/csv")
-        response["Content-Disposition"] = 'attachment; filename="{0}.csv"'.format(
-            campaign.slug
+
+        return export_to_csv_response(
+            "%s.csv" % self.kwargs["campaign_slug"], headers, data
         )
-        field_names = ["title", "description", "media_url"]
-        writer = csv.writer(response)
-        writer.writerow(
-            ["Campaign", "Title", "Description", "MediaUrl", "Transcription", "Tags"]
-        )
-        for asset in asset_list:
-            transcription = Transcription.objects.filter(
-                asset=asset, user=self.request.user
-            )
-            if transcription:
-                transcription = transcription[0].text
-            else:
-                transcription = ""
-            tags = UserAssetTagCollection.objects.filter(
-                asset=asset, user=self.request.user
-            )
-            if tags:
-                tags = list(tags[0].tags.all().values_list("name", flat=True))
-            else:
-                tags = ""
-            row = (
-                [campaign.title]
-                + [getattr(asset, i) for i in field_names]
-                + [transcription, tags]
-            )
-            writer.writerow(row)
-        return response
 
 
 class ExportCampaignToBagit(TemplateView):
@@ -107,7 +97,8 @@ class ExportCampaignToBagit(TemplateView):
                             dest_file.write(chunk)
 
             # Get transcription data
-            # FIXME: if we're not including all transcriptions, we should pick the completed or latest versions!
+            # FIXME: if we're not including all transcriptions,
+            # we should pick the completed or latest versions!
 
             try:
                 transcription = Transcription.objects.get(
