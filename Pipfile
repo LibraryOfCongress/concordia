@@ -36,6 +36,7 @@ setuptools-scm = "*"
 django-bittersweet = "*"
 django-ratelimit = "*"
 python-memcached = "*"
+django-tabular-export = "*"
 
 [dev-packages]
 invoke = "*"
