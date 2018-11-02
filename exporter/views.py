@@ -1,64 +1,67 @@
-import csv
 import os
 import shutil
 
 import bagit
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.db.models import Subquery, OuterRef
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
+from tabular_export.core import export_to_csv_response, flatten_queryset
 
-from concordia.models import Asset, Campaign, Transcription, UserAssetTagCollection
+from concordia.models import Asset, Campaign, Transcription
 from concordia.storage import ASSET_STORAGE
 
 
 class ExportCampaignToCSV(TemplateView):
     """
-    Exports the transcription and tags to csv file
+    Exports the most recent transcription for each asset in a campaign
 
     """
 
-    template_name = "transcriptions/campaign.html"
-
     @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
-        campaign = Campaign.objects.get(slug=self.kwargs["campaign_slug"])
-        asset_list = Asset.objects.filter(item__project__campaign=campaign).order_by(
-            "title", "sequence"
+        latest_trans_subquery = (
+            Transcription.objects.filter(asset=OuterRef("pk"))
+            .order_by("-pk")
+            .values("text")
         )
-        # Create the HttpResponse object with the appropriate CSV header.
-        response = HttpResponse(content_type="text/csv")
-        response["Content-Disposition"] = 'attachment; filename="{0}.csv"'.format(
-            campaign.slug
+        assets = Asset.objects.annotate(
+            latest_transcription=Subquery(latest_trans_subquery[:1])
         )
-        field_names = ["title", "description", "media_url"]
-        writer = csv.writer(response)
-        writer.writerow(
-            ["Campaign", "Title", "Description", "MediaUrl", "Transcription", "Tags"]
+        assets = assets.filter(
+            item__project__campaign__slug=self.kwargs["campaign_slug"]
         )
-        for asset in asset_list:
-            transcription = Transcription.objects.filter(
-                asset=asset, user=self.request.user
-            )
-            if transcription:
-                transcription = transcription[0].text
-            else:
-                transcription = ""
-            tags = UserAssetTagCollection.objects.filter(
-                asset=asset, user=self.request.user
-            )
-            if tags:
-                tags = list(tags[0].tags.all().values_list("name", flat=True))
-            else:
-                tags = ""
-            row = (
-                [campaign.title]
-                + [getattr(asset, i) for i in field_names]
-                + [transcription, tags]
-            )
-            writer.writerow(row)
-        return response
+
+        headers, data = flatten_queryset(
+            assets,
+            field_names=[
+                "item__project__campaign__title",
+                "item__project__title",
+                "item__title",
+                "item__item_id",
+                "title",
+                "transcription_status",
+                "download_url",
+                "latest_transcription",
+            ],
+            extra_verbose_names={
+                "item__project__campaign__title": "Campaign",
+                "item__project__title": "Project",
+                "item__title": "Item",
+                "item__item_id": "ItemId",
+                "item_id": "ItemId",
+                "title": "Asset",
+                "transcription_status": "AssetStatus",
+                "download_url": "DownloadUrl",
+                "latest_transcription": "Transcription",
+            },
+        )
+
+        return export_to_csv_response(
+            "%s.csv" % self.kwargs["campaign_slug"], headers, data
+        )
 
 
 class ExportCampaignToBagit(TemplateView):
@@ -107,7 +110,8 @@ class ExportCampaignToBagit(TemplateView):
                             dest_file.write(chunk)
 
             # Get transcription data
-            # FIXME: if we're not including all transcriptions, we should pick the completed or latest versions!
+            # FIXME: if we're not including all transcriptions,
+            # we should pick the completed or latest versions!
 
             try:
                 transcription = Transcription.objects.get(
