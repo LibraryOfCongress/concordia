@@ -1,4 +1,4 @@
-/* global $ Cookies screenfull */
+/* global $ Cookies screenfull raven */
 /* exported displayMessage buildErrorMessage */
 
 (function() {
@@ -66,15 +66,30 @@ function displayHtmlMessage(level, message, uniqueId) {
     $newMessage.prepend(message);
 
     $messages.append($newMessage);
+
+    return $newMessage;
 }
 
 function displayMessage(level, message, uniqueId) {
-    displayHtmlMessage(level, document.createTextNode(message), uniqueId);
+    return displayHtmlMessage(
+        level,
+        document.createTextNode(message),
+        uniqueId
+    );
 }
 
 function isOutdatedBrowser() {
     /* See https://caniuse.com/#feat=css-supports-api */
     return typeof CSS == 'undefined' || !CSS.supports;
+}
+
+function loadLegacyPolyfill(scriptUrl, callback) {
+    var script = document.createElement('script');
+    script.type = 'text/javascript';
+    script.async = false;
+    script.onload = callback;
+    script.src = scriptUrl;
+    document.body.appendChild(script);
 }
 
 $(function() {
@@ -86,10 +101,36 @@ $(function() {
             'our <a href="/help-center/#browserSupport">browser support policy</a> ' +
             'for more information.';
 
-        displayHtmlMessage('danger', theMessage);
-        $('script[type="legacy-browser-polyfill"]').attr(
-            'type',
-            'text/javascript'
+        var warningCookie = 'outdated-browser-message-hidden';
+        var warningLastShown = 0;
+        try {
+            var cookie = Cookies.get(warningCookie);
+            if (cookie) {
+                warningLastShown = parseInt(cookie, 10);
+            }
+        } catch (e) {
+            raven.captureMessage(e);
+        }
+
+        if (Date.now() - warningLastShown > 7 * 86400) {
+            displayHtmlMessage('danger', theMessage).on(
+                'closed.bs.alert',
+                function() {
+                    Cookies.set(warningCookie, Date.now());
+                }
+            );
+        }
+
+        loadLegacyPolyfill(
+            'https://cdn.jsdelivr.net/npm/css-vars-ponyfill@1.12.0/dist/css-vars-ponyfill.min.js',
+            function() {
+                /* global cssVars */
+                cssVars({
+                    legacyOnly: true,
+                    onlyVars: true,
+                    include: 'link[rel="stylesheet"][href^="/static/"]'
+                });
+            }
         );
     }
 

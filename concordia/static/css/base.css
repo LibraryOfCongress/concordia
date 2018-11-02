@@ -506,6 +506,11 @@ ul.nav-secondary {
     background-color: var(--bg-lightest-gray);
 }
 
+.card-deck .card.concordia-object-card > * {
+    /* This is only necessary for IE11 */
+    max-width: 100%;
+}
+
 @media screen and (max-width: 576px) {
     .card-deck .card.concordia-object-card {
         flex-basis: auto;
@@ -661,6 +666,7 @@ ul.nav-secondary {
  */
 
 body.view-transcriptions--asset-detail main {
+    min-height: 740px;
     height: var(--height-main);
     background-color: inherit;
 }
@@ -790,10 +796,11 @@ body.view-transcriptions--asset-detail main,
 #current-tags {
     border: 0px solid #ccc;
     border-radius: 0.25rem;
-    max-height: var(--height-contribute-input);
     list-style-type: none;
 
+    max-height: var(--height-contribute-input);
     max-height: 15vh;
+
     overflow-y: scroll;
 }
 
