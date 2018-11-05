@@ -254,11 +254,11 @@ MESSAGE_STORAGE = "django.contrib.messages.storage.session.SessionStorage"
 
 MESSAGE_TAGS = {messages.ERROR: "danger"}
 
-SENTRY_DSN = os.environ.get("SENTRY_DSN", "")
+SENTRY_BACKEND_DSN = os.environ.get("SENTRY_BACKEND_DSN", "")
 SENTRY_PUBLIC_DSN = os.environ.get("SENTRY_PUBLIC_DSN", "")
 
 RAVEN_CONFIG = {
-    "dsn": SENTRY_DSN,
+    "dsn": SENTRY_BACKEND_DSN,
     "environment": CONCORDIA_ENVIRONMENT,
     "release": raven.fetch_git_sha(SITE_ROOT_DIR),
 }

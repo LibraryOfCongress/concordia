@@ -36,9 +36,8 @@ else:
     EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
     EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 
-
-SENTRY_DSN = os.environ.get("SENTRY_BACKEND_DSN", "")
-RAVEN_CONFIG.update({"dsn": SENTRY_DSN, "environment": CONCORDIA_ENVIRONMENT})
+SENTRY_BACKEND_DSN = os.environ.get("SENTRY_BACKEND_DSN", "")
+RAVEN_CONFIG.update({"dsn": SENTRY_BACKEND_DSN, "environment": CONCORDIA_ENVIRONMENT})
 
 SENTRY_PUBLIC_DSN = os.environ.get("SENTRY_FRONTEND_DSN", "")
 
