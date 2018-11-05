@@ -161,8 +161,15 @@
     </footer>
 
     {% if SENTRY_PUBLIC_DSN %}
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/raven.js/3.26.1/raven.min.js" integrity="sha256-N3YzTdAC27tvNKpIM2rly/WvlJf8YAat0NjPXgh5Bw4=" crossorigin="anonymous"></script>
-    <script>Raven.config('{{ SENTRY_PUBLIC_DSN }}', {'environment': '{{ CONCORDIA_ENVIRONMENT }}', 'release': '{{ RAVEN_CONFIG.release }}'}).install()</script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/raven.js/3.26.1/raven.min.js" integrity="sha256-N3YzTdAC27tvNKpIM2rly/WvlJf8YAat0NjPXgh5Bw4=" crossorigin="anonymous"></script>
+        <script>
+            if (navigator.userAgent.indexOf("CloudFlare-AlwaysOnline") < 0) {
+                Raven.config("{{ SENTRY_PUBLIC_DSN }}", {
+                    environment: "{{ CONCORDIA_ENVIRONMENT }}",
+                    release: "{{ RAVEN_CONFIG.release }}"
+                }).install();
+            }
+        </script>
     {% endif %}
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
