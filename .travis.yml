@@ -24,6 +24,5 @@ script:
   - ./manage.py collectstatic --no-input
   - ./manage.py test concordia
   - ./manage.py test importer
-  - coverage run --source='.' manage.py test concordia importer exporter
 after_success:
     coveralls
