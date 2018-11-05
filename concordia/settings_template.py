@@ -255,7 +255,7 @@ MESSAGE_STORAGE = "django.contrib.messages.storage.session.SessionStorage"
 MESSAGE_TAGS = {messages.ERROR: "danger"}
 
 SENTRY_BACKEND_DSN = os.environ.get("SENTRY_BACKEND_DSN", "")
-SENTRY_PUBLIC_DSN = os.environ.get("SENTRY_PUBLIC_DSN", "")
+SENTRY_FRONTEND_DSN = os.environ.get("SENTRY_FRONTEND_DSN", "")
 
 RAVEN_CONFIG = {
     "dsn": SENTRY_BACKEND_DSN,
