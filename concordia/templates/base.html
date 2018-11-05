@@ -14,9 +14,12 @@
     <link rel="stylesheet" href="{% static 'css/base.css' %}">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.2.0/css/all.css" integrity="sha384-hWVjflwFxL6sNzntih27bfxkr27PmbbK/iSvJ+a4+0owXq79v+lsFkW54bOGbiDQ" crossorigin="anonymous">
     {% block prefetch %}
-        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
-        <link href="https://thelibraryofcongress.tt.omtrdc.net" rel="preconnect" crossorigin>
-        <link href="https://smon.loc.gov" rel="preconnect" crossorigin>
+        <link href="https://fonts.gstatic.com" rel="preconnect dns-prefetch" crossorigin>
+        {% if CONCORDIA_ENVIRONMENT == "production" %}
+            <link href="https://crowd-media.loc.gov" rel="preconnect dns-prefetch" crossorigin>
+        {% endif %}
+        <link href="https://thelibraryofcongress.tt.omtrdc.net" rel="preconnect dns-prefetch" crossorigin>
+        <link href="https://smon.loc.gov" rel="preconnect dns-prefetch" crossorigin>
     {% endblock prefetch %}
     {% block head_content %}{% endblock head_content %}
     {% comment %}
