@@ -11,18 +11,18 @@ python:
     - "3.7-dev"
     - "3.8-dev"
 services:
-  - postgresql    
-# command to install dependencies
+  - postgresql
 before_script:
   - psql -c 'create database concordia;' -U postgres
 install:
-  - pip install pipenv
+  - pip install coveralls pipenv
   - pipenv run pip install pip==18.0
   - pipenv install --dev --deploy
-# command to run tests
 script:
   - mkdir logs
   - touch ./logs/concordia-celery.log
   - ./manage.py collectstatic --no-input
   - ./manage.py test concordia
   - ./manage.py test importer
+after_success:
+    coveralls
