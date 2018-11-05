@@ -37,6 +37,7 @@ django-bittersweet = "*"
 django-ratelimit = "*"
 python-memcached = "*"
 django-tabular-export = "*"
+pylibmc = "*"
 
 [dev-packages]
 invoke = "*"
