@@ -24,9 +24,7 @@ virtual environment to work in.
 
 Instead of doing `docker-compose up` as above, instead do the following:
 
-    $ docker-compose up -d db
-    $ docker-compose up -d rabbit
-    $ docker-compose up -d importer
+    $ docker-compose up -d db rabbit importer
 
 This will keep the database in its container for convenience.
 
