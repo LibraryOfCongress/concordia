@@ -69,13 +69,11 @@ wish to make available.
 
 #### Data Model Graph
 
-To generate a model graph, do:
+To generate a model graph, make sure that you have GraphViz installed (e.g.
+`brew install graphviz` or `apt-get install graphviz`) and use the
+django-extensions `graph_models` command:
 
-    $ docker-compose up -d app
-    $ docker-compose exec app bash
-    # cd concordia/static/img
-    # python3 ./manage.py graph_models concordia > tx.dot
-    # dot -Tsvg tx.dot -o tx.svg
+    $ dot -Tsvg <(pipenv run ./manage.py graph_models concordia importer) -o concordia.svg
 
 #### Python Dependencies
 
@@ -86,6 +84,11 @@ environment, it must be added to the Pipfile and the Pipfile.lock file.
 This can be done with the command:
 
     $ pipenv install <package>
+
+If the dependency you are installing is only of use for developers, mark it as
+such using `--dev` so it will not be deployed to servers — for example:
+
+    $ pipenv install --dev django-debug-toolbar
 
 If you manually add package names to Pipfile, then you need to update
 the Pipfile.lock file:
