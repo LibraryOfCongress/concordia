@@ -1,4 +1,5 @@
 import os
+import re
 import shutil
 
 import bagit
@@ -24,6 +25,19 @@ def get_latest_transcription_data(campaign_slug):
     )
     assets = assets.filter(item__project__campaign__slug=campaign_slug)
     return assets
+
+
+def get_original_asset_id(download_url):
+    """
+    Extract the bit from the download url
+    that identifies this image uniquely on loc.gov
+    """
+    if download_url.startswith("http://tile.loc.gov/"):
+        pattern = r"/service:([A-Za-z0-9:]*)/"
+        asset_id = re.search(pattern, download_url)
+        return asset_id.group(1).replace(":", "-")
+    else:
+        return download_url
 
 
 class ExportCampaignToCSV(TemplateView):
@@ -69,11 +83,10 @@ class ExportCampaignToCSV(TemplateView):
 # FIXME: we should be able to export at the project and item level, too
 class ExportCampaignToBagit(TemplateView):
     """
-    Creates temp directory structure for source data.  Copies source image
-    file from S3 or local storage into temp directory, builds export.csv
-    with meta, transcription, and tag data.  Executes bagit.py to turn temp
-    directory into bagit strucutre.  Builds and exports bagit structure as
-    zip.  Removes all temporary directories and files.
+    Creates temp directory structure for source data.
+    Executes bagit.py to turn temp directory into bagit strucutre.
+    Builds and exports bagit structure as zip.
+    Removes all temporary directories and files.
 
     """
 
@@ -86,16 +99,17 @@ class ExportCampaignToBagit(TemplateView):
 
         for asset in assets:
             dest_folder = os.path.join(
-                export_base_dir, asset.item.project.slug, asset.item.item_id, asset.slug
+                export_base_dir, asset.item.project.slug, asset.item.item_id
             )
             os.makedirs(dest_folder, exist_ok=True)
 
             # Build transcription output text file
             text_output_path = os.path.join(
-                dest_folder, "%s.txt" % os.path.basename(asset.media_url)
+                dest_folder,
+                "%s.txt" % os.path.basename(get_original_asset_id(asset.download_url)),
             )
             with open(text_output_path, "w") as f:
-                f.write(asset.latest_transcription)
+                f.write(asset.latest_transcription or "")
 
         # Turn Structure into bagit format
         bagit.make_bag(export_base_dir, {"Contact-Name": request.user.username})

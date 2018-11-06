@@ -1,10 +1,7 @@
 import io
-import os
+
 import zipfile
 
-from django.conf import settings
-from django.core.files.base import ContentFile
-from django.core.files.storage import default_storage
 from django.test import TestCase
 from django.urls import reverse
 
@@ -14,6 +11,12 @@ from concordia.tests.utils import (
     create_campaign,
     create_item,
     create_project,
+    clean_up,
+)
+
+DOWNLOAD_URL = (
+    "http://tile.loc.gov/image-services/iiif/"
+    "service:mss:mal:003:0036300:002/full/pct:25/0/default.jpg"
 )
 
 
@@ -23,6 +26,31 @@ class ViewTest_Exporter(TestCase):
 
     Make sure the postgresql db is available. Run docker-compose up db
     """
+
+    def setUp(self):
+
+        self.login_user()
+
+        campaign = create_campaign(published=True)
+        project = create_project(campaign=campaign, published=True)
+        item = create_item(project=project, published=True)
+
+        asset = create_asset(
+            item=item,
+            title="TestAsset",
+            description="Asset Description",
+            download_url=DOWNLOAD_URL,
+            media_type=MediaType.IMAGE,
+            sequence=1,
+        )
+
+        # add a Transcription object
+        transcription1 = Transcription(asset=asset, user=self.user, text="Sample")
+        transcription1.full_clean()
+        transcription1.save()
+
+    def tearDown(self):
+        clean_up()
 
     def login_user(self):
         """
@@ -39,14 +67,11 @@ class ViewTest_Exporter(TestCase):
         """
         Test GET route /campaigns/exportCSV/<slug-value>/ (campaign)
         """
-        self.login_user()
 
-        asset = create_asset()
+        campaign_slug = "test-campaign"
 
         response = self.client.get(
-            reverse(
-                "transcriptions:export-csv", args=(asset.item.project.campaign.slug,)
-            )
+            reverse("transcriptions:export-csv", args=(campaign_slug,))
         )
 
         self.assertEqual(response.status_code, 200)
@@ -56,9 +81,12 @@ class ViewTest_Exporter(TestCase):
         self.assertEqual(
             response_content,
             "b'Campaign,Project,Item,ItemId,Asset,"
-            + "AssetStatus,DownloadUrl,Transcription\\r\\n'"
-            + "b'Test Campaign,Test Project,Test Item,"
-            + "testitem0123456789,Test Asset,edit,,\\r\\n'",
+            "AssetStatus,DownloadUrl,Transcription\\r\\n'"
+            "b'Test Campaign,Test Project,Test Item,"
+            "testitem0123456789,TestAsset,edit,"
+            "http://tile.loc.gov/image-services/"
+            "iiif/service:mss:mal:003:0036300:002/full"
+            "/pct:25/0/default.jpg,Sample\\r\\n'",
         )
 
     def test_bagit_export(self):
@@ -66,43 +94,16 @@ class ViewTest_Exporter(TestCase):
         Test the http GET on route /campaigns/exportBagit/<campaignname>/
         """
 
-        self.login_user()
-
-        campaign = create_campaign(published=True)
-        project = create_project(campaign=campaign, published=True)
-        item = create_item(project=project, published=True)
-
-        asset = create_asset(
-            item=item,
-            title="TestAsset",
-            description="Asset Description",
-            media_url="1.jpg",
-            media_type=MediaType.IMAGE,
-            sequence=1,
-        )
-
-        # add a Transcription object
-        transcription1 = Transcription(asset=asset, user=self.user, text="Sample")
-        transcription1.full_clean()
-        transcription1.save()
-
-        item_dir = os.path.join(
-            settings.MEDIA_ROOT, campaign.slug, project.slug, item.item_id, asset.slug
-        )
-
-        asset_file = ContentFile(b"Not a real JPEG")
-        default_storage.save(
-            os.path.join(item_dir, f"{asset.sequence}.jpg"), asset_file
-        )
+        campaign_slug = "test-campaign"
 
         response = self.client.get(
-            reverse("transcriptions:export-bagit", args=(campaign.slug,))
+            reverse("transcriptions:export-bagit", args=(campaign_slug,))
         )
 
         self.assertEqual(response.status_code, 200)
         self.assertEquals(
             response.get("Content-Disposition"),
-            "attachment; filename=%s.zip" % campaign.slug,
+            "attachment; filename=%s.zip" % campaign_slug,
         )
 
         f = io.BytesIO(response.content)
@@ -110,3 +111,7 @@ class ViewTest_Exporter(TestCase):
 
         self.assertIn("bagit.txt", zipped_file.namelist())
         self.assertIn("bag-info.txt", zipped_file.namelist())
+        self.assertIn(
+            "data/test-project/testitem0123456789/mss-mal-003-0036300-002.txt",
+            zipped_file.namelist(),
+        )
