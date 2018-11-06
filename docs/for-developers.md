@@ -1,17 +1,16 @@
-# For Developers 
-
+# For Developers
 
 ## Prerequisites
 
-This application can run on a single Docker host using docker-compose. 
-(recommended for development environments). For production, see the 
+This application can run on a single Docker host using docker-compose.
+(recommended for development environments). For production, see the
 [cloudformation](cloudformation/) directory for AWS Elastic Container Service stack templates.
 
 ## Running Concordia
 
     $ git clone https://github.com/LibraryOfCongress/concordia.git
     $ cd concordia
-    $ make devup
+    $ docker-compose up
 
 Browse to [localhost](http://localhost)
 
@@ -23,7 +22,7 @@ virtual environment to work in.
 
 #### Serve
 
-Instead of doing `make devup` as above, instead do the following:
+Instead of doing `docker-compose up` as above, instead do the following:
 
     $ docker-compose up -d db
     $ docker-compose up -d rabbit
@@ -31,7 +30,7 @@ Instead of doing `make devup` as above, instead do the following:
 
 This will keep the database in its container for convenience.
 
-Next, set up a Python virtual environment, 
+Next, set up a Python virtual environment,
 install [pipenv](https://docs.pipenv.org/), and other Python prerequisites:
 
     $ python3 -m venv .venv
@@ -48,14 +47,14 @@ development server:
 
 #### Import Data
 
-Once the database, rabbitMQ service, importer and the application 
-are running, you're ready to import data. 
-First, [create a Django admin user](https://docs.djangoproject.com/en/2.1/intro/tutorial02/#creating-an-admin-user) 
+Once the database, rabbitMQ service, importer and the application
+are running, you're ready to import data.
+First, [create a Django admin user](https://docs.djangoproject.com/en/2.1/intro/tutorial02/#creating-an-admin-user)
 and log in as that user.
-Then, Click on Campaigns and then Add Campaign. Enter a name for the campaign 
-and project and a loc.gov item URL such as 
-[https://www.loc.gov/item/mss859430011](https://www.loc.gov/item/mss859430011) and click Create.
-
+Then, go to the Admin area (under Account) and click "Bulk Import Items".
+Upload a spreadsheet populated according to the instructions. Once all the import
+jobs are complete, publish the Campaigns, Projects, Items and Assets that you
+wish to make available.
 
 #### Data Model Graph
 
