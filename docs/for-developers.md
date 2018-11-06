@@ -4,7 +4,8 @@
 
 This application can run on a single Docker host using docker-compose.
 (recommended for development environments). For production, see the
-[cloudformation](cloudformation/) directory for AWS Elastic Container Service stack templates.
+[cloudformation](cloudformation/) directory for AWS Elastic Container Service
+stack templates.
 
 ## Running Concordia
 
@@ -14,13 +15,36 @@ This application can run on a single Docker host using docker-compose.
 
 Browse to [localhost](http://localhost)
 
-### Development Environment
+### Local Development Environment
 
 You may wish to run the Django development server on your localhost
 instead of within a Docker container. It is easy to set up a Python
 virtual environment to work in.
 
-#### Serve
+#### Python Dependencies
+
+Python dependencies are managed using [pipenv](https://docs.pipenv.org/).
+
+If you want to add a new Python package requirement to the application
+environment, it must be added to the Pipfile and the Pipfile.lock file.
+This can be done with the command:
+
+    $ pipenv install <package>
+
+If the dependency you are installing is only of use for developers, mark it as
+such using `--dev` so it will not be deployed to servers — for example:
+
+    $ pipenv install --dev django-debug-toolbar
+
+If you manually add package names to Pipfile, then you need to update
+the Pipfile.lock file:
+
+    $ pipenv lock
+
+Both the Pipfile and the Pipfile.lock file must be committed to the
+source code repository.
+
+#### Setting up a local development server
 
 Instead of doing `docker-compose up` as above, instead do the following:
 
@@ -75,25 +99,25 @@ django-extensions `graph_models` command:
 
     $ dot -Tsvg <(pipenv run ./manage.py graph_models concordia importer) -o concordia.svg
 
-#### Python Dependencies
+## Front-End Testing
 
-Python dependencies are managed using [pipenv](https://docs.pipenv.org/).
+### Installing front-end tools
 
-If you want to add a new Python package requirement to the application
-environment, it must be added to the Pipfile and the Pipfile.lock file.
-This can be done with the command:
+1. Use a package manager such as Yarn or NPM to install our development tools:
 
-    $ pipenv install <package>
+    $ yarn install --dev
+    $ npm install
 
-If the dependency you are installing is only of use for developers, mark it as
-such using `--dev` so it will not be deployed to servers — for example:
+2. If you need a list of public-facing URLs for testing, there's a management
+   command which may be helpful:
 
-    $ pipenv install --dev django-debug-toolbar
+    $ pipenv run ./manage.py print_frontend_test_urls
 
-If you manually add package names to Pipfile, then you need to update
-the Pipfile.lock file:
+### Accessibility testing using aXe
 
-    $ pipenv lock
+Automated tools such as [aXe](https://www.deque.com/axe/) are useful for
+catching low-hanging fruit and regressions. You run aXe against a development
+server by giving it one or more URLs:
 
-Both the Pipfile and the Pipfile.lock file must be committed to the
-source code repository.
+    $ yarn run axe --show-errors http://localhost:8000/
+    $ pipenv run ./manage.py print_frontend_test_urls | xargs yarn run axe --show-errors
