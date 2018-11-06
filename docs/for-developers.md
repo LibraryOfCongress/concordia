@@ -28,20 +28,33 @@ Instead of doing `docker-compose up` as above, instead do the following:
 
 This will keep the database in its container for convenience.
 
-Next, set up a Python virtual environment,
-install [pipenv](https://docs.pipenv.org/), and other Python prerequisites:
+Next, we need to setup a Python virtual environment and install our Python dependencies:
 
-    $ python3 -m venv .venv
-    $ source .venv/bin/activate
+1. Install [pipenv](https://docs.pipenv.org/) either using a tool like
+   [Homebrew](https://brew.sh) (`brew install pipenv`) or using `pip`:
+
     $ pip3 install pipenv
+
+2. Let Pipenv create the virtual environment and install all of the packages,
+   including our developer tools:
+
     $ pipenv install --dev
 
-Finally, configure the Django settings, run migrations, and launch the
-development server:
+3. Configure the Django settings module in the `.env` file which Pipenv will use
+   to automatically populate the environment for every command it runs:
 
-    $ export DJANGO_SETTINGS_MODULE="concordia.settings_dev"
-    $ ./manage.py migrate
-    $ ./manage.py runserver
+    $ echo DJANGO_SETTINGS_MODULE="concordia.settings_dev" >> .env
+
+    You can use this to set any other values you want to customize, such as
+    `POSTGRESQL_PW` or `POSTGRESQL_HOST`.
+
+4. Apply any database migrations:
+
+    $ pipenv run ./manage.py migrate
+
+5. Run the development server:
+
+    $ pipenv run ./manage.py runserver
 
 #### Import Data
 
