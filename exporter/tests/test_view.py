@@ -37,7 +37,7 @@ class ViewTest_Exporter(TestCase):
 
     def test_csv_export(self):
         """
-        Test GET route /campaigns/export/<slug-value>/ (campaign)
+        Test GET route /campaigns/exportCSV/<slug-value>/ (campaign)
         """
         self.login_user()
 
@@ -50,10 +50,15 @@ class ViewTest_Exporter(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
+        response_content = ""
+        for content_piece in response.streaming_content:
+            response_content += str(content_piece)
         self.assertEqual(
-            response.content.decode("utf-8"),
-            "Campaign,Title,Description,MediaUrl,Transcription,Tags\r\n"
-            "Test Campaign,Test Asset,,1.jpg,,\r\n",
+            response_content,
+            "b'Campaign,Project,Item,ItemId,Asset,"
+            + "AssetStatus,DownloadUrl,Transcription\\r\\n'"
+            + "b'Test Campaign,Test Project,Test Item,"
+            + "testitem0123456789,Test Asset,edit,,\\r\\n'",
         )
 
     def test_bagit_export(self):
@@ -105,7 +110,3 @@ class ViewTest_Exporter(TestCase):
 
         self.assertIn("bagit.txt", zipped_file.namelist())
         self.assertIn("bag-info.txt", zipped_file.namelist())
-        self.assertIn(
-            "data/test-project/testitem0123456789/testasset/1.jpg",
-            zipped_file.namelist(),
-        )

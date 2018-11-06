@@ -10,8 +10,20 @@ from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
 from tabular_export.core import export_to_csv_response, flatten_queryset
 
-from concordia.models import Asset, Campaign, Transcription
-from concordia.storage import ASSET_STORAGE
+from concordia.models import Asset, Transcription
+
+
+def get_latest_transcription_data(campaign_slug):
+    latest_trans_subquery = (
+        Transcription.objects.filter(asset=OuterRef("pk"))
+        .order_by("-pk")
+        .values("text")
+    )
+    assets = Asset.objects.annotate(
+        latest_transcription=Subquery(latest_trans_subquery[:1])
+    )
+    assets = assets.filter(item__project__campaign__slug=campaign_slug)
+    return assets
 
 
 class ExportCampaignToCSV(TemplateView):
@@ -22,17 +34,7 @@ class ExportCampaignToCSV(TemplateView):
 
     @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
-        latest_trans_subquery = (
-            Transcription.objects.filter(asset=OuterRef("pk"))
-            .order_by("-pk")
-            .values("text")
-        )
-        assets = Asset.objects.annotate(
-            latest_transcription=Subquery(latest_trans_subquery[:1])
-        )
-        assets = assets.filter(
-            item__project__campaign__slug=self.kwargs["campaign_slug"]
-        )
+        assets = get_latest_transcription_data(self.kwargs["campaign_slug"])
 
         headers, data = flatten_queryset(
             assets,
@@ -64,6 +66,7 @@ class ExportCampaignToCSV(TemplateView):
         )
 
 
+# FIXME: we should be able to export at the project and item level, too
 class ExportCampaignToBagit(TemplateView):
     """
     Creates temp directory structure for source data.  Copies source image
@@ -74,58 +77,25 @@ class ExportCampaignToBagit(TemplateView):
 
     """
 
-    include_images = True
-    template_name = "transcriptions/campaign.html"
-
     @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
-        campaign = Campaign.objects.get(slug=self.kwargs["campaign_slug"])
-        asset_list = Asset.objects.filter(item__project__campaign=campaign).order_by(
-            "title", "sequence"
-        )
+        campaign_slug = self.kwargs["campaign_slug"]
+        assets = get_latest_transcription_data(campaign_slug)
 
-        # FIXME: this code should be working in a separate path than the media root!
-        # FIXME: we should be able to export at the project and item level, too
-        export_base_dir = os.path.join(settings.MEDIA_ROOT, "exporter", campaign.slug)
+        export_base_dir = os.path.join(settings.SITE_ROOT_DIR, "tmp", campaign_slug)
 
-        for asset in asset_list:
-            src = os.path.join(
-                settings.MEDIA_ROOT,
-                asset.item.project.campaign.slug,
-                asset.item.project.slug,
-                asset.item.item_id,
-                asset.slug,
-                asset.media_url,
-            )
+        for asset in assets:
             dest_folder = os.path.join(
                 export_base_dir, asset.item.project.slug, asset.item.item_id, asset.slug
             )
             os.makedirs(dest_folder, exist_ok=True)
-            dest = os.path.join(dest_folder, asset.media_url)
-
-            if self.include_images:
-                with open(dest, mode="wb") as dest_file:
-                    with ASSET_STORAGE.open(src, mode="rb") as src_file:
-                        for chunk in src_file.chunks(1048576):
-                            dest_file.write(chunk)
-
-            # Get transcription data
-            # FIXME: if we're not including all transcriptions,
-            # we should pick the completed or latest versions!
-
-            try:
-                transcription = Transcription.objects.get(
-                    asset=asset, user=self.request.user
-                ).text
-            except Transcription.DoesNotExist:
-                transcription = ""
 
             # Build transcription output text file
-            tran_output_path = os.path.join(
+            text_output_path = os.path.join(
                 dest_folder, "%s.txt" % os.path.basename(asset.media_url)
             )
-            with open(tran_output_path, "w") as f:
-                f.write(transcription)
+            with open(text_output_path, "w") as f:
+                f.write(asset.latest_transcription)
 
         # Turn Structure into bagit format
         bagit.make_bag(export_base_dir, {"Contact-Name": request.user.username})
@@ -137,7 +107,7 @@ class ExportCampaignToBagit(TemplateView):
         # Download zip
         with open("%s.zip" % export_base_dir, "rb") as zip_file:
             response = HttpResponse(zip_file, content_type="application/zip")
-        response["Content-Disposition"] = "attachment; filename=%s.zip" % campaign.slug
+        response["Content-Disposition"] = "attachment; filename=%s.zip" % campaign_slug
 
         # Clean up temp folders & zipfile once exported
         shutil.rmtree(export_base_dir)
