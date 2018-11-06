@@ -22,7 +22,7 @@ script:
   - mkdir logs
   - touch ./logs/concordia-celery.log
   - ./manage.py collectstatic --no-input
-  - ./manage.py test concordia
-  - ./manage.py test importer
+  - ./manage.py test concordia importer exporter
+  - coverage run ./manage.py test concordia importer exporter
 after_success:
     coveralls
