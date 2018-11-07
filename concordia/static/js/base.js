@@ -27,6 +27,10 @@
     });
 })();
 
+$(function() {
+    $('[data-toggle="popover"]').popover();
+});
+
 function buildErrorMessage(jqXHR, textStatus, errorThrown) {
     /* Construct a nice error message using optional JSON response context */
     var errMessage;
