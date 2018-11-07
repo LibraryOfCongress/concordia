@@ -69,8 +69,8 @@
 
 
 
-            <div class="btn-group btn-group-sm align-self-end" role="navigation" aria-label="Link to the next editable page">
-                <a class="btn btn-default" href="{% url "transcriptions:redirect-to-next-transcribable-asset" campaign.slug project.slug %}">Find a new page &rarr;</a>
+            <div class="btn-group btn-group-sm align-self-end" role="navigation">
+                <a class="btn btn-default" title="Move to the next page in this item that needs help" href="{% url "transcriptions:redirect-to-next-transcribable-asset" campaign.slug project.slug %}">Find a new page &rarr;</a>
             </div>
         </nav>
     </div>
@@ -118,12 +118,17 @@
                                     <label class="form-check-label" for="nothing-to-transcribe">
                                         Nothing to transcribe
                                     </label>
+
+                                    <a tabindex="0" class="btn btn-link d-inline" role="button" data-toggle="popover" data-placement="top" data-trigger="focus click hover" title="Help" data-html="true" data-content="If it looks like there’s nothing to transcribe, use this button and then Submit. Not sure? Check these tips: {% filter force_escape %}<a href="{% url 'how-to-transcribe' %}">how to transcribe</a>{% endfilter %}">
+                                        <span class="fas fa-question-circle" aria-label="Open Help"></span>
+                                    </a>
                                 </div>
-                                <button id="save-transcription-button" disabled type="submit" class="btn btn-primary">Save</button>
-                                <button id="submit-transcription-button" disabled type="button" class="btn btn-primary">Submit for Review</button>
+
+                                <button id="save-transcription-button" disabled type="submit" class="btn btn-primary" title="Use this button to save the text you typed above">Save</button>
+                                <button id="submit-transcription-button" disabled type="button" class="btn btn-primary" title="Use this button when nothing remains to transcribe and someone else can review">Submit for Review</button>
                             {% elif transcription_status == 'submitted' and user.is_authenticated and transcription.user.pk != user.pk %}
-                                <button id="reject-transcription-button" disabled type="button" class="btn btn-primary">Edit</button>
-                                <button id="accept-transcription-button" disabled type="button" class="btn btn-primary">Accept</button>
+                                <button id="reject-transcription-button" disabled type="button" class="btn btn-primary" title="Use this button if you see errors in the text that need to be corrected">Edit</button>
+                                <button id="accept-transcription-button" disabled type="button" class="btn btn-primary" title="Use this button once you’re confident that the text is accurately transcribed">Accept</button>
                             {% endif %}
                         </div>
                     {% endspaceless %}
@@ -151,6 +156,10 @@
                         <p class="help-text primary-text">
                             Want to tag this page?
                             <a class="primary-text" href="{% url 'registration_register' %}">Register</a> or <a class="primary-text" href="{% url 'login' %}?next={{ request.path|urlencode }}">Login</a>
+
+                            <a tabindex="0" class="btn btn-link d-inline" role="button" data-toggle="popover" data-placement="top" data-trigger="focus click hover" title="Help" data-content="Only registered users can add tags">
+                                <span class="fas fa-question-circle" aria-label="Open Help"></span>
+                            </a>
                         </p>
                     {% endif %}
 
