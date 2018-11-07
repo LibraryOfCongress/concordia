@@ -1,5 +1,4 @@
 import io
-
 import zipfile
 
 from django.test import TestCase
@@ -62,20 +61,19 @@ class ViewTest_Exporter(TestCase):
             reverse("transcriptions:export-csv", args=(campaign_slug,))
         )
 
-        self.assertEqual(response.status_code, 200)
-        response_content = ""
-        for content_piece in response.streaming_content:
-            response_content += str(content_piece)
-        self.assertEqual(
-            response_content,
+        expected_response_content = (
             "b'Campaign,Project,Item,ItemId,Asset,"
             "AssetStatus,DownloadUrl,Transcription\\r\\n'"
             "b'Test Campaign,Test Project,Test Item,"
             "testitem0123456789,TestAsset,edit,"
             "http://tile.loc.gov/image-services/"
             "iiif/service:mss:mal:003:0036300:002/full"
-            "/pct:25/0/default.jpg,Sample\\r\\n'",
+            "/pct:25/0/default.jpg,Sample\\r\\n'"
         )
+
+        self.assertEqual(response.status_code, 200)
+        response_content = "".join(map(str, response.streaming_content))
+        self.assertEqual(response_content, expected_response_content)
 
     def test_bagit_export(self):
         """

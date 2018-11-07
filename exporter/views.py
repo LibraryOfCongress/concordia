@@ -35,6 +35,7 @@ def get_original_asset_id(download_url):
     if download_url.startswith("http://tile.loc.gov/"):
         pattern = r"/service:([A-Za-z0-9:]*)/"
         asset_id = re.search(pattern, download_url)
+        assert asset_id
         return asset_id.group(1).replace(":", "-")
     else:
         return download_url
