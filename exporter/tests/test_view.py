@@ -11,7 +11,6 @@ from concordia.tests.utils import (
     create_campaign,
     create_item,
     create_project,
-    clean_up,
 )
 
 DOWNLOAD_URL = (
@@ -28,8 +27,11 @@ class ViewTest_Exporter(TestCase):
     """
 
     def setUp(self):
+        user = User.objects.create(username="tester", email="tester@example.com")
+        user.set_password("top_secret")
+        user.save()
 
-        self.login_user()
+        self.assertTrue(self.client.login(username="tester", password="top_secret"))
 
         campaign = create_campaign(published=True)
         project = create_project(campaign=campaign, published=True)
@@ -45,23 +47,9 @@ class ViewTest_Exporter(TestCase):
         )
 
         # add a Transcription object
-        transcription1 = Transcription(asset=asset, user=self.user, text="Sample")
+        transcription1 = Transcription(asset=asset, user=user, text="Sample")
         transcription1.full_clean()
         transcription1.save()
-
-    def tearDown(self):
-        clean_up()
-
-    def login_user(self):
-        """
-        Create a user and log the user in
-        """
-
-        self.user = User.objects.create(username="tester", email="tester@example.com")
-        self.user.set_password("top_secret")
-        self.user.save()
-
-        self.assertTrue(self.client.login(username="tester", password="top_secret"))
 
     def test_csv_export(self):
         """

@@ -104,11 +104,6 @@ def create_asset(
     return asset
 
 
-def clean_up():
-    campaign = Campaign.objects.get(title="Test Campaign")
-    campaign.delete()
-
-
 class JSONAssertMixin(object):
     def assertValidJSON(self, response, expected_status=200):
         """

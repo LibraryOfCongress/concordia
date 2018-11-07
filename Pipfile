@@ -48,6 +48,7 @@ django-debug-toolbar = "*"
 "flake8" = "*"
 coverage = "*"
 pre-commit = "*"
+pylint = "*"
 
 [requires]
 python_version = "3.6"

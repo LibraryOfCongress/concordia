@@ -43,7 +43,6 @@ def get_original_asset_id(download_url):
 class ExportCampaignToCSV(TemplateView):
     """
     Exports the most recent transcription for each asset in a campaign
-
     """
 
     @method_decorator(login_required)
@@ -87,7 +86,6 @@ class ExportCampaignToBagit(TemplateView):
     Executes bagit.py to turn temp directory into bagit strucutre.
     Builds and exports bagit structure as zip.
     Removes all temporary directories and files.
-
     """
 
     @method_decorator(login_required)
@@ -122,6 +120,8 @@ class ExportCampaignToBagit(TemplateView):
         with open("%s.zip" % export_base_dir, "rb") as zip_file:
             response = HttpResponse(zip_file, content_type="application/zip")
         response["Content-Disposition"] = "attachment; filename=%s.zip" % campaign_slug
+
+        # Upload zip to S3 bucket
 
         # Clean up temp folders & zipfile once exported
         shutil.rmtree(export_base_dir)
