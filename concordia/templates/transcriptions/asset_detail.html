@@ -153,7 +153,7 @@
                             </div>
                         </div>
                     {% else %}
-                        <p class="help-text primary-text">
+                        <p class="help-text primary-text text-center anonymous-only">
                             Want to tag this page?
                             <a class="primary-text" href="{% url 'registration_register' %}">Register</a> or <a class="primary-text" href="{% url 'login' %}?next={{ request.path|urlencode }}">Login</a>
 
@@ -185,11 +185,9 @@
                         {% endfor %}
                     </ul>
 
-                    {% if user.is_authenticated %}
-                        <div class="form-row btn-row">
-                            <button id="save-tags-button" type="submit" class="btn btn-primary mx-auto">Save Tags</button>
-                        </div>
-                    {% endif %}
+                    <div class="form-row btn-row authenticated-only" hidden>
+                        <button id="save-tags-button" type="submit" class="btn btn-primary mx-auto">Save Tags</button>
+                    </div>
                 </form>
             </div>
         </div>
