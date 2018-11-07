@@ -11,6 +11,9 @@ echo Running makemigrations
 echo Running migrations
 ./manage.py migrate
 
+echo "Ensuring our base configuration is present in the database"
+./manage.py ensure_initial_site_configuration
+
 echo Running collectstatic
 ./manage.py collectstatic --clear --noinput -v0
 
