@@ -1,10 +1,6 @@
 import io
-import os
 import zipfile
 
-from django.conf import settings
-from django.core.files.base import ContentFile
-from django.core.files.storage import default_storage
 from django.test import TestCase
 from django.urls import reverse
 
@@ -16,6 +12,11 @@ from concordia.tests.utils import (
     create_project,
 )
 
+DOWNLOAD_URL = (
+    "http://tile.loc.gov/image-services/iiif/"
+    "service:mss:mal:003:0036300:002/full/pct:25/0/default.jpg"
+)
+
 
 class ViewTest_Exporter(TestCase):
     """
@@ -24,44 +25,12 @@ class ViewTest_Exporter(TestCase):
     Make sure the postgresql db is available. Run docker-compose up db
     """
 
-    def login_user(self):
-        """
-        Create a user and log the user in
-        """
-
-        self.user = User.objects.create(username="tester", email="tester@example.com")
-        self.user.set_password("top_secret")
-        self.user.save()
+    def setUp(self):
+        user = User.objects.create(username="tester", email="tester@example.com")
+        user.set_password("top_secret")
+        user.save()
 
         self.assertTrue(self.client.login(username="tester", password="top_secret"))
-
-    def test_csv_export(self):
-        """
-        Test GET route /campaigns/export/<slug-value>/ (campaign)
-        """
-        self.login_user()
-
-        asset = create_asset()
-
-        response = self.client.get(
-            reverse(
-                "transcriptions:export-csv", args=(asset.item.project.campaign.slug,)
-            )
-        )
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(
-            response.content.decode("utf-8"),
-            "Campaign,Title,Description,MediaUrl,Transcription,Tags\r\n"
-            "Test Campaign,Test Asset,,1.jpg,,\r\n",
-        )
-
-    def test_bagit_export(self):
-        """
-        Test the http GET on route /campaigns/exportBagit/<campaignname>/
-        """
-
-        self.login_user()
 
         campaign = create_campaign(published=True)
         project = create_project(campaign=campaign, published=True)
@@ -71,33 +40,56 @@ class ViewTest_Exporter(TestCase):
             item=item,
             title="TestAsset",
             description="Asset Description",
-            media_url="1.jpg",
+            download_url=DOWNLOAD_URL,
             media_type=MediaType.IMAGE,
             sequence=1,
         )
 
         # add a Transcription object
-        transcription1 = Transcription(asset=asset, user=self.user, text="Sample")
+        transcription1 = Transcription(asset=asset, user=user, text="Sample")
         transcription1.full_clean()
         transcription1.save()
 
-        item_dir = os.path.join(
-            settings.MEDIA_ROOT, campaign.slug, project.slug, item.item_id, asset.slug
-        )
+    def test_csv_export(self):
+        """
+        Test GET route /campaigns/exportCSV/<slug-value>/ (campaign)
+        """
 
-        asset_file = ContentFile(b"Not a real JPEG")
-        default_storage.save(
-            os.path.join(item_dir, f"{asset.sequence}.jpg"), asset_file
-        )
+        campaign_slug = "test-campaign"
 
         response = self.client.get(
-            reverse("transcriptions:export-bagit", args=(campaign.slug,))
+            reverse("transcriptions:export-csv", args=(campaign_slug,))
+        )
+
+        expected_response_content = (
+            "b'Campaign,Project,Item,ItemId,Asset,"
+            "AssetStatus,DownloadUrl,Transcription\\r\\n'"
+            "b'Test Campaign,Test Project,Test Item,"
+            "testitem0123456789,TestAsset,edit,"
+            "http://tile.loc.gov/image-services/"
+            "iiif/service:mss:mal:003:0036300:002/full"
+            "/pct:25/0/default.jpg,Sample\\r\\n'"
+        )
+
+        self.assertEqual(response.status_code, 200)
+        response_content = "".join(map(str, response.streaming_content))
+        self.assertEqual(response_content, expected_response_content)
+
+    def test_bagit_export(self):
+        """
+        Test the http GET on route /campaigns/exportBagit/<campaignname>/
+        """
+
+        campaign_slug = "test-campaign"
+
+        response = self.client.get(
+            reverse("transcriptions:export-bagit", args=(campaign_slug,))
         )
 
         self.assertEqual(response.status_code, 200)
         self.assertEquals(
             response.get("Content-Disposition"),
-            "attachment; filename=%s.zip" % campaign.slug,
+            "attachment; filename=%s.zip" % campaign_slug,
         )
 
         f = io.BytesIO(response.content)
@@ -106,6 +98,6 @@ class ViewTest_Exporter(TestCase):
         self.assertIn("bagit.txt", zipped_file.namelist())
         self.assertIn("bag-info.txt", zipped_file.namelist())
         self.assertIn(
-            "data/test-project/testitem0123456789/testasset/1.jpg",
+            "data/test-project/testitem0123456789/mss-mal-003-0036300-002.txt",
             zipped_file.namelist(),
         )
