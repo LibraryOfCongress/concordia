@@ -1,13 +1,13 @@
-from datetime import datetime
 import os
 import re
 import shutil
+from datetime import datetime
 
 import bagit
 import boto3
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from django.db.models import Subquery, OuterRef
+from django.db.models import OuterRef, Subquery
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView

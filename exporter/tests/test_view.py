@@ -1,5 +1,6 @@
 import io
 import zipfile
+from datetime import datetime
 
 from django.test import TestCase
 from django.urls import reverse
@@ -87,9 +88,14 @@ class ViewTest_Exporter(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
+
+        export_filename = "%s-%s.zip" % (
+            campaign_slug,
+            datetime.today().isoformat(timespec="minutes"),
+        )
         self.assertEquals(
             response.get("Content-Disposition"),
-            "attachment; filename=%s.zip" % campaign_slug,
+            "attachment; filename=%s" % export_filename,
         )
 
         f = io.BytesIO(response.content)
