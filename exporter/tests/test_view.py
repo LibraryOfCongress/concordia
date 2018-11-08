@@ -47,7 +47,13 @@ class ViewTest_Exporter(TestCase):
         )
 
         # add a Transcription object
-        transcription1 = Transcription(asset=asset, user=user, text="Sample")
+        transcription1 = Transcription(
+            asset=asset,
+            user=user,
+            text="Sample",
+            submitted=datetime.now(),
+            accepted=datetime.now(),
+        )
         transcription1.full_clean()
         transcription1.save()
 
