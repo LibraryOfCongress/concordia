@@ -131,7 +131,7 @@ class ExportCampaignToBagit(TemplateView):
         response["Content-Disposition"] = "attachment; filename=%s.zip" % campaign_slug
 
         # Upload zip to S3 bucket
-        if settings.S3_BUCKET_NAME:
+        if "S3_BUCKET_NAME" in settings and settings.S3_BUCKET_NAME:
             s3 = boto3.resource("s3")
             s3.Bucket(settings.S3_BUCKET_NAME).upload_file(
                 "%s.zip" % export_base_dir, "exporter/%s.zip" % campaign_slug
