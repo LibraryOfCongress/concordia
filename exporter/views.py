@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 import re
 import shutil
@@ -128,13 +129,21 @@ class ExportCampaignToBagit(TemplateView):
         # Download zip
         with open("%s.zip" % export_base_dir, "rb") as zip_file:
             response = HttpResponse(zip_file, content_type="application/zip")
-        response["Content-Disposition"] = "attachment; filename=%s.zip" % campaign_slug
+
+        export_filename = "%s-%s.zip" % (
+            campaign_slug,
+            datetime.today().isoformat(timespec="minutes"),
+        )
+
+        response["Content-Disposition"] = "attachment; filename=%s" % export_filename
 
         # Upload zip to S3 bucket
-        if "S3_BUCKET_NAME" in settings and settings.S3_BUCKET_NAME:
+        s3_bucket = getattr(settings, "S3_BUCKET_NAME", None)
+
+        if s3_bucket:
             s3 = boto3.resource("s3")
-            s3.Bucket(settings.S3_BUCKET_NAME).upload_file(
-                "%s.zip" % export_base_dir, "exporter/%s.zip" % campaign_slug
+            s3.Bucket(s3_bucket).upload_file(
+                "%s.zip" % export_base_dir, "exporter/%s" % export_filename
             )
 
         # Clean up temp folders & zipfile once exported
