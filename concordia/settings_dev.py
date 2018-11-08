@@ -19,7 +19,7 @@ ALLOWED_HOSTS = ["127.0.0.1", "0.0.0.0", "*"]
 CELERY_BROKER_URL = "pyamqp://guest@localhost"
 CELERY_RESULT_BACKEND = "rpc://"
 
-S3_BUCKET_NAME = "concordia-staticpages"
+S3_BUCKET_NAME = "crowd-dev-content"
 
 DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 AWS_STORAGE_BUCKET_NAME = S3_BUCKET_NAME

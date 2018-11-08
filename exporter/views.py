@@ -3,6 +3,7 @@ import re
 import shutil
 
 import bagit
+import boto3
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.db.models import Subquery, OuterRef
@@ -14,7 +15,7 @@ from tabular_export.core import export_to_csv_response, flatten_queryset
 from concordia.models import Asset, Transcription
 
 
-def get_latest_transcription_data(campaign_slug):
+def get_latest_transcription_data(campaign_slug, filter_status=False):
     latest_trans_subquery = (
         Transcription.objects.filter(asset=OuterRef("pk"))
         .order_by("-pk")
@@ -23,7 +24,13 @@ def get_latest_transcription_data(campaign_slug):
     assets = Asset.objects.annotate(
         latest_transcription=Subquery(latest_trans_subquery[:1])
     )
-    assets = assets.filter(item__project__campaign__slug=campaign_slug)
+    if filter_status:
+        assets = assets.filter(
+            item__project__campaign__slug=campaign_slug,
+            transcription_status="completed",
+        )
+    else:
+        assets = assets.filter(item__project__campaign__slug=campaign_slug)
     return assets
 
 
@@ -33,7 +40,7 @@ def get_original_asset_id(download_url):
     that identifies this image uniquely on loc.gov
     """
     if download_url.startswith("http://tile.loc.gov/"):
-        pattern = r"/service:([A-Za-z0-9:]*)/"
+        pattern = r"/service:([A-Za-z0-9:\-]*)/"
         asset_id = re.search(pattern, download_url)
         assert asset_id
         return asset_id.group(1).replace(":", "-")
@@ -92,9 +99,10 @@ class ExportCampaignToBagit(TemplateView):
     @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
         campaign_slug = self.kwargs["campaign_slug"]
-        assets = get_latest_transcription_data(campaign_slug)
+        assets = get_latest_transcription_data(campaign_slug, True)
 
         export_base_dir = os.path.join(settings.SITE_ROOT_DIR, "tmp", campaign_slug)
+        os.makedirs(export_base_dir, exist_ok=True)
 
         for asset in assets:
             dest_folder = os.path.join(
@@ -123,6 +131,11 @@ class ExportCampaignToBagit(TemplateView):
         response["Content-Disposition"] = "attachment; filename=%s.zip" % campaign_slug
 
         # Upload zip to S3 bucket
+        if settings.S3_BUCKET_NAME:
+            s3 = boto3.resource("s3")
+            s3.Bucket(settings.S3_BUCKET_NAME).upload_file(
+                "%s.zip" % export_base_dir, "exporter/%s.zip" % campaign_slug
+            )
 
         # Clean up temp folders & zipfile once exported
         shutil.rmtree(export_base_dir)
