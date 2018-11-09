@@ -108,6 +108,12 @@
                             <span class="sr-only">Full Page</span>
                         </button>
                     </div>
+
+                    <div class="d-flex btn-group btn-group-sm m-1">
+                        <button type="button" class="btn btn-default" data-toggle="modal" data-target="#keyboard-help-modal">
+                            <span class="fas fa-question-circle" aria-label="Open Help"></span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -244,6 +250,66 @@
                     <li>Include insertions where you would read them in the text.</li>
                 </ul>
                 Find more detailed instructions in the <a href="{% url 'help-center' %}">Help Center</a>
+            </div>
+        </div>
+    </div>
+    <div id="keyboard-help-modal" class="modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Keyboard Shortcuts</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <h6>Viewer Shortcuts</h6>
+                    <table class="table table-compact table-responsive">
+                        <tr>
+                            <th><kbd>w</kbd>, up arrow</th>
+                            <td>Scroll the viewport up</td>
+                        </tr>
+                        <tr>
+                            <th><kbd>s</kbd>, down arrow</th>
+                            <td>Scroll the viewport down</td>
+                        </tr>
+                        <tr>
+                            <th><kbd>a</kbd>, left arrow</th>
+                            <td>Scroll the viewport left</td>
+                        </tr>
+                        <tr>
+                            <th><kbd>d</kbd>, right arrow </th>
+                            <td>Scroll the viewport right</td>
+                        </tr>
+                        <tr>
+                            <th><kbd>0</kbd></th>
+                            <td>Fit the entire image to the viewport</td>
+                        </tr>
+                        <tr>
+                            <th><kbd>-</kbd>, <kbd>_</kbd>, Shift+<kbd>W</kbd>, Shift+Up arrow</th>
+                            <td>Zoom the viewport out</td>
+                        </tr>
+                        <tr>
+                            <th><kbd>=</kbd>, <kbd>+</kbd>, Shift+<kbd>S</kbd>, Shift+Down arrow</th>
+                            <td>Scroll the viewport in</td>
+                        </tr>
+                        <tr>
+                            <th><kbd>r</kbd></th>
+                            <td>Rotate the viewport clockwise</td>
+                        </tr>
+                        <tr>
+                            <th><kbd>R</kbd></th>
+                            <td>Rotate the viewport counterclockwise</td>
+                        </tr>
+                        <tr>
+                            <th><kbd>f</kbd></th>
+                            <td>Flip the viewport horizontally</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
             </div>
         </div>
     </div>
