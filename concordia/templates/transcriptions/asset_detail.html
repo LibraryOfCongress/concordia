@@ -67,15 +67,56 @@
                 </button>
             </div>
 
-
-
-            <div class="btn-group btn-group-sm align-self-end" role="navigation">
+            <div class="btn-group btn-group-sm align-self-end" role="navigation" aria-label="Link to the next editable page">
                 <a class="btn btn-default" title="Move to the next page in this item that needs help" href="{% url "transcriptions:redirect-to-next-transcribable-asset" campaign.slug project.slug %}">Find a new page &rarr;</a>
-            </div>
+          </div>
         </nav>
     </div>
     <div id="contribute-container" class="row flex-grow-1 pb-2">
-        <div id="viewer-column" class="pl-0">
+        <div id="viewer-column" class="pl-0 d-flex flex-column align-items-stretch bg-dark">
+            <div id="viewer-controls" class="m-1 text-center">
+                <div class="d-inline-flex justify-content-between">
+                    <div class="d-flex btn-group btn-group-sm m-1">
+                        <button id="viewer-home" class="btn btn-default">
+                            <span class="fas fa-compress"></span>
+                            <span class="sr-only">Home</span>
+                        </button>
+                    </div>
+                    <div class="d-flex btn-group btn-group-sm m-1">
+                        <button id="viewer-zoom-in" class="btn btn-default">
+                            <span class="fas fa-search-plus"></span>
+                            <span class="sr-only">Zoom In</span>
+                        </button>
+                        <button id="viewer-zoom-out" class="btn btn-default">
+                            <span class="fas fa-search-minus"></span>
+                            <span class="sr-only">Zoom Out</span>
+                        </button>
+                    </div>
+                    <div class="d-flex btn-group btn-group-sm m-1">
+                        <button id="viewer-rotate-left" class="btn btn-default">
+                            <span class="fas fa-undo"></span>
+                            <span class="sr-only">Rotate Left</span>
+                        </button>
+                        <button id="viewer-rotate-right" class="btn btn-default">
+                            <span class="fas fa-redo"></span>
+                            <span class="sr-only">Rotate Right</span>
+                        </button>
+                    </div>
+                    <div class="d-flex btn-group btn-group-sm m-1">
+                        <button id="viewer-full-page" class="btn btn-default">
+                            <span class="fas fa-expand"></span>
+                            <span class="sr-only">Full Page</span>
+                        </button>
+                    </div>
+
+                    <div class="d-flex btn-group btn-group-sm m-1">
+                        <button type="button" class="btn btn-default" data-toggle="modal" data-target="#keyboard-help-modal">
+                            <span class="fas fa-question-circle" aria-label="Open Help"></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <div id="asset-image" class="h-100 bg-dark"></div>
         </div>
 
@@ -219,6 +260,66 @@
             </div>
         </div>
     </div>
+    <div id="keyboard-help-modal" class="modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Keyboard Shortcuts</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <h6>Viewer Shortcuts</h6>
+                    <table class="table table-compact table-responsive">
+                        <tr>
+                            <th><kbd>w</kbd>, up arrow</th>
+                            <td>Scroll the viewport up</td>
+                        </tr>
+                        <tr>
+                            <th><kbd>s</kbd>, down arrow</th>
+                            <td>Scroll the viewport down</td>
+                        </tr>
+                        <tr>
+                            <th><kbd>a</kbd>, left arrow</th>
+                            <td>Scroll the viewport left</td>
+                        </tr>
+                        <tr>
+                            <th><kbd>d</kbd>, right arrow </th>
+                            <td>Scroll the viewport right</td>
+                        </tr>
+                        <tr>
+                            <th><kbd>0</kbd></th>
+                            <td>Fit the entire image to the viewport</td>
+                        </tr>
+                        <tr>
+                            <th><kbd>-</kbd>, <kbd>_</kbd>, Shift+<kbd>W</kbd>, Shift+Up arrow</th>
+                            <td>Zoom the viewport out</td>
+                        </tr>
+                        <tr>
+                            <th><kbd>=</kbd>, <kbd>+</kbd>, Shift+<kbd>S</kbd>, Shift+Down arrow</th>
+                            <td>Scroll the viewport in</td>
+                        </tr>
+                        <tr>
+                            <th><kbd>r</kbd></th>
+                            <td>Rotate the viewport clockwise</td>
+                        </tr>
+                        <tr>
+                            <th><kbd>R</kbd></th>
+                            <td>Rotate the viewport counterclockwise</td>
+                        </tr>
+                        <tr>
+                            <th><kbd>f</kbd></th>
+                            <td>Flip the viewport horizontally</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <div id="asset-reservation-failure-modal" class="modal" tabindex="-1" role="dialog">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
@@ -336,17 +437,26 @@
 <script src="{% static 'js/contribute.js' %}"></script>
 <script src="{% static 'js/asset-reservation.js' %}"></script>
 <script>
-    var viewer = OpenSeadragon({
-        id: 'asset-image',
-        prefixUrl: 'https://cdnjs.cloudflare.com/ajax/libs/openseadragon/2.4.0/images/',
+    var seadragonViewer = OpenSeadragon({
+        id: "asset-image",
+        prefixUrl:
+            "https://cdnjs.cloudflare.com/ajax/libs/openseadragon/2.4.0/images/",
         tileSources: {
-            type: 'image',
+            type: "image",
             url: "{% asset_media_url asset %}"
         },
-        showRotationControl: true,
         gestureSettingsTouch: {
             pinchRotate: true
-        }
+        },
+        showNavigator:  true,
+        showRotationControl: true,
+        toolbar: "viewer-controls",
+        zoomInButton: "viewer-zoom-in",
+        zoomOutButton: "viewer-zoom-out",
+        homeButton: "viewer-home",
+        fullPageButton: "viewer-full-page",
+        rotateLeftButton: "viewer-rotate-left",
+        rotateRightButton: "viewer-rotate-right"
     });
 </script>
 
