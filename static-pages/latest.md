@@ -1,23 +1,24 @@
 title: Latest News
 
-# Join us at the Library for the 155th Anniversary of the Gettysburg Address
+## Join us at the Library for the 155th Anniversary of the Gettysburg Address
+---
  
 On Nov. 19, 1863, Abraham Lincoln delivered the Gettysburg Address in Gettysburg, Pennsylvania. The Library of Congress will mark the 155th anniversary of this historic speech with a one-day celebration, featuring a pop-up exhibit of the earliest known draft of the speech, and a Letters to Lincoln transcribe-a-thon for volunteers on and offsite!
 
-## Schedule
+### Schedule
 - 8:30am Library doors open!
 - 10:00am Talk by Dr Carla Hayden, 14th Librarian of Congress
 - 10:05am: Gettysburg address delivered by student orator 
 - 10:10-10:30am: Talk by historian and curator Michelle Krowl
 - 10:30am-1:30pm: Transcribe-a-thon for and offsite participants
 
-### In the area on November 19th?
+#### In the area on November 19th?
 Join us in the Great Hall of the Jefferson Building (Library of Congress) to have the rare opportunity to see the Nicolay copy in person. Dr. Hayden will kick things off at 10am, followed by a special talk about Lincoln and the Gettysburg Address, by historian and curator Michelle Krowl.
 
-### Off site but online?
+#### Off site but online?
 We’ll livestream the Librarian and curator’s talks, and the reading of the Gettysburg address from 10:00-10:30 [via this link](https://www.youtube.com/loc). After that people at the Library and online can participate in the #LettersToLincoln challenge right here on [crowd.loc.gov](/campaigns/letters-to-lincoln/)! Choose an item from the Letters to Lincoln Campaign to transcribe, review, and/or tag. Join in the discussion on [History Hub](https://historyhub.history.gov/community/crowd-loc) and [Twitter](https://twitter.com/Crowd_LOC)!  
 
-### Opportunities for students
+#### Opportunities for students
 Tune in at 10:00am for the livestream or join us in person to see the Gettysburg address, hear talks, and do some hands on activities and online transcriptions. Students onsite or in their own classrooms will be invited to transcribe, tag, and review documents received by Abraham Lincoln throughout his career. You can transcribe as a group or challenge your students to transcribe on their own or in pairs. All transcriptions are reviewed by at least one other volunteer, so don't be shy to try! If you or your students are finding it hard to read something, try finding something to review first. This is a great way to "get your eye in" and learn from others how to read these original documents. 
 To confirm participation for your class or students, please e-mail the Community Managers at crowd@loc.gov for further instructions.
 
