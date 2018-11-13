@@ -165,11 +165,11 @@
                                     </a>
                                 </div>
 
-                                <button id="save-transcription-button" disabled type="submit" class="btn btn-primary" title="Use this button to save the text you typed above">Save</button>
-                                <button id="submit-transcription-button" disabled type="button" class="btn btn-primary" title="Use this button when nothing remains to transcribe and someone else can review">Submit for Review</button>
+                                <button id="save-transcription-button" disabled type="submit" class="btn btn-primary" title="Save the text you entered above">Save</button>
+                                <button id="submit-transcription-button" disabled type="button" class="btn btn-primary" title="Request another volunteer to review the text you entered above">Submit for Review</button>
                             {% elif transcription_status == 'submitted' and user.is_authenticated and transcription.user.pk != user.pk %}
-                                <button id="reject-transcription-button" disabled type="button" class="btn btn-primary" title="Use this button if you see errors in the text that need to be corrected">Edit</button>
-                                <button id="accept-transcription-button" disabled type="button" class="btn btn-primary" title="Use this button once you’re confident that the text is accurately transcribed">Accept</button>
+                                <button id="reject-transcription-button" disabled type="button" class="btn btn-primary" title="Correct errors you see in the text">Edit</button>
+                                <button id="accept-transcription-button" disabled type="button" class="btn btn-primary" title="Confirm that the text is accurately transcribed">Accept</button>
                             {% endif %}
                         </div>
                     {% endspaceless %}
@@ -186,7 +186,7 @@
                             <div class="input-group">
                                 <input type="text" id="new-tag-input" class="form-control" placeholder="Add a new tag…" aria-label="Add a new tag" pattern="[- _'\w]{1,50}">
                                 <div class="input-group-append">
-                                    <button id="new-tag-button" class="btn btn-outline-primary" type="button">Add</button>
+                                    <button id="new-tag-button" class="btn btn-outline-primary" type="button" title="Add tags to the page">Add</button>
                                 </div>
                                 <div class="invalid-feedback">
                                     Tags must be between 1-50 characters and may contain only letters, numbers, dashes, underscores, apostrophes, and spaces
@@ -209,7 +209,7 @@
                             <label>
                                 <input type="hidden" name="tags" value="" disabled />
                             </label>
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Remove previous tag">
                                 <span aria-hidden="true">&times;</span>
                             </button>
                         </li>
@@ -219,7 +219,7 @@
                                     <input type="hidden" name="tags" value="{{ tag }}" />
                                     {{ tag }}
                                 </label>
-                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Remove previous tag">
                                     <span aria-hidden="true">&times;</span>
                                 </button>
                             </li>
@@ -227,7 +227,9 @@
                     </ul>
 
                     <div class="form-row btn-row authenticated-only" hidden>
-                        <button id="save-tags-button" type="submit" class="btn btn-primary mx-auto">Save Tags</button>
+                        <button id="save-tags-button" type="submit" class="btn btn-primary mx-auto" title="Save tags that you’ve added to the page">
+                            Save Tags
+                        </button>
                     </div>
                 </form>
             </div>
