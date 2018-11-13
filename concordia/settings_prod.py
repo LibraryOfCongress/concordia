@@ -50,6 +50,7 @@ CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "pyamqp://guest@rabbit:5672")
 CELERY_RESULT_BACKEND = "rpc://"
 
 S3_BUCKET_NAME = os.getenv("S3_BUCKET_NAME")
+EXPORT_S3_BUCKET_NAME = os.getenv("EXPORT_S3_BUCKET_NAME")
 
 DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 AWS_STORAGE_BUCKET_NAME = S3_BUCKET_NAME

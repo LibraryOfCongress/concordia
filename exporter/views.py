@@ -16,7 +16,7 @@ from tabular_export.core import export_to_csv_response, flatten_queryset
 from concordia.models import Asset, Transcription
 
 
-def get_latest_transcription_data(campaign_slug, filter_status=False):
+def get_latest_transcription_data(campaign_slug, only_completed=False):
     latest_trans_subquery = (
         Transcription.objects.filter(asset=OuterRef("pk"))
         .order_by("-pk")
@@ -25,7 +25,7 @@ def get_latest_transcription_data(campaign_slug, filter_status=False):
     assets = Asset.objects.annotate(
         latest_transcription=Subquery(latest_trans_subquery[:1])
     )
-    if filter_status:
+    if only_completed:
         assets = assets.filter(
             item__project__campaign__slug=campaign_slug,
             transcription_status="completed",
@@ -100,7 +100,7 @@ class ExportCampaignToBagit(TemplateView):
     @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
         campaign_slug = self.kwargs["campaign_slug"]
-        assets = get_latest_transcription_data(campaign_slug, True)
+        assets = get_latest_transcription_data(campaign_slug, only_completed=True)
 
         export_base_dir = os.path.join(settings.SITE_ROOT_DIR, "tmp", campaign_slug)
         os.makedirs(export_base_dir, exist_ok=True)
@@ -138,7 +138,7 @@ class ExportCampaignToBagit(TemplateView):
         response["Content-Disposition"] = "attachment; filename=%s" % export_filename
 
         # Upload zip to S3 bucket
-        s3_bucket = getattr(settings, "S3_BUCKET_NAME", None)
+        s3_bucket = getattr(settings, "EXPORT_S3_BUCKET_NAME", None)
 
         if s3_bucket:
             s3 = boto3.resource("s3")
