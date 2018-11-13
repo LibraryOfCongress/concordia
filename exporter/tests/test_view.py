@@ -110,6 +110,6 @@ class ViewTest_Exporter(TestCase):
         self.assertIn("bagit.txt", zipped_file.namelist())
         self.assertIn("bag-info.txt", zipped_file.namelist())
         self.assertIn(
-            "data/test-project/testitem0123456789/mss-mal-003-0036300-002.txt",
+            "data/test-project/testitem0123456789/mss:mal:003:0036300:002.txt",
             zipped_file.namelist(),
         )
