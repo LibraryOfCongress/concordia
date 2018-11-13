@@ -16,8 +16,10 @@ for key, value in getattr(settings, "ADMIN_SITE", {}).items():
 
 tx_urlpatterns = (
     [
-        path("", views.CampaignListView.as_view(), name="campaigns"),
-        path("<slug:slug>/", views.CampaignDetailView.as_view(), name="campaign"),
+        path("", views.CampaignListView.as_view(), name="campaign-list"),
+        path(
+            "<slug:slug>/", views.CampaignDetailView.as_view(), name="campaign-detail"
+        ),
         path(
             "exportCSV/<slug:campaign_slug>/",
             exporter_views.ExportCampaignToCSV.as_view(),

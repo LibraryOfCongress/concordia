@@ -88,7 +88,7 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
         """
         Test the GET method for route /campaigns
         """
-        response = self.client.get(reverse("transcriptions:campaigns"))
+        response = self.client.get(reverse("transcriptions:campaign-list"))
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(
@@ -103,7 +103,9 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
         """
         c = create_campaign(title="GET Campaign", slug="get-campaign")
 
-        response = self.client.get(reverse("transcriptions:campaign", args=(c.slug,)))
+        response = self.client.get(
+            reverse("transcriptions:campaign-detail", args=(c.slug,))
+        )
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(
@@ -118,7 +120,7 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
         c = create_campaign()
 
         response = self.client.get(
-            reverse("transcriptions:campaign", args=(c.slug,)), {"page": 2}
+            reverse("transcriptions:campaign-detail", args=(c.slug,)), {"page": 2}
         )
 
         self.assertEqual(response.status_code, 200)
@@ -240,7 +242,9 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, template_name="transcriptions/project_detail.html")
+        self.assertTemplateUsed(
+            response, template_name="transcriptions/project_detail.html"
+        )
 
     def test_campaign_report(self):
         """

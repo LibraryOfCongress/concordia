@@ -9,9 +9,9 @@
 {% endblock head_content %}
 
 {% block breadcrumbs %}
-    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaigns' %}">Campaigns</a></li>
+    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaign-list' %}">Campaigns</a></li>
     <li class="breadcrumb-item">
-        <a class="primary-text" href="{% url 'transcriptions:campaign' campaign.slug %}" title="{{ campaign.title }}">{{ campaign.title }}</a>
+        <a class="primary-text" href="{% url 'transcriptions:campaign-detail' campaign.slug %}" title="{{ campaign.title }}">{{ campaign.title }}</a>
     </li>
     <li class="breadcrumb-item active" aria-current="page" title="{{ project.title }}">{{ project.title }}</li>
 {% endblock breadcrumbs %}

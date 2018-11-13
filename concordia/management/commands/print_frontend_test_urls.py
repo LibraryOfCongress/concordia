@@ -39,7 +39,7 @@ class Command(BaseCommand):
             reverse("registration_login"),
             reverse("password_reset"),
             reverse("login"),
-            reverse("transcriptions:campaigns"),
+            reverse("transcriptions:campaign-list"),
         ]
 
         # Database content
@@ -79,7 +79,9 @@ class Command(BaseCommand):
                         "transcriptions:project-detail",
                         kwargs={"campaign_slug": campaign.slug, "slug": project.slug},
                     ),
-                    reverse("transcriptions:campaign", kwargs={"slug": campaign.slug}),
+                    reverse(
+                        "transcriptions:campaign-detail", kwargs={"slug": campaign.slug}
+                    ),
                 ]
             )
         for path in sorted(paths):

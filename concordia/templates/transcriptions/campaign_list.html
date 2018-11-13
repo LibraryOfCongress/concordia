@@ -17,13 +17,13 @@
                 <div class="bg-lightest-gray w-100 mb-3">
                     <div class="row">
                         <div class="col-12 col-md-8 px-3">
-                            <a href="{% url 'transcriptions:campaign' campaign.slug %}">
+                            <a href="{% url 'transcriptions:campaign-detail' campaign.slug %}">
                                 <h1 class="campaign-title">{{ campaign.title }}</h1>
                             </a>
                             {{ campaign.short_description }}
                         </div>
                         <div class="col-12 col-md-4">
-                            <a href="{% url 'transcriptions:campaign' campaign.slug %}">
+                            <a href="{% url 'transcriptions:campaign-detail' campaign.slug %}">
                             <img src="{{ MEDIA_URL }}{{ campaign.thumbnail_image }}" class="img-fluid" alt="{{ campaign.title }} image">
                             </a>
                         </div>
