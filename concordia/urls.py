@@ -21,14 +21,14 @@ tx_urlpatterns = (
             "<slug:slug>/", views.CampaignDetailView.as_view(), name="campaign-detail"
         ),
         path(
-            "exportCSV/<slug:campaign_slug>/",
+            "<slug:campaign_slug>/export/csv/",
             exporter_views.ExportCampaignToCSV.as_view(),
-            name="export-csv",
+            name="campaign-export-csv",
         ),
         path(
-            "exportBagIt/<slug:campaign_slug>/",
+            "<slug:campaign_slug>/export/bagit/",
             exporter_views.ExportCampaignToBagit.as_view(),
-            name="export-bagit",
+            name="campaign-export-bagit",
         ),
         path(
             "<slug:campaign_slug>/report/",
