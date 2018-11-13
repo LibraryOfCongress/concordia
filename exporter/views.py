@@ -34,11 +34,10 @@ def get_original_asset_id(download_url):
     that identifies this image uniquely on loc.gov
     """
     if download_url.startswith("http://tile.loc.gov/"):
-        # TODO: change this pattern to accept anything a POSIX filesystem would accept
-        pattern = r"/service:([A-Za-z0-9:\-]*)/"
+        pattern = r"/service:([^/]?)/"
         asset_id = re.search(pattern, download_url)
         assert asset_id
-        return asset_id.group(1).replace(":", "-")
+        return asset_id.group(1)
     else:
         return download_url
 
