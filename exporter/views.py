@@ -9,7 +9,7 @@ import boto3
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.db.models import OuterRef, Subquery
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
 from tabular_export.core import export_to_csv_response, flatten_queryset
@@ -91,6 +91,7 @@ class ExportCampaignToBagit(TemplateView):
     Creates temp directory structure for source data.
     Executes bagit.py to turn temp directory into bagit strucutre.
     Builds and exports bagit structure as zip.
+    Uploads zip to S3 if configured.
     Removes all temporary directories and files.
     """
 
@@ -131,31 +132,27 @@ class ExportCampaignToBagit(TemplateView):
         archive_name = export_base_dir
         shutil.make_archive(archive_name, "zip", export_base_dir)
 
-        try:
-            # Upload zip to S3 bucket
-            s3_bucket = getattr(settings, "EXPORT_S3_BUCKET_NAME", None)
-            export_filename = "%s-%s.zip" % (
-                campaign_slug,
-                datetime.today().isoformat(timespec="minutes"),
+        # Upload zip to S3 bucket
+        s3_bucket = getattr(settings, "EXPORT_S3_BUCKET_NAME", None)
+        export_filename = "%s-%s.zip" % (
+            campaign_slug,
+            datetime.today().isoformat(timespec="minutes"),
+        )
+
+        if s3_bucket:
+            s3 = boto3.resource("s3")
+            s3.Bucket(s3_bucket).upload_file(
+                "%s.zip" % export_base_dir, "%s" % export_filename
             )
 
-            if s3_bucket:
-                s3 = boto3.resource("s3")
-                s3.Bucket(s3_bucket).upload_file(
-                    "%s.zip" % export_base_dir, "%s" % export_filename
-                )
-                # TODO: return a link to this file
-                # return redirect to the S3 object's
-                # public URL in the response returned by `upload_file`
-            else:
-                # Download zip
-                with open("%s.zip" % export_base_dir, "rb") as zip_file:
-                    response = HttpResponse(zip_file, content_type="application/zip")
-                response["Content-Disposition"] = (
-                    "attachment; filename=%s" % export_filename
-                )
-                return response
-        finally:
-            # Clean up temp folders & zipfile once exported
-            shutil.rmtree(export_base_dir)
-            os.remove("%s.zip" % export_base_dir)
+            return HttpResponseRedirect(
+                "https://%s.s3.amazonaws.com/%s" % (s3_bucket, export_filename)
+            )
+        else:
+            # Download zip from local storage
+            with open("%s.zip" % export_base_dir, "rb") as zip_file:
+                response = HttpResponse(zip_file, content_type="application/zip")
+            response["Content-Disposition"] = (
+                "attachment; filename=%s" % export_filename
+            )
+            return response
