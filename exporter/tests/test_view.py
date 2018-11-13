@@ -52,13 +52,13 @@ class ViewTest_Exporter(TestCase):
 
     def test_csv_export(self):
         """
-        Test GET route /campaigns/exportCSV/<slug-value>/ (campaign)
+        Test Campaign export as CSV
         """
 
         campaign_slug = "test-campaign"
 
         response = self.client.get(
-            reverse("transcriptions:export-csv", args=(campaign_slug,))
+            reverse("transcriptions:campaign-export-csv", args=(campaign_slug,))
         )
 
         expected_response_content = (
@@ -77,13 +77,13 @@ class ViewTest_Exporter(TestCase):
 
     def test_bagit_export(self):
         """
-        Test the http GET on route /campaigns/exportBagit/<campaignname>/
+        Test Campaign export as CSV
         """
 
         campaign_slug = "test-campaign"
 
         response = self.client.get(
-            reverse("transcriptions:export-bagit", args=(campaign_slug,))
+            reverse("transcriptions:campaign-export-bagit", args=(campaign_slug,))
         )
 
         self.assertEqual(response.status_code, 200)

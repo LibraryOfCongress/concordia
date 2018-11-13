@@ -78,7 +78,7 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
     def get_absolute_url(self):
         # FIXME: change this with
         # https://github.com/LibraryOfCongress/concordia/issues/242
-        return reverse("transcriptions:campaign", args=(self.slug,))
+        return reverse("transcriptions:campaign-detail", args=(self.slug,))
 
 
 class Resource(MetricsModelMixin("resource"), models.Model):

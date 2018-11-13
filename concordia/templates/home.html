@@ -19,7 +19,7 @@
                 <div class="carousel-overlay text-center py-md-3">
                     <h1>Get Involved:</h1>
                     <p class="hero-text mx-auto">Volunteer to uncover our shared history and make documents more searchable for everyone.</p>
-                    <a class="btn btn-primary btn-lg" href="{% url 'transcriptions:campaigns' %}">LET'S GO!</a>
+                    <a class="btn btn-primary btn-lg" href="{% url 'transcriptions:campaign-list' %}">LET'S GO!</a>
                 </div>
             </div>
         </div>
@@ -56,7 +56,7 @@
             <div class="d-flex flex-wrap col-12 justify-content-around">
                 {% for campaign in campaigns|slice:":6" %}
                     <div class="text-center campaign m-1 mb-4 mb-md-5 d-flex flex-column flex-wrap justify-content-between align-items-center">
-                        {% url 'transcriptions:campaign' campaign.slug as campaign_url %}
+                        {% url 'transcriptions:campaign-detail' campaign.slug as campaign_url %}
                         <div>
                             <a href="{{ campaign_url }}" aria-hidden="true">
                                 <img src="{{ MEDIA_URL }}{{ campaign.thumbnail_image }}" class="img-fluid" alt="{{ campaign.title }}">
@@ -68,7 +68,7 @@
                 {% endfor %}
             </div>
             <div class="col-12 d-flex justify-content-center my-3">
-                <a class="btn btn-primary" href="{% url 'transcriptions:campaigns' %}" role="button">Browse All Campaigns</a>
+                <a class="btn btn-primary" href="{% url 'transcriptions:campaign-list' %}" role="button">Browse All Campaigns</a>
             </div>
         </div>
     </div>
