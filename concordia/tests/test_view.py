@@ -5,7 +5,12 @@ from django.test import TestCase, TransactionTestCase
 from django.urls import reverse
 from django.utils.timezone import now
 
-from concordia.models import AssetTranscriptionReservation, Transcription, User
+from concordia.models import (
+    AssetTranscriptionReservation,
+    Transcription,
+    TranscriptionStatus,
+    User,
+)
 from concordia.views import get_anonymous_user
 
 from .utils import (
@@ -736,3 +741,71 @@ class TransactionalViewTests(JSONAssertMixin, TransactionTestCase):
         # values, they should not be stored:
         self.assertEqual(["bar", "foo", "quux"], data["user_tags"])
         self.assertEqual(["baaz", "bar", "foo", "quux"], data["all_tags"])
+
+    def test_find_next_transcribable(self):
+        asset1 = create_asset(slug="test-asset-1")
+        asset2 = create_asset(item=asset1.item, slug="test-asset-2")
+        campaign = asset1.item.project.campaign
+
+        resp = self.client.get(
+            reverse(
+                "transcriptions:redirect-to-next-transcribable-asset",
+                kwargs={"campaign_slug": campaign.slug},
+            )
+        )
+
+        self.assertRedirects(resp, expected_url=asset2.get_absolute_url())
+
+    def test_find_next_transcribable_single_asset(self):
+        asset = create_asset()
+        campaign = asset.item.project.campaign
+
+        resp = self.client.get(
+            reverse(
+                "transcriptions:redirect-to-next-transcribable-asset",
+                kwargs={"campaign_slug": campaign.slug},
+            )
+        )
+
+        self.assertRedirects(resp, expected_url=asset.get_absolute_url())
+
+    def test_find_next_transcribable_in_singleton_campaign(self):
+        asset = create_asset(transcription_status=TranscriptionStatus.SUBMITTED)
+        campaign = asset.item.project.campaign
+
+        resp = self.client.get(
+            reverse(
+                "transcriptions:redirect-to-next-transcribable-asset",
+                kwargs={"campaign_slug": campaign.slug},
+            )
+        )
+
+        self.assertRedirects(
+            resp,
+            expected_url=reverse(
+                "transcriptions:campaign-detail", args=(campaign.slug,)
+            ),
+        )
+
+    def test_find_next_transcribable_project_redirect(self):
+        asset = create_asset(transcription_status=TranscriptionStatus.SUBMITTED)
+        project = asset.item.project
+        campaign = project.campaign
+
+        resp = self.client.get(
+            "%s?project=%s"
+            % (
+                reverse(
+                    "transcriptions:redirect-to-next-transcribable-asset",
+                    kwargs={"campaign_slug": campaign.slug},
+                ),
+                project.slug,
+            )
+        )
+
+        self.assertRedirects(
+            resp,
+            expected_url=reverse(
+                "transcriptions:project-detail", args=(campaign.slug, project.slug)
+            ),
+        )
