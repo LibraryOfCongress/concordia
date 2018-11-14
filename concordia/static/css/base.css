@@ -30,9 +30,8 @@
     --control-label-color: #333333;
 
     --height-top-nav: 113px; /* Height of logo image plus padding */
-    --height-main: calc(
-        100vh - var(--height-top-nav)
-    ); /* Subtract height of navbar */
+    --height-footer: 149px;
+    --height-main: calc(100vh - (var(--height-top-nav) + var(--height-footer)));
 
     /* Making room for instructions button on bottom and breadcrumb and nav on top */
     --height-contribute-image: calc(
@@ -49,6 +48,10 @@ body {
     color: var(--text-color-primary);
     border-top: 0.25rem solid var(--primary-color);
     background-color: var(--bg-offwhite);
+}
+
+main {
+    min-height: var(--height-main);
 }
 
 h1 {
