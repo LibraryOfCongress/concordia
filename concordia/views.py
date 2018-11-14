@@ -358,6 +358,14 @@ class ProjectDetailView(ListView):
         )
 
         item_qs = self.project.item_set.published().order_by("item_id")
+        item_qs = item_qs.annotate(
+            **{
+                f"{key}_count": Count(
+                    "asset", filter=Q(asset__transcription_status=key)
+                )
+                for key in TranscriptionStatus.CHOICE_MAP.keys()
+            }
+        )
 
         return item_qs
 
@@ -371,6 +379,12 @@ class ProjectDetailView(ListView):
         )
 
         calculate_asset_stats(project_assets, ctx)
+
+        for item in ctx["items"]:
+            for k, v in TranscriptionStatus.CHOICES:
+                if getattr(item, f"{k}_count", 0) > 0:
+                    item.lowest_transcription_status = k
+                    break
 
         return ctx
 
