@@ -40,15 +40,16 @@ tx_urlpatterns = (
             views.AssetDetailView.as_view(),
             name="asset-detail",
         ),
+        # n.b. this must be above project-detail to avoid being seen as a project slug:
+        path(
+            "<slug:campaign_slug>/next-transcribable-asset/",
+            views.redirect_to_next_transcribable_asset,
+            name="redirect-to-next-transcribable-asset",
+        ),
         path(
             "<slug:campaign_slug>/<slug:slug>/",
             views.ProjectDetailView.as_view(),
             name="project-detail",
-        ),
-        path(
-            "<slug:campaign_slug>/<slug:project_slug>/next-transcribable-asset/",
-            views.redirect_to_next_transcribable_asset,
-            name="redirect-to-next-transcribable-asset",
         ),
         path(
             "<slug:campaign_slug>/<slug:project_slug>/<slug:item_id>/",

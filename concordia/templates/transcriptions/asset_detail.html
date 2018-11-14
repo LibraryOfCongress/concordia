@@ -68,7 +68,7 @@
             </div>
 
             <div class="btn-group btn-group-sm align-self-end" role="navigation" aria-label="Link to the next editable page">
-                <a class="btn btn-default" title="Move to the next page in this item that needs help" href="{% url "transcriptions:redirect-to-next-transcribable-asset" campaign.slug project.slug %}">Find a new page &rarr;</a>
+                <a class="btn btn-default" title="Move to the next page in this item that needs help" href="{{ next_open_asset_url }}">Find a new page &rarr;</a>
           </div>
         </nav>
     </div>
@@ -335,7 +335,7 @@
                     <p>You can help by transcribing a new page, adding tags to this page, or coming back later to review this page's transcription.</p>
                 </div>
                 <div class="modal-footer">
-                    <a class="btn btn-primary" href="{% url "transcriptions:redirect-to-next-transcribable-asset" campaign.slug project.slug %}">
+                    <a class="btn btn-primary" href="{{ next_open_asset_url }}">
                         Find a new page
                     </a>
                     <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
@@ -364,7 +364,7 @@
                     <button type="button" class="btn btn-default" data-dismiss="modal">
                         Add Tags
                     </button>
-                    <a class="btn btn-primary" href="{% url "transcriptions:redirect-to-next-transcribable-asset" campaign.slug project.slug %}">
+                    <a class="btn btn-primary" href="{{ next_open_asset_url }}">
                         Find a new page
                     </a>
                 </div>
@@ -392,7 +392,7 @@
                     <button type="button" class="btn btn-default" data-dismiss="modal">
                         Add Tags
                     </button>
-                    <a class="btn btn-primary" href="{% url "transcriptions:redirect-to-next-transcribable-asset" campaign.slug project.slug %}">
+                    <a class="btn btn-primary" href="{{ next_open_asset_url }}">
                         Find a new page
                     </a>
                 </div>
