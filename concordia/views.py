@@ -484,7 +484,9 @@ class AssetDetailView(DetailView):
                 "transcriptions:redirect-to-next-transcribable-asset",
                 kwargs={"campaign_slug": project.campaign.slug},
             ),
-            urlencode({"project": project.slug, "item": item.item_id}),
+            urlencode(
+                {"project": project.slug, "item": item.item_id, "asset": asset.id}
+            ),
         )
 
         # We'll handle the case where an item with no transcriptions should be
@@ -984,6 +986,7 @@ def redirect_to_next_transcribable_asset(request, *, campaign_slug):
     campaign = get_object_or_404(Campaign.objects.published(), slug=campaign_slug)
     project_slug = request.GET.get("project")
     item_id = request.GET.get("item")
+    asset_id = request.GET.get("asset")
 
     if not request.user.is_authenticated:
         user = get_anonymous_user()
@@ -1012,7 +1015,10 @@ def redirect_to_next_transcribable_asset(request, *, campaign_slug):
         same_item=Case(
             When(item__item_id=item_id, then=1), default=0, output_field=IntegerField()
         ),
-    ).order_by("-same_project", "-same_item")
+        next_asset=Case(
+            When(pk__gt=asset_id, then=1), default=0, output_field=IntegerField()
+        ),
+    ).order_by("-next_asset", "-same_item", "-same_project", "sequence")
 
     asset = potential_assets.first()
     if asset:
