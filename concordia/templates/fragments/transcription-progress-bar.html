@@ -10,19 +10,19 @@
 </div>
 <div class="table-responsive-md">
     <table id="progress-stats" class="table table-sm font-weight-light">
-        <tr>
-            <th class="text-nowrap">Complete:</th>
-            <td class="text-right">{{ completed_percent }}%</td>
-        </tr>
-        <tr>
-            <th class="text-nowrap">In progress:</th>
-            <td class="text-right">
-                {{ edit_percent|add:submitted_percent }}%
-            </td>
-        </tr>
-        <tr>
-            <th class="text-nowrap">Contributors:</th>
-            <td class="text-right">{{ contributor_count|intcomma }}</td>
-        <tr>
+        <tbody>
+            {% for label, value in transcription_status_counts %}
+                <tr>
+                    <th class="text-nowrap">{{ label }}</th>
+                    <td class="text-right">{{ value|intcomma }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+        <tbody>
+            <tr>
+                <th class="text-nowrap">Contributors:</th>
+                <td class="text-right">{{ contributor_count|intcomma }}</td>
+            <tr>
+        </tbody>
     </table>
 </div>
