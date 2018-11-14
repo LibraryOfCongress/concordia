@@ -984,9 +984,9 @@ def reserve_asset_transcription(request, *, asset_pk):
 @atomic
 def redirect_to_next_transcribable_asset(request, *, campaign_slug):
     campaign = get_object_or_404(Campaign.objects.published(), slug=campaign_slug)
-    project_slug = request.GET.get("project")
-    item_id = request.GET.get("item")
-    asset_id = request.GET.get("asset")
+    project_slug = request.GET.get("project", "")
+    item_id = request.GET.get("item", "")
+    asset_id = request.GET.get("asset", 0)
 
     if not request.user.is_authenticated:
         user = get_anonymous_user()
