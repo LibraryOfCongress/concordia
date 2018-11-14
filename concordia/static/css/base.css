@@ -520,6 +520,10 @@ ul.nav-secondary {
     }
 }
 
+.concordia-object-card[data-transcription-status='completed']:not(:hover) {
+    opacity: 0.5;
+}
+
 .concordia-object-card .card-title,
 .concordia-object-card .card-actions {
     position: absolute;
