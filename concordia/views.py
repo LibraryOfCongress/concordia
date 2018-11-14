@@ -319,7 +319,7 @@ def calculate_asset_stats(asset_qs, ctx):
             pct = 0
 
         ctx[f"{status_key}_percent"] = pct
-        labeled_status_counts.append((status_label, value))
+        labeled_status_counts.append((status_key, status_label, value))
 
 
 @method_decorator(default_cache_control, name="dispatch")

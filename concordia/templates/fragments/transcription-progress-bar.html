@@ -11,10 +11,10 @@
 <div class="table-responsive-md">
     <table id="progress-stats" class="table table-sm font-weight-light">
         <tbody>
-            {% for label, value in transcription_status_counts %}
+            {% for key, label, value in transcription_status_counts %}
                 <tr>
-                    <th class="text-nowrap">{{ label }}</th>
-                    <td class="text-right">{{ value|intcomma }}</td>
+                    <th class="text-nowrap"><a href="?transcription_status={{ key|urlencode }}">{{ label }}</a></th>
+                    <td class="text-right"><a href="?transcription_status={{ key|urlencode }}">{{ value|intcomma }}</a></td>
                 </tr>
             {% endfor %}
         </tbody>
