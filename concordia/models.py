@@ -26,8 +26,8 @@ class TranscriptionStatus(object):
     to avoid needing to do nested queries in views
     """
 
-    NOT_STARTED = "not started"
-    IN_PROGRESS = "in progress"
+    NOT_STARTED = "not_started"
+    IN_PROGRESS = "in_progress"
     SUBMITTED = "submitted"
     COMPLETED = "completed"
 
@@ -197,7 +197,7 @@ class Asset(MetricsModelMixin("asset"), models.Model):
     # be directly modified except by the Transcription signal handler:
     transcription_status = models.CharField(
         editable=False,
-        max_length=10,
+        max_length=20,
         default=TranscriptionStatus.NOT_STARTED,
         choices=TranscriptionStatus.CHOICES,
     )
