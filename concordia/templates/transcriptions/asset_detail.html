@@ -196,11 +196,11 @@
                     {% else %}
                         <p class="help-text primary-text text-center anonymous-only">
                             Want to tag this page?
-                            <a class="primary-text" href="{% url 'registration_register' %}">Register</a> or <a class="primary-text" href="{% url 'login' %}?next={{ request.path|urlencode }}">Login</a>
 
-                            <a tabindex="0" class="btn btn-link d-inline" role="button" data-toggle="popover" data-placement="top" data-trigger="focus click hover" title="Help" data-content="Only registered users can add tags">
-                                <span class="fas fa-question-circle" aria-label="Open Help"></span>
-                            </a>
+                            <a class="primary-text" href="{% url 'registration_register' %}">Register</a>
+                            or
+                            <a class="primary-text" href="{% url 'login' %}?next={{ request.path|urlencode }}">login</a>
+                            to add tags.
                         </p>
                     {% endif %}
 
