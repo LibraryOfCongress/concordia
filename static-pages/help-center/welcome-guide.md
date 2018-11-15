@@ -15,7 +15,7 @@ title: Welcome Guide
 Welcome to crowd.loc.gov! Our goal is to make documents word-searchable in the Library of Congress catalog. Help us transcribe original items, many of which have never been transcribed before. Anyone can transcribe, you don’t need an account, but registered volunteers can access the review and tag features. You can choose which tasks you want to do, and what pages you want to work on. To create an account, <a href="/account/register/">go to our registration page</a>. Let's get started!
 </p>
 <ol>
-<li>Choose what to transcribe. You can either click the "Get Started" button on the homepage or <a href="/campaigns/">explore our various campaigns</a>.
+<li>Choose what to transcribe. You can either click the "Let's Go" button on the <a href="/">homepage</a> or <a href="/campaigns/">explore our various campaigns</a>.
 </li>
 <li>
 Transcribe what you can into the white box on the right. Transcribe lines in the order they appear and preserve line breaks. This will make the transcriptions useful for researchers. If you see multiple pages, such as an open notebook with two pages, just transcribe the content in the order it appears.
