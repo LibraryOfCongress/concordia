@@ -29,12 +29,18 @@
     <div class="row">
         <div class="card-deck w-100 flex-column flex-sm-row justify-content-center align-items-center align-items-sm-stretch">
             {% for item in items %}
-                <div class="col-12 col-md-4 col-lg-3 m-2 p-1 concordia-object-card card bg-lightest-gray shadow-regular justify-content-between align-items-center" data-transcription-status="{{ item.lowest_transcription_status }}">
+                <div class="col-12 col-md-4 col-lg-3 m-2 p-1 concordia-object-card card bg-lightest-gray shadow-regular align-items-center" data-transcription-status="{{ item.lowest_transcription_status }}">
                     <a href="{% url 'transcriptions:item-detail' campaign.slug project.slug item.item_id %}">
                         <img class="card-img card-img-campaign" alt="{{ item.title }}" src="{{ item.thumbnail_url }}">
                     </a>
 
-                    <h6 class="text-center primary-text my-3">
+                    <div class="progress w-100 my-2">
+                        <div title="Completed" class="progress-bar bg-completed" role="progressbar" style="width: {{ item.completed_percent }}%" aria-valuenow="{{ item.completed_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        <div title="Submitted for Review" class="progress-bar bg-submitted" role="progressbar" style="width: {{ item.submitted_percent }}%" aria-valuenow="{{ item.submitted_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        <div title="In Progress" class="progress-bar bg-edit" role="progressbar" style="width: {{ item.edit_percent }}%" aria-valuenow="{{ item.edit_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+
+                    <h6 class="text-center primary-text">
                         <a href="{% url 'transcriptions:item-detail' campaign.slug project.slug item.item_id %}" class="campaign-image-link">
                             {{ item.title }}
                         </a>

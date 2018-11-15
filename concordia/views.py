@@ -323,6 +323,24 @@ def calculate_asset_stats(asset_qs, ctx):
         labeled_status_counts.append((status_key, status_label, value))
 
 
+def annotate_children_with_progress_stats(children):
+    for obj in children:
+        counts = {}
+
+        for k, v in TranscriptionStatus.CHOICES:
+            counts[k] = getattr(obj, f"{k}_count", 0)
+
+        obj.total_count = total = sum(counts.values())
+
+        for k, v in TranscriptionStatus.CHOICES:
+            if total > 0:
+                pct = round(100 * (counts[k] / total))
+            else:
+                pct = 0
+
+            setattr(obj, f"{k}_percent", pct)
+
+
 @method_decorator(default_cache_control, name="dispatch")
 class CampaignDetailView(DetailView):
     template_name = "transcriptions/campaign_detail.html"
@@ -332,6 +350,20 @@ class CampaignDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
+
+        ctx["projects"] = projects = (
+            ctx["campaign"]
+            .project_set.published()
+            .annotate(
+                **{
+                    f"{key}_count": Count(
+                        "item__asset", filter=Q(item__asset__transcription_status=key)
+                    )
+                    for key in TranscriptionStatus.CHOICE_MAP.keys()
+                }
+            )
+        )
+        annotate_children_with_progress_stats(projects)
 
         campaign_assets = Asset.objects.filter(
             item__project__campaign=self.object,
@@ -381,11 +413,7 @@ class ProjectDetailView(ListView):
 
         calculate_asset_stats(project_assets, ctx)
 
-        for item in ctx["items"]:
-            for k, v in TranscriptionStatus.CHOICES:
-                if getattr(item, f"{k}_count", 0) > 0:
-                    item.lowest_transcription_status = k
-                    break
+        annotate_children_with_progress_stats(ctx["items"])
 
         return ctx
 

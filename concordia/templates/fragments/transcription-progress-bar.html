@@ -1,28 +1,32 @@
 {% load humanize %}
 
+<div id="contributor-stats">
+    {{ contributor_count|intcomma }}
+    contributor{{ contributor_count|pluralize}}
+</div>
+
 <div id="progress-bar" class="progress">
-    <div title="Completed" class="progress-bar bg-success" role="progressbar" style="width: {{ completed_percent }}%" aria-valuenow="{{ completed_percent }}" aria-valuemin="0" aria-valuemax="100">
+    <div title="Completed" class="progress-bar bg-completed" role="progressbar" style="width: {{ completed_percent }}%" aria-valuenow="{{ completed_percent }}" aria-valuemin="0" aria-valuemax="100">
     </div>
-    <div title="Submitted for Review" class="progress-bar bg-info" role="progressbar" style="width: {{ submitted_percent }}%" aria-valuenow="{{ submitted_percent }}" aria-valuemin="0" aria-valuemax="100">
+    <div title="Submitted for Review" class="progress-bar bg-submitted" role="progressbar" style="width: {{ submitted_percent }}%" aria-valuenow="{{ submitted_percent }}" aria-valuemin="0" aria-valuemax="100">
     </div>
-    <div title="In Progress" class="progress-bar progress-bar-striped progress-bar-animated bg-warning" role="progressbar" style="width: {{ edit_percent }}%" aria-valuenow="{{ edit_percent }}" aria-valuemin="0" aria-valuemax="100">
+    <div title="In Progress" class="progress-bar bg-edit" role="progressbar" style="width: {{ edit_percent }}%" aria-valuenow="{{ edit_percent }}" aria-valuemin="0" aria-valuemax="100">
     </div>
 </div>
 <div class="table-responsive-md">
     <table id="progress-stats" class="table table-sm font-weight-light">
         <tbody>
-            {% for key, label, value in transcription_status_counts %}
+            {% for key, label, value in transcription_status_counts reversed %}
                 <tr>
-                    <th class="text-nowrap"><a href="?transcription_status={{ key|urlencode }}">{{ label }}</a></th>
+                    <th class="text-nowrap">
+                        <a href="?transcription_status={{ key|urlencode }}">
+                            <span class="transcription-status-key bg-{{ key }}"></span>
+                            {{ label }}
+                        </a>
+                    </th>
                     <td class="text-right"><a href="?transcription_status={{ key|urlencode }}">{{ value|intcomma }}</a></td>
                 </tr>
             {% endfor %}
-        </tbody>
-        <tbody>
-            <tr>
-                <th class="text-nowrap">Contributors:</th>
-                <td class="text-right">{{ contributor_count|intcomma }}</td>
-            <tr>
         </tbody>
     </table>
 </div>
