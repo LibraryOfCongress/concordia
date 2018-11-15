@@ -16,7 +16,7 @@
 <div class="table-responsive-md">
     <table id="progress-stats" class="table table-sm font-weight-light">
         <tbody>
-            {% for key, label, value in transcription_status_counts %}
+            {% for key, label, value in transcription_status_counts reversed %}
                 <tr>
                     <th class="text-nowrap">
                         <a href="?transcription_status={{ key|urlencode }}">
