@@ -7,7 +7,7 @@ from datetime import datetime
 import bagit
 import boto3
 from django.conf import settings
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import permission_required
 from django.db.models import OuterRef, Subquery
 from django.http import HttpResponse, HttpResponseRedirect
 from django.utils.decorators import method_decorator
@@ -47,7 +47,12 @@ class ExportCampaignToCSV(TemplateView):
     Exports the most recent transcription for each asset in a campaign
     """
 
-    @method_decorator(login_required)
+    @method_decorator(permission_required("concordia.add_campaign"))
+    @method_decorator(permission_required("concordia.change_campaign"))
+    @method_decorator(permission_required("concordia.add_project"))
+    @method_decorator(permission_required("concordia.change_project"))
+    @method_decorator(permission_required("concordia.add_item"))
+    @method_decorator(permission_required("concordia.change_item"))
     def get(self, request, *args, **kwargs):
         asset_qs = Asset.objects.filter(
             item__project__campaign__slug=self.kwargs["campaign_slug"]
@@ -94,7 +99,12 @@ class ExportCampaignToBagit(TemplateView):
     Removes all temporary directories and files.
     """
 
-    @method_decorator(login_required)
+    @method_decorator(permission_required("concordia.add_campaign"))
+    @method_decorator(permission_required("concordia.change_campaign"))
+    @method_decorator(permission_required("concordia.add_project"))
+    @method_decorator(permission_required("concordia.change_project"))
+    @method_decorator(permission_required("concordia.add_item"))
+    @method_decorator(permission_required("concordia.change_item"))
     def get(self, request, *args, **kwargs):
         campaign_slug = self.kwargs["campaign_slug"]
         asset_qs = Asset.objects.filter(
