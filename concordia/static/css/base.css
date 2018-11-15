@@ -10,6 +10,7 @@
     --text-color-primary: rgba(38, 50, 56, 1); /* #263238 */
     --text-color-offwhite: rgba(250, 250, 250, 1); /* #FAFAFA */
     --text-nav-current: rgba(252, 76, 2, 1); /* #FC4C02 */
+
     --bg-offwhite: rgba(250, 250, 250, 1); /* #FAFAFA */
     --bg-lightest-gray: rgba(245, 245, 245, 1); /* #F5F5F5 */
     --bg-darkest-gray: rgba(51, 51, 51, 1); /* #333333 */
@@ -20,6 +21,10 @@
     --bg-divider: rgba(189, 189, 189, 1); /* #BDBDBD */
     --bg-card-title: rgba(51, 51, 51, 0.7); /* #333333 */
     --bg-loading: rgba(51, 51, 51, 0.5); /* #333333 */
+    --bg-completed: #006477;
+    --bg-submitted: #009cba;
+    --bg-open-for-edit: #83cfdd;
+
     --shadow-color: rgba(51, 51, 51, 0.8); /* #333333 */
     --light-shadow-color: rgba(51, 51, 51, 0.4); /* #333333 */
     --footer-links-color: #00618e;
@@ -265,6 +270,18 @@ p.hero-secondary.offwhite-text {
 
 .bg-primary-color {
     background-color: var(--primary-color);
+}
+
+.bg-completed {
+    background-color: var(--bg-completed);
+}
+
+.bg-submitted {
+    background-color: var(--bg-submitted);
+}
+
+.bg-open-for-edit {
+    background-color: var(--bg-open-for-edit);
 }
 
 input {
