@@ -382,10 +382,20 @@ class ProjectDetailView(ListView):
         calculate_asset_stats(project_assets, ctx)
 
         for item in ctx["items"]:
+            counts = {}
+
             for k, v in TranscriptionStatus.CHOICES:
-                if getattr(item, f"{k}_count", 0) > 0:
-                    item.lowest_transcription_status = k
-                    break
+                counts[k] = getattr(item, f"{k}_count", 0)
+
+            item.total_count = total = sum(counts.values())
+
+            for k, v in TranscriptionStatus.CHOICES:
+                if total > 0:
+                    pct = round(100 * (counts[k] / total))
+                else:
+                    pct = 0
+
+                setattr(item, f"{k}_percent", pct)
 
         return ctx
 
