@@ -1,5 +1,11 @@
 <div class="btn-group btn-group-sm btn-group-toggle">
-    {% for url, classes, label in status_choices %}
-        <a class="btn btn-outline-secondary {{ classes }}" href="{{ url|default:"?" }}">{{ label }}</a>
+    {% for url, classes, key, label in status_choices %}
+        <a class="btn btn-outline-secondary {{ classes }}" href="{{ url|default:"?" }}">
+            {% if key %}
+                <span class="transcription-status-key bg-{{ key }}"></span>
+            {% endif %}
+
+            {{ label }}
+        </a>
     {% endfor %}
 </div>

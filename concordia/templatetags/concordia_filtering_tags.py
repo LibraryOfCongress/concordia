@@ -12,7 +12,7 @@ def transcription_status_filters(status_counts, active_value):
     ctx = {}
 
     ctx["status_choices"] = status_choices = [
-        ("", "active" if not active_value else "", f"All")
+        ("", "active" if not active_value else "", "", "All")
     ]
 
     for key, label in TranscriptionStatus.CHOICES:
@@ -20,6 +20,7 @@ def transcription_status_filters(status_counts, active_value):
             (
                 "?transcription_status=%s" % urlquote(key),
                 "active" if active_value == key else "",
+                key,
                 label,
             )
         )
