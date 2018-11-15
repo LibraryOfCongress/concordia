@@ -322,13 +322,22 @@ def annotate_children_with_progress_stats(children):
 
         obj.total_count = total = sum(counts.values())
 
+        lowest_status = None
+
         for k, v in TranscriptionStatus.CHOICES:
+            count = counts[k]
+
             if total > 0:
-                pct = round(100 * (counts[k] / total))
+                pct = round(100 * (count / total))
             else:
                 pct = 0
 
             setattr(obj, f"{k}_percent", pct)
+
+            if lowest_status is None and count > 0:
+                lowest_status = k
+
+        obj.lowest_transcription_status = lowest_status
 
 
 @method_decorator(default_cache_control, name="dispatch")
@@ -341,7 +350,7 @@ class CampaignDetailView(DetailView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
 
-        ctx["projects"] = projects = (
+        projects = (
             ctx["campaign"]
             .project_set.published()
             .annotate(
@@ -353,7 +362,13 @@ class CampaignDetailView(DetailView):
                 }
             )
         )
+
+        status = self.request.GET.get("transcription_status")
+        if status in TranscriptionStatus.CHOICE_MAP:
+            projects = projects.exclude(**{f"{status}_count": 0})
+
         annotate_children_with_progress_stats(projects)
+        ctx["projects"] = projects
 
         campaign_assets = Asset.objects.filter(
             item__project__campaign=self.object,
@@ -389,6 +404,10 @@ class ProjectDetailView(ListView):
                 for key in TranscriptionStatus.CHOICE_MAP.keys()
             }
         )
+
+        status = self.request.GET.get("transcription_status")
+        if status in TranscriptionStatus.CHOICE_MAP:
+            item_qs = item_qs.exclude(**{f"{status}_count": 0})
 
         return item_qs
 
@@ -439,7 +458,9 @@ class ItemDetailView(ListView):
     def apply_asset_filters(self, asset_qs):
         """Use optional GET parameters to filter the asset list"""
 
-        # FIXME: re-implement filtering
+        status = self.request.GET.get("transcription_status")
+        if status in TranscriptionStatus.CHOICE_MAP:
+            asset_qs = asset_qs.filter(transcription_status=status)
 
         return asset_qs
 
