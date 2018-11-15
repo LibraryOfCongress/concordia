@@ -131,9 +131,13 @@
                         <span class="fas fa-check"></span>
                         Completed
                     </span>
-                    <span class="tx-edit" {% if transcription_status != "edit" %}hidden{% endif %}>
+                    <span class="tx-edit" {% if transcription_status != "not_started" %}hidden{% endif %}>
                         <span class="fas fa-edit"></span>
-                        Open for edit
+                        Not started
+                    </span>
+                    <span class="tx-edit" {% if transcription_status != "in_progress" %}hidden{% endif %}>
+                        <span class="fas fa-edit"></span>
+                        In progress
                     </span>
                     <span class="tx-edit-conflict" hidden>
                         <span class="fas fa-exclamation-triangle"></span>
@@ -148,12 +152,12 @@
                     <h2>Transcription</h2>
 
                     {% spaceless %}
-                        <textarea readonly class="form-control w-100 rounded flex-grow-1" name="text" id="transcription-input" placeholder="{% if transcription_status == 'edit' %}Go ahead, start typing. You got this!{% else %}Nothing to transcribe{% endif %}" aria-label="Transcription input">
+                        <textarea readonly class="form-control w-100 rounded flex-grow-1" name="text" id="transcription-input" placeholder="{% if transcription_status == 'not_started' or transcription_status == 'in_progress' %}Go ahead, start typing. You got this!{% else %}Nothing to transcribe{% endif %}" aria-label="Transcription input">
                             {{ transcription.text }}
                         </textarea>
 
                         <div class="my-3 d-flex flex-wrap justify-content-around align-items-center btn-row">
-                            {% if transcription_status == 'edit' %}
+                            {% if transcription_status == 'not_started' or transcription_status == 'in_progress' %}
                                 <div class="form-check w-100 text-center mt-0 mb-3">
                                     <input id="nothing-to-transcribe" type="checkbox" class="form-check-input" />
                                     <label class="form-check-label" for="nothing-to-transcribe">
@@ -480,7 +484,7 @@
     });
 </script>
 
-{% if transcription_status == "edit" %}
+{% if transcription_status == "not_started" or transcription_status == "in_progress" %}
     <script>
         attemptToReserveAsset("{% url 'reserve-asset-for-transcription' asset.pk %}");
     </script>

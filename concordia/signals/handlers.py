@@ -21,7 +21,7 @@ def add_user_to_newsletter(sender, user, request, **kwargs):
 
 @receiver(post_save, sender=Transcription)
 def update_asset_status(sender, *, instance, **kwargs):
-    new_status = TranscriptionStatus.EDIT
+    new_status = TranscriptionStatus.IN_PROGRESS
 
     if instance.accepted:
         new_status = TranscriptionStatus.COMPLETED

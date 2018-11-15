@@ -171,7 +171,11 @@ $transcriptionEditor
 
         var data = $transcriptionEditor.data();
 
-        if (!data.hasReservation || data.transcriptionStatus != 'edit') {
+        if (
+            !data.hasReservation ||
+            (data.transcriptionStatus != 'in_progress' &&
+                data.transcriptionStatus != 'not_started')
+        ) {
             lockControls($transcriptionEditor);
         } else {
             var $textarea = $transcriptionEditor.find('textarea');
@@ -203,7 +207,11 @@ $transcriptionEditor
             }
         }
 
-        if (!data.hasReservation && data.transcriptionStatus == 'edit') {
+        if (
+            !data.hasReservation &&
+            (data.transcriptionStatus == 'in_progress' ||
+                data.transcriptionStatus == 'not_started')
+        ) {
             $('.tx-status-display')
                 .children()
                 .attr('hidden', 'hidden')
@@ -255,7 +263,7 @@ $submitButton.on('click', function(evt) {
             $('.tx-status-display')
                 .children()
                 .attr('hidden', 'hidden')
-                .has('.tx-submitted')
+                .filter('.tx-submitted')
                 .removeAttr('hidden');
             $('#successful-submission-modal')
                 .modal()
