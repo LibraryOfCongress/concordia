@@ -21,9 +21,9 @@
     --bg-divider: rgba(189, 189, 189, 1); /* #BDBDBD */
     --bg-card-title: rgba(51, 51, 51, 0.7); /* #333333 */
     --bg-loading: rgba(51, 51, 51, 0.5); /* #333333 */
-    --bg-completed: #006477;
-    --bg-submitted: #009cba;
-    --bg-edit: #83cfdd;
+    --bg-completed: #00618e;
+    --bg-submitted: #2e91bf;
+    --bg-edit: #80cef3;
 
     --shadow-color: rgba(51, 51, 51, 0.8); /* #333333 */
     --light-shadow-color: rgba(51, 51, 51, 0.4); /* #333333 */
