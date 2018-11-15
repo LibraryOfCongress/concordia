@@ -23,7 +23,7 @@
     --bg-loading: rgba(51, 51, 51, 0.5); /* #333333 */
     --bg-completed: #006477;
     --bg-submitted: #009cba;
-    --bg-open-for-edit: #83cfdd;
+    --bg-edit: #83cfdd;
 
     --shadow-color: rgba(51, 51, 51, 0.8); /* #333333 */
     --light-shadow-color: rgba(51, 51, 51, 0.4); /* #333333 */
@@ -280,8 +280,8 @@ p.hero-secondary.offwhite-text {
     background-color: var(--bg-submitted);
 }
 
-.bg-open-for-edit {
-    background-color: var(--bg-open-for-edit);
+.bg-edit {
+    background-color: var(--bg-edit);
 }
 
 input {
@@ -592,6 +592,13 @@ ul.nav-secondary {
 #progress-stats th {
     font-size: inherit;
     font-weight: inherit;
+}
+
+#progress-stats .transcription-status-key {
+    display: inline-block;
+    height: 0.6em;
+    width: 0.6em;
+    vertical-align: baseline;
 }
 
 /*
