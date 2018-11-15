@@ -291,11 +291,11 @@ class Transcription(MetricsModelMixin("transcription"), models.Model):
     @property
     def status(self):
         if self.accepted:
-            return TranscriptionStatus.COMPLETED
+            return TranscriptionStatus.CHOICE_MAP[TranscriptionStatus.COMPLETED]
         elif self.submitted and not self.rejected:
-            return TranscriptionStatus.SUBMITTED
+            return TranscriptionStatus.CHOICE_MAP[TranscriptionStatus.SUBMITTED]
         else:
-            return TranscriptionStatus.IN_PROGRESS
+            return TranscriptionStatus.CHOICE_MAP[TranscriptionStatus.IN_PROGRESS]
 
 
 class AssetTranscriptionReservation(models.Model):
