@@ -24,7 +24,11 @@
                             {{ label }}
                         </a>
                     </th>
-                    <td class="text-right"><a href="?transcription_status={{ key|urlencode }}">{{ value|intcomma }}</a></td>
+                    <td class="text-right">
+                        <a href="?transcription_status={{ key|urlencode }}">
+                            <abbr title="{{ value|intcomma }} pages">{{ value|intcomma }}</abbr>
+                        </a>
+                    </td>
                 </tr>
             {% endfor %}
         </tbody>
