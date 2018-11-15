@@ -23,7 +23,8 @@
     --bg-loading: rgba(51, 51, 51, 0.5); /* #333333 */
     --bg-completed: #00618e;
     --bg-submitted: #2e91bf;
-    --bg-edit: #80cef3;
+    --bg-in_progress: #80cef3;
+    --bg-not_started: #e9ecef;
 
     --shadow-color: rgba(51, 51, 51, 0.8); /* #333333 */
     --light-shadow-color: rgba(51, 51, 51, 0.4); /* #333333 */
@@ -280,8 +281,12 @@ p.hero-secondary.offwhite-text {
     background-color: var(--bg-submitted);
 }
 
-.bg-edit {
-    background-color: var(--bg-edit);
+.bg-in_progress {
+    background-color: var(--bg-in_progress);
+}
+
+.bg-not_started {
+    background-color: var(--bg-not_started);
 }
 
 input {
