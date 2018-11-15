@@ -189,3 +189,16 @@ $.ajax({url: '/account/ajax-messages/', method: 'GET'}).done(function(data) {
         });
     }
 });
+
+$(function() {
+    var $progressBar = $('#progress-bar');
+    if ($progressBar.length) {
+        $progressBar.popover({
+            content: document.getElementById('progress-bar-popover-contents')
+                .innerHTML,
+            html: true,
+            trigger: 'click hover focus',
+            placement: 'bottom'
+        });
+    }
+});
