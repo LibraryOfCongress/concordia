@@ -1,5 +1,10 @@
 {% load humanize %}
 
+<div id="contributor-stats">
+    {{ contributor_count|intcomma }}
+    contributor{{ contributor_count|pluralize}}
+</div>
+
 <div id="progress-bar" class="progress">
     <div title="Completed" class="progress-bar bg-completed" role="progressbar" style="width: {{ completed_percent }}%" aria-valuenow="{{ completed_percent }}" aria-valuemin="0" aria-valuemax="100">
     </div>
@@ -22,12 +27,6 @@
                     <td class="text-right"><a href="?transcription_status={{ key|urlencode }}">{{ value|intcomma }}</a></td>
                 </tr>
             {% endfor %}
-        </tbody>
-        <tbody>
-            <tr>
-                <th class="text-nowrap">Contributors:</th>
-                <td class="text-right">{{ contributor_count|intcomma }}</td>
-            <tr>
         </tbody>
     </table>
 </div>
