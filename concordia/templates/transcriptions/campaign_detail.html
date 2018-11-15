@@ -1,6 +1,5 @@
 {% extends "base.html" %}
 {% load staticfiles %}
-{% load concordia_filtering_tags %}
 
 {% block title %}{{ campaign.title }}{% endblock title %}
 
@@ -29,14 +28,7 @@
             {% endif %}
         </div>
     </div>
-    <div class="row px-3 mb-2">
-        <div class="col-md-6">
-            {% transcription_status_filters transcription_status_counts request.GET.transcription_status %}
-        </div>
-        <div class="col-md-6">
-            {% include "fragments/transcription-progress-bar.html" %}
-        </div>
-    </div>
+    {% include "fragments/transcription-progress-row.html" %}
     <div class="row">
         <div class="card-deck w-100 flex-column flex-sm-row justify-content-center align-items-center align-items-sm-stretch">
             {% for project in projects %}
