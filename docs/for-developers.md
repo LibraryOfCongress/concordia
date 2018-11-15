@@ -99,7 +99,7 @@ django-extensions `graph_models` command:
 
     $ dot -Tsvg <(pipenv run ./manage.py graph_models concordia importer) -o concordia.svg
 
-## Front-End Testing
+## Front-End Tools
 
 ### Installing front-end tools
 
@@ -121,3 +121,15 @@ server by giving it one or more URLs:
 
     $ yarn run axe --show-errors http://localhost:8000/
     $ pipenv run ./manage.py print_frontend_test_urls | xargs yarn run axe --show-errors
+
+### Static Image Compression
+
+The `concordia/static/img` directory has a Makefile which will run an
+[imagemin](http://github.com/imagemin/imagemin)-based toolchain. Use of other
+tools such as [ImageOptim](https://github.com/ImageOptim/ImageOptim) may yield
+better results at the expensive of portability and is encouraged at least for
+comparison purposes.
+
+```
+make -C concordia/static/img/
+```
