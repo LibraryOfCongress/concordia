@@ -26,12 +26,14 @@ class TranscriptionStatus(object):
     to avoid needing to do nested queries in views
     """
 
-    EDIT = "edit"
+    NOT_STARTED = "not started"
+    IN_PROGRESS = "in progress"
     SUBMITTED = "submitted"
     COMPLETED = "completed"
 
     CHOICES = (
-        (EDIT, "Open for Edit"),
+        (NOT_STARTED, "Not Started"),
+        (IN_PROGRESS, "In Progress"),
         (SUBMITTED, "Submitted for Review"),
         (COMPLETED, "Completed"),
     )
@@ -196,7 +198,7 @@ class Asset(MetricsModelMixin("asset"), models.Model):
     transcription_status = models.CharField(
         editable=False,
         max_length=10,
-        default=TranscriptionStatus.EDIT,
+        default=TranscriptionStatus.NOT_STARTED,
         choices=TranscriptionStatus.CHOICES,
     )
 
@@ -289,11 +291,11 @@ class Transcription(MetricsModelMixin("transcription"), models.Model):
     @property
     def status(self):
         if self.accepted:
-            return "Completed"
+            return TranscriptionStatus.COMPLETED
         elif self.submitted and not self.rejected:
-            return "Submitted"
+            return TranscriptionStatus.SUBMITTED
         else:
-            return "Edit"
+            return TranscriptionStatus.IN_PROGRESS
 
 
 class AssetTranscriptionReservation(models.Model):

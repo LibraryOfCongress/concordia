@@ -305,11 +305,6 @@ def calculate_asset_stats(asset_qs, ctx):
     asset_state_qs = asset_state_qs.annotate(Count("transcription_status")).order_by()
     status_counts_by_key = dict(asset_state_qs)
 
-    if "edit" in status_counts_by_key:
-        # Correct semantic difference between our normal “open for edit”
-        # including assets with no progress at all:
-        status_counts_by_key["edit"] -= asset_qs.filter(transcription=None).count()
-
     ctx["transcription_status_counts"] = labeled_status_counts = []
 
     for status_key, status_label in TranscriptionStatus.CHOICES:
@@ -535,12 +530,12 @@ class AssetDetailView(DetailView):
         )
 
         # We'll handle the case where an item with no transcriptions should be
-        # shown as status=edit here so the logic doesn't need to be repeated in
+        # shown as status=not started here so the logic doesn't need to be repeated in
         # templates:
         if transcription:
             transcription_status = transcription.status.lower()
         else:
-            transcription_status = "edit"
+            transcription_status = "not started"
         ctx["transcription_status"] = transcription_status
 
         previous_asset = (
@@ -1041,7 +1036,7 @@ def redirect_to_next_transcribable_asset(request, *, campaign_slug):
     potential_assets = Asset.objects.select_for_update(skip_locked=True, of=("self",))
     potential_assets = potential_assets.filter(
         item__project__campaign=campaign,
-        transcription_status=TranscriptionStatus.EDIT,
+        transcription_status=TranscriptionStatus.NOT_STARTED,
         item__project__published=True,
         item__published=True,
         published=True,
