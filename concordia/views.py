@@ -310,6 +310,7 @@ def calculate_asset_stats(asset_qs, ctx):
             pct = 0
 
         ctx[f"{status_key}_percent"] = pct
+        ctx[f"{status_key}_count"] = value
         labeled_status_counts.append((status_key, status_label, value))
 
 
