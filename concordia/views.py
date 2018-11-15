@@ -303,21 +303,24 @@ def calculate_asset_stats(asset_qs, ctx):
 
     asset_state_qs = asset_qs.values_list("transcription_status")
     asset_state_qs = asset_state_qs.annotate(Count("transcription_status")).order_by()
-    state_counts = dict(asset_state_qs)
+    status_counts_by_key = dict(asset_state_qs)
 
-    if "edit" in state_counts:
+    if "edit" in status_counts_by_key:
         # Correct semantic difference between our normal “open for edit”
         # including assets with no progress at all:
-        state_counts["edit"] -= asset_qs.filter(transcription=None).count()
+        status_counts_by_key["edit"] -= asset_qs.filter(transcription=None).count()
 
-    for state in TranscriptionStatus.CHOICE_MAP.keys():
-        value = state_counts.get(state, 0)
+    ctx["transcription_status_counts"] = labeled_status_counts = []
+
+    for status_key, status_label in TranscriptionStatus.CHOICES:
+        value = status_counts_by_key.get(status_key, 0)
         if value:
             pct = round(100 * (value / asset_count))
         else:
             pct = 0
 
-        ctx[f"{state}_percent"] = pct
+        ctx[f"{status_key}_percent"] = pct
+        labeled_status_counts.append((status_key, status_label, value))
 
 
 @method_decorator(default_cache_control, name="dispatch")
@@ -356,6 +359,14 @@ class ProjectDetailView(ListView):
         )
 
         item_qs = self.project.item_set.published().order_by("item_id")
+        item_qs = item_qs.annotate(
+            **{
+                f"{key}_count": Count(
+                    "asset", filter=Q(asset__transcription_status=key)
+                )
+                for key in TranscriptionStatus.CHOICE_MAP.keys()
+            }
+        )
 
         return item_qs
 
@@ -369,6 +380,12 @@ class ProjectDetailView(ListView):
         )
 
         calculate_asset_stats(project_assets, ctx)
+
+        for item in ctx["items"]:
+            for k, v in TranscriptionStatus.CHOICES:
+                if getattr(item, f"{k}_count", 0) > 0:
+                    item.lowest_transcription_status = k
+                    break
 
         return ctx
 

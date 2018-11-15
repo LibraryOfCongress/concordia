@@ -68,14 +68,13 @@ class AssetFilteringForm(forms.Form):
         super().__init__(*args, **kwargs)
 
         asset_statuses = {
-            status: "%s (%d)" % (TranscriptionStatus.CHOICE_MAP[status], count)
-            for status, count in status_counts.items()
+            key: "%s (%d)" % (val, status_counts.get(key, 0))
+            for key, val in TranscriptionStatus.CHOICES
         }
 
         filtered_choices = [("", f"All Images ({sum(status_counts.values())})")]
         for val, label in self.fields["transcription_status"].choices:
-            if val in asset_statuses:
-                filtered_choices.append((val, asset_statuses[val]))
+            filtered_choices.append((val, asset_statuses[val]))
 
         self.fields["transcription_status"].choices = filtered_choices
 
