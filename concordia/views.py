@@ -6,6 +6,7 @@ from datetime import timedelta
 from functools import wraps
 from logging import getLogger
 from smtplib import SMTPException
+from urllib.parse import urlencode
 
 import markdown
 from captcha.helpers import captcha_image_url
@@ -21,7 +22,7 @@ from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
 from django.db import connection
-from django.db.models import Count, Q
+from django.db.models import Case, Count, IntegerField, Q, When
 from django.db.transaction import atomic
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import Http404, get_object_or_404, redirect, render
@@ -477,6 +478,16 @@ class AssetDetailView(DetailView):
 
         transcription = asset.transcription_set.order_by("-pk").first()
         ctx["transcription"] = transcription
+
+        ctx["next_open_asset_url"] = "%s?%s" % (
+            reverse(
+                "transcriptions:redirect-to-next-transcribable-asset",
+                kwargs={"campaign_slug": project.campaign.slug},
+            ),
+            urlencode(
+                {"project": project.slug, "item": item.item_id, "asset": asset.id}
+            ),
+        )
 
         # We'll handle the case where an item with no transcriptions should be
         # shown as status=edit here so the logic doesn't need to be repeated in
@@ -971,10 +982,11 @@ def reserve_asset_transcription(request, *, asset_pk):
 
 @never_cache
 @atomic
-def redirect_to_next_transcribable_asset(request, *, campaign_slug, project_slug):
-    project = get_object_or_404(
-        Project.objects.published(), campaign__slug=campaign_slug, slug=project_slug
-    )
+def redirect_to_next_transcribable_asset(request, *, campaign_slug):
+    campaign = get_object_or_404(Campaign.objects.published(), slug=campaign_slug)
+    project_slug = request.GET.get("project", "")
+    item_id = request.GET.get("item", "")
+    asset_id = request.GET.get("asset", 0)
 
     if not request.user.is_authenticated:
         user = get_anonymous_user()
@@ -983,25 +995,51 @@ def redirect_to_next_transcribable_asset(request, *, campaign_slug, project_slug
 
     potential_assets = Asset.objects.select_for_update(skip_locked=True, of=("self",))
     potential_assets = potential_assets.filter(
-        item__project=project, transcription_status=TranscriptionStatus.EDIT
+        item__project__campaign=campaign,
+        transcription_status=TranscriptionStatus.EDIT,
+        item__project__published=True,
+        item__published=True,
+        published=True,
     )
-    potential_assets = potential_assets.filter(assettranscriptionreservation=None)
 
-    for potential_asset in potential_assets:
-        res = AssetTranscriptionReservation(user=user, asset=potential_asset)
+    potential_assets = potential_assets.filter(assettranscriptionreservation=None)
+    potential_assets = potential_assets.select_related("item", "item__project")
+
+    # We'll favor assets which are in the same item or project as the original:
+    potential_assets = potential_assets.annotate(
+        same_project=Case(
+            When(item__project__slug=project_slug, then=1),
+            default=0,
+            output_field=IntegerField(),
+        ),
+        same_item=Case(
+            When(item__item_id=item_id, then=1), default=0, output_field=IntegerField()
+        ),
+        next_asset=Case(
+            When(pk__gt=asset_id, then=1), default=0, output_field=IntegerField()
+        ),
+    ).order_by("-next_asset", "-same_item", "-same_project", "sequence")
+
+    asset = potential_assets.first()
+    if asset:
+        res = AssetTranscriptionReservation(user=user, asset=asset)
         res.full_clean()
         res.save()
         return redirect(
             "transcriptions:asset-detail",
-            project.campaign.slug,
-            project.slug,
-            potential_asset.item.item_id,
-            potential_asset.slug,
+            campaign.slug,
+            asset.item.project.slug,
+            asset.item.item_id,
+            asset.slug,
         )
     else:
         messages.info(
             request, "There are no remaining pages to be transcribed in this project!"
         )
-        return redirect(
-            "transcriptions:project-detail", project.campaign.slug, project.slug
-        )
+
+        if project_slug:
+            return redirect(
+                "transcriptions:project-detail", campaign_slug, project_slug
+            )
+        else:
+            return redirect("transcriptions:campaign-detail", campaign_slug)
