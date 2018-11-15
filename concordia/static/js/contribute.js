@@ -263,7 +263,7 @@ $submitButton.on('click', function(evt) {
             $('.tx-status-display')
                 .children()
                 .attr('hidden', 'hidden')
-                .has('.tx-submitted')
+                .filter('.tx-submitted')
                 .removeAttr('hidden');
             $('#successful-submission-modal')
                 .modal()
