@@ -6,11 +6,11 @@
 </div>
 
 <div id="progress-bar" class="progress">
-    <div title="Completed" class="progress-bar bg-completed" role="progressbar" style="width: {{ completed_percent }}%" aria-valuenow="{{ completed_percent }}" aria-valuemin="0" aria-valuemax="100">
+    <div title="Completed ({{ completed_count|intcomma }} page{{ completed_count|pluralize }})" class="progress-bar bg-completed" role="progressbar" style="width: {{ completed_percent }}%" aria-valuenow="{{ completed_percent }}" aria-valuemin="0" aria-valuemax="100">
     </div>
-    <div title="Submitted for Review" class="progress-bar bg-submitted" role="progressbar" style="width: {{ submitted_percent }}%" aria-valuenow="{{ submitted_percent }}" aria-valuemin="0" aria-valuemax="100">
+    <div title="Submitted for Review ({{ submitted_count|intcomma }} page{{ submitted_count|pluralize }})" class="progress-bar bg-submitted" role="progressbar" style="width: {{ submitted_percent }}%" aria-valuenow="{{ submitted_percent }}" aria-valuemin="0" aria-valuemax="100">
     </div>
-    <div title="In Progress" class="progress-bar bg-in_progress" role="progressbar" style="width: {{ in_progress_percent }}%" aria-valuenow="{{ in_progress_percent }}" aria-valuemin="0" aria-valuemax="100">
+    <div title="In Progress ({{ in_progress_count|intcomma }} page{{ in_progress_count|pluralize }})" class="progress-bar bg-in_progress" role="progressbar" style="width: {{ in_progress_percent }}%" aria-valuenow="{{ in_progress_percent }}" aria-valuemin="0" aria-valuemax="100">
     </div>
 </div>
 <div class="table-responsive-md">
@@ -24,7 +24,11 @@
                             {{ label }}
                         </a>
                     </th>
-                    <td class="text-right"><a href="?transcription_status={{ key|urlencode }}">{{ value|intcomma }}</a></td>
+                    <td class="text-right">
+                        <a href="?transcription_status={{ key|urlencode }}">
+                            <abbr title="{{ value|intcomma }} pages">{{ value|intcomma }}</abbr>
+                        </a>
+                    </td>
                 </tr>
             {% endfor %}
         </tbody>

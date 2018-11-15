@@ -3,6 +3,7 @@
 {% load humanize %}
 {% load staticfiles %}
 {% load concordia_media_tags %}
+{% load concordia_filtering_tags %}
 
 {% block title %}
 {{ item.title }} ({{ campaign.title }}: {{ project.title }})
@@ -30,21 +31,11 @@
             </div>
         </div>
     </div>
-    <div class="row py-3">
-        <form method="get" class="col-md-4 mx-auto">
-            <div class="form-group row">
-                <div class="input-group input-group-sm">
-                    <div class="input-group-prepend">
-                        <label for="id_transcription_status" class="input-group-text">Filter:</label>
-                    </div>
-                    {{ filter_form.transcription_status }}
-                    <div class="input-group-append">
-                        <button type="submit" class="btn btn-sm btn-outline-primary">Go</button>
-                    </div>
-                </div>
-            </div>
-        </form>
-        <div class="col-md-4 mx-auto">
+    <div class="row p-3">
+        <div class="col-md-6">
+            {% transcription_status_filters transcription_status_counts request.GET.transcription_status %}
+        </div>
+        <div class="col-md-6">
             {% include "fragments/transcription-progress-bar.html" %}
         </div>
     </div>

@@ -604,7 +604,7 @@ ul.nav-secondary {
     font-weight: inherit;
 }
 
-#progress-stats .transcription-status-key {
+.transcription-status-key {
     display: inline-block;
     height: 0.6em;
     width: 0.6em;

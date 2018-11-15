@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load staticfiles %}
+{% load concordia_filtering_tags %}
 
 {% block title %}{{ campaign.title }}{% endblock title %}
 
@@ -16,8 +17,6 @@
             <p class="hero-text">{{ campaign.description }}</p>
         </div>
         <div class="col-md-3">
-            {% include "fragments/transcription-progress-bar.html" %}
-
             {% if campaign.resource_set.all|length %}
                 <div class="related-links mb-3 p-1 p-sm-2 p-lg-3">
                     <h4>Related Links</h4>
@@ -28,6 +27,14 @@
                     </div>
                 </div>
             {% endif %}
+        </div>
+    </div>
+    <div class="row px-3">
+        <div class="col-md-6">
+            {% transcription_status_filters transcription_status_counts request.GET.transcription_status %}
+        </div>
+        <div class="col-md-6">
+            {% include "fragments/transcription-progress-bar.html" %}
         </div>
     </div>
     <div class="row">

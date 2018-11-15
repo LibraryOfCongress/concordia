@@ -39,12 +39,7 @@ from django_registration.backends.activation.views import RegistrationView
 from ratelimit.decorators import ratelimit
 from ratelimit.mixins import RatelimitMixin
 
-from concordia.forms import (
-    AssetFilteringForm,
-    ContactUsForm,
-    UserProfileForm,
-    UserRegistrationForm,
-)
+from concordia.forms import ContactUsForm, UserProfileForm, UserRegistrationForm
 from concordia.models import (
     Asset,
     AssetTranscriptionReservation,
@@ -315,6 +310,7 @@ def calculate_asset_stats(asset_qs, ctx):
             pct = 0
 
         ctx[f"{status_key}_percent"] = pct
+        ctx[f"{status_key}_count"] = value
         labeled_status_counts.append((status_key, status_label, value))
 
 
@@ -327,13 +323,22 @@ def annotate_children_with_progress_stats(children):
 
         obj.total_count = total = sum(counts.values())
 
+        lowest_status = None
+
         for k, v in TranscriptionStatus.CHOICES:
+            count = counts[k]
+
             if total > 0:
-                pct = round(100 * (counts[k] / total))
+                pct = round(100 * (count / total))
             else:
                 pct = 0
 
             setattr(obj, f"{k}_percent", pct)
+
+            if lowest_status is None and count > 0:
+                lowest_status = k
+
+        obj.lowest_transcription_status = lowest_status
 
 
 @method_decorator(default_cache_control, name="dispatch")
@@ -346,7 +351,7 @@ class CampaignDetailView(DetailView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
 
-        ctx["projects"] = projects = (
+        projects = (
             ctx["campaign"]
             .project_set.published()
             .annotate(
@@ -358,7 +363,13 @@ class CampaignDetailView(DetailView):
                 }
             )
         )
+
+        status = self.request.GET.get("transcription_status")
+        if status in TranscriptionStatus.CHOICE_MAP:
+            projects = projects.exclude(**{f"{status}_count": 0})
+
         annotate_children_with_progress_stats(projects)
+        ctx["projects"] = projects
 
         campaign_assets = Asset.objects.filter(
             item__project__campaign=self.object,
@@ -395,6 +406,10 @@ class ProjectDetailView(ListView):
             }
         )
 
+        status = self.request.GET.get("transcription_status")
+        if status in TranscriptionStatus.CHOICE_MAP:
+            item_qs = item_qs.exclude(**{f"{status}_count": 0})
+
         return item_qs
 
     def get_context_data(self, **kws):
@@ -425,8 +440,6 @@ class ItemDetailView(ListView):
     context_object_name = "assets"
     paginate_by = 10
 
-    form_class = AssetFilteringForm
-
     http_method_names = ["get", "options", "head"]
 
     def get_queryset(self):
@@ -446,21 +459,9 @@ class ItemDetailView(ListView):
     def apply_asset_filters(self, asset_qs):
         """Use optional GET parameters to filter the asset list"""
 
-        # We want to get a list of all of the available asset states in this
-        # item's assets and will return that with the preferred display labels
-        # including the asset count to be displayed in the filter UI
-        asset_state_qs = asset_qs.values_list("transcription_status")
-        asset_state_qs = asset_state_qs.annotate(
-            Count("transcription_status")
-        ).order_by()
-
-        self.transcription_status_counts = status_counts = dict(asset_state_qs)
-
-        self.filter_form = form = self.form_class(status_counts, self.request.GET)
-        if form.is_valid():
-            asset_qs = asset_qs.filter(
-                **{k: v for k, v in form.cleaned_data.items() if v}
-            )
+        status = self.request.GET.get("transcription_status")
+        if status in TranscriptionStatus.CHOICE_MAP:
+            asset_qs = asset_qs.filter(transcription_status=status)
 
         return asset_qs
 
@@ -472,8 +473,6 @@ class ItemDetailView(ListView):
                 "campaign": self.item.project.campaign,
                 "project": self.item.project,
                 "item": self.item,
-                "filter_form": self.filter_form,
-                "transcription_status_counts": self.transcription_status_counts,
             }
         )
 

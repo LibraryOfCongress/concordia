@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% load staticfiles %}
+{% load concordia_filtering_tags %}
 
 {% block title %}{{ project.title }} ({{ campaign.title }}){% endblock title %}
 
@@ -18,11 +19,16 @@
 {% block main_content %}
 <div class="container py-3">
     <div class="row">
-        <div class="col-md-9">
+        <div class="col-12">
             <h1 class="m-3">{{ project.title }}</h1>
             <p class="m-3 hero-text">{{ project.description }}</p>
         </div>
-        <div class="col-md-3">
+    </div>
+    <div class="row px-3">
+        <div class="col-md-6">
+            {% transcription_status_filters transcription_status_counts request.GET.transcription_status %}
+        </div>
+        <div class="col-md-6">
             {% include "fragments/transcription-progress-bar.html" %}
         </div>
     </div>
