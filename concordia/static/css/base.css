@@ -699,8 +699,27 @@ body.view-transcriptions--asset-detail main,
 }
 
 .gutter.gutter-horizontal {
+    display: block;
+
+    position: relative;
+
     cursor: ew-resize;
     background-color: var(--control-bg-default);
+}
+
+.gutter.gutter-horizontal::after {
+    display: block;
+
+    position: absolute;
+    top: calc(50% - 40px);
+    left: -4px;
+
+    content: '';
+
+    height: 40px;
+    width: 16px;
+
+    background: url(../img/handle.svg) no-repeat;
 }
 
 #transcription-editor textarea {
