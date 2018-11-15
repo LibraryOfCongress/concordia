@@ -532,7 +532,9 @@ class AssetDetailView(DetailView):
         # shown as status=not_started here so the logic doesn't need to be repeated in
         # templates:
         if transcription:
-            transcription_status = transcription.status.lower()
+            for choice_key, choice_value in TranscriptionStatus.CHOICE_MAP.items():
+                if choice_value == transcription.status:
+                    transcription_status = choice_key
         else:
             transcription_status = TranscriptionStatus.NOT_STARTED
         ctx["transcription_status"] = transcription_status
