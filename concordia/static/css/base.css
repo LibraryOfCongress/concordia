@@ -579,8 +579,6 @@ ul.nav-secondary {
 
 .card.concordia-object-card .progress {
     height: 1em;
-
-    border: solid black 1px;
     border-radius: 0;
 }
 
