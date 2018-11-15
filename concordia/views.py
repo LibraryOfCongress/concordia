@@ -39,12 +39,7 @@ from django_registration.backends.activation.views import RegistrationView
 from ratelimit.decorators import ratelimit
 from ratelimit.mixins import RatelimitMixin
 
-from concordia.forms import (
-    AssetFilteringForm,
-    ContactUsForm,
-    UserProfileForm,
-    UserRegistrationForm,
-)
+from concordia.forms import ContactUsForm, UserProfileForm, UserRegistrationForm
 from concordia.models import (
     Asset,
     AssetTranscriptionReservation,
@@ -425,8 +420,6 @@ class ItemDetailView(ListView):
     context_object_name = "assets"
     paginate_by = 10
 
-    form_class = AssetFilteringForm
-
     http_method_names = ["get", "options", "head"]
 
     def get_queryset(self):
@@ -446,21 +439,7 @@ class ItemDetailView(ListView):
     def apply_asset_filters(self, asset_qs):
         """Use optional GET parameters to filter the asset list"""
 
-        # We want to get a list of all of the available asset states in this
-        # item's assets and will return that with the preferred display labels
-        # including the asset count to be displayed in the filter UI
-        asset_state_qs = asset_qs.values_list("transcription_status")
-        asset_state_qs = asset_state_qs.annotate(
-            Count("transcription_status")
-        ).order_by()
-
-        self.transcription_status_counts = status_counts = dict(asset_state_qs)
-
-        self.filter_form = form = self.form_class(status_counts, self.request.GET)
-        if form.is_valid():
-            asset_qs = asset_qs.filter(
-                **{k: v for k, v in form.cleaned_data.items() if v}
-            )
+        # FIXME: re-implement filtering
 
         return asset_qs
 
@@ -472,8 +451,6 @@ class ItemDetailView(ListView):
                 "campaign": self.item.project.campaign,
                 "project": self.item.project,
                 "item": self.item,
-                "filter_form": self.filter_form,
-                "transcription_status_counts": self.transcription_status_counts,
             }
         )
 
