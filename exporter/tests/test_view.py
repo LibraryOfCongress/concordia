@@ -1,5 +1,6 @@
 import io
 import zipfile
+from datetime import datetime
 
 from django.test import TestCase
 from django.urls import reverse
@@ -26,7 +27,9 @@ class ViewTest_Exporter(TestCase):
     """
 
     def setUp(self):
-        user = User.objects.create(username="tester", email="tester@example.com")
+        user = User.objects.create(
+            username="tester", email="tester@example.com", is_staff=True
+        )
         user.set_password("top_secret")
         user.save()
 
@@ -46,7 +49,13 @@ class ViewTest_Exporter(TestCase):
         )
 
         # add a Transcription object
-        transcription1 = Transcription(asset=asset, user=user, text="Sample")
+        transcription1 = Transcription(
+            asset=asset,
+            user=user,
+            text="Sample",
+            submitted=datetime.now(),
+            accepted=datetime.now(),
+        )
         transcription1.full_clean()
         transcription1.save()
 
@@ -65,7 +74,7 @@ class ViewTest_Exporter(TestCase):
             "b'Campaign,Project,Item,ItemId,Asset,"
             "AssetStatus,DownloadUrl,Transcription\\r\\n'"
             "b'Test Campaign,Test Project,Test Item,"
-            "testitem0123456789,TestAsset,edit,"
+            "testitem0123456789,TestAsset,completed,"
             "http://tile.loc.gov/image-services/"
             "iiif/service:mss:mal:003:0036300:002/full"
             "/pct:25/0/default.jpg,Sample\\r\\n'"
@@ -87,9 +96,14 @@ class ViewTest_Exporter(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
+
+        export_filename = "%s-%s.zip" % (
+            campaign_slug,
+            datetime.today().isoformat(timespec="minutes"),
+        )
         self.assertEquals(
             response.get("Content-Disposition"),
-            "attachment; filename=%s.zip" % campaign_slug,
+            "attachment; filename=%s" % export_filename,
         )
 
         f = io.BytesIO(response.content)
@@ -98,6 +112,6 @@ class ViewTest_Exporter(TestCase):
         self.assertIn("bagit.txt", zipped_file.namelist())
         self.assertIn("bag-info.txt", zipped_file.namelist())
         self.assertIn(
-            "data/test-project/testitem0123456789/mss-mal-003-0036300-002.txt",
+            "data/test-project/testitem0123456789/mss:mal:003:0036300:002.txt",
             zipped_file.namelist(),
         )
