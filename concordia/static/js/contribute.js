@@ -173,8 +173,8 @@ $transcriptionEditor
 
         if (
             !data.hasReservation ||
-            (data.transcriptionStatus != 'in progress' &&
-                data.transcriptionStatus != 'not started')
+            (data.transcriptionStatus != 'in_progress' &&
+                data.transcriptionStatus != 'not_started')
         ) {
             lockControls($transcriptionEditor);
         } else {
@@ -209,8 +209,8 @@ $transcriptionEditor
 
         if (
             !data.hasReservation &&
-            (data.transcriptionStatus == 'in progress' ||
-                data.transcriptionStatus == 'not started')
+            (data.transcriptionStatus == 'in_progress' ||
+                data.transcriptionStatus == 'not_started')
         ) {
             $('.tx-status-display')
                 .children()

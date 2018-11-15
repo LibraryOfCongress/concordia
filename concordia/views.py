@@ -530,12 +530,12 @@ class AssetDetailView(DetailView):
         )
 
         # We'll handle the case where an item with no transcriptions should be
-        # shown as status=not started here so the logic doesn't need to be repeated in
+        # shown as status=not_started here so the logic doesn't need to be repeated in
         # templates:
         if transcription:
             transcription_status = transcription.status.lower()
         else:
-            transcription_status = "not started"
+            transcription_status = TranscriptionStatus.NOT_STARTED
         ctx["transcription_status"] = transcription_status
 
         previous_asset = (
