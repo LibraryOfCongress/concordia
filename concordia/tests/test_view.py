@@ -5,7 +5,12 @@ from django.test import TestCase, TransactionTestCase
 from django.urls import reverse
 from django.utils.timezone import now
 
-from concordia.models import AssetTranscriptionReservation, Transcription, User
+from concordia.models import (
+    AssetTranscriptionReservation,
+    Transcription,
+    TranscriptionStatus,
+    User,
+)
 from concordia.views import get_anonymous_user
 
 from .utils import (
@@ -88,7 +93,7 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
         """
         Test the GET method for route /campaigns
         """
-        response = self.client.get(reverse("transcriptions:campaigns"))
+        response = self.client.get(reverse("transcriptions:campaign-list"))
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(
@@ -103,7 +108,9 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
         """
         c = create_campaign(title="GET Campaign", slug="get-campaign")
 
-        response = self.client.get(reverse("transcriptions:campaign", args=(c.slug,)))
+        response = self.client.get(
+            reverse("transcriptions:campaign-detail", args=(c.slug,))
+        )
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(
@@ -118,7 +125,7 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
         c = create_campaign()
 
         response = self.client.get(
-            reverse("transcriptions:campaign", args=(c.slug,)), {"page": 2}
+            reverse("transcriptions:campaign-detail", args=(c.slug,)), {"page": 2}
         )
 
         self.assertEqual(response.status_code, 200)
@@ -146,7 +153,8 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
         )
         self.assertContains(response, item.title)
 
-        self.assertEqual(0, response.context["edit_percent"])
+        self.assertEqual(0, response.context["not_started_percent"])
+        self.assertEqual(0, response.context["in_progress_percent"])
         self.assertEqual(0, response.context["submitted_percent"])
         self.assertEqual(0, response.context["completed_percent"])
 
@@ -194,7 +202,8 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
 
         # We have 10 total, 6 of which have transcription records and of those
         # 6, 3 have been submitted and one of those was accepted:
-        self.assertEqual(30, response.context["edit_percent"])
+        self.assertEqual(40, response.context["not_started_percent"])
+        self.assertEqual(30, response.context["in_progress_percent"])
         self.assertEqual(20, response.context["submitted_percent"])
         self.assertEqual(10, response.context["completed_percent"])
 
@@ -240,7 +249,9 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, template_name="transcriptions/project_detail.html")
+        self.assertTemplateUsed(
+            response, template_name="transcriptions/project_detail.html"
+        )
 
     def test_campaign_report(self):
         """
@@ -732,3 +743,71 @@ class TransactionalViewTests(JSONAssertMixin, TransactionTestCase):
         # values, they should not be stored:
         self.assertEqual(["bar", "foo", "quux"], data["user_tags"])
         self.assertEqual(["baaz", "bar", "foo", "quux"], data["all_tags"])
+
+    def test_find_next_transcribable(self):
+        asset1 = create_asset(slug="test-asset-1")
+        asset2 = create_asset(item=asset1.item, slug="test-asset-2")
+        campaign = asset1.item.project.campaign
+
+        resp = self.client.get(
+            reverse(
+                "transcriptions:redirect-to-next-transcribable-asset",
+                kwargs={"campaign_slug": campaign.slug},
+            )
+        )
+
+        self.assertRedirects(resp, expected_url=asset2.get_absolute_url())
+
+    def test_find_next_transcribable_single_asset(self):
+        asset = create_asset()
+        campaign = asset.item.project.campaign
+
+        resp = self.client.get(
+            reverse(
+                "transcriptions:redirect-to-next-transcribable-asset",
+                kwargs={"campaign_slug": campaign.slug},
+            )
+        )
+
+        self.assertRedirects(resp, expected_url=asset.get_absolute_url())
+
+    def test_find_next_transcribable_in_singleton_campaign(self):
+        asset = create_asset(transcription_status=TranscriptionStatus.SUBMITTED)
+        campaign = asset.item.project.campaign
+
+        resp = self.client.get(
+            reverse(
+                "transcriptions:redirect-to-next-transcribable-asset",
+                kwargs={"campaign_slug": campaign.slug},
+            )
+        )
+
+        self.assertRedirects(
+            resp,
+            expected_url=reverse(
+                "transcriptions:campaign-detail", args=(campaign.slug,)
+            ),
+        )
+
+    def test_find_next_transcribable_project_redirect(self):
+        asset = create_asset(transcription_status=TranscriptionStatus.SUBMITTED)
+        project = asset.item.project
+        campaign = project.campaign
+
+        resp = self.client.get(
+            "%s?project=%s"
+            % (
+                reverse(
+                    "transcriptions:redirect-to-next-transcribable-asset",
+                    kwargs={"campaign_slug": campaign.slug},
+                ),
+                project.slug,
+            )
+        )
+
+        self.assertRedirects(
+            resp,
+            expected_url=reverse(
+                "transcriptions:project-detail", args=(campaign.slug, project.slug)
+            ),
+        )

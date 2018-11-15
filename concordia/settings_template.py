@@ -56,7 +56,7 @@ DATABASES = {
         "USER": "concordia",
         "PASSWORD": os.getenv("POSTGRESQL_PW"),
         "HOST": os.getenv("POSTGRESQL_HOST", "localhost"),
-        "PORT": "5432",
+        "PORT": os.getenv("POSTGRESQL_PORT", "5432"),
         "CONN_MAX_AGE": 15 * 60,  # Keep database connections open for 15 minutes
     }
 }
@@ -95,7 +95,10 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "maintenance_mode.middleware.MaintenanceModeMiddleware",
+    "ratelimit.middleware.RatelimitMiddleware",
 ]
+
+RATELIMIT_VIEW = "concordia.views.ratelimit_view"
 
 TEMPLATES = [
     {
@@ -251,11 +254,11 @@ MESSAGE_STORAGE = "django.contrib.messages.storage.session.SessionStorage"
 
 MESSAGE_TAGS = {messages.ERROR: "danger"}
 
-SENTRY_DSN = os.environ.get("SENTRY_DSN", "")
-SENTRY_PUBLIC_DSN = os.environ.get("SENTRY_PUBLIC_DSN", "")
+SENTRY_BACKEND_DSN = os.environ.get("SENTRY_BACKEND_DSN", "")
+SENTRY_FRONTEND_DSN = os.environ.get("SENTRY_FRONTEND_DSN", "")
 
 RAVEN_CONFIG = {
-    "dsn": SENTRY_DSN,
+    "dsn": SENTRY_BACKEND_DSN,
     "environment": CONCORDIA_ENVIRONMENT,
     "release": raven.fetch_git_sha(SITE_ROOT_DIR),
 }

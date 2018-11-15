@@ -12,6 +12,36 @@ function unlockControls($container) {
     $container.find('button').removeAttr('disabled');
 }
 
+$(document).on('keydown', function(evt) {
+    /*
+        Global keyboard event handlers
+
+        * F1 and ? open help
+        * Control-I focuses on the image viewer
+        * Control-T focuses on the transcription text field
+
+        n.b. jQuery interferes with setting the focus so our handlers use the
+        DOM directly
+    */
+
+    if (
+        (evt.which == 112 || evt.which == 191) &&
+        !evt.target.tagName.match(/(INPUT|TEXTAREA)/i)
+    ) {
+        // Either the F1 or ? keys were pressed outside of a text field so we'll show help:
+        $('#keyboard-help-modal').modal('show');
+        return false;
+    } else if (evt.which == 73 && evt.ctrlKey) {
+        // Control-I == switch to the image viewer
+        document.querySelector('#asset-image .openseadragon-canvas').focus();
+        return false;
+    } else if (evt.which == 84 && evt.ctrlKey) {
+        // Control-T == switch to the transcription field
+        document.getElementById('transcription-input').focus();
+        return false;
+    }
+});
+
 var $captchaModal = $('#captcha-modal');
 var $captchaForm = $captchaModal.find('form').on('submit', function(evt) {
     evt.preventDefault();
@@ -141,7 +171,11 @@ $transcriptionEditor
 
         var data = $transcriptionEditor.data();
 
-        if (!data.hasReservation || data.transcriptionStatus != 'edit') {
+        if (
+            !data.hasReservation ||
+            (data.transcriptionStatus != 'in_progress' &&
+                data.transcriptionStatus != 'not_started')
+        ) {
             lockControls($transcriptionEditor);
         } else {
             var $textarea = $transcriptionEditor.find('textarea');
@@ -173,7 +207,11 @@ $transcriptionEditor
             }
         }
 
-        if (!data.hasReservation && data.transcriptionStatus == 'edit') {
+        if (
+            !data.hasReservation &&
+            (data.transcriptionStatus == 'in_progress' ||
+                data.transcriptionStatus == 'not_started')
+        ) {
             $('.tx-status-display')
                 .children()
                 .attr('hidden', 'hidden')
@@ -225,7 +263,7 @@ $submitButton.on('click', function(evt) {
             $('.tx-status-display')
                 .children()
                 .attr('hidden', 'hidden')
-                .has('.tx-submitted')
+                .filter('.tx-submitted')
                 .removeAttr('hidden');
             $('#successful-submission-modal')
                 .modal()

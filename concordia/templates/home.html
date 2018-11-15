@@ -1,11 +1,6 @@
 {% extends "base.html" %}
 {% load staticfiles %}
 
-{% block prefetch %}
-    <link href="https://crowd-content.s3.amazonaws.com" rel="preconnect" crossorigin>
-    {{ block.super }}
-{% endblock prefetch %}
-
 {% block title %}Home{% endblock title %}
 
 {% block breadcrumbs-container %}{% endblock breadcrumbs-container %}
@@ -24,7 +19,7 @@
                 <div class="carousel-overlay text-center py-md-3">
                     <h1>Get Involved:</h1>
                     <p class="hero-text mx-auto">Volunteer to uncover our shared history and make documents more searchable for everyone.</p>
-                    <a class="btn btn-primary btn-lg" href="{% url 'transcriptions:campaigns' %}">LET'S GO!</a>
+                    <a class="btn btn-primary btn-lg" href="{% url "transcriptions:redirect-to-next-transcribable-asset" 'letters-to-lincoln' %}">LET'S GO!</a>
                 </div>
             </div>
         </div>
@@ -36,17 +31,17 @@
             </div>
             <div id="homepage-contribute-activities" class="d-flex justify-content-around text-center">
                 <div class="homepage-activity px-1 pl-mx-2 px-lg-3">
-                    <a href="{% url 'how-to-transcribe' %}"><img class="img-fluid" alt="Transcribe" src="{% static 'img/homepage-pencil.svg' %}"></a>
+                    <a aria-hidden="true" href="{% url 'how-to-transcribe' %}"><img class="img-fluid" src="{% static 'img/homepage-pencil.svg' %}"></a>
                     <h4 class="mt-3"><a class="offwhite-text" href="{% url 'how-to-transcribe' %}">TRANSCRIBE</a></h4>
                     <p class="offwhite-text">Type what you see on the page.</p>
                 </div>
                 <div class="homepage-activity px-1 pl-mx-2 px-lg-3">
-                    <a class="offwhite-text" href="{% url 'how-to-review' %}"><img class="img-fluid" src="{% static 'img/homepage-checkmark.svg' %}"></a>
+                    <a aria-hidden="true" class="offwhite-text" href="{% url 'how-to-review' %}"><img class="img-fluid" src="{% static 'img/homepage-checkmark.svg' %}"></a>
                     <h4 class="offwhite-text mt-3"><a class="offwhite-text" href="{% url 'how-to-review' %}">REVIEW</a></h4>
                     <p class="offwhite-text">Register to edit and complete transcriptions.</p>
                 </div>
                 <div class="homepage-activity px-1 pl-mx-2 px-lg-3">
-                    <a class="offwhite-text" href="{% url 'how-to-tag' %}"><img class="img-fluid" src="{% static 'img/homepage-tag.svg' %}"></a>
+                    <a aria-hidden="true" class="offwhite-text" href="{% url 'how-to-tag' %}"><img class="img-fluid" src="{% static 'img/homepage-tag.svg' %}"></a>
                     <h4 class="offwhite-text mt-3"><a class="offwhite-text" href="{% url 'how-to-tag' %}">TAG</a></h4>
                     <p class="offwhite-text">Register to add tags and share what you find.</p>
                 </div>
@@ -61,7 +56,7 @@
             <div class="d-flex flex-wrap col-12 justify-content-around">
                 {% for campaign in campaigns|slice:":6" %}
                     <div class="text-center campaign m-1 mb-4 mb-md-5 d-flex flex-column flex-wrap justify-content-between align-items-center">
-                        {% url 'transcriptions:campaign' campaign.slug as campaign_url %}
+                        {% url 'transcriptions:campaign-detail' campaign.slug as campaign_url %}
                         <div>
                             <a href="{{ campaign_url }}" aria-hidden="true">
                                 <img src="{{ MEDIA_URL }}{{ campaign.thumbnail_image }}" class="img-fluid" alt="{{ campaign.title }}">
@@ -73,7 +68,7 @@
                 {% endfor %}
             </div>
             <div class="col-12 d-flex justify-content-center my-3">
-                <a class="btn btn-primary" href="{% url 'transcriptions:campaigns' %}" role="button">Browse All Campaigns</a>
+                <a class="btn btn-primary" href="{% url 'transcriptions:campaign-list' %}" role="button">Browse All Campaigns</a>
             </div>
         </div>
     </div>

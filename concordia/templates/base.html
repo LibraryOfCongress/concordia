@@ -1,6 +1,5 @@
 {% spaceless %}
 {% load staticfiles %}
-{% load concordia_auth_tags %}
 {% endspaceless %}<!DOCTYPE html>
 <html lang="en">
 
@@ -14,9 +13,12 @@
     <link rel="stylesheet" href="{% static 'css/base.css' %}">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.2.0/css/all.css" integrity="sha384-hWVjflwFxL6sNzntih27bfxkr27PmbbK/iSvJ+a4+0owXq79v+lsFkW54bOGbiDQ" crossorigin="anonymous">
     {% block prefetch %}
-        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
-        <link href="https://thelibraryofcongress.tt.omtrdc.net" rel="preconnect" crossorigin>
-        <link href="https://smon.loc.gov" rel="preconnect" crossorigin>
+        <link href="https://fonts.gstatic.com" rel="preconnect dns-prefetch" crossorigin>
+        {% if CONCORDIA_ENVIRONMENT == "production" %}
+            <link href="https://crowd-media.loc.gov" rel="preconnect dns-prefetch" crossorigin>
+        {% endif %}
+        <link href="https://thelibraryofcongress.tt.omtrdc.net" rel="preconnect dns-prefetch" crossorigin>
+        <link href="https://smon.loc.gov" rel="preconnect dns-prefetch" crossorigin>
     {% endblock prefetch %}
     {% block head_content %}{% endblock head_content %}
     {% comment %}
@@ -53,7 +55,7 @@
                         <a class="nav-link {% if PATH_LEVEL_1 == 'about'%}active{% endif %}" href="{% url 'about' %}">About</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if PATH_LEVEL_1 == 'campaigns' %}active{% endif %}" href="{% url 'transcriptions:campaigns' %}">Campaigns</a>
+                        <a class="nav-link {% if PATH_LEVEL_1 == 'campaigns' %}active{% endif %}" href="{% url 'transcriptions:campaign-list' %}">Campaigns</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if PATH_LEVEL_1 == 'latest' %}active{% endif %}" href="{% url 'latest' %}">Latest</a>
@@ -160,9 +162,19 @@
         </div>
     </footer>
 
-    {% if SENTRY_PUBLIC_DSN %}
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/raven.js/3.26.1/raven.min.js" integrity="sha256-N3YzTdAC27tvNKpIM2rly/WvlJf8YAat0NjPXgh5Bw4=" crossorigin="anonymous"></script>
-    <script>Raven.config('{{ SENTRY_PUBLIC_DSN }}', {'environment': '{{ CONCORDIA_ENVIRONMENT }}', 'release': '{{ RAVEN_CONFIG.release }}'}).install()</script>
+    {% if SENTRY_FRONTEND_DSN %}
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/raven.js/3.26.1/raven.min.js" integrity="sha256-N3YzTdAC27tvNKpIM2rly/WvlJf8YAat0NjPXgh5Bw4=" crossorigin="anonymous"></script>
+        <script>
+            if (navigator.userAgent.indexOf("CloudFlare-AlwaysOnline") < 0) {
+                Raven.config("{{ SENTRY_FRONTEND_DSN }}", {
+                    environment: "{{ CONCORDIA_ENVIRONMENT }}",
+                    release: "{{ RAVEN_CONFIG.release }}",
+                    ignoreUrls: [
+                        /^moz-extension/
+                    ]
+                }).install();
+            }
+        </script>
     {% endif %}
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>

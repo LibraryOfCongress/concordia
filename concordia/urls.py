@@ -16,17 +16,19 @@ for key, value in getattr(settings, "ADMIN_SITE", {}).items():
 
 tx_urlpatterns = (
     [
-        path("", views.CampaignListView.as_view(), name="campaigns"),
-        path("<slug:slug>/", views.CampaignDetailView.as_view(), name="campaign"),
+        path("", views.CampaignListView.as_view(), name="campaign-list"),
         path(
-            "exportCSV/<slug:campaign_slug>/",
-            exporter_views.ExportCampaignToCSV.as_view(),
-            name="export-csv",
+            "<slug:slug>/", views.CampaignDetailView.as_view(), name="campaign-detail"
         ),
         path(
-            "exportBagIt/<slug:campaign_slug>/",
+            "<slug:campaign_slug>/export/csv/",
+            exporter_views.ExportCampaignToCSV.as_view(),
+            name="campaign-export-csv",
+        ),
+        path(
+            "<slug:campaign_slug>/export/bagit/",
             exporter_views.ExportCampaignToBagit.as_view(),
-            name="export-bagit",
+            name="campaign-export-bagit",
         ),
         path(
             "<slug:campaign_slug>/report/",
@@ -38,15 +40,16 @@ tx_urlpatterns = (
             views.AssetDetailView.as_view(),
             name="asset-detail",
         ),
+        # n.b. this must be above project-detail to avoid being seen as a project slug:
+        path(
+            "<slug:campaign_slug>/next-transcribable-asset/",
+            views.redirect_to_next_transcribable_asset,
+            name="redirect-to-next-transcribable-asset",
+        ),
         path(
             "<slug:campaign_slug>/<slug:slug>/",
             views.ProjectDetailView.as_view(),
             name="project-detail",
-        ),
-        path(
-            "<slug:campaign_slug>/<slug:project_slug>/next-transcribable-asset/",
-            views.redirect_to_next_transcribable_asset,
-            name="redirect-to-next-transcribable-asset",
         ),
         path(
             "<slug:campaign_slug>/<slug:project_slug>/<slug:item_id>/",
@@ -99,6 +102,9 @@ urlpatterns = [
         views.ConcordiaRegistrationView.as_view(),
         name="registration_register",
     ),
+    path(
+        "account/login/", views.ConcordiaLoginView.as_view(), name="registration_login"
+    ),
     path("account/profile/", views.AccountProfileView.as_view(), name="user-profile"),
     path("account/", include("django_registration.backends.activation.urls")),
     path("account/", include("django.contrib.auth.urls")),
@@ -113,6 +119,7 @@ urlpatterns = [
     path("maintenance-mode/", include("maintenance_mode.urls")),
     path("error/500/", server_error),
     path("error/404/", page_not_found, {"exception": Http404()}),
+    path("error/429/", views.ratelimit_view),
     path("error/403/", permission_denied, {"exception": HttpResponseForbidden()}),
     url("", include("django_prometheus_metrics.urls")),
     path("robots.txt", include("robots.urls")),

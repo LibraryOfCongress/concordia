@@ -6,6 +6,7 @@ from datetime import timedelta
 from functools import wraps
 from logging import getLogger
 from smtplib import SMTPException
+from urllib.parse import urlencode
 
 import markdown
 from captcha.helpers import captcha_image_url
@@ -15,12 +16,13 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
+from django.contrib.auth.views import LoginView
 from django.contrib.messages import get_messages
 from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
 from django.db import connection
-from django.db.models import Count, Q
+from django.db.models import Case, Count, IntegerField, Q, When
 from django.db.transaction import atomic
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import Http404, get_object_or_404, redirect, render
@@ -35,6 +37,7 @@ from django.views.decorators.vary import vary_on_headers
 from django.views.generic import DetailView, FormView, ListView, TemplateView
 from django_registration.backends.activation.views import RegistrationView
 from ratelimit.decorators import ratelimit
+from ratelimit.mixins import RatelimitMixin
 
 from concordia.forms import (
     AssetFilteringForm,
@@ -75,7 +78,7 @@ def default_cache_control(view_function):
     """
 
     @vary_on_headers("Accept-Encoding")
-    @cache_control(public=True, no_transform=True, max_age=settings.DEFAULT_PAGE_TTL)
+    @cache_control(public=True, max_age=settings.DEFAULT_PAGE_TTL)
     @wraps(view_function)
     def inner(*args, **kwargs):
         return view_function(*args, **kwargs)
@@ -151,7 +154,7 @@ def static_page(request, base_name=None):
     return render(request, "static-page.html", ctx)
 
 
-@cache_control(private=True, no_transform=True, max_age=settings.DEFAULT_PAGE_TTL)
+@cache_control(private=True, max_age=settings.DEFAULT_PAGE_TTL)
 @csrf_exempt
 def ajax_session_status(request):
     """
@@ -200,9 +203,36 @@ def ajax_messages(request):
     )
 
 
+def registration_rate(self, group, request):
+    registration_form = UserRegistrationForm(request.POST)
+    if registration_form.is_valid():
+        return None
+    else:
+        return "10/h"
+
+
 @method_decorator(never_cache, name="dispatch")
-class ConcordiaRegistrationView(RegistrationView):
+class ConcordiaRegistrationView(RatelimitMixin, RegistrationView):
     form_class = UserRegistrationForm
+    ratelimit_key = "ip"
+    ratelimit_rate = registration_rate
+    ratelimit_method = "POST"
+    ratelimit_block = True
+
+
+@method_decorator(never_cache, name="dispatch")
+class ConcordiaLoginView(RatelimitMixin, LoginView):
+    ratelimit_key = "ip"
+    ratelimit_rate = "3/15m"
+    ratelimit_method = "POST"
+    ratelimit_block = True
+
+
+def ratelimit_view(request, exception=None):
+    template_name = "429.html"
+    status_code = 429
+    template = loader.get_template(template_name)
+    return HttpResponse(template.render(), status=status_code)
 
 
 @method_decorator(never_cache, name="dispatch")
@@ -273,21 +303,37 @@ def calculate_asset_stats(asset_qs, ctx):
 
     asset_state_qs = asset_qs.values_list("transcription_status")
     asset_state_qs = asset_state_qs.annotate(Count("transcription_status")).order_by()
-    state_counts = dict(asset_state_qs)
+    status_counts_by_key = dict(asset_state_qs)
 
-    if "edit" in state_counts:
-        # Correct semantic difference between our normal “open for edit”
-        # including assets with no progress at all:
-        state_counts["edit"] -= asset_qs.filter(transcription=None).count()
+    ctx["transcription_status_counts"] = labeled_status_counts = []
 
-    for state in TranscriptionStatus.CHOICE_MAP.keys():
-        value = state_counts.get(state, 0)
+    for status_key, status_label in TranscriptionStatus.CHOICES:
+        value = status_counts_by_key.get(status_key, 0)
         if value:
             pct = round(100 * (value / asset_count))
         else:
             pct = 0
 
-        ctx[f"{state}_percent"] = pct
+        ctx[f"{status_key}_percent"] = pct
+        labeled_status_counts.append((status_key, status_label, value))
+
+
+def annotate_children_with_progress_stats(children):
+    for obj in children:
+        counts = {}
+
+        for k, v in TranscriptionStatus.CHOICES:
+            counts[k] = getattr(obj, f"{k}_count", 0)
+
+        obj.total_count = total = sum(counts.values())
+
+        for k, v in TranscriptionStatus.CHOICES:
+            if total > 0:
+                pct = round(100 * (counts[k] / total))
+            else:
+                pct = 0
+
+            setattr(obj, f"{k}_percent", pct)
 
 
 @method_decorator(default_cache_control, name="dispatch")
@@ -299,6 +345,20 @@ class CampaignDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
+
+        ctx["projects"] = projects = (
+            ctx["campaign"]
+            .project_set.published()
+            .annotate(
+                **{
+                    f"{key}_count": Count(
+                        "item__asset", filter=Q(item__asset__transcription_status=key)
+                    )
+                    for key in TranscriptionStatus.CHOICE_MAP.keys()
+                }
+            )
+        )
+        annotate_children_with_progress_stats(projects)
 
         campaign_assets = Asset.objects.filter(
             item__project__campaign=self.object,
@@ -326,6 +386,14 @@ class ProjectDetailView(ListView):
         )
 
         item_qs = self.project.item_set.published().order_by("item_id")
+        item_qs = item_qs.annotate(
+            **{
+                f"{key}_count": Count(
+                    "asset", filter=Q(asset__transcription_status=key)
+                )
+                for key in TranscriptionStatus.CHOICE_MAP.keys()
+            }
+        )
 
         return item_qs
 
@@ -339,6 +407,8 @@ class ProjectDetailView(ListView):
         )
 
         calculate_asset_stats(project_assets, ctx)
+
+        annotate_children_with_progress_stats(ctx["items"])
 
         return ctx
 
@@ -449,13 +519,23 @@ class AssetDetailView(DetailView):
         transcription = asset.transcription_set.order_by("-pk").first()
         ctx["transcription"] = transcription
 
+        ctx["next_open_asset_url"] = "%s?%s" % (
+            reverse(
+                "transcriptions:redirect-to-next-transcribable-asset",
+                kwargs={"campaign_slug": project.campaign.slug},
+            ),
+            urlencode(
+                {"project": project.slug, "item": item.item_id, "asset": asset.id}
+            ),
+        )
+
         # We'll handle the case where an item with no transcriptions should be
-        # shown as status=edit here so the logic doesn't need to be repeated in
+        # shown as status=not_started here so the logic doesn't need to be repeated in
         # templates:
         if transcription:
             transcription_status = transcription.status.lower()
         else:
-            transcription_status = "edit"
+            transcription_status = TranscriptionStatus.NOT_STARTED
         ctx["transcription_status"] = transcription_status
 
         previous_asset = (
@@ -538,7 +618,7 @@ def save_rate(g, r):
     return None if r.user.is_authenticated else "1/m"
 
 
-@ratelimit(key="ip", rate=save_rate)
+@ratelimit(key="ip", rate=save_rate, block=True)
 @require_POST
 @validate_anonymous_captcha
 @atomic
@@ -600,7 +680,7 @@ def submit_rate(g, r):
     return None if r.user.is_authenticated else "1/m"
 
 
-@ratelimit(key="ip", rate=submit_rate)
+@ratelimit(key="ip", rate=submit_rate, block=True)
 @require_POST
 @validate_anonymous_captcha
 def submit_transcription(request, *, pk):
@@ -822,7 +902,7 @@ class ReportCampaignView(TemplateView):
             asset_count=Count(
                 "item__asset",
                 filter=Q(item__published=True, item__asset__published=True),
-                distinct=True
+                distinct=True,
             )
         )
         projects_qs = projects_qs.annotate(
@@ -830,7 +910,9 @@ class ReportCampaignView(TemplateView):
         )
         projects_qs = projects_qs.annotate(
             transcriber_count=Count("item__asset__transcription__user", distinct=True),
-            reviewer_count=Count("item__asset__transcription__reviewed_by", distinct=True)
+            reviewer_count=Count(
+                "item__asset__transcription__reviewed_by", distinct=True
+            ),
         )
 
         paginator = Paginator(projects_qs, ASSETS_PER_PAGE)
@@ -873,7 +955,7 @@ def reserve_rate(g, r):
     return None if r.user.is_authenticated else "12/m"
 
 
-@ratelimit(key="ip", rate=reserve_rate)
+@ratelimit(key="ip", rate=reserve_rate, block=True)
 @require_POST
 @never_cache
 def reserve_asset_transcription(request, *, asset_pk):
@@ -940,10 +1022,11 @@ def reserve_asset_transcription(request, *, asset_pk):
 
 @never_cache
 @atomic
-def redirect_to_next_transcribable_asset(request, *, campaign_slug, project_slug):
-    project = get_object_or_404(
-        Project.objects.published(), campaign__slug=campaign_slug, slug=project_slug
-    )
+def redirect_to_next_transcribable_asset(request, *, campaign_slug):
+    campaign = get_object_or_404(Campaign.objects.published(), slug=campaign_slug)
+    project_slug = request.GET.get("project", "")
+    item_id = request.GET.get("item", "")
+    asset_id = request.GET.get("asset", 0)
 
     if not request.user.is_authenticated:
         user = get_anonymous_user()
@@ -952,25 +1035,51 @@ def redirect_to_next_transcribable_asset(request, *, campaign_slug, project_slug
 
     potential_assets = Asset.objects.select_for_update(skip_locked=True, of=("self",))
     potential_assets = potential_assets.filter(
-        item__project=project, transcription_status=TranscriptionStatus.EDIT
+        item__project__campaign=campaign,
+        transcription_status=TranscriptionStatus.NOT_STARTED,
+        item__project__published=True,
+        item__published=True,
+        published=True,
     )
-    potential_assets = potential_assets.filter(assettranscriptionreservation=None)
 
-    for potential_asset in potential_assets:
-        res = AssetTranscriptionReservation(user=user, asset=potential_asset)
+    potential_assets = potential_assets.filter(assettranscriptionreservation=None)
+    potential_assets = potential_assets.select_related("item", "item__project")
+
+    # We'll favor assets which are in the same item or project as the original:
+    potential_assets = potential_assets.annotate(
+        same_project=Case(
+            When(item__project__slug=project_slug, then=1),
+            default=0,
+            output_field=IntegerField(),
+        ),
+        same_item=Case(
+            When(item__item_id=item_id, then=1), default=0, output_field=IntegerField()
+        ),
+        next_asset=Case(
+            When(pk__gt=asset_id, then=1), default=0, output_field=IntegerField()
+        ),
+    ).order_by("-next_asset", "-same_item", "-same_project", "sequence")
+
+    asset = potential_assets.first()
+    if asset:
+        res = AssetTranscriptionReservation(user=user, asset=asset)
         res.full_clean()
         res.save()
         return redirect(
             "transcriptions:asset-detail",
-            project.campaign.slug,
-            project.slug,
-            potential_asset.item.item_id,
-            potential_asset.slug,
+            campaign.slug,
+            asset.item.project.slug,
+            asset.item.item_id,
+            asset.slug,
         )
     else:
         messages.info(
             request, "There are no remaining pages to be transcribed in this project!"
         )
-        return redirect(
-            "transcriptions:project-detail", project.campaign.slug, project.slug
-        )
+
+        if project_slug:
+            return redirect(
+                "transcriptions:project-detail", campaign_slug, project_slug
+            )
+        else:
+            return redirect("transcriptions:campaign-detail", campaign_slug)

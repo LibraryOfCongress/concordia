@@ -1,6 +1,5 @@
 {% extends "base.html" %}
 
-{% load concordia_auth_tags %}
 {% load staticfiles %}
 
 {% block title %}{{ project.title }} ({{ campaign.title }}){% endblock title %}
@@ -9,9 +8,9 @@
 {% endblock head_content %}
 
 {% block breadcrumbs %}
-    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaigns' %}">Campaigns</a></li>
+    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaign-list' %}">Campaigns</a></li>
     <li class="breadcrumb-item">
-        <a class="primary-text" href="{% url 'transcriptions:campaign' campaign.slug %}" title="{{ campaign.title }}">{{ campaign.title }}</a>
+        <a class="primary-text" href="{% url 'transcriptions:campaign-detail' campaign.slug %}" title="{{ campaign.title }}">{{ campaign.title }}</a>
     </li>
     <li class="breadcrumb-item active" aria-current="page" title="{{ project.title }}">{{ project.title }}</li>
 {% endblock breadcrumbs %}
@@ -30,14 +29,22 @@
     <div class="row">
         <div class="card-deck w-100 flex-column flex-sm-row justify-content-center align-items-center align-items-sm-stretch">
             {% for item in items %}
-                <div class="col-12 col-md-4 col-lg-3 m-2 p-1 concordia-object-card card bg-lightest-gray shadow-regular justify-content-between align-items-center">
+                <div class="col-12 col-md-4 col-lg-3 m-2 p-1 concordia-object-card card bg-lightest-gray shadow-regular align-items-center" data-transcription-status="{{ item.lowest_transcription_status }}">
                     <a href="{% url 'transcriptions:item-detail' campaign.slug project.slug item.item_id %}">
                         <img class="card-img card-img-campaign" alt="{{ item.title }}" src="{{ item.thumbnail_url }}">
                     </a>
 
-                    <a href="{% url 'transcriptions:item-detail' campaign.slug project.slug item.item_id %}" class="campaign-image-link">
-                        <h6 class="text-center primary-text my-3">{{ item.title }}</h6>
-                    </a>
+                    <div class="progress w-100 my-2">
+                        <div title="Completed" class="progress-bar bg-completed" role="progressbar" style="width: {{ item.completed_percent }}%" aria-valuenow="{{ item.completed_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        <div title="Submitted for Review" class="progress-bar bg-submitted" role="progressbar" style="width: {{ item.submitted_percent }}%" aria-valuenow="{{ item.submitted_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        <div title="In Progress" class="progress-bar bg-in_progress" role="progressbar" style="width: {{ item.in_progress_percent }}%" aria-valuenow="{{ item.in_progress_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+
+                    <h6 class="text-center primary-text">
+                        <a href="{% url 'transcriptions:item-detail' campaign.slug project.slug item.item_id %}" class="campaign-image-link">
+                            {{ item.title }}
+                        </a>
+                    </h6>
                 </div>
             {% endfor %}
         </div>
