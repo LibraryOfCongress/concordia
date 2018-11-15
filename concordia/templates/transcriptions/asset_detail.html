@@ -131,9 +131,13 @@
                         <span class="fas fa-check"></span>
                         Completed
                     </span>
-                    <span class="tx-edit" {% if transcription_status != "edit" %}hidden{% endif %}>
+                    <span class="tx-edit" {% if transcription_status != "not_started" %}hidden{% endif %}>
                         <span class="fas fa-edit"></span>
-                        Open for edit
+                        Not started
+                    </span>
+                    <span class="tx-edit" {% if transcription_status != "in_progress" %}hidden{% endif %}>
+                        <span class="fas fa-edit"></span>
+                        In progress
                     </span>
                     <span class="tx-edit-conflict" hidden>
                         <span class="fas fa-exclamation-triangle"></span>
