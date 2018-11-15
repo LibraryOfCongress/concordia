@@ -31,14 +31,24 @@
         </div>
     </div>
     <div class="row">
-        <div class="d-flex flex-wrap col-12 my-3 justify-content-around align-items-center text-center">
-            {% for project in campaign.project_set.published %}
-                <div class="col-12 col-md-4 col-lg-3 mb-3 px-3">
+        <div class="card-deck w-100 flex-column flex-sm-row justify-content-center align-items-center align-items-sm-stretch">
+            {% for project in projects %}
+                <div class="col-12 col-md-4 col-lg-3 m-2 p-1 concordia-object-card card bg-lightest-gray shadow-regular align-items-center" data-transcription-status="{{ project.lowest_transcription_status }}">
                     {% url 'transcriptions:project-detail' campaign.slug project.slug as project_url %}
+
                     <a href="{{ project_url }}" aria-hidden="true">
-                        <img src="{{ MEDIA_URL }}{{ project.thumbnail_image }}" class="img-fluid" alt="{{ project.title }}">
+                        <img class="card-img card-img-campaign" src="{{ MEDIA_URL }}{{ project.thumbnail_image }}" alt="{{ project.title }}">
                     </a>
-                    <h5 class="card-title pl-3 w-100 bg-lightest-gray"><a href="{{ project_url }}">{{ project.title }}</a></h5>
+
+                    <div class="progress w-100">
+                        <div title="Completed" class="progress-bar bg-completed" role="progressbar" style="width: {{ project.completed_percent }}%" aria-valuenow="{{ project.completed_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        <div title="Submitted for Review" class="progress-bar bg-submitted" role="progressbar" style="width: {{ project.submitted_percent }}%" aria-valuenow="{{ project.submitted_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        <div title="In Progress" class="progress-bar bg-edit" role="progressbar" style="width: {{ project.edit_percent }}%" aria-valuenow="{{ project.edit_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+
+                    <h6 class="text-center primary-text my-3">
+                        <a href="{{ project_url }}">{{ project.title }}</a>
+                    </h6>
                 </div>
             {% endfor %}
         </div>
