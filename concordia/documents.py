@@ -19,15 +19,33 @@ class UserDocument(DocType):
     class Meta:
         model = User
 
-        fields = ["last_login", "date_joined"]
+        fields = ["last_login", "date_joined", "username"]
 
 
 @tag_collection.doc_type
 class TagCollectionDocument(DocType):
     tags = fields.TextField(attr="tags_to_string")
     asset = fields.ObjectField(
-        properties={"title": fields.TextField(), "resource_id": fields.TextField()}
+        properties={
+            "title": fields.TextField(),
+            "slug": fields.TextField(),
+            "transcription_status": fields.TextField(),
+            "item": fields.ObjectField(
+                properties={
+                    "item_id": fields.TextField(),
+                    "project": fields.ObjectField(
+                        properties={
+                            "slug": fields.TextField(),
+                            "campaign": fields.ObjectField(
+                                properties={"slug": fields.TextField()}
+                            ),
+                        }
+                    ),
+                }
+            ),
+        }
     )
+    user = fields.ObjectField(properties={"username": fields.TextField()})
 
     class Meta:
         model = UserAssetTagCollection
@@ -36,10 +54,35 @@ class TagCollectionDocument(DocType):
 
 @transcription.doc_type
 class TranscriptionDocument(DocType):
+    asset = fields.ObjectField(
+        properties={
+            "title": fields.TextField(),
+            "slug": fields.TextField(),
+            "transcription_status": fields.TextField(),
+            "item": fields.ObjectField(
+                properties={
+                    "item_id": fields.TextField(),
+                    "project": fields.ObjectField(
+                        properties={
+                            "slug": fields.TextField(),
+                            "campaign": fields.ObjectField(
+                                properties={"slug": fields.TextField()}
+                            ),
+                        }
+                    ),
+                }
+            ),
+        }
+    )
+    user = fields.ObjectField(properties={"username": fields.TextField()})
+    reviewed_by = fields.ObjectField(properties={"username": fields.TextField()})
+    supersedes = fields.ObjectField(properties={"id": fields.IntegerField()})
+
     class Meta:
         model = Transcription
 
         fields = [
+            "id",
             "created_on",
             "updated_on",
             "text",
@@ -47,4 +90,3 @@ class TranscriptionDocument(DocType):
             "rejected",
             "submitted",
         ]
-
