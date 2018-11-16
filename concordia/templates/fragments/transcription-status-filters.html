@@ -1,4 +1,4 @@
-<div class="btn-group btn-group-sm btn-group-toggle">
+<div class="btn-group btn-group-sm btn-group-toggle flex-wrap justify-content-center">
     {% for url, classes, key, label in status_choices %}
         <a class="btn btn-outline-secondary {{ classes }}" href="{{ url|default:"?" }}">
             {% if key %}

@@ -1,0 +1,10 @@
+{% load concordia_filtering_tags %}
+
+<div class="row mb-2 p-3 flex-column-reverse flex-xl-row justify-content-center align-items-center">
+    <div class="col-12 col-xl-6 text-center">
+        {% transcription_status_filters transcription_status_counts request.GET.transcription_status %}
+    </div>
+    <div class="col-12 col-xl-6">
+        {% include "fragments/transcription-progress-bar.html" %}
+    </div>
+</div>
