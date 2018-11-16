@@ -2,8 +2,6 @@
 
 set -euox pipefail
 
-BUILD_NUMBER=1
-
 # Get an unique venv folder to using *inside* workspace
 VENV=".venv-$BUILD_NUMBER"
 
@@ -28,7 +26,6 @@ python3 setup.py build
 
 docker build -t concordia/indexer --file indexer/Dockerfile .
 docker tag concordia/indexer:latest ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia/indexer:${VERSION_NUMBER}
-docker tag concordia/indexer:latest ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia/indexer:latest
+docker tag concordia/indexer:latest ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia/indexer:${TAG}
 docker push ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia/indexer:${VERSION_NUMBER}
-docker push ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia/indexer:latest
-
+docker push ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia/indexer:${TAG}

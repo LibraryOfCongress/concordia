@@ -2,7 +2,6 @@ FROM ubuntu:18.04
 
 ENV DEBIAN_FRONTEND="noninteractive"
 
-# Pillow/Imaging: https://pillow.readthedocs.io/en/latest/installation.html#external-libraries
 RUN apt-get update -qy && apt-get install -o Dpkg::Options::='--force-confnew' -qy \
     git curl \
     python3 python3-dev python3-pip \
@@ -19,8 +18,6 @@ ENV LANGUAGE=en_US.UTF-8
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONPATH /app
 ENV DJANGO_SETTINGS_MODULE=concordia.settings_prod
-
-ENV ELASTICSEARCH_ENDPOINT=https://search-crowd-dev2-ham5q77lx6rdcjvqdlyoplf47q.us-east-1.es.amazonaws.com
 
 ENV ELASTICSEARCH_DSL_AUTOSYNC=True
 
