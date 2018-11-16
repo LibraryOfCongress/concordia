@@ -2,17 +2,12 @@
 import os
 
 from django.contrib import messages
-from dotenv import load_dotenv
-from machina import MACHINA_MAIN_STATIC_DIR, MACHINA_MAIN_TEMPLATE_DIR
-from machina import get_apps as get_machina_apps
+
+import raven
 
 # Build paths inside the project like this: os.path.join(SITE_ROOT_DIR, ...)
 CONCORDIA_APP_DIR = os.path.abspath(os.path.dirname(__file__))
 SITE_ROOT_DIR = os.path.dirname(CONCORDIA_APP_DIR)
-
-# Build path for and load .env file.
-dotenv_path = os.path.join(SITE_ROOT_DIR, ".env")
-load_dotenv(dotenv_path)
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = "django-secret-key"
@@ -39,15 +34,14 @@ LANGUAGE_CODE = "en-us"
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
 ROOT_URLCONF = "concordia.urls"
-STATIC_ROOT = "static"
+STATIC_ROOT = "static-files"
 STATIC_URL = "/static/"
 STATICFILES_DIRS = [
     os.path.join(CONCORDIA_APP_DIR, "static"),
-    os.path.join("/".join(CONCORDIA_APP_DIR.split("/")[:-1]), "concordia/static"),
+    os.path.join(SITE_ROOT_DIR, "static"),
 ]
-STATICFILES_DIRS = [os.path.join(CONCORDIA_APP_DIR, "static"), MACHINA_MAIN_STATIC_DIR]
 TEMPLATE_DEBUG = False
-TIME_ZONE = "UTC"
+TIME_ZONE = "America/New_York"
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
@@ -62,7 +56,7 @@ DATABASES = {
         "USER": "concordia",
         "PASSWORD": os.getenv("POSTGRESQL_PW"),
         "HOST": os.getenv("POSTGRESQL_HOST", "localhost"),
-        "PORT": "5432",
+        "PORT": os.getenv("POSTGRESQL_PORT", "5432"),
         "CONN_MAX_AGE": 15 * 60,  # Keep database connections open for 15 minutes
     }
 }
@@ -75,29 +69,19 @@ INSTALLED_APPS = [
     "django.contrib.humanize",
     "django.contrib.sessions",
     "django.contrib.messages",
+    "django.contrib.sites",
     "django.contrib.staticfiles",
     "raven.contrib.django.raven_compat",
     "maintenance_mode",
     "bootstrap4",
-    "rest_framework",
+    "bittersweet",
     "concordia.apps.ConcordiaAppConfig",
     "exporter",
     "importer",
     "captcha",
-    # Machina related apps:
-    "mptt",
-    "haystack",
-    "widget_tweaks",
     "django_prometheus_metrics",
-    "django.contrib.sites",
     "robots",
-] + get_machina_apps()
-
-
-if DEBUG:
-    INSTALLED_APPS += ["django_extensions"]
-    INSTALLED_APPS += ["kombu.transport"]
-
+]
 
 MIDDLEWARE = [
     "django_prometheus_metrics.middleware.PrometheusBeforeMiddleware",
@@ -111,9 +95,10 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "maintenance_mode.middleware.MaintenanceModeMiddleware",
-    # Machina
-    "machina.apps.forum_permission.middleware.ForumPermissionMiddleware",
+    "ratelimit.middleware.RatelimitMiddleware",
 ]
+
+RATELIMIT_VIEW = "concordia.views.ratelimit_view"
 
 TEMPLATES = [
     {
@@ -121,7 +106,6 @@ TEMPLATES = [
         "DIRS": [
             os.path.join(SITE_ROOT_DIR, "templates"),
             os.path.join(CONCORDIA_APP_DIR, "templates"),
-            MACHINA_MAIN_TEMPLATE_DIR,
         ],
         "OPTIONS": {
             "context_processors": [
@@ -133,8 +117,6 @@ TEMPLATES = [
                 # Concordia
                 "concordia.context_processors.system_configuration",
                 "concordia.context_processors.site_navigation",
-                # Machina
-                "machina.core.context_processors.metadata",
             ],
             "loaders": [
                 "django.template.loaders.filesystem.Loader",
@@ -144,12 +126,14 @@ TEMPLATES = [
     }
 ]
 
+MEMCACHED_ADDRESS = os.getenv("MEMCACHED_ADDRESS", "")
+MEMCACHED_PORT = os.getenv("MEMCACHED_PORT", "")
+
 CACHES = {
-    "default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"},
-    "machina_attachments": {
-        "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
-        "LOCATION": "/tmp",
-    },
+    "default": {
+        "BACKEND": "django.core.cache.backends.memcached.MemcachedCache",
+        "LOCATION": "{}:{}".format(MEMCACHED_ADDRESS, MEMCACHED_PORT),
+    }
 }
 
 HAYSTACK_CONNECTIONS = {
@@ -231,23 +215,10 @@ LOGGING = {
 # Django-specific settings above
 ################################################################################
 
-ACCOUNT_ACTIVATION_DAYS = 7
-
-REST_FRAMEWORK = {
-    "PAGE_SIZE": 10,
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
-    "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework.authentication.BasicAuthentication",
-        "rest_framework.authentication.SessionAuthentication",
-    ),
-}
-
-CONCORDIA = {"netloc": "http://0:80"}
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(SITE_ROOT_DIR, "media")
 
-
-LOGIN_URL = "/account/login/"
+LOGIN_URL = "login"
 
 PASSWORD_VALIDATOR = (
     "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
@@ -269,25 +240,28 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 CAPTCHA_CHALLENGE_FUNCT = "captcha.helpers.random_char_challenge"
-CAPTCHA_FIELD_TEMPLATE = "captcha/field.html"
-CAPTCHA_TEXT_FIELD_TEMPLATE = "captcha/text_field.html"
+#: Anonymous sessions require captcha validation every day by default:
+ANONYMOUS_CAPTCHA_VALIDATION_INTERVAL = 86400
 
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
-WHITENOISE_ROOT = STATIC_ROOT
+WHITENOISE_ROOT = os.path.join(SITE_ROOT_DIR, "static")
 
-PASSWORD_RESET_TIMEOUT_DAYS = 1
-ACCOUNT_ACTIVATION_DAYS = 1
+PASSWORD_RESET_TIMEOUT_DAYS = 2
+ACCOUNT_ACTIVATION_DAYS = 2
 REGISTRATION_OPEN = True  # set to false to temporarily disable registrations
 
 MESSAGE_STORAGE = "django.contrib.messages.storage.session.SessionStorage"
 
 MESSAGE_TAGS = {messages.ERROR: "danger"}
 
-SENTRY_DSN = os.environ.get("SENTRY_DSN", "")
-SENTRY_PUBLIC_DSN = os.environ.get("SENTRY_PUBLIC_DSN", "")
+SENTRY_BACKEND_DSN = os.environ.get("SENTRY_BACKEND_DSN", "")
+SENTRY_FRONTEND_DSN = os.environ.get("SENTRY_FRONTEND_DSN", "")
 
-if SENTRY_DSN:
-    RAVEN_CONFIG = {"dsn": SENTRY_DSN, "environment": CONCORDIA_ENVIRONMENT}
+RAVEN_CONFIG = {
+    "dsn": SENTRY_BACKEND_DSN,
+    "environment": CONCORDIA_ENVIRONMENT,
+    "release": raven.fetch_git_sha(SITE_ROOT_DIR),
+}
 
 # When the MAINTENANCE_MODE setting is true, this template will be used to
 # generate a 503 response:
@@ -302,8 +276,13 @@ SITE_ID = 1
 ROBOTS_USE_SITEMAP = False
 ROBOTS_USE_HOST = False
 
+# django-bootstrap4 customization:
+BOOTSTRAP4 = {"required_css_class": "form-group-required"}
+
 # Transcription-related settings
 
 #: Number of seconds an asset reservation is valid for
 TRANSCRIPTION_RESERVATION_SECONDS = 5 * 60
 
+#: Web cache policy settings
+DEFAULT_PAGE_TTL = 5 * 60

@@ -19,16 +19,6 @@ ALLOWED_HOSTS = ["127.0.0.1", "0.0.0.0", "*"]
 CELERY_BROKER_URL = "pyamqp://guest@localhost"
 CELERY_RESULT_BACKEND = "rpc://"
 
-CONCORDIA = {"netloc": "http://0.0.0.0:8000"}
-
-S3_BUCKET_NAME = "concordia-staticpages"
-
-DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
-AWS_STORAGE_BUCKET_NAME = S3_BUCKET_NAME
-AWS_DEFAULT_ACL = None  # Don't set an ACL on the files, inherit the bucket ACLs
-
-MEDIA_URL = "https://%s.s3.amazonaws.com/" % S3_BUCKET_NAME
-
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 EMAIL_FILE_PATH = "/tmp/concordia-messages"  # change this to a proper location
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "")
@@ -43,10 +33,18 @@ ELASTICSEARCH_DSL = {"default": {"hosts": "localhost:9200"}}
 
 INSTALLED_APPS += ["django_elasticsearch_dsl"]
 
-REGISTRATION_SALT = "django_registration"  # doesn't need to be secret
+CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
 
-ACCOUNT_ACTIVATION_DAYS = 1  # required for HMAC registration two-step-flow
+REGISTRATION_SALT = "django_registration"  # doesn't need to be secret
 
 INSTALLED_APPS += ["debug_toolbar"]
 MIDDLEWARE += ["debug_toolbar.middleware.DebugToolbarMiddleware"]
 INTERNAL_IPS = ("127.0.0.1",)
+
+INSTALLED_APPS += ("django_extensions",)
+SHELL_PLUS_PRE_IMPORTS = [
+    ("concordia.views", "get_anonymous_user"),
+    ("concordia.models", "TranscriptionStatus"),
+]
+
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"

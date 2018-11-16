@@ -6,10 +6,10 @@ from celery import Celery
 from raven import Client
 from raven.contrib.celery import register_logger_signal, register_signal
 
-SENTRY_DSN = os.environ.get("SENTRY_DSN", None)
+SENTRY_BACKEND_DSN = os.environ.get("SENTRY_BACKEND_DSN", None)
 
-if SENTRY_DSN:
-    client = Client(SENTRY_DSN)
+if SENTRY_BACKEND_DSN:
+    client = Client(SENTRY_BACKEND_DSN)
     register_logger_signal(client)
     register_signal(client)
 

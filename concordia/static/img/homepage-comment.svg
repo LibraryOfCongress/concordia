@@ -1,17 +1,1 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg width="200px" height="200px" viewBox="0 0 200 200" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-    <!-- Generator: Sketch 51.2 (57519) - http://www.bohemiancoding.com/sketch -->
-    <title>Group</title>
-    <desc>Created with Sketch.</desc>
-    <defs></defs>
-    <g id="Wireframes" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-        <g id="CHC-Home" transform="translate(-932.000000, -1435.000000)" fill-rule="nonzero">
-            <g id="Group-14" transform="translate(932.000000, 1435.000000)">
-                <g id="Group">
-                    <circle id="Oval-2" fill="#FC4C02" cx="100" cy="100" r="100"></circle>
-                    <path d="M145.121951,51 L54.8780488,51 C52.1839768,51 50,53.1839768 50,55.8780488 L50,119.292683 C50,121.986755 52.1839768,124.170732 54.8780488,124.170732 L69.5121951,124.170732 L69.5121951,143.390244 C69.5207658,145.25606 70.5928977,146.953538 72.2740187,147.762967 C73.9551397,148.572395 75.9507117,148.35196 77.4146341,147.195122 L106.573171,124.146341 L145.121951,124.146341 C147.816023,124.146341 150,121.962365 150,119.268293 L150,55.8536585 C149.986577,53.1691165 147.806527,50.9999664 145.121951,51 Z" id="Shape" fill="#FFFFFF"></path>
-                </g>
-            </g>
-        </g>
-    </g>
-</svg>
+<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg"><g fill="none"><circle fill="#FC4C02" cx="100" cy="100" r="100"/><path d="M145.122 51H54.878A4.878 4.878 0 0 0 50 55.878v63.415a4.878 4.878 0 0 0 4.878 4.878h14.634v19.22a4.878 4.878 0 0 0 7.903 3.804l29.158-23.049h38.549a4.878 4.878 0 0 0 4.878-4.878V55.854A4.878 4.878 0 0 0 145.122 51z" fill="#FFF"/></g></svg>

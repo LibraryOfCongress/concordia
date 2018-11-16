@@ -15,15 +15,15 @@ Description: >
 Mappings:
     EnvironmentMapping:
         AvailabilityZone1Map:
-            dev: 2
+            dev: 0
             test: 2
             stage: 2
-            prod: 2
+            prod: 0
         AvailabilityZone2Map:
-            dev: 3
+            dev: 1
             test: 3
             stage: 3
-            prod: 3
+            prod: 1
         VPCCIDRMap:
             dev: 10.192.0.0/16
             test: 10.193.0.0/16
@@ -49,17 +49,28 @@ Mappings:
             test: 10.193.21.0/24
             stage: 10.194.21.0/24
             prod: 10.195.21.0/24
+        S3BucketNameMap:
+            dev: crowd-dev-content
+            test: crowd-test-content
+            stage: crowd-stage-content
+            prod: crowd-content
+        ExportS3BucketNameMap:
+            dev: crowd-dev-export
+            test: crowd-test-export
+            stage: crowd-stage-export
+            prod: crowd-export
 
 Parameters:
+
+    ConcordiaVersion:
+        Description: which version of the docker images to deploy
+        Type: String
+        Default: latest
 
     MyDbPassword:
         Description: Master database password to use for RDS
         Type: String
         NoEcho: true
-
-    KeyPairName:
-        Description: key pair within this region for ECS access
-        Type: String
     
     EnvName:
         Description: which type of environment we are setting up
@@ -69,6 +80,25 @@ Parameters:
             - "test"
             - "stage"
             - "prod"
+
+    FullEnvironmentName:
+        Type: String
+        Description: Full name of deployment environment
+        AllowedValues:
+            - 'development'
+            - 'test'
+            - 'staging'
+            - 'production'
+
+    CanonicalHostName:
+        Description: the canonical host name for this environment
+        Type: String
+        AllowedValues:
+            - "crowd-dev.loc.gov"
+            - "crowd-test.loc.gov"
+            - "crowd-stage.loc.gov"
+            - "crowd-prod.loc.gov"
+            - "crowd.loc.gov"
             
 Resources:
 
@@ -76,7 +106,7 @@ Resources:
         Type: AWS::CloudFormation::Stack
         Properties:
 #            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/vpc.yaml" ]]
-            TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/vpc.yaml"
+            TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/vpc.yaml"
             Parameters:
                 EnvironmentName:    !Ref AWS::StackName
                 VpcCIDR:            !FindInMap [EnvironmentMapping, VPCCIDRMap, !Ref EnvName]
@@ -91,7 +121,7 @@ Resources:
         Type: AWS::CloudFormation::Stack
         Properties:
 #            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/network-acl.yaml" ]]
-            TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/network-acl.yaml"
+            TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/network-acl.yaml"
             Parameters: 
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
@@ -103,8 +133,7 @@ Resources:
     SecurityGroups:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/security-groups.yaml"
-#            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/security-groups.yaml" ]]
+            TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/security-groups.yaml"
             Parameters: 
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
@@ -112,79 +141,47 @@ Resources:
     RDS:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/rds.yaml"
-#            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/rds.yaml" ]]
+            TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/rds.yaml"
             Parameters:
-                EnvironmentName: !Ref AWS::StackName
-                VPC: !GetAtt VPC.Outputs.VPC
                 DbPassword: !Ref MyDbPassword
                 DatabaseSecurityGroup: !GetAtt SecurityGroups.Outputs.DatabaseSecurityGroup
                 PrivateSubnet1: !GetAtt VPC.Outputs.PrivateSubnet1
                 PrivateSubnet2: !GetAtt VPC.Outputs.PrivateSubnet2
 
-    ALB:
+    ElastiCache:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/load-balancers.yaml"
-#            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/load-balancers.yaml" ]]
+            TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/elasticache.yaml"
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
-                VPC: !GetAtt VPC.Outputs.VPC
-                Subnets: !GetAtt VPC.Outputs.PublicSubnets
-                SecurityGroup: !GetAtt SecurityGroups.Outputs.LoadBalancerSecurityGroup
+                SecurityGroup: !GetAtt SecurityGroups.Outputs.CacheServiceSecurityGroup
+                PrivateSubnets: !GetAtt VPC.Outputs.PrivateSubnets
 
-    ECS:
+    FargateCluster:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/ecs-cluster.yaml"
-#            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/ecs-cluster.yaml" ]]
+            TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/fargate-cluster.yaml"
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
-                KeyPairName: !Ref KeyPairName
+                EnvName: !Ref EnvName
+                VpcId: !GetAtt VPC.Outputs.VPC
                 SecurityGroup: !GetAtt SecurityGroups.Outputs.ECSHostSecurityGroup
-                Subnets: !GetAtt VPC.Outputs.PrivateSubnets
-
-#    ConcordiaService:
-#        Type: AWS::CloudFormation::Stack
-#        Properties:
-#            TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/services/concordia-service/service.yaml"
-#            TemplateURL: !Join [ "/", [ !Ref BasePath, "/services/concordia-service/service.yaml" ]]
-#            Parameters:
-#                EnvName: !Ref EnvName
-#                DesiredCount: 2
-#                MaxCount: 3
-#                Memory: 4096
-#                Cpu: 2048
-#                VPC: !GetAtt VPC.Outputs.VPC
-#                Cluster: !GetAtt ECS.Outputs.Cluster	              
-#                PostgresHost: !GetAtt RDS.Outputs.DatabaseHostName	
-#                Listener: !GetAtt ALB.Outputs.Listener	
-#                Path: /*	
-#                ECSServiceAutoScalingRoleARN: !GetAtt ECS.Outputs.ECSServiceAutoScalingRole
-
-    LifecycleHook:
-        Type: AWS::CloudFormation::Stack
-        Properties:
-            TemplateURL: "https://s3.amazonaws.com/rstorey-concordia-refarch/infrastructure/lifecyclehook.yaml"
-#            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/lifecyclehook.yaml" ]]
-            Parameters:
-                Cluster: !GetAtt ECS.Outputs.Cluster
-                ECSAutoScalingGroupName: !GetAtt ECS.Outputs.ECSAutoScalingGroupName
+                LoadBalancerSecurityGroup: !GetAtt SecurityGroups.Outputs.LoadBalancerSecurityGroup
+                PrivateSubnets: !GetAtt VPC.Outputs.PrivateSubnets
+                PublicSubnets: !GetAtt VPC.Outputs.PublicSubnets
+                ConcordiaVersion: !Ref ConcordiaVersion
+                RedisAddress: !GetAtt ElastiCache.Outputs.RedisAddress
+                RedisPort: !GetAtt ElastiCache.Outputs.RedisPort
+                MemcachedAddress: !GetAtt ElastiCache.Outputs.MemcachedAddress
+                MemcachedPort: !GetAtt ElastiCache.Outputs.MemcachedPort
+                CanonicalHostName: !Ref CanonicalHostName
+                DatabaseEndpoint: !GetAtt RDS.Outputs.DatabaseHostName
+                FullEnvironmentName: !Ref FullEnvironmentName
+                S3BucketName: !FindInMap [EnvironmentMapping, S3BucketNameMap, !Ref EnvName]
+                ExportS3BucketName: !FindInMap [EnvironmentMapping, ExportS3BucketNameMap, !Ref EnvName]
 
 Outputs:
 
     WebsiteServiceUrl: 
         Description: The URL endpoint for the concordia website service
-        Value: !Join ["", [ !GetAtt ALB.Outputs.LoadBalancerUrl, "/" ]]
-    
-    ALBListener:
-        Description: The listener to register with for the ECS service 
-        Value: !GetAtt ALB.Outputs.Listener
-
-    ClusterId:
-        Description: Id of the ECS Cluster 
-        Value: !GetAtt ECS.Outputs.Cluster
-
-    ECSServiceAutoScalingRoleARN:
-        Description: ARN of the ECS AutoScaling IAM Role 
-        Value: !GetAtt ECS.Outputs.ECSServiceAutoScalingRole
+        Value: !Join ["", [ !GetAtt FargateCluster.Outputs.LoadBalancerUrl, "/" ]]

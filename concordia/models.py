@@ -26,12 +26,14 @@ class TranscriptionStatus(object):
     to avoid needing to do nested queries in views
     """
 
-    EDIT = "edit"
+    NOT_STARTED = "not_started"
+    IN_PROGRESS = "in_progress"
     SUBMITTED = "submitted"
     COMPLETED = "completed"
 
     CHOICES = (
-        (EDIT, "Open for Edit"),
+        (NOT_STARTED, "Not Started"),
+        (IN_PROGRESS, "In Progress"),
         (SUBMITTED, "Submitted for Review"),
         (COMPLETED, "Completed"),
     )
@@ -76,13 +78,14 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
         return self.title
 
     def get_absolute_url(self):
-        # FIXME: change this with https://github.com/LibraryOfCongress/concordia/issues/242
-        return reverse("transcriptions:campaign", args=(self.slug,))
+        # FIXME: change this with
+        # https://github.com/LibraryOfCongress/concordia/issues/242
+        return reverse("transcriptions:campaign-detail", args=(self.slug,))
 
 
 class Resource(MetricsModelMixin("resource"), models.Model):
     sequence = models.PositiveIntegerField(default=1)
-    title = models.TextField(blank=False, max_length=255)
+    title = models.CharField(blank=False, max_length=255)
     resource_url = models.URLField()
 
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
@@ -108,6 +111,7 @@ class Project(MetricsModelMixin("project"), models.Model):
         upload_to="project-thumbnails", blank=True, null=True
     )
 
+    description = models.TextField(blank=True)
     category = models.CharField(max_length=12, blank=True)
     metadata = JSONField(default=metadata_default, blank=True, null=True)
 
@@ -128,9 +132,7 @@ class Project(MetricsModelMixin("project"), models.Model):
 class Item(MetricsModelMixin("item"), models.Model):
     objects = PublicationManager()
 
-    project = models.ForeignKey(
-        Project, on_delete=models.CASCADE, blank=True, null=True
-    )
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
 
     published = models.BooleanField(default=False, blank=True)
 
@@ -185,7 +187,7 @@ class Asset(MetricsModelMixin("asset"), models.Model):
     sequence = models.PositiveIntegerField(default=1)
 
     # The original ID of the image resource on loc.gov
-    resource_id = models.CharField(max_length=100, blank=True, null=True)
+    resource_url = models.URLField(max_length=255, blank=True, null=True)
     # The URL used to download this image from loc.gov
     download_url = models.CharField(max_length=255, blank=True, null=True)
 
@@ -195,8 +197,8 @@ class Asset(MetricsModelMixin("asset"), models.Model):
     # be directly modified except by the Transcription signal handler:
     transcription_status = models.CharField(
         editable=False,
-        max_length=10,
-        default=TranscriptionStatus.EDIT,
+        max_length=20,
+        default=TranscriptionStatus.NOT_STARTED,
         choices=TranscriptionStatus.CHOICES,
     )
 
@@ -292,11 +294,11 @@ class Transcription(MetricsModelMixin("transcription"), models.Model):
     @property
     def status(self):
         if self.accepted:
-            return "Completed"
+            return TranscriptionStatus.CHOICE_MAP[TranscriptionStatus.COMPLETED]
         elif self.submitted and not self.rejected:
-            return "Submitted"
+            return TranscriptionStatus.CHOICE_MAP[TranscriptionStatus.SUBMITTED]
         else:
-            return "Edit"
+            return TranscriptionStatus.CHOICE_MAP[TranscriptionStatus.IN_PROGRESS]
 
 
 class AssetTranscriptionReservation(models.Model):

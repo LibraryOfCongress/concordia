@@ -1,17 +1,28 @@
-import json
 from datetime import datetime, timedelta
 
+from captcha.models import CaptchaStore
 from django.test import TestCase, TransactionTestCase
 from django.urls import reverse
 from django.utils.timezone import now
 
-from concordia.models import AssetTranscriptionReservation, User, Transcription
+from concordia.models import (
+    AssetTranscriptionReservation,
+    Transcription,
+    TranscriptionStatus,
+    User,
+)
 from concordia.views import get_anonymous_user
 
-from .utils import create_asset, create_campaign, create_item, create_project
+from .utils import (
+    JSONAssertMixin,
+    create_asset,
+    create_campaign,
+    create_item,
+    create_project,
+)
 
 
-class ConcordiaViewTests(TestCase):
+class ConcordiaViewTests(JSONAssertMixin, TestCase):
     """
     This class contains the unit tests for the view in the concordia app.
     """
@@ -82,7 +93,7 @@ class ConcordiaViewTests(TestCase):
         """
         Test the GET method for route /campaigns
         """
-        response = self.client.get(reverse("transcriptions:campaigns"))
+        response = self.client.get(reverse("transcriptions:campaign-list"))
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(
@@ -97,7 +108,9 @@ class ConcordiaViewTests(TestCase):
         """
         c = create_campaign(title="GET Campaign", slug="get-campaign")
 
-        response = self.client.get(reverse("transcriptions:campaign", args=(c.slug,)))
+        response = self.client.get(
+            reverse("transcriptions:campaign-detail", args=(c.slug,))
+        )
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(
@@ -112,7 +125,7 @@ class ConcordiaViewTests(TestCase):
         c = create_campaign()
 
         response = self.client.get(
-            reverse("transcriptions:campaign", args=(c.slug,)), {"page": 2}
+            reverse("transcriptions:campaign-detail", args=(c.slug,)), {"page": 2}
         )
 
         self.assertEqual(response.status_code, 200)
@@ -120,24 +133,81 @@ class ConcordiaViewTests(TestCase):
             response, template_name="transcriptions/campaign_detail.html"
         )
 
-    def test_ConcordiaItemView_get(self):
+    def test_empty_item_detail_view(self):
         """
-        Test GET on route /campaigns/<campaign-slug>/<project-slug>/<item-slug>
+        Test item detail display with no assets
         """
-        i = create_item()
+
+        item = create_item()
 
         response = self.client.get(
             reverse(
                 "transcriptions:item-detail",
-                args=(i.project.campaign.slug, i.project.slug, i.item_id),
+                args=(item.project.campaign.slug, item.project.slug, item.item_id),
             )
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, template_name="transcriptions/item_detail.html")
-        self.assertContains(response, i.title)
+        self.assertTemplateUsed(
+            response, template_name="transcriptions/item_detail.html"
+        )
+        self.assertContains(response, item.title)
 
-    def test_ConcordiaAssetView_get(self):
+        self.assertEqual(0, response.context["not_started_percent"])
+        self.assertEqual(0, response.context["in_progress_percent"])
+        self.assertEqual(0, response.context["submitted_percent"])
+        self.assertEqual(0, response.context["completed_percent"])
+
+    def test_item_detail_view(self):
+        """
+        Test item detail display with assets
+        """
+
+        self.login_user()  # Implicitly create the test account
+        anon = get_anonymous_user()
+
+        item = create_item()
+        # We'll create 10 assets and transcriptions for some of them so we can
+        # confirm that the math is working correctly:
+        for i in range(1, 11):
+            asset = create_asset(item=item, sequence=i, slug=f"test-{i}")
+            if i > 9:
+                t = asset.transcription_set.create(asset=asset, user=anon)
+                t.submitted = now()
+                t.accepted = now()
+                t.reviewed_by = self.user
+            elif i > 7:
+                t = asset.transcription_set.create(asset=asset, user=anon)
+                t.submitted = now()
+            elif i > 4:
+                t = asset.transcription_set.create(asset=asset, user=anon)
+            else:
+                continue
+
+            t.full_clean()
+            t.save()
+
+        response = self.client.get(
+            reverse(
+                "transcriptions:item-detail",
+                args=(item.project.campaign.slug, item.project.slug, item.item_id),
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, template_name="transcriptions/item_detail.html"
+        )
+        self.assertContains(response, item.title)
+
+        # We have 10 total, 6 of which have transcription records and of those
+        # 6, 3 have been submitted and one of those was accepted:
+        self.assertEqual(40, response.context["not_started_percent"])
+        self.assertEqual(30, response.context["in_progress_percent"])
+        self.assertEqual(20, response.context["submitted_percent"])
+        self.assertEqual(10, response.context["completed_percent"])
+
+    def test_asset_detail_view(self):
         """
         This unit test test the GET route /campaigns/<campaign>/asset/<Asset_name>/
         with already in use.
@@ -179,10 +249,77 @@ class ConcordiaViewTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, template_name="transcriptions/project.html")
+        self.assertTemplateUsed(
+            response, template_name="transcriptions/project_detail.html"
+        )
+
+    def test_campaign_report(self):
+        """
+        Test campaign reporting
+        """
+
+        item = create_item()
+        # We'll create 10 assets and transcriptions for some of them so we can
+        # confirm that the math is working correctly:
+        for i in range(1, 11):
+            create_asset(item=item, sequence=i, slug=f"test-{i}")
+
+        response = self.client.get(
+            reverse(
+                "transcriptions:campaign-report",
+                kwargs={"campaign_slug": item.project.campaign.slug},
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "transcriptions/campaign_report.html")
+
+        ctx = response.context
+
+        self.assertEqual(ctx["title"], item.project.campaign.title)
+        self.assertEqual(ctx["total_asset_count"], 10)
+
+    def test_static_page(self):
+        resp = self.client.get(reverse("help-center"))
+        self.assertEqual(200, resp.status_code)
+        self.assertEqual("Help Center", resp.context["title"])
+        self.assertEqual(
+            [(reverse("help-center"), "Help Center")], resp.context["breadcrumbs"]
+        )
+        self.assertIn("body", resp.context)
+
+    def test_ajax_session_status_anon(self):
+        resp = self.client.get(reverse("ajax-session-status"))
+        data = self.assertValidJSON(resp)
+        self.assertEqual(data, {})
+
+    def test_ajax_session_status(self):
+        self.login_user()
+
+        resp = self.client.get(reverse("ajax-session-status"))
+        data = self.assertValidJSON(resp)
+
+        self.assertIn("links", data)
+        self.assertIn("username", data)
+
+        self.assertEqual(data["username"], self.user.username)
+
+        self.assertIn("private", resp["Cache-Control"])
+
+    def test_ajax_messages(self):
+        self.login_user()
+
+        resp = self.client.get(reverse("ajax-messages"))
+        data = self.assertValidJSON(resp)
+
+        self.assertIn("messages", data)
+
+        # This view cannot be cached because the messages would be displayed
+        # multiple times:
+        self.assertIn("no-cache", resp["Cache-Control"])
 
 
-class TransactionalViewTests(TransactionTestCase):
+class TransactionalViewTests(JSONAssertMixin, TransactionTestCase):
     def login_user(self):
         """
         Create a user and log the user in
@@ -196,6 +333,27 @@ class TransactionalViewTests(TransactionTestCase):
         self.user.save()
 
         self.client.login(username="tester", password="top_secret")
+
+    def completeCaptcha(self, key=None):
+        """Submit a CAPTCHA response using the provided challenge key"""
+
+        if key is None:
+            challenge_data = self.assertValidJSON(
+                self.client.get(reverse("ajax-captcha")), expected_status=401
+            )
+            self.assertIn("key", challenge_data)
+            self.assertIn("image", challenge_data)
+            key = challenge_data["key"]
+
+        self.assertValidJSON(
+            self.client.post(
+                reverse("ajax-captcha"),
+                data={
+                    "key": key,
+                    "response": CaptchaStore.objects.get(hashkey=key).response,
+                },
+            )
+        )
 
     def test_asset_reservation(self):
         """
@@ -310,22 +468,28 @@ class TransactionalViewTests(TransactionTestCase):
         reservation = AssetTranscriptionReservation.objects.get()
         self.assertEqual(reservation.user_id, self.user.pk)
 
-    def assertValidJSON(self, response, expected_status=200):
-        """
-        Assert that a response contains valid JSON and return the decoded JSON
-        """
-        self.assertEqual(response.status_code, expected_status)
+    def test_anonymous_transcription_save_captcha(self):
+        asset = create_asset()
 
-        try:
-            data = json.loads(response.content.decode("utf-8"))
-        except json.JSONDecodeError as exc:
-            self.fail(msg=f"response content failed to decode: {exc}")
-            raise
+        resp = self.client.post(
+            reverse("save-transcription", args=(asset.pk,)), data={"text": "test"}
+        )
+        data = self.assertValidJSON(resp, expected_status=401)
+        self.assertIn("key", data)
+        self.assertIn("image", data)
 
-        return data
+        self.completeCaptcha(data["key"])
+
+        resp = self.client.post(
+            reverse("save-transcription", args=(asset.pk,)), data={"text": "test"}
+        )
+        data = self.assertValidJSON(resp, expected_status=201)
 
     def test_transcription_save(self):
         asset = create_asset()
+
+        # We're not testing the CAPTCHA here so we'll complete it:
+        self.completeCaptcha()
 
         resp = self.client.post(
             reverse("save-transcription", args=(asset.pk,)), data={"text": "test"}
@@ -373,8 +537,32 @@ class TransactionalViewTests(TransactionTestCase):
         data = self.assertValidJSON(resp, expected_status=201)
         self.assertIn("submissionUrl", data)
 
+    def test_anonymous_transcription_submission(self):
+        asset = create_asset()
+        anon = get_anonymous_user()
+
+        transcription = Transcription(asset=asset, user=anon, text="previous entry")
+        transcription.full_clean()
+        transcription.save()
+
+        resp = self.client.post(
+            reverse("submit-transcription", args=(transcription.pk,))
+        )
+        data = self.assertValidJSON(resp, expected_status=401)
+        self.assertIn("key", data)
+        self.assertIn("image", data)
+
+        self.assertFalse(Transcription.objects.filter(submitted__isnull=False).exists())
+
+        self.completeCaptcha(data["key"])
+        self.client.post(reverse("submit-transcription", args=(transcription.pk,)))
+        self.assertTrue(Transcription.objects.filter(submitted__isnull=False).exists())
+
     def test_transcription_submission(self):
         asset = create_asset()
+
+        # We're not testing the CAPTCHA here so we'll complete it:
+        self.completeCaptcha()
 
         resp = self.client.post(
             reverse("save-transcription", args=(asset.pk,)), data={"text": "test"}
@@ -396,6 +584,9 @@ class TransactionalViewTests(TransactionTestCase):
 
     def test_stale_transcription_submission(self):
         asset = create_asset()
+
+        # We're not testing the CAPTCHA here so we'll complete it:
+        self.completeCaptcha()
 
         anon = get_anonymous_user()
 
@@ -480,3 +671,143 @@ class TransactionalViewTests(TransactionTestCase):
         self.assertIn("error", data)
         self.assertEqual("This transcription has already been reviewed", data["error"])
 
+    def test_anonymous_tag_submission(self):
+        """Confirm that anonymous users cannot submit tags"""
+        asset = create_asset()
+        submit_url = reverse("submit-tags", kwargs={"asset_pk": asset.pk})
+
+        resp = self.client.post(submit_url, data={"tags": ["foo", "bar"]})
+        self.assertRedirects(resp, "%s?next=%s" % (reverse("login"), submit_url))
+
+    def test_tag_submission(self):
+        asset = create_asset()
+
+        self.login_user()
+
+        test_tags = ["foo", "bar"]
+
+        resp = self.client.post(
+            reverse("submit-tags", kwargs={"asset_pk": asset.pk}),
+            data={"tags": test_tags},
+        )
+        data = self.assertValidJSON(resp, expected_status=200)
+        self.assertIn("user_tags", data)
+        self.assertIn("all_tags", data)
+
+        self.assertEqual(sorted(test_tags), data["user_tags"])
+        self.assertEqual(sorted(test_tags), data["all_tags"])
+
+    def test_tag_submission_with_multiple_users(self):
+        asset = create_asset()
+        self.login_user()
+
+        test_tags = ["foo", "bar"]
+
+        resp = self.client.post(
+            reverse("submit-tags", kwargs={"asset_pk": asset.pk}),
+            data={"tags": test_tags},
+        )
+        data = self.assertValidJSON(resp, expected_status=200)
+        self.assertIn("user_tags", data)
+        self.assertIn("all_tags", data)
+
+        self.assertEqual(sorted(test_tags), data["user_tags"])
+        self.assertEqual(sorted(test_tags), data["all_tags"])
+
+    def test_duplicate_tag_submission(self):
+        """Confirm that tag values cannot be duplicated"""
+        asset = create_asset()
+
+        self.login_user()
+
+        resp = self.client.post(
+            reverse("submit-tags", kwargs={"asset_pk": asset.pk}),
+            data={"tags": ["foo", "bar", "baaz"]},
+        )
+        data = self.assertValidJSON(resp, expected_status=200)
+
+        second_user = User.objects.create_user(
+            username="second_tester", email="second_tester@example.com"
+        )
+        second_user.set_password("secret")
+        second_user.save()
+        self.client.login(username="second_tester", password="secret")
+
+        resp = self.client.post(
+            reverse("submit-tags", kwargs={"asset_pk": asset.pk}),
+            data={"tags": ["foo", "bar", "quux"]},
+        )
+        data = self.assertValidJSON(resp, expected_status=200)
+
+        # Even though the user submitted (through some horrible bug) duplicate
+        # values, they should not be stored:
+        self.assertEqual(["bar", "foo", "quux"], data["user_tags"])
+        self.assertEqual(["baaz", "bar", "foo", "quux"], data["all_tags"])
+
+    def test_find_next_transcribable(self):
+        asset1 = create_asset(slug="test-asset-1")
+        asset2 = create_asset(item=asset1.item, slug="test-asset-2")
+        campaign = asset1.item.project.campaign
+
+        resp = self.client.get(
+            reverse(
+                "transcriptions:redirect-to-next-transcribable-asset",
+                kwargs={"campaign_slug": campaign.slug},
+            )
+        )
+
+        self.assertRedirects(resp, expected_url=asset2.get_absolute_url())
+
+    def test_find_next_transcribable_single_asset(self):
+        asset = create_asset()
+        campaign = asset.item.project.campaign
+
+        resp = self.client.get(
+            reverse(
+                "transcriptions:redirect-to-next-transcribable-asset",
+                kwargs={"campaign_slug": campaign.slug},
+            )
+        )
+
+        self.assertRedirects(resp, expected_url=asset.get_absolute_url())
+
+    def test_find_next_transcribable_in_singleton_campaign(self):
+        asset = create_asset(transcription_status=TranscriptionStatus.SUBMITTED)
+        campaign = asset.item.project.campaign
+
+        resp = self.client.get(
+            reverse(
+                "transcriptions:redirect-to-next-transcribable-asset",
+                kwargs={"campaign_slug": campaign.slug},
+            )
+        )
+
+        self.assertRedirects(
+            resp,
+            expected_url=reverse(
+                "transcriptions:campaign-detail", args=(campaign.slug,)
+            ),
+        )
+
+    def test_find_next_transcribable_project_redirect(self):
+        asset = create_asset(transcription_status=TranscriptionStatus.SUBMITTED)
+        project = asset.item.project
+        campaign = project.campaign
+
+        resp = self.client.get(
+            "%s?project=%s"
+            % (
+                reverse(
+                    "transcriptions:redirect-to-next-transcribable-asset",
+                    kwargs={"campaign_slug": campaign.slug},
+                ),
+                project.slug,
+            )
+        )
+
+        self.assertRedirects(
+            resp,
+            expected_url=reverse(
+                "transcriptions:project-detail", args=(campaign.slug, project.slug)
+            ),
+        )

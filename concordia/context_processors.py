@@ -9,10 +9,11 @@ def system_configuration(request):
     """
 
     return {
-        "SENTRY_PUBLIC_DSN": getattr(settings, "SENTRY_PUBLIC_DSN", None),
+        "SENTRY_FRONTEND_DSN": getattr(settings, "SENTRY_FRONTEND_DSN", None),
         "CONCORDIA_ENVIRONMENT": settings.CONCORDIA_ENVIRONMENT,
         "S3_BUCKET_NAME": getattr(settings, "S3_BUCKET_NAME", None),
         "APPLICATION_VERSION": get_concordia_version(),
+        "RAVEN_CONFIG": settings.RAVEN_CONFIG,
     }
 
 

@@ -3,19 +3,23 @@
 {% block title %}{{ title }}{% endblock title %}
 
 {% block breadcrumbs %}
-    <li class="breadcrumb-item active">{{ PATH_LEVEL_1|title }}</li>
+    {% for link, title in breadcrumbs %}
+        {% if forloop.last %}
+            <li class="breadcrumb-item active" title="{{ title }}">{{ title }}</li>
+        {% else %}
+            <li class="breadcrumb-item"><a class="primary-text" href="{{ link }}" title="{{ title }}">{{ title }}</a></li>
+        {% endif %}
+    {% endfor %}
 {% endblock breadcrumbs %}
 
 {% block main_content %}
-<div class="container-fluid py-default">
+<div class="container">
     <div class="row">
-        <div class="col-md-10 mx-auto bg-offwhite rounded">
-            <div class="mxy-default">
-                <h1 class="mb-default">{{ title }}</h1>
+        <div class="col bg-offwhite">
+            <h1 class="my-3">{{ title }}</h1>
 
-                <div>
-                    {{ body|safe }}
-                </div>
+            <div>
+                {{ body|safe }}
             </div>
         </div>
     </div>

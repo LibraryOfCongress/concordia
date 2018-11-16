@@ -1,7 +1,6 @@
 Contact request from {{ email }}:
 
 Subject: {{ subject }}
-Category: {{ category }}
 Link:  {{ link }}
 Referring Page: {{ referrer|default:"Unspecified" }}
 

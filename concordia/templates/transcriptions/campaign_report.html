@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% load humanize %}
+{% load staticfiles %}
+
+{% block title %}Campaign Report: {{ title }}{% endblock title %}
+
+{% block main_content %}
+<div class="container">
+    <div class="row">
+        <h3>Campaign Summary: {{ title }}</h3>
+        <table class="table table-bordered table-hover">
+            <tbody>
+                <tr>
+                    <th>Total Images:</th>
+                    <td class="text-monospace text-right">{{ total_asset_count|intcomma }}</td>
+                </tr>
+                <tr>
+                    <th>Total Projects:</th>
+                    <td class="text-monospace text-right">{{ projects.paginator.count|intcomma }} </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="row">
+        <div class="card-columns">
+            {% for project in projects %}
+            <div class="card" style="width: 20em">
+                <div class="card-header">
+                    <a class="card-title" href="{% url 'transcriptions:project-detail' campaign_slug=campaign_slug slug=project.slug %}">
+                        {{ project.title }}
+                    </a>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm table-bordered table-striped">
+                        <tbody>
+                            <tr>
+                                <th>Images in this Project</th>
+                                <td class="text-monospace text-right">{{ project.asset_count|intcomma }}</td>
+                            </tr>
+                            <tr>
+                                <th>Number of Transcribers</th>
+                                <td class="text-monospace text-right">{{ project.transcriber_count|intcomma }} </td>
+                            </tr>
+                            <tr>
+                                <th>Number of Reviewers</th>
+                                <td class="text-monospace text-right">{{ project.reviewer_count|intcomma }} </td>
+                            </tr>
+                            <tr>
+                                <th>Tags</th>
+                                <td class="text-monospace text-right">{{ project.tag_count|intcomma }} </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <table class="table table-sm table-bordered table-striped mb-0">
+                        <caption style="caption-side: top">Transcription Statuses</caption>
+                        <tbody>
+                            {% for status, count in project.transcription_statuses %}
+                            <tr>
+                                <th>{{ status }}</th>
+                                <td class="text-monospace text-right">{{ count }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="row mt-3">
+        <nav class="w-100">
+            <ul class="pagination mx-auto justify-content-center">
+                {% if projects.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ projects.previous_page_number }}">Previous</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Previous</span>
+                </li>
+                {% endif %}
+
+                {% for page_num in paginator.page_range %}
+                <li class="page-item {% if page_num == projects.number %}active{% endif %}">
+                    <a class="page-link" href="?page={{ page_num }}">{{ page_num }}</a>
+                </li>
+                {% endfor %}
+
+                {% if projects.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ projects.next_page_number }}">Next</a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Next</span>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</div>
+{% endblock main_content %}

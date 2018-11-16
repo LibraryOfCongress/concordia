@@ -22,6 +22,24 @@ from importer.models import ImportItem, ImportItemAsset, ImportJob
 
 logger = getLogger(__name__)
 
+#: P1 has generic search / item pages and a number of top-level format-specific
+#: “context portals” which expose the same JSON interface.
+#: jq 'to_entries[] | select(.value.type == "context-portal") | .key' < manifest.json
+ACCEPTED_P1_URL_PREFIXES = [
+    "collections",
+    "search",
+    "item",
+    "audio",
+    "books",
+    "film-and-videos",
+    "manuscripts",
+    "maps",
+    "newspapers",
+    "notated-music",
+    "photos",
+    "websites",
+]
+
 
 def update_task_status(f):
     """
@@ -202,7 +220,9 @@ def import_items_into_project_from_url(requesting_user, project, import_url):
 
     parsed_url = urlparse(import_url)
 
-    m = re.match(r"^/(collections|search|item)/", parsed_url.path)
+    m = re.match(
+        r"^/(%s)/" % "|".join(map(re.escape, ACCEPTED_P1_URL_PREFIXES)), parsed_url.path
+    )
     if not m:
         raise ValueError(
             f"{import_url} doesn't match one of the known importable patterns"
@@ -298,8 +318,9 @@ def import_item_task(self, import_item_pk):
 def import_item(self, import_item):
     item_assets = []
     import_assets = []
+    item_resource_url = None
 
-    asset_urls = get_asset_urls_from_item_resources(
+    asset_urls, item_resource_url = get_asset_urls_from_item_resources(
         import_item.item.metadata.get("resources", [])
     )
 
@@ -313,6 +334,7 @@ def import_item(self, import_item):
             media_url=f"{idx}.jpg",
             media_type=MediaType.IMAGE,
             download_url=asset_url,
+            resource_url=item_resource_url,
         )
         item_asset.full_clean()
         item_assets.append(item_asset)
@@ -365,6 +387,7 @@ def get_asset_urls_from_item_resources(resources):
     """
 
     assets = []
+    item_resource_url = resources[0]["url"] or ""
 
     for resource in resources:
         # The JSON response for each file is a list of available image versions
@@ -388,7 +411,7 @@ def get_asset_urls_from_item_resources(resources):
                 candidates.sort(key=lambda i: i[1], reverse=True)
                 assets.append(candidates[0][0])
 
-    return assets
+    return assets, item_resource_url
 
 
 @task(

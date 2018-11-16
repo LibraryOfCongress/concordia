@@ -1,16 +1,14 @@
 from django.conf import settings
 from django.conf.urls import url
 from django.contrib import admin
-from django.contrib.auth import views as auth_views
 from django.http import Http404, HttpResponseForbidden
-from django.urls import include, path, re_path
+from django.urls import include, path
 from django.views.defaults import page_not_found, permission_denied, server_error
-from machina.app import board
 
 from concordia.admin import admin_bulk_import_view
 from exporter import views as exporter_views
 
-from . import views, views_ws
+from . import views
 
 for key, value in getattr(settings, "ADMIN_SITE", {}).items():
     setattr(admin.site, key, value)
@@ -18,22 +16,19 @@ for key, value in getattr(settings, "ADMIN_SITE", {}).items():
 
 tx_urlpatterns = (
     [
-        path("", views.CampaignListView.as_view(), name="campaigns"),
-        path("<slug:slug>/", views.CampaignDetailView.as_view(), name="campaign"),
-        re_path(
-            r"^alternateasset/$",
-            views.ConcordiaAlternateAssetView.as_view(),
-            name="alternate-asset",
+        path("", views.CampaignListView.as_view(), name="campaign-list"),
+        path(
+            "<slug:slug>/", views.CampaignDetailView.as_view(), name="campaign-detail"
         ),
         path(
-            "exportCSV/<slug:campaign_slug>/",
+            "<slug:campaign_slug>/export/csv/",
             exporter_views.ExportCampaignToCSV.as_view(),
-            name="export-csv",
+            name="campaign-export-csv",
         ),
         path(
-            "exportBagIt/<slug:campaign_slug>/",
+            "<slug:campaign_slug>/export/bagit/",
             exporter_views.ExportCampaignToBagit.as_view(),
-            name="export-bagit",
+            name="campaign-export-bagit",
         ),
         path(
             "<slug:campaign_slug>/report/",
@@ -42,12 +37,18 @@ tx_urlpatterns = (
         ),
         path(
             "<slug:campaign_slug>/<slug:project_slug>/<slug:item_id>/<slug:slug>/",
-            views.ConcordiaAssetView.as_view(),
+            views.AssetDetailView.as_view(),
             name="asset-detail",
+        ),
+        # n.b. this must be above project-detail to avoid being seen as a project slug:
+        path(
+            "<slug:campaign_slug>/next-transcribable-asset/",
+            views.redirect_to_next_transcribable_asset,
+            name="redirect-to-next-transcribable-asset",
         ),
         path(
             "<slug:campaign_slug>/<slug:slug>/",
-            views.ConcordiaProjectView.as_view(),
+            views.ProjectDetailView.as_view(),
             name="project-detail",
         ),
         path(
@@ -63,9 +64,14 @@ urlpatterns = [
     path("", views.HomeView.as_view(), name="homepage"),
     path("healthz", views.healthz, name="health-check"),
     path("about/", views.static_page, name="about"),
-    path("instructions/", views.static_page, name="instructions"),
+    path("help-center/", views.static_page, name="help-center"),
+    path("help-center/welcome-guide/", views.static_page, name="welcome-guide"),
+    path("help-center/how-to-transcribe/", views.static_page, name="how-to-transcribe"),
+    path("help-center/how-to-review/", views.static_page, name="how-to-review"),
+    path("help-center/how-to-tag/", views.static_page, name="how-to-tag"),
     path("for-educators/", views.static_page, name="for-educators"),
     path("latest/", views.static_page, name="latest"),
+    path("questions/", views.static_page, name="questions"),
     path("contact/", views.ContactUsView.as_view(), name="contact"),
     path("campaigns/", include(tx_urlpatterns, namespace="transcriptions")),
     path(
@@ -88,56 +94,35 @@ urlpatterns = [
         views.review_transcription,
         name="review-transcription",
     ),
+    path("assets/<int:asset_pk>/tags/submit/", views.submit_tags, name="submit-tags"),
+    path("account/ajax-status/", views.ajax_session_status, name="ajax-session-status"),
+    path("account/ajax-messages/", views.ajax_messages, name="ajax-messages"),
     path(
-        "assets/<int:asset_pk>/tags/",
-        views_ws.UserAssetTagsGet().as_view(),
-        name="get-tags",
-    ),
-    path(
-        "assets/<int:asset_pk>/tags/submit/",
-        views_ws.TagCreate.as_view(),
-        name="submit-tags",
-    ),
-    re_path(
-        r"^account/register/$",
+        "account/register/",
         views.ConcordiaRegistrationView.as_view(),
         name="registration_register",
     ),
-    re_path(
-        r"^account/profile/$", views.AccountProfileView.as_view(), name="user-profile"
+    path(
+        "account/login/", views.ConcordiaLoginView.as_view(), name="registration_login"
     ),
-    url(r"^accounts/", include("django_registration.backends.activation.urls")),
-    url(r"^accounts/", include("django.contrib.auth.urls")),
+    path("account/profile/", views.AccountProfileView.as_view(), name="user-profile"),
+    path("account/", include("django_registration.backends.activation.urls")),
+    path("account/", include("django.contrib.auth.urls")),
+    path("captcha/ajax/", views.ajax_captcha, name="ajax-captcha"),
+    path("captcha/", include("captcha.urls")),
     # TODO: when we upgrade to Django 2.1 we can use the admin site override
-    # mechanism (the old one is broken in 2.0): see https://code.djangoproject.com/ticket/27887
+    # mechanism (the old one is broken in 2.0): see
+    # https://code.djangoproject.com/ticket/27887
     path("admin/bulk-import", admin_bulk_import_view, name="admin-bulk-import"),
     path("admin/", admin.site.urls),
-    # Apps
-    path("forum/", include(board.urls)),
-    path("captcha/", include("captcha.urls")),
-    re_path(r"^password_reset/$", auth_views.password_reset, name="password_reset"),
-    re_path(
-        r"^password_reset/done/$",
-        auth_views.password_reset_done,
-        name="password_reset_done",
-    ),
-    re_path(
-        r"^reset/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/$",
-        auth_views.password_reset_confirm,
-        name="password_reset_confirm",
-    ),
-    re_path(
-        r"^reset/done/$",
-        auth_views.password_reset_complete,
-        name="password_reset_complete",
-    ),
     # Internal support assists:
     path("maintenance-mode/", include("maintenance_mode.urls")),
     path("error/500/", server_error),
     path("error/404/", page_not_found, {"exception": Http404()}),
+    path("error/429/", views.ratelimit_view),
     path("error/403/", permission_denied, {"exception": HttpResponseForbidden()}),
     url("", include("django_prometheus_metrics.urls")),
-    url(r"^robots\.txt", include("robots.urls")),
+    path("robots.txt", include("robots.urls")),
 ]
 
 if settings.DEBUG:

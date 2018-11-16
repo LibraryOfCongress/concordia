@@ -1,16 +1,22 @@
 import re
 from urllib.parse import urljoin
 
+from bittersweet.models import validated_get_or_create
 from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.decorators import permission_required
+from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
+from django.db.models import Count
 from django.shortcuts import get_object_or_404, render
 from django.template.defaultfilters import slugify, truncatechars
 from django.urls import path
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html
 from django.views.decorators.cache import never_cache
+from tabular_export.admin import export_to_csv_action, export_to_excel_action
 
 from exporter import views as exporter_views
 from importer.tasks import import_items_into_project_from_url
@@ -30,13 +36,45 @@ from .models import (
 from .views import ReportCampaignView
 
 
+def publish_item_action(modeladmin, request, queryset):
+    """
+    Mark all of the selected items and their related assets as published
+    """
+
+    count = queryset.filter(published=False).update(published=True)
+    asset_count = Asset.objects.filter(item__in=queryset, published=False).update(
+        published=True
+    )
+
+    messages.info(request, f"Published {count} items and {asset_count} assets")
+
+
+publish_item_action.short_description = "Publish selected items and assets"
+
+
+def unpublish_item_action(modeladmin, request, queryset):
+    """
+    Mark all of the selected items and their related assets as unpublished
+    """
+
+    count = queryset.filter(published=True).update(published=False)
+    asset_count = Asset.objects.filter(item__in=queryset, published=True).update(
+        published=False
+    )
+
+    messages.info(request, f"Unpublished {count} items and {asset_count} assets")
+
+
+unpublish_item_action.short_description = "Unpublish selected items and assets"
+
+
 def publish_action(modeladmin, request, queryset):
     """
     Mark all of the selected objects as published
     """
 
     count = queryset.filter(published=False).update(published=True)
-    messages.add_message(request, messages.INFO, f"Published {count} objects")
+    messages.info(request, f"Published {count} objects")
 
 
 publish_action.short_description = "Publish selected"
@@ -48,10 +86,29 @@ def unpublish_action(modeladmin, request, queryset):
     """
 
     count = queryset.filter(published=True).update(published=False)
-    messages.add_message(request, messages.INFO, f"Unpublished {count} objects")
+    messages.info(request, f"Unpublished {count} objects")
 
 
 unpublish_action.short_description = "Unpublish selected"
+
+
+class ConcordiaUserAdmin(UserAdmin):
+    list_display = UserAdmin.list_display + ("date_joined", "transcription_count")
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        qs = qs.annotate(Count("transcription"))
+        return qs
+
+    def transcription_count(self, obj):
+        return obj.transcription__count
+
+    transcription_count.admin_order_field = "transcription__count"
+    actions = (export_to_excel_action, export_to_csv_action)
+
+
+admin.site.unregister(User)
+admin.site.register(User, ConcordiaUserAdmin)
 
 
 @never_cache
@@ -91,10 +148,8 @@ def admin_bulk_import_view(request):
             for idx, row in enumerate(rows):
                 missing_fields = [i for i in required_fields if i not in row]
                 if missing_fields:
-                    messages.add_message(
-                        request,
-                        messages.WARNING,
-                        f"Skipping row {idx}: missing fields {missing_fields}",
+                    messages.warning(
+                        request, f"Skipping row {idx}: missing fields {missing_fields}"
                     )
                     continue
 
@@ -103,58 +158,92 @@ def admin_bulk_import_view(request):
                 import_url_blob = row["Import URLs"]
 
                 if not all((campaign_title, project_title, import_url_blob)):
-                    messages.add_message(
+                    if not any(row.values()):
+                        # No messages for completely blank rows
+                        continue
+
+                    warning_message = (
+                        f"Skipping row {idx}: at least one required field "
+                        "(Campaign, Project, Import URLs) is empty"
+                    )
+                    messages.warning(request, warning_message)
+                    continue
+
+                try:
+                    campaign, created = validated_get_or_create(
+                        Campaign,
+                        title=campaign_title,
+                        defaults={
+                            "slug": slugify(campaign_title),
+                            "description": row["Campaign Long Description"] or "",
+                            "short_description": row["Campaign Short Description"]
+                            or "",
+                        },
+                    )
+                except ValidationError as exc:
+                    messages.error(
                         request,
-                        messages.WARNING,
-                        f"Skipping row {idx}: at least one required field (Campaign, Project, Import URLs) is empty",
+                        f"Validation error occurred creating campaign {campaign_title}",
                     )
                     continue
 
-                campaign, created = Campaign.objects.get_or_create(
-                    title=campaign_title,
-                    defaults={
-                        "slug": slugify(campaign_title),
-                        "description": row["Campaign Long Description"] or "",
-                        "short_description": row["Campaign Short Description"] or "",
-                    },
-                )
                 if created:
-                    messages.add_message(
-                        request, messages.INFO, f"Created new campaign {campaign_title}"
-                    )
+                    messages.info(request, f"Created new campaign {campaign_title}")
                 else:
-                    messages.add_message(
+                    messages.info(
                         request,
-                        messages.INFO,
                         f"Reusing campaign {campaign_title} without modification",
                     )
 
-                project, created = campaign.project_set.get_or_create(
-                    title=project_title, defaults={"slug": slugify(project_title)}
-                )
-                if created:
-                    messages.add_message(
-                        request, messages.INFO, f"Created new project {project_title}"
+                try:
+                    project, created = validated_get_or_create(
+                        Project,
+                        title=project_title,
+                        campaign=campaign,
+                        defaults={
+                            "slug": slugify(project_title),
+                            "description": row["Project Description"] or "",
+                            "campaign": campaign,
+                        },
                     )
-                else:
-                    messages.add_message(
+                except ValidationError as exc:
+                    messages.error(
                         request,
-                        messages.INFO,
-                        f"Reusing project {project_title} without modification",
+                        f"Validation error occurred creating project {project_title}",
+                    )
+                    continue
+
+                if created:
+                    messages.info(request, f"Created new project {project_title}")
+                else:
+                    messages.info(
+                        request, f"Reusing project {project_title} without modification"
                     )
 
                 potential_urls = filter(None, re.split(r"[\s]+", import_url_blob))
                 for url in potential_urls:
                     if not url.startswith("http"):
+                        messages.warning(
+                            request, f"Skipping unrecognized URL value: {url}"
+                        )
                         continue
-                    import_jobs.append(
-                        import_items_into_project_from_url(request.user, project, url)
-                    )
-                    messages.add_message(
-                        request,
-                        messages.INFO,
-                        f"Queued {campaign_title} {project_title} import for {url}",
-                    )
+
+                    try:
+                        import_jobs.append(
+                            import_items_into_project_from_url(
+                                request.user, project, url
+                            )
+                        )
+
+                        messages.info(
+                            request,
+                            f"Queued {campaign_title} {project_title} import for {url}",
+                        )
+                    except Exception as exc:
+                        messages.error(
+                            request,
+                            f"Unhandled error attempting to import {url}: {exc}",
+                        )
     else:
         form = AdminProjectBulkImportForm()
 
@@ -336,9 +425,7 @@ class ItemAdmin(admin.ModelAdmin):
     ]
     list_filter = ("published", "project__campaign", "project")
 
-    actions = (publish_action, unpublish_action)
-
-    readonly_fields = ("project",)
+    actions = (publish_item_action, unpublish_item_action)
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -377,9 +464,7 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         "transcription_status",
     )
     actions = (publish_action, unpublish_action)
-
-    readonly_fields = ("item",)
-
+    autocomplete_fields = ("item",)
     ordering = ("item__item_id", "sequence")
 
     def get_queryset(self, request):
@@ -398,6 +483,11 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
 
     truncated_media_url.allow_tags = True
     truncated_media_url.short_description = "Media URL"
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj:
+            return self.readonly_fields + ("item",)
+        return self.readonly_fields
 
     def change_view(self, request, object_id, extra_context=None, **kwargs):
         if object_id:

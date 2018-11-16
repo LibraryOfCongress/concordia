@@ -1,0 +1,23 @@
+exclude: '.*/vendor/.*'
+repos:
+    - repo: https://github.com/ambv/black
+      rev: stable
+      hooks:
+          - id: black
+    - repo: https://github.com/pre-commit/pre-commit-hooks
+      rev: v2.0.0
+      hooks:
+          - id: flake8
+    - repo: https://github.com/prettier/prettier
+      rev: 1.14.3
+      hooks:
+          - id: prettier
+            files: \.(css|less|scss|ts|tsx|graphql|gql|json|js|jsx|md)$
+    - repo: https://github.com/pre-commit/mirrors-eslint
+      rev: v5.8.0
+      hooks:
+          - id: eslint
+            additional_dependencies:
+                - eslint@5.8.0
+                - eslint-plugin-prettier@3.0.0
+                - prettier@1.14.3

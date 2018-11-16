@@ -1,28 +1,28 @@
-{% extends "transcriptions/base.html" %}
-{% block title %}Crowd — Campaigns{% endblock title %}
+{% extends "base.html" %}
 
 {% load staticfiles %}
-{% load concordia_auth_tags %}
+
+{% block title %}Campaigns{% endblock title %}
 
 {% block breadcrumbs %}
     <li class="breadcrumb-item active" aria-current="page">Campaigns</li>
 {% endblock breadcrumbs %}
 
 {% block main_content %}
-<div class="container-fluid py-default">
+<div class="container-fluid py-3">
     <div class="row">
-        <div class="d-flex flex-wrap col-12 mb-default justify-content-around">
+        <div class="d-flex flex-wrap col-12 mb-3 justify-content-around">
             {% for campaign in campaigns %}
-                <div class="bg-lightest-gray w-100 mb-default">
+                <div class="bg-lightest-gray w-100 mb-3">
                     <div class="row">
                         <div class="col-12 col-md-8 px-3">
-                            <a href="{% url 'transcriptions:campaign' campaign.slug %}">
+                            <a href="{% url 'transcriptions:campaign-detail' campaign.slug %}">
                                 <h1 class="campaign-title">{{ campaign.title }}</h1>
                             </a>
                             {{ campaign.short_description }}
                         </div>
                         <div class="col-12 col-md-4">
-                            <a href="{% url 'transcriptions:campaign' campaign.slug %}">
+                            <a href="{% url 'transcriptions:campaign-detail' campaign.slug %}">
                             <img src="{{ MEDIA_URL }}{{ campaign.thumbnail_image }}" class="img-fluid" alt="{{ campaign.title }} image">
                             </a>
                         </div>
@@ -32,7 +32,7 @@
         </div>
     </div>
     <div class="row">
-        {% include "standard-pagination.html" %}
+        {% include "fragments/standard-pagination.html" %}
     </div>
 </div>
 {% endblock main_content %}
