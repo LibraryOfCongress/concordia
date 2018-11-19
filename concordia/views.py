@@ -242,21 +242,29 @@ class ConcordiaLoginView(RatelimitMixin, LoginView):
                 method=self.ratelimit_method,
                 rate=self.ratelimit_rate,
             ):
-                raise Ratelimited()
-            else:
-                return self.form_invalid(form)
+                raise Ratelimited(
+                    "We're sorry. Due to too many failed log in attempts "
+                    "we have locked your account. Please try again later "
+                    "or reset your password."
+                )
+
+            return self.form_invalid(form)
 
 
 def ratelimit_view(request, exception=None):
     status_code = 429
 
+    # TODO: return JSON response for JSON requests
+
     template_name = "429.html"
     template = loader.get_template(template_name)
 
-    response = HttpResponse(template.render(), status=status_code)
+    response = HttpResponse(
+        template.render({"exception": exception}), status=status_code
+    )
 
     response["Retry-After"] = 15 * 60
-    response["reason_phrase"] = "Too many requests"
+    response["reason_phrase"] = str(exception)
 
     return response
 
