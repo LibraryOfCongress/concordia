@@ -37,7 +37,9 @@ from django.views.decorators.vary import vary_on_headers
 from django.views.generic import DetailView, FormView, ListView, TemplateView
 from django_registration.backends.activation.views import RegistrationView
 from ratelimit.decorators import ratelimit
+from ratelimit.exceptions import Ratelimited
 from ratelimit.mixins import RatelimitMixin
+from ratelimit.utils import is_ratelimited
 
 from concordia.forms import ContactUsForm, UserProfileForm, UserRegistrationForm
 from concordia.models import (
@@ -209,6 +211,7 @@ def registration_rate(self, group, request):
 @method_decorator(never_cache, name="dispatch")
 class ConcordiaRegistrationView(RatelimitMixin, RegistrationView):
     form_class = UserRegistrationForm
+    ratelimit_group = "registration"
     ratelimit_key = "ip"
     ratelimit_rate = registration_rate
     ratelimit_method = "POST"
@@ -217,17 +220,45 @@ class ConcordiaRegistrationView(RatelimitMixin, RegistrationView):
 
 @method_decorator(never_cache, name="dispatch")
 class ConcordiaLoginView(RatelimitMixin, LoginView):
+    ratelimit_group = "login"
     ratelimit_key = "ip"
     ratelimit_rate = "3/15m"
     ratelimit_method = "POST"
-    ratelimit_block = settings.RATELIMIT_BLOCK
+    ratelimit_block = False
+
+    def post(self, request, *args, **kwargs):
+        """
+        Handle POST requests: instantiate a form instance with the passed
+        POST variables and then check if it's valid.
+        """
+        form = self.get_form()
+        if form.is_valid():
+            return self.form_valid(form)
+        else:
+            if is_ratelimited(
+                request,
+                group=self.ratelimit_group,
+                key=self.ratelimit_key,
+                method=self.ratelimit_method,
+                rate=self.ratelimit_rate,
+            ):
+                raise Ratelimited()
+            else:
+                return self.form_invalid(form)
 
 
 def ratelimit_view(request, exception=None):
-    template_name = "429.html"
     status_code = 429
+
+    template_name = "429.html"
     template = loader.get_template(template_name)
-    return HttpResponse(template.render(), status=status_code)
+
+    response = HttpResponse(template.render(), status=status_code)
+
+    response["Retry-After"] = 15 * 60
+    response["reason_phrase"] = "Too many requests"
+
+    return response
 
 
 @method_decorator(never_cache, name="dispatch")
