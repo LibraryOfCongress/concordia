@@ -107,10 +107,11 @@ You can launch this CloudFormation stack in your account:
 ### Customize the templates
 
 1. [Fork](https://github.com/awslabs/ecs-refarch-cloudformation#fork-destination-box) this GitHub repository.
-2. Clone the forked GitHub repository to your local machine.
-3. Modify the templates.
-4. Upload them to an Amazon S3 bucket of your choice.
-5. Either create a new CloudFormation stack by deploying the master.yaml template, or update your existing stack with your version of the templates.
+1. Clone the forked GitHub repository to your local machine.
+1. Modify the templates.
+1. Verify your changes locally: `pipenv run cfn-lint path/to/template.yaml`
+1. Upload them to an Amazon S3 bucket of your choice.
+1. Either create a new CloudFormation stack by deploying the master.yaml template, or update your existing stack with your version of the templates.
 
 ### Create a new ECS service
 
