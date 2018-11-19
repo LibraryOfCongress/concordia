@@ -10,7 +10,7 @@
 {% block breadcrumbs %}
     <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaign-list' %}">Campaigns</a></li>
     <li class="breadcrumb-item">
-        <a class="primary-text" href="{% url 'transcriptions:campaign-detail' campaign.slug %}" title="{{ campaign.title }}">{{ campaign.title }}</a>
+        <a class="primary-text" href="{% url 'transcriptions:campaign-detail' campaign.slug %}?{{ sublevel_querystring }}" title="{{ campaign.title }}">{{ campaign.title }}</a>
     </li>
     <li class="breadcrumb-item active" aria-current="page" title="{{ project.title }}">{{ project.title }}</li>
 {% endblock breadcrumbs %}
@@ -28,7 +28,7 @@
         <div class="card-deck w-100 flex-column flex-sm-row justify-content-center align-items-center align-items-sm-stretch">
             {% for item in items %}
                 <div class="col-12 col-md-4 col-lg-3 m-2 p-1 concordia-object-card card bg-lightest-gray shadow-regular align-items-center" data-transcription-status="{{ item.lowest_transcription_status }}">
-                    <a href="{% url 'transcriptions:item-detail' campaign.slug project.slug item.item_id %}">
+                    <a href="{% url 'transcriptions:item-detail' campaign.slug project.slug item.item_id %}?{{ sublevel_querystring }}">
                         <img class="card-img card-img-campaign" alt="{{ item.title }}" src="{{ item.thumbnail_url }}">
                     </a>
 
@@ -39,7 +39,7 @@
                     </div>
 
                     <h6 class="text-center primary-text">
-                        <a href="{% url 'transcriptions:item-detail' campaign.slug project.slug item.item_id %}" class="campaign-image-link">
+                        <a href="{% url 'transcriptions:item-detail' campaign.slug project.slug item.item_id %}?{{ sublevel_querystring }}" class="campaign-image-link">
                             {{ item.title }}
                         </a>
                     </h6>
