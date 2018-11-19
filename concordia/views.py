@@ -956,7 +956,7 @@ def reserve_rate(g, r):
     return None if r.user.is_authenticated else "12/m"
 
 
-@ratelimit(key="ip", rate=reserve_rate, block=settings.RATE_LIMIT_BLOCK)
+@ratelimit(key="ip", rate=reserve_rate, block=settings.RATELIMIT_BLOCK)
 @require_POST
 @never_cache
 def reserve_asset_transcription(request, *, asset_pk):
