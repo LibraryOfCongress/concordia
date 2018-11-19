@@ -99,6 +99,7 @@ MIDDLEWARE = [
 ]
 
 RATELIMIT_VIEW = "concordia.views.ratelimit_view"
+RATELIMIT_BLOCK = False
 
 TEMPLATES = [
     {

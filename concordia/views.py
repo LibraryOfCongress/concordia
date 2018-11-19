@@ -212,7 +212,7 @@ class ConcordiaRegistrationView(RatelimitMixin, RegistrationView):
     ratelimit_key = "ip"
     ratelimit_rate = registration_rate
     ratelimit_method = "POST"
-    ratelimit_block = True
+    ratelimit_block = settings.RATELIMIT_BLOCK
 
 
 @method_decorator(never_cache, name="dispatch")
@@ -220,7 +220,7 @@ class ConcordiaLoginView(RatelimitMixin, LoginView):
     ratelimit_key = "ip"
     ratelimit_rate = "3/15m"
     ratelimit_method = "POST"
-    ratelimit_block = True
+    ratelimit_block = settings.RATELIMIT_BLOCK
 
 
 def ratelimit_view(request, exception=None):
@@ -619,7 +619,7 @@ def save_rate(g, r):
     return None if r.user.is_authenticated else "1/m"
 
 
-@ratelimit(key="ip", rate=save_rate, block=True)
+@ratelimit(key="ip", rate=save_rate, block=settings.RATELIMIT_BLOCK)
 @require_POST
 @validate_anonymous_captcha
 @atomic
@@ -681,7 +681,7 @@ def submit_rate(g, r):
     return None if r.user.is_authenticated else "1/m"
 
 
-@ratelimit(key="ip", rate=submit_rate, block=True)
+@ratelimit(key="ip", rate=submit_rate, block=settings.RATELIMIT_BLOCK)
 @require_POST
 @validate_anonymous_captcha
 def submit_transcription(request, *, pk):
@@ -956,7 +956,7 @@ def reserve_rate(g, r):
     return None if r.user.is_authenticated else "12/m"
 
 
-@ratelimit(key="ip", rate=reserve_rate, block=True)
+@ratelimit(key="ip", rate=reserve_rate, block=settings.RATE_LIMIT_BLOCK)
 @require_POST
 @never_cache
 def reserve_asset_transcription(request, *, asset_pk):
