@@ -364,9 +364,13 @@ class CampaignDetailView(DetailView):
             )
         )
 
+        ctx["filters"] = filters = {}
         status = self.request.GET.get("transcription_status")
         if status in TranscriptionStatus.CHOICE_MAP:
             projects = projects.exclude(**{f"{status}_count": 0})
+            # We only want to pass specific QS parameters to lower-level search pages:
+            filters["transcription_status"] = status
+        ctx["sublevel_querystring"] = urlencode(filters)
 
         annotate_children_with_progress_stats(projects)
         ctx["projects"] = projects
@@ -406,9 +410,13 @@ class ProjectDetailView(ListView):
             }
         )
 
+        self.filters = {}
         status = self.request.GET.get("transcription_status")
         if status in TranscriptionStatus.CHOICE_MAP:
             item_qs = item_qs.exclude(**{f"{status}_count": 0})
+            # We only want to pass specific QS parameters to lower-level search
+            # pages so we'll record those here:
+            self.filters["transcription_status"] = status
 
         return item_qs
 
@@ -416,6 +424,10 @@ class ProjectDetailView(ListView):
         ctx = super().get_context_data(**kws)
         ctx["project"] = project = self.project
         ctx["campaign"] = project.campaign
+
+        if self.filters:
+            ctx["sublevel_querystring"] = urlencode(self.filters)
+            ctx["filters"] = self.filters
 
         project_assets = Asset.objects.filter(
             item__project=project, published=True, item__published=True
@@ -454,14 +466,14 @@ class ItemDetailView(ListView):
         asset_qs = asset_qs.select_related(
             "item__project__campaign", "item__project", "item"
         )
-        return self.apply_asset_filters(asset_qs)
 
-    def apply_asset_filters(self, asset_qs):
-        """Use optional GET parameters to filter the asset list"""
-
+        self.filters = {}
         status = self.request.GET.get("transcription_status")
         if status in TranscriptionStatus.CHOICE_MAP:
             asset_qs = asset_qs.filter(transcription_status=status)
+            # We only want to pass specific QS parameters to lower-level search
+            # pages so we'll record those here:
+            self.filters["transcription_status"] = status
 
         return asset_qs
 
@@ -473,6 +485,8 @@ class ItemDetailView(ListView):
                 "campaign": self.item.project.campaign,
                 "project": self.item.project,
                 "item": self.item,
+                "sublevel_querystring": urlencode(self.filters),
+                "filters": self.filters,
             }
         )
 
