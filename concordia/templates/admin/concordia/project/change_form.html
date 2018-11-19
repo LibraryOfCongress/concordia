@@ -9,6 +9,12 @@
                 Import Items
             </a>
         </li>
+
+        <li>
+            <a class="view-parent-object" href="{% url 'admin:concordia_campaign_change' original.campaign_id %}">
+                Campaign
+            </a>
+        </li>
     {% endif %}
     {{ block.super }}
 {% endblock %}
