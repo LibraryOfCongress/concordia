@@ -182,8 +182,7 @@ def admin_bulk_import_view(request):
                     )
                 except ValidationError as exc:
                     messages.error(
-                        request,
-                        f"Validation error occurred creating campaign {campaign_title}",
+                        request, f"Unable to create campaign {campaign_title}: {exc}"
                     )
                     continue
 
@@ -208,8 +207,7 @@ def admin_bulk_import_view(request):
                     )
                 except ValidationError as exc:
                     messages.error(
-                        request,
-                        f"Validation error occurred creating project {project_title}",
+                        request, f"Unable to create project {project_title}: {exc}"
                     )
                     continue
 
