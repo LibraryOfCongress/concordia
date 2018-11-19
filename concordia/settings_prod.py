@@ -79,4 +79,4 @@ REGISTRATION_SALT = "django_registration"  # doesn't need to be secret
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
 
-RATELIMIT_BLOCK = False
+RATELIMIT_BLOCK = os.getenv("RATELIMIT_BLOCK", True).lower() not in ("false", "0")
