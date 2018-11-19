@@ -19,6 +19,11 @@
                 Item
             </a>
         </li>
+        <li>
+            <a class="view-related-objects" href="{% url 'admin:concordia_transcription_changelist' %}?asset__id__exact={{ original.pk }}">
+                Transcriptions
+            </a>
+        </li>
     {% endif %}
     {{ block.super }}
 {% endblock object-tools-items %}

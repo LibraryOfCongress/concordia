@@ -14,6 +14,13 @@
                 Project
             </a>
         </li>
+
+        <li>
+            <a class="view-related-objects" href="{% url 'admin:concordia_asset_changelist' %}?item__id__exact={{ original.pk }}">
+                Assets
+            </a>
+        </li>
+
     {% endif %}
     {{ block.super }}
 {% endblock %}
