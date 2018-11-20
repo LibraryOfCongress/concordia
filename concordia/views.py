@@ -235,11 +235,15 @@ class ConcordiaLoginView(RatelimitMixin, LoginView):
             rate=self.ratelimit_rate,
         )
         recent_captcha = (
-            time.time() - request.session.get("captcha_validation_time", 0) < 86400
-        )
+            time.time() - request.session.get("captcha_validation_time", 0)
+        ) < 86400
 
         if blocked and not recent_captcha:
-            raise Ratelimited()
+            raise Ratelimited(
+                "We're sorry. Due to too many failed log in attempts "
+                "we have locked your account. Please try again later "
+                "or reset your password."
+            )
         else:
             return super().post(request, *args, **kwargs)
 
@@ -247,14 +251,15 @@ class ConcordiaLoginView(RatelimitMixin, LoginView):
 def ratelimit_view(request, exception=None):
     status_code = 429
 
-    # TODO: return JSON response for JSON requests
+    if "json" in request.META["HTTP_ACCEPT"].lower():
+        response = JsonResponse({"exception": str(exception), "status": status_code})
+    else:
+        template_name = "429.html"
+        template = loader.get_template(template_name)
 
-    template_name = "429.html"
-    template = loader.get_template(template_name)
-
-    response = HttpResponse(
-        template.render({"exception": exception}), status=status_code
-    )
+        response = HttpResponse(
+            template.render({"exception": exception}), status=status_code
+        )
 
     response["Retry-After"] = 15 * 60
     response["reason_phrase"] = str(exception)
