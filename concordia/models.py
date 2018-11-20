@@ -257,6 +257,7 @@ class Transcription(MetricsModelMixin("transcription"), models.Model):
         null=True,
         on_delete=models.CASCADE,
         help_text="A previous transcription record which is replaced by this one",
+        related_name="superseded_by",
     )
 
     submitted = models.DateTimeField(
