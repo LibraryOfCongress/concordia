@@ -366,11 +366,11 @@ class TranscriptionAdmin(admin.ModelAdmin):
     list_display_links = ("id", "asset")
 
     list_filter = (
-        "asset__item__project__campaign",
-        "asset__item__project",
         SubmittedFilter,
         AcceptedFilter,
         RejectedFilter,
+        "asset__item__project__campaign",
+        "asset__item__project",
     )
 
     search_fields = ["text", "user__username", "user__email"]
