@@ -103,8 +103,31 @@ class ConcordiaUserAdmin(UserAdmin):
     def transcription_count(self, obj):
         return obj.transcription__count
 
+    EXPORT_FIELDS = (
+        "username",
+        "email",
+        "first_name",
+        "last_name",
+        "is_active",
+        "is_staff",
+        "is_superuser",
+        "date_joined",
+        "last_login",
+        "transcription__count",
+    )
+
+    def export_users_as_csv(self, request, queryset):
+        return export_to_csv_action(
+            self, request, queryset, field_names=self.EXPORT_FIELDS
+        )
+
+    def export_users_as_excel(self, request, queryset):
+        return export_to_excel_action(
+            self, request, queryset, field_names=self.EXPORT_FIELDS
+        )
+
     transcription_count.admin_order_field = "transcription__count"
-    actions = (export_to_excel_action, export_to_csv_action)
+    actions = (export_users_as_csv, export_users_as_excel)
 
 
 admin.site.unregister(User)
@@ -182,8 +205,7 @@ def admin_bulk_import_view(request):
                     )
                 except ValidationError as exc:
                     messages.error(
-                        request,
-                        f"Validation error occurred creating campaign {campaign_title}",
+                        request, f"Unable to create campaign {campaign_title}: {exc}"
                     )
                     continue
 
@@ -208,8 +230,7 @@ def admin_bulk_import_view(request):
                     )
                 except ValidationError as exc:
                     messages.error(
-                        request,
-                        f"Validation error occurred creating project {project_title}",
+                        request, f"Unable to create project {project_title}: {exc}"
                     )
                     continue
 
