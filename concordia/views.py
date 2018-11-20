@@ -221,34 +221,27 @@ class ConcordiaRegistrationView(RatelimitMixin, RegistrationView):
 @method_decorator(never_cache, name="dispatch")
 class ConcordiaLoginView(RatelimitMixin, LoginView):
     ratelimit_group = "login"
-    ratelimit_key = "ip"
+    ratelimit_key = "post:username"
     ratelimit_rate = "3/15m"
     ratelimit_method = "POST"
     ratelimit_block = False
 
     def post(self, request, *args, **kwargs):
-        """
-        Handle POST requests: instantiate a form instance with the passed
-        POST variables and then check if it's valid.
-        """
-        form = self.get_form()
-        if form.is_valid():
-            return self.form_valid(form)
-        else:
-            if is_ratelimited(
-                request,
-                group=self.ratelimit_group,
-                key=self.ratelimit_key,
-                method=self.ratelimit_method,
-                rate=self.ratelimit_rate,
-            ):
-                raise Ratelimited(
-                    "We're sorry. Due to too many failed log in attempts "
-                    "we have locked your account. Please try again later "
-                    "or reset your password."
-                )
+        blocked = is_ratelimited(
+            request,
+            group=self.ratelimit_group,
+            key=self.ratelimit_key,
+            method=self.ratelimit_method,
+            rate=self.ratelimit_rate,
+        )
+        recent_captcha = (
+            time.time() - request.session.get("captcha_validation_time", 0) < 86400
+        )
 
-            return self.form_invalid(form)
+        if blocked and not recent_captcha:
+            raise Ratelimited()
+        else:
+            return super().post(request, *args, **kwargs)
 
 
 def ratelimit_view(request, exception=None):
