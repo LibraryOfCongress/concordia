@@ -24,6 +24,22 @@
                 Asset
             </a>
         </li>
+        {% if original.supersedes_id %}
+            <li>
+                <a class="view-related-object" href="{% url 'admin:concordia_transcription_change' original.supersedes_id %}">
+                    Previous Version
+                </a>
+            </li>
+        {% endif %}
+        {% with original.superseded_by.first as superseded_by %}
+            {% if superseded_by %}
+                <li>
+                    <a class="view-related-object" href="{% url 'admin:concordia_transcription_change' superseded_by.pk %}">
+                        Next Version
+                    </a>
+                </li>
+            {% endif %}
+        {% endwith %}
     {% endif %}
     {{ block.super }}
 {% endblock object-tools-items %}
