@@ -559,7 +559,7 @@ class TranscriptionAdmin(admin.ModelAdmin):
     )
     list_display_links = ("id", "asset")
 
-    search_fields = ["text"]
+    search_fields = ["text", "user__username", "user__email"]
 
     readonly_fields = (
         "asset",
