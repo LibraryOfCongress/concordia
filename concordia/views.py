@@ -9,6 +9,7 @@ from smtplib import SMTPException
 from urllib.parse import urlencode
 
 import markdown
+from captcha.fields import CaptchaField
 from captcha.helpers import captcha_image_url
 from captcha.models import CaptchaStore
 from django.conf import settings
@@ -37,7 +38,6 @@ from django.views.decorators.vary import vary_on_headers
 from django.views.generic import DetailView, FormView, ListView, TemplateView
 from django_registration.backends.activation.views import RegistrationView
 from ratelimit.decorators import ratelimit
-from ratelimit.exceptions import Ratelimited
 from ratelimit.mixins import RatelimitMixin
 from ratelimit.utils import is_ratelimited
 
@@ -239,11 +239,9 @@ class ConcordiaLoginView(RatelimitMixin, LoginView):
         ) < 86400
 
         if blocked and not recent_captcha:
-            raise Ratelimited(
-                "We're sorry. Due to too many failed log in attempts "
-                "we have locked your account. Please try again later "
-                "or reset your password."
-            )
+            form = self.get_form()
+            form.fields["captcha"] = CaptchaField()
+            return self.form_invalid(form)
         else:
             return super().post(request, *args, **kwargs)
 
