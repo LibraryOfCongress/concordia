@@ -23,18 +23,19 @@ from ..models import (
     Item,
     Project,
     Resource,
+    SimplePage,
     Tag,
     Transcription,
     UserAssetTagCollection,
 )
 from ..views import ReportCampaignView
-from .filters import AcceptedFilter, SubmittedFilter, RejectedFilter
 from .actions import (
     publish_action,
-    unpublish_action,
     publish_item_action,
+    unpublish_action,
     unpublish_item_action,
 )
+from .filters import AcceptedFilter, RejectedFilter, SubmittedFilter
 
 
 class ConcordiaUserAdmin(UserAdmin):
@@ -392,3 +393,14 @@ class TranscriptionAdmin(admin.ModelAdmin):
         return truncatechars(obj.text, 100)
 
     truncated_text.short_description = "Text"
+
+
+@admin.register(SimplePage)
+class SimplePageAdmin(admin.ModelAdmin):
+    list_display = ("path", "title", "created_on", "updated_on")
+    readonly_fields = ("path", "created_on", "updated_on")
+
+    fieldsets = (
+        (None, {"fields": ("created_on", "updated_on", "path", "title")}),
+        ("Body", {"classes": ("markdown-preview",), "fields": ("body",)}),
+    )
