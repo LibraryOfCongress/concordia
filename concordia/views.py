@@ -227,6 +227,8 @@ class ConcordiaLoginView(RatelimitMixin, LoginView):
     ratelimit_block = False
 
     def post(self, request, *args, **kwargs):
+        form = self.get_form()
+
         blocked = is_ratelimited(
             request,
             group=self.ratelimit_group,
@@ -239,11 +241,16 @@ class ConcordiaLoginView(RatelimitMixin, LoginView):
         ) < 86400
 
         if blocked and not recent_captcha:
-            form = self.get_form()
             form.fields["captcha"] = CaptchaField()
-            return self.form_invalid(form)
+
+        if form.is_valid():
+            return self.form_valid(form)
         else:
-            return super().post(request, *args, **kwargs)
+            return self.form_invalid(form)
+
+    def form_valid(self, form):
+        self.request.session["captcha_validation_time"] = time.time()
+        return super().form_valid(form)
 
 
 def ratelimit_view(request, exception=None):
