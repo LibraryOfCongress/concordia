@@ -26,10 +26,11 @@ from django.db import connection
 from django.db.models import Case, Count, IntegerField, Q, When
 from django.db.transaction import atomic
 from django.http import HttpResponse, JsonResponse
-from django.shortcuts import Http404, get_object_or_404, redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.template import loader
 from django.urls import reverse, reverse_lazy
 from django.utils.decorators import method_decorator
+from django.utils.http import http_date
 from django.utils.timezone import now
 from django.views.decorators.cache import cache_control, never_cache
 from django.views.decorators.csrf import csrf_exempt
@@ -48,6 +49,7 @@ from concordia.models import (
     Campaign,
     Item,
     Project,
+    SimplePage,
     Tag,
     Transcription,
     TranscriptionStatus,
@@ -110,7 +112,7 @@ def healthz(request):
 
 
 @default_cache_control
-def static_page(request, base_name=None):
+def simple_page(request, path=None):
     """
     Serve static content from Markdown files
 
@@ -121,23 +123,13 @@ def static_page(request, base_name=None):
     path("foobar/", static_page, {"base_name": "some-weird-filename.md"})
     """
 
-    if not base_name:
-        base_name = request.path.strip("/")
+    if not path:
+        path = request.path
 
-    filename = os.path.join(settings.SITE_ROOT_DIR, "static-pages", f"{base_name}.md")
-
-    if not os.path.exists(filename):
-        raise Http404
+    page = get_object_or_404(SimplePage, path=path)
 
     md = markdown.Markdown(extensions=["meta"])
-    with open(filename) as f:
-        html = md.convert(f.read())
-
-    page_title = md.Meta.get("title")
-    if page_title:
-        page_title = "\n".join(i.strip() for i in page_title)
-    else:
-        page_title = base_name.replace("-", " ").replace("/", " — ").title()
+    html = md.convert(page.body)
 
     breadcrumbs = []
     path_components = request.path.strip("/").split("/")
@@ -146,9 +138,12 @@ def static_page(request, base_name=None):
             ("/%s/" % "/".join(path_components[0:i]), segment.replace("-", " ").title())
         )
 
-    ctx = {"body": html, "title": page_title, "breadcrumbs": breadcrumbs}
+    ctx = {"body": html, "title": page.title, "breadcrumbs": breadcrumbs}
 
-    return render(request, "static-page.html", ctx)
+    resp = render(request, "static-page.html", ctx)
+    resp["Created"] = http_date(page.created_on.timestamp())
+    resp["Last-Modified"] = http_date(page.updated_on.timestamp())
+    return resp
 
 
 @cache_control(private=True, max_age=settings.DEFAULT_PAGE_TTL)
