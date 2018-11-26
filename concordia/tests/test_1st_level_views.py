@@ -1,5 +1,3 @@
-# TODO: Add correct copyright header
-
 from django.test import TestCase
 from django.urls import reverse
 
