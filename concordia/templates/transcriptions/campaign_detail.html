@@ -1,11 +1,13 @@
 {% extends "base.html" %}
 
 {% load staticfiles %}
+{% load concordia_text_tags %}
 
 {% block title %}{{ campaign.title }}{% endblock title %}
 
 {% block head_content %}
     <link rel="canonical" href="https://{{ request.get_host }}{{ request.path }}">
+    <meta name="description" content="{{ campaign.description|normalize_whitespace }}">
 {% endblock head_content %}
 
 {% block breadcrumbs %}
