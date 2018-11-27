@@ -24,7 +24,7 @@ class UserDocument(DocType):
 
 @tag_collection.doc_type
 class TagCollectionDocument(DocType):
-    tags = fields.TextField(attr="tags_to_string")
+    tags = fields.NestedField(properties={"value": fields.TextField()})
     asset = fields.ObjectField(
         properties={
             "title": fields.TextField(),
