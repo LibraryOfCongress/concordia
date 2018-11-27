@@ -354,7 +354,7 @@ ul.nav-secondary {
 
 .btn.disabled,
 .btn:disabled {
-    opacity: 0.25 !important;
+    opacity: 0.3 !important;
 }
 
 .btn-secondary {
