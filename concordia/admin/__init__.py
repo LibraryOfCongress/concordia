@@ -1,29 +1,23 @@
-import re
 from urllib.parse import urljoin
 
-from bittersweet.models import validated_get_or_create
 from django.conf import settings
-from django.contrib import admin, messages
-from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError
 from django.db.models import Count
 from django.shortcuts import get_object_or_404, render
-from django.template.defaultfilters import slugify, truncatechars
+from django.template.defaultfilters import truncatechars
 from django.urls import path
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html
-from django.views.decorators.cache import never_cache
 from tabular_export.admin import export_to_csv_action, export_to_excel_action
 
 from exporter import views as exporter_views
 from importer.tasks import import_items_into_project_from_url
-from importer.utils.excel import slurp_excel
 
-from .forms import AdminItemImportForm, AdminProjectBulkImportForm
-from .models import (
+from ..forms import AdminItemImportForm
+from ..models import (
     Asset,
     Campaign,
     Item,
@@ -33,63 +27,14 @@ from .models import (
     Transcription,
     UserAssetTagCollection,
 )
-from .views import ReportCampaignView
-
-
-def publish_item_action(modeladmin, request, queryset):
-    """
-    Mark all of the selected items and their related assets as published
-    """
-
-    count = queryset.filter(published=False).update(published=True)
-    asset_count = Asset.objects.filter(item__in=queryset, published=False).update(
-        published=True
-    )
-
-    messages.info(request, f"Published {count} items and {asset_count} assets")
-
-
-publish_item_action.short_description = "Publish selected items and assets"
-
-
-def unpublish_item_action(modeladmin, request, queryset):
-    """
-    Mark all of the selected items and their related assets as unpublished
-    """
-
-    count = queryset.filter(published=True).update(published=False)
-    asset_count = Asset.objects.filter(item__in=queryset, published=True).update(
-        published=False
-    )
-
-    messages.info(request, f"Unpublished {count} items and {asset_count} assets")
-
-
-unpublish_item_action.short_description = "Unpublish selected items and assets"
-
-
-def publish_action(modeladmin, request, queryset):
-    """
-    Mark all of the selected objects as published
-    """
-
-    count = queryset.filter(published=False).update(published=True)
-    messages.info(request, f"Published {count} objects")
-
-
-publish_action.short_description = "Publish selected"
-
-
-def unpublish_action(modeladmin, request, queryset):
-    """
-    Mark all of the selected objects as unpublished
-    """
-
-    count = queryset.filter(published=True).update(published=False)
-    messages.info(request, f"Unpublished {count} objects")
-
-
-unpublish_action.short_description = "Unpublish selected"
+from ..views import ReportCampaignView
+from .filters import AcceptedFilter, SubmittedFilter, RejectedFilter
+from .actions import (
+    publish_action,
+    unpublish_action,
+    publish_item_action,
+    unpublish_item_action,
+)
 
 
 class ConcordiaUserAdmin(UserAdmin):
@@ -132,145 +77,6 @@ class ConcordiaUserAdmin(UserAdmin):
 
 admin.site.unregister(User)
 admin.site.register(User, ConcordiaUserAdmin)
-
-
-@never_cache
-@staff_member_required
-@permission_required("concordia.add_campaign")
-@permission_required("concordia.change_campaign")
-@permission_required("concordia.add_project")
-@permission_required("concordia.change_project")
-@permission_required("concordia.add_item")
-@permission_required("concordia.change_item")
-def admin_bulk_import_view(request):
-    # TODO: when we upgrade to Django 2.1 we can use the admin site override
-    # mechanism (the old one is broken in 2.0): see
-    # https://code.djangoproject.com/ticket/27887 in the meantime, this will
-    # simply be a regular Django view using forms and just enough context to
-    # reuse the Django admin template
-
-    request.current_app = "admin"
-
-    context = {"title": "Bulk Import"}
-
-    if request.method == "POST":
-        form = AdminProjectBulkImportForm(request.POST, request.FILES)
-
-        if form.is_valid():
-            context["import_jobs"] = import_jobs = []
-
-            rows = slurp_excel(request.FILES["spreadsheet_file"])
-            required_fields = [
-                "Campaign",
-                "Campaign Short Description",
-                "Campaign Long Description",
-                "Project",
-                "Project Description",
-                "Import URLs",
-            ]
-            for idx, row in enumerate(rows):
-                missing_fields = [i for i in required_fields if i not in row]
-                if missing_fields:
-                    messages.warning(
-                        request, f"Skipping row {idx}: missing fields {missing_fields}"
-                    )
-                    continue
-
-                campaign_title = row["Campaign"]
-                project_title = row["Project"]
-                import_url_blob = row["Import URLs"]
-
-                if not all((campaign_title, project_title, import_url_blob)):
-                    if not any(row.values()):
-                        # No messages for completely blank rows
-                        continue
-
-                    warning_message = (
-                        f"Skipping row {idx}: at least one required field "
-                        "(Campaign, Project, Import URLs) is empty"
-                    )
-                    messages.warning(request, warning_message)
-                    continue
-
-                try:
-                    campaign, created = validated_get_or_create(
-                        Campaign,
-                        title=campaign_title,
-                        defaults={
-                            "slug": slugify(campaign_title),
-                            "description": row["Campaign Long Description"] or "",
-                            "short_description": row["Campaign Short Description"]
-                            or "",
-                        },
-                    )
-                except ValidationError as exc:
-                    messages.error(
-                        request, f"Unable to create campaign {campaign_title}: {exc}"
-                    )
-                    continue
-
-                if created:
-                    messages.info(request, f"Created new campaign {campaign_title}")
-                else:
-                    messages.info(
-                        request,
-                        f"Reusing campaign {campaign_title} without modification",
-                    )
-
-                try:
-                    project, created = validated_get_or_create(
-                        Project,
-                        title=project_title,
-                        campaign=campaign,
-                        defaults={
-                            "slug": slugify(project_title),
-                            "description": row["Project Description"] or "",
-                            "campaign": campaign,
-                        },
-                    )
-                except ValidationError as exc:
-                    messages.error(
-                        request, f"Unable to create project {project_title}: {exc}"
-                    )
-                    continue
-
-                if created:
-                    messages.info(request, f"Created new project {project_title}")
-                else:
-                    messages.info(
-                        request, f"Reusing project {project_title} without modification"
-                    )
-
-                potential_urls = filter(None, re.split(r"[\s]+", import_url_blob))
-                for url in potential_urls:
-                    if not url.startswith("http"):
-                        messages.warning(
-                            request, f"Skipping unrecognized URL value: {url}"
-                        )
-                        continue
-
-                    try:
-                        import_jobs.append(
-                            import_items_into_project_from_url(
-                                request.user, project, url
-                            )
-                        )
-
-                        messages.info(
-                            request,
-                            f"Queued {campaign_title} {project_title} import for {url}",
-                        )
-                    except Exception as exc:
-                        messages.error(
-                            request,
-                            f"Unhandled error attempting to import {url}: {exc}",
-                        )
-    else:
-        form = AdminProjectBulkImportForm()
-
-    context["form"] = form
-
-    return render(request, "admin/bulk_import.html", context)
 
 
 class CustomListDisplayFieldsMixin:
@@ -559,7 +365,15 @@ class TranscriptionAdmin(admin.ModelAdmin):
     )
     list_display_links = ("id", "asset")
 
-    search_fields = ["text"]
+    list_filter = (
+        SubmittedFilter,
+        AcceptedFilter,
+        RejectedFilter,
+        "asset__item__project__campaign",
+        "asset__item__project",
+    )
+
+    search_fields = ["text", "user__username", "user__email"]
 
     readonly_fields = (
         "asset",

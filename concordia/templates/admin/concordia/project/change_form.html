@@ -9,6 +9,24 @@
                 Import Items
             </a>
         </li>
+
+        <li>
+            <a class="view-parent-object" href="{% url 'admin:concordia_campaign_change' original.campaign_id %}">
+                Campaign
+            </a>
+        </li>
+
+        <li>
+            <a class="view-related-objects" href="{% url 'admin:concordia_item_changelist' %}?project__id__exact={{ original.pk }}">
+                Items
+            </a>
+        </li>
+
+        <li>
+            <a class="view-related-objects" href="{% url 'admin:concordia_asset_changelist' %}?item__project__id__exact={{ original.pk }}">
+                Assets
+            </a>
+        </li>
     {% endif %}
     {{ block.super }}
 {% endblock %}

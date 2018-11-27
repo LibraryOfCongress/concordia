@@ -5,7 +5,7 @@ from django.http import Http404, HttpResponseForbidden
 from django.urls import include, path
 from django.views.defaults import page_not_found, permission_denied, server_error
 
-from concordia.admin import admin_bulk_import_view
+from concordia.admin.views import admin_bulk_import_view
 from exporter import views as exporter_views
 
 from . import views
