@@ -38,6 +38,7 @@ django-ratelimit = "*"
 python-memcached = "*"
 django-tabular-export = "*"
 pylibmc = "*"
+cfn-lint = "*"
 
 [dev-packages]
 invoke = "*"
