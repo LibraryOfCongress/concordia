@@ -9,6 +9,7 @@ from smtplib import SMTPException
 from urllib.parse import urlencode
 
 import markdown
+from captcha.fields import CaptchaField
 from captcha.helpers import captcha_image_url
 from captcha.models import CaptchaStore
 from django.conf import settings
@@ -38,6 +39,7 @@ from django.views.generic import DetailView, FormView, ListView, TemplateView
 from django_registration.backends.activation.views import RegistrationView
 from ratelimit.decorators import ratelimit
 from ratelimit.mixins import RatelimitMixin
+from ratelimit.utils import is_ratelimited
 
 from concordia.forms import ContactUsForm, UserProfileForm, UserRegistrationForm
 from concordia.models import (
@@ -209,25 +211,65 @@ def registration_rate(self, group, request):
 @method_decorator(never_cache, name="dispatch")
 class ConcordiaRegistrationView(RatelimitMixin, RegistrationView):
     form_class = UserRegistrationForm
+    ratelimit_group = "registration"
     ratelimit_key = "ip"
     ratelimit_rate = registration_rate
     ratelimit_method = "POST"
-    ratelimit_block = True
+    ratelimit_block = settings.RATELIMIT_BLOCK
 
 
 @method_decorator(never_cache, name="dispatch")
 class ConcordiaLoginView(RatelimitMixin, LoginView):
-    ratelimit_key = "ip"
+    ratelimit_group = "login"
+    ratelimit_key = "post:username"
     ratelimit_rate = "3/15m"
     ratelimit_method = "POST"
-    ratelimit_block = True
+    ratelimit_block = False
+
+    def post(self, request, *args, **kwargs):
+        form = self.get_form()
+
+        blocked = is_ratelimited(
+            request,
+            group=self.ratelimit_group,
+            key=self.ratelimit_key,
+            method=self.ratelimit_method,
+            rate=self.ratelimit_rate,
+        )
+        recent_captcha = (
+            time.time() - request.session.get("captcha_validation_time", 0)
+        ) < 86400
+
+        if blocked and not recent_captcha:
+            form.fields["captcha"] = CaptchaField()
+
+        if form.is_valid():
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
+
+    def form_valid(self, form):
+        self.request.session["captcha_validation_time"] = time.time()
+        return super().form_valid(form)
 
 
 def ratelimit_view(request, exception=None):
-    template_name = "429.html"
     status_code = 429
-    template = loader.get_template(template_name)
-    return HttpResponse(template.render(), status=status_code)
+
+    if "json" in request.META["HTTP_ACCEPT"].lower():
+        response = JsonResponse({"exception": str(exception), "status": status_code})
+    else:
+        template_name = "429.html"
+        template = loader.get_template(template_name)
+
+        response = HttpResponse(
+            template.render({"exception": exception}), status=status_code
+        )
+
+    response["Retry-After"] = 15 * 60
+    response["reason_phrase"] = str(exception)
+
+    return response
 
 
 @method_decorator(never_cache, name="dispatch")
@@ -633,7 +675,7 @@ def save_rate(g, r):
     return None if r.user.is_authenticated else "1/m"
 
 
-@ratelimit(key="ip", rate=save_rate, block=True)
+@ratelimit(key="ip", rate=save_rate, block=settings.RATELIMIT_BLOCK)
 @require_POST
 @validate_anonymous_captcha
 @atomic
@@ -695,7 +737,7 @@ def submit_rate(g, r):
     return None if r.user.is_authenticated else "1/m"
 
 
-@ratelimit(key="ip", rate=submit_rate, block=True)
+@ratelimit(key="ip", rate=submit_rate, block=settings.RATELIMIT_BLOCK)
 @require_POST
 @validate_anonymous_captcha
 def submit_transcription(request, *, pk):
@@ -970,7 +1012,7 @@ def reserve_rate(g, r):
     return None if r.user.is_authenticated else "12/m"
 
 
-@ratelimit(key="ip", rate=reserve_rate, block=True)
+@ratelimit(key="ip", rate=reserve_rate, block=settings.RATELIMIT_BLOCK)
 @require_POST
 @never_cache
 def reserve_asset_transcription(request, *, asset_pk):
