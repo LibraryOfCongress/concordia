@@ -242,9 +242,6 @@ class UserAssetTagCollection(
     def __str__(self):
         return "{} - {}".format(self.asset, self.user)
 
-    def tags_to_string(self):
-        return ", ".join(t.value for t in self.tags.all())
-
 
 class Transcription(MetricsModelMixin("transcription"), models.Model):
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
