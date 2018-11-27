@@ -4,7 +4,10 @@
 {% block content %}
     {{ block.super }}
 
+    <script src="https://cdn.jsdelivr.net/npm/prettier@1.15.2/standalone.js" integrity="sha256-J+EGJvtGc2C0TOj2teUqFDcW5ovV2oimUkdea60++qE=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prettier@1.15.2/parser-markdown.js" integrity="sha256-ceDp4sXOqX8LdQaP9OsnQ1oS1JTlt4vwIVdBmCxPkME=" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/remarkable/1.7.1/remarkable.min.js" integrity="sha256-ltAts6+/XysEs9E5RF/t0H+0eD3ET6NpbqzshWkqeic=" crossorigin="anonymous"></script>
+
     <script>
         (function ($) {
             var md = new Remarkable({html: true});
@@ -16,9 +19,20 @@
             var $bodyPreview = $('<div id="id_body_preview" class="container">');
 
             $bodyPreview.insertAfter($bodyInput);
-            $bodyPreview.on('change', function () {
+            $bodyInput.on('change input', function () {
                 $bodyPreview.empty().html(md.render($bodyInput.val()));
             }).trigger('change');
+
+            $('<button class="button">Run Prettier</button>').prependTo('.field-body').on('click', function (evt) {
+                evt.preventDefault();
+                var pretty = prettier.format($bodyInput.val(), {
+                    parser: "markdown", plugins: prettierPlugins,
+                    printWidth: 120,
+                    tabWidth: 4
+                     });
+                $bodyInput.val(pretty).trigger('change');
+                return false;
+            })
         })(django.jQuery);
     </script>
 
@@ -33,6 +47,10 @@
             overflow-y: auto;
 
             min-height: 500px;
+        }
+
+        .field-body textarea {
+            font-family: monospace;
         }
     </style>
 {% endblock content %}
