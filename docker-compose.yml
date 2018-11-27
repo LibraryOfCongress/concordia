@@ -52,6 +52,16 @@ services:
         volumes:
             - images_volume:/concordia_images
 
+    indexer:
+        build:
+            context: .
+            dockerfile: indexer/Dockerfile
+        environment:
+            POSTGRESQL_HOST: db
+            ELASTICSEARCH_ENDPOINT: http://localhost:9200
+        depends_on:
+            - db
+
 volumes:
     ? db_volume
     ? images_volume
