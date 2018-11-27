@@ -133,10 +133,11 @@ def simple_page(request, path=None):
 
     breadcrumbs = []
     path_components = request.path.strip("/").split("/")
-    for i, segment in enumerate(path_components, start=1):
+    for i, segment in enumerate(path_components[:-1], start=1):
         breadcrumbs.append(
             ("/%s/" % "/".join(path_components[0:i]), segment.replace("-", " ").title())
         )
+    breadcrumbs.append((request.path, page.title))
 
     ctx = {"body": html, "title": page.title, "breadcrumbs": breadcrumbs}
 
