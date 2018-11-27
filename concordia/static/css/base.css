@@ -352,6 +352,11 @@ ul.nav-secondary {
     left: -5rem;
 }
 
+.btn.disabled,
+.btn:disabled {
+    opacity: 0.3 !important;
+}
+
 .btn-secondary {
     background-color: var(--secondary-color);
     border-color: var(--secondary-color);
