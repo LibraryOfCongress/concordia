@@ -23,7 +23,7 @@
                             <a href="{% url 'transcriptions:campaign-detail' campaign.slug %}">
                                 <h1 class="campaign-title">{{ campaign.title }}</h1>
                             </a>
-                            {{ campaign.short_description }}
+                            {{ campaign.short_description|linebreaksbr }}
                         </div>
                         <div class="col-12 col-md-4">
                             <a href="{% url 'transcriptions:campaign-detail' campaign.slug %}">

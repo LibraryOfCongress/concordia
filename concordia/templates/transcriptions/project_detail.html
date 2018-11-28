@@ -21,7 +21,7 @@
     <div class="row">
         <div class="col-12">
             <h1 class="m-3">{{ project.title }}</h1>
-            <p class="m-3 hero-text">{{ project.description }}</p>
+            <p class="m-3 hero-text">{{ project.description|linebreaksbr }}</p>
         </div>
     </div>
     {% include "fragments/transcription-progress-row.html" %}
