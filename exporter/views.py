@@ -123,7 +123,19 @@ class ExportCampaignToBagit(TemplateView):
                 f.write(asset.latest_transcription or "")
 
         # Turn Structure into bagit format
-        bagit.make_bag(export_base_dir)
+        bagit.make_bag(
+            export_base_dir,
+            {
+                "Content-Access": "web",
+                "Content-Custodian": "DCMS",
+                "Content-Process": "crowdsourcing",
+                "Content-Type": "textual",
+                "LC-Bag-Id": campaign_slug,
+                "LC-Items": "%d transcriptions" % len(assets),
+                "LC-Project": "gdccrowd",
+                "License-Information": "CC0",
+            },
+        )
 
         # Build .zip file of bagit formatted Campaign Folder
         archive_name = export_base_dir
