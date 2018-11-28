@@ -111,9 +111,7 @@ class ExportCampaignToBagit(TemplateView):
         os.makedirs(export_base_dir, exist_ok=True)
 
         for asset in assets:
-            dest_folder = os.path.join(
-                export_base_dir, asset.item.project.slug, asset.item.item_id
-            )
+            dest_folder = os.path.join(export_base_dir, asset.item.item_id)
             os.makedirs(dest_folder, exist_ok=True)
 
             # Build transcription output text file
