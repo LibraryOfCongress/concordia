@@ -103,19 +103,18 @@ class CustomListDisplayFieldsMixin:
 @admin.register(Campaign)
 class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     list_display = (
-        "id",
         "title",
-        "slug",
         "short_description",
-        "start_date",
-        "end_date",
-        "truncated_metadata",
         "published",
+        "display_on_homepage",
+        "ordering",
+        "truncated_metadata",
     )
-    list_display_links = ("id", "title", "slug")
+    list_editable = ("display_on_homepage", "ordering", "published")
+    list_display_links = ("title",)
     prepopulated_fields = {"slug": ("title",)}
     search_fields = ["title", "description"]
-    list_filter = ("published",)
+    list_filter = ("published", "display_on_homepage")
 
     actions = (publish_action, unpublish_action)
 
