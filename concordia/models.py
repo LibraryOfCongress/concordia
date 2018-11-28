@@ -67,7 +67,7 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
     display_on_homepage = models.BooleanField(default=True)
 
     title = models.CharField(max_length=80)
-    slug = models.SlugField(max_length=80, unique=True)
+    slug = models.SlugField(max_length=80, unique=True, allow_unicode=True)
     description = models.TextField(blank=True)
     thumbnail_image = models.ImageField(
         upload_to="campaign-thumbnails", blank=True, null=True
@@ -106,7 +106,7 @@ class Project(MetricsModelMixin("project"), models.Model):
     published = models.BooleanField(default=False, blank=True)
 
     title = models.CharField(max_length=80)
-    slug = models.SlugField(max_length=80)
+    slug = models.SlugField(max_length=80, allow_unicode=True)
     thumbnail_image = models.ImageField(
         upload_to="project-thumbnails", blank=True, null=True
     )
@@ -175,7 +175,7 @@ class Asset(MetricsModelMixin("asset"), models.Model):
     published = models.BooleanField(default=False, blank=True)
 
     title = models.CharField(max_length=100)
-    slug = models.SlugField(max_length=100)
+    slug = models.SlugField(max_length=100, allow_unicode=True)
 
     description = models.TextField(blank=True)
     # TODO: do we really need this given that we import in lock-step sequence
