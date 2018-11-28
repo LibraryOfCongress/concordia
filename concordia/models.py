@@ -61,6 +61,11 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
 
     published = models.BooleanField(default=False, blank=True)
 
+    ordering = models.IntegerField(
+        default=0, help_text="Sort order override: higher values will be listed first"
+    )
+    display_on_homepage = models.BooleanField(default=True)
+
     title = models.CharField(max_length=80)
     slug = models.SlugField(max_length=80, unique=True)
     description = models.TextField(blank=True)
