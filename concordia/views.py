@@ -322,7 +322,7 @@ class CampaignListView(ListView):
     template_name = "transcriptions/campaign_list.html"
     paginate_by = 10
 
-    queryset = Campaign.objects.published().order_by("title")
+    queryset = Campaign.objects.published().order_by("-ordering", "title")
     context_object_name = "campaigns"
 
 
