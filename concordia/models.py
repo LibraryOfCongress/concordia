@@ -309,3 +309,21 @@ class AssetTranscriptionReservation(models.Model):
 
     created_on = models.DateTimeField(editable=False, auto_now_add=True)
     updated_on = models.DateTimeField(auto_now=True)
+
+
+class SimplePage(models.Model):
+    created_on = models.DateTimeField(editable=False, auto_now_add=True)
+    updated_on = models.DateTimeField(editable=False, auto_now=True)
+
+    path = models.CharField(
+        max_length=255,
+        help_text="URL path where this page will be accessible from",
+        validators=[RegexValidator(r"^/.+/$")],
+    )
+
+    title = models.CharField(max_length=200)
+
+    body = models.TextField()
+
+    def __str__(self):
+        return f"SimplePage: {self.path}"
