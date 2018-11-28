@@ -74,9 +74,6 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
     )
     short_description = models.TextField(blank=True)
 
-    start_date = models.DateTimeField(null=True, blank=True)
-    end_date = models.DateTimeField(null=True, blank=True)
-
     metadata = JSONField(default=metadata_default, blank=True, null=True)
 
     def __str__(self):
