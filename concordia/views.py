@@ -313,7 +313,11 @@ class AccountProfileView(LoginRequiredMixin, FormView):
 class HomeView(ListView):
     template_name = "home.html"
 
-    queryset = Campaign.objects.published().order_by("title")
+    queryset = (
+        Campaign.objects.published()
+        .filter(display_on_homepage=True)
+        .order_by("-ordering", "title")
+    )
     context_object_name = "campaigns"
 
 
