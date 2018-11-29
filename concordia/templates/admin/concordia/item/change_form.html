@@ -5,6 +5,11 @@
 {% block object-tools-items %}
     {% if original.pk %}
         <li>
+            <a href="{% url 'transcriptions:item-export-bagit' original.project.campaign.slug original.project.slug original.item_id %}" class="viewsitelink">
+                Export BagIt
+            </a>
+        </li>
+        <li>
             <a class="view-parent-object" href="{% url 'admin:concordia_campaign_change' original.project.campaign_id %}">
                 Campaign
             </a>
