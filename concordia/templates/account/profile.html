@@ -8,8 +8,8 @@
 
 {% block main_content %}
 <div class="container bg-main">
-    <div class="row">
-        <div class="col-12 col-md-10 bg-offwhite mx-auto mt-3 pxy-3 rounded">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-8">
             <form class="form-horizontal" action="{% url 'user-profile' %}" method="POST" enctype="multipart/form-data">
                 {% csrf_token %}
 
@@ -33,49 +33,56 @@
             </form>
         </div>
     </div>
-    <div class="col-10 my-3 mx-auto">
-        <hr>
+    <div class="row justify-content-center">
+        <div class="col-6 mx-auto">
+            <hr>
+        </div>
     </div>
     <div class="row justify-content-center">
         <div class="btn-row">
             <a class="btn btn-secondary" href="{% url 'password_change' %}">Change Password</a>
         </div>
     </div>
-    <div class="col-10 my-3 mx-auto">
-        <hr>
+    <div class="row justify-content-center">
+        <div class="col-6 mx-auto">
+            <hr>
+        </div>
     </div>
-    {% if transcriptions %}
-        <div class="col-12 col-md-10 bg-offwhite mx-auto pxy-3 mb-3 rounded">
-            <h2 class="mb-3">My Contributions</h2>
-            <table class="table mb-3">
-                <thead class="bg-lightest-gray">
-                    <tr>
-                        <th>Campaign</th>
-                        <th>Project</th>
-                        <th>Item</th>
-                        <th>Asset Name</th>
-                        <th>Current Status</th>
-                        <th>Date</th>
-                    </tr>
-                </thead>
 
-                {% for t in transcriptions %}
-                    {% with asset=t.asset item=t.asset.item project=t.asset.item.project campaign=t.asset.item.project.campaign %}
+    {% if contributions %}
+        <div class="row justify-content-center">
+            <div class="col-12 col-md-8">
+                <h2>My Contributions</h2>
+
+                <table class="table table-striped">
+                    <thead>
                         <tr>
-                            <td>{{ campaign.title }}</td>
-                            <td>{{ project.title }}</td>
-                            <td>{{ item.title }}</td>
-                            <td>
-                                <a class="primary-text" href="{% url 'transcriptions:asset-detail' campaign.slug project.slug item.item_id asset.slug %}">
-                                    {{ asset.title }}
-                                </a>
-                            </td>
-                            <td>{{ t.status }}</td>
-                            <td>{{ t.updated_on|date:'SHORT_DATE_FORMAT' }}</td>
+                            <th>Most Recent Contribution</th>
+                            <th>Item</th>
+                            <th>Current Status</th>
                         </tr>
-                    {% endwith %}
-                {% endfor %}
-            </table>
+                    </thead>
+
+                    {% for campaign, project, item in contributions %}
+                        {% ifchanged campaign.title project.title %}
+                            <tr>
+                                <th colspan="3">
+                                    <h3>
+                                        <a href="{{ campaign.get_absolute_url }}">{{ campaign.title }}</a>:
+                                        <a href="{{ project.get_absolute_url }}">{{ project.title }}</a>
+                                    </h3>
+                                </th>
+                            </tr>
+                        {% endifchanged %}
+
+                        <tr>
+                            <td>{{ item.last_user_contribution|date:'SHORT_DATE_FORMAT' }}</td>
+                            <td><a href="{{ item.get_absolute_url }}">{{ item.title }}</a></td>
+                            <td class="text-right">{{ item.percentage_completed }}%</td>
+                        </tr>
+                    {% endfor %}
+                </table>
+            </div>
         </div>
     {% endif %}
 </div>

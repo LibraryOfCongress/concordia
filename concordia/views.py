@@ -23,7 +23,8 @@ from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
 from django.db import connection
-from django.db.models import Case, Count, IntegerField, Q, When
+from django.db.models import Case, Count, F, IntegerField, Max, Q, When
+from django.db.models.functions import Cast
 from django.db.transaction import atomic
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -276,12 +277,33 @@ class AccountProfileView(LoginRequiredMixin, FormView):
 
     def get_context_data(self, *args, **kwargs):
         ctx = super().get_context_data(*args, **kwargs)
-        ctx["transcriptions"] = (
-            Transcription.objects.filter(user=self.request.user)
-            .select_related("asset__item__project__campaign")
-            .order_by("asset__pk", "-pk")
-            .distinct("asset")
+
+        transcriptions = Transcription.objects.filter(user=self.request.user)
+        items = Item.objects.filter(pk__in=transcriptions.values("asset__item__pk"))
+        items = items.select_related("project", "project__campaign")
+        items = items.order_by("project__campaign__title", "project__title", "item_id")
+
+        items = items.annotate(
+            last_user_contribution=Max(
+                "asset__transcription__created_on",
+                filter=Q(asset__transcription__user=self.request.user),
+            ),
+            assets_completed=Cast(
+                Count(
+                    "asset__transcription_status",
+                    filter=Q(asset__transcription_status=TranscriptionStatus.COMPLETED),
+                ),
+                IntegerField(),
+            ),
+            assets_total=Cast(Count("asset"), IntegerField()),
+            percentage_completed=100 * F("assets_completed") / F("assets_total"),
         )
+
+        ctx["contributions"] = contributions = []
+
+        for item in items:
+            contributions.append((item.project.campaign, item.project, item))
+
         return ctx
 
     def get_initial(self):
