@@ -97,10 +97,7 @@ class ViewTest_Exporter(TestCase):
 
         self.assertEqual(response.status_code, 200)
 
-        export_filename = "%s-%s.zip" % (
-            campaign_slug,
-            datetime.today().isoformat(timespec="minutes"),
-        )
+        export_filename = "%s-%s.zip" % (campaign_slug,)
         self.assertEquals(
             response.get("Content-Disposition"),
             "attachment; filename=%s" % export_filename,
