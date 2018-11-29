@@ -68,13 +68,13 @@ def do_bagit_export(assets, export_base_dir, export_filename_base):
         export_base_dir,
         {
             "Content-Access": "web",
-            "Content-Custodian": "DCMS",
+            "Content-Custodian": "dcms",
             "Content-Process": "crowdsourcing",
             "Content-Type": "textual",
             "LC-Bag-Id": export_filename_base,
             "LC-Items": "%d transcriptions" % len(assets),
             "LC-Project": "gdccrowd",
-            "License-Information": "CC0",
+            "License-Information": "Public domain",
         },
     )
 
