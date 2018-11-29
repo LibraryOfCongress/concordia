@@ -2,7 +2,6 @@ import os
 import re
 import shutil
 import tempfile
-from datetime import datetime
 
 import bagit
 import boto3
@@ -40,6 +39,69 @@ def get_original_asset_id(download_url):
         return asset_id.group(1)
     else:
         return download_url
+
+
+def do_bagit_export(assets, export_base_dir, export_filename_base):
+    """
+    Creates temp directory structure for source data.
+    Executes bagit.py to turn temp directory into bagit strucutre.
+    Builds and exports bagit structure as zip.
+    Uploads zip to S3 if configured.
+    Removes all temporary directories and files.
+    """
+    os.makedirs(export_base_dir, exist_ok=True)
+
+    for asset in assets:
+        dest_folder = os.path.join(export_base_dir, asset.item.item_id)
+        os.makedirs(dest_folder, exist_ok=True)
+
+        # Build transcription output text file
+        text_output_path = os.path.join(
+            dest_folder,
+            "%s.txt" % os.path.basename(get_original_asset_id(asset.download_url)),
+        )
+        with open(text_output_path, "w") as f:
+            f.write(asset.latest_transcription or "")
+
+    # Turn Structure into bagit format
+    bagit.make_bag(
+        export_base_dir,
+        {
+            "Content-Access": "web",
+            "Content-Custodian": "DCMS",
+            "Content-Process": "crowdsourcing",
+            "Content-Type": "textual",
+            "LC-Bag-Id": export_filename_base,
+            "LC-Items": "%d transcriptions" % len(assets),
+            "LC-Project": "gdccrowd",
+            "License-Information": "CC0",
+        },
+    )
+
+    # Build .zip file of bagit formatted Campaign Folder
+    archive_name = export_base_dir
+    shutil.make_archive(archive_name, "zip", export_base_dir)
+
+    export_filename = "%s.zip" % export_filename_base
+
+    # Upload zip to S3 bucket
+    s3_bucket = getattr(settings, "EXPORT_S3_BUCKET_NAME", None)
+
+    if s3_bucket:
+        s3 = boto3.resource("s3")
+        s3.Bucket(s3_bucket).upload_file(
+            "%s.zip" % export_base_dir, "%s" % export_filename
+        )
+
+        return HttpResponseRedirect(
+            "https://%s.s3.amazonaws.com/%s" % (s3_bucket, export_filename)
+        )
+    else:
+        # Download zip from local storage
+        with open("%s.zip" % export_base_dir, "rb") as zip_file:
+            response = HttpResponse(zip_file, content_type="application/zip")
+        response["Content-Disposition"] = "attachment; filename=%s" % export_filename
+        return response
 
 
 class ExportCampaignToCSV(TemplateView):
@@ -84,16 +146,52 @@ class ExportCampaignToCSV(TemplateView):
         )
 
 
-# FIXME: we should be able to export at the project and item level, too
-class ExportCampaignToBagit(TemplateView):
-    """
-    Creates temp directory structure for source data.
-    Executes bagit.py to turn temp directory into bagit strucutre.
-    Builds and exports bagit structure as zip.
-    Uploads zip to S3 if configured.
-    Removes all temporary directories and files.
-    """
+class ExportItemToBagIt(TemplateView):
+    @method_decorator(staff_member_required)
+    def get(self, request, *args, **kwargs):
+        campaign_slug = self.kwargs["campaign_slug"]
+        project_slug = self.kwargs["project_slug"]
+        item_id = self.kwargs["item_id"]
 
+        asset_qs = Asset.objects.filter(
+            item__project__campaign__slug=campaign_slug,
+            item__project__slug=project_slug,
+            item__item_id=item_id,
+            transcription_status="completed",
+        )
+
+        assets = get_latest_transcription_data(asset_qs)
+
+        export_filename_base = "%s-%s-%s" % (campaign_slug, project_slug, item_id)
+
+        with tempfile.TemporaryDirectory(
+            prefix=export_filename_base
+        ) as export_base_dir:
+            return do_bagit_export(assets, export_base_dir, export_filename_base)
+
+
+class ExportProjectToBagIt(TemplateView):
+    @method_decorator(staff_member_required)
+    def get(self, request, *args, **kwargs):
+        campaign_slug = self.kwargs["campaign_slug"]
+        project_slug = self.kwargs["project_slug"]
+        asset_qs = Asset.objects.filter(
+            item__project__campaign__slug=campaign_slug,
+            item__project__slug=project_slug,
+            transcription_status="completed",
+        )
+
+        assets = get_latest_transcription_data(asset_qs)
+
+        export_filename_base = "%s-%s" % (campaign_slug, project_slug)
+
+        with tempfile.TemporaryDirectory(
+            prefix=export_filename_base
+        ) as export_base_dir:
+            return do_bagit_export(assets, export_base_dir, export_filename_base)
+
+
+class ExportCampaignToBagit(TemplateView):
     @method_decorator(staff_member_required)
     def get(self, request, *args, **kwargs):
         campaign_slug = self.kwargs["campaign_slug"]
@@ -104,64 +202,9 @@ class ExportCampaignToBagit(TemplateView):
 
         assets = get_latest_transcription_data(asset_qs)
 
-        with tempfile.TemporaryDirectory(prefix=campaign_slug) as export_base_dir:
-            return self.do_bagit_export(assets, export_base_dir, campaign_slug)
+        export_filename_base = "%s" % (campaign_slug,)
 
-    def do_bagit_export(self, assets, export_base_dir, campaign_slug):
-        os.makedirs(export_base_dir, exist_ok=True)
-
-        for asset in assets:
-            dest_folder = os.path.join(export_base_dir, asset.item.item_id)
-            os.makedirs(dest_folder, exist_ok=True)
-
-            # Build transcription output text file
-            text_output_path = os.path.join(
-                dest_folder,
-                "%s.txt" % os.path.basename(get_original_asset_id(asset.download_url)),
-            )
-            with open(text_output_path, "w") as f:
-                f.write(asset.latest_transcription or "")
-
-        # Turn Structure into bagit format
-        bagit.make_bag(
-            export_base_dir,
-            {
-                "Content-Access": "web",
-                "Content-Custodian": "DCMS",
-                "Content-Process": "crowdsourcing",
-                "Content-Type": "textual",
-                "LC-Bag-Id": campaign_slug,
-                "LC-Items": "%d transcriptions" % len(assets),
-                "LC-Project": "gdccrowd",
-                "License-Information": "CC0",
-            },
-        )
-
-        # Build .zip file of bagit formatted Campaign Folder
-        archive_name = export_base_dir
-        shutil.make_archive(archive_name, "zip", export_base_dir)
-
-        # Upload zip to S3 bucket
-        s3_bucket = getattr(settings, "EXPORT_S3_BUCKET_NAME", None)
-        export_filename = "%s-%s.zip" % (
-            campaign_slug,
-            datetime.today().isoformat(timespec="minutes"),
-        )
-
-        if s3_bucket:
-            s3 = boto3.resource("s3")
-            s3.Bucket(s3_bucket).upload_file(
-                "%s.zip" % export_base_dir, "%s" % export_filename
-            )
-
-            return HttpResponseRedirect(
-                "https://%s.s3.amazonaws.com/%s" % (s3_bucket, export_filename)
-            )
-        else:
-            # Download zip from local storage
-            with open("%s.zip" % export_base_dir, "rb") as zip_file:
-                response = HttpResponse(zip_file, content_type="application/zip")
-            response["Content-Disposition"] = (
-                "attachment; filename=%s" % export_filename
-            )
-            return response
+        with tempfile.TemporaryDirectory(
+            prefix=export_filename_base
+        ) as export_base_dir:
+            return do_bagit_export(assets, export_base_dir, export_filename_base)
