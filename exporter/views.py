@@ -2,6 +2,7 @@ import os
 import re
 import shutil
 import tempfile
+from logging import getLogger
 
 import bagit
 import boto3
@@ -14,6 +15,8 @@ from django.views.generic import TemplateView
 from tabular_export.core import export_to_csv_response, flatten_queryset
 
 from concordia.models import Asset, Transcription
+
+logger = getLogger(__name__)
 
 
 def get_latest_transcription_data(asset_qs):
@@ -34,32 +37,36 @@ def get_original_asset_id(download_url):
     """
     if download_url.startswith("http://tile.loc.gov/"):
         pattern = r"/service:([A-Za-z0-9:\-]*)/"
-        asset_id = re.search(pattern, download_url)
+        asset_id = re.search(pattern, download_url).group(1)
         assert asset_id
-        return asset_id.group(1)
+        logger.debug("Found asset ID %s in download URL %s" % (asset_id, download_url))
+        return asset_id
     else:
+        logger.warning(
+            "Download URL doesn't start with tile.loc.gov: %s" % download_url
+        )
         return download_url
 
 
 def do_bagit_export(assets, export_base_dir, export_filename_base):
     """
-    Creates temp directory structure for source data.
-    Executes bagit.py to turn temp directory into bagit strucutre.
+    Executes bagit.py to turn temp directory into LC-specific bagit strucutre.
     Builds and exports bagit structure as zip.
     Uploads zip to S3 if configured.
-    Removes all temporary directories and files.
     """
-    os.makedirs(export_base_dir, exist_ok=True)
 
     for asset in assets:
-        dest_folder = os.path.join(export_base_dir, asset.item.item_id)
-        os.makedirs(dest_folder, exist_ok=True)
+        asset_id = get_original_asset_id(asset.download_url)
+        logger.debug("Exporting asset %s into %s" % (asset_id, export_base_dir))
+
+        asset_id = asset_id.replace(":", "/")
+        asset_path, asset_filename = os.path.split(asset_id)
+
+        dest_path = os.path.join(export_base_dir, asset_path)
+        os.makedirs(dest_path, exist_ok=True)
 
         # Build transcription output text file
-        text_output_path = os.path.join(
-            dest_folder,
-            "%s.txt" % os.path.basename(get_original_asset_id(asset.download_url)),
-        )
+        text_output_path = os.path.join(dest_path, "%s.txt" % asset_filename)
         with open(text_output_path, "w") as f:
             f.write(asset.latest_transcription or "")
 
@@ -88,6 +95,7 @@ def do_bagit_export(assets, export_base_dir, export_filename_base):
     s3_bucket = getattr(settings, "EXPORT_S3_BUCKET_NAME", None)
 
     if s3_bucket:
+        logger.debug("Uploading exported bag to S3 bucket %s" % s3_bucket)
         s3 = boto3.resource("s3")
         s3.Bucket(s3_bucket).upload_file(
             "%s.zip" % export_base_dir, "%s" % export_filename
