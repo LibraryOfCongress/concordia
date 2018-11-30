@@ -43,7 +43,7 @@ def get_original_asset_id(download_url):
         return asset_id
     else:
         logger.warning(
-            "Download URL doesn't start with tile.loc.gov: %s" % download_url
+            "Download URL doesn't start with tile.loc.gov: %s", download_url
         )
         return download_url
 
