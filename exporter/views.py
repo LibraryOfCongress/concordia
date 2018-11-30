@@ -186,7 +186,7 @@ class ExportProjectToBagIt(TemplateView):
         asset_qs = Asset.objects.filter(
             item__project__campaign__slug=campaign_slug,
             item__project__slug=project_slug,
-            transcription_status="completed",
+            transcription_status=TranscriptionStatus.COMPLETED,
         )
 
         assets = get_latest_transcription_data(asset_qs)
