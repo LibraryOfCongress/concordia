@@ -205,7 +205,7 @@ class ExportCampaignToBagit(TemplateView):
         campaign_slug = self.kwargs["campaign_slug"]
         asset_qs = Asset.objects.filter(
             item__project__campaign__slug=campaign_slug,
-            transcription_status="completed",
+            transcription_status=TranscriptionStatus.COMPLETED,
         )
 
         assets = get_latest_transcription_data(asset_qs)
