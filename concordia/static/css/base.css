@@ -197,7 +197,7 @@ a.nav-secondary:hover {
 }
 
 a .campaign-title:hover,
-a .hero-text:hover {
+.hero-text a:hover {
     color: var(--text-color-primary);
     text-decoration: underline;
 }
