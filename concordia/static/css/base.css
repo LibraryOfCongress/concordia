@@ -625,12 +625,6 @@ ul.nav-secondary {
     line-height: 125%;
 }
 
-.view-homepage .carousel-control-next-icon,
-.view-homepage .carousel-control-prev-icon {
-    height: 60px;
-    width: 60px;
-}
-
 .view-homepage .carousel-overlay h1 {
     text-transform: uppercase;
 }
@@ -700,7 +694,7 @@ ul.nav-secondary {
     .carousel-overlay {
         position: absolute;
         top: 50px;
-        left: 100px;
+        left: 120px;
         width: 420px;
         height: 232px;
         background-color: var(--bg-offwhite);
@@ -709,11 +703,25 @@ ul.nav-secondary {
 
     #homepage-carousel[data-overlay-position='top-right'] .carousel-overlay {
         left: unset;
-        right: 100px;
+        right: 120px;
     }
 
     #homepage-campaign-list .campaign {
         max-width: 30%;
+    }
+
+    .view-homepage .carousel-control-next-icon,
+    .view-homepage .carousel-control-prev-icon {
+        height: 60px;
+        width: 60px;
+    }
+
+    .view-homepage .carousel-control-next {
+        padding-left: 50px;
+    }
+
+    .view-homepage .carousel-control-prev {
+        padding-right: 50px;
     }
 }
 
