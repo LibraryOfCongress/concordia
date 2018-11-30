@@ -55,6 +55,25 @@
             <div class="col-12 col-md-10">
                 <h2>My Contributions</h2>
 
+                <table class="table table-striped table-sm table-responsive-sm">
+                    <thead>
+                        <tr>
+                            <th>Campaign</th>
+                            <th><abbr title="Total number of times you saved, submitted, or reviewed a transcription">Actions</abbr></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for campaign in contributed_campaigns %}
+                            <tr>
+                                <th>
+                                    <a href="{{ campaign.get_absolute_url }}">{{ campaign.title }}</a>
+                                </th>
+                                <td class="text-right">{{ campaign.action_count|intcomma }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
                 <table class="table table-striped table-responsive-sm">
                     <thead>
                         <tr class="text-center">

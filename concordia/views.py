@@ -321,6 +321,19 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
                 (asset.item.project.campaign, asset.item.project, asset.item, asset)
             )
 
+        user = self.request.user
+        ctx["contributed_campaigns"] = (
+            Campaign.objects.annotate(
+                action_count=Count(
+                    "project__item__asset__transcription",
+                    filter=Q(project__item__asset__transcription__user=user)
+                    | Q(project__item__asset__transcription__reviewed_by=user),
+                )
+            )
+            .exclude(action_count=0)
+            .order_by("title")
+        )
+
         return ctx
 
     def get_initial(self):
