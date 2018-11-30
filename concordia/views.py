@@ -283,6 +283,10 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
     ordering = ("-updated_on",)
     paginate_by = 12
 
+    def post(self, *args, **kwargs):
+        self.object_list = self.get_queryset()
+        return super().post(*args, **kwargs)
+
     def get_queryset(self):
         transcriptions = Transcription.objects.filter(
             Q(user=self.request.user) | Q(reviewed_by=self.request.user)
