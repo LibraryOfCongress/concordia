@@ -165,7 +165,7 @@ class ExportItemToBagIt(TemplateView):
             item__project__campaign__slug=campaign_slug,
             item__project__slug=project_slug,
             item__item_id=item_id,
-            transcription_status="completed",
+            transcription_status=TranscriptionStatus.COMPLETED,
         )
 
         assets = get_latest_transcription_data(asset_qs)
