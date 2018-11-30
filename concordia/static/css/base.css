@@ -621,7 +621,7 @@ ul.nav-secondary {
  */
 
 .view-homepage h1 {
-    font-size: 3rem;
+    font-size: 2.5rem;
     line-height: 125%;
 }
 
@@ -699,9 +699,10 @@ ul.nav-secondary {
 
     .carousel-overlay {
         position: absolute;
-        top: 30px;
-        left: 30px;
-        width: 442px;
+        top: 50px;
+        left: 100px;
+        width: 420px;
+        height: 232px;
         background-color: var(--bg-offwhite);
         padding: 1rem 1rem 1.3rem 1rem;
     }
