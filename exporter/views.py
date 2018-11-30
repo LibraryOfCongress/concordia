@@ -95,7 +95,7 @@ def do_bagit_export(assets, export_base_dir, export_filename_base):
     s3_bucket = getattr(settings, "EXPORT_S3_BUCKET_NAME", None)
 
     if s3_bucket:
-        logger.debug("Uploading exported bag to S3 bucket %s" % s3_bucket)
+        logger.debug("Uploading exported bag to S3 bucket %s", s3_bucket)
         s3 = boto3.resource("s3")
         s3.Bucket(s3_bucket).upload_file(
             "%s.zip" % export_base_dir, "%s" % export_filename
