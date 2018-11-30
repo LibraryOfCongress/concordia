@@ -99,6 +99,10 @@
         var $carousel = $("#homepage-carousel");
         var $overlay = $carousel.find('.carousel-overlay');
 
+        $carousel.find('img').on('click', function (evt) {
+            document.location.href = $overlay.find('a').attr('href');
+        });
+
         $carousel.on('slide.bs.carousel', function (evt) {
             var targetData = evt.relatedTarget.dataset;
             $overlay.find(".title").text(targetData.title);

@@ -691,6 +691,10 @@ ul.nav-secondary {
         position: relative;
     }
 
+    #homepage-carousel img {
+        cursor: pointer;
+    }
+
     .carousel-overlay {
         position: absolute;
         top: 50px;
