@@ -39,7 +39,7 @@ def get_original_asset_id(download_url):
         pattern = r"/service:([A-Za-z0-9:\-]*)/"
         asset_id = re.search(pattern, download_url).group(1)
         assert asset_id
-        logger.debug("Found asset ID %s in download URL %s" % (asset_id, download_url))
+        logger.debug("Found asset ID %s in download URL %s", asset_id, download_url)
         return asset_id
     else:
         logger.warning(
