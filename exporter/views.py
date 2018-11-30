@@ -57,7 +57,7 @@ def do_bagit_export(assets, export_base_dir, export_filename_base):
 
     for asset in assets:
         asset_id = get_original_asset_id(asset.download_url)
-        logger.debug("Exporting asset %s into %s" % (asset_id, export_base_dir))
+        logger.debug("Exporting asset %s into %s", asset_id, export_base_dir)
 
         asset_id = asset_id.replace(":", "/")
         asset_path, asset_filename = os.path.split(asset_id)
