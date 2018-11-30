@@ -14,7 +14,7 @@ from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
 from tabular_export.core import export_to_csv_response, flatten_queryset
 
-from concordia.models import Asset, Transcription
+from concordia.models import Asset, Transcription, TranscriptionStatus
 
 logger = getLogger(__name__)
 
@@ -37,14 +37,20 @@ def get_original_asset_id(download_url):
     """
     if download_url.startswith("http://tile.loc.gov/"):
         pattern = r"/service:([A-Za-z0-9:\-]+)/"
-        asset_id = re.search(pattern, download_url).group(1)
-        assert asset_id
-        logger.debug("Found asset ID %s in download URL %s", asset_id, download_url)
-        return asset_id
+        asset_id = re.search(pattern, download_url)
+        if not asset_id:
+            logger.error(
+                "Couldn't find a matching asset ID in download URL %s", download_url
+            )
+            raise AssertionError
+        else:
+            matching_asset_id = asset_id.group(1)
+            logger.debug(
+                "Found asset ID %s in download URL %s", matching_asset_id, download_url
+            )
+            return matching_asset_id
     else:
-        logger.warning(
-            "Download URL doesn't start with tile.loc.gov: %s", download_url
-        )
+        logger.warning("Download URL doesn't start with tile.loc.gov: %s", download_url)
         return download_url
 
 
