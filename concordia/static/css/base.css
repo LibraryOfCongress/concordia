@@ -629,6 +629,11 @@ ul.nav-secondary {
     text-transform: uppercase;
 }
 
+.view-homepage .carousel-indicators li {
+    height: 16px;
+    border-radius: 8px;
+}
+
 .view-homepage .hero-text {
     font-family: 'Open Sans', sans-serif;
     max-width: 30em;
