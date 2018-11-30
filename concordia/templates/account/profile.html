@@ -66,26 +66,28 @@
                         </tr>
                     </thead>
 
-                    {% for campaign, project, item, asset in object_list %}
-                        {% ifchanged campaign.title project.title %}
-                            <tr>
-                                <th colspan="5">
-                                    <h3>
-                                        <a href="{{ campaign.get_absolute_url }}">{{ campaign.title }}</a>:
-                                        <a href="{{ project.get_absolute_url }}">{{ project.title }}</a>
-                                    </h3>
-                                </th>
-                            </tr>
-                        {% endifchanged %}
+                    <tbody>
+                        {% for campaign, project, item, asset in object_list %}
+                            {% ifchanged campaign.title project.title %}
+                                <tr>
+                                    <th colspan="5">
+                                        <h3>
+                                            <a href="{{ campaign.get_absolute_url }}">{{ campaign.title }}</a>:
+                                            <a href="{{ project.get_absolute_url }}">{{ project.title }}</a>
+                                        </h3>
+                                    </th>
+                                </tr>
+                            {% endifchanged %}
 
-                        <tr>
-                            <td><abbr title="{{ asset.last_interaction_time|date:'SHORT_DATE_FORMAT' }}">{{ asset.last_interaction_time|naturaltime }}</abbr></td>
-                            <td>{{ asset.last_interaction_type.title }}</td>
-                            <td><a href="{{ item.get_absolute_url }}">{{ item.title }}</a></td>
-                            <td class="text-right"><a href="{{ asset.get_absolute_url }}">{{ asset.sequence }}</a></td>
-                            <td>{{ asset.get_transcription_status_display }}</td>
-                        </tr>
-                    {% endfor %}
+                            <tr>
+                                <td><abbr title="{{ asset.last_interaction_time|date:'SHORT_DATE_FORMAT' }}">{{ asset.last_interaction_time|naturaltime }}</abbr></td>
+                                <td>{{ asset.last_interaction_type.title }}</td>
+                                <td><a href="{{ item.get_absolute_url }}">{{ item.title }}</a></td>
+                                <td class="text-right"><a href="{{ asset.get_absolute_url }}">{{ asset.sequence }}</a></td>
+                                <td>{{ asset.get_transcription_status_display }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
                 </table>
             </div>
         </div>
