@@ -20,7 +20,7 @@
                     <div class="carousel-item active" data-title="By the People:" data-hero-text="Volunteer to uncover our shared history and make documents more searchable for everyone." data-link-url="{% url 'transcriptions:redirect-to-next-transcribable-asset' 'letters-to-lincoln' %}">
                         <img class="d-block w-100" src="{% static 'img/homepage-carousel/crowd-home.jpg' %}" alt="a crowd of girls waving handkerchiefs and smiling; possibly cheering">
                     </div>
-                    <div class="carousel-item" data-title="Letters to Lincoln:" data-hero-text="Help us transcribe and review Letters to Lincoln: husband, father, postmaster, lawyer, politician, President." data-link-url="{% url 'transcriptions:redirect-to-next-transcribable-asset' 'letters-to-lincoln' %}">
+                    <div class="carousel-item" data-overlay-position="top-right" data-title="Letters to Lincoln:" data-hero-text="Help us transcribe and review Letters to Lincoln: husband, father, postmaster, lawyer, politician, President." data-link-url="{% url 'transcriptions:redirect-to-next-transcribable-asset' 'letters-to-lincoln' %}">
                         <img class="d-block w-100" src="{% static 'img/homepage-carousel/letters-to-lincoln.jpg' %}" alt="Image of letters sent to Abraham Lincoln">
                     </div>
                     <div class="carousel-item" data-title="Welcome Center:" data-hero-text="Learn how to transcribe, review, and tag." data-link-url="{% url 'welcome-guide' %}">
@@ -104,6 +104,11 @@
             $overlay.find(".title").text(targetData.title);
             $overlay.find(".hero-text").text(targetData.heroText);
             $overlay.find("[href]").attr("href", targetData.linkUrl);
+            if (targetData.overlayPosition) {
+                $carousel.attr('data-overlay-position', targetData.overlayPosition);
+            } else {
+                $carousel.removeAttr('data-overlay-position');
+            }
         });
     })(jQuery);
 </script>

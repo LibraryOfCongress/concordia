@@ -707,6 +707,11 @@ ul.nav-secondary {
         padding: 1rem 1rem 1.3rem 1rem;
     }
 
+    #homepage-carousel[data-overlay-position='top-right'] .carousel-overlay {
+        left: unset;
+        right: 100px;
+    }
+
     #homepage-campaign-list .campaign {
         max-width: 30%;
     }
