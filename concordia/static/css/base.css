@@ -625,6 +625,12 @@ ul.nav-secondary {
     line-height: 125%;
 }
 
+.view-homepage .carousel-control-next-icon,
+.view-homepage .carousel-control-prev-icon {
+    height: 60px;
+    width: 60px;
+}
+
 .view-homepage .carousel-overlay h1 {
     text-transform: uppercase;
 }
