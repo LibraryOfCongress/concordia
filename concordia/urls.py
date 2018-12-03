@@ -31,6 +31,16 @@ tx_urlpatterns = (
             name="campaign-export-bagit",
         ),
         path(
+            "<slug:campaign_slug>/<slug:project_slug>/export/bagit/",
+            exporter_views.ExportProjectToBagIt.as_view(),
+            name="project-export-bagit",
+        ),
+        path(
+            "<slug:campaign_slug>/<slug:project_slug>/<slug:item_id>/export/bagit/",
+            exporter_views.ExportItemToBagIt.as_view(),
+            name="item-export-bagit",
+        ),
+        path(
             "<slug:campaign_slug>/report/",
             views.ReportCampaignView.as_view(),
             name="campaign-report",
