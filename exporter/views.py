@@ -82,7 +82,7 @@ def do_bagit_export(assets, export_base_dir, export_filename_base):
         {
             "Content-Access": "web",
             "Content-Custodian": "dcms",
-            "Content-Process": "crowdsourcing",
+            "Content-Process": "crowdsourced",
             "Content-Type": "textual",
             "LC-Bag-Id": export_filename_base,
             "LC-Items": "%d transcriptions" % len(assets),
