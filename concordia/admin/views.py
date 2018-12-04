@@ -298,57 +298,60 @@ def get_campaign_report(campaign):
 
     assets_total = Asset.objects.filter(item__project__campaign__id=campaign.id).count()
     assets_published = Asset.objects.filter(
-        item__project__campaign__id=campaign.id, published=True
+        item__project__campaign=campaign, published=True
     ).count()
     assets_not_started = Asset.objects.filter(
-        item__project__campaign__id=campaign.id,
+        item__project__campaign=campaign,
         transcription_status=TranscriptionStatus.NOT_STARTED,
     ).count()
     assets_in_progress = Asset.objects.filter(
-        item__project__campaign__id=campaign.id,
+        item__project__campaign=campaign,
         transcription_status=TranscriptionStatus.IN_PROGRESS,
     ).count()
     assets_waiting_review = Asset.objects.filter(
-        item__project__campaign__id=campaign.id,
+        item__project__campaign=campaign,
         transcription_status=TranscriptionStatus.SUBMITTED,
     ).count()
     assets_completed = Asset.objects.filter(
-        item__project__campaign__id=campaign.id,
+        item__project__campaign=campaign,
         transcription_status=TranscriptionStatus.COMPLETED,
     ).count()
     assets_unpublished = Asset.objects.filter(
-        item__project__campaign__id=campaign.id, published=False
+        item__project__campaign=campaign, published=False
     ).count()
 
     items_published = Item.objects.filter(
-        project__campaign__id=campaign.id, published=True
+        project__campaign=campaign, published=True
     ).count()
     items_unpublished = Item.objects.filter(
-        project__campaign__id=campaign.id, published=False
+        project__campaign=campaign, published=False
     ).count()
 
     projects_published = Project.objects.filter(
-        campaign__id=campaign.id, published=True
+        campaign=campaign, published=True
     ).count()
     projects_unpublished = Project.objects.filter(
-        campaign__id=campaign.id, published=False
+        campaign=campaign, published=False
     ).count()
 
     anonymous_transcriptions = Transcription.objects.filter(
-        asset__item__project__campaign__id=campaign.id, user__username="anonymous"
+        asset__item__project__campaign=campaign, user__username="anonymous"
     ).count()
     transcriptions_saved = Transcription.objects.filter(
-        asset__item__project__campaign__id=campaign.id
+        asset__item__project__campaign=campaign
     ).count()
 
     asset_tag_collections = UserAssetTagCollection.objects.filter(
-        asset__item__project__campaign__id=campaign.id
+        asset__item__project__campaign=campaign
     )
     tag_count = 0
-    distinct_tag_count = 0
+    distinct_tag_list = set()
 
     for tag_collection in asset_tag_collections:
         tag_count += tag_collection.tags.all().count()
+        distinct_tag_list.add(tag_collection.tags.all())
+
+    distinct_tag_count = len(distinct_tag_list)
 
     site_report = SiteReport()
     site_report.campaign = campaign
