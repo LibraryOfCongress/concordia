@@ -29,6 +29,7 @@ services:
             # as defined at https://github.com/ufoscout/docker-compose-wait
             WAIT_HOSTS: db:5432
             POSTGRESQL_HOST: db
+            POSTGRESQL_PW: ${POSTGRESQL_PW}
         depends_on:
             - db
         volumes:
@@ -46,6 +47,7 @@ services:
             dockerfile: importer/Dockerfile
         environment:
             POSTGRESQL_HOST: db
+            POSTGRESQL_PW: ${POSTGRESQL_PW}
         depends_on:
             - rabbit
             - db
@@ -58,6 +60,7 @@ services:
             dockerfile: celerybeat/Dockerfile
         environment:
             POSTGRESQL_HOST: db
+            POSTGRESQL_PW: ${POSTGRESQL_PW}
         depends_on:
             - rabbit
             - db

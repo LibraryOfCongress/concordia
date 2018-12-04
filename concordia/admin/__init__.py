@@ -24,6 +24,7 @@ from ..models import (
     Project,
     Resource,
     SimplePage,
+    SiteReport,
     Tag,
     Transcription,
     UserAssetTagCollection,
@@ -403,3 +404,9 @@ class SimplePageAdmin(admin.ModelAdmin):
         (None, {"fields": ("created_on", "updated_on", "path", "title")}),
         ("Body", {"classes": ("markdown-preview",), "fields": ("body",)}),
     )
+
+
+@admin.register(SiteReport)
+class SiteReportAdmin(admin.ModelAdmin):
+    readonly_fields = ("created_on", "campaign")
+    list_display = ("created_on", "campaign")

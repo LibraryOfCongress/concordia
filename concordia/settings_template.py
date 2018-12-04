@@ -81,6 +81,7 @@ INSTALLED_APPS = [
     "captcha",
     "django_prometheus_metrics",
     "robots",
+    "django_celery_beat",
 ]
 
 MIDDLEWARE = [
