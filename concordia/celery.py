@@ -29,7 +29,6 @@ app.conf.beat_schedule = {
     "site-report-nightly": {
         "task": "tasks.site_report",
         "schedule": crontab(hour=2, minute=0),
-        "args": (16, 16),
     }
 }
 
