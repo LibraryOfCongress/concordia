@@ -22,6 +22,7 @@ from ..models import (
     Item,
     Project,
     SiteReport,
+    Tag,
     Transcription,
     TranscriptionStatus,
     UserAssetTagCollection,
@@ -208,6 +209,7 @@ def admin_site_report_view(request):
 
     tag_collections = UserAssetTagCollection.objects.all()
     tag_count = 0
+    distinct_tag_count = Tag.objects.all().count()
 
     for tag_group in tag_collections:
         tag_count += tag_group.tags.count()
@@ -229,6 +231,7 @@ def admin_site_report_view(request):
         "Projects unpublished",
         "Anonymous transcriptions",
         "Transcriptions saved",
+        "Distinct Tags",
         "Tag Uses",
         "Campaigns published",
         "Campaigns unpublished",
@@ -254,6 +257,7 @@ def admin_site_report_view(request):
             projects_unpublished,
             anonymous_transcriptions,
             transcriptions_saved,
+            distinct_tag_count,
             tag_count,
             campaigns_published,
             campaigns_unpublished,
@@ -276,6 +280,7 @@ def admin_site_report_view(request):
     site_report.projects_unpublished = projects_unpublished
     site_report.anonymous_transcriptions = anonymous_transcriptions
     site_report.transcriptions_saved = transcriptions_saved
+    site_report.distinct_tags = distinct_tag_count
     site_report.tag_uses = tag_count
     site_report.campaigns_published = campaigns_published
     site_report.campaigns_unpublished = campaigns_unpublished
@@ -340,6 +345,7 @@ def get_campaign_report(campaign):
         asset__item__project__campaign__id=campaign.id
     )
     tag_count = 0
+    distinct_tag_count = 0
 
     for tag_collection in asset_tag_collections:
         tag_count += tag_collection.tags.all().count()
@@ -359,6 +365,7 @@ def get_campaign_report(campaign):
     site_report.projects_unpublished = projects_unpublished
     site_report.anonymous_transcriptions = anonymous_transcriptions
     site_report.transcriptions_saved = transcriptions_saved
+    site_report.distinct_tags = distinct_tag_count
     site_report.tag_uses = tag_count
     site_report.save()
 
@@ -379,5 +386,6 @@ def get_campaign_report(campaign):
         projects_unpublished,
         anonymous_transcriptions,
         transcriptions_saved,
+        distinct_tag_count,
         tag_count,
     ]
