@@ -9,7 +9,7 @@ from django.core.exceptions import ValidationError
 from django.shortcuts import render
 from django.template.defaultfilters import slugify
 from django.views.decorators.cache import never_cache
-from tabular_export.core import export_to_csv_response
+from tabular_export.core import export_to_csv_response, flatten_queryset
 
 from importer.tasks import import_items_into_project_from_url
 from importer.utils.excel import slurp_excel
@@ -163,31 +163,34 @@ def admin_bulk_import_view(request):
 @staff_member_required
 def admin_site_report_view(request):
 
-    headers = [
-        "Date",
-        "Time",
-        "Campaign",
-        "Assets total",
-        "Assets published",
-        "Assets not started",
-        "Assets in progress",
-        "Assets waiting review",
-        "Assets complete",
-        "Assets unpublished",
-        "Items published",
-        "Items unpublished",
-        "Projects published",
-        "Projects unpublished",
-        "Anonymous transcriptions",
-        "Transcriptions saved",
-        "Distinct Tags",
-        "Tag Uses",
-        "Campaigns published",
-        "Campaigns unpublished",
-        "Users registered",
-        "Users activated",
-    ]
-
     site_reports = SiteReport.objects.all()
 
-    return export_to_csv_response("site-report.csv", headers, site_reports)
+    headers, data = flatten_queryset(
+        site_reports,
+        field_names=[
+            "created_on",
+            "campaign__title",
+            "assets_total",
+            "assets_published",
+            "assets_not_started",
+            "assets_in_progress",
+            "assets_waiting_review",
+            "assets_completed",
+            "assets_unpublished",
+            "items_published",
+            "items_unpublished",
+            "projects_published",
+            "projects_unpublished",
+            "anonymous_transcriptions",
+            "transcriptions_saved",
+            "distinct_tags",
+            "tag_uses",
+            "campaigns_published",
+            "campaigns_unpublished",
+            "users_registered",
+            "users_activated",
+        ],
+        extra_verbose_names={"created_on": "Date", "campaign__title": "Campaign"},
+    )
+
+    return export_to_csv_response("site-report.csv", headers, data)
