@@ -1,19 +1,31 @@
 import re
+from datetime import date, datetime
 
 from bittersweet.models import validated_get_or_create
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import permission_required
+from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.shortcuts import render
 from django.template.defaultfilters import slugify
 from django.views.decorators.cache import never_cache
+from tabular_export.core import export_to_csv_response
 
 from importer.tasks import import_items_into_project_from_url
 from importer.utils.excel import slurp_excel
 
 from ..forms import AdminProjectBulkImportForm
-from ..models import Campaign, Project
+from ..models import (
+    Asset,
+    Campaign,
+    Item,
+    Project,
+    Tag,
+    Transcription,
+    TranscriptionStatus,
+    UserAssetTagCollection,
+)
 
 
 @never_cache
@@ -155,3 +167,174 @@ def admin_bulk_import_view(request):
     context["form"] = form
 
     return render(request, "admin/bulk_import.html", context)
+
+
+@never_cache
+@staff_member_required
+def admin_site_report_view(request):
+
+    assets_total = Asset.objects.count()
+    assets_published = Asset.objects.filter(published=True).count()
+    assets_not_started = Asset.objects.filter(
+        transcription_status=TranscriptionStatus.NOT_STARTED
+    ).count()
+    assets_in_progress = Asset.objects.filter(
+        transcription_status=TranscriptionStatus.IN_PROGRESS
+    ).count()
+    assets_waiting_review = Asset.objects.filter(
+        transcription_status=TranscriptionStatus.SUBMITTED
+    ).count()
+    assets_completed = Asset.objects.filter(
+        transcription_status=TranscriptionStatus.COMPLETED
+    ).count()
+    assets_unpublished = Asset.objects.filter(published=False).count()
+
+    items_published = Item.objects.filter(published=True).count()
+    items_unpublished = Item.objects.filter(published=False).count()
+
+    projects_published = Project.objects.filter(published=True).count()
+    projects_unpublished = Project.objects.filter(published=False).count()
+
+    campaigns_published = Campaign.objects.filter(published=True).count()
+    campaigns_unpublished = Campaign.objects.filter(published=False).count()
+
+    users_registered = User.objects.all().count()
+    users_activated = User.objects.filter(is_active=True).count()
+
+    anonymous_transcriptions = Transcription.objects.filter(
+        user__username="anonymous"
+    ).count()
+    transcriptions_saved = Transcription.objects.all().count()
+
+    tag_count = Tag.objects.all().count()
+
+    headers = [
+        "Date",
+        "Time",
+        "Campaign",
+        "Assets total",
+        "Assets published",
+        "Assets not started",
+        "Assets in progress",
+        "Assets waiting review",
+        "Assets complete",
+        "Assets unpublished",
+        "Items published",
+        "Items unpublished",
+        "Projects published",
+        "Projects unpublished",
+        "Anonymous transcriptions",
+        "Transcriptions saved",
+        "Tags",
+        "Campaigns published",
+        "Campaigns unpublished",
+        "Users registered",
+        "Users activated",
+    ]
+
+    data = [
+        [
+            date.today(),
+            datetime.time(datetime.now()),
+            "All",
+            assets_total,
+            assets_published,
+            assets_not_started,
+            assets_in_progress,
+            assets_waiting_review,
+            assets_completed,
+            assets_unpublished,
+            items_published,
+            items_unpublished,
+            projects_published,
+            projects_unpublished,
+            anonymous_transcriptions,
+            transcriptions_saved,
+            tag_count,
+            campaigns_published,
+            campaigns_unpublished,
+            users_registered,
+            users_activated,
+        ]
+    ]
+
+    for campaign in Campaign.objects.all():
+        data.append(get_campaign_report(campaign))
+
+    return export_to_csv_response("site-report.csv", headers, data)
+
+
+def get_campaign_report(campaign):
+
+    assets_total = Asset.objects.filter(item__project__campaign__id=campaign.id).count()
+    assets_published = Asset.objects.filter(
+        item__project__campaign__id=campaign.id, published=True
+    ).count()
+    assets_not_started = Asset.objects.filter(
+        item__project__campaign__id=campaign.id,
+        transcription_status=TranscriptionStatus.NOT_STARTED,
+    ).count()
+    assets_in_progress = Asset.objects.filter(
+        item__project__campaign__id=campaign.id,
+        transcription_status=TranscriptionStatus.IN_PROGRESS,
+    ).count()
+    assets_waiting_review = Asset.objects.filter(
+        item__project__campaign__id=campaign.id,
+        transcription_status=TranscriptionStatus.SUBMITTED,
+    ).count()
+    assets_completed = Asset.objects.filter(
+        item__project__campaign__id=campaign.id,
+        transcription_status=TranscriptionStatus.COMPLETED,
+    ).count()
+    assets_unpublished = Asset.objects.filter(
+        item__project__campaign__id=campaign.id, published=False
+    ).count()
+
+    items_published = Item.objects.filter(
+        project__campaign__id=campaign.id, published=True
+    ).count()
+    items_unpublished = Item.objects.filter(
+        project__campaign__id=campaign.id, published=False
+    ).count()
+
+    projects_published = Project.objects.filter(
+        campaign__id=campaign.id, published=True
+    ).count()
+    projects_unpublished = Project.objects.filter(
+        campaign__id=campaign.id, published=False
+    ).count()
+
+    anonymous_transcriptions = Transcription.objects.filter(
+        asset__item__project__campaign__id=campaign.id, user__username="anonymous"
+    ).count()
+    transcriptions_saved = Transcription.objects.filter(
+        asset__item__project__campaign__id=campaign.id
+    ).count()
+
+    asset_tag_collections = UserAssetTagCollection.objects.filter(
+        asset__item__project__campaign__id=campaign.id
+    )
+    tag_count = 0
+
+    for tag_collection in asset_tag_collections:
+        tag_count += tag_collection.tags.all().count()
+
+    return [
+        date.today(),
+        datetime.time(datetime.now()),
+        campaign.title,
+        assets_total,
+        assets_published,
+        assets_not_started,
+        assets_in_progress,
+        assets_waiting_review,
+        assets_completed,
+        assets_unpublished,
+        items_published,
+        items_unpublished,
+        projects_published,
+        projects_unpublished,
+        anonymous_transcriptions,
+        transcriptions_saved,
+        tag_count,
+    ]
