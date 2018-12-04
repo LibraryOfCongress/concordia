@@ -79,10 +79,10 @@ def site_report():
     site_report.save()
 
     for campaign in Campaign.objects.all():
-        get_campaign_report(campaign)
+        campaign_report(campaign)
 
 
-def get_campaign_report(campaign):
+def campaign_report(campaign):
 
     assets_total = Asset.objects.filter(item__project__campaign=campaign).count()
     assets_published = Asset.objects.filter(

@@ -52,6 +52,17 @@ services:
         volumes:
             - images_volume:/concordia_images
 
+    celerybeat:
+        build:
+            context: .
+            dockerfile: celerybeat/Dockerfile
+        environment:
+            POSTGRESQL_HOST: db
+        depends_on:
+            - rabbit
+            - db
+
+
 volumes:
     ? db_volume
     ? images_volume

@@ -28,7 +28,7 @@ app.autodiscover_tasks()
 app.conf.beat_schedule = {
     "site-report-nightly": {
         "task": "tasks.site_report",
-        "schedule": crontab(hour=2, minute=0),
+        "schedule": crontab(hour=16, minute=0),
     }
 }
 

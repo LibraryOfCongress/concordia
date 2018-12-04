@@ -28,10 +28,4 @@ COPY . /app
 
 RUN pipenv install --system --dev --deploy
 
-EXPOSE 80
-
-## Add the wait script to the image
-ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.2.1/wait /wait
-RUN chmod +x /wait
-
-CMD /wait && /bin/bash entrypoint.sh
+CMD [ "/bin/bash", "celerybeat/entrypoint.sh" ]
