@@ -3,6 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import os
 
 from celery import Celery
+from celery.schedules import crontab
 from raven import Client
 from raven.contrib.celery import register_logger_signal, register_signal
 
@@ -23,6 +24,14 @@ app.config_from_object("django.conf:settings", namespace="CELERY")
 
 # Load task modules from all registered Django app configs.
 app.autodiscover_tasks()
+
+app.conf.beat_schedule = {
+    "site-report-nightly": {
+        "task": "tasks.site_report",
+        "schedule": crontab(hour=2, minute=0),
+        "args": (16, 16),
+    }
+}
 
 
 @app.task(bind=True)
