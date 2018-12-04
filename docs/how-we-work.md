@@ -52,7 +52,7 @@ So that we can work more efficiently and be confident in the quality of the work
 
 ## Processes
 
-#### Testing Strategy
+### Testing Strategy
 
 We practice testing at three levels: unit tests, integration tests, and feature tests. For details about how we create and maintain unit, integration and feature tests.
 
@@ -60,54 +60,79 @@ We practice testing at three levels: unit tests, integration tests, and feature 
 -   Integration - Code must include tests that verify that interfaces are functioning as designed.
 -   Feature - New features must have functional definitions of the thing that they are to perform, and a description of human-performable actions to verify that they perform that thing.
 
+#### Testing new code
+
+A the end of each sprint a release will be created of the work that was completed. A bulleted list of new features and bug fixes will be generated from the release. A testing plan will be drafted by the project manager to include personas and guidance on how to test new features. The testing plan will be available in GitHub wiki
+**What will be included in testing plan**
+- Persona
+- acceptance criteria
+- Link to ticket associated with/background on what is
+
+Testing will take place in crowd-stage.loc.gov and will happen alongside the current sprint. Monday, Tuesday and Wednesday are testing days, bug fix will happen on Thurs/Fr, and new code will be deployed on 2nd Monday of sprint
+
+Testers will identify high, medium, low. Here are the criteria for each of the levels: 
+- High: Does not meet the acceptace criteria and does not work as expected 
+- Medium: Does meet the acceptace criteria and does not work as expected
+- Low: Does meet both acceptace criteria and works as expected but can see ways to enhance the features
+
+**How to provide feedback**
+
+If testers find issues to address: 
+- Open a new BUG ticket if it is a high 
+- Open a new FEATURE ticket even if enhancement if it is a low
+- Link to testing plan that is in the wiki
+
+If a Bug ticket is open be prepared to be available to on Thursday and Friday to respond to developers until result is what is desired. If a high priority bug ticket is created, it can’t be shipped until tester closes ticket
+
+If all looks good and all user acceptance criteria has been met tester can close all open tickets in the testing column and signal to the Technical lead to prepare new release. 
+
+Final step: Technical lead will create a release tag in GitHub and will share release notes in slack channel 
+
 ## Branch strategy and Pull Request Process
 
 # Git branching strategy
 
-We will have two long-lived git branches, `master` and `staging`.
+We have two long-lived git branches, `master` and `release`.
 
-`master` will continuously deploy to our production environment.
+The `master` branch continuously deploys to our development environment.
 
-`staging` will continuously deploy to our staging environment.
-Our staging environment will be on AWS and only accessible through the library's network.
+The `release` branch continuously deploys to our staging environment.
+Our development and staging environments are on AWS and only accessible through the Library's network.
 
 ## Starting new work
 
-When someone begins new work, they cut a new branch from `staging` and name it after their work, perhaps `feature1`. New changes are pushed to the feature branch origin. Continuous Integration (CI) will be triggered on PR to `staging`.
-
-## Merging to `staging`
-
-When new work is complete, we set up a Pull Request (PR) from `feature1` to `staging`. Discussion about, and approval of changes by either the technical lead, Product Owner or both happens in the PR interface in GitHub
-
-Once this new work is approved we close the PR, which merges the code.
-From here, our CI pipeline will build the new changes on the `staging` branch. Next, our CD pipeline will deploy the new work to our staging environment.
+When someone begins new work, they cut a new branch from `master` and name it after their work, perhaps `feature1`. New changes are pushed to the feature branch origin.
 
 ## Merging to `master`
 
-Once a new body of work is merged to `staging` (likely via multiple PRs) and any manual QA work has finished in the staging environment, we set up a PR from `staging` to `master`.
+When new work is complete, we set up a Pull Request (PR) from `feature1` to `master`. Discussion about, and approval of changes by either the Technical Lead, Product Owner or both happens in the PR interface in GitHub.
 
-This constitutes a new production release. Any last-minute discussion, as well as approval happens in the PR interface. Once approved by the technical lead, product owner or both and merged, CI runs for `master` branch to the production environments.
+Once this new work is approved we merge the code, which closes the PR.
+From here, our CI pipeline will build the new changes on the `master` branch. Next, our CD pipeline will deploy the new work to our development environment.
 
-## Race conditions on merges to staging
+## Merging to `release`
 
-Imagine two PRs called A and B are open against the `staging` branch. The two PRs both change code in the same file. Now, we merge PR A to staging. After this merge PR B will report that it is "unmergeable" in GitHub. This is because `staging` contains the changes from PR A, but PR B does not contain those changes -- git doesn't know what to do.
+Once the development work on a sprint is completed, we set up a PR from `master` to `release`.
 
-In this case we have a couple options.
+This constitutes a new release candidate. Any last-minute discussion, as well as approval happens in the PR interface. Once approved by the Technical Lead, Product Owner or both and merged, CI runs for `release` branch to the staging environment.
 
-1. Rebase: `git rebase B_branch staging`. Rebasing the branch replays all of the commits from B on top of the _new_ `staging` branch (which now contains changes from A). **Rebasing is the preferred method for handling these issues.** Push the `B_branch` and you'll be able to use GitHub to close the PR.
-2. Manual conflict resolution. Instead of using the GitHub UI to merge the PR, execute the merge locally. `git checkout staging && git merge B_branch`. Git will report merge conflicts, which you can resolve locally, manually, using your editor. When you're done push the `staging` branch and close the PR in GitHub
+## Tagging and deploying to production
 
-## Patching production/master
+When the `release` branch has been fully tested in the staging environment, we create a GitHub release with a tag on the `release` branch.
 
-Imagine that many PRs have been merged to `staging`, and you find a problem in production that needs a quick fix. At this point `staging` has moved far past `master`. In this case we code the fix to production in a new branch cut from `master`, maybe called `prod_fix`. We set up a PR against `master` for reiew and discussion.
+Either trigger a Jenkins build manually or wait for continuous integration for the `release` branch to kick in. This will build a cleanly tagged versioned release candidate and upload the docker images to Amazon Elastic Container Registry.
 
-Any QA or manual testing will take place in a one-off environment deployed from the `prod_fix` branch; with the Azure PaaS we could manually deploy to an empty Deployment Slot. Once the PR on `master` is merged CI/CD takes care of deployment to the production environment.
+To deploy to production, create a new task revision for the `concordia-prod` task which updates the version numbers of the docker containers to match the recently built cleanly tagged release candidate. Update the production service to use the new task definition revision. Monitor the health check endpoint to ensure the service is updated to the proper version.
 
-Now we have to bring those new changes in master back into staging. We use rebase again: `git rebase staging master`.
+## Patching production mid-sprint
+
+If a problem is identified in production that needs a quick fix, we code the fix to production in a new branch cut from `release`, maybe called `prod_fix`. We set up a PR against `release` for review and discussion.
+
+Any QA or manual testing will take place in the staging environment deployed from the `release` branch. Once the release is tagged and deployed to production, we have to bring those new changes in release back into master. We use rebase again: `git rebase master release`.
 
 ## Code quality and review process
 
-Code reviews are about keeping code clean and limiting technical debt. We will look for things that increase technical debt or create an environment where technical debt can be introduced easily later. Each pull request will be reviewed by the technical lead or assigend reviewer. As a reviewer, they will look closely to untested code, if there are tests that they are testing what they're supposed to, that they are following the Library's code standards.
+Code reviews are about keeping code clean and limiting technical debt. We will look for things that increase technical debt or create an environment where technical debt can be introduced easily later. Each pull request will be reviewed by the technical lead or assigned reviewer. As a reviewer, they will look closely for untested code, if there are tests that they are testing what they're supposed to, that they are following the Library's code standards.
 
 ### Ensuring your work follows the Library's coding standards
 
