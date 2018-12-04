@@ -327,3 +327,28 @@ class SimplePage(models.Model):
 
     def __str__(self):
         return f"SimplePage: {self.path}"
+
+
+class SiteReport(models.Model):
+    created_on = models.DateTimeField(editable=False, auto_now_add=True)
+    campaign = models.ForeignKey(
+        Campaign, on_delete=models.DO_NOTHING, blank=True, null=True
+    )
+    assets_total = models.IntegerField()
+    assets_published = models.IntegerField()
+    assets_not_started = models.IntegerField()
+    assets_in_progress = models.IntegerField()
+    assets_waiting_review = models.IntegerField()
+    assets_complete = models.IntegerField()
+    assets_unpublished = models.IntegerField()
+    items_published = models.IntegerField()
+    items_unpublished = models.IntegerField()
+    projects_published = models.IntegerField()
+    projects_unpublished = models.IntegerField()
+    anonymous_transcriptions = models.IntegerField()
+    transcriptions_saved = models.IntegerField()
+    tag_uses = models.IntegerField()
+    campaigns_published = models.IntegerField(blank=True, null=True)
+    campaigns_unpublished = models.IntegerField(blank=True, null=True)
+    users_registered = models.IntegerField(blank=True, null=True)
+    users_activated = models.IntegerField(blank=True, null=True)

@@ -21,7 +21,7 @@ from ..models import (
     Campaign,
     Item,
     Project,
-    Tag,
+    SiteReport,
     Transcription,
     TranscriptionStatus,
     UserAssetTagCollection,
@@ -206,7 +206,11 @@ def admin_site_report_view(request):
     ).count()
     transcriptions_saved = Transcription.objects.all().count()
 
-    tag_count = Tag.objects.all().count()
+    tag_collections = UserAssetTagCollection.objects.all()
+    tag_count = 0
+
+    for tag_group in tag_collections:
+        tag_count += tag_group.tags.count()
 
     headers = [
         "Date",
@@ -225,7 +229,7 @@ def admin_site_report_view(request):
         "Projects unpublished",
         "Anonymous transcriptions",
         "Transcriptions saved",
-        "Tags",
+        "Tag Uses",
         "Campaigns published",
         "Campaigns unpublished",
         "Users registered",
@@ -257,6 +261,27 @@ def admin_site_report_view(request):
             users_activated,
         ]
     ]
+
+    site_report = SiteReport()
+    site_report.assets_total = assets_total
+    site_report.assets_published = assets_published
+    site_report.assets_not_started = assets_not_started
+    site_report.assets_in_progress = assets_in_progress
+    site_report.assets_waiting_review = assets_waiting_review
+    site_report.assets_completed = assets_completed
+    site_report.assets_unpublished = assets_unpublished
+    site_report.items_published = items_published
+    site_report.items_unpublished = items_unpublished
+    site_report.projects_published = projects_published
+    site_report.projects_unpublished = projects_unpublished
+    site_report.anonymous_transcriptions = anonymous_transcriptions
+    site_report.transcriptions_saved = transcriptions_saved
+    site_report.tag_uses = tag_count
+    site_report.campaigns_published = campaigns_published
+    site_report.campaigns_unpublished = campaigns_unpublished
+    site_report.users_registered = users_registered
+    site_report.users_activated = users_activated
+    site_report.save()
 
     for campaign in Campaign.objects.all():
         data.append(get_campaign_report(campaign))
@@ -318,6 +343,24 @@ def get_campaign_report(campaign):
 
     for tag_collection in asset_tag_collections:
         tag_count += tag_collection.tags.all().count()
+
+    site_report = SiteReport()
+    site_report.campaign = campaign
+    site_report.assets_total = assets_total
+    site_report.assets_published = assets_published
+    site_report.assets_not_started = assets_not_started
+    site_report.assets_in_progress = assets_in_progress
+    site_report.assets_waiting_review = assets_waiting_review
+    site_report.assets_completed = assets_completed
+    site_report.assets_unpublished = assets_unpublished
+    site_report.items_published = items_published
+    site_report.items_unpublished = items_unpublished
+    site_report.projects_published = projects_published
+    site_report.projects_unpublished = projects_unpublished
+    site_report.anonymous_transcriptions = anonymous_transcriptions
+    site_report.transcriptions_saved = transcriptions_saved
+    site_report.tag_uses = tag_count
+    site_report.save()
 
     return [
         date.today(),
