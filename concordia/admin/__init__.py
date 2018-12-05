@@ -408,5 +408,4 @@ class SimplePageAdmin(admin.ModelAdmin):
 
 @admin.register(SiteReport)
 class SiteReportAdmin(admin.ModelAdmin):
-    readonly_fields = ("created_on", "campaign")
     list_display = ("created_on", "campaign")
