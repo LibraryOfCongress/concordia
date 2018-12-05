@@ -329,6 +329,9 @@ Resources:
                 Value: !Ref DatabaseEndpoint
               - Name: HOST_NAME
                 Value: !Ref CanonicalHostName
+          MountPoints:
+              - SourceVolume: images_volume
+                ContainerPath: /concordia_images
         - Name: celerybeat
           Cpu: 1024
           Memory: 2048
