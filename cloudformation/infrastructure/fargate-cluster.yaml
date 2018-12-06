@@ -332,6 +332,47 @@ Resources:
           MountPoints:
               - SourceVolume: images_volume
                 ContainerPath: /concordia_images
+        - Name: celerybeat
+          Cpu: 1024
+          Memory: 2048
+          Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/concordia/celerybeat:${ConcordiaVersion}'
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref 'ConcordiaAppLogsGroup'
+              awslogs-region: !Ref 'AWS::Region'
+              awslogs-stream-prefix: ConcordiaWorker
+          Environment:
+              - Name: AWS
+                Value: '1'
+              - Name: ENV_NAME
+                Value: !Ref EnvName
+              - Name: CONCORDIA_ENVIRONMENT
+                Value: !Ref FullEnvironmentName
+              - Name: S3_BUCKET_NAME
+                Value: !Ref S3BucketName
+              - Name: EXPORT_S3_BUCKET_NAME
+                Value: !Ref ExportS3BucketName
+              - Name: CELERY_BROKER_URL
+                Value: pyamqp://guest@localhost:5672
+              - Name: AWS_DEFAULT_REGION
+                Value: !Ref AWS::Region
+              - Name: SENTRY_BACKEND_DSN
+                Value: http://34db819263f34c28809da045f841f045@sentry-internal.devops.cloud/2
+              - Name: SENTRY_FRONTEND_DSN
+                Value: https://48ec47f15e484502a29879e40ed2e0c3@crowd-sentry.loc.gov/3
+              - Name: REDIS_ADDRESS
+                Value: !Ref RedisAddress
+              - Name: REDIS_PORT
+                Value: !Ref RedisPort
+              - Name: MEMCACHED_ADDRESS
+                Value: !Ref MemcachedAddress
+              - Name: MEMCACHED_PORT
+                Value: !Ref MemcachedPort
+              - Name: POSTGRESQL_HOST
+                Value: !Ref DatabaseEndpoint
+              - Name: HOST_NAME
+                Value: !Ref CanonicalHostName
 
   ConcordiaExternalService:
     Type: AWS::ECS::Service
