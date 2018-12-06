@@ -210,12 +210,12 @@
                             </div>
                         </div>
                     {% else %}
-                        <p class="help-text primary-text text-center anonymous-only">
+                        <p class="help-text anonymous-only text-center">
                             Want to tag this page?
 
-                            <a class="primary-text" href="{% url 'registration_register' %}">Register</a>
+                            <a href="{% url 'registration_register' %}">Register</a>
                             or
-                            <a class="primary-text" href="{% url 'login' %}?next={{ request.path|urlencode }}">login</a>
+                            <a href="{% url 'login' %}?next={{ request.path|urlencode }}">login</a>
                             to add tags.
                         </p>
                     {% endif %}
