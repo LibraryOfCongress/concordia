@@ -1,5 +1,8 @@
+from logging import getLogger
+
 from celery import task
 from django.contrib.auth.models import User
+from django.db.models import Count
 
 from concordia.models import (
     Asset,
@@ -9,28 +12,31 @@ from concordia.models import (
     SiteReport,
     Tag,
     Transcription,
-    TranscriptionStatus,
     UserAssetTagCollection,
 )
 from concordia.utils import get_anonymous_user
 
+logger = getLogger(__name__)
+
 
 @task
 def site_report():
+
+    report = dict()
+    report["assets_not_started"] = 0
+    report["assets_in_progress"] = 0
+    report["assets_submitted"] = 0
+    report["assets_completed"] = 0
+
+    asset_count_qs = Asset.objects.values_list("transcription_status").annotate(
+        Count("transcription_status")
+    )
+    for status, count in asset_count_qs:
+        logger.debug("Assets %s: %d", status, count)
+        report[f"assets_{status}"] = count
+
     assets_total = Asset.objects.count()
     assets_published = Asset.objects.published().count()
-    assets_not_started = Asset.objects.filter(
-        transcription_status=TranscriptionStatus.NOT_STARTED
-    ).count()
-    assets_in_progress = Asset.objects.filter(
-        transcription_status=TranscriptionStatus.IN_PROGRESS
-    ).count()
-    assets_waiting_review = Asset.objects.filter(
-        transcription_status=TranscriptionStatus.SUBMITTED
-    ).count()
-    assets_completed = Asset.objects.filter(
-        transcription_status=TranscriptionStatus.COMPLETED
-    ).count()
     assets_unpublished = Asset.objects.unpublished().count()
 
     items_published = Item.objects.published().count()
@@ -60,10 +66,10 @@ def site_report():
     site_report = SiteReport()
     site_report.assets_total = assets_total
     site_report.assets_published = assets_published
-    site_report.assets_not_started = assets_not_started
-    site_report.assets_in_progress = assets_in_progress
-    site_report.assets_waiting_review = assets_waiting_review
-    site_report.assets_completed = assets_completed
+    site_report.assets_not_started = report["assets_not_started"]
+    site_report.assets_in_progress = report["assets_in_progress"]
+    site_report.assets_waiting_review = report["assets_submitted"]
+    site_report.assets_completed = report["assets_completed"]
     site_report.assets_unpublished = assets_unpublished
     site_report.items_published = items_published
     site_report.items_unpublished = items_unpublished
@@ -85,26 +91,24 @@ def site_report():
 
 def campaign_report(campaign):
 
+    report = dict()
+    report["assets_not_started"] = 0
+    report["assets_in_progress"] = 0
+    report["assets_submitted"] = 0
+    report["assets_completed"] = 0
+    asset_count_qs = (
+        Asset.objects.filter(item__project__campaign=campaign)
+        .values_list("transcription_status")
+        .annotate(Count("transcription_status"))
+    )
+    for status, count in asset_count_qs:
+        logger.debug("Campaign %s assets %s: %d", campaign.slug, status, count)
+        report[f"assets_{status}"] = count
+
     assets_total = Asset.objects.filter(item__project__campaign=campaign).count()
     assets_published = (
         Asset.objects.published().filter(item__project__campaign=campaign).count()
     )
-    assets_not_started = Asset.objects.filter(
-        item__project__campaign=campaign,
-        transcription_status=TranscriptionStatus.NOT_STARTED,
-    ).count()
-    assets_in_progress = Asset.objects.filter(
-        item__project__campaign=campaign,
-        transcription_status=TranscriptionStatus.IN_PROGRESS,
-    ).count()
-    assets_waiting_review = Asset.objects.filter(
-        item__project__campaign=campaign,
-        transcription_status=TranscriptionStatus.SUBMITTED,
-    ).count()
-    assets_completed = Asset.objects.filter(
-        item__project__campaign=campaign,
-        transcription_status=TranscriptionStatus.COMPLETED,
-    ).count()
     assets_unpublished = (
         Asset.objects.unpublished().filter(item__project__campaign=campaign).count()
     )
@@ -144,10 +148,10 @@ def campaign_report(campaign):
     site_report.campaign = campaign
     site_report.assets_total = assets_total
     site_report.assets_published = assets_published
-    site_report.assets_not_started = assets_not_started
-    site_report.assets_in_progress = assets_in_progress
-    site_report.assets_waiting_review = assets_waiting_review
-    site_report.assets_completed = assets_completed
+    site_report.assets_not_started = report["assets_not_started"]
+    site_report.assets_in_progress = report["assets_in_progress"]
+    site_report.assets_waiting_review = report["assets_submitted"]
+    site_report.assets_completed = report["assets_completed"]
     site_report.assets_unpublished = assets_unpublished
     site_report.items_published = items_published
     site_report.items_unpublished = items_unpublished
