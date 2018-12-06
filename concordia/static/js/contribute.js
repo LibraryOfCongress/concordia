@@ -301,11 +301,15 @@ function submitReview(status) {
         }
     })
         .done(function() {
-            $('#successful-review-modal')
-                .modal()
-                .on('hidden.bs.modal', function() {
-                    window.location.reload(true);
-                });
+            if (status == 'reject') {
+                window.location.reload(true);
+            } else {
+                $('#review-accepted-modal')
+                    .modal()
+                    .on('hidden.bs.modal', function() {
+                        window.location.reload(true);
+                    });
+            }
         })
         .fail(function(jqXHR, textStatus, errorThrown) {
             displayMessage(

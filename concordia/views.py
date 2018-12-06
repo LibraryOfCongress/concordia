@@ -23,7 +23,7 @@ from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
 from django.db import connection
-from django.db.models import Case, Count, IntegerField, Q, When
+from django.db.models import Case, Count, IntegerField, Max, Q, When
 from django.db.transaction import atomic
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -257,19 +257,75 @@ def ratelimit_view(request, exception=None):
 
 
 @method_decorator(never_cache, name="dispatch")
-class AccountProfileView(LoginRequiredMixin, FormView):
+class AccountProfileView(LoginRequiredMixin, FormView, ListView):
     template_name = "account/profile.html"
     form_class = UserProfileForm
     success_url = reverse_lazy("user-profile")
 
+    # This view will list the assets which the user has contributed to
+    # along with their most recent action on each asset. This will be
+    # presented in the template as a standard paginated list of Asset
+    # instances with annotations
+
+    allow_empty = True
+    ordering = ("-updated_on",)
+    paginate_by = 12
+
+    def post(self, *args, **kwargs):
+        self.object_list = self.get_queryset()
+        return super().post(*args, **kwargs)
+
+    def get_queryset(self):
+        transcriptions = Transcription.objects.filter(
+            Q(user=self.request.user) | Q(reviewed_by=self.request.user)
+        ).distinct("asset")
+
+        assets = Asset.objects.filter(transcription__in=transcriptions)
+        assets = assets.select_related(
+            "item", "item__project", "item__project__campaign"
+        )
+        assets = assets.annotate(
+            last_transcribed=Max(
+                "transcription__created_on",
+                filter=Q(transcription__user=self.request.user),
+            ),
+            last_reviewed=Max(
+                "transcription__updated_on",
+                filter=Q(transcription__reviewed_by=self.request.user),
+            ),
+        )
+        return assets
+
     def get_context_data(self, *args, **kwargs):
         ctx = super().get_context_data(*args, **kwargs)
-        ctx["transcriptions"] = (
-            Transcription.objects.filter(user=self.request.user)
-            .select_related("asset__item__project__campaign")
-            .order_by("asset__pk", "-pk")
-            .distinct("asset")
+        obj_list = ctx.pop("object_list")
+        ctx["object_list"] = object_list = []
+
+        for asset in obj_list:
+            if asset.last_reviewed:
+                asset.last_interaction_time = asset.last_reviewed
+                asset.last_interaction_type = "reviewed"
+            else:
+                asset.last_interaction_time = asset.last_transcribed
+                asset.last_interaction_type = "transcribed"
+
+            object_list.append(
+                (asset.item.project.campaign, asset.item.project, asset.item, asset)
+            )
+
+        user = self.request.user
+        ctx["contributed_campaigns"] = (
+            Campaign.objects.annotate(
+                action_count=Count(
+                    "project__item__asset__transcription",
+                    filter=Q(project__item__asset__transcription__user=user)
+                    | Q(project__item__asset__transcription__reviewed_by=user),
+                )
+            )
+            .exclude(action_count=0)
+            .order_by("title")
         )
+
         return ctx
 
     def get_initial(self):
