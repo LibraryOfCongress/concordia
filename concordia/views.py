@@ -55,6 +55,7 @@ from concordia.models import (
     TranscriptionStatus,
     UserAssetTagCollection,
 )
+from concordia.utils import get_anonymous_user
 from concordia.version import get_concordia_version
 
 logger = getLogger(__name__)
@@ -83,19 +84,6 @@ def default_cache_control(view_function):
         return view_function(*args, **kwargs)
 
     return inner
-
-
-def get_anonymous_user():
-    """
-    Get the user called "anonymous" if it exist. Create the user if it doesn't
-    exist This is the default concordia user if someone is working on the site
-    without logging in first.
-    """
-
-    try:
-        return User.objects.get(username="anonymous")
-    except User.DoesNotExist:
-        return User.objects.create_user(username="anonymous")
 
 
 @never_cache

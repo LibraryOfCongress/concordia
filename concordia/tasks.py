@@ -12,6 +12,7 @@ from concordia.models import (
     TranscriptionStatus,
     UserAssetTagCollection,
 )
+from concordia.utils import get_anonymous_user
 
 
 @task
@@ -45,7 +46,7 @@ def site_report():
     users_activated = User.objects.filter(is_active=True).count()
 
     anonymous_transcriptions = Transcription.objects.filter(
-        user__username="anonymous"
+        user=get_anonymous_user()
     ).count()
     transcriptions_saved = Transcription.objects.all().count()
 
@@ -123,7 +124,7 @@ def campaign_report(campaign):
     ).count()
 
     anonymous_transcriptions = Transcription.objects.filter(
-        asset__item__project__campaign=campaign, user__username="anonymous"
+        asset__item__project__campaign=campaign, user=get_anonymous_user()
     ).count()
     transcriptions_saved = Transcription.objects.filter(
         asset__item__project__campaign=campaign
