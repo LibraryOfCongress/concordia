@@ -18,7 +18,7 @@ from concordia.utils import get_anonymous_user
 @task
 def site_report():
     assets_total = Asset.objects.count()
-    assets_published = Asset.objects.filter(published=True).count()
+    assets_published = Asset.objects.published().count()
     assets_not_started = Asset.objects.filter(
         transcription_status=TranscriptionStatus.NOT_STARTED
     ).count()
@@ -31,16 +31,16 @@ def site_report():
     assets_completed = Asset.objects.filter(
         transcription_status=TranscriptionStatus.COMPLETED
     ).count()
-    assets_unpublished = Asset.objects.filter(published=False).count()
+    assets_unpublished = Asset.objects.unpublished().count()
 
-    items_published = Item.objects.filter(published=True).count()
-    items_unpublished = Item.objects.filter(published=False).count()
+    items_published = Item.objects.published().count()
+    items_unpublished = Item.objects.unpublished().count()
 
-    projects_published = Project.objects.filter(published=True).count()
-    projects_unpublished = Project.objects.filter(published=False).count()
+    projects_published = Project.objects.published().count()
+    projects_unpublished = Project.objects.unpublished().count()
 
-    campaigns_published = Campaign.objects.filter(published=True).count()
-    campaigns_unpublished = Campaign.objects.filter(published=False).count()
+    campaigns_published = Campaign.objects.published().count()
+    campaigns_unpublished = Campaign.objects.unpublished().count()
 
     users_registered = User.objects.all().count()
     users_activated = User.objects.filter(is_active=True).count()
@@ -86,9 +86,9 @@ def site_report():
 def campaign_report(campaign):
 
     assets_total = Asset.objects.filter(item__project__campaign=campaign).count()
-    assets_published = Asset.objects.filter(
-        item__project__campaign=campaign, published=True
-    ).count()
+    assets_published = (
+        Asset.objects.published().filter(item__project__campaign=campaign).count()
+    )
     assets_not_started = Asset.objects.filter(
         item__project__campaign=campaign,
         transcription_status=TranscriptionStatus.NOT_STARTED,
@@ -105,23 +105,21 @@ def campaign_report(campaign):
         item__project__campaign=campaign,
         transcription_status=TranscriptionStatus.COMPLETED,
     ).count()
-    assets_unpublished = Asset.objects.filter(
-        item__project__campaign=campaign, published=False
-    ).count()
+    assets_unpublished = (
+        Asset.objects.unpublished().filter(item__project__campaign=campaign).count()
+    )
 
-    items_published = Item.objects.filter(
-        project__campaign=campaign, published=True
-    ).count()
-    items_unpublished = Item.objects.filter(
-        project__campaign=campaign, published=False
-    ).count()
+    items_published = (
+        Item.objects.published().filter(project__campaign=campaign).count()
+    )
+    items_unpublished = (
+        Item.objects.published().filter(project__campaign=campaign).count()
+    )
 
-    projects_published = Project.objects.filter(
-        campaign=campaign, published=True
-    ).count()
-    projects_unpublished = Project.objects.filter(
-        campaign=campaign, published=False
-    ).count()
+    projects_published = Project.objects.published().filter(campaign=campaign).count()
+    projects_unpublished = (
+        Project.objects.unpublished().filter(campaign=campaign).count()
+    )
 
     anonymous_transcriptions = Transcription.objects.filter(
         asset__item__project__campaign=campaign, user=get_anonymous_user()
