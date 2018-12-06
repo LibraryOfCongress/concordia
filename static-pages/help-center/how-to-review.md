@@ -26,7 +26,7 @@ When a transcription is accurate and you do not need to make any changes, click 
 A transcription that needs more work:
 </h2>
 <p>
-While reviewing, you can change a transcription to fix errors or add missing material. Remember, do not edit the spelling and grammar of the original document, but do correct any spelling errors or misreadings created by the transcriber. When you’re done, click the "Approve" button.
+While reviewing, you can change a transcription to fix errors or add missing material. Remember, do not edit the spelling and grammar of the original document, but do correct any spelling errors or misreadings created by the transcriber. When you’re done, click the "Save" and "Submit" buttons. The page will then need to be reviewed by another volunteer and will only be completed when a volunteer clicks "Approve" without making changes.
 </p>
   </div>
 </div>
