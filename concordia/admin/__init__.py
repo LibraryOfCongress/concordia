@@ -23,18 +23,19 @@ from ..models import (
     Item,
     Project,
     Resource,
+    SimplePage,
     Tag,
     Transcription,
     UserAssetTagCollection,
 )
 from ..views import ReportCampaignView
-from .filters import AcceptedFilter, SubmittedFilter, RejectedFilter
 from .actions import (
     publish_action,
-    unpublish_action,
     publish_item_action,
+    unpublish_action,
     unpublish_item_action,
 )
+from .filters import AcceptedFilter, RejectedFilter, SubmittedFilter
 
 
 class ConcordiaUserAdmin(UserAdmin):
@@ -103,19 +104,18 @@ class CustomListDisplayFieldsMixin:
 @admin.register(Campaign)
 class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     list_display = (
-        "id",
         "title",
-        "slug",
         "short_description",
-        "start_date",
-        "end_date",
-        "truncated_metadata",
         "published",
+        "display_on_homepage",
+        "ordering",
+        "truncated_metadata",
     )
-    list_display_links = ("id", "title", "slug")
+    list_editable = ("display_on_homepage", "ordering", "published")
+    list_display_links = ("title",)
     prepopulated_fields = {"slug": ("title",)}
     search_fields = ["title", "description"]
-    list_filter = ("published",)
+    list_filter = ("published", "display_on_homepage")
 
     actions = (publish_action, unpublish_action)
 
@@ -392,3 +392,14 @@ class TranscriptionAdmin(admin.ModelAdmin):
         return truncatechars(obj.text, 100)
 
     truncated_text.short_description = "Text"
+
+
+@admin.register(SimplePage)
+class SimplePageAdmin(admin.ModelAdmin):
+    list_display = ("path", "title", "created_on", "updated_on")
+    readonly_fields = ("path", "created_on", "updated_on")
+
+    fieldsets = (
+        (None, {"fields": ("created_on", "updated_on", "path", "title")}),
+        ("Body", {"classes": ("markdown-preview",), "fields": ("body",)}),
+    )

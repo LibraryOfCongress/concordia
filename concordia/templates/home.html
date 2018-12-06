@@ -54,7 +54,7 @@
                 <h2 class="px-default px-md-0 ml-md-3">Campaigns: <small>Choose what to transcribe</small></h2>
             </div>
             <div class="d-flex flex-wrap col-12 justify-content-around">
-                {% for campaign in campaigns|slice:":6" %}
+                {% for campaign in campaigns|slice:":3" %}
                     <div class="text-center campaign m-1 mb-4 mb-md-5 d-flex flex-column flex-wrap justify-content-between align-items-center">
                         {% url 'transcriptions:campaign-detail' campaign.slug as campaign_url %}
                         <div>
@@ -63,7 +63,6 @@
                             </a>
                             <h3 class="mt-half"><a href="{{ campaign_url }}">{{ campaign.title }}</a></h3>
                         </div>
-                        <a class="btn btn-outline-primary" href="{{ campaign_url }}">Get Started</a>
                     </div>
                 {% endfor %}
             </div>

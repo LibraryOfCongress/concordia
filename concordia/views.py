@@ -23,13 +23,14 @@ from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
 from django.db import connection
-from django.db.models import Case, Count, IntegerField, Q, When
+from django.db.models import Case, Count, IntegerField, Max, Q, When
 from django.db.transaction import atomic
 from django.http import HttpResponse, JsonResponse
-from django.shortcuts import Http404, get_object_or_404, redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.template import loader
 from django.urls import reverse, reverse_lazy
 from django.utils.decorators import method_decorator
+from django.utils.http import http_date
 from django.utils.timezone import now
 from django.views.decorators.cache import cache_control, never_cache
 from django.views.decorators.csrf import csrf_exempt
@@ -48,6 +49,7 @@ from concordia.models import (
     Campaign,
     Item,
     Project,
+    SimplePage,
     Tag,
     Transcription,
     TranscriptionStatus,
@@ -110,7 +112,7 @@ def healthz(request):
 
 
 @default_cache_control
-def static_page(request, base_name=None):
+def simple_page(request, path=None):
     """
     Serve static content from Markdown files
 
@@ -121,34 +123,28 @@ def static_page(request, base_name=None):
     path("foobar/", static_page, {"base_name": "some-weird-filename.md"})
     """
 
-    if not base_name:
-        base_name = request.path.strip("/")
+    if not path:
+        path = request.path
 
-    filename = os.path.join(settings.SITE_ROOT_DIR, "static-pages", f"{base_name}.md")
-
-    if not os.path.exists(filename):
-        raise Http404
+    page = get_object_or_404(SimplePage, path=path)
 
     md = markdown.Markdown(extensions=["meta"])
-    with open(filename) as f:
-        html = md.convert(f.read())
-
-    page_title = md.Meta.get("title")
-    if page_title:
-        page_title = "\n".join(i.strip() for i in page_title)
-    else:
-        page_title = base_name.replace("-", " ").replace("/", " — ").title()
+    html = md.convert(page.body)
 
     breadcrumbs = []
     path_components = request.path.strip("/").split("/")
-    for i, segment in enumerate(path_components, start=1):
+    for i, segment in enumerate(path_components[:-1], start=1):
         breadcrumbs.append(
             ("/%s/" % "/".join(path_components[0:i]), segment.replace("-", " ").title())
         )
+    breadcrumbs.append((request.path, page.title))
 
-    ctx = {"body": html, "title": page_title, "breadcrumbs": breadcrumbs}
+    ctx = {"body": html, "title": page.title, "breadcrumbs": breadcrumbs}
 
-    return render(request, "static-page.html", ctx)
+    resp = render(request, "static-page.html", ctx)
+    resp["Created"] = http_date(page.created_on.timestamp())
+    resp["Last-Modified"] = http_date(page.updated_on.timestamp())
+    return resp
 
 
 @cache_control(private=True, max_age=settings.DEFAULT_PAGE_TTL)
@@ -273,19 +269,75 @@ def ratelimit_view(request, exception=None):
 
 
 @method_decorator(never_cache, name="dispatch")
-class AccountProfileView(LoginRequiredMixin, FormView):
+class AccountProfileView(LoginRequiredMixin, FormView, ListView):
     template_name = "account/profile.html"
     form_class = UserProfileForm
     success_url = reverse_lazy("user-profile")
 
+    # This view will list the assets which the user has contributed to
+    # along with their most recent action on each asset. This will be
+    # presented in the template as a standard paginated list of Asset
+    # instances with annotations
+
+    allow_empty = True
+    ordering = ("-updated_on",)
+    paginate_by = 12
+
+    def post(self, *args, **kwargs):
+        self.object_list = self.get_queryset()
+        return super().post(*args, **kwargs)
+
+    def get_queryset(self):
+        transcriptions = Transcription.objects.filter(
+            Q(user=self.request.user) | Q(reviewed_by=self.request.user)
+        ).distinct("asset")
+
+        assets = Asset.objects.filter(transcription__in=transcriptions)
+        assets = assets.select_related(
+            "item", "item__project", "item__project__campaign"
+        )
+        assets = assets.annotate(
+            last_transcribed=Max(
+                "transcription__created_on",
+                filter=Q(transcription__user=self.request.user),
+            ),
+            last_reviewed=Max(
+                "transcription__updated_on",
+                filter=Q(transcription__reviewed_by=self.request.user),
+            ),
+        )
+        return assets
+
     def get_context_data(self, *args, **kwargs):
         ctx = super().get_context_data(*args, **kwargs)
-        ctx["transcriptions"] = (
-            Transcription.objects.filter(user=self.request.user)
-            .select_related("asset__item__project__campaign")
-            .order_by("asset__pk", "-pk")
-            .distinct("asset")
+        obj_list = ctx.pop("object_list")
+        ctx["object_list"] = object_list = []
+
+        for asset in obj_list:
+            if asset.last_reviewed:
+                asset.last_interaction_time = asset.last_reviewed
+                asset.last_interaction_type = "reviewed"
+            else:
+                asset.last_interaction_time = asset.last_transcribed
+                asset.last_interaction_type = "transcribed"
+
+            object_list.append(
+                (asset.item.project.campaign, asset.item.project, asset.item, asset)
+            )
+
+        user = self.request.user
+        ctx["contributed_campaigns"] = (
+            Campaign.objects.annotate(
+                action_count=Count(
+                    "project__item__asset__transcription",
+                    filter=Q(project__item__asset__transcription__user=user)
+                    | Q(project__item__asset__transcription__reviewed_by=user),
+                )
+            )
+            .exclude(action_count=0)
+            .order_by("title")
         )
+
         return ctx
 
     def get_initial(self):
@@ -313,7 +365,11 @@ class AccountProfileView(LoginRequiredMixin, FormView):
 class HomeView(ListView):
     template_name = "home.html"
 
-    queryset = Campaign.objects.published().order_by("title")
+    queryset = (
+        Campaign.objects.published()
+        .filter(display_on_homepage=True)
+        .order_by("-ordering", "title")
+    )
     context_object_name = "campaigns"
 
 
@@ -322,7 +378,7 @@ class CampaignListView(ListView):
     template_name = "transcriptions/campaign_list.html"
     paginate_by = 10
 
-    queryset = Campaign.objects.published().order_by("title")
+    queryset = Campaign.objects.published().order_by("-ordering", "title")
     context_object_name = "campaigns"
 
 

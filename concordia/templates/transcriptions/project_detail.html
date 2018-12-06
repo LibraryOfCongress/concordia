@@ -1,11 +1,15 @@
 {% extends "base.html" %}
 
 {% load staticfiles %}
+{% load concordia_text_tags %}
 
 {% block title %}{{ project.title }} ({{ campaign.title }}){% endblock title %}
 
 {% block head_content %}
     <link rel="canonical" href="https://{{ request.get_host }}{{ request.path }}">
+    <meta name="description" content="{{ project.description|normalize_whitespace }}">
+    <meta name="thumbnail" content="{{ MEDIA_URL }}{{ project.thumbnail_image }}">
+    <meta property="og:image" content="{{ MEDIA_URL }}{{ project.thumbnail_image }}">
 {% endblock head_content %}
 
 {% block breadcrumbs %}
@@ -21,7 +25,7 @@
     <div class="row">
         <div class="col-12">
             <h1 class="m-3">{{ project.title }}</h1>
-            <p class="m-3 hero-text">{{ project.description }}</p>
+            <p class="m-3 hero-text">{{ project.description|linebreaksbr }}</p>
         </div>
     </div>
     {% include "fragments/transcription-progress-row.html" %}

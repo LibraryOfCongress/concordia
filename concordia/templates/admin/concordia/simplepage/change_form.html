@@ -1,0 +1,84 @@
+{% extends "admin/change_form.html" %}
+
+{% block extrahead %}
+    {{ block.super }}
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.42.0/codemirror.min.css" integrity="sha256-I8NyGs4wjbMuBSUE40o55W6k6P7tu/7G28/JGUUYCIs=" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha256-eSi1q2PG6J7g7ib17yAaWMcrr5GrtohYChqibrV7PBE=" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.42.0/codemirror.min.js" integrity="sha256-cEZZfu/xNhXjnj1TRr9CrIGoAZ2hztIzwNTUv0Zcll8=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.42.0/mode/markdown/markdown.min.js" integrity="sha256-BZXkUzlSBobUXEiSFbDIbTc/DOqhNdegF/iK5m99kbk=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prettier@1.15.2/standalone.js" integrity="sha256-J+EGJvtGc2C0TOj2teUqFDcW5ovV2oimUkdea60++qE=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prettier@1.15.2/parser-markdown.js" integrity="sha256-ceDp4sXOqX8LdQaP9OsnQ1oS1JTlt4vwIVdBmCxPkME=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/remarkable/1.7.1/remarkable.min.js" integrity="sha256-ltAts6+/XysEs9E5RF/t0H+0eD3ET6NpbqzshWkqeic=" crossorigin="anonymous"></script>
+{% endblock extrahead %}
+
+{% block content %}
+    {{ block.super }}
+
+    <script>
+        (function($) {
+            var md = new Remarkable({ html: true });
+
+            var $bodyRow = $(".field-body");
+            $bodyRow.find("label").remove();
+
+            var $bodyPreview = $('<div id="id_body_preview" class="container">');
+            $bodyPreview.insertAfter("#id_body");
+
+            var editor = CodeMirror.fromTextArea(document.getElementById("id_body"), {
+                mode: "markdown",
+                lineNumbers: true,
+                highlightFormatting: true,
+                indentUnit: 4
+            });
+
+            var queuedUpdate;
+
+            editor.on("change", queueUpdate);
+
+            function queueUpdate() {
+                if (queuedUpdate) {
+                    window.cancelAnimationFrame(queuedUpdate);
+                }
+                queuedUpdate = window.requestAnimationFrame(updatePreview);
+            }
+
+            function updatePreview() {
+                $bodyPreview.empty().html(md.render(editor.getValue()));
+            }
+
+            $('<button class="button">Run Prettier</button>')
+                .prependTo(".field-body")
+                .on("click", function(evt) {
+                    evt.preventDefault();
+                    var pretty = prettier.format(editor.getValue(), {
+                        parser: "markdown",
+                        plugins: prettierPlugins,
+                        printWidth: 120,
+                        tabWidth: 4
+                    });
+
+                    editor.setValue(pretty);
+                    queueUpdate();
+
+                    return false;
+                });
+
+            updatePreview();
+        })(django.jQuery);
+    </script>
+
+    <style>
+        .field-body > div {
+            display: flex;
+            width: 100%;
+        }
+
+        .field-body > div > * {
+            flex-basis: 50%;
+            overflow-y: auto;
+
+            min-height: 500px;
+        }
+    </style>
+{% endblock content %}
