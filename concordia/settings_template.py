@@ -233,8 +233,18 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
-    {"NAME": "concordia.validators.complexity"},
+    {"NAME": "concordia.validators.DjangoPasswordsValidator"},
 ]
+
+# See https://github.com/dstufft/django-passwords#settings
+PASSWORD_COMPLEXITY = {
+    "UPPER": 1,
+    "LOWER": 1,
+    "LETTERS": 1,
+    "DIGITS": 1,
+    "SPECIAL": 1,
+    "WORDS": 1,
+}
 
 AUTHENTICATION_BACKENDS = [
     "concordia.email_username_backend.EmailOrUsernameModelBackend"
