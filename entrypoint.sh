@@ -20,8 +20,5 @@ echo "Testing Sentry configuration"
 echo Running collectstatic
 ./manage.py collectstatic --clear --noinput -v0
 
-#    echo Running indexing
-#    ./manage.py search_index --rebuild -f
-
 echo Running Django dev server
 gunicorn --log-level=warn --bind 0.0.0.0:80 --workers=4 concordia.wsgi

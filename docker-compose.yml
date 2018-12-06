@@ -54,6 +54,16 @@ services:
         volumes:
             - images_volume:/concordia_images
 
+    indexer:
+        build:
+            context: .
+            dockerfile: indexer/Dockerfile
+        environment:
+            POSTGRESQL_HOST: db
+            ELASTICSEARCH_ENDPOINT: http://localhost:9200
+        depends_on:
+            - db
+
     celerybeat:
         build:
             context: .
@@ -64,7 +74,6 @@ services:
         depends_on:
             - rabbit
             - db
-
 
 volumes:
     ? db_volume

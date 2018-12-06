@@ -1,29 +1,92 @@
-# documents.py
-
 from django.contrib.auth.models import User
-from django_elasticsearch_dsl import DocType, Index
+from django_elasticsearch_dsl import fields, DocType, Index
 
-# Name of the Elasticsearch index
+from .models import Transcription, UserAssetTagCollection
+
+
 user = Index("users")
-# See Elasticsearch Indices API reference for available settings
 user.settings(number_of_shards=1, number_of_replicas=0)
+
+tag_collection = Index("tags")
+tag_collection.settings(number_of_shards=1, number_of_replicas=0)
+
+transcription = Index("transcriptions")
+transcription.settings(number_of_shards=1, number_of_replicas=0)
 
 
 @user.doc_type
 class UserDocument(DocType):
     class Meta:
-        model = User  # The model associated with this DocType
+        model = User
 
-        # The fields of the model you want to be indexed in Elasticsearch
-        fields = ["last_login", "date_joined"]
+        fields = ["last_login", "date_joined", "username"]
 
-        # Ignore auto updating of Elasticsearch when a model is saved
-        # or deleted:
-        # ignore_signals = True
-        # Don't perform an index refresh after every update
-        # (overrides global setting):
-        # auto_refresh = False
-        # Paginate the django queryset used to populate the index with
-        # the specified size
-        # (by default there is no pagination)
-        # queryset_pagination = 5000
+
+@tag_collection.doc_type
+class TagCollectionDocument(DocType):
+    tags = fields.NestedField(properties={"value": fields.TextField()})
+    asset = fields.ObjectField(
+        properties={
+            "title": fields.TextField(),
+            "slug": fields.TextField(),
+            "transcription_status": fields.TextField(),
+            "item": fields.ObjectField(
+                properties={
+                    "item_id": fields.TextField(),
+                    "project": fields.ObjectField(
+                        properties={
+                            "slug": fields.TextField(),
+                            "campaign": fields.ObjectField(
+                                properties={"slug": fields.TextField()}
+                            ),
+                        }
+                    ),
+                }
+            ),
+        }
+    )
+    user = fields.ObjectField(properties={"username": fields.TextField()})
+
+    class Meta:
+        model = UserAssetTagCollection
+        fields = ["created_on", "updated_on"]
+
+
+@transcription.doc_type
+class TranscriptionDocument(DocType):
+    asset = fields.ObjectField(
+        properties={
+            "title": fields.TextField(),
+            "slug": fields.TextField(),
+            "transcription_status": fields.TextField(),
+            "item": fields.ObjectField(
+                properties={
+                    "item_id": fields.TextField(),
+                    "project": fields.ObjectField(
+                        properties={
+                            "slug": fields.TextField(),
+                            "campaign": fields.ObjectField(
+                                properties={"slug": fields.TextField()}
+                            ),
+                        }
+                    ),
+                }
+            ),
+        }
+    )
+    user = fields.ObjectField(properties={"username": fields.TextField()})
+    reviewed_by = fields.ObjectField(properties={"username": fields.TextField()})
+    supersedes = fields.ObjectField(properties={"id": fields.IntegerField()})
+
+    class Meta:
+        model = Transcription
+
+        fields = [
+            "id",
+            "created_on",
+            "updated_on",
+            "text",
+            "accepted",
+            "rejected",
+            "submitted",
+        ]
