@@ -4,16 +4,18 @@ from bittersweet.models import validated_get_or_create
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import permission_required
+
 from django.core.exceptions import ValidationError
 from django.shortcuts import render
 from django.template.defaultfilters import slugify
 from django.views.decorators.cache import never_cache
+from tabular_export.core import export_to_csv_response, flatten_queryset
 
 from importer.tasks import import_items_into_project_from_url
 from importer.utils.excel import slurp_excel
 
 from ..forms import AdminProjectBulkImportForm
-from ..models import Campaign, Project
+from ..models import Campaign, Project, SiteReport
 
 
 @never_cache
@@ -155,3 +157,40 @@ def admin_bulk_import_view(request):
     context["form"] = form
 
     return render(request, "admin/bulk_import.html", context)
+
+
+@never_cache
+@staff_member_required
+def admin_site_report_view(request):
+
+    site_reports = SiteReport.objects.all()
+
+    headers, data = flatten_queryset(
+        site_reports,
+        field_names=[
+            "created_on",
+            "campaign__title",
+            "assets_total",
+            "assets_published",
+            "assets_not_started",
+            "assets_in_progress",
+            "assets_waiting_review",
+            "assets_completed",
+            "assets_unpublished",
+            "items_published",
+            "items_unpublished",
+            "projects_published",
+            "projects_unpublished",
+            "anonymous_transcriptions",
+            "transcriptions_saved",
+            "distinct_tags",
+            "tag_uses",
+            "campaigns_published",
+            "campaigns_unpublished",
+            "users_registered",
+            "users_activated",
+        ],
+        extra_verbose_names={"created_on": "Date", "campaign__title": "Campaign"},
+    )
+
+    return export_to_csv_response("site-report.csv", headers, data)

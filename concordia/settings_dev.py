@@ -43,7 +43,7 @@ INTERNAL_IPS = ("127.0.0.1",)
 
 INSTALLED_APPS += ("django_extensions",)
 SHELL_PLUS_PRE_IMPORTS = [
-    ("concordia.views", "get_anonymous_user"),
+    ("concordia.utils", "get_anonymous_user"),
     ("concordia.models", "TranscriptionStatus"),
 ]
 

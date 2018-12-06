@@ -12,7 +12,7 @@ from concordia.models import (
     TranscriptionStatus,
     User,
 )
-from concordia.views import get_anonymous_user
+from concordia.utils import get_anonymous_user
 
 from .utils import (
     JSONAssertMixin,

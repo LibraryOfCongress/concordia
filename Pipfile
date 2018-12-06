@@ -39,6 +39,7 @@ python-memcached = "*"
 django-tabular-export = "*"
 pylibmc = "*"
 cfn-lint = "*"
+django-celery-beat = "*"
 django-passwords = "*"
 
 [dev-packages]
