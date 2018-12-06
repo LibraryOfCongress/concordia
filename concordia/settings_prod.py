@@ -36,12 +36,6 @@ else:
     EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
     EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 
-
-SENTRY_DSN = os.environ.get("SENTRY_BACKEND_DSN", "")
-RAVEN_CONFIG.update({"dsn": SENTRY_DSN, "environment": CONCORDIA_ENVIRONMENT})
-
-SENTRY_PUBLIC_DSN = os.environ.get("SENTRY_FRONTEND_DSN", "")
-
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 EMAIL_USE_TLS = True
@@ -56,13 +50,14 @@ CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "pyamqp://guest@rabbit:5672")
 CELERY_RESULT_BACKEND = "rpc://"
 
 S3_BUCKET_NAME = os.getenv("S3_BUCKET_NAME")
+EXPORT_S3_BUCKET_NAME = os.getenv("EXPORT_S3_BUCKET_NAME")
 
 DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 AWS_STORAGE_BUCKET_NAME = S3_BUCKET_NAME
 AWS_DEFAULT_ACL = None  # Don't set an ACL on the files, inherit the bucket ACLs
 
 if CONCORDIA_ENVIRONMENT == "production":
-    MEDIA_URL = "https://crowd-media.loc.gov"
+    MEDIA_URL = "https://crowd-media.loc.gov/"
 else:
     MEDIA_URL = "https://%s.s3.amazonaws.com/" % S3_BUCKET_NAME
 
@@ -82,6 +77,6 @@ ELASTICSEARCH_DSL = {
 
 REGISTRATION_SALT = "django_registration"  # doesn't need to be secret
 
-ACCOUNT_ACTIVATION_DAYS = 1  # required for HMAC registration two-step-flow
-
 SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
+
+RATELIMIT_BLOCK = os.getenv("RATELIMIT_BLOCK", "").lower() not in ("false", "0")

@@ -36,6 +36,10 @@ setuptools-scm = "*"
 django-bittersweet = "*"
 django-ratelimit = "*"
 python-memcached = "*"
+django-tabular-export = "*"
+pylibmc = "*"
+cfn-lint = "*"
+django-passwords = "*"
 
 [dev-packages]
 invoke = "*"
@@ -45,6 +49,8 @@ isort = "*"
 django-debug-toolbar = "*"
 "flake8" = "*"
 coverage = "*"
+pre-commit = "*"
+pylint = "*"
 
 [requires]
 python_version = "3.6"

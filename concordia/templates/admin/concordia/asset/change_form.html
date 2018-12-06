@@ -2,6 +2,32 @@
 
 {% load i18n admin_urls humanize %}
 
+{% block object-tools-items %}
+    {% if original.pk %}
+        <li>
+            <a class="view-parent-object" href="{% url 'admin:concordia_campaign_change' original.item.project.campaign_id %}">
+                Campaign
+            </a>
+        </li>
+        <li>
+            <a class="view-parent-object" href="{% url 'admin:concordia_project_change' original.item.project_id %}">
+                Project
+            </a>
+        </li>
+        <li>
+            <a class="view-parent-object" href="{% url 'admin:concordia_item_change' original.item_id %}">
+                Item
+            </a>
+        </li>
+        <li>
+            <a class="view-related-objects" href="{% url 'admin:concordia_transcription_changelist' %}?asset__id__exact={{ original.pk }}">
+                Transcriptions
+            </a>
+        </li>
+    {% endif %}
+    {{ block.super }}
+{% endblock object-tools-items %}
+
 {% block content %}
     {{ block.super }}
 

@@ -1,74 +1,119 @@
 {% extends "base.html" %}
 {% load staticfiles %}
 
-{% block prefetch %}
-    <link href="https://crowd-content.s3.amazonaws.com" rel="preconnect" crossorigin>
-    {{ block.super }}
-{% endblock prefetch %}
-
 {% block title %}Home{% endblock title %}
 
 {% block breadcrumbs-container %}{% endblock breadcrumbs-container %}
 
+{% block extra_main_classes %}{% endblock %}
+
 {% block main_content %}
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12 ">
-            <div id="homepage-carousel" class="carousel slide" data-ride="carousel">
+    <div class="row no-gutters px-sm-3">
+        <div class="col-12">
+            <div id="homepage-carousel" class="carousel slide" data-ride="carousel" data-pause="hover">
+                <ol class="carousel-indicators d-none d-md-flex">
+                    <li data-target="#homepage-carousel" data-slide-to="0" class="active"></li>
+                    <li data-target="#homepage-carousel" data-slide-to="1"></li>
+                    <li data-target="#homepage-carousel" data-slide-to="2"></li>
+                </ol>
                 <div class="carousel-inner">
-                    <div class="carousel-item text-right active">
-                        <img class="d-block" src="{% static  'img/crowd-home.jpg' %}" alt="a crowd of girls waving handkerchiefs and smiling; possibly cheering">
+                    <div class="carousel-item active" data-title="By the People:" data-hero-text="Volunteer to uncover our shared history and make documents more searchable for everyone." data-link-url="{% url 'transcriptions:redirect-to-next-transcribable-asset' 'letters-to-lincoln' %}">
+                        <img class="d-block w-100" src="{% static 'img/homepage-carousel/crowd-home.jpg' %}" alt="a crowd of girls waving handkerchiefs and smiling; possibly cheering">
+                    </div>
+                    <div class="carousel-item" data-overlay-position="top-right" data-title="Letters to Lincoln:" data-hero-text="Help us transcribe and review Letters to Lincoln: husband, father, postmaster, lawyer, politician, President." data-link-url="{% url 'transcriptions:redirect-to-next-transcribable-asset' 'letters-to-lincoln' %}">
+                        <img class="d-block w-100" src="{% static 'img/homepage-carousel/letters-to-lincoln.jpg' %}" alt="Image of letters sent to Abraham Lincoln">
+                    </div>
+                    <div class="carousel-item" data-title="Welcome Center:" data-hero-text="Learn how to transcribe, review, and tag." data-link-url="{% url 'welcome-guide' %}">
+                        <img class="d-block w-100" src="{% static 'img/homepage-carousel/welcome-guide.jpg' %}" alt="">
                     </div>
                 </div>
-            </div>
-            <div class="col-8 col-md-6 carousel-text text-center py-md-3">
-                <h1 class=" px-md-default">Get Involved:</h1>
-                <p class="hero-text d-none d-md-block mb-0 mx-2">Volunteer to uncover our shared history and make documents more searchable for everyone.</p>
-                <a class="btn btn-primary btn-lg my-2 mb-md-3" href="{% url 'transcriptions:campaigns' %}">LET'S GO!</a>
+                <a class="carousel-control-prev" href="#homepage-carousel" role="button" data-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="sr-only">Previous</span>
+                </a>
+                <a class="carousel-control-next" href="#homepage-carousel" role="button" data-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="sr-only">Next</span>
+                </a>
+                <div class="carousel-overlay text-center d-flex flex-column justify-content-around align-items-center">
+                    <h1 class="title">By the People:</h1>
+                    <p class="hero-text mx-auto">Volunteer to uncover our shared history and make documents more searchable for everyone.</p>
+                    <a class="btn btn-primary btn-lg" href="{% url "transcriptions:redirect-to-next-transcribable-asset" 'letters-to-lincoln' %}">LET'S GO!</a>
+                </div>
             </div>
         </div>
     </div>
-    <div class="row my-5">
-        <div class="row bg-home-contribute pxy-default mx-auto">
-            <div class="col-12 mb-default">
-                <h2 class="px-default offwhite-text px-md-0 ml-md-default">Anyone Can Contribute</h2>
+    <div class="row no-gutters my-5 px-sm-3">
+        <div id="homepage-contribute-container" class="col-12 bg-home-contribute p-3 p-md-4 p-xl-5">
+            <div class="mb-3">
+                <h2 class="px-default offwhite-text px-md-0 ml-md-3">Anyone Can Contribute</h2>
             </div>
-            <div class="col-12 w-100 d-flex flex-wrap justify-content-around">
-                <div class="mb-default text-center">
-                    <a href="{% url 'how-to-transcribe' %}"><img class="img-responsive d-block mx-auto" alt="Transcribe" src="{% static 'img/homepage-pencil.svg' %}"></a>
+            <div id="homepage-contribute-activities" class="d-flex justify-content-around text-center">
+                <div class="homepage-activity px-1 pl-mx-2 px-lg-3">
+                    <a aria-hidden="true" href="{% url 'how-to-transcribe' %}"><img class="img-fluid" src="{% static 'img/homepage-pencil.svg' %}"></a>
                     <h4 class="mt-3"><a class="offwhite-text" href="{% url 'how-to-transcribe' %}">TRANSCRIBE</a></h4>
-                    <p class="offwhite-text px-default">Type what you see on the page.</p>
+                    <p class="offwhite-text">Type what you see on the page.</p>
                 </div>
-                <div class="mb-default text-center border-left-home-contribute">
-                    <a class="offwhite-text" href="{% url 'how-to-review' %}"><img class="img-responsive d-block mx-auto" src="{% static 'img/homepage-checkmark.svg' %}"></a>
+                <div class="homepage-activity px-1 pl-mx-2 px-lg-3">
+                    <a aria-hidden="true" class="offwhite-text" href="{% url 'how-to-review' %}"><img class="img-fluid" src="{% static 'img/homepage-checkmark.svg' %}"></a>
                     <h4 class="offwhite-text mt-3"><a class="offwhite-text" href="{% url 'how-to-review' %}">REVIEW</a></h4>
-                    <p class="offwhite-text px-default">Register to edit and complete transcriptions.</p>
+                    <p class="offwhite-text">Register to edit and complete transcriptions.</p>
                 </div>
-                <div class="mb-default text-center border-left-home-contribute">
-                    <a class="offwhite-text" href="{% url 'how-to-tag' %}"><img class="img-responsive d-block mx-auto" src="{% static 'img/homepage-tag.svg' %}"></a>
-                    <h4 class="offwhite-text mt-3"><a class="offwhite-text" href="{% url 'how-to-tag' %}">TAG</h4>
-                    <p class="offwhite-text px-default">Register to add tags and share what you find.</p>
+                <div class="homepage-activity px-1 pl-mx-2 px-lg-3">
+                    <a aria-hidden="true" class="offwhite-text" href="{% url 'how-to-tag' %}"><img class="img-fluid" src="{% static 'img/homepage-tag.svg' %}"></a>
+                    <h4 class="offwhite-text mt-3"><a class="offwhite-text" href="{% url 'how-to-tag' %}">TAG</a></h4>
+                    <p class="offwhite-text">Register to add tags and share what you find.</p>
                 </div>
             </div>
         </div>
     </div>
-    <div class="row my-5">
-        <div class="col-12 mb-3">
-            <h2 class="px-default px-md-0 ml-md-default">Campaigns: <small>Choose what to transcribe</small></h2>
-        </div>
-        <div class="d-flex flex-wrap col-12 justify-content-around">
-            {% for campaign in campaigns|slice:":6" %}
-                <div class="text-center campaign m-1">
-                    <a href="{% url 'transcriptions:campaign' campaign.slug %}">
-                        <img src="{{ MEDIA_URL }}{{ campaign.thumbnail_image }}" class="img-home-contribute d-block mx-auto img-fluid" alt="{{ campaign.title }} image">
-                        <h3 class="mt-half">{{ campaign.title }}</h3>
-                    </a>
-                </div>
-            {% endfor %}
+    <div id="homepage-campaign-list" class="container my-5">
+        <div class="row">
+            <div class="col-12 mb-3">
+                <h2 class="px-default px-md-0 ml-md-3">Campaigns: <small>Choose what to transcribe</small></h2>
+            </div>
+            <div class="d-flex flex-wrap col-12 justify-content-around">
+                {% for campaign in campaigns|slice:":3" %}
+                    <div class="text-center campaign m-1 mb-4 mb-md-5 d-flex flex-column flex-wrap justify-content-between align-items-center">
+                        {% url 'transcriptions:campaign-detail' campaign.slug as campaign_url %}
+                        <div>
+                            <a href="{{ campaign_url }}" aria-hidden="true">
+                                <img src="{{ MEDIA_URL }}{{ campaign.thumbnail_image }}" class="img-fluid" alt="{{ campaign.title }}">
+                            </a>
+                            <h3 class="mt-half"><a href="{{ campaign_url }}">{{ campaign.title }}</a></h3>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="col-12 d-flex justify-content-center my-3">
+                <a class="btn btn-primary" href="{% url 'transcriptions:campaign-list' %}" role="button">Browse All Campaigns</a>
+            </div>
         </div>
     </div>
-    <div class="row mx-auto d-flex justify-content-center my-default">
-        <a class="btn btn-primary" href="{% url 'transcriptions:campaigns' %}" role="button">Browse All Campaigns</a>
-    </div>
-</div>
 {% endblock main_content %}
+
+
+{% block body_scripts %}
+<script>
+    (function ($) {
+        var $carousel = $("#homepage-carousel");
+        var $overlay = $carousel.find('.carousel-overlay');
+
+        $carousel.find('img').on('click', function (evt) {
+            document.location.href = $overlay.find('a').attr('href');
+        });
+
+        $carousel.on('slide.bs.carousel', function (evt) {
+            var targetData = evt.relatedTarget.dataset;
+            $overlay.find(".title").text(targetData.title);
+            $overlay.find(".hero-text").text(targetData.heroText);
+            $overlay.find("[href]").attr("href", targetData.linkUrl);
+            if (targetData.overlayPosition) {
+                $carousel.attr('data-overlay-position', targetData.overlayPosition);
+            } else {
+                $carousel.removeAttr('data-overlay-position');
+            }
+        });
+    })(jQuery);
+</script>
+{% endblock body_scripts %}

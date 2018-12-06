@@ -26,12 +26,14 @@ class TranscriptionStatus(object):
     to avoid needing to do nested queries in views
     """
 
-    EDIT = "edit"
+    NOT_STARTED = "not_started"
+    IN_PROGRESS = "in_progress"
     SUBMITTED = "submitted"
     COMPLETED = "completed"
 
     CHOICES = (
-        (EDIT, "Open for Edit"),
+        (NOT_STARTED, "Not Started"),
+        (IN_PROGRESS, "In Progress"),
         (SUBMITTED, "Submitted for Review"),
         (COMPLETED, "Completed"),
     )
@@ -59,6 +61,11 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
 
     published = models.BooleanField(default=False, blank=True)
 
+    ordering = models.IntegerField(
+        default=0, help_text="Sort order override: higher values will be listed first"
+    )
+    display_on_homepage = models.BooleanField(default=True)
+
     title = models.CharField(max_length=80)
     slug = models.SlugField(max_length=80, unique=True)
     description = models.TextField(blank=True)
@@ -67,18 +74,13 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
     )
     short_description = models.TextField(blank=True)
 
-    start_date = models.DateTimeField(null=True, blank=True)
-    end_date = models.DateTimeField(null=True, blank=True)
-
     metadata = JSONField(default=metadata_default, blank=True, null=True)
 
     def __str__(self):
         return self.title
 
     def get_absolute_url(self):
-        # FIXME: change this with
-        # https://github.com/LibraryOfCongress/concordia/issues/242
-        return reverse("transcriptions:campaign", args=(self.slug,))
+        return reverse("transcriptions:campaign-detail", args=(self.slug,))
 
 
 class Resource(MetricsModelMixin("resource"), models.Model):
@@ -195,8 +197,8 @@ class Asset(MetricsModelMixin("asset"), models.Model):
     # be directly modified except by the Transcription signal handler:
     transcription_status = models.CharField(
         editable=False,
-        max_length=10,
-        default=TranscriptionStatus.EDIT,
+        max_length=20,
+        default=TranscriptionStatus.NOT_STARTED,
         choices=TranscriptionStatus.CHOICES,
     )
 
@@ -255,6 +257,7 @@ class Transcription(MetricsModelMixin("transcription"), models.Model):
         null=True,
         on_delete=models.CASCADE,
         help_text="A previous transcription record which is replaced by this one",
+        related_name="superseded_by",
     )
 
     submitted = models.DateTimeField(
@@ -289,11 +292,11 @@ class Transcription(MetricsModelMixin("transcription"), models.Model):
     @property
     def status(self):
         if self.accepted:
-            return "Completed"
+            return TranscriptionStatus.CHOICE_MAP[TranscriptionStatus.COMPLETED]
         elif self.submitted and not self.rejected:
-            return "Submitted"
+            return TranscriptionStatus.CHOICE_MAP[TranscriptionStatus.SUBMITTED]
         else:
-            return "Edit"
+            return TranscriptionStatus.CHOICE_MAP[TranscriptionStatus.IN_PROGRESS]
 
 
 class AssetTranscriptionReservation(models.Model):
@@ -306,3 +309,21 @@ class AssetTranscriptionReservation(models.Model):
 
     created_on = models.DateTimeField(editable=False, auto_now_add=True)
     updated_on = models.DateTimeField(auto_now=True)
+
+
+class SimplePage(models.Model):
+    created_on = models.DateTimeField(editable=False, auto_now_add=True)
+    updated_on = models.DateTimeField(editable=False, auto_now=True)
+
+    path = models.CharField(
+        max_length=255,
+        help_text="URL path where this page will be accessible from",
+        validators=[RegexValidator(r"^/.+/$")],
+    )
+
+    title = models.CharField(max_length=200)
+
+    body = models.TextField()
+
+    def __str__(self):
+        return f"SimplePage: {self.path}"

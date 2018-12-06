@@ -19,6 +19,21 @@
                 Report
             </a>
         </li>
+        <li>
+            <a class="view-related-objects" href="{% url 'admin:concordia_project_changelist' %}?campaign__id__exact={{ original.pk }}">
+                Projects
+            </a>
+        </li>
+        <li>
+            <a class="view-related-objects" href="{% url 'admin:concordia_item_changelist' %}?project__campaign__id__exact={{ original.pk }}">
+                Items
+            </a>
+        </li>
+        <li>
+            <a class="view-related-objects" href="{% url 'admin:concordia_asset_changelist' %}?item__project__campaign__id__exact={{ original.pk }}">
+                Assets
+            </a>
+        </li>
     {% endif %}
     {{ block.super }}
 {% endblock %}

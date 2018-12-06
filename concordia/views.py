@@ -6,8 +6,10 @@ from datetime import timedelta
 from functools import wraps
 from logging import getLogger
 from smtplib import SMTPException
+from urllib.parse import urlencode
 
 import markdown
+from captcha.fields import CaptchaField
 from captcha.helpers import captcha_image_url
 from captcha.models import CaptchaStore
 from django.conf import settings
@@ -15,18 +17,20 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
+from django.contrib.auth.views import LoginView
 from django.contrib.messages import get_messages
 from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
 from django.db import connection
-from django.db.models import Count, Q
+from django.db.models import Case, Count, IntegerField, Max, Q, When
 from django.db.transaction import atomic
 from django.http import HttpResponse, JsonResponse
-from django.shortcuts import Http404, get_object_or_404, redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.template import loader
 from django.urls import reverse, reverse_lazy
 from django.utils.decorators import method_decorator
+from django.utils.http import http_date
 from django.utils.timezone import now
 from django.views.decorators.cache import cache_control, never_cache
 from django.views.decorators.csrf import csrf_exempt
@@ -35,19 +39,17 @@ from django.views.decorators.vary import vary_on_headers
 from django.views.generic import DetailView, FormView, ListView, TemplateView
 from django_registration.backends.activation.views import RegistrationView
 from ratelimit.decorators import ratelimit
+from ratelimit.mixins import RatelimitMixin
+from ratelimit.utils import is_ratelimited
 
-from concordia.forms import (
-    AssetFilteringForm,
-    ContactUsForm,
-    UserProfileForm,
-    UserRegistrationForm,
-)
+from concordia.forms import ContactUsForm, UserProfileForm, UserRegistrationForm
 from concordia.models import (
     Asset,
     AssetTranscriptionReservation,
     Campaign,
     Item,
     Project,
+    SimplePage,
     Tag,
     Transcription,
     TranscriptionStatus,
@@ -75,7 +77,7 @@ def default_cache_control(view_function):
     """
 
     @vary_on_headers("Accept-Encoding")
-    @cache_control(public=True, no_transform=True, max_age=settings.DEFAULT_PAGE_TTL)
+    @cache_control(public=True, max_age=settings.DEFAULT_PAGE_TTL)
     @wraps(view_function)
     def inner(*args, **kwargs):
         return view_function(*args, **kwargs)
@@ -110,7 +112,7 @@ def healthz(request):
 
 
 @default_cache_control
-def static_page(request, base_name=None):
+def simple_page(request, path=None):
     """
     Serve static content from Markdown files
 
@@ -121,37 +123,31 @@ def static_page(request, base_name=None):
     path("foobar/", static_page, {"base_name": "some-weird-filename.md"})
     """
 
-    if not base_name:
-        base_name = request.path.strip("/")
+    if not path:
+        path = request.path
 
-    filename = os.path.join(settings.SITE_ROOT_DIR, "static-pages", f"{base_name}.md")
-
-    if not os.path.exists(filename):
-        raise Http404
+    page = get_object_or_404(SimplePage, path=path)
 
     md = markdown.Markdown(extensions=["meta"])
-    with open(filename) as f:
-        html = md.convert(f.read())
-
-    page_title = md.Meta.get("title")
-    if page_title:
-        page_title = "\n".join(i.strip() for i in page_title)
-    else:
-        page_title = base_name.replace("-", " ").replace("/", " — ").title()
+    html = md.convert(page.body)
 
     breadcrumbs = []
     path_components = request.path.strip("/").split("/")
-    for i, segment in enumerate(path_components, start=1):
+    for i, segment in enumerate(path_components[:-1], start=1):
         breadcrumbs.append(
             ("/%s/" % "/".join(path_components[0:i]), segment.replace("-", " ").title())
         )
+    breadcrumbs.append((request.path, page.title))
 
-    ctx = {"body": html, "title": page_title, "breadcrumbs": breadcrumbs}
+    ctx = {"body": html, "title": page.title, "breadcrumbs": breadcrumbs}
 
-    return render(request, "static-page.html", ctx)
+    resp = render(request, "static-page.html", ctx)
+    resp["Created"] = http_date(page.created_on.timestamp())
+    resp["Last-Modified"] = http_date(page.updated_on.timestamp())
+    return resp
 
 
-@cache_control(private=True, no_transform=True, max_age=settings.DEFAULT_PAGE_TTL)
+@cache_control(private=True, max_age=settings.DEFAULT_PAGE_TTL)
 @csrf_exempt
 def ajax_session_status(request):
     """
@@ -200,25 +196,148 @@ def ajax_messages(request):
     )
 
 
+def registration_rate(self, group, request):
+    registration_form = UserRegistrationForm(request.POST)
+    if registration_form.is_valid():
+        return None
+    else:
+        return "10/h"
+
+
 @method_decorator(never_cache, name="dispatch")
-class ConcordiaRegistrationView(RegistrationView):
+class ConcordiaRegistrationView(RatelimitMixin, RegistrationView):
     form_class = UserRegistrationForm
+    ratelimit_group = "registration"
+    ratelimit_key = "ip"
+    ratelimit_rate = registration_rate
+    ratelimit_method = "POST"
+    ratelimit_block = settings.RATELIMIT_BLOCK
 
 
 @method_decorator(never_cache, name="dispatch")
-class AccountProfileView(LoginRequiredMixin, FormView):
+class ConcordiaLoginView(RatelimitMixin, LoginView):
+    ratelimit_group = "login"
+    ratelimit_key = "post:username"
+    ratelimit_rate = "3/15m"
+    ratelimit_method = "POST"
+    ratelimit_block = False
+
+    def post(self, request, *args, **kwargs):
+        form = self.get_form()
+
+        blocked = is_ratelimited(
+            request,
+            group=self.ratelimit_group,
+            key=self.ratelimit_key,
+            method=self.ratelimit_method,
+            rate=self.ratelimit_rate,
+        )
+        recent_captcha = (
+            time.time() - request.session.get("captcha_validation_time", 0)
+        ) < 86400
+
+        if blocked and not recent_captcha:
+            form.fields["captcha"] = CaptchaField()
+
+        if form.is_valid():
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
+
+    def form_valid(self, form):
+        self.request.session["captcha_validation_time"] = time.time()
+        return super().form_valid(form)
+
+
+def ratelimit_view(request, exception=None):
+    status_code = 429
+
+    if "json" in request.META["HTTP_ACCEPT"].lower():
+        response = JsonResponse({"exception": str(exception), "status": status_code})
+    else:
+        template_name = "429.html"
+        template = loader.get_template(template_name)
+
+        response = HttpResponse(
+            template.render({"exception": exception}), status=status_code
+        )
+
+    response["Retry-After"] = 15 * 60
+    response["reason_phrase"] = str(exception)
+
+    return response
+
+
+@method_decorator(never_cache, name="dispatch")
+class AccountProfileView(LoginRequiredMixin, FormView, ListView):
     template_name = "account/profile.html"
     form_class = UserProfileForm
     success_url = reverse_lazy("user-profile")
 
+    # This view will list the assets which the user has contributed to
+    # along with their most recent action on each asset. This will be
+    # presented in the template as a standard paginated list of Asset
+    # instances with annotations
+
+    allow_empty = True
+    ordering = ("-updated_on",)
+    paginate_by = 12
+
+    def post(self, *args, **kwargs):
+        self.object_list = self.get_queryset()
+        return super().post(*args, **kwargs)
+
+    def get_queryset(self):
+        transcriptions = Transcription.objects.filter(
+            Q(user=self.request.user) | Q(reviewed_by=self.request.user)
+        ).distinct("asset")
+
+        assets = Asset.objects.filter(transcription__in=transcriptions)
+        assets = assets.select_related(
+            "item", "item__project", "item__project__campaign"
+        )
+        assets = assets.annotate(
+            last_transcribed=Max(
+                "transcription__created_on",
+                filter=Q(transcription__user=self.request.user),
+            ),
+            last_reviewed=Max(
+                "transcription__updated_on",
+                filter=Q(transcription__reviewed_by=self.request.user),
+            ),
+        )
+        return assets
+
     def get_context_data(self, *args, **kwargs):
         ctx = super().get_context_data(*args, **kwargs)
-        ctx["transcriptions"] = (
-            Transcription.objects.filter(user=self.request.user)
-            .select_related("asset__item__project__campaign")
-            .order_by("asset__pk", "-pk")
-            .distinct("asset")
+        obj_list = ctx.pop("object_list")
+        ctx["object_list"] = object_list = []
+
+        for asset in obj_list:
+            if asset.last_reviewed:
+                asset.last_interaction_time = asset.last_reviewed
+                asset.last_interaction_type = "reviewed"
+            else:
+                asset.last_interaction_time = asset.last_transcribed
+                asset.last_interaction_type = "transcribed"
+
+            object_list.append(
+                (asset.item.project.campaign, asset.item.project, asset.item, asset)
+            )
+
+        user = self.request.user
+        ctx["contributed_campaigns"] = (
+            Campaign.objects.annotate(
+                action_count=Count(
+                    "project__item__asset__transcription",
+                    filter=Q(project__item__asset__transcription__user=user)
+                    | Q(project__item__asset__transcription__reviewed_by=user),
+                )
+            )
+            .exclude(action_count=0)
+            .order_by("title")
         )
+
         return ctx
 
     def get_initial(self):
@@ -246,7 +365,11 @@ class AccountProfileView(LoginRequiredMixin, FormView):
 class HomeView(ListView):
     template_name = "home.html"
 
-    queryset = Campaign.objects.published().order_by("title")
+    queryset = (
+        Campaign.objects.published()
+        .filter(display_on_homepage=True)
+        .order_by("-ordering", "title")
+    )
     context_object_name = "campaigns"
 
 
@@ -255,7 +378,7 @@ class CampaignListView(ListView):
     template_name = "transcriptions/campaign_list.html"
     paginate_by = 10
 
-    queryset = Campaign.objects.published().order_by("title")
+    queryset = Campaign.objects.published().order_by("-ordering", "title")
     context_object_name = "campaigns"
 
 
@@ -273,21 +396,47 @@ def calculate_asset_stats(asset_qs, ctx):
 
     asset_state_qs = asset_qs.values_list("transcription_status")
     asset_state_qs = asset_state_qs.annotate(Count("transcription_status")).order_by()
-    state_counts = dict(asset_state_qs)
+    status_counts_by_key = dict(asset_state_qs)
 
-    if "edit" in state_counts:
-        # Correct semantic difference between our normal “open for edit”
-        # including assets with no progress at all:
-        state_counts["edit"] -= asset_qs.filter(transcription=None).count()
+    ctx["transcription_status_counts"] = labeled_status_counts = []
 
-    for state in TranscriptionStatus.CHOICE_MAP.keys():
-        value = state_counts.get(state, 0)
+    for status_key, status_label in TranscriptionStatus.CHOICES:
+        value = status_counts_by_key.get(status_key, 0)
         if value:
             pct = round(100 * (value / asset_count))
         else:
             pct = 0
 
-        ctx[f"{state}_percent"] = pct
+        ctx[f"{status_key}_percent"] = pct
+        ctx[f"{status_key}_count"] = value
+        labeled_status_counts.append((status_key, status_label, value))
+
+
+def annotate_children_with_progress_stats(children):
+    for obj in children:
+        counts = {}
+
+        for k, v in TranscriptionStatus.CHOICES:
+            counts[k] = getattr(obj, f"{k}_count", 0)
+
+        obj.total_count = total = sum(counts.values())
+
+        lowest_status = None
+
+        for k, v in TranscriptionStatus.CHOICES:
+            count = counts[k]
+
+            if total > 0:
+                pct = round(100 * (count / total))
+            else:
+                pct = 0
+
+            setattr(obj, f"{k}_percent", pct)
+
+            if lowest_status is None and count > 0:
+                lowest_status = k
+
+        obj.lowest_transcription_status = lowest_status
 
 
 @method_decorator(default_cache_control, name="dispatch")
@@ -299,6 +448,30 @@ class CampaignDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
+
+        projects = (
+            ctx["campaign"]
+            .project_set.published()
+            .annotate(
+                **{
+                    f"{key}_count": Count(
+                        "item__asset", filter=Q(item__asset__transcription_status=key)
+                    )
+                    for key in TranscriptionStatus.CHOICE_MAP.keys()
+                }
+            )
+        )
+
+        ctx["filters"] = filters = {}
+        status = self.request.GET.get("transcription_status")
+        if status in TranscriptionStatus.CHOICE_MAP:
+            projects = projects.exclude(**{f"{status}_count": 0})
+            # We only want to pass specific QS parameters to lower-level search pages:
+            filters["transcription_status"] = status
+        ctx["sublevel_querystring"] = urlencode(filters)
+
+        annotate_children_with_progress_stats(projects)
+        ctx["projects"] = projects
 
         campaign_assets = Asset.objects.filter(
             item__project__campaign=self.object,
@@ -326,6 +499,22 @@ class ProjectDetailView(ListView):
         )
 
         item_qs = self.project.item_set.published().order_by("item_id")
+        item_qs = item_qs.annotate(
+            **{
+                f"{key}_count": Count(
+                    "asset", filter=Q(asset__transcription_status=key)
+                )
+                for key in TranscriptionStatus.CHOICE_MAP.keys()
+            }
+        )
+
+        self.filters = {}
+        status = self.request.GET.get("transcription_status")
+        if status in TranscriptionStatus.CHOICE_MAP:
+            item_qs = item_qs.exclude(**{f"{status}_count": 0})
+            # We only want to pass specific QS parameters to lower-level search
+            # pages so we'll record those here:
+            self.filters["transcription_status"] = status
 
         return item_qs
 
@@ -334,11 +523,17 @@ class ProjectDetailView(ListView):
         ctx["project"] = project = self.project
         ctx["campaign"] = project.campaign
 
+        if self.filters:
+            ctx["sublevel_querystring"] = urlencode(self.filters)
+            ctx["filters"] = self.filters
+
         project_assets = Asset.objects.filter(
             item__project=project, published=True, item__published=True
         )
 
         calculate_asset_stats(project_assets, ctx)
+
+        annotate_children_with_progress_stats(ctx["items"])
 
         return ctx
 
@@ -355,8 +550,6 @@ class ItemDetailView(ListView):
     context_object_name = "assets"
     paginate_by = 10
 
-    form_class = AssetFilteringForm
-
     http_method_names = ["get", "options", "head"]
 
     def get_queryset(self):
@@ -371,26 +564,14 @@ class ItemDetailView(ListView):
         asset_qs = asset_qs.select_related(
             "item__project__campaign", "item__project", "item"
         )
-        return self.apply_asset_filters(asset_qs)
 
-    def apply_asset_filters(self, asset_qs):
-        """Use optional GET parameters to filter the asset list"""
-
-        # We want to get a list of all of the available asset states in this
-        # item's assets and will return that with the preferred display labels
-        # including the asset count to be displayed in the filter UI
-        asset_state_qs = asset_qs.values_list("transcription_status")
-        asset_state_qs = asset_state_qs.annotate(
-            Count("transcription_status")
-        ).order_by()
-
-        self.transcription_status_counts = status_counts = dict(asset_state_qs)
-
-        self.filter_form = form = self.form_class(status_counts, self.request.GET)
-        if form.is_valid():
-            asset_qs = asset_qs.filter(
-                **{k: v for k, v in form.cleaned_data.items() if v}
-            )
+        self.filters = {}
+        status = self.request.GET.get("transcription_status")
+        if status in TranscriptionStatus.CHOICE_MAP:
+            asset_qs = asset_qs.filter(transcription_status=status)
+            # We only want to pass specific QS parameters to lower-level search
+            # pages so we'll record those here:
+            self.filters["transcription_status"] = status
 
         return asset_qs
 
@@ -402,8 +583,8 @@ class ItemDetailView(ListView):
                 "campaign": self.item.project.campaign,
                 "project": self.item.project,
                 "item": self.item,
-                "filter_form": self.filter_form,
-                "transcription_status_counts": self.transcription_status_counts,
+                "sublevel_querystring": urlencode(self.filters),
+                "filters": self.filters,
             }
         )
 
@@ -449,13 +630,25 @@ class AssetDetailView(DetailView):
         transcription = asset.transcription_set.order_by("-pk").first()
         ctx["transcription"] = transcription
 
+        ctx["next_open_asset_url"] = "%s?%s" % (
+            reverse(
+                "transcriptions:redirect-to-next-transcribable-asset",
+                kwargs={"campaign_slug": project.campaign.slug},
+            ),
+            urlencode(
+                {"project": project.slug, "item": item.item_id, "asset": asset.id}
+            ),
+        )
+
         # We'll handle the case where an item with no transcriptions should be
-        # shown as status=edit here so the logic doesn't need to be repeated in
+        # shown as status=not_started here so the logic doesn't need to be repeated in
         # templates:
         if transcription:
-            transcription_status = transcription.status.lower()
+            for choice_key, choice_value in TranscriptionStatus.CHOICE_MAP.items():
+                if choice_value == transcription.status:
+                    transcription_status = choice_key
         else:
-            transcription_status = "edit"
+            transcription_status = TranscriptionStatus.NOT_STARTED
         ctx["transcription_status"] = transcription_status
 
         previous_asset = (
@@ -538,7 +731,7 @@ def save_rate(g, r):
     return None if r.user.is_authenticated else "1/m"
 
 
-@ratelimit(key="ip", rate=save_rate)
+@ratelimit(key="ip", rate=save_rate, block=settings.RATELIMIT_BLOCK)
 @require_POST
 @validate_anonymous_captcha
 @atomic
@@ -600,7 +793,7 @@ def submit_rate(g, r):
     return None if r.user.is_authenticated else "1/m"
 
 
-@ratelimit(key="ip", rate=submit_rate)
+@ratelimit(key="ip", rate=submit_rate, block=settings.RATELIMIT_BLOCK)
 @require_POST
 @validate_anonymous_captcha
 def submit_transcription(request, *, pk):
@@ -822,7 +1015,7 @@ class ReportCampaignView(TemplateView):
             asset_count=Count(
                 "item__asset",
                 filter=Q(item__published=True, item__asset__published=True),
-                distinct=True
+                distinct=True,
             )
         )
         projects_qs = projects_qs.annotate(
@@ -830,7 +1023,9 @@ class ReportCampaignView(TemplateView):
         )
         projects_qs = projects_qs.annotate(
             transcriber_count=Count("item__asset__transcription__user", distinct=True),
-            reviewer_count=Count("item__asset__transcription__reviewed_by", distinct=True)
+            reviewer_count=Count(
+                "item__asset__transcription__reviewed_by", distinct=True
+            ),
         )
 
         paginator = Paginator(projects_qs, ASSETS_PER_PAGE)
@@ -873,7 +1068,7 @@ def reserve_rate(g, r):
     return None if r.user.is_authenticated else "12/m"
 
 
-@ratelimit(key="ip", rate=reserve_rate)
+@ratelimit(key="ip", rate=reserve_rate, block=settings.RATELIMIT_BLOCK)
 @require_POST
 @never_cache
 def reserve_asset_transcription(request, *, asset_pk):
@@ -940,10 +1135,11 @@ def reserve_asset_transcription(request, *, asset_pk):
 
 @never_cache
 @atomic
-def redirect_to_next_transcribable_asset(request, *, campaign_slug, project_slug):
-    project = get_object_or_404(
-        Project.objects.published(), campaign__slug=campaign_slug, slug=project_slug
-    )
+def redirect_to_next_transcribable_asset(request, *, campaign_slug):
+    campaign = get_object_or_404(Campaign.objects.published(), slug=campaign_slug)
+    project_slug = request.GET.get("project", "")
+    item_id = request.GET.get("item", "")
+    asset_id = request.GET.get("asset", 0)
 
     if not request.user.is_authenticated:
         user = get_anonymous_user()
@@ -952,25 +1148,51 @@ def redirect_to_next_transcribable_asset(request, *, campaign_slug, project_slug
 
     potential_assets = Asset.objects.select_for_update(skip_locked=True, of=("self",))
     potential_assets = potential_assets.filter(
-        item__project=project, transcription_status=TranscriptionStatus.EDIT
+        item__project__campaign=campaign,
+        transcription_status=TranscriptionStatus.NOT_STARTED,
+        item__project__published=True,
+        item__published=True,
+        published=True,
     )
-    potential_assets = potential_assets.filter(assettranscriptionreservation=None)
 
-    for potential_asset in potential_assets:
-        res = AssetTranscriptionReservation(user=user, asset=potential_asset)
+    potential_assets = potential_assets.filter(assettranscriptionreservation=None)
+    potential_assets = potential_assets.select_related("item", "item__project")
+
+    # We'll favor assets which are in the same item or project as the original:
+    potential_assets = potential_assets.annotate(
+        same_project=Case(
+            When(item__project__slug=project_slug, then=1),
+            default=0,
+            output_field=IntegerField(),
+        ),
+        same_item=Case(
+            When(item__item_id=item_id, then=1), default=0, output_field=IntegerField()
+        ),
+        next_asset=Case(
+            When(pk__gt=asset_id, then=1), default=0, output_field=IntegerField()
+        ),
+    ).order_by("-next_asset", "-same_item", "-same_project", "sequence")
+
+    asset = potential_assets.first()
+    if asset:
+        res = AssetTranscriptionReservation(user=user, asset=asset)
         res.full_clean()
         res.save()
         return redirect(
             "transcriptions:asset-detail",
-            project.campaign.slug,
-            project.slug,
-            potential_asset.item.item_id,
-            potential_asset.slug,
+            campaign.slug,
+            asset.item.project.slug,
+            asset.item.item_id,
+            asset.slug,
         )
     else:
         messages.info(
             request, "There are no remaining pages to be transcribed in this project!"
         )
-        return redirect(
-            "transcriptions:project-detail", project.campaign.slug, project.slug
-        )
+
+        if project_slug:
+            return redirect(
+                "transcriptions:project-detail", campaign_slug, project_slug
+            )
+        else:
+            return redirect("transcriptions:campaign-detail", campaign_slug)

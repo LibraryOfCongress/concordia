@@ -54,6 +54,11 @@ Mappings:
             test: crowd-test-content
             stage: crowd-stage-content
             prod: crowd-content
+        ExportS3BucketNameMap:
+            dev: crowd-dev-export
+            test: crowd-test-export
+            stage: crowd-stage-export
+            prod: crowd-export
 
 Parameters:
 
@@ -173,6 +178,7 @@ Resources:
                 DatabaseEndpoint: !GetAtt RDS.Outputs.DatabaseHostName
                 FullEnvironmentName: !Ref FullEnvironmentName
                 S3BucketName: !FindInMap [EnvironmentMapping, S3BucketNameMap, !Ref EnvName]
+                ExportS3BucketName: !FindInMap [EnvironmentMapping, ExportS3BucketNameMap, !Ref EnvName]
 
 Outputs:
 

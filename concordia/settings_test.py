@@ -21,3 +21,5 @@ EMAIL_BACKEND = "django.core.mail.backends.dummy.EmailBackend"
 CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+
+RATELIMIT_ENABLE = False

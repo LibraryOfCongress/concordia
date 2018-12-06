@@ -4,8 +4,6 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django_registration.forms import RegistrationForm
 
-from .models import TranscriptionStatus
-
 User = get_user_model()
 logger = getLogger(__name__)
 
@@ -54,30 +52,6 @@ class ContactUsForm(forms.Form):
     story = forms.CharField(
         label="Let us know how we can help:", required=True, widget=forms.Textarea
     )
-
-
-class AssetFilteringForm(forms.Form):
-    transcription_status = forms.ChoiceField(
-        choices=TranscriptionStatus.CHOICES,
-        required=False,
-        label="Image Status",
-        widget=forms.Select(attrs={"class": "form-control"}),
-    )
-
-    def __init__(self, status_counts, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        asset_statuses = {
-            status: "%s (%d)" % (TranscriptionStatus.CHOICE_MAP[status], count)
-            for status, count in status_counts.items()
-        }
-
-        filtered_choices = [("", f"All Images ({sum(status_counts.values())})")]
-        for val, label in self.fields["transcription_status"].choices:
-            if val in asset_statuses:
-                filtered_choices.append((val, asset_statuses[val]))
-
-        self.fields["transcription_status"].choices = filtered_choices
 
 
 class AdminItemImportForm(forms.Form):

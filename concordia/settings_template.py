@@ -56,7 +56,7 @@ DATABASES = {
         "USER": "concordia",
         "PASSWORD": os.getenv("POSTGRESQL_PW"),
         "HOST": os.getenv("POSTGRESQL_HOST", "localhost"),
-        "PORT": "5432",
+        "PORT": os.getenv("POSTGRESQL_PORT", "5432"),
         "CONN_MAX_AGE": 15 * 60,  # Keep database connections open for 15 minutes
     }
 }
@@ -95,7 +95,11 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "maintenance_mode.middleware.MaintenanceModeMiddleware",
+    "ratelimit.middleware.RatelimitMiddleware",
 ]
+
+RATELIMIT_VIEW = "concordia.views.ratelimit_view"
+RATELIMIT_BLOCK = False
 
 TEMPLATES = [
     {
@@ -212,8 +216,6 @@ LOGGING = {
 # Django-specific settings above
 ################################################################################
 
-ACCOUNT_ACTIVATION_DAYS = 7
-
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(SITE_ROOT_DIR, "media")
 
@@ -231,8 +233,18 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
-    {"NAME": "concordia.validators.complexity"},
+    {"NAME": "concordia.validators.DjangoPasswordsValidator"},
 ]
+
+# See https://github.com/dstufft/django-passwords#settings
+PASSWORD_COMPLEXITY = {
+    "UPPER": 1,
+    "LOWER": 1,
+    "LETTERS": 1,
+    "DIGITS": 1,
+    "SPECIAL": 1,
+    "WORDS": 1,
+}
 
 AUTHENTICATION_BACKENDS = [
     "concordia.email_username_backend.EmailOrUsernameModelBackend"
@@ -245,19 +257,19 @@ ANONYMOUS_CAPTCHA_VALIDATION_INTERVAL = 86400
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 WHITENOISE_ROOT = os.path.join(SITE_ROOT_DIR, "static")
 
-PASSWORD_RESET_TIMEOUT_DAYS = 1
-ACCOUNT_ACTIVATION_DAYS = 1
+PASSWORD_RESET_TIMEOUT_DAYS = 2
+ACCOUNT_ACTIVATION_DAYS = 2
 REGISTRATION_OPEN = True  # set to false to temporarily disable registrations
 
 MESSAGE_STORAGE = "django.contrib.messages.storage.session.SessionStorage"
 
 MESSAGE_TAGS = {messages.ERROR: "danger"}
 
-SENTRY_DSN = os.environ.get("SENTRY_DSN", "")
-SENTRY_PUBLIC_DSN = os.environ.get("SENTRY_PUBLIC_DSN", "")
+SENTRY_BACKEND_DSN = os.environ.get("SENTRY_BACKEND_DSN", "")
+SENTRY_FRONTEND_DSN = os.environ.get("SENTRY_FRONTEND_DSN", "")
 
 RAVEN_CONFIG = {
-    "dsn": SENTRY_DSN,
+    "dsn": SENTRY_BACKEND_DSN,
     "environment": CONCORDIA_ENVIRONMENT,
     "release": raven.fetch_git_sha(SITE_ROOT_DIR),
 }

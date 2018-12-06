@@ -79,7 +79,7 @@
             <h4>Messages</h4>
             <ul>
                 {% for message in messages %}
-                    <li class="message {% if message.level >= DEFAULT_MESSAGE_LEVELS.error %}message-error{% elif message.level >= DEFAULT_MESSAGE_LEVELS.warning %}message-warning{% endif %}">{{ message }}</li>
+                    <li class="message {% if message.level >= DEFAULT_MESSAGE_LEVELS.ERROR %}message-error{% elif message.level >= DEFAULT_MESSAGE_LEVELS.WARNING %}message-warning{% endif %}">{{ message }}</li>
                 {% endfor %}
             </ul>
         {% endif %}

@@ -1,24 +1,30 @@
 {% extends "base.html" %}
+
 {% load staticfiles %}
-{% load concordia_auth_tags %}
+{% load concordia_text_tags %}
 
 {% block title %}{{ campaign.title }}{% endblock title %}
 
+{% block head_content %}
+    <link rel="canonical" href="https://{{ request.get_host }}{{ request.path }}">
+    <meta name="description" content="{{ campaign.description|normalize_whitespace }}">
+    <meta name="thumbnail" content="{{ MEDIA_URL }}{{ campaign.thumbnail_image }}">
+    <meta property="og:image" content="{{ MEDIA_URL }}{{ campaign.thumbnail_image }}">
+{% endblock head_content %}
+
 {% block breadcrumbs %}
-    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaigns' %}">Campaigns</a></li>
+    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaign-list' %}">Campaigns</a></li>
     <li class="breadcrumb-item active" aria-current="page" title="{{ campaign.title }}">{{ campaign.title }}</li>
 {% endblock breadcrumbs %}
 
 {% block main_content %}
-<div class="container-fluid py-default">
+<div class="container py-3">
     <div class="row">
         <div class="col-md-9">
             <h1>{{ campaign.title }}</h1>
-            <p class="hero-text">{{ campaign.description }}</p>
+            <p class="hero-text">{{ campaign.description|linebreaksbr }}</p>
         </div>
         <div class="col-md-3">
-            {% include "fragments/transcription-progress-bar.html" %}
-
             {% if campaign.resource_set.all|length %}
                 <div class="related-links mb-3 p-1 p-sm-2 p-lg-3">
                     <h4>Related Links</h4>
@@ -31,14 +37,26 @@
             {% endif %}
         </div>
     </div>
+    {% include "fragments/transcription-progress-row.html" %}
     <div class="row">
-        <div class="d-flex flex-wrap col-12 my-3 justify-content-around">
-            {% for project in campaign.project_set.published %}
-                <div class="col-12 col-md-4 col-lg-3 mb-default px-3">
-                    <a href="{% url 'transcriptions:project-detail' campaign.slug project.slug %}" class="">
-                        <img src="{{ MEDIA_URL }}{{ project.thumbnail_image }}" class="img-fluid" alt="{{ project.title }} image">
-                        <h5 class="card-title pl-3 w-100 bg-lightest-gray">{{ project.title }}</h5>
+        <div class="card-deck w-100 flex-column flex-sm-row justify-content-center align-items-center align-items-sm-stretch">
+            {% for project in projects %}
+                <div class="col-12 col-md-4 col-lg-3 m-2 p-1 concordia-object-card card bg-lightest-gray shadow-regular align-items-center" data-transcription-status="{{ project.lowest_transcription_status }}">
+                    {% url 'transcriptions:project-detail' campaign.slug project.slug as project_url %}
+
+                    <a href="{{ project_url }}?{{ sublevel_querystring }}" aria-hidden="true">
+                        <img class="card-img card-img-campaign" src="{{ MEDIA_URL }}{{ project.thumbnail_image }}" alt="{{ project.title }}">
                     </a>
+
+                    <div class="progress w-100 my-2">
+                        <div title="Completed" class="progress-bar bg-completed" role="progressbar" style="width: {{ project.completed_percent }}%" aria-valuenow="{{ project.completed_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        <div title="Submitted for Review" class="progress-bar bg-submitted" role="progressbar" style="width: {{ project.submitted_percent }}%" aria-valuenow="{{ project.submitted_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        <div title="In Progress" class="progress-bar bg-in_progress" role="progressbar" style="width: {{ project.in_progress_percent }}%" aria-valuenow="{{ project.in_progress_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+
+                    <h6 class="text-center primary-text">
+                        <a href="{{ project_url }}?{{ sublevel_querystring }}">{{ project.title }}</a>
+                    </h6>
                 </div>
             {% endfor %}
         </div>

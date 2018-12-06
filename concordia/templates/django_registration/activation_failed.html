@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block main_content %}
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8 mx-auto p-3">
+                <h2>Registration Failed</h2>
+                <p class="activation-error-{{ activation_error.code }}">
+                    {{ activation_error.message }}
+                </p>
+            </div>
+        </div>
+    </div>
+{% endblock main_content %}

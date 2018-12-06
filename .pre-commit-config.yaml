@@ -13,3 +13,16 @@ repos:
       hooks:
           - id: prettier
             files: \.(css|less|scss|ts|tsx|graphql|gql|json|js|jsx|md)$
+    - repo: https://github.com/pre-commit/mirrors-eslint
+      rev: v5.8.0
+      hooks:
+          - id: eslint
+            additional_dependencies:
+                - eslint@5.8.0
+                - eslint-plugin-prettier@3.0.0
+                - prettier@1.14.3
+    - repo: https://github.com/awslabs/cfn-python-lint
+      rev: v0.9.1
+      hooks:
+          - id: cfn-python-lint
+            files: cloudformation/.*\.(json|yml|yaml)$

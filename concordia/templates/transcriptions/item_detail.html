@@ -8,21 +8,23 @@
 {{ item.title }} ({{ campaign.title }}: {{ project.title }})
 {% endblock title %}
 
-{% block head_content %}{% endblock head_content %}
+{% block head_content %}
+    <link rel="canonical" href="https://{{ request.get_host }}{{ request.path }}">
+{% endblock head_content %}
 
 {% block breadcrumbs %}
-    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaigns' %}">Campaigns</a></li>
-    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaign' campaign.slug %}" title="{{ campaign.title }}">{{ campaign.title }}</a></li>
-    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:project-detail' campaign.slug project.slug %}" title="{{ project.title }}">{{ project.title }}</a></li>
+    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaign-list' %}">Campaigns</a></li>
+    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaign-detail' campaign.slug %}?{{ sublevel_querystring }}" title="{{ campaign.title }}">{{ campaign.title }}</a></li>
+    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:project-detail' campaign.slug project.slug %}?{{ sublevel_querystring }}" title="{{ project.title }}">{{ project.title }}</a></li>
     <li class="breadcrumb-item active" aria-current="page" title="{{ item.title }}">{{ item.title|truncatechars:40 }}</li>
 {% endblock breadcrumbs%}
 
 {% block main_content %}
-<div class="container py-default">
+<div class="container py-3">
     <div class="row">
         <div class="col-md-10">
             <h1 class="m-3">{{ item.title }}</h1>
-            <p class="m-3 hero-text">{{ item.description }}</p>
+            <p class="m-3 hero-text">{{ item.description|linebreaksbr }}</p>
         </div>
         <div class="col-md-2 align-bottom">
             <div class="m-3">
@@ -30,25 +32,8 @@
             </div>
         </div>
     </div>
-    <div class="row py-default">
-        <form method="get" class="col-md-4 mx-auto">
-            <div class="form-group row">
-                <div class="input-group input-group-sm">
-                    <div class="input-group-prepend">
-                        <span class="input-group-text">Filter:</span>
-                    </div>
-                    {{ filter_form.transcription_status }}
-                    <div class="input-group-append">
-                        <button type="submit" class="btn btn-sm btn-outline-primary">Go</button>
-                    </div>
-                </div>
-            </div>
-        </form>
-        <div class="col-md-4 mx-auto">
-            {% include "fragments/transcription-progress-bar.html" %}
-        </div>
-    </div>
-    <div class="card-deck justify-content-center">
+    {% include "fragments/transcription-progress-row.html" %}
+    <div class="card-deck justify-content-center align-items-center align-items-sm-stretch">
         {% for a in assets %}
             {% url 'transcriptions:asset-detail' a.item.project.campaign.slug a.item.project.slug a.item.item_id a.slug as asset_detail_url %}
 

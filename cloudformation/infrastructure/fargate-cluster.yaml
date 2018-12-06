@@ -79,6 +79,11 @@ Parameters:
         Type: String
         Description: name of the S3 bucket (public) where collection images will be stored
 
+    ExportS3BucketName:
+        Type: String
+        Description: name of the S3 bucket (public) where exported transcriptions will be stored
+
+
 Resources:
 
   ConcordiaServiceSecretAccessPolicy:
@@ -244,6 +249,8 @@ Resources:
                 Value: !Ref FullEnvironmentName
               - Name: S3_BUCKET_NAME
                 Value: !Ref S3BucketName
+              - Name: EXPORT_S3_BUCKET_NAME
+                Value: !Ref ExportS3BucketName
               - Name: CELERY_BROKER_URL
                 Value: pyamqp://guest@localhost:5672
               - Name: AWS_DEFAULT_REGION
@@ -300,6 +307,8 @@ Resources:
                 Value: !Ref FullEnvironmentName
               - Name: S3_BUCKET_NAME
                 Value: !Ref S3BucketName
+              - Name: EXPORT_S3_BUCKET_NAME
+                Value: !Ref ExportS3BucketName
               - Name: CELERY_BROKER_URL
                 Value: pyamqp://guest@localhost:5672
               - Name: AWS_DEFAULT_REGION
