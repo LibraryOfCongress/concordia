@@ -1,7 +1,16 @@
 {% extends "base.html" %}
+
 {% load staticfiles %}
+{% load concordia_text_tags %}
 
 {% block title %}{{ campaign.title }}{% endblock title %}
+
+{% block head_content %}
+    <link rel="canonical" href="https://{{ request.get_host }}{{ request.path }}">
+    <meta name="description" content="{{ campaign.description|normalize_whitespace }}">
+    <meta name="thumbnail" content="{{ MEDIA_URL }}{{ campaign.thumbnail_image }}">
+    <meta property="og:image" content="{{ MEDIA_URL }}{{ campaign.thumbnail_image }}">
+{% endblock head_content %}
 
 {% block breadcrumbs %}
     <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaign-list' %}">Campaigns</a></li>
@@ -13,7 +22,7 @@
     <div class="row">
         <div class="col-md-9">
             <h1>{{ campaign.title }}</h1>
-            <p class="hero-text">{{ campaign.description }}</p>
+            <p class="hero-text">{{ campaign.description|linebreaksbr }}</p>
         </div>
         <div class="col-md-3">
             {% if campaign.resource_set.all|length %}
@@ -35,7 +44,7 @@
                 <div class="col-12 col-md-4 col-lg-3 m-2 p-1 concordia-object-card card bg-lightest-gray shadow-regular align-items-center" data-transcription-status="{{ project.lowest_transcription_status }}">
                     {% url 'transcriptions:project-detail' campaign.slug project.slug as project_url %}
 
-                    <a href="{{ project_url }}" aria-hidden="true">
+                    <a href="{{ project_url }}?{{ sublevel_querystring }}" aria-hidden="true">
                         <img class="card-img card-img-campaign" src="{{ MEDIA_URL }}{{ project.thumbnail_image }}" alt="{{ project.title }}">
                     </a>
 
@@ -46,7 +55,7 @@
                     </div>
 
                     <h6 class="text-center primary-text">
-                        <a href="{{ project_url }}">{{ project.title }}</a>
+                        <a href="{{ project_url }}?{{ sublevel_querystring }}">{{ project.title }}</a>
                     </h6>
                 </div>
             {% endfor %}

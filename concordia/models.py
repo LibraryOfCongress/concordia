@@ -61,6 +61,11 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
 
     published = models.BooleanField(default=False, blank=True)
 
+    ordering = models.IntegerField(
+        default=0, help_text="Sort order override: higher values will be listed first"
+    )
+    display_on_homepage = models.BooleanField(default=True)
+
     title = models.CharField(max_length=80)
     slug = models.SlugField(max_length=80, unique=True)
     description = models.TextField(blank=True)
@@ -69,17 +74,12 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
     )
     short_description = models.TextField(blank=True)
 
-    start_date = models.DateTimeField(null=True, blank=True)
-    end_date = models.DateTimeField(null=True, blank=True)
-
     metadata = JSONField(default=metadata_default, blank=True, null=True)
 
     def __str__(self):
         return self.title
 
     def get_absolute_url(self):
-        # FIXME: change this with
-        # https://github.com/LibraryOfCongress/concordia/issues/242
         return reverse("transcriptions:campaign-detail", args=(self.slug,))
 
 
@@ -257,6 +257,7 @@ class Transcription(MetricsModelMixin("transcription"), models.Model):
         null=True,
         on_delete=models.CASCADE,
         help_text="A previous transcription record which is replaced by this one",
+        related_name="superseded_by",
     )
 
     submitted = models.DateTimeField(
@@ -308,3 +309,47 @@ class AssetTranscriptionReservation(models.Model):
 
     created_on = models.DateTimeField(editable=False, auto_now_add=True)
     updated_on = models.DateTimeField(auto_now=True)
+
+
+class SimplePage(models.Model):
+    created_on = models.DateTimeField(editable=False, auto_now_add=True)
+    updated_on = models.DateTimeField(editable=False, auto_now=True)
+
+    path = models.CharField(
+        max_length=255,
+        help_text="URL path where this page will be accessible from",
+        validators=[RegexValidator(r"^/.+/$")],
+    )
+
+    title = models.CharField(max_length=200)
+
+    body = models.TextField()
+
+    def __str__(self):
+        return f"SimplePage: {self.path}"
+
+
+class SiteReport(models.Model):
+    created_on = models.DateTimeField(editable=False, auto_now_add=True)
+    campaign = models.ForeignKey(
+        Campaign, on_delete=models.DO_NOTHING, blank=True, null=True
+    )
+    assets_total = models.IntegerField()
+    assets_published = models.IntegerField()
+    assets_not_started = models.IntegerField()
+    assets_in_progress = models.IntegerField()
+    assets_waiting_review = models.IntegerField()
+    assets_completed = models.IntegerField()
+    assets_unpublished = models.IntegerField()
+    items_published = models.IntegerField()
+    items_unpublished = models.IntegerField()
+    projects_published = models.IntegerField()
+    projects_unpublished = models.IntegerField()
+    anonymous_transcriptions = models.IntegerField()
+    transcriptions_saved = models.IntegerField()
+    distinct_tags = models.IntegerField()
+    tag_uses = models.IntegerField()
+    campaigns_published = models.IntegerField(blank=True, null=True)
+    campaigns_unpublished = models.IntegerField(blank=True, null=True)
+    users_registered = models.IntegerField(blank=True, null=True)
+    users_activated = models.IntegerField(blank=True, null=True)

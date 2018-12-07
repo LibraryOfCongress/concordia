@@ -23,13 +23,14 @@ from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
 from django.db import connection
-from django.db.models import Case, Count, IntegerField, Q, When
+from django.db.models import Case, Count, IntegerField, Max, Q, When
 from django.db.transaction import atomic
 from django.http import HttpResponse, JsonResponse
-from django.shortcuts import Http404, get_object_or_404, redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.template import loader
 from django.urls import reverse, reverse_lazy
 from django.utils.decorators import method_decorator
+from django.utils.http import http_date
 from django.utils.timezone import now
 from django.views.decorators.cache import cache_control, never_cache
 from django.views.decorators.csrf import csrf_exempt
@@ -48,11 +49,13 @@ from concordia.models import (
     Campaign,
     Item,
     Project,
+    SimplePage,
     Tag,
     Transcription,
     TranscriptionStatus,
     UserAssetTagCollection,
 )
+from concordia.utils import get_anonymous_user
 from concordia.version import get_concordia_version
 
 logger = getLogger(__name__)
@@ -83,19 +86,6 @@ def default_cache_control(view_function):
     return inner
 
 
-def get_anonymous_user():
-    """
-    Get the user called "anonymous" if it exist. Create the user if it doesn't
-    exist This is the default concordia user if someone is working on the site
-    without logging in first.
-    """
-
-    try:
-        return User.objects.get(username="anonymous")
-    except User.DoesNotExist:
-        return User.objects.create_user(username="anonymous")
-
-
 @never_cache
 def healthz(request):
     status = {"current_time": time.time(), "load_average": os.getloadavg()}
@@ -110,7 +100,7 @@ def healthz(request):
 
 
 @default_cache_control
-def static_page(request, base_name=None):
+def simple_page(request, path=None):
     """
     Serve static content from Markdown files
 
@@ -121,34 +111,28 @@ def static_page(request, base_name=None):
     path("foobar/", static_page, {"base_name": "some-weird-filename.md"})
     """
 
-    if not base_name:
-        base_name = request.path.strip("/")
+    if not path:
+        path = request.path
 
-    filename = os.path.join(settings.SITE_ROOT_DIR, "static-pages", f"{base_name}.md")
-
-    if not os.path.exists(filename):
-        raise Http404
+    page = get_object_or_404(SimplePage, path=path)
 
     md = markdown.Markdown(extensions=["meta"])
-    with open(filename) as f:
-        html = md.convert(f.read())
-
-    page_title = md.Meta.get("title")
-    if page_title:
-        page_title = "\n".join(i.strip() for i in page_title)
-    else:
-        page_title = base_name.replace("-", " ").replace("/", " — ").title()
+    html = md.convert(page.body)
 
     breadcrumbs = []
     path_components = request.path.strip("/").split("/")
-    for i, segment in enumerate(path_components, start=1):
+    for i, segment in enumerate(path_components[:-1], start=1):
         breadcrumbs.append(
             ("/%s/" % "/".join(path_components[0:i]), segment.replace("-", " ").title())
         )
+    breadcrumbs.append((request.path, page.title))
 
-    ctx = {"body": html, "title": page_title, "breadcrumbs": breadcrumbs}
+    ctx = {"body": html, "title": page.title, "breadcrumbs": breadcrumbs}
 
-    return render(request, "static-page.html", ctx)
+    resp = render(request, "static-page.html", ctx)
+    resp["Created"] = http_date(page.created_on.timestamp())
+    resp["Last-Modified"] = http_date(page.updated_on.timestamp())
+    return resp
 
 
 @cache_control(private=True, max_age=settings.DEFAULT_PAGE_TTL)
@@ -273,19 +257,75 @@ def ratelimit_view(request, exception=None):
 
 
 @method_decorator(never_cache, name="dispatch")
-class AccountProfileView(LoginRequiredMixin, FormView):
+class AccountProfileView(LoginRequiredMixin, FormView, ListView):
     template_name = "account/profile.html"
     form_class = UserProfileForm
     success_url = reverse_lazy("user-profile")
 
+    # This view will list the assets which the user has contributed to
+    # along with their most recent action on each asset. This will be
+    # presented in the template as a standard paginated list of Asset
+    # instances with annotations
+
+    allow_empty = True
+    ordering = ("-created_on",)
+    paginate_by = 12
+
+    def post(self, *args, **kwargs):
+        self.object_list = self.get_queryset()
+        return super().post(*args, **kwargs)
+
+    def get_queryset(self):
+        transcriptions = Transcription.objects.filter(
+            Q(user=self.request.user) | Q(reviewed_by=self.request.user)
+        ).distinct("asset")
+
+        assets = Asset.objects.filter(transcription__in=transcriptions)
+        assets = assets.select_related(
+            "item", "item__project", "item__project__campaign"
+        )
+        assets = assets.annotate(
+            last_transcribed=Max(
+                "transcription__created_on",
+                filter=Q(transcription__user=self.request.user),
+            ),
+            last_reviewed=Max(
+                "transcription__updated_on",
+                filter=Q(transcription__reviewed_by=self.request.user),
+            ),
+        )
+        return assets
+
     def get_context_data(self, *args, **kwargs):
         ctx = super().get_context_data(*args, **kwargs)
-        ctx["transcriptions"] = (
-            Transcription.objects.filter(user=self.request.user)
-            .select_related("asset__item__project__campaign")
-            .order_by("asset__pk", "-pk")
-            .distinct("asset")
+        obj_list = ctx.pop("object_list")
+        ctx["object_list"] = object_list = []
+
+        for asset in obj_list:
+            if asset.last_reviewed:
+                asset.last_interaction_time = asset.last_reviewed
+                asset.last_interaction_type = "reviewed"
+            else:
+                asset.last_interaction_time = asset.last_transcribed
+                asset.last_interaction_type = "transcribed"
+
+            object_list.append(
+                (asset.item.project.campaign, asset.item.project, asset.item, asset)
+            )
+
+        user = self.request.user
+        ctx["contributed_campaigns"] = (
+            Campaign.objects.annotate(
+                action_count=Count(
+                    "project__item__asset__transcription",
+                    filter=Q(project__item__asset__transcription__user=user)
+                    | Q(project__item__asset__transcription__reviewed_by=user),
+                )
+            )
+            .exclude(action_count=0)
+            .order_by("title")
         )
+
         return ctx
 
     def get_initial(self):
@@ -313,7 +353,11 @@ class AccountProfileView(LoginRequiredMixin, FormView):
 class HomeView(ListView):
     template_name = "home.html"
 
-    queryset = Campaign.objects.published().order_by("title")
+    queryset = (
+        Campaign.objects.published()
+        .filter(display_on_homepage=True)
+        .order_by("-ordering", "title")
+    )
     context_object_name = "campaigns"
 
 
@@ -322,7 +366,7 @@ class CampaignListView(ListView):
     template_name = "transcriptions/campaign_list.html"
     paginate_by = 10
 
-    queryset = Campaign.objects.published().order_by("title")
+    queryset = Campaign.objects.published().order_by("-ordering", "title")
     context_object_name = "campaigns"
 
 
@@ -406,9 +450,13 @@ class CampaignDetailView(DetailView):
             )
         )
 
+        ctx["filters"] = filters = {}
         status = self.request.GET.get("transcription_status")
         if status in TranscriptionStatus.CHOICE_MAP:
             projects = projects.exclude(**{f"{status}_count": 0})
+            # We only want to pass specific QS parameters to lower-level search pages:
+            filters["transcription_status"] = status
+        ctx["sublevel_querystring"] = urlencode(filters)
 
         annotate_children_with_progress_stats(projects)
         ctx["projects"] = projects
@@ -448,9 +496,13 @@ class ProjectDetailView(ListView):
             }
         )
 
+        self.filters = {}
         status = self.request.GET.get("transcription_status")
         if status in TranscriptionStatus.CHOICE_MAP:
             item_qs = item_qs.exclude(**{f"{status}_count": 0})
+            # We only want to pass specific QS parameters to lower-level search
+            # pages so we'll record those here:
+            self.filters["transcription_status"] = status
 
         return item_qs
 
@@ -458,6 +510,10 @@ class ProjectDetailView(ListView):
         ctx = super().get_context_data(**kws)
         ctx["project"] = project = self.project
         ctx["campaign"] = project.campaign
+
+        if self.filters:
+            ctx["sublevel_querystring"] = urlencode(self.filters)
+            ctx["filters"] = self.filters
 
         project_assets = Asset.objects.filter(
             item__project=project, published=True, item__published=True
@@ -496,14 +552,14 @@ class ItemDetailView(ListView):
         asset_qs = asset_qs.select_related(
             "item__project__campaign", "item__project", "item"
         )
-        return self.apply_asset_filters(asset_qs)
 
-    def apply_asset_filters(self, asset_qs):
-        """Use optional GET parameters to filter the asset list"""
-
+        self.filters = {}
         status = self.request.GET.get("transcription_status")
         if status in TranscriptionStatus.CHOICE_MAP:
             asset_qs = asset_qs.filter(transcription_status=status)
+            # We only want to pass specific QS parameters to lower-level search
+            # pages so we'll record those here:
+            self.filters["transcription_status"] = status
 
         return asset_qs
 
@@ -515,6 +571,8 @@ class ItemDetailView(ListView):
                 "campaign": self.item.project.campaign,
                 "project": self.item.project,
                 "item": self.item,
+                "sublevel_querystring": urlencode(self.filters),
+                "filters": self.filters,
             }
         )
 

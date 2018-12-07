@@ -37,6 +37,12 @@ docker tag concordia/importer:latest ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazona
 docker push ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia/importer:${VERSION_NUMBER}
 docker push ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia/importer:${TAG}
 
+docker build -t concordia/celerybeat --file celerybeat/Dockerfile .
+docker tag concordia/celerybeat:latest ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia/celerybeat:${VERSION_NUMBER}
+docker tag concordia/celerybeat:latest ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia/celerybeat:${TAG}
+docker push ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia/celerybeat:${VERSION_NUMBER}
+docker push ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia/celerybeat:${TAG}
+
 docker pull rabbitmq:latest
 docker tag rabbitmq:latest ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/rabbitmq:${VERSION_NUMBER}
 docker tag rabbitmq:latest ${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/rabbitmq:${TAG}

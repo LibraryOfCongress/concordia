@@ -9,6 +9,7 @@
 {% endblock title %}
 
 {% block head_content %}
+    <link rel="canonical" href="https://{{ request.get_host }}{{ request.path }}">
 {% endblock head_content %}
 
 {% block breadcrumbs %}
@@ -171,9 +172,20 @@
 
                                 <button id="save-transcription-button" disabled type="submit" class="btn btn-primary" title="Save the text you entered above">Save</button>
                                 <button id="submit-transcription-button" disabled type="button" class="btn btn-primary" title="Request another volunteer to review the text you entered above">Submit for Review</button>
-                            {% elif transcription_status == 'submitted' and user.is_authenticated and transcription.user.pk != user.pk %}
-                                <button id="reject-transcription-button" disabled type="button" class="btn btn-primary" title="Correct errors you see in the text">Edit</button>
-                                <button id="accept-transcription-button" disabled type="button" class="btn btn-primary" title="Confirm that the text is accurately transcribed">Accept</button>
+                            {% elif transcription_status == 'submitted' %}
+                                {% if not user.is_authenticated %}
+                                    <p class="help-text">
+                                        <a href="{% url 'registration_register' %}">Register</a>
+                                            or
+                                        <a href="{% url 'login' %}?next={{ request.path|urlencode }}">login</a>
+                                        to help review
+                                    </p>
+                                {% elif transcription.user.pk == user.pk %}
+                                    <p class="help-text">You submitted this transcription for review by another user.</p>
+                                {% else %}
+                                    <button id="reject-transcription-button" disabled type="button" class="btn btn-primary" title="Correct errors you see in the text">Edit</button>
+                                    <button id="accept-transcription-button" disabled type="button" class="btn btn-primary" title="Confirm that the text is accurately transcribed">Accept</button>
+                                {% endif %}
                             {% endif %}
                         </div>
                     {% endspaceless %}
@@ -198,12 +210,12 @@
                             </div>
                         </div>
                     {% else %}
-                        <p class="help-text primary-text text-center anonymous-only">
+                        <p class="help-text anonymous-only text-center">
                             Want to tag this page?
 
-                            <a class="primary-text" href="{% url 'registration_register' %}">Register</a>
+                            <a href="{% url 'registration_register' %}">Register</a>
                             or
-                            <a class="primary-text" href="{% url 'login' %}?next={{ request.path|urlencode }}">login</a>
+                            <a href="{% url 'login' %}?next={{ request.path|urlencode }}">login</a>
                             to add tags.
                         </p>
                     {% endif %}
@@ -375,7 +387,7 @@
             </div>
         </div>
     </div>
-    <div id="successful-review-modal" class="modal" tabindex="-1" role="dialog">
+    <div id="review-accepted-modal" class="modal" tabindex="-1" role="dialog">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header">

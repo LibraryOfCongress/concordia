@@ -61,7 +61,7 @@ if CONCORDIA_ENVIRONMENT == "production":
 else:
     MEDIA_URL = "https://%s.s3.amazonaws.com/" % S3_BUCKET_NAME
 
-ELASTICSEARCH_DSL_AUTOSYNC = False
+ELASTICSEARCH_DSL_AUTOSYNC = os.getenv("ELASTICSEARCH_DSL_AUTOSYNC", False)
 
 INSTALLED_APPS += ["django_elasticsearch_dsl"]
 

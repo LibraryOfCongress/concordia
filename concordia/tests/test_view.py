@@ -7,11 +7,12 @@ from django.utils.timezone import now
 
 from concordia.models import (
     AssetTranscriptionReservation,
+    SimplePage,
     Transcription,
     TranscriptionStatus,
     User,
 )
-from concordia.views import get_anonymous_user
+from concordia.utils import get_anonymous_user
 
 from .utils import (
     JSONAssertMixin,
@@ -279,14 +280,20 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
         self.assertEqual(ctx["title"], item.project.campaign.title)
         self.assertEqual(ctx["total_asset_count"], 10)
 
-    def test_static_page(self):
+    def test_simple_page(self):
+        s = SimplePage.objects.create(
+            title="Help Center 123",
+            body="not the real body",
+            path=reverse("help-center"),
+        )
+
         resp = self.client.get(reverse("help-center"))
         self.assertEqual(200, resp.status_code)
-        self.assertEqual("Help Center", resp.context["title"])
+        self.assertEqual(s.title, resp.context["title"])
         self.assertEqual(
-            [(reverse("help-center"), "Help Center")], resp.context["breadcrumbs"]
+            [(reverse("help-center"), s.title)], resp.context["breadcrumbs"]
         )
-        self.assertIn("body", resp.context)
+        self.assertEqual(resp.context["body"], f"<p>{s.body}</p>")
 
     def test_ajax_session_status_anon(self):
         resp = self.client.get(reverse("ajax-session-status"))

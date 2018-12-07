@@ -5,7 +5,7 @@ from django.http import Http404, HttpResponseForbidden
 from django.urls import include, path
 from django.views.defaults import page_not_found, permission_denied, server_error
 
-from concordia.admin import admin_bulk_import_view
+from concordia.admin.views import admin_bulk_import_view, admin_site_report_view
 from exporter import views as exporter_views
 
 from . import views
@@ -29,6 +29,16 @@ tx_urlpatterns = (
             "<slug:campaign_slug>/export/bagit/",
             exporter_views.ExportCampaignToBagit.as_view(),
             name="campaign-export-bagit",
+        ),
+        path(
+            "<slug:campaign_slug>/<slug:project_slug>/export/bagit/",
+            exporter_views.ExportProjectToBagIt.as_view(),
+            name="project-export-bagit",
+        ),
+        path(
+            "<slug:campaign_slug>/<slug:project_slug>/<slug:item_id>/export/bagit/",
+            exporter_views.ExportItemToBagIt.as_view(),
+            name="item-export-bagit",
         ),
         path(
             "<slug:campaign_slug>/report/",
@@ -63,15 +73,15 @@ tx_urlpatterns = (
 urlpatterns = [
     path("", views.HomeView.as_view(), name="homepage"),
     path("healthz", views.healthz, name="health-check"),
-    path("about/", views.static_page, name="about"),
-    path("help-center/", views.static_page, name="help-center"),
-    path("help-center/welcome-guide/", views.static_page, name="welcome-guide"),
-    path("help-center/how-to-transcribe/", views.static_page, name="how-to-transcribe"),
-    path("help-center/how-to-review/", views.static_page, name="how-to-review"),
-    path("help-center/how-to-tag/", views.static_page, name="how-to-tag"),
-    path("for-educators/", views.static_page, name="for-educators"),
-    path("latest/", views.static_page, name="latest"),
-    path("questions/", views.static_page, name="questions"),
+    path("about/", views.simple_page, name="about"),
+    path("help-center/", views.simple_page, name="help-center"),
+    path("help-center/welcome-guide/", views.simple_page, name="welcome-guide"),
+    path("help-center/how-to-transcribe/", views.simple_page, name="how-to-transcribe"),
+    path("help-center/how-to-review/", views.simple_page, name="how-to-review"),
+    path("help-center/how-to-tag/", views.simple_page, name="how-to-tag"),
+    path("for-educators/", views.simple_page, name="for-educators"),
+    path("latest/", views.simple_page, name="latest"),
+    path("questions/", views.simple_page, name="questions"),
     path("contact/", views.ContactUsView.as_view(), name="contact"),
     path("campaigns/", include(tx_urlpatterns, namespace="transcriptions")),
     path(
@@ -114,6 +124,7 @@ urlpatterns = [
     # mechanism (the old one is broken in 2.0): see
     # https://code.djangoproject.com/ticket/27887
     path("admin/bulk-import", admin_bulk_import_view, name="admin-bulk-import"),
+    path("admin/site-report", admin_site_report_view, name="admin-site-report"),
     path("admin/", admin.site.urls),
     # Internal support assists:
     path("maintenance-mode/", include("maintenance_mode.urls")),

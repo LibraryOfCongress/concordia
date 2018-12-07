@@ -1,22 +1,23 @@
 {% extends "base.html" %}
 
 {% load staticfiles %}
-
+{% load humanize %}
 {% load bootstrap4 %}
 
 {% block title %}User Profile{% endblock title %}
 
 {% block main_content %}
 <div class="container bg-main">
-    <div class="row">
-        <div class="col-12 col-md-10 bg-offwhite mx-auto mt-3 pxy-3 rounded">
-            <form class="form-horizontal" action="{% url 'user-profile' %}" method="POST" enctype="multipart/form-data">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-10">
+            <h2>Account Information</h2>
+            <form class="form col-md-8" action="{% url 'user-profile' %}" method="POST" enctype="multipart/form-data">
                 {% csrf_token %}
 
                 {% comment %} We want to list the username but it's not an editable field {% endcomment %}
 
-                <div class="form-group">
-                    <label>Username</label>
+                <div class="form-group ">
+                    <label><b>Username</b></label>
                     <input type="text" readonly class="form-control-plaintext" value="{{ user.username }}">
                     <small class="form-text text-muted">
                         Member since {{ user.date_joined|date:"SHORT_DATE_FORMAT" }}
@@ -33,51 +34,84 @@
             </form>
         </div>
     </div>
-    <div class="col-10 my-3 mx-auto">
-        <hr>
+    <div class="row justify-content-center">
+        <div class="col-8">
+            <hr>
+        </div>
     </div>
     <div class="row justify-content-center">
         <div class="btn-row">
             <a class="btn btn-secondary" href="{% url 'password_change' %}">Change Password</a>
         </div>
     </div>
-    <div class="col-10 my-3 mx-auto">
-        <hr>
+    <div class="row justify-content-center">
+        <div class="col-8">
+            <hr>
+        </div>
     </div>
-    {% if transcriptions %}
-        <div class="col-12 col-md-10 bg-offwhite mx-auto pxy-3 mb-3 rounded">
-            <h2 class="mb-3">My Contributions</h2>
-            <table class="table mb-3">
-                <thead class="bg-lightest-gray">
-                    <tr>
-                        <th>Campaign</th>
-                        <th>Project</th>
-                        <th>Item</th>
-                        <th>Asset Name</th>
-                        <th>Current Status</th>
-                        <th>Date</th>
-                    </tr>
-                </thead>
 
-                {% for t in transcriptions %}
-                    {% with asset=t.asset item=t.asset.item project=t.asset.item.project campaign=t.asset.item.project.campaign %}
+    {% if object_list %}
+        <div class="row justify-content-center">
+            <div class="col-12 col-md-10">
+                <h2>My Contributions</h2>
+
+                <table class="table table-striped table-sm table-responsive-sm">
+                    <thead>
                         <tr>
-                            <td>{{ campaign.title }}</td>
-                            <td>{{ project.title }}</td>
-                            <td>{{ item.title }}</td>
-                            <td>
-                                <a class="primary-text" href="{% url 'transcriptions:asset-detail' campaign.slug project.slug item.item_id asset.slug %}">
-                                    {{ asset.title }}
-                                </a>
-                            </td>
-                            <td>{{ t.status }}</td>
-                            <td>{{ t.updated_on|date:'SHORT_DATE_FORMAT' }}</td>
+                            <th>Campaign</th>
+                            <th><abbr title="Total number of times you saved, submitted, or reviewed a transcription">Actions</abbr></th>
                         </tr>
-                    {% endwith %}
-                {% endfor %}
-            </table>
+                    </thead>
+                    <tbody>
+                        {% for campaign in contributed_campaigns %}
+                            <tr>
+                                <th>
+                                    <a href="{{ campaign.get_absolute_url }}">{{ campaign.title }}</a>
+                                </th>
+                                <td class="text-right">{{ campaign.action_count|intcomma }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <table class="table table-striped table-responsive-sm">
+                    <thead>
+                        <tr class="text-center">
+                            <th>Time</th>
+                            <th>Action</th>
+                            <th>Item</th>
+                            <th>Page</th>
+                            <th>Current Status</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for campaign, project, item, asset in object_list %}
+                            {% ifchanged campaign.title project.title %}
+                                <tr>
+                                    <th colspan="5">
+                                        <h3>
+                                            <a href="{{ campaign.get_absolute_url }}">{{ campaign.title }}</a>:
+                                            <a href="{{ project.get_absolute_url }}">{{ project.title }}</a>
+                                        </h3>
+                                    </th>
+                                </tr>
+                            {% endifchanged %}
+
+                            <tr>
+                                <td><abbr title="{{ asset.last_interaction_time|date:'SHORT_DATE_FORMAT' }}">{{ asset.last_interaction_time|naturaltime }}</abbr></td>
+                                <td>{{ asset.last_interaction_type.title }}</td>
+                                <td><a href="{{ item.get_absolute_url }}">{{ item.title }}</a></td>
+                                <td class="text-right"><a href="{{ asset.get_absolute_url }}">{{ asset.sequence }}</a></td>
+                                <td>{{ asset.get_transcription_status_display }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <div>{% include "fragments/standard-pagination.html" %}</div>
+            </div>
         </div>
     {% endif %}
 </div>
 {% endblock main_content %}
-
