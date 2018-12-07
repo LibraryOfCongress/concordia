@@ -19,7 +19,7 @@ class UserRegistrationForm(RegistrationForm):
         help_texts = {
             "username": (
                 "Required. 150 characters or fewer. Usernames can contain"
-                " letters, digits and any of these punctuation symbols:"
+                " letters, numbers, and any of these punctuation symbols:"
                 " <kbd>@</kbd>, <kbd>.</kbd>, <kbd>+</kbd>, <kbd>-</kbd>,"
                 " or <kbd>_</kbd>"
             )
