@@ -56,12 +56,10 @@ def site_report():
     ).count()
     transcriptions_saved = Transcription.objects.all().count()
 
-    tag_collections = UserAssetTagCollection.objects.all()
-    tag_count = 0
-    distinct_tag_count = Tag.objects.all().count()
+    stats = UserAssetTagCollection.objects.aggregate(Count("tags"))
+    tag_count = stats["tags__count"]
 
-    for tag_group in tag_collections:
-        tag_count += tag_group.tags.count()
+    distinct_tag_count = Tag.objects.all().count()
 
     site_report = SiteReport()
     site_report.assets_total = assets_total
@@ -135,12 +133,14 @@ def campaign_report(campaign):
     asset_tag_collections = UserAssetTagCollection.objects.filter(
         asset__item__project__campaign=campaign
     )
-    tag_count = 0
+
+    stats = asset_tag_collections.order_by().aggregate(tag_count=Count("tags"))
+    tag_count = stats["tag_count"]
+
     distinct_tag_list = set()
 
     for tag_collection in asset_tag_collections:
-        tag_count += tag_collection.tags.all().count()
-        distinct_tag_list.add(tag_collection.tags.all())
+        distinct_tag_list.add(tag_collection.tags.values_list("pk", flat=True))
 
     distinct_tag_count = len(distinct_tag_list)
 
