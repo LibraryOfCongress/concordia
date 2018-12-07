@@ -15,6 +15,16 @@ class UserRegistrationForm(RegistrationForm):
         help_text="Email me about campaign updates, upcoming events, and new features.",
     )
 
+    class Meta(RegistrationForm.Meta):
+        help_texts = {
+            "username": (
+                "Required. 150 characters or fewer. Usernames can contain"
+                " letters, digits and any of these punctuation symbols:"
+                " <kbd>@</kbd>, <kbd>.</kbd>, <kbd>+</kbd>, <kbd>-</kbd>,"
+                " or <kbd>_</kbd>"
+            )
+        }
+
 
 class UserProfileForm(forms.Form):
     email = forms.CharField(
