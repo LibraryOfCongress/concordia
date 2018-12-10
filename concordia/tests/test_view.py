@@ -6,6 +6,7 @@ from django.urls import reverse
 from django.utils.timezone import now
 
 from concordia.models import (
+    Asset,
     AssetTranscriptionReservation,
     SimplePage,
     Transcription,
@@ -639,7 +640,83 @@ class TransactionalViewTests(JSONAssertMixin, TransactionTestCase):
             1, Transcription.objects.filter(pk=t1.pk, accepted__isnull=False).count()
         )
 
-    def test_transcription_self_review(self):
+    def test_transcription_review_asset_status_updates(self):
+        """
+        Confirm that the Asset.transcription_status field is correctly updated
+        throughout the review process
+        """
+        asset = create_asset()
+
+        anon = get_anonymous_user()
+
+        # We should see NOT_STARTED only when no transcription records exist:
+        self.assertEqual(asset.transcription_set.count(), 0)
+        self.assertEqual(
+            Asset.objects.get(pk=asset.pk).transcription_status,
+            TranscriptionStatus.NOT_STARTED,
+        )
+
+        t1 = Transcription(asset=asset, user=anon, text="test", submitted=now())
+        t1.full_clean()
+        t1.save()
+
+        self.assertEqual(
+            Asset.objects.get(pk=asset.pk).transcription_status,
+            TranscriptionStatus.SUBMITTED,
+        )
+
+        # “Login” so we can review the anonymous transcription:
+        self.login_user()
+
+        self.assertEqual(
+            1, Transcription.objects.filter(pk=t1.pk, accepted__isnull=True).count()
+        )
+
+        resp = self.client.post(
+            reverse("review-transcription", args=(t1.pk,)), data={"action": "reject"}
+        )
+        self.assertValidJSON(resp, expected_status=200)
+
+        # After rejecting a transcription, the asset status should be reset to
+        # in-progress:
+        self.assertEqual(
+            1,
+            Transcription.objects.filter(
+                pk=t1.pk, accepted__isnull=True, rejected__isnull=False
+            ).count(),
+        )
+        self.assertEqual(
+            Asset.objects.get(pk=asset.pk).transcription_status,
+            TranscriptionStatus.IN_PROGRESS,
+        )
+
+        # We'll simulate a second attempt:
+
+        t2 = Transcription(
+            asset=asset, user=anon, text="test", submitted=now(), supersedes=t1
+        )
+        t2.full_clean()
+        t2.save()
+
+        self.assertEqual(
+            Asset.objects.get(pk=asset.pk).transcription_status,
+            TranscriptionStatus.SUBMITTED,
+        )
+
+        resp = self.client.post(
+            reverse("review-transcription", args=(t2.pk,)), data={"action": "accept"}
+        )
+        self.assertValidJSON(resp, expected_status=200)
+
+        self.assertEqual(
+            1, Transcription.objects.filter(pk=t2.pk, accepted__isnull=False).count()
+        )
+        self.assertEqual(
+            Asset.objects.get(pk=asset.pk).transcription_status,
+            TranscriptionStatus.COMPLETED,
+        )
+
+    def test_transcription_disallow_self_review(self):
         asset = create_asset()
 
         self.login_user()
