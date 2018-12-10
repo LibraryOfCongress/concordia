@@ -18,10 +18,10 @@ class UserRegistrationForm(RegistrationForm):
     class Meta(RegistrationForm.Meta):
         help_texts = {
             "username": (
-                "150 characters or fewer. Can only contain letters, numbers,"
-                " and any of these symbols:"
+                "Can only contain letters, numbers, and any of these symbols:"
                 " <kbd>@</kbd>, <kbd>.</kbd>, <kbd>+</kbd>, <kbd>-</kbd>,"
-                " or <kbd>_</kbd>"
+                " or <kbd>_</kbd>."
+                " 150 characters or fewer."
             )
         }
 
