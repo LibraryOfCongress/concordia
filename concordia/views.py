@@ -356,7 +356,7 @@ class HomeView(ListView):
     queryset = (
         Campaign.objects.published()
         .filter(display_on_homepage=True)
-        .order_by("-ordering", "title")
+        .order_by("ordering", "title")
     )
     context_object_name = "campaigns"
 
@@ -366,7 +366,7 @@ class CampaignListView(ListView):
     template_name = "transcriptions/campaign_list.html"
     paginate_by = 10
 
-    queryset = Campaign.objects.published().order_by("-ordering", "title")
+    queryset = Campaign.objects.published().order_by("ordering", "title")
     context_object_name = "campaigns"
 
 
