@@ -62,7 +62,7 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
     published = models.BooleanField(default=False, blank=True)
 
     ordering = models.IntegerField(
-        default=0, help_text="Sort order override: higher values will be listed first"
+        default=0, help_text="Sort order override: lower values will be listed first"
     )
     display_on_homepage = models.BooleanField(default=True)
 
