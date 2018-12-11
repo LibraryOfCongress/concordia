@@ -1167,7 +1167,7 @@ def redirect_to_next_transcribable_asset(request, *, campaign_slug):
         next_asset=Case(
             When(pk__gt=asset_id, then=1), default=0, output_field=IntegerField()
         ),
-    ).order_by("-unstarted", "-next_asset", "-same_item", "-same_project", "sequence")
+    ).order_by("-next_asset", "-unstarted", "-same_project", "-same_item", "sequence")
 
     asset = potential_assets.first()
     if asset:

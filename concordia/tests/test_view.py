@@ -895,3 +895,94 @@ class TransactionalViewTests(JSONAssertMixin, TransactionTestCase):
                 "transcriptions:project-detail", args=(campaign.slug, project.slug)
             ),
         )
+
+    def test_find_next_transcribable_hierarchy(self):
+        """Confirm that find-next-page selects assets in the expected order"""
+
+        asset = create_asset()
+        item = asset.item
+        project = item.project
+        campaign = project.campaign
+
+        asset_in_item = create_asset(item=item, slug="test-asset-in-same-item")
+        in_progress_asset_in_item = create_asset(
+            item=item,
+            slug="inprogress-asset-in-same-item",
+            transcription_status=TranscriptionStatus.IN_PROGRESS,
+        )
+
+        asset_in_project = create_asset(
+            item=create_item(project=project, item_id="other-item-in-same-project"),
+            title="test-asset-in-same-project",
+        )
+
+        asset_in_campaign = create_asset(
+            item=create_item(
+                project=create_project(campaign=campaign, title="other project"),
+                title="item in other project",
+            ),
+            slug="test-asset-in-same-campaign",
+        )
+
+        # Now that we have test assets we'll see what find-next-page gives us as
+        # successive test records are marked as submitted and thus ineligible.
+        # The expected ordering is that it will favor moving forward (i.e. not
+        # landing you on the same asset unless that's the only one available),
+        # and will keep you closer to the asset you started from (i.e. within
+        # the same item or project in that order).
+
+        self.assertRedirects(
+            self.client.get(
+                reverse(
+                    "transcriptions:redirect-to-next-transcribable-asset",
+                    kwargs={"campaign_slug": campaign.slug},
+                ),
+                {"project": project.slug, "item": item.item_id, "asset": asset.pk},
+            ),
+            asset_in_item.get_absolute_url(),
+        )
+
+        asset_in_item.transcription_status = TranscriptionStatus.SUBMITTED
+        asset_in_item.save()
+        AssetTranscriptionReservation.objects.all().delete()
+
+        self.assertRedirects(
+            self.client.get(
+                reverse(
+                    "transcriptions:redirect-to-next-transcribable-asset",
+                    kwargs={"campaign_slug": campaign.slug},
+                ),
+                {"project": project.slug, "item": item.item_id, "asset": asset.pk},
+            ),
+            asset_in_project.get_absolute_url(),
+        )
+
+        asset_in_project.transcription_status = TranscriptionStatus.SUBMITTED
+        asset_in_project.save()
+        AssetTranscriptionReservation.objects.all().delete()
+
+        self.assertRedirects(
+            self.client.get(
+                reverse(
+                    "transcriptions:redirect-to-next-transcribable-asset",
+                    kwargs={"campaign_slug": campaign.slug},
+                ),
+                {"project": project.slug, "item": item.item_id, "asset": asset.pk},
+            ),
+            asset_in_campaign.get_absolute_url(),
+        )
+
+        asset_in_campaign.transcription_status = TranscriptionStatus.SUBMITTED
+        asset_in_campaign.save()
+        AssetTranscriptionReservation.objects.all().delete()
+
+        self.assertRedirects(
+            self.client.get(
+                reverse(
+                    "transcriptions:redirect-to-next-transcribable-asset",
+                    kwargs={"campaign_slug": campaign.slug},
+                ),
+                {"project": project.slug, "item": item.item_id, "asset": asset.pk},
+            ),
+            in_progress_asset_in_item.get_absolute_url(),
+        )
