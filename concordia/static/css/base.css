@@ -654,10 +654,6 @@ ul.nav-secondary {
     display: block;
 }
 
-#homepage-campaign-list a {
-    color: inherit;
-}
-
 #homepage-campaign-list .campaign {
     width: 380px;
 }
