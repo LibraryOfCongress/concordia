@@ -1137,10 +1137,13 @@ def redirect_to_next_transcribable_asset(request, *, campaign_slug):
     potential_assets = Asset.objects.select_for_update(skip_locked=True, of=("self",))
     potential_assets = potential_assets.filter(
         item__project__campaign=campaign,
-        transcription_status=TranscriptionStatus.NOT_STARTED,
         item__project__published=True,
         item__published=True,
         published=True,
+    )
+    potential_assets = potential_assets.filter(
+        Q(transcription_status=TranscriptionStatus.NOT_STARTED)
+        | Q(transcription_status=TranscriptionStatus.IN_PROGRESS)
     )
 
     potential_assets = potential_assets.filter(assettranscriptionreservation=None)
@@ -1148,6 +1151,11 @@ def redirect_to_next_transcribable_asset(request, *, campaign_slug):
 
     # We'll favor assets which are in the same item or project as the original:
     potential_assets = potential_assets.annotate(
+        unstarted=Case(
+            When(transcription_status=TranscriptionStatus.NOT_STARTED, then=1),
+            default=0,
+            output_field=IntegerField(),
+        ),
         same_project=Case(
             When(item__project__slug=project_slug, then=1),
             default=0,
@@ -1159,7 +1167,7 @@ def redirect_to_next_transcribable_asset(request, *, campaign_slug):
         next_asset=Case(
             When(pk__gt=asset_id, then=1), default=0, output_field=IntegerField()
         ),
-    ).order_by("-next_asset", "-same_item", "-same_project", "sequence")
+    ).order_by("-unstarted", "-next_asset", "-same_item", "-same_project", "sequence")
 
     asset = potential_assets.first()
     if asset:
