@@ -47,8 +47,6 @@ USE_L10N = True
 USE_TZ = True
 WSGI_APPLICATION = "concordia.wsgi.application"
 
-ADMIN_SITE = {"site_header": "Concordia Admin", "site_title": "Concordia"}
-
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
@@ -63,7 +61,7 @@ DATABASES = {
 
 
 INSTALLED_APPS = [
-    "django.contrib.admin",
+    "concordia.apps.ConcordiaAdminConfig",  # Replaces 'django.contrib.admin'
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.humanize",

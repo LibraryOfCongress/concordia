@@ -5,13 +5,9 @@ from django.http import Http404, HttpResponseForbidden
 from django.urls import include, path
 from django.views.defaults import page_not_found, permission_denied, server_error
 
-from concordia.admin.views import admin_bulk_import_view, admin_site_report_view
 from exporter import views as exporter_views
 
 from . import views
-
-for key, value in getattr(settings, "ADMIN_SITE", {}).items():
-    setattr(admin.site, key, value)
 
 
 tx_urlpatterns = (
@@ -120,11 +116,6 @@ urlpatterns = [
     path("account/", include("django.contrib.auth.urls")),
     path("captcha/ajax/", views.ajax_captcha, name="ajax-captcha"),
     path("captcha/", include("captcha.urls")),
-    # TODO: when we upgrade to Django 2.1 we can use the admin site override
-    # mechanism (the old one is broken in 2.0): see
-    # https://code.djangoproject.com/ticket/27887
-    path("admin/bulk-import", admin_bulk_import_view, name="admin-bulk-import"),
-    path("admin/site-report", admin_site_report_view, name="admin-site-report"),
     path("admin/", admin.site.urls),
     # Internal support assists:
     path("maintenance-mode/", include("maintenance_mode.urls")),
