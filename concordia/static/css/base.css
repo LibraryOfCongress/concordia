@@ -1,5 +1,5 @@
 :root {
-    --primary-color: rgba(252, 76, 2, 1); /* #FC4C02 */
+    --primary-color: #f05129;
     --primary-color-hover: rgba(188, 57, 1, 1); /* #BC3901 */
     --secondary-color: rgba(0, 167, 228, 1); /* #00A7E4 */
     --secondary-color-hover: rgba(0, 35, 71, 1); /* #002347 */
@@ -9,7 +9,7 @@
     --color-info: rgba(2, 252, 216, 1); /* #02FCD8 */
     --text-color-primary: rgba(38, 50, 56, 1); /* #263238 */
     --text-color-offwhite: rgba(250, 250, 250, 1); /* #FAFAFA */
-    --text-nav-current: rgba(252, 76, 2, 1); /* #FC4C02 */
+    --text-nav-current: #f05129;
 
     --bg-offwhite: rgba(250, 250, 250, 1); /* #FAFAFA */
     --bg-lightest-gray: rgba(245, 245, 245, 1); /* #F5F5F5 */
@@ -630,8 +630,42 @@ ul.nav-secondary {
 }
 
 .view-homepage .carousel-indicators li {
-    height: 16px;
-    border-radius: 8px;
+    width: 12px;
+    height: 12px;
+
+    background: url('data:image/svg+xml;charset=utf8,%3Csvg%20height%3D%2212%22%20viewBox%3D%220%200%2012%2012%22%20width%3D%2212%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Ccircle%20cx%3D%226%22%20cy%3D%226%22%20fill%3D%22%23fff%22%20fill-rule%3D%22evenodd%22%20r%3D%225.5%22%20stroke%3D%22%23333%22/%3E%3C/svg%3E');
+    background-repeat: no-repeat;
+}
+
+.view-homepage .carousel-indicators .active {
+    background: url('data:image/svg+xml;charset=utf8,%3Csvg%20height%3D%2212%22%20viewBox%3D%220%200%2012%2012%22%20width%3D%2212%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Ccircle%20cx%3D%226%22%20cy%3D%226%22%20fill%3D%22%23F05129%22%20fill-rule%3D%22evenodd%22%20r%3D%225.5%22%20stroke%3D%22%23fff%22/%3E%3C/svg%3E');
+}
+
+.view-homepage .carousel-control-next,
+.view-homepage .carousel-control-prev {
+    opacity: 1;
+}
+
+.view-homepage .carousel-control-next-icon,
+.view-homepage .carousel-control-prev-icon {
+    height: 55px;
+    width: 33px;
+}
+
+.view-homepage .carousel-control-next-icon {
+    background-image: url('data:image/svg+xml;charset=utf8,%3Csvg%20height%3D%2255%22%20viewBox%3D%220%200%2033%2055%22%20width%3D%2233%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22m1221.23218%20395.14282c0%20.428572-.21429.910716-.53571%201.232145l-24.96432%2024.964315c-.32143.321429-.80357.535715-1.23214.535715-.42858%200-.91072-.214286-1.23215-.535715l-2.67857-2.678574c-.32143-.321429-.53572-.750001-.53572-1.232145%200-.428572.21429-.910715.53572-1.232144l21.05359-21.053597-21.05359-21.053596c-.32143-.321429-.53572-.803573-.53572-1.232144%200-.428572.21429-.910716.53572-1.232145l2.67857-2.678574c.32143-.321429.80357-.535715%201.23215-.535715.42857%200%20.91071.214286%201.23214.535715l24.96432%2024.964315c.32142.321429.53571.803572.53571%201.232144z%22%20fill%3D%22%23fff%22%20fill-rule%3D%22evenodd%22%20stroke%3D%22%23333%22%20stroke-width%3D%22.5%22%20transform%3D%22translate%28-1189%20-368%29%22/%3E%3C/svg%3E');
+}
+
+.view-homepage .carousel-control-next:hover .carousel-control-next-icon {
+    background-image: url('data:image/svg+xml;charset=utf8,%3Csvg%20height%3D%2255%22%20viewBox%3D%220%200%2033%2055%22%20width%3D%2233%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22m1221.23218%20395.14282c0%20.428572-.21429.910716-.53571%201.232145l-24.96432%2024.964315c-.32143.321429-.80357.535715-1.23214.535715-.42858%200-.91072-.214286-1.23215-.535715l-2.67857-2.678574c-.32143-.321429-.53572-.750001-.53572-1.232145%200-.428572.21429-.910715.53572-1.232144l21.05359-21.053597-21.05359-21.053596c-.32143-.321429-.53572-.803573-.53572-1.232144%200-.428572.21429-.910716.53572-1.232145l2.67857-2.678574c.32143-.321429.80357-.535715%201.23215-.535715.42857%200%20.91071.214286%201.23214.535715l24.96432%2024.964315c.32142.321429.53571.803572.53571%201.232144z%22%20fill%3D%22%23F05129%22%20fill-rule%3D%22evenodd%22%20stroke%3D%22%23fff%22%20stroke-width%3D%22.5%22%20transform%3D%22translate%28-1189%20-368%29%22/%3E%3C/svg%3E');
+}
+
+.carousel-control-prev-icon {
+    background-image: url('data:image/svg+xml;charset=utf8,%3Csvg%20height%3D%2255%22%20viewBox%3D%220%200%2033%2055%22%20width%3D%2233%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22m100.946469%20372.85708c0%20.428571-.214286.910715-.535715%201.232144l-21.0535968%2021.053596%2021.0535968%2021.053597c.321429.321429.535715.803572.535715%201.232144s-.214286.910716-.535715%201.232145l-2.6785749%202.678574c-.321429.321429-.8035724.535715-1.2321444.535715-.4285719%200-.9107153-.214286-1.2321443-.535715l-24.9643155-24.964315c-.3214289-.321429-.5357149-.803573-.5357149-1.232145s.214286-.910715.5357149-1.232144l24.9643155-24.964315c.321429-.321429.8035724-.535715%201.2321443-.535715.428572%200%20.9107154.214286%201.2321444.535715l2.6785749%202.678574c.321429.321429.535715.750001.535715%201.232145z%22%20fill%3D%22%23fff%22%20fill-rule%3D%22evenodd%22%20stroke%3D%22%23333%22%20stroke-width%3D%22.5%22%20transform%3D%22translate%28-69%20-368%29%22/%3E%3C/svg%3E');
+}
+
+.view-homepage .carousel-control-prev:hover .carousel-control-prev-icon {
+    background-image: url('data:image/svg+xml;charset=utf8,%3Csvg%20height%3D%2255%22%20viewBox%3D%220%200%2033%2055%22%20width%3D%2233%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22m100.946469%20372.85708c0%20.428571-.214286.910715-.535715%201.232144l-21.0535968%2021.053596%2021.0535968%2021.053597c.321429.321429.535715.803572.535715%201.232144s-.214286.910716-.535715%201.232145l-2.6785749%202.678574c-.321429.321429-.8035724.535715-1.2321444.535715-.4285719%200-.9107153-.214286-1.2321443-.535715l-24.9643155-24.964315c-.3214289-.321429-.5357149-.803573-.5357149-1.232145s.214286-.910715.5357149-1.232144l24.9643155-24.964315c.321429-.321429.8035724-.535715%201.2321443-.535715.428572%200%20.9107154.214286%201.2321444.535715l2.6785749%202.678574c.321429.321429.535715.750001.535715%201.232145z%22%20fill%3D%22%23F05129%22%20fill-rule%3D%22evenodd%22%20stroke%3D%22%23fff%22%20stroke-width%3D%22.5%22%20transform%3D%22translate%28-69%20-368%29%22/%3E%3C/svg%3E');
 }
 
 .view-homepage .hero-text {
@@ -713,12 +747,6 @@ ul.nav-secondary {
 
     #homepage-campaign-list .campaign {
         max-width: 30%;
-    }
-
-    .view-homepage .carousel-control-next-icon,
-    .view-homepage .carousel-control-prev-icon {
-        height: 60px;
-        width: 60px;
     }
 
     .view-homepage .carousel-control-next {
