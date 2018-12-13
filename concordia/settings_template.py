@@ -248,7 +248,7 @@ PASSWORD_COMPLEXITY = {
 }
 
 AUTHENTICATION_BACKENDS = [
-    "concordia.email_username_backend.EmailOrUsernameModelBackend"
+    "concordia.authentication_backends.EmailOrUsernameModelBackend"
 ]
 
 CAPTCHA_CHALLENGE_FUNCT = "captcha.helpers.random_char_challenge"
