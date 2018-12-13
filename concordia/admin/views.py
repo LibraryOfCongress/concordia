@@ -108,9 +108,7 @@ def admin_bulk_import_view(request):
                     )
                 except ValidationError as exc:
                     messages.error(
-                        request,
-                        request,
-                        f"Unable to create project {project_title}: {exc}",
+                        request, f"Unable to create project {project_title}: {exc}"
                     )
                     continue
 
