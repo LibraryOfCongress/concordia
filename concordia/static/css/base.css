@@ -719,6 +719,23 @@ ul.nav-secondary {
     .homepage-activity p {
         font-size: 85%;
     }
+
+    .view-homepage .carousel-control-next,
+    .view-homepage .carousel-control-prev {
+        /*
+            the background images are all 1200x480 sized with width: 100% so
+            we'll set our height to maintain that aspect ratio so the arrows
+            will be centered on the image rather than the total carousel height
+            which includes the overlay
+        */
+        height: calc(100vw / (1200 / 480));
+    }
+
+    .view-homepage .carousel-control-next-icon,
+    .view-homepage .carousel-control-prev-icon {
+        height: 36.5px;
+        width: 22px;
+    }
 }
 
 @media screen and (min-width: 720px) {
