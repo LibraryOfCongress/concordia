@@ -730,6 +730,7 @@ ul.nav-secondary {
     .view-homepage .carousel-control-prev-icon {
         height: 36.5px;
         width: 22px;
+        filter: invert(1);
     }
 
     .view-homepage .carousel-overlay .title {
