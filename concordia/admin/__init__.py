@@ -416,3 +416,26 @@ class SiteReportAdmin(admin.ModelAdmin):
         self.readonly_fields = [
             i.name for i in self.model._meta.fields if i.name != "id"
         ]
+
+    def get_fields(self, *args, **kwargs):
+        fields = super().get_fields(*args, **kwargs)
+        fields.sort(key=self.fieldname_sort_key)
+        return fields
+
+    FIELDNAME_SORT_KEYS = [
+        "created",
+        "user",
+        "campaign",
+        "project",
+        "item",
+        "asset",
+        "transcription",
+        "tag",
+    ]
+
+    def fieldname_sort_key(self, key):
+        for i, prefix in enumerate(self.FIELDNAME_SORT_KEYS):
+            if prefix in key:
+                return (i, key)
+        else:
+            return (1024, key)
