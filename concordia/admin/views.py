@@ -167,29 +167,7 @@ def admin_site_report_view(request):
 
     headers, data = flatten_queryset(
         site_reports,
-        field_names=[
-            "created_on",
-            "campaign__title",
-            "assets_total",
-            "assets_published",
-            "assets_not_started",
-            "assets_in_progress",
-            "assets_waiting_review",
-            "assets_completed",
-            "assets_unpublished",
-            "items_published",
-            "items_unpublished",
-            "projects_published",
-            "projects_unpublished",
-            "anonymous_transcriptions",
-            "transcriptions_saved",
-            "distinct_tags",
-            "tag_uses",
-            "campaigns_published",
-            "campaigns_unpublished",
-            "users_registered",
-            "users_activated",
-        ],
+        field_names=SiteReport.DEFAULT_EXPORT_FIELDNAMES,
         extra_verbose_names={"created_on": "Date", "campaign__title": "Campaign"},
     )
 

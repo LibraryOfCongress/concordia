@@ -410,17 +410,19 @@ class SimplePageAdmin(admin.ModelAdmin):
 class SiteReportAdmin(admin.ModelAdmin):
     list_display = ("created_on", "campaign")
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    list_filter = ("campaign",)
 
-        self.readonly_fields = [
-            i.name for i in self.model._meta.fields if i.name != "id"
-        ]
+    def export_to_csv(self, request, queryset):
+        return export_to_csv_action(
+            self, request, queryset, field_names=SiteReport.DEFAULT_EXPORT_FIELDNAMES
+        )
 
-    def get_fields(self, *args, **kwargs):
-        fields = super().get_fields(*args, **kwargs)
-        fields.sort(key=self.fieldname_sort_key)
-        return fields
+    def export_to_excel(self, request, queryset):
+        return export_to_excel_action(
+            self, request, queryset, field_names=SiteReport.DEFAULT_EXPORT_FIELDNAMES
+        )
+
+    actions = (export_to_csv, export_to_excel)
 
     FIELDNAME_SORT_KEYS = [
         "created",
