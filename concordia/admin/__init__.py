@@ -409,3 +409,10 @@ class SimplePageAdmin(admin.ModelAdmin):
 @admin.register(SiteReport)
 class SiteReportAdmin(admin.ModelAdmin):
     list_display = ("created_on", "campaign")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.readonly_fields = [
+            i.name for i in self.model._meta.fields if i.name != "id"
+        ]
