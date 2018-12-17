@@ -11,19 +11,19 @@
     <div class="row no-gutters px-sm-3">
         <div class="col-12">
             <div id="homepage-carousel" class="carousel slide" data-ride="carousel" data-pause="hover">
-                <ol class="carousel-indicators d-none d-md-flex">
+                <ol class="carousel-indicators d-none d-lg-flex">
                     <li data-target="#homepage-carousel" data-slide-to="0" class="active"></li>
                     <li data-target="#homepage-carousel" data-slide-to="1"></li>
                     <li data-target="#homepage-carousel" data-slide-to="2"></li>
                 </ol>
                 <div class="carousel-inner">
-                    <div class="carousel-item active" data-title="By the People:" data-hero-text="Volunteer to uncover our shared history and make documents more searchable for everyone." data-link-url="{% url 'transcriptions:redirect-to-next-transcribable-asset' 'letters-to-lincoln' %}">
+                    <div class="carousel-item active" data-title="By the People" data-hero-text="Volunteer to uncover our shared history and make documents more searchable for everyone." data-link-url="{% url 'transcriptions:redirect-to-next-transcribable-asset' 'letters-to-lincoln' %}">
                         <img class="d-block w-100" src="{% static 'img/homepage-carousel/crowd-home.jpg' %}" alt="a crowd of girls waving handkerchiefs and smiling; possibly cheering">
                     </div>
-                    <div class="carousel-item" data-overlay-position="top-right" data-title="Letters to Lincoln:" data-hero-text="Help us transcribe and review Letters to Lincoln: husband, father, postmaster, lawyer, politician, President." data-link-url="{% url 'transcriptions:redirect-to-next-transcribable-asset' 'letters-to-lincoln' %}">
+                    <div class="carousel-item" data-overlay-position="top-right" data-title="Letters to Lincoln" data-hero-text="Help us transcribe and review Letters to Lincoln: husband, father, postmaster, lawyer, politician, President." data-link-url="{% url 'transcriptions:redirect-to-next-transcribable-asset' 'letters-to-lincoln' %}">
                         <img class="d-block w-100" src="{% static 'img/homepage-carousel/letters-to-lincoln.jpg' %}" alt="Image of letters sent to Abraham Lincoln">
                     </div>
-                    <div class="carousel-item" data-title="Welcome Center:" data-hero-text="Learn how to transcribe, review, and tag." data-link-url="{% url 'welcome-guide' %}">
+                    <div class="carousel-item" data-title="Welcome Center" data-hero-text="Learn how to transcribe, review, and tag." data-link-url="{% url 'welcome-guide' %}">
                         <img class="d-block w-100" src="{% static 'img/homepage-carousel/welcome-guide.jpg' %}" alt="">
                     </div>
                 </div>
@@ -36,7 +36,7 @@
                     <span class="sr-only">Next</span>
                 </a>
                 <div class="carousel-overlay text-center d-flex flex-column justify-content-around align-items-center">
-                    <h1 class="title">By the People:</h1>
+                    <h1 class="title">By the People</h1>
                     <p class="hero-text mx-auto">Volunteer to uncover our shared history and make documents more searchable for everyone.</p>
                     <a class="btn btn-primary btn-lg" href="{% url "transcriptions:redirect-to-next-transcribable-asset" 'letters-to-lincoln' %}">LET'S GO!</a>
                 </div>

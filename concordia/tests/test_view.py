@@ -6,6 +6,7 @@ from django.urls import reverse
 from django.utils.timezone import now
 
 from concordia.models import (
+    Asset,
     AssetTranscriptionReservation,
     SimplePage,
     Transcription,
@@ -639,7 +640,83 @@ class TransactionalViewTests(JSONAssertMixin, TransactionTestCase):
             1, Transcription.objects.filter(pk=t1.pk, accepted__isnull=False).count()
         )
 
-    def test_transcription_self_review(self):
+    def test_transcription_review_asset_status_updates(self):
+        """
+        Confirm that the Asset.transcription_status field is correctly updated
+        throughout the review process
+        """
+        asset = create_asset()
+
+        anon = get_anonymous_user()
+
+        # We should see NOT_STARTED only when no transcription records exist:
+        self.assertEqual(asset.transcription_set.count(), 0)
+        self.assertEqual(
+            Asset.objects.get(pk=asset.pk).transcription_status,
+            TranscriptionStatus.NOT_STARTED,
+        )
+
+        t1 = Transcription(asset=asset, user=anon, text="test", submitted=now())
+        t1.full_clean()
+        t1.save()
+
+        self.assertEqual(
+            Asset.objects.get(pk=asset.pk).transcription_status,
+            TranscriptionStatus.SUBMITTED,
+        )
+
+        # “Login” so we can review the anonymous transcription:
+        self.login_user()
+
+        self.assertEqual(
+            1, Transcription.objects.filter(pk=t1.pk, accepted__isnull=True).count()
+        )
+
+        resp = self.client.post(
+            reverse("review-transcription", args=(t1.pk,)), data={"action": "reject"}
+        )
+        self.assertValidJSON(resp, expected_status=200)
+
+        # After rejecting a transcription, the asset status should be reset to
+        # in-progress:
+        self.assertEqual(
+            1,
+            Transcription.objects.filter(
+                pk=t1.pk, accepted__isnull=True, rejected__isnull=False
+            ).count(),
+        )
+        self.assertEqual(
+            Asset.objects.get(pk=asset.pk).transcription_status,
+            TranscriptionStatus.IN_PROGRESS,
+        )
+
+        # We'll simulate a second attempt:
+
+        t2 = Transcription(
+            asset=asset, user=anon, text="test", submitted=now(), supersedes=t1
+        )
+        t2.full_clean()
+        t2.save()
+
+        self.assertEqual(
+            Asset.objects.get(pk=asset.pk).transcription_status,
+            TranscriptionStatus.SUBMITTED,
+        )
+
+        resp = self.client.post(
+            reverse("review-transcription", args=(t2.pk,)), data={"action": "accept"}
+        )
+        self.assertValidJSON(resp, expected_status=200)
+
+        self.assertEqual(
+            1, Transcription.objects.filter(pk=t2.pk, accepted__isnull=False).count()
+        )
+        self.assertEqual(
+            Asset.objects.get(pk=asset.pk).transcription_status,
+            TranscriptionStatus.COMPLETED,
+        )
+
+    def test_transcription_disallow_self_review(self):
         asset = create_asset()
 
         self.login_user()
@@ -817,4 +894,95 @@ class TransactionalViewTests(JSONAssertMixin, TransactionTestCase):
             expected_url=reverse(
                 "transcriptions:project-detail", args=(campaign.slug, project.slug)
             ),
+        )
+
+    def test_find_next_transcribable_hierarchy(self):
+        """Confirm that find-next-page selects assets in the expected order"""
+
+        asset = create_asset()
+        item = asset.item
+        project = item.project
+        campaign = project.campaign
+
+        asset_in_item = create_asset(item=item, slug="test-asset-in-same-item")
+        in_progress_asset_in_item = create_asset(
+            item=item,
+            slug="inprogress-asset-in-same-item",
+            transcription_status=TranscriptionStatus.IN_PROGRESS,
+        )
+
+        asset_in_project = create_asset(
+            item=create_item(project=project, item_id="other-item-in-same-project"),
+            title="test-asset-in-same-project",
+        )
+
+        asset_in_campaign = create_asset(
+            item=create_item(
+                project=create_project(campaign=campaign, title="other project"),
+                title="item in other project",
+            ),
+            slug="test-asset-in-same-campaign",
+        )
+
+        # Now that we have test assets we'll see what find-next-page gives us as
+        # successive test records are marked as submitted and thus ineligible.
+        # The expected ordering is that it will favor moving forward (i.e. not
+        # landing you on the same asset unless that's the only one available),
+        # and will keep you closer to the asset you started from (i.e. within
+        # the same item or project in that order).
+
+        self.assertRedirects(
+            self.client.get(
+                reverse(
+                    "transcriptions:redirect-to-next-transcribable-asset",
+                    kwargs={"campaign_slug": campaign.slug},
+                ),
+                {"project": project.slug, "item": item.item_id, "asset": asset.pk},
+            ),
+            asset_in_item.get_absolute_url(),
+        )
+
+        asset_in_item.transcription_status = TranscriptionStatus.SUBMITTED
+        asset_in_item.save()
+        AssetTranscriptionReservation.objects.all().delete()
+
+        self.assertRedirects(
+            self.client.get(
+                reverse(
+                    "transcriptions:redirect-to-next-transcribable-asset",
+                    kwargs={"campaign_slug": campaign.slug},
+                ),
+                {"project": project.slug, "item": item.item_id, "asset": asset.pk},
+            ),
+            asset_in_project.get_absolute_url(),
+        )
+
+        asset_in_project.transcription_status = TranscriptionStatus.SUBMITTED
+        asset_in_project.save()
+        AssetTranscriptionReservation.objects.all().delete()
+
+        self.assertRedirects(
+            self.client.get(
+                reverse(
+                    "transcriptions:redirect-to-next-transcribable-asset",
+                    kwargs={"campaign_slug": campaign.slug},
+                ),
+                {"project": project.slug, "item": item.item_id, "asset": asset.pk},
+            ),
+            asset_in_campaign.get_absolute_url(),
+        )
+
+        asset_in_campaign.transcription_status = TranscriptionStatus.SUBMITTED
+        asset_in_campaign.save()
+        AssetTranscriptionReservation.objects.all().delete()
+
+        self.assertRedirects(
+            self.client.get(
+                reverse(
+                    "transcriptions:redirect-to-next-transcribable-asset",
+                    kwargs={"campaign_slug": campaign.slug},
+                ),
+                {"project": project.slug, "item": item.item_id, "asset": asset.pk},
+            ),
+            in_progress_asset_in_item.get_absolute_url(),
         )
