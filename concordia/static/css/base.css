@@ -625,10 +625,6 @@ ul.nav-secondary {
     line-height: 125%;
 }
 
-.view-homepage .carousel-overlay h1 {
-    text-transform: uppercase;
-}
-
 .view-homepage .carousel-indicators li {
     width: 12px;
     height: 12px;
@@ -718,6 +714,27 @@ ul.nav-secondary {
     }
     .homepage-activity p {
         font-size: 85%;
+    }
+
+    .view-homepage .carousel-control-next,
+    .view-homepage .carousel-control-prev {
+        /*
+            the background images are all 1200x480 sized with width:100% so
+            we'll set our height to match that aspect ratio plus the control icon height and a bit of padding
+        */
+        height: calc((100vw / (1200 / 480)) + 36px + 8px);
+        align-items: flex-end;
+    }
+
+    .view-homepage .carousel-control-next-icon,
+    .view-homepage .carousel-control-prev-icon {
+        height: 36.5px;
+        width: 22px;
+        filter: invert(1);
+    }
+
+    .view-homepage .carousel-overlay .title {
+        max-width: 70%;
     }
 }
 
