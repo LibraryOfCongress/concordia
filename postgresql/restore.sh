@@ -6,13 +6,13 @@
 
 # Before running the restore, you'll have to stop the ECS task to close any open connections.
 # Then, run the following to drop the database.
-# psql -U concordia -h $POSTGRES_HOST
+# psql -U concordia -h $POSTGRESQL_HOST
 # \c postgres
 # drop database concordia;
 
-export POSTGRES_HOST=
+export POSTGRESQL_HOST=
 export DUMP_FILE=concordia.dmp
 
-pg_restore --create --clean -U concordia -h $POSTGRES_HOST -Fc --dbname=postgres --no-owner --no-acl $DUMP_FILE
+pg_restore --create --clean -U concordia -h $POSTGRESQL_HOST -Fc --dbname=postgres --no-owner --no-acl $DUMP_FILE
 
 # After this, change the Sites in django admin to match the host name
