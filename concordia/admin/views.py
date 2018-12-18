@@ -27,12 +27,6 @@ from ..models import Campaign, Project, SiteReport
 @permission_required("concordia.add_item")
 @permission_required("concordia.change_item")
 def admin_bulk_import_view(request):
-    # TODO: when we upgrade to Django 2.1 we can use the admin site override
-    # mechanism (the old one is broken in 2.0): see
-    # https://code.djangoproject.com/ticket/27887 in the meantime, this will
-    # simply be a regular Django view using forms and just enough context to
-    # reuse the Django admin template
-
     request.current_app = "admin"
 
     context = {"title": "Bulk Import"}
@@ -114,9 +108,7 @@ def admin_bulk_import_view(request):
                     )
                 except ValidationError as exc:
                     messages.error(
-                        request,
-                        request,
-                        f"Unable to create project {project_title}: {exc}",
+                        request, f"Unable to create project {project_title}: {exc}"
                     )
                     continue
 
