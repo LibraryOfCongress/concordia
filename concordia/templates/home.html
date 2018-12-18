@@ -49,20 +49,20 @@
                 <h2 class="px-default offwhite-text px-md-0 ml-md-3">Anyone Can Contribute</h2>
             </div>
             <div id="homepage-contribute-activities" class="d-flex justify-content-around text-center">
-                <div class="homepage-activity px-1 pl-mx-2 px-lg-3">
+                <div class="homepage-activity px-1 pl-mx-2 px-lg-3" >
                     <a aria-hidden="true" href="{% url 'how-to-transcribe' %}"><img class="img-fluid" src="{% static 'img/homepage-pencil.svg' %}"></a>
-                    <h4 class="mt-3"><a class="offwhite-text" href="{% url 'how-to-transcribe' %}">TRANSCRIBE</a></h4>
-                    <p class="offwhite-text">Type what you see on the page.</p>
+                    <h4 class="mt-3"><a class="offwhite-text" href="{% url 'how-to-transcribe' %}" aria-describedby="homepage-activity-transcribe-help">TRANSCRIBE</a></h4>
+                    <p id="homepage-activity-transcribe-help" class="offwhite-text">Type what you see on the page.</p>
                 </div>
                 <div class="homepage-activity px-1 pl-mx-2 px-lg-3">
                     <a aria-hidden="true" class="offwhite-text" href="{% url 'how-to-review' %}"><img class="img-fluid" src="{% static 'img/homepage-checkmark.svg' %}"></a>
-                    <h4 class="offwhite-text mt-3"><a class="offwhite-text" href="{% url 'how-to-review' %}">REVIEW</a></h4>
-                    <p class="offwhite-text">Register to edit and complete transcriptions.</p>
+                    <h4 class="offwhite-text mt-3"><a class="offwhite-text" href="{% url 'how-to-review' %}" aria-describedby="homepage-activity-review-help">REVIEW</a></h4>
+                    <p id="homepage-activity-review-help" class="offwhite-text">Register to edit and complete transcriptions.</p>
                 </div>
                 <div class="homepage-activity px-1 pl-mx-2 px-lg-3">
                     <a aria-hidden="true" class="offwhite-text" href="{% url 'how-to-tag' %}"><img class="img-fluid" src="{% static 'img/homepage-tag.svg' %}"></a>
-                    <h4 class="offwhite-text mt-3"><a class="offwhite-text" href="{% url 'how-to-tag' %}">TAG</a></h4>
-                    <p class="offwhite-text">Register to add tags and share what you find.</p>
+                    <h4 class="offwhite-text mt-3"><a class="offwhite-text" href="{% url 'how-to-tag' %}"  aria-describedby="homepage-activity-tag-help">TAG</a></h4>
+                    <p id="homepage-activity-tag-help" class="offwhite-text">Register to add tags and share what you find.</p>
                 </div>
             </div>
         </div>
