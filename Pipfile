@@ -52,6 +52,7 @@ django-debug-toolbar = "*"
 coverage = "*"
 pre-commit = "*"
 pylint = "*"
+cfn-lint = "*"
 
 [requires]
 python_version = "3.6"
