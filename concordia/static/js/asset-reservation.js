@@ -7,7 +7,8 @@ function attemptToReserveAsset(reservationURL) {
     jQuery
         .ajax({
             url: reservationURL,
-            type: 'POST'
+            type: 'POST',
+            dataType: 'json'
         })
         .done(function() {
             $transcriptionEditor

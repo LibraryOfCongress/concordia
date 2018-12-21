@@ -25,13 +25,13 @@
 </head>
 <body class="d-flex justify-content-center align-items-center text-center">
     <div id="error-message">
-        <h1>HTTP 429 Error</h1>
+        <h1>HTTP 429: Too Many Requests</h1>
 
         <p>
             {% if exception %}
                 {{ exception }}
-            {% else %} 
-                Please wait a bit, then try again.
+            {% else %}
+                {{ error|default:'Please wait a bit, then try again.' }}
             {% endif %}
 
         </p>

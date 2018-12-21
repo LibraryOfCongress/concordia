@@ -55,7 +55,7 @@ from concordia.models import (
     TranscriptionStatus,
     UserAssetTagCollection,
 )
-from concordia.utils import get_anonymous_user
+from concordia.utils import get_anonymous_user, request_accepts_json
 from concordia.version import get_concordia_version
 
 logger = getLogger(__name__)
@@ -240,18 +240,20 @@ class ConcordiaLoginView(RatelimitMixin, LoginView):
 def ratelimit_view(request, exception=None):
     status_code = 429
 
-    if "json" in request.META["HTTP_ACCEPT"].lower():
-        response = JsonResponse({"exception": str(exception), "status": status_code})
-    else:
-        template_name = "429.html"
-        template = loader.get_template(template_name)
+    ctx = {
+        "error": "You have been rate-limited. Please try again later.",
+        "status": status_code,
+    }
 
-        response = HttpResponse(
-            template.render({"exception": exception}), status=status_code
-        )
+    if exception is not None:
+        ctx["exception"]: str(exception)
+
+    if request.is_ajax() or request_accepts_json(request):
+        response = JsonResponse(ctx, status=status_code)
+    else:
+        response = render(request, "429.html", context=ctx, status=status_code)
 
     response["Retry-After"] = 15 * 60
-    response["reason_phrase"] = str(exception)
 
     return response
 
