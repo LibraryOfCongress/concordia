@@ -67,14 +67,22 @@ def do_bagit_export(assets, export_base_dir, export_filename_base):
 
         asset_id = asset_id.replace(":", "/")
         asset_path, asset_filename = os.path.split(asset_id)
+        item_path, item_filename = os.path.split(asset_path)
 
-        dest_path = os.path.join(export_base_dir, asset_path)
-        os.makedirs(dest_path, exist_ok=True)
+        asset_dest_path = os.path.join(export_base_dir, asset_path)
+        os.makedirs(asset_dest_path, exist_ok=True)
 
         # Build transcription output text file
-        text_output_path = os.path.join(dest_path, "%s.txt" % asset_filename)
-        with open(text_output_path, "w") as f:
+        asset_text_output_path = os.path.join(
+            asset_dest_path, "%s.txt" % asset_filename
+        )
+        with open(asset_text_output_path, "w") as f:
             f.write(asset.latest_transcription or "")
+
+        item_text_output_path = os.path.join(asset_dest_path, "%s.txt" % item_filename)
+        with open(item_text_output_path, "a") as f:
+            f.write(asset.latest_transcription or "")
+            f.write("\n\n")
 
     # Turn Structure into bagit format
     bagit.make_bag(
@@ -172,7 +180,7 @@ class ExportItemToBagIt(TemplateView):
             item__project__slug=project_slug,
             item__item_id=item_id,
             transcription_status=TranscriptionStatus.COMPLETED,
-        )
+        ).order_by("sequence")
 
         assets = get_latest_transcription_data(asset_qs)
 
@@ -193,7 +201,7 @@ class ExportProjectToBagIt(TemplateView):
             item__project__campaign__slug=campaign_slug,
             item__project__slug=project_slug,
             transcription_status=TranscriptionStatus.COMPLETED,
-        )
+        ).order_by("item", "sequence")
 
         assets = get_latest_transcription_data(asset_qs)
 
@@ -212,7 +220,7 @@ class ExportCampaignToBagit(TemplateView):
         asset_qs = Asset.objects.filter(
             item__project__campaign__slug=campaign_slug,
             transcription_status=TranscriptionStatus.COMPLETED,
-        )
+        ).order_by("item__project", "item", "sequence")
 
         assets = get_latest_transcription_data(asset_qs)
 
