@@ -16,6 +16,8 @@ from tabular_export.core import export_to_csv_response, flatten_queryset
 
 from concordia.models import Asset, Transcription, TranscriptionStatus
 
+import pdfkit
+
 logger = getLogger(__name__)
 
 
@@ -83,6 +85,24 @@ def do_bagit_export(assets, export_base_dir, export_filename_base):
         with open(item_text_output_path, "a") as f:
             f.write(asset.latest_transcription or "")
             f.write("\n\n")
+
+    # Add attributions to the end of all files found under asset_dest_path
+    if hasattr(settings, "ATTRIBUTION_TEXT"):
+        for dirpath, dirnames, filenames in os.walk(export_base_dir, topdown=False):
+            for each_text_file in filenames:
+                this_text_file = os.path.join(dirpath, each_text_file)
+                with open(this_text_file, "a") as f:
+                    f.write("\n\n")
+                    f.write(settings.ATTRIBUTION_TEXT)
+
+    # Make PDFs of all pages
+    for dirpath, dirnames, filenames in os.walk(export_base_dir, topdown=False):
+        for each_text_file in filenames:
+            this_pdf_file = each_text_file.replace(".txt", ".pdf")
+            pdfkit.from_file(
+                os.path.join(dirpath, each_text_file),
+                os.path.join(dirpath, this_pdf_file),
+            )
 
     # Turn Structure into bagit format
     bagit.make_bag(
