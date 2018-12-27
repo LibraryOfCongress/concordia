@@ -7,7 +7,7 @@ RUN apt-get update -qy && apt-get dist-upgrade -qy && apt-get install -o Dpkg::O
     git curl \
     python3 python3-dev python3-pip \
     libz-dev libfreetype6-dev \
-    wkhtmltopdf libmemcached-dev \
+    libmemcached-dev \
     libtiff-dev libjpeg-dev libopenjp2-7-dev libwebp-dev zlib1g-dev \
     graphviz \
     locales && apt-get -qy autoremove && apt-get -qy autoclean

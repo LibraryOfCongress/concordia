@@ -13,7 +13,6 @@ python:
 services:
   - postgresql
 before_script:
-  - sudo apt-get install wkhtmltopdf
   - psql -c 'create database concordia;' -U postgres
 install:
   - pip install coveralls pipenv

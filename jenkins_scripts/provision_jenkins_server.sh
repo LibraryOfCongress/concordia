@@ -5,6 +5,6 @@ sudo apt-get install -qy -o Dpkg::Options::='--force-confnew' default-jre jenkin
 sudo usermod -aG docker jenkins
 sudo apt-get install -qy -o Dpkg::Options::='--force-confnew' \
     python3 python3-dev python3-venv python3-pip \
-    libtiff-dev wkhtmltopdf libjpeg-dev libopenjp2-7-dev libwebp-dev zlib1g-dev \
+    libtiff-dev libjpeg-dev libopenjp2-7-dev libwebp-dev zlib1g-dev \
     graphviz
 sudo service start jenkins
