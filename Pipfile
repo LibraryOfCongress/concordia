@@ -41,7 +41,6 @@ pylibmc = "*"
 cfn-lint = "*"
 django-celery-beat = "*"
 django-passwords = "*"
-pdfkit = "*"
 
 [dev-packages]
 invoke = "*"
