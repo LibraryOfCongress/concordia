@@ -75,7 +75,7 @@ def do_bagit_export(assets, export_base_dir, export_filename_base):
         text_output_path = os.path.join(dest_path, "%s.txt" % asset_filename)
         with open(text_output_path, "w") as f:
             f.write(asset.latest_transcription or "")
-            if getattr(settings, "ATTRIBUTION_TEXT"):
+            if hasattr(settings, "ATTRIBUTION_TEXT"):
                 f.write("\n\n")
                 f.write(settings.ATTRIBUTION_TEXT)
 
