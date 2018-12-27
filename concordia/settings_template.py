@@ -296,3 +296,9 @@ TRANSCRIPTION_RESERVATION_SECONDS = 5 * 60
 
 #: Web cache policy settings
 DEFAULT_PAGE_TTL = 5 * 60
+
+# Exporter attribution text for BagIt exports to LC
+ATTRIBUTION_TEXT = (
+    "Transcribed and reviewed by volunteers participating in the "
+    "By The People project at crowd.loc.gov."
+)
