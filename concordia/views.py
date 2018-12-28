@@ -715,11 +715,6 @@ def validate_anonymous_captcha(view):
     return inner
 
 
-def save_rate(g, r):
-    return None if r.user.is_authenticated else "1/m"
-
-
-@ratelimit(key="ip", rate=save_rate, block=settings.RATELIMIT_BLOCK)
 @require_POST
 @validate_anonymous_captcha
 @atomic
@@ -777,11 +772,6 @@ def save_transcription(request, *, asset_pk):
     )
 
 
-def submit_rate(g, r):
-    return None if r.user.is_authenticated else "1/m"
-
-
-@ratelimit(key="ip", rate=submit_rate, block=settings.RATELIMIT_BLOCK)
 @require_POST
 @validate_anonymous_captcha
 def submit_transcription(request, *, pk):
@@ -1053,7 +1043,7 @@ class ReportCampaignView(TemplateView):
 
 
 def reserve_rate(g, r):
-    return None if r.user.is_authenticated else "12/m"
+    return None if r.user.is_authenticated else "100/m"
 
 
 @ratelimit(key="ip", rate=reserve_rate, block=settings.RATELIMIT_BLOCK)
