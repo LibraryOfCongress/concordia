@@ -161,31 +161,36 @@ if (screenfull.enabled) {
         });
 }
 
-$.ajax({url: '/account/ajax-status/', method: 'GET', cache: true}).done(
-    function(data) {
-        if (!data.username) {
-            return;
-        }
+$.ajax({
+    url: '/account/ajax-status/',
+    method: 'GET',
+    dataType: 'json',
+    cache: true
+}).done(function(data) {
+    if (!data.username) {
+        return;
+    }
 
-        $('.anonymous-only').remove();
-        $('.authenticated-only').removeAttr('hidden');
-        if (data.links) {
-            var $accountMenu = $('#topnav-account-dropdown .dropdown-menu');
-            data.links.forEach(function(i) {
-                $('<a>')
-                    .addClass('dropdown-item')
-                    .attr('href', i.url)
-                    .text(i.title)
-                    .prependTo($accountMenu);
+    $('.anonymous-only').remove();
+    $('.authenticated-only').removeAttr('hidden');
+    if (data.links) {
+        var $accountMenu = $('#topnav-account-dropdown .dropdown-menu');
+        data.links.forEach(function(i) {
+            $('<a>')
+                .addClass('dropdown-item')
+                .attr('href', i.url)
+                .text(i.title)
+                .prependTo($accountMenu);
+        });
+    }
+});
+
+$.ajax({url: '/account/ajax-messages/', method: 'GET', dataType: 'json'}).done(
+    function(data) {
+        if (data.messages) {
+            data.messages.forEach(function(message) {
+                displayMessage(message.level, message.message);
             });
         }
     }
 );
-
-$.ajax({url: '/account/ajax-messages/', method: 'GET'}).done(function(data) {
-    if (data.messages) {
-        data.messages.forEach(function(message) {
-            displayMessage(message.level, message.message);
-        });
-    }
-});
