@@ -61,6 +61,7 @@ def do_bagit_export(assets, export_base_dir, export_filename_base):
     Uploads zip to S3 if configured.
     """
 
+    # These assets should already be in the correct order - by item, seequence
     for asset in assets:
         asset_id = get_original_asset_id(asset.download_url)
         logger.debug("Exporting asset %s into %s", asset_id, export_base_dir)
@@ -72,22 +73,24 @@ def do_bagit_export(assets, export_base_dir, export_filename_base):
         asset_dest_path = os.path.join(export_base_dir, asset_path)
         os.makedirs(asset_dest_path, exist_ok=True)
 
-        # Build transcription output text file
+        # Build a transcription output text file for each asset
         asset_text_output_path = os.path.join(
             asset_dest_path, "%s.txt" % asset_filename
         )
+        # Write the asset level transcription file
         with open(asset_text_output_path, "w") as f:
             f.write(asset.latest_transcription or "")
 
+        # Append this asset transcription to the item transcription
         item_text_output_path = os.path.join(asset_dest_path, "%s.txt" % item_filename)
         with open(item_text_output_path, "a") as f:
             f.write(asset.latest_transcription or "")
             f.write("\n\n")
 
-    # Add attributions to the end of all files found under asset_dest_path
+    # Add attributions to the end of all text files found under asset_dest_path
     if hasattr(settings, "ATTRIBUTION_TEXT"):
         for dirpath, dirnames, filenames in os.walk(export_base_dir, topdown=False):
-            for each_text_file in filenames:
+            for each_text_file in (i for i in filenames if i.endswith(".txt")):
                 this_text_file = os.path.join(dirpath, each_text_file)
                 with open(this_text_file, "a") as f:
                     f.write("\n\n")
