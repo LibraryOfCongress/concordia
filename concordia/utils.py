@@ -12,3 +12,9 @@ def get_anonymous_user():
         return User.objects.get(username="anonymous")
     except User.DoesNotExist:
         return User.objects.create_user(username="anonymous")
+
+
+def request_accepts_json(request):
+    accept_header = request.META.get("HTTP_ACCEPT", "*/*")
+
+    return "application/json" in accept_header
