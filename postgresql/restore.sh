@@ -10,7 +10,7 @@
 # \c postgres
 # drop database concordia;
 
-export POSTGRESQL_HOST=
+export POSTGRESQL_HOST=localhost
 export DUMP_FILE=concordia.dmp
 
 pg_restore --create --clean -U concordia -h $POSTGRESQL_HOST -Fc --dbname=postgres --no-owner --no-acl $DUMP_FILE
