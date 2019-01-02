@@ -445,7 +445,12 @@ class CampaignDetailView(DetailView):
             .annotate(
                 **{
                     f"{key}_count": Count(
-                        "item__asset", filter=Q(item__asset__transcription_status=key)
+                        "item__asset",
+                        filter=Q(
+                            item__published=True,
+                            item__asset__published=True,
+                            item__asset__transcription_status=key,
+                        ),
                     )
                     for key in TranscriptionStatus.CHOICE_MAP.keys()
                 }
