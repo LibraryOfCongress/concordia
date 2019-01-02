@@ -41,6 +41,7 @@ pylibmc = "*"
 cfn-lint = "*"
 django-celery-beat = "*"
 django-passwords = "*"
+kombu = ">=4.2.2<4.3.0"
 
 [dev-packages]
 invoke = "*"

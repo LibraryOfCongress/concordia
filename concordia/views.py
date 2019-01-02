@@ -55,7 +55,7 @@ from concordia.models import (
     TranscriptionStatus,
     UserAssetTagCollection,
 )
-from concordia.utils import get_anonymous_user
+from concordia.utils import get_anonymous_user, request_accepts_json
 from concordia.version import get_concordia_version
 
 logger = getLogger(__name__)
@@ -240,18 +240,20 @@ class ConcordiaLoginView(RatelimitMixin, LoginView):
 def ratelimit_view(request, exception=None):
     status_code = 429
 
-    if "json" in request.META["HTTP_ACCEPT"].lower():
-        response = JsonResponse({"exception": str(exception), "status": status_code})
-    else:
-        template_name = "429.html"
-        template = loader.get_template(template_name)
+    ctx = {
+        "error": "You have been rate-limited. Please try again later.",
+        "status": status_code,
+    }
 
-        response = HttpResponse(
-            template.render({"exception": exception}), status=status_code
-        )
+    if exception is not None:
+        ctx["exception"]: str(exception)
+
+    if request.is_ajax() or request_accepts_json(request):
+        response = JsonResponse(ctx, status=status_code)
+    else:
+        response = render(request, "429.html", context=ctx, status=status_code)
 
     response["Retry-After"] = 15 * 60
-    response["reason_phrase"] = str(exception)
 
     return response
 
@@ -443,7 +445,12 @@ class CampaignDetailView(DetailView):
             .annotate(
                 **{
                     f"{key}_count": Count(
-                        "item__asset", filter=Q(item__asset__transcription_status=key)
+                        "item__asset",
+                        filter=Q(
+                            item__published=True,
+                            item__asset__published=True,
+                            item__asset__transcription_status=key,
+                        ),
                     )
                     for key in TranscriptionStatus.CHOICE_MAP.keys()
                 }
@@ -715,11 +722,6 @@ def validate_anonymous_captcha(view):
     return inner
 
 
-def save_rate(g, r):
-    return None if r.user.is_authenticated else "1/m"
-
-
-@ratelimit(key="ip", rate=save_rate, block=settings.RATELIMIT_BLOCK)
 @require_POST
 @validate_anonymous_captcha
 @atomic
@@ -777,11 +779,6 @@ def save_transcription(request, *, asset_pk):
     )
 
 
-def submit_rate(g, r):
-    return None if r.user.is_authenticated else "1/m"
-
-
-@ratelimit(key="ip", rate=submit_rate, block=settings.RATELIMIT_BLOCK)
 @require_POST
 @validate_anonymous_captcha
 def submit_transcription(request, *, pk):
@@ -1053,7 +1050,7 @@ class ReportCampaignView(TemplateView):
 
 
 def reserve_rate(g, r):
-    return None if r.user.is_authenticated else "12/m"
+    return None if r.user.is_authenticated else "100/m"
 
 
 @ratelimit(key="ip", rate=reserve_rate, block=settings.RATELIMIT_BLOCK)
