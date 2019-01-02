@@ -18,13 +18,13 @@
                 </ol>
                 <div class="carousel-inner">
                     <div class="carousel-item active" data-title="By the People" data-hero-text="Volunteer to uncover our shared history and make documents more searchable for everyone." data-link-url="{% url 'transcriptions:redirect-to-next-transcribable-asset' 'letters-to-lincoln' %}">
-                        <img class="d-block w-100" src="{% static 'img/homepage-carousel/crowd-home.jpg' %}" alt="a crowd of girls waving handkerchiefs and smiling; possibly cheering">
+                        <img class="d-block w-100" src="{% static 'img/homepage-carousel/crowd-home.jpg' %}" alt="A crowd of young women cheering and waving handkerchiefs">
                     </div>
                     <div class="carousel-item" data-overlay-position="top-right" data-title="Letters to Lincoln" data-hero-text="Help us transcribe and review Letters to Lincoln: husband, father, postmaster, lawyer, politician, President." data-link-url="{% url 'transcriptions:redirect-to-next-transcribable-asset' 'letters-to-lincoln' %}">
-                        <img class="d-block w-100" src="{% static 'img/homepage-carousel/letters-to-lincoln.jpg' %}" alt="Image of letters sent to Abraham Lincoln">
+                        <img class="d-block w-100" src="{% static 'img/homepage-carousel/letters-to-lincoln.jpg' %}" alt="Postal envelope depicting President Lincoln and Vice President Hamlin">
                     </div>
                     <div class="carousel-item" data-title="Welcome Center" data-hero-text="Learn how to transcribe, review, and tag." data-link-url="{% url 'welcome-guide' %}">
-                        <img class="d-block w-100" src="{% static 'img/homepage-carousel/welcome-guide.jpg' %}" alt="">
+                        <img class="d-block w-100" src="{% static 'img/homepage-carousel/welcome-guide.jpg' %}" alt="Collection of typed report pages by baseball scout Branch Rickey">
                     </div>
                 </div>
                 <a class="carousel-control-prev" href="#homepage-carousel" role="button" data-slide="prev">
@@ -49,20 +49,20 @@
                 <h2 class="px-default offwhite-text px-md-0 ml-md-3">Anyone Can Contribute</h2>
             </div>
             <div id="homepage-contribute-activities" class="d-flex justify-content-around text-center">
-                <div class="homepage-activity px-1 pl-mx-2 px-lg-3">
+                <div class="homepage-activity px-1 pl-mx-2 px-lg-3" >
                     <a aria-hidden="true" href="{% url 'how-to-transcribe' %}"><img class="img-fluid" src="{% static 'img/homepage-pencil.svg' %}"></a>
-                    <h4 class="mt-3"><a class="offwhite-text" href="{% url 'how-to-transcribe' %}">TRANSCRIBE</a></h4>
-                    <p class="offwhite-text">Type what you see on the page.</p>
+                    <h4 class="mt-3"><a class="offwhite-text" href="{% url 'how-to-transcribe' %}" aria-describedby="homepage-activity-transcribe-help">TRANSCRIBE</a></h4>
+                    <p id="homepage-activity-transcribe-help" class="offwhite-text">Type what you see on the page.</p>
                 </div>
                 <div class="homepage-activity px-1 pl-mx-2 px-lg-3">
                     <a aria-hidden="true" class="offwhite-text" href="{% url 'how-to-review' %}"><img class="img-fluid" src="{% static 'img/homepage-checkmark.svg' %}"></a>
-                    <h4 class="offwhite-text mt-3"><a class="offwhite-text" href="{% url 'how-to-review' %}">REVIEW</a></h4>
-                    <p class="offwhite-text">Register to edit and complete transcriptions.</p>
+                    <h4 class="offwhite-text mt-3"><a class="offwhite-text" href="{% url 'how-to-review' %}" aria-describedby="homepage-activity-review-help">REVIEW</a></h4>
+                    <p id="homepage-activity-review-help" class="offwhite-text">Register to edit and complete transcriptions.</p>
                 </div>
                 <div class="homepage-activity px-1 pl-mx-2 px-lg-3">
                     <a aria-hidden="true" class="offwhite-text" href="{% url 'how-to-tag' %}"><img class="img-fluid" src="{% static 'img/homepage-tag.svg' %}"></a>
-                    <h4 class="offwhite-text mt-3"><a class="offwhite-text" href="{% url 'how-to-tag' %}">TAG</a></h4>
-                    <p class="offwhite-text">Register to add tags and share what you find.</p>
+                    <h4 class="offwhite-text mt-3"><a class="offwhite-text" href="{% url 'how-to-tag' %}"  aria-describedby="homepage-activity-tag-help">TAG</a></h4>
+                    <p id="homepage-activity-tag-help" class="offwhite-text">Register to add tags and share what you find.</p>
                 </div>
             </div>
         </div>

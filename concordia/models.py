@@ -353,3 +353,32 @@ class SiteReport(models.Model):
     campaigns_unpublished = models.IntegerField(blank=True, null=True)
     users_registered = models.IntegerField(blank=True, null=True)
     users_activated = models.IntegerField(blank=True, null=True)
+
+    class Meta:
+        ordering = ("created_on",)
+
+    # We have several places where these are exported as CSV/Excel. By default
+    # the ORM will be told to retrieve these fields & lookups:
+    DEFAULT_EXPORT_FIELDNAMES = [
+        "created_on",
+        "campaign__title",
+        "assets_total",
+        "assets_published",
+        "assets_not_started",
+        "assets_in_progress",
+        "assets_waiting_review",
+        "assets_completed",
+        "assets_unpublished",
+        "items_published",
+        "items_unpublished",
+        "projects_published",
+        "projects_unpublished",
+        "anonymous_transcriptions",
+        "transcriptions_saved",
+        "distinct_tags",
+        "tag_uses",
+        "campaigns_published",
+        "campaigns_unpublished",
+        "users_registered",
+        "users_activated",
+    ]

@@ -51,6 +51,7 @@ var $captchaForm = $captchaModal.find('form').on('submit', function(evt) {
     $.ajax({
         url: $captchaForm.attr('action'),
         method: 'POST',
+        dataType: 'json',
         data: $.param(formData)
     })
         .done(function() {
@@ -95,6 +96,7 @@ $('form.ajax-submission').each(function(idx, formElement) {
         $.ajax({
             url: $form.attr('action'),
             method: 'POST',
+            dataType: 'json',
             data: $.param(formData)
         })
             .done(function(data, textStatus) {
@@ -257,7 +259,8 @@ $submitButton.on('click', function(evt) {
 
     $.ajax({
         url: $transcriptionEditor.data('submitUrl'),
-        method: 'POST'
+        method: 'POST',
+        dataType: 'json'
     })
         .done(function() {
             $('.tx-status-display')
@@ -296,6 +299,7 @@ function submitReview(status) {
     $.ajax({
         url: reviewUrl,
         method: 'POST',
+        dataType: 'json',
         data: {
             action: status
         }

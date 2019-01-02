@@ -27,12 +27,6 @@ from ..models import Campaign, Project, SiteReport
 @permission_required("concordia.add_item")
 @permission_required("concordia.change_item")
 def admin_bulk_import_view(request):
-    # TODO: when we upgrade to Django 2.1 we can use the admin site override
-    # mechanism (the old one is broken in 2.0): see
-    # https://code.djangoproject.com/ticket/27887 in the meantime, this will
-    # simply be a regular Django view using forms and just enough context to
-    # reuse the Django admin template
-
     request.current_app = "admin"
 
     context = {"title": "Bulk Import"}
@@ -114,9 +108,7 @@ def admin_bulk_import_view(request):
                     )
                 except ValidationError as exc:
                     messages.error(
-                        request,
-                        request,
-                        f"Unable to create project {project_title}: {exc}",
+                        request, f"Unable to create project {project_title}: {exc}"
                     )
                     continue
 
@@ -167,29 +159,7 @@ def admin_site_report_view(request):
 
     headers, data = flatten_queryset(
         site_reports,
-        field_names=[
-            "created_on",
-            "campaign__title",
-            "assets_total",
-            "assets_published",
-            "assets_not_started",
-            "assets_in_progress",
-            "assets_waiting_review",
-            "assets_completed",
-            "assets_unpublished",
-            "items_published",
-            "items_unpublished",
-            "projects_published",
-            "projects_unpublished",
-            "anonymous_transcriptions",
-            "transcriptions_saved",
-            "distinct_tags",
-            "tag_uses",
-            "campaigns_published",
-            "campaigns_unpublished",
-            "users_registered",
-            "users_activated",
-        ],
+        field_names=SiteReport.DEFAULT_EXPORT_FIELDNAMES,
         extra_verbose_names={"created_on": "Date", "campaign__title": "Campaign"},
     )
 

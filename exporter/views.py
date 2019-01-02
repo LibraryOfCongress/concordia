@@ -61,20 +61,40 @@ def do_bagit_export(assets, export_base_dir, export_filename_base):
     Uploads zip to S3 if configured.
     """
 
+    # These assets should already be in the correct order - by item, seequence
     for asset in assets:
         asset_id = get_original_asset_id(asset.download_url)
         logger.debug("Exporting asset %s into %s", asset_id, export_base_dir)
 
         asset_id = asset_id.replace(":", "/")
         asset_path, asset_filename = os.path.split(asset_id)
+        item_path, item_filename = os.path.split(asset_path)
 
-        dest_path = os.path.join(export_base_dir, asset_path)
-        os.makedirs(dest_path, exist_ok=True)
+        asset_dest_path = os.path.join(export_base_dir, asset_path)
+        os.makedirs(asset_dest_path, exist_ok=True)
 
-        # Build transcription output text file
-        text_output_path = os.path.join(dest_path, "%s.txt" % asset_filename)
-        with open(text_output_path, "w") as f:
+        # Build a transcription output text file for each asset
+        asset_text_output_path = os.path.join(
+            asset_dest_path, "%s.txt" % asset_filename
+        )
+        # Write the asset level transcription file
+        with open(asset_text_output_path, "w") as f:
             f.write(asset.latest_transcription or "")
+
+        # Append this asset transcription to the item transcription
+        item_text_output_path = os.path.join(asset_dest_path, "%s.txt" % item_filename)
+        with open(item_text_output_path, "a") as f:
+            f.write(asset.latest_transcription or "")
+            f.write("\n\n")
+
+    # Add attributions to the end of all text files found under asset_dest_path
+    if hasattr(settings, "ATTRIBUTION_TEXT"):
+        for dirpath, dirnames, filenames in os.walk(export_base_dir, topdown=False):
+            for each_text_file in (i for i in filenames if i.endswith(".txt")):
+                this_text_file = os.path.join(dirpath, each_text_file)
+                with open(this_text_file, "a") as f:
+                    f.write("\n\n")
+                    f.write(settings.ATTRIBUTION_TEXT)
 
     # Turn Structure into bagit format
     bagit.make_bag(
@@ -172,7 +192,7 @@ class ExportItemToBagIt(TemplateView):
             item__project__slug=project_slug,
             item__item_id=item_id,
             transcription_status=TranscriptionStatus.COMPLETED,
-        )
+        ).order_by("sequence")
 
         assets = get_latest_transcription_data(asset_qs)
 
@@ -193,7 +213,7 @@ class ExportProjectToBagIt(TemplateView):
             item__project__campaign__slug=campaign_slug,
             item__project__slug=project_slug,
             transcription_status=TranscriptionStatus.COMPLETED,
-        )
+        ).order_by("item", "sequence")
 
         assets = get_latest_transcription_data(asset_qs)
 
@@ -212,7 +232,7 @@ class ExportCampaignToBagit(TemplateView):
         asset_qs = Asset.objects.filter(
             item__project__campaign__slug=campaign_slug,
             transcription_status=TranscriptionStatus.COMPLETED,
-        )
+        ).order_by("item__project", "item", "sequence")
 
         assets = get_latest_transcription_data(asset_qs)
 
