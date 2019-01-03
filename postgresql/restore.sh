@@ -14,5 +14,3 @@ export POSTGRESQL_HOST=${POSTGRESQL_HOST:-localhost}
 export DUMP_FILE=concordia.dmp
 
 pg_restore --create --clean -U concordia -h "${POSTGRESQL_HOST}" -Fc --dbname=postgres --no-owner --no-acl $DUMP_FILE
-
-# After this, change the Sites in django admin to match the host name
