@@ -1,20 +1,20 @@
 exclude: '.*/vendor/.*'
 repos:
     - repo: https://github.com/ambv/black
-      rev: stable
+      rev: 18.9b0
       hooks:
           - id: black
     - repo: https://github.com/pre-commit/pre-commit-hooks
-      rev: v2.0.0
+      rev: v2.1.0
       hooks:
           - id: flake8
     - repo: https://github.com/prettier/prettier
-      rev: 1.14.3
+      rev: 1.15.3
       hooks:
           - id: prettier
             files: \.(css|less|scss|ts|tsx|graphql|gql|json|js|jsx|md)$
     - repo: https://github.com/pre-commit/mirrors-eslint
-      rev: v5.8.0
+      rev: v5.11.1
       hooks:
           - id: eslint
             additional_dependencies:
@@ -22,7 +22,7 @@ repos:
                 - eslint-plugin-prettier@3.0.0
                 - prettier@1.14.3
     - repo: https://github.com/awslabs/cfn-python-lint
-      rev: v0.9.1
+      rev: v0.10.2
       hooks:
           - id: cfn-python-lint
             files: cloudformation/.*\.(json|yml|yaml)$
