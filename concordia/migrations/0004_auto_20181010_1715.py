@@ -9,63 +9,73 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('concordia', '0003_auto_20181004_2103'),
+        ("concordia", "0003_auto_20181004_2103"),
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name='asset',
-            name='status',
-        ),
-        migrations.RemoveField(
-            model_name='campaign',
-            name='status',
-        ),
-        migrations.RemoveField(
-            model_name='item',
-            name='status',
-        ),
-        migrations.RemoveField(
-            model_name='project',
-            name='status',
-        ),
-        migrations.RemoveField(
-            model_name='transcription',
-            name='status',
-        ),
+        migrations.RemoveField(model_name="asset", name="status"),
+        migrations.RemoveField(model_name="campaign", name="status"),
+        migrations.RemoveField(model_name="item", name="status"),
+        migrations.RemoveField(model_name="project", name="status"),
+        migrations.RemoveField(model_name="transcription", name="status"),
         migrations.AddField(
-            model_name='asset',
-            name='published',
+            model_name="asset",
+            name="published",
             field=models.BooleanField(default=False),
         ),
         migrations.AddField(
-            model_name='asset',
-            name='transcription_status',
-            field=models.CharField(choices=[('edit', 'Open for Edit'), ('submitted', 'Submitted for Review'), ('completed', 'Completed')], default='edit', editable=False, max_length=10),
+            model_name="asset",
+            name="transcription_status",
+            field=models.CharField(
+                choices=[
+                    ("edit", "Open for Edit"),
+                    ("submitted", "Submitted for Review"),
+                    ("completed", "Completed"),
+                ],
+                default="edit",
+                editable=False,
+                max_length=10,
+            ),
         ),
         migrations.AddField(
-            model_name='transcription',
-            name='accepted',
+            model_name="transcription",
+            name="accepted",
             field=models.DateTimeField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='transcription',
-            name='rejected',
+            model_name="transcription",
+            name="rejected",
             field=models.DateTimeField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='transcription',
-            name='reviewed_by',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='transcription_reviewers', to=settings.AUTH_USER_MODEL),
+            model_name="transcription",
+            name="reviewed_by",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="transcription_reviewers",
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
         migrations.AddField(
-            model_name='transcription',
-            name='submitted',
-            field=models.DateTimeField(blank=True, help_text='Timestamp when the creator submitted this for review', null=True),
+            model_name="transcription",
+            name="submitted",
+            field=models.DateTimeField(
+                blank=True,
+                help_text="Timestamp when the creator submitted this for review",
+                null=True,
+            ),
         ),
         migrations.AddField(
-            model_name='transcription',
-            name='supersedes',
-            field=models.ForeignKey(blank=True, help_text='A previous transcription record which is replaced by this one', null=True, on_delete=django.db.models.deletion.CASCADE, to='concordia.Transcription'),
+            model_name="transcription",
+            name="supersedes",
+            field=models.ForeignKey(
+                blank=True,
+                help_text="A previous transcription record which is replaced by this one",
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                to="concordia.Transcription",
+            ),
         ),
     ]

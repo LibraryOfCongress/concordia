@@ -5,24 +5,22 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-        ('concordia', '0001_squashed_0040_remove_campaign_is_active'),
-    ]
+    dependencies = [("concordia", "0001_squashed_0040_remove_campaign_is_active")]
 
     operations = [
         migrations.AlterField(
-            model_name='pageinuse',
-            name='created_on',
+            model_name="pageinuse",
+            name="created_on",
             field=models.DateTimeField(auto_now_add=True),
         ),
         migrations.AlterField(
-            model_name='pageinuse',
-            name='page_url',
+            model_name="pageinuse",
+            name="page_url",
             field=models.URLField(max_length=768),
         ),
         migrations.AlterField(
-            model_name='pageinuse',
-            name='updated_on',
+            model_name="pageinuse",
+            name="updated_on",
             field=models.DateTimeField(auto_now=True),
         ),
     ]
