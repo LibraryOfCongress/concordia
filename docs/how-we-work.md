@@ -64,29 +64,32 @@ We practice testing at three levels: unit tests, integration tests, and feature 
 
 A the end of each sprint a release will be created of the work that was completed. A bulleted list of new features and bug fixes will be generated from the release. A testing plan will be drafted by the project manager to include personas and guidance on how to test new features. The testing plan will be available in GitHub wiki
 **What will be included in testing plan**
-- Persona
-- acceptance criteria
-- Link to ticket associated with/background on what is
+
+-   Persona
+-   acceptance criteria
+-   Link to ticket associated with/background on what is
 
 Testing will take place in crowd-stage.loc.gov and will happen alongside the current sprint. Monday, Tuesday and Wednesday are testing days, bug fix will happen on Thurs/Fr, and new code will be deployed on 2nd Monday of sprint
 
-Testers will identify high, medium, low. Here are the criteria for each of the levels: 
-- High: Does not meet the acceptace criteria and does not work as expected 
-- Medium: Does meet the acceptace criteria and does not work as expected
-- Low: Does meet both acceptace criteria and works as expected but can see ways to enhance the features
+Testers will identify high, medium, low. Here are the criteria for each of the levels:
+
+-   High: Does not meet the acceptace criteria and does not work as expected
+-   Medium: Does meet the acceptace criteria and does not work as expected
+-   Low: Does meet both acceptace criteria and works as expected but can see ways to enhance the features
 
 **How to provide feedback**
 
-If testers find issues to address: 
-- Open a new BUG ticket if it is a high 
-- Open a new FEATURE ticket even if enhancement if it is a low
-- Link to testing plan that is in the wiki
+If testers find issues to address:
+
+-   Open a new BUG ticket if it is a high
+-   Open a new FEATURE ticket even if enhancement if it is a low
+-   Link to testing plan that is in the wiki
 
 If a Bug ticket is open be prepared to be available to on Thursday and Friday to respond to developers until result is what is desired. If a high priority bug ticket is created, it can’t be shipped until tester closes ticket
 
-If all looks good and all user acceptance criteria has been met tester can close all open tickets in the testing column and signal to the Technical lead to prepare new release. 
+If all looks good and all user acceptance criteria has been met tester can close all open tickets in the testing column and signal to the Technical lead to prepare new release.
 
-Final step: Technical lead will create a release tag in GitHub and will share release notes in slack channel 
+Final step: Technical lead will create a release tag in GitHub and will share release notes in slack channel
 
 ## Branch strategy and Pull Request Process
 
