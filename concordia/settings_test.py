@@ -1,4 +1,5 @@
-from .settings_template import *
+from .settings_template import *  # NOQA ignore=F405
+from .settings_template import DATABASES, LOGGING
 
 LOGGING["handlers"]["stream"]["level"] = "INFO"
 LOGGING["handlers"]["file"]["level"] = "INFO"

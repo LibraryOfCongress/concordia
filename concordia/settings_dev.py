@@ -1,6 +1,7 @@
 import os
 
-from .settings_template import *
+from .settings_template import *  # NOQA ignore=F405
+from .settings_template import DATABASES, INSTALLED_APPS, LOGGING, MIDDLEWARE
 
 LOGGING["handlers"]["stream"]["level"] = "DEBUG"
 LOGGING["handlers"]["file"]["level"] = "DEBUG"
