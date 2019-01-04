@@ -28,8 +28,8 @@ def get_secret(secret_name):
         elif e.response["Error"]["Code"] == "InvalidParameterException":
             raise Exception("The request had invalid params:", e)
     else:
-        # Decrypted secret using the associated KMS CMK
-        # Depending on whether the secret was a string or binary, one of these fields will be populated
+        # Decrypted secret using the associated KMS CMK Depending on whether the
+        # secret was a string or binary, one of these fields will be populated
         if "SecretString" in get_secret_value_response:
             secret = get_secret_value_response["SecretString"]
         else:
