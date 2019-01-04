@@ -27,7 +27,6 @@ CSRF_COOKIE_SECURE = False
 
 AUTH_PASSWORD_VALIDATORS = []
 EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
-# EMAIL_FILE_PATH = os.path.join(SITE_ROOT_DIR, 'emails')
 EMAIL_HOST = "localhost"
 EMAIL_PORT = 25
 LANGUAGE_CODE = "en-us"
