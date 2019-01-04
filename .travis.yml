@@ -1,27 +1,26 @@
 language: python
 env:
-  - DJANGO_SETTINGS_MODULE=concordia.settings_test
-language: python
+    - DJANGO_SETTINGS_MODULE=concordia.settings_test
 dist: xenial
 sudo: required
 python:
-    - "3.6"
-    - "3.7"
-    - "3.7-dev"
-    - "3.8-dev"
+    - '3.6'
+    - '3.7'
+    - '3.7-dev'
+    - '3.8-dev'
 services:
-  - postgresql
+    - postgresql
 before_script:
-  - psql -c 'create database concordia;' -U postgres
+    - psql -c 'create database concordia;' -U postgres
 install:
-  - pip install coveralls pipenv
-  - pipenv run pip install pip==18.0
-  - pipenv install --dev --deploy
+    - pip install coveralls pipenv
+    - pipenv run pip install pip==18.0
+    - pipenv install --dev --deploy
 script:
-  - mkdir logs
-  - touch ./logs/concordia-celery.log
-  - ./manage.py collectstatic --no-input
-  - ./manage.py test concordia importer exporter
-  - coverage run ./manage.py test concordia importer exporter
+    - mkdir logs
+    - touch ./logs/concordia-celery.log
+    - ./manage.py collectstatic --no-input
+    - ./manage.py test concordia importer exporter
+    - coverage run ./manage.py test concordia importer exporter
 after_success:
-    coveralls
+    - coveralls
