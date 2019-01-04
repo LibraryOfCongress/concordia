@@ -13,8 +13,11 @@ services:
 before_script:
     - psql -c 'create database concordia;' -U postgres
 install:
-    - pip install coveralls pipenv
-    - pipenv run pip install pip==18.0
+    - pip install --upgrade pip
+    # We install pre-commit outside of the virtualenv to avoid issues with pipenv / pip
+    # in the Travis CI Python 3.6 environment. Once we upgrade to Python 3.7 this will
+    # no longer be necessary:
+    - pip install coveralls "pipenv>=2018.11.26" pre-commit
     - pipenv install --dev --deploy
 script:
     - mkdir logs
@@ -22,5 +25,6 @@ script:
     - ./manage.py collectstatic --no-input
     - ./manage.py test concordia importer exporter
     - coverage run ./manage.py test concordia importer exporter
+    - git diff --name-only $TRAVIS_COMMIT_RANGE | xargs pre-commit run --files
 after_success:
     - coveralls
