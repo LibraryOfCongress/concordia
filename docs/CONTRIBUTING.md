@@ -26,7 +26,7 @@ Look through the GitHub issues for features. Anything tagged with "feature" is o
 
 ### Write Documentation
 
-Concordia could always use more documentation. If you have worked in the tool and found any of our documentation in accurate or requires more specificity, submit an issue or a pull request.
+Concordia could always use more documentation. If you have worked with the tool and found any of our documentation to be inaccurate or vague, please submit an issue or a pull request.
 
 ### How to submit Feedback
 
