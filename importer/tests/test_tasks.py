@@ -43,7 +43,7 @@ class CollectionURLNormalizationTests(TestCase):
     def test_conflicting_querystring_parameters(self):
         self.assertEqual(
             normalize_collection_url(
-                "https://www.loc.gov/collections/branch-rickey-papers/?foo=bar&fo=xml&sp=99&at=item"
+                "https://www.loc.gov/collections/branch-rickey-papers/?foo=bar&fo=xml&sp=99&at=item"  # NOQA
             ),
             "https://www.loc.gov/collections/branch-rickey-papers/?fo=json&foo=bar",
         )

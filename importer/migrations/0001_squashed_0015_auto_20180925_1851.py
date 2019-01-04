@@ -55,7 +55,7 @@ class Migration(migrations.Migration):
                     models.DateTimeField(
                         blank=True,
                         null=True,
-                        verbose_name="Last time when a worker started processing this job",
+                        verbose_name="Last time when a worker started processing this job",  # NOQA
                     ),
                 ),
                 (
@@ -71,7 +71,7 @@ class Migration(migrations.Migration):
                     models.DateTimeField(
                         blank=True,
                         null=True,
-                        verbose_name="Time when the job failed and will not be restarted",
+                        verbose_name="Time when the job failed and will not be restarted",  # NOQA
                     ),
                 ),
                 (
@@ -87,7 +87,7 @@ class Migration(migrations.Migration):
                     models.UUIDField(
                         blank=True,
                         null=True,
-                        verbose_name="UUID of the last Celery task to process this record",
+                        verbose_name="UUID of the last Celery task to process this record",  # NOQA
                     ),
                 ),
                 ("url", models.URLField()),

@@ -72,7 +72,7 @@ class Migration(migrations.Migration):
             name="supersedes",
             field=models.ForeignKey(
                 blank=True,
-                help_text="A previous transcription record which is replaced by this one",
+                help_text="A previous transcription record which is replaced by this one",  # NOQA
                 null=True,
                 on_delete=django.db.models.deletion.CASCADE,
                 to="concordia.Transcription",
