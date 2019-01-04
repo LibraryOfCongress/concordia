@@ -1,8 +1,7 @@
 from django.contrib.auth.models import User
-from django_elasticsearch_dsl import fields, DocType, Index
+from django_elasticsearch_dsl import DocType, Index, fields
 
 from .models import Transcription, UserAssetTagCollection
-
 
 user = Index("users")
 user.settings(number_of_shards=1, number_of_replicas=0)

@@ -9,7 +9,6 @@ from exporter import views as exporter_views
 
 from . import views
 
-
 tx_urlpatterns = (
     [
         path("", views.CampaignListView.as_view(), name="campaign-list"),

@@ -1,9 +1,10 @@
 from django.contrib import admin, messages
 from django.contrib.humanize.templatetags.humanize import naturaltime
 
+from concordia.admin.filters import NullableTimestampFilter
+
 from .models import ImportItem, ImportItemAsset, ImportJob
 from .tasks import download_asset_task
-from concordia.admin.filters import NullableTimestampFilter
 
 
 def retry_download_task(modeladmin, request, queryset):
