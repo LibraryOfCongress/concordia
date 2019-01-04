@@ -1,9 +1,8 @@
 # TODO: use correct copyright header
 import os
 
-from django.contrib import messages
-
 import raven
+from django.contrib import messages
 
 # Build paths inside the project like this: os.path.join(SITE_ROOT_DIR, ...)
 CONCORDIA_APP_DIR = os.path.abspath(os.path.dirname(__file__))
