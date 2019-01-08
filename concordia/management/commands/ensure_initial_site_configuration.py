@@ -18,6 +18,7 @@ import os
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.core.management.base import BaseCommand
+from django.db.models import Q
 from django.db.transaction import atomic
 
 
@@ -72,9 +73,10 @@ class Command(BaseCommand):
             )
 
         if site_domain != "example.com":
-            updated = Site.objects.filter(domain="example.com").update(
-                name=site_name, domain=site_domain
-            )
+
+            updated = Site.objects.filter(
+                Q(domain="example.com") | Q(domain="crowd.loc.gov")
+            ).update(name=site_name, domain=site_domain)
             if updated:
                 self.stdout.write(
                     f"Configured site with name {site_name} and domain {site_domain}"
