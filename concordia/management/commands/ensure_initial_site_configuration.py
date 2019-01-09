@@ -72,9 +72,7 @@ class Command(BaseCommand):
             )
 
         if site_domain != "example.com":
-            updated = Site.objects.filter(domain="example.com").update(
-                name=site_name, domain=site_domain
-            )
+            updated = Site.objects.filter.update(name=site_name, domain=site_domain)
             if updated:
                 self.stdout.write(
                     f"Configured site with name {site_name} and domain {site_domain}"
