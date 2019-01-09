@@ -6,31 +6,39 @@ Our basic principles are those familiar to anybody who has contributed to a prom
 
 -   We produce open source software, created and maintained in repositories where it may be inspected by the public who places their trust in it and copied for use by other agencies or institutions.
 -   We adhere to the basic practices of agile software development, using the Scrum development framework.
--   We practice human-centered design. Everything that we produce is highly accessible, per [WCAG 2.1](https://www.w3.org/TR/WCAG21/).
+-   We practice human-centered design. Everything that we produce is highly accessible, per [WCAG 2.0](https://www.w3.org/TR/WCAG20/).
 -   Finally, we believe in having the relevant decision-makers at the table during all meetings, to maximize efficiency and maintain momentum.
 
 ## Product Team
 
-There is a cross functional product team for Concordia comprised of Library Services, policy, security, and technical specialists who are working together. This product team will be comprised of the following roles
+This is a cross functional product team for Concordia made up of members across the Library who are working together. This product team will be comprised of the following roles:
 
--   Product owner
--   Product manager
--   Technical lead
+-   Product owner 
+-   Product manager (Scrum master)
+-   Technical lead 
 -   User Experience designer
 -   Developers (Front-end, Back-end, Full-stack)
+-   QA Tester
+-   Community Managers (content writers, administrators) 
 
-This team will participate in all stand ups, backlog grooming and retrospectives in service of prioritizing, defining and delivering value to the department and the public it serves.
+This team participates in stand ups, product alignment, backlog grooming and retrospectives in service of prioritizing, defining and delivering value to the department and the public it serves.
 
 ## Sprint Organization and Meetings
 
 Each sprint is two weeks long. We have a sprint kick off the first day of the new sprint. There are three basic meeting rhythms:
 
--   Daily standups at 10:30 - 10:45 am
+-   **Daily standups at 10:30 - 10:45 am**
     -   Structure: Each team member talks says what they completed yesterday, what they will work on today, and any blockers
--   Weekly backlog grooming on Thursday at 3:00 – 4:30 pm
-    -   Structure: tickets in the backlog are sorted by priority, the team adds acceptance criteria, story points and assigns the tasks to a team member
--   Sprint demo and retrospectives are held every two weeks
-    -   At the end of each sprint, the PM demos work completed in the sprint for the larger library stakeholders followed by a retrospective of just the product team. These are held back-to-back, on the same day
+-   **Alignment every Tuesday at 3:00 – 4:30 pm**
+    -   Structure: Community managers support product owner in identifying user facing priorities in the backlog
+-   **Backlog grooming every other Thursday at 3:00 – 4:30 pm**
+    -   Structure: tickets in the backlog are sorted by priority, the team adds acceptance criteria, estimates size, and assigns the tasks to a team member.
+-   **Sprint planning every other Thursday at 3:00 – 4:30 pm**
+    -   Structure: tickets are pulled into the next sprint, the team reviews or confirms acceptance criteria, estimates size, and assigns the tasks to a team member
+-   **Sprint kick off every other Monday at 10:30 – 11:00 pm**
+    -   Structure: Begins the next sprint. Any last minute questions about acceptance criteria will be addressed here. No additional tickets can be pulled into a sprint at this point. Questions about future tickets will take place in alignment and backlog grooming. 
+-   **Demo and retrospectives are held every other Friday at the end of the sprint 10:30 am - 12:00 pm**
+    -   At the end of each sprint, Developers or content writers demo completed work in the sprint for the larger library stakeholders. During demo, we will confirm if the user acceptance criteria is met and moved to be tested. Following the demo, the team will go through a retrospective. These are held back-to-back, on the same day
 
 All meetings are held in person, on Slack or WebEx, a video teleconference application.
 
@@ -63,6 +71,7 @@ We practice testing at three levels: unit tests, integration tests, and feature 
 #### Testing new code
 
 A the end of each sprint a release will be created of the work that was completed. A bulleted list of new features and bug fixes will be generated from the release. A testing plan will be drafted by the project manager to include personas and guidance on how to test new features. The testing plan will be available in GitHub wiki
+
 **What will be included in testing plan**
 
 -   Persona
@@ -79,15 +88,15 @@ Testers will identify high, medium, low. Here are the criteria for each of the l
 
 **How to provide feedback**
 
-If testers find issues to address:
+If feature testers find issues to address:
 
--   Open a new BUG ticket if it is a high
--   Open a new FEATURE ticket even if enhancement if it is a low
--   Link to testing plan that is in the wiki
+-   For a BUG, comment and @ the developer in the feature ticket. The ticket number will added to the testing plan.
+-   If it is an enhancement, open a new FEATURE ticket. This ticket will be added to the backlog and up for priortization in alignment meeting and backlog grooming
+-   Link to testing plan that is in the wiki, to the issue
 
-If a Bug ticket is open be prepared to be available to on Thursday and Friday to respond to developers until result is what is desired. If a high priority bug ticket is created, it can’t be shipped until tester closes ticket
+If a BUG needs to be addressed, tester should expect to be available to on Thursday and Friday to respond to developers questions until acceptance criteria is met. 
 
-If all looks good and all user acceptance criteria has been met tester can close all open tickets in the testing column and signal to the Technical lead to prepare new release.
+If all looks good and all user acceptance criteria has been met the ticket will be closed tickets in the testing column and signal to the Technical lead to prepare new release.
 
 Final step: Technical lead will create a release tag in GitHub and will share release notes in slack channel
 
