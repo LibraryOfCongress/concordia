@@ -25,19 +25,19 @@ This team participates in stand ups, product alignment, backlog grooming and ret
 
 ## Sprint Organization and Meetings
 
-Each sprint is two weeks long. We have a sprint kick off the first day of the new sprint. There are three basic meeting rhythms:
+Each sprint is three weeks long. We have a sprint kick off the first day of the new sprint. There are five basic meeting rhythms:
 
 -   **Daily standups at 10:30 - 10:45 am**
     -   Structure: Each team member talks says what they completed yesterday, what they will work on today, and any blockers
 -   **Alignment every Tuesday at 3:00 – 4:30 pm**
     -   Structure: Community managers support product owner in identifying user facing priorities in the backlog
--   **Backlog grooming every other Thursday at 3:00 – 4:30 pm**
+-   **Backlog grooming Thursday at 3:00 – 4:30 pm**
     -   Structure: tickets in the backlog are sorted by priority, the team adds acceptance criteria, estimates size, and assigns the tasks to a team member.
--   **Sprint planning every other Thursday at 3:00 – 4:30 pm**
+-   **Sprint planning every third Wednesday at 3:00 – 4:30 pm**
     -   Structure: tickets are pulled into the next sprint, the team reviews or confirms acceptance criteria, estimates size, and assigns the tasks to a team member
--   **Sprint kick off every other Monday at 10:30 – 11:00 pm**
+-   **Sprint kick off first Monday at 10:30 – 11:00 pm**
     -   Structure: Begins the next sprint. Any last minute questions about acceptance criteria will be addressed here. No additional tickets can be pulled into a sprint at this point. Questions about future tickets will take place in alignment and backlog grooming. 
--   **Demo and retrospectives are held every other Friday at the end of the sprint 10:30 am - 12:00 pm**
+-   **Demo and retrospectives are held on third Thursday at the end of the sprint 10:30 am - 12:00 pm**
     -   At the end of each sprint, Developers or content writers demo completed work in the sprint for the larger library stakeholders. During demo, we will confirm if the user acceptance criteria is met and moved to be tested. Following the demo, the team will go through a retrospective. These are held back-to-back, on the same day
 
 All meetings are held in person, on Slack or WebEx, a video teleconference application.
