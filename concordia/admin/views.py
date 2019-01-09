@@ -4,7 +4,6 @@ from bittersweet.models import validated_get_or_create
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import permission_required
-
 from django.core.exceptions import ValidationError
 from django.shortcuts import render
 from django.template.defaultfilters import slugify

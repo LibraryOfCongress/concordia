@@ -25,7 +25,7 @@ Resources:
             GroupDescription: Access to the ECS hosts and the tasks/containers that run on them
             SecurityGroupIngress:
                 - SourceSecurityGroupId: !Ref LoadBalancerSecurityGroup 
-                  IpProtocol: -1
+                  IpProtocol: '-1'
                 - SourceSecurityGroupId: !Ref BastionHostSecurityGroup
                   IpProtocol: tcp
                   FromPort: 22
@@ -56,7 +56,7 @@ Resources:
                 - Key: Name
                   Value: !Sub ${EnvironmentName}-LoadBalancers
                 - Key: AllowCloudFlareIngress
-                  Value: true
+                  Value: 'true'
 
     DatabaseSecurityGroup:
         Type: AWS::EC2::SecurityGroup

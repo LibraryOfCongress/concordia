@@ -1,9 +1,8 @@
 # TODO: use correct copyright header
 import os
 
-from django.contrib import messages
-
 import raven
+from django.contrib import messages
 
 # Build paths inside the project like this: os.path.join(SITE_ROOT_DIR, ...)
 CONCORDIA_APP_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -27,7 +26,6 @@ CSRF_COOKIE_SECURE = False
 
 AUTH_PASSWORD_VALIDATORS = []
 EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
-# EMAIL_FILE_PATH = os.path.join(SITE_ROOT_DIR, 'emails')
 EMAIL_HOST = "localhost"
 EMAIL_PORT = 25
 LANGUAGE_CODE = "en-us"

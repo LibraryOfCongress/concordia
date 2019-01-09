@@ -57,28 +57,28 @@ Next, we need to setup a Python virtual environment and install our Python depen
 1. Install [pipenv](https://docs.pipenv.org/) either using a tool like
    [Homebrew](https://brew.sh) (`brew install pipenv`) or using `pip`:
 
-    $ pip3 install pipenv
+    \$ pip3 install pipenv
 
 2. Let Pipenv create the virtual environment and install all of the packages,
    including our developer tools:
 
-    $ pipenv install --dev
+    \$ pipenv install --dev
 
 3. Configure the Django settings module in the `.env` file which Pipenv will use
    to automatically populate the environment for every command it runs:
 
-    $ echo DJANGO_SETTINGS_MODULE="concordia.settings_dev" >> .env
+    \$ echo DJANGO_SETTINGS_MODULE="concordia.settings_dev" >> .env
 
     You can use this to set any other values you want to customize, such as
     `POSTGRESQL_PW` or `POSTGRESQL_HOST`.
 
 4. Apply any database migrations:
 
-    $ pipenv run ./manage.py migrate
+    \$ pipenv run ./manage.py migrate
 
 5. Run the development server:
 
-    $ pipenv run ./manage.py runserver
+    \$ pipenv run ./manage.py runserver
 
 #### Import Data
 
@@ -111,7 +111,7 @@ django-extensions `graph_models` command:
 2. If you need a list of public-facing URLs for testing, there's a management
    command which may be helpful:
 
-    $ pipenv run ./manage.py print_frontend_test_urls
+    \$ pipenv run ./manage.py print_frontend_test_urls
 
 ### Accessibility testing using aXe
 

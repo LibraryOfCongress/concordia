@@ -77,15 +77,19 @@ def do_bagit_export(assets, export_base_dir, export_filename_base):
         asset_text_output_path = os.path.join(
             asset_dest_path, "%s.txt" % asset_filename
         )
-        # Write the asset level transcription file
-        with open(asset_text_output_path, "w") as f:
-            f.write(asset.latest_transcription or "")
 
-        # Append this asset transcription to the item transcription
-        item_text_output_path = os.path.join(asset_dest_path, "%s.txt" % item_filename)
-        with open(item_text_output_path, "a") as f:
-            f.write(asset.latest_transcription or "")
-            f.write("\n\n")
+        if asset.latest_transcription:
+            # Write the asset level transcription file
+            with open(asset_text_output_path, "w") as f:
+                f.write(asset.latest_transcription)
+
+            # Append this asset transcription to the item transcription
+            item_text_output_path = os.path.join(
+                asset_dest_path, "%s.txt" % item_filename
+            )
+            with open(item_text_output_path, "a") as f:
+                f.write(asset.latest_transcription or "")
+                f.write("\n\n")
 
     # Add attributions to the end of all text files found under asset_dest_path
     if hasattr(settings, "ATTRIBUTION_TEXT"):

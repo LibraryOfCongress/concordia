@@ -47,81 +47,81 @@ Resources:
         Type: AWS::EC2::NetworkAclEntry
         Properties:
             CidrBlock: 0.0.0.0/0
-            Egress: 'true'
-            Protocol: "-1"
+            Egress: true
+            Protocol: 1
             RuleAction: allow
-            RuleNumber: '100'
+            RuleNumber: 100
             NetworkAclId: !Ref NetworkAcl
     acl5:
         Type: AWS::EC2::NetworkAclEntry
         Properties:
             CidrBlock: 140.147.236.152/32
-            Protocol: "-1"
+            Protocol: -1
             RuleAction: deny
-            RuleNumber: '10'
+            RuleNumber: 10
             NetworkAclId: !Ref NetworkAcl
     acl6:
         Type: AWS::EC2::NetworkAclEntry
         Properties:
             CidrBlock: 140.147.236.214/32
-            Protocol: "-1"
+            Protocol: -1
             RuleAction: deny
-            RuleNumber: '11'
+            RuleNumber: 11
             NetworkAclId: !Ref NetworkAcl
     acl7:
         Type: AWS::EC2::NetworkAclEntry
         Properties:
             CidrBlock: 140.147.0.0/16
-            Protocol: '6'
+            Protocol: 6
             RuleAction: allow
-            RuleNumber: '100'
+            RuleNumber: 100
             PortRange:
-                From: '22'
-                To: '22'
+                From: 22
+                To: 22
             NetworkAclId:
                 Ref: NetworkAcl
     acl8:
         Type: AWS::EC2::NetworkAclEntry
         Properties:
             CidrBlock: 0.0.0.0/0
-            Protocol: '6'
+            Protocol: 6
             RuleAction: allow
-            RuleNumber: '110'
+            RuleNumber: 110
             PortRange:
-                From: '1024'
-                To: '65535'
+                From: 1024
+                To: 65535
             NetworkAclId:
                 Ref: NetworkAcl
     acl9:
         Type: AWS::EC2::NetworkAclEntry
         Properties:
             CidrBlock: 0.0.0.0/0
-            Protocol: '6'
+            Protocol: 6
             RuleAction: allow
-            RuleNumber: '200'
+            RuleNumber: 200
             PortRange:
-                From: '80'
-                To: '80'
+                From: 80
+                To: 80
             NetworkAclId: !Ref NetworkAcl
     acl10:
         Type: AWS::EC2::NetworkAclEntry
         Properties:
             CidrBlock: 0.0.0.0/0
-            Protocol: '6'
+            Protocol: 6
             RuleAction: allow
-            RuleNumber: '210'
+            RuleNumber: 210
             PortRange:
-                From: '443'
-                To: '443'
+                From: 443
+                To: 443
             NetworkAclId: !Ref NetworkAcl
 
     acl11:
         Type: AWS::EC2::NetworkAclEntry
         Properties:
             CidrBlock: 0.0.0.0/0
-            Protocol: "-1"
+            Protocol: -1
             RuleAction: allow
-            RuleNumber: '300'
+            RuleNumber: 300
             NetworkAclId: !Ref NetworkAcl
 
     subnetacl5:
