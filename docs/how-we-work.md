@@ -94,7 +94,7 @@ If feature testers find issues to address:
 - HIGH: comment and @ the developer in the feature ticket
 - LOW: open a new FEATURE ticket. This ticket will be added to the backlog and up for priortization in alignment meeting and backlog grooming. Link to related ticket by adding the issue #.
 
-If a HIGH issue needs to be addressed, tester should expect to be available to respond to developers questions until acceptance criteria is met.
+If a HIGH issue needs to be addressed, tester should expect to be available to respond to developers questions and retest until acceptance criteria is met.
 
 ### Branch strategy and Pull Request Process
 
