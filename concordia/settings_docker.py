@@ -12,7 +12,8 @@ LOGGING["loggers"]["django"]["level"] = "INFO"
 LOGGING["loggers"]["celery"]["level"] = "INFO"
 
 
-DJANGO_SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "changeme")
+from django.core.management import get_random_secret_key
+DJANGO_SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", get_random_secret_key())
 
 EMAIL_BACKEND = "django.core.mail.backends.dummy.EmailBackend"
 
