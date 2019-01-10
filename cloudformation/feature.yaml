@@ -1,0 +1,85 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+
+    This template deploys a VPC, with a pair of public and private subnets spread 
+    across two Availabilty Zones. It deploys an Internet Gateway, with a default 
+    route on the public subnets. It deploys a pair of NAT Gateways (one in each AZ), 
+    and default routes for them in the private subnets.
+
+    It then deploys a highly available ECS cluster using an AutoScaling Group, with 
+    ECS hosts distributed across multiple Availability Zones. 
+
+    Finally, it deploys a pair of example ECS services from containers published in 
+    Amazon EC2 Container Registry (Amazon ECR).
+
+
+Parameters:
+
+    ConcordiaBranch:
+        Description: which branch name / docker tagged images to deploy
+        Type: String
+        Default: release
+
+    CanonicalHostName:
+        Description: the canonical host name for this environment
+        Type: String
+        AllowedValues:
+            - "crowd-dev.loc.gov"
+            - "crowd-test.loc.gov"
+            - "crowd-stage.loc.gov"
+            - "crowd-prod.loc.gov"
+            - "crowd.loc.gov"
+            
+Resources:
+
+    RDS:
+        Type: AWS::CloudFormation::Stack
+        Properties:
+            TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/rds.yaml"
+            Parameters:
+                DbPassword: !Ref MyDbPassword
+                DatabaseSecurityGroup: !GetAtt SecurityGroups.Outputs.DatabaseSecurityGroup
+                PrivateSubnet1: !GetAtt VPC.Outputs.PrivateSubnet1
+                PrivateSubnet2: !GetAtt VPC.Outputs.PrivateSubnet2
+
+    ElastiCache:
+        Type: AWS::CloudFormation::Stack
+        Properties:
+            TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/elasticache.yaml"
+            Parameters:
+                EnvironmentName: !Ref AWS::StackName
+                SecurityGroup: !GetAtt SecurityGroups.Outputs.CacheServiceSecurityGroup
+                PrivateSubnets: !GetAtt VPC.Outputs.PrivateSubnets
+
+    FargateCluster:
+        Type: AWS::CloudFormation::Stack
+        Properties:
+            TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/fargate-cluster.yaml"
+            Parameters:
+                EnvironmentName: !Ref AWS::StackName
+                EnvName: "test"
+                FullEnvironmentName: "test"
+                S3BucketName: "crowd-test-content"
+                ExportS3BucketName: "crowd-test-export"
+                ConcordiaVersion: !Ref ConcordiaBranch
+                CanonicalHostName: !Ref CanonicalHostName
+
+                VpcId: !GetAtt VPC.Outputs.VPC
+                SecurityGroup: !GetAtt SecurityGroups.Outputs.ECSHostSecurityGroup
+                LoadBalancerSecurityGroup: !GetAtt SecurityGroups.Outputs.LoadBalancerSecurityGroup
+                PrivateSubnets: !GetAtt VPC.Outputs.PrivateSubnets
+                PublicSubnets: !GetAtt VPC.Outputs.PublicSubnets
+
+                RedisAddress: !GetAtt ElastiCache.Outputs.RedisAddress
+                RedisPort: !GetAtt ElastiCache.Outputs.RedisPort
+                MemcachedAddress: !GetAtt ElastiCache.Outputs.MemcachedAddress
+                MemcachedPort: !GetAtt ElastiCache.Outputs.MemcachedPort
+                DatabaseEndpoint: !GetAtt RDS.Outputs.DatabaseHostName
+
+
+Outputs:
+
+    WebsiteServiceUrl: 
+        Description: The URL endpoint for the concordia website service
+        Value: !Join ["", [ !GetAtt FargateCluster.Outputs.LoadBalancerUrl, "/" ]]
