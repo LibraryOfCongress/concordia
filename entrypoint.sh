@@ -14,8 +14,10 @@ echo Running migrations
 echo "Ensuring our base configuration is present in the database"
 ./manage.py ensure_initial_site_configuration
 
-echo "Testing Sentry configuration"
-./manage.py raven test
+if [ -v SENTRY_BACKEND_DSN ]; then
+    echo "Testing Sentry configuration"
+    ./manage.py raven test
+fi
 
 echo Running collectstatic
 ./manage.py collectstatic --clear --noinput -v0

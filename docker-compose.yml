@@ -30,8 +30,6 @@ services:
             WAIT_HOSTS: db:5432
             POSTGRESQL_HOST: db
             POSTGRESQL_PW: ${POSTGRESQL_PW}
-            SENTRY_BACKEND_DSN: https://34db819263f34c28809da045f841f045@crowd-sentry.loc.gov/2
-            SENTRY_FRONTEND_DSN: https://48ec47f15e484502a29879e40ed2e0c3@crowd-sentry.loc.gov/3
             CONCORDIA_ENVIRONMENT: development
             S3_BUCKET_NAME: crowd-dev-content
             DJANGO_SETTINGS_MODULE: concordia.settings_docker
