@@ -1,5 +1,7 @@
 import os
 
+from django.core.management import get_random_secret_key
+
 from .settings_template import *  # NOQA ignore=F405
 from .settings_template import INSTALLED_APPS, LOGGING
 
@@ -12,7 +14,6 @@ LOGGING["loggers"]["django"]["level"] = "INFO"
 LOGGING["loggers"]["celery"]["level"] = "INFO"
 
 
-from django.core.management import get_random_secret_key
 DJANGO_SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", get_random_secret_key())
 
 EMAIL_BACKEND = "django.core.mail.backends.dummy.EmailBackend"
@@ -43,8 +44,8 @@ ELASTICSEARCH_DSL = {
 # the user signs up and then completes activation via email instructions.
 
 # This is *not* a secret for the HMAC activation workflow — see:
- # https://django-registration.readthedocs.io/en/2.0.4/hmac.html#security-considerations
-REGISTRATION_SALT = "django_registration" 
+# https://django-registration.readthedocs.io/en/2.0.4/hmac.html#security-considerations
+REGISTRATION_SALT = "django_registration"
 
 RATELIMIT_BLOCK = os.getenv("RATELIMIT_BLOCK", "").lower() not in ("false", "0")
 
