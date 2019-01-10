@@ -19,4 +19,6 @@ ALLOWED_HOSTS = ["127.0.0.1", "0.0.0.0"]
 
 EMAIL_BACKEND = "django.core.mail.backends.dummy.EmailBackend"
 
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+
 RATELIMIT_ENABLE = False
