@@ -127,12 +127,22 @@ TEMPLATES = [
 MEMCACHED_ADDRESS = os.getenv("MEMCACHED_ADDRESS", "")
 MEMCACHED_PORT = os.getenv("MEMCACHED_PORT", "")
 
-CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.memcached.MemcachedCache",
-        "LOCATION": "{}:{}".format(MEMCACHED_ADDRESS, MEMCACHED_PORT),
+if MEMCACHED_ADDRESS and MEMCACHED_PORT:
+
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.memcached.MemcachedCache",
+            "LOCATION": "{}:{}".format(MEMCACHED_ADDRESS, MEMCACHED_PORT),
+        }
     }
-}
+
+    SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
+
+else:
+
+    CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
+
+    SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 
 HAYSTACK_CONNECTIONS = {
     "default": {

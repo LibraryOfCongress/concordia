@@ -34,8 +34,6 @@ ELASTICSEARCH_DSL = {"default": {"hosts": "localhost:9200"}}
 
 INSTALLED_APPS += ["django_elasticsearch_dsl"]
 
-CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
-
 REGISTRATION_SALT = "django_registration"  # doesn't need to be secret
 
 INSTALLED_APPS += ["debug_toolbar"]
@@ -47,5 +45,3 @@ SHELL_PLUS_PRE_IMPORTS = [
     ("concordia.utils", "get_anonymous_user"),
     ("concordia.models", "TranscriptionStatus"),
 ]
-
-SESSION_ENGINE = "django.contrib.sessions.backends.cache"
