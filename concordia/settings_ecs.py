@@ -1,6 +1,8 @@
 import json
 import os
 
+from django.core.management import get_random_secret_key
+
 from .secrets import get_secret
 from .settings_template import *  # NOQA ignore=F405
 from .settings_template import CONCORDIA_ENVIRONMENT, DATABASES, INSTALLED_APPS, LOGGING
@@ -32,7 +34,7 @@ if os.getenv("AWS"):
     EMAIL_HOST_PASSWORD = smtp_secret["Password"]
 
 else:
-    DJANGO_SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "changeme")
+    DJANGO_SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", get_random_secret_key())
     EMAIL_HOST = os.environ.get("EMAIL_HOST", "localhost")
     EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
     EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
