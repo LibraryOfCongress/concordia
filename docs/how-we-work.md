@@ -42,21 +42,27 @@ Each sprint is three weeks long. We have a sprint kick off the first day of the 
 
 All meetings are held in person, on Slack or WebEx, a video teleconference application.
 
+
 ## Definition of Done
 
 So that we can work more efficiently and be confident in the quality of the work we are delivering, we have a clear definition of what it means for a user story to be done, or production-ready.
 
--   **For delivering a user story to the product team:**
-    -   Story needs to be written in a way that is clear from both a development and a testing standpoint. Stories will need to be reviewed by the product team during creation.
-    -   Acceptance criteria should include the relevant tests needed (unit, security, performance, acceptance, etc)
-    -   Acceptance criteria should include the objective of the story, for use in approval by PO or tech team or both - The delivered functionality should match the acceptance criteria of the user story
--   **for product team to accept the user story and ship it**
-    -   The functionality meets the acceptance criteria
-    -   The product team has verified the functionality in staging
-    -   All tests must pass in the the stage environment (unit, integration, feature)
-    -   The delivered functionality should be 508 compliant
-    -   Security requirements must be met - All documentation must be up to date (diagrams, training documentation, API documentation, help text, etc)
-    -   The delivered functionality should be compatible with the latest versions of IE, Firefox, Chrome and Safari
+**For delivering a user story to the product team:**
+
+-   Story needs to be written in a way that is clear from both a development and a testing standpoint. Stories will need to be reviewed by the product team during creation.
+-   Acceptance criteria should include the relevant tests needed (unit, security, performance, acceptance, etc)
+-   Acceptance criteria should include the objective of the story, for use in approval by PO or tech team or both 
+-   The delivered functionality should match the acceptance criteria of the user story
+
+**for product team to accept the user story and ship it:**
+
+-   The functionality meets the acceptance criteria
+-   The product team has verified the functionality in staging
+-   All tests must pass in the the stage environment (unit, integration, feature)
+-   The delivered functionality should be 508 compliant
+-   Security requirements must be met 
+-   All documentation must be up to date (diagrams, training documentation, API documentation, help text, etc)
+-   The delivered functionality should be compatible with the latest versions of Firefox, Chrome and Safari
 
 ## Processes
 
@@ -70,39 +76,31 @@ We practice testing at three levels: unit tests, integration tests, and feature 
 
 #### Testing new code
 
-A the end of each sprint a release will be created of the work that was completed. A bulleted list of new features and bug fixes will be generated from the release. A testing plan will be drafted by the project manager to include personas and guidance on how to test new features. The testing plan will be available in GitHub wiki
+Each ticket will include acceptance tests, especially for new user facing functionality. When the developer signals that the ticket is ready for test, they will move it to the `Needs test` column and pings the tester in the comment of the ticket. 
 
-**What will be included in testing plan**
+Testers will identify issues - HIGH, LOW, or NONE. Here are the criteria for each of the levels:
 
--   Persona
--   acceptance criteria
--   Link to ticket associated with/background on what is
+-   HIGH: Does not meet the acceptace criteria and can not complete the acceptance test.
+-   LOW: Does meet both acceptace criteria and and acceptance tests, but can see opportunities for enhancements.
+-   NONE: Meets both accpetance criteria and acceptance tests
 
-Testing will take place in crowd-stage.loc.gov and will happen alongside the current sprint. Monday, Tuesday and Wednesday are testing days, bug fix will happen on Thurs/Fr, and new code will be deployed on 2nd Monday of sprint
+If all user acceptance criteria has been met, the ticket will be closed and moved to done. 
 
-Testers will identify high, medium, low. Here are the criteria for each of the levels:
-
--   High: Does not meet the acceptace criteria and does not work as expected
--   Medium: Does meet the acceptace criteria and does not work as expected
--   Low: Does meet both acceptace criteria and works as expected but can see ways to enhance the features
+Final step: Technical lead will create a release with all tickets that are done. 
 
 **How to provide feedback**
 
 If feature testers find issues to address:
 
--   For a BUG, comment and @ the developer in the feature ticket. The ticket number will added to the testing plan.
--   If it is an enhancement, open a new FEATURE ticket. This ticket will be added to the backlog and up for priortization in alignment meeting and backlog grooming
--   Link to testing plan that is in the wiki, to the issue
+-   HIGH: comment and @ the developer in the feature ticket 
+-   LOW: open a new FEATURE ticket. This ticket will be added to the backlog and up for priortization in alignment meeting and backlog grooming. Link to related ticket by adding the issue #. 
 
-If a BUG needs to be addressed, tester should expect to be available to on Thursday and Friday to respond to developers questions until acceptance criteria is met. 
+If a HIGH issue needs to be addressed, tester should expect to be available to respond to developers questions until acceptance criteria is met. 
 
-If all looks good and all user acceptance criteria has been met the ticket will be closed tickets in the testing column and signal to the Technical lead to prepare new release.
 
-Final step: Technical lead will create a release tag in GitHub and will share release notes in slack channel
+### Branch strategy and Pull Request Process
 
-## Branch strategy and Pull Request Process
-
-# Git branching strategy
+#### Git branching strategy
 
 We have two long-lived git branches, `master` and `release`.
 
@@ -111,24 +109,24 @@ The `master` branch continuously deploys to our development environment.
 The `release` branch continuously deploys to our staging environment.
 Our development and staging environments are on AWS and only accessible through the Library's network.
 
-## Starting new work
+##### Starting new work
 
 When someone begins new work, they cut a new branch from `master` and name it after their work, perhaps `feature1`. New changes are pushed to the feature branch origin.
 
-## Merging to `master`
+##### Merging to `master`
 
 When new work is complete, we set up a Pull Request (PR) from `feature1` to `master`. Discussion about, and approval of changes by either the Technical Lead, Product Owner or both happens in the PR interface in GitHub.
 
 Once this new work is approved we merge the code, which closes the PR.
 From here, our CI pipeline will build the new changes on the `master` branch. Next, our CD pipeline will deploy the new work to our development environment.
 
-## Merging to `release`
+##### Merging to `release`
 
 Once the development work on a sprint is completed, we set up a PR from `master` to `release`.
 
 This constitutes a new release candidate. Any last-minute discussion, as well as approval happens in the PR interface. Once approved by the Technical Lead, Product Owner or both and merged, CI runs for `release` branch to the staging environment.
 
-## Tagging and deploying to production
+##### Tagging and deploying to production
 
 When the `release` branch has been fully tested in the staging environment, we create a GitHub release with a tag on the `release` branch.
 
@@ -136,13 +134,13 @@ Either trigger a Jenkins build manually or wait for continuous integration for t
 
 To deploy to production, create a new task revision for the `concordia-prod` task which updates the version numbers of the docker containers to match the recently built cleanly tagged release candidate. Update the production service to use the new task definition revision. Monitor the health check endpoint to ensure the service is updated to the proper version.
 
-## Patching production mid-sprint
+##### Patching production mid-sprint
 
 If a problem is identified in production that needs a quick fix, we code the fix to production in a new branch cut from `release`, maybe called `prod_fix`. We set up a PR against `release` for review and discussion.
 
 Any QA or manual testing will take place in the staging environment deployed from the `release` branch. Once the release is tagged and deployed to production, we have to bring those new changes in release back into master. We use rebase again: `git rebase master release`.
 
-## Code quality and review process
+### Code quality and review process
 
 Code reviews are about keeping code clean and limiting technical debt. We will look for things that increase technical debt or create an environment where technical debt can be introduced easily later. Each pull request will be reviewed by the technical lead or assigned reviewer. As a reviewer, they will look closely for untested code, if there are tests that they are testing what they're supposed to, that they are following the Library's code standards.
 
