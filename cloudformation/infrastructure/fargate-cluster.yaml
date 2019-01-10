@@ -271,6 +271,8 @@ Resources:
                 Value: !Ref DatabaseEndpoint
               - Name: HOST_NAME
                 Value: !Ref CanonicalHostName
+              - Name: DJANGO_SETTINGS_MODULE
+                Value: concordia.settings_ecs  
           MountPoints:
               - SourceVolume: images_volume
                 ContainerPath: /concordia_images
@@ -329,6 +331,8 @@ Resources:
                 Value: !Ref DatabaseEndpoint
               - Name: HOST_NAME
                 Value: !Ref CanonicalHostName
+              - Name: DJANGO_SETTINGS_MODULE
+                Value: concordia.settings_ecs
           MountPoints:
               - SourceVolume: images_volume
                 ContainerPath: /concordia_images
@@ -373,7 +377,9 @@ Resources:
                 Value: !Ref DatabaseEndpoint
               - Name: HOST_NAME
                 Value: !Ref CanonicalHostName
-
+              - Name: DJANGO_SETTINGS_MODULE
+                Value: concordia.settings_ecs  
+                
   ConcordiaExternalService:
     Type: AWS::ECS::Service
     DependsOn: ExternalLoadBalancerListener
