@@ -42,7 +42,9 @@ ELASTICSEARCH_DSL = {
 # HMAC activation flow provide the two-step registration process,
 # the user signs up and then completes activation via email instructions.
 
-REGISTRATION_SALT = "django_registration"  # doesn't need to be secret
+# This is *not* a secret for the HMAC activation workflow — see:
+ # https://django-registration.readthedocs.io/en/2.0.4/hmac.html#security-considerations
+REGISTRATION_SALT = "django_registration" 
 
 RATELIMIT_BLOCK = os.getenv("RATELIMIT_BLOCK", "").lower() not in ("false", "0")
 
