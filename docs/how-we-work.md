@@ -6,7 +6,7 @@ Our basic principles are those familiar to anybody who has contributed to a prom
 
 - We produce open source software, created and maintained in repositories where it may be inspected by the public who places their trust in it and copied for use by other agencies or institutions.
 - We adhere to the basic practices of agile software development, using the Scrum development framework.
-- We practice human-centered design. Everything that we produce is highly accessible, per [WCAG 2.0](https://www.w3.org/TR/WCAG20/).
+- We practice human-centered design. Everything that we produce is highly accessible, per [WCAG 2.1](https://www.w3.org/TR/WCAG21/).
 - Finally, we believe in having the relevant decision-makers at the table during all meetings, to maximize efficiency and maintain momentum.
 
 ## Product Team
