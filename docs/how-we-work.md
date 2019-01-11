@@ -4,22 +4,22 @@
 
 Our basic principles are those familiar to anybody who has contributed to a prominent open source project, or deployed code in a modern software environment:
 
-- We produce open source software, created and maintained in repositories where it may be inspected by the public who places their trust in it and copied for use by other agencies or institutions.
-- We adhere to the basic practices of agile software development, using the Scrum development framework.
-- We practice human-centered design. Everything that we produce is highly accessible, per [WCAG 2.1](https://www.w3.org/TR/WCAG21/).
-- Finally, we believe in having the relevant decision-makers at the table during all meetings, to maximize efficiency and maintain momentum.
+-   We produce open source software, created and maintained in repositories where it may be inspected by the public who places their trust in it and copied for use by other agencies or institutions.
+-   We adhere to the basic practices of agile software development, using the Scrum development framework.
+-   We practice human-centered design. Everything that we produce is highly accessible, per [WCAG 2.1](https://www.w3.org/TR/WCAG21/).
+-   Finally, we believe in having the relevant decision-makers at the table during all meetings, to maximize efficiency and maintain momentum.
 
 ## Product Team
 
 This is a cross functional product team for Concordia made up of members across the Library who are working together. This product team will be comprised of the following roles:
 
-- Product owner
-- Product manager (Scrum master)
-- Technical lead
-- User Experience designer
-- Developers (Front-end, Back-end, Full-stack)
-- QA Tester
-- Community Managers (content writers, administrators)
+-   Product owner
+-   Product manager (Scrum master)
+-   Technical lead
+-   User Experience designer
+-   Developers (Front-end, Back-end, Full-stack)
+-   QA Tester
+-   Community Managers (content writers, administrators)
 
 This team participates in stand ups, product alignment, backlog grooming and retrospectives in service of prioritizing, defining and delivering value to the department and the public it serves.
 
@@ -27,18 +27,18 @@ This team participates in stand ups, product alignment, backlog grooming and ret
 
 Each sprint is three weeks long. We have a sprint kick off the first day of the new sprint. There are five basic meeting rhythms:
 
-- **Daily standups at 10:30 - 10:45 am**
-  - Structure: Each team member talks says what they completed yesterday, what they will work on today, and any blockers
-- **Alignment every Tuesday at 3:00 – 4:30 pm**
-  - Structure: Community managers support product owner in identifying user facing priorities in the backlog
-- **Backlog grooming Thursday at 3:00 – 4:30 pm**
-  - Structure: tickets in the backlog are sorted by priority, the team adds acceptance criteria, estimates size, and assigns the tasks to a team member.
-- **Sprint planning every third Wednesday at 3:00 – 4:30 pm**
-  - Structure: tickets are pulled into the next sprint, the team reviews or confirms acceptance criteria, estimates size, and assigns the tasks to a team member
-- **Sprint kick off first Monday at 10:30 – 11:00 pm**
-  - Structure: Begins the next sprint. Any last minute questions about acceptance criteria will be addressed here. No additional tickets can be pulled into a sprint at this point. Questions about future tickets will take place in alignment and backlog grooming.
-- **Demo and retrospectives are held on third Thursday at the end of the sprint 10:30 am - 12:00 pm**
-  - At the end of each sprint, Developers or content writers demo completed work in the sprint for the larger library stakeholders. During demo, we will confirm if the user acceptance criteria is met and moved to be tested. Following the demo, the team will go through a retrospective. These are held back-to-back, on the same day
+-   **Daily standups at 10:30 - 10:45 am**
+    -   Structure: Each team member talks says what they completed yesterday, what they will work on today, and any blockers
+-   **Alignment every Tuesday at 3:00 – 4:30 pm**
+    -   Structure: Community managers support product owner in identifying user facing priorities in the backlog
+-   **Backlog grooming Thursday at 3:00 – 4:30 pm**
+    -   Structure: tickets in the backlog are sorted by priority, the team adds acceptance criteria, estimates size, and assigns the tasks to a team member.
+-   **Sprint planning every third Wednesday at 3:00 – 4:30 pm**
+    -   Structure: tickets are pulled into the next sprint, the team reviews or confirms acceptance criteria, estimates size, and assigns the tasks to a team member
+-   **Sprint kick off first Monday at 10:30 – 11:00 pm**
+    -   Structure: Begins the next sprint. Any last minute questions about acceptance criteria will be addressed here. No additional tickets can be pulled into a sprint at this point. Questions about future tickets will take place in alignment and backlog grooming.
+-   **Demo and retrospectives are held on third Thursday at the end of the sprint 10:30 am - 12:00 pm**
+    -   At the end of each sprint, Developers or content writers demo completed work in the sprint for the larger library stakeholders. During demo, we will confirm if the user acceptance criteria is met and moved to be tested. Following the demo, the team will go through a retrospective. These are held back-to-back, on the same day
 
 All meetings are held in person, on Slack or WebEx, a video teleconference application.
 
@@ -48,20 +48,20 @@ So that we can work more efficiently and be confident in the quality of the work
 
 **For delivering a user story to the product team:**
 
-- Story needs to be written in a way that is clear from both a development and a testing standpoint. Stories will need to be reviewed by the product team during creation.
-- Acceptance criteria should include the relevant tests needed (unit, security, performance, acceptance, etc)
-- Acceptance criteria should include the objective of the story, for use in approval by PO or tech team or both
-- The delivered functionality should match the acceptance criteria of the user story
+-   Story needs to be written in a way that is clear from both a development and a testing standpoint. Stories will need to be reviewed by the product team during creation.
+-   Acceptance criteria should include the relevant tests needed (unit, security, performance, acceptance, etc)
+-   Acceptance criteria should include the objective of the story, for use in approval by PO or tech team or both
+-   The delivered functionality should match the acceptance criteria of the user story
 
 **for product team to accept the user story and ship it:**
 
-- The functionality meets the acceptance criteria
-- The product team has verified the functionality in staging
-- All tests must pass in the the stage environment (unit, integration, feature)
-- The delivered functionality should be 508 compliant
-- Security requirements must be met
-- All documentation must be up to date (diagrams, training documentation, API documentation, help text, etc)
-- The delivered functionality should be compatible with the latest versions of Firefox, Chrome and Safari
+-   The functionality meets the acceptance criteria
+-   The product team has verified the functionality in staging
+-   All tests must pass in the the stage environment (unit, integration, feature)
+-   The delivered functionality should be 508 compliant
+-   Security requirements must be met
+-   All documentation must be up to date (diagrams, training documentation, API documentation, help text, etc)
+-   The delivered functionality should be compatible with the latest versions of Firefox, Chrome and Safari
 
 ## Processes
 
@@ -69,9 +69,9 @@ So that we can work more efficiently and be confident in the quality of the work
 
 We practice testing at three levels: unit tests, integration tests, and feature tests. For details about how we create and maintain unit, integration and feature tests.
 
-- Unit - Unit tests must be created for all new code, during the sprint in which the code is written, with coverage of at least 90%.
-- Integration - Code must include tests that verify that interfaces are functioning as designed.
-- Feature - New features must have functional definitions of the thing that they are to perform, and a description of human-performable actions to verify that they perform that thing.
+-   Unit - Unit tests must be created for all new code, during the sprint in which the code is written, with coverage of at least 90%.
+-   Integration - Code must include tests that verify that interfaces are functioning as designed.
+-   Feature - New features must have functional definitions of the thing that they are to perform, and a description of human-performable actions to verify that they perform that thing.
 
 #### Testing new code
 
@@ -79,9 +79,9 @@ Each ticket will include acceptance tests, especially for new user facing functi
 
 Testers will identify issues - HIGH, LOW, or NONE. Here are the criteria for each of the levels:
 
-- HIGH: Does not meet the acceptace criteria and can not complete the acceptance test.
-- LOW: Does meet both acceptace criteria and and acceptance tests, but can see opportunities for enhancements.
-- NONE: Meets both accpetance criteria and acceptance tests
+-   HIGH: Does not meet the acceptace criteria and can not complete the acceptance test.
+-   LOW: Does meet both acceptace criteria and and acceptance tests, but can see opportunities for enhancements.
+-   NONE: Meets both accpetance criteria and acceptance tests
 
 If all user acceptance criteria has been met, the ticket will be closed and moved to done.
 
@@ -91,8 +91,8 @@ Final step: Technical lead will create a release with all tickets that are done.
 
 If feature testers find issues to address:
 
-- HIGH: comment and @ the developer in the feature ticket
-- LOW: open a new FEATURE ticket. This ticket will be added to the backlog and up for priortization in alignment meeting and backlog grooming. Link to related ticket by adding the issue #.
+-   HIGH: comment and @ the developer in the feature ticket
+-   LOW: open a new FEATURE ticket. This ticket will be added to the backlog and up for priortization in alignment meeting and backlog grooming. Link to related ticket by adding the issue #.
 
 If a HIGH issue needs to be addressed, tester should expect to be available to respond to developers questions and retest until acceptance criteria is met.
 
@@ -152,8 +152,8 @@ The easiest way to install the site is using [Pipenv](https://pipenv.readthedocs
 
 #### Configure your local checkout with code-quality hooks
 
-1. Install [pre-commit](https://pre-commit.com/)
-1. Run `pre-commit install`
+1.  Install [pre-commit](https://pre-commit.com/)
+1.  Run `pre-commit install`
 
 Now every time you make a commit in Git the various tools listed in the next
 section will automatically run and report any problems.
@@ -164,9 +164,9 @@ section will automatically run and report any problems.
 
 Configure your editor to run black and isort on each file at save time.
 
-1. Install [black](https://pypi.org/project/black/) and integrate it with your editor of choice.
-2. Run [flake8](http://flake8.pycqa.org/en/latest/) to ensure you don't increase the warning count or introduce errors with your commits.
-3. This project uses [EditorConfig](https://editorconfig.org) for code consistency.
+1.  Install [black](https://pypi.org/project/black/) and integrate it with your editor of choice.
+2.  Run [flake8](http://flake8.pycqa.org/en/latest/) to ensure you don't increase the warning count or introduce errors with your commits.
+3.  This project uses [EditorConfig](https://editorconfig.org) for code consistency.
 
 If you can't modify your editor, here is how to run the code quality
 tools manually:
@@ -182,6 +182,6 @@ the changes from each step are visible.
 
 ## Tools we use
 
-- GitHub - We use our GitHub organization for storing both software and collaboratively-maintained text.
-- Slack - We use the Slack for communication that falls outside of the structure of Jira or GitHub, but that doesn’t rise to the level of email, or for communication that it’s helpful for everybody else to be able to observe.
-- WebEx - We use WebEx for video conferencing in all our meetings
+-   GitHub - We use our GitHub organization for storing both software and collaboratively-maintained text.
+-   Slack - We use the Slack for communication that falls outside of the structure of Jira or GitHub, but that doesn’t rise to the level of email, or for communication that it’s helpful for everybody else to be able to observe.
+-   WebEx - We use WebEx for video conferencing in all our meetings
