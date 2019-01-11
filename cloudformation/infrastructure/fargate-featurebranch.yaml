@@ -90,82 +90,6 @@ Parameters:
 
 Resources:
 
-  ConcordiaServiceSecretAccessPolicy:
-      Type: AWS::IAM::Policy
-      Properties:
-        PolicyName: !Sub ReadOnlyAccessToConcordiaSecrets-${EnvironmentName}
-        Roles:
-          - !Ref 'ConcordiaTaskRole'
-          - !Ref 'ConcordiaEC2Role'
-        PolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-            - Effect: Allow
-              Action:
-              - 'secretsmanager:GetResourcePolicy'
-              - 'secretsmanager:GetSecretValue'
-              - 'secretsmanager:DescribeSecret'
-              - 'secretsmanager:ListSecretVersionIds'
-              - 'kms:GetParametersForImport'
-              - 'kms:GetKeyRotationStatus'
-              - 'kms:GetKeyPolicy'
-              - 'kms:DescribeKey'
-              - 'kms:ListResourceTags'
-              - 'kms:Decrypt'
-              - 'kms:GenerateDataKey'
-              - 's3:PutObject'
-              - 's3:GetObject'
-              - 's3:AbortMultipartUpload'
-              - 's3:ListMultipartUploadParts'
-              - 's3:ListBucket'
-              - 's3:ListBucketMultipartUploads'
-              Resource:
-                - "*"
-
-  ConcordiaEC2Role:
-    Type: AWS::IAM::Role
-    Properties:
-      Path: /
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: ec2.amazonaws.com
-            Action: sts:AssumeRole
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
-        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
-
-  ConcordiaInstanceProfile:
-    Type: AWS::IAM::InstanceProfile
-    Properties:
-      Path: /
-      Roles:
-        - !Ref 'ConcordiaEC2Role'
-
-  ConcordiaTaskRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: !Sub ConcordiaServerTaskRole-${EnvironmentName}
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: ecs-tasks.amazonaws.com
-            Action:
-              - sts:AssumeRole
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
-        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
-
-  ConcordiaAppLogsGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Ref AWS::StackName
-      RetentionInDays: 30
-
   ConcordiaExternalTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
@@ -180,45 +104,18 @@ Resources:
       Protocol: HTTP
       VpcId: !Ref VpcId
 
-  LoadBalancer:
-    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
-    Properties:
-        Name: !Ref EnvironmentName
-        Subnets: !Ref PublicSubnets
-        SecurityGroups:
-            - !Ref LoadBalancerSecurityGroup
-        Tags:
-            - Key: Name
-              Value: !Ref EnvironmentName
-
-  ExternalLoadBalancerListener:
-    Properties:
-      DefaultActions:
-        # FIXME: When AWS CF supports it, redirect to https
-        # instead of forward to target group
-        - TargetGroupArn: !Ref ConcordiaExternalTargetGroup
-          Type: forward
-      LoadBalancerArn:  !Ref LoadBalancer
-      Port: 80
-      Protocol: HTTP
-    Type: AWS::ElasticLoadBalancingV2::Listener
-
-  SecureExternalLoadBalancerListener:
-    Properties:
-      Certificates:
-        - CertificateArn: !Sub 'arn:aws:iam::${AWS::AccountId}:server-certificate/${CertificateName}'
-      DefaultActions:
-        - TargetGroupArn: !Ref ConcordiaExternalTargetGroup
-          Type: forward
-      LoadBalancerArn:  !Ref LoadBalancer
-      Port: 443
-      Protocol: HTTPS
-    Type: AWS::ElasticLoadBalancingV2::Listener
-
-  ECSCluster:
-    Type: AWS::ECS::Cluster
-    Properties:
-      ClusterName: !Ref EnvironmentName
+SubdomainListenerRule:
+  Type: AWS::ElasticLoadBalancingV2::ListenerRule
+  Properties:
+    Actions:
+      - TargetGroupArn: !Ref ConcordiaExternalTargetGroup
+        Type: forward
+    Conditions:
+      - Field: host-header
+        Values:
+          - !Ref CanonicalHostName
+    ListenerArn: arn:aws:elasticloadbalancing:us-east-1:619333082511:listener/app/crowd-test/81e4820e354ea810/187fd94e534ad833
+    Priority: 100
 
   ConcordiaTask:
     Type: AWS::ECS::TaskDefinition

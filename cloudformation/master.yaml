@@ -7,10 +7,10 @@ Description: >
     route on the public subnets. It deploys a pair of NAT Gateways (one in each AZ), 
     and default routes for them in the private subnets.
 
-    It then deploys a highly available ECS cluster using an AutoScaling Group, with 
-    ECS hosts distributed across multiple Availability Zones. 
+    It then deploys a Fargate ECS cluster distributed across multiple
+    Availability Zones. 
 
-    Finally, it deploys a pair of example ECS services from containers published in 
+    Finally, it deploys crowd ECS services from containers published in 
     Amazon EC2 Container Registry (Amazon ECR).
 Mappings:
     EnvironmentMapping:
@@ -175,6 +175,7 @@ Resources:
                 MemcachedAddress: !GetAtt ElastiCache.Outputs.MemcachedAddress
                 MemcachedPort: !GetAtt ElastiCache.Outputs.MemcachedPort
                 CanonicalHostName: !Ref CanonicalHostName
+                CertificateName: !Ref CanonicalHostName
                 DatabaseEndpoint: !GetAtt RDS.Outputs.DatabaseHostName
                 FullEnvironmentName: !Ref FullEnvironmentName
                 S3BucketName: !FindInMap [EnvironmentMapping, S3BucketNameMap, !Ref EnvName]
