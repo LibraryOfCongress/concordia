@@ -50,9 +50,6 @@ Resources:
                 CanonicalHostName: !Sub ${ConcordiaBranch}.crowd-test.loc.gov
                 VpcId: vpc-018e5a73079d0b350
                 SecurityGroup: sg-04de21574623caca7
-                PrivateSubnets: 
-                 - subnet-0aa55b322229b945a
-                 - subnet-0f65558b319b2d4dc
                 RedisAddress: !GetAtt ElastiCache.Outputs.RedisAddress
                 RedisPort: !GetAtt ElastiCache.Outputs.RedisPort
                 MemcachedAddress: !GetAtt ElastiCache.Outputs.MemcachedAddress
