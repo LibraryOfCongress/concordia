@@ -112,8 +112,8 @@ Resources:
     Type: AWS::ECS::TaskDefinition
     Properties:
       Family: !Sub crowd-${EnvName}
-      Cpu: '4096'
-      Memory: '16384'
+      Cpu: '2048'
+      Memory: '8192'
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE
