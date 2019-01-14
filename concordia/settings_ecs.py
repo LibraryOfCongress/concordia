@@ -1,7 +1,7 @@
 import json
 import os
 
-from django.core.management import get_random_secret_key
+from django.core.management.utils import get_random_secret_key
 
 from .secrets import get_secret
 from .settings_template import *  # NOQA ignore=F405
