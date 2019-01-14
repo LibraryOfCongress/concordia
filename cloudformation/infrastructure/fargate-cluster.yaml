@@ -223,7 +223,7 @@ Resources:
   ConcordiaTask:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      Family: !Sub concordia-${EnvName}
+      Family: !Sub crowd-${EnvName}
       Cpu: '4096'
       Memory: '16384'
       NetworkMode: awsvpc

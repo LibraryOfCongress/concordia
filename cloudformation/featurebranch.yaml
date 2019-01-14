@@ -32,7 +32,7 @@ Resources:
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 SecurityGroup: sg-028ebfe14211447c4
-                PrivateSubnets: 
+                PrivateSubnets:
                  - subnet-0aa55b322229b945a
                  - subnet-0f65558b319b2d4dc
 
@@ -48,16 +48,11 @@ Resources:
                 ExportS3BucketName: crowd-test-export
                 ConcordiaVersion: !Ref ConcordiaBranch
                 CanonicalHostName: !Sub ${ConcordiaBranch}.crowd-test.loc.gov
-                CertificateName: crowd-test.loc.gov
-
-                VpcId: !GetAtt VPC.Outputs.VPC
-                SecurityGroup: !GetAtt SecurityGroups.Outputs.ECSHostSecurityGroup
-                LoadBalancerSecurityGroup: !GetAtt SecurityGroups.Outputs.LoadBalancerSecurityGroup
+                VpcId: vpc-018e5a73079d0b350
+                SecurityGroup: sg-04de21574623caca7
                 PrivateSubnets: 
                  - subnet-0aa55b322229b945a
                  - subnet-0f65558b319b2d4dc
-                PublicSubnets: !GetAtt VPC.Outputs.PublicSubnets
-
                 RedisAddress: !GetAtt ElastiCache.Outputs.RedisAddress
                 RedisPort: !GetAtt ElastiCache.Outputs.RedisPort
                 MemcachedAddress: !GetAtt ElastiCache.Outputs.MemcachedAddress

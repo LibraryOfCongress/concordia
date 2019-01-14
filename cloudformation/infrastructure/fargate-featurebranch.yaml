@@ -7,20 +7,12 @@ Parameters:
         Description: An environment name that will be prefixed to resource names
         Type: String
 
-    PublicSubnets:
-        Description: The subnets for the load balancer
-        Type: List<AWS::EC2::Subnet::Id>
-
     PrivateSubnets:
         Description: Choose which subnets this ECS cluster should be deployed to
         Type: List<AWS::EC2::Subnet::Id>
 
     SecurityGroup:
         Description: Select the Security Group to use for the ECS cluster hosts
-        Type: AWS::EC2::SecurityGroup::Id
-
-    LoadBalancerSecurityGroup:
-        Description: The SecurityGroup for load balancer
         Type: AWS::EC2::SecurityGroup::Id
 
     VpcId:
@@ -71,10 +63,6 @@ Parameters:
         Type: String
         Description: canonical host name of the application, e.g. crowd-test.loc.gov
 
-    CertificateName:
-        Type: String
-        Description: Normally the canonical host name, except for subdomains in crowd-test.loc.gov
-
     DatabaseEndpoint:
         Type: String
         Description: Host name of the Postgres RDS service
@@ -90,6 +78,13 @@ Parameters:
 
 Resources:
 
+  ConcordiaAppLogsGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Ref AWS::StackName
+      RetentionInDays: 30
+
+
   ConcordiaExternalTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
@@ -104,23 +99,23 @@ Resources:
       Protocol: HTTP
       VpcId: !Ref VpcId
 
-SubdomainListenerRule:
-  Type: AWS::ElasticLoadBalancingV2::ListenerRule
-  Properties:
-    Actions:
-      - TargetGroupArn: !Ref ConcordiaExternalTargetGroup
-        Type: forward
-    Conditions:
-      - Field: host-header
-        Values:
-          - !Ref CanonicalHostName
-    ListenerArn: arn:aws:elasticloadbalancing:us-east-1:619333082511:listener/app/crowd-test/81e4820e354ea810/187fd94e534ad833
-    Priority: 100
+  SubdomainListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      Actions:
+        - TargetGroupArn: !Ref ConcordiaExternalTargetGroup
+          Type: forward
+      Conditions:
+        - Field: host-header
+          Values:
+            - !Ref CanonicalHostName
+      ListenerArn: arn:aws:elasticloadbalancing:us-east-1:619333082511:listener/app/crowd-test/81e4820e354ea810/187fd94e534ad833
+      Priority: 100
 
   ConcordiaTask:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      Family: !Sub concordia-${EnvName}
+      Family: !Sub crowd-${EnvName}
       Cpu: '4096'
       Memory: '16384'
       NetworkMode: awsvpc
@@ -283,9 +278,8 @@ SubdomainListenerRule:
                 
   ConcordiaExternalService:
     Type: AWS::ECS::Service
-    DependsOn: ExternalLoadBalancerListener
     Properties:
-      Cluster: !Ref ECSCluster
+      Cluster: crowd-test
       LaunchType: FARGATE
       DeploymentConfiguration:
         MaximumPercent: 200
@@ -301,9 +295,3 @@ SubdomainListenerRule:
         - ContainerName: 'app'
           ContainerPort: 80
           TargetGroupArn: !Ref ConcordiaExternalTargetGroup
-
-Outputs:
-
-  LoadBalancerUrl:
-    Description: The URL of the ALB
-    Value: !GetAtt LoadBalancer.DNSName
