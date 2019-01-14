@@ -12,6 +12,11 @@ Parameters:
         Description: which branch name to deploy
         Type: String
         Default: release
+    
+    AbbreviatedName:
+        Description: an abbreviation used for creating cloudformation Resources
+        Type: String
+        Default: rel
             
 Resources:
 
@@ -20,7 +25,7 @@ Resources:
         Properties:
             TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/rds.yaml"
             Parameters:
-                DbPassword: '{{resolve:secretsmanager:us-east-1:619333082511:secret:crowd/test/DB/MasterUserPassword-rxyUBT:SecretString:password}}'
+                DbPassword: '{{resolve:secretsmanager:crowd/test/DB/MasterUserPassword:SecretString:password}}'
                 DatabaseSecurityGroup: 'sg-0496910b800de2869'
                 PrivateSubnet1: 'subnet-0aa55b322229b945a'
                 PrivateSubnet2: 'subnet-0f65558b319b2d4dc'
@@ -30,7 +35,7 @@ Resources:
         Properties:
             TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/elasticache-feature.yaml"
             Parameters:
-                EnvironmentName: !Ref AWS::StackName
+                EnvironmentName: !Ref AbbreviatedName
                 SecurityGroup: 'sg-028ebfe14211447c4'
 
     FargateCluster:
@@ -38,7 +43,7 @@ Resources:
         Properties:
             TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/fargate-featurebranch.yaml"
             Parameters:
-                EnvironmentName: !Ref AWS::StackName
+                EnvironmentName: !Ref AbbreviatedName
                 EnvName: 'test'
                 FullEnvironmentName: 'test'
                 S3BucketName: 'crowd-test-content'
