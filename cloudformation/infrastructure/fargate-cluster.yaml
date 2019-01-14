@@ -71,10 +71,6 @@ Parameters:
         Type: String
         Description: canonical host name of the application, e.g. crowd-test.loc.gov
 
-    CertificateName:
-        Type: String
-        Description: Normally the canonical host name, except for subdomains in crowd-test.loc.gov
-
     DatabaseEndpoint:
         Type: String
         Description: Host name of the Postgres RDS service
@@ -206,7 +202,7 @@ Resources:
   SecureExternalLoadBalancerListener:
     Properties:
       Certificates:
-        - CertificateArn: !Sub 'arn:aws:iam::${AWS::AccountId}:server-certificate/${CertificateName}'
+        - CertificateArn: !Sub 'arn:aws:iam::${AWS::AccountId}:server-certificate/${CanonicalHostName}'
       DefaultActions:
         - TargetGroupArn: !Ref ConcordiaExternalTargetGroup
           Type: forward

@@ -175,7 +175,6 @@ Resources:
                 MemcachedAddress: !GetAtt ElastiCache.Outputs.MemcachedAddress
                 MemcachedPort: !GetAtt ElastiCache.Outputs.MemcachedPort
                 CanonicalHostName: !Ref CanonicalHostName
-                CertificateName: !Ref CanonicalHostName
                 DatabaseEndpoint: !GetAtt RDS.Outputs.DatabaseHostName
                 FullEnvironmentName: !Ref FullEnvironmentName
                 S3BucketName: !FindInMap [EnvironmentMapping, S3BucketNameMap, !Ref EnvName]
