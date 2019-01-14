@@ -43,7 +43,6 @@ Resources:
         Properties:
             TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/fargate-featurebranch.yaml"
             Parameters:
-                EnvironmentName: !Ref AbbreviatedName
                 EnvName: 'test'
                 FullEnvironmentName: 'test'
                 S3BucketName: 'crowd-test-content'

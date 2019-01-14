@@ -3,10 +3,6 @@ Description: >
 
 Parameters:
 
-    EnvironmentName:
-        Description: An environment name that will be prefixed to resource names
-        Type: String
-
     SecurityGroup:
         Description: Select the Security Group to use for the ECS cluster hosts
         Type: AWS::EC2::SecurityGroup::Id
@@ -118,7 +114,7 @@ Resources:
       RequiresCompatibilities:
         - FARGATE
       ExecutionRoleArn: ecsTaskExecutionRole
-      TaskRoleArn: !Sub 'arn:aws:iam::${AWS::AccountId}:role/ConcordiaServerTaskRole-${EnvironmentName}'
+      TaskRoleArn: !Sub 'arn:aws:iam::${AWS::AccountId}:role/ConcordiaServerTaskRole-crowd-test'
       Volumes:
         - Name: images_volume
       ContainerDefinitions:
