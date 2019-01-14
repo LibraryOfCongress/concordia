@@ -20,21 +20,18 @@ Resources:
         Properties:
             TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/rds.yaml"
             Parameters:
-                DbPassword: '{{resolve:secretsmanager:crowd/test/DB/MasterUserPassword-rxyUBT:SecretString:password}}'
-                DatabaseSecurityGroup: sg-0496910b800de2869
-                PrivateSubnet1: subnet-0aa55b322229b945a
-                PrivateSubnet2: subnet-0f65558b319b2d4dc
+                DbPassword: '{{resolve:secretsmanager:us-east-1:619333082511:secret:crowd/test/DB/MasterUserPassword-rxyUBT:SecretString:password}}'
+                DatabaseSecurityGroup: 'sg-0496910b800de2869'
+                PrivateSubnet1: 'subnet-0aa55b322229b945a'
+                PrivateSubnet2: 'subnet-0f65558b319b2d4dc'
 
     ElastiCache:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/elasticache.yaml"
+            TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/elasticache-feature.yaml"
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
-                SecurityGroup: sg-028ebfe14211447c4
-                PrivateSubnets:
-                 - subnet-0aa55b322229b945a
-                 - subnet-0f65558b319b2d4dc
+                SecurityGroup: 'sg-028ebfe14211447c4'
 
     FargateCluster:
         Type: AWS::CloudFormation::Stack
@@ -42,14 +39,14 @@ Resources:
             TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/fargate-featurebranch.yaml"
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
-                EnvName: test
-                FullEnvironmentName: test
-                S3BucketName: crowd-test-content
-                ExportS3BucketName: crowd-test-export
+                EnvName: 'test'
+                FullEnvironmentName: 'test'
+                S3BucketName: 'crowd-test-content'
+                ExportS3BucketName: 'crowd-test-export'
                 ConcordiaVersion: !Ref ConcordiaBranch
-                CanonicalHostName: !Sub ${ConcordiaBranch}.crowd-test.loc.gov
-                VpcId: vpc-018e5a73079d0b350
-                SecurityGroup: sg-04de21574623caca7
+                CanonicalHostName: !Sub '${ConcordiaBranch}.crowd-test.loc.gov'
+                VpcId: 'vpc-018e5a73079d0b350'
+                SecurityGroup: 'sg-04de21574623caca7'
                 RedisAddress: !GetAtt ElastiCache.Outputs.RedisAddress
                 RedisPort: !GetAtt ElastiCache.Outputs.RedisPort
                 MemcachedAddress: !GetAtt ElastiCache.Outputs.MemcachedAddress
