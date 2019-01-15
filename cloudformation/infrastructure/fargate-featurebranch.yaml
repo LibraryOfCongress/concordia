@@ -13,7 +13,7 @@ Parameters:
 
     ConcordiaVersion:
         Type: String
-        Description: version of concordia, concordia/importer, and rabbitmq docker images to pull and deploy
+        Description: docker tag of concordia app image to pull and deploy
         Default: latest
 
     EnvName:
