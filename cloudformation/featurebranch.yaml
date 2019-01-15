@@ -2,7 +2,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >
     Deploy a feature branch to a subdomain of crowd-test.loc.gov
-    using pre-existing infrastructure
+    using pre-existing infrastructure.
     Assumes docker images have been published to ECR with 
     tag matching the feature branch name.
 
@@ -14,7 +14,7 @@ Parameters:
         Default: release
     
     AbbreviatedName:
-        Description: an abbreviation used for creating cloudformation Resources
+        Description: an abbreviation used for creating short-named cloudformation resources
         Type: String
         Default: rel
             
@@ -23,7 +23,7 @@ Resources:
     RDS:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/rds.yaml"
+            TemplateURL: 'https://s3.amazonaws.com/crowd-deployment/infrastructure/rds.yaml'
             Parameters:
                 DbPassword: '{{resolve:secretsmanager:crowd/test/DB/MasterUserPassword:SecretString:password}}'
                 DatabaseSecurityGroup: 'sg-0496910b800de2869'
@@ -33,7 +33,7 @@ Resources:
     ElastiCache:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/elasticache-feature.yaml"
+            TemplateURL: 'https://s3.amazonaws.com/crowd-deployment/infrastructure/elasticache-feature.yaml'
             Parameters:
                 EnvironmentName: !Ref AbbreviatedName
                 SecurityGroup: 'sg-028ebfe14211447c4'
@@ -41,7 +41,7 @@ Resources:
     FargateCluster:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/fargate-featurebranch.yaml"
+            TemplateURL: 'https://s3.amazonaws.com/crowd-deployment/infrastructure/fargate-featurebranch.yaml'
             Parameters:
                 EnvName: 'test'
                 FullEnvironmentName: 'test'
