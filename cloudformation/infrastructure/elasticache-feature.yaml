@@ -17,19 +17,12 @@ Parameters:
 
 Resources:
 
-  CachePrivateSubnetGroup:
-    Type: AWS::ElastiCache::SubnetGroup
-    Properties:
-      Description: Private subnet group
-      SubnetIds: 
-        - 'subnet-0aa55b322229b945a'
-        - 'subnet-0f65558b319b2d4dc'
   MemcachedService:
     Type: AWS::ElastiCache::CacheCluster
     Properties:
       VpcSecurityGroupIds:
         - !Ref 'SecurityGroup'
-      CacheSubnetGroupName: !Ref 'CachePrivateSubnetGroup'
+      CacheSubnetGroupName: 'crowd-cache-1frtjeewr57u7'
       CacheNodeType: !Ref 'CacheNodeType'
       ClusterName: !Sub '${EnvironmentName}-cache'
       Engine: memcached
@@ -40,7 +33,7 @@ Resources:
     Properties:
       VpcSecurityGroupIds:
         - !Ref 'SecurityGroup'
-      CacheSubnetGroupName: !Ref 'CachePrivateSubnetGroup'
+      CacheSubnetGroupName: 'crowd-cache-1frtjeewr57u7'
       CacheNodeType: !Ref 'CacheNodeType'
       ClusterName: !Sub '${EnvironmentName}-redis'
       Engine: redis
