@@ -83,6 +83,14 @@ Resources:
                         - EnvironmentMapping
                         - PublicSubnet1
                         - Ref: EnvironmentName
+            UserData:
+                Fn::Base64: !Join ["", [
+                  "#!/bin/bash -xe\n",
+                  "yum -y update\n",
+                  "yum -y install https://download.postgresql.org/pub/repos/yum/9.6/redhat/rhel-6-x86_64/pgdg-ami201503-96-9.6-2.noarch.rpm\n",
+                  "yum -y install postgresql96\n",
+                  "aws s3 cp s3://crowd-deployment/database-dumps/concordia.latest.dmp concordia.dmp\n"
+                ]]
             Tags:
                 - Key: Name
                   Value: !Sub ${EnvironmentName}-BastionHost-1     
@@ -116,6 +124,14 @@ Resources:
                         - EnvironmentMapping
                         - PublicSubnet2
                         - Ref: EnvironmentName
+            UserData:
+                Fn::Base64: !Join ["", [
+                  "#!/bin/bash -xe\n",
+                  "yum -y update\n",
+                  "yum -y install https://download.postgresql.org/pub/repos/yum/9.6/redhat/rhel-6-x86_64/pgdg-ami201503-96-9.6-2.noarch.rpm\n",
+                  "yum -y install postgresql96\n",
+                  "aws s3 cp s3://crowd-deployment/database-dumps/concordia.latest.dmp concordia.dmp\n"
+                ]]
             Tags:
                 - Key: Name
                   Value: !Sub ${EnvironmentName}-BastionHost-2
