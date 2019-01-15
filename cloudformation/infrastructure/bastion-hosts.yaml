@@ -22,6 +22,15 @@ Parameters:
     PublicSubnet2:
         Description: The ID of the public subnet in the second AZ
         Type: AWS::EC2::Subnet::Id
+    
+    IamInstanceProfileArn:
+        Description: IAM role ARN for the EC2 instances
+        Type: String
+        AllowedValues:
+            - arn:aws:iam::619333082511:role/ConcordiaServerTaskRole-crowd-dev
+            - arn:aws:iam::619333082511:role/ConcordiaServerTaskRole-crowd-test
+            - arn:aws:iam::619333082511:role/ConcordiaServerTaskRole-crowd-stage
+            - arn:aws:iam::619333082511:role/ConcordiaServerTaskRole-crowd-prod
 
 Mappings:
     AWSRegionToAMI:
@@ -41,6 +50,8 @@ Resources:
                 - Ref: "AWS::Region"
                 - "AMI"
             InstanceType: "t1.micro"
+            IamInstanceProfile: 
+                Ref: IamInstanceProfileArn
             KeyName: 
                 Ref: KeyPairName
             NetworkInterfaces: 
@@ -63,6 +74,8 @@ Resources:
                 - Ref: "AWS::Region"
                 - "AMI"
             InstanceType: "t1.micro"
+            IamInstanceProfile: 
+                Ref: IamInstanceProfileArn
             KeyName: 
                 Ref: KeyPairName
             NetworkInterfaces: 
