@@ -2,7 +2,7 @@
 from setuptools import find_packages, setup
 
 VERSION = __import__("importer").get_version()
-INSTALL_REQUIREMENTS = ["boto3", "celery", "requests", "Django<2.1,>=2.0.9", "Pillow"]
+INSTALL_REQUIREMENTS = ["boto3", "celery", "requests", "Django>=2.1.5", "Pillow"]
 DESCRIPTION = "Download collections of images from loc.gov"
 CLASSIFIERS = """
 Environment :: Web Environment
