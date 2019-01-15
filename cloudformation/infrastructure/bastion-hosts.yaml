@@ -27,10 +27,10 @@ Parameters:
         Description: IAM role ARN for the EC2 instances
         Type: String
         AllowedValues:
-            - arn:aws:iam::619333082511:role/ConcordiaServerTaskRole-crowd-dev
-            - arn:aws:iam::619333082511:role/ConcordiaServerTaskRole-crowd-test
-            - arn:aws:iam::619333082511:role/ConcordiaServerTaskRole-crowd-stage
-            - arn:aws:iam::619333082511:role/ConcordiaServerTaskRole-crowd-prod
+            - arn:aws:iam::619333082511:instance-profile/crowd-dev-FargateCluster-WFCY4I0U7JSM-ConcordiaInstanceProfile-RQHLRZADDM9M
+            - arn:aws:iam::619333082511:instance-profile/crowd-test-FargateCluster-1R5U1VT4HOYX2-ConcordiaInstanceProfile-1FJXY570ZM2O3
+            - arn:aws:iam::619333082511:instance-profile/crowd-stage-FargateCluster-1TBKSIZQKLJHV-ConcordiaInstanceProfile-1XG3TR3LY42ND
+            - arn:aws:iam::619333082511:instance-profile/crowd-prod-FargateCluster-1X1CI0J3HFJ9F-ConcordiaInstanceProfile-13SHE5FAB7D6Q
 
 Mappings:
     AWSRegionToAMI:
