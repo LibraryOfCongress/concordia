@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -euox pipefail
+set -eu -o pipefail
 
 BUILD_ALL=${BUILD_ALL:=0}
 BUILD_NUMBER=${BUILD_NUMBER:=1}
