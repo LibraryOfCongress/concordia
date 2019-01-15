@@ -1,6 +1,6 @@
 import os
 
-from django.core.management import get_random_secret_key
+from django.core.management.utils import get_random_secret_key
 
 from .settings_template import *  # NOQA ignore=F405
 from .settings_template import INSTALLED_APPS, LOGGING
