@@ -19,7 +19,7 @@ Parameters:
 Mappings:
     AWSRegionToAMI:
         us-east-1:
-            AMI: ami-04681a1dbd79675a5
+            AMI: ami-0080e4c5bc078760e
     
     EnvironmentMapping:
         IamInstanceProfileName:
