@@ -6,38 +6,51 @@ Parameters:
     EnvironmentName:
         Description: An environment name that will be prefixed to resource names
         Type: String
-
-    BastionHostsSecurityGroup:
-        Description: The security group for bastion hosts
-        Type: AWS::EC2::SecurityGroup::Id
+        AllowedValues:
+          - dev
+          - test
+          - stage
+          - prod
     
     KeyPairName:
         Description: key pair (within this region) for ECS instances access
         Type: String
 
-    PublicSubnet1:
-        Description: The ID of the public subnet in the first AZ
-        Type: AWS::EC2::Subnet::Id
-    
-    PublicSubnet2:
-        Description: The ID of the public subnet in the second AZ
-        Type: AWS::EC2::Subnet::Id
-    
-    IamInstanceProfileName:
-        Description: IAM role Name for the EC2 instances
-        Type: String
-        AllowedValues:
-            - crowd-dev-FargateCluster-WFCY4I0U7JSM-ConcordiaInstanceProfile-RQHLRZADDM9M
-            - crowd-test-FargateCluster-1R5U1VT4HOYX2-ConcordiaInstanceProfile-1FJXY570ZM2O3
-            - crowd-stage-FargateCluster-1TBKSIZQKLJHV-ConcordiaInstanceProfile-1XG3TR3LY42ND
-            - crowd-prod-FargateCluster-1X1CI0J3HFJ9F-ConcordiaInstanceProfile-13SHE5FAB7D6Q
-
 Mappings:
     AWSRegionToAMI:
-        us-east-2:
-            AMI: ami-0cf31d971a3ca20d6
         us-east-1:
             AMI: ami-04681a1dbd79675a5
+    
+    EnvironmentMapping:
+        IamInstanceProfileName:
+            dev: crowd-dev-FargateCluster-WFCY4I0U7JSM-ConcordiaInstanceProfile-RQHLRZADDM9M
+            test: crowd-test-FargateCluster-1R5U1VT4HOYX2-ConcordiaInstanceProfile-1FJXY570ZM2O3
+            stage: crowd-stage-FargateCluster-1TBKSIZQKLJHV-ConcordiaInstanceProfile-1XG3TR3LY42ND
+            prod: crowd-prod-FargateCluster-1X1CI0J3HFJ9F-ConcordiaInstanceProfile-13SHE5FAB7D6Q
+
+        # The ID of the public subnet in the first AZ
+        # Type: AWS::EC2::Subnet::Id
+        PublicSubnet1:
+            dev: subnet-079b5dd4f9acf44e6
+            test: subnet-06f443ea589879e8d
+            stage: subnet-06f40e2fc8d891692
+            prod: subnet-09fdaf1c5c73f588f
+    
+        # The ID of the public subnet in the second AZ
+        # Type: AWS::EC2::Subnet::Id
+        PublicSubnet2:
+            dev: subnet-01d6614725c7dabd6
+            test: subnet-05a15c6058ebdf54f
+            stage: subnet-0a022eb0c614b0b00
+            prod: subnet-01580e2a4d6d42b52
+
+        # The security group for bastion hosts
+        # Type: AWS::EC2::SecurityGroup::Id
+        BastionHostsSecurityGroup:
+            dev: sg-062afe8941ace25ad
+            test: sg-0208b0df704b66c3c
+            stage: sg-0a2175a2df32a4332
+            prod: sg-066c68e77787b2a10
 
 Resources:
 
@@ -51,16 +64,25 @@ Resources:
                 - "AMI"
             InstanceType: "t1.micro"
             IamInstanceProfile: 
-                Ref: IamInstanceProfileName
+                Fn::FindInMap: 
+                    - EnvironmentMapping
+                    - IamInstanceProfileName
+                    - Ref: EnvironmentName
             KeyName: 
                 Ref: KeyPairName
             NetworkInterfaces: 
                 - AssociatePublicIpAddress: true
                   DeviceIndex: "0"
                   GroupSet: 
-                    - Ref: BastionHostsSecurityGroup
+                    - Fn::FindInMap: 
+                        - EnvironmentMapping
+                        - BastionHostsSecurityGroup
+                        - Ref: EnvironmentName
                   SubnetId: 
-                    Ref: PublicSubnet1
+                    Fn::FindInMap: 
+                        - EnvironmentMapping
+                        - PublicSubnet1
+                        - Ref: EnvironmentName
             Tags:
                 - Key: Name
                   Value: !Sub ${EnvironmentName}-BastionHost-1     
@@ -75,16 +97,25 @@ Resources:
                 - "AMI"
             InstanceType: "t1.micro"
             IamInstanceProfile: 
-                Ref: IamInstanceProfileName
+                Fn::FindInMap: 
+                    - EnvironmentMapping
+                    - IamInstanceProfileName
+                    - Ref: EnvironmentName
             KeyName: 
                 Ref: KeyPairName
             NetworkInterfaces: 
                 - AssociatePublicIpAddress: true
                   DeviceIndex: "0"
                   GroupSet: 
-                    - Ref: BastionHostsSecurityGroup
+                    - Fn::FindInMap: 
+                        - EnvironmentMapping
+                        - BastionHostsSecurityGroup
+                        - Ref: EnvironmentName
                   SubnetId: 
-                    Ref: PublicSubnet2
+                    Fn::FindInMap: 
+                        - EnvironmentMapping
+                        - PublicSubnet2
+                        - Ref: EnvironmentName
             Tags:
                 - Key: Name
                   Value: !Sub ${EnvironmentName}-BastionHost-2
