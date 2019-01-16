@@ -1,0 +1,108 @@
+Description:
+  This template deploys a bastion host in each of the public subnets.
+
+Parameters:
+
+    EnvironmentName:
+        Description: An environment name that will be prefixed to resource names
+        Type: String
+        AllowedValues:
+          - dev
+          - test
+          - stage
+          - prod
+    
+    KeyPairName:
+        Description: key pair (within this region) for ECS instances access
+        Type: String
+
+    PostgresqlHost:
+        Description: the end point of the RDS database host to restore
+        Type: String
+
+    PostgresqlPassword:
+        Description: the password for the RDS endpoint to restore
+        Type: String
+        NoEcho: true        
+
+Mappings:
+    AWSRegionToAMI:
+        us-east-1:
+            AMI: ami-0080e4c5bc078760e
+    
+    EnvironmentMapping:
+        IamInstanceProfileName:
+            dev: crowd-dev-FargateCluster-WFCY4I0U7JSM-ConcordiaInstanceProfile-RQHLRZADDM9M
+            test: crowd-test-FargateCluster-1R5U1VT4HOYX2-ConcordiaInstanceProfile-1FJXY570ZM2O3
+            stage: crowd-stage-FargateCluster-1TBKSIZQKLJHV-ConcordiaInstanceProfile-1XG3TR3LY42ND
+            prod: crowd-prod-FargateCluster-1X1CI0J3HFJ9F-ConcordiaInstanceProfile-13SHE5FAB7D6Q
+
+        # The ID of the public subnet in the first AZ
+        # Type: AWS::EC2::Subnet::Id
+        PublicSubnet1:
+            dev: subnet-079b5dd4f9acf44e6
+            test: subnet-06f443ea589879e8d
+            stage: subnet-06f40e2fc8d891692
+            prod: subnet-09fdaf1c5c73f588f
+    
+        # The ID of the public subnet in the second AZ
+        # Type: AWS::EC2::Subnet::Id
+        PublicSubnet2:
+            dev: subnet-01d6614725c7dabd6
+            test: subnet-05a15c6058ebdf54f
+            stage: subnet-0a022eb0c614b0b00
+            prod: subnet-01580e2a4d6d42b52
+
+        # The security group for bastion hosts
+        # Type: AWS::EC2::SecurityGroup::Id
+        BastionHostsSecurityGroup:
+            dev: sg-062afe8941ace25ad
+            test: sg-0208b0df704b66c3c
+            stage: sg-0a2175a2df32a4332
+            prod: sg-066c68e77787b2a10
+
+Resources:
+
+    DataLoadHost:
+        Type: AWS::EC2::Instance
+        Properties: 
+            ImageId: 
+                Fn::FindInMap: 
+                - AWSRegionToAMI
+                - Ref: "AWS::Region"
+                - "AMI"
+            InstanceType: "t1.micro"
+            IamInstanceProfile: 
+                Fn::FindInMap: 
+                    - EnvironmentMapping
+                    - IamInstanceProfileName
+                    - Ref: EnvironmentName
+            KeyName: 
+                Ref: KeyPairName
+            NetworkInterfaces: 
+                - AssociatePublicIpAddress: true
+                  DeviceIndex: "0"
+                  GroupSet: 
+                    - Fn::FindInMap: 
+                        - EnvironmentMapping
+                        - BastionHostsSecurityGroup
+                        - Ref: EnvironmentName
+                  SubnetId: 
+                    Fn::FindInMap: 
+                        - EnvironmentMapping
+                        - PublicSubnet1
+                        - Ref: EnvironmentName
+            UserData:
+                Fn::Base64: !Sub |
+                  #!/bin/bash -xe
+                  echo "Running userdata for ${EnvironmentName}"
+                  yum -y update
+                  yum -y install https://download.postgresql.org/pub/repos/yum/9.6/redhat/rhel-6-x86_64/pgdg-ami201503-96-9.6-2.noarch.rpm
+                  yum -y install postgresql96
+                  aws s3 cp s3://crowd-deployment/database-dumps/concordia.latest.dmp concordia.dmp
+                  echo "${PostgresqlHost}:5432:*:concordia:${PostgresqlPassword}" >> /root/.pgpass
+                  chmod 0600 /root/.pgpass
+                  pg_restore --create --clean -Fc -U concordia -h ${PostgresqlHost} --dbname=postgres --no-password --no-owner --no-acl concordia.dmp
+            Tags:
+                - Key: Name
+                  Value: !Sub ${EnvironmentName}-DataLoadHost
