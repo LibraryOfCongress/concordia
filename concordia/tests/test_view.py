@@ -746,9 +746,6 @@ class TransactionalViewTests(JSONAssertMixin, TransactionTestCase):
         )
         self.assertValidJSON(resp, expected_status=200)
         self.assertEqual(
-            1, Transcription.objects.filter(pk=t1.pk, submitted__isnull=True).count()
-        )
-        self.assertEqual(
             Asset.objects.get(pk=asset.pk).transcription_status,
             TranscriptionStatus.IN_PROGRESS,
         )
