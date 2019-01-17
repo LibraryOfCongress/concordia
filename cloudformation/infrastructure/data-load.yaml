@@ -1,6 +1,7 @@
 Description:
-  This template deploys a bastion host in each of the public subnets.
-
+  This template deploys a host in a private subnet and loads the most recent
+  database dump to the specified database server.
+  
 Parameters:
 
     EnvironmentName:
