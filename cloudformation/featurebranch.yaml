@@ -1,0 +1,58 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+    Deploy a feature branch to a subdomain of crowd-test.loc.gov
+    using pre-existing infrastructure.
+    Assumes docker images have been published to ECR with 
+    tag matching the feature branch name.
+
+Parameters:
+
+    ConcordiaBranch:
+        Description: which branch name to deploy
+        Type: String
+        Default: release
+    
+    AbbreviatedName:
+        Description: an abbreviation used for creating short-named cloudformation resources
+        Type: String
+        Default: rel
+            
+Resources:
+
+    RDS:
+        Type: AWS::CloudFormation::Stack
+        Properties:
+            TemplateURL: 'https://s3.amazonaws.com/crowd-deployment/infrastructure/rds.yaml'
+            Parameters:
+                DbPassword: '{{resolve:secretsmanager:crowd/test/DB/MasterUserPassword:SecretString:password}}'
+                DatabaseSecurityGroup: 'sg-0496910b800de2869'
+                PrivateSubnet1: 'subnet-0aa55b322229b945a'
+                PrivateSubnet2: 'subnet-0f65558b319b2d4dc'
+
+    ElastiCache:
+        Type: AWS::CloudFormation::Stack
+        Properties:
+            TemplateURL: 'https://s3.amazonaws.com/crowd-deployment/infrastructure/elasticache-feature.yaml'
+            Parameters:
+                EnvironmentName: !Ref AbbreviatedName
+                SecurityGroup: 'sg-028ebfe14211447c4'
+
+    FargateCluster:
+        Type: AWS::CloudFormation::Stack
+        Properties:
+            TemplateURL: 'https://s3.amazonaws.com/crowd-deployment/infrastructure/fargate-featurebranch.yaml'
+            Parameters:
+                EnvName: 'test'
+                FullEnvironmentName: 'test'
+                S3BucketName: 'crowd-test-content'
+                ExportS3BucketName: 'crowd-test-export'
+                ConcordiaVersion: !Ref ConcordiaBranch
+                CanonicalHostName: !Sub '${ConcordiaBranch}.crowd-test.loc.gov'
+                VpcId: 'vpc-018e5a73079d0b350'
+                SecurityGroup: 'sg-04de21574623caca7'
+                RedisAddress: !GetAtt ElastiCache.Outputs.RedisAddress
+                RedisPort: !GetAtt ElastiCache.Outputs.RedisPort
+                MemcachedAddress: !GetAtt ElastiCache.Outputs.MemcachedAddress
+                MemcachedPort: !GetAtt ElastiCache.Outputs.MemcachedPort
+                DatabaseEndpoint: !GetAtt RDS.Outputs.DatabaseHostName

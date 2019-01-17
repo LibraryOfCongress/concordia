@@ -1,0 +1,190 @@
+Description: >
+    This template deploys a fargate cluster to the provided VPC and subnets
+
+Parameters:
+
+    SecurityGroup:
+        Description: Select the Security Group to use for the ECS cluster hosts
+        Type: AWS::EC2::SecurityGroup::Id
+
+    VpcId:
+        Description: The Id of the VPC for this cluster
+        Type: AWS::EC2::VPC::Id
+
+    ConcordiaVersion:
+        Type: String
+        Description: docker tag of concordia app image to pull and deploy
+        Default: latest
+
+    EnvName:
+        Type: String
+        Description: which environment to target
+        AllowedValues:
+            - 'dev'
+            - 'test'
+            - 'stage'
+            - 'prod'
+        ConstraintDescription: Must match a location for secret storage in secretsmanager
+
+    FullEnvironmentName:
+        Type: String
+        Description: Full name of deployment environment
+        AllowedValues:
+            - 'development'
+            - 'test'
+            - 'staging'
+            - 'production'
+
+    RedisAddress:
+        Type: String
+        Description: Redis endpoint address
+
+    RedisPort:
+        Type: String
+        Description: Redis endpoint port
+
+    MemcachedAddress:
+        Type: String
+        Description: memcached endpoint address
+
+    MemcachedPort:
+        Type: String
+        Description: memcached endpoint port
+
+    CanonicalHostName:
+        Type: String
+        Description: canonical host name of the application, e.g. crowd-test.loc.gov
+
+    DatabaseEndpoint:
+        Type: String
+        Description: Host name of the Postgres RDS service
+
+    S3BucketName:
+        Type: String
+        Description: name of the S3 bucket (public) where collection images will be stored
+
+    ExportS3BucketName:
+        Type: String
+        Description: name of the S3 bucket (public) where exported transcriptions will be stored
+
+
+Resources:
+
+  ConcordiaAppLogsGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Ref AWS::StackName
+      RetentionInDays: 30
+
+
+  ConcordiaExternalTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 30
+      HealthCheckPath: /healthz
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 10
+      TargetType: ip
+      Port: 80
+      Protocol: HTTP
+      VpcId: !Ref VpcId
+
+  SubdomainListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      Actions:
+        - TargetGroupArn: !Ref ConcordiaExternalTargetGroup
+          Type: forward
+      Conditions:
+        - Field: host-header
+          Values:
+            - !Ref CanonicalHostName
+      ListenerArn: arn:aws:elasticloadbalancing:us-east-1:619333082511:listener/app/crowd-test/81e4820e354ea810/187fd94e534ad833
+      Priority: 100
+
+  ConcordiaTask:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub crowd-${ConcordiaVersion}
+      Cpu: '2048'
+      Memory: '8192'
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      ExecutionRoleArn: ecsTaskExecutionRole
+      TaskRoleArn: !Sub 'arn:aws:iam::${AWS::AccountId}:role/ConcordiaServerTaskRole-crowd-test'
+      Volumes:
+        - Name: images_volume
+      ContainerDefinitions:
+        - Name: app
+          Cpu: 2048
+          Memory: 8192
+          Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/concordia:${ConcordiaVersion}'
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref 'ConcordiaAppLogsGroup'
+              awslogs-region: !Ref 'AWS::Region'
+              awslogs-stream-prefix: ConcordiaServer
+          Environment:
+              - Name: AWS
+                Value: '1'
+              - Name: ENV_NAME
+                Value: !Ref EnvName
+              - Name: CONCORDIA_ENVIRONMENT
+                Value: !Ref FullEnvironmentName
+              - Name: S3_BUCKET_NAME
+                Value: !Ref S3BucketName
+              - Name: EXPORT_S3_BUCKET_NAME
+                Value: !Ref ExportS3BucketName
+              - Name: CELERY_BROKER_URL
+                Value: pyamqp://guest@localhost:5672
+              - Name: AWS_DEFAULT_REGION
+                Value: !Ref AWS::Region
+              - Name: SENTRY_BACKEND_DSN
+                Value: http://34db819263f34c28809da045f841f045@sentry-internal.devops.cloud/2
+              - Name: SENTRY_FRONTEND_DSN
+                Value: https://48ec47f15e484502a29879e40ed2e0c3@crowd-sentry.loc.gov/3
+              - Name: REDIS_ADDRESS
+                Value: !Ref RedisAddress
+              - Name: REDIS_PORT
+                Value: !Ref RedisPort
+              - Name: MEMCACHED_ADDRESS
+                Value: !Ref MemcachedAddress
+              - Name: MEMCACHED_PORT
+                Value: !Ref MemcachedPort
+              - Name: POSTGRESQL_HOST
+                Value: !Ref DatabaseEndpoint
+              - Name: HOST_NAME
+                Value: !Ref CanonicalHostName
+              - Name: DJANGO_SETTINGS_MODULE
+                Value: concordia.settings_ecs  
+          MountPoints:
+              - SourceVolume: images_volume
+                ContainerPath: /concordia_images
+          PortMappings:
+              - ContainerPort: 80
+                
+  ConcordiaExternalService:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster: crowd-test
+      LaunchType: FARGATE
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 75
+      DesiredCount: 1
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          SecurityGroups:
+            - !Ref SecurityGroup
+          Subnets:
+            - subnet-0aa55b322229b945a
+            - subnet-0f65558b319b2d4dc
+      TaskDefinition: !Ref ConcordiaTask
+      LoadBalancers:
+        - ContainerName: 'app'
+          ContainerPort: 80
+          TargetGroupArn: !Ref ConcordiaExternalTargetGroup

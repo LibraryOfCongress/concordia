@@ -1,0 +1,60 @@
+Description: >
+    This template deploys an elasticache cluster to the provided VPC and subnets
+    
+Parameters:
+
+    EnvironmentName:
+        Description: An environment name that will be prefixed to resource names
+        Type: String
+
+    SecurityGroup:
+        Description: Select the Security Group to use for the ECS cluster hosts
+        Type: AWS::EC2::SecurityGroup::Id
+      
+    CacheNodeType:
+        Type: String
+        Default: cache.m1.small
+
+Resources:
+
+  MemcachedService:
+    Type: AWS::ElastiCache::CacheCluster
+    Properties:
+      VpcSecurityGroupIds:
+        - !Ref 'SecurityGroup'
+      CacheSubnetGroupName: 'crowd-cache-1frtjeewr57u7'
+      CacheNodeType: !Ref 'CacheNodeType'
+      ClusterName: !Sub '${EnvironmentName}-cache'
+      Engine: memcached
+      AutoMinorVersionUpgrade: true
+      NumCacheNodes: 1
+  RedisService:
+    Type: AWS::ElastiCache::CacheCluster
+    Properties:
+      VpcSecurityGroupIds:
+        - !Ref 'SecurityGroup'
+      CacheSubnetGroupName: 'crowd-cache-1frtjeewr57u7'
+      CacheNodeType: !Ref 'CacheNodeType'
+      ClusterName: !Sub '${EnvironmentName}-redis'
+      Engine: redis
+      AutoMinorVersionUpgrade: true
+      NumCacheNodes: 1
+      SnapshotRetentionLimit: 1
+
+Outputs:
+
+  RedisAddress:
+    Description: Redis endpoint address
+    Value: !GetAtt 'RedisService.RedisEndpoint.Address'
+
+  RedisPort:
+    Description: Redis endpoint port
+    Value: !GetAtt 'RedisService.RedisEndpoint.Port'
+
+  MemcachedAddress:
+    Description: memcached endpoint address
+    Value: !GetAtt 'MemcachedService.ConfigurationEndpoint.Address'
+
+  MemcachedPort:
+    Description: memcached endpoint port
+    Value: !GetAtt 'MemcachedService.ConfigurationEndpoint.Port'
