@@ -635,6 +635,16 @@ class AssetDetailView(DetailView):
             ),
         )
 
+        ctx["next_review_asset_url"] = "%s?%s" % (
+            reverse(
+                "transcriptions:redirect-to-next-reviewable-asset",
+                kwargs={"campaign_slug": project.campaign.slug},
+            ),
+            urlencode(
+                {"project": project.slug, "item": item.item_id, "asset": asset.id}
+            ),
+        )
+
         # We'll handle the case where an item with no transcriptions should be
         # shown as status=not_started here so the logic doesn't need to be repeated in
         # templates:
@@ -1120,6 +1130,73 @@ def reserve_asset_transcription(request, *, asset_pk):
 
 @never_cache
 @atomic
+def redirect_to_next_reviewable_asset(request, *, campaign_slug):
+    campaign = get_object_or_404(Campaign.objects.published(), slug=campaign_slug)
+    project_slug = request.GET.get("project", "")
+    item_id = request.GET.get("item", "")
+    asset_id = request.GET.get("asset", 0)
+
+    if not request.user.is_authenticated:
+        user = get_anonymous_user()
+    else:
+        user = request.user
+
+    potential_assets = Asset.objects.select_for_update(skip_locked=True, of=("self",))
+    potential_assets = potential_assets.filter(
+        item__project__campaign=campaign,
+        item__project__published=True,
+        item__published=True,
+        published=True,
+    )
+    potential_assets = potential_assets.filter(
+        transcription_status=TranscriptionStatus.SUBMITTED,
+        assettranscriptionreservation=None,
+    )
+    potential_assets = potential_assets.exclude(transcription__user=request.user.pk)
+    potential_assets = potential_assets.select_related("item", "item__project")
+
+    # We'll favor assets which are in the same item or project as the original:
+    potential_assets = potential_assets.annotate(
+        same_project=Case(
+            When(item__project__slug=project_slug, then=1),
+            default=0,
+            output_field=IntegerField(),
+        ),
+        same_item=Case(
+            When(item__item_id=item_id, then=1), default=0, output_field=IntegerField()
+        ),
+        next_asset=Case(
+            When(pk__gt=asset_id, then=1), default=0, output_field=IntegerField()
+        ),
+    ).order_by("-next_asset", "-same_item", "-same_project", "sequence")
+
+    asset = potential_assets.first()
+    if asset:
+        res = AssetTranscriptionReservation(user=user, asset=asset)
+        res.full_clean()
+        res.save()
+        return redirect(
+            "transcriptions:asset-detail",
+            campaign.slug,
+            asset.item.project.slug,
+            asset.item.item_id,
+            asset.slug,
+        )
+    else:
+        messages.info(
+            request, "There are no remaining pages to be reviewed in this project."
+        )
+
+        if project_slug:
+            return redirect(
+                "transcriptions:project-detail", campaign_slug, project_slug
+            )
+        else:
+            return redirect("transcriptions:campaign-detail", campaign_slug)
+
+
+@never_cache
+@atomic
 def redirect_to_next_transcribable_asset(request, *, campaign_slug):
     campaign = get_object_or_404(Campaign.objects.published(), slug=campaign_slug)
     project_slug = request.GET.get("project", "")
@@ -1164,7 +1241,7 @@ def redirect_to_next_transcribable_asset(request, *, campaign_slug):
         next_asset=Case(
             When(pk__gt=asset_id, then=1), default=0, output_field=IntegerField()
         ),
-    ).order_by("-next_asset", "-unstarted", "-same_project", "-same_item", "sequence")
+    ).order_by("-next_asset", "-unstarted", "-same_item", "-same_project", "sequence")
 
     asset = potential_assets.first()
     if asset:
@@ -1180,7 +1257,7 @@ def redirect_to_next_transcribable_asset(request, *, campaign_slug):
         )
     else:
         messages.info(
-            request, "There are no remaining pages to be transcribed in this project!"
+            request, "There are no remaining pages to be transcribed in this project."
         )
 
         if project_slug:
