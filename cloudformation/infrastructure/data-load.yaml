@@ -11,10 +11,6 @@ Parameters:
           - test
           - stage
           - prod
-    
-    KeyPairName:
-        Description: key pair (within this region) for ECS instances access
-        Type: String
 
     PostgresqlHost:
         Description: the end point of the RDS database host to restore
@@ -77,8 +73,6 @@ Resources:
                     - EnvironmentMapping
                     - IamInstanceProfileName
                     - Ref: EnvironmentName
-            KeyName: 
-                Ref: KeyPairName
             NetworkInterfaces: 
                 - AssociatePublicIpAddress: true
                   DeviceIndex: "0"
