@@ -64,6 +64,7 @@ Resources:
                     - EnvironmentMapping
                     - IamInstanceProfileName
                     - Ref: EnvironmentName
+            InstanceInitiatedShutdownBehavior: terminate
             NetworkInterfaces: 
                 - AssociatePublicIpAddress: true
                   DeviceIndex: "0"
@@ -88,6 +89,7 @@ Resources:
                   echo "${PostgresqlHost}:5432:*:concordia:${PostgresqlPassword}" >> /root/.pgpass
                   chmod 0600 /root/.pgpass
                   pg_restore --create --clean -Fc -U concordia -h ${PostgresqlHost} --dbname=postgres --no-password --no-owner --no-acl concordia.dmp
+                  shutdown -h now
             Tags:
                 - Key: Name
                   Value: !Sub ${EnvironmentName}-DataLoadHost
