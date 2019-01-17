@@ -6,10 +6,6 @@ BUILD_ALL=${BUILD_ALL:=0}
 BUILD_NUMBER=${BUILD_NUMBER:=1}
 TAG=${TAG:-test}
 
-BUILD_ALL=${BUILD_ALL:=0}
-BUILD_NUMBER=${BUILD_NUMBER:=1}
-TAG=${TAG:-test}
-
 # Get an unique venv folder to using *inside* workspace
 VENV=".venv-${BUILD_NUMBER}"
 
@@ -33,12 +29,10 @@ eval "$(aws ecr get-login --no-include-email --region us-east-1)"
 python3 setup.py build
 
 docker build -t concordia .
-
 docker tag concordia:latest "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia:${VERSION_NUMBER}"
 docker tag concordia:latest "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia:${TAG}"
 docker push "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia:${VERSION_NUMBER}"
 docker push "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia:${TAG}"
-
 
 if [ $BUILD_ALL -eq 1 ]; then
 
@@ -67,4 +61,3 @@ if [ $BUILD_ALL -eq 1 ]; then
     docker push "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia/indexer:${TAG}"
 
 fi
-
