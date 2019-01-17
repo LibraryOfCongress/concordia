@@ -1128,6 +1128,35 @@ def reserve_asset_transcription(request, *, asset_pk):
     return HttpResponse(status=204)
 
 
+def redirect_to_next_asset(
+    potential_assets, mode, request, campaign, project_slug, user
+):
+    asset = potential_assets.first()
+    if asset:
+        if mode == "transcribe":
+            res = AssetTranscriptionReservation(user=user, asset=asset)
+            res.full_clean()
+            res.save()
+        return redirect(
+            "transcriptions:asset-detail",
+            campaign.slug,
+            asset.item.project.slug,
+            asset.item.item_id,
+            asset.slug,
+        )
+    else:
+        no_pages_message = "There are no remaining pages to %s in this project"
+
+        messages.info(request, no_pages_message % mode)
+
+        if project_slug:
+            return redirect(
+                "transcriptions:project-detail", campaign.slug, project_slug
+            )
+        else:
+            return redirect("transcriptions:campaign-detail", campaign.slug)
+
+
 @never_cache
 @atomic
 def redirect_to_next_reviewable_asset(request, *, campaign_slug):
@@ -1149,8 +1178,7 @@ def redirect_to_next_reviewable_asset(request, *, campaign_slug):
         published=True,
     )
     potential_assets = potential_assets.filter(
-        transcription_status=TranscriptionStatus.SUBMITTED,
-        assettranscriptionreservation=None,
+        transcription_status=TranscriptionStatus.SUBMITTED
     )
     potential_assets = potential_assets.exclude(transcription__user=request.user.pk)
     potential_assets = potential_assets.select_related("item", "item__project")
@@ -1168,31 +1196,11 @@ def redirect_to_next_reviewable_asset(request, *, campaign_slug):
         next_asset=Case(
             When(pk__gt=asset_id, then=1), default=0, output_field=IntegerField()
         ),
-    ).order_by("-next_asset", "-same_item", "-same_project", "sequence")
+    ).order_by("-next_asset", "-same_project", "-same_item", "sequence")
 
-    asset = potential_assets.first()
-    if asset:
-        res = AssetTranscriptionReservation(user=user, asset=asset)
-        res.full_clean()
-        res.save()
-        return redirect(
-            "transcriptions:asset-detail",
-            campaign.slug,
-            asset.item.project.slug,
-            asset.item.item_id,
-            asset.slug,
-        )
-    else:
-        messages.info(
-            request, "There are no remaining pages to be reviewed in this project."
-        )
-
-        if project_slug:
-            return redirect(
-                "transcriptions:project-detail", campaign_slug, project_slug
-            )
-        else:
-            return redirect("transcriptions:campaign-detail", campaign_slug)
+    redirect_to_next_asset(
+        potential_assets, "review", request, campaign, project_slug, user
+    )
 
 
 @never_cache
@@ -1241,28 +1249,8 @@ def redirect_to_next_transcribable_asset(request, *, campaign_slug):
         next_asset=Case(
             When(pk__gt=asset_id, then=1), default=0, output_field=IntegerField()
         ),
-    ).order_by("-next_asset", "-unstarted", "-same_item", "-same_project", "sequence")
+    ).order_by("-next_asset", "-unstarted", "-same_project", "-same_item", "sequence")
 
-    asset = potential_assets.first()
-    if asset:
-        res = AssetTranscriptionReservation(user=user, asset=asset)
-        res.full_clean()
-        res.save()
-        return redirect(
-            "transcriptions:asset-detail",
-            campaign.slug,
-            asset.item.project.slug,
-            asset.item.item_id,
-            asset.slug,
-        )
-    else:
-        messages.info(
-            request, "There are no remaining pages to be transcribed in this project."
-        )
-
-        if project_slug:
-            return redirect(
-                "transcriptions:project-detail", campaign_slug, project_slug
-            )
-        else:
-            return redirect("transcriptions:campaign-detail", campaign_slug)
+    redirect_to_next_asset(
+        potential_assets, "transcribe", request, campaign, project_slug, user
+    )
