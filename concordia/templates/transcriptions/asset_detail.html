@@ -180,11 +180,13 @@
                                         <a href="{% url 'login' %}?next={{ request.path|urlencode }}">login</a>
                                         to help review
                                     </p>
-                                {% elif transcription.user.pk == user.pk %}
-                                    <p class="help-text">You submitted this transcription for review by another user.</p>
                                 {% else %}
                                     <button id="reject-transcription-button" disabled type="button" class="btn btn-primary" title="Correct errors you see in the text">Edit</button>
-                                    <button id="accept-transcription-button" disabled type="button" class="btn btn-primary" title="Confirm that the text is accurately transcribed">Accept</button>
+                                    {% if transcription.user.pk == user.pk %}
+                                        <p class="help-text">You submitted this transcription for review by another user.</p>
+                                    {% else %}    
+                                        <button id="accept-transcription-button" disabled type="button" class="btn btn-primary" title="Confirm that the text is accurately transcribed">Accept</button>
+                                    {% endif %}
                                 {% endif %}
                             {% endif %}
                         </div>
