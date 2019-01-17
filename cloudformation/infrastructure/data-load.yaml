@@ -33,21 +33,11 @@ Mappings:
             stage: crowd-stage-FargateCluster-1TBKSIZQKLJHV-ConcordiaInstanceProfile-1XG3TR3LY42ND
             prod: crowd-prod-FargateCluster-1X1CI0J3HFJ9F-ConcordiaInstanceProfile-13SHE5FAB7D6Q
 
-        # The ID of the public subnet in the first AZ
-        # Type: AWS::EC2::Subnet::Id
-        PublicSubnet1:
-            dev: subnet-079b5dd4f9acf44e6
-            test: subnet-06f443ea589879e8d
-            stage: subnet-06f40e2fc8d891692
-            prod: subnet-09fdaf1c5c73f588f
-    
-        # The ID of the public subnet in the second AZ
-        # Type: AWS::EC2::Subnet::Id
-        PublicSubnet2:
-            dev: subnet-01d6614725c7dabd6
-            test: subnet-05a15c6058ebdf54f
-            stage: subnet-0a022eb0c614b0b00
-            prod: subnet-01580e2a4d6d42b52
+        PrivateSubnet1:
+            dev: subnet-0c95a830ce007fa65
+            test: subnet-0aa55b322229b945a
+            stage: subnet-0f7c7d66b66d6dd90
+            prod: subnet-0da84976b66c32ce4
 
         # The security group for bastion hosts
         # Type: AWS::EC2::SecurityGroup::Id
@@ -84,7 +74,7 @@ Resources:
                   SubnetId: 
                     Fn::FindInMap: 
                         - EnvironmentMapping
-                        - PublicSubnet1
+                        - PrivateSubnet1
                         - Ref: EnvironmentName
             UserData:
                 Fn::Base64: !Sub |
