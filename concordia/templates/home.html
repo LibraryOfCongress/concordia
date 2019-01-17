@@ -15,6 +15,7 @@
                     <li data-target="#homepage-carousel" data-slide-to="0" class="active"></li>
                     <li data-target="#homepage-carousel" data-slide-to="1"></li>
                     <li data-target="#homepage-carousel" data-slide-to="2"></li>
+                    <li data-target="#homepage-carousel" data-slide-to="3"></li>
                 </ol>
                 <div class="carousel-inner">
                     <div class="carousel-item active" data-title="By the People" data-hero-text="Volunteer to uncover our shared history and make documents more searchable for everyone." data-link-url="{% url 'transcriptions:redirect-to-next-transcribable-asset' 'letters-to-lincoln' %}">
@@ -25,6 +26,9 @@
                     </div>
                     <div class="carousel-item" data-title="Welcome Center" data-hero-text="Learn how to transcribe, review, and tag." data-link-url="{% url 'welcome-guide' %}">
                         <img class="d-block w-100" src="{% static 'img/homepage-carousel/welcome-guide.jpg' %}" alt="Collection of typed report pages by baseball scout Branch Rickey">
+                    </div>
+                    <div class="carousel-item" data-title="Let's Review" data-hero-text="Please help us by reviewing transcriptions" data-link-url="{% url 'transcriptions:redirect-to-next-reviewable-asset' 'letters-to-lincoln' %}">
+                        <img class="d-block w-100" src="{% static 'img/homepage-carousel/crowd-home.jpg' %}" alt="An image that represents reviewing">
                     </div>
                 </div>
                 <a class="carousel-control-prev" href="#homepage-carousel" role="button" data-slide="prev">
@@ -38,7 +42,7 @@
                 <div class="carousel-overlay text-center d-flex flex-column justify-content-around align-items-center">
                     <h1 class="title">By the People</h1>
                     <p class="hero-text mx-auto">Volunteer to uncover our shared history and make documents more searchable for everyone.</p>
-                    <a class="btn btn-primary btn-lg" href="{% url "transcriptions:redirect-to-next-transcribable-asset" 'letters-to-lincoln' %}">LET'S GO!</a>
+                    <a class="btn btn-primary btn-lg" href="{% url 'transcriptions:redirect-to-next-transcribable-asset' 'letters-to-lincoln' %}">LET'S GO!</a>
                 </div>
             </div>
         </div>
