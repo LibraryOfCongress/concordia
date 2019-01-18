@@ -1,0 +1,95 @@
+Description:
+  This template deploys a host in a private subnet and loads the most recent
+  database dump to the specified database server.
+  
+Parameters:
+
+    EnvironmentName:
+        Description: An environment name that will be prefixed to resource names
+        Type: String
+        AllowedValues:
+          - dev
+          - test
+          - stage
+          - prod
+
+    PostgresqlHost:
+        Description: the end point of the RDS database host to restore
+        Type: String
+
+    PostgresqlPassword:
+        Description: the password for the RDS endpoint to restore
+        Type: String
+        NoEcho: true        
+
+Mappings:
+    AWSRegionToAMI:
+        us-east-1:
+            AMI: ami-0080e4c5bc078760e
+    
+    EnvironmentMapping:
+        IamInstanceProfileName:
+            dev: crowd-dev-FargateCluster-WFCY4I0U7JSM-ConcordiaInstanceProfile-RQHLRZADDM9M
+            test: crowd-test-FargateCluster-1R5U1VT4HOYX2-ConcordiaInstanceProfile-1FJXY570ZM2O3
+            stage: crowd-stage-FargateCluster-1TBKSIZQKLJHV-ConcordiaInstanceProfile-1XG3TR3LY42ND
+            prod: crowd-prod-FargateCluster-1X1CI0J3HFJ9F-ConcordiaInstanceProfile-13SHE5FAB7D6Q
+
+        PrivateSubnet1:
+            dev: subnet-0c95a830ce007fa65
+            test: subnet-0aa55b322229b945a
+            stage: subnet-0f7c7d66b66d6dd90
+            prod: subnet-0da84976b66c32ce4
+
+        # The security group for bastion hosts
+        # Type: AWS::EC2::SecurityGroup::Id
+        BastionHostsSecurityGroup:
+            dev: sg-062afe8941ace25ad
+            test: sg-0208b0df704b66c3c
+            stage: sg-0a2175a2df32a4332
+            prod: sg-066c68e77787b2a10
+
+Resources:
+
+    DataLoadHost:
+        Type: AWS::EC2::Instance
+        Properties: 
+            ImageId: 
+                Fn::FindInMap: 
+                - AWSRegionToAMI
+                - Ref: "AWS::Region"
+                - "AMI"
+            InstanceType: "t1.micro"
+            IamInstanceProfile: 
+                Fn::FindInMap: 
+                    - EnvironmentMapping
+                    - IamInstanceProfileName
+                    - Ref: EnvironmentName
+            InstanceInitiatedShutdownBehavior: terminate
+            NetworkInterfaces: 
+                - AssociatePublicIpAddress: true
+                  DeviceIndex: "0"
+                  GroupSet: 
+                    - Fn::FindInMap: 
+                        - EnvironmentMapping
+                        - BastionHostsSecurityGroup
+                        - Ref: EnvironmentName
+                  SubnetId: 
+                    Fn::FindInMap: 
+                        - EnvironmentMapping
+                        - PrivateSubnet1
+                        - Ref: EnvironmentName
+            UserData:
+                Fn::Base64: !Sub |
+                  #!/bin/bash -xe
+                  echo "Running userdata for ${EnvironmentName}"
+                  yum -y update
+                  yum -y install https://download.postgresql.org/pub/repos/yum/9.6/redhat/rhel-6-x86_64/pgdg-ami201503-96-9.6-2.noarch.rpm
+                  yum -y install postgresql96
+                  aws s3 cp s3://crowd-deployment/database-dumps/concordia.latest.dmp concordia.dmp
+                  echo "${PostgresqlHost}:5432:*:concordia:${PostgresqlPassword}" >> /root/.pgpass
+                  chmod 0600 /root/.pgpass
+                  pg_restore --create --clean -Fc -U concordia -h ${PostgresqlHost} --dbname=postgres --no-password --no-owner --no-acl concordia.dmp
+                  shutdown -h now
+            Tags:
+                - Key: Name
+                  Value: !Sub ${EnvironmentName}-DataLoadHost
