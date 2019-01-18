@@ -17,6 +17,15 @@ $ docker-compose up
 
 Browse to [localhost](http://localhost)
 
+If you're intending to edit static resources, templates, etc. and would like to
+enable Django's DEBUG mode ensure that your environment has `DEBUG=true` set
+before you run `docker-compose up` for the `app` container. The easiest way to
+do this permanently is to add it to the `.env` file:
+
+```bash
+$ echo DEBUG=true >> .env
+```
+
 ### Local Development Environment
 
 You will likely want to run the Django development server on your localhost
