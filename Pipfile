@@ -46,7 +46,7 @@ kombu = ">=4.2.2<4.3.0"
 [dev-packages]
 invoke = "*"
 django-extensions = "*"
-black = "*"
+black = "==18.9b0"
 isort = "*"
 django-debug-toolbar = "*"
 "flake8" = "*"
@@ -57,6 +57,3 @@ cfn-lint = "*"
 
 [requires]
 python_version = "3.6"
-
-[pipenv]
-allow_prereleases = true
