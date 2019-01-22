@@ -60,7 +60,7 @@ main {
     min-height: var(--height-main);
 }
 
-h1 {
+h1, .h1 {
     font-family: 'Roboto Slab', serif;
     font-weight: bold;
     color: var(--text-color-primary);
@@ -355,6 +355,17 @@ ul.nav-secondary {
 .btn.disabled,
 .btn:disabled {
     opacity: 0.3 !important;
+}
+
+.btn-primary-alternative {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: var(--text-color-offwhite);
+}
+.btn-primary-alternative:hover {
+    background-color: var(--primary-color-hover);
+    border-color: var(--primary-color-hover);
+    color: var(--text-color-offwhite);
 }
 
 .btn-secondary {

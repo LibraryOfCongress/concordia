@@ -13,28 +13,24 @@
 {% endblock breadcrumbs %}
 
 {% block main_content %}
-<div class="container-fluid py-3">
-    <div class="row">
-        <div class="d-flex flex-wrap col-12 mb-3 justify-content-around">
-            {% for campaign in campaigns %}
-                <div class="bg-lightest-gray w-100 mb-3">
-                    <div class="row">
-                        <div class="col-12 col-md-8 px-3">
-                            <a href="{% url 'transcriptions:campaign-detail' campaign.slug %}">
-                                <h1 class="campaign-title">{{ campaign.title }}</h1>
-                            </a>
-                            {{ campaign.short_description|linebreaksbr }}
-                        </div>
-                        <div class="col-12 col-md-4">
-                            <a href="{% url 'transcriptions:campaign-detail' campaign.slug %}">
-                            <img src="{{ MEDIA_URL }}{{ campaign.thumbnail_image }}" class="img-fluid" alt="{{ campaign.title }} image">
-                            </a>
-                        </div>
-                    </div>
+<div class="container py-3">
+    <h1 class="mb-5 sr-only">Campaigns</h1>
+    <ul class="list-unstyled">
+        {% for campaign in campaigns %}
+        <li class="p-4 mb-1 bg-footer">
+            <h2 class="h1 mb-3">{{ campaign.title }}</h2>
+            <div class="row">
+                <a class="col-md-5 order-md-2" href="{% url 'transcriptions:campaign-detail' campaign.slug %}">
+                    <p class="mb-2 text-center"><img src="{{ MEDIA_URL }}{{ campaign.thumbnail_image }}" class="img-fluid" alt="{{ campaign.title }} image"></p>
+                </a>
+                <div class="col-md">
+                    <p>{{ campaign.short_description|linebreaksbr }}</p>
+                    <a href="{% url 'transcriptions:campaign-detail' campaign.slug %}" class="btn btn-primary-alternative">View Projects</a>
                 </div>
-            {% endfor %}
-        </div>
-    </div>
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
     <div class="row">
         {% include "fragments/standard-pagination.html" %}
     </div>
