@@ -16,9 +16,9 @@ repos:
             args: ['--allow-missing-credentials']
           - id: detect-private-key
           - id: pretty-format-json
-            args: ["--autofix", "--no-sort-keys", "--indent=4"]
+            args: ['--autofix', '--no-sort-keys', '--indent=4']
           - id: mixed-line-ending
-            args: ["--fix=lf"]
+            args: ['--fix=lf']
     - repo: https://github.com/prettier/prettier
       rev: 1.15.3
       hooks:
