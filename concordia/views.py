@@ -1128,35 +1128,6 @@ def reserve_asset_transcription(request, *, asset_pk):
     return HttpResponse(status=204)
 
 
-def redirect_to_next_asset(
-    potential_assets, mode, request, campaign, project_slug, user
-):
-    asset = potential_assets.first()
-    if asset:
-        if mode == "transcribe":
-            res = AssetTranscriptionReservation(user=user, asset=asset)
-            res.full_clean()
-            res.save()
-        return redirect(
-            "transcriptions:asset-detail",
-            campaign.slug,
-            asset.item.project.slug,
-            asset.item.item_id,
-            asset.slug,
-        )
-    else:
-        no_pages_message = "There are no remaining pages to %s in this project"
-
-        messages.info(request, no_pages_message % mode)
-
-        if project_slug:
-            return redirect(
-                "transcriptions:project-detail", campaign.slug, project_slug
-            )
-        else:
-            return redirect("transcriptions:campaign-detail", campaign.slug)
-
-
 @never_cache
 @atomic
 def redirect_to_next_reviewable_asset(request, *, campaign_slug):
@@ -1164,11 +1135,6 @@ def redirect_to_next_reviewable_asset(request, *, campaign_slug):
     project_slug = request.GET.get("project", "")
     item_id = request.GET.get("item", "")
     asset_id = request.GET.get("asset", 0)
-
-    if not request.user.is_authenticated:
-        user = get_anonymous_user()
-    else:
-        user = request.user
 
     potential_assets = Asset.objects.select_for_update(skip_locked=True, of=("self",))
     potential_assets = potential_assets.filter(
@@ -1198,9 +1164,26 @@ def redirect_to_next_reviewable_asset(request, *, campaign_slug):
         ),
     ).order_by("-next_asset", "-same_project", "-same_item", "sequence")
 
-    redirect_to_next_asset(
-        potential_assets, "review", request, campaign, project_slug, user
-    )
+    asset = potential_assets.first()
+    if asset:
+        return redirect(
+            "transcriptions:asset-detail",
+            campaign.slug,
+            asset.item.project.slug,
+            asset.item.item_id,
+            asset.slug,
+        )
+    else:
+        no_pages_message = "There are no remaining pages to review in this project."
+
+        messages.info(request, no_pages_message)
+
+        if project_slug:
+            return redirect(
+                "transcriptions:project-detail", campaign.slug, project_slug
+            )
+        else:
+            return redirect("transcriptions:campaign-detail", campaign.slug)
 
 
 @never_cache
@@ -1251,6 +1234,27 @@ def redirect_to_next_transcribable_asset(request, *, campaign_slug):
         ),
     ).order_by("-next_asset", "-unstarted", "-same_project", "-same_item", "sequence")
 
-    redirect_to_next_asset(
-        potential_assets, "transcribe", request, campaign, project_slug, user
-    )
+    asset = potential_assets.first()
+    if asset:
+        res = AssetTranscriptionReservation(user=user, asset=asset)
+        res.full_clean()
+        res.save()
+
+        return redirect(
+            "transcriptions:asset-detail",
+            campaign.slug,
+            asset.item.project.slug,
+            asset.item.item_id,
+            asset.slug,
+        )
+    else:
+        no_pages_message = "There are no remaining pages to transcribe in this project."
+
+        messages.info(request, no_pages_message)
+
+        if project_slug:
+            return redirect(
+                "transcriptions:project-detail", campaign.slug, project_slug
+            )
+        else:
+            return redirect("transcriptions:campaign-detail", campaign.slug)
