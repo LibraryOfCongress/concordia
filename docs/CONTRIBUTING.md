@@ -41,65 +41,24 @@ If you are proposing a feature:
 
 ### Get Started!
 
-Ready to contribute? Check out our [Developers Guide](https://github.com/LibraryOfCongress/docs/for-developers.md) on how to set up your machine for local development. You'll need Docker and Python 3 with pip and pipenv.
+Ready to contribute? Check out our [Developers’ Guide](https://github.com/LibraryOfCongress/docs/for-developers.md)
+for information about running your own copy of the site and making changes.
 
-1. Fork the `concordia` repo on GitHub.
-2. Clone your fork locally:
+## Contributing Changes
 
-    #### Git Bash
+If you have work which you would like to share with the main project, GitHub has
+a [guide for creating pull requests](https://help.github.com/articles/creating-a-pull-request/)
+as part of their broader help site, which also includes instructions for performing
+common tasks using the Git command-line interface or various desktop interfaces.
 
-    ```
-    $ git clone git@github.com:YOUR_USERNAME/concordia.git
-    ```
-
-    #### GitHub Desktop
-
-    File > Clone Repository > YOUR_USERNAME/concordia
-
-3. Install your local copy to your virtual environment. Follow the instructions in the [Developers Guide](https://github.com/LibraryOfCongress/docs/for-developers.md).
-
-4. Create a branch for local development:
-
-    #### Git Bash
-
-    ```
-    `$ git checkout -b name-of-your-bugfix-or-feature`
-    ```
-
-    #### GitHub Desktop
-
-    Branch > New Branch > NAME_OF_BRANCH > Create new branch
-
-    Now you can make your changes locally.
-
-5. Commit your changes and push your branch to GitHub:
-
-    #### Git Bash
-
-    ```
-    $ git add .
-    $ git commit -m "Your detailed description of your changes."
-    $ git push origin name-of-your-bugfix-or-feature
-    ```
-
-    #### GitHub Desktop
-
-    I. Enter Commit Message
-
-    II. Enter in optional extended description
-
-    III. Select commit to YOUR_BRANCH
-
-    IV. Click Push to Origin
-
-6. Submit a pull request through the GitHub website.
-
-## Pull Request Guidelines
+### Pull Request Guidelines
 
 Before you submit a pull request, check that it meets these guidelines:
 
+1. You should be able and willing to release your code under the same terms as
+   the top-level LICENSE file
 1. The pull request should include tests.
-2. If the pull request adds functionality, the docs should be updated. Put
-   your new functionality into a function with a docstring, and add the
-   feature to the list in README.rst.
-3. The pull request should work for Python `3.6`
+1. If the pull request adds functionality it should be described at a technical
+   level in the code and and user-visible changes should be described in the
+   main README
+

@@ -9,6 +9,8 @@ stack templates.
 
 ## Running Concordia
 
+### Docker Compose
+
 ```bash
 $ git clone https://github.com/LibraryOfCongress/concordia.git
 $ cd concordia
