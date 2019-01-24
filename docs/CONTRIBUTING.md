@@ -62,3 +62,10 @@ Before you submit a pull request, check that it meets these guidelines:
    level in the code and and user-visible changes should be described in the
    main README
 
+## Testing & Accessibility
+
+The [Developers’ Guide](https://github.com/LibraryOfCongress/docs/for-developers.md)
+has instructions about how to run the test suite for Python code and perform various
+front-end tests. Because accessibility is an important topic we additionally have two
+separate documents detailing how we [expect people to be able to use the site](accessibility-goals.md)
+and how we [attempt to enable people to accomplish those goals](accessibility-techniques.md).
