@@ -7,14 +7,25 @@ repos:
     - repo: https://github.com/pre-commit/pre-commit-hooks
       rev: v2.1.0
       hooks:
+          - id: check-byte-order-marker
+          - id: trailing-whitespace
+          - id: check-merge-conflict
           - id: flake8
+          - id: check-json
+          - id: detect-aws-credentials
+            args: ['--allow-missing-credentials']
+          - id: detect-private-key
+          - id: pretty-format-json
+            args: ['--autofix', '--no-sort-keys', '--indent=4']
+          - id: mixed-line-ending
+            args: ['--fix=lf']
     - repo: https://github.com/prettier/prettier
-      rev: 1.15.3
+      rev: 1.16.1
       hooks:
           - id: prettier
             files: \.(css|less|scss|ts|tsx|graphql|gql|json|js|jsx|md)$
     - repo: https://github.com/pre-commit/mirrors-eslint
-      rev: v5.11.1
+      rev: v5.12.1
       hooks:
           - id: eslint
             additional_dependencies:
@@ -22,7 +33,7 @@ repos:
                 - eslint-plugin-prettier@3.0.0
                 - prettier@1.14.3
     - repo: https://github.com/awslabs/cfn-python-lint
-      rev: v0.10.2
+      rev: v0.12.1
       hooks:
           - id: cfn-python-lint
             files: cloudformation/.*\.(json|yml|yaml)$
