@@ -71,20 +71,20 @@
     </div>
 
     <div class="row mt-3">
-        <nav class="w-100">
+        <nav class="w-100" aria-label="pagination">
             <ul class="pagination mx-auto justify-content-center">
                 {% if projects.has_previous %}
                 <li class="page-item">
                     <a class="page-link" href="?page={{ projects.previous_page_number }}">Previous</a>
                 </li>
                 {% else %}
-                <li class="page-item disabled">
+                <li class="page-item disabled" aria-hidden="true">
                     <span class="page-link">Previous</span>
                 </li>
                 {% endif %}
 
                 {% for page_num in paginator.page_range %}
-                <li class="page-item {% if page_num == projects.number %}active{% endif %}">
+                <li class="page-item {% if page_num == projects.number %}active{% endif %}" {% if page_num == projects.number %}aria-current="page"{% endif %}>
                     <a class="page-link" href="?page={{ page_num }}">{{ page_num }}</a>
                 </li>
                 {% endfor %}
@@ -94,7 +94,7 @@
                     <a class="page-link" href="?page={{ projects.next_page_number }}">Next</a>
                 </li>
                 {% else %}
-                <li class="page-item disabled">
+                <li class="page-item disabled" aria-hidden="true">
                     <span class="page-link">Next</span>
                 </li>
                 {% endif %}
