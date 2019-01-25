@@ -17,7 +17,12 @@ Parameters:
         Description: an abbreviation used for creating short-named cloudformation resources
         Type: String
         Default: rel
-            
+    
+    Priority:
+        Type: Number
+        Description: Priority of the subdomain listener rule, must be unique in the set of listener rules
+        Default: 100
+
 Resources:
 
     RDS:
@@ -29,6 +34,15 @@ Resources:
                 DatabaseSecurityGroup: 'sg-0496910b800de2869'
                 PrivateSubnet1: 'subnet-0aa55b322229b945a'
                 PrivateSubnet2: 'subnet-0f65558b319b2d4dc'
+
+    DataLoadHost:
+        Type: AWS::CloudFormation::Stack
+        Properties:
+            TemplateURL: 'https://s3.amazonaws.com/crowd-deployment/infrastructure/data-load.yaml'
+            Parameters:
+                PostgresqlHost: !GetAtt RDS.Outputs.DatabaseHostName
+                PostgresqlPassword: '{{resolve:secretsmanager:crowd/test/DB/MasterUserPassword:SecretString:password}}'
+                EnvironmentName: 'test'
 
     ElastiCache:
         Type: AWS::CloudFormation::Stack
@@ -56,3 +70,4 @@ Resources:
                 MemcachedAddress: !GetAtt ElastiCache.Outputs.MemcachedAddress
                 MemcachedPort: !GetAtt ElastiCache.Outputs.MemcachedPort
                 DatabaseEndpoint: !GetAtt RDS.Outputs.DatabaseHostName
+                Priority: !Ref Priority
