@@ -66,11 +66,6 @@ Parameters:
         Description: which version of the docker images to deploy
         Type: String
         Default: latest
-
-    MyDbPassword:
-        Description: Master database password to use for RDS
-        Type: String
-        NoEcho: true
     
     EnvName:
         Description: which type of environment we are setting up
@@ -143,7 +138,7 @@ Resources:
         Properties:
             TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/rds.yaml"
             Parameters:
-                DbPassword: !Ref MyDbPassword
+                DbPassword: !Sub '{{resolve:secretsmanager:crowd/${EnvName}/DB/MasterUserPassword:SecretString:password}}'
                 DatabaseSecurityGroup: !GetAtt SecurityGroups.Outputs.DatabaseSecurityGroup
                 PrivateSubnet1: !GetAtt VPC.Outputs.PrivateSubnet1
                 PrivateSubnet2: !GetAtt VPC.Outputs.PrivateSubnet2

@@ -67,6 +67,11 @@ Parameters:
         Type: String
         Description: name of the S3 bucket (public) where exported transcriptions will be stored
 
+    Priority:
+        Type: Number
+        Description: Priority of the subdomain listener rule, must be unique in the set of listener rules
+        Default: 100
+
 
 Resources:
 
@@ -102,7 +107,7 @@ Resources:
           Values:
             - !Ref CanonicalHostName
       ListenerArn: arn:aws:elasticloadbalancing:us-east-1:619333082511:listener/app/crowd-test/81e4820e354ea810/187fd94e534ad833
-      Priority: 100
+      Priority: !Ref Priority
 
   ConcordiaTask:
     Type: AWS::ECS::TaskDefinition

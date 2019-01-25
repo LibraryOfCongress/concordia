@@ -33,6 +33,7 @@ services:
             CONCORDIA_ENVIRONMENT: development
             S3_BUCKET_NAME: crowd-dev-content
             DJANGO_SETTINGS_MODULE: concordia.settings_docker
+            DEBUG: ${DEBUG:-}
         depends_on:
             - db
         volumes:
@@ -79,5 +80,5 @@ services:
             - db
 
 volumes:
-    ? db_volume
-    ? images_volume
+    db_volume:
+    images_volume:

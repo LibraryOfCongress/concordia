@@ -88,7 +88,11 @@ def default_cache_control(view_function):
 
 @never_cache
 def healthz(request):
-    status = {"current_time": time.time(), "load_average": os.getloadavg()}
+    status = {
+        "current_time": time.time(),
+        "load_average": os.getloadavg(),
+        "debug": settings.DEBUG,
+    }
 
     # We don't want to query a large table but we do want to hit the database
     # at last once:
