@@ -61,4 +61,3 @@ Before you submit a pull request, check that it meets these guidelines:
 1. If the pull request adds functionality it should be described at a technical
    level in the code and and user-visible changes should be described in the
    main README
-
