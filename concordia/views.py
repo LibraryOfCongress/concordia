@@ -1203,14 +1203,7 @@ def redirect_to_next_reviewable_asset(request, *, campaign_slug):
     ).order_by("-next_asset", "-same_project", "-same_item", "sequence")
 
     return redirect_to_next_asset(
-        potential_assets,
-        "review",
-        request,
-        campaign,
-        project_slug,
-        user,
-        campaign_slug,
-        project_slug,
+        potential_assets, "review", request, campaign, project_slug, user
     )
 
 
@@ -1263,12 +1256,5 @@ def redirect_to_next_transcribable_asset(request, *, campaign_slug):
     ).order_by("-next_asset", "-unstarted", "-same_project", "-same_item", "sequence")
 
     return redirect_to_next_asset(
-        potential_assets,
-        "transcribe",
-        request,
-        campaign,
-        project_slug,
-        user,
-        campaign_slug,
-        project_slug,
+        potential_assets, "transcribe", request, campaign, project_slug, user
     )
