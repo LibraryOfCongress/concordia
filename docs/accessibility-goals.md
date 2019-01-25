@@ -4,7 +4,7 @@
 
 -   Microsoft has a site with a number of resources detailing their “Inclusive Design” strategy: https://www.microsoft.com/design/inclusive/
 
-    Of note is the [Inclusive 101" PDF](https://download.microsoft.com/download/b/0/d/b0d4bf87-09ce-4417-8f28-d60703d672ed/inclusive_toolkit_manual_final.pdf) covering the range of factors which designs should take into account and common strategies.
+    Of note is the [“Inclusive 101” PDF](https://download.microsoft.com/download/b/0/d/b0d4bf87-09ce-4417-8f28-d60703d672ed/inclusive_toolkit_manual_final.pdf) covering the range of factors which designs should take into account and common strategies.
 
     [Kill Your Personas: How persona spectrums champion real user needs](https://medium.com/microsoft-design/kill-your-personas-1c332d4908cc)
     has a longer discussion about avoiding binary thinking when designing
