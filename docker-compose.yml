@@ -52,6 +52,9 @@ services:
         environment:
             POSTGRESQL_HOST: db
             POSTGRESQL_PW: ${POSTGRESQL_PW}
+            S3_BUCKET_NAME: crowd-dev-content
+            DJANGO_SETTINGS_MODULE: concordia.settings_docker
+            DEBUG: ${DEBUG:-}
         depends_on:
             - rabbit
             - db
@@ -64,7 +67,10 @@ services:
             dockerfile: indexer/Dockerfile
         environment:
             POSTGRESQL_HOST: db
+            POSTGRESQL_PW: ${POSTGRESQL_PW}
             ELASTICSEARCH_ENDPOINT: http://localhost:9200
+            DJANGO_SETTINGS_MODULE: concordia.settings_docker
+            DEBUG: ${DEBUG:-}
         depends_on:
             - db
 
@@ -75,6 +81,8 @@ services:
         environment:
             POSTGRESQL_HOST: db
             POSTGRESQL_PW: ${POSTGRESQL_PW}
+            DJANGO_SETTINGS_MODULE: concordia.settings_docker
+            DEBUG: ${DEBUG:-}
         depends_on:
             - rabbit
             - db
