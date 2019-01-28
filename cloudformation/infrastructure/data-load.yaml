@@ -1,7 +1,7 @@
 Description:
   This template deploys a host in a private subnet and loads the most recent
   database dump to the specified database server.
-  
+
 Parameters:
 
     EnvironmentName:
@@ -20,13 +20,13 @@ Parameters:
     PostgresqlPassword:
         Description: the password for the RDS endpoint to restore
         Type: String
-        NoEcho: true        
+        NoEcho: true
 
 Mappings:
     AWSRegionToAMI:
         us-east-1:
             AMI: ami-0080e4c5bc078760e
-    
+
     EnvironmentMapping:
         IamInstanceProfileName:
             dev: crowd-dev-FargateCluster-WFCY4I0U7JSM-ConcordiaInstanceProfile-RQHLRZADDM9M
@@ -52,29 +52,29 @@ Resources:
 
     DataLoadHost:
         Type: AWS::EC2::Instance
-        Properties: 
-            ImageId: 
-                Fn::FindInMap: 
+        Properties:
+            ImageId:
+                Fn::FindInMap:
                 - AWSRegionToAMI
                 - Ref: "AWS::Region"
                 - "AMI"
             InstanceType: "t1.micro"
-            IamInstanceProfile: 
-                Fn::FindInMap: 
+            IamInstanceProfile:
+                Fn::FindInMap:
                     - EnvironmentMapping
                     - IamInstanceProfileName
                     - Ref: EnvironmentName
             InstanceInitiatedShutdownBehavior: terminate
-            NetworkInterfaces: 
+            NetworkInterfaces:
                 - AssociatePublicIpAddress: true
                   DeviceIndex: "0"
-                  GroupSet: 
-                    - Fn::FindInMap: 
+                  GroupSet:
+                    - Fn::FindInMap:
                         - EnvironmentMapping
                         - BastionHostsSecurityGroup
                         - Ref: EnvironmentName
-                  SubnetId: 
-                    Fn::FindInMap: 
+                  SubnetId:
+                    Fn::FindInMap:
                         - EnvironmentMapping
                         - PrivateSubnet1
                         - Ref: EnvironmentName

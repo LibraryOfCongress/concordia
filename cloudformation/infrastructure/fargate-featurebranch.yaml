@@ -165,13 +165,13 @@ Resources:
               - Name: HOST_NAME
                 Value: !Ref CanonicalHostName
               - Name: DJANGO_SETTINGS_MODULE
-                Value: concordia.settings_ecs  
+                Value: concordia.settings_ecs
           MountPoints:
               - SourceVolume: images_volume
                 ContainerPath: /concordia_images
           PortMappings:
               - ContainerPort: 80
-                
+
   ConcordiaExternalService:
     Type: AWS::ECS::Service
     Properties:
