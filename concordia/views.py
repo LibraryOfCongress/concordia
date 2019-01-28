@@ -833,10 +833,10 @@ def review_transcription(request, *, pk):
             {"error": "This transcription has already been reviewed"}, status=400
         )
 
-    if transcription.user.pk == request.user.pk:
-        logger.warning("Attempted self-review for transcription %s", transcription)
+    if transcription.user.pk == request.user.pk and action == "accept":
+        logger.warning("Attempted self-acceptance for transcription %s", transcription)
         return JsonResponse(
-            {"error": "You cannot review your own transcription"}, status=400
+            {"error": "You cannot accept your own transcription"}, status=400
         )
 
     transcription.reviewed_by = request.user

@@ -2,15 +2,15 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >
 
-    This template deploys a VPC, with a pair of public and private subnets spread 
-    across two Availabilty Zones. It deploys an Internet Gateway, with a default 
-    route on the public subnets. It deploys a pair of NAT Gateways (one in each AZ), 
+    This template deploys a VPC, with a pair of public and private subnets spread
+    across two Availabilty Zones. It deploys an Internet Gateway, with a default
+    route on the public subnets. It deploys a pair of NAT Gateways (one in each AZ),
     and default routes for them in the private subnets.
 
     It then deploys a Fargate ECS cluster distributed across multiple
-    Availability Zones. 
+    Availability Zones.
 
-    Finally, it deploys crowd ECS services from containers published in 
+    Finally, it deploys crowd ECS services from containers published in
     Amazon EC2 Container Registry (Amazon ECR).
 Mappings:
     EnvironmentMapping:
@@ -66,7 +66,7 @@ Parameters:
         Description: which version of the docker images to deploy
         Type: String
         Default: latest
-    
+
     EnvName:
         Description: which type of environment we are setting up
         Type: String
@@ -94,7 +94,7 @@ Parameters:
             - "crowd-stage.loc.gov"
             - "crowd-prod.loc.gov"
             - "crowd.loc.gov"
-            
+
 Resources:
 
     VPC:
@@ -117,7 +117,7 @@ Resources:
         Properties:
 #            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/network-acl.yaml" ]]
             TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/network-acl.yaml"
-            Parameters: 
+            Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
                 PublicSubnet1: !GetAtt VPC.Outputs.PublicSubnet1
@@ -129,7 +129,7 @@ Resources:
         Type: AWS::CloudFormation::Stack
         Properties:
             TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/security-groups.yaml"
-            Parameters: 
+            Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
 
@@ -177,6 +177,6 @@ Resources:
 
 Outputs:
 
-    WebsiteServiceUrl: 
+    WebsiteServiceUrl:
         Description: The URL endpoint for the concordia website service
         Value: !Join ["", [ !GetAtt FargateCluster.Outputs.LoadBalancerUrl, "/" ]]

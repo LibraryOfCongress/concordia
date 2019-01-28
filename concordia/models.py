@@ -283,8 +283,13 @@ class Transcription(MetricsModelMixin("transcription"), models.Model):
         return f"Transcription #{self.pk}"
 
     def clean(self):
-        if self.user and self.reviewed_by and self.user == self.reviewed_by:
-            raise ValidationError("Transcriptions cannot be self-reviewed")
+        if (
+            self.user
+            and self.reviewed_by
+            and self.user == self.reviewed_by
+            and self.accepted
+        ):
+            raise ValidationError("Transcriptions cannot be self-accepted")
         if self.accepted and self.rejected:
             raise ValidationError("Transcriptions cannot be both accepted and rejected")
         return super().clean()

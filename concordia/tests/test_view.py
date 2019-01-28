@@ -730,7 +730,25 @@ class TransactionalViewTests(JSONAssertMixin, TransactionTestCase):
         )
         data = self.assertValidJSON(resp, expected_status=400)
         self.assertIn("error", data)
-        self.assertEqual("You cannot review your own transcription", data["error"])
+        self.assertEqual("You cannot accept your own transcription", data["error"])
+
+    def test_transcription_allow_self_reject(self):
+        asset = create_asset()
+
+        self.login_user()
+
+        t1 = Transcription(asset=asset, user=self.user, text="test", submitted=now())
+        t1.full_clean()
+        t1.save()
+
+        resp = self.client.post(
+            reverse("review-transcription", args=(t1.pk,)), data={"action": "reject"}
+        )
+        self.assertValidJSON(resp, expected_status=200)
+        self.assertEqual(
+            Asset.objects.get(pk=asset.pk).transcription_status,
+            TranscriptionStatus.IN_PROGRESS,
+        )
 
     def test_transcription_double_review(self):
         asset = create_asset()
