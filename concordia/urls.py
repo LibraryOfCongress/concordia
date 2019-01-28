@@ -4,6 +4,7 @@ from django.contrib import admin
 from django.http import Http404, HttpResponseForbidden
 from django.urls import include, path
 from django.views.defaults import page_not_found, permission_denied, server_error
+from django.views.generic import RedirectView
 
 from exporter import views as exporter_views
 
@@ -52,6 +53,11 @@ tx_urlpatterns = (
             name="redirect-to-next-transcribable-asset",
         ),
         path(
+            "<slug:campaign_slug>/next-reviewable-asset/",
+            views.redirect_to_next_reviewable_asset,
+            name="redirect-to-next-reviewable-asset",
+        ),
+        path(
             "<slug:campaign_slug>/<slug:slug>/",
             views.ProjectDetailView.as_view(),
             name="project-detail",
@@ -75,7 +81,10 @@ urlpatterns = [
     path("help-center/how-to-review/", views.simple_page, name="how-to-review"),
     path("help-center/how-to-tag/", views.simple_page, name="how-to-tag"),
     path("for-educators/", views.simple_page, name="for-educators"),
-    path("latest/", views.simple_page, name="latest"),
+    path(
+        "latest/",
+        RedirectView.as_view(pattern_name="about", permanent=True, query_string=True),
+    ),
     path("questions/", views.simple_page, name="questions"),
     path("contact/", views.ContactUsView.as_view(), name="contact"),
     path("campaigns/", include(tx_urlpatterns, namespace="transcriptions")),

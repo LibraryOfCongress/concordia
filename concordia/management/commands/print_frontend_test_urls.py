@@ -24,7 +24,6 @@ class Command(BaseCommand):
         paths = [
             reverse("homepage"),
             reverse("about"),
-            reverse("latest"),
             reverse("contact"),
             # Help pages
             reverse("help-center"),
