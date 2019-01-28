@@ -65,7 +65,7 @@ same package versions which you used during development.
 Instead of doing `docker-compose up` as above, instead start everything except the app:
 
 ```bash
-$ docker-compose up -d db rabbit importer
+$ docker-compose up -d db redis importer
 ```
 
 This will run the database in a container to ensure that it always matches the
@@ -135,7 +135,7 @@ virtualenv environment:
 
 #### Import Data
 
-Once the database, rabbitMQ service, importer and the application
+Once the database, redis service, importer and the application
 are running, you're ready to import data.
 First, [create a Django admin user](https://docs.djangoproject.com/en/2.1/intro/tutorial02/#creating-an-admin-user)
 and log in as that user.

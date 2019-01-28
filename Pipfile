@@ -7,7 +7,7 @@ name = "pypi"
 "psycopg2" = "*"
 "psycopg2-binary" = "*"
 gunicorn = "*"
-celery = "*"
+celery = {extras = ["redis"],version = "*"}
 coreapi = "*"
 django-haystack = "*"
 "boto3" = ">=1.9.16"

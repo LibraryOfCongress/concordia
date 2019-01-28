@@ -145,7 +145,7 @@ Resources:
               - Name: EXPORT_S3_BUCKET_NAME
                 Value: !Ref ExportS3BucketName
               - Name: CELERY_BROKER_URL
-                Value: pyamqp://guest@localhost:5672
+                Value: !Sub 'redis://${RedisAddress}:${RedisPort}/0'
               - Name: AWS_DEFAULT_REGION
                 Value: !Ref AWS::Region
               - Name: SENTRY_BACKEND_DSN

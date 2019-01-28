@@ -13,7 +13,7 @@ cd cloudformation
 ./sync_templates.sh
 ```
 
-2.  Read [how to get started with AWS ECR](https://docs.aws.amazon.com/AmazonECR/latest/userguide/ECR_GetStarted.html) and follow the instructions to create three ECR repositories named `concordia`, `concordia/importer` and `rabbitmq`.
+2.  Read [how to get started with AWS ECR](https://docs.aws.amazon.com/AmazonECR/latest/userguide/ECR_GetStarted.html) and follow the instructions to create an ECR repository for each docker image that will be deployed.
 3.  Set a BUILD_NUMBER in your environment and run `./build_containers.sh`
 4.  Create a KMS key for this project.
 5.  Populate the secrets in `create_secrets.sh` and run that script to create a new set of secrets.
