@@ -18,7 +18,6 @@ ENV LANGUAGE=en_US.UTF-8
 
 ENV PYTHONUNBUFFERED 1
 ENV PYTHONPATH /app
-ENV DJANGO_SETTINGS_MODULE=concordia.settings_prod
 
 RUN pip3 install pipenv
 
