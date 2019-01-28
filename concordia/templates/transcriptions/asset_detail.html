@@ -183,7 +183,7 @@
                                 {% else %}
                                     <button id="reject-transcription-button" disabled type="button" class="btn btn-primary" title="Correct errors you see in the text">Edit</button>
                                     {% if transcription.user.pk == user.pk %}
-                                        <p class="help-text">You submitted this transcription. ou submitted this transcription. You can re-open it for editing if you wish to make changes before another volunteer reviews it.</p>
+                                        <p class="help-text">You submitted this transcription. You can re-open it for editing if you wish to make changes before another volunteer reviews it.</p>
                                     {% else %}
                                         <button id="accept-transcription-button" disabled type="button" class="btn btn-primary" title="Confirm that the text is accurately transcribed">Accept</button>
                                     {% endif %}
