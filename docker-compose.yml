@@ -16,7 +16,10 @@ services:
             - db_volume:/var/lib/postgresl/data/
 
     redis:
-        image: redis
+        hostname: redis
+        image: redis:latest
+        ports:
+            - 63791:6379
 
     app:
         build: .

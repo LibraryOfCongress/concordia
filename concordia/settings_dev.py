@@ -17,8 +17,8 @@ DATABASES["default"]["PORT"] = "54323"
 
 ALLOWED_HOSTS = ["127.0.0.1", "0.0.0.0", "*"]
 
-CELERY_BROKER_URL = "pyamqp://guest@localhost"
-CELERY_RESULT_BACKEND = "rpc://"
+CELERY_BROKER_URL = "redis://localhost:63791/0"
+CELERY_RESULT_BACKEND = CELERY_BROKER_URL
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 EMAIL_FILE_PATH = "/tmp/concordia-messages"  # change this to a proper location
