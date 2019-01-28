@@ -53,6 +53,11 @@ tx_urlpatterns = (
             name="redirect-to-next-transcribable-asset",
         ),
         path(
+            "<slug:campaign_slug>/next-reviewable-asset/",
+            views.redirect_to_next_reviewable_asset,
+            name="redirect-to-next-reviewable-asset",
+        ),
+        path(
             "<slug:campaign_slug>/<slug:slug>/",
             views.ProjectDetailView.as_view(),
             name="project-detail",
