@@ -29,7 +29,7 @@ Parameters:
 
     ConcordiaVersion:
         Type: String
-        Description: version of concordia, concordia/importer, and rabbitmq docker images to pull and deploy
+        Description: version of concordia docker images to pull and deploy
         Default: latest
 
     EnvName:
@@ -272,24 +272,12 @@ Resources:
               - Name: HOST_NAME
                 Value: !Ref CanonicalHostName
               - Name: DJANGO_SETTINGS_MODULE
-                Value: concordia.settings_ecs  
+                Value: concordia.settings_ecs
           MountPoints:
               - SourceVolume: images_volume
                 ContainerPath: /concordia_images
           PortMappings:
               - ContainerPort: 80
-        - Name: rabbit
-          Cpu: 1024
-          Memory: 2048
-          Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/rabbitmq:${ConcordiaVersion}'
-          PortMappings:
-            - ContainerPort: 5672
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-group: !Ref 'ConcordiaAppLogsGroup'
-              awslogs-region: !Ref 'AWS::Region'
-              awslogs-stream-prefix: ConcordiaCron
         - Name: importer
           Cpu: 1024
           Memory: 2048
@@ -378,8 +366,8 @@ Resources:
               - Name: HOST_NAME
                 Value: !Ref CanonicalHostName
               - Name: DJANGO_SETTINGS_MODULE
-                Value: concordia.settings_ecs  
-                
+                Value: concordia.settings_ecs
+
   ConcordiaExternalService:
     Type: AWS::ECS::Service
     DependsOn: ExternalLoadBalancerListener

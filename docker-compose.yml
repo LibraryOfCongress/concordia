@@ -15,12 +15,8 @@ services:
             - ./postgresql:/docker-entrypoint-initdb.d
             - db_volume:/var/lib/postgresl/data/
 
-    rabbit:
-        hostname: rabbit
-        image: rabbitmq:latest
-        ports:
-            - 5672:5672
-            - 15672:15672
+    redis:
+        image: redis
 
     app:
         build: .
@@ -40,7 +36,7 @@ services:
             - .:/app
             - images_volume:/concordia_images
         links:
-            - rabbit
+            - redis
 
         ports:
             - 80:80
@@ -53,7 +49,7 @@ services:
             POSTGRESQL_HOST: db
             POSTGRESQL_PW: ${POSTGRESQL_PW}
         depends_on:
-            - rabbit
+            - redis
             - db
         volumes:
             - images_volume:/concordia_images
@@ -76,7 +72,7 @@ services:
             POSTGRESQL_HOST: db
             POSTGRESQL_PW: ${POSTGRESQL_PW}
         depends_on:
-            - rabbit
+            - redis
             - db
 
 volumes:

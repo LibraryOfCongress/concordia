@@ -19,8 +19,8 @@ DJANGO_SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", get_random_secret_key())
 
 EMAIL_BACKEND = "django.core.mail.backends.dummy.EmailBackend"
 
-CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "pyamqp://guest@rabbit:5672")
-CELERY_RESULT_BACKEND = "rpc://"
+# CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "pyamqp://guest@rabbit:5672")
+# CELERY_RESULT_BACKEND = "rpc://"
 
 S3_BUCKET_NAME = os.getenv("S3_BUCKET_NAME")
 
