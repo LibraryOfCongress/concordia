@@ -252,9 +252,9 @@ p.hero-secondary.offwhite-text {
     background-color: var(--bg-darkest-gray);
 
     background-image: linear-gradient(
-            rgba(250, 250, 250, 0.25),
-            rgba(38, 50, 56, 0.25)
-        ),
+        rgba(250, 250, 250, 0.25),
+        rgba(38, 50, 56, 0.25)
+    ),
         linear-gradient(rgba(51, 51, 51, 1), rgba(51, 51, 51, 1));
 }
 
@@ -264,9 +264,9 @@ p.hero-secondary.offwhite-text {
 
 .bg-img-placeholder:hover {
     background-image: linear-gradient(
-            rgba(252, 76, 2, 0.5),
-            rgba(252, 76, 2, 0.1)
-        ),
+        rgba(252, 76, 2, 0.5),
+        rgba(252, 76, 2, 0.1)
+    ),
         linear-gradient(rgba(189, 189, 189, 1), rgba(189, 189, 189, 1));
 }
 
@@ -1211,4 +1211,42 @@ div.related-links {
 /* Registration page */
 #registration-form-container > .col-md-6 {
     max-width: 30rem;
+}
+
+/* print */
+@media print {
+    @page {
+        margin: 0.75in;
+    }
+    body {
+        border-style: none;
+        background-color: transparent;
+        font-size: 14pt;
+    }
+    header .navbar {
+        padding: 0;
+        background-color: transparent;
+    }
+    #navigation-container {
+        border-style: none;
+        padding: 0;
+    }
+    #contribute-container {
+        border-style: none;
+    }
+    #contribute-container #viewer-column {
+        height: 300px;
+    }
+    #contribute-container .gutter-horizontal {
+        display: none;
+    }
+    #contribute-container #editor-column .tx-status-display {
+        font-size: 24px;
+        margin: 2rem 0;
+    }
+    #contribute-container #editor-column .print-transcription-text {
+        display: block !important;
+        white-space: pre-wrap;
+        color: #000;
+    }
 }
