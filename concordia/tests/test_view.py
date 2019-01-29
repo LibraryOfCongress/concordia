@@ -749,6 +749,7 @@ class TransactionalViewTests(JSONAssertMixin, TransactionTestCase):
             Asset.objects.get(pk=asset.pk).transcription_status,
             TranscriptionStatus.IN_PROGRESS,
         )
+        self.assertEqual(Transcription.objects.get(pk=t1.pk).reviewed_by, self.user)
 
     def test_transcription_double_review(self):
         asset = create_asset()
