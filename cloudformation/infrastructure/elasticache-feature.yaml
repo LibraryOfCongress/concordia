@@ -1,6 +1,6 @@
 Description: >
     This template deploys an elasticache cluster to the provided VPC and subnets
-    
+
 Parameters:
 
     EnvironmentName:
@@ -10,7 +10,7 @@ Parameters:
     SecurityGroup:
         Description: Select the Security Group to use for the ECS cluster hosts
         Type: AWS::EC2::SecurityGroup::Id
-      
+
     CacheNodeType:
         Type: String
         Default: cache.m1.small
