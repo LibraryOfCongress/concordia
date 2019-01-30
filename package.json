@@ -4,7 +4,7 @@
         "eslint": "^5.8.0",
         "eslint-plugin-prettier": "^3.0.0",
         "imagemin": "^6.0.0",
-        "imagemin-advpng": "^4.0.0",
+        "imagemin-advpng": "^5.0.0",
         "imagemin-jpegoptim": "^6.0.0",
         "imagemin-jpegtran": "^6.0.0",
         "imagemin-mozjpeg": "^8.0.0",
