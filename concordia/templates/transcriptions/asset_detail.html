@@ -373,18 +373,27 @@
                 <div class="modal-body">
                     <p>
                         This page has been submitted for review.
-                        <br>
-                         You can stay on this page to add tags or go to the next
-                         page needing transcription.
+                    </p>
+                    <p>
+                        What do you want to do next?
                     </p>
                 </div>
-                <div class="modal-footer justify-content-around">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">
-                        Add Tags
-                    </button>
-                    <a class="btn btn-primary" href="{{ next_open_asset_url }}">
-                        Find a new page
-                    </a>
+                <div class="modal-footer d-block text-center">
+                    <p>
+                        <a class="btn btn-primary" href="{{ next_review_asset_url }}">
+                            Review a new page
+                        </a>
+                    </p>
+                    <p>
+                        <a class="btn btn-primary" href="{{ next_open_asset_url }}">
+                            Transcribe a new page
+                        </a>
+                    </p>
+                    <p>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">
+                            Add Tags
+                        </button>
+                    </p>
                 </div>
             </div>
         </div>
