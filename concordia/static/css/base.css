@@ -1237,6 +1237,11 @@ div.related-links {
     #contribute-container #viewer-column {
         height: 300px;
     }
+
+    #asset-image .openseadragon-container {
+        display: none;
+    }
+
     #contribute-container .gutter-horizontal {
         display: none;
     }

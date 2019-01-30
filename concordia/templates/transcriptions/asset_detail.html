@@ -118,7 +118,9 @@
                 </div>
             </div>
 
-            <div id="asset-image" class="h-100 bg-dark"></div>
+            <div id="asset-image" class="h-100 bg-dark">
+                <img class="d-none d-print-block img-fluid" alt="Scanned image of the current content page" src="{% asset_media_url asset %}">
+            </div>
         </div>
 
         <div id="editor-column" class="d-flex flex-column flex-nowrap justify-content-between d-print-block">
