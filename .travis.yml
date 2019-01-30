@@ -30,5 +30,6 @@ script:
     - ./manage.py test concordia importer exporter
     - coverage run ./manage.py test concordia importer exporter
     - git diff --name-only $TRAVIS_COMMIT_RANGE | xargs pre-commit run --files
+    - pipenv check
 after_success:
     - coveralls
