@@ -252,9 +252,9 @@ p.hero-secondary.offwhite-text {
     background-color: var(--bg-darkest-gray);
 
     background-image: linear-gradient(
-        rgba(250, 250, 250, 0.25),
-        rgba(38, 50, 56, 0.25)
-    ),
+            rgba(250, 250, 250, 0.25),
+            rgba(38, 50, 56, 0.25)
+        ),
         linear-gradient(rgba(51, 51, 51, 1), rgba(51, 51, 51, 1));
 }
 
@@ -264,9 +264,9 @@ p.hero-secondary.offwhite-text {
 
 .bg-img-placeholder:hover {
     background-image: linear-gradient(
-        rgba(252, 76, 2, 0.5),
-        rgba(252, 76, 2, 0.1)
-    ),
+            rgba(252, 76, 2, 0.5),
+            rgba(252, 76, 2, 0.1)
+        ),
         linear-gradient(rgba(189, 189, 189, 1), rgba(189, 189, 189, 1));
 }
 
