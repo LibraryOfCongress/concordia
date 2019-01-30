@@ -159,7 +159,7 @@
 
                         <div class="print-transcription-text" aria-hidden="true" style="display: none;">{{ transcription.text }}</div>
 
-                        <div class="my-3 d-flex flex-wrap justify-content-around align-items-center btn-row">
+                        <div class="my-3 d-print-none d-flex flex-wrap justify-content-around align-items-center btn-row">
                             {% if transcription_status == 'not_started' or transcription_status == 'in_progress' %}
                                 <div class="form-check w-100 text-center mt-0 mb-3">
                                     <input id="nothing-to-transcribe" type="checkbox" class="form-check-input" />
