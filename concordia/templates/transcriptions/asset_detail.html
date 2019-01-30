@@ -201,28 +201,30 @@
 
                     <h2>Tags</h2>
 
-                    {% if user.is_authenticated %}
-                        <div class="form-row">
-                            <div class="input-group">
-                                <input type="text" id="new-tag-input" class="form-control" placeholder="Add a new tag…" aria-label="Add a new tag" pattern="[- _'\w]{1,50}">
-                                <div class="input-group-append">
-                                    <button id="new-tag-button" class="btn btn-outline-primary" type="button" title="Add tags to the page">Add</button>
-                                </div>
-                                <div class="invalid-feedback">
-                                    Tags must be between 1-50 characters and may contain only letters, numbers, dashes, underscores, apostrophes, and spaces
+                    <div class="d-print-none">
+                        {% if user.is_authenticated %}
+                            <div class="form-row">
+                                <div class="input-group">
+                                    <input type="text" id="new-tag-input" class="form-control" placeholder="Add a new tag…" aria-label="Add a new tag" pattern="[- _'\w]{1,50}">
+                                    <div class="input-group-append">
+                                        <button id="new-tag-button" class="btn btn-outline-primary" type="button" title="Add tags to the page">Add</button>
+                                    </div>
+                                    <div class="invalid-feedback">
+                                        Tags must be between 1-50 characters and may contain only letters, numbers, dashes, underscores, apostrophes, and spaces
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    {% else %}
-                        <p class="help-text anonymous-only text-center d-print-none">
-                            Want to tag this page?
+                        {% else %}
+                            <p class="help-text anonymous-only text-center d-print-none">
+                                Want to tag this page?
 
-                            <a href="{% url 'registration_register' %}">Register</a>
-                            or
-                            <a href="{% url 'login' %}?next={{ request.path|urlencode }}">login</a>
-                            to add tags.
-                        </p>
-                    {% endif %}
+                                <a href="{% url 'registration_register' %}">Register</a>
+                                or
+                                <a href="{% url 'login' %}?next={{ request.path|urlencode }}">login</a>
+                                to add tags.
+                            </p>
+                        {% endif %}
+                    </div>
 
                     <ul id="current-tags" class="d-flex flex-wrap list-unstyled mb-0">
                         <li id="tag-template" hidden>
