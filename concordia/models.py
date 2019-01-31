@@ -34,7 +34,7 @@ class TranscriptionStatus(object):
     CHOICES = (
         (NOT_STARTED, "Not Started"),
         (IN_PROGRESS, "In Progress"),
-        (SUBMITTED, "Submitted for Review"),
+        (SUBMITTED, "Needs Review"),
         (COMPLETED, "Completed"),
     )
     CHOICE_MAP = dict(CHOICES)
