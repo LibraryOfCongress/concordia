@@ -118,7 +118,6 @@
                 </div>
             </div>
             <div id="asset-image" class="h-100 bg-dark d-print-none"></div>
-            <div class="print-transcription-image d-none d-print-block"><img class="img-fluid" alt="Scanned image of the current content page" src="{% asset_media_url asset %}"></div>
         </div>
 
         <div id="editor-column" class="d-flex flex-column flex-nowrap justify-content-between d-print-block">
@@ -226,7 +225,7 @@
                         {% endif %}
                     </div>
 
-                    <ul id="current-tags" class="d-flex flex-wrap list-unstyled mb-0">
+                    <ul id="current-tags" class="d-flex flex-wrap list-unstyled mb-0 d-print-block">
                         <li id="tag-template" hidden>
                             <label>
                                 <input type="hidden" name="tags" value="" disabled />
@@ -462,6 +461,7 @@
         </form>
     </div>
 </div>
+<div class="print-transcription-image d-none d-print-block"><img class="img-fluid" alt="Scanned image of the current content page" src="{% asset_media_url asset %}"></div>
 {% endblock main_content %}
 
 {% block body_scripts %}
