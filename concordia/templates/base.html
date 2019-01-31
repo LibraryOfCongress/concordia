@@ -31,9 +31,9 @@
     {% endif %}
 </head>
 
-<body class="view-{{ VIEW_NAME_FOR_CSS }} section-{{ PATH_LEVEL_1|default:'homepage' }} environment-{{ CONCORDIA_ENVIRONMENT }} {% block extra_body_classes %}{% endblock %}">
+<body class="view-{{ VIEW_NAME_FOR_CSS }} section-{{ PATH_LEVEL_1|default:'homepage' }} environment-{{ CONCORDIA_ENVIRONMENT }} {% block extra_body_classes %}{% endblock %} d-print-block">
     <header role="banner" aria-label="site navigation">
-        <nav class="navbar navbar-expand-lg flex-row navbar-offwhite bg-offwhite justify-content-between align-items-end">
+        <nav class="navbar navbar-expand-lg flex-row navbar-offwhite bg-offwhite justify-content-between align-items-end d-print-block">
             <div class="navbar-brand d-flex align-items-stretch">
                 <a href="https://www.loc.gov">
                     <img src="{% static 'img/LoC-logo.svg' %}" alt="Library of Congress logo">
@@ -46,11 +46,11 @@
                     </div>
                 </h1>
             </div>
-            <button class="navbar-toggler navbar-light" type="button" data-toggle="collapse" data-target="#nav-menu" aria-controls="nav-menu" aria-expanded="false" aria-label="Toggle navigation">
+            <button class="navbar-toggler navbar-light d-print-none" type="button" data-toggle="collapse" data-target="#nav-menu" aria-controls="nav-menu" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            <div class="collapse navbar-collapse text-center" id="nav-menu">
-                <ul class="navbar-nav ml-auto">
+            <div class="collapse navbar-collapse text-center d-print-none" id="nav-menu">
+                <ul class="navbar-nav ml-auto d-print-none">
                     <li class="nav-item">
                         <a class="nav-link {% if PATH_LEVEL_1 == 'about'%}active{% endif %}" href="{% url 'about' %}">About</a>
                     </li>
@@ -78,7 +78,7 @@
                 </ul>
             </div>
 
-            <ul class="nav-secondary anonymous-only list-unstyled d-none d-lg-flex">
+            <ul class="nav-secondary anonymous-only list-unstyled d-none d-lg-flex d-print-none">
                 <li class="nav-item">
                     <a class="nav-link nav-secondary nav-link-login" href="{% url 'login' %}?next={{ request.path|urlencode }}" rel="nofollow">Login</a>
                 </li>
@@ -88,7 +88,7 @@
             </ul>
         </nav>
     </header>
-    <main class="{% block extra_main_classes %}{% endblock %}">
+    <main class="{% block extra_main_classes %}{% endblock %} d-print-block">
         {% block breadcrumbs-container %}
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb bg-offwhite my-0">

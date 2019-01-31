@@ -23,9 +23,9 @@
 {% block extra_main_classes %}flex-grow-1 d-flex flex-column{% endblock %}
 
 {% block main_content %}
-<div id="contribute-main-content" class="container-fluid flex-grow-1 d-flex flex-column">
-    <div id="navigation-container" class="row p-2">
-        <nav id="asset-navigation" class="d-flex flex-grow-1 justify-content-between align-items-center" role="navigation">
+<div id="contribute-main-content" class="container-fluid flex-grow-1 d-flex flex-column d-print-block">
+    <div id="navigation-container" class="row p-2 d-print-none">
+        <nav id="asset-navigation" class="d-flex flex-grow-1 justify-content-between align-items-center d-print-block" role="navigation">
             <div class="d-flex align-items-center">
                 <form onsubmit="document.location.href = document.getElementById('asset-selection').value; return false">
                     <div class="input-group input-group-sm">
@@ -73,9 +73,9 @@
           </div>
         </nav>
     </div>
-    <div id="contribute-container" class="row flex-grow-1 pb-2">
-        <div id="viewer-column" class="pl-0 d-flex flex-column align-items-stretch bg-dark">
-            <div id="viewer-controls" class="m-1 text-center">
+    <div id="contribute-container" class="row flex-grow-1 pb-2 d-print-block">
+        <div id="viewer-column" class="pl-0 d-flex flex-column align-items-stretch bg-dark d-print-block">
+            <div id="viewer-controls" class="m-1 text-center d-print-none">
                 <div class="d-inline-flex justify-content-between">
                     <div class="d-flex btn-group btn-group-sm m-1">
                         <button id="viewer-home" class="btn btn-default">
@@ -117,12 +117,12 @@
                     </div>
                 </div>
             </div>
-
-            <div id="asset-image" class="h-100 bg-dark"></div>
+            <div id="asset-image" class="h-100 bg-dark d-print-none"></div>
+            <div class="print-transcription-image d-none d-print-block"><img class="img-fluid" alt="Scanned image of the current content page" src="{% asset_media_url asset %}"></div>
         </div>
 
-        <div id="editor-column" class="d-flex flex-column flex-nowrap justify-content-between">
-            <div class="flex-grow-1 d-flex flex-column">
+        <div id="editor-column" class="d-flex flex-column flex-nowrap justify-content-between d-print-block">
+            <div class="flex-grow-1 d-flex flex-column d-print-block">
                 <div class="tx-status-display">
                     <span class="tx-submitted" {% if transcription_status != 'submitted' %}hidden{% endif %}>
                         <span class="fas fa-list"></span>
@@ -146,7 +146,7 @@
                     </span>
                 </div>
 
-                <form id="transcription-editor" class="ajax-submission flex-grow-1 d-flex flex-column" method="post" action="{% url 'save-transcription' asset_pk=asset.pk %}" data-transcription-status="{{ transcription_status }}" {% if transcription %}data-transcription-id="{{ transcription.pk|default:'' }}" {% if transcription.submitted %}data-unsaved-changes="true"{% endif %} data-submit-url="{% url 'submit-transcription' pk=transcription.pk %}" data-review-url="{% url 'review-transcription' pk=transcription.pk %}"{% endif %}>
+                <form id="transcription-editor" class="ajax-submission flex-grow-1 d-flex flex-column d-print-block" method="post" action="{% url 'save-transcription' asset_pk=asset.pk %}" data-transcription-status="{{ transcription_status }}" {% if transcription %}data-transcription-id="{{ transcription.pk|default:'' }}" {% if transcription.submitted %}data-unsaved-changes="true"{% endif %} data-submit-url="{% url 'submit-transcription' pk=transcription.pk %}" data-review-url="{% url 'review-transcription' pk=transcription.pk %}"{% endif %}>
                     {% csrf_token %}
                     <input type="hidden" name="supersedes" value="{{ transcription.pk|default:'' }}" />
 
@@ -165,11 +165,13 @@
                     </h2>
 
                     {% spaceless %}
-                        <textarea readonly class="form-control w-100 rounded flex-grow-1" name="text" id="transcription-input" placeholder="{% if transcription_status == 'not_started' or transcription_status == 'in_progress' %}Go ahead, start typing. You got this!{% else %}Nothing to transcribe{% endif %}" aria-label="Transcription input">
+                        <textarea readonly class="form-control w-100 rounded flex-grow-1 d-print-none" name="text" id="transcription-input" placeholder="{% if transcription_status == 'not_started' or transcription_status == 'in_progress' %}Go ahead, start typing. You got this!{% else %}Nothing to transcribe{% endif %}" aria-label="Transcription input">
                             {{ transcription.text }}
                         </textarea>
 
-                        <div class="my-3 d-flex flex-wrap justify-content-around align-items-center btn-row">
+                        <div class="print-transcription-text" aria-hidden="true" style="display: none;">{{ transcription.text }}</div>
+
+                        <div class="my-3 d-print-none d-flex flex-wrap justify-content-around align-items-center btn-row">
                             {% if transcription_status == 'not_started' or transcription_status == 'in_progress' %}
                                 <div class="form-check w-100 text-center mt-0 mb-3">
                                     <input id="nothing-to-transcribe" type="checkbox" class="form-check-input" />
@@ -211,28 +213,30 @@
 
                     <h2>Tags</h2>
 
-                    {% if user.is_authenticated %}
-                        <div class="form-row">
-                            <div class="input-group">
-                                <input type="text" id="new-tag-input" class="form-control" placeholder="Add a new tag…" aria-label="Add a new tag" pattern="[- _'\w]{1,50}">
-                                <div class="input-group-append">
-                                    <button id="new-tag-button" class="btn btn-outline-primary" type="button" title="Add tags to the page">Add</button>
-                                </div>
-                                <div class="invalid-feedback">
-                                    Tags must be between 1-50 characters and may contain only letters, numbers, dashes, underscores, apostrophes, and spaces
+                    <div class="d-print-none">
+                        {% if user.is_authenticated %}
+                            <div class="form-row">
+                                <div class="input-group">
+                                    <input type="text" id="new-tag-input" class="form-control" placeholder="Add a new tag…" aria-label="Add a new tag" pattern="[- _'\w]{1,50}">
+                                    <div class="input-group-append">
+                                        <button id="new-tag-button" class="btn btn-outline-primary" type="button" title="Add tags to the page">Add</button>
+                                    </div>
+                                    <div class="invalid-feedback">
+                                        Tags must be between 1-50 characters and may contain only letters, numbers, dashes, underscores, apostrophes, and spaces
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    {% else %}
-                        <p class="help-text anonymous-only text-center">
-                            Want to tag this page?
+                        {% else %}
+                            <p class="help-text anonymous-only text-center d-print-none">
+                                Want to tag this page?
 
-                            <a href="{% url 'registration_register' %}">Register</a>
-                            or
-                            <a href="{% url 'login' %}?next={{ request.path|urlencode }}">login</a>
-                            to add tags.
-                        </p>
-                    {% endif %}
+                                <a href="{% url 'registration_register' %}">Register</a>
+                                or
+                                <a href="{% url 'login' %}?next={{ request.path|urlencode }}">login</a>
+                                to add tags.
+                            </p>
+                        {% endif %}
+                    </div>
 
                     <ul id="current-tags" class="d-flex flex-wrap list-unstyled mb-0">
                         <li id="tag-template" hidden>
@@ -265,7 +269,7 @@
             </div>
         </div>
     </div>
-    <div id="help-container" class="row justify-content-center">
+    <div id="help-container" class="row justify-content-center d-print-none">
         <p>Need help?</p>
 
         <button id="instruction-button" class="btn btn-secondary" type="button" data-toggle="collapse" data-target="#instruction-window" aria-expanded="false" aria-controls="instruction-window">
