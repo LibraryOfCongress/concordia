@@ -1,7 +1,7 @@
 import json
 from functools import wraps
 
-from django.template.defaultfilters import slugify
+from django.utils.text import slugify
 
 from concordia.models import Campaign, MediaType
 
@@ -12,7 +12,7 @@ def ensure_slug(original_function):
         title = kwargs.get("title")
         slug = kwargs.get("slug")
         if title and slug is None:
-            kwargs["slug"] = slugify(title)
+            kwargs["slug"] = slugify(title, allow_unicode=True)
 
         return original_function(*args, **kwargs)
 

@@ -3,67 +3,70 @@ from django.conf.urls import url
 from django.contrib import admin
 from django.http import Http404, HttpResponseForbidden
 from django.urls import include, path
+from django.urls.converters import register_converter
 from django.views.defaults import page_not_found, permission_denied, server_error
 from django.views.generic import RedirectView
 
 from exporter import views as exporter_views
 
-from . import views
+from . import converters, views
+
+register_converter(converters.UnicodeSlugConverter, "uslug")
 
 tx_urlpatterns = (
     [
         path("", views.CampaignListView.as_view(), name="campaign-list"),
         path(
-            "<slug:slug>/", views.CampaignDetailView.as_view(), name="campaign-detail"
+            "<uslug:slug>/", views.CampaignDetailView.as_view(), name="campaign-detail"
         ),
         path(
-            "<slug:campaign_slug>/export/csv/",
+            "<uslug:campaign_slug>/export/csv/",
             exporter_views.ExportCampaignToCSV.as_view(),
             name="campaign-export-csv",
         ),
         path(
-            "<slug:campaign_slug>/export/bagit/",
+            "<uslug:campaign_slug>/export/bagit/",
             exporter_views.ExportCampaignToBagit.as_view(),
             name="campaign-export-bagit",
         ),
         path(
-            "<slug:campaign_slug>/<slug:project_slug>/export/bagit/",
+            "<uslug:campaign_slug>/<uslug:project_slug>/export/bagit/",
             exporter_views.ExportProjectToBagIt.as_view(),
             name="project-export-bagit",
         ),
         path(
-            "<slug:campaign_slug>/<slug:project_slug>/<slug:item_id>/export/bagit/",
+            "<uslug:campaign_slug>/<uslug:project_slug>/<slug:item_id>/export/bagit/",
             exporter_views.ExportItemToBagIt.as_view(),
             name="item-export-bagit",
         ),
         path(
-            "<slug:campaign_slug>/report/",
+            "<uslug:campaign_slug>/report/",
             views.ReportCampaignView.as_view(),
             name="campaign-report",
         ),
         path(
-            "<slug:campaign_slug>/<slug:project_slug>/<slug:item_id>/<slug:slug>/",
+            "<uslug:campaign_slug>/<uslug:project_slug>/<slug:item_id>/<uslug:slug>/",
             views.AssetDetailView.as_view(),
             name="asset-detail",
         ),
         # n.b. this must be above project-detail to avoid being seen as a project slug:
         path(
-            "<slug:campaign_slug>/next-transcribable-asset/",
+            "<uslug:campaign_slug>/next-transcribable-asset/",
             views.redirect_to_next_transcribable_asset,
             name="redirect-to-next-transcribable-asset",
         ),
         path(
-            "<slug:campaign_slug>/next-reviewable-asset/",
+            "<uslug:campaign_slug>/next-reviewable-asset/",
             views.redirect_to_next_reviewable_asset,
             name="redirect-to-next-reviewable-asset",
         ),
         path(
-            "<slug:campaign_slug>/<slug:slug>/",
+            "<uslug:campaign_slug>/<uslug:slug>/",
             views.ProjectDetailView.as_view(),
             name="project-detail",
         ),
         path(
-            "<slug:campaign_slug>/<slug:project_slug>/<slug:item_id>/",
+            "<uslug:campaign_slug>/<uslug:project_slug>/<slug:item_id>/",
             views.ItemDetailView.as_view(),
             name="item-detail",
         ),

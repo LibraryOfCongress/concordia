@@ -6,7 +6,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import permission_required
 from django.core.exceptions import ValidationError
 from django.shortcuts import render
-from django.template.defaultfilters import slugify
+from django.utils.text import slugify
 from django.views.decorators.cache import never_cache
 from tabular_export.core import export_to_csv_response, flatten_queryset
 
@@ -74,7 +74,7 @@ def admin_bulk_import_view(request):
                         Campaign,
                         title=campaign_title,
                         defaults={
-                            "slug": slugify(campaign_title),
+                            "slug": slugify(campaign_title, allow_unicode=True),
                             "description": row["Campaign Long Description"] or "",
                             "short_description": row["Campaign Short Description"]
                             or "",
@@ -100,7 +100,7 @@ def admin_bulk_import_view(request):
                         title=project_title,
                         campaign=campaign,
                         defaults={
-                            "slug": slugify(project_title),
+                            "slug": slugify(project_title, allow_unicode=True),
                             "description": row["Project Description"] or "",
                             "campaign": campaign,
                         },

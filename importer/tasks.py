@@ -12,7 +12,7 @@ from urllib.parse import parse_qsl, urlencode, urljoin, urlparse, urlsplit, urlu
 import requests
 from celery import group, task
 from django.db.transaction import atomic
-from django.template.defaultfilters import slugify
+from django.utils.text import slugify
 from django.utils.timezone import now
 from requests.exceptions import HTTPError
 
@@ -329,7 +329,7 @@ def import_item(self, import_item):
         item_asset = Asset(
             item=import_item.item,
             title=asset_title,
-            slug=slugify(asset_title),
+            slug=slugify(asset_title, allow_unicode=True),
             sequence=idx,
             media_url=f"{idx}.jpg",
             media_type=MediaType.IMAGE,

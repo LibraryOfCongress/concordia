@@ -120,6 +120,17 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
         )
         self.assertContains(response, c.title)
 
+    def test_campaign_unicode_slug(self):
+        """Confirm that Unicode characters are usable in Campaign URLs"""
+
+        campaign = create_campaign(title="你好 World")
+
+        self.assertEqual(campaign.slug, "你好-world")
+
+        response = self.client.get(campaign.get_absolute_url())
+
+        self.assertEqual(response.status_code, 200)
+
     def test_concordiaCampaignView_get_page2(self):
         """
         Test GET on route /campaigns/<slug-value>/ (campaign) on page 2
@@ -209,6 +220,17 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
         self.assertEqual(20, response.context["submitted_percent"])
         self.assertEqual(10, response.context["completed_percent"])
 
+    def test_asset_unicode_slug(self):
+        """Confirm that Unicode characters are usable in Asset URLs"""
+
+        asset = create_asset(title="你好 World")
+
+        self.assertEqual(asset.slug, "你好-world")
+
+        response = self.client.get(asset.get_absolute_url())
+
+        self.assertEqual(response.status_code, 200)
+
     def test_asset_detail_view(self):
         """
         This unit test test the GET route /campaigns/<campaign>/asset/<Asset_name>/
@@ -254,6 +276,17 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
         self.assertTemplateUsed(
             response, template_name="transcriptions/project_detail.html"
         )
+
+    def test_project_unicode_slug(self):
+        """Confirm that Unicode characters are usable in Project URLs"""
+
+        project = create_project(title="你好 World")
+
+        self.assertEqual(project.slug, "你好-world")
+
+        response = self.client.get(project.get_absolute_url())
+
+        self.assertEqual(response.status_code, 200)
 
     def test_campaign_report(self):
         """
