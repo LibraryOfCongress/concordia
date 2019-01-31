@@ -1234,14 +1234,8 @@ div.related-links {
     #contribute-container {
         border-style: none;
     }
-    #contribute-container #viewer-column .print-transcription-image {
-        height: 700px;
-        border: thin solid #ccc;
-    }
-    #contribute-container #viewer-column .print-transcription-image img {
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
+    .print-transcription-image {
+        page-break-before: always;
     }
     #contribute-container .gutter-horizontal {
         display: none;
@@ -1261,5 +1255,6 @@ div.related-links {
     #current-tags li {
         background-color: transparent;
         color: #000;
+        display: inline-block;
     }
 }
