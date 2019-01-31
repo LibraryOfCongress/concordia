@@ -5,8 +5,9 @@ set -eu -o pipefail
 BUILD_ALL=${BUILD_ALL:=0}
 BUILD_NUMBER=${BUILD_NUMBER:=1}
 TAG=${TAG:-test}
+PUBLISH_CONTAINERS=${PUBLISH_CONTAINERS:=1}
 
-# Get an unique venv folder to using *inside* workspace
+# Get an unique venv folder to use inside workspace
 VENV=".venv-${BUILD_NUMBER}"
 
 # Initialize new venv
@@ -18,40 +19,45 @@ source "${VENV}/bin/activate"
 pip3 install pipenv
 pipenv install --dev --deploy
 
-AWS_ACCOUNT_ID="$(aws sts get-caller-identity  --output=text --query "Account")"
-
 FULL_VERSION_NUMBER="$(python3 setup.py --version)"
-
 VERSION_NUMBER=$(echo "${FULL_VERSION_NUMBER}" | cut -d '+' -f 1)
 
-eval "$(aws ecr get-login --no-include-email --region us-east-1)"
+if [ $PUBLISH_CONTAINERS -eq 1 ]; then
+    AWS_ACCOUNT_ID="$(aws sts get-caller-identity  --output=text --query "Account")"
+    eval "$(aws ecr get-login --no-include-email --region us-east-1)"
+fi
 
 python3 setup.py build
 
 docker build -t concordia .
-docker tag concordia:latest "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia:${VERSION_NUMBER}"
-docker tag concordia:latest "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia:${TAG}"
-docker push "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia:${VERSION_NUMBER}"
-docker push "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia:${TAG}"
+
+if [ $PUBLISH_CONTAINERS -eq 1 ]; then
+    docker tag concordia:latest "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia:${VERSION_NUMBER}"
+    docker tag concordia:latest "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia:${TAG}"
+    docker push "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia:${VERSION_NUMBER}"
+    docker push "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia:${TAG}"
+fi
 
 if [ $BUILD_ALL -eq 1 ]; then
 
     docker build -t concordia/importer --file importer/Dockerfile .
-    docker tag concordia/importer:latest "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia/importer:${VERSION_NUMBER}"
-    docker tag concordia/importer:latest "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia/importer:${TAG}"
-    docker push "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia/importer:${VERSION_NUMBER}"
-    docker push "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia/importer:${TAG}"
-
     docker build -t concordia/celerybeat --file celerybeat/Dockerfile .
-    docker tag concordia/celerybeat:latest "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia/celerybeat:${VERSION_NUMBER}"
-    docker tag concordia/celerybeat:latest "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia/celerybeat:${TAG}"
-    docker push "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia/celerybeat:${VERSION_NUMBER}"
-    docker push "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia/celerybeat:${TAG}"
-
     docker build -t concordia/indexer --file indexer/Dockerfile .
-    docker tag concordia/indexer:latest "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia/indexer:${VERSION_NUMBER}"
-    docker tag concordia/indexer:latest "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia/indexer:${TAG}"
-    docker push "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia/indexer:${VERSION_NUMBER}"
-    docker push "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia/indexer:${TAG}"
 
+    if [ $PUBLISH_CONTAINERS -eq 1 ]; then
+        docker tag concordia/importer:latest "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia/importer:${VERSION_NUMBER}"
+        docker tag concordia/importer:latest "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia/importer:${TAG}"
+        docker push "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia/importer:${VERSION_NUMBER}"
+        docker push "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia/importer:${TAG}"
+
+        docker tag concordia/celerybeat:latest "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia/celerybeat:${VERSION_NUMBER}"
+        docker tag concordia/celerybeat:latest "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia/celerybeat:${TAG}"
+        docker push "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia/celerybeat:${VERSION_NUMBER}"
+        docker push "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia/celerybeat:${TAG}"
+
+        docker tag concordia/indexer:latest "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia/indexer:${VERSION_NUMBER}"
+        docker tag concordia/indexer:latest "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia/indexer:${TAG}"
+        docker push "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia/indexer:${VERSION_NUMBER}"
+        docker push "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia/indexer:${TAG}"
+    fi
 fi
