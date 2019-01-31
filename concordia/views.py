@@ -380,13 +380,9 @@ def calculate_asset_stats(asset_qs, ctx):
     asset_count = asset_qs.count()
 
     trans_qs = Transcription.objects.filter(asset__in=asset_qs)
-    ctx["contributor_count"] = (
-        User.objects.filter(
-            Q(transcription__in=trans_qs) | Q(transcription_reviewers__in=trans_qs)
-        )
-        .distinct()
-        .count()
-    )
+    ctx["contributor_count"] = User.objects.filter(
+        Q(pk__in=trans_qs.values("user_id")) | Q(pk__in=trans_qs.values("reviewed_by"))
+    ).count()
 
     asset_state_qs = asset_qs.values_list("transcription_status")
     asset_state_qs = asset_state_qs.annotate(Count("transcription_status")).order_by()
