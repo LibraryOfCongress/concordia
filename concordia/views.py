@@ -679,9 +679,9 @@ class AssetDetailView(DetailView):
             .values_list("sequence", "slug")
         )
 
-        ctx["tweet_text"] = (
-            "This is a tweet about this page. #ByThePeople @Crowd_LOC %s"
-            % self.request.build_absolute_uri()
+        ctx["tweet_text"] = quote_plus(
+            "#ByThePeople @Crowd_LOC %s %s"
+            % (asset.item.title, self.request.build_absolute_uri())
         )
         ctx["share_url"] = quote_plus(self.request.build_absolute_uri())
 
