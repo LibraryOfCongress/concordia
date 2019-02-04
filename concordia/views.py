@@ -6,7 +6,7 @@ from datetime import timedelta
 from functools import wraps
 from logging import getLogger
 from smtplib import SMTPException
-from urllib.parse import urlencode
+from urllib.parse import quote_plus, urlencode
 
 import markdown
 from captcha.fields import CaptchaField
@@ -679,10 +679,11 @@ class AssetDetailView(DetailView):
             .values_list("sequence", "slug")
         )
 
-        ctx[
-            "tweet_text"
-        ] = "This is a tweet about this page. https://crowd.loc.gov/healthz"
-        ctx["share_url"] = "https%3A%2F%2Fcrowd.loc.gov%2Fhealthz"
+        ctx["tweet_text"] = (
+            "This is a tweet about this page. #ByThePeople @Crowd_LOC %s"
+            % self.request.build_absolute_uri()
+        )
+        ctx["share_url"] = quote_plus(self.request.build_absolute_uri())
 
         tag_groups = UserAssetTagCollection.objects.filter(asset__slug=asset.slug)
         ctx["tags"] = tags = []
