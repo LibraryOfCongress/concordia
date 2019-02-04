@@ -415,3 +415,23 @@ $tagEditor
 
         displayMessage('error', message, 'tags-save-result');
     });
+
+var $copyUrlButton = $('#copy-url-button');
+$copyUrlButton.tooltip();
+$copyUrlButton.on('click', function() {
+    var $currentAssetUrl = $('#currentAssetUrl');
+    $currentAssetUrl.removeClass('d-none');
+    var currentAssetUrl = document.getElementById('currentAssetUrl');
+    currentAssetUrl.select();
+    document.execCommand('copy');
+    $currentAssetUrl.addClass('d-none');
+});
+$copyUrlButton.on('shown.bs.tooltip', function() {
+    // wait a couple seconds and then hide the tooltip.
+    var hideTooltip = function(tooltipButton) {
+        return function() {
+            tooltipButton.tooltip('hide');
+        };
+    };
+    setTimeout(hideTooltip($(this)), 3000);
+});

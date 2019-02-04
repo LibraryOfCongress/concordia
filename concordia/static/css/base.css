@@ -870,6 +870,10 @@ body.view-transcriptions--asset-detail main,
     background-repeat: no-repeat;
 }
 
+.white {
+    color: #fff;
+}
+
 /* Help Center */
 
 .help-center-card {

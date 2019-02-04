@@ -679,11 +679,13 @@ class AssetDetailView(DetailView):
             .values_list("sequence", "slug")
         )
 
+        ctx["current_asset_url"] = self.request.build_absolute_uri()
+
         ctx["tweet_text"] = quote_plus(
             "#ByThePeople @Crowd_LOC %s %s"
-            % (asset.item.title, self.request.build_absolute_uri())
+            % (asset.item.title, ctx["current_asset_url"])
         )
-        ctx["share_url"] = quote_plus(self.request.build_absolute_uri())
+        ctx["share_url"] = quote_plus(ctx["current_asset_url"])
 
         tag_groups = UserAssetTagCollection.objects.filter(asset__slug=asset.slug)
         ctx["tags"] = tags = []
