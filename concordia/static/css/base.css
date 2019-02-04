@@ -850,6 +850,26 @@ body.view-transcriptions--asset-detail main,
     margin: 0.6rem;
 }
 
+/* Social share icons */
+
+.facebook-icon {
+    display: inline-block;
+    vertical-align: text-top;
+    height: 19px;
+    width: 19px;
+    background-image: url(../img/facebook-icon.png);
+    background-repeat: no-repeat;
+}
+
+.twitter-icon {
+    display: inline-block;
+    vertical-align: text-top;
+    height: 19px;
+    width: 19px;
+    background-image: url(../img/twitter-icon.png);
+    background-repeat: no-repeat;
+}
+
 /* Help Center */
 
 .help-center-card {

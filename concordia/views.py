@@ -679,6 +679,11 @@ class AssetDetailView(DetailView):
             .values_list("sequence", "slug")
         )
 
+        ctx[
+            "tweet_text"
+        ] = "This is a tweet about this page. https://crowd.loc.gov/healthz"
+        ctx["share_url"] = "https%3A%2F%2Fcrowd.loc.gov%2Fhealthz"
+
         tag_groups = UserAssetTagCollection.objects.filter(asset__slug=asset.slug)
         ctx["tags"] = tags = []
 
