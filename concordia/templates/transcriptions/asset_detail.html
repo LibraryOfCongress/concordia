@@ -55,18 +55,18 @@
                 </div>
             </div>
 
-            {% if asset.resource_url %}
-                <div class="btn-group btn-group-sm ml-2">
-                    <a class="btn btn-default" target="_blank" href="{{ asset.resource_url }}?sp={{ asset.sequence }}">View on www.loc.gov</a>
-                </div>
-            {% endif %}
-
             <div class="btn-group btn-group-sm ml-2">
                 <button hidden id="go-fullscreen" class="btn btn-default" data-target="contribute-main-content">
                     <span class="fas fa-arrows-alt"></span>
                     Fullscreen
                 </button>
             </div>
+
+            {% if asset.resource_url %}
+                <div class="btn-group btn-group-sm ml-2">
+                    <a class="btn btn-default" target="_blank" href="{{ asset.resource_url }}?sp={{ asset.sequence }}">View on www.loc.gov <i class="fa fa-external-link-alt"></i></a>
+                </div>
+            {% endif %}
 
             <div class="btn-group btn-group-sm align-self-end" role="navigation" aria-label="Link to the next editable page">
                 <a class="btn btn-default" title="Move to the next page in this item that needs help" href="{{ next_open_asset_url }}">Find a new page &rarr;</a>
