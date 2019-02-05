@@ -1,7 +1,6 @@
 import re
 
 from django import template
-from urllib.parse import quote_plus
 
 register = template.Library()
 
@@ -15,8 +14,3 @@ def normalize_whitespace(text):
     a single space
     """
     return WHITESPACE_NORMALIZER.sub(" ", text)
-
-
-@register.filter
-def urlencode_text(text):
-    return quote_plus(text)
