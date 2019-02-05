@@ -71,13 +71,13 @@
             <div class="btn-group btn-group-sm" role="navigation" aria-label="Links to share this page">
                 <a class="btn btn-default" target="_blank" role="button" title="Share this page on Facebook" href="https://www.facebook.com/share.php?u={{ share_url }}"><span class="facebook-icon"></span></a>
                 <a class="btn btn-default" target="_blank" role="button" title="Share this page on Twitter" href="https://twitter.com/intent/tweet?text={{ tweet_text }}&source=webclient"><span class="twitter-icon"></span></a>
-                <a class="btn btn-default" id="copy-url-button" role="button" data-toggle="tooltip"  data-trigger="click"  data-placement="bottom"  title="This link has been copied."><i class="fas fa-link text-white"></i></a>
+                <a class="btn btn-default" id="copy-url-button" role="button" data-toggle="tooltip"  data-trigger="manual"  data-placement="bottom"  title="Copy this link to your clipboard"><i class="fas fa-link text-white"></i></a>
                 <input type="text" class="d-none" id="currentAssetUrl" name="currentAssetUrl" value="{{ current_asset_url }}" />
             </div>
 
             {% if asset.resource_url %}
-                <div class="btn-group btn-group-sm ml-2" role="navigation" aria-label="Link to view the original item">
-                    <a class="btn btn-default" target="_blank" title="View this item on loc.gov in a new tab" href="{{ asset.resource_url }}?sp={{ asset.sequence }}">View on www.loc.gov <i class="fa fa-external-link-alt"></i></a>
+                <div class="btn-group btn-group-sm ml-2" role="navigation" aria-label="Link to the original source for this item">
+                    <a class="btn btn-default" target="_blank" title="View the original source for this item in a new tab" href="{{ asset.resource_url }}?sp={{ asset.sequence }}">View on www.loc.gov <i class="fa fa-external-link-alt"></i></a>
                 </div>
             {% endif %}
 
