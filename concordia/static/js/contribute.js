@@ -437,11 +437,11 @@ $copyUrlButton.on('click', function() {
         // Show the tooltip with a success message
         tooltipMessage = 'This link has been copied to your clipboard';
         $currentAssetUrl.addClass('d-none');
-        $(this)
+        $copyUrlButton
             .tooltip('dispose')
             .tooltip({title: tooltipMessage})
-            .tooltip('show');
-        $(this).on('shown.bs.tooltip', hideTooltipCallback);
+            .tooltip('show')
+            .on('shown.bs.tooltip', hideTooltipCallback);
     } catch (e) {
         if (typeof Raven != 'undefined') {
             Raven.captureException(e);
@@ -450,12 +450,12 @@ $copyUrlButton.on('click', function() {
         tooltipMessage =
             '<p>Could not access your clipboard.</p><button class="btn btn-light btn-sm" id="dismiss-tooltip-button">Close</button>';
         $currentAssetUrl.addClass('d-none');
-        $(this)
+        $copyUrlButton
             .tooltip('dispose')
             .tooltip({title: tooltipMessage, html: true})
             .tooltip('show');
         $('#dismiss-tooltip-button').on('click', function() {
-            $('#copy-url-button').tooltip('hide');
+            $copyUrlButton.tooltip('hide');
         });
     }
 });
