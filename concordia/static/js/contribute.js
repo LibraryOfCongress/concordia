@@ -1,4 +1,4 @@
-/* global $ displayMessage buildErrorMessage */
+/* global $ displayMessage buildErrorMessage Raven */
 
 function lockControls($container) {
     // Locks all of the controls in the provided jQuery element
@@ -443,6 +443,9 @@ $copyUrlButton.on('click', function() {
             .tooltip('show');
         $(this).on('shown.bs.tooltip', hideTooltipCallback);
     } catch (e) {
+        if (typeof Raven != 'undefined') {
+            Raven.captureException(e);
+        }
         // Display an error message in the tooltip
         tooltipMessage =
             '<p>Could not access your clipboard.</p><button class="btn btn-light btn-sm" id="dismiss-tooltip-button">Close</button>';
