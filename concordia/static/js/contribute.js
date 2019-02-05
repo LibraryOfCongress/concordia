@@ -426,7 +426,6 @@ var hideTooltipCallback = function() {
     setTimeout(hideTooltip($(this)), 3000);
 };
 var $copyUrlButton = $('#copy-url-button');
-$copyUrlButton.tooltip();
 $copyUrlButton.on('click', function() {
     var $currentAssetUrl = $('#currentAssetUrl');
     $currentAssetUrl.removeClass('d-none');
@@ -437,15 +436,23 @@ $copyUrlButton.on('click', function() {
         document.execCommand('copy');
         // Show the tooltip with a success message
         tooltipMessage = 'This link has been copied to your clipboard';
+        $currentAssetUrl.addClass('d-none');
+        $(this)
+            .tooltip('dispose')
+            .tooltip({title: tooltipMessage})
+            .tooltip('show');
+        $(this).on('shown.bs.tooltip', hideTooltipCallback);
     } catch (e) {
         // Display an error message in the tooltip
-        tooltipMessage = 'Could not access your clipboard';
+        tooltipMessage =
+            '<p>Could not access your clipboard.</p><button class="btn btn-light btn-sm" id="dismiss-tooltip-button">Close</button>';
+        $currentAssetUrl.addClass('d-none');
+        $(this)
+            .tooltip('dispose')
+            .tooltip({title: tooltipMessage, html: true})
+            .tooltip('show');
+        $('#dismiss-tooltip-button').on('click', function() {
+            $('#copy-url-button').tooltip('hide');
+        });
     }
-    $currentAssetUrl.addClass('d-none');
-    $(this)
-        .tooltip('dispose')
-        .tooltip({title: tooltipMessage})
-        .tooltip('show');
-    $(this).on('shown.bs.tooltip', hideTooltipCallback);
 });
-$copyUrlButton.on('shown.bs.tooltip', hideTooltipCallback);
