@@ -12,7 +12,7 @@
     <link rel="canonical" href="https://{{ request.get_host }}{{ request.path }}">
     <meta property="og.url" content="https://{{ request.get_host }}{{ request.path }}" />
     <meta property="og.title" content="{{ asset.item.title }}" />
-    <meta property="og.description" content="{{ asset.item.project.short_description }}" />
+    <meta property="og.description" content="{{ asset.item.project.description }}" />
     <meta property="og.type" content="website" />
     <meta property="og.image" content="{% asset_media_url asset %}" />
 {% endblock head_content %}
