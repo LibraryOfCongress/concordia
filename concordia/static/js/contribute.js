@@ -416,17 +416,7 @@ $tagEditor
         displayMessage('error', message, 'tags-save-result');
     });
 
-var $copyUrlButton = $('#copy-url-button');
-$copyUrlButton.tooltip();
-$copyUrlButton.on('click', function() {
-    var $currentAssetUrl = $('#currentAssetUrl');
-    $currentAssetUrl.removeClass('d-none');
-    var currentAssetUrl = document.getElementById('currentAssetUrl');
-    currentAssetUrl.select();
-    document.execCommand('copy');
-    $currentAssetUrl.addClass('d-none');
-});
-$copyUrlButton.on('shown.bs.tooltip', function() {
+var hideTooltipCallback = function() {
     // wait a couple seconds and then hide the tooltip.
     var hideTooltip = function(tooltipButton) {
         return function() {
@@ -434,4 +424,28 @@ $copyUrlButton.on('shown.bs.tooltip', function() {
         };
     };
     setTimeout(hideTooltip($(this)), 3000);
+};
+var $copyUrlButton = $('#copy-url-button');
+$copyUrlButton.tooltip();
+$copyUrlButton.on('click', function() {
+    var $currentAssetUrl = $('#currentAssetUrl');
+    $currentAssetUrl.removeClass('d-none');
+    var currentAssetUrl = document.getElementById('currentAssetUrl');
+    currentAssetUrl.select();
+    var tooltipMessage = '';
+    try {
+        document.execCommand('copy');
+        // Show the tooltip with a success message
+        tooltipMessage = 'This link has been copied to your clipboard';
+    } catch (e) {
+        // Display an error message in the tooltip
+        tooltipMessage = 'Could not access your clipboard';
+    }
+    $currentAssetUrl.addClass('d-none');
+    $(this)
+        .tooltip('dispose')
+        .tooltip({title: tooltipMessage})
+        .tooltip('show');
+    $(this).on('shown.bs.tooltip', hideTooltipCallback);
 });
+$copyUrlButton.on('shown.bs.tooltip', hideTooltipCallback);
