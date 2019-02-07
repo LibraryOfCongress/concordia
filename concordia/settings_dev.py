@@ -45,3 +45,9 @@ SHELL_PLUS_PRE_IMPORTS = [
     ("concordia.utils", "get_anonymous_user"),
     ("concordia.models", "TranscriptionStatus"),
 ]
+
+S3_BUCKET_NAME = "crowd-dev-content"
+DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+AWS_STORAGE_BUCKET_NAME = S3_BUCKET_NAME
+AWS_DEFAULT_ACL = None  # Don't set an ACL on the files, inherit the bucket ACLs
+MEDIA_URL = "https://%s.s3.amazonaws.com/" % S3_BUCKET_NAME
