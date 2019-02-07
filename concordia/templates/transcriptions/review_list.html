@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% load humanize %}
+{% load staticfiles %}
+{% load concordia_media_tags %}
+
+{% block title %}
+Things to Review
+{% endblock title %}
+
+{% block head_content %}
+    <link rel="canonical" href="https://{{ request.get_host }}{{ request.path }}">
+{% endblock head_content %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item active" aria-current="page" title="Things to review">Things to review</li>
+{% endblock breadcrumbs%}
+
+{% block main_content %}
+<div class="container py-3">
+    <div class="card-deck justify-content-center align-items-center align-items-sm-stretch">
+        {% for a in assets %}
+            {% url 'transcriptions:asset-detail' a.item.project.campaign.slug a.item.project.slug a.item.item_id a.slug as asset_detail_url %}
+
+            <div class="card concordia-object-card" data-transcription-status="{{ a.transcription_status }}">
+                <a class="card-img-container" href="{{ asset_detail_url }}">
+                    <img class="card-img" alt="{{ a.slug }}" src="{% asset_media_url a %}">
+                </a>
+
+                <a class="card-title" href="{{ asset_detail_url }}">
+                    #{{ a.sequence }}
+                </a>
+
+                <div class="card-actions">
+                    <a class="btn btn-sm btn-block btn-default" href="{{ asset_detail_url }}">
+                            <span class="fas fa-list tx-submitted"></span>
+                            Review
+                    </a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock main_content %}
+
