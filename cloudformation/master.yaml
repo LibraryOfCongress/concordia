@@ -92,7 +92,6 @@ Parameters:
             - "crowd-dev.loc.gov"
             - "crowd-test.loc.gov"
             - "crowd-stage.loc.gov"
-            - "crowd-prod.loc.gov"
             - "crowd.loc.gov"
 
 Resources:
