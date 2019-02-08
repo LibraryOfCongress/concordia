@@ -1,3 +1,4 @@
+/* global OpenSeadragon */
 /* eslint-disable no-console */
 
 let $ = (selector, scope = document) => scope.querySelector(selector);
@@ -37,6 +38,11 @@ export class ActionApp {
     setupAssetList() {
         this.assetList = $('#asset-list');
 
+        /*
+            This is used to lazy-load asset images. Note that we use the image
+            as the background-image value because browsers load/unload invisible
+            images from memory for us, unlike a regular <img> tag.
+        */
         this.assetListObserver = new IntersectionObserver(entries => {
             entries
                 .filter(i => i.isIntersecting)
@@ -48,11 +54,35 @@ export class ActionApp {
                     this.assetListObserver.unobserve(target);
                 });
         });
+
+        this.assetList.addEventListener('click', evt => {
+            let target = evt.target;
+            if (target && target.classList.contains('asset')) {
+                this.openViewer(target);
+                return false;
+            }
+        });
     }
 
     setupAssetViewer() {
         this.assetViewer = $('#asset-viewer');
-        console.warn('setupAssetViewer is unimplemented');
+        this.seadragonViewer = new OpenSeadragon({
+            id: 'asset-image',
+            prefixUrl:
+                'https://cdnjs.cloudflare.com/ajax/libs/openseadragon/2.4.0/images/',
+            gestureSettingsTouch: {
+                pinchRotate: true
+            },
+            showNavigator: true,
+            showRotationControl: true,
+            toolbar: 'viewer-controls',
+            zoomInButton: 'viewer-zoom-in',
+            zoomOutButton: 'viewer-zoom-out',
+            homeButton: 'viewer-home',
+            fullPageButton: 'viewer-full-page',
+            rotateLeftButton: 'viewer-rotate-left',
+            rotateRightButton: 'viewer-rotate-right'
+        });
     }
 
     fetchAssetData() {
@@ -82,12 +112,13 @@ export class ActionApp {
     }
 
     createAsset(assetData) {
-        this.assets.push(assetData);
+        let newIdx = this.assets.push(assetData);
 
         let assetElement = document.createElement('div');
         assetElement.id = assetData.id;
         assetElement.classList.add('asset', 'rounded');
         assetElement.dataset.image = assetData.thumbnail;
+        assetElement.dataset.idx = newIdx;
 
         assetElement.title = `${assetData.title} (${assetData.project.title})`;
 
@@ -100,5 +131,22 @@ export class ActionApp {
         $$('.asset', this.assetList).forEach(elem => {
             console.log('FIXME: implement visibility checks for', elem.id);
         });
+    }
+
+    openViewer(assetElement) {
+        let asset = this.assets[assetElement.dataset.idx];
+
+        $$('.asset-title', this.assetViewer).forEach(
+            i => (i.innerText = asset.title)
+        );
+        $('textarea', this.assetViewer).innerText = 'Loading…';
+
+        this.assetViewer.classList.remove('d-none');
+
+        if (this.seadragonViewer.isOpen()) {
+            this.seadragonViewer.close();
+        }
+
+        this.seadragonViewer.open({type: 'image', url: asset.thumbnail});
     }
 }
