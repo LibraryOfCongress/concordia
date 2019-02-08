@@ -680,11 +680,14 @@ class AssetDetailView(DetailView):
         )
 
         tag_groups = UserAssetTagCollection.objects.filter(asset__slug=asset.slug)
-        ctx["tags"] = tags = set()
+
+        tags = set()
 
         for tag_group in tag_groups:
             for tag in tag_group.tags.all():
                 tags.add(tag.value)
+
+        ctx["tags"] = sorted(tags)
 
         return ctx
 
