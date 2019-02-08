@@ -10,6 +10,7 @@
 {% endblock head_content %}
 
 {% block body_scripts %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/openseadragon/2.4.0/openseadragon.min.js" integrity="sha256-grVJpqgDSGBx1q2llmvY+J5zU9hEHbO7UvftFY2bK1w=" crossorigin="anonymous"></script>
     <script type="module">
         import { ActionApp } from "{% static 'js/action-app/index.js' %}";
         window.actionApp = new ActionApp({
@@ -53,11 +54,73 @@
     </header>
     <main id="action-app-main" class="d-flex flex-column">
         <div id="editor-topnav">
-            <div id="asset-metadata"></div>
+            <div id="asset-metadata">
+                <h2 class="asset-title"></h2>
+            </div>
         </div>
-        <div id="editor-main" class="p-1">
-            <div id="asset-list"></div>
-            <div id="asset-viewer"></div>
+        <div id="editor-main" class="p-1 d-flex">
+            <div id="asset-list" class="flex-grow-1"></div>
+            <div id="asset-viewer" class="d-none flex-grow-1">
+                <div id="contribute-container" class="flex-grow-1 d-flex h-100">
+                    <div id="viewer-column" class="pl-0 d-flex flex-column align-items-stretch bg-dark d-print-block">
+                        <div id="viewer-controls" class="m-1 text-center d-print-none">
+                            <div class="d-inline-flex justify-content-between">
+                                <div class="d-flex btn-group btn-group-sm m-1">
+                                    <button id="viewer-home" class="btn btn-default">
+                                        <span class="fas fa-compress"></span>
+                                        <span class="sr-only">Home</span>
+                                    </button>
+                                </div>
+                                <div class="d-flex btn-group btn-group-sm m-1">
+                                    <button id="viewer-zoom-in" class="btn btn-default">
+                                        <span class="fas fa-search-plus"></span>
+                                        <span class="sr-only">Zoom In</span>
+                                    </button>
+                                    <button id="viewer-zoom-out" class="btn btn-default">
+                                        <span class="fas fa-search-minus"></span>
+                                        <span class="sr-only">Zoom Out</span>
+                                    </button>
+                                </div>
+                                <div class="d-flex btn-group btn-group-sm m-1">
+                                    <button id="viewer-rotate-left" class="btn btn-default">
+                                        <span class="fas fa-undo"></span>
+                                        <span class="sr-only">Rotate Left</span>
+                                    </button>
+                                    <button id="viewer-rotate-right" class="btn btn-default">
+                                        <span class="fas fa-redo"></span>
+                                        <span class="sr-only">Rotate Right</span>
+                                    </button>
+                                </div>
+                                <div class="d-flex btn-group btn-group-sm m-1">
+                                    <button id="viewer-full-page" class="btn btn-default">
+                                        <span class="fas fa-expand"></span>
+                                        <span class="sr-only">Full Page</span>
+                                    </button>
+                                </div>
+
+                                <div class="d-flex btn-group btn-group-sm m-1">
+                                    <button type="button" class="btn btn-default" data-toggle="modal" data-target="#keyboard-help-modal">
+                                        <span class="fas fa-question-circle" aria-label="Open Help"></span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="asset-image" class="h-100 bg-dark"></div>
+                    </div>
+
+                    <div id="editor-column" class="d-flex flex-column flex-nowrap justify-content-between h-100">
+                        <div class="flex-grow-1 d-flex flex-column">
+                            <form id="transcription-editor" class="flex-grow-1">
+                                {% csrf_token %}
+
+                                <textarea readonly class="form-control h-100 w-100 rounded flex-grow-1 d-print-none" name="text" id="transcription-input" placeholder="{% if transcription_status == 'not_started' or transcription_status == 'in_progress' %}Go ahead, start typing. You got this!{% else %}Nothing to transcribe{% endif %}" aria-label="Transcription input">
+                                </textarea>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </main>
     <footer id="action-app-footer" class="footer bg-light">
