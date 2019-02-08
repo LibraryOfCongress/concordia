@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% load staticfiles %}
+
+{% block title %}🥞{% endblock title %}
+
+{% block head_content %}
+    <link rel="canonical" href="https://{{ request.get_host }}{{ request.path }}">
+    <link rel="stylesheet" href="{% static 'css/action-app.css' %}">
+{% endblock head_content %}
+
+{% block body_scripts %}
+    <script type="module">
+        import { ActionApp } from "{% static 'js/action-app/index.js' %}";
+        window.actionApp = new ActionApp({
+            assetDataUrlTemplate: "/{action}.json"
+        });
+    </script>
+{% endblock body_scripts %}
+
+{% comment %} This app is close to a full-screen view so we suppress the standard header & footer {% endcomment %}
+{% block site-header %}{% endblock site-header %}
+{% block site-footer %}{% endblock site-footer %}
+
+{% block site-main %}
+    <header id="action-app-header">
+        <nav id="action-app-global-controls" class="navbar navbar-dark bg-dark" role="navigation">
+            <span class="navbar-brand mb-0 h1">🥞</span>
+            <ul class="navbar-nav ml-5 mr-auto">
+                <li class="navbar-item text-white">
+                    {% comment %} This could use some re-thinking but … not now {% endcomment %}
+                    <form class="form-inline">
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">I want to:</span>
+                            </div>
+
+                            <div id="activity-mode-selection" class="btn-group" role="group" aria-label="Activity mode">
+                                <button type="button" class="btn btn-outline-primary" value="transcribe">Transcribe</button>
+                                <button type="button" class="btn btn-outline-primary active" value="review">Review</button>
+                                <button type="button" class="btn btn-outline-primary" value="tag">Tag</button>
+                            </div>
+                        </div>
+                    </form>
+                </li>
+            </ul>
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="#">↩Home <span class="sr-only">(current)</span></a>
+                </li>
+            </ul>
+        </nav>
+    </header>
+    <main id="action-app-main" class="d-flex flex-column">
+        <div id="editor-topnav">
+            <div id="asset-metadata"></div>
+        </div>
+        <div id="editor-main">
+            <div id="asset-list"></div>
+            <div id="asset-viewer"></div>
+        </div>
+    </main>
+    <footer id="action-app-footer" class="footer bg-light">
+        <div class="container">
+            <div class="m-auto text-center text-muted">
+                Displaying <span id="asset-count">0</span> assets
+            <div>
+        </div>
+    </footer>
+{% endblock site-main %}
+
