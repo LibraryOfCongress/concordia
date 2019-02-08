@@ -1351,3 +1351,7 @@ class TranscribeListAPIView(APIViewMixin, TranscribeListView):
 
 class ReviewListAPIView(APIViewMixin, ReviewListView):
     pass
+
+
+def action_app(request):
+    return render(request, "action-app.html", {})
