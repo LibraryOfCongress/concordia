@@ -1277,20 +1277,20 @@ def redirect_to_next_transcribable_asset(request, *, campaign_slug):
 class TranscribeListView(ListView):
     template_name = "transcriptions/transcribe_list.html"
     context_object_name = "assets"
-
-    def get_queryset(self):
-        assets = Asset.objects.published().filter(
-            transcription_status=TranscriptionStatus.NOT_STARTED
-        )[:50]
-        return assets
+    paginate_by = 50
+    queryset = (
+        Asset.objects.published()
+        .filter(transcription_status=TranscriptionStatus.NOT_STARTED)
+        .select_related("item", "item__project", "item__project__campaign")
+    )
 
 
 class ReviewListView(ListView):
     template_name = "transcriptions/review_list.html"
     context_object_name = "assets"
-
-    def get_queryset(self):
-        assets = Asset.objects.published().filter(
-            transcription_status=TranscriptionStatus.SUBMITTED
-        )[:50]
-        return assets
+    paginate_by = 50
+    queryset = (
+        Asset.objects.published()
+        .filter(transcription_status=TranscriptionStatus.SUBMITTED)
+        .select_related("item", "item__project", "item__project__campaign")
+    )
