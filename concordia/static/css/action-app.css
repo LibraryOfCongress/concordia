@@ -1,0 +1,38 @@
+body.view-action-app {
+    height: 100vh;
+    max-height: 100vh;
+
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex-shrink: 1;
+    max-height: inherit;
+}
+
+#editor-main {
+    max-height: 100%;
+}
+
+#asset-list {
+    max-height: 100%;
+    overflow-y: scroll;
+
+    display: grid;
+    column-gap: 1rem;
+    row-gap: 1rem;
+
+    grid-template-columns: repeat(auto-fill, 256px);
+    grid-template-rows: auto;
+
+    justify-content: center;
+}
+
+#asset-list .asset {
+    display: block;
+    width: 256px;
+    height: 256px;
+
+    background-size: contain;
+}
