@@ -138,7 +138,15 @@ disable=print-statement,
         xreadlines-attribute,
         deprecated-sys-function,
         exception-escape,
-        comprehension-escape
+        comprehension-escape,
+        attribute-defined-outside-init,
+        missing-docstring,
+        too-few-public-methods,
+        too-many-ancestors,
+        # We use Black:
+        format,
+        # This is worded as if it's a bug but it's just a dubious aesthetic preference:
+        no-else-return
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
@@ -182,7 +190,6 @@ max-nested-blocks=5
 # it will be considered as an explicit return statement and no message will be
 # printed.
 never-returning-functions=sys.exit
-
 
 [LOGGING]
 
@@ -417,9 +424,11 @@ function-naming-style=snake_case
 good-names=i,
            j,
            k,
+           v,
            ex,
            Run,
-           _
+           _,
+           pk
 
 # Include a hint for the correct naming format with invalid-name.
 include-naming-hint=no
