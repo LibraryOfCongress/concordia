@@ -54,6 +54,8 @@ coverage = "*"
 pre-commit = "*"
 pylint = "*"
 cfn-lint = "*"
+pylint-django = "*"
+pylint-celery = "*"
 
 [requires]
 python_version = "3.6"
