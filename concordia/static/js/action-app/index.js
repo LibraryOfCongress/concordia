@@ -86,7 +86,7 @@ export class ActionApp {
 
         let assetElement = document.createElement('div');
         assetElement.id = assetData.id;
-        assetElement.classList.add('asset');
+        assetElement.classList.add('asset', 'rounded');
         assetElement.dataset.image = assetData.thumbnail;
 
         assetElement.title = `${assetData.title} (${assetData.project.title})`;
