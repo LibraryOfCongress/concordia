@@ -202,6 +202,8 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         choices=TranscriptionStatus.CHOICES,
     )
 
+    difficulty = models.PositiveIntegerField(blank=True, null=True)
+
     class Meta:
         unique_together = (("slug", "item"),)
 
