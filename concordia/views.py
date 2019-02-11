@@ -1291,7 +1291,10 @@ class TranscribeListView(ListView):
     queryset = (
         Asset.objects.published()
         .order_by("pk")
-        .filter(transcription_status=TranscriptionStatus.NOT_STARTED)
+        .filter(
+            Q(transcription_status=TranscriptionStatus.NOT_STARTED)
+            | Q(transcription_status=TranscriptionStatus.IN_PROGRESS)
+        )
         .select_related("item", "item__project", "item__project__campaign")
     )
 
