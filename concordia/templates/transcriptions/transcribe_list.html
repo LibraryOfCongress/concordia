@@ -20,19 +20,10 @@ Things to Transcribe
 {% block main_content %}
 <div class="container py-3">
     <div class="row">
-
-        <div class="col-sm">
-        <ul>
-        <li>{{ transcribe_count|intcomma }} things to transcribe</li>
-        <li><a href="/review">{{ review_count|intcomma }} things to review</a></li>
-        </ul>
-        </div>
-
         {% include "fragments/activity-filter-sort.html" %}
     </div>
 
     <div class="row">
-
         {% include "fragments/standard-pagination.html" %}
     </div>
 
