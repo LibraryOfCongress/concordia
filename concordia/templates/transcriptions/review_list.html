@@ -4,6 +4,7 @@
 {% load staticfiles %}
 {% load concordia_media_tags %}
 
+
 {% block title %}
 Things to Review
 {% endblock title %}
@@ -18,6 +19,19 @@ Things to Review
 
 {% block main_content %}
 <div class="container py-3">
+
+
+    <div class="row">
+
+
+        {% include "fragments/activity-filter-sort.html" %}
+
+    </div>
+
+    <div class="row">
+        {% include "fragments/standard-pagination.html" %}
+    </div>
+
     <div class="card-deck justify-content-center align-items-center align-items-sm-stretch">
         {% for a in assets %}
             {% url 'transcriptions:asset-detail' a.item.project.campaign.slug a.item.project.slug a.item.item_id a.slug as asset_detail_url %}
