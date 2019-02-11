@@ -1,0 +1,23 @@
+        {% load bittersweet_querystring %}
+        <div class="col-sm">
+            <ul>
+                <li><a href="/transcribe">Transcribe</a></li>
+                <li><a href="/review">Review</a></li>
+            </ul>
+        </div>
+        <div class="col-sm">
+            Filter by campaign:
+            <ul>
+                {% for c in campaigns %}
+                    <li><a href="?{% qs_alter request.GET campaign_filter=c.pk %}">{{ c.title }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="col-sm">
+            Sort by:
+            <ul>
+            <li><a href="?{% qs_alter request.GET order_by="pk" %}">None</a></li>
+            <li><a href="?{% qs_alter request.GET order_by="-difficulty" %}">Hard to easy</a></li>
+            <li><a href="?{% qs_alter request.GET order_by="difficulty" %}">Easy to hard</a></li>
+            </ul>
+        </div>
