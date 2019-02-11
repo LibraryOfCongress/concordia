@@ -1289,21 +1289,39 @@ class TranscribeListView(ListView):
     context_object_name = "assets"
     paginate_by = 50
 
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["campaigns"] = Campaign.objects.published().order_by("title")
+        return ctx
+
     def get_queryset(self):
         if self.request.GET.get("order_by"):
             order_field = self.request.GET.get("order_by")
         else:
             order_field = "pk"
 
-        return (
-            Asset.objects.published()
-            .order_by(order_field)
-            .filter(
-                Q(transcription_status=TranscriptionStatus.NOT_STARTED)
-                | Q(transcription_status=TranscriptionStatus.IN_PROGRESS)
+        if self.request.GET.get("campaign_filter"):
+            campaign_filter = self.request.GET.get("campaign_filter")
+            return (
+                Asset.objects.published()
+                .order_by(order_field)
+                .filter(
+                    Q(transcription_status=TranscriptionStatus.NOT_STARTED)
+                    | Q(transcription_status=TranscriptionStatus.IN_PROGRESS),
+                    item__project__campaign__pk=campaign_filter,
+                )
+                .select_related("item", "item__project", "item__project__campaign")
             )
-            .select_related("item", "item__project", "item__project__campaign")
-        )
+        else:
+            return (
+                Asset.objects.published()
+                .order_by(order_field)
+                .filter(
+                    Q(transcription_status=TranscriptionStatus.NOT_STARTED)
+                    | Q(transcription_status=TranscriptionStatus.IN_PROGRESS)
+                )
+                .select_related("item", "item__project", "item__project__campaign")
+            )
 
 
 class ReviewListView(ListView):
@@ -1311,18 +1329,35 @@ class ReviewListView(ListView):
     context_object_name = "assets"
     paginate_by = 50
 
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["campaigns"] = Campaign.objects.published().order_by("title")
+        return ctx
+
     def get_queryset(self):
         if self.request.GET.get("order_by"):
             order_field = self.request.GET.get("order_by")
         else:
             order_field = "pk"
 
-        return (
-            Asset.objects.published()
-            .order_by(order_field)
-            .filter(transcription_status=TranscriptionStatus.SUBMITTED)
-            .select_related("item", "item__project", "item__project__campaign")
-        )
+        if self.request.GET.get("campaign_filter"):
+            campaign_filter = self.request.GET.get("campaign_filter")
+            return (
+                Asset.objects.published()
+                .order_by(order_field)
+                .filter(
+                    transcription_status=TranscriptionStatus.SUBMITTED,
+                    item__project__campaign__pk=campaign_filter,
+                )
+                .select_related("item", "item__project", "item__project__campaign")
+            )
+        else:
+            return (
+                Asset.objects.published()
+                .order_by(order_field)
+                .filter(transcription_status=TranscriptionStatus.SUBMITTED)
+                .select_related("item", "item__project", "item__project__campaign")
+            )
 
 
 class APIViewMixin:
