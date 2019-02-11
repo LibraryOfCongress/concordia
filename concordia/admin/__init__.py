@@ -271,6 +271,7 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         "transcription_status",
         "item_id",
         "sequence",
+        "difficulty",
         "truncated_media_url",
         "media_type",
         "truncated_metadata",
