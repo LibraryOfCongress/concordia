@@ -1288,27 +1288,41 @@ class TranscribeListView(ListView):
     template_name = "transcriptions/transcribe_list.html"
     context_object_name = "assets"
     paginate_by = 50
-    queryset = (
-        Asset.objects.published()
-        .order_by("pk")
-        .filter(
-            Q(transcription_status=TranscriptionStatus.NOT_STARTED)
-            | Q(transcription_status=TranscriptionStatus.IN_PROGRESS)
+
+    def get_queryset(self):
+        if self.request.GET.get("order_by"):
+            order_field = self.request.GET.get("order_by")
+        else:
+            order_field = "pk"
+
+        return (
+            Asset.objects.published()
+            .order_by(order_field)
+            .filter(
+                Q(transcription_status=TranscriptionStatus.NOT_STARTED)
+                | Q(transcription_status=TranscriptionStatus.IN_PROGRESS)
+            )
+            .select_related("item", "item__project", "item__project__campaign")
         )
-        .select_related("item", "item__project", "item__project__campaign")
-    )
 
 
 class ReviewListView(ListView):
     template_name = "transcriptions/review_list.html"
     context_object_name = "assets"
     paginate_by = 50
-    queryset = (
-        Asset.objects.published()
-        .order_by("pk")
-        .filter(transcription_status=TranscriptionStatus.SUBMITTED)
-        .select_related("item", "item__project", "item__project__campaign")
-    )
+
+    def get_queryset(self):
+        if self.request.GET.get("order_by"):
+            order_field = self.request.GET.get("order_by")
+        else:
+            order_field = "pk"
+
+        return (
+            Asset.objects.published()
+            .order_by(order_field)
+            .filter(transcription_status=TranscriptionStatus.SUBMITTED)
+            .select_related("item", "item__project", "item__project__campaign")
+        )
 
 
 class APIViewMixin:
