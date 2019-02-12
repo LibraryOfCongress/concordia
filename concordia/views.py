@@ -1274,10 +1274,27 @@ def redirect_to_next_transcribable_asset(request, *, campaign_slug):
     )
 
 
-class TranscribeListView(ListView):
-    template_name = "transcriptions/transcribe_list.html"
+class AssetListView(ListView):
     context_object_name = "assets"
     paginate_by = 50
+
+    def get_ordering(self):
+        order_field = self.request.GET.get("order_by", "pk")
+        if order_field.lstrip("-") not in ("pk", "difficulty"):
+            raise ValueError
+
+
+class TranscribeListView(AssetListView):
+    template_name = "transcriptions/transcribe_list.html"
+
+    queryset = (
+        Asset.objects.published()
+        .filter(
+            Q(transcription_status=TranscriptionStatus.NOT_STARTED)
+            | Q(transcription_status=TranscriptionStatus.IN_PROGRESS)
+        )
+        .select_related("item", "item__project", "item__project__campaign")
+    )
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -1285,33 +1302,12 @@ class TranscribeListView(ListView):
         return ctx
 
     def get_queryset(self):
-        if self.request.GET.get("order_by"):
-            order_field = self.request.GET.get("order_by")
-        else:
-            order_field = "pk"
+        asset_qs = super().get_queryset()
 
-        if self.request.GET.get("campaign_filter"):
-            campaign_filter = self.request.GET.get("campaign_filter")
-            asset_qs = (
-                Asset.objects.published()
-                .order_by(order_field)
-                .filter(
-                    Q(transcription_status=TranscriptionStatus.NOT_STARTED)
-                    | Q(transcription_status=TranscriptionStatus.IN_PROGRESS),
-                    item__project__campaign__pk=campaign_filter,
-                )
-                .select_related("item", "item__project", "item__project__campaign")
-            )
-        else:
-            asset_qs = (
-                Asset.objects.published()
-                .order_by(order_field)
-                .filter(
-                    Q(transcription_status=TranscriptionStatus.NOT_STARTED)
-                    | Q(transcription_status=TranscriptionStatus.IN_PROGRESS)
-                )
-                .select_related("item", "item__project", "item__project__campaign")
-            )
+        campaign_filter = self.request.GET.get("campaign_filter")
+        if campaign_filter:
+            asset_qs = asset_qs.filter(item__project__campaign__pk=campaign_filter)
+
         latest_trans_subquery = (
             Transcription.objects.filter(asset=OuterRef("pk"))
             .order_by("-pk")
@@ -1321,13 +1317,17 @@ class TranscribeListView(ListView):
         assets = asset_qs.annotate(
             latest_transcription=Subquery(latest_trans_subquery[:1])
         )
+
         return assets
 
 
-class ReviewListView(ListView):
+class ReviewListView(AssetListView):
     template_name = "transcriptions/review_list.html"
-    context_object_name = "assets"
-    paginate_by = 50
+    queryset = (
+        Asset.objects.published()
+        .filter(transcription_status=TranscriptionStatus.SUBMITTED)
+        .select_related("item", "item__project", "item__project__campaign")
+    )
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -1335,29 +1335,13 @@ class ReviewListView(ListView):
         return ctx
 
     def get_queryset(self):
-        if self.request.GET.get("order_by"):
-            order_field = self.request.GET.get("order_by")
-        else:
-            order_field = "pk"
+        asset_qs = super().get_queryset()
 
-        if self.request.GET.get("campaign_filter"):
-            campaign_filter = self.request.GET.get("campaign_filter")
-            asset_qs = (
-                Asset.objects.published()
-                .order_by(order_field)
-                .filter(
-                    transcription_status=TranscriptionStatus.SUBMITTED,
-                    item__project__campaign__pk=campaign_filter,
-                )
-                .select_related("item", "item__project", "item__project__campaign")
-            )
-        else:
-            asset_qs = (
-                Asset.objects.published()
-                .order_by(order_field)
-                .filter(transcription_status=TranscriptionStatus.SUBMITTED)
-                .select_related("item", "item__project", "item__project__campaign")
-            )
+        campaign_filter = self.request.GET.get("campaign_filter")
+
+        if campaign_filter:
+            asset_qs = asset_qs.filter(item__project__campaign__pk=campaign_filter)
+
         latest_trans_subquery = (
             Transcription.objects.filter(asset=OuterRef("pk"))
             .order_by("-pk")
@@ -1367,6 +1351,7 @@ class ReviewListView(ListView):
         assets = asset_qs.annotate(
             latest_transcription=Subquery(latest_trans_subquery[:1])
         )
+
         return assets
 
 
