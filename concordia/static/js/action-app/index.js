@@ -168,7 +168,7 @@ export class ActionApp {
     }
 
     openViewer(assetElement) {
-        let asset = this.assets[assetElement.dataset.idx];
+        let asset = this.assets[assetElement.dataset.idx-1];
 
         $$('.asset-title', this.assetViewer).forEach(
             i => (i.innerText = asset.title)
