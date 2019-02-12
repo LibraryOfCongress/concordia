@@ -173,7 +173,19 @@ export class ActionApp {
         $$('.asset-title', this.assetViewer).forEach(
             i => (i.innerText = asset.title)
         );
-        $('textarea', this.assetViewer).innerText = 'Loading…';
+
+        if (asset.latest_transcription) {
+            $('textarea', this.assetViewer).innerText =
+                asset.latest_transcription;
+        } else {
+            if (this.currentMode == 'review') {
+                $('textarea', this.assetViewer).innerText =
+                    'Nothing to transcribe';
+            } else {
+                $('textarea', this.assetViewer).innerText =
+                    'Go ahead, start typing. You got this!';
+            }
+        }
 
         this.assetViewer.classList.remove('d-none');
 
