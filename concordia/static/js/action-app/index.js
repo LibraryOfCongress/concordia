@@ -21,6 +21,7 @@ export class ActionApp {
         this.config = Object.assign({}, config);
 
         this.setupModeSelector();
+        this.setupAssetList();
         this.setupAssetViewer();
 
         this.refreshData();
@@ -47,15 +48,13 @@ export class ActionApp {
     }
 
     refreshData() {
-        this.assets = [];
-
         this.setMode();
         this.resetAssetList();
-        this.setupAssetList();
         this.fetchAssetData();
     }
 
     resetAssetList() {
+        this.assets = [];
         $('#asset-list').innerHTML = '';
     }
 
@@ -92,6 +91,14 @@ export class ActionApp {
                 return false;
             }
         });
+
+        this.assetList.addEventListener('mouseover', evt => {
+            let target = evt.target;
+            if (target && target.classList.contains('asset')) {
+                this.resetHovers();
+                this.displayHover(target);
+            }
+        });
     }
 
     setupAssetViewer() {
@@ -114,7 +121,7 @@ export class ActionApp {
             rotateRightButton: 'viewer-rotate-right'
         });
 
-        $('#close-viewer-button').addEventListener('click', evt => {
+        $('#close-viewer-button').addEventListener('click', () => {
             window.actionApp.closeViewer();
         });
     }
@@ -153,7 +160,7 @@ export class ActionApp {
         assetElement.classList.add('asset', 'rounded', 'border');
         assetElement.dataset.image = assetData.thumbnail;
         assetElement.dataset.idx = newIdx;
-
+        assetElement.dataset.difficulty = assetData.difficulty;
         assetElement.title = `${assetData.title} (${assetData.project.title})`;
 
         this.assetListObserver.observe(assetElement);
@@ -165,6 +172,26 @@ export class ActionApp {
         $$('.asset', this.assetList).forEach(elem => {
             console.log('FIXME: implement visibility checks for', elem.id);
         });
+    }
+
+    resetHovers() {
+        $$('div.asset-hover').forEach(elem => {
+            elem.remove();
+        });
+    }
+
+    displayHover(assetElement) {
+        let asset = this.assets[assetElement.dataset.idx - 1];
+
+        assetElement.innerHTML =
+            "<div class='asset-hover text-white p-2'>" +
+            asset.item.title +
+            '<br/>' +
+            asset.title +
+            '<br/>' +
+            'Difficulty Score: ' +
+            asset.difficulty +
+            '</div>';
     }
 
     openViewer(assetElement) {
