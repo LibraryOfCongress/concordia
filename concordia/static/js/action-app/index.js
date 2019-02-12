@@ -20,19 +20,43 @@ export class ActionApp {
 
         this.config = Object.assign({}, config);
 
-        this.assets = [];
-
         this.setupModeSelector();
-        this.setupAssetList();
         this.setupAssetViewer();
 
-        this.fetchAssetData();
+        this.refreshData();
     }
 
     setupModeSelector() {
-        // TODO: actually implement switching modes
+        $$('#activity-mode-selection button').forEach(elem => {
+            elem.addEventListener('click', evt => {
+                $$('#activity-mode-selection button').forEach(inactiveElem => {
+                    if (inactiveElem.classList.contains('active')) {
+                        inactiveElem.classList.remove('active');
+                    }
+                });
+                evt.target.classList.add('active');
+                // refresh the interface to reflect the activity of elem
+                window.actionApp.refreshData();
+            });
+        });
+    }
+
+    setMode() {
         this.modeSelection = $('#activity-mode-selection');
         this.currentMode = this.modeSelection.querySelector('.active').value;
+    }
+
+    refreshData() {
+        this.assets = [];
+
+        this.setMode();
+        this.resetAssetList();
+        this.setupAssetList();
+        this.fetchAssetData();
+    }
+
+    resetAssetList() {
+        $('#asset-list').innerHTML = '';
     }
 
     setupAssetList() {
@@ -105,7 +129,7 @@ export class ActionApp {
                 $('#asset-count').innerText = this.assets.length;
 
                 // FIXME: think about how we want demand loading / “I don't want to work on any of this” to behave
-                if (data.pagination.next && this.assets.length < 500) {
+                if (data.pagination.next && this.assets.length < 100) {
                     this.fetchAssetPage(data.pagination.next);
                 }
             });
