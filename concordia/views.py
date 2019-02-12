@@ -1408,6 +1408,7 @@ class APIViewMixin:
                     "href": obj.get_absolute_url(),
                     "thumbnail": asset_media_url(obj),
                     "title": obj.title,
+                    "difficulty": obj.difficulty,
                     "item": {
                         "title": obj.item.title,
                         "href": obj.item.get_absolute_url(),
@@ -1436,4 +1437,8 @@ class ReviewListAPIView(APIViewMixin, ReviewListView):
 
 
 def action_app(request):
-    return render(request, "action-app.html", {})
+    return render(
+        request,
+        "action-app.html",
+        {"campaigns": Campaign.objects.published().order_by("title")},
+    )

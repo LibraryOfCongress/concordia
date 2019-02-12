@@ -11,6 +11,10 @@ main {
     max-height: inherit;
 }
 
+#contribute-container {
+    border: none;
+}
+
 #editor-main {
     max-height: 100%;
 }
@@ -35,4 +39,8 @@ main {
     height: 256px;
     border-width: 3px !important;
     background-size: contain;
+}
+
+.asset-hover {
+    background-color: #000;
 }

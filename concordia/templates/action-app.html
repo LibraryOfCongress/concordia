@@ -41,6 +41,32 @@
                                 <button type="button" class="btn btn-outline-primary active" value="review">Review</button>
                             </div>
                         </div>
+                                <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">Sort by:</span>
+                            </div>
+
+                            <div id="activity-sort-selection" class="btn-group" role="group" aria-label="Activity sort">
+                                <button type="button" class="btn btn-outline-primary" value="easiest">Easiest</button>
+                                <button type="button" class="btn btn-outline-primary" value="hardest">Hardest</button>
+                            </div>
+                        </div>
+
+
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">Filter by:</span>
+                            </div>
+
+                            <div id="activity-filter-selection" class="btn-group" role="group" aria-label="Activity filter">
+                                <select id="campaign-filter">
+                                {% for c in campaigns %}
+                                    <option value="{{ c.pk }}">{{ c.title }}</option>
+                                {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
                     </form>
                 </li>
             </ul>
@@ -61,6 +87,7 @@
             </div>
         </div>
         <div id="editor-main" class="p-1 d-flex">
+
             <div id="asset-list" class="flex-grow-1"></div>
             <div id="asset-viewer" class="d-none flex-grow-1">
                 <div id="contribute-container" class="flex-grow-1 d-flex h-100">
@@ -142,7 +169,7 @@
                                     </div>
 
                                     <button id="save-transcription-button" type="submit" class="btn btn-primary" title="Save the text you entered above">Save</button>
-
+                                    <button id="increase-difficulty-button" class="btn btn-primary" title="Upvote the difficulty for this transcription">This is too much</button>
                                 </div>
 
                             </form>
