@@ -107,6 +107,10 @@ export class ActionApp {
             rotateLeftButton: 'viewer-rotate-left',
             rotateRightButton: 'viewer-rotate-right'
         });
+
+        $('#close-viewer-button').addEventListener('click', evt => {
+            window.actionApp.closeViewer();
+        });
     }
 
     fetchAssetData() {
@@ -172,5 +176,12 @@ export class ActionApp {
         }
 
         this.seadragonViewer.open({type: 'image', url: asset.thumbnail});
+    }
+
+    closeViewer() {
+        this.assetViewer.classList.add('d-none');
+        if (this.seadragonViewer.isOpen()) {
+            this.seadragonViewer.close();
+        }
     }
 }
