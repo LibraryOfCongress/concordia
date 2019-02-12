@@ -47,11 +47,11 @@ main {
     pointer-events: none;
 }
 
-[data-mode='review'] #transcriber-column,
-[data-mode='transcribe'] #reviewer-column {
+main[data-mode='review'] #transcriber-column,
+main[data-mode='transcribe'] #reviewer-column {
     display: none;
 }
-[data-mode='transcribe'] #transcriber-column,
-[data-mode='review'] #reviewer-column {
+main[data-mode='transcribe'] #transcriber-column,
+main[data-mode='review'] #reviewer-column {
     display: flex;
 }
