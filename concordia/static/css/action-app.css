@@ -41,6 +41,6 @@ main {
     background-size: contain;
 }
 
-.asset-hover {
+.asset-tooltip {
     background-color: #000;
 }
