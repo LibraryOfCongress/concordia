@@ -175,7 +175,7 @@ export class ActionApp {
     }
 
     removeAssetTooltips() {
-        $$('.asset-hover', this.assetList).forEach(elem => {
+        $$('.asset-tooltip', this.assetList).forEach(elem => {
             elem.remove();
         });
     }
@@ -184,7 +184,7 @@ export class ActionApp {
         let asset = this.assets[assetElement.dataset.idx - 1];
 
         assetElement.innerHTML =
-            "<div class='asset-hover text-white p-2'>" +
+            "<div class='asset-tooltip text-white p-2'>" +
             asset.item.title +
             '<br/>' +
             asset.title +
