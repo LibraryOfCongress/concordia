@@ -33,6 +33,6 @@ main {
     display: block;
     width: 256px;
     height: 256px;
-
+    border-width: 3px !important;
     background-size: contain;
 }
