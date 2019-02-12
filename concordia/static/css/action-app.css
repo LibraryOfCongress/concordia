@@ -39,6 +39,7 @@ main {
     height: 256px;
     border-width: 3px !important;
     background-size: contain;
+    cursor: pointer;
 }
 
 .asset-tooltip {
