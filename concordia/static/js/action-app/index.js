@@ -1,6 +1,8 @@
 /* global OpenSeadragon */
 /* eslint-disable no-console */
 
+import {html, render} from 'https://unpkg.com/lit-html?module';
+
 let $ = (selector, scope = document) => scope.querySelector(selector);
 
 let $$ = (selector, scope = document) => {
@@ -95,11 +97,30 @@ export class ActionApp {
             }
         });
 
+        /* Tooltips */
+
         this.assetList.addEventListener('mouseover', evt => {
             let target = evt.target;
+
             if (target && target.classList.contains('asset')) {
-                this.removeAssetTooltips();
-                this.displayAssetTooltip(target);
+                const asset = this.assets[target.dataset.idx - 1];
+
+                // FIXME: we can hoist this out if we add a visibility toggle for the mouseout state
+                const tooltip = asset => html`
+                    <div class="asset-tooltip text-white p-2">
+                        <div class="item-title">
+                            ${asset.item.title}
+                        </div>
+                        <div class="asset-title">
+                            ${asset.title}
+                        </div>
+                        <div class="difficulty-score">
+                            Difficulty Score: ${asset.difficulty}
+                        </div>
+                    </div>
+                `;
+
+                render(tooltip(asset), target);
             }
         });
     }
@@ -175,26 +196,6 @@ export class ActionApp {
         $$('.asset', this.assetList).forEach(elem => {
             console.log('FIXME: implement visibility checks for', elem.id);
         });
-    }
-
-    removeAssetTooltips() {
-        $$('.asset-tooltip', this.assetList).forEach(elem => {
-            elem.remove();
-        });
-    }
-
-    displayAssetTooltip(assetElement) {
-        let asset = this.assets[assetElement.dataset.idx - 1];
-
-        assetElement.innerHTML =
-            "<div class='asset-tooltip text-white p-2'>" +
-            asset.item.title +
-            '<br/>' +
-            asset.title +
-            '<br/>' +
-            'Difficulty Score: ' +
-            asset.difficulty +
-            '</div>';
     }
 
     openViewer(assetElement) {
