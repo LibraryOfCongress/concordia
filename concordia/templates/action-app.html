@@ -142,7 +142,7 @@
                             <button id="close-viewer-button" class="btn btn-secondary" aria-label="Close viewer">✖️ Close</button>
                         </div>
 
-                        <div id="reviewer-column" class="d-none flex-column flex-grow-1">
+                        <div id="reviewer-column" class="flex-column flex-grow-1">
                             <div id="review-transcription-text"></div>
                             <div class="my-3 d-print-none d-flex flex-wrap justify-content-around align-items-center btn-row">
 
@@ -151,7 +151,7 @@
                             </div>
                         </div>
 
-                        <div id="transcriber-column" class="flex-grow-1 d-flex flex-column">
+                        <div id="transcriber-column" class="flex-column flex-grow-1">
                             <form id="transcription-editor" class="flex-grow-1 d-flex flex-column">
                                 {% csrf_token %}
                                 <textarea class="form-control w-100 rounded flex-grow-1 d-print-none" name="text" placeholder="Go ahead, start typing. You got this!" id="transcription-input"  aria-label="Transcription input">
