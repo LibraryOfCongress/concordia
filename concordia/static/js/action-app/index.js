@@ -20,6 +20,8 @@ export class ActionApp {
 
         this.config = Object.assign({}, config);
 
+        this.appElement = $('#action-app-main');
+
         this.setupModeSelector();
         this.setupAssetList();
         this.setupAssetViewer();
@@ -44,6 +46,7 @@ export class ActionApp {
 
     getCurrentMode() {
         this.currentMode = this.modeSelection.querySelector('.active').value;
+        this.appElement.dataset.mode = this.currentMode;
     }
 
     refreshData() {
@@ -220,19 +223,6 @@ export class ActionApp {
             } else {
                 $('textarea', this.assetViewer).innerText = '';
             }
-        }
-
-        // TODO: use CSS for this keyed off of the active mode on the parent element
-        if (this.currentMode == 'review') {
-            $('#transcriber-column').classList.add('d-none');
-            $('#transcriber-column').classList.remove('d-flex');
-            $('#reviewer-column').classList.remove('d-none');
-            $('#reviewer-column').classList.add('d-flex');
-        } else {
-            $('#transcriber-column').classList.remove('d-none');
-            $('#transcriber-column').classList.add('d-flex');
-            $('#reviewer-column').classList.add('d-none');
-            $('#reviewer-column').classList.remove('d-flex');
         }
 
         this.assetViewer.classList.remove('d-none');
