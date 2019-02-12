@@ -110,14 +110,41 @@
                         <div id="asset-image" class="h-100 bg-dark"></div>
                     </div>
 
-                    <div id="editor-column" class="d-flex flex-column flex-nowrap justify-content-between h-100">
-                        <button id="close-viewer-button">✖️ Close</button>
-                        <div class="flex-grow-1 d-flex flex-column">
-                            <form id="transcription-editor" class="flex-grow-1">
+                    <div id="editor-column" class="d-flex pl-2 flex-column flex-grow-1 flex-nowrap justify-content-between h-100">
+                        <div class="d-flex flex-row-reverse">
+                            <button id="close-viewer-button">✖️ Close</button>
+                        </div>
+
+                        <div id="reviewer-column" class="d-none flex-column flex-grow-1">
+                            <div id="review-transcription-text"></div>
+                            <div class="my-3 d-print-none d-flex flex-wrap justify-content-around align-items-center btn-row">
+
+                            <button id="reject-transcription-button" type="button" class="btn btn-primary" title="Correct errors you see in the text">Edit</button>
+                            <button id="accept-transcription-button" type="button" class="btn btn-primary" title="Confirm that the text is accurately transcribed">Accept</button>
+                            </div>
+                        </div>
+
+                        <div id="transcriber-column" class="flex-grow-1 d-flex flex-column">
+                            <form id="transcription-editor" class="flex-grow-1 d-flex flex-column">
                                 {% csrf_token %}
-                                <textarea readonly class="form-control h-100 w-100 rounded flex-grow-1 d-print-none" name="text" id="transcription-input"  aria-label="Transcription input">
+                                <textarea class="form-control w-100 rounded flex-grow-1 d-print-none" name="text" placeholder="Go ahead, start typing. You got this!" id="transcription-input"  aria-label="Transcription input">
                                 </textarea>
+                                <div class="my-3 d-print-none d-flex flex-wrap justify-content-around align-items-center btn-row">
+                                    <div class="form-check w-100 text-center mt-0 mb-3">
+                                        <input id="nothing-to-transcribe" type="checkbox" class="form-check-input" />
+                                        <label class="form-check-label" for="nothing-to-transcribe">
+                                            Nothing to transcribe
+                                        </label>
+
+                                        <a tabindex="0" class="btn btn-link d-inline" role="button" data-toggle="popover" data-placement="top" data-trigger="focus click hover" title="Help" data-html="true" data-content="If it looks like there’s nothing to transcribe, use this button and then Submit. Not sure? Check these tips: {% filter force_escape %}<a target="_blank" href="{% url 'how-to-transcribe' %}">how to transcribe</a>{% endfilter %}">
+                                            <span class="fas fa-question-circle" aria-label="Open Help"></span>
+                                        </a>
+                                    </div>
+
+                                    <button id="save-transcription-button" type="submit" class="btn btn-primary" title="Save the text you entered above">Save</button>
+
                                 </div>
+
                             </form>
                         </div>
                     </div>
@@ -144,7 +171,12 @@
                         </ul>
                     </div>
                     <div class="modal-footer d-block text-center">
-                        Find more detailed instructions in the <a href="{% url 'help-center' %}" target="_blank">Help Center</a>
+                        <p>
+                            Find more detailed instructions in the <a href="{% url 'help-center' %}" target="_blank">Help Center</a>
+                        </p>
+                        <a class="btn btn-secondary" href="{% url 'questions' %}" target="_blank">
+                            Questions?
+                        </a>
                     </div>
                 </div>
             </div>
