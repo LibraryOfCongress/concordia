@@ -31,9 +31,7 @@ export class ActionApp {
         $$('#activity-mode-selection button').forEach(elem => {
             elem.addEventListener('click', evt => {
                 $$('#activity-mode-selection button').forEach(inactiveElem => {
-                    if (inactiveElem.classList.contains('active')) {
-                        inactiveElem.classList.remove('active');
-                    }
+                    inactiveElem.classList.remove('active');
                 });
                 evt.target.classList.add('active');
                 // refresh the interface to reflect the activity of elem
@@ -83,9 +81,7 @@ export class ActionApp {
             if (target && target.classList.contains('asset')) {
                 this.openViewer(target);
                 $$('#asset-list .asset').forEach(elem => {
-                    if (elem.classList.contains('border-primary')) {
-                        elem.classList.remove('border-primary');
-                    }
+                    elem.classList.remove('border-primary');
                 });
                 target.classList.add('border-primary');
                 return false;
