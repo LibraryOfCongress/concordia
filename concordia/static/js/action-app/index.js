@@ -200,6 +200,8 @@ export class ActionApp {
     openViewer(assetElement) {
         let asset = this.assets[assetElement.dataset.idx - 1];
 
+        this.appElement.dataset.openAssetId = asset.id;
+
         $$('.asset-title', this.assetViewer).forEach(
             i => (i.innerText = asset.title)
         );
@@ -225,8 +227,6 @@ export class ActionApp {
             }
         }
 
-        this.assetViewer.classList.remove('d-none');
-
         if (this.seadragonViewer.isOpen()) {
             this.seadragonViewer.close();
         }
@@ -235,7 +235,8 @@ export class ActionApp {
     }
 
     closeViewer() {
-        this.assetViewer.classList.add('d-none');
+        delete this.appElement.dataset.openAssetId;
+
         if (this.seadragonViewer.isOpen()) {
             this.seadragonViewer.close();
         }
