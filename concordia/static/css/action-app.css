@@ -44,3 +44,12 @@ main {
 .asset-tooltip {
     background-color: #000;
 }
+
+[data-mode='review'] #transcriber-column,
+[data-mode='transcribe'] #reviewer-column {
+    display: none;
+}
+[data-mode='transcribe'] #transcriber-column,
+[data-mode='review'] #reviewer-column {
+    display: flex;
+}
