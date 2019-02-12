@@ -39,14 +39,20 @@ main {
     display: block;
     width: 256px;
     height: 256px;
+    object-fit: contain;
     border-width: 3px !important;
     background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
     cursor: pointer;
 }
 
 .asset-tooltip {
     background-color: #000;
     pointer-events: none;
+    overflow: hidden;
+    max-height: 100%;
+    max-width: 100%;
 }
 
 main[data-mode='review'] #transcriber-column,
@@ -70,6 +76,15 @@ main[data-open-asset-id] #asset-viewer {
 main[data-open-asset-id] #asset-list {
     flex-grow: 0;
     display: block;
+}
+
+main[data-open-asset-id] #asset-list .asset {
+    width: 128px;
+    height: 128px;
+}
+
+main[data-open-asset-id] .asset-tooltip {
+    font-size: smaller;
 }
 
 main[data-open-asset-id] #contribute-container {
