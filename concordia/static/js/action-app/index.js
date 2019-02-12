@@ -83,6 +83,12 @@ export class ActionApp {
             let target = evt.target;
             if (target && target.classList.contains('asset')) {
                 this.openViewer(target);
+                $$('#asset-list .asset').forEach(elem => {
+                    if (elem.classList.contains('border-primary')) {
+                        elem.classList.remove('border-primary');
+                    }
+                });
+                target.classList.add('border-primary');
                 return false;
             }
         });
@@ -144,7 +150,7 @@ export class ActionApp {
 
         let assetElement = document.createElement('div');
         assetElement.id = assetData.id;
-        assetElement.classList.add('asset', 'rounded');
+        assetElement.classList.add('asset', 'rounded', 'border');
         assetElement.dataset.image = assetData.thumbnail;
         assetElement.dataset.idx = newIdx;
 
