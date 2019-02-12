@@ -46,7 +46,10 @@
             </ul>
             <ul class="navbar-nav">
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'homepage' %}">↩Home <span class="sr-only">(current)</span></a>
+                    <a class="nav-link" href="{% url 'help-center' %}" target="_blank">🆘 Help</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'homepage' %}">↩ Home <span class="sr-only">(current)</span></a>
                 </li>
             </ul>
         </nav>
@@ -108,6 +111,7 @@
                     </div>
 
                     <div id="editor-column" class="d-flex flex-column flex-nowrap justify-content-between h-100">
+                        <button id="close-viewer-button">✖️ Close</button>
                         <div class="flex-grow-1 d-flex flex-column">
                             <form id="transcription-editor" class="flex-grow-1">
                                 {% csrf_token %}
