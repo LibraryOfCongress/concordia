@@ -42,12 +42,12 @@ export class ActionApp {
         });
     }
 
-    setMode() {
+    getCurrentMode() {
         this.currentMode = this.modeSelection.querySelector('.active').value;
     }
 
     refreshData() {
-        this.setMode();
+        this.getCurrentMode();
         this.assets.length = 0;
         this.resetAssetList();
         this.fetchAssetData();
@@ -95,8 +95,8 @@ export class ActionApp {
         this.assetList.addEventListener('mouseover', evt => {
             let target = evt.target;
             if (target && target.classList.contains('asset')) {
-                this.resetHovers();
-                this.displayHover(target);
+                this.removeAssetTooltips();
+                this.displayAssetTooltip(target);
             }
         });
     }
@@ -174,13 +174,13 @@ export class ActionApp {
         });
     }
 
-    resetHovers() {
+    removeAssetTooltips() {
         $$('.asset-hover', this.assetList).forEach(elem => {
             elem.remove();
         });
     }
 
-    displayHover(assetElement) {
+    displayAssetTooltip(assetElement) {
         let asset = this.assets[assetElement.dataset.idx - 1];
 
         assetElement.innerHTML =
@@ -222,6 +222,7 @@ export class ActionApp {
             }
         }
 
+        // TODO: use CSS for this keyed off of the active mode on the parent element
         if (this.currentMode == 'review') {
             $('#transcriber-column').classList.add('d-none');
             $('#transcriber-column').classList.remove('d-flex');
