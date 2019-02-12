@@ -215,7 +215,7 @@ export class ActionApp {
                     '<br/>'
                 );
             } else {
-                $('textarea', this.assetViewer).innerText =
+                $('textarea', this.assetViewer).value =
                     asset.latest_transcription;
             }
         } else {
@@ -223,7 +223,7 @@ export class ActionApp {
                 $('#review-transcription-text').innerHTML =
                     'Nothing to transcribe';
             } else {
-                $('textarea', this.assetViewer).innerText = '';
+                $('textarea', this.assetViewer).value = '';
             }
         }
 
