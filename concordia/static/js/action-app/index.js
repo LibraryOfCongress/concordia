@@ -48,16 +48,17 @@ export class ActionApp {
 
     refreshData() {
         this.setMode();
+        this.assets.length = 0;
         this.resetAssetList();
         this.fetchAssetData();
     }
 
     resetAssetList() {
-        this.assets = [];
-        $('#asset-list').innerHTML = '';
+        this.assetList.childNodes.forEach(i => i.remove());
     }
 
     setupAssetList() {
+        this.assets = [];
         this.assetList = $('#asset-list');
 
         /*
