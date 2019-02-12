@@ -175,16 +175,36 @@ export class ActionApp {
         );
 
         if (asset.latest_transcription) {
-            $('textarea', this.assetViewer).innerText =
-                asset.latest_transcription;
-        } else {
             if (this.currentMode == 'review') {
-                $('textarea', this.assetViewer).innerText =
-                    'Nothing to transcribe';
+                $(
+                    '#review-transcription-text'
+                ).innerHTML = asset.latest_transcription.replace(
+                    /\n/g,
+                    '<br/>'
+                );
             } else {
                 $('textarea', this.assetViewer).innerText =
-                    'Go ahead, start typing. You got this!';
+                    asset.latest_transcription;
             }
+        } else {
+            if (this.currentMode == 'review') {
+                $('#review-transcription-text').innerHTML =
+                    'Nothing to transcribe';
+            } else {
+                $('textarea', this.assetViewer).innerText = '';
+            }
+        }
+
+        if (this.currentMode == 'review') {
+            $('#transcriber-column').classList.add('d-none');
+            $('#transcriber-column').classList.remove('d-flex');
+            $('#reviewer-column').classList.remove('d-none');
+            $('#reviewer-column').classList.add('d-flex');
+        } else {
+            $('#transcriber-column').classList.remove('d-none');
+            $('#transcriber-column').classList.add('d-flex');
+            $('#reviewer-column').classList.add('d-none');
+            $('#reviewer-column').classList.remove('d-flex');
         }
 
         this.assetViewer.classList.remove('d-none');
