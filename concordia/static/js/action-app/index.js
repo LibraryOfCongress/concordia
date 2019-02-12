@@ -34,8 +34,8 @@ export class ActionApp {
                     inactiveElem.classList.remove('active');
                 });
                 evt.target.classList.add('active');
-                // refresh the interface to reflect the activity of elem
-                window.actionApp.refreshData();
+
+                this.refreshData();
             });
         });
     }
