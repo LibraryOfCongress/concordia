@@ -28,9 +28,11 @@ export class ActionApp {
     }
 
     setupModeSelector() {
-        $$('#activity-mode-selection button').forEach(elem => {
+        this.modeSelection = $('#activity-mode-selection');
+
+        $$('button', this.modeSelection).forEach(elem => {
             elem.addEventListener('click', evt => {
-                $$('#activity-mode-selection button').forEach(inactiveElem => {
+                $$('button', this.modeSelection).forEach(inactiveElem => {
                     inactiveElem.classList.remove('active');
                 });
                 evt.target.classList.add('active');
@@ -41,7 +43,6 @@ export class ActionApp {
     }
 
     setMode() {
-        this.modeSelection = $('#activity-mode-selection');
         this.currentMode = this.modeSelection.querySelector('.active').value;
     }
 
@@ -80,7 +81,9 @@ export class ActionApp {
             let target = evt.target;
             if (target && target.classList.contains('asset')) {
                 this.openViewer(target);
-                $$('#asset-list .asset').forEach(elem => {
+
+                // TODO: stop using Bootstrap classes directly and toggle semantic classes
+                $$('.asset', this.assetList).forEach(elem => {
                     elem.classList.remove('border-primary');
                 });
                 target.classList.add('border-primary');
@@ -171,7 +174,7 @@ export class ActionApp {
     }
 
     resetHovers() {
-        $$('div.asset-hover').forEach(elem => {
+        $$('.asset-hover', this.assetList).forEach(elem => {
             elem.remove();
         });
     }
