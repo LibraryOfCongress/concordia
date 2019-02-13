@@ -14,11 +14,11 @@ The base APIViewMixin implements a base implementation of serialize_object which
 uses the generic django.forms.models.model_to_dict and can be overridden as needed.
 """
 
+from django.core.serializers.json import DjangoJSONEncoder
 from django.forms.models import model_to_dict
 from django.http import JsonResponse
 from django.views.generic import DetailView, ListView
 from django.views.generic.base import TemplateResponseMixin
-from django.core.serializers.json import DjangoJSONEncoder
 
 
 class URLAwareEncoder(DjangoJSONEncoder):
@@ -30,6 +30,8 @@ class URLAwareEncoder(DjangoJSONEncoder):
     def default(self, obj):
         if hasattr(obj, "url"):
             return obj.url
+        elif hasattr(obj, "get_absolute_url"):
+            return obj.get_absolute_url()
         else:
             return super().default(obj)
 
