@@ -120,11 +120,11 @@ urlpatterns = [
     path("transcribe/", views.TranscribeListView.as_view(), name="transcribe-assets"),
     path(
         "transcribe.json",
-        views.TranscribeListAPIView.as_view(),
+        views.TranscribeListView.as_view(),
         name="transcribe-assets-json",
     ),
     path("review/", views.ReviewListView.as_view(), name="review-assets"),
-    path("review.json", views.ReviewListAPIView.as_view(), name="review-assets-json"),
+    path("review.json", views.ReviewListView.as_view(), name="review-assets-json"),
     path("account/ajax-status/", views.ajax_session_status, name="ajax-session-status"),
     path("account/ajax-messages/", views.ajax_messages, name="ajax-messages"),
     path(
