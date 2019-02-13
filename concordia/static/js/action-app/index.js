@@ -5,8 +5,7 @@
 import {
     html,
     text,
-    mount,
-    unmount
+    mount
 } from 'https://cdnjs.cloudflare.com/ajax/libs/redom/3.18.0/redom.es.min.js';
 
 let $ = (selector, scope = document) => scope.querySelector(selector);
@@ -104,15 +103,24 @@ export class ActionApp {
         });
 
         /* Tooltips */
-        // TODO: make this a component
-        const tooltip = html('.asset-tooltip.text-white.p-2', [
-            html('.item-title'),
-            html('.asset-title'),
-            html('.difficulty-score-container', [
-                text('Difficulty Score: '),
-                html('span.difficulty-score')
-            ])
-        ]);
+        class AssetTooltip {
+            constructor() {
+                this.el = html('.asset-tooltip.text-white.p-2', [
+                    html('.item-title'),
+                    html('.asset-title'),
+                    html('.difficulty-score-container', [
+                        text('Difficulty Score: '),
+                        html('span.difficulty-score')
+                    ])
+                ]);
+            }
+            update(asset) {
+                $('.item-title', this.el).innerText = asset.item.title;
+                $('.asset-title', this.el).innerText = asset.title;
+                $('.difficulty-score', this.el).innerText = asset.difficulty;
+            }
+        }
+        const tooltip = new AssetTooltip();
 
         this.assetList.addEventListener('mouseover', evt => {
             let target = evt.target;
@@ -120,13 +128,7 @@ export class ActionApp {
             if (target && target.classList.contains('asset')) {
                 const asset = this.assets[target.dataset.idx - 1];
 
-                if (tooltip.parentNode) {
-                    unmount(tooltip.parentNode, tooltip);
-                }
-
-                $('.item-title', tooltip).innerText = asset.item.title;
-                $('.asset-title', tooltip).innerText = asset.title;
-                $('.difficulty-score', tooltip).innerText = asset.difficulty;
+                tooltip.update(asset);
 
                 mount(target, tooltip);
             }
