@@ -53,8 +53,13 @@ class APIViewMixin(TemplateResponseMixin):
             return super().render_to_response(context, **response_kwargs)
 
     def render_to_json_response(self, context):
-        data = self.serialize_object(context["object"])
+        data = self.serialize_context(context)
         return JsonResponse(data, encoder=URLAwareEncoder)
+
+    def serialize_context(self, context):
+        # Subclasses will want to selectively filter this but we
+        # will simply return the context verbatim:
+        return context
 
     def serialize_object(self, obj):
         data = model_to_dict(obj)
@@ -68,12 +73,18 @@ class APIViewMixin(TemplateResponseMixin):
 class APIDetailView(APIViewMixin, DetailView):
     """DetailView which can also return JSON"""
 
+    def serialize_context(self, context):
+        return {"object": self.serialize_object(context["object"])}
+
 
 class APIListView(APIViewMixin, ListView):
     """ListView which can also return JSON with consistent pagination"""
 
+    def serialize_context(self, context):
+        return {"objects": [self.serialize_object(i) for i in context["object_list"]]}
+
     def render_to_json_response(self, context):
-        data = {"objects": [self.serialize_object(i) for i in context["object_list"]]}
+        data = self.serialize_context(context)
 
         page_obj = context["page_obj"]
         if page_obj:
