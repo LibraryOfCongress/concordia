@@ -75,7 +75,10 @@ main[data-open-asset-id] #asset-viewer {
 
 main[data-open-asset-id] #asset-list {
     flex-grow: 0;
+    flex-shrink: 0;
+
     display: block;
+    width: 128px;
 }
 
 main[data-open-asset-id] #asset-list .asset {
