@@ -54,6 +54,7 @@ class APIViewMixin(TemplateResponseMixin):
 
     def render_to_json_response(self, context):
         data = self.serialize_context(context)
+        self.make_absolute_urls(data)
         return JsonResponse(data, encoder=URLAwareEncoder)
 
     def serialize_context(self, context):
@@ -64,10 +65,19 @@ class APIViewMixin(TemplateResponseMixin):
     def serialize_object(self, obj):
         data = model_to_dict(obj)
         if hasattr(obj, "get_absolute_url"):
-            data["url"] = self.request.build_absolute_uri(
-                "%s?format=json" % obj.get_absolute_url()
-            )
+            data["url"] = obj.get_absolute_url()
         return data
+
+    def make_absolute_urls(self, data):
+        if isinstance(data, dict):
+            for k, v in data.items():
+                if k.endswith("url") and isinstance(v, str) and v.startswith("/"):
+                    data[k] = self.request.build_absolute_uri(v)
+                elif isinstance(v, (dict, list)):
+                    self.make_absolute_urls(v)
+        elif isinstance(data, list):
+            for i in data:
+                self.make_absolute_urls(i)
 
 
 class APIDetailView(APIViewMixin, DetailView):
@@ -81,10 +91,7 @@ class APIListView(APIViewMixin, ListView):
     """ListView which can also return JSON with consistent pagination"""
 
     def serialize_context(self, context):
-        return {"objects": [self.serialize_object(i) for i in context["object_list"]]}
-
-    def render_to_json_response(self, context):
-        data = self.serialize_context(context)
+        data = {"objects": [self.serialize_object(i) for i in context["object_list"]]}
 
         page_obj = context["page_obj"]
         if page_obj:
@@ -101,4 +108,4 @@ class APIListView(APIViewMixin, ListView):
                     "%s?page=%s" % (self.request.path, page_obj.next_page_number())
                 )
 
-        return JsonResponse(data, encoder=URLAwareEncoder)
+        return data
