@@ -43,6 +43,7 @@ from ratelimit.decorators import ratelimit
 from ratelimit.mixins import RatelimitMixin
 from ratelimit.utils import is_ratelimited
 
+from concordia.api_views import APIListView
 from concordia.forms import ContactUsForm, UserProfileForm, UserRegistrationForm
 from concordia.models import (
     Asset,
@@ -1284,7 +1285,7 @@ def redirect_to_next_transcribable_asset(request, *, campaign_slug):
     )
 
 
-class AssetListView(ListView):
+class AssetListView(APIListView):
     context_object_name = "assets"
     paginate_by = 50
 
@@ -1292,6 +1293,25 @@ class AssetListView(ListView):
         order_field = self.request.GET.get("order_by", "pk")
         if order_field.lstrip("-") not in ("pk", "difficulty"):
             raise ValueError
+
+    def serialize_object(self, obj):
+        return {
+            "id": obj.pk,
+            "url": obj.get_absolute_url(),
+            "thumbnail": asset_media_url(obj),
+            "title": obj.title,
+            "difficulty": obj.difficulty,
+            "item": {"title": obj.item.title, "url": obj.item.get_absolute_url()},
+            "project": {
+                "title": obj.item.project.title,
+                "url": obj.item.project.get_absolute_url(),
+            },
+            "campaign": {
+                "title": obj.item.project.campaign.title,
+                "url": obj.item.project.campaign.get_absolute_url(),
+            },
+            "latest_transcription": obj.latest_transcription,
+        }
 
 
 class TranscribeListView(AssetListView):
@@ -1363,62 +1383,6 @@ class ReviewListView(AssetListView):
         )
 
         return assets
-
-
-class APIViewMixin:
-    def render_to_response(self, context):
-        page_obj = context["page_obj"]
-
-        # FIXME: make this a function:
-        pagination = {
-            "first": self.request.build_absolute_uri(
-                "%s?page=%s" % (self.request.path, 1)
-            ),
-            "last": self.request.build_absolute_uri(
-                "%s?page=%s" % (self.request.path, page_obj.paginator.num_pages)
-            ),
-        }
-        if page_obj.has_next():
-            pagination["next"] = self.request.build_absolute_uri(
-                "%s?page=%s" % (self.request.path, page_obj.next_page_number())
-            )
-
-        objects = []
-        for obj in context["object_list"]:
-            # This needs to be reconsidered to either reference or summarize
-            # these once we determine how we're even using the related values:
-            objects.append(
-                {
-                    "id": obj.pk,
-                    "href": obj.get_absolute_url(),
-                    "thumbnail": asset_media_url(obj),
-                    "title": obj.title,
-                    "difficulty": obj.difficulty,
-                    "item": {
-                        "title": obj.item.title,
-                        "href": obj.item.get_absolute_url(),
-                    },
-                    "project": {
-                        "title": obj.item.project.title,
-                        "href": obj.item.project.get_absolute_url(),
-                    },
-                    "campaign": {
-                        "title": obj.item.project.campaign.title,
-                        "href": obj.item.project.campaign.get_absolute_url(),
-                    },
-                    "latest_transcription": obj.latest_transcription,
-                }
-            )
-
-        return JsonResponse({"objects": objects, "pagination": pagination})
-
-
-class TranscribeListAPIView(APIViewMixin, TranscribeListView):
-    pass
-
-
-class ReviewListAPIView(APIViewMixin, ReviewListView):
-    pass
 
 
 def action_app(request):
