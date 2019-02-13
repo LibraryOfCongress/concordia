@@ -43,7 +43,7 @@ from ratelimit.decorators import ratelimit
 from ratelimit.mixins import RatelimitMixin
 from ratelimit.utils import is_ratelimited
 
-from concordia.api_views import APIListView
+from concordia.api_views import APIDetailView, APIListView
 from concordia.forms import ContactUsForm, UserProfileForm, UserRegistrationForm
 from concordia.models import (
     Asset,
@@ -433,7 +433,7 @@ def annotate_children_with_progress_stats(children):
 
 
 @method_decorator(default_cache_control, name="dispatch")
-class CampaignDetailView(DetailView):
+class CampaignDetailView(APIDetailView):
     template_name = "transcriptions/campaign_detail.html"
 
     queryset = Campaign.objects.published().order_by("title")
@@ -484,7 +484,7 @@ class CampaignDetailView(DetailView):
 
 
 @method_decorator(default_cache_control, name="dispatch")
-class ProjectDetailView(ListView):
+class ProjectDetailView(APIListView):
     template_name = "transcriptions/project_detail.html"
     context_object_name = "items"
     paginate_by = 10
@@ -537,7 +537,7 @@ class ProjectDetailView(ListView):
 
 
 @method_decorator(default_cache_control, name="dispatch")
-class ItemDetailView(ListView):
+class ItemDetailView(APIListView):
     """
     Handle GET requests on /campaign/<campaign>/<project>/<item>
 
@@ -1301,14 +1301,23 @@ class AssetListView(APIListView):
             "thumbnail": asset_media_url(obj),
             "title": obj.title,
             "difficulty": obj.difficulty,
-            "item": {"title": obj.item.title, "url": obj.item.get_absolute_url()},
+            "item": {
+                "title": obj.item.title,
+                "url": self.request.build_absolute_uri(
+                    "%s?format=json" % obj.item.get_absolute_url()
+                ),
+            },
             "project": {
                 "title": obj.item.project.title,
-                "url": obj.item.project.get_absolute_url(),
+                "url": self.request.build_absolute_uri(
+                    "%s?format=json" % obj.item.project.get_absolute_url()
+                ),
             },
             "campaign": {
                 "title": obj.item.project.campaign.title,
-                "url": obj.item.project.campaign.get_absolute_url(),
+                "url": self.request.build_absolute_uri(
+                    "%s?format=json" % obj.item.project.campaign.get_absolute_url()
+                ),
             },
             "latest_transcription": obj.latest_transcription,
         }
