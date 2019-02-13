@@ -1,7 +1,13 @@
 /* global OpenSeadragon */
 /* eslint-disable no-console */
 
-import {html, render} from 'https://unpkg.com/lit-html?module';
+// import {html, render} from 'https://unpkg.com/lit-html?module';
+import {
+    html,
+    text,
+    mount,
+    unmount
+} from 'https://cdnjs.cloudflare.com/ajax/libs/redom/3.18.0/redom.es.min.js';
 
 let $ = (selector, scope = document) => scope.querySelector(selector);
 
@@ -98,6 +104,15 @@ export class ActionApp {
         });
 
         /* Tooltips */
+        // TODO: make this a component
+        const tooltip = html('.asset-tooltip.text-white.p-2', [
+            html('.item-title'),
+            html('.asset-title'),
+            html('.difficulty-score-container', [
+                text('Difficulty Score: '),
+                html('span.difficulty-score')
+            ])
+        ]);
 
         this.assetList.addEventListener('mouseover', evt => {
             let target = evt.target;
@@ -105,24 +120,15 @@ export class ActionApp {
             if (target && target.classList.contains('asset')) {
                 const asset = this.assets[target.dataset.idx - 1];
 
-                $$('.asset-tooltip', this.assetList).forEach(i => i.remove());
+                if (tooltip.parentNode) {
+                    unmount(tooltip.parentNode, tooltip);
+                }
 
-                // FIXME: we can hoist this out if we add a visibility toggle for the mouseout state rather than emptying the target
-                const tooltip = asset => html`
-                    <div class="asset-tooltip text-white p-2">
-                        <div class="item-title">
-                            ${asset.item.title}
-                        </div>
-                        <div class="asset-title">
-                            ${asset.title}
-                        </div>
-                        <div class="difficulty-score">
-                            Difficulty Score: ${asset.difficulty}
-                        </div>
-                    </div>
-                `;
+                $('.item-title', tooltip).innerText = asset.item.title;
+                $('.asset-title', tooltip).innerText = asset.title;
+                $('.difficulty-score', tooltip).innerText = asset.difficulty;
 
-                render(tooltip(asset), target);
+                mount(target, tooltip);
             }
         });
     }
