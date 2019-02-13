@@ -1,4 +1,4 @@
-/* global $ displayMessage buildErrorMessage */
+/* global $ displayMessage buildErrorMessage Raven */
 
 function lockControls($container) {
     // Locks all of the controls in the provided jQuery element
@@ -415,3 +415,47 @@ $tagEditor
 
         displayMessage('error', message, 'tags-save-result');
     });
+
+var hideTooltipCallback = function() {
+    // wait a couple seconds and then hide the tooltip.
+    var hideTooltip = function(tooltipButton) {
+        return function() {
+            tooltipButton.tooltip('hide');
+        };
+    };
+    setTimeout(hideTooltip($(this)), 3000);
+};
+var $copyUrlButton = $('#copy-url-button');
+$copyUrlButton.on('click', function() {
+    var $currentAssetUrl = $('#currentAssetUrl');
+    $currentAssetUrl.removeClass('d-none');
+    var currentAssetUrl = document.getElementById('currentAssetUrl');
+    currentAssetUrl.select();
+    var tooltipMessage = '';
+    try {
+        document.execCommand('copy');
+        // Show the tooltip with a success message
+        tooltipMessage = 'This link has been copied to your clipboard';
+        $currentAssetUrl.addClass('d-none');
+        $copyUrlButton
+            .tooltip('dispose')
+            .tooltip({title: tooltipMessage})
+            .tooltip('show')
+            .on('shown.bs.tooltip', hideTooltipCallback);
+    } catch (e) {
+        if (typeof Raven != 'undefined') {
+            Raven.captureException(e);
+        }
+        // Display an error message in the tooltip
+        tooltipMessage =
+            '<p>Could not access your clipboard.</p><button class="btn btn-light btn-sm" id="dismiss-tooltip-button">Close</button>';
+        $currentAssetUrl.addClass('d-none');
+        $copyUrlButton
+            .tooltip('dispose')
+            .tooltip({title: tooltipMessage, html: true})
+            .tooltip('show');
+        $('#dismiss-tooltip-button').on('click', function() {
+            $copyUrlButton.tooltip('hide');
+        });
+    }
+});

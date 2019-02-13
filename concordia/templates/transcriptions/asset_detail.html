@@ -10,6 +10,11 @@
 
 {% block head_content %}
     <link rel="canonical" href="https://{{ request.get_host }}{{ request.path }}">
+    <meta property="og.url" content="https://{{ request.get_host }}{{ request.path }}" />
+    <meta property="og.title" content="{{ asset.item.title }}" />
+    <meta property="og.description" content="{{ asset.item.project.description }}" />
+    <meta property="og.type" content="website" />
+    <meta property="og.image" content="{% asset_media_url asset %}" />
 {% endblock head_content %}
 
 {% block breadcrumbs %}
@@ -53,20 +58,28 @@
                         <span class="sr-only">Next Page</span>
                     </a>
                 </div>
+
+                <div class="btn-group btn-group-sm ml-2">
+                    <button hidden id="go-fullscreen" class="btn btn-default" data-target="contribute-main-content">
+                        <span class="fas fa-arrows-alt"></span>
+                        Fullscreen
+                    </button>
+                </div>
+            </div>
+
+
+            <div class="btn-group btn-group-sm" role="navigation" aria-label="Links to share this page">
+                <a class="btn btn-default" target="_blank" role="button" title="Share this page on Facebook" href="https://www.facebook.com/share.php?u={{ share_url|urlencode:"" }}"><span class="facebook-icon"></span></a>
+                <a class="btn btn-default" target="_blank" role="button" title="Share this page on Twitter" href="https://twitter.com/intent/tweet?text={{ tweet_text|urlencode:"" }}&source=webclient"><span class="twitter-icon"></span></a>
+                <a class="btn btn-default" id="copy-url-button" role="button" data-toggle="tooltip"  data-trigger="manual"  data-placement="bottom" aria-label="Copy this link to your clipboard"><i class="fas fa-link text-white"></i></a>
+                <input type="text" tabindex="-1" aria-hidden="true" class="d-none" id="currentAssetUrl" name="currentAssetUrl" value="{{ current_asset_url }}" />
             </div>
 
             {% if asset.resource_url %}
-                <div class="btn-group btn-group-sm ml-2">
-                    <a class="btn btn-default" target="_blank" href="{{ asset.resource_url }}?sp={{ asset.sequence }}">View on www.loc.gov</a>
+                <div class="btn-group btn-group-sm ml-2" role="navigation" aria-label="Link to the original source for this item">
+                    <a class="btn btn-default" target="_blank" title="View the original source for this item in a new tab" href="{{ asset.resource_url }}?sp={{ asset.sequence }}">View on www.loc.gov <i class="fa fa-external-link-alt"></i></a>
                 </div>
             {% endif %}
-
-            <div class="btn-group btn-group-sm ml-2">
-                <button hidden id="go-fullscreen" class="btn btn-default" data-target="contribute-main-content">
-                    <span class="fas fa-arrows-alt"></span>
-                    Fullscreen
-                </button>
-            </div>
 
             <div class="btn-group btn-group-sm align-self-end" role="navigation" aria-label="Link to the next editable page">
                 <a class="btn btn-default" title="Move to the next page in this item that needs help" href="{{ next_open_asset_url }}">Find a new page &rarr;</a>
