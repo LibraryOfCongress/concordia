@@ -105,8 +105,9 @@ export class ActionApp {
             if (target && target.classList.contains('asset')) {
                 const asset = this.assets[target.dataset.idx - 1];
 
+                $$('.asset-tooltip', this.assetList).forEach(i => i.remove());
+
                 // FIXME: we can hoist this out if we add a visibility toggle for the mouseout state rather than emptying the target
-                target.childNodes.forEach(i => i.remove());
                 const tooltip = asset => html`
                     <div class="asset-tooltip text-white p-2">
                         <div class="item-title">
