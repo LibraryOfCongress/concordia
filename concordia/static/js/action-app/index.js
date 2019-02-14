@@ -137,10 +137,11 @@ export class ActionApp {
             if (target && target.classList.contains('asset')) {
                 this.openViewer(target);
 
-                // TODO: stop using Bootstrap classes directly and toggle semantic classes
                 $$('.asset', this.assetList).forEach(elem => {
+                    elem.classList.remove('asset-active');
                     elem.classList.remove('border-primary');
                 });
+                target.classList.add('asset-active');
                 target.classList.add('border-primary');
                 target.scrollIntoView({
                     behavior: 'smooth',
@@ -303,5 +304,11 @@ export class ActionApp {
         if (this.seadragonViewer.isOpen()) {
             this.seadragonViewer.close();
         }
+
+        $('.asset-active').scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+            inline: 'nearest'
+        });
     }
 }
