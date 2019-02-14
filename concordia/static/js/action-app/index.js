@@ -223,6 +223,9 @@ export class ActionApp {
         $$('.asset-title', this.assetViewer).forEach(
             i => (i.innerText = asset.title)
         );
+        $$('.item-title', this.assetViewer).forEach(
+            i => (i.innerText = asset.item.title)
+        );
 
         if (asset.latest_transcription) {
             if (this.currentMode == 'review') {
