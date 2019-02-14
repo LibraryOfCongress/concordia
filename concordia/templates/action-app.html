@@ -25,10 +25,10 @@
 
 {% block site-main %}
     <header id="action-app-header">
-        <nav id="action-app-global-controls" class="navbar navbar-dark bg-dark" role="navigation">
+        <nav id="action-app-global-controls" class="navbar navbar-expand-lg navbar-dark bg-dark" role="navigation">
             <span class="navbar-brand mb-0 h1">🥞</span>
             <ul class="navbar-nav ml-5 mr-auto">
-                <li class="navbar-item text-white">
+                <li class="nav-item text-white">
                     {% comment %} This could use some re-thinking but … not now {% endcomment %}
                     <form class="form-inline">
                         <div class="input-group">
@@ -41,33 +41,27 @@
                                 <button type="button" class="btn btn-outline-primary active" value="review">Review</button>
                             </div>
                         </div>
-                                <div class="input-group">
-                            <div class="input-group-prepend">
-                                <span class="input-group-text">Sort by:</span>
-                            </div>
-
-                            <div id="activity-sort-selection" class="btn-group" role="group" aria-label="Activity sort">
-                                <button type="button" class="btn btn-outline-primary" value="easiest">Easiest</button>
-                                <button type="button" class="btn btn-outline-primary" value="hardest">Hardest</button>
-                            </div>
-                        </div>
-
-
-                        <div class="input-group">
-                            <div class="input-group-prepend">
-                                <span class="input-group-text">Filter by:</span>
-                            </div>
-
-                            <div id="activity-filter-selection" class="btn-group" role="group" aria-label="Activity filter">
-                                <select id="campaign-filter">
-                                {% for c in campaigns %}
-                                    <option value="{{ c.pk }}">{{ c.title }}</option>
-                                {% endfor %}
-                                </select>
-                            </div>
-                        </div>
-
                     </form>
+                </li>
+                <li class="nav-item dropdown text-white">
+                    <a class="nav-link dropdown-toggle" href="#" id="sortDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Sort by
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="sortDropdown">
+                        <a class="dropdown-item" href="#">Easiest</a>
+                        <a class="dropdown-item" href="#">Hardest</a>
+                    </div>
+                </li>
+                <li class="nav-item dropdown text-white">
+                    <a class="nav-link dropdown-toggle" href="#" id="filterDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Filter by campaign
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="filterDropdown">
+                        <a class="dropdown-item" href="#">All</a>
+                        {% for c in campaigns %}
+                            <a class="dropdown-item" href="#{{ c.pk }}">{{ c.title }}</a>
+                        {% endfor %}
+                    </div>
                 </li>
             </ul>
             <ul class="navbar-nav">
