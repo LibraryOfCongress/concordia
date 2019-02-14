@@ -137,6 +137,7 @@ export class ActionApp {
             if (target && target.classList.contains('asset')) {
                 this.openViewer(target);
 
+                // TODO: stop using Bootstrap classes directly and toggle semantic classes only
                 $$('.asset', this.assetList).forEach(elem => {
                     elem.classList.remove('asset-active');
                     elem.classList.remove('border-primary');
@@ -166,7 +167,8 @@ export class ActionApp {
             }
             update(asset) {
                 $('.item-title', this.el).innerText = asset.item.title;
-                $('.asset-title', this.el).innerText = asset.title;
+                $('.asset-title', this.el).innerText =
+                    'Image ' + asset.sequence;
                 $('.difficulty-score', this.el).innerText = asset.difficulty;
             }
         }
@@ -264,11 +266,31 @@ export class ActionApp {
         this.appElement.dataset.openAssetId = asset.id;
 
         $$('.asset-title', this.assetViewer).forEach(
-            i => (i.innerText = asset.title)
+            i => (i.innerText = 'Image ' + asset.sequence)
         );
         $$('.item-title', this.assetViewer).forEach(
             i => (i.innerText = asset.item.title)
         );
+        $$('.item-url', this.assetViewer).forEach(
+            i => (i.href = asset.item.url)
+        );
+        $$('.asset-url', this.assetViewer).forEach(i => (i.href = asset.url));
+        $$('.project-url', this.assetViewer).forEach(
+            i => (i.href = asset.project.url)
+        );
+        $$('.project-title', this.assetViewer).forEach(
+            i => (i.innerText = asset.project.title)
+        );
+        $$('.campaign-title', this.assetViewer).forEach(
+            i => (i.innerText = asset.campaign.title)
+        );
+        $$('.campaign-url', this.assetViewer).forEach(
+            i => (i.href = asset.campaign.url)
+        );
+        $$('.resource-url', this.assetViewer).forEach(i => {
+            i.href = asset.resource_url + '?sp=' + asset.sequence;
+            i.innerText = asset.resource_url + '?sp=' + asset.sequence;
+        });
 
         if (asset.latest_transcription) {
             if (this.currentMode == 'review') {
