@@ -100,6 +100,11 @@ export class ActionApp {
                     elem.classList.remove('border-primary');
                 });
                 target.classList.add('border-primary');
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center',
+                    inline: 'nearest'
+                });
                 return false;
             }
         });
