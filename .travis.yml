@@ -3,6 +3,9 @@ env:
     - DJANGO_SETTINGS_MODULE=concordia.settings_test
 dist: xenial
 sudo: required
+addons:
+    sonarcloud:
+        organization: 'libraryofcongress'
 python:
     - '3.6'
     - '3.7'
@@ -31,5 +34,6 @@ script:
     - coverage run ./manage.py test concordia importer exporter
     - git diff --name-only $TRAVIS_COMMIT_RANGE | xargs pre-commit run --files
     - safety check
+    - sonar-scanner -Dsonar.projectKey=libraryofcongress_concordia -Dsonar.organization=libraryofcongress -Dsonar.sources=. -Dsonar.host.url=https://sonarcloud.io
 after_success:
     - coveralls
