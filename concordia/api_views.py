@@ -88,17 +88,26 @@ class APIListView(APIViewMixin, ListView):
 
         page_obj = context["page_obj"]
         if page_obj:
+            first_page_query_dict = self.request.GET.copy()
+            first_page_query_dict["page"] = 1
+
+            last_page_query_dict = self.request.GET.copy()
+            last_page_query_dict["page"] = page_obj.paginator.num_pages
+
+            next_page_query_dict = self.request.GET.copy()
+            next_page_query_dict["page"] = page_obj.next_page_number()
+
             data["pagination"] = pagination = {
                 "first": self.request.build_absolute_uri(
-                    "%s?page=%s" % (self.request.path, 1)
+                    "%s?%s" % (self.request.path, first_page_query_dict.urlencode())
                 ),
                 "last": self.request.build_absolute_uri(
-                    "%s?page=%s" % (self.request.path, page_obj.paginator.num_pages)
+                    "%s?%s" % (self.request.path, last_page_query_dict.urlencode())
                 ),
             }
             if page_obj.has_next():
                 pagination["next"] = self.request.build_absolute_uri(
-                    "%s?page=%s" % (self.request.path, page_obj.next_page_number())
+                    "%s?%s" % (self.request.path, next_page_query_dict.urlencode())
                 )
 
         return JsonResponse(data, encoder=URLAwareEncoder)
