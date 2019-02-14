@@ -1303,6 +1303,7 @@ class AssetListView(APIListView):
         order_field = self.request.GET.get("order_by", "pk")
         if order_field.lstrip("-") not in ("pk", "difficulty"):
             raise ValueError
+        return order_field
 
     def serialize_object(self, obj):
         return {
@@ -1357,6 +1358,10 @@ class TranscribeListView(AssetListView):
         if campaign_filter:
             asset_qs = asset_qs.filter(item__project__campaign__pk=campaign_filter)
 
+        order_field = self.get_ordering()
+        if order_field:
+            asset_qs.order_by(order_field)
+
         latest_trans_subquery = (
             Transcription.objects.filter(asset=OuterRef("pk"))
             .order_by("-pk")
@@ -1390,6 +1395,10 @@ class ReviewListView(AssetListView):
 
         if campaign_filter:
             asset_qs = asset_qs.filter(item__project__campaign__pk=campaign_filter)
+
+        order_field = self.get_ordering()
+        if order_field:
+            asset_qs.order_by(order_field)
 
         latest_trans_subquery = (
             Transcription.objects.filter(asset=OuterRef("pk"))
