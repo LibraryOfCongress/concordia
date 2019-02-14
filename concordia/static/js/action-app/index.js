@@ -30,6 +30,7 @@ export class ActionApp {
         this.appElement = $('#action-app-main');
 
         this.setupModeSelector();
+        this.setupSortAndFilter();
         this.setupAssetList();
         this.setupAssetViewer();
 
@@ -51,13 +52,54 @@ export class ActionApp {
         });
     }
 
+    setupSortAndFilter() {
+        this.sortSelection = $('#sort-selection');
+        this.filterSelection = $('#filter-selection');
+
+        $$('button', this.sortSelection).forEach(elem => {
+            elem.addEventListener('click', evt => {
+                $$('button', this.sortSelection).forEach(inactiveElem => {
+                    inactiveElem.classList.remove('active');
+                });
+                evt.target.classList.add('active');
+                this.closeViewer();
+                this.refreshData();
+            });
+        });
+
+        $$('button', this.filterSelection).forEach(elem => {
+            elem.addEventListener('click', evt => {
+                $$('button', this.filterSelection).forEach(inactiveElem => {
+                    inactiveElem.classList.remove('active');
+                });
+                evt.target.classList.add('active');
+                this.closeViewer();
+                this.refreshData();
+            });
+        });
+    }
+
     getCurrentMode() {
         this.currentMode = this.modeSelection.querySelector('.active').value;
         this.appElement.dataset.mode = this.currentMode;
     }
 
+    getCurrentSort() {
+        this.currentSort = this.sortSelection.querySelector('.active').value;
+        this.appElement.dataset.sort = this.currentSort;
+    }
+
+    getCurrentFilter() {
+        this.currentFilter = this.filterSelection.querySelector(
+            '.active'
+        ).value;
+        this.appElement.dataset.filter = this.currentFilter;
+    }
+
     refreshData() {
         this.getCurrentMode();
+        this.getCurrentSort();
+        this.getCurrentFilter();
         this.assets.length = 0;
         this.resetAssetList();
         this.fetchAssetData();
@@ -168,10 +210,10 @@ export class ActionApp {
     }
 
     fetchAssetData() {
-        let url = this.config.assetDataUrlTemplate.replace(
-            /{action}/,
-            this.currentMode
-        );
+        let url = this.config.assetDataUrlTemplate
+            .replace(/{action}/, this.currentMode)
+            .replace(/{sort}/, this.currentSort)
+            .replace(/{filter}/, this.currentFilter);
 
         this.fetchAssetPage(url);
     }

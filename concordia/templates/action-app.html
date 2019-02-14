@@ -14,7 +14,7 @@
     <script type="module">
         import { ActionApp } from "{% static 'js/action-app/index.js' %}";
         window.actionApp = new ActionApp({
-            assetDataUrlTemplate: "/{action}.json"
+            assetDataUrlTemplate: "/{action}.json?order_by={sort}&campaign_filter={filter}"
         });
     </script>
 {% endblock body_scripts %}
@@ -47,19 +47,20 @@
                     <a class="nav-link dropdown-toggle" href="#" id="sortDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     Sort by
                     </a>
-                    <div class="dropdown-menu" aria-labelledby="sortDropdown">
-                        <a class="dropdown-item" href="#">Easiest</a>
-                        <a class="dropdown-item" href="#">Hardest</a>
+                    <div class="dropdown-menu" id="sort-selection" aria-labelledby="sortDropdown">
+                        <button class="dropdown-item sortOption active" value="difficulty">Easiest</button>
+                        <button class="dropdown-item sortOption" value="-difficulty">Hardest</a>
+                        <button class="dropdown-item sortOption" value="pk">Campaign</button>
                     </div>
                 </li>
                 <li class="nav-item dropdown text-white pr-5">
                     <a class="nav-link dropdown-toggle" href="#" id="filterDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     Filter by campaign
                     </a>
-                    <div class="dropdown-menu" aria-labelledby="filterDropdown">
-                        <a class="dropdown-item active" href="#">All</a>
+                    <div class="dropdown-menu" id="filter-selection" aria-labelledby="filterDropdown">
+                        <button class="dropdown-item active campaignFilter" value="">All</button>
                         {% for c in campaigns %}
-                            <a class="dropdown-item" href="#{{ c.pk }}">{{ c.title }}</a>
+                            <button class="dropdown-item campaignFilter" value="{{ c.pk }}">{{ c.title }}</button>
                         {% endfor %}
                     </div>
                 </li>
@@ -78,11 +79,11 @@
         <div id="editor-topnav">
         </div>
         <div id="editor-main" class="p-1 d-flex">
-
             <div id="asset-list"></div>
             <div id="asset-viewer">
                 <div id="asset-metadata">
-                    <h2><span class="item-title"></span> <span class="asset-title"></h2>
+                    <h2 class="item-title"></h2>
+                    <h3 class="asset-title"></h3>
                 </div>
                 <div id="contribute-container" class="flex-grow-1 d-flex h-100">
                     <div id="viewer-column" class="pl-0 d-flex flex-column align-items-stretch bg-dark d-print-block">
