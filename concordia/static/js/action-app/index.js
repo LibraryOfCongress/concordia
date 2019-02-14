@@ -45,7 +45,7 @@ export class ActionApp {
                     inactiveElem.classList.remove('active');
                 });
                 evt.target.classList.add('active');
-
+                this.closeViewer();
                 this.refreshData();
             });
         });
@@ -64,7 +64,9 @@ export class ActionApp {
     }
 
     resetAssetList() {
-        this.assetList.childNodes.forEach(i => i.remove());
+        while (this.assetList.firstChild) {
+            this.assetList.removeChild(this.assetList.firstChild);
+        }
     }
 
     setupAssetList() {
