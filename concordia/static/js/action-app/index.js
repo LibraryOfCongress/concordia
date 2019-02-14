@@ -275,22 +275,21 @@ export class ActionApp {
             i => (i.href = asset.item.url)
         );
         $$('.asset-url', this.assetViewer).forEach(i => (i.href = asset.url));
-        $$('.project-url', this.assetViewer).forEach(
-            i => (i.href = asset.project.url)
-        );
-        $$('.project-title', this.assetViewer).forEach(
-            i => (i.innerText = asset.project.title)
-        );
-        $$('.campaign-title', this.assetViewer).forEach(
-            i => (i.innerText = asset.campaign.title)
-        );
-        $$('.campaign-url', this.assetViewer).forEach(
-            i => (i.href = asset.campaign.url)
-        );
-        $$('.resource-url', this.assetViewer).forEach(i => {
+        $$('a.project-url').forEach(i => {
+            i.href = asset.project.url;
+            i.innerText = asset.project.title;
+        });
+        $$('a.campaign-url').forEach(i => {
+            i.href = asset.campaign.url;
+            i.innerText = asset.campaign.title;
+        });
+        $$('.resource-url').forEach(i => {
             i.href = asset.resource_url + '?sp=' + asset.sequence;
             i.innerText = asset.resource_url + '?sp=' + asset.sequence;
         });
+
+        $('#asset-more-info').innerHTML =
+            '<pre>' + JSON.stringify(asset.metadata, null, 3) + '</pre>';
 
         if (asset.latest_transcription) {
             if (this.currentMode == 'review') {
