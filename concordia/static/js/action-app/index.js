@@ -305,10 +305,12 @@ export class ActionApp {
             this.seadragonViewer.close();
         }
 
-        $('.asset-active').scrollIntoView({
-            behavior: 'smooth',
-            block: 'center',
-            inline: 'nearest'
-        });
+        if ($('.asset-active')) {
+            $('.asset-active').scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+                inline: 'nearest'
+            });
+        }
     }
 }
