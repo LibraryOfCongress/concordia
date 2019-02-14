@@ -1302,22 +1302,23 @@ class AssetListView(APIListView):
             "thumbnail": asset_media_url(obj),
             "title": obj.title,
             "difficulty": obj.difficulty,
+            "sequence": obj.sequence,
+            "resource_url": obj.resource_url,
+            "metadata": obj.metadata,
             "item": {
                 "title": obj.item.title,
-                "url": self.request.build_absolute_uri(
-                    "%s?format=json" % obj.item.get_absolute_url()
-                ),
+                "url": self.request.build_absolute_uri(obj.item.get_absolute_url()),
             },
             "project": {
                 "title": obj.item.project.title,
                 "url": self.request.build_absolute_uri(
-                    "%s?format=json" % obj.item.project.get_absolute_url()
+                    obj.item.project.get_absolute_url()
                 ),
             },
             "campaign": {
                 "title": obj.item.project.campaign.title,
                 "url": self.request.build_absolute_uri(
-                    "%s?format=json" % obj.item.project.campaign.get_absolute_url()
+                    obj.item.project.campaign.get_absolute_url()
                 ),
             },
             "latest_transcription": obj.latest_transcription,
