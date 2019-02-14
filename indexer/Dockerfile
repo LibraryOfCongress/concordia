@@ -5,7 +5,7 @@ ENV DEBIAN_FRONTEND="noninteractive"
 RUN apt-get update -qy && apt-get install -o Dpkg::Options::='--force-confnew' -qy \
     git curl \
     libmemcached-dev \
-    python3 python3-dev python3-pip \
+    python3.6 python3.6-dev python3-pip \
     libz-dev libfreetype6-dev \
     libtiff-dev libjpeg-dev libopenjp2-7-dev libwebp-dev zlib1g-dev \
     graphviz \
