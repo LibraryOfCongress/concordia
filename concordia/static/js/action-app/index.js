@@ -1,8 +1,10 @@
 /* global OpenSeadragon */
 /* eslint-disable no-console */
 
-// import {html, render} from 'https://unpkg.com/lit-html?module';
-import {mount} from 'https://cdnjs.cloudflare.com/ajax/libs/redom/3.18.0/redom.es.min.js';
+import {
+    mount,
+    unmount
+} from 'https://cdnjs.cloudflare.com/ajax/libs/redom/3.18.0/redom.es.min.js';
 
 import {$, $$, emptyNode, sortChildren} from './utils/dom.js';
 import {fetchJSON, getCachedData} from './utils/api.js';
@@ -139,16 +141,21 @@ export class ActionApp {
         /* Tooltips */
         const tooltip = new AssetTooltip();
 
-        this.assetList.addEventListener('mouseover', evt => {
+        const handleTooltipRevealEvent = evt => {
             let target = evt.target;
-
             if (target && target.classList.contains('asset')) {
                 const asset = this.assets.get(target.dataset.id);
-
                 tooltip.update(asset);
-
                 mount(target, tooltip);
             }
+        };
+        this.assetList.addEventListener('mouseover', handleTooltipRevealEvent);
+        // Unlike focus, focusin bubbles:
+        this.assetList.addEventListener('focusin', handleTooltipRevealEvent);
+
+        // We'll remove the tooltip any time the asset list itself loses focus:
+        this.assetList.addEventListener('blur', () => {
+            unmount(tooltip.el.parentNode, tooltip);
         });
     }
 
@@ -245,6 +252,7 @@ export class ActionApp {
         assetElement.dataset.id = assetData.id;
         assetElement.dataset.difficulty = assetData.difficulty;
         assetElement.title = `${assetData.title} (${assetData.project.title})`;
+        assetElement.tabIndex = 0;
 
         this.assetListObserver.observe(assetElement);
 
