@@ -1342,7 +1342,7 @@ class TranscribeListView(AssetListView):
             Q(transcription_status=TranscriptionStatus.NOT_STARTED)
             | Q(transcription_status=TranscriptionStatus.IN_PROGRESS)
         )
-        .select_related("item", "item__project", "item__project__campaign")
+        .prefetch_related("item", "item__project", "item__project__campaign")
     )
 
     def get_context_data(self, **kwargs):
@@ -1379,7 +1379,7 @@ class ReviewListView(AssetListView):
     queryset = (
         Asset.objects.published()
         .filter(transcription_status=TranscriptionStatus.SUBMITTED)
-        .select_related("item", "item__project", "item__project__campaign")
+        .prefetch_related("item", "item__project", "item__project__campaign")
     )
 
     def get_context_data(self, **kwargs):
