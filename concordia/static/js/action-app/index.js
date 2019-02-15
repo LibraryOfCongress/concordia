@@ -14,6 +14,20 @@ let $$ = (selector, scope = document) => {
     return Array.from(scope.querySelectorAll(selector));
 };
 
+let fetchJSON = originalURL => {
+    let url = new URL(originalURL, window.location);
+    let qs = url.searchParams;
+    qs.set('format', 'json');
+    let finalURL = `${url.origin}${url.pathname}?${qs}`;
+
+    console.time(`Fetch ${url}`);
+
+    return fetch(finalURL).then(response => {
+        console.timeEnd(`Fetch ${url}`);
+        return response.json();
+    });
+};
+
 class AssetTooltip {
     constructor() {
         this.el = html('.asset-tooltip.text-white.p-2', [
@@ -183,20 +197,15 @@ export class ActionApp {
     }
 
     fetchAssetPage(url) {
-        console.time(`Fetch ${url}`);
+        fetchJSON(url).then(data => {
+            data.objects.forEach(i => this.createAsset(i));
+            $('#asset-count').innerText = this.assets.length;
 
-        fetch(url)
-            .then(response => response.json())
-            .then(data => {
-                console.timeEnd(`Fetch ${url}`);
-                data.objects.forEach(i => this.createAsset(i));
-                $('#asset-count').innerText = this.assets.length;
-
-                // FIXME: think about how we want demand loading / “I don't want to work on any of this” to behave
-                if (data.pagination.next && this.assets.length < 100) {
-                    this.fetchAssetPage(data.pagination.next);
-                }
-            });
+            // FIXME: think about how we want demand loading / “I don't want to work on any of this” to behave
+            if (data.pagination.next && this.assets.length < 100) {
+                this.fetchAssetPage(data.pagination.next);
+            }
+        });
     }
 
     createAsset(assetData) {
