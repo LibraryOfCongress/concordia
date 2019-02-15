@@ -280,9 +280,26 @@ export class ActionApp {
     }
 
     filterAssets() {
-        $$('.asset', this.assetList).forEach(elem => {
-            console.log('FIXME: implement visibility checks for', elem.id);
-        });
+        console.time('Filtering assets');
+        let currentCampaignId = this.campaignSelect.value;
+
+        if (!currentCampaignId) {
+            $$('.asset[hidden]', this.assetList).forEach(i =>
+                i.removeAttribute('hidden')
+            );
+        } else {
+            $$('.asset', this.assetList).forEach(elem => {
+                // FIXME: if we populated the filterable attributes as data values when we create the asset we could avoid this lookup entirely and test replacing this with querySelectorAll using attribute selectors
+                // TODO: test whether iterating the list backwards and/or doing this in requestAnimationFrame would be more efficient interacting with our intersection observer
+                let asset = this.assets.get(elem.dataset.id);
+                if (asset.campaign.id == currentCampaignId) {
+                    elem.removeAttribute('hidden');
+                } else {
+                    elem.setAttribute('hidden', 'hidden');
+                }
+            });
+        }
+        console.timeEnd('Filtering assets');
     }
 
     scrollToActiveAsset() {
