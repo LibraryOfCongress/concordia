@@ -268,6 +268,10 @@ export class ActionApp {
             }
         } else {
             if (this.currentMode == 'review') {
+                // FIXME: this really should be a property in the data rather
+                // than an inferred value from latest_transcription and we
+                // probably want this to be styled differently, too
+
                 $('#review-transcription-text').innerHTML =
                     'Nothing to transcribe';
             } else {
