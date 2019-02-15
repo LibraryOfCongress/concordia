@@ -8,27 +8,8 @@ import {
     mount
 } from 'https://cdnjs.cloudflare.com/ajax/libs/redom/3.18.0/redom.es.min.js';
 
-import {emptyNode} from './utils.js';
-
-let $ = (selector, scope = document) => scope.querySelector(selector);
-
-let $$ = (selector, scope = document) => {
-    return Array.from(scope.querySelectorAll(selector));
-};
-
-let fetchJSON = originalURL => {
-    let url = new URL(originalURL, window.location);
-    let qs = url.searchParams;
-    qs.set('format', 'json');
-    let finalURL = `${url.origin}${url.pathname}?${qs}`;
-
-    console.time(`Fetch ${url}`);
-
-    return fetch(finalURL).then(response => {
-        console.timeEnd(`Fetch ${url}`);
-        return response.json();
-    });
-};
+import {$, $$, emptyNode} from './utils/dom.js';
+import {fetchJSON, getCachedData} from './utils/api.js';
 
 class AssetTooltip {
     constructor() {
@@ -217,40 +198,16 @@ export class ActionApp {
         });
     }
 
-    getCachedData(container, refObj, key) {
-        /*
-            Assumes a passed object with .id potentially matching a key in
-            this.items and .url being the source for the data if we don't
-            already have a copy
-
-            The key parameter will be used to extract only a single key from the
-            returned data object. This is a code-smell indicator that we may
-            want to review our API return format to have the parent/children
-            elements use the same name everywhere.
-        */
-        let id = refObj.id.toString();
-
-        if (container.has(id)) {
-            return Promise.resolve(container.get(id));
-        } else {
-            return fetchJSON(refObj.url).then(data => {
-                let obj = key ? data[key] : data;
-                container.set(id, obj);
-                return obj;
-            });
-        }
-    }
-
     getCachedItem(refObj) {
-        return this.getCachedData(this.items, refObj, 'item');
+        return getCachedData(this.items, refObj, 'item');
     }
 
     getCachedProject(refObj) {
-        return this.getCachedData(this.projects, refObj, 'project');
+        return getCachedData(this.projects, refObj, 'project');
     }
 
     getCachedCampaign(refObj) {
-        return this.getCachedData(this.campaigns, refObj, 'campaign');
+        return getCachedData(this.campaigns, refObj, 'campaign');
     }
 
     createAsset(assetData) {
@@ -280,7 +237,6 @@ export class ActionApp {
         let asset = this.assets.get(assetElement.dataset.id);
 
         this.getCachedItem(asset.item).then(itemInfo => {
-            console.log(itemInfo);
             $('#asset-more-info').innerHTML =
                 '<pre>' + JSON.stringify(itemInfo, null, 3) + '</pre>';
         });
