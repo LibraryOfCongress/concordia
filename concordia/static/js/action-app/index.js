@@ -4,7 +4,7 @@
 // import {html, render} from 'https://unpkg.com/lit-html?module';
 import {mount} from 'https://cdnjs.cloudflare.com/ajax/libs/redom/3.18.0/redom.es.min.js';
 
-import {$, $$, emptyNode} from './utils/dom.js';
+import {$, $$, emptyNode, sortChildren} from './utils/dom.js';
 import {fetchJSON, getCachedData} from './utils/api.js';
 import {AssetTooltip} from './components.js';
 
@@ -114,6 +114,14 @@ export class ActionApp {
             }
         });
 
+        /* List sorting */
+        this.sortModeSelector = $('#sort-mode');
+        this.sortMode = this.sortModeSelector.value;
+        this.sortModeSelector.addEventListener('change', evt => {
+            this.sortMode = evt.target.value;
+            sortChildren(this.assetList, this.getAssetComparator());
+        });
+
         /* Tooltips */
         const tooltip = new AssetTooltip();
 
@@ -128,6 +136,29 @@ export class ActionApp {
                 mount(target, tooltip);
             }
         });
+    }
+
+    getAssetComparator() {
+        /*
+            Return a sort function suitable for sorting the children of asset
+            list
+
+            This will likely make sense to replace in the future with something
+            which would sort this.assets and then move the DOM elements
+        */
+
+        let int = str => parseInt(str, 10);
+
+        let getDifficulty = elem => int(elem.dataset.difficulty);
+
+        switch (this.sortMode) {
+            case 'hardest':
+                return (a, b) => getDifficulty(b) - getDifficulty(a);
+            case 'easiest':
+                return (a, b) => getDifficulty(a) - getDifficulty(b);
+            default:
+                return (a, b) => int(a.id) - int(b.id);
+        }
     }
 
     setupAssetViewer() {
