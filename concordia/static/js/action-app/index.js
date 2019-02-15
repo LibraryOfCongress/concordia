@@ -107,11 +107,7 @@ export class ActionApp {
                     elem.classList.remove('asset-active', 'border-primary');
                 });
                 target.classList.add('asset-active', 'border-primary');
-                target.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'center',
-                    inline: 'nearest'
-                });
+                this.scrollToActiveAsset();
                 return false;
             }
         });
