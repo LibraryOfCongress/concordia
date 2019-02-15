@@ -11,3 +11,9 @@ export function emptyNode(node) {
         node.lastChild.remove();
     }
 }
+
+export function sortChildren(container, comparisonFunction) {
+    [...container.childNodes]
+        .sort(comparisonFunction)
+        .forEach(child => container.appendChild(child));
+}

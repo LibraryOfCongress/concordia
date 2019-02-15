@@ -44,13 +44,17 @@
                     </form>
                 </li>
                 <li class="nav-item dropdown text-white pr-5">
-                    <a class="nav-link dropdown-toggle" href="#" id="sortDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    Sort by
-                    </a>
-                    <div class="dropdown-menu" id="sort-selection" aria-labelledby="sortDropdown">
-                        <button class="dropdown-item sortOption active" value="difficulty">Easiest</button>
-                        <button class="dropdown-item sortOption" value="-difficulty">Hardest</a>
-                    </div>
+                    <form class="form-inline">
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <label class="input-group-text" for="sort-mode">Sort by:</span>
+                            </div>
+                            <select class="custom-select" id="sort-mode">
+                                <option value="easiest">Easiest</option>
+                                <option value="hardest">Hardest</option>
+                            </select>
+                        </div>
+                    </form>
                 </li>
                 <li class="nav-item dropdown text-white pr-5">
                     <a class="nav-link dropdown-toggle" href="#" id="filterDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
