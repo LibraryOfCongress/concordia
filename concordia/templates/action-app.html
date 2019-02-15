@@ -14,7 +14,7 @@
     <script type="module">
         import { ActionApp } from "{% static 'js/action-app/index.js' %}";
         window.actionApp = new ActionApp({
-            assetDataUrlTemplate: "/{action}.json?order_by={sort}&campaign_filter={filter}"
+            assetDataUrlTemplate: "/{action}.json"
         });
     </script>
 {% endblock body_scripts %}
@@ -50,7 +50,6 @@
                     <div class="dropdown-menu" id="sort-selection" aria-labelledby="sortDropdown">
                         <button class="dropdown-item sortOption active" value="difficulty">Easiest</button>
                         <button class="dropdown-item sortOption" value="-difficulty">Hardest</a>
-                        <button class="dropdown-item sortOption" value="pk">Campaign</button>
                     </div>
                 </li>
                 <li class="nav-item dropdown text-white pr-5">
@@ -59,9 +58,6 @@
                     </a>
                     <div class="dropdown-menu" id="filter-selection" aria-labelledby="filterDropdown">
                         <button class="dropdown-item active campaignFilter" value="">All</button>
-                        {% for c in campaigns %}
-                            <button class="dropdown-item campaignFilter" value="{{ c.pk }}">{{ c.title }}</button>
-                        {% endfor %}
                     </div>
                 </li>
             </ul>
