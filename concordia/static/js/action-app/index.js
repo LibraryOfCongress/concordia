@@ -123,6 +123,19 @@ export class ActionApp {
             this.scrollToActiveAsset();
         });
 
+        /* List filtering */
+        this.campaignSelect = $('#selected-campaign');
+        fetchJSON('/campaigns/') // FIXME: this URL should be an input variable!
+            .then(data => {
+                data.objects.forEach(campaign => {
+                    let o = document.createElement('option');
+                    o.value = campaign.id;
+                    o.innerText = campaign.title;
+                    this.campaignSelect.appendChild(o);
+                });
+            });
+        this.campaignSelect.addEventListener('change', this.filterAssets);
+
         /* Tooltips */
         const tooltip = new AssetTooltip();
 
