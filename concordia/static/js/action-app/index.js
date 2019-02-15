@@ -129,11 +129,9 @@ export class ActionApp {
 
                 // TODO: stop using Bootstrap classes directly and toggle semantic classes only
                 $$('.asset', this.assetList).forEach(elem => {
-                    elem.classList.remove('asset-active');
-                    elem.classList.remove('border-primary');
+                    elem.classList.remove('asset-active', 'border-primary');
                 });
-                target.classList.add('asset-active');
-                target.classList.add('border-primary');
+                target.classList.add('asset-active', 'border-primary');
                 target.scrollIntoView({
                     behavior: 'smooth',
                     block: 'center',
