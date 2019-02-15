@@ -63,6 +63,20 @@ export class ActionApp {
 
         this.appElement = $('#action-app-main');
 
+        /*
+            These will store *all* metadata retrieved from the API so it can be
+            easily queried and updated.
+
+            Note that while the IDs returned from the server may currently be
+            numeric we index them as strings to avoid surprises in the future
+            and to avoid issues with DOM interfaces such as dataset which
+            convert arguments to strings.
+        */
+        this.assets = new Map();
+        this.items = new Map();
+        this.projects = new Map();
+        this.campaigns = new Map();
+
         this.setupModeSelector();
         this.setupAssetList();
         this.setupAssetViewer();
@@ -92,7 +106,7 @@ export class ActionApp {
 
     refreshData() {
         this.getCurrentMode();
-        this.assets.length = 0;
+        this.assets.clear();
         this.resetAssetList();
         this.fetchAssetData();
     }
@@ -102,7 +116,6 @@ export class ActionApp {
     }
 
     setupAssetList() {
-        this.assets = [];
         this.assetList = $('#asset-list');
 
         /*
@@ -148,7 +161,7 @@ export class ActionApp {
             let target = evt.target;
 
             if (target && target.classList.contains('asset')) {
-                const asset = this.assets[target.dataset.idx - 1];
+                const asset = this.assets.get(target.dataset.id);
 
                 tooltip.update(asset);
 
@@ -194,23 +207,25 @@ export class ActionApp {
     fetchAssetPage(url) {
         fetchJSON(url).then(data => {
             data.objects.forEach(i => this.createAsset(i));
-            $('#asset-count').innerText = this.assets.length;
+
+            $('#asset-count').innerText = this.assets.size;
 
             // FIXME: think about how we want demand loading / “I don't want to work on any of this” to behave
-            if (data.pagination.next && this.assets.length < 100) {
+            if (data.pagination.next && this.assets.size < 100) {
                 this.fetchAssetPage(data.pagination.next);
             }
         });
     }
 
     createAsset(assetData) {
-        let newIdx = this.assets.push(assetData);
+        // n.b. although we are
+        this.assets.set(assetData.id.toString(), assetData);
 
         let assetElement = document.createElement('div');
         assetElement.id = assetData.id;
         assetElement.classList.add('asset', 'rounded', 'border');
         assetElement.dataset.image = assetData.thumbnail;
-        assetElement.dataset.idx = newIdx;
+        assetElement.dataset.id = assetData.id;
         assetElement.dataset.difficulty = assetData.difficulty;
         assetElement.title = `${assetData.title} (${assetData.project.title})`;
 
@@ -226,7 +241,7 @@ export class ActionApp {
     }
 
     openViewer(assetElement) {
-        let asset = this.assets[assetElement.dataset.idx - 1];
+        let asset = this.assets.get(assetElement.dataset.id);
 
         this.appElement.dataset.openAssetId = asset.id;
 
