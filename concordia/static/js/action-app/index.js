@@ -39,11 +39,34 @@ export class ActionApp {
         this.projects = new Map();
         this.campaigns = new Map();
 
+        this.setupGlobalKeyboardEvents();
+
         this.setupModeSelector();
         this.setupAssetList();
         this.setupAssetViewer();
 
         this.refreshData();
+    }
+
+    setupGlobalKeyboardEvents() {
+        // Register things which we need to handle in any context, such as
+        // opening help or handling focus-shift events
+
+        document.body.addEventListener('keydown', evt => {
+            switch (evt.key) {
+                case '?':
+                case 'F1':
+                    if (!evt.target.tagName.match(/(INPUT|TEXTAREA)/i))
+                        // Either the F1 or ? keys were pressed outside of a
+                        // text field so we'll open the global help modal:
+                        window.jQuery('#help-modal').modal('show');
+                    return false;
+
+                case 'Escape':
+                    this.closeViewer();
+                    return false;
+            }
+        });
     }
 
     setupModeSelector() {
@@ -97,18 +120,17 @@ export class ActionApp {
                 });
         });
 
-        this.assetList.addEventListener('click', evt => {
+        let handleViewerOpenEvent = evt => {
             let target = evt.target;
             if (target && target.classList.contains('asset')) {
                 this.openViewer(target);
-
-                // TODO: stop using Bootstrap classes directly and toggle semantic classes only
-                $$('.asset.asset-active', this.assetList).forEach(elem => {
-                    elem.classList.remove('asset-active', 'border-primary');
-                });
-                target.classList.add('asset-active', 'border-primary');
-                this.scrollToActiveAsset();
                 return false;
+            }
+        };
+        this.assetList.addEventListener('click', handleViewerOpenEvent);
+        this.assetList.addEventListener('keydown', evt => {
+            if (evt.key == 'Enter' || evt.key == ' ') {
+                return handleViewerOpenEvent(evt);
             }
         });
 
@@ -274,6 +296,13 @@ export class ActionApp {
 
     openViewer(assetElement) {
         let asset = this.assets.get(assetElement.dataset.id);
+
+        // TODO: stop using Bootstrap classes directly and toggle semantic classes only
+        $$('.asset.asset-active', this.assetList).forEach(elem => {
+            elem.classList.remove('asset-active', 'border-primary');
+        });
+        assetElement.classList.add('asset-active', 'border-primary');
+        this.scrollToActiveAsset();
 
         this.getCachedItem(asset.item).then(itemInfo => {
             $('#asset-more-info').innerHTML =
