@@ -238,7 +238,7 @@ export class ActionApp {
         // n.b. although we are
         this.assets.set(assetData.id.toString(), assetData);
 
-        let assetElement = document.createElement('div');
+        let assetElement = document.createElement('li');
         assetElement.id = assetData.id;
         assetElement.classList.add('asset', 'rounded', 'border');
         assetElement.dataset.image = assetData.thumbnail;
