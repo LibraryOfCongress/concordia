@@ -14,7 +14,7 @@ echo Running migrations
 echo "Ensuring our base configuration is present in the database"
 ./manage.py ensure_initial_site_configuration
 
-echo "Initiailzing difficulty values"
+echo "Initializing difficulty values"
 ./manage.py initialize_difficulty_values
 
 if [ -v SENTRY_BACKEND_DSN ]; then
