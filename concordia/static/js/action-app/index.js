@@ -120,6 +120,7 @@ export class ActionApp {
         this.sortModeSelector.addEventListener('change', evt => {
             this.sortMode = evt.target.value;
             sortChildren(this.assetList, this.getAssetComparator());
+            this.scrollToActiveAsset();
         });
 
         /* Tooltips */
@@ -243,6 +244,17 @@ export class ActionApp {
         });
     }
 
+    scrollToActiveAsset() {
+        let activeAsset = $('.asset-active', this.assetList);
+        if (activeAsset) {
+            activeAsset.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+                inline: 'nearest'
+            });
+        }
+    }
+
     openViewer(assetElement) {
         let asset = this.assets.get(assetElement.dataset.id);
 
@@ -310,13 +322,6 @@ export class ActionApp {
             this.seadragonViewer.close();
         }
 
-        let activeAsset = $('.asset-active');
-        if (activeAsset) {
-            activeAsset.scrollIntoView({
-                behavior: 'smooth',
-                block: 'center',
-                inline: 'nearest'
-            });
-        }
+        this.scrollToActiveAsset();
     }
 }
