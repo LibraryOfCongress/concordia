@@ -1304,7 +1304,6 @@ class AssetListView(APIListView):
             "difficulty": obj.difficulty,
             "sequence": obj.sequence,
             "resource_url": obj.resource_url,
-            "metadata": obj.item.metadata,
             "item": {
                 "title": obj.item.title,
                 "url": self.request.build_absolute_uri(obj.item.get_absolute_url()),
