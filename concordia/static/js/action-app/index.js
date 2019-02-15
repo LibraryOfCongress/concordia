@@ -235,32 +235,28 @@ export class ActionApp {
 
         this.appElement.dataset.openAssetId = asset.id;
 
-        $$('.asset-title', this.assetViewer).forEach(
-            i => (i.innerText = 'Image ' + asset.sequence)
-        );
-        $$('.item-title', this.assetViewer).forEach(
-            i => (i.innerText = asset.item.title)
-        );
-        $$('.item-url', this.assetViewer).forEach(
-            i => (i.href = asset.item.url)
-        );
-        $$('.asset-url', this.assetViewer).forEach(i => (i.href = asset.url));
-        $$('a.project-url').forEach(i => {
-            i.href = asset.project.url;
+        $$('.asset-title', this.assetViewer).forEach(i => {
+            i.innerText = asset.title;
+            i.href = asset.url;
+        });
+        $$('.item-title', this.assetViewer).forEach(i => {
+            i.innerText = asset.item.title;
+            i.href = asset.item.url;
+        });
+        $$('.project-title', this.assetViewer).forEach(i => {
             i.innerText = asset.project.title;
+            i.href = asset.project.url;
         });
-        $$('a.campaign-url').forEach(i => {
-            i.href = asset.campaign.url;
+
+        $$('.campaign-title', this.assetViewer).forEach(i => {
             i.innerText = asset.campaign.title;
-        });
-        $$('.resource-url').forEach(i => {
-            i.href = asset.resource_url + '?sp=' + asset.sequence;
-            i.innerText = asset.resource_url + '?sp=' + asset.sequence;
+            i.href = asset.campaign.url;
         });
 
         $('#asset-more-info').innerHTML =
             '<pre>' + JSON.stringify(asset.metadata, null, 3) + '</pre>';
 
+        // This should be a component which renders based on the mode and the provided data
         if (asset.latest_transcription) {
             if (this.currentMode == 'review') {
                 $(
