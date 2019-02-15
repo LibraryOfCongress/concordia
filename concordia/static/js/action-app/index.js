@@ -154,7 +154,9 @@ export class ActionApp {
                     this.campaignSelect.appendChild(o);
                 });
             });
-        this.campaignSelect.addEventListener('change', this.filterAssets);
+        this.campaignSelect.addEventListener('change', () =>
+            this.filterAssets()
+        );
 
         /* Tooltips */
         const tooltip = new AssetTooltip();
