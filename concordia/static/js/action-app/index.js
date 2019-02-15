@@ -292,10 +292,13 @@ export class ActionApp {
             this.seadragonViewer.close();
         }
 
-        $('.asset-active').scrollIntoView({
-            behavior: 'smooth',
-            block: 'center',
-            inline: 'nearest'
-        });
+        let activeAsset = $('.asset-active');
+        if (activeAsset) {
+            activeAsset.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+                inline: 'nearest'
+            });
+        }
     }
 }
