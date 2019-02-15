@@ -371,7 +371,7 @@ class HomeView(ListView):
 
 
 @method_decorator(default_cache_control, name="dispatch")
-class CampaignListView(ListView):
+class CampaignListView(APIListView):
     template_name = "transcriptions/campaign_list.html"
     paginate_by = 10
 
