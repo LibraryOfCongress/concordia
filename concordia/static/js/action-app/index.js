@@ -82,9 +82,6 @@ export class ActionApp {
             });
         });
     }
-            });
-        });
-    }
 
     getCurrentMode() {
         this.currentMode = this.modeSelection.querySelector('.active').value;
