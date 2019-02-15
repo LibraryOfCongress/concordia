@@ -103,7 +103,7 @@ export class ActionApp {
                 this.openViewer(target);
 
                 // TODO: stop using Bootstrap classes directly and toggle semantic classes only
-                $$('.asset', this.assetList).forEach(elem => {
+                $$('.asset.asset-active', this.assetList).forEach(elem => {
                     elem.classList.remove('asset-active', 'border-primary');
                 });
                 target.classList.add('asset-active', 'border-primary');
