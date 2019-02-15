@@ -2,32 +2,11 @@
 /* eslint-disable no-console */
 
 // import {html, render} from 'https://unpkg.com/lit-html?module';
-import {
-    html,
-    text,
-    mount
-} from 'https://cdnjs.cloudflare.com/ajax/libs/redom/3.18.0/redom.es.min.js';
+import {mount} from 'https://cdnjs.cloudflare.com/ajax/libs/redom/3.18.0/redom.es.min.js';
 
 import {$, $$, emptyNode} from './utils/dom.js';
 import {fetchJSON, getCachedData} from './utils/api.js';
-
-class AssetTooltip {
-    constructor() {
-        this.el = html('.asset-tooltip.text-white.p-2', [
-            html('.item-title'),
-            html('.asset-title'),
-            html('.difficulty-score-container', [
-                text('Difficulty Score: '),
-                html('span.difficulty-score')
-            ])
-        ]);
-    }
-    update(asset) {
-        $('.item-title', this.el).innerText = asset.item.title;
-        $('.asset-title', this.el).innerText = 'Image ' + asset.sequence;
-        $('.difficulty-score', this.el).innerText = asset.difficulty;
-    }
-}
+import {AssetTooltip} from './components.js';
 
 export class ActionApp {
     constructor(config) {
