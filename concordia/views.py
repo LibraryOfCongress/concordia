@@ -783,6 +783,18 @@ class ItemDetailView(APIListView):
         return data
 
 
+@method_decorator(default_cache_control, name="dispatch")
+class AllTagsView(ListView):
+    template_name = "tags/all.html"
+    context_object_name = "tags"
+
+    http_method_names = ["get"]
+
+    def get_queryset(self):
+        tag_qs = Tag.objects.all()
+        return tag_qs
+
+
 @method_decorator(never_cache, name="dispatch")
 class AssetDetailView(APIDetailView):
     """
