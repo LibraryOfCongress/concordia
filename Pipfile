@@ -7,7 +7,7 @@ name = "pypi"
 "psycopg2" = "*"
 "psycopg2-binary" = "*"
 gunicorn = "*"
-celery = {extras = ["redis"],version = "*"}
+celery = "===4.3.0rc1"
 coreapi = "*"
 django-haystack = "*"
 "boto3" = ">=1.9.16"
@@ -58,4 +58,7 @@ pylint-django = "*"
 pylint-celery = "*"
 
 [requires]
-python_version = "3.6"
+python_version = "3.7"
+
+[pipenv]
+allow_prereleases = true
