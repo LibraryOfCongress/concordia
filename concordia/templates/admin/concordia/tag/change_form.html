@@ -1,0 +1,31 @@
+{% extends "admin/change_form.html" %}
+
+{% load i18n admin_urls humanize %}
+
+{% block content %}
+    {{ block.super }}
+
+    {% if assets %}
+        <table>
+            <caption>Tag History</caption>
+            <thead>
+                <tr>
+                    <th>Asset</th>
+                    <th>Creator</th>
+                    <th>Created</th>
+                    <th>Updated</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for a in assets %}
+                    <tr>
+                        <th>{{ a.asset }}</th>
+                        <th>{{ a.user }}</th>
+                        <td>{{ a.created_on|naturaltime }}</td>
+                        <td>{{ a.updated_on|naturaltime }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+{% endblock content %}

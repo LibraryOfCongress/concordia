@@ -48,7 +48,6 @@ from concordia.api_views import APIDetailView, APIListView
 from concordia.forms import ContactUsForm, UserProfileForm, UserRegistrationForm
 from concordia.models import (
     Asset,
-    AssetTag,
     AssetTranscriptionReservation,
     Campaign,
     Item,
@@ -788,9 +787,11 @@ class ItemDetailView(APIListView):
 class AllTagsView(ListView):
     template_name = "tags/all.html"
     context_object_name = "tags"
+    paginate_by = 10
 
     def get_queryset(self):
-        tag_qs = AssetTag.objects.all()[:1000]
+        tag_qs = Tag.objects.all().annotate(asset_count=Count("asset_tag"))
+
         return tag_qs
 
 

@@ -18,6 +18,7 @@ from importer.tasks import import_items_into_project_from_url
 
 from ..models import (
     Asset,
+    AssetTag,
     Campaign,
     Item,
     Project,
@@ -346,12 +347,34 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         )
 
 
+@admin.register(AssetTag)
+class AssetTagAdmin(admin.ModelAdmin):
+    list_display = ("tag", "asset", "created_on", "user")
+    list_display_links = "tag"
+    search_fields = ["tag"]
+
+
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
     list_display = ("id", "value")
     list_display_links = ("id", "value")
 
     search_fields = ["value"]
+
+    def change_view(self, request, object_id, extra_context=None, **kwargs):
+        if object_id:
+            if extra_context is None:
+                extra_context = {}
+
+            extra_context["tag_value"] = Tag.objects.get(pk=object_id)
+            extra_context["assets"] = (
+                AssetTag.objects.filter(tag_text=extra_context["tag_value"].value)
+                .select_related("user", "asset")
+                .order_by("created_on")
+            )
+        return super().change_view(
+            request, object_id, extra_context=extra_context, **kwargs
+        )
 
 
 @admin.register(UserAssetTagCollection)

@@ -1,21 +1,18 @@
 from django.core.management.base import BaseCommand
-from concordia.models import AssetTag, UserAssetTagCollection
+from concordia.models import AssetTag
 
 
 class Command(BaseCommand):
-    help = "Flatten tags"
+    help = "Dedupe flattened tags"
 
     def handle(self, **options):
-        all_tags = UserAssetTagCollection.objects.all()
+        flat_tags = AssetTag.objects.all()
 
-        for tag_collection in all_tags:
-            for tag in tag_collection.tags.all():
-                # Add each row as an AssetTag object
-                new_flat_tag = AssetTag(
-                    tag=tag.value,
-                    asset=tag_collection.asset,
-                    user=tag_collection.user,
-                    created_on=tag_collection.created_on,
-                    updated_on=tag_collection.updated_on,
-                )
-                new_flat_tag.save()
+        for each_tag in flat_tags:
+            # Check whether there are any other instances of the same tag text and asset
+            duplicate_tags = AssetTag.objects.filter(
+                tag_text=each_tag.tag_text, asset=each_tag.asset
+            ).order_by("created_on")
+            if duplicate_tags.count() > 1:
+                for duplicate_tag in duplicate_tags[1:]:
+                    duplicate_tag.delete()

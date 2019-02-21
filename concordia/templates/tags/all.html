@@ -1,4 +1,9 @@
+<div class="row">
+    {% include "fragments/standard-pagination.html" %}
+</div>
+
+
 {% for tag in tags %}
-    <p>{{ tag.tag }} - {{ tag.asset.title }}
+    <p>{{ tag.tag }} - {{ tag.asset_count }}
     </p>
 {% endfor %}

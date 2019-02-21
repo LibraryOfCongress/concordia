@@ -273,7 +273,8 @@ class AssetTag(models.Model):
     TAG_VALIDATOR = RegexValidator(r"^[- _'\w]{1,50}$")
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    tag = models.CharField(max_length=50, validators=[TAG_VALIDATOR])
+    tag_text = models.CharField(max_length=50, validators=[TAG_VALIDATOR])
+    tag = models.ForeignKey(Tag, blank=True, null=True, on_delete=models.CASCADE)
     created_on = models.DateTimeField()
     updated_on = models.DateTimeField()
 
