@@ -789,11 +789,8 @@ class AllTagsView(ListView):
     template_name = "tags/all.html"
     context_object_name = "tags"
 
-    http_method_names = ["get"]
-
     def get_queryset(self):
         tag_qs = AssetTag.objects.all()[:1000]
-
         return tag_qs
 
 
