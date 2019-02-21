@@ -92,7 +92,8 @@ urlpatterns = [
     path("help-center/how-to-tag/", views.simple_page, name="how-to-tag"),
     path("for-educators/", views.simple_page, name="for-educators"),
     path("resources/", views.simple_page, name="resources"),
-    path("tags/", views.AllTagsView.as_view(), name="all-tags"),
+    path("tags/", views.TagListView.as_view(), name="tag-list"),
+    path("tags/<int:pk>/", views.TagDetailView.as_view(), name="tag-detail"),
     path(
         "latest/",
         RedirectView.as_view(pattern_name="about", permanent=True, query_string=True),

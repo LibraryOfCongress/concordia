@@ -1,9 +1,19 @@
-<div class="row">
-    {% include "fragments/standard-pagination.html" %}
+{% extends "base.html" %}
+
+{% load staticfiles %}
+
+{% block main_content %}
+
+<div class="container">
+    <h1>Tags</h1>
+
+    <div class="row">
+        {% include "fragments/standard-pagination.html" %}
+    </div>
+    <ul>
+    {% for tag in tags %}
+        <li><a href="{% url 'tag-detail' tag.pk %}">{{ tag.value }} - {{ tag.asset_count }}</a></li>
+    {% endfor %}
+    </ul>
 </div>
-
-
-{% for tag in tags %}
-    <p>{{ tag.tag }} - {{ tag.asset_count }}
-    </p>
-{% endfor %}
+{% endblock %}

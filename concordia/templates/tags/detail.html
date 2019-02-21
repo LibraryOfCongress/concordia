@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% load staticfiles %}
+
+{% block main_content %}
+
+<div class="container">
+    <h1>Tag: {{ tag.value }}</h1>
+    <h2>{{ tag.asset_count }} Assets</h2>
+    <ul>
+        {% for a_tag in asset_tags %}
+            {% url 'transcriptions:asset-detail' a_tag.asset.item.project.campaign.slug a_tag.asset.item.project.slug a_tag.asset.item.item_id a_tag.asset.slug as asset_detail_url %}
+                    <li><a class="card-title" href="{{ asset_detail_url }}">
+                        {{ a_tag.asset.title }}
+                    </a> tagged by {{ a_tag.user }} on {{ a_tag.created_on }}</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}

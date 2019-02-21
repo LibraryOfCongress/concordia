@@ -10,6 +10,7 @@ class Command(BaseCommand):
 
         for each_tag in flat_tags:
             # Check whether there are any other instances of the same tag text and asset
+            # FIXME: make this check case-insensitive
             duplicate_tags = AssetTag.objects.filter(
                 tag_text=each_tag.tag_text, asset=each_tag.asset
             ).order_by("created_on")

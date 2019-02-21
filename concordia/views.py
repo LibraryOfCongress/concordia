@@ -48,6 +48,7 @@ from concordia.api_views import APIDetailView, APIListView
 from concordia.forms import ContactUsForm, UserProfileForm, UserRegistrationForm
 from concordia.models import (
     Asset,
+    AssetTag,
     AssetTranscriptionReservation,
     Campaign,
     Item,
@@ -784,15 +785,48 @@ class ItemDetailView(APIListView):
 
 
 @method_decorator(default_cache_control, name="dispatch")
-class AllTagsView(ListView):
+class TagListView(ListView):
     template_name = "tags/all.html"
     context_object_name = "tags"
-    paginate_by = 10
+    paginate_by = 100
 
     def get_queryset(self):
-        tag_qs = Tag.objects.all().annotate(asset_count=Count("asset_tag"))
+        tag_qs = (
+            Tag.objects.all()
+            .annotate(asset_count=Count("assettag"))
+            .order_by("-asset_count")
+        )
 
         return tag_qs
+
+
+@method_decorator(default_cache_control, name="dispatch")
+class TagDetailView(DetailView):
+    template_name = "tags/detail.html"
+    context_object_name = "tag"
+
+    def get_queryset(self):
+        tag_obj = Tag.objects.get(pk=self.kwargs["pk"])
+        self.asset_tags = AssetTag.objects.filter(tag=tag_obj).prefetch_related(
+            "asset",
+            "asset__item",
+            "asset__item__project",
+            "asset__item__project__campaign",
+            "user",
+        )
+
+        tag_qs = Tag.objects.filter(pk=self.kwargs["pk"]).annotate(
+            asset_count=Count("assettag")
+        )
+
+        return tag_qs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+
+        ctx.update({"asset_tags": self.asset_tags})
+
+        return ctx
 
 
 @method_decorator(never_cache, name="dispatch")

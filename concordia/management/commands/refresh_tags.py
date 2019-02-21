@@ -15,6 +15,7 @@ class Command(BaseCommand):
         # And repopulate Tags, linking created Tag objects to their AssetTag instances
         fresh_flat_tags = AssetTag.objects.all()
         for flat_tag in fresh_flat_tags:
-            distinct_tag = Tag.objects.get_or_create(value=flat_tag.tag_text)
+            # FIXME: make case-insensitive on get, sensitive on create
+            distinct_tag, created = Tag.objects.get_or_create(value=flat_tag.tag_text)
             flat_tag.tag = distinct_tag
             flat_tag.save()
