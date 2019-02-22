@@ -58,7 +58,6 @@ from concordia.models import (
     Topic,
     Transcription,
     TranscriptionStatus,
-    UserAssetTagCollection,
 )
 from concordia.signals.signals import reservation_obtained, reservation_released
 from concordia.templatetags.concordia_media_tags import asset_media_url
@@ -938,13 +937,19 @@ class AssetDetailView(APIDetailView):
 
         ctx["current_asset_url"] = self.request.build_absolute_uri()
 
-        tag_groups = UserAssetTagCollection.objects.filter(asset__slug=asset.slug)
+        ctx["tweet_text"] = "#ByThePeople @Crowd_LOC %s %s" % (
+            asset.item.title,
+            ctx["current_asset_url"],
+        )
+
+        ctx["share_url"] = ctx["current_asset_url"]
+
+        asset_tags = AssetTag.objects.filter(asset=asset)
 
         tags = set()
 
-        for tag_group in tag_groups:
-            for tag in tag_group.tags.all():
-                tags.add(tag.value)
+        for asset_tag in asset_tags:
+            tags.add(asset_tag.tag.value)
 
         ctx["tags"] = sorted(tags)
 
@@ -1141,9 +1146,7 @@ def review_transcription(request, *, pk):
 def submit_tags(request, *, asset_pk):
     asset = get_object_or_404(Asset, pk=asset_pk)
 
-    user_tags, created = UserAssetTagCollection.objects.get_or_create(
-        asset=asset, user=request.user
-    )
+    user_tags, created = AssetTag.objects.get_or_create(asset=asset, user=request.user)
 
     tags = set(request.POST.getlist("tags"))
     existing_tags = Tag.objects.filter(value__in=tags)

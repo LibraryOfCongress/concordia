@@ -8,13 +8,13 @@ from more_itertools.more import chunked
 
 from concordia.models import (
     Asset,
+    AssetTag,
     Campaign,
     Item,
     Project,
     SiteReport,
     Tag,
     Transcription,
-    UserAssetTagCollection,
 )
 from concordia.utils import get_anonymous_user
 
@@ -59,8 +59,7 @@ def site_report():
     ).count()
     transcriptions_saved = Transcription.objects.all().count()
 
-    stats = UserAssetTagCollection.objects.aggregate(Count("tags"))
-    tag_count = stats["tags__count"]
+    tag_count = AssetTag.objects.all().count()
 
     distinct_tag_count = Tag.objects.all().count()
 
@@ -135,7 +134,7 @@ def campaign_report(campaign):
         asset__item__project__campaign=campaign
     ).count()
 
-    asset_tag_collections = UserAssetTagCollection.objects.filter(
+    asset_tag_collections = AssetTag.objects.filter(
         asset__item__project__campaign=campaign
     )
 

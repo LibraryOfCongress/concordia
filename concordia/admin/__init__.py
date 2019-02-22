@@ -29,7 +29,6 @@ from ..models import (
     Tag,
     Topic,
     Transcription,
-    UserAssetTagCollection,
 )
 from ..views import ReportCampaignView
 from .actions import (
@@ -375,19 +374,6 @@ class TagAdmin(admin.ModelAdmin):
         return super().change_view(
             request, object_id, extra_context=extra_context, **kwargs
         )
-
-
-@admin.register(UserAssetTagCollection)
-class UserAssetTagCollectionAdmin(admin.ModelAdmin):
-    list_display = ("id", "asset", "user", "created_on", "updated_on")
-    list_display_links = ("id", "asset")
-    date_hierarchy = "created_on"
-    search_fields = ["asset__title", "asset__campaign__title", "asset__project__title"]
-    list_filter = (
-        "asset__item__project__campaign",
-        "asset__item__project",
-        "user__is_staff",
-    )
 
 
 @admin.register(Transcription)

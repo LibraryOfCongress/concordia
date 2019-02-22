@@ -7,9 +7,6 @@ from .models import Asset, SiteReport, Transcription, UserAssetTagCollection
 user = Index("users")
 user.settings(number_of_shards=1, number_of_replicas=0)
 
-tag_collection = Index("tags")
-tag_collection.settings(number_of_shards=1, number_of_replicas=0)
-
 transcription = Index("transcriptions")
 transcription.settings(number_of_shards=1, number_of_replicas=0)
 
@@ -63,46 +60,6 @@ class SiteReportDocument(DocType):
             "users_registered",
             "users_activated",
         ]
-
-
-@tag_collection.doc_type
-class TagCollectionDocument(DocType):
-    tags = fields.NestedField(properties={"value": fields.TextField()})
-    asset = fields.ObjectField(
-        properties={
-            "title": fields.TextField(),
-            "slug": fields.TextField(),
-            "transcription_status": fields.KeywordField(),
-            "item": fields.ObjectField(
-                properties={
-                    "item_id": fields.TextField(),
-                    "project": fields.ObjectField(
-                        properties={
-                            "slug": fields.KeywordField(),
-                            "campaign": fields.ObjectField(
-                                properties={"slug": fields.KeywordField()}
-                            ),
-                        }
-                    ),
-                }
-            ),
-        }
-    )
-    user = fields.ObjectField(properties={"username": fields.TextField()})
-
-    class Meta:
-        model = UserAssetTagCollection
-        fields = ["created_on", "updated_on"]
-
-    def get_queryset(self):
-        return (
-            super()
-            .get_queryset()
-            .order_by("pk")
-            .prefetch_related(
-                "asset__item", "asset__item__project", "asset__item__project__campaign"
-            )
-        )
 
 
 @transcription.doc_type
