@@ -1146,10 +1146,10 @@ def review_transcription(request, *, pk):
 def submit_tags(request, *, asset_pk):
     asset = get_object_or_404(Asset, pk=asset_pk)
 
-    user_tags, created = AssetTag.objects.get_or_create(asset=asset, user=request.user)
+    user_tags = AssetTag.objects.filter(asset=asset, user=request.user)
+    existing_tags = AssetTag.objects.filter(asset=asset)
 
     tags = set(request.POST.getlist("tags"))
-    existing_tags = Tag.objects.filter(value__in=tags)
     new_tag_values = tags.difference(i.value for i in existing_tags)
     new_tags = [Tag(value=i) for i in new_tag_values]
     try:
@@ -1166,17 +1166,15 @@ def submit_tags(request, *, asset_pk):
 
     all_submitted_tags = list(existing_tags) + new_tags
 
-    existing_user_tags = user_tags.tags.all()
-
     for tag in all_submitted_tags:
-        if tag not in existing_user_tags:
+        if tag not in user_tags:
             user_tags.tags.add(tag)
 
-    for tag in existing_user_tags:
+    for tag in user_tags:
         if tag not in all_submitted_tags:
             user_tags.tags.remove(tag)
 
-    all_tags_qs = Tag.objects.filter(userassettagcollection__asset__pk=asset_pk)
+    all_tags_qs = Tag.objects.filter(asset__pk=asset_pk)
     all_tags = all_tags_qs.order_by("value")
 
     final_user_tags = user_tags.tags.order_by("value").values_list("value", flat=True)
