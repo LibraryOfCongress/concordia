@@ -197,6 +197,7 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         max_length=4, choices=MediaType.CHOICES, db_index=True
     )
     sequence = models.PositiveIntegerField(default=1)
+    year = models.CharField(blank=True, max_length=50)
 
     # The original ID of the image resource on loc.gov
     resource_url = models.URLField(max_length=255, blank=True, null=True)

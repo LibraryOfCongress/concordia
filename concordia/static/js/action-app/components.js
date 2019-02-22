@@ -19,6 +19,10 @@ export class AssetTooltip {
             html('.difficulty-score-container', [
                 text('Difficulty Score: '),
                 html('span.difficulty-score')
+            ]),
+            html('.asset-year-container', [
+                text('Year: '),
+                html('span.asset-year')
             ])
         ]);
     }
@@ -26,6 +30,7 @@ export class AssetTooltip {
         $('.item-title', this.el).innerText = asset.item.title;
         $('.asset-title', this.el).innerText = 'Image ' + asset.sequence;
         $('.difficulty-score', this.el).innerText = asset.difficulty;
+        $('.asset-year', this.el).innerText = asset.year;
     }
 }
 

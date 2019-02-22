@@ -1466,6 +1466,7 @@ class AssetListView(APIListView):
             "imageUrl": image_url,
             "title": obj.title,
             "difficulty": obj.difficulty,
+            "year": obj.year,
             "sequence": obj.sequence,
             "resource_url": obj.resource_url,
             "item": {

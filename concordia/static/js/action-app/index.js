@@ -481,6 +481,9 @@ export class ActionApp {
             case 'recent':
                 keyFromAsset = asset => [asset.sent, asset.id];
                 break;
+            case 'year':
+                keyFromAsset = asset => asset.year;
+                break;
             default:
                 console.warn(`Unknown sort mode ${sortMode}; using asset ID…`);
                 keyFromAsset = asset => asset.id;
