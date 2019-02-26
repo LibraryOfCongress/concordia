@@ -1,8 +1,8 @@
-Contact request from {{ email }}:
-
+From: {{ email }}
 Subject: {{ subject }}
 Link:  {{ link }}
 Referring Page: {{ referrer|default:"Unspecified" }}
 
 Story:
+
 {{ story }}
