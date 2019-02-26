@@ -20,7 +20,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.views import LoginView
 from django.contrib.messages import get_messages
 from django.core.exceptions import ValidationError
-from django.core.mail import send_mail
+from django.core.mail import EmailMultiAlternatives, send_mail
 from django.core.paginator import Paginator
 from django.db import connection
 from django.db.models import Case, Count, IntegerField, Max, Q, When
@@ -944,17 +944,19 @@ class ContactUsView(FormView):
         )
         confirmation_message = confirmation_template.render(form.cleaned_data)
 
-        try:
-            send_mail(
-                "Contact {}: {}".format(
-                    self.request.get_host(), form.cleaned_data["subject"]
-                ),
-                message=text_message,
-                html_message=html_message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[settings.DEFAULT_TO_EMAIL],
-            )
+        message = EmailMultiAlternatives(
+            subject="Contact {}: {}".format(
+                self.request.get_host(), form.cleaned_data["subject"]
+            ),
+            body=text_message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[settings.DEFAULT_TO_EMAIL],
+            reply_to=[form.cleaned_data["email"]],
+        )
+        message.attach_alternative(html_message, "text/html")
 
+        try:
+            message.send()
             messages.success(self.request, "Your contact message has been sent.")
         except SMTPException as exc:
             logger.error(
