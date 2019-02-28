@@ -229,7 +229,7 @@ class ExportProjectToBagIt(TemplateView):
             return do_bagit_export(assets, export_base_dir, export_filename_base)
 
 
-class ExportCampaignToBagit(TemplateView):
+class ExportCampaignToBagIt(TemplateView):
     @method_decorator(staff_member_required)
     def get(self, request, *args, **kwargs):
         campaign_slug = self.kwargs["campaign_slug"]
