@@ -12,6 +12,7 @@ from exporter import views as exporter_views
 from . import converters, views
 
 register_converter(converters.UnicodeSlugConverter, "uslug")
+register_converter(converters.ItemIdConverter, "item_id")
 
 tx_urlpatterns = (
     [
@@ -35,7 +36,10 @@ tx_urlpatterns = (
             name="project-export-bagit",
         ),
         path(
-            "<uslug:campaign_slug>/<uslug:project_slug>/<slug:item_id>/export/bagit/",
+            (
+                "<uslug:campaign_slug>/<uslug:project_slug>/"
+                "<item_id:item_id>/export/bagit/"
+            ),
             exporter_views.ExportItemToBagIt.as_view(),
             name="item-export-bagit",
         ),
@@ -45,7 +49,10 @@ tx_urlpatterns = (
             name="campaign-report",
         ),
         path(
-            "<uslug:campaign_slug>/<uslug:project_slug>/<slug:item_id>/<uslug:slug>/",
+            (
+                "<uslug:campaign_slug>/<uslug:project_slug>/"
+                "<item_id:item_id>/<uslug:slug>/"
+            ),
             views.AssetDetailView.as_view(),
             name="asset-detail",
         ),
@@ -66,7 +73,7 @@ tx_urlpatterns = (
             name="project-detail",
         ),
         path(
-            "<uslug:campaign_slug>/<uslug:project_slug>/<slug:item_id>/",
+            "<uslug:campaign_slug>/<uslug:project_slug>/<item_id:item_id>/",
             views.ItemDetailView.as_view(),
             name="item-detail",
         ),
