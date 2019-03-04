@@ -211,6 +211,7 @@ export class ActionApp {
                 return (a, b) => getDifficulty(b) - getDifficulty(a);
             case 'easiest':
                 return (a, b) => getDifficulty(a) - getDifficulty(b);
+            case 'item-id':
             default:
                 return (a, b) => int(a.id) - int(b.id);
         }
