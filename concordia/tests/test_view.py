@@ -416,7 +416,8 @@ class TransactionalViewTests(JSONAssertMixin, TransactionTestCase):
         asset = create_asset()
 
         # Acquire the reservation:
-        with self.assertNumQueries(3):  # 1 auth query + 1 expiry + 1 acquire
+        # 1 auth query + 1 expiry + 1 acquire + 1 feature flag check
+        with self.assertNumQueries(4):
             resp = self.client.post(
                 reverse("reserve-asset-for-transcription", args=(asset.pk,))
             )
@@ -428,7 +429,8 @@ class TransactionalViewTests(JSONAssertMixin, TransactionTestCase):
 
         # Confirm that an update did not change the pk when it updated the timestamp:
 
-        with self.assertNumQueries(3):  # 1 auth query + 1 expiry + 1 acquire
+        # 1 auth query + 1 expiry + 1 acquire + 1 feature flag check
+        with self.assertNumQueries(4):
             resp = self.client.post(
                 reverse("reserve-asset-for-transcription", args=(asset.pk,))
             )
@@ -473,7 +475,8 @@ class TransactionalViewTests(JSONAssertMixin, TransactionTestCase):
 
         self.login_user()
 
-        with self.assertNumQueries(3):  # 1 auth query + 1 expiry + 1 acquire
+        # 1 auth query + 1 expiry + 1 acquire + 1 feature flag check
+        with self.assertNumQueries(4):
             resp = self.client.post(
                 reverse("reserve-asset-for-transcription", args=(asset.pk,))
             )
@@ -499,7 +502,8 @@ class TransactionalViewTests(JSONAssertMixin, TransactionTestCase):
 
         self.login_user()
 
-        with self.assertNumQueries(3):  # 1 auth query + 1 expiry + 1 acquire
+        # 1 auth query + 1 expiry + 1 acquire + 1 feature flag check
+        with self.assertNumQueries(4):
             resp = self.client.post(
                 reverse("reserve-asset-for-transcription", args=(asset.pk,))
             )
