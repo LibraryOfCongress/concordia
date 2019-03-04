@@ -76,12 +76,14 @@ main[data-open-asset-id] #asset-viewer {
     flex-grow: 1;
 }
 
-main[data-open-asset-id] #asset-list {
+main[data-open-asset-id] #asset-list-container {
     flex-grow: 0;
     flex-shrink: 0;
 
     display: block;
     width: 128px;
+
+    grid-template-columns: repeat(auto-fill, 128px);
 }
 
 main[data-open-asset-id] #asset-list .asset {
