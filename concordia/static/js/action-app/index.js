@@ -153,7 +153,7 @@ export class ActionApp {
         this.sortMode = this.sortModeSelector.value;
         this.sortModeSelector.addEventListener('change', evt => {
             this.sortMode = evt.target.value;
-            sortChildren(this.assetList, this.getAssetComparator());
+            sortChildren(this.assetList, this.getAssetSortKeyGenerator());
             this.scrollToActiveAsset();
         });
 
@@ -193,27 +193,22 @@ export class ActionApp {
         });
     }
 
-    getAssetComparator() {
+    getAssetSortKeyGenerator() {
         /*
-            Return a sort function suitable for sorting the children of asset
-            list
-
-            This will likely make sense to replace in the future with something
-            which would sort this.assets and then move the DOM elements
+            Return a function for the current sort mode which will generate the
+            appropriate sort key from a given .asset Element.
         */
 
         let int = str => parseInt(str, 10);
 
-        let getDifficulty = elem => int(elem.dataset.difficulty);
-
         switch (this.sortMode) {
             case 'hardest':
-                return (a, b) => getDifficulty(b) - getDifficulty(a);
+                return elem => -1 * int(elem.dataset.difficulty);
             case 'easiest':
-                return (a, b) => getDifficulty(a) - getDifficulty(b);
+                return elem => int(elem.dataset.difficulty);
             case 'item-id':
             default:
-                return (a, b) => int(a.id) - int(b.id);
+                return elem => int(elem.id);
         }
     }
 
