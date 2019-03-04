@@ -9,6 +9,7 @@ body.view-action-app {
 main {
     flex-shrink: 1;
     max-height: inherit;
+    margin-bottom: 1.5rem; /* Ensure that the fixed footer does not overlap content */
 }
 
 #contribute-container {
