@@ -443,8 +443,8 @@ class TransactionalViewTests(JSONAssertMixin, TransactionTestCase):
 
         # Release the reservation now that we're done:
 
-        # 3 = 1 auth query + 1 expiry + 1 delete
-        with self.assertNumQueries(3):
+        # 4 = 1 auth query + 1 expiry + 1 delete + 1 feature flag check
+        with self.assertNumQueries(4):
             resp = self.client.post(
                 reverse("reserve-asset-for-transcription", args=(asset.pk,)),
                 data={"release": True},
