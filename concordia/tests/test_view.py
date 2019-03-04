@@ -465,8 +465,10 @@ class TransactionalViewTests(JSONAssertMixin, TransactionTestCase):
         # We'll reserve the test asset as the anonymous user and then attempt
         # to edit it after logging in
 
-        # 4 queries = 1 auth query + 1 anonymous user creation + 1 expiry + 1 acquire
-        with self.assertNumQueries(4):
+        # 5 queries =
+        # 1 auth query + 1 anonymous user creation
+        # + 1 expiry + 1 acquire + 1 feature flag
+        with self.assertNumQueries(5):
             resp = self.client.post(
                 reverse("reserve-asset-for-transcription", args=(asset.pk,))
             )
