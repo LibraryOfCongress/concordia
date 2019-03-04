@@ -1,4 +1,4 @@
-from django.urls.converters import SlugConverter
+from django.urls.converters import SlugConverter, StringConverter
 
 
 class UnicodeSlugConverter(SlugConverter):
@@ -7,6 +7,6 @@ class UnicodeSlugConverter(SlugConverter):
     regex = r"[-\w+]+"
 
 
-class ItemSlugConverter(SlugConverter):
+class ItemIdConverter(StringConverter):
     # Allows . in the item ID
     regex = r"[-a-zA-Z0-9_\.]+"
