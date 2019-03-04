@@ -206,6 +206,17 @@ export class ActionApp {
                 return elem => -1 * int(elem.dataset.difficulty);
             case 'easiest':
                 return elem => int(elem.dataset.difficulty);
+            case 'campaign':
+                // Sort by Campaign using sub-values for stable ordering
+                return elem => {
+                    let asset = this.assets.get(elem.dataset.id);
+                    return [
+                        asset.campaign.title,
+                        asset.project.title,
+                        asset.item.title,
+                        asset.id
+                    ];
+                };
             case 'item-id':
             default:
                 return elem => int(elem.id);
