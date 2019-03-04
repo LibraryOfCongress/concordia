@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 
 {% load staticfiles %}
-
 {% load concordia_media_tags %}
 
 {% block title %}
@@ -67,13 +66,14 @@
                 </div>
             </div>
 
-
-            <div class="btn-group btn-group-sm" role="navigation" aria-label="Links to share this page">
-                <a class="btn btn-default" target="_blank" role="button" title="Share this page on Facebook" href="https://www.facebook.com/share.php?u={{ share_url|urlencode:"" }}"><span class="facebook-icon"></span></a>
-                <a class="btn btn-default" target="_blank" role="button" title="Share this page on Twitter" href="https://twitter.com/intent/tweet?text={{ tweet_text|urlencode:"" }}&source=webclient"><span class="twitter-icon"></span></a>
-                <a class="btn btn-default" id="copy-url-button" role="button" data-toggle="tooltip"  data-trigger="manual"  data-placement="bottom" aria-label="Copy this link to your clipboard"><i class="fas fa-link text-white"></i></a>
-                <input type="text" tabindex="-1" aria-hidden="true" class="d-none" id="currentAssetUrl" name="currentAssetUrl" value="{{ current_asset_url }}" />
-            </div>
+            {% if social_share_flag %}
+                <div class="btn-group btn-group-sm" role="navigation" aria-label="Links to share this page">
+                    <a class="btn btn-default" target="_blank" role="button" title="Share this page on Facebook" href="https://www.facebook.com/share.php?u={{ share_url|urlencode:"" }}"><span class="facebook-icon"></span></a>
+                    <a class="btn btn-default" target="_blank" role="button" title="Share this page on Twitter" href="https://twitter.com/intent/tweet?text={{ tweet_text|urlencode:"" }}&source=webclient"><span class="twitter-icon"></span></a>
+                    <a class="btn btn-default" id="copy-url-button" role="button" data-toggle="tooltip"  data-trigger="manual"  data-placement="bottom" aria-label="Copy this link to your clipboard"><i class="fas fa-link text-white"></i></a>
+                    <input type="text" tabindex="-1" aria-hidden="true" class="d-none" id="currentAssetUrl" name="currentAssetUrl" value="{{ current_asset_url }}" />
+                </div>
+            {% endif %}
 
             {% if asset.resource_url %}
                 <div class="btn-group btn-group-sm ml-2" role="navigation" aria-label="Link to the original source for this item">

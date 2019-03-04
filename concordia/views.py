@@ -38,6 +38,7 @@ from django.views.decorators.http import require_POST
 from django.views.decorators.vary import vary_on_headers
 from django.views.generic import DetailView, FormView, ListView, TemplateView
 from django_registration.backends.activation.views import RegistrationView
+from flags.state import flag_enabled
 from ratelimit.decorators import ratelimit
 from ratelimit.mixins import RatelimitMixin
 from ratelimit.utils import is_ratelimited
@@ -678,6 +679,8 @@ class AssetDetailView(DetailView):
             .order_by("sequence")
             .values_list("sequence", "slug")
         )
+
+        ctx["social_share_flag"] = flag_enabled("SOCIAL_SHARE", request=self.request)
 
         ctx["current_asset_url"] = self.request.build_absolute_uri()
 

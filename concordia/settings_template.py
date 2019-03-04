@@ -78,6 +78,7 @@ INSTALLED_APPS = [
     "django_prometheus_metrics",
     "robots",
     "django_celery_beat",
+    "flags",
 ]
 
 MIDDLEWARE = [
@@ -93,6 +94,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "maintenance_mode.middleware.MaintenanceModeMiddleware",
     "ratelimit.middleware.RatelimitMiddleware",
+    "flags.middleware.FlagConditionsMiddleware",
 ]
 
 RATELIMIT_VIEW = "concordia.views.ratelimit_view"
@@ -304,3 +306,6 @@ TRANSCRIPTION_RESERVATION_SECONDS = 5 * 60
 
 #: Web cache policy settings
 DEFAULT_PAGE_TTL = 5 * 60
+
+# Feature flag for social share
+FLAGS = {"SOCIAL_SHARE": []}
