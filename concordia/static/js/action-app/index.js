@@ -120,6 +120,20 @@ export class ActionApp {
                 });
         });
 
+        // We have a simple queue of URLs for asset pages which have not yet
+        // been fetched which fetchNextAssetPage will empty:
+        this.queuedAssetPageURLs = [];
+
+        let loadMoreButton = $('#load-more-assets');
+        loadMoreButton.addEventListener('click', () =>
+            this.fetchNextAssetPage()
+        );
+        new IntersectionObserver(entries => {
+            if (entries.filter(i => i.isIntersecting)) {
+                this.fetchNextAssetPage();
+            }
+        }).observe(loadMoreButton);
+
         let handleViewerOpenEvent = evt => {
             let target = evt.target;
             if (target && target.classList.contains('asset')) {
@@ -242,11 +256,21 @@ export class ActionApp {
 
             $('#asset-count').innerText = this.assets.size;
 
-            // FIXME: think about how we want demand loading / “I don't want to work on any of this” to behave
-            if (data.pagination.next && this.assets.size < 100) {
-                this.fetchAssetPage(data.pagination.next);
+            if (data.pagination.next) {
+                this.queuedAssetPageURLs.push(data.pagination.next);
+            }
+
+            if (this.assets.size < 300) {
+                // We like to have a fair number of items to start with
+                this.fetchNextAssetPage();
             }
         });
+    }
+
+    fetchNextAssetPage() {
+        if (this.queuedAssetPageURLs.length > 0) {
+            this.fetchAssetPage(this.queuedAssetPageURLs.pop());
+        }
     }
 
     getCachedItem(refObj) {
