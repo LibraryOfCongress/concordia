@@ -62,8 +62,8 @@ def create_item(
     *,
     project=None,
     title="Test Item",
-    item_id="testitem0123456789",
-    item_url="http://example.com/item/testitem0123456789/",
+    item_id="testitem.0123456789",
+    item_url="http://example.com/item/testitem.0123456789/",
     published=True,
     **kwargs,
 ):
