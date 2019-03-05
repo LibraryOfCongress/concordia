@@ -1322,6 +1322,11 @@ class AssetListView(APIListView):
         return ctx
 
     def serialize_object(self, obj):
+        # Since we're doing this a lot, let's avoid some repetitive lookups:
+        item = obj.item
+        project = item.project
+        campaign = project.campaign
+
         return {
             "id": obj.pk,
             "url": obj.get_absolute_url(),
@@ -1331,19 +1336,21 @@ class AssetListView(APIListView):
             "sequence": obj.sequence,
             "resource_url": obj.resource_url,
             "item": {
-                "id": obj.item.pk,
-                "title": obj.item.title,
-                "url": obj.item.get_absolute_url(),
+                "id": item.pk,
+                "item_id": item.item_id,
+                "title": item.title,
+                "url": item.get_absolute_url(),
             },
             "project": {
-                "id": obj.item.project.pk,
-                "title": obj.item.project.title,
-                "url": obj.item.project.get_absolute_url(),
+                "id": project.pk,
+                "slug": project.slug,
+                "title": project.title,
+                "url": project.get_absolute_url(),
             },
             "campaign": {
-                "id": obj.item.project.campaign.pk,
-                "title": obj.item.project.campaign.title,
-                "url": obj.item.project.campaign.get_absolute_url(),
+                "id": campaign.pk,
+                "title": campaign.title,
+                "url": campaign.get_absolute_url(),
             },
             "latest_transcription": obj.latest_transcription,
         }
