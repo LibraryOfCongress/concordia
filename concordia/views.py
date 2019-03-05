@@ -23,7 +23,7 @@ from django.core.exceptions import ValidationError
 from django.core.mail import EmailMultiAlternatives, send_mail
 from django.core.paginator import Paginator
 from django.db import connection
-from django.db.models import Case, Count, IntegerField, Max, OuterRef, Q, Subquery, When
+from django.db.models import Case, Count, F, IntegerField, Max, Q, When
 from django.db.transaction import atomic
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -1295,6 +1295,22 @@ class AssetListView(APIListView):
             raise ValueError
         return order_field
 
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+
+        assets = ctx["assets"]
+
+        latest_transcriptions = dict(
+            Transcription.objects.filter(asset__in=[i.pk for i in assets])
+            .annotate(max_pk=Max("pk"))
+            .filter(pk=F("max_pk"))
+            .values_list("asset_id", "text")
+        )
+        for asset in assets:
+            asset.latest_transcription = latest_transcriptions.get(asset.id, None)
+
+        return ctx
+
     def serialize_object(self, obj):
         return {
             "id": obj.pk,
@@ -1351,17 +1367,7 @@ class TranscribeListView(AssetListView):
         if order_field:
             asset_qs.order_by(order_field)
 
-        latest_trans_subquery = (
-            Transcription.objects.filter(asset=OuterRef("pk"))
-            .order_by("-pk")
-            .values("text")
-        )
-
-        assets = asset_qs.annotate(
-            latest_transcription=Subquery(latest_trans_subquery[:1])
-        )
-
-        return assets
+        return asset_qs
 
 
 class ReviewListView(AssetListView):
@@ -1389,17 +1395,7 @@ class ReviewListView(AssetListView):
         if order_field:
             asset_qs.order_by(order_field)
 
-        latest_trans_subquery = (
-            Transcription.objects.filter(asset=OuterRef("pk"))
-            .order_by("-pk")
-            .values("text")
-        )
-
-        assets = asset_qs.annotate(
-            latest_transcription=Subquery(latest_trans_subquery[:1])
-        )
-
-        return assets
+        return asset_qs
 
 
 def action_app(request):
