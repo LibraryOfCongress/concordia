@@ -238,13 +238,17 @@ export class ActionApp {
             },
             showNavigator: true,
             showRotationControl: true,
+            showReferenceStrip: true,
+            sequenceMode: true,
             toolbar: 'viewer-controls',
             zoomInButton: 'viewer-zoom-in',
             zoomOutButton: 'viewer-zoom-out',
             homeButton: 'viewer-home',
             fullPageButton: 'viewer-full-page',
             rotateLeftButton: 'viewer-rotate-left',
-            rotateRightButton: 'viewer-rotate-right'
+            rotateRightButton: 'viewer-rotate-right',
+            nextButton: 'viewer-next-page',
+            previousButton: 'viewer-previous-page'
         });
 
         $('#close-viewer-button').addEventListener('click', () => {
@@ -412,7 +416,30 @@ export class ActionApp {
             this.seadragonViewer.close();
         }
 
-        this.seadragonViewer.open({type: 'image', url: asset.thumbnail});
+        let tileSources = [
+            {
+                type: 'image',
+                url: asset.thumbnail
+            }
+        ];
+        let initialPage = 0;
+
+        if (asset.previous_thumbnail) {
+            initialPage = 1;
+            tileSources.unshift({
+                type: 'image',
+                url: asset.previous_thumbnail
+            });
+        }
+
+        if (asset.next_thumbnail) {
+            tileSources.push({
+                type: 'image',
+                url: asset.next_thumbnail
+            });
+        }
+
+        this.seadragonViewer.open(tileSources, initialPage);
     }
 
     closeViewer() {
