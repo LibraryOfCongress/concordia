@@ -23,7 +23,17 @@ from django.core.exceptions import ValidationError
 from django.core.mail import EmailMultiAlternatives, send_mail
 from django.core.paginator import Paginator
 from django.db import connection
-from django.db.models import Case, Count, F, IntegerField, Max, Q, When
+from django.db.models import (
+    Case,
+    Count,
+    F,
+    IntegerField,
+    Max,
+    OuterRef,
+    Q,
+    Subquery,
+    When,
+)
 from django.db.transaction import atomic
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -1310,14 +1320,45 @@ class AssetListView(APIListView):
 
         assets = ctx["assets"]
 
+        asset_pks = [i.pk for i in assets]
+
         latest_transcriptions = dict(
-            Transcription.objects.filter(asset__in=[i.pk for i in assets])
+            Transcription.objects.filter(asset__in=asset_pks)
             .annotate(max_pk=Max("pk"))
             .filter(pk=F("max_pk"))
             .values_list("asset_id", "text")
         )
+
+        adjacent_asset_qs = Asset.objects.filter(
+            published=True, item=OuterRef("item")
+        ).values("sequence")
+
+        adjacent_seq_qs = (
+            Asset.objects.filter(pk__in=asset_pks, published=True)
+            .annotate(
+                next_sequence=Subquery(
+                    adjacent_asset_qs.filter(
+                        sequence__gt=OuterRef("sequence")
+                    ).order_by("sequence")[:1]
+                ),
+                previous_sequence=Subquery(
+                    adjacent_asset_qs.filter(
+                        sequence__lt=OuterRef("sequence")
+                    ).order_by("-sequence")[:1]
+                ),
+            )
+            .values_list("pk", "previous_sequence", "next_sequence")
+        )
+
+        adjacent_seqs = {
+            pk: (prev_seq, next_seq) for pk, prev_seq, next_seq in adjacent_seq_qs
+        }
+
         for asset in assets:
             asset.latest_transcription = latest_transcriptions.get(asset.id, None)
+            asset.previous_sequence, asset.next_sequence = adjacent_seqs.get(
+                asset.id, (None, None)
+            )
 
         return ctx
 
@@ -1327,7 +1368,7 @@ class AssetListView(APIListView):
         project = item.project
         campaign = project.campaign
 
-        return {
+        metadata = {
             "id": obj.pk,
             "url": obj.get_absolute_url(),
             "thumbnail": asset_media_url(obj),
@@ -1354,6 +1395,18 @@ class AssetListView(APIListView):
             },
             "latest_transcription": obj.latest_transcription,
         }
+
+        # FIXME: we want to rework how this is done after deprecating Asset.media_url
+        if obj.previous_sequence:
+            metadata["previous_thumbnail"] = re.sub(
+                r"[/]\d+[.]jpg", f"/{obj.previous_sequence}.jpg", metadata["thumbnail"]
+            )
+        if obj.next_sequence:
+            metadata["next_thumbnail"] = re.sub(
+                r"[/]\d+[.]jpg", f"/{obj.next_sequence}.jpg", metadata["thumbnail"]
+            )
+
+        return metadata
 
 
 class TranscribeListView(AssetListView):
