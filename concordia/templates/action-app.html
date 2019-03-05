@@ -91,15 +91,18 @@
                 <button id="load-more-assets" class="btn btn-secondary btn-block btn-sm">Load more…</button>
             </div>
             <div id="asset-viewer">
-                <div class="float-right">
-                    <button id="show-metadata-button" class="btn btn-secondary" data-toggle="modal" data-target="#asset-info-modal" aria-label="Show metadata">ℹ Info</button>
-                    <button id="close-viewer-button" class="btn btn-secondary" aria-label="Close viewer">✖️ Close</button>
-                </div>
                 <div id="asset-metadata">
-                    <a class="campaign-title h1" target="_blank"></a>
-                    <a class="project-title h2" target="_blank"></a>
-                    <a class="item-title h3" target="_blank"></a>
-                    <a class="asset-title h4" target="_blank"></a>
+                    <div class="hierarchy">
+                        <a class="campaign-title" target="_blank"></a>
+                        <a class="project-title" target="_blank"></a>
+                        <a class="item-title" target="_blank"></a>
+                        <a class="asset-title" target="_blank"></a>
+                    </div>
+
+                    <div>
+                        <button id="show-metadata-button" class="btn btn-secondary" data-toggle="modal" data-target="#asset-info-modal" aria-label="Show metadata">ℹ Info</button>
+                        <button id="close-viewer-button" class="btn btn-secondary" aria-label="Close viewer">✖️ Close</button>
+                    </div>
                 </div>
                 <div id="contribute-container" class="flex-grow-1 d-flex h-100">
                     <div id="viewer-column" class="pl-0 d-flex flex-column align-items-stretch bg-dark d-print-block">

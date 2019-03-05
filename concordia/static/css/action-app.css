@@ -72,8 +72,11 @@ main[data-mode='review'] #reviewer-column {
 }
 
 main[data-open-asset-id] #asset-viewer {
-    display: block;
     flex-grow: 1;
+    max-height: inherit;
+
+    display: flex;
+    flex-direction: column;
 }
 
 main[data-open-asset-id] #asset-list-container {
@@ -98,6 +101,20 @@ main[data-open-asset-id] .asset-tooltip {
 main[data-open-asset-id] #contribute-container {
     width: 100%;
     height: 100%;
+}
+
+#asset-metadata {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#asset-metadata .hierarchy {
+    max-width: 85%;
+}
+
+#asset-metadata .hierarchy a {
+    text-decoration: underline;
 }
 
 #viewer-column,
