@@ -218,6 +218,10 @@ export class ActionApp {
                     ];
                 };
             case 'item-id':
+                return elem => {
+                    let asset = this.assets.get(elem.dataset.id);
+                    return asset.item.item_id;
+                };
             default:
                 return elem => int(elem.id);
         }
