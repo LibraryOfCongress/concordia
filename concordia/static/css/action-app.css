@@ -85,7 +85,9 @@ main[data-open-asset-id] #asset-list-container {
 
     display: block;
     width: 128px;
+}
 
+main[data-open-asset-id] #asset-list {
     grid-template-columns: repeat(auto-fill, 128px);
 }
 
