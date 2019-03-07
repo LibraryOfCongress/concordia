@@ -370,8 +370,8 @@ export class ActionApp {
         this.appElement.dataset.openAssetId = asset.id;
 
         $$('.asset-title', this.assetViewer).forEach(i => {
-            i.innerText = asset.title;
             i.href = asset.url;
+            i.innerText = 'Image ' + asset.sequence;
         });
         $$('.item-title', this.assetViewer).forEach(i => {
             i.innerText = asset.item.title;
