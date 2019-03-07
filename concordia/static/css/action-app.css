@@ -105,6 +105,14 @@ main[data-open-asset-id] #contribute-container {
     height: 100%;
 }
 
+#asset-info-modal.modal.show {
+    width: 100vw;
+}
+
+#asset-info-modal.modal.show .modal-dialog {
+    max-width: 90vw;
+}
+
 #asset-metadata {
     display: flex;
     justify-content: space-between;
