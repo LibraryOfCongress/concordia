@@ -388,31 +388,24 @@ export class ActionApp {
             i.href = asset.resource_url;
         });
 
-        // TODO: refactor this to use the almost-identical structure better
+        [
+            ['asset', asset],
+            ['item', asset.item],
+            ['project', asset.project],
+            ['campaign', asset.campaign]
+        ].forEach(([prefix, data]) => {
+            $$(`a.${prefix}-url`, this.assetViewer).forEach(link => {
+                link.href = data.url;
+            });
 
+            $$(`.${prefix}-title`, this.assetViewer).forEach(elem => {
+                elem.innerText = data.title;
+            });
+        });
+
+        // Until we component-ize this, we use a custom display for the asset titles:
         $$('.asset-title', this.assetViewer).forEach(i => {
             i.innerText = 'Image ' + asset.sequence;
-        });
-        $$('.item-title', this.assetViewer).forEach(i => {
-            i.innerText = asset.item.title;
-        });
-        $$('.project-title', this.assetViewer).forEach(i => {
-            i.innerText = asset.project.title;
-        });
-        $$('.campaign-title', this.assetViewer).forEach(i => {
-            i.innerText = asset.campaign.title;
-        });
-        $$('.asset-url', this.assetViewer).forEach(i => {
-            i.href = asset.url;
-        });
-        $$('.item-url', this.assetViewer).forEach(i => {
-            i.href = asset.item.url;
-        });
-        $$('.project-url', this.assetViewer).forEach(i => {
-            i.href = asset.project.url;
-        });
-        $$('.campaign-url', this.assetViewer).forEach(i => {
-            i.href = asset.campaign.url;
         });
 
         // This should be a component which renders based on the mode and the provided data
