@@ -136,3 +136,28 @@ main[data-open-asset-id] #contribute-container {
 #editor-column {
     flex-basis: 50%;
 }
+
+.related-links {
+    table-layout: fixed;
+}
+
+.related-links caption {
+    caption-side: top-outside;
+    text-align: center;
+}
+
+.related-links td {
+    width: 50%;
+    max-width: 50%;
+    overflow: hidden;
+}
+
+.related-links a {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.metadata-list .title {
+    text-transform: capitalize;
+}
