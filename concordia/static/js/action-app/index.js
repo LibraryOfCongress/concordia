@@ -8,7 +8,7 @@ import {
 
 import {$, $$, emptyNode, sortChildren} from './utils/dom.js';
 import {fetchJSON, getCachedData} from './utils/api.js';
-import {AssetTooltip} from './components.js';
+import {AssetTooltip, MetadataPanel} from './components.js';
 
 export class ActionApp {
     constructor(config) {
@@ -362,24 +362,22 @@ export class ActionApp {
         assetElement.classList.add('asset-active', 'border-primary');
         this.scrollToActiveAsset();
 
-        this.getCachedItem(asset.item).then(itemInfo => {
-            $('.item-info .details-body').innerHTML = itemInfo.description;
+        this.metadataPanel = new MetadataPanel(asset);
+        mount(
+            $('#asset-info-modal .modal-body', this.assetViewer),
+            this.metadataPanel
+        );
 
-            $('#raw-metadata .details-body').innerText = JSON.stringify(
-                itemInfo,
-                null,
-                2
-            );
+        this.getCachedItem(asset.item).then(itemInfo => {
+            this.metadataPanel.itemMetadata.update(itemInfo);
         });
 
         this.getCachedProject(asset.project).then(projectInfo => {
-            $('.project-info .details-body').innerHTML =
-                projectInfo.description;
+            this.metadataPanel.projectMetadata.update(projectInfo);
         });
 
         this.getCachedCampaign(asset.campaign).then(campaignInfo => {
-            $('.campaign-info .details-body').innerHTML =
-                campaignInfo.description;
+            this.metadataPanel.campaignMetadata.update(campaignInfo);
         });
 
         this.appElement.dataset.openAssetId = asset.id;
@@ -388,6 +386,7 @@ export class ActionApp {
             i.href = asset.resource_url;
         });
 
+        // Generic text & URL updates until we finish componentizing everything:
         [
             ['asset', asset],
             ['item', asset.item],
@@ -469,6 +468,10 @@ export class ActionApp {
 
         if (this.seadragonViewer.isOpen()) {
             this.seadragonViewer.close();
+        }
+
+        if (this.metadataPanel.el.parentNode) {
+            unmount(this.metadataPanel.el.parentNode, this.metadataPanel);
         }
 
         this.scrollToActiveAsset();
