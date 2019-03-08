@@ -492,6 +492,16 @@ class CampaignDetailView(APIDetailView):
 
         return ctx
 
+    def serialize_context(self, context):
+        ctx = super().serialize_context(context)
+        ctx["object"]["related_links"] = [
+            {"title": title, "url": url}
+            for title, url in self.object.resource_set.values_list(
+                "title", "resource_url"
+            )
+        ]
+        return ctx
+
 
 @method_decorator(default_cache_control, name="dispatch")
 class ProjectDetailView(APIListView):
