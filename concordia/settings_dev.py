@@ -45,3 +45,10 @@ SHELL_PLUS_PRE_IMPORTS = [
     ("concordia.utils", "get_anonymous_user"),
     ("concordia.models", "TranscriptionStatus"),
 ]
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {"hosts": [("127.0.0.1", 6379)]},
+    }
+}
