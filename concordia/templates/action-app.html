@@ -26,7 +26,10 @@
 {% block site-main %}
     <header id="action-app-header">
         <nav id="action-app-global-controls" class="navbar navbar-expand-lg navbar-dark bg-dark" role="navigation">
-            <span class="navbar-brand mb-0 h1">🥞</span>
+            <a class="navbar-brand mb-0 h1" href="{% url 'homepage' %}">
+                <span class="fas fa-home"></span>
+                Home
+            </a>
             <ul class="navbar-nav ml-5 mr-auto">
                 <li class="nav-item text-white pr-5">
                     {% comment %} This could use some re-thinking but … not now {% endcomment %}
@@ -73,9 +76,6 @@
                 </li>
             </ul>
             <ul class="navbar-nav">
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'help-center' %}" data-toggle="modal" data-target="#help-modal">❔ Help</a>
-                </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'homepage' %}">↩ Home <span class="sr-only">(current)</span></a>
                 </li>
