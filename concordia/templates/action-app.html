@@ -93,8 +93,8 @@
             <div id="asset-viewer">
                 <div id="asset-metadata">
                     <div class="hierarchy">
-                        <a class="item-title" target="_blank"></a>
-                        <a class="asset-title" target="_blank"></a>
+                        <a class="item-title item-url" target="_blank"></a>
+                        <a class="asset-title asset-url" target="_blank"></a>
                     </div>
 
                     <div>
@@ -200,14 +200,37 @@
                                 </button>
                             </div>
                             <div class="modal-body">
-                                <h3>Campaign: <a class="campaign-title" target="_blank"></a></h3>
-                                <h4>Project: <a class="project-title" target="_blank"></a></h4>
-                                <h5>Item: <a class="project-title" target="_blank"></a></h5>
+                                <details class="campaign-info" open>
+                                    <summary class="h3">
+                                        Campaign: <a class="campaign-title campaign-url" target="_blank"></a>
+                                    </summary>
+                                    <div class="details-body"></div>
+                                </details>
+                                <details class="project-info" open>
+                                    <summary class="h3">
+                                        Project: <a class="project-title project-url" target="_blank"></a>
+                                    </summary>
+                                    <div class="details-body"></div>
+                                </details>
+                                <details class="item-info" open>
+                                    <summary class="h3">
+                                        Item: <a class="item-title item-url" target="_blank"></a>
+                                    </summary>
+                                    <div class="details-body"></div>
+                                </details>
 
-                                <a class="resource-url" target="_blank"></a>
-                                <div id="asset-more-info"></div>
+                                <details id="raw-metadata">
+                                    <summary>All Available Metadata</summary>
+                                    <pre class="details-body"></pre>
+                                </details>
                             </div>
-                            <div class="modal-footer d-block text-center">
+                            <div class="modal-footer d-flex justify-content-center">
+                                <div class="btn-group btn-group-sm">
+                                    <a class="asset-external-view btn btn-link" target="_blank">View item on www.loc.gov</a>
+                                    <a class="campaign-url btn btn-link" target="_blank">Go to Campaign</a>
+                                    <a class="project-url btn btn-link" target="_blank">Go to Project</a>
+                                    <a class="item-url btn btn-link" target="_blank">Go to Item</a>
+                                </div>
                             </div>
                         </div>
                     </div>
