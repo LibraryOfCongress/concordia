@@ -81,6 +81,7 @@ INSTALLED_APPS = [
     "robots",
     "django_celery_beat",
     "flags",
+    "channels",
 ]
 
 MIDDLEWARE = [
@@ -309,3 +310,4 @@ DEFAULT_PAGE_TTL = 5 * 60
 
 # Feature flag for social share
 FLAGS = {"SOCIAL_SHARE": [], "NEW_CAROUSEL_SLIDE": []}
+ASGI_APPLICATION = "concordia.routing.application"

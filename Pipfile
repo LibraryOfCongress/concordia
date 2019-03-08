@@ -37,6 +37,7 @@ django-passwords = "*"
 kombu = "~=4.5"
 django-flags = "*"
 sentry-sdk = "*"
+channels = "*"
 
 [dev-packages]
 invoke = "*"
