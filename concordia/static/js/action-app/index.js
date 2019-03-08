@@ -297,7 +297,7 @@ export class ActionApp {
     }
 
     getCachedCampaign(refObj) {
-        return getCachedData(this.campaigns, refObj, 'campaign');
+        return getCachedData(this.campaigns, refObj, 'object');
     }
 
     createAsset(assetData) {
@@ -363,26 +363,55 @@ export class ActionApp {
         this.scrollToActiveAsset();
 
         this.getCachedItem(asset.item).then(itemInfo => {
-            $('#asset-more-info').innerHTML =
-                '<pre>' + JSON.stringify(itemInfo, null, 3) + '</pre>';
+            $('.item-info .details-body').innerHTML = itemInfo.description;
+
+            $('#raw-metadata .details-body').innerText = JSON.stringify(
+                itemInfo,
+                null,
+                2
+            );
+        });
+
+        this.getCachedProject(asset.project).then(projectInfo => {
+            $('.project-info .details-body').innerHTML =
+                projectInfo.description;
+        });
+
+        this.getCachedCampaign(asset.campaign).then(campaignInfo => {
+            $('.campaign-info .details-body').innerHTML =
+                campaignInfo.description;
         });
 
         this.appElement.dataset.openAssetId = asset.id;
 
+        $$('a.asset-external-view', this.assetViewer).forEach(i => {
+            i.href = asset.resource_url;
+        });
+
+        // TODO: refactor this to use the almost-identical structure better
+
         $$('.asset-title', this.assetViewer).forEach(i => {
-            i.href = asset.url;
             i.innerText = 'Image ' + asset.sequence;
         });
         $$('.item-title', this.assetViewer).forEach(i => {
             i.innerText = asset.item.title;
-            i.href = asset.item.url;
         });
         $$('.project-title', this.assetViewer).forEach(i => {
             i.innerText = asset.project.title;
-            i.href = asset.project.url;
         });
         $$('.campaign-title', this.assetViewer).forEach(i => {
             i.innerText = asset.campaign.title;
+        });
+        $$('.asset-url', this.assetViewer).forEach(i => {
+            i.href = asset.url;
+        });
+        $$('.item-url', this.assetViewer).forEach(i => {
+            i.href = asset.item.url;
+        });
+        $$('.project-url', this.assetViewer).forEach(i => {
+            i.href = asset.project.url;
+        });
+        $$('.campaign-url', this.assetViewer).forEach(i => {
             i.href = asset.campaign.url;
         });
 

@@ -113,6 +113,11 @@ main[data-open-asset-id] #contribute-container {
     max-width: 90vw;
 }
 
+#asset-info-modal .modal-body {
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
 #asset-metadata {
     display: flex;
     justify-content: space-between;
