@@ -541,9 +541,9 @@
 
 <script>
     {% if transcription_status == "not_started" or transcription_status == "in_progress" %}
-        attemptToReserveAsset("{% url 'reserve-asset-for-transcription' asset.pk %}");
+        attemptToReserveAsset("{% url 'reserve-asset' asset.pk %}");
     {% elif user.is_authenticated %}
-        checkForReviewers("{% url 'reserve-asset-for-transcription' asset.pk %}",
+        checkForReviewers("{% url 'reserve-asset' asset.pk %}",
         "{% url 'transcriptions:redirect-to-next-reviewable-asset' asset.item.project.campaign.slug %}");
     {% endif %}
 </script>

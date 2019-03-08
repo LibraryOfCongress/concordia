@@ -1080,7 +1080,7 @@ def reserve_rate(g, r):
 @ratelimit(key="ip", rate=reserve_rate, block=settings.RATELIMIT_BLOCK)
 @require_POST
 @never_cache
-def reserve_asset_transcription(request, *, asset_pk):
+def reserve_asset(request, *, asset_pk):
     """
     Receives an asset PK and attempts to create/update a reservation for it
 

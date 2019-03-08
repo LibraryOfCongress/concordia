@@ -98,11 +98,7 @@ urlpatterns = [
     path("questions/", views.simple_page, name="questions"),
     path("contact/", views.ContactUsView.as_view(), name="contact"),
     path("campaigns/", include(tx_urlpatterns, namespace="transcriptions")),
-    path(
-        "reserve-asset-for-transcription/<int:asset_pk>/",
-        views.reserve_asset_transcription,
-        name="reserve-asset-for-transcription",
-    ),
+    path("reserve-asset/<int:asset_pk>/", views.reserve_asset, name="reserve-asset"),
     path(
         "assets/<int:asset_pk>/transcriptions/save/",
         views.save_transcription,
