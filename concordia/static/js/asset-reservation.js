@@ -1,7 +1,7 @@
 /* global jQuery displayMessage displayHtmlMessage buildErrorMessage */
 /* exported attemptToReserveAsset checkForReviewers */
 
-function addUnloadListener(reservationURL) {
+function addReservationUnloadListener(reservationURL) {
     window.addEventListener('beforeunload', function() {
         var payload = {
             release: true,
@@ -57,7 +57,7 @@ function attemptToReserveAsset(reservationURL) {
             window.setTimeout(attemptToReserveAsset, 60000, reservationURL);
         });
 
-    addUnloadListener(reservationURL);
+    addReservationUnloadListener(reservationURL);
 }
 
 function checkForReviewers(reservationURL, findANewPageURL) {
@@ -97,5 +97,5 @@ function checkForReviewers(reservationURL, findANewPageURL) {
             window.setTimeout(checkForReviewers, 60000, reservationURL);
         });
 
-    addUnloadListener(reservationURL);
+    addReservationUnloadListener(reservationURL);
 }
