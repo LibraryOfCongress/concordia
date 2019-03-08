@@ -41,6 +41,8 @@ export class ActionApp {
 
         this.setupGlobalKeyboardEvents();
 
+        this.setupToolbars();
+
         this.setupModeSelector();
         this.setupAssetList();
         this.setupAssetViewer();
@@ -87,6 +89,16 @@ export class ActionApp {
     getCurrentMode() {
         this.currentMode = this.modeSelection.querySelector('.active').value;
         this.appElement.dataset.mode = this.currentMode;
+    }
+
+    setupToolbars() {
+        let helpToggle = $('#help-toggle');
+        let helpPanel = $('#help-panel');
+
+        helpToggle.addEventListener('click', () => {
+            helpPanel.toggleAttribute('hidden');
+            return false;
+        });
     }
 
     refreshData() {

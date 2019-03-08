@@ -77,15 +77,16 @@
             </ul>
             <ul class="navbar-nav">
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'homepage' %}">↩ Home <span class="sr-only">(current)</span></a>
+                    <button id="help-toggle" class="btn btn-link nav-link" href="{% url 'help-center' %}">
+                        <span class="fas fa-question-circle"></span>
+                        <span class="sr-only">Help</span>
+                    </button>
                 </li>
             </ul>
         </nav>
     </header>
-    <main id="action-app-main" class="d-flex flex-column">
-        <div id="editor-topnav">
-        </div>
-        <div id="editor-main" class="p-1 d-flex">
+    <main id="action-app-main" class="d-flex">
+        <div id="editor-main" class="p-1 d-flex flex-grow-1">
             <div id="asset-list-container">
                 <ul id="asset-list" class="list-unstyled"></ul>
                 <button id="load-more-assets" class="btn btn-secondary btn-block btn-sm">Load more…</button>
@@ -215,34 +216,68 @@
             </div>
         </div>
 
-        <div id="help-modal" class="modal" tabindex="-1" role="dialog">
-            <div class="modal-dialog modal-dialog-centered" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Quick Tips</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <ul>
-                            <li>Type what you see. Preserve original spelling, punctuation, and line breaks.</li>
-                            <li>Use brackets [ ] around deleted, illegible or partially legible text.</li>
-                            <li>Transcribe any words or letters you can't identify as ?.</li>
-                            <li>Use square brackets and asterisks around text from margins [ * * ].</li>
-                            <li>Include insertions where you would read them in the text.</li>
-                        </ul>
-                    </div>
-                    <div class="modal-footer d-block text-center">
-                        <p>
-                            Find more detailed instructions in the <a href="{% url 'help-center' %}" target="_blank">Help Center</a>
-                        </p>
-                        <a class="btn btn-secondary" href="{% url 'questions' %}" target="_blank">
-                            Questions?
-                        </a>
-                    </div>
-                </div>
-            </div>
+        <div id="help-panel" hidden>
+            <section>
+                <h5>Quick Tips</h5>
+                <ul>
+                    <li>Type what you see. Preserve original spelling, punctuation, and line breaks.</li>
+                    <li>Use brackets [ ] around deleted, illegible or partially legible text.</li>
+                    <li>Transcribe any words or letters you can't identify as ?.</li>
+                    <li>Use square brackets and asterisks around text from margins [ * * ].</li>
+                    <li>Include insertions where you would read them in the text.</li>
+                </ul>
+            </section>
+
+            <section>
+                <h5>Keyboard Shortcuts</h5>
+                <table class="table table-compact table-responsive">
+                    <tr>
+                        <th><kbd>w</kbd>, up arrow</th>
+                        <td>Scroll the viewport up</td>
+                    </tr>
+                    <tr>
+                        <th><kbd>s</kbd>, down arrow</th>
+                        <td>Scroll the viewport down</td>
+                    </tr>
+                    <tr>
+                        <th><kbd>a</kbd>, left arrow</th>
+                        <td>Scroll the viewport left</td>
+                    </tr>
+                    <tr>
+                        <th><kbd>d</kbd>, right arrow </th>
+                        <td>Scroll the viewport right</td>
+                    </tr>
+                    <tr>
+                        <th><kbd>0</kbd></th>
+                        <td>Fit the entire image to the viewport</td>
+                    </tr>
+                    <tr>
+                        <th><kbd>-</kbd>, <kbd>_</kbd>, Shift+<kbd>W</kbd>, Shift+Up arrow</th>
+                        <td>Zoom the viewport out</td>
+                    </tr>
+                    <tr>
+                        <th><kbd>=</kbd>, <kbd>+</kbd>, Shift+<kbd>S</kbd>, Shift+Down arrow</th>
+                        <td>Scroll the viewport in</td>
+                    </tr>
+                    <tr>
+                        <th><kbd>r</kbd></th>
+                        <td>Rotate the viewport clockwise</td>
+                    </tr>
+                    <tr>
+                        <th><kbd>R</kbd></th>
+                        <td>Rotate the viewport counterclockwise</td>
+                    </tr>
+                    <tr>
+                        <th><kbd>f</kbd></th>
+                        <td>Flip the viewport horizontally</td>
+                    </tr>
+                </table>
+            </section>
+
+            <p>
+                {% comment %} FIXME: this should probably be a fixed footer at the bottom of this element {% endcomment %}
+                Find more detailed instructions in the <a href="{% url 'help-center' %}" target="_blank">Help Center</a>
+            </p>
         </div>
     </main>
     <footer id="action-app-footer" class="footer fixed-bottom bg-light">
