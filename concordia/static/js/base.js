@@ -1,5 +1,5 @@
 /* global $ Cookies screenfull raven */
-/* exported displayMessage buildErrorMessage */
+/* exported displayMessage displayHtmlMessage buildErrorMessage */
 
 (function() {
     /*
