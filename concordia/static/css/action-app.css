@@ -161,3 +161,11 @@ main[data-open-asset-id] #contribute-container {
 .metadata-list .title {
     text-transform: capitalize;
 }
+
+#help-panel {
+    flex-basis: 26rem;
+}
+
+#help-panel ul {
+    padding-left: 1rem;
+}
