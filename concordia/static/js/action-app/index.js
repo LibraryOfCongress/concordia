@@ -204,6 +204,13 @@ export class ActionApp {
         this.assetList.addEventListener('blur', () => {
             unmount(tooltip.el.parentNode, tooltip);
         });
+
+        $('#asset-list-thumbnail-size').addEventListener('input', evt => {
+            this.assetList.style.setProperty(
+                '--asset-thumbnail-size',
+                evt.target.value + 'px'
+            );
+        });
     }
 
     getAssetSortKeyGenerator() {
