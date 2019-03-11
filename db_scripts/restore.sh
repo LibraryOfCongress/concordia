@@ -11,7 +11,7 @@ if [ $ENV_NAME = "prod" ]; then
     exit 1
 fi
 
-POSTGRESQL_PW="$(aws secretsmanager get-secret-value --secret-id crowd/${ENV_NAME}/DB/MasterUserPassword | python -c 'import json,sys;Secret=json.load(sys.stdin);SecretString=json.loads(Secret["SecretString"]);print(SecretString["password"])')"
+POSTGRESQL_PW="$(aws secretsmanager get-secret-value --region us-east-1 --secret-id crowd/${ENV_NAME}/DB/MasterUserPassword | python -c 'import json,sys;Secret=json.load(sys.stdin);SecretString=json.loads(Secret["SecretString"]);print(SecretString["password"])')"
 # TODO: look up the RDS endpoint for this environment
 POSTGRESQL_HOST=${POSTGRESQL_HOST:-localhost}
 DUMP_FILE=/concordia.dmp
