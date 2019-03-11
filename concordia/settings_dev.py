@@ -1,7 +1,13 @@
 import os
 
 from .settings_template import *  # NOQA ignore=F405
-from .settings_template import DATABASES, INSTALLED_APPS, LOGGING, MIDDLEWARE
+from .settings_template import (
+    CHANNEL_LAYERS,
+    DATABASES,
+    INSTALLED_APPS,
+    LOGGING,
+    MIDDLEWARE,
+)
 
 LOGGING["handlers"]["stream"]["level"] = "DEBUG"
 LOGGING["handlers"]["file"]["level"] = "DEBUG"
@@ -17,7 +23,10 @@ DATABASES["default"]["PORT"] = "54323"
 
 ALLOWED_HOSTS = ["127.0.0.1", "0.0.0.0", "*"]
 
-CELERY_BROKER_URL = "redis://localhost:63791/0"
+CELERY_HOST = "localhost"
+CELERY_PORT = 63791
+
+CELERY_BROKER_URL = "redis://%s:%d/0" % (CELERY_HOST, CELERY_PORT)
 CELERY_RESULT_BACKEND = CELERY_BROKER_URL
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
@@ -46,9 +55,4 @@ SHELL_PLUS_PRE_IMPORTS = [
     ("concordia.models", "TranscriptionStatus"),
 ]
 
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {"hosts": [("127.0.0.1", 6379)]},
-    }
-}
+CHANNEL_LAYERS["default"]["CONFIG"].update({"hosts": (CELERY_HOST, CELERY_PORT)})
