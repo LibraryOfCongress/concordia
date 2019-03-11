@@ -1,10 +1,11 @@
+from channels.layers import get_channel_layer
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django_registration.signals import user_registered
 
-from ..models import Transcription, TranscriptionStatus
+from ..models import Asset, Transcription, TranscriptionStatus
 
 
 @receiver(user_registered)
@@ -33,3 +34,12 @@ def update_asset_status(sender, *, instance, **kwargs):
     instance.asset.transcription_status = new_status
     instance.asset.full_clean()
     instance.asset.save()
+
+
+@receiver(post_save, sender=Asset)
+def send_asset_update(sender, *, instance, **kwargs):
+    channel_layer = get_channel_layer()
+    channel_layer.group_send(
+        instance.slug,
+        {"type": "asset_update", "message": "This is an asset update announcement"},
+    )
