@@ -482,7 +482,7 @@ export class ActionApp {
             this.seadragonViewer.close();
         }
 
-        if (this.metadataPanel.el.parentNode) {
+        if (this.metadataPanel && this.metadataPanel.el.parentNode) {
             unmount(this.metadataPanel.el.parentNode, this.metadataPanel);
         }
 
