@@ -5,7 +5,13 @@ from django.core.management.utils import get_random_secret_key
 
 from .secrets import get_secret
 from .settings_template import *  # NOQA ignore=F405
-from .settings_template import CONCORDIA_ENVIRONMENT, DATABASES, INSTALLED_APPS, LOGGING
+from .settings_template import (
+    CHANNEL_LAYERS,
+    CONCORDIA_ENVIRONMENT,
+    DATABASES,
+    INSTALLED_APPS,
+    LOGGING,
+)
 
 LOGGING["handlers"]["stream"]["level"] = "INFO"
 LOGGING["handlers"]["file"]["level"] = "INFO"
@@ -86,4 +92,8 @@ RATELIMIT_BLOCK = os.getenv("RATELIMIT_BLOCK", "").lower() not in ("false", "0")
 ATTRIBUTION_TEXT = (
     "Transcribed and reviewed by volunteers participating in the "
     "By The People project at crowd.loc.gov."
+)
+
+CHANNEL_LAYERS["default"]["CONFIG"].update(
+    {"hosts": (os.getenv("REDIS_ADDRESS"), os.getenv("REDIS_PORT"))}
 )
