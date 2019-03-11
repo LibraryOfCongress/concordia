@@ -89,6 +89,7 @@ export class ActionApp {
     getCurrentMode() {
         this.currentMode = this.modeSelection.querySelector('.active').value;
         this.appElement.dataset.mode = this.currentMode;
+        $$('.current-mode').forEach(i => (i.innerText = this.currentMode));
     }
 
     setupToolbars() {
