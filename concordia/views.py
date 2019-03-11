@@ -1195,6 +1195,7 @@ def redirect_to_next_reviewable_asset(request, *, campaign_slug):
         transcription_status=TranscriptionStatus.SUBMITTED
     )
     potential_assets = potential_assets.exclude(transcription__user=request.user.pk)
+    potential_assets = potential_assets.filter(assettranscriptionreservation=None)
     potential_assets = potential_assets.select_related("item", "item__project")
 
     # We'll favor assets which are in the same item or project as the original:
