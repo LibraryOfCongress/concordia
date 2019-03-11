@@ -47,7 +47,7 @@
     <main id="action-app-main" class="d-flex">
         <div id="editor-main" class="p-1 d-flex flex-grow-1">
             <div id="asset-list-container">
-                <form id="asset-list-controls" class="sticky-top bg-light form-inline justify-content-center" role="navigation">
+                <form id="asset-list-controls" class="sticky-top bg-light form-inline flex-wrap justify-content-center" role="navigation">
                     <div class="input-group input-group-sm m-1">
                         <div class="input-group-prepend">
                             <span class="input-group-text">I want to:</span>
@@ -76,6 +76,12 @@
                         <select class="custom-select custom-select-sm" id="selected-campaign">
                             <option>All</option>
                         </select>
+                    </div>
+
+                    <div class="w-75 m-1 d-flex align-items-center justify-content-between">
+                        <span class="fas fa-compress-arrows-alt"></span>
+                        <input type="range" class="form-input custom-range" id="asset-list-thumbnail-size" min="128" max="512" step="8" autocomplete="off">
+                        <span class="fas fa-expand-arrows-alt"></span>
                     </div>
                 </form>
 
