@@ -2,10 +2,13 @@
 
 set -eu -o pipefail
 
-ENV_NAME=prod
-
 # aws cloudformation create-stack --region us-east-1 --stack-name $ENV_NAME-bastionhosts --template-url https://s3.amazonaws.com/crowd-deployment/infrastructure/bastion-hosts.yaml --parameters ParameterKey=EnvironmentName,ParameterValue=$ENV_NAME ParameterKey=KeyPairName,ParameterValue=rstorey@loc.gov --disable-rollback
 # aws cloudformation delete-stack --region us-east-1 --stack-name $ENV_NAME-bastionhosts
+
+if [[ -z "${ENV_NAME}" ]]; then
+    echo "ENV_NAME must be set prior to running this script."
+    exit 1
+fi
 
 if [ $ENV_NAME != "prod" ]; then
     echo "This script should only be run in the production environment."
