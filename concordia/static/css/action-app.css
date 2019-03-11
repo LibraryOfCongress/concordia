@@ -12,6 +12,11 @@ main {
     margin-bottom: 1.5rem; /* Ensure that the fixed footer does not overlap content */
 }
 
+#action-app-global-controls > :first-child,
+#action-app-global-controls > :last-child {
+    width: 8rem;
+}
+
 #contribute-container {
     border: none;
 }
