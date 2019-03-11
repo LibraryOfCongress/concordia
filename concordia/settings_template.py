@@ -312,3 +312,10 @@ DEFAULT_PAGE_TTL = 5 * 60
 # Feature flag for social share
 FLAGS = {"SOCIAL_SHARE": []}
 ASGI_APPLICATION = "concordia.routing.application"
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {"hosts": [("redis", 6379)]},
+    }
+}
