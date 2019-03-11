@@ -38,6 +38,7 @@ kombu = "~=4.5"
 django-flags = "*"
 sentry-sdk = "*"
 channels = "*"
+channels-redis = "*"
 
 [dev-packages]
 invoke = "*"
