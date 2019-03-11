@@ -27,12 +27,20 @@
         assetSocket.onmessage = function(e) {
             var data = JSON.parse(e.data);
             var message = data['message'];
-            document.querySelector('#asset-log').value += (message + '\n');
+            document.querySelector('#asset-log').innerText += (message + '\n');
         };
 
         assetSocket.onclose = function(e) {
+            document.querySelector('#asset-log').innerText += "Asset socket closed unexpectedly.";
+
             console.error('Asset socket closed unexpectedly');
         };
+
+        assetSocket.onerror = function(e) {
+            document.querySelector('#asset-log').innerText += "An unexpected error occurred.";
+
+            console.error("An unexpected error occurred.");
+        }
 
 /*
         document.querySelector('#chat-message-input').focus();
