@@ -44,6 +44,7 @@ django-passwords = "*"
 kombu = ">=4.2.2<4.3.0"
 django-flags = "*"
 channels = "*"
+channels-redis = "*"
 
 [dev-packages]
 invoke = "*"
