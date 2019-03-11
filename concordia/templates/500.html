@@ -1,54 +1,81 @@
-{% spaceless %}
-{% load staticfiles %}
-{% endspaceless %}<!DOCTYPE html>
+{% spaceless %} {% load staticfiles %} {% endspaceless %}<!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>{% block title %}500 Error{% endblock title %}</title>
-    <link rel="shortcut icon" href="{% static 'favicon.ico' %}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha256-eSi1q2PG6J7g7ib17yAaWMcrr5GrtohYChqibrV7PBE=" crossorigin="anonymous" />
-    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,600,700|Roboto+Slab" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/base.css' %}">
-    <style>
-        body {
-            height: 100vh;
-            width: 100vw;
-            margin: 0;
-            padding: 0;
-        }
+    <head>
+        <meta charset="UTF-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1, shrink-to-fit=no"
+        />
+        <title>{% block title %}500 Error{% endblock title %}</title>
+        <link rel="shortcut icon" href="{% static 'favicon.ico' %}" />
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.3/css/bootstrap.min.css"
+            integrity="sha256-eSi1q2PG6J7g7ib17yAaWMcrr5GrtohYChqibrV7PBE="
+            crossorigin="anonymous"
+        />
+        <link
+            href="https://fonts.googleapis.com/css?family=Open+Sans:400,600,700|Roboto+Slab"
+            rel="stylesheet"
+        />
+        <link rel="stylesheet" href="{% static 'css/base.css' %}" />
+        <style>
+            body {
+                height: 100vh;
+                width: 100vw;
+                margin: 0;
+                padding: 0;
+            }
 
-        #error-message {
-            max-width: 30em;
-        }
-    </style>
-</head>
-<body class="d-flex justify-content-center align-items-center text-center">
-    <div id="error-message">
-        <h1>HTTP 500 Error</h1>
+            #error-message {
+                max-width: 30em;
+            }
+        </style>
+    </head>
+    <body class="d-flex justify-content-center align-items-center text-center">
+        <div id="error-message">
+            <h1>HTTP 500 Error</h1>
 
-        <p>
-            The server encountered an unexpected condition which prevented it from fulfilling the request.
-            Our staff have been notified about the failure.
-        </p>
+            <p>
+                The server encountered an unexpected condition which prevented
+                it from fulfilling the request. Our staff have been notified
+                about the failure.
+            </p>
 
-        <nav>
-            <ul class="nav justify-content-center">
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ request.META.HTTP_REFERER }}">
-                        &laquo; Go Back
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/">Go Home &raquo;</a>
-                </li>
-            </ul>
-        </nav>
-    </div>
+            <nav>
+                <ul class="nav justify-content-center">
+                    {% if request %}
+                    <li class="nav-item">
+                        <a
+                            class="nav-link"
+                            href="{{ request.META.HTTP_REFERER }}"
+                        >
+                            &laquo; Go Back
+                        </a>
+                    </li>
+                    {% endif %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Go Home &raquo;</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha256-VsEqElsCHSGmnmHXGQzvoWjWwoznFSZc6hs7ARLRacQ=" crossorigin="anonymous"></script>
-    <script src="{% static 'js/base.js' %}"></script>
-</body>
+        <script
+            src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"
+            integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+            crossorigin="anonymous"
+        ></script>
+        <script
+            src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"
+            integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49"
+            crossorigin="anonymous"
+        ></script>
+        <script
+            src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.3/js/bootstrap.min.js"
+            integrity="sha256-VsEqElsCHSGmnmHXGQzvoWjWwoznFSZc6hs7ARLRacQ="
+            crossorigin="anonymous"
+        ></script>
+        <script src="{% static 'js/base.js' %}"></script>
+    </body>
 </html>
