@@ -5,7 +5,7 @@ from django.conf.urls import url
 from . import consumers
 
 websocket_urlpatterns = [
-    url(r"^ws/asset/(?P<asset_pk>[^/]+)/$", consumers.AssetConsumer)
+    url(r"^ws/asset/(?P<asset_id>[^/]+)/$", consumers.AssetConsumer)
 ]
 
 application = ProtocolTypeRouter(

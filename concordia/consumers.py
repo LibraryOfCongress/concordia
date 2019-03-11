@@ -1,34 +1,35 @@
-from channels.generic.websocket import AsyncWebsocketConsumer
 import json
 
+from channels.generic.websocket import WebsocketConsumer
 
-class AssetConsumer(AsyncWebsocketConsumer):
-    async def connect(self):
-        self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
-        self.room_group_name = "chat_%s" % self.room_name
 
-        # Join room group
-        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+class AssetConsumer(WebsocketConsumer):
+    def connect(self):
+        self.asset_id = self.scope["url_route"]["kwargs"]["asset_id"]
+        self.asset_group_name = "asset_%s" % self.asset_id
 
-        await self.accept()
+        # Join group
+        self.channel_layer.group_add(self.asset_group_name, self.channel_name)
 
-    async def disconnect(self, close_code):
-        # Leave room group
-        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
+        self.accept()
+
+    def disconnect(self, close_code):
+        # Leave group
+        self.channel_layer.group_discard(self.asset_group_name, self.channel_name)
 
     # Receive message from WebSocket
-    async def receive(self, text_data):
+    def receive(self, text_data):
         text_data_json = json.loads(text_data)
         message = text_data_json["message"]
 
-        # Send message to room group
-        await self.channel_layer.group_send(
-            self.room_group_name, {"type": "chat_message", "message": message}
+        # Send message to group
+        self.channel_layer.group_send(
+            self.asset_group_name, {"type": "asset_update", "message": message}
         )
 
-    # Receive message from room group
-    async def chat_message(self, event):
+    # Receive message from group
+    def asset_update(self, event):
         message = event["message"]
 
         # Send message to WebSocket
-        await self.send(text_data=json.dumps({"message": message}))
+        self.send(text_data=json.dumps({"message": message}))
