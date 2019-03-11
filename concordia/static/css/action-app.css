@@ -79,6 +79,10 @@ main[data-open-asset-id] #asset-viewer {
     flex-direction: column;
 }
 
+main[data-open-asset-id] #asset-list-controls {
+    display: none;
+}
+
 main[data-open-asset-id] #asset-list-container {
     flex-grow: 0;
     flex-shrink: 0;
