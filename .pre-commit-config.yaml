@@ -1,5 +1,9 @@
 exclude: '.*/vendor/.*'
 repos:
+    - repo: https://github.com/pre-commit/mirrors-isort
+      rev: v4.3.15
+      hooks:
+          - id: isort
     - repo: https://github.com/ambv/black
       rev: 18.9b0
       hooks:
