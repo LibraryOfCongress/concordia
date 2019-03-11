@@ -74,7 +74,7 @@ class ViewTest_Exporter(TestCase):
             "b'Campaign,Project,Item,ItemId,Asset,"
             "AssetStatus,DownloadUrl,Transcription\\r\\n'"
             "b'Test Campaign,Test Project,Test Item,"
-            "testitem0123456789,TestAsset,completed,"
+            "testitem.0123456789,TestAsset,completed,"
             "http://tile.loc.gov/image-services/"
             "iiif/service:mss:mal:003:0036300:002/full"
             "/pct:25/0/default.jpg,Sample\\r\\n'"
