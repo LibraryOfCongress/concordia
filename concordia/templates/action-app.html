@@ -30,49 +30,8 @@
                 <span class="fas fa-home"></span>
                 Home
             </a>
-            <ul class="navbar-nav ml-5 mr-auto">
-                <li class="nav-item text-white pr-5">
-                    {% comment %} This could use some re-thinking but … not now {% endcomment %}
-                    <form class="form-inline">
-                        <div class="input-group">
-                            <div class="input-group-prepend">
-                                <span class="input-group-text">I want to:</span>
-                            </div>
-
-                            <div id="activity-mode-selection" class="btn-group" role="group" aria-label="Activity mode">
-                                <button type="button" class="btn btn-outline-primary" value="transcribe">Transcribe</button>
-                                <button type="button" class="btn btn-outline-primary active" value="review">Review</button>
-                            </div>
-                        </div>
-                    </form>
-                </li>
-                <li class="nav-item dropdown text-white pr-5">
-                    <form class="form-inline">
-                        <div class="input-group">
-                            <div class="input-group-prepend">
-                                <label class="input-group-text" for="sort-mode">Sort by:</label>
-                            </div>
-                            <select class="custom-select" id="sort-mode">
-                                <option value="easiest">Easiest</option>
-                                <option value="hardest">Hardest</option>
-                                <option value="item-id">Item ID</option>
-                                <option value="campaign">Campaign</option>
-                            </select>
-                        </div>
-                    </form>
-                </li>
-                <li class="nav-item dropdown text-white pr-5">
-                    {% comment %} FIXME: this wants to be more of a sidebar or drop-down panel but for now… {% endcomment %}
-                    <form class="form-inline">
-                        <div class="input-group">
-                            <div class="input-group-prepend">
-                                <label class="input-group-text" for="selected-campaign">Campaign:</label>
-                            </div>
-                            <select class="custom-select" id="selected-campaign">
-                                <option>All</option>
-                            </select>
-                        </div>
-                    </form>
+            <ul class="navbar-nav mx-auto">
+                <li class="nav-item navbar-text text-center current-mode">
                 </li>
             </ul>
             <ul class="navbar-nav">
@@ -88,6 +47,54 @@
     <main id="action-app-main" class="d-flex">
         <div id="editor-main" class="p-1 d-flex flex-grow-1">
             <div id="asset-list-container">
+                <nav id="asset-list-controls" class="navbar navbar-expand-lg" role="navigation">
+                    <ul class="navbar-nav ml-5 mr-auto">
+                        <li class="nav-item text-white pr-5">
+                            {% comment %} This could use some re-thinking but … not now {% endcomment %}
+                            <form class="form-inline">
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text">I want to:</span>
+                                    </div>
+
+                                    <div id="activity-mode-selection" class="btn-group" role="group" aria-label="Activity mode">
+                                        <button type="button" class="btn btn-outline-primary" value="transcribe">Transcribe</button>
+                                        <button type="button" class="btn btn-outline-primary active" value="review">Review</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </li>
+                        <li class="nav-item dropdown text-white pr-5">
+                            <form class="form-inline">
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <label class="input-group-text" for="sort-mode">Sort by:</label>
+                                    </div>
+                                    <select class="custom-select" id="sort-mode">
+                                        <option value="easiest">Easiest</option>
+                                        <option value="hardest">Hardest</option>
+                                        <option value="item-id">Item ID</option>
+                                        <option value="campaign">Campaign</option>
+                                    </select>
+                                </div>
+                            </form>
+                        </li>
+                        <li class="nav-item dropdown text-white pr-5">
+                            {% comment %} FIXME: this wants to be more of a sidebar or drop-down panel but for now… {% endcomment %}
+                            <form class="form-inline">
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <label class="input-group-text" for="selected-campaign">Campaign:</label>
+                                    </div>
+                                    <select class="custom-select" id="selected-campaign">
+                                        <option>All</option>
+                                    </select>
+                                </div>
+                            </form>
+                        </li>
+                    </ul>
+                </nav>
+
                 <ul id="asset-list" class="list-unstyled"></ul>
                 <button id="load-more-assets" class="btn btn-secondary btn-block btn-sm">Load more…</button>
             </div>
