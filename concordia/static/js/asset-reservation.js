@@ -1,7 +1,50 @@
 /* global jQuery displayMessage displayHtmlMessage buildErrorMessage */
-/* exported attemptToReserveAsset checkForReviewers */
+/* exported attemptToReserveAsset */
 
-function addReservationUnloadListener(reservationURL) {
+function attemptToReserveAsset(reservationURL, findANewPageURL, actionType) {
+    var $transcriptionEditor = jQuery('#transcription-editor');
+
+    jQuery
+        .ajax({
+            url: reservationURL,
+            type: 'POST',
+            dataType: 'json'
+        })
+        .done(function() {
+            $transcriptionEditor
+                .data('hasReservation', true)
+                .trigger('update-ui-state');
+        })
+        .fail(function(jqXHR, textStatus, errorThrown) {
+            if (jqXHR.status == 409) {
+                if (actionType == 'transcribe') {
+                    $transcriptionEditor
+                        .data('hasReservation', false)
+                        .trigger('update-ui-state');
+                    jQuery('#asset-reservation-failure-modal').modal();
+                } else {
+                    displayHtmlMessage(
+                        'warning',
+                        'There are other reviewers on this page.' +
+                            ' <a href="' +
+                            findANewPageURL +
+                            '">Find a new page to review</a>',
+                        'transcription-reservation'
+                    );
+                }
+            } else {
+                displayMessage(
+                    'error',
+                    'Unable to reserve this page: ' +
+                        buildErrorMessage(jqXHR, textStatus, errorThrown),
+                    'transcription-reservation'
+                );
+            }
+        })
+        .always(function() {
+            window.setTimeout(attemptToReserveAsset, 60000, reservationURL);
+        });
+
     window.addEventListener('beforeunload', function() {
         var payload = {
             release: true,
@@ -22,80 +65,4 @@ function addReservationUnloadListener(reservationURL) {
             jQuery.ajax({url: reservationURL, type: 'POST', data: payload});
         }
     });
-}
-
-function attemptToReserveAsset(reservationURL) {
-    var $transcriptionEditor = jQuery('#transcription-editor');
-
-    jQuery
-        .ajax({
-            url: reservationURL,
-            type: 'POST',
-            dataType: 'json'
-        })
-        .done(function() {
-            $transcriptionEditor
-                .data('hasReservation', true)
-                .trigger('update-ui-state');
-        })
-        .fail(function(jqXHR, textStatus, errorThrown) {
-            if (jqXHR.status == 409) {
-                $transcriptionEditor
-                    .data('hasReservation', false)
-                    .trigger('update-ui-state');
-                jQuery('#asset-reservation-failure-modal').modal();
-            } else {
-                displayMessage(
-                    'error',
-                    'Unable to reserve this page: ' +
-                        buildErrorMessage(jqXHR, textStatus, errorThrown),
-                    'transcription-reservation'
-                );
-            }
-        })
-        .always(function() {
-            window.setTimeout(attemptToReserveAsset, 60000, reservationURL);
-        });
-
-    addReservationUnloadListener(reservationURL);
-}
-
-function checkForReviewers(reservationURL, findANewPageURL) {
-    var $transcriptionEditor = jQuery('#transcription-editor');
-
-    jQuery
-        .ajax({
-            url: reservationURL,
-            type: 'POST',
-            dataType: 'json'
-        })
-        .done(function() {
-            $transcriptionEditor
-                .data('hasReservation', true)
-                .trigger('update-ui-state');
-        })
-        .fail(function(jqXHR, textStatus, errorThrown) {
-            if (jqXHR.status == 409) {
-                displayHtmlMessage(
-                    'warning',
-                    'There are other reviewers on this page.' +
-                        ' <a href="' +
-                        findANewPageURL +
-                        '">Find a new page to review</a>',
-                    'transcription-reservation'
-                );
-            } else {
-                displayMessage(
-                    'error',
-                    'Unable to reserve this page: ' +
-                        buildErrorMessage(jqXHR, textStatus, errorThrown),
-                    'transcription-reservation'
-                );
-            }
-        })
-        .always(function() {
-            window.setTimeout(checkForReviewers, 60000, reservationURL);
-        });
-
-    addReservationUnloadListener(reservationURL);
 }
