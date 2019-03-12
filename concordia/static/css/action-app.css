@@ -59,6 +59,9 @@ main {
     background-repeat: no-repeat;
     background-position: center;
     cursor: pointer;
+
+    transition-property: height, width;
+    transition-duration: 0.1s;
 }
 
 .asset-tooltip {
