@@ -188,7 +188,7 @@ export class ActionApp {
         /* Tooltips */
         const tooltip = new AssetTooltip();
 
-        const handleTooltipRevealEvent = evt => {
+        const handleTooltipShowEvent = evt => {
             let target = evt.target;
             if (target && target.classList.contains('asset')) {
                 const asset = this.assets.get(target.dataset.id);
@@ -196,14 +196,22 @@ export class ActionApp {
                 mount(target, tooltip);
             }
         };
-        this.assetList.addEventListener('mouseover', handleTooltipRevealEvent);
-        // Unlike focus, focusin bubbles:
-        this.assetList.addEventListener('focusin', handleTooltipRevealEvent);
 
-        // We'll remove the tooltip any time the asset list itself loses focus:
-        this.assetList.addEventListener('blur', () => {
-            unmount(tooltip.el.parentNode, tooltip);
-        });
+        const handleTooltipHideEvent = () => {
+            if (tooltip.el.parentNode) {
+                unmount(tooltip.el.parentNode, tooltip);
+            }
+        };
+
+        // We want to handle both mouse hover events and keyboard/tap focus
+        // changes. We'll use "focusin" which bubbles instead of “focus”, which
+        // does not.
+
+        this.assetList.addEventListener('mouseover', handleTooltipShowEvent);
+        this.assetList.addEventListener('focusin', handleTooltipShowEvent);
+
+        this.assetList.addEventListener('mouseout', handleTooltipHideEvent);
+        this.assetList.addEventListener('focusout', handleTooltipHideEvent);
 
         $('#asset-list-thumbnail-size').addEventListener('input', evt => {
             this.assetList.style.setProperty(
