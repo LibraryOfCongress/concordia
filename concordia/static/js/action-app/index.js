@@ -48,6 +48,35 @@ export class ActionApp {
         this.setupAssetViewer();
 
         this.refreshData();
+
+        window.setInterval(() => {
+            // Until we have a live data stream we'll randomly have a chance
+            // that an asset will be marked as unavailable or that an
+            // unavailable asset will be marked as available to demonstrate the
+            // UI:
+
+            if (Math.random() > 0.4) {
+                let assets = $$('.asset', this.assetList).map(elem => elem.id);
+
+                let newAssetKey =
+                    assets[Math.floor(Math.random() * assets.length)];
+
+                if (newAssetKey) {
+                    this.markAssetAsUnavailable(newAssetKey);
+                }
+            } else {
+                let unavailableAssets = $$('.unavailable', this.assetList).map(
+                    elem => elem.id
+                );
+                let assetToRelease =
+                    unavailableAssets[
+                        Math.floor(Math.random() * unavailableAssets.length)
+                    ];
+                if (assetToRelease) {
+                    this.markAssetAsAvailable(assetToRelease);
+                }
+            }
+        }, 700);
     }
 
     setupGlobalKeyboardEvents() {
@@ -347,6 +376,18 @@ export class ActionApp {
         this.assetList.appendChild(assetElement);
     }
 
+    markAssetAsAvailable(assetId) {
+        console.log(`Marking asset ${assetId} available`);
+        document.getElementById(assetId).classList.remove('available');
+        this.checkViewerAvailability(assetId);
+    }
+
+    markAssetAsUnavailable(assetId) {
+        console.log(`Marking asset ${assetId} unavailable`);
+        document.getElementById(assetId).classList.add('unavailable');
+        this.checkViewerAvailability(assetId);
+    }
+
     filterAssets() {
         console.time('Filtering assets');
         let currentCampaignId = this.campaignSelect.value;
@@ -490,6 +531,8 @@ export class ActionApp {
         }
 
         this.seadragonViewer.open(tileSources, initialPage);
+
+        this.checkViewerAvailability(assetElement.id);
     }
 
     closeViewer() {
@@ -504,5 +547,31 @@ export class ActionApp {
         }
 
         this.scrollToActiveAsset();
+    }
+
+    checkViewerAvailability() {
+        if (!this.appElement.dataset.openAssetId) {
+            return;
+        }
+
+        let editor = document.getElementById('editor-column');
+
+        let openAsset = document.getElementById(
+            this.appElement.dataset.openAssetId
+        );
+
+        if (openAsset.classList.contains('unavailable')) {
+            $$('input,button', editor).forEach(i =>
+                i.setAttribute('disabled', 'disabled')
+            );
+            $$('textarea', editor).forEach(i =>
+                i.setAttribute('readonly', 'readonly')
+            );
+        } else {
+            $$('button,input,textarea', editor).forEach(i => {
+                i.removeAttribute('disabled');
+                i.removeAttribute('readonly');
+            });
+        }
     }
 }
