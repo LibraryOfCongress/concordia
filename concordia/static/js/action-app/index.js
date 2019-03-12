@@ -329,7 +329,8 @@ export class ActionApp {
     }
 
     createAsset(assetData) {
-        // n.b. although we are
+        // n.b. although we are currently using numeric keys, we're coding under
+        // the assumption that they will become opaque strings in the future:
         this.assets.set(assetData.id.toString(), assetData);
 
         let assetElement = document.createElement('li');
