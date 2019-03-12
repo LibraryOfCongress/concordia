@@ -50,7 +50,7 @@ main {
 }
 
 #asset-list .asset {
-    display: block;
+    display: flex;
     width: var(--asset-thumbnail-size);
     height: var(--asset-thumbnail-size);
     object-fit: contain;
@@ -62,6 +62,19 @@ main {
 
     transition-property: height, width;
     transition-duration: 0.1s;
+}
+
+.asset.unavailable {
+    filter: grayscale(0.9);
+}
+
+.asset.unavailable::after {
+    content: 'Someone else is working on this';
+    text-align: center;
+    align-self: center;
+    width: 100%;
+
+    font-size: smaller;
 }
 
 .asset-tooltip {
@@ -154,6 +167,21 @@ main[data-open-asset-id] #contribute-container {
 #viewer-column,
 #editor-column {
     flex-basis: 50%;
+}
+
+.unavailable .control-toolbar {
+    display: none !important;
+}
+
+.unavailable #editor-column::before {
+    content: 'Someone else is working on this page';
+    text-align: center;
+    font-weight: bold;
+}
+
+[readonly] + label,
+[disabled] + label {
+    color: #999;
 }
 
 .current-mode {
