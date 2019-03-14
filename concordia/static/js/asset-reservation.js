@@ -1,7 +1,12 @@
 /* global jQuery displayMessage displayHtmlMessage buildErrorMessage */
 /* exported attemptToReserveAsset */
 
-function attemptToReserveAsset(reservationURL, findANewPageURL, actionType) {
+function attemptToReserveAsset(
+    reservationURL,
+    findANewPageURL,
+    actionType,
+    firstTime
+) {
     var $transcriptionEditor = jQuery('#transcription-editor');
 
     jQuery
@@ -21,7 +26,9 @@ function attemptToReserveAsset(reservationURL, findANewPageURL, actionType) {
                     $transcriptionEditor
                         .data('hasReservation', false)
                         .trigger('update-ui-state');
-                    jQuery('#asset-reservation-failure-modal').modal();
+                    if (firstTime) {
+                        jQuery('#asset-reservation-failure-modal').modal();
+                    }
                 } else {
                     displayHtmlMessage(
                         'warning',
@@ -40,11 +47,17 @@ function attemptToReserveAsset(reservationURL, findANewPageURL, actionType) {
                     'transcription-reservation'
                 );
             }
-        })
-        .always(function() {
-            window.setTimeout(attemptToReserveAsset, 60000, reservationURL);
         });
-
+    /*
+        // TODO: implement UI updates for when the transcription has been updated and / or status changed
+        // by the user who has the asset reservation. This type of timed update (below) only works correctly when
+        // the user who has the asset reservation navigates away from the page without doing anything.
+        // e.g. we don't want to re-enable a blank textarea when the user with the reservation has already
+        // updated the transcription (and even possibly the asset status) in the background.
+        .always(function() {
+            window.setTimeout(attemptToReserveAsset, 60000, reservationURL, findANewPageURL, actionType, false);
+        });
+        */
     window.addEventListener('beforeunload', function() {
         var payload = {
             release: true,
