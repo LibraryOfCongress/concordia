@@ -33,6 +33,7 @@ script:
     - ./manage.py collectstatic --no-input
     - ./manage.py test concordia importer exporter
     - coverage run ./manage.py test concordia importer exporter
+    - coverage xml
     - git diff --name-only $TRAVIS_COMMIT_RANGE | xargs pre-commit run --files
     - safety check
     - sonar-scanner
