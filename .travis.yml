@@ -1,6 +1,7 @@
 language: python
 env:
     - DJANGO_SETTINGS_MODULE=concordia.settings_test
+    - PIPENV_IGNORE_VIRTUALENVS=1
 dist: xenial
 sudo: required
 addons:
