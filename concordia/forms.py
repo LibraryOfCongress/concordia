@@ -30,7 +30,7 @@ class UserProfileForm(forms.Form):
 
     def __init__(self, *, request, **kwargs):
         self.request = request
-        return super().__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def clean_email(self):
         data = self.cleaned_data["email"]

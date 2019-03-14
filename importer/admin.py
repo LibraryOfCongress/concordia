@@ -77,7 +77,7 @@ class TaskStatusModelAdmin(admin.ModelAdmin):
                 self.generate_natural_timestamp_display_property(field_name),
             )
 
-        return super().__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
 
 class ImportJobAdmin(TaskStatusModelAdmin):
