@@ -27,7 +27,7 @@ tx_urlpatterns = (
         ),
         path(
             "<uslug:campaign_slug>/export/bagit/",
-            exporter_views.ExportCampaignToBagit.as_view(),
+            exporter_views.ExportCampaignToBagIt.as_view(),
             name="campaign-export-bagit",
         ),
         path(
