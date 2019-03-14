@@ -40,6 +40,7 @@ def update_asset_status(sender, *, instance, **kwargs):
 def send_asset_update(sender, *, instance, **kwargs):
     channel_layer = get_channel_layer()
     channel_layer.group_send(
-        instance.slug,
-        {"type": "asset_update", "message": "This is an asset update announcement"},
+        "mss13375001-229",
+        {"type": "asset_update", "message": "This is an asset update message"},
     )
+    print("***************************ASSET UPDATE HANDLER************************")
