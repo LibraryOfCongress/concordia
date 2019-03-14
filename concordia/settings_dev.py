@@ -1,13 +1,7 @@
 import os
 
 from .settings_template import *  # NOQA ignore=F405
-from .settings_template import (
-    CHANNEL_LAYERS,
-    DATABASES,
-    INSTALLED_APPS,
-    LOGGING,
-    MIDDLEWARE,
-)
+from .settings_template import DATABASES, INSTALLED_APPS, LOGGING, MIDDLEWARE
 
 LOGGING["handlers"]["stream"]["level"] = "DEBUG"
 LOGGING["handlers"]["file"]["level"] = "DEBUG"
@@ -54,5 +48,9 @@ SHELL_PLUS_PRE_IMPORTS = [
     ("concordia.utils", "get_anonymous_user"),
     ("concordia.models", "TranscriptionStatus"),
 ]
-
-CHANNEL_LAYERS["default"]["CONFIG"].update({"hosts": (CELERY_HOST, CELERY_PORT)})
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {"hosts": [("localhost", 63791)]},
+    }
+}
