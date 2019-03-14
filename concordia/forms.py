@@ -1,11 +1,8 @@
-from logging import getLogger
-
 from django import forms
 from django.contrib.auth import get_user_model
 from django_registration.forms import RegistrationForm
 
 User = get_user_model()
-logger = getLogger(__name__)
 
 
 class UserRegistrationForm(RegistrationForm):
