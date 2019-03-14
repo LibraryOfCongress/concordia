@@ -5,12 +5,12 @@ dist: xenial
 sudo: required
 addons:
     sonarcloud:
-        organization: 'libraryofcongress'
+        organization: "libraryofcongress"
 python:
-    - '3.6'
-    - '3.7'
-    - '3.7-dev'
-    - '3.8-dev'
+    - "3.6"
+    - "3.7"
+    - "3.7-dev"
+    - "3.8-dev"
 matrix:
     allow_failures:
         - python: 3.7-dev
@@ -34,6 +34,6 @@ script:
     - coverage run ./manage.py test concordia importer exporter
     - git diff --name-only $TRAVIS_COMMIT_RANGE | xargs pre-commit run --files
     - safety check
-    - sonar-scanner -Dsonar.projectKey=libraryofcongress_concordia -Dsonar.organization=libraryofcongress -Dsonar.sources=. -Dsonar.host.url=https://sonarcloud.io
+    - sonar-scanner
 after_success:
     - coveralls
