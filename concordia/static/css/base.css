@@ -1192,23 +1192,27 @@ div.related-links {
         margin: 5px 0;
     }
 }
+
 .footer-crowd-links-aside .links-intersites > li.intersites-link-congress > a {
     width: 125px;
     height: 30px;
-    background-size: 125px 30px;
     background: url(../img/congress-gov.svg) no-repeat;
+    background-size: 125px 30px;
 }
+
 .footer-crowd-links-aside .links-intersites > li.intersites-link-copyright > a {
     width: 175px;
     height: 30px;
-    background-size: 175px 30px;
     background: url(../img/copyright-gov.svg) no-repeat;
+    background-size: 175px 30px;
 }
+
 @media (max-width: 768px) {
     .footer-crowd-links-aside .links-intersites {
         text-align: center;
     }
 }
+
 .bitmap-icon {
     display: inline-block;
     width: 24px;

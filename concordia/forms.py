@@ -1,11 +1,8 @@
-from logging import getLogger
-
 from django import forms
 from django.contrib.auth import get_user_model
 from django_registration.forms import RegistrationForm
 
 User = get_user_model()
-logger = getLogger(__name__)
 
 
 class UserRegistrationForm(RegistrationForm):
@@ -33,7 +30,7 @@ class UserProfileForm(forms.Form):
 
     def __init__(self, *, request, **kwargs):
         self.request = request
-        return super().__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def clean_email(self):
         data = self.cleaned_data["email"]

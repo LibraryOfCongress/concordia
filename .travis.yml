@@ -39,5 +39,5 @@ script:
     - pipenv run safety check
 after_success:
     - pipenv run coverage xml
-    - coveralls
     - sonar-scanner
+    - coveralls

@@ -381,12 +381,8 @@ $tagEditor.find('#new-tag-button').on('click', addNewTag);
 $newTagInput.on('change', addNewTag);
 $newTagInput.on('keydown', function(evt) {
     // See https://github.com/LibraryOfCongress/concordia/issues/159 for the source of these values:
-    if (evt.which == '13') {
-        // Enter key
-        evt.preventDefault();
-        addNewTag();
-    } else if (evt.which == '188') {
-        // Comma
+    if (evt.which == '13' || evt.which == '188') {
+        // Either the enter or comma keys will add the tag and reset the input field:
         evt.preventDefault();
         addNewTag();
     }
