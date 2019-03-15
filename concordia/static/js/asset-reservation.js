@@ -19,6 +19,16 @@ function attemptToReserveAsset(
             $transcriptionEditor
                 .data('hasReservation', true)
                 .trigger('update-ui-state');
+
+            // If the asset was successfully reserved, continue reserving it
+            window.setTimeout(
+                attemptToReserveAsset,
+                60000,
+                reservationURL,
+                findANewPageURL,
+                actionType,
+                false
+            );
         })
         .fail(function(jqXHR, textStatus, errorThrown) {
             if (jqXHR.status == 409) {
@@ -48,16 +58,7 @@ function attemptToReserveAsset(
                 );
             }
         });
-    /*
-        // TODO: implement UI updates for when the transcription has been updated and / or status changed
-        // by the user who has the asset reservation. This type of timed update (below) only works correctly when
-        // the user who has the asset reservation navigates away from the page without doing anything.
-        // e.g. we don't want to re-enable a blank textarea when the user with the reservation has already
-        // updated the transcription (and even possibly the asset status) in the background.
-        .always(function() {
-            window.setTimeout(attemptToReserveAsset, 60000, reservationURL, findANewPageURL, actionType, false);
-        });
-        */
+
     window.addEventListener('beforeunload', function() {
         var payload = {
             release: true,
