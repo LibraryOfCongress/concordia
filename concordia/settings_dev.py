@@ -11,7 +11,7 @@ LOGGING["handlers"]["celery"]["filename"] = "./logs/concordia-celery.log"
 LOGGING["loggers"]["django"]["level"] = "DEBUG"
 LOGGING["loggers"]["celery"]["level"] = "DEBUG"
 
-DEBUG = False
+DEBUG = True
 
 DATABASES["default"]["PORT"] = "54323"
 
@@ -51,6 +51,6 @@ SHELL_PLUS_PRE_IMPORTS = [
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {"hosts": [("localhost", 63791)]},
+        "CONFIG": {"hosts": [(CELERY_HOST, CELERY_PORT)]},
     }
 }
