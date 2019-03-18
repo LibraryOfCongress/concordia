@@ -22,3 +22,10 @@ EMAIL_BACKEND = "django.core.mail.backends.dummy.EmailBackend"
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 
 RATELIMIT_ENABLE = False
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {"hosts": [("localhost", 6379)]},
+    }
+}
