@@ -18,34 +18,27 @@
         });
     </script>
     <script>
-        var assetId = "asset_updates";
-
         var assetSocket = new WebSocket(
             'ws://' + window.location.host +
-            '/ws/asset/' + assetId + '/');
+            '/ws/asset/asset_updates/');
 
         assetSocket.onmessage = function(e) {
             var data = JSON.parse(e.data);
             var message = data['message']['message'];
-            document.querySelector('#asset-log').innerHTML += (message + '\n');
+            var asset_slug = data['message']['asset_slug']
+            var asset_status = data['message']['asset_status']
+            console.log(message);
+            console.log(asset_slug);
+            console.log(asset_status)
         };
 
         assetSocket.onclose = function(e) {
-            document.querySelector('#asset-log').innerHTML += "Asset socket closed unexpectedly.";
             console.error('Asset socket closed unexpectedly');
         };
 
         assetSocket.onerror = function(e) {
-            document.querySelector('#asset-log').innerHTML += "An unexpected error occurred.";
             console.error("An unexpected error occurred.");
         }
-
-        document.querySelector('#asset-update-message').onclick = function(e) {
-            assetSocket.send(JSON.stringify({
-                'message': "I clicked a button to send an asset update message."
-            }));
-
-        };
 
     </script>
 
@@ -77,10 +70,6 @@
         </nav>
     </header>
     <main id="action-app-main" class="d-flex">
-        <div>
-            <button id="asset-update-message">Send a message</button>
-            <div id="asset-log"></div>
-        </div>
         <div id="editor-main" class="p-1 d-flex flex-grow-1">
             <div id="asset-list-container">
                 <form id="asset-list-controls" class="sticky-top bg-light form-inline flex-wrap justify-content-center" role="navigation">
