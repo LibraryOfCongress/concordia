@@ -1,3 +1,4 @@
+from asgiref.sync import AsyncToSync
 from channels.layers import get_channel_layer
 from django.conf import settings
 from django.contrib.auth.models import Group
@@ -39,8 +40,10 @@ def update_asset_status(sender, *, instance, **kwargs):
 @receiver(post_save, sender=Asset)
 def send_asset_update(sender, *, instance, **kwargs):
     channel_layer = get_channel_layer()
-    channel_layer.group_send(
-        "mss13375001-229",
-        {"type": "asset_update", "message": "This is an asset update message"},
+    AsyncToSync(channel_layer.group_send)(
+        "asset_updates",
+        {
+            "type": "asset_update",
+            "message": "This is an asset update message from the post-save handler",
+        },
     )
-    print("***************************ASSET UPDATE HANDLER************************")
