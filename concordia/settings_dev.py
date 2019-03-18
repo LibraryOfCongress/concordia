@@ -17,7 +17,7 @@ LOGGING["handlers"]["celery"]["filename"] = "./logs/concordia-celery.log"
 LOGGING["loggers"]["django"]["level"] = "DEBUG"
 LOGGING["loggers"]["celery"]["level"] = "DEBUG"
 
-DEBUG = False
+DEBUG = True
 
 DATABASES["default"]["PORT"] = "54323"
 
