@@ -18,7 +18,7 @@
         });
     </script>
     <script>
-        var assetId = "mss13375001-229";
+        var assetId = "asset_updates";
 
         var assetSocket = new WebSocket(
             'ws://' + window.location.host +
@@ -26,40 +26,27 @@
 
         assetSocket.onmessage = function(e) {
             var data = JSON.parse(e.data);
-            var message = data['message'];
-            document.querySelector('#asset-log').innerText += (message + '\n');
+            var message = data['message']['message'];
+            document.querySelector('#asset-log').innerHTML += (message + '\n');
         };
 
         assetSocket.onclose = function(e) {
-            document.querySelector('#asset-log').innerText += "Asset socket closed unexpectedly.";
-
+            document.querySelector('#asset-log').innerHTML += "Asset socket closed unexpectedly.";
             console.error('Asset socket closed unexpectedly');
         };
 
         assetSocket.onerror = function(e) {
-            document.querySelector('#asset-log').innerText += "An unexpected error occurred.";
-
+            document.querySelector('#asset-log').innerHTML += "An unexpected error occurred.";
             console.error("An unexpected error occurred.");
         }
 
-/*
-        document.querySelector('#chat-message-input').focus();
-        document.querySelector('#chat-message-input').onkeyup = function(e) {
-            if (e.keyCode === 13) {  // enter, return
-                document.querySelector('#chat-message-submit').click();
-            }
-        };
-
-        document.querySelector('#chat-message-submit').onclick = function(e) {
-            var messageInputDom = document.querySelector('#chat-message-input');
-            var message = messageInputDom.value;
+        document.querySelector('#asset-update-message').onclick = function(e) {
             assetSocket.send(JSON.stringify({
-                'message': message
+                'message': "I clicked a button to send an asset update message."
             }));
 
-            messageInputDom.value = '';
         };
-*/
+
     </script>
 
 {% endblock body_scripts %}
@@ -96,8 +83,10 @@
         </nav>
     </header>
     <main id="action-app-main" class="d-flex">
-        <div id="asset-log"></div>
-
+        <div>
+            <button id="asset-update-message">Send a message</button>
+            <div id="asset-log"></div>
+        </div>
         <div id="editor-main" class="p-1 d-flex flex-grow-1">
             <div id="asset-list-container">
                 <form id="asset-list-controls" class="sticky-top bg-light form-inline flex-wrap justify-content-center" role="navigation">
