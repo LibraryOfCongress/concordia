@@ -44,6 +44,8 @@ def send_asset_update(sender, *, instance, **kwargs):
         "asset_updates",
         {
             "type": "asset_update",
+            "asset_slug": instance.slug,
+            "asset_status": instance.transcription_status,
             "message": "This is an asset update message from the post-save handler",
         },
     )
