@@ -4,13 +4,11 @@ from django.conf.urls import url
 
 from . import consumers
 
-websocket_urlpatterns = [
-    url(r"^ws/asset/(?P<asset_id>[^/]+)/$", consumers.AssetConsumer)
-]
-
 application = ProtocolTypeRouter(
     {
         # (http->django views is added by default)
-        "websocket": AuthMiddlewareStack(URLRouter(websocket_urlpatterns))
+        "websocket": AuthMiddlewareStack(
+            URLRouter([url("^ws/asset/asset_updates/$", consumers.AssetConsumer)])
+        )
     }
 )
