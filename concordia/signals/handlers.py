@@ -6,7 +6,12 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django_registration.signals import user_registered
 
-from ..models import Asset, Transcription, TranscriptionStatus
+from ..models import (
+    Asset,
+    AssetTranscriptionReservation,
+    Transcription,
+    TranscriptionStatus,
+)
 
 
 @receiver(user_registered)
@@ -46,6 +51,14 @@ def send_asset_update(sender, *, instance, **kwargs):
             "type": "asset_update",
             "asset_slug": instance.slug,
             "asset_status": instance.transcription_status,
-            "message": "This is an asset update message from the post-save handler",
         },
+    )
+
+
+@receiver(post_save, sender=AssetTranscriptionReservation)
+def send_asset_reservation(sender, *, instance, **kwargs):
+    channel_layer = get_channel_layer()
+    AsyncToSync(channel_layer.group_send)(
+        "asset_updates",
+        {"type": "asset_reservation", "asset_slug": instance.asset.slug},
     )
