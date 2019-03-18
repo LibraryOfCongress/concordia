@@ -11,9 +11,7 @@ LOGGING["loggers"]["celery"]["level"] = "INFO"
 
 DEBUG = False
 
-# DATABASES["default"].update({"PASSWORD": "", "USER": "postgres"})
-
-DATABASES["default"].update({"PORT": 54323})
+DATABASES["default"].update({"PASSWORD": "", "USER": "postgres"})
 
 DEFAULT_TO_EMAIL = "rstorey@loc.gov"
 
