@@ -14,7 +14,7 @@ from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
 from tabular_export.core import export_to_csv_response, flatten_queryset
 
-from concordia.models import Asset, Transcription, TranscriptionStatus
+from concordia.models import Asset, Item, Transcription, TranscriptionStatus
 
 logger = getLogger(__name__)
 
@@ -28,6 +28,22 @@ def get_latest_transcription_data(asset_qs):
 
     assets = asset_qs.annotate(latest_transcription=Subquery(latest_trans_subquery[:1]))
     return assets
+
+
+def remove_incomplete_items(item_qs):
+    incomplete_item_assets = Asset.objects.filter(
+        item__in=item_qs,
+        transcription_status__in=(
+            TranscriptionStatus.NOT_STARTED,
+            TranscriptionStatus.IN_PROGRESS,
+            TranscriptionStatus.SUBMITTED,
+        ),
+    )
+    item_qs = item_qs.exclude(asset__in=incomplete_item_assets)
+    asset_qs = Asset.objects.filter(item__in=item_qs).order_by(
+        "item__project", "item", "sequence"
+    )
+    return asset_qs
 
 
 def get_original_asset_id(download_url):
@@ -213,12 +229,11 @@ class ExportProjectToBagIt(TemplateView):
     def get(self, request, *args, **kwargs):
         campaign_slug = self.kwargs["campaign_slug"]
         project_slug = self.kwargs["project_slug"]
-        asset_qs = Asset.objects.filter(
-            item__project__campaign__slug=campaign_slug,
-            item__project__slug=project_slug,
-            transcription_status=TranscriptionStatus.COMPLETED,
-        ).order_by("item", "sequence")
 
+        item_qs = Item.objects.filter(
+            project__campaign__slug=campaign_slug, project__slug=project_slug
+        )
+        asset_qs = remove_incomplete_items(item_qs)
         assets = get_latest_transcription_data(asset_qs)
 
         export_filename_base = "%s-%s" % (campaign_slug, project_slug)
@@ -229,15 +244,13 @@ class ExportProjectToBagIt(TemplateView):
             return do_bagit_export(assets, export_base_dir, export_filename_base)
 
 
-class ExportCampaignToBagit(TemplateView):
+class ExportCampaignToBagIt(TemplateView):
     @method_decorator(staff_member_required)
     def get(self, request, *args, **kwargs):
         campaign_slug = self.kwargs["campaign_slug"]
-        asset_qs = Asset.objects.filter(
-            item__project__campaign__slug=campaign_slug,
-            transcription_status=TranscriptionStatus.COMPLETED,
-        ).order_by("item__project", "item", "sequence")
 
+        item_qs = Item.objects.filter(project__campaign__slug=campaign_slug)
+        asset_qs = remove_incomplete_items(item_qs)
         assets = get_latest_transcription_data(asset_qs)
 
         export_filename_base = "%s" % (campaign_slug,)

@@ -20,7 +20,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.views import LoginView
 from django.contrib.messages import get_messages
 from django.core.exceptions import ValidationError
-from django.core.mail import send_mail
+from django.core.mail import EmailMultiAlternatives, send_mail
 from django.core.paginator import Paginator
 from django.db import connection
 from django.db.models import Case, Count, IntegerField, Max, Q, When
@@ -38,6 +38,7 @@ from django.views.decorators.http import require_POST
 from django.views.decorators.vary import vary_on_headers
 from django.views.generic import DetailView, FormView, ListView, TemplateView
 from django_registration.backends.activation.views import RegistrationView
+from flags.state import flag_enabled
 from ratelimit.decorators import ratelimit
 from ratelimit.mixins import RatelimitMixin
 from ratelimit.utils import is_ratelimited
@@ -679,6 +680,8 @@ class AssetDetailView(DetailView):
             .values_list("sequence", "slug")
         )
 
+        ctx["social_share_flag"] = flag_enabled("SOCIAL_SHARE", request=self.request)
+
         ctx["current_asset_url"] = self.request.build_absolute_uri()
 
         ctx["tweet_text"] = "#ByThePeople @Crowd_LOC %s %s" % (
@@ -944,17 +947,19 @@ class ContactUsView(FormView):
         )
         confirmation_message = confirmation_template.render(form.cleaned_data)
 
-        try:
-            send_mail(
-                "Contact {}: {}".format(
-                    self.request.get_host(), form.cleaned_data["subject"]
-                ),
-                message=text_message,
-                html_message=html_message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[settings.DEFAULT_TO_EMAIL],
-            )
+        message = EmailMultiAlternatives(
+            subject="Contact {}: {}".format(
+                self.request.get_host(), form.cleaned_data["subject"]
+            ),
+            body=text_message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[settings.DEFAULT_TO_EMAIL],
+            reply_to=[form.cleaned_data["email"]],
+        )
+        message.attach_alternative(html_message, "text/html")
 
+        try:
+            message.send()
             messages.success(self.request, "Your contact message has been sent.")
         except SMTPException as exc:
             logger.error(
@@ -1078,7 +1083,7 @@ def reserve_rate(g, r):
 @ratelimit(key="ip", rate=reserve_rate, block=settings.RATELIMIT_BLOCK)
 @require_POST
 @never_cache
-def reserve_asset_transcription(request, *, asset_pk):
+def reserve_asset(request, *, asset_pk):
     """
     Receives an asset PK and attempts to create/update a reservation for it
 
@@ -1193,6 +1198,7 @@ def redirect_to_next_reviewable_asset(request, *, campaign_slug):
         transcription_status=TranscriptionStatus.SUBMITTED
     )
     potential_assets = potential_assets.exclude(transcription__user=request.user.pk)
+    potential_assets = potential_assets.filter(assettranscriptionreservation=None)
     potential_assets = potential_assets.select_related("item", "item__project")
 
     # We'll favor assets which are in the same item or project as the original:

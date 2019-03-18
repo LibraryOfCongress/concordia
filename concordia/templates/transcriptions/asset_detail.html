@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 
 {% load staticfiles %}
-
 {% load concordia_media_tags %}
 
 {% block title %}
@@ -67,13 +66,14 @@
                 </div>
             </div>
 
-
-            <div class="btn-group btn-group-sm" role="navigation" aria-label="Links to share this page">
-                <a class="btn btn-default" target="_blank" role="button" title="Share this page on Facebook" href="https://www.facebook.com/share.php?u={{ share_url|urlencode:"" }}"><span class="facebook-icon"></span></a>
-                <a class="btn btn-default" target="_blank" role="button" title="Share this page on Twitter" href="https://twitter.com/intent/tweet?text={{ tweet_text|urlencode:"" }}&source=webclient"><span class="twitter-icon"></span></a>
-                <a class="btn btn-default" id="copy-url-button" role="button" data-toggle="tooltip"  data-trigger="manual"  data-placement="bottom" aria-label="Copy this link to your clipboard"><i class="fas fa-link text-white"></i></a>
-                <input type="text" tabindex="-1" aria-hidden="true" class="d-none" id="currentAssetUrl" name="currentAssetUrl" value="{{ current_asset_url }}" />
-            </div>
+            {% if social_share_flag %}
+                <div class="btn-group btn-group-sm" role="navigation" aria-label="Links to share this page">
+                    <a class="btn btn-default" target="_blank" role="button" title="Share this page on Facebook" href="https://www.facebook.com/share.php?u={{ share_url|urlencode:"" }}"><span class="facebook-icon"></span></a>
+                    <a class="btn btn-default" target="_blank" role="button" title="Share this page on Twitter" href="https://twitter.com/intent/tweet?text={{ tweet_text|urlencode:"" }}&source=webclient"><span class="twitter-icon"></span></a>
+                    <a class="btn btn-default" id="copy-url-button" role="button" data-toggle="tooltip"  data-trigger="manual"  data-placement="bottom" aria-label="Copy this link to your clipboard"><i class="fas fa-link text-white"></i></a>
+                    <input type="text" tabindex="-1" aria-hidden="true" class="d-none" id="currentAssetUrl" name="currentAssetUrl" value="{{ current_asset_url }}" />
+                </div>
+            {% endif %}
 
             {% if asset.resource_url %}
                 <div class="btn-group btn-group-sm ml-2" role="navigation" aria-label="Link to the original source for this item">
@@ -91,35 +91,29 @@
             <div id="viewer-controls" class="m-1 text-center d-print-none">
                 <div class="d-inline-flex justify-content-between">
                     <div class="d-flex btn-group btn-group-sm m-1">
-                        <button id="viewer-home" class="btn btn-default">
+                        <button id="viewer-home" class="btn btn-default" title="Fit Image to Viewport">
                             <span class="fas fa-compress"></span>
-                            <span class="sr-only">Home</span>
                         </button>
                     </div>
                     <div class="d-flex btn-group btn-group-sm m-1">
-                        <button id="viewer-zoom-in" class="btn btn-default">
+                        <button id="viewer-zoom-in" class="btn btn-default" title="Zoom In">
                             <span class="fas fa-search-plus"></span>
-                            <span class="sr-only">Zoom In</span>
                         </button>
-                        <button id="viewer-zoom-out" class="btn btn-default">
+                        <button id="viewer-zoom-out" class="btn btn-default" title="Zoom Out">
                             <span class="fas fa-search-minus"></span>
-                            <span class="sr-only">Zoom Out</span>
                         </button>
                     </div>
                     <div class="d-flex btn-group btn-group-sm m-1">
-                        <button id="viewer-rotate-left" class="btn btn-default">
+                        <button id="viewer-rotate-left" class="btn btn-default" title="Rotate Left">
                             <span class="fas fa-undo"></span>
-                            <span class="sr-only">Rotate Left</span>
                         </button>
-                        <button id="viewer-rotate-right" class="btn btn-default">
+                        <button id="viewer-rotate-right" class="btn btn-default" title="Rotate Right">
                             <span class="fas fa-redo"></span>
-                            <span class="sr-only">Rotate Right</span>
                         </button>
                     </div>
                     <div class="d-flex btn-group btn-group-sm m-1">
-                        <button id="viewer-full-page" class="btn btn-default">
+                        <button id="viewer-full-page" class="btn btn-default" title="View Full Screen">
                             <span class="fas fa-expand"></span>
-                            <span class="sr-only">Full Page</span>
                         </button>
                     </div>
 
@@ -545,10 +539,15 @@
     });
 </script>
 
-{% if transcription_status == "not_started" or transcription_status == "in_progress" %}
-    <script>
-        attemptToReserveAsset("{% url 'reserve-asset-for-transcription' asset.pk %}");
-    </script>
-{% endif %}
-
+<script>
+    {% if transcription_status == "not_started" or transcription_status == "in_progress" %}
+        attemptToReserveAsset("{% url 'reserve-asset' asset.pk %}",
+        "",
+        "transcribe");
+    {% elif user.is_authenticated %}
+        attemptToReserveAsset("{% url 'reserve-asset' asset.pk %}",
+        "{% url 'transcriptions:redirect-to-next-reviewable-asset' asset.item.project.campaign.slug %}",
+        "review");
+    {% endif %}
+</script>
 {% endblock body_scripts %}

@@ -134,7 +134,7 @@ class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
             ),
             path(
                 "exportBagIt/<path:campaign_slug>",
-                exporter_views.ExportCampaignToBagit.as_view(),
+                exporter_views.ExportCampaignToBagIt.as_view(),
                 name=f"{app_label}_{model_name}_export-bagit",
             ),
             path(

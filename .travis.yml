@@ -1,13 +1,18 @@
 language: python
 env:
-    - DJANGO_SETTINGS_MODULE=concordia.settings_test
+    global:
+        - PIPENV_IGNORE_VIRTUALENVS=1
+        - DJANGO_SETTINGS_MODULE=concordia.settings_test
 dist: xenial
 sudo: required
+addons:
+    sonarcloud:
+        organization: "libraryofcongress"
 python:
-    - '3.6'
-    - '3.7'
-    - '3.7-dev'
-    - '3.8-dev'
+    - "3.6"
+    - "3.7"
+    - "3.7-dev"
+    - "3.8-dev"
 matrix:
     allow_failures:
         - python: 3.7-dev
@@ -21,15 +26,18 @@ install:
     # We install pre-commit outside of the virtualenv to avoid issues with pipenv / pip
     # in the Travis CI Python 3.6 environment. Once we upgrade to Python 3.7 this will
     # no longer be necessary:
-    - pip install coveralls "pipenv>=2018.11.26" pre-commit safety
+    - pip install coveralls "pipenv>=2018.11.26" pre-commit
     - pipenv install --dev --deploy
+    # We want to have safety available but aren't putting it in the dev tools:
+    - pipenv run pip install safety
 script:
     - mkdir logs
     - touch ./logs/concordia-celery.log
-    - ./manage.py collectstatic --no-input
-    - ./manage.py test concordia importer exporter
-    - coverage run ./manage.py test concordia importer exporter
+    - pipenv run ./manage.py collectstatic --no-input
+    - pipenv run coverage run ./manage.py test concordia importer exporter
     - git diff --name-only $TRAVIS_COMMIT_RANGE | xargs pre-commit run --files
-    - safety check
+    - pipenv run safety check
 after_success:
+    - pipenv run coverage xml
+    - sonar-scanner
     - coveralls

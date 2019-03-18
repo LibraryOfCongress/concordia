@@ -416,10 +416,9 @@ class TransactionalViewTests(JSONAssertMixin, TransactionTestCase):
         asset = create_asset()
 
         # Acquire the reservation:
-        with self.assertNumQueries(3):  # 1 auth query + 1 expiry + 1 acquire
-            resp = self.client.post(
-                reverse("reserve-asset-for-transcription", args=(asset.pk,))
-            )
+        # 1 auth query + 1 expiry + 1 acquire + 1 feature flag check
+        with self.assertNumQueries(4):
+            resp = self.client.post(reverse("reserve-asset", args=(asset.pk,)))
         self.assertEqual(204, resp.status_code)
 
         reservation = AssetTranscriptionReservation.objects.get()
@@ -428,10 +427,9 @@ class TransactionalViewTests(JSONAssertMixin, TransactionTestCase):
 
         # Confirm that an update did not change the pk when it updated the timestamp:
 
-        with self.assertNumQueries(3):  # 1 auth query + 1 expiry + 1 acquire
-            resp = self.client.post(
-                reverse("reserve-asset-for-transcription", args=(asset.pk,))
-            )
+        # 1 auth query + 1 expiry + 1 acquire + 1 feature flag check
+        with self.assertNumQueries(4):
+            resp = self.client.post(reverse("reserve-asset", args=(asset.pk,)))
         self.assertEqual(204, resp.status_code)
 
         self.assertEqual(1, AssetTranscriptionReservation.objects.count())
@@ -443,11 +441,10 @@ class TransactionalViewTests(JSONAssertMixin, TransactionTestCase):
 
         # Release the reservation now that we're done:
 
-        # 3 = 1 auth query + 1 expiry + 1 delete
-        with self.assertNumQueries(3):
+        # 4 = 1 auth query + 1 expiry + 1 delete + 1 feature flag check
+        with self.assertNumQueries(4):
             resp = self.client.post(
-                reverse("reserve-asset-for-transcription", args=(asset.pk,)),
-                data={"release": True},
+                reverse("reserve-asset", args=(asset.pk,)), data={"release": True}
             )
         self.assertEqual(204, resp.status_code)
 
@@ -463,20 +460,19 @@ class TransactionalViewTests(JSONAssertMixin, TransactionTestCase):
         # We'll reserve the test asset as the anonymous user and then attempt
         # to edit it after logging in
 
-        # 4 queries = 1 auth query + 1 anonymous user creation + 1 expiry + 1 acquire
-        with self.assertNumQueries(4):
-            resp = self.client.post(
-                reverse("reserve-asset-for-transcription", args=(asset.pk,))
-            )
+        # 5 queries =
+        # 1 auth query + 1 anonymous user creation
+        # + 1 expiry + 1 acquire + 1 feature flag
+        with self.assertNumQueries(5):
+            resp = self.client.post(reverse("reserve-asset", args=(asset.pk,)))
         self.assertEqual(204, resp.status_code)
         self.assertEqual(1, AssetTranscriptionReservation.objects.count())
 
         self.login_user()
 
-        with self.assertNumQueries(3):  # 1 auth query + 1 expiry + 1 acquire
-            resp = self.client.post(
-                reverse("reserve-asset-for-transcription", args=(asset.pk,))
-            )
+        # 1 auth query + 1 expiry + 1 acquire + 1 feature flag check
+        with self.assertNumQueries(4):
+            resp = self.client.post(reverse("reserve-asset", args=(asset.pk,)))
         self.assertEqual(409, resp.status_code)
         self.assertEqual(1, AssetTranscriptionReservation.objects.count())
 
@@ -499,10 +495,9 @@ class TransactionalViewTests(JSONAssertMixin, TransactionTestCase):
 
         self.login_user()
 
-        with self.assertNumQueries(3):  # 1 auth query + 1 expiry + 1 acquire
-            resp = self.client.post(
-                reverse("reserve-asset-for-transcription", args=(asset.pk,))
-            )
+        # 1 auth query + 1 expiry + 1 acquire + 1 feature flag check
+        with self.assertNumQueries(4):
+            resp = self.client.post(reverse("reserve-asset", args=(asset.pk,)))
         self.assertEqual(204, resp.status_code)
 
         self.assertEqual(1, AssetTranscriptionReservation.objects.count())

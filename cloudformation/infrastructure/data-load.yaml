@@ -1,17 +1,16 @@
 Description:
-  This template deploys a host in a private subnet and loads the most recent
-  database dump to the specified database server.
+    This template deploys a host in a private subnet and loads the most recent
+    database dump to the specified database server.
 
 Parameters:
-
     EnvironmentName:
         Description: An environment name that will be prefixed to resource names
         Type: String
         AllowedValues:
-          - dev
-          - test
-          - stage
-          - prod
+            - dev
+            - test
+            - stage
+            - prod
 
     PostgresqlHost:
         Description: the end point of the RDS database host to restore
@@ -49,16 +48,15 @@ Mappings:
             prod: sg-066c68e77787b2a10
 
 Resources:
-
     DataLoadHost:
         Type: AWS::EC2::Instance
         Properties:
             ImageId:
                 Fn::FindInMap:
-                - AWSRegionToAMI
-                - Ref: "AWS::Region"
-                - "AMI"
-            InstanceType: "t1.micro"
+                    - AWSRegionToAMI
+                    - Ref: 'AWS::Region'
+                    - 'AMI'
+            InstanceType: 't1.micro'
             IamInstanceProfile:
                 Fn::FindInMap:
                     - EnvironmentMapping
@@ -67,29 +65,31 @@ Resources:
             InstanceInitiatedShutdownBehavior: terminate
             NetworkInterfaces:
                 - AssociatePublicIpAddress: true
-                  DeviceIndex: "0"
+                  DeviceIndex: '0'
                   GroupSet:
-                    - Fn::FindInMap:
-                        - EnvironmentMapping
-                        - BastionHostsSecurityGroup
-                        - Ref: EnvironmentName
+                      - Fn::FindInMap:
+                            - EnvironmentMapping
+                            - BastionHostsSecurityGroup
+                            - Ref: EnvironmentName
                   SubnetId:
-                    Fn::FindInMap:
-                        - EnvironmentMapping
-                        - PrivateSubnet1
-                        - Ref: EnvironmentName
+                      Fn::FindInMap:
+                          - EnvironmentMapping
+                          - PrivateSubnet1
+                          - Ref: EnvironmentName
             UserData:
                 Fn::Base64: !Sub |
-                  #!/bin/bash -xe
-                  echo "Running userdata for ${EnvironmentName}"
-                  yum -y update
-                  yum -y install https://download.postgresql.org/pub/repos/yum/9.6/redhat/rhel-6-x86_64/pgdg-ami201503-96-9.6-2.noarch.rpm
-                  yum -y install postgresql96
-                  aws s3 cp s3://crowd-deployment/database-dumps/concordia.latest.dmp concordia.dmp
-                  echo "${PostgresqlHost}:5432:*:concordia:${PostgresqlPassword}" >> /root/.pgpass
-                  chmod 0600 /root/.pgpass
-                  pg_restore --create --clean -Fc -U concordia -h ${PostgresqlHost} --dbname=postgres --no-password --no-owner --no-acl concordia.dmp
-                  shutdown -h now
+                    #!/bin/bash -xe
+                    echo "Running userdata for ${EnvironmentName}"
+                    echo "export ENV_NAME=${EnvironmentName}" >> /home/ec2-user/.bash_profile
+                    source /home/ec2-user/.bash_profile
+                    yum -y update
+                    yum -y install https://download.postgresql.org/pub/repos/yum/9.6/redhat/rhel-6-x86_64/pgdg-ami201503-96-9.6-2.noarch.rpm
+                    yum -y install postgresql96
+                    aws s3 cp s3://crowd-deployment/database-dumps/concordia.latest.dmp concordia.dmp
+                    echo "${PostgresqlHost}:5432:*:concordia:${PostgresqlPassword}" >> /root/.pgpass
+                    chmod 0600 /root/.pgpass
+                    pg_restore --create --clean -Fc -U concordia -h ${PostgresqlHost} --dbname=postgres --no-password --no-owner --no-acl concordia.dmp
+                    shutdown -h now
             Tags:
                 - Key: Name
                   Value: !Sub ${EnvironmentName}-DataLoadHost

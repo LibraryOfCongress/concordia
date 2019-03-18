@@ -12,6 +12,7 @@ from exporter import views as exporter_views
 from . import converters, views
 
 register_converter(converters.UnicodeSlugConverter, "uslug")
+register_converter(converters.ItemIdConverter, "item_id")
 
 tx_urlpatterns = (
     [
@@ -26,7 +27,7 @@ tx_urlpatterns = (
         ),
         path(
             "<uslug:campaign_slug>/export/bagit/",
-            exporter_views.ExportCampaignToBagit.as_view(),
+            exporter_views.ExportCampaignToBagIt.as_view(),
             name="campaign-export-bagit",
         ),
         path(
@@ -35,7 +36,10 @@ tx_urlpatterns = (
             name="project-export-bagit",
         ),
         path(
-            "<uslug:campaign_slug>/<uslug:project_slug>/<slug:item_id>/export/bagit/",
+            (
+                "<uslug:campaign_slug>/<uslug:project_slug>/"
+                "<item_id:item_id>/export/bagit/"
+            ),
             exporter_views.ExportItemToBagIt.as_view(),
             name="item-export-bagit",
         ),
@@ -45,7 +49,10 @@ tx_urlpatterns = (
             name="campaign-report",
         ),
         path(
-            "<uslug:campaign_slug>/<uslug:project_slug>/<slug:item_id>/<uslug:slug>/",
+            (
+                "<uslug:campaign_slug>/<uslug:project_slug>/"
+                "<item_id:item_id>/<uslug:slug>/"
+            ),
             views.AssetDetailView.as_view(),
             name="asset-detail",
         ),
@@ -66,7 +73,7 @@ tx_urlpatterns = (
             name="project-detail",
         ),
         path(
-            "<uslug:campaign_slug>/<uslug:project_slug>/<slug:item_id>/",
+            "<uslug:campaign_slug>/<uslug:project_slug>/<item_id:item_id>/",
             views.ItemDetailView.as_view(),
             name="item-detail",
         ),
@@ -91,11 +98,7 @@ urlpatterns = [
     path("questions/", views.simple_page, name="questions"),
     path("contact/", views.ContactUsView.as_view(), name="contact"),
     path("campaigns/", include(tx_urlpatterns, namespace="transcriptions")),
-    path(
-        "reserve-asset-for-transcription/<int:asset_pk>/",
-        views.reserve_asset_transcription,
-        name="reserve-asset-for-transcription",
-    ),
+    path("reserve-asset/<int:asset_pk>/", views.reserve_asset, name="reserve-asset"),
     path(
         "assets/<int:asset_pk>/transcriptions/save/",
         views.save_transcription,
