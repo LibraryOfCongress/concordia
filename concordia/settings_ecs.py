@@ -5,13 +5,7 @@ from django.core.management.utils import get_random_secret_key
 
 from .secrets import get_secret
 from .settings_template import *  # NOQA ignore=F405
-from .settings_template import (
-    CHANNEL_LAYERS,
-    CONCORDIA_ENVIRONMENT,
-    DATABASES,
-    INSTALLED_APPS,
-    LOGGING,
-)
+from .settings_template import CONCORDIA_ENVIRONMENT, DATABASES, INSTALLED_APPS, LOGGING
 
 LOGGING["handlers"]["stream"]["level"] = "INFO"
 LOGGING["handlers"]["file"]["level"] = "INFO"
@@ -97,6 +91,9 @@ ATTRIBUTION_TEXT = (
 if os.getenv("USE_PERSISTENT_DATABASE_CONNECTIONS"):
     DATABASES["default"].update({"CONN_MAX_AGE": 15 * 60})
 
-CHANNEL_LAYERS["default"]["CONFIG"].update(
-    {"hosts": (os.getenv("REDIS_ADDRESS"), os.getenv("REDIS_PORT"))}
-)
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {"hosts": [(os.getenv("REDIS_ADDRESS"), os.getenv("REDIS_PORT"))]},
+    }
+}
