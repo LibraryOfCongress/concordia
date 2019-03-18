@@ -11,7 +11,9 @@ LOGGING["loggers"]["celery"]["level"] = "INFO"
 
 DEBUG = False
 
-DATABASES["default"].update({"PASSWORD": "", "USER": "postgres"})
+# DATABASES["default"].update({"PASSWORD": "", "USER": "postgres"})
+
+DATABASES["default"].update({"PORT": 54323})
 
 DEFAULT_TO_EMAIL = "rstorey@loc.gov"
 
@@ -22,3 +24,10 @@ EMAIL_BACKEND = "django.core.mail.backends.dummy.EmailBackend"
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 
 RATELIMIT_ENABLE = False
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {"hosts": [("localhost", 6379)]},
+    }
+}
