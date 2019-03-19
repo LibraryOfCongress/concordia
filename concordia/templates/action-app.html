@@ -25,15 +25,16 @@
         assetSocket.onmessage = function(e) {
             var data = JSON.parse(e.data);
             var message_type = data['message']['type'];
-            var message = data['message']['message'];
-            var asset_slug = data['message']['asset_slug'];
-
+            var asset_pk = data['message']['asset_pk'];
             console.log(message_type);
-            console.log(asset_slug);
 
             if(message_type=="asset_update") {
-                var asset_status = data['message']['asset_status'];
-                console.log(asset_status);
+                var asset_status = data['message']['status'];
+                var asset_difficulty = data['message']['difficulty'];
+                var submitted_by = data['message']['submitted_by'];
+            } else {
+                // new asset reservation
+                var user_pk = data['message']['user_pk'];
             }
 
         };
