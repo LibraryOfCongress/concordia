@@ -136,8 +136,12 @@ export class ActionApp {
                     break;
                 }
                 case 'asset_reservation_obtained':
-                    // FIXME: we need to test whether the user who reserved it is different than the user we're running as!
-                    this.markAssetAsUnavailable(assetId);
+                    if (
+                        this.config.currentUser != 'None' &&
+                        this.config.currentUser != message.user_pk
+                    ) {
+                        this.markAssetAsUnavailable(assetId);
+                    }
                     break;
                 case 'asset_reservation_released':
                     // FIXME: we need to test whether the user who reserved it is different than the user we're running as!
