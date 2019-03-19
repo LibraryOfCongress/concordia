@@ -44,13 +44,24 @@ def update_asset_status(sender, *, instance, **kwargs):
 
 @receiver(post_save, sender=Asset)
 def send_asset_update(sender, *, instance, **kwargs):
+    submitted_by = None
+
+    if instance.transcription_status == TranscriptionStatus.SUBMITTED:
+        # Get latest transcription for this asset
+        latest_transcription = (
+            Transcription.objects.filter(asset=instance).order_by("-pk").first()
+        )
+        submitted_by = latest_transcription.user.pk
+
     channel_layer = get_channel_layer()
     AsyncToSync(channel_layer.group_send)(
         "asset_updates",
         {
             "type": "asset_update",
-            "asset_slug": instance.slug,
-            "asset_status": instance.transcription_status,
+            "asset_pk": instance.pk,
+            "status": instance.transcription_status,
+            "difficulty": instance.difficulty,
+            "submitted_by": submitted_by,
         },
     )
 
@@ -60,5 +71,9 @@ def send_asset_reservation(sender, *, instance, **kwargs):
     channel_layer = get_channel_layer()
     AsyncToSync(channel_layer.group_send)(
         "asset_updates",
-        {"type": "asset_reservation", "asset_slug": instance.asset.slug},
+        {
+            "type": "asset_reservation",
+            "asset_pk": instance.asset.pk,
+            "user_pk": instance.user.pk,
+        },
     )
