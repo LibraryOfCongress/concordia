@@ -51,13 +51,14 @@ export class MetadataPanel {
 
 class MetadataDetails {
     constructor(sectionName, initialData) {
-        this.el = html('details', {open: true}, [
+        this.children = [
             html('summary.h3', [
                 text(`${sectionName}: `),
                 html('span.title', text(initialData.title))
             ]),
             html('div.details-body')
-        ]);
+        ];
+        this.el = html('details', {open: true}, this.children);
     }
     update(data) {
         $('.details-body', this.el).innerText = data.description || '';
@@ -121,16 +122,9 @@ class ItemMetadataDetails extends MetadataDetails {
 
         this.featuredMetadata = new FeaturedMetadata();
         this.rawMetadataDisplay = new RawMetadataDisplay();
-    }
 
-    onmount() {
-        mount(this.el, this.featuredMetadata);
-        mount(this.el, this.rawMetadataDisplay);
-    }
-
-    onunmount() {
-        unmount(this.el, this.featuredMetadata);
-        unmount(this.el, this.rawMetadataDisplay);
+        this.children.push([this.featuredMetadata, this.rawMetadataDisplay]);
+        setChildren(this.el, this.children);
     }
 
     update(data) {
