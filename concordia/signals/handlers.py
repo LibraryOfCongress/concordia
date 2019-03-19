@@ -51,7 +51,8 @@ def send_asset_update(sender, *, instance, **kwargs):
         latest_transcription = (
             Transcription.objects.filter(asset=instance).order_by("-pk").first()
         )
-        submitted_by = latest_transcription.user.pk
+        if latest_transcription:
+            submitted_by = latest_transcription.user.pk
 
     channel_layer = get_channel_layer()
     AsyncToSync(channel_layer.group_send)(
