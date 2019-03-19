@@ -543,11 +543,11 @@
     {% if transcription_status == "not_started" or transcription_status == "in_progress" %}
         attemptToReserveAsset("{% url 'reserve-asset' asset.pk %}",
         "",
-        "transcribe");
+        "transcribe", true);
     {% elif user.is_authenticated %}
         attemptToReserveAsset("{% url 'reserve-asset' asset.pk %}",
         "{% url 'transcriptions:redirect-to-next-reviewable-asset' asset.item.project.campaign.slug %}",
-        "review");
+        "review", true);
     {% endif %}
 </script>
 {% endblock body_scripts %}
