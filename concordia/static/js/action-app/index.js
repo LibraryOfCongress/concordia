@@ -47,36 +47,9 @@ export class ActionApp {
         this.setupAssetList();
         this.setupAssetViewer();
 
+        this.connectAssetEventStream();
+
         this.refreshData();
-
-        window.setInterval(() => {
-            // Until we have a live data stream we'll randomly have a chance
-            // that an asset will be marked as unavailable or that an
-            // unavailable asset will be marked as available to demonstrate the
-            // UI:
-
-            if (Math.random() > 0.4) {
-                let assets = $$('.asset', this.assetList).map(elem => elem.id);
-
-                let newAssetKey =
-                    assets[Math.floor(Math.random() * assets.length)];
-
-                if (newAssetKey) {
-                    this.markAssetAsUnavailable(newAssetKey);
-                }
-            } else {
-                let unavailableAssets = $$('.unavailable', this.assetList).map(
-                    elem => elem.id
-                );
-                let assetToRelease =
-                    unavailableAssets[
-                        Math.floor(Math.random() * unavailableAssets.length)
-                    ];
-                if (assetToRelease) {
-                    this.markAssetAsAvailable(assetToRelease);
-                }
-            }
-        }, 700);
     }
 
     setupGlobalKeyboardEvents() {
@@ -129,6 +102,61 @@ export class ActionApp {
             helpPanel.toggleAttribute('hidden');
             return false;
         });
+    }
+
+    connectAssetEventStream() {
+        let assetSocketURL = // FIXME: this path should not be hard-coded
+            'ws://' + window.location.host + '/ws/asset/asset_updates/';
+        console.log(`Connecting to ${assetSocketURL}`);
+        let assetSocket = (this.assetSocket = new WebSocket(assetSocketURL));
+
+        assetSocket.onmessage = rawMessage => {
+            console.log('Asset socket message: ', rawMessage);
+
+            let data = JSON.parse(rawMessage.data);
+            let message = data.message;
+            let assetId = message.asset_pk.toString();
+            let asset = this.assets.get(assetId);
+
+            if (!asset) {
+                console.warn(
+                    `Asset ID ${assetId} has not been loaded yet. We are ignoring this message for now.`
+                );
+                return;
+            }
+
+            console.log('Asset before:', asset);
+            switch (message.type) {
+                case 'asset_update': {
+                    asset.status = message.status; // FIXME: the UI does not currently handle status changes
+                    asset.difficulty = message.difficulty;
+                    asset.submittedBy = message.submitted_by; // FIXME: the UI needs to apply the same self-edit/approval rules
+                    break;
+                }
+                case 'asset_reservation_obtained':
+                    // FIXME: we need to test whether the user who reserved it is different than the user we're running as!
+                    this.markAssetAsUnavailable(assetId);
+                    break;
+                case 'asset_reservation_released':
+                    // FIXME: we need to test whether the user who reserved it is different than the user we're running as!
+                    this.markAssetAsAvailable(assetId);
+                    break;
+                default:
+                    console.warn(
+                        `Unknown message type ${message.type}: ${message}`
+                    );
+            }
+            console.log('Asset after:', asset);
+        };
+
+        assetSocket.onerror = evt => {
+            console.error('Asset socket error occurred: ', evt);
+        };
+
+        assetSocket.onclose = evt => {
+            console.warn('Asset socket closed: ', evt);
+            window.setTimeout(this.connectAssetEventStream.bind(this), 1000);
+        };
     }
 
     refreshData() {
