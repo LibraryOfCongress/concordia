@@ -13,6 +13,8 @@ from ..models import (
     TranscriptionStatus,
 )
 
+ASSET_CHANNEL_LAYER = get_channel_layer()
+
 
 @receiver(user_registered)
 def add_user_to_newsletter(sender, user, request, **kwargs):
@@ -43,7 +45,7 @@ def update_asset_status(sender, *, instance, **kwargs):
 
 
 @receiver(post_save, sender=Asset)
-def send_asset_update(sender, *, instance, **kwargs):
+def send_asset_update(*, instance, **kwargs):
     submitted_by = None
 
     if instance.transcription_status == TranscriptionStatus.SUBMITTED:
@@ -54,8 +56,7 @@ def send_asset_update(sender, *, instance, **kwargs):
         if latest_transcription:
             submitted_by = latest_transcription.user.pk
 
-    channel_layer = get_channel_layer()
-    AsyncToSync(channel_layer.group_send)(
+    AsyncToSync(ASSET_CHANNEL_LAYER.group_send)(
         "asset_updates",
         {
             "type": "asset_update",
@@ -68,12 +69,13 @@ def send_asset_update(sender, *, instance, **kwargs):
 
 
 @receiver(post_save, sender=AssetTranscriptionReservation)
-def send_asset_reservation(sender, *, instance, **kwargs):
-    channel_layer = get_channel_layer()
-    AsyncToSync(channel_layer.group_send)(
+def send_asset_reservation(*, instance, **kwargs):
+    AsyncToSync(ASSET_CHANNEL_LAYER.group_send)(
         "asset_updates",
         {
-            "type": "asset_reservation",
+            # FIXME: we need to register for both asset reservations being
+            # obtained and released
+            "type": "asset_reservation_obtained",
             "asset_pk": instance.asset.pk,
             "user_pk": instance.user.pk,
         },
