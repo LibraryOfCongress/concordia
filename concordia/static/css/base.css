@@ -50,6 +50,12 @@
     --top-tags-input: calc(50vh - 0.75rem);
 }
 
+html {
+    /* This avoids browser inconsistencies when using the fullscreen API */
+    color: var(--text-color-primary);
+    background-color: var(--bg-offwhite);
+}
+
 body {
     color: var(--text-color-primary);
     border-top: 0.25rem solid var(--primary-color);
@@ -790,12 +796,6 @@ body.view-transcriptions--asset-detail main {
 
 #contribute-main-content {
     position: relative;
-}
-
-body.view-transcriptions--asset-detail main,
-#contribute-main-content {
-    /* This avoids browser inconsistencies when using the fullscreen API */
-    background-color: inherit;
 }
 
 #contribute-main-content h2 {

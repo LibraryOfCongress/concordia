@@ -31,7 +31,7 @@
     {% endif %}
 </head>
 
-<body class="view-{{ VIEW_NAME_FOR_CSS }} section-{{ PATH_LEVEL_1|default:'homepage' }} environment-{{ CONCORDIA_ENVIRONMENT }} {% block extra_body_classes %}{% endblock %} d-print-block">
+<body id="body" class="view-{{ VIEW_NAME_FOR_CSS }} section-{{ PATH_LEVEL_1|default:'homepage' }} environment-{{ CONCORDIA_ENVIRONMENT }} {% block extra_body_classes %}{% endblock %} d-print-block">
     {% block site-header %}
         <header role="banner" aria-label="site navigation">
             <nav class="navbar navbar-expand-lg flex-row navbar-offwhite bg-offwhite justify-content-between align-items-end d-print-block">
