@@ -36,7 +36,13 @@
             </ul>
             <ul class="navbar-nav justify-content-end">
                 <li class="nav-item">
-                    <button id="help-toggle" class="btn btn-link nav-link" href="{% url 'help-center' %}">
+                    <button hidden id="go-fullscreen" class="btn btn-link nav-link" data-target="body" title="Go fullscreen">
+                        <span class="fas fa-arrows-alt"></span>
+                        <span class="sr-only">Go fullscreen</span>
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button id="help-toggle" class="btn btn-link nav-link" href="{% url 'help-center' %}" title="Open Help">
                         <span class="fas fa-question-circle"></span>
                         <span class="sr-only">Help</span>
                     </button>
