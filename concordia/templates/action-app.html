@@ -14,7 +14,9 @@
     <script type="module">
         import { ActionApp } from "{% static 'js/action-app/index.js' %}";
         window.actionApp = new ActionApp({
+            {% if request.user.pk %}
             currentUser: "{{ request.user.pk }}",
+            {% endif %}
             assetDataUrlTemplate: "/{action}.json"
         });
     </script>
