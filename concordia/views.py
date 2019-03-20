@@ -1394,7 +1394,6 @@ class AssetListView(APIListView):
                 "url": campaign.get_absolute_url(),
             },
             "latest_transcription": obj.latest_transcription,
-            "last_updated": int(time.time()),
         }
 
         # FIXME: we want to rework how this is done after deprecating Asset.media_url
