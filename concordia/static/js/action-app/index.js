@@ -132,7 +132,7 @@ export class ActionApp {
                     asset.status = message.status; // FIXME: the UI does not currently handle status changes
                     asset.difficulty = message.difficulty;
                     asset.submitted_by = message.submitted_by; // FIXME: the UI needs to apply the same self-edit/approval rules
-                    asset.last_updated = message_sent;
+                    asset.sent = message_sent;
                     break;
                 }
                 case 'asset_reservation_obtained':
@@ -358,7 +358,7 @@ export class ActionApp {
 
     fetchAssetPage(url) {
         fetchJSON(url).then(data => {
-            data.objects.forEach(i => this.createAsset(i));
+            data.objects.forEach(i => this.createAsset(i, data.sent));
 
             $('#asset-count').innerText = this.assets.size;
 
@@ -391,9 +391,10 @@ export class ActionApp {
         return getCachedData(this.campaigns, refObj, 'object');
     }
 
-    createAsset(assetData) {
+    createAsset(assetData, assetSent) {
         // n.b. although we are currently using numeric keys, we're coding under
         // the assumption that they will become opaque strings in the future:
+        assetData.sent = assetSent;
         this.assets.set(assetData.id.toString(), assetData);
 
         let assetElement = document.createElement('li');

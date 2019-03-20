@@ -13,6 +13,7 @@ behaviour for the non-JSON endpoint:
 The base APIViewMixin implements a base implementation of serialize_object which
 uses the generic django.forms.models.model_to_dict and can be overridden as needed.
 """
+import time
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.forms.models import model_to_dict
@@ -91,7 +92,10 @@ class APIListView(APIViewMixin, ListView):
     """ListView which can also return JSON with consistent pagination"""
 
     def serialize_context(self, context):
-        data = {"objects": [self.serialize_object(i) for i in context["object_list"]]}
+        data = {
+            "objects": [self.serialize_object(i) for i in context["object_list"]],
+            "sent": int(time.time()),
+        }
 
         page_obj = context["page_obj"]
         if page_obj:
