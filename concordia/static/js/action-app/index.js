@@ -115,7 +115,7 @@ export class ActionApp {
 
             let data = JSON.parse(rawMessage.data);
             let message = data.message;
-            let message_timestamp = data.message_timestamp;
+            let message_sent = data.sent;
             let assetId = message.asset_pk.toString();
             let asset = this.assets.get(assetId);
 
@@ -132,7 +132,7 @@ export class ActionApp {
                     asset.status = message.status; // FIXME: the UI does not currently handle status changes
                     asset.difficulty = message.difficulty;
                     asset.submitted_by = message.submitted_by; // FIXME: the UI needs to apply the same self-edit/approval rules
-                    asset.last_updated = message_timestamp;
+                    asset.last_updated = message_sent;
                     break;
                 }
                 case 'asset_reservation_obtained':
