@@ -4,10 +4,10 @@ include =
     concordia/*
     importer/*
     exporter/*
- omit =
+omit =
     */migrations/*
     */tests/*
-    concordia/settings*
+    */settings*.py
 
 [report]
 include =
@@ -17,4 +17,4 @@ include =
 omit =
     */migrations/*
     */tests/*
-    concordia/settings*
+    */settings*.py
