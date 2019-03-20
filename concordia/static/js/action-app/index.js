@@ -137,7 +137,7 @@ export class ActionApp {
                 }
                 case 'asset_reservation_obtained':
                     if (
-                        this.config.currentUser != 'None' &&
+                        this.config.currentUser &&
                         this.config.currentUser != message.user_pk
                     ) {
                         this.markAssetAsUnavailable(assetId);
