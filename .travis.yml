@@ -34,10 +34,12 @@ script:
     - mkdir logs
     - touch ./logs/concordia-celery.log
     - pipenv run ./manage.py collectstatic --no-input
-    - pipenv run coverage run ./manage.py test concordia importer exporter
+    # n.b.
+    - pipenv run coverage run ./manage.py test
     - git diff --name-only $TRAVIS_COMMIT_RANGE | xargs pre-commit run --files
     - pipenv run safety check
 after_success:
+    - git fetch --unshallow --tags
     - pipenv run coverage xml
     - sonar-scanner
     - coveralls

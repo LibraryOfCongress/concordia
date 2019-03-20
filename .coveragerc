@@ -1,6 +1,20 @@
 [run]
 branch = true
-source =
-    concordia
-    importer
-    exporter
+include =
+    concordia/*
+    importer/*
+    exporter/*
+ omit =
+    */migrations/*
+    */tests/*
+    concordia/settings*
+
+[report]
+include =
+    concordia/*
+    importer/*
+    exporter/*
+omit =
+    */migrations/*
+    */tests/*
+    concordia/settings*
