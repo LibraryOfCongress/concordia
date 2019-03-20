@@ -106,7 +106,9 @@ export class ActionApp {
 
     connectAssetEventStream() {
         let assetSocketURL = // FIXME: this path should not be hard-coded
-            'ws://' + window.location.host + '/ws/asset/asset_updates/';
+            (document.location.protocol == 'https:' ? 'wss://' : 'ws://') +
+            window.location.host +
+            '/ws/asset/asset_updates/';
         console.log(`Connecting to ${assetSocketURL}`);
         let assetSocket = (this.assetSocket = new WebSocket(assetSocketURL));
 
