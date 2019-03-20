@@ -11,14 +11,11 @@ echo Running makemigrations
 echo Running migrations
 ./manage.py migrate
 
-echo "Ensuring our base configuration is present in the database"
+echo Ensuring our base configuration is present in the database
 ./manage.py ensure_initial_site_configuration
 
-echo "Initializing difficulty values"
-./manage.py initialize_difficulty_values
-
 if [ -v SENTRY_BACKEND_DSN ]; then
-    echo "Testing Sentry configuration"
+    echo Testing Sentry configuration
     ./manage.py raven test
 fi
 
