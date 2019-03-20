@@ -69,7 +69,7 @@ INSTALLED_APPS = [
     "django.contrib.sites",
     "django.contrib.staticfiles",
     "raven.contrib.django.raven_compat",
-    "maintenance_mode",
+    # "maintenance_mode",
     "bootstrap4",
     "bittersweet",
     "concordia.apps.ConcordiaAppConfig",
@@ -94,7 +94,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "maintenance_mode.middleware.MaintenanceModeMiddleware",
+    # "maintenance_mode.middleware.MaintenanceModeMiddleware",
     "ratelimit.middleware.RatelimitMiddleware",
     "flags.middleware.FlagConditionsMiddleware",
 ]
