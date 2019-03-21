@@ -1147,7 +1147,7 @@ def reserve_asset(request, *, asset_pk):
     with connection.cursor() as cursor:
         rows_to_release = cursor.execute(
             (
-                "SELECT asset_id as asset_pk, user_id as user_pk"
+                "SELECT asset_id as asset_pk, user_id as user_pk "
                 "FROM concordia_assettranscriptionreservation "
                 "WHERE updated_on < %s"
             ),
