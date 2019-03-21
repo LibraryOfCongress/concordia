@@ -41,5 +41,5 @@ script:
 after_success:
     - git fetch --unshallow --tags
     - pipenv run coverage xml
-    - sonar-scanner
+    - sonar-scanner -Dsonar.projectVersion="$(pipenv run ./setup.py --version)"
     - coveralls
