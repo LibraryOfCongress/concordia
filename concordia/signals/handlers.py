@@ -6,12 +6,8 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django_registration.signals import user_registered
 
-from ..models import (
-    Asset,
-    AssetTranscriptionReservation,
-    Transcription,
-    TranscriptionStatus,
-)
+from ..models import Asset, Transcription, TranscriptionStatus
+from .signals import reservation_obtained, reservation_released
 
 ASSET_CHANNEL_LAYER = get_channel_layer()
 
@@ -66,15 +62,25 @@ def send_asset_update(*, instance, **kwargs):
     )
 
 
-@receiver(post_save, sender=AssetTranscriptionReservation)
-def send_asset_reservation(*, instance, **kwargs):
+@receiver(reservation_obtained)
+def send_asset_reservation_obtained(sender, **kwargs):
     AsyncToSync(ASSET_CHANNEL_LAYER.group_send)(
         "asset_updates",
         {
-            # FIXME: we need to register for both asset reservations being
-            # obtained and released
             "type": "asset_reservation_obtained",
-            "asset_pk": instance.asset.pk,
-            "user_pk": instance.user.pk,
+            "asset_pk": kwargs["asset_pk"],
+            "user_pk": kwargs["user_pk"],
+        },
+    )
+
+
+@receiver(reservation_released)
+def send_asset_reservation_released(sender, **kwargs):
+    AsyncToSync(ASSET_CHANNEL_LAYER.group_send)(
+        "asset_updates",
+        {
+            "type": "asset_reservation_released",
+            "asset_pk": kwargs["asset_pk"],
+            "user_pk": kwargs["user_pk"],
         },
     )
