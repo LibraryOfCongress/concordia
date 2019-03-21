@@ -67,6 +67,7 @@ from concordia.models import (
     TranscriptionStatus,
     UserAssetTagCollection,
 )
+from concordia.signals.signals import reservation_obtained, reservation_released
 from concordia.templatetags.concordia_media_tags import asset_media_url
 from concordia.utils import get_anonymous_user, request_accepts_json
 from concordia.version import get_concordia_version
@@ -1128,7 +1129,7 @@ def reserve_asset(request, *, asset_pk):
 
     timestamp = now()
 
-    # First clear old reservations, with a grace period:
+    # First clear old reservations, with a grace period.
     cutoff = timestamp - (
         timedelta(seconds=2 * settings.TRANSCRIPTION_RESERVATION_SECONDS)
     )
@@ -1139,6 +1140,8 @@ def reserve_asset(request, *, asset_pk):
             [cutoff],
         )
 
+    # If the browser is letting us know of a specific reservation release,
+    # let it go even if it's within the grace period.
     if request.POST.get("release"):
         with connection.cursor() as cursor:
             cursor.execute(
@@ -1148,6 +1151,10 @@ def reserve_asset(request, *, asset_pk):
                 """,
                 [user.pk, asset_pk],
             )
+        # Notify the web socket of the reservation release
+        reservation_released.send(
+            sender="reserve_asset", asset_pk=asset_pk, user_pk=user.pk
+        )
         return HttpResponse(status=204)
 
     # We're relying on the database to meet our integrity requirements and since
@@ -1173,6 +1180,9 @@ def reserve_asset(request, *, asset_pk):
         if cursor.rowcount != 1:
             return HttpResponse(status=409)
 
+    reservation_obtained.send(
+        sender="reserve_asset", asset_pk=asset_pk, user_pk=user.pk
+    )
     return HttpResponse(status=204)
 
 
