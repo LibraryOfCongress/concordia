@@ -1145,10 +1145,31 @@ def reserve_asset(request, *, asset_pk):
     )
 
     with connection.cursor() as cursor:
-        cursor.execute(
-            "DELETE FROM concordia_assettranscriptionreservation WHERE updated_on < %s",
+        rows_to_release = cursor.execute(
+            (
+                "SELECT asset_id as asset_pk, user_id as user_pk"
+                "FROM concordia_assettranscriptionreservation "
+                "WHERE updated_on < %s"
+            ),
             [cutoff],
         )
+        if rows_to_release:
+            reservations = []
+            for row in rows_to_release.fetchone():
+                reservations += (row["asset_pk"], row["user_pk"])
+            cursor.execute(
+                (
+                    "DELETE FROM concordia_assettranscriptionreservation "
+                    "WHERE updated_on < %s"
+                ),
+                [cutoff],
+            )
+            for reservation in reservations:
+                reservation_released.send(
+                    sender="reserve_asset",
+                    asset_pk=reservation[0],
+                    user_pk=reservation[1],
+                )
 
     # If the browser is letting us know of a specific reservation release,
     # let it go even if it's within the grace period.
