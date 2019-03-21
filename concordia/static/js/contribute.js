@@ -176,7 +176,8 @@ $transcriptionEditor
         if (
             !data.hasReservation ||
             (data.transcriptionStatus != 'in_progress' &&
-                data.transcriptionStatus != 'not_started')
+                data.transcriptionStatus != 'not_started' &&
+                data.transcriptionStatus != 'submitted')
         ) {
             lockControls($transcriptionEditor);
         } else {
