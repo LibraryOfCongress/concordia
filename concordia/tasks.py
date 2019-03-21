@@ -165,3 +165,16 @@ def campaign_report(campaign):
     site_report.distinct_tags = distinct_tag_count
     site_report.tag_uses = tag_count
     site_report.save()
+
+
+@task
+def initialize_difficulty_values():
+    assets = Asset.objects.published().annotate(
+        transcription_count=Count("transcription", distinct=True),
+        contributor_count=Count("transcription__user", distinct=True),
+        reviewer_count=Count("transcription__reviewed_by", distinct=True),
+    )
+
+    for a in assets:
+        a.difficulty = a.transcription_count * (a.contributor_count + a.reviewer_count)
+        a.save()
