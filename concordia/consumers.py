@@ -14,5 +14,8 @@ class AssetConsumer(AsyncJsonWebsocketConsumer):
     async def asset_update(self, message):
         await self.send_json({"message": message, "sent": int(time.time())})
 
-    async def asset_reservation(self, message):
+    async def asset_reservation_obtained(self, message):
+        await self.send_json({"message": message, "sent": int(time.time())})
+
+    async def asset_reservation_released(self, message):
         await self.send_json({"message": message, "sent": int(time.time())})
