@@ -13,7 +13,7 @@
         "imagemin-svgo": "^7.0.0",
         "prettier": "^1.14.3",
         "stylelint": "^9.7.1",
-        "stylelint-config-prettier": "^4.0.0",
+        "stylelint-config-prettier": "^5.0.0",
         "stylelint-config-recommended": "^2.1.0"
     }
 }
