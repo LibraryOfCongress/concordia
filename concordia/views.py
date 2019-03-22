@@ -1141,18 +1141,18 @@ def reserve_asset(request, *, asset_pk):
             (
                 "DELETE FROM concordia_assettranscriptionreservation "
                 "WHERE updated_on < %s "
-                "RETURNING asset_id as asset_pk, user_id as user_pk"
+                "RETURNING asset_id AS asset_pk, user_id AS user_pk"
             ),
             [cutoff],
         )
 
     if rows_to_release:
-        for row in rows_to_release.fetchone():
+        for row in rows_to_release.fetchall():
             reservations += (row["asset_pk"], row["user_pk"])
 
-    for reservation in reservations:
+    for asset_pk, user_pk in reservations:
         reservation_released.send(
-            sender="reserve_asset", asset_pk=reservation[0], user_pk=reservation[1]
+            sender="reserve_asset", asset_pk=asset_pk, user_pk=user_pk
         )
 
     # If the browser is letting us know of a specific reservation release,
