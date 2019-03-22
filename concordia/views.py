@@ -1134,7 +1134,7 @@ def reserve_asset(request, *, asset_pk):
         timedelta(seconds=2 * settings.TRANSCRIPTION_RESERVATION_SECONDS)
     )
 
-    reservations = []
+    expired_reservations = []
 
     with connection.cursor() as cursor:
         rows_to_release = cursor.execute(
@@ -1146,11 +1146,12 @@ def reserve_asset(request, *, asset_pk):
             [cutoff],
         )
 
-    if rows_to_release:
-        for row in rows_to_release.fetchall():
-            reservations += (row["asset_pk"], row["user_pk"])
+        if rows_to_release:
+            expired_reservations.extend(
+                (row["asset_pk"], row["user_pk"]) for row in rows_to_release.fetchall()
+            )
 
-    for asset_pk, user_pk in reservations:
+    for asset_pk, user_pk in expired_reservations:
         reservation_released.send(
             sender="reserve_asset", asset_pk=asset_pk, user_pk=user_pk
         )
