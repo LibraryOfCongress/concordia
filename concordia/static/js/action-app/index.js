@@ -406,7 +406,7 @@ export class ActionApp {
 
         let freshestCopy;
         if (oldData.sent && oldData.sent > newData.sent) {
-            console.log(
+            console.warn(
                 'Updated data is older than our existing record: ',
                 newData,
                 oldData
@@ -425,7 +425,7 @@ export class ActionApp {
             mergedData[k] = freshestCopy[k];
         }
 
-        console.log(
+        console.debug(
             `Changing asset ${assetId} from ${JSON.stringify(
                 oldData
             )} to ${JSON.stringify(mergedData)}`
