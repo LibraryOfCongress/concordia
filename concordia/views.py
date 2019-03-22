@@ -1404,10 +1404,19 @@ class AssetListView(APIListView):
         project = item.project
         campaign = project.campaign
 
+        image_url = asset_media_url(obj)
+        if obj.download_url and "iiif" in obj.download_url:
+            thumbnail_url = obj.download_url.replace(
+                "http://tile.loc.gov", "https://tile.loc.gov"
+            )
+        else:
+            thumbnail_url = image_url
+
         metadata = {
             "id": obj.pk,
             "url": obj.get_absolute_url(),
-            "thumbnail": asset_media_url(obj),
+            "thumbnailUrl": thumbnail_url,
+            "imageUrl": image_url,
             "title": obj.title,
             "difficulty": obj.difficulty,
             "sequence": obj.sequence,
@@ -1435,11 +1444,11 @@ class AssetListView(APIListView):
         # FIXME: we want to rework how this is done after deprecating Asset.media_url
         if obj.previous_sequence:
             metadata["previous_thumbnail"] = re.sub(
-                r"[/]\d+[.]jpg", f"/{obj.previous_sequence}.jpg", metadata["thumbnail"]
+                r"[/]\d+[.]jpg", f"/{obj.previous_sequence}.jpg", image_url
             )
         if obj.next_sequence:
             metadata["next_thumbnail"] = re.sub(
-                r"[/]\d+[.]jpg", f"/{obj.next_sequence}.jpg", metadata["thumbnail"]
+                r"[/]\d+[.]jpg", f"/{obj.next_sequence}.jpg", image_url
             )
 
         return metadata

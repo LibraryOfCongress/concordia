@@ -441,10 +441,21 @@ export class ActionApp {
 
         this.mergeAssetUpdate(assetId, assetData);
 
+        let thumbnailUrl = assetData.thumbnailUrl;
+        if (thumbnailUrl.indexOf('/iiif/') > 0) {
+            // We'll adjust the IIIF image URLs not to return something larger
+            // than we're going to use:
+            // FIXME: this is an ugly, ugly kludge and should be replaced with something like https://www.npmjs.com/package/iiif-image
+            thumbnailUrl = thumbnailUrl.replace(
+                /([/]iiif[/].+[/]full)[/]pct:100[/](0[/]default.jpg)$/,
+                '$1/!512,512/$2'
+            );
+        }
+
         let assetElement = document.createElement('li');
         assetElement.id = assetId;
         assetElement.classList.add('asset', 'rounded', 'border');
-        assetElement.dataset.image = assetData.thumbnail;
+        assetElement.dataset.image = thumbnailUrl;
         assetElement.dataset.id = assetData.id;
         assetElement.dataset.difficulty = assetData.difficulty;
         assetElement.title = `${assetData.title} (${assetData.project.title})`;
@@ -595,7 +606,7 @@ export class ActionApp {
         let tileSources = [
             {
                 type: 'image',
-                url: asset.thumbnail
+                url: asset.imageUrl
             }
         ];
         let initialPage = 0;
