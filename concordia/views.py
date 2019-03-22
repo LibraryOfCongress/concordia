@@ -1144,30 +1144,21 @@ def reserve_asset(request, *, asset_pk):
         timedelta(seconds=2 * settings.TRANSCRIPTION_RESERVATION_SECONDS)
     )
 
+    reservations = []
+
     with connection.cursor() as cursor:
         rows_to_release = cursor.execute(
             (
-                "SELECT asset_id as asset_pk, user_id as user_pk "
-                "FROM concordia_assettranscriptionreservation "
-                "WHERE updated_on < %s"
+                "DELETE FROM concordia_assettranscriptionreservation "
+                "WHERE updated_on < %s "
+                "RETURNING asset_id as asset_pk, user_id as user_pk"
             ),
             [cutoff],
         )
-
-    reservations = []
 
     if rows_to_release:
         for row in rows_to_release.fetchone():
             reservations += (row["asset_pk"], row["user_pk"])
-
-    with connection.cursor() as cursor:
-        cursor.execute(
-            (
-                "DELETE FROM concordia_assettranscriptionreservation "
-                "WHERE updated_on < %s"
-            ),
-            [cutoff],
-        )
 
     for reservation in reservations:
         reservation_released.send(
