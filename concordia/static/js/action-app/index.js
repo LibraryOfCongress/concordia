@@ -117,24 +117,17 @@ export class ActionApp {
 
             let data = JSON.parse(rawMessage.data);
             let message = data.message;
-            let message_sent = data.sent;
             let assetId = message.asset_pk.toString();
-            let asset = this.assets.get(assetId);
 
-            if (!asset) {
-                console.warn(
-                    `Asset ID ${assetId} has not been loaded yet. We are ignoring this message for now.`
-                );
-                return;
-            }
-
-            console.log('Asset before:', asset);
             switch (message.type) {
                 case 'asset_update': {
-                    asset.status = message.status; // FIXME: the UI does not currently handle status changes
-                    asset.difficulty = message.difficulty;
-                    asset.submitted_by = message.submitted_by; // FIXME: the UI needs to apply the same self-edit/approval rules
-                    asset.sent = message_sent;
+                    let assetUpdate = {
+                        status: message.status,
+                        difficulty: message.difficulty,
+                        submitted_by: message.submitted_by,
+                        sent: data.sent
+                    };
+                    this.mergeAssetUpdate(assetId, assetUpdate);
                     break;
                 }
                 case 'asset_reservation_obtained':
@@ -154,7 +147,6 @@ export class ActionApp {
                         `Unknown message type ${message.type}: ${message}`
                     );
             }
-            console.log('Asset after:', asset);
         };
 
         assetSocket.onerror = evt => {
@@ -360,7 +352,10 @@ export class ActionApp {
 
     fetchAssetPage(url) {
         fetchJSON(url).then(data => {
-            data.objects.forEach(i => this.createAsset(i, data.sent));
+            data.objects.forEach(i => {
+                i.sent = data.sent;
+                this.createAsset(i);
+            });
 
             $('#asset-count').innerText = this.assets.size;
 
@@ -393,14 +388,61 @@ export class ActionApp {
         return getCachedData(this.campaigns, refObj, 'object');
     }
 
-    createAsset(assetData, assetSent) {
+    mergeAssetUpdate(assetId, newData) {
+        /*
+            We have two sources of data: JSON API requests and WebSocket
+            updates. The WebSocket updates may be more recent depending on how
+            long it takes an XHR request to return but the API responses have
+            the full object representation.
+
+            We will generate the merged record by taking creating a copy of the
+            old data and new data and then selectively picking the most recent
+            of the fields which frequently change.
+        */
+
+        let oldData = this.assets.get(assetId) || {};
+        let mergedData = Object.assign({}, oldData);
+        mergedData = Object.assign(mergedData, newData);
+
+        let freshestCopy;
+        if (oldData.sent && oldData.sent > newData.sent) {
+            console.log(
+                'Updated data is older than our existing record: ',
+                newData,
+                oldData
+            );
+            freshestCopy = oldData;
+        } else {
+            freshestCopy = newData;
+        }
+
+        for (let k of [
+            'status',
+            'difficulty',
+            'submitted_by',
+            'latest_transcription'
+        ]) {
+            mergedData[k] = freshestCopy[k];
+        }
+
+        console.log(
+            `Changing asset ${assetId} from ${JSON.stringify(
+                oldData
+            )} to ${JSON.stringify(mergedData)}`
+        );
+
+        this.assets.set(assetId, mergedData);
+    }
+
+    createAsset(assetData) {
         // n.b. although we are currently using numeric keys, we're coding under
         // the assumption that they will become opaque strings in the future:
-        assetData.sent = assetSent;
-        this.assets.set(assetData.id.toString(), assetData);
+        let assetId = assetData.id.toString();
+
+        this.mergeAssetUpdate(assetId, assetData);
 
         let assetElement = document.createElement('li');
-        assetElement.id = assetData.id;
+        assetElement.id = assetId;
         assetElement.classList.add('asset', 'rounded', 'border');
         assetElement.dataset.image = assetData.thumbnail;
         assetElement.dataset.id = assetData.id;
@@ -414,15 +456,21 @@ export class ActionApp {
     }
 
     markAssetAsAvailable(assetId) {
-        console.log(`Marking asset ${assetId} available`);
-        document.getElementById(assetId).classList.remove('available');
-        this.checkViewerAvailability(assetId);
+        let assetElement = document.getElementById(assetId);
+        if (assetElement) {
+            console.log(`Marking asset ${assetId} available`);
+            assetElement.classList.remove('available');
+            this.checkViewerAvailability(assetId);
+        }
     }
 
     markAssetAsUnavailable(assetId) {
-        console.log(`Marking asset ${assetId} unavailable`);
-        document.getElementById(assetId).classList.add('unavailable');
-        this.checkViewerAvailability(assetId);
+        let assetElement = document.getElementById(assetId);
+        if (assetElement) {
+            console.log(`Marking asset ${assetId} unavailable`);
+            assetElement.classList.add('unavailable');
+            this.checkViewerAvailability(assetId);
+        }
     }
 
     filterAssets() {
