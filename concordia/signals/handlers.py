@@ -64,23 +64,26 @@ def send_asset_update(*, instance, **kwargs):
 
 @receiver(reservation_obtained)
 def send_asset_reservation_obtained(sender, **kwargs):
-    AsyncToSync(ASSET_CHANNEL_LAYER.group_send)(
-        "asset_updates",
-        {
-            "type": "asset_reservation_obtained",
-            "asset_pk": kwargs["asset_pk"],
-            "user_pk": kwargs["user_pk"],
-        },
+    send_asset_reservation_message(
+        sender=sender,
+        message_type="asset_reservation_obtained",
+        asset_pk=kwargs["asset_pk"],
+        user_pk=kwargs["user_pk"],
     )
 
 
 @receiver(reservation_released)
 def send_asset_reservation_released(sender, **kwargs):
+    send_asset_reservation_message(
+        sender=sender,
+        message_type="asset_reservation_released",
+        asset_pk=kwargs["asset_pk"],
+        user_pk=kwargs["user_pk"],
+    )
+
+
+def send_asset_reservation_message(*, sender, message_type, asset_pk, user_pk):
     AsyncToSync(ASSET_CHANNEL_LAYER.group_send)(
         "asset_updates",
-        {
-            "type": "asset_reservation_released",
-            "asset_pk": kwargs["asset_pk"],
-            "user_pk": kwargs["user_pk"],
-        },
+        {"type": message_type, "asset_pk": asset_pk, "user_pk": user_pk},
     )
