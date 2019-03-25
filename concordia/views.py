@@ -389,6 +389,43 @@ class CampaignListView(APIListView):
     queryset = Campaign.objects.published().order_by("ordering", "title")
     context_object_name = "campaigns"
 
+    def serialize_context(self, context):
+        data = super().serialize_context(context)
+
+        object_list = data["objects"]
+
+        status_count_keys = {
+            status: f"{status}_count" for status in TranscriptionStatus.CHOICE_MAP
+        }
+
+        campaign_stats_qs = (
+            Campaign.objects.filter(pk__in=[i["id"] for i in object_list])
+            .annotate(
+                **{
+                    v: Count(
+                        "project__item__asset",
+                        filter=Q(
+                            project__published=True,
+                            project__item__published=True,
+                            project__item__asset__published=True,
+                            project__item__asset__transcription_status=k,
+                        ),
+                    )
+                    for k, v in status_count_keys.items()
+                }
+            )
+            .values("pk", *status_count_keys.values())
+        )
+
+        campaign_asset_counts = {}
+        for campaign_stats in campaign_stats_qs:
+            campaign_asset_counts[campaign_stats.pop("pk")] = campaign_stats
+
+        for obj in object_list:
+            obj["asset_stats"] = campaign_asset_counts[obj["id"]]
+
+        return data
+
 
 def calculate_asset_stats(asset_qs, ctx):
     asset_count = asset_qs.count()
