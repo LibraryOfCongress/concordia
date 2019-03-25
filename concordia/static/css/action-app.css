@@ -169,6 +169,15 @@ main[data-open-asset-id] #contribute-container {
     flex-basis: 50%;
 }
 
+#review-transcription-text {
+    flex-grow: 1;
+    flex-shrink: 1;
+
+    max-height: 100%;
+
+    overflow-y: scroll;
+}
+
 .unavailable .control-toolbar {
     display: none !important;
 }
