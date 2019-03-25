@@ -82,6 +82,7 @@ export class ActionApp {
                     inactiveElem.classList.remove('active');
                 });
                 evt.target.classList.add('active');
+                this.updateAvailableCampaignFilters();
                 this.closeViewer();
                 this.refreshData();
             });
@@ -233,8 +234,19 @@ export class ActionApp {
                     let o = document.createElement('option');
                     o.value = campaign.id;
                     o.innerText = campaign.title;
+
+                    // TODO: this does not handle the case where the last assets of a campaign change state while the app is open
+                    Object.entries(campaign.asset_stats).forEach(
+                        ([key, value]) => {
+                            o.dataset[key] = value;
+                        }
+                    );
+
                     this.campaignSelect.appendChild(o);
                 });
+            })
+            .then(() => {
+                this.updateAvailableCampaignFilters();
             });
         this.campaignSelect.addEventListener('change', () =>
             this.filterAssets()
@@ -274,6 +286,26 @@ export class ActionApp {
                 evt.target.value + 'px'
             );
             this.attemptAssetLazyLoad();
+        });
+    }
+
+    updateAvailableCampaignFilters() {
+        /*
+            Ensure that the list of campaign filter values only contains
+            campaigns which you can actually work on
+        */
+
+        // TODO: componentize the asset list controls
+        $$('option', this.campaignSelect).forEach(optionElement => {
+            let disabled;
+            if (this.campaignSelect == 'review') {
+                disabled = optionElement.dataset.submitted_count == '0';
+            } else {
+                disabled =
+                    optionElement.dataset.not_started_count == '0' &&
+                    optionElement.dataset.in_progress_count == '0';
+            }
+            optionElement.toggleAttribute('disabled', disabled);
         });
     }
 
