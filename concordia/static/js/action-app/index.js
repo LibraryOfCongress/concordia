@@ -1,4 +1,4 @@
-/* global OpenSeadragon */
+/* global OpenSeadragon Split */
 /* eslint-disable no-console */
 
 import {
@@ -314,6 +314,11 @@ export class ActionApp {
 
     setupAssetViewer() {
         this.assetViewer = $('#asset-viewer');
+
+        $('#close-viewer-button').addEventListener('click', () => {
+            this.closeViewer();
+        });
+
         this.seadragonViewer = new OpenSeadragon({
             id: 'asset-image',
             prefixUrl:
@@ -336,8 +341,20 @@ export class ActionApp {
             previousButton: 'viewer-previous-page'
         });
 
-        $('#close-viewer-button').addEventListener('click', () => {
-            this.closeViewer();
+        this.assetViewSplitter = Split(['#viewer-column', '#editor-column'], {
+            sizes: [50, 50],
+            minSize: 300,
+            gutterSize: 8,
+            elementStyle: function(dimension, size, gutterSize) {
+                return {
+                    'flex-basis': 'calc(' + size + '% - ' + gutterSize + 'px)'
+                };
+            },
+            gutterStyle: function(dimension, gutterSize) {
+                return {
+                    'flex-basis': gutterSize + 'px'
+                };
+            }
         });
     }
 
