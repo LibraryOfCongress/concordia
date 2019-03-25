@@ -169,6 +169,10 @@ main[data-open-asset-id] #contribute-container {
     flex-basis: 50%;
 }
 
+#reviewer-column {
+    max-height: calc(100% - 40px); /* One normal button height */
+}
+
 #review-transcription-text {
     flex-grow: 1;
     flex-shrink: 1;
