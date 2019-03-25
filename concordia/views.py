@@ -466,7 +466,7 @@ class CampaignDetailView(APIDetailView):
                             item__asset__transcription_status=key,
                         ),
                     )
-                    for key in TranscriptionStatus.CHOICE_MAP.keys()
+                    for key in TranscriptionStatus.CHOICE_MAP
                 }
             )
         )
@@ -523,7 +523,7 @@ class ProjectDetailView(APIListView):
                 f"{key}_count": Count(
                     "asset", filter=Q(asset__transcription_status=key)
                 )
-                for key in TranscriptionStatus.CHOICE_MAP.keys()
+                for key in TranscriptionStatus.CHOICE_MAP
             }
         )
 
