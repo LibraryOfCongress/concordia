@@ -45,3 +45,15 @@ SHELL_PLUS_PRE_IMPORTS = [
     ("concordia.utils", "get_anonymous_user"),
     ("concordia.models", "TranscriptionStatus"),
 ]
+
+S3_BUCKET_NAME = "crowd-dev-content"
+EXPORT_S3_BUCKET_NAME = "crowd-dev-export"
+DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+AWS_STORAGE_BUCKET_NAME = S3_BUCKET_NAME
+AWS_DEFAULT_ACL = None  # Don't set an ACL on the files, inherit the bucket ACLs
+MEDIA_URL = "https://%s.s3.amazonaws.com/" % S3_BUCKET_NAME
+
+# Celery 4.2.1 needs this when using docker DB
+# see https://github.com/celery/celery/issues/4878
+# For some reason, in AWS it doesn't seem to be an issue
+DATABASES["default"]["CONN_MAX_AGE"] = 0
