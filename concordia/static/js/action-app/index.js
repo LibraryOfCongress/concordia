@@ -221,10 +221,8 @@ export class ActionApp {
         /* List sorting */
         this.sortModeSelector = $('#sort-mode');
         this.sortMode = this.sortModeSelector.value;
-        this.sortModeSelector.addEventListener('change', evt => {
-            this.sortMode = evt.target.value;
-            sortChildren(this.assetList, this.getAssetSortKeyGenerator());
-            this.scrollToActiveAsset();
+        this.sortModeSelector.addEventListener('change', () => {
+            this.sortAssets();
         });
 
         /* List filtering */
@@ -275,6 +273,7 @@ export class ActionApp {
                 '--asset-thumbnail-size',
                 evt.target.value + 'px'
             );
+            this.attemptAssetLazyLoad();
         });
     }
 
@@ -368,23 +367,30 @@ export class ActionApp {
     }
 
     fetchAssetPage(url) {
-        fetchJSON(url).then(data => {
-            data.objects.forEach(i => {
-                i.sent = data.sent;
-                this.createAsset(i);
+        fetchJSON(url)
+            .then(data => {
+                data.objects.forEach(i => {
+                    i.sent = data.sent;
+                    this.createAsset(i);
+                });
+
+                $('#asset-count').innerText = this.assets.size;
+
+                if (data.pagination.next) {
+                    this.queuedAssetPageURLs.push(data.pagination.next);
+                }
+
+                if (this.assets.size < 300) {
+                    // We like to have a fair number of items to start with
+                    // FIXME: this will require a fallback for MS Edge
+                    window.requestIdleCallback(
+                        this.fetchNextAssetPage.bind(this)
+                    );
+                }
+            })
+            .then(() => {
+                window.requestAnimationFrame(this.updateAssetList.bind(this));
             });
-
-            $('#asset-count').innerText = this.assets.size;
-
-            if (data.pagination.next) {
-                this.queuedAssetPageURLs.push(data.pagination.next);
-            }
-
-            if (this.assets.size < 300) {
-                // We like to have a fair number of items to start with
-                this.fetchNextAssetPage();
-            }
-        });
     }
 
     fetchNextAssetPage() {
@@ -499,6 +505,31 @@ export class ActionApp {
             assetElement.classList.add('unavailable');
             this.checkViewerAvailability(assetId);
         }
+    }
+
+    updateAssetList() {
+        this.filterAssets();
+        this.sortAssets();
+        this.attemptAssetLazyLoad();
+    }
+
+    attemptAssetLazyLoad() {
+        /*
+            If the list is small enough to display without scrolling we'll
+            attempt to load more assets in the background.
+        */
+
+        let el = this.assetList.parentNode;
+
+        if (el.scrollHeight <= el.clientHeight) {
+            window.requestIdleCallback(this.fetchNextAssetPage.bind(this)); // FIXME: this will require a fallback for MS Edge
+        }
+    }
+
+    sortAssets() {
+        this.sortMode = this.sortModeSelector.value;
+        sortChildren(this.assetList, this.getAssetSortKeyGenerator());
+        this.scrollToActiveAsset();
     }
 
     filterAssets() {
