@@ -57,6 +57,11 @@ pylint = "*"
 cfn-lint = "*"
 pylint-django = "*"
 pylint-celery = "*"
+flake8-eradicate = "*"
+flake8-comprehensions = "*"
+flake8-logging-format = "*"
+flake8-builtins = "*"
+flake8-assertive = "*"
 
 [requires]
 python_version = "3.6"

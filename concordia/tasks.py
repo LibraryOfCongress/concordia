@@ -22,11 +22,12 @@ logger = getLogger(__name__)
 @task
 def site_report():
 
-    report = dict()
-    report["assets_not_started"] = 0
-    report["assets_in_progress"] = 0
-    report["assets_submitted"] = 0
-    report["assets_completed"] = 0
+    report = {
+        "assets_not_started": 0,
+        "assets_in_progress": 0,
+        "assets_submitted": 0,
+        "assets_completed": 0,
+    }
 
     asset_count_qs = Asset.objects.values_list("transcription_status").annotate(
         Count("transcription_status")
@@ -89,11 +90,13 @@ def site_report():
 
 def campaign_report(campaign):
 
-    report = dict()
-    report["assets_not_started"] = 0
-    report["assets_in_progress"] = 0
-    report["assets_submitted"] = 0
-    report["assets_completed"] = 0
+    report = {
+        "assets_not_started": 0,
+        "assets_in_progress": 0,
+        "assets_submitted": 0,
+        "assets_completed": 0,
+    }
+
     asset_count_qs = (
         Asset.objects.filter(item__project__campaign=campaign)
         .values_list("transcription_status")
