@@ -4,6 +4,7 @@ See the module-level docstring for implementation details
 
 import os
 import re
+import time
 from functools import wraps
 from logging import getLogger
 from tempfile import NamedTemporaryFile
@@ -132,9 +133,21 @@ def get_collection_items(collection_url):
 
     items = []
     current_page_url = collection_url
+    max_attempts = 10
 
     while current_page_url:
-        resp = requests.get(current_page_url)
+        attempts = 0
+
+        while attempts < max_attempts:
+            resp = requests.get(current_page_url)
+
+            if resp.status_code != 429 and resp.status_code != 503:
+                break
+
+            # If rate limited or service unavailable, wait and try again
+            time.sleep(2 * attempts)
+            attempts = attempts + 1
+
         resp.raise_for_status()
         data = resp.json()
 
