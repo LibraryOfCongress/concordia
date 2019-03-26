@@ -225,3 +225,68 @@ class Li {
         this.el.textContent = data;
     }
 }
+
+class AssetListItem {
+    constructor([assetListObserver]) {
+        this.el = html('li', {
+            class: 'asset rounded border',
+            tabIndex: 0
+        });
+
+        assetListObserver.observe(this.el);
+    }
+
+    update(assetData) {
+        // FIXME: adjust hidden state?
+
+        let thumbnailUrl = assetData.thumbnailUrl;
+        if (thumbnailUrl.indexOf('/iiif/') > 0) {
+            // We'll adjust the IIIF image URLs not to return something larger
+            // than we're going to use:
+            // FIXME: this is an ugly, ugly kludge and should be replaced with something like https://www.npmjs.com/package/iiif-image
+            thumbnailUrl = thumbnailUrl.replace(
+                /([/]iiif[/].+[/]full)[/]pct:100[/](0[/]default.jpg)$/,
+                '$1/!512,512/$2'
+            );
+        }
+
+        this.el.id = assetData.id;
+        this.el.classList.add('asset', 'rounded', 'border');
+        this.el.dataset.image = thumbnailUrl;
+        this.el.dataset.id = assetData.id;
+        this.el.dataset.difficulty = assetData.difficulty;
+        this.el.title = `${assetData.title} (${assetData.project.title})`;
+    }
+}
+
+export class AssetList extends List {
+    constructor() {
+        let assetListObserver = new IntersectionObserver(entries => {
+            entries
+                .filter(i => i.isIntersecting)
+                .forEach(entry => {
+                    let target = entry.target;
+                    target.style.backgroundImage = `url(${
+                        target.dataset.image
+                    })`;
+                    assetListObserver.unobserve(target);
+                });
+        });
+
+        /*
+        This is used to lazy-load asset images. Note that we use the image
+        as the background-image value because browsers load/unload invisible
+        images from memory for us, unlike a regular <img> tag.
+        */
+
+        super('ul#asset-list.list-unstyled', AssetListItem, 'id', [
+            assetListObserver
+        ]);
+    }
+    update(assets) {
+        /* eslint-disable no-console */
+        console.time('Updating asset list');
+        super.update([...assets.values()]);
+        console.timeEnd('Updating asset list');
+    }
+}
