@@ -45,8 +45,3 @@ SHELL_PLUS_PRE_IMPORTS = [
     ("concordia.utils", "get_anonymous_user"),
     ("concordia.models", "TranscriptionStatus"),
 ]
-
-# Celery 4.2.1 needs this when using docker DB
-# see https://github.com/celery/celery/issues/4878
-# For some reason, in AWS it doesn't seem to be an issue
-DATABASES["default"]["CONN_MAX_AGE"] = 0
