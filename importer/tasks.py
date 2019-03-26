@@ -11,6 +11,7 @@ from urllib.parse import parse_qsl, urlencode, urljoin, urlparse, urlsplit, urlu
 
 import requests
 from celery import group, task
+from django.core.cache import cache
 from django.db.transaction import atomic
 from django.utils.text import slugify
 from django.utils.timezone import now
@@ -156,7 +157,12 @@ def get_collection_items(collection_url):
     current_page_url = collection_url
 
     while current_page_url:
-        resp = requests_retry_session().get(current_page_url)
+        resp = cache.get(current_page_url)
+        if resp is None:
+            resp = requests_retry_session().get(current_page_url)
+            # 48-hour timeout
+            cache.set(current_page_url, resp, timeout=(3600 * 48))
+
         data = resp.json()
 
         if "results" not in data:
