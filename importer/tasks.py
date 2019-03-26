@@ -4,7 +4,6 @@ See the module-level docstring for implementation details
 
 import os
 import re
-import time
 from functools import wraps
 from logging import getLogger
 from tempfile import NamedTemporaryFile
@@ -15,7 +14,9 @@ from celery import group, task
 from django.db.transaction import atomic
 from django.utils.text import slugify
 from django.utils.timezone import now
+from requests.adapters import HTTPAdapter
 from requests.exceptions import HTTPError
+from requests.packages.urllib3.util.retry import Retry
 
 from concordia.models import Asset, Item, MediaType
 from concordia.storage import ASSET_STORAGE
@@ -40,6 +41,26 @@ ACCEPTED_P1_URL_PREFIXES = [
     "photos",
     "websites",
 ]
+
+
+def requests_retry_session(
+    retries=10,
+    backoff_factor=0.3,
+    status_forcelist=(429, 500, 502, 503, 504),
+    session=None,
+):
+    session = session or requests.Session()
+    retry = Retry(
+        total=retries,
+        read=retries,
+        connect=retries,
+        backoff_factor=backoff_factor,
+        status_forcelist=status_forcelist,
+    )
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
+    return session
 
 
 def update_task_status(f):
@@ -133,22 +154,9 @@ def get_collection_items(collection_url):
 
     items = []
     current_page_url = collection_url
-    max_attempts = 10
 
     while current_page_url:
-        attempts = 0
-
-        while attempts < max_attempts:
-            resp = requests.get(current_page_url)
-
-            if resp.status_code != 429 and resp.status_code != 503:
-                break
-
-            # If rate limited or service unavailable, wait and try again
-            time.sleep(2 * attempts)
-            attempts = attempts + 1
-
-        resp.raise_for_status()
+        resp = requests_retry_session().get(current_page_url)
         data = resp.json()
 
         if "results" not in data:
