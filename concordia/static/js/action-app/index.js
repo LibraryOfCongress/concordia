@@ -8,7 +8,7 @@ import {
 
 import {$, $$, emptyNode, sortChildren} from './utils/dom.js';
 import {fetchJSON, getCachedData} from './utils/api.js';
-import {AssetTooltip, MetadataPanel} from './components.js';
+import {AssetTooltip, MetadataPanel, AssetList} from './components.js';
 
 export class ActionApp {
     constructor(config) {
@@ -168,33 +168,10 @@ export class ActionApp {
     }
 
     resetAssetList() {
-        emptyNode(this.assetList);
+        emptyNode(this.assetList.el);
     }
 
     setupAssetList() {
-        this.assetList = $('#asset-list');
-
-        /*
-            This is used to lazy-load asset images. Note that we use the image
-            as the background-image value because browsers load/unload invisible
-            images from memory for us, unlike a regular <img> tag.
-        */
-        this.assetListObserver = new IntersectionObserver(entries => {
-            entries
-                .filter(i => i.isIntersecting)
-                .forEach(entry => {
-                    let target = entry.target;
-                    target.style.backgroundImage = `url(${
-                        target.dataset.image
-                    })`;
-                    this.assetListObserver.unobserve(target);
-                });
-        });
-
-        // We have a simple queue of URLs for asset pages which have not yet
-        // been fetched which fetchNextAssetPage will empty:
-        this.queuedAssetPageURLs = [];
-
         let loadMoreButton = $('#load-more-assets');
         loadMoreButton.addEventListener('click', () =>
             this.fetchNextAssetPage()
@@ -205,6 +182,14 @@ export class ActionApp {
             }
         }).observe(loadMoreButton);
 
+        // FIXME: pass in scope for open/close viewer
+        this.assetList = new AssetList();
+        mount($('#asset-list-container'), this.assetList, loadMoreButton);
+
+        // We have a simple queue of URLs for asset pages which have not yet
+        // been fetched which fetchNextAssetPage will empty:
+        this.queuedAssetPageURLs = [];
+
         let handleViewerOpenEvent = evt => {
             let target = evt.target;
             if (target && target.classList.contains('asset')) {
@@ -212,8 +197,8 @@ export class ActionApp {
                 return false;
             }
         };
-        this.assetList.addEventListener('click', handleViewerOpenEvent);
-        this.assetList.addEventListener('keydown', evt => {
+        this.assetList.el.addEventListener('click', handleViewerOpenEvent);
+        this.assetList.el.addEventListener('keydown', evt => {
             if (evt.key == 'Enter' || evt.key == ' ') {
                 return handleViewerOpenEvent(evt);
             }
@@ -253,6 +238,7 @@ export class ActionApp {
         );
 
         /* Tooltips */
+        // FIXME: move this into asset list view widget
         const tooltip = new AssetTooltip();
 
         const handleTooltipShowEvent = evt => {
@@ -274,14 +260,14 @@ export class ActionApp {
         // changes. We'll use "focusin" which bubbles instead of “focus”, which
         // does not.
 
-        this.assetList.addEventListener('mouseover', handleTooltipShowEvent);
-        this.assetList.addEventListener('focusin', handleTooltipShowEvent);
+        this.assetList.el.addEventListener('mouseover', handleTooltipShowEvent);
+        this.assetList.el.addEventListener('focusin', handleTooltipShowEvent);
 
-        this.assetList.addEventListener('mouseout', handleTooltipHideEvent);
-        this.assetList.addEventListener('focusout', handleTooltipHideEvent);
+        this.assetList.el.addEventListener('mouseout', handleTooltipHideEvent);
+        this.assetList.el.addEventListener('focusout', handleTooltipHideEvent);
 
         $('#asset-list-thumbnail-size').addEventListener('input', evt => {
-            this.assetList.style.setProperty(
+            this.assetList.el.style.setProperty(
                 '--asset-thumbnail-size',
                 evt.target.value + 'px'
             );
@@ -495,30 +481,6 @@ export class ActionApp {
         let assetId = assetData.id.toString();
 
         this.mergeAssetUpdate(assetId, assetData);
-
-        let thumbnailUrl = assetData.thumbnailUrl;
-        if (thumbnailUrl.indexOf('/iiif/') > 0) {
-            // We'll adjust the IIIF image URLs not to return something larger
-            // than we're going to use:
-            // FIXME: this is an ugly, ugly kludge and should be replaced with something like https://www.npmjs.com/package/iiif-image
-            thumbnailUrl = thumbnailUrl.replace(
-                /([/]iiif[/].+[/]full)[/]pct:100[/](0[/]default.jpg)$/,
-                '$1/!512,512/$2'
-            );
-        }
-
-        let assetElement = document.createElement('li');
-        assetElement.id = assetId;
-        assetElement.classList.add('asset', 'rounded', 'border');
-        assetElement.dataset.image = thumbnailUrl;
-        assetElement.dataset.id = assetData.id;
-        assetElement.dataset.difficulty = assetData.difficulty;
-        assetElement.title = `${assetData.title} (${assetData.project.title})`;
-        assetElement.tabIndex = 0;
-
-        this.assetListObserver.observe(assetElement);
-
-        this.assetList.appendChild(assetElement);
     }
 
     markAssetAsAvailable(assetId) {
@@ -540,6 +502,8 @@ export class ActionApp {
     }
 
     updateAssetList() {
+        this.assetList.update(this.assets);
+
         this.filterAssets();
         this.sortAssets();
         this.attemptAssetLazyLoad();
@@ -551,7 +515,7 @@ export class ActionApp {
             attempt to load more assets in the background.
         */
 
-        let el = this.assetList.parentNode;
+        let el = this.assetList.el.parentNode;
 
         if (el.scrollHeight <= el.clientHeight) {
             window.requestIdleCallback(this.fetchNextAssetPage.bind(this)); // FIXME: this will require a fallback for MS Edge
@@ -560,7 +524,7 @@ export class ActionApp {
 
     sortAssets() {
         this.sortMode = this.sortModeSelector.value;
-        sortChildren(this.assetList, this.getAssetSortKeyGenerator());
+        sortChildren(this.assetList.el, this.getAssetSortKeyGenerator());
         this.scrollToActiveAsset();
     }
 
@@ -569,11 +533,11 @@ export class ActionApp {
         let currentCampaignId = this.campaignSelect.value;
 
         if (!currentCampaignId) {
-            $$('.asset[hidden]', this.assetList).forEach(i =>
+            $$('.asset[hidden]', this.assetList.el).forEach(i =>
                 i.removeAttribute('hidden')
             );
         } else {
-            $$('.asset', this.assetList).forEach(elem => {
+            $$('.asset', this.assetList.el).forEach(elem => {
                 // FIXME: if we populated the filterable attributes as data values when we create the asset we could avoid this lookup entirely and test replacing this with querySelectorAll using attribute selectors
                 // TODO: test whether iterating the list backwards and/or doing this in requestAnimationFrame would be more efficient interacting with our intersection observer
                 let asset = this.assets.get(elem.dataset.id);
@@ -588,7 +552,7 @@ export class ActionApp {
     }
 
     scrollToActiveAsset() {
-        let activeAsset = $('.asset-active', this.assetList);
+        let activeAsset = $('.asset-active', this.assetList.el);
         if (activeAsset) {
             activeAsset.scrollIntoView({
                 behavior: 'smooth',
@@ -602,7 +566,7 @@ export class ActionApp {
         let asset = this.assets.get(assetElement.dataset.id);
 
         // TODO: stop using Bootstrap classes directly and toggle semantic classes only
-        $$('.asset.asset-active', this.assetList).forEach(elem => {
+        $$('.asset.asset-active', this.assetList.el).forEach(elem => {
             elem.classList.remove('asset-active', 'border-primary');
         });
         assetElement.classList.add('asset-active', 'border-primary');
