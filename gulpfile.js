@@ -6,11 +6,7 @@ let rename = require('gulp-rename');
 let sourcemaps = require('gulp-sourcemaps');
 
 let paths = {
-    styles: [
-        'node_modules/bootstrap/scss/bootstrap.scss',
-        '*/static/scss/**/*.scss'
-    ],
-
+    styles: ['*/static/scss/**/*.scss'],
     scripts: ['*/static/js/**/*.js']
 };
 
