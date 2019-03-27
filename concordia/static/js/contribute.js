@@ -432,12 +432,12 @@ var hideTooltipCallback = function() {
     setTimeout(hideTooltip($(this)), 3000);
 };
 
-function trackShareInteraction(element, interactionType) {
+function trackShareInteraction($element, interactionType) {
     // Adobe analytics user interaction tracking
-    if (window['loc_ux_tracking'] != undefined) {
+    if ('loc_ux_tracking' in window) {
         let loc_ux_tracking = window['loc_ux_tracking'];
         loc_ux_tracking.trackUserInteractionEvent(
-            element,
+            $element,
             'Share Tool',
             'click',
             interactionType
