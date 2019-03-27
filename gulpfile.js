@@ -50,4 +50,4 @@ exports.styles = styles;
 exports.scripts = scripts;
 exports.build = build;
 exports.watch = watch;
-exports.default = watch;
+exports.default = gulp.series(build, watch);
