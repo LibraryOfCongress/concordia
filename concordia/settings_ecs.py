@@ -87,3 +87,6 @@ ATTRIBUTION_TEXT = (
     "Transcribed and reviewed by volunteers participating in the "
     "By The People project at crowd.loc.gov."
 )
+
+if os.getenv("CONN_MAX_AGE_NONZERO"):
+    DATABASES["default"].update({"CONN_MAX_AGE": 15 * 60})
