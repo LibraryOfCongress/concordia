@@ -16,7 +16,7 @@ let paths = {
 function styles() {
     return gulp
         .src(paths.styles)
-        .pipe(sass())
+        .pipe(sass({outputStyle: 'expanded'}).on('error', sass.logError))
         .pipe(
             rename(function(path) {
                 path.dirname = path.dirname.replace(
