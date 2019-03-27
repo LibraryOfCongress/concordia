@@ -112,11 +112,11 @@ export class ActionApp {
             (document.location.protocol == 'https:' ? 'wss://' : 'ws://') +
             window.location.host +
             '/ws/asset/asset_updates/';
-        console.log(`Connecting to ${assetSocketURL}`);
+        console.info(`Connecting to ${assetSocketURL}`);
         let assetSocket = (this.assetSocket = new WebSocket(assetSocketURL));
 
         assetSocket.onmessage = rawMessage => {
-            console.log('Asset socket message: ', rawMessage);
+            console.debug('Asset socket message: ', rawMessage);
 
             let data = JSON.parse(rawMessage.data);
             let message = data.message;
@@ -488,7 +488,7 @@ export class ActionApp {
     markAssetAsAvailable(assetId) {
         let assetElement = document.getElementById(assetId);
         if (assetElement) {
-            console.log(`Marking asset ${assetId} available`);
+            console.info(`Marking asset ${assetId} available`);
             assetElement.classList.remove('available');
             this.checkViewerAvailability(assetId);
         }
@@ -497,7 +497,7 @@ export class ActionApp {
     markAssetAsUnavailable(assetId) {
         let assetElement = document.getElementById(assetId);
         if (assetElement) {
-            console.log(`Marking asset ${assetId} unavailable`);
+            console.info(`Marking asset ${assetId} unavailable`);
             assetElement.classList.add('unavailable');
             this.checkViewerAvailability(assetId);
         }
