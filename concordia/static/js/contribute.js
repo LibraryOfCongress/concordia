@@ -420,6 +420,8 @@ $tagEditor
         displayMessage('error', message, 'tags-save-result');
     });
 
+/* Social share stuff */
+
 var hideTooltipCallback = function() {
     // wait a couple seconds and then hide the tooltip.
     var hideTooltip = function(tooltipButton) {
@@ -429,13 +431,33 @@ var hideTooltipCallback = function() {
     };
     setTimeout(hideTooltip($(this)), 3000);
 };
+
+function trackShareInteraction($element, interactionType) {
+    // Adobe analytics user interaction tracking
+    if ('loc_ux_tracking' in window) {
+        let loc_ux_tracking = window['loc_ux_tracking'];
+        loc_ux_tracking.trackUserInteractionEvent(
+            $element,
+            'Share Tool',
+            'click',
+            interactionType
+        );
+    }
+}
+
 var $copyUrlButton = $('#copy-url-button');
+var $facebookShareButton = $('#facebook-share-button');
+var $twitterShareButton = $('#twitter-share-button');
+
 $copyUrlButton.on('click', function() {
     var $currentAssetUrl = $('#currentAssetUrl');
     $currentAssetUrl.removeClass('d-none');
     var currentAssetUrl = document.getElementById('currentAssetUrl');
     currentAssetUrl.select();
     var tooltipMessage = '';
+
+    trackShareInteraction($copyUrlButton, 'Link copy');
+
     try {
         document.execCommand('copy');
         // Show the tooltip with a success message
@@ -462,4 +484,14 @@ $copyUrlButton.on('click', function() {
             $copyUrlButton.tooltip('hide');
         });
     }
+});
+
+$facebookShareButton.on('click', function() {
+    trackShareInteraction($facebookShareButton, 'Facebook Share');
+    return true;
+});
+
+$twitterShareButton.on('click', function() {
+    trackShareInteraction($twitterShareButton, 'Twitter Share');
+    return true;
 });
