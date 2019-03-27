@@ -7,6 +7,7 @@ export function $$(selector, scope = document) {
 }
 
 export function emptyNode(node) {
+    // TODO: deprecate and remove this
     while (node.lastChild) {
         node.lastChild.remove();
     }

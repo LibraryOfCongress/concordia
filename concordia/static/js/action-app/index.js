@@ -6,7 +6,7 @@ import {
     unmount
 } from 'https://cdnjs.cloudflare.com/ajax/libs/redom/3.18.0/redom.es.min.js';
 
-import {$, $$, emptyNode, sortChildren} from './utils/dom.js';
+import {$, $$, sortChildren} from './utils/dom.js';
 import {fetchJSON, getCachedData} from './utils/api.js';
 import {AssetTooltip, MetadataPanel, AssetList} from './components.js';
 
@@ -164,13 +164,8 @@ export class ActionApp {
 
     refreshData() {
         this.getCurrentMode();
-        this.assets.clear();
-        this.resetAssetList();
-        this.fetchAssetData();
-    }
-
-    resetAssetList() {
-        emptyNode(this.assetList.el);
+        this.updateAssetList();
+        this.fetchAssetData(); // This starts the fetch process going by calculating the appropriate base URL
     }
 
     setupAssetList() {
@@ -236,7 +231,7 @@ export class ActionApp {
                 this.updateAvailableCampaignFilters();
             });
         this.campaignSelect.addEventListener('change', () =>
-            this.filterAssets()
+            this.updateAssetList()
         );
 
         /* Tooltips */
@@ -504,10 +499,12 @@ export class ActionApp {
     }
 
     updateAssetList() {
-        this.assetList.update(this.assets);
+        let visibleAssets = this.getVisibleAssets();
 
-        this.filterAssets();
+        this.assetList.update(visibleAssets);
+
         this.sortAssets();
+
         this.attemptAssetLazyLoad();
     }
 
@@ -530,27 +527,48 @@ export class ActionApp {
         this.scrollToActiveAsset();
     }
 
-    filterAssets() {
-        console.time('Filtering assets');
+    getVisibleAssets() {
         let currentCampaignId = this.campaignSelect.value;
-
-        if (!currentCampaignId) {
-            $$('.asset[hidden]', this.assetList.el).forEach(i =>
-                i.removeAttribute('hidden')
-            );
-        } else {
-            $$('.asset', this.assetList.el).forEach(elem => {
-                // FIXME: if we populated the filterable attributes as data values when we create the asset we could avoid this lookup entirely and test replacing this with querySelectorAll using attribute selectors
-                // TODO: test whether iterating the list backwards and/or doing this in requestAnimationFrame would be more efficient interacting with our intersection observer
-                let asset = this.assets.get(elem.dataset.id);
-                if (asset.campaign.id == currentCampaignId) {
-                    elem.removeAttribute('hidden');
-                } else {
-                    elem.setAttribute('hidden', 'hidden');
-                }
-            });
+        if (currentCampaignId) {
+            // The values specified in API responses are integers, not DOM strings:
+            currentCampaignId = parseInt(currentCampaignId, 10);
         }
+
+        // TODO: We should have a cleaner way to filter the assets which are in scope due to the current status & having been fully loaded
+        let currentStatuses;
+        let currentMode = this.currentMode;
+        if (currentMode == 'review') {
+            currentStatuses = ['submitted'];
+        } else if (currentMode == 'transcribe') {
+            currentStatuses = ['not_started', 'in_progress'];
+        } else {
+            throw `Don't know how to filter assets for unrecognized ${currentMode} mode`;
+        }
+
+        console.time('Filtering assets');
+
+        // Selection criteria: asset metadata has been fully loaded (we're using thumbnailUrl as a proxy for that) and the status is in-scope
+        let visibleAssets = [];
+
+        for (let asset of this.assets.values()) {
+            if (!asset.thumbnailUrl) {
+                continue;
+            }
+
+            if (currentCampaignId && asset.campaign.id != currentCampaignId) {
+                continue;
+            }
+
+            if (currentStatuses.indexOf(asset.status) < 0) {
+                continue;
+            }
+
+            visibleAssets.push(asset);
+        }
+
         console.timeEnd('Filtering assets');
+
+        return visibleAssets;
     }
 
     scrollToActiveAsset() {
