@@ -14,6 +14,7 @@ LOGGING["loggers"]["celery"]["level"] = "DEBUG"
 DEBUG = True
 
 DATABASES["default"]["PORT"] = "54323"
+DATABASES["celery"]["PORT"] = "54323"
 
 ALLOWED_HOSTS = ["127.0.0.1", "0.0.0.0", "*"]
 
