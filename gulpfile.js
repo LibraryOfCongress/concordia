@@ -1,8 +1,10 @@
 /* eslint-env node */
 
+let child_process = require('child_process');
 let gulp = require('gulp');
-let sass = require('gulp-sass');
+let log = require('fancy-log');
 let rename = require('gulp-rename');
+let sass = require('gulp-sass');
 let sourcemaps = require('gulp-sourcemaps');
 
 let paths = {
@@ -43,10 +45,29 @@ function watch() {
     gulp.watch(paths.styles, styles);
 }
 
+function clean() {
+    return child_process.exec('git clean -fdx static/', function(
+        err,
+        stdout,
+        stderr
+    ) {
+        if (err) {
+            log.error(`git clean failed: ${err}`);
+        }
+        if (stderr) {
+            process.stderr.write(stderr);
+        }
+        if (stdout) {
+            process.stdout.write(stdout);
+        }
+    });
+}
+
 var build = gulp.parallel(styles, scripts);
 
-exports.styles = styles;
-exports.scripts = scripts;
 exports.build = build;
-exports.watch = watch;
+exports.clean = clean;
 exports.default = gulp.series(build, watch);
+exports.scripts = scripts;
+exports.styles = styles;
+exports.watch = watch;
