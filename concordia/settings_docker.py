@@ -3,7 +3,7 @@ import os
 from django.core.management.utils import get_random_secret_key
 
 from .settings_template import *  # NOQA ignore=F405
-from .settings_template import DATABASES, INSTALLED_APPS, LOGGING
+from .settings_template import INSTALLED_APPS, LOGGING
 
 LOGGING["handlers"]["stream"]["level"] = "INFO"
 LOGGING["handlers"]["file"]["level"] = "INFO"
@@ -52,8 +52,3 @@ ATTRIBUTION_TEXT = (
     "Transcribed and reviewed by volunteers participating in the "
     "By The People project at crowd.loc.gov."
 )
-
-# Celery 4.2.1 needs this when using docker DB
-# see https://github.com/celery/celery/issues/4878
-# For some reason, in AWS it doesn't seem to be an issue
-DATABASES["default"]["CONN_MAX_AGE"] = 0
