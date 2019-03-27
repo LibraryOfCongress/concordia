@@ -60,11 +60,13 @@ export class ActionApp {
             switch (evt.key) {
                 case '?':
                 case 'F1':
-                    if (!evt.target.tagName.match(/(INPUT|TEXTAREA)/i))
+                    if (!evt.target.tagName.match(/(INPUT|TEXTAREA)/i)) {
                         // Either the F1 or ? keys were pressed outside of a
                         // text field so we'll open the global help modal:
                         window.jQuery('#help-modal').modal('show');
-                    return false;
+                        return false;
+                    }
+                    break;
 
                 case 'Escape':
                     this.closeViewer();
