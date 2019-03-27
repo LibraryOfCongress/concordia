@@ -1441,6 +1441,7 @@ class AssetListView(APIListView):
 
         metadata = {
             "id": obj.pk,
+            "status": obj.transcription_status,
             "url": obj.get_absolute_url(),
             "thumbnailUrl": thumbnail_url,
             "imageUrl": image_url,
