@@ -18,22 +18,25 @@ function styles() {
         .src(paths.styles)
         .pipe(sass())
         .pipe(
-            rename({
-                dirname: ''
+            rename(function(path) {
+                path.dirname = path.dirname.replace(
+                    /^[^/]+[/]static[/]scss/,
+                    'css'
+                );
             })
         )
-        .pipe(gulp.dest('static/css/'));
+        .pipe(gulp.dest('static/'));
 }
 
 function scripts() {
     return gulp
         .src(paths.scripts)
         .pipe(
-            rename({
-                dirname: ''
+            rename(function(path) {
+                path.dirname = path.dirname.replace(/^[^/]+[/]static[/]js/, '');
             })
         )
-        .pipe(gulp.dest('static/js/'));
+        .pipe(gulp.dest('static/'));
 }
 
 function watch() {
