@@ -53,22 +53,11 @@ DATABASES = {
         "PASSWORD": os.getenv("POSTGRESQL_PW"),
         "HOST": os.getenv("POSTGRESQL_HOST", "localhost"),
         "PORT": os.getenv("POSTGRESQL_PORT", "5432"),
-        "CONN_MAX_AGE": 15 * 60,  # Keep database connections open for 15 minutes,
-    },
-    "celery": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "concordia",
-        "USER": "concordia",
-        "PASSWORD": os.getenv("POSTGRESQL_PW"),
-        "HOST": os.getenv("POSTGRESQL_HOST", "localhost"),
-        "PORT": os.getenv("POSTGRESQL_PORT", "5432"),
-        # see https://github.com/celery/celery/issues/4878 re: conn_max_age
+        # Change this back to 15 minutes (15*60) once celery regression
+        # is fixed  see https://github.com/celery/celery/issues/4878
         "CONN_MAX_AGE": 0,
-    },
+    }
 }
-
-DATABASE_ROUTERS = ["concordia.db_routers.AppRouter"]
-
 
 INSTALLED_APPS = [
     "concordia.apps.ConcordiaAdminConfig",  # Replaces 'django.contrib.admin'

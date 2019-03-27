@@ -26,7 +26,6 @@ if os.getenv("AWS"):
     postgres_secret = json.loads(postgres_secret_json)
 
     DATABASES["default"].update({"PASSWORD": postgres_secret["password"]})
-    DATABASES["celery"].update({"PASSWORD": postgres_secret["password"]})
 
     smtp_secret_json = get_secret("concordia/SMTP")
     smtp_secret = json.loads(smtp_secret_json)
