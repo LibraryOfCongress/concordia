@@ -88,5 +88,5 @@ ATTRIBUTION_TEXT = (
     "By The People project at crowd.loc.gov."
 )
 
-if os.getenv("CONN_MAX_AGE_NONZERO"):
+if os.getenv("USE_PERSISTENT_DATABASE_CONNECTIONS"):
     DATABASES["default"].update({"CONN_MAX_AGE": 15 * 60})
