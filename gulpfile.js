@@ -33,7 +33,7 @@ function scripts() {
         .src(paths.scripts)
         .pipe(
             rename(function(path) {
-                path.dirname = path.dirname.replace(/^[^/]+[/]static[/]js/, '');
+                path.dirname = path.dirname.replace(/^[^/]+[/]static[/]/, '');
             })
         )
         .pipe(gulp.dest('static/'));
