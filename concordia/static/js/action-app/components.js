@@ -261,6 +261,7 @@ class AssetListItem {
 
 export class AssetList extends List {
     constructor() {
+        // TODO: refactor this into a utility function
         let assetListObserver = new IntersectionObserver(entries => {
             entries
                 .filter(i => i.isIntersecting)
@@ -283,10 +284,14 @@ export class AssetList extends List {
             assetListObserver
         ]);
     }
+
     update(assets) {
         /* eslint-disable no-console */
+
         console.time('Updating asset list');
-        super.update([...assets.values()]);
+
+        super.update(assets);
+
         console.timeEnd('Updating asset list');
     }
 }
