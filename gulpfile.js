@@ -3,6 +3,7 @@
 let gulp = require('gulp');
 let sass = require('gulp-sass');
 let rename = require('gulp-rename');
+let sourcemaps = require('gulp-sourcemaps');
 
 let paths = {
     styles: [
@@ -16,6 +17,7 @@ let paths = {
 function styles() {
     return gulp
         .src(paths.styles)
+        .pipe(sourcemaps.init())
         .pipe(sass({outputStyle: 'expanded'}).on('error', sass.logError))
         .pipe(
             rename(function(path) {
@@ -25,6 +27,7 @@ function styles() {
                 );
             })
         )
+        .pipe(sourcemaps.write('sourcemaps/'))
         .pipe(gulp.dest('static/'));
 }
 
