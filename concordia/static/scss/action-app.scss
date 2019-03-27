@@ -56,32 +56,33 @@ main {
         cursor: pointer;
         transition-property: height, width;
         transition-duration: 0.1s;
+
+        &.unavailable {
+            filter: grayscale(0.9);
+            &::after {
+                content: 'Someone else is working on this';
+                text-align: center;
+                align-self: center;
+                width: 100%;
+                font-size: smaller;
+            }
+        }
+    }
+
+    .asset-tooltip {
+        background-color: #000;
+        pointer-events: none;
+        overflow: hidden;
+        max-height: 100%;
+        max-width: 100%;
     }
 }
 
-.asset.unavailable {
-    filter: grayscale(0.9);
-    &::after {
-        content: 'Someone else is working on this';
-        text-align: center;
-        align-self: center;
-        width: 100%;
-        font-size: smaller;
-    }
+#asset-viewer {
+    display: none;
 }
 
-.asset-tooltip {
-    background-color: #000;
-    pointer-events: none;
-    overflow: hidden;
-    max-height: 100%;
-    max-width: 100%;
-}
-
-main {
-    &[data-mode='review'] #transcriber-column {
-        display: none;
-    }
+#action-app-main {
     &[data-mode='transcribe'] {
         #reviewer-column {
             display: none;
@@ -90,16 +91,17 @@ main {
             display: flex;
         }
     }
-    &[data-mode='review'] #reviewer-column {
-        display: flex;
+
+    &[data-mode='review'] {
+        #transcriber-column {
+            display: none;
+        }
+
+        #reviewer-column {
+            display: flex;
+        }
     }
-}
 
-#asset-viewer {
-    display: none;
-}
-
-main {
     &[data-open-asset-id] {
         #asset-viewer {
             flex-grow: 1;
@@ -110,11 +112,6 @@ main {
         #asset-list-controls {
             display: none;
         }
-    }
-    &:not([data-open-asset-id]) #close-viewer-button {
-        display: none;
-    }
-    &[data-open-asset-id] {
         #asset-list-container {
             flex-grow: 0;
             flex-shrink: 0;
@@ -135,6 +132,10 @@ main {
             width: 100%;
             height: 100%;
         }
+    }
+
+    &:not([data-open-asset-id]) #close-viewer-button {
+        display: none;
     }
 }
 
