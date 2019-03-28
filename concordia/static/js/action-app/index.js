@@ -465,11 +465,17 @@ export class ActionApp {
     }
 
     updateAssetList() {
+        console.time('Filtering assets');
         let visibleAssets = this.getVisibleAssets();
+        console.timeEnd('Filtering assets');
 
+        console.time('Sorting assets');
         this.sortAssets(visibleAssets);
+        console.timeEnd('Sorting assets');
 
+        console.time('Updating asset list');
         this.assetList.update(visibleAssets);
+        console.timeEnd('Updating asset list');
 
         this.scrollToActiveAsset(); // FIXME: confirm that this still works after updates
 
@@ -551,8 +557,6 @@ export class ActionApp {
             throw `Don't know how to filter assets for unrecognized ${currentMode} mode`;
         }
 
-        console.time('Filtering assets');
-
         // Selection criteria: asset metadata has been fully loaded (we're using thumbnailUrl as a proxy for that) and the status is in-scope
         let visibleAssets = [];
 
@@ -571,8 +575,6 @@ export class ActionApp {
 
             visibleAssets.push(asset);
         }
-
-        console.timeEnd('Filtering assets');
 
         return visibleAssets;
     }
