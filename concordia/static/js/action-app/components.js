@@ -260,7 +260,7 @@ class AssetListItem {
 }
 
 export class AssetList extends List {
-    constructor() {
+    constructor(assets, callbacks) {
         // TODO: refactor this into a utility function
         let assetListObserver = new IntersectionObserver(entries => {
             entries
@@ -283,6 +283,61 @@ export class AssetList extends List {
         super('ul#asset-list.list-unstyled', AssetListItem, 'id', [
             assetListObserver
         ]);
+
+        let assetOpenHandler = evt => {
+            let target = evt.target;
+            if (target && target.classList.contains('asset')) {
+                callbacks.open(target);
+                return false;
+            }
+        };
+
+        this.el.addEventListener('click', assetOpenHandler);
+        this.el.addEventListener('keydown', evt => {
+            if (evt.key == 'Enter' || evt.key == ' ') {
+                return assetOpenHandler(evt);
+            }
+        });
+
+        this.setupTooltip(assets);
+    }
+
+    setupTooltip(assets) {
+        /* Tooltips */
+        let tooltip = new AssetTooltip();
+
+        const handleTooltipShowEvent = evt => {
+            let target = evt.target;
+            if (target && target.classList.contains('asset')) {
+                const asset = assets.get(target.dataset.id);
+                tooltip.update(asset);
+                mount(target, tooltip);
+            }
+        };
+
+        const handleTooltipHideEvent = () => {
+            if (tooltip.el.parentNode) {
+                unmount(tooltip.el.parentNode, tooltip);
+            }
+        };
+
+        // We want to handle both mouse hover events and keyboard/tap focus
+        // changes. We'll use "focusin" which bubbles instead of “focus”, which
+        // does not.
+
+        this.el.addEventListener('mouseover', handleTooltipShowEvent);
+        this.el.addEventListener('focusin', handleTooltipShowEvent);
+
+        this.el.addEventListener('mouseout', handleTooltipHideEvent);
+        this.el.addEventListener('focusout', handleTooltipHideEvent);
+
+        $('#asset-list-thumbnail-size').addEventListener('input', evt => {
+            this.el.style.setProperty(
+                '--asset-thumbnail-size',
+                evt.target.value + 'px'
+            );
+            this.attemptAssetLazyLoad();
+        });
     }
 
     update(assets) {
