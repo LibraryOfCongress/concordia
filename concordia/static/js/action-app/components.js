@@ -286,12 +286,6 @@ export class AssetList extends List {
     }
 
     update(assets) {
-        /* eslint-disable no-console */
-
-        console.time('Updating asset list');
-
         super.update(assets);
-
-        console.timeEnd('Updating asset list');
     }
 }
