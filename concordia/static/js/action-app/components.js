@@ -343,4 +343,15 @@ export class AssetList extends List {
     update(assets) {
         super.update(assets);
     }
+
+    scrollToActiveAsset() {
+        let activeAsset = $('.asset-active', this.el);
+        if (activeAsset) {
+            activeAsset.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+                inline: 'nearest'
+            });
+        }
+    }
 }

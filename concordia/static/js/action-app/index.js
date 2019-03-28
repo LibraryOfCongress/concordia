@@ -431,7 +431,7 @@ export class ActionApp {
 
                 $('#visible-asset-count').innerText = visibleAssets.length;
 
-                this.scrollToActiveAsset();
+                this.assetList.scrollToActiveAsset();
                 this.attemptAssetLazyLoad();
             });
         });
@@ -534,17 +534,6 @@ export class ActionApp {
         return visibleAssets;
     }
 
-    scrollToActiveAsset() {
-        let activeAsset = $('.asset-active', this.assetList.el);
-        if (activeAsset) {
-            activeAsset.scrollIntoView({
-                behavior: 'smooth',
-                block: 'center',
-                inline: 'nearest'
-            });
-        }
-    }
-
     openViewer(assetElement) {
         let asset = this.assets.get(assetElement.dataset.id);
 
@@ -553,7 +542,7 @@ export class ActionApp {
             elem.classList.remove('asset-active', 'border-primary');
         });
         assetElement.classList.add('asset-active', 'border-primary');
-        this.scrollToActiveAsset();
+        this.assetList.scrollToActiveAsset();
 
         this.metadataPanel = new MetadataPanel(asset);
         mount(
@@ -669,7 +658,7 @@ export class ActionApp {
             unmount(this.metadataPanel.el.parentNode, this.metadataPanel);
         }
 
-        this.scrollToActiveAsset();
+        this.assetList.scrollToActiveAsset();
     }
 
     checkViewerAvailability() {
