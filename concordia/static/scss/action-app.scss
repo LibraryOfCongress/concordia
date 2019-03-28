@@ -180,6 +180,16 @@ main {
     flex-shrink: 1;
     max-height: 100%;
     overflow-y: scroll;
+
+    white-space: pre;
+
+    .nothing-to-transcribe & {
+        font-style: oblique;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
 }
 
 .unavailable {

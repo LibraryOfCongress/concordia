@@ -8,7 +8,7 @@ import {
 
 import {$, $$} from './utils/dom.js';
 import {fetchJSON, getCachedData} from './utils/api.js';
-import {MetadataPanel, AssetList} from './components.js';
+import {MetadataPanel, AssetList, AssetViewer} from './components.js';
 
 export class ActionApp {
     constructor(config) {
@@ -243,7 +243,9 @@ export class ActionApp {
     }
 
     setupAssetViewer() {
-        this.assetViewer = $('#asset-viewer');
+        this.assetViewer = new AssetViewer();
+
+        mount($('#editor-main'), this.assetViewer);
 
         $('#close-viewer-button').addEventListener('click', () => {
             this.closeViewer();
@@ -539,7 +541,7 @@ export class ActionApp {
 
         this.metadataPanel = new MetadataPanel(asset);
         mount(
-            $('#asset-info-modal .modal-body', this.assetViewer),
+            $('#asset-info-modal .modal-body', this.appElement),
             this.metadataPanel
         );
 
@@ -555,56 +557,7 @@ export class ActionApp {
             this.metadataPanel.campaignMetadata.update(campaignInfo);
         });
 
-        $$('a.asset-external-view', this.assetViewer).forEach(i => {
-            i.href = asset.resource_url;
-        });
-
-        // Generic text & URL updates until we finish componentizing everything:
-        [
-            ['asset', asset],
-            ['item', asset.item],
-            ['project', asset.project],
-            ['campaign', asset.campaign]
-        ].forEach(([prefix, data]) => {
-            $$(`a.${prefix}-url`, this.assetViewer).forEach(link => {
-                link.href = data.url;
-            });
-
-            $$(`.${prefix}-title`, this.assetViewer).forEach(elem => {
-                elem.innerText = data.title;
-            });
-        });
-
-        // Until we component-ize this, we use a custom display for the asset titles:
-        $$('.asset-title', this.assetViewer).forEach(i => {
-            i.innerText = 'Image ' + asset.sequence;
-        });
-
-        // This should be a component which renders based on the mode and the provided data
-        if (asset.latest_transcription) {
-            if (this.currentMode == 'review') {
-                $(
-                    '#review-transcription-text'
-                ).innerHTML = asset.latest_transcription.replace(
-                    /\n/g,
-                    '<br/>'
-                );
-            } else {
-                $('textarea', this.assetViewer).value =
-                    asset.latest_transcription;
-            }
-        } else {
-            if (this.currentMode == 'review') {
-                // FIXME: this really should be a property in the data rather
-                // than an inferred value from latest_transcription and we
-                // probably want this to be styled differently, too
-
-                $('#review-transcription-text').innerHTML =
-                    'Nothing to transcribe';
-            } else {
-                $('textarea', this.assetViewer).value = '';
-            }
-        }
+        this.assetViewer.update(this.currentMode, asset);
 
         if (this.seadragonViewer.isOpen()) {
             this.seadragonViewer.close();
