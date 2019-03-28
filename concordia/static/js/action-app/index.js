@@ -8,7 +8,7 @@ import {
 
 import {$, $$} from './utils/dom.js';
 import {fetchJSON, getCachedData} from './utils/api.js';
-import {AssetTooltip, MetadataPanel, AssetList} from './components.js';
+import {MetadataPanel, AssetList} from './components.js';
 
 export class ActionApp {
     constructor(config) {
@@ -169,6 +169,10 @@ export class ActionApp {
     }
 
     setupAssetList() {
+        // We have a simple queue of URLs for asset pages which have not yet
+        // been fetched which fetchNextAssetPage will empty:
+        this.queuedAssetPageURLs = [];
+
         let loadMoreButton = $('#load-more-assets');
         loadMoreButton.addEventListener('click', () =>
             this.fetchNextAssetPage()
@@ -179,27 +183,10 @@ export class ActionApp {
             }
         }).observe(loadMoreButton);
 
-        // FIXME: pass in scope for open/close viewer
-        this.assetList = new AssetList();
-        mount($('#asset-list-container'), this.assetList, loadMoreButton);
-
-        // We have a simple queue of URLs for asset pages which have not yet
-        // been fetched which fetchNextAssetPage will empty:
-        this.queuedAssetPageURLs = [];
-
-        let handleViewerOpenEvent = evt => {
-            let target = evt.target;
-            if (target && target.classList.contains('asset')) {
-                this.openViewer(target);
-                return false;
-            }
-        };
-        this.assetList.el.addEventListener('click', handleViewerOpenEvent);
-        this.assetList.el.addEventListener('keydown', evt => {
-            if (evt.key == 'Enter' || evt.key == ' ') {
-                return handleViewerOpenEvent(evt);
-            }
+        this.assetList = new AssetList(this.assets, {
+            open: targetElement => this.openViewer(targetElement)
         });
+        mount($('#asset-list-container'), this.assetList, loadMoreButton);
 
         /* List sorting */
         this.sortModeSelector = $('#sort-mode');
@@ -233,43 +220,6 @@ export class ActionApp {
         this.campaignSelect.addEventListener('change', () =>
             this.updateAssetList()
         );
-
-        /* Tooltips */
-        // FIXME: move this into asset list view widget
-        const tooltip = new AssetTooltip();
-
-        const handleTooltipShowEvent = evt => {
-            let target = evt.target;
-            if (target && target.classList.contains('asset')) {
-                const asset = this.assets.get(target.dataset.id);
-                tooltip.update(asset);
-                mount(target, tooltip);
-            }
-        };
-
-        const handleTooltipHideEvent = () => {
-            if (tooltip.el.parentNode) {
-                unmount(tooltip.el.parentNode, tooltip);
-            }
-        };
-
-        // We want to handle both mouse hover events and keyboard/tap focus
-        // changes. We'll use "focusin" which bubbles instead of “focus”, which
-        // does not.
-
-        this.assetList.el.addEventListener('mouseover', handleTooltipShowEvent);
-        this.assetList.el.addEventListener('focusin', handleTooltipShowEvent);
-
-        this.assetList.el.addEventListener('mouseout', handleTooltipHideEvent);
-        this.assetList.el.addEventListener('focusout', handleTooltipHideEvent);
-
-        $('#asset-list-thumbnail-size').addEventListener('input', evt => {
-            this.assetList.el.style.setProperty(
-                '--asset-thumbnail-size',
-                evt.target.value + 'px'
-            );
-            this.attemptAssetLazyLoad();
-        });
     }
 
     updateAvailableCampaignFilters() {
