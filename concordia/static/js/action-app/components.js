@@ -374,3 +374,212 @@ export class AssetList extends List {
         this.scrollToActiveAsset();
     }
 }
+
+class ReviewerView {
+    constructor() {
+        this.displayText = html('#review-transcription-text');
+
+        this.el = html(
+            'div#reviewer-column.flex-column.flex-grow-1',
+            this.displayText,
+            html(
+                '.control-toolbar.my-3.d-print-none.d-flex.flex-wrap.justify-content-around.align-items-center.btn-row',
+                html(
+                    'button',
+                    {
+                        id: 'reject-transcription-button',
+                        type: 'button',
+                        class: 'btn btn-primary',
+                        title: 'Correct errors you see in the text'
+                    },
+                    text('Edit')
+                ),
+                html(
+                    'button',
+                    {
+                        id: 'accept-transcription-button',
+                        type: 'button',
+                        class: 'btn btn-primary',
+                        title: 'Confirm that the text is accurately transcribed'
+                    },
+                    text('Accept')
+                )
+            )
+        );
+    }
+
+    update(asset) {
+        this.el.classList.toggle(
+            'nothing-to-transcribe',
+            !asset.latest_transcription
+        );
+
+        if (asset.latest_transcription) {
+            this.displayText.innerText = asset.latest_transcription;
+        } else {
+            this.displayText.innerHTML = 'Nothing to transcribe';
+        }
+    }
+}
+
+class TranscriberView {
+    constructor() {
+        this.textarea = html('textarea', {
+            class: 'form-control w-100 rounded flex-grow-1 d-print-none',
+            name: 'text',
+            placeholder: 'Go ahead, start typing. You got this!',
+            id: 'transcription-input',
+            'aria-label': 'Transcription input'
+        });
+
+        let toolbar = html(
+            'div',
+            {
+                class:
+                    'my-3 d-print-none d-flex flex-wrap justify-content-around align-items-center btn-row control-toolbar'
+            },
+            html(
+                'div',
+                {class: 'form-check w-100 text-center mt-0 mb-3'},
+                html('input', {
+                    id: 'nothing-to-transcribe',
+                    type: 'checkbox',
+                    class: 'form-check-input'
+                }),
+                html(
+                    'label',
+                    {
+                        class: 'form-check-label',
+                        for: 'nothing-to-transcribe'
+                    },
+                    text('Nothing to transcribe')
+                ),
+                html(
+                    'a',
+                    {
+                        tabindex: '0',
+                        class: 'btn btn-link d-inline',
+                        role: 'button',
+                        'data-toggle': 'popover',
+                        'data-placement': 'top',
+                        'data-trigger': 'focus click hover',
+                        title: 'Help',
+                        'data-html': 'true',
+                        'data-content':
+                            'FIXME: ⚠️ THIS POPOVER NEEDS UPDATING ⚠️'
+                    },
+                    html('span', {
+                        class: 'fas fa-question-circle',
+                        'aria-label': 'Open Help'
+                    })
+                )
+            ),
+            html(
+                'button',
+                {
+                    id: 'save-transcription-button',
+                    type: 'submit',
+                    class: 'btn btn-primary',
+                    title: 'Save the text you entered above'
+                },
+                text('Save')
+            ),
+            html(
+                'button',
+                {
+                    id: 'submit-transcription-button',
+                    disabled: true,
+                    type: 'button',
+                    class: 'btn btn-primary',
+                    title:
+                        'Request another volunteer to review the text you entered above'
+                },
+                text('Submit for Review')
+            )
+        );
+
+        this.el = html(
+            '#transcriber-column',
+            {class: 'flex-column flex-grow-1'},
+            html(
+                'form',
+                {
+                    id: 'transcription-editor',
+                    class: 'flex-grow-1 d-flex flex-column'
+                },
+                this.textarea,
+                toolbar
+            )
+        );
+    }
+
+    update(asset) {
+        this.textarea.value = asset.latest_transcription || '';
+    }
+}
+
+function conditionalUnmount(component) {
+    if (component.el.parentNode) {
+        unmount(component.el.parentNode, component);
+    }
+}
+
+export class AssetViewer {
+    constructor() {
+        // FIXME: add seadragon viewer
+        this.reviewerView = new ReviewerView();
+        this.transcriberView = new TranscriberView();
+
+        // FIXME: finish pulling in the rest of this structure so it will all be created normally
+        let elem = document.getElementById('asset-viewer');
+        elem.remove();
+        this.el = elem;
+
+        setAttr(this.el, {class: 'initialized'});
+    }
+
+    setMode(newMode) {
+        if (this.mode == newMode) return;
+
+        this.mode = newMode;
+
+        if (this.mode == 'review') {
+            this.activeView = this.reviewerView;
+            conditionalUnmount(this.transcriberView);
+        } else {
+            this.activeView = this.transcriberView;
+            conditionalUnmount(this.reviewerView);
+        }
+
+        mount($('#editor-column', this.el), this.activeView);
+    }
+
+    update(mode, asset) {
+        this.setMode(mode);
+
+        this.activeView.update(asset);
+
+        $$('a.asset-external-view', this.el).forEach(i => {
+            i.href = asset.resource_url;
+        });
+
+        [
+            ['asset', asset],
+            ['item', asset.item],
+            ['project', asset.project],
+            ['campaign', asset.campaign]
+        ].forEach(([prefix, data]) => {
+            $$(`a.${prefix}-url`, this.el).forEach(link => {
+                link.href = data.url;
+            });
+
+            $$(`.${prefix}-title`, this.el).forEach(elem => {
+                elem.innerText = data.title;
+            });
+        });
+
+        $$('.asset-title', this.el).forEach(i => {
+            i.innerText = 'Image ' + asset.sequence;
+        });
+    }
+}
