@@ -1,4 +1,4 @@
-import {$} from './utils/dom.js';
+import {$, $$} from './utils/dom.js';
 
 import {
     html,
@@ -347,11 +347,30 @@ export class AssetList extends List {
     scrollToActiveAsset() {
         let activeAsset = $('.asset-active', this.el);
         if (activeAsset) {
-            activeAsset.scrollIntoView({
-                behavior: 'smooth',
-                block: 'center',
-                inline: 'nearest'
+            // We want to push this update back after any CSS reflows complete
+            // since that will affect the target scroll position:
+            window.requestIdleCallback(() => {
+                window.requestIdleCallback(() => {
+                    activeAsset.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'center',
+                        inline: 'nearest'
+                    });
+                });
             });
         }
+    }
+
+    setActiveAsset(assetElement) {
+        // TODO: stop using Bootstrap classes directly and toggle semantic classes only
+        $$('.asset.asset-active', this.el).forEach(elem => {
+            if (elem != assetElement) {
+                elem.classList.remove('asset-active', 'border-primary');
+            }
+        });
+
+        assetElement.classList.add('asset-active', 'border-primary');
+
+        this.scrollToActiveAsset();
     }
 }

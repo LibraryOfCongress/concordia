@@ -537,13 +537,6 @@ export class ActionApp {
     openViewer(assetElement) {
         let asset = this.assets.get(assetElement.dataset.id);
 
-        // TODO: stop using Bootstrap classes directly and toggle semantic classes only
-        $$('.asset.asset-active', this.assetList.el).forEach(elem => {
-            elem.classList.remove('asset-active', 'border-primary');
-        });
-        assetElement.classList.add('asset-active', 'border-primary');
-        this.assetList.scrollToActiveAsset();
-
         this.metadataPanel = new MetadataPanel(asset);
         mount(
             $('#asset-info-modal .modal-body', this.assetViewer),
@@ -561,8 +554,6 @@ export class ActionApp {
         this.getCachedCampaign(asset.campaign).then(campaignInfo => {
             this.metadataPanel.campaignMetadata.update(campaignInfo);
         });
-
-        this.appElement.dataset.openAssetId = asset.id;
 
         $$('a.asset-external-view', this.assetViewer).forEach(i => {
             i.href = asset.resource_url;
@@ -645,6 +636,13 @@ export class ActionApp {
         this.seadragonViewer.open(tileSources, initialPage);
 
         this.checkViewerAvailability(assetElement.id);
+
+        window.requestAnimationFrame(() => {
+            // This will trigger the CSS which displays the viewer:
+            this.appElement.dataset.openAssetId = asset.id;
+
+            this.assetList.setActiveAsset(assetElement);
+        });
     }
 
     closeViewer() {
