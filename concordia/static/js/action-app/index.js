@@ -465,23 +465,26 @@ export class ActionApp {
     }
 
     updateAssetList() {
-        console.time('Filtering assets');
-        let visibleAssets = this.getVisibleAssets();
-        console.timeEnd('Filtering assets');
+        window.requestIdleCallback(() => {
+            console.time('Filtering assets');
+            let visibleAssets = this.getVisibleAssets();
+            console.timeEnd('Filtering assets');
 
-        console.time('Sorting assets');
-        this.sortAssets(visibleAssets);
-        console.timeEnd('Sorting assets');
+            console.time('Sorting assets');
+            visibleAssets = this.sortAssets(visibleAssets);
+            console.timeEnd('Sorting assets');
 
-        console.time('Updating asset list');
-        this.assetList.update(visibleAssets);
-        console.timeEnd('Updating asset list');
+            window.requestAnimationFrame(() => {
+                console.time('Updating asset list');
+                this.assetList.update(visibleAssets);
+                console.timeEnd('Updating asset list');
 
-        $('#visible-asset-count').innerText = visibleAssets.length;
+                $('#visible-asset-count').innerText = visibleAssets.length;
 
-        this.scrollToActiveAsset(); // FIXME: confirm that this still works after updates
-
-        this.attemptAssetLazyLoad();
+                this.scrollToActiveAsset();
+                this.attemptAssetLazyLoad();
+            });
+        });
     }
 
     attemptAssetLazyLoad() {
