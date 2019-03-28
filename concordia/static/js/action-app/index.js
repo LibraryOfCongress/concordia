@@ -477,6 +477,8 @@ export class ActionApp {
         this.assetList.update(visibleAssets);
         console.timeEnd('Updating asset list');
 
+        $('#visible-asset-count').innerText = visibleAssets.length;
+
         this.scrollToActiveAsset(); // FIXME: confirm that this still works after updates
 
         this.attemptAssetLazyLoad();
