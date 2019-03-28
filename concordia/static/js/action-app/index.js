@@ -6,7 +6,7 @@ import {
     unmount
 } from 'https://cdnjs.cloudflare.com/ajax/libs/redom/3.18.0/redom.es.min.js';
 
-import {$, $$, sortChildren} from './utils/dom.js';
+import {$, $$} from './utils/dom.js';
 import {fetchJSON, getCachedData} from './utils/api.js';
 import {AssetTooltip, MetadataPanel, AssetList} from './components.js';
 
@@ -205,7 +205,7 @@ export class ActionApp {
         this.sortModeSelector = $('#sort-mode');
         this.sortMode = this.sortModeSelector.value;
         this.sortModeSelector.addEventListener('change', () => {
-            this.sortAssets();
+            this.updateAssetList();
         });
 
         /* List filtering */
@@ -290,40 +290,6 @@ export class ActionApp {
             }
             optionElement.toggleAttribute('disabled', disabled);
         });
-    }
-
-    getAssetSortKeyGenerator() {
-        /*
-            Return a function for the current sort mode which will generate the
-            appropriate sort key from a given .asset Element.
-        */
-
-        let int = str => parseInt(str, 10);
-
-        switch (this.sortMode) {
-            case 'hardest':
-                return elem => -1 * int(elem.dataset.difficulty);
-            case 'easiest':
-                return elem => int(elem.dataset.difficulty);
-            case 'campaign':
-                // Sort by Campaign using sub-values for stable ordering
-                return elem => {
-                    let asset = this.assets.get(elem.dataset.id);
-                    return [
-                        asset.campaign.title,
-                        asset.project.title,
-                        asset.item.title,
-                        asset.id
-                    ];
-                };
-            case 'item-id':
-                return elem => {
-                    let asset = this.assets.get(elem.dataset.id);
-                    return asset.item.item_id;
-                };
-            default:
-                return elem => int(elem.id);
-        }
     }
 
     setupAssetViewer() {
@@ -501,9 +467,11 @@ export class ActionApp {
     updateAssetList() {
         let visibleAssets = this.getVisibleAssets();
 
+        this.sortAssets(visibleAssets);
+
         this.assetList.update(visibleAssets);
 
-        this.sortAssets();
+        this.scrollToActiveAsset(); // FIXME: confirm that this still works after updates
 
         this.attemptAssetLazyLoad();
     }
@@ -521,10 +489,48 @@ export class ActionApp {
         }
     }
 
-    sortAssets() {
-        this.sortMode = this.sortModeSelector.value;
-        sortChildren(this.assetList.el, this.getAssetSortKeyGenerator());
-        this.scrollToActiveAsset();
+    sortAssets(assetList) {
+        let sortMode = (this.sortMode = this.sortModeSelector.value);
+
+        let keyFromAsset;
+        switch (sortMode) {
+            case 'hardest':
+                keyFromAsset = asset => -1 * asset.difficulty;
+                break;
+            case 'easiest':
+                keyFromAsset = asset => asset.difficulty;
+                break;
+            case 'campaign':
+                // Sort by Campaign using sub-values for stable ordering
+                keyFromAsset = asset => [
+                    asset.campaign.title,
+                    asset.project.title,
+                    asset.item.title,
+                    asset.id
+                ];
+                break;
+            case 'item-id':
+                keyFromAsset = asset => asset.item.item_id;
+                break;
+            case 'recent':
+                keyFromAsset = asset => [asset.sent, asset.id];
+                break;
+            default:
+                console.warn(`Unknown sort mode ${sortMode}; using asset ID…`);
+                keyFromAsset = asset => asset.id;
+        }
+
+        return assetList.sort((a, b) => {
+            let aKey = keyFromAsset(a),
+                bKey = keyFromAsset(b);
+            if (aKey < bKey) {
+                return -1;
+            } else if (aKey > bKey) {
+                return 1;
+            } else {
+                return 0;
+            }
+        });
     }
 
     getVisibleAssets() {
