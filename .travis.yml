@@ -7,12 +7,12 @@ dist: xenial
 sudo: required
 addons:
     sonarcloud:
-        organization: "libraryofcongress"
+        organization: 'libraryofcongress'
 python:
-    - "3.6"
-    - "3.7"
-    - "3.7-dev"
-    - "3.8-dev"
+    - '3.6'
+    - '3.7'
+    - '3.7-dev'
+    - '3.8-dev'
 matrix:
     allow_failures:
         - python: 3.7-dev
@@ -34,6 +34,8 @@ install:
 script:
     - mkdir logs
     - touch ./logs/concordia-celery.log
+    - npm install
+    - npx gulp build
     - pipenv run ./manage.py collectstatic --no-input
     # n.b.
     - pipenv run coverage run ./manage.py test
