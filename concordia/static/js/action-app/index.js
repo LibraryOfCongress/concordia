@@ -1,4 +1,4 @@
-/* global OpenSeadragon Split */
+/* global OpenSeadragon Split jQuery */
 /* eslint-disable no-console */
 
 import {
@@ -590,6 +590,10 @@ export class ActionApp {
 
         this.checkViewerAvailability(assetElement.id);
 
+        let reservationURL = '/reserve-asset/' + assetElement.id + '/';
+        let actionType = 'transcribe';
+        this.reserveAsset(reservationURL, actionType);
+
         window.requestAnimationFrame(() => {
             // This will trigger the CSS which displays the viewer:
             this.appElement.dataset.openAssetId = asset.id;
@@ -599,6 +603,10 @@ export class ActionApp {
     }
 
     closeViewer() {
+        let reservationURL =
+            '/reserve-asset/' + this.appElement.dataset.openAssetId + '/';
+        this.releaseAsset(reservationURL);
+
         delete this.appElement.dataset.openAssetId;
 
         if (this.seadragonViewer.isOpen()) {
@@ -635,6 +643,45 @@ export class ActionApp {
                 i.removeAttribute('disabled');
                 i.removeAttribute('readonly');
             });
+        }
+    }
+
+    reserveAsset(reservationURL, actionType) {
+        jQuery
+            .ajax({
+                url: reservationURL,
+                type: 'POST',
+                dataType: 'json'
+            })
+            .done(function() {
+                // If the asset was successfully reserved, continue reserving it
+                window.setTimeout(
+                    this.reserveAsset,
+                    60000,
+                    reservationURL,
+                    actionType
+                );
+            })
+            .fail(function(jqXHR, textStatus, errorThrown) {
+                console.error(textStatus, errorThrown);
+            });
+    }
+
+    releaseAsset(reservationURL) {
+        var payload = {
+            release: true
+        };
+
+        // We'll try Beacon since that's reliable but until we can drop support for IE11 we need a fallback:
+        if ('sendBeacon' in navigator) {
+            navigator.sendBeacon(
+                reservationURL,
+                new Blob([jQuery.param(payload)], {
+                    type: 'application/x-www-form-urlencoded'
+                })
+            );
+        } else {
+            jQuery.ajax({url: reservationURL, type: 'POST', data: payload});
         }
     }
 }
