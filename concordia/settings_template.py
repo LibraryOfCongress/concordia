@@ -310,7 +310,7 @@ TRANSCRIPTION_RESERVATION_SECONDS = 5 * 60
 DEFAULT_PAGE_TTL = 5 * 60
 
 # Feature flag for social share
-FLAGS = {"SOCIAL_SHARE": []}
+FLAGS = {"SOCIAL_SHARE": [], "ACTIVITY_UI": [("boolean", True)]}
 ASGI_APPLICATION = "concordia.routing.application"
 
 CHANNEL_LAYERS = {

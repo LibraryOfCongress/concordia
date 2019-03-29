@@ -1,4 +1,5 @@
 from django.conf import settings
+from flags.state import flag_enabled
 
 from concordia.version import get_concordia_version
 
@@ -14,6 +15,7 @@ def system_configuration(request):
         "S3_BUCKET_NAME": getattr(settings, "S3_BUCKET_NAME", None),
         "APPLICATION_VERSION": get_concordia_version(),
         "RAVEN_CONFIG": settings.RAVEN_CONFIG,
+        "ACTIVITY_UI_ENABLED": flag_enabled("ACTIVITY_UI", request=request),
     }
 
 
