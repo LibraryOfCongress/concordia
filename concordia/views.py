@@ -35,7 +35,7 @@ from django.db.models import (
     When,
 )
 from django.db.transaction import atomic
-from django.http import HttpResponse, JsonResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template import loader
 from django.urls import reverse, reverse_lazy
@@ -1552,8 +1552,11 @@ class ReviewListView(AssetListView):
 
 
 def action_app(request):
-    return render(
-        request,
-        "action-app.html",
-        {"campaigns": Campaign.objects.published().order_by("title")},
-    )
+    if flag_enabled("ACTIVITY_UI", request=request):
+        return render(
+            request,
+            "action-app.html",
+            {"campaigns": Campaign.objects.published().order_by("title")},
+        )
+    else:
+        raise Http404("Sorry, this page isn't ready for prime time yet!")

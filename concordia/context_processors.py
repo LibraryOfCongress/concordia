@@ -13,6 +13,7 @@ def system_configuration(request):
         "S3_BUCKET_NAME": getattr(settings, "S3_BUCKET_NAME", None),
         "APPLICATION_VERSION": getattr(settings, "APPLICATION_VERSION", None),
         "NEW_CAROUSEL_SLIDE": flag_enabled("NEW_CAROUSEL_SLIDE", request=request),
+        "ACTIVITY_UI_ENABLED": flag_enabled("ACTIVITY_UI", request=request),
     }
 
 

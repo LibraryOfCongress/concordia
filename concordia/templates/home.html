@@ -116,6 +116,11 @@
             <div class="col-12 d-flex justify-content-center my-3">
                 <a class="btn btn-primary" href="{% url 'transcriptions:campaign-list' %}" role="button">Browse All Campaigns</a>
             </div>
+            {% if ACTIVITY_UI_ENABLED %}
+                 <div class="col-12 d-flex justify-content-center my-3">
+                    <a class="btn btn-primary" href="{% url 'action-app' %}" role="button">Try the new thing</a>
+                </div>
+            {% endif %}
         </div>
     </div>
 {% endblock main_content %}
