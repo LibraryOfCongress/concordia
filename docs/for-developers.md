@@ -127,6 +127,12 @@ virtualenv environment:
     $ pipenv run ./manage.py migrate
     ```
 
+1.  Build the CSS:
+
+    ```bash
+    $ npx gulp build
+    ```
+
 1.  Start the development server:
 
     ```bash
