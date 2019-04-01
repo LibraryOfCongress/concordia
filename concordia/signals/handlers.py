@@ -1,8 +1,8 @@
 from asgiref.sync import AsyncToSync
 from channels.layers import get_channel_layer
 from django.conf import settings
-from django.contrib.auth.models import Group
-from django.db.models import Count
+from django.contrib.auth.models import Group, User
+from django.db.models import Q
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django_registration.signals import user_registered
@@ -36,13 +36,12 @@ def update_asset_status(sender, *, instance, **kwargs):
     elif instance.submitted:
         new_status = TranscriptionStatus.SUBMITTED
 
-    asset = Asset.objects.filter(pk=instance.asset.pk).annotate(
-        contributor_count=Count("transcription__user", distinct=True),
-        reviewer_count=Count("transcription__reviewed_by", distinct=True),
-    )
-    number_of_contributors = asset[0].contributor_count + asset[0].reviewer_count
+    trans_qs = Transcription.objects.filter(asset=instance.asset)
+    number_of_contributors = User.objects.filter(
+        Q(pk__in=trans_qs.values("user_id")) | Q(pk__in=trans_qs.values("reviewed_by"))
+    ).count()
 
-    instance.asset.difficulty = instance.asset.difficulty + number_of_contributors
+    instance.asset.difficulty += number_of_contributors
     instance.asset.transcription_status = new_status
     instance.asset.full_clean()
     instance.asset.save()
