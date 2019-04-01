@@ -16,7 +16,7 @@
                     <li data-target="#homepage-carousel" data-slide-to="1"></li>
                     <li data-target="#homepage-carousel" data-slide-to="2"></li>
                     {% if ACTIVITY_UI_ENABLED %}
-                    <li data-target="#homepage-carousel" data-slide-to="3"></li>
+                        <li data-target="#homepage-carousel" data-slide-to="3"></li>
                     {% endif %}
                 </ol>
                 <div class="carousel-inner">
@@ -44,12 +44,11 @@
                     <span class="sr-only">Next</span>
                 </a>
 
-                    <div class="carousel-overlay text-center d-flex flex-column justify-content-around align-items-center">
-                        <h1 class="title">By the People</h1>
-                        <p class="hero-text mx-auto">Volunteer to uncover our shared history and make documents more searchable for everyone.</p>
-                        <a class="btn btn-primary btn-lg" href="{% url 'transcriptions:redirect-to-next-transcribable-asset' 'mary-church-terrell-advocate-for-african-americans-and-women' %}">LET'S GO!</a>
-                    </div>
-
+                <div class="carousel-overlay text-center d-flex flex-column justify-content-around align-items-center">
+                    <h1 class="title">By the People</h1>
+                    <p class="hero-text mx-auto">Volunteer to uncover our shared history and make documents more searchable for everyone.</p>
+                    <a class="btn btn-primary btn-lg" href="{% url 'transcriptions:redirect-to-next-transcribable-asset' 'mary-church-terrell-advocate-for-african-americans-and-women' %}">LET'S GO!</a>
+                </div>
             </div>
         </div>
     </div>
