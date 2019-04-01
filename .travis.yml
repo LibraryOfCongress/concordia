@@ -7,15 +7,12 @@ dist: xenial
 sudo: required
 addons:
     sonarcloud:
-        organization: "libraryofcongress"
+        organization: 'libraryofcongress'
 python:
-    - "3.6"
-    - "3.7"
-    - "3.7-dev"
-    - "3.8-dev"
+    - '3.7'
+    - '3.8-dev'
 matrix:
     allow_failures:
-        - python: 3.7-dev
         - python: 3.8-dev
 services:
     - postgresql
@@ -23,10 +20,7 @@ before_script:
     - psql -c 'create database concordia;' -U postgres
 install:
     - pip install --upgrade pip
-    # We install pre-commit outside of the virtualenv to avoid issues with pipenv / pip
-    # in the Travis CI Python 3.6 environment. Once we upgrade to Python 3.7 this will
-    # no longer be necessary:
-    - pip install coveralls "pipenv>=2018.11.26" pre-commit
+    - pip install coveralls "pipenv>=2018.11.26"
     - pipenv install --dev --deploy
     # We want to have safety available but aren't putting it in the dev tools:
     - pipenv run pip install safety
@@ -35,7 +29,7 @@ script:
     - touch ./logs/concordia-celery.log
     - pipenv run ./manage.py collectstatic --no-input
     - pipenv run coverage run ./manage.py test concordia importer exporter
-    - git diff --name-only $TRAVIS_COMMIT_RANGE | xargs pre-commit run --files
+    - git diff --name-only $TRAVIS_COMMIT_RANGE | xargs pipenv run pre-commit run --files
     - pipenv run safety check
 after_success:
     - pipenv run coverage xml
