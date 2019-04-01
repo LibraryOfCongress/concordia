@@ -1542,11 +1542,26 @@ class ReviewListView(AssetListView):
 
 
 def action_app(request):
-    if flag_enabled("ACTIVITY_UI", request=request):
-        return render(
-            request,
-            "action-app.html",
-            {"campaigns": Campaign.objects.published().order_by("title")},
-        )
-    else:
-        raise Http404("Sorry, this page isn't ready for prime time yet!")
+    if not flag_enabled("ACTIVITY_UI", request=request):
+        raise Http404
+
+    return render(
+        request,
+        "action-app.html",
+        {
+            "campaigns": Campaign.objects.published().order_by("title"),
+            "app_parameters": {
+                "currentUser": request.user.pk,
+                "urls": {
+                    "assetUpdateSocket": request.build_absolute_uri(
+                        "/ws/asset/asset_updates/"
+                    ).replace("http", "ws"),
+                    "campaignList": reverse("transcriptions:campaign-list"),
+                },
+                "urlTemplates": {
+                    "assetData": "/{action}.json",
+                    "assetReservation": "/reserve-asset/{assetId}/",
+                },
+            },
+        },
+    )
