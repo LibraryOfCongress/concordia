@@ -240,7 +240,7 @@ class AssetListItem {
         // FIXME: adjust hidden state?
 
         let thumbnailUrl = assetData.thumbnailUrl;
-        if (thumbnailUrl.indexOf('/iiif/') > 0) {
+        if (thumbnailUrl.includes('/iiif/')) {
             // We'll adjust the IIIF image URLs not to return something larger
             // than we're going to use:
             // FIXME: this is an ugly, ugly kludge and should be replaced with something like https://www.npmjs.com/package/iiif-image
