@@ -7,7 +7,7 @@ name = "pypi"
 "psycopg2" = "*"
 "psycopg2-binary" = "*"
 gunicorn = "*"
-celery = "===4.3.0rc1"
+celery = {extras = ["redis"],version = ">=4.3.0"}
 coreapi = "*"
 django-haystack = "*"
 "boto3" = ">=1.9.16"
@@ -41,7 +41,7 @@ pylibmc = "*"
 cfn-lint = "*"
 django-celery-beat = "*"
 django-passwords = "*"
-kombu = ">=4.2.2<4.3.0"
+kombu = "~=4.5"
 django-flags = "*"
 
 [dev-packages]
@@ -57,9 +57,11 @@ pylint = "*"
 cfn-lint = "*"
 pylint-django = "*"
 pylint-celery = "*"
+flake8-eradicate = "*"
+flake8-comprehensions = "*"
+flake8-logging-format = "*"
+flake8-builtins = "*"
+flake8-assertive = "*"
 
 [requires]
 python_version = "3.7"
-
-[pipenv]
-allow_prereleases = true
