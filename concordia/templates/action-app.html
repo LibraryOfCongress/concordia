@@ -28,6 +28,7 @@
 {% block site-footer %}{% endblock site-footer %}
 
 {% block site-main %}
+    {% csrf_token %}
     <header id="action-app-header">
         <nav id="action-app-global-controls" class="navbar navbar-expand-lg navbar-dark bg-dark" role="navigation">
             <a class="navbar-brand mb-0 h1" href="{% url 'homepage' %}">

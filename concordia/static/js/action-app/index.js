@@ -403,7 +403,7 @@ export class ActionApp {
         if (assetElement) {
             console.info(`Marking asset ${assetId} available`);
             assetElement.classList.remove('available');
-            this.checkViewerAvailability(assetId);
+            this.checkViewerAvailability();
         }
     }
 
@@ -412,7 +412,7 @@ export class ActionApp {
         if (assetElement) {
             console.info(`Marking asset ${assetId} unavailable`);
             assetElement.classList.add('unavailable');
-            this.checkViewerAvailability(assetId);
+            this.checkViewerAvailability();
         }
     }
 
@@ -539,6 +539,13 @@ export class ActionApp {
     openViewer(assetElement) {
         let asset = this.assets.get(assetElement.dataset.id);
 
+        this.openAssetElement = assetElement;
+
+        this.assetReservationURL =
+            '/reserve-asset/' + encodeURIComponent(asset.id) + '/';
+
+        this.reserveAsset();
+
         this.metadataPanel = new MetadataPanel(asset);
         mount(
             $('#asset-info-modal .modal-body', this.appElement),
@@ -588,11 +595,7 @@ export class ActionApp {
 
         this.seadragonViewer.open(tileSources, initialPage);
 
-        this.checkViewerAvailability(assetElement.id);
-
-        let reservationURL = '/reserve-asset/' + assetElement.id + '/';
-        let actionType = 'transcribe';
-        this.reserveAsset(reservationURL, actionType);
+        this.checkViewerAvailability();
 
         window.requestAnimationFrame(() => {
             // This will trigger the CSS which displays the viewer:
@@ -603,11 +606,10 @@ export class ActionApp {
     }
 
     closeViewer() {
-        let reservationURL =
-            '/reserve-asset/' + this.appElement.dataset.openAssetId + '/';
-        this.releaseAsset(reservationURL);
+        this.releaseAsset();
 
         delete this.appElement.dataset.openAssetId;
+        delete this.openAssetElement;
 
         if (this.seadragonViewer.isOpen()) {
             this.seadragonViewer.close();
@@ -621,17 +623,19 @@ export class ActionApp {
     }
 
     checkViewerAvailability() {
-        if (!this.appElement.dataset.openAssetId) {
+        if (!this.appElement.dataset.openAssetId || !this.openAssetElement) {
             return;
         }
 
         let editor = document.getElementById('editor-column');
 
-        let openAsset = document.getElementById(
-            this.appElement.dataset.openAssetId
-        );
+        let enableEditing =
+            !this.openAssetElement.classList.contains('unavailable') &&
+            this.openAssetElement.classList.contains('reserved');
 
-        if (openAsset.classList.contains('unavailable')) {
+        editor.classList.toggle('reserved', enableEditing);
+
+        if (!enableEditing) {
             $$('input,button', editor).forEach(i =>
                 i.setAttribute('disabled', 'disabled')
             );
@@ -646,42 +650,59 @@ export class ActionApp {
         }
     }
 
-    reserveAsset(reservationURL, actionType) {
+    reserveAsset() {
+        if (!this.assetReservationURL) {
+            return;
+        }
+
         jQuery
             .ajax({
-                url: reservationURL,
+                url: this.assetReservationURL,
                 type: 'POST',
                 dataType: 'json'
             })
-            .done(function() {
-                // If the asset was successfully reserved, continue reserving it
-                window.setTimeout(
-                    this.reserveAsset,
-                    60000,
-                    reservationURL,
-                    actionType
-                );
+            .done(() => {
+                if (this.openAssetElement) {
+                    this.openAssetElement.classList.add('reserved');
+                    this.checkViewerAvailability();
+                    // If the asset was successfully reserved, continue reserving it
+                    window.setTimeout(this.reserveAsset, 60000);
+                } else {
+                    throw 'Open asset was closed before we could reserve it';
+                }
             })
-            .fail(function(jqXHR, textStatus, errorThrown) {
-                console.error(textStatus, errorThrown);
+            .fail((jqXHR, textStatus, errorThrown) => {
+                console.error(
+                    'Unable to reserve asset: %s %s',
+                    textStatus,
+                    errorThrown
+                );
             });
+
+        // FIXME: update the asset list & viewer components!
     }
 
-    releaseAsset(reservationURL) {
-        var payload = {
-            release: true
+    releaseAsset() {
+        if (!this.assetReservationURL) {
+            return;
+        }
+
+        if (this.openAssetElement) {
+            this.openAssetElement.classList.remove('reserved');
+        }
+
+        let payload = {
+            release: true,
+            csrfmiddlewaretoken: $('input[name="csrfmiddlewaretoken"]').value
         };
 
-        // We'll try Beacon since that's reliable but until we can drop support for IE11 we need a fallback:
-        if ('sendBeacon' in navigator) {
-            navigator.sendBeacon(
-                reservationURL,
-                new Blob([jQuery.param(payload)], {
-                    type: 'application/x-www-form-urlencoded'
-                })
-            );
-        } else {
-            jQuery.ajax({url: reservationURL, type: 'POST', data: payload});
-        }
+        navigator.sendBeacon(
+            this.assetReservationURL,
+            new Blob([jQuery.param(payload)], {
+                type: 'application/x-www-form-urlencoded'
+            })
+        );
+
+        // FIXME: update the asset list & viewer components!
     }
 }
