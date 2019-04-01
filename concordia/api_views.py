@@ -29,7 +29,12 @@ class URLAwareEncoder(DjangoJSONEncoder):
     """
 
     def default(self, obj):
-        if hasattr(obj, "url"):
+        if not obj:
+            # Beyond the obvious, this handles the case where FileFields and
+            # their subclasses (e.g. ImageField) define a url property which
+            # will raise ValueError if accessed when the name property is empty.
+            return None
+        elif hasattr(obj, "url"):
             return obj.url
         elif hasattr(obj, "get_absolute_url"):
             return obj.get_absolute_url()
