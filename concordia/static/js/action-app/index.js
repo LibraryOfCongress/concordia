@@ -108,10 +108,7 @@ export class ActionApp {
     }
 
     connectAssetEventStream() {
-        let assetSocketURL = // FIXME: this path should not be hard-coded
-            (document.location.protocol == 'https:' ? 'wss://' : 'ws://') +
-            window.location.host +
-            '/ws/asset/asset_updates/';
+        let assetSocketURL = this.config.urls.assetUpdateSocket;
         console.info(`Connecting to ${assetSocketURL}`);
         let assetSocket = (this.assetSocket = new WebSocket(assetSocketURL));
 
@@ -197,7 +194,7 @@ export class ActionApp {
 
         /* List filtering */
         this.campaignSelect = $('#selected-campaign');
-        fetchJSON('/campaigns/') // FIXME: this URL should be an input variable!
+        fetchJSON(this.config.urls.campaignList)
             .then(data => {
                 data.objects.forEach(campaign => {
                     let o = document.createElement('option');
@@ -291,7 +288,7 @@ export class ActionApp {
     }
 
     fetchAssetData() {
-        let url = this.config.assetDataUrlTemplate.replace(
+        let url = this.config.urlTemplates.assetData.replace(
             /{action}/,
             this.currentMode
         );
@@ -541,8 +538,10 @@ export class ActionApp {
 
         this.openAssetElement = assetElement;
 
-        this.assetReservationURL =
-            '/reserve-asset/' + encodeURIComponent(asset.id) + '/';
+        this.assetReservationURL = this.config.urlTemplates.assetReservation.replace(
+            /{assetId}/,
+            encodeURIComponent(asset.id)
+        );
 
         this.reserveAsset();
 
