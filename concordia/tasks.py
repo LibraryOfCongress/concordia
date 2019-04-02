@@ -3,6 +3,7 @@ from logging import getLogger
 from celery import task
 from django.contrib.auth.models import User
 from django.db.models import Count
+from more_itertools.more import chunked
 
 from concordia.models import (
     Asset,
@@ -168,13 +169,39 @@ def campaign_report(campaign):
 
 
 @task
-def initialize_difficulty_values():
-    assets = Asset.objects.published().annotate(
-        transcription_count=Count("transcription", distinct=True),
-        contributor_count=Count("transcription__user", distinct=True),
-        reviewer_count=Count("transcription__reviewed_by", distinct=True),
-    )
+def calculate_difficulty_values(asset_qs=None):
+    """
+    Calculate the difficulty scores for the provided AssetQuerySet and update
+    the Asset records for changed difficulty values
+    """
 
-    for a in assets:
-        a.difficulty = a.transcription_count * (a.contributor_count + a.reviewer_count)
-        a.save()
+    if asset_qs is None:
+        asset_qs = Asset.objects.published()
+
+    asset_qs = asset_qs.add_contribution_counts()
+
+    updated_count = 0
+
+    # We'll process assets in chunks using an iterator to avoid saving objects
+    # which will never be used again in memory. We will find assets which have a
+    # difficulty value which is not the same as the value stored in the database
+    # and pass them to bulk_update() to be saved in a single query.
+    for asset_chunk in chunked(asset_qs.iterator(), 500):
+        changed_assets = []
+
+        for asset in asset_chunk:
+            difficulty = asset.transcription_count * (
+                asset.transcriber_count + asset.reviewer_count
+            )
+            if difficulty != asset.difficulty:
+                asset.difficulty = difficulty
+                changed_assets.append(asset)
+
+        if changed_assets:
+            # We will only save the new difficulty score both for performance
+            # and to avoid any possibility of race conditions causing stale data
+            # to be saved:
+            Asset.objects.bulk_update(changed_assets, ["difficulty"])
+            updated_count += len(changed_assets)
+
+    return updated_count

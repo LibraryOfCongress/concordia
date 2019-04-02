@@ -6,6 +6,7 @@ from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
+from django.db.models import Count
 from django.urls import reverse
 from django_prometheus_metrics.models import MetricsModelMixin
 
@@ -167,8 +168,19 @@ class Item(MetricsModelMixin("item"), models.Model):
         )
 
 
+class AssetQuerySet(PublicationQuerySet):
+    def add_contribution_counts(self):
+        """Add annotations for the number of transcriptions & users"""
+
+        return self.annotate(
+            transcription_count=Count("transcription", distinct=True),
+            transcriber_count=Count("transcription__user", distinct=True),
+            reviewer_count=Count("transcription__reviewed_by", distinct=True),
+        )
+
+
 class Asset(MetricsModelMixin("asset"), models.Model):
-    objects = PublicationQuerySet.as_manager()
+    objects = AssetQuerySet.as_manager()
 
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
 
