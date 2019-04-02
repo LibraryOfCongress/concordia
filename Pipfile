@@ -45,6 +45,7 @@ kombu = ">=4.2.2<4.3.0"
 django-flags = "*"
 channels = "*"
 channels-redis = "*"
+more-itertools = "*"
 
 [dev-packages]
 invoke = "*"
