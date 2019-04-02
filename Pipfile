@@ -39,6 +39,7 @@ django-flags = "*"
 sentry-sdk = "*"
 channels = "*"
 channels-redis = "*"
+more-itertools = "*"
 
 [dev-packages]
 invoke = "*"
