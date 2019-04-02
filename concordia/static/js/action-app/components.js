@@ -379,31 +379,34 @@ class ReviewerView {
     constructor() {
         this.displayText = html('#review-transcription-text');
 
+        this.editButton = html(
+            'button',
+            {
+                id: 'reject-transcription-button',
+                type: 'button',
+                class: 'btn btn-primary',
+                title: 'Correct errors you see in the text'
+            },
+            text('Edit')
+        );
+        this.acceptButton = html(
+            'button',
+            {
+                id: 'accept-transcription-button',
+                type: 'button',
+                class: 'btn btn-primary',
+                title: 'Confirm that the text is accurately transcribed'
+            },
+            text('Accept')
+        );
+
         this.el = html(
             'div#reviewer-column.flex-column.flex-grow-1',
             this.displayText,
             html(
                 '.control-toolbar.my-3.d-print-none.d-flex.flex-wrap.justify-content-around.align-items-center.btn-row',
-                html(
-                    'button',
-                    {
-                        id: 'reject-transcription-button',
-                        type: 'button',
-                        class: 'btn btn-primary',
-                        title: 'Correct errors you see in the text'
-                    },
-                    text('Edit')
-                ),
-                html(
-                    'button',
-                    {
-                        id: 'accept-transcription-button',
-                        type: 'button',
-                        class: 'btn btn-primary',
-                        title: 'Confirm that the text is accurately transcribed'
-                    },
-                    text('Accept')
-                )
+                this.editButton,
+                this.acceptButton
             )
         );
     }
@@ -431,6 +434,29 @@ class TranscriberView {
             id: 'transcription-input',
             'aria-label': 'Transcription input'
         });
+
+        this.saveButton = html(
+            'button',
+            {
+                id: 'save-transcription-button',
+                type: 'submit',
+                class: 'btn btn-primary',
+                title: 'Save the text you entered above'
+            },
+            text('Save')
+        );
+        this.submitButton = html(
+            'button',
+            {
+                id: 'submit-transcription-button',
+                disabled: true,
+                type: 'button',
+                class: 'btn btn-primary',
+                title:
+                    'Request another volunteer to review the text you entered above'
+            },
+            text('Submit for Review')
+        );
 
         let toolbar = html(
             'div',
@@ -474,28 +500,8 @@ class TranscriberView {
                     })
                 )
             ),
-            html(
-                'button',
-                {
-                    id: 'save-transcription-button',
-                    type: 'submit',
-                    class: 'btn btn-primary',
-                    title: 'Save the text you entered above'
-                },
-                text('Save')
-            ),
-            html(
-                'button',
-                {
-                    id: 'submit-transcription-button',
-                    disabled: true,
-                    type: 'button',
-                    class: 'btn btn-primary',
-                    title:
-                        'Request another volunteer to review the text you entered above'
-                },
-                text('Submit for Review')
-            )
+            this.saveButton,
+            this.submitButton
         );
 
         this.el = html(
