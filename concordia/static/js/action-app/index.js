@@ -131,9 +131,15 @@ export class ActionApp {
                     break;
                 }
                 case 'asset_reservation_obtained':
+                    // If the user is anonymous,
+                    // or if the user is logged in and
+                    // is not the same as the user who
+                    // obtained the reservation,
+                    // then mark it unavailable
                     if (
-                        this.config.currentUser &&
-                        this.config.currentUser != message.user_pk
+                        !this.config.currentUser ||
+                        (this.config.currentUser &&
+                            this.config.currentUser != message.user_pk)
                     ) {
                         this.markAssetAsUnavailable(assetId);
                     }
