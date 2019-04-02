@@ -418,7 +418,7 @@ class ReviewerView {
         );
 
         if (asset.latest_transcription) {
-            this.displayText.innerText = asset.latest_transcription;
+            this.displayText.innerText = asset.latest_transcription.text;
         } else {
             this.displayText.innerHTML = 'Nothing to transcribe';
         }
@@ -520,7 +520,7 @@ class TranscriberView {
     }
 
     update(asset) {
-        this.textarea.value = asset.latest_transcription || '';
+        this.textarea.value = asset.latest_transcription.text || '';
     }
 }
 

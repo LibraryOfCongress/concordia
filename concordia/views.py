@@ -1395,12 +1395,18 @@ class AssetListView(APIListView):
 
         asset_pks = [i.pk for i in assets]
 
-        latest_transcriptions = dict(
+        latest_transcription_qs = (
             Transcription.objects.filter(asset__in=asset_pks)
             .annotate(max_pk=Max("pk"))
             .filter(pk=F("max_pk"))
-            .values_list("asset_id", "text")
         )
+
+        latest_transcriptions = {
+            asset_id: (pk, text)
+            for asset_id, pk, text in latest_transcription_qs.values_list(
+                "asset_id", "pk", "text"
+            )
+        }
 
         adjacent_asset_qs = Asset.objects.filter(
             published=True, item=OuterRef("item")
@@ -1428,7 +1434,10 @@ class AssetListView(APIListView):
         }
 
         for asset in assets:
-            asset.latest_transcription = latest_transcriptions.get(asset.id, None)
+            latest = latest_transcriptions.get(asset.id, None)
+            if latest:
+                asset.latest_transcription_id, asset.latest_transcription_text = latest
+
             asset.previous_sequence, asset.next_sequence = adjacent_seqs.get(
                 asset.id, (None, None)
             )
@@ -1476,8 +1485,13 @@ class AssetListView(APIListView):
                 "title": campaign.title,
                 "url": campaign.get_absolute_url(),
             },
-            "latest_transcription": obj.latest_transcription,
         }
+
+        if hasattr(obj, "latest_transcription_id"):
+            metadata["latest_transcription"] = {
+                "id": obj.latest_transcription_id,
+                "text": obj.latest_transcription_text,
+            }
 
         # FIXME: we want to rework how this is done after deprecating Asset.media_url
         if obj.previous_sequence:
