@@ -610,7 +610,7 @@ class TransactionalViewTests(JSONAssertMixin, TransactionTestCase):
         data = self.assertValidJSON(resp, expected_status=201)
 
         transcription = Transcription.objects.get()
-        self.assertEqual(None, transcription.submitted)
+        self.assertIsNone(transcription.submitted)
 
         resp = self.client.post(
             reverse("submit-transcription", args=(transcription.pk,))

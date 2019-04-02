@@ -398,7 +398,7 @@ class TranscriptionAdmin(admin.ModelAdmin):
 @admin.register(SimplePage)
 class SimplePageAdmin(admin.ModelAdmin):
     list_display = ("path", "title", "created_on", "updated_on")
-    readonly_fields = ("path", "created_on", "updated_on")
+    readonly_fields = ("created_on", "updated_on")
 
     fieldsets = (
         (None, {"fields": ("created_on", "updated_on", "path", "title")}),

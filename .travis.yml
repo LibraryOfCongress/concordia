@@ -28,11 +28,12 @@ script:
     - mkdir logs
     - touch ./logs/concordia-celery.log
     - pipenv run ./manage.py collectstatic --no-input
-    - pipenv run coverage run ./manage.py test concordia importer exporter
+    - pipenv run coverage run ./manage.py test
     - git fetch --unshallow
     - git diff --name-only $TRAVIS_COMMIT_RANGE | xargs pipenv run pre-commit run --files
     - pipenv run safety check
 after_success:
+    - git fetch --unshallow --tags
     - pipenv run coverage xml
-    - sonar-scanner
+    - sonar-scanner -Dsonar.projectVersion="$(pipenv run python setup.py --version)"
     - coveralls

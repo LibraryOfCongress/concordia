@@ -176,13 +176,19 @@ $transcriptionEditor
         if (
             !data.hasReservation ||
             (data.transcriptionStatus != 'in_progress' &&
-                data.transcriptionStatus != 'not_started')
+                data.transcriptionStatus != 'not_started' &&
+                data.transcriptionStatus != 'submitted')
         ) {
+            // If the status is completed OR if the user doesn't have the reservation
             lockControls($transcriptionEditor);
         } else {
+            // Either in transcribe or review mode OR the user has the reservation
             var $textarea = $transcriptionEditor.find('textarea');
 
-            if ($nothingToTranscribeCheckbox.prop('checked')) {
+            if (
+                $nothingToTranscribeCheckbox.prop('checked') ||
+                data.transcriptionStatus == 'submitted'
+            ) {
                 $textarea.attr('readonly', 'readonly');
             } else {
                 $textarea.removeAttr('readonly');
@@ -196,6 +202,7 @@ $transcriptionEditor
                     $nothingToTranscribeCheckbox.prop('checked', true);
                 }
             } else {
+                // Unsaved changes are in the textarea and we're in transcribe mode
                 $submitButton.attr('disabled', 'disabled');
 
                 if (
@@ -214,6 +221,7 @@ $transcriptionEditor
             (data.transcriptionStatus == 'in_progress' ||
                 data.transcriptionStatus == 'not_started')
         ) {
+            // If we're in transcribe mode and we don't have the reservation
             $('.tx-status-display')
                 .children()
                 .attr('hidden', 'hidden')
@@ -412,6 +420,8 @@ $tagEditor
         displayMessage('error', message, 'tags-save-result');
     });
 
+/* Social share stuff */
+
 var hideTooltipCallback = function() {
     // wait a couple seconds and then hide the tooltip.
     var hideTooltip = function(tooltipButton) {
@@ -421,13 +431,33 @@ var hideTooltipCallback = function() {
     };
     setTimeout(hideTooltip($(this)), 3000);
 };
+
+function trackShareInteraction($element, interactionType) {
+    // Adobe analytics user interaction tracking
+    if ('loc_ux_tracking' in window) {
+        let loc_ux_tracking = window['loc_ux_tracking'];
+        loc_ux_tracking.trackUserInteractionEvent(
+            $element,
+            'Share Tool',
+            'click',
+            interactionType
+        );
+    }
+}
+
 var $copyUrlButton = $('#copy-url-button');
+var $facebookShareButton = $('#facebook-share-button');
+var $twitterShareButton = $('#twitter-share-button');
+
 $copyUrlButton.on('click', function() {
     var $currentAssetUrl = $('#currentAssetUrl');
     $currentAssetUrl.removeClass('d-none');
     var currentAssetUrl = document.getElementById('currentAssetUrl');
     currentAssetUrl.select();
     var tooltipMessage = '';
+
+    trackShareInteraction($copyUrlButton, 'Link copy');
+
     try {
         document.execCommand('copy');
         // Show the tooltip with a success message
@@ -454,4 +484,14 @@ $copyUrlButton.on('click', function() {
             $copyUrlButton.tooltip('hide');
         });
     }
+});
+
+$facebookShareButton.on('click', function() {
+    trackShareInteraction($facebookShareButton, 'Facebook Share');
+    return true;
+});
+
+$twitterShareButton.on('click', function() {
+    trackShareInteraction($twitterShareButton, 'Twitter Share');
+    return true;
 });

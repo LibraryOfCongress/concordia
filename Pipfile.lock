@@ -44,19 +44,19 @@
         },
         "boto3": {
             "hashes": [
-                "sha256:b3d579a55d7047325215c20fde0202a1d3fcd641a30355c9bb8eb0eab7cb40ec",
-                "sha256:f583197c084cf683fb643ace3b0a5197136b5717840c75942c9e98fa014e2508"
+                "sha256:0f915edb23c82a5e9f4d6956e7e172191006f57af4747d9a0e52056b708cc35c",
+                "sha256:317adb3640991dc16a65f093a835a9249263100e3e65a9ab4e3f2a9eeb237e8a"
             ],
             "index": "pypi",
-            "version": "==1.9.126"
+            "version": "==1.9.127"
         },
         "botocore": {
             "hashes": [
-                "sha256:04e010070e7c170fc2ab44c1d2047fdad850b9f2fd8b49077eeb98e00a631f9c",
-                "sha256:a79024facd0c998eaa77a05753efe36b9f1968acadc40e4313a3bacf011f9685"
+                "sha256:b62cb7948d3e3c9a7c3708d2c5bc13f4ca7e68c4c53768ce366f3026a75ef394",
+                "sha256:be21b6c2a441c0fd18d472691559680056f37609b64779c966625f59ecb2bbbb"
             ],
             "index": "pypi",
-            "version": "==1.12.126"
+            "version": "==1.12.127"
         },
         "celery": {
             "extras": [
@@ -723,19 +723,19 @@
         },
         "boto3": {
             "hashes": [
-                "sha256:b3d579a55d7047325215c20fde0202a1d3fcd641a30355c9bb8eb0eab7cb40ec",
-                "sha256:f583197c084cf683fb643ace3b0a5197136b5717840c75942c9e98fa014e2508"
+                "sha256:0f915edb23c82a5e9f4d6956e7e172191006f57af4747d9a0e52056b708cc35c",
+                "sha256:317adb3640991dc16a65f093a835a9249263100e3e65a9ab4e3f2a9eeb237e8a"
             ],
             "index": "pypi",
-            "version": "==1.9.126"
+            "version": "==1.9.127"
         },
         "botocore": {
             "hashes": [
-                "sha256:04e010070e7c170fc2ab44c1d2047fdad850b9f2fd8b49077eeb98e00a631f9c",
-                "sha256:a79024facd0c998eaa77a05753efe36b9f1968acadc40e4313a3bacf011f9685"
+                "sha256:b62cb7948d3e3c9a7c3708d2c5bc13f4ca7e68c4c53768ce366f3026a75ef394",
+                "sha256:be21b6c2a441c0fd18d472691559680056f37609b64779c966625f59ecb2bbbb"
             ],
             "index": "pypi",
-            "version": "==1.12.126"
+            "version": "==1.12.127"
         },
         "certifi": {
             "hashes": [

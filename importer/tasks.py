@@ -11,10 +11,13 @@ from urllib.parse import parse_qsl, urlencode, urljoin, urlparse, urlsplit, urlu
 
 import requests
 from celery import group, task
+from django.core.cache import cache
 from django.db.transaction import atomic
 from django.utils.text import slugify
 from django.utils.timezone import now
+from requests.adapters import HTTPAdapter
 from requests.exceptions import HTTPError
+from requests.packages.urllib3.util.retry import Retry
 
 from concordia.models import Asset, Item, MediaType
 from concordia.storage import ASSET_STORAGE
@@ -39,6 +42,26 @@ ACCEPTED_P1_URL_PREFIXES = [
     "photos",
     "websites",
 ]
+
+
+def requests_retry_session(
+    retries=10,
+    backoff_factor=0.3,
+    status_forcelist=(429, 500, 502, 503, 504),
+    session=None,
+):
+    session = session or requests.Session()
+    retry = Retry(
+        total=retries,
+        read=retries,
+        connect=retries,
+        backoff_factor=backoff_factor,
+        status_forcelist=status_forcelist,
+    )
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
+    return session
 
 
 def update_task_status(f):
@@ -134,8 +157,12 @@ def get_collection_items(collection_url):
     current_page_url = collection_url
 
     while current_page_url:
-        resp = requests.get(current_page_url)
-        resp.raise_for_status()
+        resp = cache.get(current_page_url)
+        if resp is None:
+            resp = requests_retry_session().get(current_page_url)
+            # 48-hour timeout
+            cache.set(current_page_url, resp, timeout=(3600 * 48))
+
         data = resp.json()
 
         if "results" not in data:

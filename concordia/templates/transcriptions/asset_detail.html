@@ -68,11 +68,11 @@
 
             {% if social_share_flag %}
                 <div class="btn-group btn-group-sm" role="navigation" aria-label="Links to share this page">
-                    <a class="btn btn-default" target="_blank" role="button" title="Share this page on Facebook" href="https://www.facebook.com/share.php?u={{ share_url|urlencode:"" }}"><span class="facebook-icon"></span></a>
-                    <a class="btn btn-default" target="_blank" role="button" title="Share this page on Twitter" href="https://twitter.com/intent/tweet?text={{ tweet_text|urlencode:"" }}&source=webclient"><span class="twitter-icon"></span></a>
-                    <a class="btn btn-default" id="copy-url-button" role="button" data-toggle="tooltip"  data-trigger="manual"  data-placement="bottom" aria-label="Copy this link to your clipboard"><i class="fas fa-link text-white"></i></a>
-                    <input type="text" tabindex="-1" aria-hidden="true" class="d-none" id="currentAssetUrl" name="currentAssetUrl" value="{{ current_asset_url }}" />
+                    <a class="btn btn-default" id="facebook-share-button" target="_blank" role="button" title="Share this page on Facebook" href="https://www.facebook.com/share.php?u={{ share_url|urlencode:"" }}"><span class="facebook-icon"></span></a>
+                    <a class="btn btn-default" id="twitter-share-button" target="_blank" role="button" title="Share this page on Twitter" href="https://twitter.com/intent/tweet?text={{ tweet_text|urlencode:"" }}&source=webclient"><span class="twitter-icon"></span></a>
+                    <a class="btn btn-default" id="copy-url-button" role="button" data-toggle="tooltip"  data-trigger="manual"  data-placement="bottom" aria-label="Copy this link to your clipboard"><span class="fas fa-link text-white"></span></a>
                 </div>
+                <input type="text" tabindex="-1" aria-hidden="true" class="d-none" id="currentAssetUrl" name="currentAssetUrl" value="{{ current_asset_url }}" />
             {% endif %}
 
             {% if asset.resource_url %}
@@ -543,11 +543,11 @@
     {% if transcription_status == "not_started" or transcription_status == "in_progress" %}
         attemptToReserveAsset("{% url 'reserve-asset' asset.pk %}",
         "",
-        "transcribe");
+        "transcribe", true);
     {% elif user.is_authenticated %}
         attemptToReserveAsset("{% url 'reserve-asset' asset.pk %}",
         "{% url 'transcriptions:redirect-to-next-reviewable-asset' asset.item.project.campaign.slug %}",
-        "review");
+        "review", true);
     {% endif %}
 </script>
 {% endblock body_scripts %}
