@@ -1,13 +1,13 @@
 from asgiref.sync import AsyncToSync
 from channels.layers import get_channel_layer
 from django.conf import settings
-from django.contrib.auth.models import Group, User
-from django.db.models import Q
+from django.contrib.auth.models import Group
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django_registration.signals import user_registered
 
 from ..models import Asset, Transcription, TranscriptionStatus
+from ..tasks import calculate_difficulty_values
 from .signals import reservation_obtained, reservation_released
 
 ASSET_CHANNEL_LAYER = get_channel_layer()
@@ -36,15 +36,11 @@ def update_asset_status(sender, *, instance, **kwargs):
     elif instance.submitted:
         new_status = TranscriptionStatus.SUBMITTED
 
-    trans_qs = Transcription.objects.filter(asset=instance.asset)
-    number_of_contributors = User.objects.filter(
-        Q(pk__in=trans_qs.values("user_id")) | Q(pk__in=trans_qs.values("reviewed_by"))
-    ).count()
-
-    instance.asset.difficulty += number_of_contributors
     instance.asset.transcription_status = new_status
     instance.asset.full_clean()
     instance.asset.save()
+
+    calculate_difficulty_values(Asset.objects.filter(pk=instance.asset.pk))
 
 
 @receiver(post_save, sender=Asset)
