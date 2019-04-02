@@ -48,16 +48,16 @@ class MediaType:
     CHOICES = ((IMAGE, "Image"), (AUDIO, "Audio"), (VIDEO, "Video"))
 
 
-class PublicationManager(models.Manager):
+class PublicationQuerySet(models.QuerySet):
     def published(self):
-        return self.get_queryset().filter(published=True)
+        return self.filter(published=True)
 
     def unpublished(self):
-        return self.get_queryset().filter(published=False)
+        return self.filter(published=False)
 
 
 class Campaign(MetricsModelMixin("campaign"), models.Model):
-    objects = PublicationManager()
+    objects = PublicationQuerySet.as_manager()
 
     published = models.BooleanField(default=False, blank=True)
 
@@ -99,7 +99,7 @@ class Resource(MetricsModelMixin("resource"), models.Model):
 
 
 class Project(MetricsModelMixin("project"), models.Model):
-    objects = PublicationManager()
+    objects = PublicationQuerySet.as_manager()
 
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
 
@@ -130,7 +130,7 @@ class Project(MetricsModelMixin("project"), models.Model):
 
 
 class Item(MetricsModelMixin("item"), models.Model):
-    objects = PublicationManager()
+    objects = PublicationQuerySet.as_manager()
 
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
 
@@ -168,7 +168,7 @@ class Item(MetricsModelMixin("item"), models.Model):
 
 
 class Asset(MetricsModelMixin("asset"), models.Model):
-    objects = PublicationManager()
+    objects = PublicationQuerySet.as_manager()
 
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
 
