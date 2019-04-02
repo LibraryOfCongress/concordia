@@ -7,6 +7,17 @@
 {% block head_content %}
     <link rel="canonical" href="https://{{ request.get_host }}{{ request.path }}">
     <link rel="stylesheet" href="{% static 'css/action-app.css' %}">
+
+    <script>
+        (function() {
+            if ("requestIdleCallback" in window) return;
+
+            var s = document.createElement('script');
+            s.async = false;
+            s.src = "https://cdn.jsdelivr.net/npm/requestidlecallback@0.3.0/index.min.js";
+            document.head.appendChild(s);
+        })();
+    </script>
 {% endblock head_content %}
 
 {% block body_scripts %}
