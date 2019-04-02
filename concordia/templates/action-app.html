@@ -23,6 +23,12 @@
         import { ActionApp } from "{% static 'js/action-app/index.js' %}";
         window.actionApp = new ActionApp(appConfig);
     </script>
+
+    <script nomodule>
+        if (confirm("This application is still under development and does not yet support older browsers. Would you like to return to the main site?")) {
+            window.location.href = "{% url 'homepage' %}";
+        }
+    </script>
 {% endblock body_scripts %}
 
 {% comment %} This app is close to a full-screen view so we suppress the standard header & footer {% endcomment %}
