@@ -94,7 +94,7 @@ export class ActionApp {
     getCurrentMode() {
         this.currentMode = this.modeSelection.querySelector('.active').value;
         this.appElement.dataset.mode = this.currentMode;
-        $$('.current-mode').forEach(i => (i.innerText = this.currentMode));
+        $$('.current-mode').forEach(i => (i.textContent = this.currentMode));
     }
 
     setupToolbars() {
@@ -205,7 +205,7 @@ export class ActionApp {
                 data.objects.forEach(campaign => {
                     let o = document.createElement('option');
                     o.value = campaign.id;
-                    o.innerText = campaign.title;
+                    o.textContent = campaign.title;
 
                     // TODO: this does not handle the case where the last assets of a campaign change state while the app is open
                     Object.entries(campaign.asset_stats).forEach(
@@ -310,7 +310,7 @@ export class ActionApp {
                     this.createAsset(i);
                 });
 
-                $('#asset-count').innerText = this.assets.size;
+                $('#asset-count').textContent = this.assets.size;
 
                 if (data.pagination.next) {
                     this.queuedAssetPageURLs.push(data.pagination.next);
@@ -434,7 +434,7 @@ export class ActionApp {
                 this.assetList.update(visibleAssets);
                 console.timeEnd('Updating asset list');
 
-                $('#visible-asset-count').innerText = visibleAssets.length;
+                $('#visible-asset-count').textContent = visibleAssets.length;
 
                 this.assetList.scrollToActiveAsset();
                 this.attemptAssetLazyLoad();

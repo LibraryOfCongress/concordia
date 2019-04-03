@@ -27,10 +27,10 @@ export class AssetTooltip {
         ]);
     }
     update(asset) {
-        $('.item-title', this.el).innerText = asset.item.title;
-        $('.asset-title', this.el).innerText = 'Image ' + asset.sequence;
-        $('.difficulty-score', this.el).innerText = asset.difficulty;
-        $('.asset-year', this.el).innerText = asset.year;
+        $('.item-title', this.el).textContent = asset.item.title;
+        $('.asset-title', this.el).textContent = 'Image ' + asset.sequence;
+        $('.difficulty-score', this.el).textContent = asset.difficulty;
+        $('.asset-year', this.el).textContent = asset.year;
     }
 }
 
@@ -66,7 +66,7 @@ class MetadataDetails {
         this.el = html('details', {open: true}, this.children);
     }
     update(data) {
-        $('.details-body', this.el).innerText = data.description || '';
+        $('.details-body', this.el).textContent = data.description || '';
     }
 }
 
@@ -150,7 +150,7 @@ class RawMetadataDisplay {
     }
     update(data) {
         // TODO: JSON key sorting, highlighting, URL -> link conversion, etc.?
-        this.el.querySelector('pre').innerText = !data
+        this.el.querySelector('pre').textContent = !data
             ? ''
             : JSON.stringify(data, null, 2);
     }
@@ -423,7 +423,7 @@ class ReviewerView {
         );
 
         if (asset.latest_transcription) {
-            this.displayText.innerText = asset.latest_transcription.text;
+            this.displayText.textContent = asset.latest_transcription.text;
         } else {
             this.displayText.innerHTML = 'Nothing to transcribe';
         }
@@ -585,12 +585,12 @@ export class AssetViewer {
             });
 
             $$(`.${prefix}-title`, this.el).forEach(elem => {
-                elem.innerText = data.title;
+                elem.textContent = data.title;
             });
         });
 
         $$('.asset-title', this.el).forEach(i => {
-            i.innerText = 'Image ' + asset.sequence;
+            i.textContent = 'Image ' + asset.sequence;
         });
     }
 }
