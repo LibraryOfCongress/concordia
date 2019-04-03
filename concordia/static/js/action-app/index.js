@@ -532,7 +532,7 @@ export class ActionApp {
                 continue;
             }
 
-            if (currentStatuses.indexOf(asset.status) < 0) {
+            if (!currentStatuses.includes(asset.status)) {
                 continue;
             }
 

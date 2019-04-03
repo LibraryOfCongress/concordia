@@ -168,7 +168,7 @@ class FeaturedMetadata extends List {
         ];
 
         let featured = Object.entries(data)
-            .filter(([key]) => FEATURED_KEYS.indexOf(key) >= 0)
+            .filter(([key]) => FEATURED_KEYS.includes(key))
             // We'll sort the list after filtering because mapping will convert
             // the keys to display titles:
             .sort(
