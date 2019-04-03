@@ -56,11 +56,11 @@ export class ActionApp {
         // Register things which we need to handle in any context, such as
         // opening help or handling focus-shift events
 
-        document.body.addEventListener('keydown', evt => {
-            switch (evt.key) {
+        document.body.addEventListener('keydown', event => {
+            switch (event.key) {
                 case '?':
                 case 'F1':
-                    if (!evt.target.tagName.match(/(INPUT|TEXTAREA)/i)) {
+                    if (!event.target.tagName.match(/(INPUT|TEXTAREA)/i)) {
                         // Either the F1 or ? keys were pressed outside of a
                         // text field so we'll open the global help modal:
                         window.jQuery('#help-modal').modal('show');
@@ -78,12 +78,12 @@ export class ActionApp {
     setupModeSelector() {
         this.modeSelection = $('#activity-mode-selection');
 
-        $$('button', this.modeSelection).forEach(elem => {
-            elem.addEventListener('click', evt => {
-                $$('button', this.modeSelection).forEach(inactiveElem => {
-                    inactiveElem.classList.remove('active');
+        $$('button', this.modeSelection).forEach(element => {
+            element.addEventListener('click', event => {
+                $$('button', this.modeSelection).forEach(inactiveElement => {
+                    inactiveElement.classList.remove('active');
                 });
-                evt.target.classList.add('active');
+                event.target.classList.add('active');
                 this.updateAvailableCampaignFilters();
                 this.closeViewer();
                 this.refreshData();
@@ -155,12 +155,12 @@ export class ActionApp {
             }
         });
 
-        assetSocket.addEventListener('error', evt => {
-            console.error('Asset socket error occurred:', evt);
+        assetSocket.addEventListener('error', event => {
+            console.error('Asset socket error occurred:', event);
         });
 
-        assetSocket.onclose = evt => {
-            console.warn('Asset socket closed:', evt);
+        assetSocket.onclose = event => {
+            console.warn('Asset socket closed:', event);
             window.setTimeout(this.connectAssetEventStream.bind(this), 1000);
         };
     }
@@ -335,16 +335,16 @@ export class ActionApp {
         }
     }
 
-    getCachedItem(refObj) {
-        return getCachedData(this.items, refObj, 'item');
+    getCachedItem(objectReference) {
+        return getCachedData(this.items, objectReference, 'item');
     }
 
-    getCachedProject(refObj) {
-        return getCachedData(this.projects, refObj, 'project');
+    getCachedProject(objectReference) {
+        return getCachedData(this.projects, objectReference, 'project');
     }
 
-    getCachedCampaign(refObj) {
-        return getCachedData(this.campaigns, refObj, 'object');
+    getCachedCampaign(objectReference) {
+        return getCachedData(this.campaigns, objectReference, 'object');
     }
 
     mergeAssetUpdate(assetId, newData) {

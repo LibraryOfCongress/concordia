@@ -14,7 +14,7 @@ export function fetchJSON(originalURL) {
     });
 }
 
-export function getCachedData(container, refObj, key) {
+export function getCachedData(container, objectReference, key) {
     /*
         Assumes a passed object with .id potentially matching a key in
         this.items and .url being the source for the data if we don't
@@ -25,15 +25,15 @@ export function getCachedData(container, refObj, key) {
         want to review our API return format to have the parent/children
         elements use the same name everywhere.
     */
-    let id = refObj.id.toString();
+    let id = objectReference.id.toString();
 
     if (container.has(id)) {
         return Promise.resolve(container.get(id));
     } else {
-        return fetchJSON(refObj.url).then(data => {
-            let obj = key ? data[key] : data;
-            container.set(id, obj);
-            return obj;
+        return fetchJSON(objectReference.url).then(data => {
+            let object = key ? data[key] : data;
+            container.set(id, object);
+            return object;
         });
     }
 }
