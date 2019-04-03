@@ -1146,11 +1146,15 @@ def review_transcription(request, *, pk):
 def submit_tags(request, *, asset_pk):
     asset = get_object_or_404(Asset, pk=asset_pk)
 
-    user_tags = AssetTag.objects.filter(asset=asset, user=request.user)
+    # Get the QuerySet of all tags applied to this asset by all users
     existing_tags = AssetTag.objects.filter(asset=asset)
 
+    # The fresh list of newly submitted tags
     tags = set(request.POST.getlist("tags"))
-    new_tag_values = tags.difference(i.value for i in existing_tags)
+
+    # Create new Tag objects for any brand-new tags that have never been
+    # applied to this asset by any user yet
+    new_tag_values = tags.difference(i.tag.value for i in existing_tags)
     new_tags = [Tag(value=i) for i in new_tag_values]
     try:
         for i in new_tags:
@@ -1161,28 +1165,25 @@ def submit_tags(request, *, asset_pk):
     Tag.objects.bulk_create(new_tags)
 
     # At this point we now have Tag objects for everything in the POSTed
-    # request. We'll add anything which wasn't previously in this user's tag
+    # request. We'll add anything which wasn't previously in this asset's tag
     # collection and remove anything which is no longer present.
 
     all_submitted_tags = list(existing_tags) + new_tags
 
     for tag in all_submitted_tags:
-        if tag not in user_tags:
-            user_tags.tags.add(tag)
+        if tag not in existing_tags:
+            # Create new AssetTag
+            AssetTag.objects.create(asset=asset, tag=tag, user=request.user)
 
-    for tag in user_tags:
+    for tag in existing_tags:
         if tag not in all_submitted_tags:
-            user_tags.tags.remove(tag)
+            # Remove AssetTag regardless of which user added it
+            AssetTag.objects.delete(asset=asset, tag=tag)
 
-    all_tags_qs = Tag.objects.filter(asset__pk=asset_pk)
-    all_tags = all_tags_qs.order_by("value")
+    all_tags_qs = Tag.objects.filter(assettag__asset__pk=asset_pk)
+    all_tags = all_tags_qs.order_by("value").values_list("value", flat=True)
 
-    final_user_tags = user_tags.tags.order_by("value").values_list("value", flat=True)
-    all_tags = all_tags.values_list("value", flat=True).distinct()
-
-    return JsonResponse(
-        {"user_tags": list(final_user_tags), "all_tags": list(all_tags)}
-    )
+    return JsonResponse({"all_tags": list(all_tags)})
 
 
 @method_decorator(never_cache, name="dispatch")

@@ -275,8 +275,8 @@ class AssetTag(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     tag_text = models.CharField(max_length=50, validators=[TAG_VALIDATOR])
     tag = models.ForeignKey(Tag, blank=True, null=True, on_delete=models.CASCADE)
-    created_on = models.DateTimeField()
-    updated_on = models.DateTimeField()
+    created_on = models.DateTimeField(auto_now_add=True)
+    updated_on = models.DateTimeField(auto_now=True)
 
 
 class UserAssetTagCollection(
