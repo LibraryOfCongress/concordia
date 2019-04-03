@@ -127,10 +127,11 @@ export class ActionApp {
             switch (message.type) {
                 case 'asset_update': {
                     let assetUpdate = {
-                        status: message.status,
+                        sent: data.sent,
                         difficulty: message.difficulty,
-                        submitted_by: message.submitted_by,
-                        sent: data.sent
+                        latest_transcription: message.latest_transcription,
+                        status: message.status,
+                        submitted_by: message.submitted_by
                     };
                     this.mergeAssetUpdate(assetId, assetUpdate);
                     break;
@@ -251,7 +252,7 @@ export class ActionApp {
     }
 
     setupAssetViewer() {
-        this.assetViewer = new AssetViewer();
+        this.assetViewer = new AssetViewer(this.handleAction.bind(this));
 
         mount($('#editor-main'), this.assetViewer);
 
@@ -715,5 +716,74 @@ export class ActionApp {
         );
 
         // FIXME: update the asset list & viewer components!
+    }
+
+    handleAction(action, data) {
+        if (!this.appElement.dataset.openAssetId) {
+            console.error(
+                `Unexpected action with no open asset: ${action} with data ${data}`
+            );
+            return;
+        } else {
+            console.debug(`User action ${action} with data ${data}`);
+        }
+
+        let openAssetId = this.appElement.dataset.openAssetId;
+        let asset = this.assets.get(openAssetId);
+        let currentTranscriptionId = asset.latest_transcription
+            ? asset.latest_transcription.id
+            : null;
+
+        switch (action) {
+            case 'save':
+                this.postAction(
+                    this.urlTemplates.saveTranscription.expand({
+                        assetId: openAssetId
+                    }),
+                    {
+                        text: data.text,
+                        supersedes: currentTranscriptionId
+                    }
+                ).done(responseData => {
+                    asset.latest_transcription.id = responseData.id;
+                    asset.latest_transcription.text = data.text;
+                });
+                break;
+            case 'submit':
+                if (!currentTranscriptionId) {
+                    throw 'Asked to submit an undefined transcription!';
+                }
+                this.postAction(
+                    this.urlTemplates.submitTranscription.expand({
+                        transcriptionId: currentTranscriptionId
+                    })
+                ).done((data, textStatus) => {
+                    alert(data, textStatus);
+                });
+                break;
+            case 'accept':
+                break;
+            case 'reject':
+                break;
+            default:
+                console.error(`Unknown action ${action} with data ${data}`);
+        }
+    }
+
+    postAction(url, payload) {
+        // FIXME: read-only UI until this completes
+        // FIXME: switch to Fetch API once we add CSRF compatibility
+        return jQuery
+            .ajax({
+                url: url,
+                method: 'POST',
+                dataType: 'json',
+                data: payload
+            })
+            .fail(function(jqXHR) {
+                if (jqXHR.status == 401) {
+                    // FIXME: implement generic CAPTCHA & retry
+                }
+            });
     }
 }

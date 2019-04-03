@@ -381,10 +381,10 @@ export class AssetList extends List {
 }
 
 class ReviewerView {
-    constructor() {
+    constructor(submitActionCallback) {
         this.displayText = html('#review-transcription-text');
 
-        this.editButton = html(
+        this.rejectButton = html(
             'button',
             {
                 id: 'reject-transcription-button',
@@ -394,6 +394,12 @@ class ReviewerView {
             },
             text('Edit')
         );
+        this.rejectButton.addEventListener('click', event => {
+            event.preventDefault();
+            submitActionCallback('reject');
+            return false;
+        });
+
         this.acceptButton = html(
             'button',
             {
@@ -404,13 +410,18 @@ class ReviewerView {
             },
             text('Accept')
         );
+        this.acceptButton.addEventListener('click', event => {
+            event.preventDefault();
+            submitActionCallback('accept');
+            return false;
+        });
 
         this.el = html(
             'div#reviewer-column.flex-column.flex-grow-1',
             this.displayText,
             html(
                 '.control-toolbar.my-3.d-print-none.d-flex.flex-wrap.justify-content-around.align-items-center.btn-row',
-                this.editButton,
+                this.rejectButton,
                 this.acceptButton
             )
         );
@@ -431,7 +442,7 @@ class ReviewerView {
 }
 
 class TranscriberView {
-    constructor() {
+    constructor(submitActionCallback) {
         this.textarea = html('textarea', {
             class: 'form-control w-100 rounded flex-grow-1 d-print-none',
             name: 'text',
@@ -439,6 +450,8 @@ class TranscriberView {
             id: 'transcription-input',
             'aria-label': 'Transcription input'
         });
+
+        // FIXME: review button blocking (is Submit disabled until you save, does it do so implicitly, etc.?)
 
         this.saveButton = html(
             'button',
@@ -450,6 +463,12 @@ class TranscriberView {
             },
             text('Save')
         );
+        this.saveButton.addEventListener('click', event => {
+            event.preventDefault();
+            submitActionCallback('save', {text: this.textarea.value});
+            return false;
+        });
+
         this.submitButton = html(
             'button',
             {
@@ -462,6 +481,11 @@ class TranscriberView {
             },
             text('Submit for Review')
         );
+        this.submitButton.addEventListener('click', event => {
+            event.preventDefault();
+            submitActionCallback('submit');
+            return false;
+        });
 
         let toolbar = html(
             'div',
@@ -525,7 +549,11 @@ class TranscriberView {
     }
 
     update(asset) {
-        this.textarea.value = asset.latest_transcription.text || '';
+        let text = '';
+        if (asset.latest_transcription && asset.latest_transcription.text) {
+            text = asset.latest_transcription.text;
+        }
+        this.textarea.value = text;
     }
 }
 
@@ -536,10 +564,14 @@ function conditionalUnmount(component) {
 }
 
 export class AssetViewer {
-    constructor() {
+    constructor(submitActionCallback) {
+        this.submitActionCallback = submitActionCallback;
+
         // FIXME: add seadragon viewer
-        this.reviewerView = new ReviewerView();
-        this.transcriberView = new TranscriberView();
+        this.reviewerView = new ReviewerView(this.submitAction.bind(this));
+        this.transcriberView = new TranscriberView(
+            this.submitAction.bind(this)
+        );
 
         // FIXME: finish pulling in the rest of this structure so it will all be created normally
         let element = document.getElementById('asset-viewer');
@@ -547,6 +579,10 @@ export class AssetViewer {
         this.el = element;
 
         setAttr(this.el, {class: 'initialized'});
+    }
+
+    submitAction(action, data) {
+        this.submitActionCallback(action, data);
     }
 
     setMode(newMode) {
