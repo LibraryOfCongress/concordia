@@ -212,11 +212,39 @@ def populate_asset_years():
     """
     Pull out date info from raw Item metadata and populate it for each Asset
     """
-    assets = Asset.objects.all()
-    for asset in assets:
-        metadata = asset.item.metadata
-        # I checked, and all of our data has only one entry in the dates list
-        date_info = metadata["item"]["dates"][0]
-        for asset_date in date_info:
-            asset.year = asset_date
-            asset.save()
+
+    asset_qs = Asset.objects.prefetch_related("item")
+
+    updated_count = 0
+
+    for asset_chunk in chunked(asset_qs, 500):
+        changed_assets = []
+
+        for asset in asset_chunk:
+            metadata = asset.item.metadata
+
+            year = None
+            for date_outer in metadata["item"]["dates"]:
+                for date_inner in date_outer.keys():
+                    if not date_inner.isdigit() or len(date_inner) != 4:
+                        logger.info(
+                            "Unexpected date format on item %s: %s",
+                            asset.item,
+                            date_inner,
+                        )
+                        continue
+
+                    year = date_inner
+                    break  # We don't support multiple values
+
+            if asset.year != year:
+                changed_assets.append(asset)
+
+        if changed_assets:
+            # We will only save the new difficulty score both for performance
+            # and to avoid any possibility of race conditions causing stale data
+            # to be saved:
+            Asset.objects.bulk_update(changed_assets, ["year"])
+            updated_count += len(changed_assets)
+
+    return updated_count
