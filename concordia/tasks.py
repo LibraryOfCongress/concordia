@@ -205,3 +205,18 @@ def calculate_difficulty_values(asset_qs=None):
             updated_count += len(changed_assets)
 
     return updated_count
+
+
+@task
+def populate_asset_years():
+    """
+    Pull out date info from raw Item metadata and populate it for each Asset
+    """
+    assets = Asset.objects.all()
+    for asset in assets:
+        metadata = asset.item.metadata
+        # I checked, and all of our data has only one entry in the dates list
+        date_info = metadata["item"]["dates"][0]
+        for asset_date in date_info:
+            asset.year = asset_date
+            asset.save()
