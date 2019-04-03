@@ -113,7 +113,7 @@ export class ActionApp {
         let assetSocket = (this.assetSocket = new WebSocket(assetSocketURL));
 
         assetSocket.onmessage = rawMessage => {
-            console.debug('Asset socket message: ', rawMessage);
+            console.debug('Asset socket message:', rawMessage);
 
             let data = JSON.parse(rawMessage.data);
             let message = data.message;
@@ -156,11 +156,11 @@ export class ActionApp {
         };
 
         assetSocket.onerror = evt => {
-            console.error('Asset socket error occurred: ', evt);
+            console.error('Asset socket error occurred:', evt);
         };
 
         assetSocket.onclose = evt => {
-            console.warn('Asset socket closed: ', evt);
+            console.warn('Asset socket closed:', evt);
             window.setTimeout(this.connectAssetEventStream.bind(this), 1000);
         };
     }
@@ -366,7 +366,7 @@ export class ActionApp {
         let freshestCopy;
         if (oldData.sent && oldData.sent > newData.sent) {
             console.warn(
-                'Updated data is older than our existing record: ',
+                'Updated data is older than our existing record:',
                 newData,
                 oldData
             );
