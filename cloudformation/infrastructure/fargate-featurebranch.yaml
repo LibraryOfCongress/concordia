@@ -166,8 +166,6 @@ Resources:
                 Value: !Ref CanonicalHostName
               - Name: DJANGO_SETTINGS_MODULE
                 Value: concordia.settings_ecs
-              - Name: USE_PERSISTENT_DATABASE_CONNECTIONS
-                Value: '1'
           MountPoints:
               - SourceVolume: images_volume
                 ContainerPath: /concordia_images

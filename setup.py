@@ -2,14 +2,14 @@
 from setuptools import find_packages, setup
 
 VERSION = __import__("concordia").get_version()
-INSTALL_REQUIREMENTS = ["boto3", "Django>=2.1.7"]
+INSTALL_REQUIREMENTS = ["boto3", "Django>=2.2"]
 SCRIPTS = ["manage.py"]
 DESCRIPTION = "Transcription crowdsourcing"
 CLASSIFIERS = """\
 Environment :: Web Environment
 Framework :: Django
 Programming Language :: Python
-Programming Language :: Python :: 3.6
+Programming Language :: Python :: 3.7
 """.splitlines()
 
 with open("README.md", "r") as f:
