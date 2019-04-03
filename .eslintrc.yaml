@@ -1,7 +1,10 @@
 root: true
-extends: eslint:recommended
+extends:
+    - eslint:recommended
+    - plugin:unicorn/recommended
 plugins:
     - prettier
+    - unicorn
 rules:
     indent:
         # https://eslint.org/docs/4.0.0/rules/indent
@@ -9,6 +12,7 @@ rules:
         - 2
         - 4
         - SwitchCase: 1
+    'unicorn/prefer-query-selector': off # See https://github.com/sindresorhus/eslint-plugin-unicorn/issues/276
 env:
     browser: true
     es6: true
