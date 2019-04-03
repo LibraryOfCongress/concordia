@@ -112,7 +112,7 @@ export class ActionApp {
         console.info(`Connecting to ${assetSocketURL}`);
         let assetSocket = (this.assetSocket = new WebSocket(assetSocketURL));
 
-        assetSocket.onmessage = rawMessage => {
+        assetSocket.addEventListener('message', rawMessage => {
             console.debug('Asset socket message:', rawMessage);
 
             let data = JSON.parse(rawMessage.data);
@@ -153,11 +153,11 @@ export class ActionApp {
                         `Unknown message type ${message.type}: ${message}`
                     );
             }
-        };
+        });
 
-        assetSocket.onerror = evt => {
+        assetSocket.addEventListener('error', evt => {
             console.error('Asset socket error occurred:', evt);
-        };
+        });
 
         assetSocket.onclose = evt => {
             console.warn('Asset socket closed:', evt);
