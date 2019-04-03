@@ -289,8 +289,8 @@ export class AssetList extends List {
             assetListObserver
         ]);
 
-        let assetOpenHandler = evt => {
-            let target = evt.target;
+        let assetOpenHandler = event => {
+            let target = event.target;
             if (target && target.classList.contains('asset')) {
                 callbacks.open(target);
                 return false;
@@ -298,9 +298,9 @@ export class AssetList extends List {
         };
 
         this.el.addEventListener('click', assetOpenHandler);
-        this.el.addEventListener('keydown', evt => {
-            if (evt.key == 'Enter' || evt.key == ' ') {
-                return assetOpenHandler(evt);
+        this.el.addEventListener('keydown', event => {
+            if (event.key == 'Enter' || event.key == ' ') {
+                return assetOpenHandler(event);
             }
         });
 
@@ -311,8 +311,8 @@ export class AssetList extends List {
         /* Tooltips */
         let tooltip = new AssetTooltip();
 
-        const handleTooltipShowEvent = evt => {
-            let target = evt.target;
+        const handleTooltipShowEvent = event => {
+            let target = event.target;
             if (target && target.classList.contains('asset')) {
                 const asset = assets.get(target.dataset.id);
                 tooltip.update(asset);
@@ -336,10 +336,10 @@ export class AssetList extends List {
         this.el.addEventListener('mouseout', handleTooltipHideEvent);
         this.el.addEventListener('focusout', handleTooltipHideEvent);
 
-        $('#asset-list-thumbnail-size').addEventListener('input', evt => {
+        $('#asset-list-thumbnail-size').addEventListener('input', event => {
             this.el.style.setProperty(
                 '--asset-thumbnail-size',
-                evt.target.value + 'px'
+                event.target.value + 'px'
             );
             this.attemptAssetLazyLoad();
         });
@@ -368,9 +368,9 @@ export class AssetList extends List {
 
     setActiveAsset(assetElement) {
         // TODO: stop using Bootstrap classes directly and toggle semantic classes only
-        $$('.asset.asset-active', this.el).forEach(elem => {
-            if (elem != assetElement) {
-                elem.classList.remove('asset-active', 'border-primary');
+        $$('.asset.asset-active', this.el).forEach(element => {
+            if (element != assetElement) {
+                element.classList.remove('asset-active', 'border-primary');
             }
         });
 
@@ -542,9 +542,9 @@ export class AssetViewer {
         this.transcriberView = new TranscriberView();
 
         // FIXME: finish pulling in the rest of this structure so it will all be created normally
-        let elem = document.getElementById('asset-viewer');
-        elem.remove();
-        this.el = elem;
+        let element = document.getElementById('asset-viewer');
+        element.remove();
+        this.el = element;
 
         setAttr(this.el, {class: 'initialized'});
     }
@@ -584,8 +584,8 @@ export class AssetViewer {
                 link.href = data.url;
             });
 
-            $$(`.${prefix}-title`, this.el).forEach(elem => {
-                elem.textContent = data.title;
+            $$(`.${prefix}-title`, this.el).forEach(element => {
+                element.textContent = data.title;
             });
         });
 
