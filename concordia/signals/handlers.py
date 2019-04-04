@@ -45,12 +45,15 @@ def update_asset_status(sender, *, instance, **kwargs):
 
 @receiver(post_save, sender=Asset)
 def send_asset_update(*, instance, **kwargs):
-    submitted_by = latest_text = None
+    submitted_by = latest_trans = None
 
     latest_transcription = instance.transcription_set.order_by("-pk").first()
     if latest_transcription:
         submitted_by = latest_transcription.user.pk
-        latest_text = latest_transcription.text
+        latest_trans = {
+            "text": latest_transcription.text,
+            "id": latest_transcription.pk,
+        }
 
     AsyncToSync(ASSET_CHANNEL_LAYER.group_send)(
         "asset_updates",
@@ -60,7 +63,7 @@ def send_asset_update(*, instance, **kwargs):
             "status": instance.transcription_status,
             "difficulty": instance.difficulty,
             "submitted_by": submitted_by,
-            "latest_transcription": latest_text,
+            "latest_transcription": latest_trans,
         },
     )
 
