@@ -133,7 +133,6 @@ MEMCACHED_ADDRESS = os.getenv("MEMCACHED_ADDRESS", "")
 MEMCACHED_PORT = os.getenv("MEMCACHED_PORT", "")
 
 if MEMCACHED_ADDRESS and MEMCACHED_PORT:
-
     CACHES = {
         "default": {
             "BACKEND": "django.core.cache.backends.memcached.MemcachedCache",
@@ -142,9 +141,7 @@ if MEMCACHED_ADDRESS and MEMCACHED_PORT:
     }
 
     SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
-
 else:
-
     CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
 
     SESSION_ENGINE = "django.contrib.sessions.backends.db"
@@ -156,9 +153,15 @@ HAYSTACK_CONNECTIONS = {
     }
 }
 
-# Celery settings
-CELERY_BROKER_URL = "redis://redis:6379/0"
-CELERY_RESULT_BACKEND = "redis://redis:6379/0"
+REDIS_ADDRESS = os.environ.get("REDIS_ADDRESS", "localhost")
+REDIS_PORT = os.environ.get("REDIS_PORT", "")
+if REDIS_PORT.isdigit():
+    REDIS_PORT = int(REDIS_PORT)
+else:
+    REDIS_PORT = 6379
+
+CELERY_BROKER_URL = f"redis://{REDIS_ADDRESS}:{REDIS_PORT}/0"
+CELERY_RESULT_BACKEND = f"redis://{REDIS_ADDRESS}:{REDIS_PORT}/0"
 
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
@@ -315,6 +318,6 @@ ASGI_APPLICATION = "concordia.routing.application"
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {"hosts": [("redis", 6379)]},
+        "CONFIG": {"hosts": [(REDIS_ADDRESS, REDIS_PORT)]},
     }
 }
