@@ -1,4 +1,4 @@
-/* global OpenSeadragon Split jQuery */
+/* global OpenSeadragon Split jQuery URITemplate */
 /* eslint-disable no-console */
 
 import {
@@ -22,6 +22,11 @@ export class ActionApp {
         */
 
         this.config = Object.assign({}, config);
+
+        this.urlTemplates = {};
+        Object.entries(config.urlTemplates).forEach(([key, value]) => {
+            this.urlTemplates[key] = new URITemplate(value);
+        });
 
         this.appElement = $('#action-app-main');
 
@@ -294,10 +299,9 @@ export class ActionApp {
     }
 
     fetchAssetData() {
-        let url = this.config.urlTemplates.assetData.replace(
-            /{action}/,
-            this.currentMode
-        );
+        let url = this.urlTemplates.assetData.expand({
+            action: this.currentMode
+        });
 
         this.fetchAssetPage(url);
     }
@@ -547,10 +551,9 @@ export class ActionApp {
 
         this.openAssetElement = assetElement;
 
-        this.assetReservationURL = this.config.urlTemplates.assetReservation.replace(
-            /{assetId}/,
-            encodeURIComponent(asset.id)
-        );
+        this.assetReservationURL = this.urlTemplates.assetReservation.expand({
+            assetId: encodeURIComponent(asset.id)
+        });
 
         this.reserveAsset();
 
