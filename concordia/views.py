@@ -1587,7 +1587,7 @@ def action_app(request):
                     "assetData": "/{action}.json",
                     "assetReservation": "/reserve-asset/{assetId}/",
                     "saveTranscription": "/assets/{assetId}/transcriptions/save/",
-                    "submitTranscription": "/assets/{assetId}/transcriptions/submit/",
+                    "submitTranscription": "/transcriptions/{transcriptionId}/submit/",
                     "reviewTranscription": "/transcriptions/{transcriptionId}/review/",
                 },
             },
