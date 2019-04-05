@@ -647,6 +647,9 @@ export class ActionApp {
 
         editor.classList.toggle('reserved', enableEditing);
 
+        // FIXME: refactor this to work with the assetViewer component
+        return;
+
         if (!enableEditing) {
             $$('input,button', editor).forEach(i =>
                 i.setAttribute('disabled', 'disabled')

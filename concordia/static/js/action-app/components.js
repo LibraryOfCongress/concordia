@@ -450,8 +450,12 @@ class TranscriberView {
             id: 'transcription-input',
             'aria-label': 'Transcription input'
         });
-
-        // FIXME: review button blocking (is Submit disabled until you save, does it do so implicitly, etc.?)
+        this.textarea.addEventListener('change', () =>
+            this.checkButtonAvailability()
+        );
+        this.textarea.addEventListener('input', () =>
+            this.checkButtonAvailability()
+        );
 
         this.saveButton = html(
             'button',
@@ -513,6 +517,8 @@ class TranscriberView {
             setAttr(this.textarea, {
                 disabled: nothingToTranscribe
             });
+
+            this.checkButtonAvailability();
         });
 
         let toolbar = html(
@@ -573,12 +579,36 @@ class TranscriberView {
     }
 
     update(asset) {
+        this.currentAsset = asset;
         let text = '';
         if (asset.latest_transcription && asset.latest_transcription.text) {
             text = asset.latest_transcription.text;
         }
-        this.textarea.value = text;
+
         this.nothingToTranscribeCheckbox.checked = false;
+
+        // <textarea> values will alter the input string related to
+        // line-termination so we will store a copy of the *modified* version so
+        // we can later check whether the user has altered it
+        this.textarea.value = text;
+        this.lastLoadedText = this.textarea.value;
+        this.checkButtonAvailability();
+    }
+
+    checkButtonAvailability() {
+        /*
+            The Save button is available when the text input matches the last
+            saved transcription. The Submit button is available when the
+            transcription has been saved and no further changes have been made.
+         */
+
+        let transcription = this.currentAsset.latest_transcription;
+
+        let saved = Boolean(transcription && transcription.id);
+        let unmodified = saved && this.lastLoadedText === this.textarea.value;
+
+        setAttr(this.saveButton, {disabled: unmodified});
+        setAttr(this.submitButton, {disabled: !unmodified});
     }
 }
 
