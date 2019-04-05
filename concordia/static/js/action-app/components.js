@@ -439,6 +439,11 @@ class ReviewerView {
             this.displayText.innerHTML = 'Nothing to transcribe';
         }
     }
+
+    setEditState(enableEditing) {
+        setAttr(this.rejectButton, {disabled: !enableEditing});
+        setAttr(this.acceptButton, {disabled: !enableEditing});
+    }
 }
 
 class TranscriberView {
