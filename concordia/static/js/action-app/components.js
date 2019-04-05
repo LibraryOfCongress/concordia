@@ -493,34 +493,26 @@ class TranscriberView {
             class: 'form-check-input'
         });
         this.nothingToTranscribeCheckbox.addEventListener('change', () => {
-            if (this.nothingToTranscribeCheckbox.checked) {
-                if (this.textarea.value) {
-                    if (
-                        !confirm(
-                            'You currently have entered text which will not be saved because “Nothing to transcribe” is checked. Do you want to discard that text?'
-                        )
-                    ) {
-                        setAttr(this.nothingToTranscribeCheckbox, {
-                            checked: false
-                        });
-                    } else {
-                        // Make the textarea readonly and blank
-                        setAttr(this.textarea, {
-                            disabled: true,
-                            value: ''
-                        });
-                    }
-                } else {
-                    // Make the textarea readonly
-                    setAttr(this.textarea, {
-                        disabled: true
+            let nothingToTranscribe = this.nothingToTranscribeCheckbox.checked;
+            if (nothingToTranscribe && this.textarea.value) {
+                if (
+                    !confirm(
+                        'You currently have entered text which will not be saved because “Nothing to transcribe” is checked. Do you want to discard that text?'
+                    )
+                ) {
+                    nothingToTranscribe = false;
+                    setAttr(this.nothingToTranscribeCheckbox, {
+                        checked: false
                     });
+                } else {
+                    // Clear the transcription text as requested:
+                    this.textarea.value = '';
                 }
-            } else {
-                setAttr(this.textarea, {
-                    disabled: false
-                });
             }
+
+            setAttr(this.textarea, {
+                disabled: nothingToTranscribe
+            });
         });
 
         let toolbar = html(
