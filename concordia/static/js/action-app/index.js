@@ -639,34 +639,16 @@ export class ActionApp {
             return;
         }
 
-        let editor = document.getElementById('editor-column');
-
         let enableEditing =
             !this.openAssetElement.classList.contains('unavailable') &&
             this.openAssetElement.classList.contains('reserved');
 
-        editor.classList.toggle('reserved', enableEditing);
-
-        // FIXME: refactor this to work with the assetViewer component
-        return;
-
-        if (!enableEditing) {
-            $$('input,button', editor).forEach(i =>
-                i.setAttribute('disabled', 'disabled')
-            );
-            $$('textarea', editor).forEach(i =>
-                i.setAttribute('readonly', 'readonly')
-            );
-        } else {
-            $$('button,input,textarea', editor).forEach(i => {
-                i.removeAttribute('disabled');
-                i.removeAttribute('readonly');
-            });
-        }
+        this.assetViewer.setEditState(enableEditing);
     }
 
     reserveAsset() {
         if (!this.assetReservationURL) {
+            console.log('Called without asset reservation URL!', this);
             return;
         }
 

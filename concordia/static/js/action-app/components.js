@@ -596,19 +596,33 @@ class TranscriberView {
     }
 
     checkButtonAvailability() {
-        /*
-            The Save button is available when the text input matches the last
-            saved transcription. The Submit button is available when the
-            transcription has been saved and no further changes have been made.
-         */
+        let enableSave = false;
+        let enableSubmit = false;
 
-        let transcription = this.currentAsset.latest_transcription;
+        if (this.enableEditing) {
+            /*
+                The Save button is available when the text input matches the
+                last saved transcription. The Submit button is available when
+                the transcription has been saved and no further changes have
+                been made.
+             */
 
-        let saved = Boolean(transcription && transcription.id);
-        let unmodified = saved && this.lastLoadedText === this.textarea.value;
+            let transcription = this.currentAsset.latest_transcription;
 
-        setAttr(this.saveButton, {disabled: unmodified});
-        setAttr(this.submitButton, {disabled: !unmodified});
+            let saved = Boolean(transcription && transcription.id);
+            let unmodified =
+                saved && this.lastLoadedText === this.textarea.value;
+
+            enableSave = !unmodified;
+            enableSubmit = unmodified;
+        }
+
+        setAttr(this.saveButton, {disabled: !enableSave});
+        setAttr(this.submitButton, {disabled: !enableSubmit});
+    }
+
+    setEditState(enableEditing) {
+        this.enableEditing = enableEditing;
     }
 }
 
@@ -654,6 +668,13 @@ export class AssetViewer {
         }
 
         mount($('#editor-column', this.el), this.activeView);
+    }
+
+    setEditState(enableEditing) {
+        // Set whether or not changes should be globally unavailable, as when we
+        // don't have a reservation or an AJAX operation is in progress
+
+        this.activeView.setEditState(enableEditing);
     }
 
     update(mode, asset) {
