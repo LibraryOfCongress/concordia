@@ -487,6 +487,42 @@ class TranscriberView {
             return false;
         });
 
+        this.nothingToTranscribeCheckbox = html('input', {
+            id: 'nothing-to-transcribe',
+            type: 'checkbox',
+            class: 'form-check-input'
+        });
+        this.nothingToTranscribeCheckbox.addEventListener('change', () => {
+            if (this.nothingToTranscribeCheckbox.checked) {
+                if (this.textarea.value) {
+                    if (
+                        !confirm(
+                            'You currently have entered text which will not be saved because “Nothing to transcribe” is checked. Do you want to discard that text?'
+                        )
+                    ) {
+                        setAttr(this.nothingToTranscribeCheckbox, {
+                            checked: false
+                        });
+                    } else {
+                        // Make the textarea readonly and blank
+                        setAttr(this.textarea, {
+                            disabled: true,
+                            value: ''
+                        });
+                    }
+                } else {
+                    // Make the textarea readonly
+                    setAttr(this.textarea, {
+                        disabled: true
+                    });
+                }
+            } else {
+                setAttr(this.textarea, {
+                    disabled: false
+                });
+            }
+        });
+
         let toolbar = html(
             'div',
             {
@@ -496,11 +532,7 @@ class TranscriberView {
             html(
                 'div',
                 {class: 'form-check w-100 text-center mt-0 mb-3'},
-                html('input', {
-                    id: 'nothing-to-transcribe',
-                    type: 'checkbox',
-                    class: 'form-check-input'
-                }),
+                this.nothingToTranscribeCheckbox,
                 html(
                     'label',
                     {
