@@ -681,7 +681,7 @@ export class ActionApp {
                     this.openAssetElement.classList.add('reserved');
                     this.checkViewerAvailability();
                     // If the asset was successfully reserved, continue reserving it
-                    window.setTimeout(this.reserveAsset, 60000);
+                    window.setTimeout(this.reserveAsset.bind(this), 60000);
                 } else {
                     throw 'Open asset was closed before we could reserve it';
                 }
