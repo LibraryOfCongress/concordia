@@ -648,7 +648,7 @@ export class ActionApp {
 
     reserveAsset() {
         if (!this.assetReservationURL) {
-            console.log('Called without asset reservation URL!', this);
+            console.warn('reserveAsset called without asset reservation URL!');
             return;
         }
 
@@ -679,6 +679,7 @@ export class ActionApp {
 
     releaseAsset() {
         if (!this.assetReservationURL) {
+            console.warn('releaseAsset called without asset reservation URL!');
             return;
         }
 
