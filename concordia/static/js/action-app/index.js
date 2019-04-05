@@ -675,8 +675,6 @@ export class ActionApp {
                     errorThrown
                 );
             });
-
-        // FIXME: update the asset list & viewer components!
     }
 
     releaseAsset() {
@@ -686,6 +684,7 @@ export class ActionApp {
 
         if (this.openAssetElement) {
             this.openAssetElement.classList.remove('reserved');
+            this.checkViewerAvailability();
         }
 
         let payload = {
@@ -699,8 +698,6 @@ export class ActionApp {
                 type: 'application/x-www-form-urlencoded'
             })
         );
-
-        // FIXME: update the asset list & viewer components!
     }
 
     handleAction(action, data) {
