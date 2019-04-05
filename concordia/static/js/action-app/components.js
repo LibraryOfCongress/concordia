@@ -578,6 +578,7 @@ class TranscriberView {
             text = asset.latest_transcription.text;
         }
         this.textarea.value = text;
+        this.nothingToTranscribeCheckbox.checked = false;
     }
 }
 
