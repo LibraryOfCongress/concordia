@@ -610,7 +610,7 @@ class TranscriberView {
 
         if (this.enableEditing) {
             /*
-                The Save button is available when the text input matches the
+                The Save button is available when the text input does not match the
                 last saved transcription. The Submit button is available when
                 the transcription has been saved and no further changes have
                 been made.
