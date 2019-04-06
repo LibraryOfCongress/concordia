@@ -728,6 +728,9 @@ export class ActionApp {
                         supersedes: currentTranscriptionId
                     }
                 ).done(responseData => {
+                    if (!asset.latest_transcription) {
+                        asset.latest_transcription = {};
+                    }
                     asset.latest_transcription.id = responseData.id;
                     asset.latest_transcription.text = data.text;
                 });
