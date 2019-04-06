@@ -1,3 +1,5 @@
+/* global jQuery */
+
 import {$, $$} from './utils/dom.js';
 
 import {
@@ -556,7 +558,7 @@ class TranscriberView {
                         title: 'Help',
                         'data-html': 'true',
                         'data-content':
-                            'FIXME: ⚠️ THIS POPOVER NEEDS UPDATING ⚠️'
+                            'If it looks like there’s nothing to transcribe, use this button and then Submit. Not sure? Check these tips: <a target="_blank" href="/help-center/how-to-transcribe/">how to transcribe</a>'
                     },
                     html('span', {
                         class: 'fas fa-question-circle',
@@ -598,6 +600,8 @@ class TranscriberView {
         this.textarea.value = text;
         this.lastLoadedText = this.textarea.value;
         this.checkButtonAvailability();
+
+        jQuery('[data-toggle="popover"]').popover();
     }
 
     checkButtonAvailability() {
