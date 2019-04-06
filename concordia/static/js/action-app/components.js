@@ -476,6 +476,7 @@ class TranscriberView {
         );
         this.saveButton.addEventListener('click', event => {
             event.preventDefault();
+            this.lastLoadedText = this.textarea.value;
             submitActionCallback('save', {text: this.textarea.value});
             this.checkButtonAvailability();
             return false;
