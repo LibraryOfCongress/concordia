@@ -813,6 +813,10 @@ export class ActionApp {
                     this.mergeAssetUpdate(responseData.asset.id, {
                         status: responseData.asset.status
                     });
+                    this.markAssetAsUnavailable(
+                        openAssetId,
+                        'Submitted for review'
+                    );
                     updateView();
                 });
                 break;
