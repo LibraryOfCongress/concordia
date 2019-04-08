@@ -772,7 +772,10 @@ export class ActionApp {
             : null;
 
         let updateView = () => {
-            this.assetViewer.update(this.currentMode, asset);
+            this.assetViewer.update(
+                this.currentMode,
+                this.assets.get(openAssetId)
+            );
             this.updateAssetList();
         };
 

@@ -431,6 +431,8 @@ class ReviewerView {
     }
 
     update(asset) {
+        this.currentAsset = asset;
+
         this.el.classList.toggle(
             'nothing-to-transcribe',
             !asset.latest_transcription
@@ -444,6 +446,8 @@ class ReviewerView {
     }
 
     setEditorAvailability(enableEditing) {
+        let acceptableStatus = this.currentAsset.status === 'submitted';
+        enableEditing = enableEditing && acceptableStatus;
         setAttr(this.rejectButton, {disabled: !enableEditing});
         setAttr(this.acceptButton, {disabled: !enableEditing});
     }
@@ -615,7 +619,11 @@ class TranscriberView {
         let enableSave = false;
         let enableSubmit = false;
 
-        if (this.enableEditing) {
+        let acceptableStatus = ['not_started', 'in_progress'].includes(
+            this.currentAsset.status
+        );
+
+        if (this.enableEditing && acceptableStatus) {
             /*
                 The Save button is available when the text input does not match the
                 last saved transcription. The Submit button is available when
@@ -696,6 +704,8 @@ export class AssetViewer {
 
     update(mode, asset) {
         this.setMode(mode);
+
+        this.el.dataset.assetStatus = asset.status;
 
         this.activeView.update(asset);
 
