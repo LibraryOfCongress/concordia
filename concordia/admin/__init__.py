@@ -33,6 +33,7 @@ from ..views import ReportCampaignView
 from .actions import (
     publish_action,
     publish_item_action,
+    reopen_asset_action,
     unpublish_action,
     unpublish_item_action,
 )
@@ -291,7 +292,7 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         "media_type",
         "transcription_status",
     )
-    actions = (publish_action, unpublish_action)
+    actions = (publish_action, reopen_asset_action, unpublish_action)
     autocomplete_fields = ("item",)
     ordering = ("item__item_id", "sequence")
 
