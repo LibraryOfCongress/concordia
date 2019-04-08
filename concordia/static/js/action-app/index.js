@@ -785,7 +785,8 @@ export class ActionApp {
     }
 
     postAction(url, payload) {
-        // FIXME: read-only UI until this completes
+        this.setEditorAvailability(false);
+
         // FIXME: switch to Fetch API once we add CSRF compatibility
         return jQuery
             .ajax({
@@ -793,6 +794,9 @@ export class ActionApp {
                 method: 'POST',
                 dataType: 'json',
                 data: payload
+            })
+            .always(() => {
+                this.setEditorAvailability(true);
             })
             .fail(function(jqXHR) {
                 if (jqXHR.status == 401) {
