@@ -463,13 +463,13 @@ class TranscriberView {
             'aria-label': 'Transcription input'
         });
         this.textarea.addEventListener('change', () =>
-            this.checkButtonAvailability()
+            this.updateToolbarAvailability()
         );
         this.textarea.addEventListener('input', () => {
             if (this.textarea.value) {
                 this.nothingToTranscribeCheckbox.checked = false;
             }
-            this.checkButtonAvailability();
+            this.updateToolbarAvailability();
         });
 
         this.saveButton = html(
@@ -486,7 +486,7 @@ class TranscriberView {
             event.preventDefault();
             this.lastLoadedText = this.textarea.value;
             submitActionCallback('save', {text: this.textarea.value});
-            this.checkButtonAvailability();
+            this.updateToolbarAvailability();
             return false;
         });
 
@@ -535,10 +535,10 @@ class TranscriberView {
                 disabled: nothingToTranscribe
             });
 
-            this.checkButtonAvailability();
+            this.updateToolbarAvailability();
         });
 
-        let toolbar = html(
+        this.toolbar = html(
             'div',
             {
                 class:
@@ -590,7 +590,7 @@ class TranscriberView {
                     class: 'flex-grow-1 d-flex flex-column'
                 },
                 this.textarea,
-                toolbar
+                this.toolbar
             )
         );
     }
@@ -616,10 +616,10 @@ class TranscriberView {
         // we can later check whether the user has altered it
         this.textarea.value = text;
         this.lastLoadedText = this.textarea.value;
-        this.checkButtonAvailability();
+        this.updateToolbarAvailability();
     }
 
-    checkButtonAvailability() {
+    updateToolbarAvailability() {
         let enableSave = false;
         let enableSubmit = false;
         let enableNTT = false;
@@ -627,6 +627,9 @@ class TranscriberView {
         let acceptableStatus = ['not_started', 'in_progress'].includes(
             this.currentAsset.status
         );
+
+        // FIXME: this doesn't work yet because this still has the Bootstrap d-flex class. It will start working as soon as we move that into our own SCSS without !important.
+        setAttr(this.toolbar, {hidden: !acceptableStatus});
 
         if (this.enableEditing && acceptableStatus) {
             /*
