@@ -57,10 +57,11 @@ main {
         transition-property: height, width;
         transition-duration: 0.1s;
 
-        &.unavailable {
+        &[data-unavailable] {
             filter: grayscale(0.9);
+
             &::after {
-                content: 'Someone else is working on this';
+                content: '🔒' attr(data-unavailable);
                 text-align: center;
                 align-self: center;
                 width: 100%;

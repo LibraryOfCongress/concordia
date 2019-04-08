@@ -147,7 +147,10 @@ export class ActionApp {
                         (this.config.currentUser &&
                             this.config.currentUser != message.user_pk)
                     ) {
-                        this.markAssetAsUnavailable(assetId);
+                        this.markAssetAsUnavailable(
+                            assetId,
+                            'Someone else is working on this'
+                        );
                     }
                     break;
                 case 'asset_reservation_released':
@@ -412,16 +415,16 @@ export class ActionApp {
         let assetElement = document.getElementById(assetId);
         if (assetElement) {
             console.info(`Marking asset ${assetId} available`);
-            assetElement.classList.remove('available');
+            delete assetElement.dataset.unavailable;
             this.updateEditorAvailability();
         }
     }
 
-    markAssetAsUnavailable(assetId) {
+    markAssetAsUnavailable(assetId, reason) {
         let assetElement = document.getElementById(assetId);
         if (assetElement) {
             console.info(`Marking asset ${assetId} unavailable`);
-            assetElement.classList.add('unavailable');
+            assetElement.dataset.unavailable = reason;
             this.updateEditorAvailability();
         }
     }
@@ -803,6 +806,7 @@ export class ActionApp {
                     this.mergeAssetUpdate(responseData.asset.id, {
                         status: responseData.asset.status
                     });
+                    this.markAssetAsUnavailable(openAssetId, 'Completed');
                     updateView();
                 });
                 break;
