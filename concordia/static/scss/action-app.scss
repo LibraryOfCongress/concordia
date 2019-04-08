@@ -181,7 +181,7 @@ main {
     max-height: 100%;
     overflow-y: scroll;
 
-    white-space: pre;
+    white-space: pre-wrap;
 
     .nothing-to-transcribe & {
         font-style: oblique;
