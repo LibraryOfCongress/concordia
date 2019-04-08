@@ -746,7 +746,10 @@ export class ActionApp {
                         asset.latest_transcription = {};
                     }
                     asset.latest_transcription.id = responseData.id;
-                    asset.latest_transcription.text = data.text;
+                    asset.latest_transcription.text = responseData.text;
+                    this.mergeAssetUpdate(responseData.asset.id, {
+                        status: responseData.asset.status
+                    });
                     updateView();
                 });
                 break;
@@ -758,8 +761,10 @@ export class ActionApp {
                     this.urlTemplates.submitTranscription.expand({
                         transcriptionId: currentTranscriptionId
                     })
-                ).done((data, textStatus) => {
-                    alert(data, textStatus);
+                ).done(responseData => {
+                    this.mergeAssetUpdate(responseData.asset.id, {
+                        status: responseData.asset.status
+                    });
                     updateView();
                 });
                 break;
@@ -769,9 +774,9 @@ export class ActionApp {
                         transcriptionId: currentTranscriptionId
                     }),
                     {action: 'accept'}
-                ).done(data => {
-                    this.mergeAssetUpdate(data.asset.id, {
-                        status: data.asset.status
+                ).done(responseData => {
+                    this.mergeAssetUpdate(responseData.asset.id, {
+                        status: responseData.asset.status
                     });
                     updateView();
                 });
@@ -782,9 +787,9 @@ export class ActionApp {
                         transcriptionId: currentTranscriptionId
                     }),
                     {action: 'reject'}
-                ).done(data => {
-                    this.mergeAssetUpdate(data.asset.id, {
-                        status: data.asset.status
+                ).done(responseData => {
+                    this.mergeAssetUpdate(responseData.asset.id, {
+                        status: responseData.asset.status
                     });
                     updateView();
                 });
