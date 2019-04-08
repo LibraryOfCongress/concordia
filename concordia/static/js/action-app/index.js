@@ -411,7 +411,7 @@ export class ActionApp {
         if (assetElement) {
             console.info(`Marking asset ${assetId} available`);
             assetElement.classList.remove('available');
-            this.checkViewerAvailability();
+            this.updateEditorAvailability();
         }
     }
 
@@ -420,7 +420,7 @@ export class ActionApp {
         if (assetElement) {
             console.info(`Marking asset ${assetId} unavailable`);
             assetElement.classList.add('unavailable');
-            this.checkViewerAvailability();
+            this.updateEditorAvailability();
         }
     }
 
@@ -607,7 +607,7 @@ export class ActionApp {
 
         this.seadragonViewer.open(tileSources, initialPage);
 
-        this.checkViewerAvailability();
+        this.updateEditorAvailability();
 
         window.requestAnimationFrame(() => {
             // This will trigger the CSS which displays the viewer:
@@ -634,16 +634,26 @@ export class ActionApp {
         this.assetList.scrollToActiveAsset();
     }
 
-    checkViewerAvailability() {
+    setEditorAvailability(enableEditing) {
+        // Set whether or not the ability to make changes should be globally
+        // unavailable such as when we don't have a reservation or an AJAX
+        // operation is in progress:
+
+        this.enableEditing = enableEditing;
+        this.updateEditorAvailability();
+    }
+
+    updateEditorAvailability() {
         if (!this.appElement.dataset.openAssetId || !this.openAssetElement) {
             return;
         }
 
         let enableEditing =
+            this.enableEditing &&
             !this.openAssetElement.classList.contains('unavailable') &&
             this.openAssetElement.classList.contains('reserved');
 
-        this.assetViewer.setEditState(enableEditing);
+        this.assetViewer.setEditorAvailability(enableEditing);
     }
 
     reserveAsset() {
@@ -661,7 +671,7 @@ export class ActionApp {
             .done(() => {
                 if (this.openAssetElement) {
                     this.openAssetElement.classList.add('reserved');
-                    this.checkViewerAvailability();
+                    this.setEditorAvailability(true);
                     // If the asset was successfully reserved, continue reserving it
                     window.setTimeout(this.reserveAsset.bind(this), 60000);
                 } else {
@@ -685,7 +695,7 @@ export class ActionApp {
 
         if (this.openAssetElement) {
             this.openAssetElement.classList.remove('reserved');
-            this.checkViewerAvailability();
+            this.setEditorAvailability(false);
         }
 
         let payload = {

@@ -442,7 +442,7 @@ class ReviewerView {
         }
     }
 
-    setEditState(enableEditing) {
+    setEditorAvailability(enableEditing) {
         setAttr(this.rejectButton, {disabled: !enableEditing});
         setAttr(this.acceptButton, {disabled: !enableEditing});
     }
@@ -632,7 +632,7 @@ class TranscriberView {
         setAttr(this.submitButton, {disabled: !enableSubmit});
     }
 
-    setEditState(enableEditing) {
+    setEditorAvailability(enableEditing) {
         this.enableEditing = enableEditing;
     }
 }
@@ -681,11 +681,12 @@ export class AssetViewer {
         mount($('#editor-column', this.el), this.activeView);
     }
 
-    setEditState(enableEditing) {
-        // Set whether or not changes should be globally unavailable, as when we
-        // don't have a reservation or an AJAX operation is in progress
+    setEditorAvailability(enableEditing) {
+        // Set whether or not the ability to make changes should be globally
+        // unavailable such as when we don't have a reservation or an AJAX
+        // operation is in progress:
 
-        this.activeView.setEditState(enableEditing);
+        this.activeView.setEditorAvailability(enableEditing);
     }
 
     update(mode, asset) {
