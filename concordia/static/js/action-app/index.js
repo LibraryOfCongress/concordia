@@ -748,8 +748,26 @@ export class ActionApp {
                 });
                 break;
             case 'accept':
+                this.postAction(
+                    this.urlTemplates.reviewTranscription.expand({
+                        transcriptionId: currentTranscriptionId
+                    }),
+                    {action: 'accept'}
+                ).done((data, textStatus) => {
+                    // FIXME: update asset status
+                    alert(data, textStatus);
+                });
                 break;
             case 'reject':
+                this.postAction(
+                    this.urlTemplates.reviewTranscription.expand({
+                        transcriptionId: currentTranscriptionId
+                    }),
+                    {action: 'reject'}
+                ).done((data, textStatus) => {
+                    // FIXME: update asset status
+                    alert(data, textStatus);
+                });
                 break;
             default:
                 console.error(`Unknown action ${action} with data ${data}`);
