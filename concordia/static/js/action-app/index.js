@@ -413,7 +413,8 @@ export class ActionApp {
 
     markAssetAsAvailable(assetId) {
         let assetElement = document.getElementById(assetId);
-        if (assetElement) {
+
+        if (assetElement && this.assets.get(assetId).status != 'completed') {
             console.info(`Marking asset ${assetId} available`);
             delete assetElement.dataset.unavailable;
             this.updateEditorAvailability();
