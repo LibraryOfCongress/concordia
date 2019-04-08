@@ -585,6 +585,10 @@ export class ActionApp {
         });
 
         this.reserveAsset();
+        this.reservationTimer = window.setInterval(
+            this.reserveAsset.bind(this),
+            30000
+        );
 
         this.metadataPanel = new MetadataPanel(asset);
         mount(
@@ -651,6 +655,10 @@ export class ActionApp {
         delete this.appElement.dataset.openAssetId;
         delete this.openAssetElement;
 
+        if (this.reservationTimer) {
+            window.clearInterval(this.reservationTimer);
+        }
+
         if (this.seadragonViewer.isOpen()) {
             this.seadragonViewer.close();
         }
@@ -697,13 +705,13 @@ export class ActionApp {
                 dataType: 'json'
             })
             .done(() => {
-                if (this.openAssetElement) {
+                if (!this.openAssetElement) {
+                    throw 'Open asset was closed before we could reserve it';
+                }
+
+                if (!this.openAssetElement.classList.contains('reserved')) {
                     this.openAssetElement.classList.add('reserved');
                     this.setEditorAvailability(true);
-                    // If the asset was successfully reserved, continue reserving it
-                    window.setTimeout(this.reserveAsset.bind(this), 60000);
-                } else {
-                    throw 'Open asset was closed before we could reserve it';
                 }
             })
             .fail((jqXHR, textStatus, errorThrown) => {
