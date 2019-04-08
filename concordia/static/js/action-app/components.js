@@ -618,6 +618,7 @@ class TranscriberView {
     checkButtonAvailability() {
         let enableSave = false;
         let enableSubmit = false;
+        let enableNTT = false;
 
         let acceptableStatus = ['not_started', 'in_progress'].includes(
             this.currentAsset.status
@@ -639,10 +640,14 @@ class TranscriberView {
 
             enableSave = !unmodified;
             enableSubmit = unmodified;
+            enableNTT = true;
         }
 
         setAttr(this.saveButton, {disabled: !enableSave});
         setAttr(this.submitButton, {disabled: !enableSubmit});
+        setAttr(this.nothingToTranscribeCheckbox, {
+            disabled: !enableNTT
+        });
     }
 
     setEditorAvailability(enableEditing) {
