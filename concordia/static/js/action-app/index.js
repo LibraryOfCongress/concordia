@@ -727,6 +727,10 @@ export class ActionApp {
             ? asset.latest_transcription.id
             : null;
 
+        let updateView = () => {
+            this.assetViewer.update(this.currentMode, asset);
+        };
+
         switch (action) {
             case 'save':
                 this.postAction(
@@ -743,6 +747,7 @@ export class ActionApp {
                     }
                     asset.latest_transcription.id = responseData.id;
                     asset.latest_transcription.text = data.text;
+                    updateView();
                 });
                 break;
             case 'submit':
@@ -755,6 +760,7 @@ export class ActionApp {
                     })
                 ).done((data, textStatus) => {
                     alert(data, textStatus);
+                    updateView();
                 });
                 break;
             case 'accept':
@@ -763,9 +769,11 @@ export class ActionApp {
                         transcriptionId: currentTranscriptionId
                     }),
                     {action: 'accept'}
-                ).done((data, textStatus) => {
-                    // FIXME: update asset status
-                    alert(data, textStatus);
+                ).done(data => {
+                    this.mergeAssetUpdate(data.asset.id, {
+                        status: data.asset.status
+                    });
+                    updateView();
                 });
                 break;
             case 'reject':
@@ -774,9 +782,11 @@ export class ActionApp {
                         transcriptionId: currentTranscriptionId
                     }),
                     {action: 'reject'}
-                ).done((data, textStatus) => {
-                    // FIXME: update asset status
-                    alert(data, textStatus);
+                ).done(data => {
+                    this.mergeAssetUpdate(data.asset.id, {
+                        status: data.asset.status
+                    });
+                    updateView();
                 });
                 break;
             default:
