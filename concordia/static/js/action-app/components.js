@@ -262,6 +262,7 @@ class AssetListItem {
         this.el.dataset.image = thumbnailUrl;
         this.el.dataset.id = assetData.id;
         this.el.dataset.difficulty = assetData.difficulty;
+        this.el.dataset.status = assetData.status;
         this.el.title = `${assetData.title} (${assetData.project.title})`;
     }
 }
