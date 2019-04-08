@@ -588,6 +588,12 @@ class TranscriberView {
         );
     }
 
+    onmount() {
+        jQuery(this.el)
+            .find('[data-toggle="popover"]')
+            .popover();
+    }
+
     update(asset) {
         this.currentAsset = asset;
         let text = '';
@@ -603,8 +609,6 @@ class TranscriberView {
         this.textarea.value = text;
         this.lastLoadedText = this.textarea.value;
         this.checkButtonAvailability();
-
-        jQuery('[data-toggle="popover"]').popover();
     }
 
     checkButtonAvailability() {
