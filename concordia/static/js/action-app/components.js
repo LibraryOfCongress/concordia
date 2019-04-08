@@ -465,9 +465,12 @@ class TranscriberView {
         this.textarea.addEventListener('change', () =>
             this.checkButtonAvailability()
         );
-        this.textarea.addEventListener('input', () =>
-            this.checkButtonAvailability()
-        );
+        this.textarea.addEventListener('input', () => {
+            if (this.textarea.value) {
+                this.nothingToTranscribeCheckbox.checked = false;
+            }
+            this.checkButtonAvailability();
+        });
 
         this.saveButton = html(
             'button',
@@ -603,9 +606,10 @@ class TranscriberView {
         let text = '';
         if (asset.latest_transcription && asset.latest_transcription.text) {
             text = asset.latest_transcription.text;
+            this.nothingToTranscribeCheckbox.checked = false;
+        } else {
+            this.nothingToTranscribeCheckbox.checked = true;
         }
-
-        this.nothingToTranscribeCheckbox.checked = false;
 
         // <textarea> values will alter the input string related to
         // line-termination so we will store a copy of the *modified* version so
