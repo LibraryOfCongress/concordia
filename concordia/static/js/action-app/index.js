@@ -330,7 +330,9 @@ export class ActionApp {
                 }
             })
             .then(() => {
-                window.requestAnimationFrame(this.updateAssetList.bind(this));
+                window.requestAnimationFrame(() => {
+                    this.updateAssetList();
+                });
             });
     }
 
@@ -424,10 +426,20 @@ export class ActionApp {
         }
     }
 
-    updateAssetList() {
+    updateAssetList(alwaysIncludedAssets) {
+        if (!alwaysIncludedAssets) {
+            alwaysIncludedAssets = [];
+        }
+
+        if (this.appElement.dataset.openAssetId) {
+            alwaysIncludedAssets.push(
+                Number(this.appElement.dataset.openAssetId)
+            );
+        }
+
         window.requestIdleCallback(() => {
             console.time('Filtering assets');
-            let visibleAssets = this.getVisibleAssets();
+            let visibleAssets = this.getVisibleAssets(alwaysIncludedAssets);
             console.timeEnd('Filtering assets');
 
             console.time('Sorting assets');
@@ -507,7 +519,14 @@ export class ActionApp {
         });
     }
 
-    getVisibleAssets() {
+    getVisibleAssets(alwaysIncludedAssetIDs) {
+        // We allow passing a list of asset IDs which should always be included
+        // to avoid jarring UI transitions (the display code is responsible for
+        // badging these as unavailable):
+        if (!alwaysIncludedAssetIDs) {
+            alwaysIncludedAssetIDs = [];
+        }
+
         let currentCampaignId = this.campaignSelect.value;
         if (currentCampaignId) {
             // The values specified in API responses are integers, not DOM strings:
@@ -529,16 +548,21 @@ export class ActionApp {
         let visibleAssets = [];
 
         for (let asset of this.assets.values()) {
-            if (!asset.thumbnailUrl) {
-                continue;
-            }
+            if (!alwaysIncludedAssetIDs.includes(asset.id)) {
+                if (!asset.thumbnailUrl) {
+                    continue;
+                }
 
-            if (currentCampaignId && asset.campaign.id != currentCampaignId) {
-                continue;
-            }
+                if (
+                    currentCampaignId &&
+                    asset.campaign.id != currentCampaignId
+                ) {
+                    continue;
+                }
 
-            if (!currentStatuses.includes(asset.status)) {
-                continue;
+                if (!currentStatuses.includes(asset.status)) {
+                    continue;
+                }
             }
 
             visibleAssets.push(asset);
@@ -729,6 +753,7 @@ export class ActionApp {
 
         let updateView = () => {
             this.assetViewer.update(this.currentMode, asset);
+            this.updateAssetList();
         };
 
         switch (action) {
