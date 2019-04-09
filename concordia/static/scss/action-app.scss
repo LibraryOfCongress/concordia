@@ -194,9 +194,6 @@ main {
 }
 
 .unavailable {
-    .control-toolbar {
-        display: none !important;
-    }
     #editor-column::before {
         content: 'Someone else is working on this page';
         text-align: center;
@@ -240,4 +237,11 @@ main {
     ul {
         padding-left: 1rem;
     }
+}
+
+.control-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    align-items: center;
 }

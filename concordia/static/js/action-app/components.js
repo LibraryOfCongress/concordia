@@ -423,7 +423,7 @@ class ReviewerView {
             'div#reviewer-column.flex-column.flex-grow-1',
             this.displayText,
             html(
-                '.control-toolbar.my-3.d-print-none.d-flex.flex-wrap.justify-content-around.align-items-center.btn-row',
+                '.control-toolbar.my-3.d-print-none.btn-row',
                 this.rejectButton,
                 this.acceptButton
             )
@@ -541,8 +541,7 @@ class TranscriberView {
         this.toolbar = html(
             'div',
             {
-                class:
-                    'my-3 d-print-none d-flex flex-wrap justify-content-around align-items-center btn-row control-toolbar'
+                class: 'my-3 d-print-none btn-row control-toolbar'
             },
             html(
                 'div',
@@ -628,7 +627,6 @@ class TranscriberView {
             this.currentAsset.status
         );
 
-        // FIXME: this doesn't work yet because this still has the Bootstrap d-flex class. It will start working as soon as we move that into our own SCSS without !important.
         setAttr(this.toolbar, {hidden: !acceptableStatus});
 
         if (this.enableEditing && acceptableStatus) {
