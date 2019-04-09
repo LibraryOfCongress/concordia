@@ -1423,10 +1423,12 @@ class AssetListView(APIListView):
             .filter(pk=F("max_pk"))
         )
 
+        # n.b. we use this as an opportunity to rename the user_id field to match
+        # what's being sent by the WebSocket update messages
         latest_transcriptions = {
-            asset_id: (pk, text)
-            for asset_id, pk, text in latest_transcription_qs.values_list(
-                "asset_id", "pk", "text"
+            asset_id: {"id": pk, "text": text, "submitted_by": user_id}
+            for asset_id, pk, user_id, text in latest_transcription_qs.values_list(
+                "asset_id", "pk", "user_id", "text"
             )
         }
 
@@ -1456,9 +1458,7 @@ class AssetListView(APIListView):
         }
 
         for asset in assets:
-            latest = latest_transcriptions.get(asset.id, None)
-            if latest:
-                asset.latest_transcription_id, asset.latest_transcription_text = latest
+            asset.latest_transcription = latest_transcriptions.get(asset.id, None)
 
             asset.previous_sequence, asset.next_sequence = adjacent_seqs.get(
                 asset.id, (None, None)
@@ -1491,6 +1491,7 @@ class AssetListView(APIListView):
             "year": obj.year,
             "sequence": obj.sequence,
             "resource_url": obj.resource_url,
+            "latest_transcription": obj.latest_transcription,
             "item": {
                 "id": item.pk,
                 "item_id": item.item_id,
@@ -1509,12 +1510,6 @@ class AssetListView(APIListView):
                 "url": campaign.get_absolute_url(),
             },
         }
-
-        if hasattr(obj, "latest_transcription_id"):
-            metadata["latest_transcription"] = {
-                "id": obj.latest_transcription_id,
-                "text": obj.latest_transcription_text,
-            }
 
         # FIXME: we want to rework how this is done after deprecating Asset.media_url
         if obj.previous_sequence:

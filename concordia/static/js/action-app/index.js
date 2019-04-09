@@ -130,8 +130,7 @@ export class ActionApp {
                         sent: data.sent,
                         difficulty: message.difficulty,
                         latest_transcription: message.latest_transcription,
-                        status: message.status,
-                        submitted_by: message.submitted_by
+                        status: message.status
                     };
                     this.mergeAssetUpdate(assetId, assetUpdate);
                     break;
@@ -385,12 +384,7 @@ export class ActionApp {
             freshestCopy = newData;
         }
 
-        for (let k of [
-            'status',
-            'difficulty',
-            'submitted_by',
-            'latest_transcription'
-        ]) {
+        for (let k of ['status', 'difficulty', 'latest_transcription']) {
             mergedData[k] = freshestCopy[k];
         }
 
