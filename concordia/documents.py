@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from django_elasticsearch_dsl import DocType, Index, fields
 
-from .models import Transcription, UserAssetTagCollection
+from .models import SiteReport, Transcription, UserAssetTagCollection
 
 user = Index("users")
 user.settings(number_of_shards=1, number_of_replicas=0)
@@ -12,6 +12,9 @@ tag_collection.settings(number_of_shards=1, number_of_replicas=0)
 transcription = Index("transcriptions")
 transcription.settings(number_of_shards=1, number_of_replicas=0)
 
+site_report = Index("site_reports")
+site_report.settings(number_of_shards=1, number_of_replicas=0)
+
 
 @user.doc_type
 class UserDocument(DocType):
@@ -19,6 +22,37 @@ class UserDocument(DocType):
         model = User
 
         fields = ["last_login", "date_joined", "username"]
+
+
+@site_report.doc_type
+class SiteReportDocument(DocType):
+    campaign = fields.ObjectField(properties={"slug": fields.TextField()})
+
+    class Meta:
+        model = SiteReport
+
+        fields = [
+            "created_on",
+            "assets_total",
+            "assets_published",
+            "assets_not_started",
+            "assets_in_progress",
+            "assets_waiting_review",
+            "assets_completed",
+            "assets_unpublished",
+            "items_published",
+            "items_unpublished",
+            "projects_published",
+            "projects_unpublished",
+            "anonymous_transcriptions",
+            "transcriptions_saved",
+            "distinct_tags",
+            "tag_uses",
+            "campaigns_published",
+            "campaigns_unpublished",
+            "users_registered",
+            "users_activated",
+        ]
 
 
 @tag_collection.doc_type
