@@ -84,6 +84,16 @@ class TagCollectionDocument(DocType):
         model = UserAssetTagCollection
         fields = ["created_on", "updated_on"]
 
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .order_by("pk")
+            .prefetch_related(
+                "asset__item", "asset__item__project", "asset__item__project__campaign"
+            )
+        )
+
 
 @transcription.doc_type
 class TranscriptionDocument(DocType):
@@ -123,3 +133,13 @@ class TranscriptionDocument(DocType):
             "rejected",
             "submitted",
         ]
+
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .order_by("pk")
+            .prefetch_related(
+                "asset__item", "asset__item__project", "asset__item__project__campaign"
+            )
+        )
