@@ -60,6 +60,11 @@ services:
         volumes:
             - images_volume:/concordia_images
 
+    elasticsearch:
+        image: elasticsearch:6.7.0
+        ports:
+            - 9200:9200
+
     indexer:
         build:
             context: .
@@ -67,11 +72,14 @@ services:
         environment:
             POSTGRESQL_HOST: db
             POSTGRESQL_PW: ${POSTGRESQL_PW}
-            ELASTICSEARCH_ENDPOINT: http://localhost:9200
+            ELASTICSEARCH_ENDPOINT: http://elasticsearch:9200
             DJANGO_SETTINGS_MODULE: concordia.settings_docker
             DEBUG: ${DEBUG:-}
         depends_on:
             - db
+            - elasticsearch
+        links:
+            - elasticsearch
 
     celerybeat:
         build:
