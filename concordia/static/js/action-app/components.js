@@ -385,49 +385,45 @@ export class AssetList extends List {
 
 class ReviewerView {
     constructor(submitActionCallback) {
-        this.displayText = html('#review-transcription-text');
-
-        this.rejectButton = html(
-            'button',
-            {
-                id: 'reject-transcription-button',
-                type: 'button',
-                class: 'btn btn-primary',
-                title: 'Correct errors you see in the text'
-            },
-            text('Edit')
+        this.el = html(
+            'div#reviewer-column.flex-column.flex-grow-1',
+            (this.displayText = html('#review-transcription-text')),
+            (this.toolbar = html(
+                '.control-toolbar.my-3.d-print-none.btn-row',
+                (this.rejectButton = html(
+                    'button',
+                    {
+                        id: 'reject-transcription-button',
+                        type: 'button',
+                        class: 'btn btn-primary',
+                        title: 'Correct errors you see in the text'
+                    },
+                    text('Edit')
+                )),
+                (this.acceptButton = html(
+                    'button',
+                    {
+                        id: 'accept-transcription-button',
+                        type: 'button',
+                        class: 'btn btn-primary',
+                        title: 'Confirm that the text is accurately transcribed'
+                    },
+                    text('Accept')
+                ))
+            ))
         );
+
         this.rejectButton.addEventListener('click', event => {
             event.preventDefault();
             submitActionCallback('reject');
             return false;
         });
 
-        this.acceptButton = html(
-            'button',
-            {
-                id: 'accept-transcription-button',
-                type: 'button',
-                class: 'btn btn-primary',
-                title: 'Confirm that the text is accurately transcribed'
-            },
-            text('Accept')
-        );
         this.acceptButton.addEventListener('click', event => {
             event.preventDefault();
             submitActionCallback('accept');
             return false;
         });
-
-        this.el = html(
-            'div#reviewer-column.flex-column.flex-grow-1',
-            this.displayText,
-            html(
-                '.control-toolbar.my-3.d-print-none.btn-row',
-                this.rejectButton,
-                this.acceptButton
-            )
-        );
     }
 
     update(asset) {
