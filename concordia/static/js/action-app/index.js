@@ -830,6 +830,7 @@ export class ActionApp {
                     this.mergeAssetUpdate(responseData.asset.id, {
                         status: responseData.asset.status
                     });
+                    this.releaseAsset();
                     this.markAssetAsUnavailable(openAssetId, 'Completed');
                     updateView();
                 });
