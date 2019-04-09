@@ -410,7 +410,8 @@ class ReviewerView {
                     },
                     text('Accept')
                 ))
-            ))
+            )),
+            html('div.text-center', (this.statusMessage = text()))
         );
 
         this.rejectButton.addEventListener('click', event => {
@@ -439,6 +440,15 @@ class ReviewerView {
         } else {
             this.displayText.innerHTML = 'Nothing to transcribe';
         }
+
+        let unavailableMessage = '';
+        if (asset.status == 'completed') {
+            unavailableMessage = 'This item has been completed';
+        } else if (asset.status != 'submitted') {
+            unavailableMessage = 'This item is unavailable for review';
+        }
+        this.statusMessage.textContent = unavailableMessage;
+        this.setEditorAvailability(asset.status == 'submitted');
     }
 
     setEditorAvailability(enableEditing) {
