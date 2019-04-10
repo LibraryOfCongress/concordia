@@ -42,7 +42,7 @@
                     <span class="d-none d-sm-block vl mx-2"></span>
                     <h1 class="header-text m-0 d-none d-sm-flex align-items-center">
                         <div>
-                            <a class="gray-text" href="/">Crowd</a>
+                            <a class="gray-text" href="/">By The People</a>
                             <span class="beta-label">beta</span>
                         </div>
                     </h1>
@@ -57,6 +57,9 @@
                         </li>
                         <li class="nav-item">
                             <a class="nav-link {% if PATH_LEVEL_1 == 'campaigns' %}active{% endif %}" href="{% url 'transcriptions:campaign-list' %}">Campaigns</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if PATH_LEVEL_1 == 'resources' %}active{% endif %}" href="{% url 'resources' %}">Resources</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="https://historyhub.history.gov/community/crowd-loc">Discuss</a>
