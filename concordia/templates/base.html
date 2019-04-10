@@ -90,16 +90,18 @@
             </nav>
         </header>
     {% endblock site-header %}
+
+    {% block breadcrumbs-container %}
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb bg-offwhite my-0">
+                <li class="breadcrumb-item"><a class="primary-text" href="/">Home</a></li>
+                {% block breadcrumbs %}{% endblock breadcrumbs %}
+            </ol>
+        </nav>
+    {% endblock breadcrumbs-container %}
+
     {% block site-main %}
         <main class="{% block extra_main_classes %}{% endblock %} d-print-block">
-            {% block breadcrumbs-container %}
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb bg-offwhite my-0">
-                        <li class="breadcrumb-item"><a class="primary-text" href="/">Home</a></li>
-                        {% block breadcrumbs %}{% endblock breadcrumbs %}
-                    </ol>
-                </nav>
-            {% endblock breadcrumbs-container %}
 
             {% block messages-container %}
                 <div id="messages" class="row" hidden>
