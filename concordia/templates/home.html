@@ -17,13 +17,13 @@
                     <li data-target="#homepage-carousel" data-slide-to="2"></li>
                 </ol>
                 <div class="carousel-inner">
-                    <div class="carousel-item active" data-title="By the People" data-hero-text="Volunteer to uncover our shared history and make documents more searchable for everyone." data-link-url="{% url 'transcriptions:redirect-to-next-transcribable-asset' 'mary-church-terrell-advocate-for-african-americans-and-women' %}">
+                    <div class="carousel-item active" data-title="Jump in!" data-hero-text="Transcription uncovers our shared history and makes documents more searchable for everyone." data-link-url="{% url 'transcriptions:redirect-to-next-transcribable-asset' 'mary-church-terrell-advocate-for-african-americans-and-women' %}">
                         <img class="d-block w-100" src="{% static 'img/homepage-carousel/crowd-home.jpg' %}" alt="A crowd of young women cheering and waving handkerchiefs">
                     </div>
-                    <div class="carousel-item" data-overlay-position="top-right" data-title="Review Now" data-hero-text="Review other volunteers' transcriptions. Completed pages need approval to cross the finish line!" data-link-url="{% url 'transcriptions:redirect-to-next-reviewable-asset' 'mary-church-terrell-advocate-for-african-americans-and-women' %}">
+                    <div class="carousel-item" data-overlay-position="top-right" data-title="Review Now" data-hero-text="Approve or correct other volunteers' transcriptions to help them cross the finish line." data-link-url="{% url 'transcriptions:redirect-to-next-reviewable-asset' 'mary-church-terrell-advocate-for-african-americans-and-women' %}">
                         <img class="d-block w-100" src="{% static 'img/homepage-carousel/review.jpg' %}" alt="Close up of hand-written text of Mary Church Terrell's first speech to the NAACP">
                     </div>
-                    <div class="carousel-item" data-title="Welcome Center" data-hero-text="Learn how to transcribe, review, and tag." data-link-url="{% url 'welcome-guide' %}">
+                    <div class="carousel-item" data-title="Where to start?" data-hero-text="Find instructions and help to get started in our Welcome Guide" data-link-url="{% url 'welcome-guide' %}">
                         <img class="d-block w-100" src="{% static 'img/homepage-carousel/welcome-guide.jpg' %}" alt="Collection of typed report pages by baseball scout Branch Rickey">
                     </div>
                 </div>
@@ -36,8 +36,8 @@
                     <span class="sr-only">Next</span>
                 </a>
                 <div class="carousel-overlay text-center d-flex flex-column justify-content-around align-items-center">
-                    <h1 class="title">By the People</h1>
-                    <p class="hero-text mx-auto">Volunteer to uncover our shared history and make documents more searchable for everyone.</p>
+                    <h1 class="title">Jump in!</h1>
+                    <p class="hero-text mx-auto">Transcription uncovers our shared history and makes documents more searchable for everyone.</p>
                     <a class="btn btn-primary btn-lg" href="{% url 'transcriptions:redirect-to-next-transcribable-asset' 'mary-church-terrell-advocate-for-african-americans-and-women' %}">LET'S GO!</a>
                 </div>
             </div>
@@ -45,24 +45,25 @@
     </div>
     <div class="row no-gutters my-5 px-sm-3">
         <div id="homepage-contribute-container" class="col-12 bg-home-contribute p-3 p-md-4 p-xl-5">
-            <div class="mb-3">
-                <h2 class="px-default offwhite-text px-md-0 ml-md-3">Anyone Can Contribute</h2>
+           <div class="px-default ml-md-3 mb-3">
+                <h2 class="offwhite-text">Be a virtual volunteer!</h2>
+                <p class="offwhite-text"> Anyone can contribute. Improve access to history by transcribing, reviewing, and tagging Library of Congress documents.</p>
             </div>
             <div id="homepage-contribute-activities" class="d-flex justify-content-around text-center">
-                <div class="homepage-activity px-1 pl-mx-2 px-lg-3" >
-                    <a aria-hidden="true" href="{% url 'how-to-transcribe' %}"><img class="img-fluid" src="{% static 'img/homepage-pencil.svg' %}"></a>
-                    <h4 class="mt-3"><a class="offwhite-text" href="{% url 'how-to-transcribe' %}" aria-describedby="homepage-activity-transcribe-help">TRANSCRIBE</a></h4>
-                    <p id="homepage-activity-transcribe-help" class="offwhite-text">Type what you see on the page.</p>
+                <div class="homepage-activity px-1 pl-mx-2 px-lg-3">
+                    <a aria-hidden="true" href="/help-center/how-to-transcribe/"><img class="img-fluid" src="/static/img/homepage-pencil.2afbadd975c2.svg"></a>
+                    <h4 class="mt-3"><a class="offwhite-text" href="/help-center/how-to-transcribe/" aria-describedby="homepage-activity-transcribe-help">TRANSCRIBE</a></h4>
+                    <p id="homepage-activity-transcribe-help" class="offwhite-text">No account needed! Type what you see on the page.</p>
                 </div>
                 <div class="homepage-activity px-1 pl-mx-2 px-lg-3">
-                    <a aria-hidden="true" class="offwhite-text" href="{% url 'how-to-review' %}"><img class="img-fluid" src="{% static 'img/homepage-checkmark.svg' %}"></a>
-                    <h4 class="offwhite-text mt-3"><a class="offwhite-text" href="{% url 'how-to-review' %}" aria-describedby="homepage-activity-review-help">REVIEW</a></h4>
-                    <p id="homepage-activity-review-help" class="offwhite-text">Register to edit and complete transcriptions.</p>
+                    <a aria-hidden="true" class="offwhite-text" href="/help-center/how-to-tag/"><img class="img-fluid" src="/static/img/homepage-tag.c9f961fc4c2e.svg"></a>
+                    <h4 class="offwhite-text mt-3"><a class="offwhite-text" href="/help-center/how-to-tag/" aria-describedby="homepage-activity-tag-help">TAG</a></h4>
+                    <p id="homepage-activity-tag-help" class="offwhite-text">Register to add keywords to help share what you find.</p>
                 </div>
                 <div class="homepage-activity px-1 pl-mx-2 px-lg-3">
-                    <a aria-hidden="true" class="offwhite-text" href="{% url 'how-to-tag' %}"><img class="img-fluid" src="{% static 'img/homepage-tag.svg' %}"></a>
-                    <h4 class="offwhite-text mt-3"><a class="offwhite-text" href="{% url 'how-to-tag' %}"  aria-describedby="homepage-activity-tag-help">TAG</a></h4>
-                    <p id="homepage-activity-tag-help" class="offwhite-text">Register to add tags and share what you find.</p>
+                    <a aria-hidden="true" class="offwhite-text" href="/help-center/how-to-review/"><img class="img-fluid" src="/static/img/homepage-checkmark.a1f067ddf440.svg"></a>
+                    <h4 class="offwhite-text mt-3"><a class="offwhite-text" href="/help-center/how-to-review/" aria-describedby="homepage-activity-review-help">REVIEW</a></h4>
+                    <p id="homepage-activity-review-help" class="offwhite-text">Review is the crucial final step! Register to edit and complete transcriptions.</p>
                 </div>
             </div>
         </div>
@@ -70,7 +71,7 @@
     <div id="homepage-campaign-list" class="container my-5">
         <div class="row">
             <div class="col-12 mb-3">
-                <h2 class="px-default px-md-0 ml-md-3">Campaigns: <small>Choose what to transcribe</small></h2>
+                <h2 class="px-default px-md-0 ml-md-3">Campaigns: <small>Choose which collections to explore and transcribe</small></h2>
             </div>
             <div class="d-flex flex-wrap col-12 justify-content-around">
                 {% for campaign in campaigns|slice:":3" %}
