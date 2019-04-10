@@ -326,6 +326,7 @@ class AssetTranscriptionReservation(models.Model):
 
     asset = models.OneToOneField(Asset, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    session_id = models.CharField(max_length=50, blank=True, null=True)
 
     created_on = models.DateTimeField(editable=False, auto_now_add=True)
     updated_on = models.DateTimeField(auto_now=True)
