@@ -31,6 +31,8 @@
 {% block content %}
     {{ block.super }}
 
+    <h4>Current status: {{ original.transcription_status }}</h4>
+
     {% if transcriptions %}
         <table>
             <caption>Transcription History</caption>
