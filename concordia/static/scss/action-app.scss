@@ -2,6 +2,8 @@
 @import '../../../node_modules/bootstrap/scss/variables';
 @import '../../../node_modules/bootstrap/scss/mixins';
 
+$concordia-app-footer-height: $line-height-lg * 1rem;
+
 body.view-action-app {
     height: 100vh;
     max-height: 100vh;
@@ -12,7 +14,12 @@ body.view-action-app {
 main {
     flex-shrink: 1;
     max-height: inherit;
-    margin-bottom: 1.5rem; // Ensure that the fixed footer does not overlap content
+    margin-bottom: $concordia-app-footer-height; // Ensure that the fixed footer does not overlap content
+}
+
+#action-app-footer {
+    height: $concordia-app-footer-height;
+    opacity: 0.8;
 }
 
 #action-app-global-controls > {
@@ -175,9 +182,10 @@ main {
 }
 
 #reviewer-column {
-    max-height: calc(
-        100% - 40px
-    ); // FIXME: use the Bootstrap button height variables
+    // We want this to be the full height of its containing element
+    // with enough padding to not be covered by the footer:
+    max-height: 100%;
+    padding-bottom: #{$concordia-app-footer-height};
 }
 
 #review-transcription-text {
