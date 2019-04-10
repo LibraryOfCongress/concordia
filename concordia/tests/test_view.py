@@ -416,6 +416,12 @@ class TransactionalViewTests(JSONAssertMixin, TransactionTestCase):
     def _asset_reservation_test_payload(self, user_id, anonymous=False):
         asset = create_asset()
 
+        # Pre-set the session_id for the test client so that the release request
+        # will have the same session_id as the reserve request.
+        session = self.client.session
+        session["session_id"] = "test"
+        session.save()
+
         # Acquire the reservation: 1 auth query + 1 expiry + 1 acquire + 1
         # feature flag check + 1 session if not anonymous and using a database:
         if not anonymous and settings.SESSION_ENGINE.endswith("db"):
