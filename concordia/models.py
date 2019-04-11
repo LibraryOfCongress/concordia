@@ -84,16 +84,33 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
         return reverse("transcriptions:campaign-detail", args=(self.slug,))
 
 
+class Theme(models.Model):
+    title = models.CharField(blank=False, max_length=255)
+    slug = models.SlugField(blank=False, allow_unicode=True, max_length=80)
+    description = models.TextField(blank=True)
+    thumbnail_image = models.ImageField(
+        upload_to="theme-thumbnails", blank=True, null=True
+    )
+
+    class Meta:
+        ordering = ["title"]
+
+    def __str__(self):
+        return self.title
+
+    def get_absolute_url(self):
+        return reverse("transcriptions:theme-detail", kwargs={"slug": self.slug})
+
+
 class Resource(MetricsModelMixin("resource"), models.Model):
     sequence = models.PositiveIntegerField(default=1)
     title = models.CharField(blank=False, max_length=255)
     resource_url = models.URLField()
 
-    campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
-
-    class Meta:
-        unique_together = (("campaign", "sequence"),)
-        ordering = ["campaign", "sequence"]
+    campaign = models.ForeignKey(
+        Campaign, on_delete=models.CASCADE, blank=True, null=True
+    )
+    theme = models.ForeignKey(Theme, on_delete=models.CASCADE, blank=True, null=True)
 
     def __str__(self):
         return self.title
@@ -113,8 +130,9 @@ class Project(MetricsModelMixin("project"), models.Model):
     )
 
     description = models.TextField(blank=True)
-    category = models.CharField(max_length=12, blank=True)
     metadata = JSONField(default=metadata_default, blank=True, null=True)
+
+    themes = models.ManyToManyField(Theme)
 
     class Meta:
         unique_together = (("slug", "campaign"),)

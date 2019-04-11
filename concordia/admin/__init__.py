@@ -26,6 +26,7 @@ from ..models import (
     SimplePage,
     SiteReport,
     Tag,
+    Theme,
     Transcription,
     UserAssetTagCollection,
 )
@@ -150,26 +151,25 @@ class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
 
 @admin.register(Resource)
 class ResourceAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
-    list_display = ("campaign", "sequence", "title", "resource_url")
+    list_display = ("campaign", "theme", "sequence", "title", "resource_url")
+    list_display_links = ("campaign", "theme", "sequence", "title")
+
+
+@admin.register(Theme)
+class ThemeAdmin(admin.ModelAdmin):
+    list_display = ("id", "title", "slug")
+    list_display_links = ("id", "title", "slug")
 
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     # todo: add foreignKey link for campaign
-    list_display = (
-        "id",
-        "title",
-        "slug",
-        "category",
-        "campaign",
-        "truncated_metadata",
-        "published",
-    )
+    list_display = ("id", "title", "slug", "campaign", "published")
 
     list_display_links = ("id", "title", "slug")
     prepopulated_fields = {"slug": ("title",)}
     search_fields = ["title", "campaign__title"]
-    list_filter = ("published", "category", "campaign")
+    list_filter = ("published", "campaign")
 
     actions = (publish_action, unpublish_action)
 

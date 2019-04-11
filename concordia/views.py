@@ -53,6 +53,7 @@ from concordia.models import (
     Project,
     SimplePage,
     Tag,
+    Theme,
     Transcription,
     TranscriptionStatus,
     UserAssetTagCollection,
@@ -474,11 +475,51 @@ def annotate_children_with_progress_stats(children):
 
 
 @method_decorator(default_cache_control, name="dispatch")
+class ThemeDetailView(DetailView):
+    template_name = "transcriptions/theme_detail.html"
+    context_object_name = "theme"
+    queryset = Theme.objects.order_by("title")
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+
+        projects = (
+            ctx["theme"]
+            .project_set.published()
+            .annotate(
+                **{
+                    f"{key}_count": Count(
+                        "item__asset",
+                        filter=Q(
+                            item__published=True,
+                            item__asset__published=True,
+                            item__asset__transcription_status=key,
+                        ),
+                    )
+                    for key in TranscriptionStatus.CHOICE_MAP.keys()
+                }
+            )
+        )
+
+        ctx["filters"] = filters = {}
+        status = self.request.GET.get("transcription_status")
+        if status in TranscriptionStatus.CHOICE_MAP:
+            projects = projects.exclude(**{f"{status}_count": 0})
+            # We only want to pass specific QS parameters to lower-level search pages:
+            filters["transcription_status"] = status
+        ctx["sublevel_querystring"] = urlencode(filters)
+
+        annotate_children_with_progress_stats(projects)
+        ctx["projects"] = projects
+
+        return ctx
+
+
+@method_decorator(default_cache_control, name="dispatch")
 class CampaignDetailView(APIDetailView):
     template_name = "transcriptions/campaign_detail.html"
-
-    queryset = Campaign.objects.published().order_by("title")
     context_object_name = "campaign"
+    queryset = Campaign.objects.published().order_by("title")
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)

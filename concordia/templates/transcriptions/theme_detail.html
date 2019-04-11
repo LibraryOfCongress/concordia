@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% load staticfiles %}
+{% load concordia_text_tags %}
+
+{% block title %}{{ theme.title }}{% endblock title %}
+
+{% block head_content %}
+    <link rel="canonical" href="https://{{ request.get_host }}{{ request.path }}">
+    <meta name="description" content="{{ theme.description|normalize_whitespace }}">
+    <meta name="thumbnail" content="{{ MEDIA_URL }}{{ theme.thumbnail_image }}">
+    <meta property="og:image" content="{{ MEDIA_URL }}{{ theme.thumbnail_image }}">
+{% endblock head_content %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaign-list' %}">Campaigns</a></li>
+    <li class="breadcrumb-item active" aria-current="page" title="{{ theme.title }}">{{ theme.title }}</li>
+{% endblock breadcrumbs %}
+
+{% block main_content %}
+<div class="container py-3">
+    <div class="row">
+        <div class="col-md-9">
+            <h1>{{ theme.title }}</h1>
+            <p class="hero-text">{{ theme.description|linebreaksbr }}</p>
+        </div>
+        <div class="col-md-3">
+            {% if theme.resource_set.all|length %}
+                <div class="related-links mb-3 p-1 p-sm-2 p-lg-3">
+                    <h4>Related Links</h4>
+                    <div class="list-group">
+                        {% for resource in theme.resource_set.all %}
+                            <a class="list-group-item" href="{{ resource.resource_url }}" target="_blank">{{ resource.title }} <i class="fa fa-external-link-alt"></i></a>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="row">
+        <div class="card-deck w-100 flex-column flex-sm-row justify-content-center align-items-center align-items-sm-stretch">
+            {% for project in projects %}
+                <div class="col-12 col-md-4 col-lg-3 m-2 p-1 concordia-object-card card bg-lightest-gray shadow-regular align-items-center" data-transcription-status="{{ project.lowest_transcription_status }}">
+                    {% url 'transcriptions:project-detail' project.campaign.slug project.slug as project_url %}
+
+                    <a href="{{ project_url }}?{{ sublevel_querystring }}" aria-hidden="true">
+                        <img class="card-img card-img-campaign" src="{{ MEDIA_URL }}{{ project.thumbnail_image }}" alt="{{ project.title }}">
+                    </a>
+
+                    <div class="progress w-100 my-2">
+                        <div title="Completed" class="progress-bar bg-completed" role="progressbar" style="width: {{ project.completed_percent }}%" aria-valuenow="{{ project.completed_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        <div title="Needs Review" class="progress-bar bg-submitted" role="progressbar" style="width: {{ project.submitted_percent }}%" aria-valuenow="{{ project.submitted_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        <div title="In Progress" class="progress-bar bg-in_progress" role="progressbar" style="width: {{ project.in_progress_percent }}%" aria-valuenow="{{ project.in_progress_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+
+                    <h6 class="text-center primary-text">
+                        <a href="{{ project_url }}?{{ sublevel_querystring }}">{{ project.title }}</a>
+                    </h6>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock main_content %}
