@@ -99,7 +99,8 @@ urlpatterns = [
     path("questions/", views.simple_page, name="questions"),
     path("contact/", views.ContactUsView.as_view(), name="contact"),
     path("act/", views.action_app, name="action-app"),
-    path("theme/<uslug:slug>/", views.ThemeDetailView.as_view(), name="theme-detail"),
+    path("themes/", views.ThemeListView.as_view(), name="theme-list"),
+    path("themes/<uslug:slug>/", views.ThemeDetailView.as_view(), name="theme-detail"),
     path("campaigns/", include(tx_urlpatterns, namespace="transcriptions")),
     path("reserve-asset/<int:asset_pk>/", views.reserve_asset, name="reserve-asset"),
     path(

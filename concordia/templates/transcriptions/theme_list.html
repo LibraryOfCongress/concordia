@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% load staticfiles %}
+
+{% block title %}Themes{% endblock title %}
+
+{% block head_content %}
+    <link rel="canonical" href="https://{{ request.get_host }}{{ request.path }}">
+{% endblock head_content %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item active" aria-current="page">Themes</li>
+{% endblock breadcrumbs %}
+
+{% block main_content %}
+<div class="container py-3">
+    <h1 class="sr-only">Themes</h1>
+    <ul class="list-unstyled">
+        {% for theme in themes %}
+            <li class="p-4 mb-1 bg-footer">
+                <h2 class="h1 mb-3">{{ campaign.title }}</h2>
+                <div class="row">
+                    <a class="col-md-5 order-md-2" href="{% url 'theme-detail' theme.slug %}">
+                        <p class="mb-2 text-center"><img src="{{ MEDIA_URL }}{{ theme.thumbnail_image }}" class="img-fluid" alt="{{ theme.title }} image"></p>
+                    </a>
+                    <div class="col-md">
+                        <p>{{ theme.description|linebreaksbr }}</p>
+                        <a class="btn btn-primary" href="{% url 'theme-detail' theme.slug %}">View Projects</a>
+                    </div>
+                </div>
+            </li>
+        {% endfor %}
+    </ul>
+    <div class="row">
+        {% include "fragments/standard-pagination.html" %}
+    </div>
+</div>
+{% endblock main_content %}

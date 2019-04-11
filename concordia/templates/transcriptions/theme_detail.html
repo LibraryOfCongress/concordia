@@ -13,7 +13,7 @@
 {% endblock head_content %}
 
 {% block breadcrumbs %}
-    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaign-list' %}">Campaigns</a></li>
+    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'theme-list' %}">Themes</a></li>
     <li class="breadcrumb-item active" aria-current="page" title="{{ theme.title }}">{{ theme.title }}</li>
 {% endblock breadcrumbs %}
 
@@ -54,7 +54,7 @@
                     </div>
 
                     <h6 class="text-center primary-text">
-                        <a href="{{ project_url }}?{{ sublevel_querystring }}">{{ project.title }}</a>
+                        <a href="{{ project_url }}?{{ sublevel_querystring }}">{{ project.campaign.title }} - {{ project.title }}</a>
                     </h6>
                 </div>
             {% endfor %}

@@ -475,6 +475,14 @@ def annotate_children_with_progress_stats(children):
 
 
 @method_decorator(default_cache_control, name="dispatch")
+class ThemeListView(ListView):
+    template_name = "transcriptions/theme_list.html"
+    paginate_by = 10
+    queryset = Theme.objects.order_by("title")
+    context_object_name = "themes"
+
+
+@method_decorator(default_cache_control, name="dispatch")
 class ThemeDetailView(DetailView):
     template_name = "transcriptions/theme_detail.html"
     context_object_name = "theme"
