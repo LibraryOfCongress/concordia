@@ -1,7 +1,7 @@
 exclude: '.*/vendor/.*'
 repos:
     - repo: https://github.com/pre-commit/mirrors-isort
-      rev: v4.3.16
+      rev: v4.3.17
       hooks:
           - id: isort
     - repo: https://github.com/ambv/black
@@ -13,16 +13,19 @@ repos:
       hooks:
           - id: check-byte-order-marker
           - id: trailing-whitespace
+          - id: mixed-line-ending
+            args: ["--fix=lf"]
           - id: check-merge-conflict
           - id: flake8
           - id: check-json
+          - id: check-yaml
           - id: detect-aws-credentials
             args: ['--allow-missing-credentials']
           - id: detect-private-key
           - id: pretty-format-json
-            args: ['--autofix', '--no-sort-keys', '--indent=4']
-          - id: mixed-line-ending
-            args: ['--fix=lf']
+            args: ["--autofix", "--no-sort-keys", "--indent=4"]
+          - id: check-ast
+          - id: debug-statements
     - repo: https://github.com/prettier/prettier
       rev: 1.16.2
       hooks:
