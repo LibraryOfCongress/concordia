@@ -18,7 +18,7 @@
     <ul class="list-unstyled">
         {% for theme in themes %}
             <li class="p-4 mb-1 bg-footer">
-                <h2 class="h1 mb-3">{{ campaign.title }}</h2>
+                <h2 class="h1 mb-3">{{ theme.title }}</h2>
                 <div class="row">
                     <a class="col-md-5 order-md-2" href="{% url 'theme-detail' theme.slug %}">
                         <p class="mb-2 text-center"><img src="{{ MEDIA_URL }}{{ theme.thumbnail_image }}" class="img-fluid" alt="{{ theme.title }} image"></p>
