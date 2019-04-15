@@ -4,8 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-"psycopg2" = "*"
-"psycopg2-binary" = "*"
+psycopg2-binary = "*"
 gunicorn = "*"
 celery = {extras = ["redis"],version = ">=4.3.0"}
 coreapi = "*"
