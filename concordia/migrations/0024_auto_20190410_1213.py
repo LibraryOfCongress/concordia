@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name="assettranscriptionreservation",
-            name="session_id",
+            name="reserve_id",
             field=models.CharField(blank=True, max_length=50, null=True),
         ),
         migrations.AlterField(

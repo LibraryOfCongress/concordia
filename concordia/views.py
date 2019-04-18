@@ -1179,11 +1179,11 @@ class ReportCampaignView(TemplateView):
             project.transcription_statuses = statuses
 
 
-def get_or_create_session_id(request):
-    session_id = request.session.get("session_id", False)
-    if not session_id:
-        request.session["session_id"] = token_hex(25)
-    return session_id
+def get_or_create_reserve_id(request):
+    reserve_id = request.session.get("reserve_id", False)
+    if not reserve_id:
+        request.session["reserve_id"] = token_hex(25)
+    return reserve_id
 
 
 def reserve_rate(g, r):
@@ -1207,7 +1207,7 @@ def reserve_asset(request, *, asset_pk):
 
     timestamp = now()
 
-    session_id = get_or_create_session_id(request)
+    reserve_id = get_or_create_reserve_id(request)
 
     # First clear old reservations, with a grace period:
     cutoff = timestamp - (
@@ -1243,9 +1243,9 @@ def reserve_asset(request, *, asset_pk):
             cursor.execute(
                 """
                 DELETE FROM concordia_assettranscriptionreservation
-                WHERE user_id = %s AND asset_id = %s and session_id = %s
+                WHERE user_id = %s AND asset_id = %s and reserve_id = %s
                 """,
-                [user.pk, asset_pk, session_id],
+                [user.pk, asset_pk, reserve_id],
             )
         # Notify the web socket of the reservation release
         reservation_released.send(
@@ -1261,7 +1261,7 @@ def reserve_asset(request, *, asset_pk):
         cursor.execute(
             """
             INSERT INTO concordia_assettranscriptionreservation AS atr
-                (user_id, asset_id, session_id, created_on, updated_on)
+                (user_id, asset_id, reserve_id, created_on, updated_on)
                 VALUES (%s, %s, %s, current_timestamp, current_timestamp)
             ON CONFLICT (asset_id) DO UPDATE
                 SET updated_on = current_timestamp
@@ -1270,7 +1270,7 @@ def reserve_asset(request, *, asset_pk):
                     AND atr.asset_id = excluded.asset_id
                 )
             """.strip(),
-            [user.pk, asset_pk, session_id],
+            [user.pk, asset_pk, reserve_id],
         )
 
         if cursor.rowcount != 1:
@@ -1286,11 +1286,11 @@ def redirect_to_next_asset(
     potential_assets, mode, request, campaign, project_slug, user
 ):
     asset = potential_assets.first()
-    session_id = get_or_create_session_id(request)
+    reserve_id = get_or_create_reserve_id(request)
     if asset:
         if mode == "transcribe":
             res = AssetTranscriptionReservation(
-                user=user, asset=asset, session_id=session_id
+                user=user, asset=asset, reserve_id=reserve_id
             )
             res.full_clean()
             res.save()
