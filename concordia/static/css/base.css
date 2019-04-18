@@ -758,9 +758,16 @@ ul.nav-secondary {
         padding: 1rem 1rem 1.3rem 1rem;
     }
 
-    #homepage-carousel[data-overlay-position='top-right'] .carousel-overlay {
+    #homepage-carousel[data-overlay-position='top-right'] .carousel-overlay,
+    .carousel-overlay-top-right {
         left: unset;
         right: 120px;
+    }
+
+    #homepage-carousel[data-overlay-position='top-left'] .carousel-overlay,
+    .carousel-overlay-top-left {
+        left: 120px;
+        right: unset;
     }
 
     #homepage-campaign-list .campaign {
