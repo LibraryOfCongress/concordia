@@ -22,8 +22,8 @@
                 </ol>
                 <div class="carousel-inner">
                     {% if NEW_CAROUSEL_SLIDE %}
-                        <div class="carousel-item active" data-title="New Slide" data-overlay-position="top-right" data-hero-text="New Text" data-link-url="{% url 'transcriptions:redirect-to-next-transcribable-asset' 'walt-whitman' %}">
-                            <img class="d-block w-100" src="{% static 'img/homepage-carousel/review.jpg' %}" alt="New alt text">
+                        <div class="carousel-item active" data-title="Walt Whitman at 200" data-overlay-position="top-right" data-hero-text="Transcribe and review poetry, letters, and writings of Walt Whitman. Discover how he wrote and lived for yourself." data-link-url="{% url 'transcriptions:redirect-to-next-transcribable-asset' 'walt-whitman' %}">
+                            <img class="d-block w-100" src="{% static 'img/homepage-carousel/review.jpg' %}" alt="Walt Whitman, the later years, 1887. Black and white photograph. Poet has long white beard and wears brimmed hat. Gazes straight ahead.">
                         </div>
                     {% endif %}
                     <div class="carousel-item {% if not NEW_CAROUSEL_SLIDE %}active{% endif %}" data-overlay-position="top-left" data-title="Jump in!" data-hero-text="Transcription uncovers our shared history and makes documents more searchable for everyone." data-link-url="{% url 'transcriptions:redirect-to-next-transcribable-asset' 'mary-church-terrell-advocate-for-african-americans-and-women' %}">
@@ -46,8 +46,8 @@
                 </a>
                 {% if NEW_CAROUSEL_SLIDE %}
                     <div class="carousel-overlay-top-right carousel-overlay text-center d-flex flex-column justify-content-around align-items-center">
-                        <h1 class="title">New Slide</h1>
-                        <p class="hero-text mx-auto">New Text</p>
+                        <h1 class="title">Walt Whitman at 200</h1>
+                        <p class="hero-text mx-auto">Transcribe and review poetry, letters, and writings of Walt Whitman. Discover how he wrote and lived for yourself.</p>
                         <a class="btn btn-primary btn-lg" href="{% url 'transcriptions:redirect-to-next-transcribable-asset' 'walt-whitman' %}">LET'S GO!</a>
                     </div>
                 {% else %}
