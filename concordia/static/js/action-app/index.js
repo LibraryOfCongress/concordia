@@ -571,17 +571,28 @@ export class ActionApp {
     openViewer(assetElement) {
         let asset = this.assets.get(assetElement.dataset.id);
 
+        // FIXME: refactor openAssetElement into a single open asset ID property & pass it to the respective list & viewer components
         this.openAssetElement = assetElement;
 
-        this.assetReservationURL = this.urlTemplates.assetReservation.expand({
-            assetId: encodeURIComponent(asset.id)
-        });
+        let canBeEdited =
+            this.config.currentUser &&
+            (!asset.latest_transcription ||
+                asset.latest_transcription.submitted_by !=
+                    this.config.currentUser);
 
-        this.reserveAsset();
-        this.reservationTimer = window.setInterval(
-            this.reserveAsset.bind(this),
-            30000
-        );
+        if (canBeEdited) {
+            this.assetReservationURL = this.urlTemplates.assetReservation.expand(
+                {
+                    assetId: encodeURIComponent(asset.id)
+                }
+            );
+
+            this.reserveAsset();
+            this.reservationTimer = window.setInterval(
+                this.reserveAsset.bind(this),
+                30000
+            );
+        }
 
         this.metadataPanel = new MetadataPanel(asset);
         mount(
@@ -632,13 +643,13 @@ export class ActionApp {
 
         this.seadragonViewer.open(tileSources, initialPage);
 
-        this.updateEditorAvailability();
-
         window.requestAnimationFrame(() => {
             // This will trigger the CSS which displays the viewer:
             this.appElement.dataset.openAssetId = asset.id;
 
             this.assetList.setActiveAsset(assetElement);
+
+            this.setEditorAvailability(canBeEdited);
         });
     }
 
