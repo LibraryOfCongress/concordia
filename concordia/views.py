@@ -5,7 +5,6 @@ import time
 from datetime import timedelta
 from functools import wraps
 from logging import getLogger
-from secrets import token_hex
 from smtplib import SMTPException
 from urllib.parse import urlencode
 
@@ -72,6 +71,11 @@ from concordia.models import (
 from concordia.signals.signals import reservation_obtained, reservation_released
 from concordia.templatetags.concordia_media_tags import asset_media_url
 from concordia.utils import get_anonymous_user, request_accepts_json
+from concordia.utils import (
+    get_anonymous_user,
+    get_or_create_reserve_id,
+    request_accepts_json,
+)
 from concordia.version import get_concordia_version
 
 logger = getLogger(__name__)
@@ -729,6 +733,8 @@ class AssetDetailView(DetailView):
             transcription_status = TranscriptionStatus.NOT_STARTED
         ctx["transcription_status"] = transcription_status
 
+        ctx["reserve_id"] = get_or_create_reserve_id(self.request)
+
         previous_asset = (
             item.asset_set.published()
             .filter(sequence__lt=asset.sequence)
@@ -1179,13 +1185,6 @@ class ReportCampaignView(TemplateView):
             project.transcription_statuses = statuses
 
 
-def get_or_create_reserve_id(request):
-    reserve_id = request.session.get("reserve_id", False)
-    if not reserve_id:
-        request.session["reserve_id"] = token_hex(25)
-    return reserve_id
-
-
 def reserve_rate(g, r):
     return None if r.user.is_authenticated else "100/m"
 
@@ -1193,7 +1192,7 @@ def reserve_rate(g, r):
 @ratelimit(key="ip", rate=reserve_rate, block=settings.RATELIMIT_BLOCK)
 @require_POST
 @never_cache
-def reserve_asset(request, *, asset_pk):
+def reserve_asset(request, *, asset_pk, reserve_id):
     """
     Receives an asset PK and attempts to create/update a reservation for it
 
@@ -1206,8 +1205,6 @@ def reserve_asset(request, *, asset_pk):
         user = request.user
 
     timestamp = now()
-
-    reserve_id = get_or_create_reserve_id(request)
 
     # First clear old reservations, with a grace period:
     cutoff = timestamp - (
@@ -1268,6 +1265,7 @@ def reserve_asset(request, *, asset_pk):
                 WHERE (
                     atr.user_id = excluded.user_id
                     AND atr.asset_id = excluded.asset_id
+                    AND atr.reserve_id = excluded.reserve_id
                 )
             """.strip(),
             [user.pk, asset_pk, reserve_id],

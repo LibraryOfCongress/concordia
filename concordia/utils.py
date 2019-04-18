@@ -1,3 +1,5 @@
+from secrets import token_hex
+
 from django.contrib.auth.models import User
 
 
@@ -18,3 +20,10 @@ def request_accepts_json(request):
     accept_header = request.META.get("HTTP_ACCEPT", "*/*")
 
     return "application/json" in accept_header
+
+
+def get_or_create_reserve_id(request):
+    reserve_id = request.session.get("reserve_id", False)
+    if not reserve_id:
+        request.session["reserve_id"] = token_hex(25)
+    return reserve_id
