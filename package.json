@@ -18,10 +18,10 @@
         "imagemin-optipng": "^6.0.0",
         "imagemin-pngout": "^4.0.0",
         "imagemin-svgo": "^7.0.0",
-        "prettier": "^1.16.4",
         "stylelint": "^9.10.1",
-        "stylelint-config-prettier": "^5.0.0",
-        "stylelint-config-recommended": "^2.1.0"
+        "prettier": "^1.17.0",
+        "stylelint-config-prettier": "^5.1.0",
+        "stylelint-config-recommended": "^2.2.0"
     },
     "dependencies": {
         "bootstrap": "4.3.1",
