@@ -244,8 +244,6 @@ class AssetListItem {
     }
 
     update(assetData) {
-        // FIXME: adjust hidden state?
-
         let thumbnailUrl = assetData.thumbnailUrl;
         if (thumbnailUrl.includes('/iiif/')) {
             // We'll adjust the IIIF image URLs not to return something larger

@@ -325,7 +325,6 @@ export class ActionApp {
 
                 if (this.assets.size < 300) {
                     // We like to have a fair number of items to start with
-                    // FIXME: this will require a fallback for MS Edge
                     window.requestIdleCallback(
                         this.fetchNextAssetPage.bind(this)
                     );
@@ -466,7 +465,7 @@ export class ActionApp {
         let el = this.assetList.el.parentNode;
 
         if (el.scrollHeight <= el.clientHeight) {
-            window.requestIdleCallback(this.fetchNextAssetPage.bind(this)); // FIXME: this will require a fallback for MS Edge
+            window.requestIdleCallback(this.fetchNextAssetPage.bind(this));
         }
     }
 
