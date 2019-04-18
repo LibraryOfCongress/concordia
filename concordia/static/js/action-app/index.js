@@ -746,6 +746,8 @@ export class ActionApp {
                 type: 'application/x-www-form-urlencoded'
             })
         );
+
+        delete this.assetReservationURL;
     }
 
     handleAction(action, data) {
