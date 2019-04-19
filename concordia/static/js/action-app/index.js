@@ -272,6 +272,7 @@ export class ActionApp {
             showNavigator: true,
             showRotationControl: true,
             showReferenceStrip: true,
+            showFlipControl: true,
             sequenceMode: true,
             toolbar: 'viewer-controls',
             zoomInButton: 'viewer-zoom-in',
@@ -281,7 +282,8 @@ export class ActionApp {
             rotateLeftButton: 'viewer-rotate-left',
             rotateRightButton: 'viewer-rotate-right',
             nextButton: 'viewer-next-page',
-            previousButton: 'viewer-previous-page'
+            previousButton: 'viewer-previous-page',
+            flipButton: 'viewer-flip'
         });
 
         this.assetViewSplitter = Split(['#viewer-column', '#editor-column'], {
