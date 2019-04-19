@@ -783,14 +783,6 @@ export class ActionApp {
             return;
         }
 
-        if (
-            !this.openAssetElement ||
-            !!this.openAssetElement.dataset.unavailable ||
-            this.openAssetElement.dataset.assetStatus == 'completed'
-        ) {
-            return;
-        }
-
         jQuery
             .ajax({
                 url: this.assetReservationURL,
