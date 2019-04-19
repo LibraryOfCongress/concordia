@@ -475,73 +475,18 @@ class ReviewerView {
 
 class TranscriberView {
     constructor(submitActionCallback) {
-        this.textarea = html('textarea', {
-            class: 'form-control w-100 rounded flex-grow-1 d-print-none',
-            name: 'text',
-            placeholder: 'Go ahead, start typing. You got this!',
-            id: 'transcription-input',
-            'aria-label': 'Transcription input'
-        });
-        this.textarea.addEventListener('change', () =>
-            this.updateAvailableToolbarActions()
-        );
-        this.textarea.addEventListener('input', () => {
-            if (this.textarea.value) {
-                this.nothingToTranscribeCheckbox.checked = false;
-            }
-            this.updateAvailableToolbarActions();
-        });
-
-        this.saveButton = html(
-            'button',
-            {
-                id: 'save-transcription-button',
-                type: 'submit',
-                class: 'btn btn-primary',
-                title: 'Save the text you entered above',
-                onclick: event => {
-                    event.preventDefault();
-                    this.lastLoadedText = this.textarea.value;
-                    submitActionCallback('save', {text: this.textarea.value});
-                    this.updateAvailableToolbarActions();
-                    return false;
-                }
-            },
-            text('Save')
-        );
-
-        this.submitButton = html(
-            'button',
-            {
-                id: 'submit-transcription-button',
-                disabled: true,
-                type: 'button',
-                class: 'btn btn-primary',
-                title:
-                    'Request another volunteer to review the text you entered above',
-                onclick: event => {
-                    event.preventDefault();
-                    submitActionCallback('submit');
-                    return false;
-                }
-            },
-            text('Submit for Review')
-        );
-
-        this.nothingToTranscribeCheckbox = html('input', {
-            id: 'nothing-to-transcribe',
-            type: 'checkbox',
-            class: 'form-check-input',
-            onchange: () => {
-                this.confirmNothingToTranscribeChange();
-            }
-        });
-
         this.toolbar = new ConditionalToolbar([
             html(
                 'div',
                 {class: 'form-check w-100 text-center mt-0 mb-3'},
-                this.nothingToTranscribeCheckbox,
+                (this.nothingToTranscribeCheckbox = html('input', {
+                    id: 'nothing-to-transcribe',
+                    type: 'checkbox',
+                    class: 'form-check-input',
+                    onchange: () => {
+                        this.confirmNothingToTranscribeChange();
+                    }
+                })),
                 html(
                     'label',
                     {
@@ -570,8 +515,42 @@ class TranscriberView {
                     })
                 )
             ),
-            this.saveButton,
-            this.submitButton
+            (this.saveButton = html(
+                'button',
+                {
+                    id: 'save-transcription-button',
+                    type: 'submit',
+                    class: 'btn btn-primary',
+                    title: 'Save the text you entered above',
+                    onclick: event => {
+                        event.preventDefault();
+                        this.lastLoadedText = this.textarea.value;
+                        submitActionCallback('save', {
+                            text: this.textarea.value
+                        });
+                        this.updateAvailableToolbarActions();
+                        return false;
+                    }
+                },
+                text('Save')
+            )),
+            (this.submitButton = html(
+                'button',
+                {
+                    id: 'submit-transcription-button',
+                    disabled: true,
+                    type: 'button',
+                    class: 'btn btn-primary',
+                    title:
+                        'Request another volunteer to review the text you entered above',
+                    onclick: event => {
+                        event.preventDefault();
+                        submitActionCallback('submit');
+                        return false;
+                    }
+                },
+                text('Submit for Review')
+            ))
         ]);
 
         this.el = html(
@@ -583,7 +562,21 @@ class TranscriberView {
                     id: 'transcription-editor',
                     class: 'flex-grow-1 d-flex flex-column'
                 },
-                this.textarea,
+                (this.textarea = html('textarea', {
+                    class:
+                        'form-control w-100 rounded flex-grow-1 d-print-none',
+                    name: 'text',
+                    placeholder: 'Go ahead, start typing. You got this!',
+                    id: 'transcription-input',
+                    'aria-label': 'Transcription input',
+                    onchange: () => this.updateAvailableToolbarActions(),
+                    oninput: () => {
+                        if (this.textarea.value) {
+                            this.nothingToTranscribeCheckbox.checked = false;
+                        }
+                        this.updateAvailableToolbarActions();
+                    }
+                })),
                 this.toolbar
             )
         );
