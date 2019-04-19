@@ -720,9 +720,15 @@ export class ActionApp {
         let asset = this.assets.get(openAssetId);
 
         let {canEdit, reason} = this.canEditAsset(asset);
+
         if (!this.assetReserved) {
             canEdit = false;
             reason = 'Asset reservation in progress';
+        }
+
+        if (this.actionSubmissionInProgress) {
+            canEdit = false;
+            reason = 'Your action is being processed';
         }
 
         this.assetViewer.update({
@@ -898,7 +904,6 @@ export class ActionApp {
                     this.mergeAssetUpdate(responseData.asset.id, {
                         status: responseData.asset.status
                     });
-                    updateViews();
                 });
                 break;
             default:
@@ -907,7 +912,8 @@ export class ActionApp {
     }
 
     postAction(url, payload) {
-        this.setEditorAvailability(false);
+        this.actionSubmissionInProgress = true;
+        this.updateViewer();
 
         // FIXME: switch to Fetch API once we add CSRF compatibility
         return jQuery
@@ -918,7 +924,8 @@ export class ActionApp {
                 data: payload
             })
             .always(() => {
-                this.setEditorAvailability(true);
+                this.actionSubmissionInProgress = false;
+                this.updateViewer();
             })
             .fail(function(jqXHR, textStatus) {
                 if (jqXHR.status == 401) {
