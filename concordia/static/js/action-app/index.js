@@ -920,10 +920,21 @@ export class ActionApp {
             .always(() => {
                 this.setEditorAvailability(true);
             })
-            .fail(function(jqXHR) {
+            .fail(function(jqXHR, textStatus) {
                 if (jqXHR.status == 401) {
-                    // FIXME: implement generic CAPTCHA & retry
+                    alert(
+                        '// FIXME: the CAPTCHA system is not implemented yet. Please hit the main site before returning to this page'
+                    );
                 }
+
+                console.error(
+                    'POSTed action to %s failed: %s %s',
+                    url,
+                    textStatus,
+                    jqXHR.responseJSON
+                        ? jqXHR.responseJSON.error
+                        : jqXHR.responseText
+                );
             });
     }
 }
