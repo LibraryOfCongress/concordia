@@ -439,8 +439,14 @@ export class ActionApp {
         let canEdit = true;
         let reason = '';
 
-        if (this.currentMode == 'review') {
-            if (!this.config.currentUser) {
+        if (asset.status == 'completed') {
+            reason = 'this asset has been completed';
+            canEdit = false;
+        } else if (this.currentMode == 'review') {
+            if (asset.status != 'submitted') {
+                reason = 'asset has not been submitted for review';
+                canEdit = false;
+            } else if (!this.config.currentUser) {
                 reason = 'anonymous users cannot review';
                 canEdit = false;
             } else if (!asset.latest_transcription) {
@@ -455,7 +461,13 @@ export class ActionApp {
                 canEdit = false;
             }
         } else if (this.currentMode == 'transcribe') {
-            return true;
+            if (
+                asset.status != 'not_started' &&
+                asset.status != 'in_progress'
+            ) {
+                canEdit = false;
+                reason = 'this asset is not available for transcription';
+            }
         } else {
             throw `Unexpected mode ${this.currentMode}`;
         }
