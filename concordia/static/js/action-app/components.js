@@ -724,12 +724,14 @@ export class AssetViewer {
         this.activeView.setEditorAvailability(enableEditing, reason);
     }
 
-    update(mode, asset) {
+    update({editable: {canEdit, reason}, mode, asset}) {
         this.setMode(mode);
 
         this.el.dataset.assetStatus = asset.status;
 
         this.activeView.update(asset);
+
+        this.setEditorAvailability(canEdit, reason);
 
         $$('a.asset-external-view', this.el).forEach(i => {
             i.href = asset.resource_url;

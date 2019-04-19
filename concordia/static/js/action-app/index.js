@@ -689,7 +689,11 @@ export class ActionApp {
             this.metadataPanel.campaignMetadata.update(campaignInfo);
         });
 
-        this.assetViewer.update(this.currentMode, asset);
+        this.assetViewer.update({
+            editable: this.canEditAsset(asset),
+            mode: this.currentMode,
+            asset
+        });
 
         if (this.seadragonViewer.isOpen()) {
             this.seadragonViewer.close();
@@ -855,10 +859,15 @@ export class ActionApp {
             : null;
 
         let updateView = () => {
-            this.assetViewer.update(
-                this.currentMode,
-                this.assets.get(openAssetId)
-            );
+            // We intentionally reload the data since it should have been updated:
+            asset = this.assets.get(openAssetId);
+
+            this.assetViewer.update({
+                editable: this.canEditAsset(asset),
+                mode: this.currentMode,
+                asset
+            });
+
             this.updateAssetList();
         };
 
