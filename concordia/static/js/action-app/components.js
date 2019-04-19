@@ -498,17 +498,17 @@ class TranscriberView {
                 id: 'save-transcription-button',
                 type: 'submit',
                 class: 'btn btn-primary',
-                title: 'Save the text you entered above'
+                title: 'Save the text you entered above',
+                onclick: event => {
+                    event.preventDefault();
+                    this.lastLoadedText = this.textarea.value;
+                    submitActionCallback('save', {text: this.textarea.value});
+                    this.updateAvailableToolbarActions();
+                    return false;
+                }
             },
             text('Save')
         );
-        this.saveButton.addEventListener('click', event => {
-            event.preventDefault();
-            this.lastLoadedText = this.textarea.value;
-            submitActionCallback('save', {text: this.textarea.value});
-            this.updateAvailableToolbarActions();
-            return false;
-        });
 
         this.submitButton = html(
             'button',
@@ -518,44 +518,23 @@ class TranscriberView {
                 type: 'button',
                 class: 'btn btn-primary',
                 title:
-                    'Request another volunteer to review the text you entered above'
+                    'Request another volunteer to review the text you entered above',
+                onclick: event => {
+                    event.preventDefault();
+                    submitActionCallback('submit');
+                    return false;
+                }
             },
             text('Submit for Review')
         );
-        this.submitButton.addEventListener('click', event => {
-            event.preventDefault();
-            submitActionCallback('submit');
-            return false;
-        });
 
         this.nothingToTranscribeCheckbox = html('input', {
             id: 'nothing-to-transcribe',
             type: 'checkbox',
-            class: 'form-check-input'
-        });
-        this.nothingToTranscribeCheckbox.addEventListener('change', () => {
-            let nothingToTranscribe = this.nothingToTranscribeCheckbox.checked;
-            if (nothingToTranscribe && this.textarea.value) {
-                if (
-                    !confirm(
-                        'You currently have entered text which will not be saved because “Nothing to transcribe” is checked. Do you want to discard that text?'
-                    )
-                ) {
-                    nothingToTranscribe = false;
-                    setAttr(this.nothingToTranscribeCheckbox, {
-                        checked: false
-                    });
-                } else {
-                    // Clear the transcription text as requested:
-                    this.textarea.value = '';
-                }
+            class: 'form-check-input',
+            onchange: () => {
+                this.confirmNothingToTranscribeChange();
             }
-
-            setAttr(this.textarea, {
-                disabled: nothingToTranscribe
-            });
-
-            this.updateAvailableToolbarActions();
         });
 
         this.toolbar = new ConditionalToolbar([
@@ -663,6 +642,33 @@ class TranscriberView {
 
     setEditorAvailability(enableEditing, reason) {
         this.toolbar.update(enableEditing, reason);
+    }
+
+    confirmNothingToTranscribeChange() {
+        // Logic for event handlers when the “Nothing to Transcribe” control state is changed
+
+        let nothingToTranscribe = this.nothingToTranscribeCheckbox.checked;
+        if (nothingToTranscribe && this.textarea.value) {
+            if (
+                !confirm(
+                    'You currently have entered text which will not be saved because “Nothing to transcribe” is checked. Do you want to discard that text?'
+                )
+            ) {
+                nothingToTranscribe = false;
+                setAttr(this.nothingToTranscribeCheckbox, {
+                    checked: false
+                });
+            } else {
+                // Clear the transcription text as requested:
+                this.textarea.value = '';
+            }
+        }
+
+        setAttr(this.textarea, {
+            disabled: nothingToTranscribe
+        });
+
+        this.updateAvailableToolbarActions();
     }
 }
 
