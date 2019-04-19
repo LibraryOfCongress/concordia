@@ -146,6 +146,7 @@ export class ActionApp {
                         (this.config.currentUser &&
                             this.config.currentUser != message.user_pk)
                     ) {
+                        alert('// FIXME: handle asset reservation updates');
                         this.markAssetAsUnavailable(
                             assetId,
                             'Someone else is working on this'
@@ -154,6 +155,7 @@ export class ActionApp {
                     break;
                 case 'asset_reservation_released':
                     // FIXME: we need to test whether the user who reserved it is different than the user we're running as!
+                    alert('// FIXME: handle asset reservation updates');
                     this.markAssetAsAvailable(assetId);
                     break;
                 default:
@@ -430,7 +432,6 @@ export class ActionApp {
 
         // FIXME: the mergeAssetUpdate() process should trigger a call to this & update the asset list & viewer
         // FIXME: decide what call signature will support specifying the displayed reason
-        // FIXME: markAssetAsAvailable/Unavailable should defer most of their checks to this
 
         if (!asset) {
             throw `No information for an asset with ID ${assetID}`;
@@ -483,25 +484,6 @@ export class ActionApp {
         );
 
         return {canEdit, reason};
-    }
-
-    markAssetAsAvailable(assetId) {
-        let assetElement = document.getElementById(assetId);
-
-        if (assetElement && this.assets.get(assetId).status != 'completed') {
-            console.info(`Marking asset ${assetId} available`);
-            delete assetElement.dataset.unavailable;
-            this.updateEditorAvailability();
-        }
-    }
-
-    markAssetAsUnavailable(assetId, reason) {
-        let assetElement = document.getElementById(assetId);
-        if (assetElement) {
-            console.info(`Marking asset ${assetId} unavailable`);
-            assetElement.dataset.unavailable = reason;
-            this.updateEditorAvailability();
-        }
     }
 
     updateAssetList(alwaysIncludedAssets) {
@@ -655,7 +637,7 @@ export class ActionApp {
         // FIXME: refactor openAssetElement into a single open asset ID property & pass it to the respective list & viewer components
         this.openAssetElement = assetElement;
 
-        let {canEdit, reason} = this.canEditAsset(asset);
+        let {canEdit} = this.canEditAsset(asset);
 
         if (canEdit) {
             this.assetReservationURL = this.urlTemplates.assetReservation.expand(
@@ -687,12 +669,6 @@ export class ActionApp {
 
         this.getCachedCampaign(asset.campaign).then(campaignInfo => {
             this.metadataPanel.campaignMetadata.update(campaignInfo);
-        });
-
-        this.assetViewer.update({
-            editable: this.canEditAsset(asset),
-            mode: this.currentMode,
-            asset
         });
 
         if (this.seadragonViewer.isOpen()) {
@@ -730,7 +706,29 @@ export class ActionApp {
 
             this.assetList.setActiveAsset(assetElement);
 
-            this.setEditorAvailability(canEdit, reason);
+            this.updateViewer();
+        });
+    }
+
+    updateViewer() {
+        if (!this.appElement.dataset.openAssetId || !this.openAssetElement) {
+            console.warn('updateViewer() called without an open asset');
+            return;
+        }
+
+        let openAssetId = this.appElement.dataset.openAssetId;
+        let asset = this.assets.get(openAssetId);
+
+        let {canEdit, reason} = this.canEditAsset(asset);
+        if (!this.assetReserved) {
+            canEdit = false;
+            reason = 'Asset reservation in progress';
+        }
+
+        this.assetViewer.update({
+            editable: {canEdit, reason},
+            mode: this.currentMode,
+            asset
         });
     }
 
@@ -755,49 +753,33 @@ export class ActionApp {
         this.assetList.scrollToActiveAsset();
     }
 
-    setEditorAvailability(enableEditing, reason) {
-        // Set whether or not the ability to make changes should be globally
-        // unavailable such as when we don't have a reservation or an AJAX
-        // operation is in progress:
-
-        this.enableEditing = enableEditing;
-        this.updateEditorAvailability(reason);
-    }
-
-    updateEditorAvailability(reason) {
-        if (!this.appElement.dataset.openAssetId || !this.openAssetElement) {
-            return;
-        }
-
-        let enableEditing =
-            this.enableEditing &&
-            !this.openAssetElement.classList.contains('unavailable') &&
-            this.openAssetElement.classList.contains('reserved');
-
-        this.assetViewer.setEditorAvailability(enableEditing, reason);
-    }
-
     reserveAsset() {
         if (!this.assetReservationURL) {
             console.warn('reserveAsset called without asset reservation URL!');
             return;
         }
 
+        let reservationURL = this.assetReservationURL;
+
         jQuery
             .ajax({
-                url: this.assetReservationURL,
+                url: reservationURL,
                 type: 'POST',
                 dataType: 'json'
             })
             .done(() => {
                 if (!this.openAssetElement) {
-                    throw 'Open asset was closed before we could reserve it';
+                    throw 'Open asset was closed with a reservation request pending';
                 }
 
-                if (!this.openAssetElement.classList.contains('reserved')) {
-                    this.openAssetElement.classList.add('reserved');
-                    this.setEditorAvailability(true);
+                if (reservationURL != this.assetReservationURL) {
+                    throw `Asset changed while reserving ${reservationURL} != ${
+                        this.assetReservationURL
+                    }`;
                 }
+
+                this.assetReserved = true;
+                this.updateViewer();
             })
             .fail((jqXHR, textStatus, errorThrown) => {
                 console.error(
@@ -805,6 +787,8 @@ export class ActionApp {
                     textStatus,
                     errorThrown
                 );
+                this.assetReserved = false;
+                this.updateViewer();
             });
     }
 
@@ -812,11 +796,6 @@ export class ActionApp {
         if (!this.assetReservationURL) {
             console.warn('releaseAsset called without asset reservation URL!');
             return;
-        }
-
-        if (this.openAssetElement) {
-            this.openAssetElement.classList.remove('reserved');
-            this.setEditorAvailability(false);
         }
 
         let payload = {
@@ -832,6 +811,9 @@ export class ActionApp {
         );
 
         delete this.assetReservationURL;
+        delete this.assetReserved;
+
+        this.updateViewer();
     }
 
     handleAction(action, data) {
@@ -850,16 +832,8 @@ export class ActionApp {
             ? asset.latest_transcription.id
             : null;
 
-        let updateView = () => {
-            // We intentionally reload the data since it should have been updated:
-            asset = this.assets.get(openAssetId);
-
-            this.assetViewer.update({
-                editable: this.canEditAsset(asset),
-                mode: this.currentMode,
-                asset
-            });
-
+        let updateViews = () => {
+            this.updateViewer();
             this.updateAssetList();
         };
 
@@ -882,7 +856,7 @@ export class ActionApp {
                     this.mergeAssetUpdate(responseData.asset.id, {
                         status: responseData.asset.status
                     });
-                    updateView();
+                    updateViews();
                 });
                 break;
             case 'submit':
@@ -897,11 +871,7 @@ export class ActionApp {
                     this.mergeAssetUpdate(responseData.asset.id, {
                         status: responseData.asset.status
                     });
-                    this.markAssetAsUnavailable(
-                        openAssetId,
-                        'Submitted for review'
-                    );
-                    updateView();
+                    updateViews();
                 });
                 break;
             case 'accept':
@@ -915,8 +885,7 @@ export class ActionApp {
                         status: responseData.asset.status
                     });
                     this.releaseAsset();
-                    this.markAssetAsUnavailable(openAssetId, 'Completed');
-                    updateView();
+                    updateViews();
                 });
                 break;
             case 'reject':
@@ -929,7 +898,7 @@ export class ActionApp {
                     this.mergeAssetUpdate(responseData.asset.id, {
                         status: responseData.asset.status
                     });
-                    updateView();
+                    updateViews();
                 });
                 break;
             default:
