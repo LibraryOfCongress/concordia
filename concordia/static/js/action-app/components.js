@@ -381,13 +381,42 @@ export class AssetList extends List {
     }
 }
 
+class ConditionalToolbar {
+    /*
+        This provides the behaviour used on the reviewer and asset views’
+        toolbars which either display buttons or a message explaining why you
+        cannot make changes
+    */
+
+    constructor(children) {
+        this.active = false;
+        this.children = children;
+        this.message = html('div.text-center');
+
+        this.el = html('.control-toolbar.my-3.d-print-none.btn-row');
+    }
+
+    update(active, reason) {
+        this.active = active;
+
+        this.message.textContent = reason;
+
+        this.el.classList.toggle('active', active);
+
+        if (active) {
+            setChildren(this.el, this.children);
+        } else {
+            setChildren(this.el, [this.message]);
+        }
+    }
+}
+
 class ReviewerView {
     constructor(submitActionCallback) {
         this.el = html(
             'div#reviewer-column.flex-column.flex-grow-1',
             (this.displayText = html('#review-transcription-text')),
-            (this.toolbar = html(
-                '.control-toolbar.my-3.d-print-none.btn-row',
+            (this.toolbar = new ConditionalToolbar([
                 (this.rejectButton = html(
                     'button',
                     {
@@ -408,8 +437,7 @@ class ReviewerView {
                     },
                     text('Accept')
                 ))
-            )),
-            html('div.text-center', (this.statusMessage = text()))
+            ]))
         );
 
         this.rejectButton.addEventListener('click', event => {
@@ -454,10 +482,7 @@ class ReviewerView {
     setEditorAvailability(enableEditing, reason) {
         let acceptableStatus = this.currentAsset.status === 'submitted';
         enableEditing = enableEditing && acceptableStatus;
-        setAttr(this.rejectButton, {disabled: !enableEditing});
-        setAttr(this.acceptButton, {disabled: !enableEditing});
-
-        this.statusMessage.textContent = reason;
+        this.toolbar.update(enableEditing, reason);
     }
 }
 
@@ -471,13 +496,13 @@ class TranscriberView {
             'aria-label': 'Transcription input'
         });
         this.textarea.addEventListener('change', () =>
-            this.updateToolbarAvailability()
+            this.updateAvailableToolbarActions()
         );
         this.textarea.addEventListener('input', () => {
             if (this.textarea.value) {
                 this.nothingToTranscribeCheckbox.checked = false;
             }
-            this.updateToolbarAvailability();
+            this.updateAvailableToolbarActions();
         });
 
         this.saveButton = html(
@@ -494,7 +519,7 @@ class TranscriberView {
             event.preventDefault();
             this.lastLoadedText = this.textarea.value;
             submitActionCallback('save', {text: this.textarea.value});
-            this.updateToolbarAvailability();
+            this.updateAvailableToolbarActions();
             return false;
         });
 
@@ -543,14 +568,10 @@ class TranscriberView {
                 disabled: nothingToTranscribe
             });
 
-            this.updateToolbarAvailability();
+            this.updateAvailableToolbarActions();
         });
 
-        this.toolbar = html(
-            'div',
-            {
-                class: 'my-3 d-print-none btn-row control-toolbar'
-            },
+        this.toolbar = new ConditionalToolbar([
             html(
                 'div',
                 {class: 'form-check w-100 text-center mt-0 mb-3'},
@@ -585,7 +606,7 @@ class TranscriberView {
             ),
             this.saveButton,
             this.submitButton
-        );
+        ]);
 
         this.el = html(
             '#transcriber-column',
@@ -623,38 +644,28 @@ class TranscriberView {
         // we can later check whether the user has altered it
         this.textarea.value = text;
         this.lastLoadedText = this.textarea.value;
-        this.updateToolbarAvailability();
+        this.updateAvailableToolbarActions();
     }
 
-    updateToolbarAvailability() {
+    updateAvailableToolbarActions() {
+        /*
+            The Save button is available when the text input does not match the
+            last saved transcription. The Submit button is available when the
+            transcription has been saved and no further changes have been made.
+        */
+
         let enableSave = false;
         let enableSubmit = false;
         let enableNTT = false;
 
-        let acceptableStatus = ['not_started', 'in_progress'].includes(
-            this.currentAsset.status
-        );
+        let transcription = this.currentAsset.latest_transcription;
 
-        setAttr(this.toolbar, {hidden: !acceptableStatus});
+        let saved = Boolean(transcription && transcription.id);
+        let unmodified = saved && this.lastLoadedText === this.textarea.value;
 
-        if (this.enableEditing && acceptableStatus) {
-            /*
-                The Save button is available when the text input does not match the
-                last saved transcription. The Submit button is available when
-                the transcription has been saved and no further changes have
-                been made.
-             */
-
-            let transcription = this.currentAsset.latest_transcription;
-
-            let saved = Boolean(transcription && transcription.id);
-            let unmodified =
-                saved && this.lastLoadedText === this.textarea.value;
-
-            enableSave = !unmodified;
-            enableSubmit = unmodified;
-            enableNTT = true;
-        }
+        enableSave = !unmodified;
+        enableSubmit = unmodified;
+        enableNTT = true;
 
         setAttr(this.saveButton, {disabled: !enableSave});
         setAttr(this.submitButton, {disabled: !enableSubmit});
@@ -663,8 +674,8 @@ class TranscriberView {
         });
     }
 
-    setEditorAvailability(enableEditing) {
-        this.enableEditing = enableEditing;
+    setEditorAvailability(enableEditing, reason) {
+        this.toolbar.update(enableEditing, reason);
     }
 }
 
