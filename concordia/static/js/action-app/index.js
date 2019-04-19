@@ -466,7 +466,8 @@ export class ActionApp {
             canEdit,
             reason
         );
-        return canEdit, reason;
+
+        return {canEdit, reason};
     }
 
     markAssetAsAvailable(assetId) {
@@ -639,10 +640,9 @@ export class ActionApp {
         // FIXME: refactor openAssetElement into a single open asset ID property & pass it to the respective list & viewer components
         this.openAssetElement = assetElement;
 
-        let canBeEdited,
-            reason = this.canEditAsset(asset);
+        let {canEdit, reason} = this.canEditAsset(asset);
 
-        if (canBeEdited) {
+        if (canEdit) {
             this.assetReservationURL = this.urlTemplates.assetReservation.expand(
                 {
                     assetId: encodeURIComponent(asset.id)
@@ -711,7 +711,7 @@ export class ActionApp {
 
             this.assetList.setActiveAsset(assetElement);
 
-            this.setEditorAvailability(canBeEdited, reason);
+            this.setEditorAvailability(canEdit, reason);
         });
     }
 
