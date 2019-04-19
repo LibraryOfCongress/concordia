@@ -406,6 +406,69 @@ export class ActionApp {
         this.mergeAssetUpdate(assetId, assetData);
     }
 
+    canEditAsset(assetObjectOrID) {
+        /*
+             Check whether an asset can possibly be edited by the current user
+
+             Note that this does not account for transient reasons why editing
+             might be disabled, such as waiting for an AJAX operation to
+             complete or obtaining a reservation. The results of this check are
+             intended to be current until the next time the asset's metadata
+             changes, which means that it should be queried again after
+             mergeAssetUpdate completes.
+        */
+
+        let asset, assetID;
+
+        if (typeof assetObjectOrID == 'string') {
+            assetID = assetObjectOrID;
+            asset = this.assets.get(assetObjectOrID);
+        } else {
+            asset = assetObjectOrID;
+            assetID = asset.id;
+        }
+
+        // FIXME: the mergeAssetUpdate() process should trigger a call to this & update the asset list & viewer
+        // FIXME: decide what call signature will support specifying the displayed reason
+        // FIXME: markAssetAsAvailable/Unavailable should defer most of their checks to this
+
+        if (!asset) {
+            throw `No information for an asset with ID ${assetID}`;
+        }
+
+        let canEdit = true;
+        let reason = '';
+
+        if (this.currentMode == 'review') {
+            if (!this.config.currentUser) {
+                reason = 'anonymous users cannot review';
+                canEdit = false;
+            } else if (!asset.latest_transcription) {
+                reason = 'no transcription';
+                canEdit = false;
+            } else if (
+                asset.latest_transcription.submitted_by ==
+                this.config.currentUser
+            ) {
+                reason =
+                    'transcriptions must be reviewed by a different person';
+                canEdit = false;
+            }
+        } else if (this.currentMode == 'transcribe') {
+            return true;
+        } else {
+            throw `Unexpected mode ${this.currentMode}`;
+        }
+
+        console.info(
+            'Asset ID %s: editable=%s, reason="%s"',
+            assetID,
+            canEdit,
+            reason
+        );
+        return canEdit, reason;
+    }
+
     markAssetAsAvailable(assetId) {
         let assetElement = document.getElementById(assetId);
 
@@ -576,11 +639,8 @@ export class ActionApp {
         // FIXME: refactor openAssetElement into a single open asset ID property & pass it to the respective list & viewer components
         this.openAssetElement = assetElement;
 
-        let canBeEdited =
-            this.config.currentUser &&
-            (!asset.latest_transcription ||
-                asset.latest_transcription.submitted_by !=
-                    this.config.currentUser);
+        let canBeEdited,
+            reason = this.canEditAsset(asset);
 
         if (canBeEdited) {
             this.assetReservationURL = this.urlTemplates.assetReservation.expand(
@@ -651,7 +711,7 @@ export class ActionApp {
 
             this.assetList.setActiveAsset(assetElement);
 
-            this.setEditorAvailability(canBeEdited);
+            this.setEditorAvailability(canBeEdited, reason);
         });
     }
 
@@ -676,16 +736,16 @@ export class ActionApp {
         this.assetList.scrollToActiveAsset();
     }
 
-    setEditorAvailability(enableEditing) {
+    setEditorAvailability(enableEditing, reason) {
         // Set whether or not the ability to make changes should be globally
         // unavailable such as when we don't have a reservation or an AJAX
         // operation is in progress:
 
         this.enableEditing = enableEditing;
-        this.updateEditorAvailability();
+        this.updateEditorAvailability(reason);
     }
 
-    updateEditorAvailability() {
+    updateEditorAvailability(reason) {
         if (!this.appElement.dataset.openAssetId || !this.openAssetElement) {
             return;
         }
@@ -695,7 +755,7 @@ export class ActionApp {
             !this.openAssetElement.classList.contains('unavailable') &&
             this.openAssetElement.classList.contains('reserved');
 
-        this.assetViewer.setEditorAvailability(enableEditing);
+        this.assetViewer.setEditorAvailability(enableEditing, reason);
     }
 
     reserveAsset() {

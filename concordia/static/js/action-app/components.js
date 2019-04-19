@@ -445,15 +445,19 @@ class ReviewerView {
         } else if (asset.status != 'submitted') {
             unavailableMessage = 'This item is unavailable for review';
         }
-        this.statusMessage.textContent = unavailableMessage;
-        this.setEditorAvailability(asset.status == 'submitted');
+        this.setEditorAvailability(
+            asset.status == 'submitted',
+            unavailableMessage
+        );
     }
 
-    setEditorAvailability(enableEditing) {
+    setEditorAvailability(enableEditing, reason) {
         let acceptableStatus = this.currentAsset.status === 'submitted';
         enableEditing = enableEditing && acceptableStatus;
         setAttr(this.rejectButton, {disabled: !enableEditing});
         setAttr(this.acceptButton, {disabled: !enableEditing});
+
+        this.statusMessage.textContent = reason;
     }
 }
 
@@ -708,12 +712,12 @@ export class AssetViewer {
         mount($('#editor-column', this.el), this.activeView);
     }
 
-    setEditorAvailability(enableEditing) {
+    setEditorAvailability(enableEditing, reason) {
         // Set whether or not the ability to make changes should be globally
         // unavailable such as when we don't have a reservation or an AJAX
         // operation is in progress:
 
-        this.activeView.setEditorAvailability(enableEditing);
+        this.activeView.setEditorAvailability(enableEditing, reason);
     }
 
     update(mode, asset) {
