@@ -1,4 +1,4 @@
-/* global OpenSeadragon Split jQuery URITemplate */
+/* global Split jQuery URITemplate */
 /* eslint-disable no-console */
 
 import {
@@ -262,30 +262,6 @@ export class ActionApp {
 
         $('#close-viewer-button').addEventListener('click', () => {
             this.closeViewer();
-        });
-
-        this.seadragonViewer = new OpenSeadragon({
-            id: 'asset-image',
-            prefixUrl:
-                'https://cdnjs.cloudflare.com/ajax/libs/openseadragon/2.4.0/images/',
-            gestureSettingsTouch: {
-                pinchRotate: true
-            },
-            showNavigator: true,
-            showRotationControl: true,
-            showReferenceStrip: true,
-            showFlipControl: true,
-            sequenceMode: true,
-            toolbar: 'viewer-controls',
-            zoomInButton: 'viewer-zoom-in',
-            zoomOutButton: 'viewer-zoom-out',
-            homeButton: 'viewer-home',
-            fullPageButton: 'viewer-full-page',
-            rotateLeftButton: 'viewer-rotate-left',
-            rotateRightButton: 'viewer-rotate-right',
-            nextButton: 'viewer-next-page',
-            previousButton: 'viewer-previous-page',
-            flipButton: 'viewer-flip'
         });
 
         this.assetViewSplitter = Split(['#viewer-column', '#editor-column'], {
@@ -671,35 +647,6 @@ export class ActionApp {
             this.metadataPanel.campaignMetadata.update(campaignInfo);
         });
 
-        if (this.seadragonViewer.isOpen()) {
-            this.seadragonViewer.close();
-        }
-
-        let tileSources = [
-            {
-                type: 'image',
-                url: asset.imageUrl
-            }
-        ];
-        let initialPage = 0;
-
-        if (asset.previous_thumbnail) {
-            initialPage = 1;
-            tileSources.unshift({
-                type: 'image',
-                url: asset.previous_thumbnail
-            });
-        }
-
-        if (asset.next_thumbnail) {
-            tileSources.push({
-                type: 'image',
-                url: asset.next_thumbnail
-            });
-        }
-
-        this.seadragonViewer.open(tileSources, initialPage);
-
         window.requestAnimationFrame(() => {
             // This will trigger the CSS which displays the viewer:
             this.appElement.dataset.openAssetId = asset.id;
@@ -746,10 +693,6 @@ export class ActionApp {
 
         if (this.reservationTimer) {
             window.clearInterval(this.reservationTimer);
-        }
-
-        if (this.seadragonViewer.isOpen()) {
-            this.seadragonViewer.close();
         }
 
         if (this.metadataPanel && this.metadataPanel.el.parentNode) {

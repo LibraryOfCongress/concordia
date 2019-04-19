@@ -1,4 +1,4 @@
-/* global jQuery */
+/* global jQuery, OpenSeadragon */
 
 import {$, $$} from './utils/dom.js';
 
@@ -665,6 +665,73 @@ class TranscriberView {
     }
 }
 
+class ImageViewer {
+    constructor() {
+        let element = document.getElementById('asset-image');
+        element.remove();
+        this.el = element;
+
+        this.seadragon = new OpenSeadragon({
+            element: this.el,
+            prefixUrl:
+                'https://cdnjs.cloudflare.com/ajax/libs/openseadragon/2.4.0/images/',
+            gestureSettingsTouch: {
+                pinchRotate: true
+            },
+            showNavigator: true,
+            showRotationControl: true,
+            showReferenceStrip: true,
+            showFlipControl: true,
+            sequenceMode: true,
+            toolbar: 'viewer-controls',
+            zoomInButton: 'viewer-zoom-in',
+            zoomOutButton: 'viewer-zoom-out',
+            homeButton: 'viewer-home',
+            fullPageButton: 'viewer-full-page',
+            rotateLeftButton: 'viewer-rotate-left',
+            rotateRightButton: 'viewer-rotate-right',
+            nextButton: 'viewer-next-page',
+            previousButton: 'viewer-previous-page',
+            flipButton: 'viewer-flip'
+        });
+    }
+
+    onunmount() {
+        this.seadragon.close();
+    }
+
+    update(asset) {
+        if (this.seadragon.isOpen()) {
+            this.seadragon.close();
+        }
+
+        let tileSources = [
+            {
+                type: 'image',
+                url: asset.imageUrl
+            }
+        ];
+        let initialPage = 0;
+
+        if (asset.previous_thumbnail) {
+            initialPage = 1;
+            tileSources.unshift({
+                type: 'image',
+                url: asset.previous_thumbnail
+            });
+        }
+
+        if (asset.next_thumbnail) {
+            tileSources.push({
+                type: 'image',
+                url: asset.next_thumbnail
+            });
+        }
+
+        this.seadragon.open(tileSources, initialPage);
+    }
+}
+
 function conditionalUnmount(component) {
     if (component.el.parentNode) {
         unmount(component.el.parentNode, component);
@@ -675,7 +742,8 @@ export class AssetViewer {
     constructor(submitActionCallback) {
         this.submitActionCallback = submitActionCallback;
 
-        // FIXME: add seadragon viewer
+        this.imageView = new ImageViewer();
+
         this.reviewerView = new ReviewerView(this.submitAction.bind(this));
         this.transcriberView = new TranscriberView(
             this.submitAction.bind(this)
@@ -687,6 +755,10 @@ export class AssetViewer {
         this.el = element;
 
         setAttr(this.el, {class: 'initialized'});
+    }
+
+    onmount() {
+        mount($('#viewer-column', this.el), this.imageView);
     }
 
     submitAction(action, data) {
@@ -725,6 +797,8 @@ export class AssetViewer {
         this.activeView.update(asset);
 
         this.setEditorAvailability(canEdit, reason);
+
+        this.imageView.update(asset);
 
         $$('a.asset-external-view', this.el).forEach(i => {
             i.href = asset.resource_url;
