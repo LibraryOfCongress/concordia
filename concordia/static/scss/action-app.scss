@@ -256,8 +256,4 @@ main {
     flex-wrap: wrap;
     justify-content: space-around;
     align-items: center;
-
-    #asset-viewer[data-asset-status='completed'] & {
-        display: none;
-    }
 }
