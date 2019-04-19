@@ -461,7 +461,10 @@ export class ActionApp {
                 canEdit = false;
             }
         } else if (this.currentMode == 'transcribe') {
-            if (
+            if (asset.status == 'submitted') {
+                canEdit = false;
+                reason = 'this asset has been submitted for review';
+            } else if (
                 asset.status != 'not_started' &&
                 asset.status != 'in_progress'
             ) {
