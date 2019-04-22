@@ -176,7 +176,7 @@
             if (navigator.userAgent.indexOf("CloudFlare-AlwaysOnline") < 0) {
                 Raven.config("{{ SENTRY_FRONTEND_DSN }}", {
                     environment: "{{ CONCORDIA_ENVIRONMENT }}",
-                    release: "{{ RAVEN_CONFIG.release }}",
+                    release: "{{ APPLICATION_VERSION }}",
                     ignoreUrls: [
                         /^moz-extension/
                     ]
