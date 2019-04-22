@@ -9,25 +9,37 @@ repos:
       hooks:
           - id: black
     - repo: https://github.com/pre-commit/pre-commit-hooks
-      rev: v2.1.0
+      rev: v2.2.1
       hooks:
+          - id: check-added-large-files
+            args: ['--maxkb=128']
+          - id: check-ast
           - id: check-byte-order-marker
-          - id: trailing-whitespace
-          - id: mixed-line-ending
-            args: ["--fix=lf"]
-          - id: check-merge-conflict
-          - id: flake8
+          - id: check-case-conflict
+          - id: check-docstring-first
+          - id: check-executables-have-shebangs
           - id: check-json
+            exclude: fixtures/.*
+          - id: check-merge-conflict
+          - id: check-symlinks
+          - id: check-xml
           - id: check-yaml
+            # CloudFormation templates rely on macros which will fail a simple
+            # YAML load, which is why we have cfn-python-lint enabled below:
+            exclude: cloudformation/.*
+          - id: debug-statements
           - id: detect-aws-credentials
             args: ['--allow-missing-credentials']
           - id: detect-private-key
+          - id: end-of-file-fixer
+          - id: mixed-line-ending
+            args: ['--fix=lf']
           - id: pretty-format-json
-            args: ["--autofix", "--no-sort-keys", "--indent=4"]
-          - id: check-ast
-          - id: debug-statements
+            args: ['--autofix', '--no-sort-keys', '--indent=4']
+            exclude: fixtures/.*
+          - id: trailing-whitespace
     - repo: https://github.com/prettier/prettier
-      rev: 1.16.2
+      rev: 1.17.0
       hooks:
           - id: prettier
             files: \.(css|less|scss|ts|tsx|graphql|gql|json|js|jsx|md)$
@@ -40,7 +52,11 @@ repos:
                 - eslint-plugin-prettier@3.0.0
                 - prettier@1.14.3
     - repo: https://github.com/awslabs/cfn-python-lint
-      rev: v0.17.1
+      rev: v0.19.1
       hooks:
           - id: cfn-python-lint
             files: cloudformation/.*\.(json|yml|yaml)$
+    - repo: https://gitlab.com/pycqa/flake8
+      rev: 3.7.7
+      hooks:
+          - id: flake8
