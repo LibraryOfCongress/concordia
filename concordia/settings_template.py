@@ -4,6 +4,8 @@ import sentry_sdk
 from django.contrib import messages
 from sentry_sdk.integrations.django import DjangoIntegration
 
+from concordia.version import get_concordia_version
+
 # Build paths inside the project like this: os.path.join(SITE_ROOT_DIR, ...)
 CONCORDIA_APP_DIR = os.path.abspath(os.path.dirname(__file__))
 SITE_ROOT_DIR = os.path.dirname(CONCORDIA_APP_DIR)
@@ -272,10 +274,12 @@ MESSAGE_TAGS = {messages.ERROR: "danger"}
 SENTRY_BACKEND_DSN = os.environ.get("SENTRY_BACKEND_DSN", "")
 SENTRY_FRONTEND_DSN = os.environ.get("SENTRY_FRONTEND_DSN", "")
 
+APPLICATION_VERSION = get_concordia_version()
+
 sentry_sdk.init(
     dsn=SENTRY_BACKEND_DSN,
     environment=CONCORDIA_ENVIRONMENT,
-    # FIXME: Add     "release": raven.fetch_git_sha(SITE_ROOT_DIR)
+    release=APPLICATION_VERSION,
     integrations=[DjangoIntegration()],
 )
 

@@ -14,10 +14,8 @@ echo Running migrations
 echo "Ensuring our base configuration is present in the database"
 ./manage.py ensure_initial_site_configuration
 
-if [ -v SENTRY_BACKEND_DSN ]; then
-    echo "Testing Sentry configuration"
-    ./manage.py raven test
-fi
+echo "Sending sentry test event"
+echo "from sentry_sdk import capture_message;capture_message('This is a test event')\n" | pipenv run ./manage.py shell
 
 echo Running collectstatic
 ./manage.py collectstatic --clear --noinput -v0
