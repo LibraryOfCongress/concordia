@@ -1,4 +1,4 @@
-/* global $ Cookies screenfull raven */
+/* global $ Cookies screenfull Sentry */
 /* exported displayMessage displayHtmlMessage buildErrorMessage */
 
 (function() {
@@ -113,7 +113,7 @@ $(function() {
                 warningLastShown = parseInt(cookie, 10);
             }
         } catch (e) {
-            raven.captureMessage(e);
+            Sentry.captureMessage(e);
         }
 
         if (Date.now() - warningLastShown > 7 * 86400) {

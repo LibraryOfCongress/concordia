@@ -1,4 +1,4 @@
-/* global $ displayMessage buildErrorMessage Raven */
+/* global $ displayMessage buildErrorMessage Sentry */
 
 function lockControls($container) {
     // Locks all of the controls in the provided jQuery element
@@ -469,8 +469,8 @@ $copyUrlButton.on('click', function() {
             .tooltip('show')
             .on('shown.bs.tooltip', hideTooltipCallback);
     } catch (e) {
-        if (typeof Raven != 'undefined') {
-            Raven.captureException(e);
+        if (typeof Sentry != 'undefined') {
+            Sentry.captureException(e);
         }
         // Display an error message in the tooltip
         tooltipMessage =
