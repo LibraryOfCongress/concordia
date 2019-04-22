@@ -8,7 +8,7 @@ env:
 
 phases:
 
-  pre_build: 
+  pre_build:
     commands:
 
       # Validate all of the CloudFormation templates
@@ -20,4 +20,3 @@ phases:
 
       # Sync the templates
       - aws s3 sync . s3://${S3_BUCKET}
-
