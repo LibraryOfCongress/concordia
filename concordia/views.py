@@ -56,6 +56,7 @@ from concordia.models import (
     TranscriptionStatus,
     UserAssetTagCollection,
 )
+from concordia.templatetags.concordia_media_tags import asset_media_url
 from concordia.utils import get_anonymous_user, request_accepts_json
 from concordia.version import get_concordia_version
 
@@ -681,6 +682,16 @@ class AssetDetailView(DetailView):
         )
 
         ctx["social_share_flag"] = flag_enabled("SOCIAL_SHARE", request=self.request)
+
+        image_url = asset_media_url(asset)
+        if asset.download_url and "iiif" in asset.download_url:
+            thumbnail_url = asset.download_url.replace(
+                "http://tile.loc.gov", "https://tile.loc.gov"
+            )
+            thumbnail_url = thumbnail_url.replace("/pct:100/", "/!512,512/")
+        else:
+            thumbnail_url = image_url
+        ctx["thumbnail_url"] = thumbnail_url
 
         ctx["current_asset_url"] = self.request.build_absolute_uri()
 
