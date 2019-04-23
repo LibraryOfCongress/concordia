@@ -13,7 +13,7 @@
     <meta property="og.title" content="{{ asset.item.title }}" />
     <meta property="og.description" content="{{ asset.item.project.description }}" />
     <meta property="og.type" content="website" />
-    <meta property="og.image" content="{% asset_media_url asset %}" />
+    <meta property="og.image" content="{{ thumbnail_url }}" />
 {% endblock head_content %}
 
 {% block breadcrumbs %}
