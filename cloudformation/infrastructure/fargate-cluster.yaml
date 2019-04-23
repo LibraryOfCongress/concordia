@@ -256,9 +256,9 @@ Resources:
               - Name: AWS_DEFAULT_REGION
                 Value: !Ref AWS::Region
               - Name: SENTRY_BACKEND_DSN
-                Value: http://34db819263f34c28809da045f841f045@sentry-internal.devops.cloud/2
+                Value: https://6727341eabcd47e3a48ce300432e840b@errorlogging.loc.gov/5
               - Name: SENTRY_FRONTEND_DSN
-                Value: https://48ec47f15e484502a29879e40ed2e0c3@crowd-sentry.loc.gov/3
+                Value: https://77a13a941ffd485dbf41dbf8e7a0bdd0@errorlogging.loc.gov/4
               - Name: REDIS_ADDRESS
                 Value: !Ref RedisAddress
               - Name: REDIS_PORT
@@ -304,9 +304,9 @@ Resources:
               - Name: AWS_DEFAULT_REGION
                 Value: !Ref AWS::Region
               - Name: SENTRY_BACKEND_DSN
-                Value: http://34db819263f34c28809da045f841f045@sentry-internal.devops.cloud/2
+                Value: https://6727341eabcd47e3a48ce300432e840b@errorlogging.loc.gov/5
               - Name: SENTRY_FRONTEND_DSN
-                Value: https://48ec47f15e484502a29879e40ed2e0c3@crowd-sentry.loc.gov/3
+                Value: https://77a13a941ffd485dbf41dbf8e7a0bdd0@errorlogging.loc.gov/4
               - Name: REDIS_ADDRESS
                 Value: !Ref RedisAddress
               - Name: REDIS_PORT
@@ -350,9 +350,9 @@ Resources:
               - Name: AWS_DEFAULT_REGION
                 Value: !Ref AWS::Region
               - Name: SENTRY_BACKEND_DSN
-                Value: http://34db819263f34c28809da045f841f045@sentry-internal.devops.cloud/2
+                Value: https://6727341eabcd47e3a48ce300432e840b@errorlogging.loc.gov/5
               - Name: SENTRY_FRONTEND_DSN
-                Value: https://48ec47f15e484502a29879e40ed2e0c3@crowd-sentry.loc.gov/3
+                Value: https://77a13a941ffd485dbf41dbf8e7a0bdd0@errorlogging.loc.gov/4
               - Name: REDIS_ADDRESS
                 Value: !Ref RedisAddress
               - Name: REDIS_PORT
