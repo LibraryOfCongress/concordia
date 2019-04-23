@@ -112,6 +112,11 @@
                         </button>
                     </div>
                     <div class="d-flex btn-group btn-group-sm m-1">
+                        <button id="viewer-flip" class="btn btn-default" title="Flip">
+                            <span class="fas fa-exchange-alt"></span>
+                        </button>
+                    </div>
+                    <div class="d-flex btn-group btn-group-sm m-1">
                         <button id="viewer-full-page" class="btn btn-default" title="View Full Screen">
                             <span class="fas fa-expand"></span>
                         </button>
@@ -517,13 +522,15 @@
         },
         showNavigator:  true,
         showRotationControl: true,
+        showFlipControl: true,
         toolbar: "viewer-controls",
         zoomInButton: "viewer-zoom-in",
         zoomOutButton: "viewer-zoom-out",
         homeButton: "viewer-home",
         fullPageButton: "viewer-full-page",
         rotateLeftButton: "viewer-rotate-left",
-        rotateRightButton: "viewer-rotate-right"
+        rotateRightButton: "viewer-rotate-right",
+        flipButton: "viewer-flip",
     });
 </script>
 
