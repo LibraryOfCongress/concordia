@@ -70,7 +70,6 @@ from concordia.models import (
 )
 from concordia.signals.signals import reservation_obtained, reservation_released
 from concordia.templatetags.concordia_media_tags import asset_media_url
-from concordia.utils import get_anonymous_user, request_accepts_json
 from concordia.utils import (
     get_anonymous_user,
     get_or_create_reserve_id,
