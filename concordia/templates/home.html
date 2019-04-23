@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load staticfiles %}
+{% load feature_flags %}
 
 {% block title %}Home{% endblock title %}
 
@@ -8,6 +9,9 @@
 {% block extra_main_classes %}{% endblock %}
 
 {% block main_content %}
+    {% flag_enabled 'NEW_CAROUSEL_SLIDE' as NEW_CAROUSEL_SLIDE %}
+    {% flag_enabled 'ADVERTISE_ACTIVITY_UI' as ADVERTISE_ACTIVITY_UI %}
+
     <div class="row no-gutters px-sm-3">
         <div class="col-12">
             <div id="homepage-carousel" class="carousel slide" data-ride="carousel" data-pause="hover">
@@ -18,6 +22,9 @@
                     <li data-target="#homepage-carousel" data-slide-to="2"></li>
                     {% if NEW_CAROUSEL_SLIDE %}
                         <li data-target="#homepage-carousel" data-slide-to="3"></li>
+                    {% endif %}
+                    {% if ADVERTISE_ACTIVITY_UI %}
+                        <li data-target="#homepage-carousel" data-slide-to="{% if NEW_CAROUSEL_SLIDE and ADVERTISE_ACTIVITY_UI %}4{% else %}3{% endif %}"></li>
                     {% endif %}
                 </ol>
                 <div class="carousel-inner">
@@ -43,6 +50,11 @@
                         </div>
                         <div class="carousel-item" data-title="Where to start?" data-hero-text="Find instructions and help to get started in our Welcome Guide" data-link-url="{% url 'welcome-guide' %}">
                             <img class="d-block w-100" src="{% static 'img/homepage-carousel/welcome-guide.jpg' %}" alt="Collection of typed report pages by baseball scout Branch Rickey">
+                        </div>
+                    {% endif %}
+                    {% if ADVERTISE_ACTIVITY_UI %}
+                        <div class="carousel-item" data-overlay-position="top-right" data-title="We made a thing" data-hero-text="Please try out this thing we made for you, our volunteers" data-link-url="{% url 'action-app' %}">
+                            <img class="d-block w-100" src="{% static 'img/homepage-carousel/crowd-home.jpg' %}" alt="A crowd of young women cheering and waving handkerchiefs">
                         </div>
                     {% endif %}
                 </div>
@@ -116,7 +128,7 @@
             <div class="col-12 d-flex justify-content-center my-3">
                 <a class="btn btn-primary" href="{% url 'transcriptions:campaign-list' %}" role="button">Browse All Campaigns</a>
             </div>
-            {% if ACTIVITY_UI_ENABLED %}
+            {% if ADVERTISE_ACTIVITY_UI %}
                  <div class="col-12 d-flex justify-content-center my-3">
                     <a class="btn btn-primary" href="{% url 'action-app' %}" role="button">Try the new thing</a>
                 </div>

@@ -35,7 +35,7 @@ from django.db.models import (
     When,
 )
 from django.db.transaction import atomic
-from django.http import Http404, HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template import loader
 from django.urls import reverse, reverse_lazy
@@ -48,6 +48,7 @@ from django.views.decorators.http import require_POST
 from django.views.decorators.vary import vary_on_headers
 from django.views.generic import DetailView, FormView, ListView, TemplateView
 from django_registration.backends.activation.views import RegistrationView
+from flags.decorators import flag_required
 from flags.state import flag_enabled
 from ratelimit.decorators import ratelimit
 from ratelimit.mixins import RatelimitMixin
@@ -1583,10 +1584,8 @@ class ReviewListView(AssetListView):
         return asset_qs
 
 
+@flag_required("ACTIVITY_UI_ENABLED")
 def action_app(request):
-    if not flag_enabled("ACTIVITY_UI", request=request):
-        raise Http404
-
     return render(
         request,
         "action-app.html",
