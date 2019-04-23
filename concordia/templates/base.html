@@ -171,17 +171,18 @@
     {% endblock site-footer %}
 
     {% if SENTRY_FRONTEND_DSN %}
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/raven.js/3.26.1/raven.min.js" integrity="sha256-N3YzTdAC27tvNKpIM2rly/WvlJf8YAat0NjPXgh5Bw4=" crossorigin="anonymous"></script>
+        <script src="https://browser.sentry-cdn.com/5.0.8/bundle.min.js" integrity="sha384-PKOJCSVL6suo2Qz9Hs4hkrZqX7S6iLwadxXxBEa0h0ycsuoDNZCiAcHlPGHYxU6l" crossorigin="anonymous"></script>
         <script>
-            if (navigator.userAgent.indexOf("CloudFlare-AlwaysOnline") < 0) {
-                Raven.config("{{ SENTRY_FRONTEND_DSN }}", {
-                    environment: "{{ CONCORDIA_ENVIRONMENT }}",
-                    release: "{{ RAVEN_CONFIG.release }}",
-                    ignoreUrls: [
+          if (navigator.userAgent.indexOf("CloudFlare-AlwaysOnline") < 0) {
+                Sentry.init({
+                    'dsn': '{{ SENTRY_FRONTEND_DSN }}',
+                    'release': '{{ APPLICATION_VERSION }}',
+                    'environment': '{{ CONCORDIA_ENVIRONMENT }}',
+                    'blacklistUrls': [
                         /^moz-extension/
                     ]
-                }).install();
-            }
+                });
+          }
         </script>
     {% endif %}
 
@@ -196,8 +197,8 @@
 
     <script type="text/javascript">
         if (typeof _satellite == "undefined") {
-            if (typeof raven != "undefined") {
-                raven.captureMessage("Adobe Analytics did not load");
+            if (typeof Sentry != "undefined") {
+                Sentry.captureMessage("Adobe Analytics did not load");
             }
         } else {
             _satellite.pageBottom();

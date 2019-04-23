@@ -1,8 +1,10 @@
-# TODO: use correct copyright header
 import os
 
-import raven
+import sentry_sdk
 from django.contrib import messages
+from sentry_sdk.integrations.django import DjangoIntegration
+
+from concordia.version import get_concordia_version
 
 # Build paths inside the project like this: os.path.join(SITE_ROOT_DIR, ...)
 CONCORDIA_APP_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -68,7 +70,6 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.sites",
     "django.contrib.staticfiles",
-    "raven.contrib.django.raven_compat",
     "maintenance_mode",
     "bootstrap4",
     "bittersweet",
@@ -209,15 +210,10 @@ LOGGING = {
             "formatter": "long",
             "maxBytes": 1024 * 1024 * 100,  # 100 mb
         },
-        "sentry": {
-            "level": "WARNING",
-            "class": "raven.contrib.django.raven_compat.handlers.SentryHandler",
-        },
     },
     "loggers": {
         "django": {"handlers": ["file", "stream"], "level": "DEBUG", "propagate": True},
         "celery": {"handlers": ["celery", "stream"], "level": "DEBUG"},
-        "sentry.errors": {"level": "INFO", "handlers": ["stream"], "propagate": False},
     },
 }
 
@@ -278,11 +274,14 @@ MESSAGE_TAGS = {messages.ERROR: "danger"}
 SENTRY_BACKEND_DSN = os.environ.get("SENTRY_BACKEND_DSN", "")
 SENTRY_FRONTEND_DSN = os.environ.get("SENTRY_FRONTEND_DSN", "")
 
-RAVEN_CONFIG = {
-    "dsn": SENTRY_BACKEND_DSN,
-    "environment": CONCORDIA_ENVIRONMENT,
-    "release": raven.fetch_git_sha(SITE_ROOT_DIR),
-}
+APPLICATION_VERSION = get_concordia_version()
+
+sentry_sdk.init(
+    dsn=SENTRY_BACKEND_DSN,
+    environment=CONCORDIA_ENVIRONMENT,
+    release=APPLICATION_VERSION,
+    integrations=[DjangoIntegration()],
+)
 
 # When the MAINTENANCE_MODE setting is true, this template will be used to
 # generate a 503 response:

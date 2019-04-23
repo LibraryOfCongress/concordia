@@ -16,7 +16,7 @@ echo "Ensuring our base configuration is present in the database"
 
 if [ -v SENTRY_BACKEND_DSN ]; then
     echo "Testing Sentry configuration"
-    ./manage.py raven test
+    echo "from sentry_sdk import capture_message;capture_message('This is a test event')\n" | pipenv run ./manage.py shell
 fi
 
 echo Running collectstatic
