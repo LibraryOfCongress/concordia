@@ -173,11 +173,16 @@
     {% if SENTRY_FRONTEND_DSN %}
         <script src="https://browser.sentry-cdn.com/5.0.8/bundle.min.js" integrity="sha384-PKOJCSVL6suo2Qz9Hs4hkrZqX7S6iLwadxXxBEa0h0ycsuoDNZCiAcHlPGHYxU6l" crossorigin="anonymous"></script>
         <script>
-            Sentry.init({
-                'dsn': '{{ SENTRY_FRONTEND_DSN }}',
-                'release': '{{ APPLICATION_VERSION }}',
-                'environment': '{{ CONCORDIA_ENVIRONMENT }}'
-            });
+          if (navigator.userAgent.indexOf("CloudFlare-AlwaysOnline") < 0) {
+                Sentry.init({
+                    'dsn': '{{ SENTRY_FRONTEND_DSN }}',
+                    'release': '{{ APPLICATION_VERSION }}',
+                    'environment': '{{ CONCORDIA_ENVIRONMENT }}',
+                    'blacklistUrls': [
+                        /^moz-extension/
+                    ]
+                });
+          }
         </script>
     {% endif %}
 
