@@ -14,9 +14,6 @@ echo "Running migrations"
 echo "Ensuring our base configuration is present in the database"
 ./manage.py ensure_initial_site_configuration
 
-echo "Initializing difficulty values"
-./manage.py initialize_difficulty_values
-
 if [ -v SENTRY_BACKEND_DSN ]; then
     echo "Testing Sentry configuration"
     echo "from sentry_sdk import capture_message;capture_message('This is a test event');" | ./manage.py shell
