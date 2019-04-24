@@ -146,7 +146,9 @@ export class ActionApp {
                         (this.config.currentUser &&
                             this.config.currentUser != message.user_pk)
                     ) {
-                        alert('// FIXME: handle asset reservation updates');
+                        console.error(
+                            '// FIXME: handle asset reservation updates'
+                        );
                         this.markAssetAsUnavailable(
                             assetId,
                             'Someone else is working on this'
@@ -155,7 +157,7 @@ export class ActionApp {
                     break;
                 case 'asset_reservation_released':
                     // FIXME: we need to test whether the user who reserved it is different than the user we're running as!
-                    alert('// FIXME: handle asset reservation updates');
+                    console.error('// FIXME: handle asset reservation updates');
                     this.markAssetAsAvailable(assetId);
                     break;
                 default:
