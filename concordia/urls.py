@@ -142,7 +142,6 @@ urlpatterns = [
     path("captcha/", include("captcha.urls")),
     path("admin/", admin.site.urls),
     # Internal support assists:
-    path("maintenance-mode/", include("maintenance_mode.urls")),
     path("error/500/", server_error),
     path("error/404/", page_not_found, {"exception": Http404()}),
     path("error/429/", views.ratelimit_view),

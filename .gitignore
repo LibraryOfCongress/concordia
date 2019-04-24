@@ -31,6 +31,5 @@ mss*
 *.swp
 config-optional-override.json
 env/
-concordia/maintenance_mode_state.txt
 concordia/settings_dev_*.py
 static-files
