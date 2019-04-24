@@ -5,7 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [("concordia", "0026_update_published_field_definition")]
+    dependencies = [("concordia", "0028_asset_year")]
 
     operations = [
         migrations.AddField(
