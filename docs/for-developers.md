@@ -127,6 +127,19 @@ virtualenv environment:
     $ pipenv run ./manage.py migrate
     ```
 
+1.  In another terminal, start Gulp to watch for changes to the SCSS files and
+    compile them to CSS:
+
+    ```bash
+    $ npx gulp
+    ```
+
+    If you only want to compile them a single time without live updates:
+
+    ```bash
+    $ npx gulp build
+    ```
+
 1.  Start the development server:
 
     ```bash

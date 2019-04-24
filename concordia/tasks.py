@@ -3,6 +3,7 @@ from logging import getLogger
 from celery import task
 from django.contrib.auth.models import User
 from django.db.models import Count
+from more_itertools.more import chunked
 
 from concordia.models import (
     Asset,
@@ -165,3 +166,75 @@ def campaign_report(campaign):
     site_report.distinct_tags = distinct_tag_count
     site_report.tag_uses = tag_count
     site_report.save()
+
+
+@task
+def calculate_difficulty_values(asset_qs=None):
+    """
+    Calculate the difficulty scores for the provided AssetQuerySet and update
+    the Asset records for changed difficulty values
+    """
+
+    if asset_qs is None:
+        asset_qs = Asset.objects.published()
+
+    asset_qs = asset_qs.add_contribution_counts()
+
+    updated_count = 0
+
+    # We'll process assets in chunks using an iterator to avoid saving objects
+    # which will never be used again in memory. We will find assets which have a
+    # difficulty value which is not the same as the value stored in the database
+    # and pass them to bulk_update() to be saved in a single query.
+    for asset_chunk in chunked(asset_qs.iterator(), 500):
+        changed_assets = []
+
+        for asset in asset_chunk:
+            difficulty = asset.transcription_count * (
+                asset.transcriber_count + asset.reviewer_count
+            )
+            if difficulty != asset.difficulty:
+                asset.difficulty = difficulty
+                changed_assets.append(asset)
+
+        if changed_assets:
+            # We will only save the new difficulty score both for performance
+            # and to avoid any possibility of race conditions causing stale data
+            # to be saved:
+            Asset.objects.bulk_update(changed_assets, ["difficulty"])
+            updated_count += len(changed_assets)
+
+    return updated_count
+
+
+@task
+def populate_asset_years():
+    """
+    Pull out date info from raw Item metadata and populate it for each Asset
+    """
+
+    asset_qs = Asset.objects.prefetch_related("item")
+
+    updated_count = 0
+
+    for asset_chunk in chunked(asset_qs, 500):
+        changed_assets = []
+
+        for asset in asset_chunk:
+            metadata = asset.item.metadata
+
+            year = None
+            for date_outer in metadata["item"]["dates"]:
+                for date_inner in date_outer.keys():
+                    year = date_inner
+                    break  # We don't support multiple values
+
+            if asset.year != year:
+                asset.year = year
+                changed_assets.append(asset)
+
+        if changed_assets:
+            Asset.objects.bulk_update(changed_assets, ["year"])
+            updated_count += len(changed_assets)
+
+    return updated_count

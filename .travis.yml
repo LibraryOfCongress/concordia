@@ -16,6 +16,7 @@ matrix:
         - python: 3.8-dev
 services:
     - postgresql
+    - redis-server
 before_script:
     - psql -c 'create database concordia;' -U postgres
 install:
@@ -27,6 +28,8 @@ install:
 script:
     - mkdir logs
     - touch ./logs/concordia-celery.log
+    - npm install
+    - npx gulp build
     - pipenv run ./manage.py collectstatic --no-input
     - pipenv run coverage run ./manage.py test
     - git fetch --unshallow

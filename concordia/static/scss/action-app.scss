@@ -1,0 +1,259 @@
+@import '../../../node_modules/bootstrap/scss/functions';
+@import '../../../node_modules/bootstrap/scss/variables';
+@import '../../../node_modules/bootstrap/scss/mixins';
+
+$concordia-app-footer-height: $line-height-lg * 1rem;
+
+body.view-action-app {
+    height: 100vh;
+    max-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex-shrink: 1;
+    max-height: inherit;
+    margin-bottom: $concordia-app-footer-height; // Ensure that the fixed footer does not overlap content
+}
+
+#action-app-footer {
+    height: $concordia-app-footer-height;
+    opacity: 0.8;
+}
+
+#action-app-global-controls > {
+    :first-child,
+    :last-child {
+        width: 8rem;
+    }
+}
+
+#asset-list-controls input[type='range'] {
+    width: calc(100% - (2 * 1.5rem));
+}
+
+#contribute-container {
+    border: none;
+}
+
+#editor-main {
+    max-height: 100%;
+}
+
+#asset-list-container {
+    max-height: 100%;
+    overflow-y: scroll;
+    flex-grow: 1;
+}
+
+#asset-list {
+    --asset-thumbnail-size: 256px;
+    display: grid;
+    column-gap: 1rem;
+    row-gap: 1rem;
+    grid-template-columns: repeat(auto-fill, var(--asset-thumbnail-size));
+    grid-template-rows: auto;
+    justify-content: center;
+    .asset {
+        display: flex;
+        width: var(--asset-thumbnail-size);
+        height: var(--asset-thumbnail-size);
+        object-fit: contain;
+        border-width: 3px !important;
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+        cursor: pointer;
+        transition-property: height, width;
+        transition-duration: 0.1s;
+
+        &[data-unavailable] {
+            filter: grayscale(0.9);
+
+            &::after {
+                content: '🔒' attr(data-unavailable);
+                text-align: center;
+                align-self: center;
+                width: 100%;
+                font-size: smaller;
+            }
+        }
+    }
+
+    .asset-tooltip {
+        background-color: #000;
+        pointer-events: none;
+        overflow: hidden;
+        max-height: 100%;
+        max-width: 100%;
+    }
+}
+
+#asset-viewer {
+    display: none;
+}
+
+#action-app-main {
+    &[data-mode='transcribe'] {
+        #reviewer-column {
+            display: none;
+        }
+        #transcriber-column {
+            display: flex;
+        }
+    }
+
+    &[data-mode='review'] {
+        #transcriber-column {
+            display: none;
+        }
+
+        #reviewer-column {
+            display: flex;
+        }
+    }
+
+    &[data-open-asset-id] {
+        #asset-viewer {
+            flex-grow: 1;
+            max-height: inherit;
+            display: flex;
+            flex-direction: column;
+        }
+        #asset-list-controls {
+            display: none;
+        }
+        #asset-list-container {
+            flex-grow: 0;
+            flex-shrink: 0;
+            display: block;
+            width: 128px;
+        }
+        #asset-list {
+            grid-template-columns: repeat(auto-fill, 128px);
+            .asset {
+                width: 128px;
+                height: 128px;
+            }
+        }
+        .asset-tooltip {
+            font-size: smaller;
+        }
+        #contribute-container {
+            width: 100%;
+            height: 100%;
+        }
+    }
+
+    &:not([data-open-asset-id]) #close-viewer-button {
+        display: none;
+    }
+}
+
+#asset-info-modal {
+    &.modal.show {
+        width: 100vw;
+        .modal-dialog {
+            max-width: 90vw;
+        }
+    }
+    .modal-body {
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+}
+
+#asset-metadata {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    .hierarchy {
+        max-width: 85%;
+        a {
+            text-decoration: underline;
+        }
+    }
+}
+
+#viewer-column,
+#editor-column {
+    flex-basis: 50%;
+}
+
+#reviewer-column {
+    // We want this to be the full height of its containing element
+    // with enough padding to not be covered by the footer:
+    max-height: 100%;
+    padding-bottom: #{$concordia-app-footer-height};
+}
+
+#review-transcription-text {
+    flex-grow: 1;
+    flex-shrink: 1;
+    max-height: 100%;
+    overflow-y: scroll;
+
+    white-space: pre-wrap;
+
+    .nothing-to-transcribe & {
+        font-style: oblique;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
+.unavailable {
+    #editor-column::before {
+        content: 'Someone else is working on this page';
+        text-align: center;
+        font-weight: bold;
+    }
+}
+
+[readonly] + label,
+[disabled] + label {
+    color: #999;
+}
+
+.current-mode {
+    text-transform: capitalize;
+}
+
+.related-links {
+    table-layout: fixed;
+    caption {
+        caption-side: top-outside;
+        text-align: center;
+    }
+    td {
+        width: 50%;
+        max-width: 50%;
+        overflow: hidden;
+    }
+    a {
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+    }
+}
+
+.metadata-list .title {
+    text-transform: capitalize;
+}
+
+#help-panel {
+    flex-basis: 26rem;
+    ul {
+        padding-left: 1rem;
+    }
+}
+
+.control-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    align-items: center;
+}

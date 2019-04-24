@@ -8,5 +8,5 @@ touch /app/logs/concordia.log
 touch /app/logs/concordia-celery.log
 
 
-echo Running indexing
+echo "Running indexing"
 ./manage.py search_index --rebuild -f

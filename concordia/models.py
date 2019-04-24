@@ -6,6 +6,7 @@ from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
+from django.db.models import Count
 from django.urls import reverse
 from django_prometheus_metrics.models import MetricsModelMixin
 
@@ -48,16 +49,16 @@ class MediaType:
     CHOICES = ((IMAGE, "Image"), (AUDIO, "Audio"), (VIDEO, "Video"))
 
 
-class PublicationManager(models.Manager):
+class PublicationQuerySet(models.QuerySet):
     def published(self):
-        return self.get_queryset().filter(published=True)
+        return self.filter(published=True)
 
     def unpublished(self):
-        return self.get_queryset().filter(published=False)
+        return self.filter(published=False)
 
 
 class Campaign(MetricsModelMixin("campaign"), models.Model):
-    objects = PublicationManager()
+    objects = PublicationQuerySet.as_manager()
 
     published = models.BooleanField(default=False, blank=True)
 
@@ -99,7 +100,7 @@ class Resource(MetricsModelMixin("resource"), models.Model):
 
 
 class Project(MetricsModelMixin("project"), models.Model):
-    objects = PublicationManager()
+    objects = PublicationQuerySet.as_manager()
 
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
 
@@ -130,7 +131,7 @@ class Project(MetricsModelMixin("project"), models.Model):
 
 
 class Item(MetricsModelMixin("item"), models.Model):
-    objects = PublicationManager()
+    objects = PublicationQuerySet.as_manager()
 
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
 
@@ -167,8 +168,19 @@ class Item(MetricsModelMixin("item"), models.Model):
         )
 
 
+class AssetQuerySet(PublicationQuerySet):
+    def add_contribution_counts(self):
+        """Add annotations for the number of transcriptions & users"""
+
+        return self.annotate(
+            transcription_count=Count("transcription", distinct=True),
+            transcriber_count=Count("transcription__user", distinct=True),
+            reviewer_count=Count("transcription__reviewed_by", distinct=True),
+        )
+
+
 class Asset(MetricsModelMixin("asset"), models.Model):
-    objects = PublicationManager()
+    objects = AssetQuerySet.as_manager()
 
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
 
@@ -185,6 +197,7 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         max_length=4, choices=MediaType.CHOICES, db_index=True
     )
     sequence = models.PositiveIntegerField(default=1)
+    year = models.CharField(blank=True, max_length=50)
 
     # The original ID of the image resource on loc.gov
     resource_url = models.URLField(max_length=255, blank=True, null=True)
@@ -201,6 +214,8 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         default=TranscriptionStatus.NOT_STARTED,
         choices=TranscriptionStatus.CHOICES,
     )
+
+    difficulty = models.PositiveIntegerField(default=0, blank=True, null=True)
 
     class Meta:
         unique_together = (("slug", "item"),)

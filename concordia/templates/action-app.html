@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+
+{% load staticfiles %}
+
+{% block title %}By the People{% endblock title %}
+
+{% block head_content %}
+    <link rel="canonical" href="https://{{ request.get_host }}{{ request.path }}">
+    <link rel="stylesheet" href="{% static 'css/action-app.css' %}">
+
+    <script>
+        (function() {
+            if ("requestIdleCallback" in window) return;
+
+            var s = document.createElement('script');
+            s.async = false;
+            s.src = "https://cdn.jsdelivr.net/npm/requestidlecallback@0.3.0/index.min.js";
+            document.head.appendChild(s);
+        })();
+    </script>
+{% endblock head_content %}
+
+{% block body_scripts %}
+    <script>
+        if (window.screen.width < 1024 || window.screen.height < 768) {
+            alert("This application is still under development and has not yet been optimized for small screens");
+        }
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/split.js/1.5.10/split.min.js" integrity="sha256-voAP1SafVzHBtUVXxB6ZuQB5mIZu6h0veHhhzwXcthQ=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/openseadragon/2.4.0/openseadragon.min.js" integrity="sha256-grVJpqgDSGBx1q2llmvY+J5zU9hEHbO7UvftFY2bK1w=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/URI.js/1.19.1/URI.min.js" integrity="sha256-D3tK9Rf/fVqBf6YDM8Q9NCNf/6+F2NOKnYSXHcl0keU=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/URI.js/1.19.1/URITemplate.min.js" integrity="sha256-LIw9ihYxDmHK4yHsnaQuuH6vWWX+2PtEYqj/EcEJNfg=" crossorigin="anonymous"></script>
+
+    {{ app_parameters|json_script:"app-parameters" }}
+
+    <script>
+        var appConfig = JSON.parse(document.getElementById('app-parameters').textContent);
+    </script>
+
+    <script type="module">
+        import { ActionApp } from "{% static 'js/action-app/index.js' %}";
+        window.actionApp = new ActionApp(appConfig);
+    </script>
+
+    <script nomodule>
+        if (confirm("This application is still under development and does not yet support older browsers. Would you like to return to the main site?")) {
+            window.location.href = "{% url 'homepage' %}";
+        }
+    </script>
+{% endblock body_scripts %}
+
+{% comment %} This app is close to a full-screen view so we suppress the standard header & footer {% endcomment %}
+{% block site-header %}{% endblock site-header %}
+{% block breadcrumbs-container %}{% endblock breadcrumbs-container %}
+{% block site-footer %}{% endblock site-footer %}
+
+{% block site-main %}
+    {% csrf_token %}
+    <header id="action-app-header">
+        <nav id="action-app-global-controls" class="navbar navbar-expand-lg navbar-dark bg-dark" role="navigation">
+            <a class="navbar-brand mb-0 h1" href="{% url 'homepage' %}">
+                <span class="fas fa-home"></span>
+                Home
+            </a>
+            <ul class="navbar-nav flex-grow-1 text-center justify-content-center">
+                <li class="nav-item navbar-text current-mode">
+                </li>
+            </ul>
+            <ul class="navbar-nav justify-content-end">
+                <li class="nav-item">
+                    <button hidden id="go-fullscreen" class="btn btn-link nav-link" data-target="body" title="Go fullscreen">
+                        <span class="fas fa-arrows-alt"></span>
+                        <span class="sr-only">Go fullscreen</span>
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button id="help-toggle" class="btn btn-link nav-link" href="{% url 'help-center' %}" title="Open Help">
+                        <span class="fas fa-question-circle"></span>
+                        <span class="sr-only">Help</span>
+                    </button>
+                </li>
+            </ul>
+        </nav>
+    </header>
+    <main id="action-app-main" class="d-flex">
+        <div id="editor-main" class="p-1 d-flex flex-grow-1">
+            <div id="asset-list-container">
+                <form id="asset-list-controls" class="sticky-top bg-light form-inline flex-wrap justify-content-center" role="navigation">
+                    <div class="input-group input-group-sm m-1">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">I want to:</span>
+                        </div>
+
+                        <div id="activity-mode-selection" class="btn-group btn-group-sm" role="group" aria-label="Activity mode">
+                            <button type="button" class="btn btn-outline-primary" value="transcribe">Transcribe</button>
+                            <button type="button" class="btn btn-outline-primary active" value="review">Review</button>
+                        </div>
+                    </div>
+                    <div class="input-group input-group-sm m-1">
+                        <div class="input-group-prepend">
+                            <label class="input-group-text" for="sort-mode">Sort by:</label>
+                        </div>
+                        <select class="custom-select custom-select-sm" id="sort-mode">
+                            <option value="recent">Most Recent</option>
+                            <option value="easiest">Easiest</option>
+                            <option value="hardest">Hardest</option>
+                            <option value="item-id">Item ID</option>
+                            <option value="campaign">Campaign</option>
+                            <option value="year">Year</option>
+                        </select>
+                    </div>
+                    <div class="input-group input-group-sm m-1">
+                        <div class="input-group-prepend">
+                            <label class="input-group-text" for="selected-campaign">Campaign:</label>
+                        </div>
+                        <select class="custom-select custom-select-sm" id="selected-campaign">
+                            <option value="">All</option>
+                        </select>
+                    </div>
+
+                    <div class="w-75 m-1 d-flex align-items-center justify-content-between">
+                        <span class="fas fa-compress-arrows-alt"></span>
+                        <input type="range" class="form-input custom-range" id="asset-list-thumbnail-size" min="128" max="512" step="8" autocomplete="off">
+                        <span class="fas fa-expand-arrows-alt"></span>
+                    </div>
+                </form>
+
+                <button id="close-viewer-button" class="btn btn-secondary btn-lg position-fixed mx-auto" aria-label="Close viewer">
+                    <span class="fas fa-th"></span>
+                    Expand
+                </button>
+
+                <button id="load-more-assets" class="btn btn-secondary btn-block btn-sm">Load more…</button>
+            </div>
+            <div id="asset-viewer">
+                <div id="asset-metadata">
+                    <div class="hierarchy">
+                        <a class="item-title item-url" target="_blank"></a>
+                        <a class="asset-title asset-url" target="_blank"></a>
+                    </div>
+
+                    <div>
+                        <button id="show-metadata-button" class="btn btn-secondary" data-toggle="modal" data-target="#asset-info-modal" aria-label="Show metadata">ℹ Info</button>
+                    </div>
+                </div>
+                <div id="contribute-container" class="flex-grow-1 d-flex h-100">
+                    <div id="viewer-column" class="pl-0 d-flex flex-column align-items-stretch bg-dark d-print-block">
+                        <div id="viewer-controls" class="m-1 text-center d-print-none">
+                            <div class="d-inline-flex justify-content-between">
+                                <div class="d-flex btn-group btn-group-sm m-1">
+                                    <button id="viewer-home" class="btn btn-default" title="Fit Image to Viewport">
+                                        <span class="fas fa-compress"></span>
+                                    </button>
+                                </div>
+                                <div class="d-flex btn-group btn-group-sm m-1">
+                                    <button id="viewer-zoom-in" class="btn btn-default" title="Zoom In">
+                                        <span class="fas fa-search-plus"></span>
+                                    </button>
+                                    <button id="viewer-zoom-out" class="btn btn-default" title="Zoom Out">
+                                        <span class="fas fa-search-minus"></span>
+                                    </button>
+                                </div>
+                                <div class="d-flex btn-group btn-group-sm m-1">
+                                    <button id="viewer-rotate-left" class="btn btn-default" title="Rotate Left">
+                                        <span class="fas fa-undo"></span>
+                                    </button>
+                                    <button id="viewer-rotate-right" class="btn btn-default" title="Rotate Right">
+                                        <span class="fas fa-redo"></span>
+                                    </button>
+                                </div>
+                                <div class="d-flex btn-group btn-group-sm m-1">
+                                    <button id="viewer-flip" class="btn btn-default" title="Flip">
+                                        <span class="fas fa-exchange-alt"></span>
+                                    </button>
+                                </div>
+                                <div class="d-flex btn-group btn-group-sm m-1">
+                                    <button id="viewer-previous-page" class="btn btn-default" title="Previous Page">
+                                        <span class="fas fa-arrow-left"></span>
+                                    </button>
+                                    <button id="viewer-next-page" class="btn btn-default" title="Next Page">
+                                        <span class="fas fa-arrow-right"></span>
+                                    </button>
+                                </div>
+                                <div class="d-flex btn-group btn-group-sm m-1">
+                                    <button type="button" class="btn btn-default" data-toggle="modal" data-target="#keyboard-help-modal">
+                                        <span class="fas fa-question-circle" aria-label="Open Help"></span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="asset-image" class="h-100 bg-dark"></div>
+                    </div>
+
+                    <div id="editor-column" class="d-flex pl-2 flex-column flex-grow-1 flex-nowrap justify-content-between h-100">
+                    </div>
+                </div>
+
+                <div id="asset-info-modal" class="modal" tabindex="-1" role="dialog">
+                    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title"><span class="asset-title">More Information</span></h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                            </div>
+                            <div class="modal-footer d-flex justify-content-center">
+                                <div class="btn-group btn-group-sm">
+                                    <a class="asset-external-view btn btn-link" target="_blank">View item on www.loc.gov</a>
+                                    <a class="campaign-url btn btn-link" target="_blank">View Campaign</a>
+                                    <a class="project-url btn btn-link" target="_blank">View Project</a>
+                                    <a class="item-url btn btn-link" target="_blank">View Item</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="help-panel" hidden>
+            <section>
+                <h5>Quick Tips</h5>
+                <ul>
+                    <li>Type what you see. Preserve original spelling, punctuation, and line breaks.</li>
+                    <li>Use brackets [ ] around deleted, illegible or partially legible text.</li>
+                    <li>Transcribe any words or letters you can't identify as ?.</li>
+                    <li>Use square brackets and asterisks around text from margins [ * * ].</li>
+                    <li>Include insertions where you would read them in the text.</li>
+                </ul>
+            </section>
+
+            <section>
+                <h5>Keyboard Shortcuts</h5>
+                <table class="table table-compact table-responsive">
+                    <tr>
+                        <th><kbd>w</kbd>, up arrow</th>
+                        <td>Scroll the viewport up</td>
+                    </tr>
+                    <tr>
+                        <th><kbd>s</kbd>, down arrow</th>
+                        <td>Scroll the viewport down</td>
+                    </tr>
+                    <tr>
+                        <th><kbd>a</kbd>, left arrow</th>
+                        <td>Scroll the viewport left</td>
+                    </tr>
+                    <tr>
+                        <th><kbd>d</kbd>, right arrow </th>
+                        <td>Scroll the viewport right</td>
+                    </tr>
+                    <tr>
+                        <th><kbd>0</kbd></th>
+                        <td>Fit the entire image to the viewport</td>
+                    </tr>
+                    <tr>
+                        <th><kbd>-</kbd>, <kbd>_</kbd>, Shift+<kbd>W</kbd>, Shift+Up arrow</th>
+                        <td>Zoom the viewport out</td>
+                    </tr>
+                    <tr>
+                        <th><kbd>=</kbd>, <kbd>+</kbd>, Shift+<kbd>S</kbd>, Shift+Down arrow</th>
+                        <td>Scroll the viewport in</td>
+                    </tr>
+                    <tr>
+                        <th><kbd>r</kbd></th>
+                        <td>Rotate the viewport clockwise</td>
+                    </tr>
+                    <tr>
+                        <th><kbd>R</kbd></th>
+                        <td>Rotate the viewport counterclockwise</td>
+                    </tr>
+                    <tr>
+                        <th><kbd>f</kbd></th>
+                        <td>Flip the viewport horizontally</td>
+                    </tr>
+                </table>
+            </section>
+
+            <p>
+                {% comment %} FIXME: this should probably be a fixed footer at the bottom of this element {% endcomment %}
+                Find more detailed instructions in the <a href="{% url 'help-center' %}" target="_blank">Help Center</a>
+            </p>
+        </div>
+    </main>
+    <footer id="action-app-footer" class="footer fixed-bottom bg-light">
+        <div class="container">
+            <div class="m-auto text-center text-muted">
+                Displaying <span id="visible-asset-count">0</span> of <span id="asset-count">0</span> assets
+            </div>
+        </div>
+    </footer>
+{% endblock site-main %}

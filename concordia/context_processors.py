@@ -1,5 +1,4 @@
 from django.conf import settings
-from flags.state import flag_enabled
 
 
 def system_configuration(request):
@@ -12,7 +11,6 @@ def system_configuration(request):
         "CONCORDIA_ENVIRONMENT": settings.CONCORDIA_ENVIRONMENT,
         "S3_BUCKET_NAME": getattr(settings, "S3_BUCKET_NAME", None),
         "APPLICATION_VERSION": getattr(settings, "APPLICATION_VERSION", None),
-        "NEW_CAROUSEL_SLIDE": flag_enabled("NEW_CAROUSEL_SLIDE", request=request),
     }
 
 

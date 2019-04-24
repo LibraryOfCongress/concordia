@@ -98,6 +98,7 @@ urlpatterns = [
     ),
     path("questions/", views.simple_page, name="questions"),
     path("contact/", views.ContactUsView.as_view(), name="contact"),
+    path("act/", views.action_app, name="action-app"),
     path("campaigns/", include(tx_urlpatterns, namespace="transcriptions")),
     path("reserve-asset/<int:asset_pk>/", views.reserve_asset, name="reserve-asset"),
     path(
@@ -116,6 +117,14 @@ urlpatterns = [
         name="review-transcription",
     ),
     path("assets/<int:asset_pk>/tags/submit/", views.submit_tags, name="submit-tags"),
+    path("transcribe/", views.TranscribeListView.as_view(), name="transcribe-assets"),
+    path(
+        "transcribe.json",
+        views.TranscribeListView.as_view(),
+        name="transcribe-assets-json",
+    ),
+    path("review/", views.ReviewListView.as_view(), name="review-assets"),
+    path("review.json", views.ReviewListView.as_view(), name="review-assets-json"),
     path("account/ajax-status/", views.ajax_session_status, name="ajax-session-status"),
     path("account/ajax-messages/", views.ajax_messages, name="ajax-messages"),
     path(

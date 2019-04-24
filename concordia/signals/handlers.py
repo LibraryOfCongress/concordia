@@ -1,10 +1,16 @@
+from asgiref.sync import AsyncToSync
+from channels.layers import get_channel_layer
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django_registration.signals import user_registered
 
-from ..models import Transcription, TranscriptionStatus
+from ..models import Asset, Transcription, TranscriptionStatus
+from ..tasks import calculate_difficulty_values
+from .signals import reservation_obtained, reservation_released
+
+ASSET_CHANNEL_LAYER = get_channel_layer()
 
 
 @receiver(user_registered)
@@ -33,3 +39,56 @@ def update_asset_status(sender, *, instance, **kwargs):
     instance.asset.transcription_status = new_status
     instance.asset.full_clean()
     instance.asset.save()
+
+    calculate_difficulty_values(Asset.objects.filter(pk=instance.asset.pk))
+
+
+@receiver(post_save, sender=Asset)
+def send_asset_update(*, instance, **kwargs):
+    latest_trans = None
+
+    latest_transcription = instance.transcription_set.order_by("-pk").first()
+    if latest_transcription:
+        latest_trans = {
+            "text": latest_transcription.text,
+            "id": latest_transcription.pk,
+            "submitted_by": latest_transcription.user.pk,
+        }
+
+    AsyncToSync(ASSET_CHANNEL_LAYER.group_send)(
+        "asset_updates",
+        {
+            "type": "asset_update",
+            "asset_pk": instance.pk,
+            "status": instance.transcription_status,
+            "difficulty": instance.difficulty,
+            "latest_transcription": latest_trans,
+        },
+    )
+
+
+@receiver(reservation_obtained)
+def send_asset_reservation_obtained(sender, **kwargs):
+    send_asset_reservation_message(
+        sender=sender,
+        message_type="asset_reservation_obtained",
+        asset_pk=kwargs["asset_pk"],
+        user_pk=kwargs["user_pk"],
+    )
+
+
+@receiver(reservation_released)
+def send_asset_reservation_released(sender, **kwargs):
+    send_asset_reservation_message(
+        sender=sender,
+        message_type="asset_reservation_released",
+        asset_pk=kwargs["asset_pk"],
+        user_pk=kwargs["user_pk"],
+    )
+
+
+def send_asset_reservation_message(*, sender, message_type, asset_pk, user_pk):
+    AsyncToSync(ASSET_CHANNEL_LAYER.group_send)(
+        "asset_updates",
+        {"type": message_type, "asset_pk": asset_pk, "user_pk": user_pk},
+    )

@@ -23,7 +23,17 @@ from django.core.exceptions import ValidationError
 from django.core.mail import EmailMultiAlternatives, send_mail
 from django.core.paginator import Paginator
 from django.db import connection
-from django.db.models import Case, Count, IntegerField, Max, Q, When
+from django.db.models import (
+    Case,
+    Count,
+    F,
+    IntegerField,
+    Max,
+    OuterRef,
+    Q,
+    Subquery,
+    When,
+)
 from django.db.transaction import atomic
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -38,11 +48,13 @@ from django.views.decorators.http import require_POST
 from django.views.decorators.vary import vary_on_headers
 from django.views.generic import DetailView, FormView, ListView, TemplateView
 from django_registration.backends.activation.views import RegistrationView
+from flags.decorators import flag_required
 from flags.state import flag_enabled
 from ratelimit.decorators import ratelimit
 from ratelimit.mixins import RatelimitMixin
 from ratelimit.utils import is_ratelimited
 
+from concordia.api_views import APIDetailView, APIListView
 from concordia.forms import ContactUsForm, UserProfileForm, UserRegistrationForm
 from concordia.models import (
     Asset,
@@ -56,6 +68,7 @@ from concordia.models import (
     TranscriptionStatus,
     UserAssetTagCollection,
 )
+from concordia.signals.signals import reservation_obtained, reservation_released
 from concordia.templatetags.concordia_media_tags import asset_media_url
 from concordia.utils import get_anonymous_user, request_accepts_json
 from concordia.version import get_concordia_version
@@ -370,12 +383,49 @@ class HomeView(ListView):
 
 
 @method_decorator(default_cache_control, name="dispatch")
-class CampaignListView(ListView):
+class CampaignListView(APIListView):
     template_name = "transcriptions/campaign_list.html"
     paginate_by = 10
 
     queryset = Campaign.objects.published().order_by("ordering", "title")
     context_object_name = "campaigns"
+
+    def serialize_context(self, context):
+        data = super().serialize_context(context)
+
+        object_list = data["objects"]
+
+        status_count_keys = {
+            status: f"{status}_count" for status in TranscriptionStatus.CHOICE_MAP
+        }
+
+        campaign_stats_qs = (
+            Campaign.objects.filter(pk__in=[i["id"] for i in object_list])
+            .annotate(
+                **{
+                    v: Count(
+                        "project__item__asset",
+                        filter=Q(
+                            project__published=True,
+                            project__item__published=True,
+                            project__item__asset__published=True,
+                            project__item__asset__transcription_status=k,
+                        ),
+                    )
+                    for k, v in status_count_keys.items()
+                }
+            )
+            .values("pk", *status_count_keys.values())
+        )
+
+        campaign_asset_counts = {}
+        for campaign_stats in campaign_stats_qs:
+            campaign_asset_counts[campaign_stats.pop("pk")] = campaign_stats
+
+        for obj in object_list:
+            obj["asset_stats"] = campaign_asset_counts[obj["id"]]
+
+        return data
 
 
 def calculate_asset_stats(asset_qs, ctx):
@@ -432,7 +482,7 @@ def annotate_children_with_progress_stats(children):
 
 
 @method_decorator(default_cache_control, name="dispatch")
-class CampaignDetailView(DetailView):
+class CampaignDetailView(APIDetailView):
     template_name = "transcriptions/campaign_detail.html"
 
     queryset = Campaign.objects.published().order_by("title")
@@ -454,7 +504,7 @@ class CampaignDetailView(DetailView):
                             item__asset__transcription_status=key,
                         ),
                     )
-                    for key in TranscriptionStatus.CHOICE_MAP.keys()
+                    for key in TranscriptionStatus.CHOICE_MAP
                 }
             )
         )
@@ -481,9 +531,19 @@ class CampaignDetailView(DetailView):
 
         return ctx
 
+    def serialize_context(self, context):
+        ctx = super().serialize_context(context)
+        ctx["object"]["related_links"] = [
+            {"title": title, "url": url}
+            for title, url in self.object.resource_set.values_list(
+                "title", "resource_url"
+            )
+        ]
+        return ctx
+
 
 @method_decorator(default_cache_control, name="dispatch")
-class ProjectDetailView(ListView):
+class ProjectDetailView(APIListView):
     template_name = "transcriptions/project_detail.html"
     context_object_name = "items"
     paginate_by = 10
@@ -501,7 +561,7 @@ class ProjectDetailView(ListView):
                 f"{key}_count": Count(
                     "asset", filter=Q(asset__transcription_status=key)
                 )
-                for key in TranscriptionStatus.CHOICE_MAP.keys()
+                for key in TranscriptionStatus.CHOICE_MAP
             }
         )
 
@@ -534,9 +594,14 @@ class ProjectDetailView(ListView):
 
         return ctx
 
+    def serialize_context(self, context):
+        data = super().serialize_context(context)
+        data["project"] = self.serialize_object(context["project"])
+        return data
+
 
 @method_decorator(default_cache_control, name="dispatch")
-class ItemDetailView(ListView):
+class ItemDetailView(APIListView):
     """
     Handle GET requests on /campaign/<campaign>/<project>/<item>
 
@@ -590,6 +655,11 @@ class ItemDetailView(ListView):
         calculate_asset_stats(item_assets, ctx)
 
         return ctx
+
+    def serialize_context(self, context):
+        data = super().serialize_context(context)
+        data["item"] = self.serialize_object(context["item"])
+        return data
 
 
 @method_decorator(never_cache, name="dispatch")
@@ -810,6 +880,10 @@ def save_transcription(request, *, asset_pk):
         {
             "id": transcription.pk,
             "submissionUrl": reverse("submit-transcription", args=(transcription.pk,)),
+            "asset": {
+                "id": transcription.asset.id,
+                "status": transcription.asset.transcription_status,
+            },
         },
         status=201,
     )
@@ -836,7 +910,16 @@ def submit_transcription(request, *, pk):
     transcription.full_clean()
     transcription.save()
 
-    return JsonResponse({"id": transcription.pk}, status=200)
+    return JsonResponse(
+        {
+            "id": transcription.pk,
+            "asset": {
+                "id": transcription.asset.id,
+                "status": transcription.asset.transcription_status,
+            },
+        },
+        status=200,
+    )
 
 
 @require_POST
@@ -871,7 +954,16 @@ def review_transcription(request, *, pk):
     transcription.full_clean()
     transcription.save()
 
-    return JsonResponse({"id": transcription.pk}, status=200)
+    return JsonResponse(
+        {
+            "id": transcription.pk,
+            "asset": {
+                "id": transcription.asset.id,
+                "status": transcription.asset.transcription_status,
+            },
+        },
+        status=200,
+    )
 
 
 @require_POST
@@ -1084,7 +1176,6 @@ class ReportCampaignView(TemplateView):
             statuses = project_statuses.get(project.id, [])
             statuses.sort(key=lambda i: sort_order.index(i[0]))
             project.transcription_statuses = statuses
-            project.transcription_statuses
 
 
 def reserve_rate(g, r):
@@ -1108,17 +1199,35 @@ def reserve_asset(request, *, asset_pk):
 
     timestamp = now()
 
-    # First clear old reservations, with a grace period:
+    # First clear old reservations, with a grace period.
     cutoff = timestamp - (
         timedelta(seconds=2 * settings.TRANSCRIPTION_RESERVATION_SECONDS)
     )
 
+    expired_reservations = []
+
     with connection.cursor() as cursor:
-        cursor.execute(
-            "DELETE FROM concordia_assettranscriptionreservation WHERE updated_on < %s",
+        rows_to_release = cursor.execute(
+            (
+                "DELETE FROM concordia_assettranscriptionreservation "
+                "WHERE updated_on < %s "
+                "RETURNING asset_id AS asset_pk, user_id AS user_pk"
+            ),
             [cutoff],
         )
 
+        if rows_to_release:
+            expired_reservations.extend(
+                (row["asset_pk"], row["user_pk"]) for row in rows_to_release.fetchall()
+            )
+
+    for asset_pk, user_pk in expired_reservations:
+        reservation_released.send(
+            sender="reserve_asset", asset_pk=asset_pk, user_pk=user_pk
+        )
+
+    # If the browser is letting us know of a specific reservation release,
+    # let it go even if it's within the grace period.
     if request.POST.get("release"):
         with connection.cursor() as cursor:
             cursor.execute(
@@ -1128,6 +1237,10 @@ def reserve_asset(request, *, asset_pk):
                 """,
                 [user.pk, asset_pk],
             )
+        # Notify the web socket of the reservation release
+        reservation_released.send(
+            sender="reserve_asset", asset_pk=asset_pk, user_pk=user.pk
+        )
         return HttpResponse(status=204)
 
     # We're relying on the database to meet our integrity requirements and since
@@ -1153,6 +1266,9 @@ def reserve_asset(request, *, asset_pk):
         if cursor.rowcount != 1:
             return HttpResponse(status=409)
 
+    reservation_obtained.send(
+        sender="reserve_asset", asset_pk=asset_pk, user_pk=user.pk
+    )
     return HttpResponse(status=204)
 
 
@@ -1282,4 +1398,214 @@ def redirect_to_next_transcribable_asset(request, *, campaign_slug):
 
     return redirect_to_next_asset(
         potential_assets, "transcribe", request, campaign, project_slug, user
+    )
+
+
+class AssetListView(APIListView):
+    context_object_name = "assets"
+    paginate_by = 50
+
+    def get_ordering(self):
+        order_field = self.request.GET.get("order_by", "pk")
+        if order_field.lstrip("-") not in ("pk", "difficulty"):
+            raise ValueError
+        return order_field
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+
+        assets = ctx["assets"]
+
+        asset_pks = [i.pk for i in assets]
+
+        latest_transcription_qs = (
+            Transcription.objects.filter(asset__in=asset_pks)
+            .annotate(max_pk=Max("pk"))
+            .filter(pk=F("max_pk"))
+        )
+
+        # n.b. we use this as an opportunity to rename the user_id field to match
+        # what's being sent by the WebSocket update messages
+        latest_transcriptions = {
+            asset_id: {"id": pk, "text": text, "submitted_by": user_id}
+            for asset_id, pk, user_id, text in latest_transcription_qs.values_list(
+                "asset_id", "pk", "user_id", "text"
+            )
+        }
+
+        adjacent_asset_qs = Asset.objects.filter(
+            published=True, item=OuterRef("item")
+        ).values("sequence")
+
+        adjacent_seq_qs = (
+            Asset.objects.filter(pk__in=asset_pks, published=True)
+            .annotate(
+                next_sequence=Subquery(
+                    adjacent_asset_qs.filter(
+                        sequence__gt=OuterRef("sequence")
+                    ).order_by("sequence")[:1]
+                ),
+                previous_sequence=Subquery(
+                    adjacent_asset_qs.filter(
+                        sequence__lt=OuterRef("sequence")
+                    ).order_by("-sequence")[:1]
+                ),
+            )
+            .values_list("pk", "previous_sequence", "next_sequence")
+        )
+
+        adjacent_seqs = {
+            pk: (prev_seq, next_seq) for pk, prev_seq, next_seq in adjacent_seq_qs
+        }
+
+        for asset in assets:
+            asset.latest_transcription = latest_transcriptions.get(asset.id, None)
+
+            asset.previous_sequence, asset.next_sequence = adjacent_seqs.get(
+                asset.id, (None, None)
+            )
+
+        return ctx
+
+    def serialize_object(self, obj):
+        # Since we're doing this a lot, let's avoid some repetitive lookups:
+        item = obj.item
+        project = item.project
+        campaign = project.campaign
+
+        image_url = asset_media_url(obj)
+        if obj.download_url and "iiif" in obj.download_url:
+            thumbnail_url = obj.download_url.replace(
+                "http://tile.loc.gov", "https://tile.loc.gov"
+            )
+        else:
+            thumbnail_url = image_url
+
+        metadata = {
+            "id": obj.pk,
+            "status": obj.transcription_status,
+            "url": obj.get_absolute_url(),
+            "thumbnailUrl": thumbnail_url,
+            "imageUrl": image_url,
+            "title": obj.title,
+            "difficulty": obj.difficulty,
+            "year": obj.year,
+            "sequence": obj.sequence,
+            "resource_url": obj.resource_url,
+            "latest_transcription": obj.latest_transcription,
+            "item": {
+                "id": item.pk,
+                "item_id": item.item_id,
+                "title": item.title,
+                "url": item.get_absolute_url(),
+            },
+            "project": {
+                "id": project.pk,
+                "slug": project.slug,
+                "title": project.title,
+                "url": project.get_absolute_url(),
+            },
+            "campaign": {
+                "id": campaign.pk,
+                "title": campaign.title,
+                "url": campaign.get_absolute_url(),
+            },
+        }
+
+        # FIXME: we want to rework how this is done after deprecating Asset.media_url
+        if obj.previous_sequence:
+            metadata["previous_thumbnail"] = re.sub(
+                r"[/]\d+[.]jpg", f"/{obj.previous_sequence}.jpg", image_url
+            )
+        if obj.next_sequence:
+            metadata["next_thumbnail"] = re.sub(
+                r"[/]\d+[.]jpg", f"/{obj.next_sequence}.jpg", image_url
+            )
+
+        return metadata
+
+
+class TranscribeListView(AssetListView):
+    template_name = "transcriptions/transcribe_list.html"
+
+    queryset = (
+        Asset.objects.published()
+        .filter(
+            Q(transcription_status=TranscriptionStatus.NOT_STARTED)
+            | Q(transcription_status=TranscriptionStatus.IN_PROGRESS)
+        )
+        .prefetch_related("item", "item__project", "item__project__campaign")
+    )
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["campaigns"] = Campaign.objects.published().order_by("title")
+        return ctx
+
+    def get_queryset(self):
+        asset_qs = super().get_queryset()
+
+        campaign_filter = self.request.GET.get("campaign_filter")
+        if campaign_filter:
+            asset_qs = asset_qs.filter(item__project__campaign__pk=campaign_filter)
+
+        order_field = self.get_ordering()
+        if order_field:
+            asset_qs.order_by(order_field)
+
+        return asset_qs
+
+
+class ReviewListView(AssetListView):
+    template_name = "transcriptions/review_list.html"
+    queryset = (
+        Asset.objects.published()
+        .filter(transcription_status=TranscriptionStatus.SUBMITTED)
+        .prefetch_related("item", "item__project", "item__project__campaign")
+    )
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["campaigns"] = Campaign.objects.published().order_by("title")
+        return ctx
+
+    def get_queryset(self):
+        asset_qs = super().get_queryset()
+
+        campaign_filter = self.request.GET.get("campaign_filter")
+
+        if campaign_filter:
+            asset_qs = asset_qs.filter(item__project__campaign__pk=campaign_filter)
+
+        order_field = self.get_ordering()
+        if order_field:
+            asset_qs.order_by(order_field)
+
+        return asset_qs
+
+
+@flag_required("ACTIVITY_UI_ENABLED")
+def action_app(request):
+    return render(
+        request,
+        "action-app.html",
+        {
+            "campaigns": Campaign.objects.published().order_by("title"),
+            "app_parameters": {
+                "currentUser": request.user.pk,
+                "urls": {
+                    "assetUpdateSocket": request.build_absolute_uri(
+                        "/ws/asset/asset_updates/"
+                    ).replace("http", "ws"),
+                    "campaignList": reverse("transcriptions:campaign-list"),
+                },
+                "urlTemplates": {
+                    "assetData": "/{action}.json",
+                    "assetReservation": "/reserve-asset/{assetId}/",
+                    "saveTranscription": "/assets/{assetId}/transcriptions/save/",
+                    "submitTranscription": "/transcriptions/{transcriptionId}/submit/",
+                    "reviewTranscription": "/transcriptions/{transcriptionId}/review/",
+                },
+            },
+        },
     )

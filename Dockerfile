@@ -12,7 +12,8 @@ RUN apt-get update -qy && apt-get dist-upgrade -qy && apt-get install -o Dpkg::O
     libtiff-dev libjpeg-dev libopenjp2-7-dev libwebp-dev zlib1g-dev \
     jpegoptim libjpeg-turbo-progs optipng advancecomp \
     graphviz \
-    locales && apt-get -qy autoremove && apt-get -qy autoclean
+    locales \
+    nodejs && apt-get -qy -t stretch-backports install npm && apt-get -qy autoremove && apt-get -qy autoclean
 
 RUN locale-gen en_US.UTF-8
 ENV LC_ALL=en_US.UTF-8
@@ -28,6 +29,8 @@ RUN pip3 install pipenv
 
 WORKDIR /app
 COPY . /app
+
+RUN npm install --silent --global npm@latest && /usr/local/bin/npm install --silent && npx gulp build
 
 RUN pipenv install --system --dev --deploy
 
