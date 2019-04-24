@@ -475,15 +475,52 @@ def annotate_children_with_progress_stats(children):
 
 
 @method_decorator(default_cache_control, name="dispatch")
-class ThemeListView(ListView):
+class ThemeListView(APIListView):
     template_name = "transcriptions/theme_list.html"
     paginate_by = 10
     queryset = Theme.objects.order_by("title")
     context_object_name = "themes"
 
+    def serialize_context(self, context):
+        data = super().serialize_context(context)
+
+        object_list = data["objects"]
+
+        status_count_keys = {
+            status: f"{status}_count" for status in TranscriptionStatus.CHOICE_MAP
+        }
+
+        theme_stats_qs = (
+            Theme.objects.filter(pk__in=[i["id"] for i in object_list])
+            .annotate(
+                **{
+                    v: Count(
+                        "project__item__asset",
+                        filter=Q(
+                            project__published=True,
+                            project__item__published=True,
+                            project__item__asset__published=True,
+                            project__item__asset__transcription_status=k,
+                        ),
+                    )
+                    for k, v in status_count_keys.items()
+                }
+            )
+            .values("pk", *status_count_keys.values())
+        )
+
+        theme_asset_counts = {}
+        for theme_stats in theme_stats_qs:
+            theme_asset_counts[theme_stats.pop("pk")] = theme_stats
+
+        for obj in object_list:
+            obj["asset_stats"] = theme_asset_counts[obj["id"]]
+
+        return data
+
 
 @method_decorator(default_cache_control, name="dispatch")
-class ThemeDetailView(DetailView):
+class TopicDetailView(APIDetailView):
     template_name = "transcriptions/theme_detail.html"
     context_object_name = "theme"
     queryset = Theme.objects.order_by("title")
@@ -1644,7 +1681,6 @@ def action_app(request):
         request,
         "action-app.html",
         {
-            "campaigns": Campaign.objects.published().order_by("title"),
             "app_parameters": {
                 "currentUser": request.user.pk,
                 "reservationToken": get_or_create_reservation_token(request),
@@ -1653,6 +1689,7 @@ def action_app(request):
                         "/ws/asset/asset_updates/"
                     ).replace("http", "ws"),
                     "campaignList": reverse("transcriptions:campaign-list"),
+                    "themeList": reverse("theme-list"),
                 },
                 "urlTemplates": {
                     "assetData": "/{action}/?per_page=500",
@@ -1661,6 +1698,6 @@ def action_app(request):
                     "submitTranscription": "/transcriptions/{transcriptionId}/submit/",
                     "reviewTranscription": "/transcriptions/{transcriptionId}/review/",
                 },
-            },
+            }
         },
     )

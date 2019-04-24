@@ -99,7 +99,7 @@ class Theme(models.Model):
         return self.title
 
     def get_absolute_url(self):
-        return reverse("transcriptions:theme-detail", kwargs={"slug": self.slug})
+        return reverse("theme-detail", kwargs={"slug": self.slug})
 
 
 class Resource(MetricsModelMixin("resource"), models.Model):
