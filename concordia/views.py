@@ -1609,9 +1609,12 @@ def action_app(request):
                     ).replace("http", "ws"),
                     "campaignList": reverse("transcriptions:campaign-list"),
                 },
+                "reserveId": get_or_create_reserve_id(request),
                 "urlTemplates": {
                     "assetData": "/{action}.json",
-                    "assetReservation": "/reserve-asset/{assetId}/",
+                    # FIXME: for some reason a trailing slash on the assetReservation
+                    # causes 404 from the prototype UI
+                    "assetReservation": "/reserve-asset/{assetId}/{reserveId}",
                     "saveTranscription": "/assets/{assetId}/transcriptions/save/",
                     "submitTranscription": "/transcriptions/{transcriptionId}/submit/",
                     "reviewTranscription": "/transcriptions/{transcriptionId}/review/",
