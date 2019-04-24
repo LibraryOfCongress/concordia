@@ -16,7 +16,7 @@ echo "Ensuring our base configuration is present in the database"
 
 if [ -v SENTRY_BACKEND_DSN ]; then
     echo "Testing Sentry configuration"
-    echo "from sentry_sdk import capture_message;capture_message('This is a test event')\n" | ./manage.py shell
+    echo "from sentry_sdk import capture_message;capture_message('This is a test event');" | ./manage.py shell
 fi
 
 echo Running collectstatic
