@@ -58,6 +58,7 @@ flake8-comprehensions = "*"
 flake8-logging-format = "*"
 flake8-builtins = "*"
 flake8-assertive = "*"
+flake8-bugbear = "*"
 
 [requires]
 python_version = "3.7"

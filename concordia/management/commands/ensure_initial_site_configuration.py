@@ -22,7 +22,7 @@ from django.db.transaction import atomic
 
 
 class Command(BaseCommand):
-    help = "Ensure that core site configuration has been applied"
+    help = "Ensure that core site configuration has been applied"  # NOQA: A003
 
     def add_arguments(self, parser):
         parser.add_argument(

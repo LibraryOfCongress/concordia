@@ -172,11 +172,10 @@ def get_collection_items(collection_url):
         for result in data["results"]:
             try:
                 item_info = get_item_info_from_result(result)
-            except Exception as exc:
+            except Exception:
                 logger.warning(
-                    "Skipping result from %s which did not match expected format: %s",
+                    "Skipping result from %s which did not match expected format:",
                     resp.url,
-                    exc,
                     exc_info=True,
                     extra={"data": {"result": result, "url": resp.url}},
                 )
@@ -279,7 +278,7 @@ def import_collection_task(self, import_job_pk):
 @update_task_status
 def import_collection(self, import_job):
     item_info = get_collection_items(normalize_collection_url(import_job.url))
-    for item_id, item_url in item_info:
+    for _, item_url in item_info:
         create_item_import_task.delay(import_job.pk, item_url)
 
 
@@ -491,13 +490,9 @@ def download_asset(self, import_asset):
 
             ASSET_STORAGE.save(asset_filename, temp_file)
 
-    except Exception as exc:
-        logger.error(
-            "Unable to download %s to %s: %s",
-            import_asset.url,
-            asset_filename,
-            exc,
-            exc_info=True,
+    except Exception:
+        logger.exception(
+            "Unable to download %s to %s", import_asset.url, asset_filename
         )
 
         raise
