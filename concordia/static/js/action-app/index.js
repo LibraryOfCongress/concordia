@@ -48,6 +48,8 @@ export class ActionApp {
 
         this.setupToolbars();
 
+        this.setupSharing();
+
         this.setupModeSelector();
         this.setupAssetList();
         this.setupAssetViewer();
@@ -109,6 +111,40 @@ export class ActionApp {
         helpToggle.addEventListener('click', () => {
             helpPanel.toggleAttribute('hidden');
             return false;
+        });
+    }
+
+    setupSharing() {
+        /*
+            We share the share button toolbar with the traditional HTML UI but
+            we need to update it from .openViewer(). This is done by saving the
+            initial button <a> tags with their placeholder href values and then
+            updating them each time they change.
+        */
+        this.sharingButtons = $(
+            '.concordia-share-button-group',
+            this.appElement
+        );
+
+        $$('a[href]', this.sharingButtons).forEach(anchor => {
+            // We use getAttribute to get the bare value without the normal
+            // browser relative URL resolution so we can recognize an unescaped
+            // URL value:
+            anchor.dataset.urlTemplate = anchor.getAttribute('href');
+        });
+    }
+
+    updateSharing(url, title) {
+        $$('a[href]', this.sharingButtons).forEach(anchor => {
+            let template = anchor.dataset.urlTemplate;
+            if (template.indexOf('SHARE_URL') === 0) {
+                // The bare URL doesn't require URL encoding
+                anchor.href = url;
+            } else {
+                anchor.href = template
+                    .replace('SHARE_URL', encodeURIComponent(url))
+                    .replace('SHARE_TITLE', encodeURIComponent(title));
+            }
         });
     }
 
@@ -612,6 +648,8 @@ export class ActionApp {
     openViewer(assetElement) {
         let asset = this.assets.get(assetElement.dataset.id);
 
+        this.updateSharing(asset.url, asset.title);
+
         // FIXME: refactor openAssetElement into a single open asset ID property & pass it to the respective list & viewer components
         this.openAssetElement = assetElement;
 
@@ -639,6 +677,7 @@ export class ActionApp {
 
         this.getCachedItem(asset.item).then(itemInfo => {
             this.metadataPanel.itemMetadata.update(itemInfo);
+            this.updateSharing(asset.url, itemInfo.title);
         });
 
         this.getCachedProject(asset.project).then(projectInfo => {

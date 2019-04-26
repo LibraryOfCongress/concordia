@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 
+{% load concordia_sharing_tags %}
+
 {% load staticfiles %}
 
 {% block title %}By the People{% endblock title %}
@@ -141,6 +143,7 @@
                     </div>
 
                     <div>
+                        {% share_buttons "SHARE_URL" "SHARE_TITLE" %}
                         <button id="show-metadata-button" class="btn btn-secondary" data-toggle="modal" data-target="#asset-info-modal" aria-label="Show metadata">ℹ Info</button>
                     </div>
                 </div>
