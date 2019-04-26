@@ -765,7 +765,7 @@ class AssetDetailView(DetailView):
 
         ctx["current_asset_url"] = self.request.build_absolute_uri()
 
-        ctx["tweet_text"] = "#ByThePeople @Crowd_LOC %s %s" % (
+        ctx["tweet_text"] = "”%s” %s #ByThePeople @Crowd_LOC" % (
             asset.item.title,
             ctx["current_asset_url"],
         )
