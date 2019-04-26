@@ -691,6 +691,8 @@ export class ActionApp {
     openViewer(assetElement) {
         let asset = this.assets.get(assetElement.dataset.id);
 
+        this.addToState('asset', asset.id);
+
         this.updateSharing(asset.url, asset.title);
 
         // FIXME: refactor openAssetElement into a single open asset ID property & pass it to the respective list & viewer components
@@ -774,6 +776,8 @@ export class ActionApp {
 
         delete this.appElement.dataset.openAssetId;
         delete this.openAssetElement;
+
+        this.deleteFromState('asset');
 
         if (this.reservationTimer) {
             window.clearInterval(this.reservationTimer);
