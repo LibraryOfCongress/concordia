@@ -11,7 +11,7 @@ from concordia.models import Asset
 
 
 class Command(BaseCommand):
-    help = "Print URLs for front-end testing"
+    help = "Print URLs for front-end testing"  # NOQA: A003
 
     def add_arguments(self, parser):
         parser.add_argument(
