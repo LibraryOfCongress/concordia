@@ -35,7 +35,7 @@ from django.db.models import (
     When,
 )
 from django.db.transaction import atomic
-from django.http import HttpResponse, JsonResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template import loader
 from django.urls import reverse, reverse_lazy
@@ -1394,6 +1394,18 @@ class AssetListView(APIListView):
     context_object_name = "assets"
     paginate_by = 50
 
+    def get_queryset(self, *args, **kwargs):
+        qs = Asset.objects.published()
+
+        pks = self.request.GET.getlist("pk")
+        if pks:
+            try:
+                qs = qs.filter(pk__in=pks)
+            except (ValueError, TypeError):
+                raise Http404
+
+        return qs.prefetch_related("item", "item__project", "item__project__campaign")
+
     def get_ordering(self):
         order_field = self.request.GET.get("order_by", "pk")
         if order_field.lstrip("-") not in ("pk", "difficulty"):
@@ -1517,15 +1529,6 @@ class AssetListView(APIListView):
 class TranscribeListView(AssetListView):
     template_name = "transcriptions/transcribe_list.html"
 
-    queryset = (
-        Asset.objects.published()
-        .filter(
-            Q(transcription_status=TranscriptionStatus.NOT_STARTED)
-            | Q(transcription_status=TranscriptionStatus.IN_PROGRESS)
-        )
-        .prefetch_related("item", "item__project", "item__project__campaign")
-    )
-
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["campaigns"] = Campaign.objects.published().order_by("title")
@@ -1533,6 +1536,11 @@ class TranscribeListView(AssetListView):
 
     def get_queryset(self):
         asset_qs = super().get_queryset()
+
+        asset_qs = asset_qs.filter(
+            Q(transcription_status=TranscriptionStatus.NOT_STARTED)
+            | Q(transcription_status=TranscriptionStatus.IN_PROGRESS)
+        )
 
         campaign_filter = self.request.GET.get("campaign_filter")
         if campaign_filter:
@@ -1547,11 +1555,6 @@ class TranscribeListView(AssetListView):
 
 class ReviewListView(AssetListView):
     template_name = "transcriptions/review_list.html"
-    queryset = (
-        Asset.objects.published()
-        .filter(transcription_status=TranscriptionStatus.SUBMITTED)
-        .prefetch_related("item", "item__project", "item__project__campaign")
-    )
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -1560,6 +1563,8 @@ class ReviewListView(AssetListView):
 
     def get_queryset(self):
         asset_qs = super().get_queryset()
+
+        asset_qs = asset_qs.filter(transcription_status=TranscriptionStatus.SUBMITTED)
 
         campaign_filter = self.request.GET.get("campaign_filter")
 
