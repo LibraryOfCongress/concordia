@@ -31,15 +31,16 @@ $(function() {
     $('[data-toggle="popover"]').popover();
 });
 
+// eslint-disable-next-line no-unused-vars
 function buildErrorMessage(jqXHR, textStatus, errorThrown) {
     /* Construct a nice error message using optional JSON response context */
-    var errMessage;
+    var errorMessage;
     if (jqXHR.responseJSON && jqXHR.responseJSON.error) {
-        errMessage = jqXHR.responseJSON.error;
+        errorMessage = jqXHR.responseJSON.error;
     } else {
-        errMessage = textStatus + ' ' + errorThrown;
+        errorMessage = textStatus + ' ' + errorThrown;
     }
-    return errMessage;
+    return errorMessage;
 }
 
 function displayHtmlMessage(level, message, uniqueId) {
@@ -91,7 +92,9 @@ function loadLegacyPolyfill(scriptUrl, callback) {
     var script = document.createElement('script');
     script.type = 'text/javascript';
     script.async = false;
+    // eslint-disable-next-line unicorn/prefer-add-event-listener
     script.onload = callback;
+    // eslint-disable-next-line unicorn/prevent-abbreviations
     script.src = scriptUrl;
     document.body.appendChild(script);
 }
@@ -112,8 +115,8 @@ $(function() {
             if (cookie) {
                 warningLastShown = parseInt(cookie, 10);
             }
-        } catch (e) {
-            Sentry.captureMessage(e);
+        } catch (error) {
+            Sentry.captureException(error);
         }
 
         if (Date.now() - warningLastShown > 7 * 86400) {
@@ -149,8 +152,8 @@ $(function() {
 if (screenfull.enabled) {
     $('#go-fullscreen')
         .removeAttr('hidden')
-        .on('click', function(evt) {
-            evt.preventDefault();
+        .on('click', function(event) {
+            event.preventDefault();
             var targetElement = document.getElementById(this.dataset.target);
 
             if (screenfull.isFullscreen) {
@@ -194,3 +197,88 @@ $.ajax({url: '/account/ajax-messages/', method: 'GET', dataType: 'json'}).done(
         }
     }
 );
+
+/* Social share stuff */
+
+var hideTooltipCallback = function() {
+    // wait a couple seconds and then hide the tooltip.
+    var hideTooltip = function(tooltipButton) {
+        return function() {
+            tooltipButton.tooltip('hide');
+        };
+    };
+    setTimeout(hideTooltip($(this)), 3000);
+};
+
+function trackShareInteraction($element, interactionType) {
+    // Adobe analytics user interaction tracking
+    if ('loc_ux_tracking' in window) {
+        let loc_ux_tracking = window['loc_ux_tracking'];
+        loc_ux_tracking.trackUserInteractionEvent(
+            $element,
+            'Share Tool',
+            'click',
+            interactionType
+        );
+    }
+}
+
+var $copyUrlButton = $('.copy-url-button');
+var $facebookShareButton = $('.facebook-share-button');
+var $twitterShareButton = $('.twitter-share-button');
+
+$copyUrlButton.on('click', function(event) {
+    event.preventDefault();
+
+    // The asynchronous Clipboard API is not supported by Microsoft Edge or Internet Explorer:
+    // https://developer.mozilla.org/en-US/docs/Web/API/Clipboard/writeText#Browser_compatibility
+    // We'll use the older document.execCommand("copy") interface which requires a text input:
+    var $clipboardInput = $('<input type="text">')
+        .val($copyUrlButton.attr('href'))
+        .insertAfter($copyUrlButton);
+    $clipboardInput.get(0).select();
+
+    var tooltipMessage = '';
+
+    trackShareInteraction($copyUrlButton, 'Link copy');
+
+    try {
+        document.execCommand('copy');
+        // Show the tooltip with a success message
+        tooltipMessage = 'This link has been copied to your clipboard';
+        $copyUrlButton
+            .tooltip('dispose')
+            .tooltip({title: tooltipMessage})
+            .tooltip('show')
+            .on('shown.bs.tooltip', hideTooltipCallback);
+    } catch (error) {
+        if (typeof Sentry != 'undefined') {
+            Sentry.captureException(error);
+        }
+
+        // Display an error message in the tooltip
+        tooltipMessage =
+            '<p>Could not access your clipboard.</p><button class="btn btn-light btn-sm" id="dismiss-tooltip-button">Close</button>';
+        $copyUrlButton
+            .tooltip('dispose')
+            .tooltip({title: tooltipMessage, html: true})
+            .tooltip('show');
+        $('#dismiss-tooltip-button').on('click', function() {
+            $copyUrlButton.tooltip('hide');
+        });
+    } finally {
+        $clipboardInput.remove();
+    }
+
+    return false;
+});
+
+$facebookShareButton.on('click', function() {
+    trackShareInteraction($facebookShareButton, 'Facebook Share');
+    return true;
+});
+
+$twitterShareButton.on('click', function() {
+    trackShareInteraction($twitterShareButton, 'Twitter Share');
+    return true;
+});

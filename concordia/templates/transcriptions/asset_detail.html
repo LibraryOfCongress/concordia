@@ -2,6 +2,7 @@
 
 {% load staticfiles %}
 {% load concordia_media_tags %}
+{% load concordia_sharing_tags %}
 
 {% block title %}
 {{ asset.title }} ({{ asset.item.project.campaign.title }}: {{ asset.item.project.title }})
@@ -67,12 +68,7 @@
             </div>
 
             {% if social_share_flag %}
-                <div class="btn-group btn-group-sm" role="navigation" aria-label="Links to share this page">
-                    <a class="btn btn-default" id="facebook-share-button" target="_blank" role="button" title="Share this page on Facebook" href="https://www.facebook.com/share.php?u={{ share_url|urlencode:"" }}"><span class="facebook-icon"></span></a>
-                    <a class="btn btn-default" id="twitter-share-button" target="_blank" role="button" title="Share this page on Twitter" href="https://twitter.com/intent/tweet?text={{ tweet_text|urlencode:"" }}&source=webclient"><span class="twitter-icon"></span></a>
-                    <a class="btn btn-default" id="copy-url-button" role="button" data-toggle="tooltip"  data-trigger="manual"  data-placement="bottom" aria-label="Copy this link to your clipboard"><span class="fas fa-link text-white"></span></a>
-                </div>
-                <input type="text" tabindex="-1" aria-hidden="true" class="d-none" id="currentAssetUrl" name="currentAssetUrl" value="{{ current_asset_url }}" />
+                {% share_buttons current_asset_url asset.item.title %}
             {% endif %}
 
             {% if asset.resource_url %}
