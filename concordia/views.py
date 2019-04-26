@@ -46,7 +46,7 @@ from django.views.decorators.cache import cache_control, never_cache
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.views.decorators.vary import vary_on_headers
-from django.views.generic import DetailView, FormView, ListView, TemplateView
+from django.views.generic import FormView, ListView, TemplateView
 from django_registration.backends.activation.views import RegistrationView
 from flags.decorators import flag_required
 from flags.state import flag_enabled
@@ -663,7 +663,7 @@ class ItemDetailView(APIListView):
 
 
 @method_decorator(never_cache, name="dispatch")
-class AssetDetailView(DetailView):
+class AssetDetailView(APIDetailView):
     """
     Class to handle GET ansd POST requests on route /campaigns/<campaign>/asset/<asset>
     """
