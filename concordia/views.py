@@ -1064,12 +1064,10 @@ class ContactUsView(FormView):
         try:
             message.send()
             messages.success(self.request, "Your contact message has been sent.")
-        except SMTPException as exc:
-            logger.error(
-                "Unable to send contact message to %s: %s",
+        except SMTPException:
+            logger.exception(
+                "Unable to send contact message to %s",
                 settings.DEFAULT_TO_EMAIL,
-                exc,
-                exc_info=True,
                 extra={"data": form.cleaned_data},
             )
             messages.error(
@@ -1086,12 +1084,10 @@ class ContactUsView(FormView):
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[form.cleaned_data["email"]],
             )
-        except SMTPException as exc:
-            logger.error(
+        except SMTPException:
+            logger.exception(
                 "Unable to send contact message to %s: %s",
                 form.cleaned_data["email"],
-                exc,
-                exc_info=True,
                 extra={"data": form.cleaned_data},
             )
 
