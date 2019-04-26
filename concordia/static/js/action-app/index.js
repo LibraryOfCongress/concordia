@@ -72,6 +72,16 @@ export class ActionApp {
         window.history.replaceState(null, null, loc);
     }
 
+    addToState(key, value) {
+        this.persistentState.set(key, value);
+        this.serializeStateToURL();
+    }
+
+    deleteFromState(key) {
+        this.persistentState.delete(key);
+        this.serializeStateToURL();
+    }
+
     setupGlobalKeyboardEvents() {
         // Register things which we need to handle in any context, such as
         // opening help or handling focus-shift events
@@ -109,7 +119,7 @@ export class ActionApp {
                 target.classList.add('active');
 
                 this.currentMode = target.value;
-                this.persistentState.set('mode', this.currentMode);
+                this.addToState('mode', this.currentMode);
 
                 this.appElement.dataset.mode = this.currentMode;
                 $$('.current-mode').forEach(
@@ -241,7 +251,6 @@ export class ActionApp {
     }
 
     refreshData() {
-        this.serializeStateToURL();
         this.updateAssetList();
         this.fetchAssetData(); // This starts the fetch process going by calculating the appropriate base URL
     }
@@ -271,8 +280,7 @@ export class ActionApp {
         setSelectValue(this.sortModeSelector, this.persistentState.get('sort'));
         this.sortMode = this.sortModeSelector.value;
         this.sortModeSelector.addEventListener('change', () => {
-            this.persistentState.set('sort', this.sortModeSelector.value);
-            this.serializeStateToURL();
+            this.addToState('sort', this.sortModeSelector.value);
             this.updateAssetList();
         });
 
@@ -304,8 +312,7 @@ export class ActionApp {
             });
 
         this.campaignSelect.addEventListener('change', () => {
-            this.persistentState.set('campaign', this.campaignSelect.value);
-            this.serializeStateToURL();
+            this.addToState('campaign', this.campaignSelect.value);
             this.updateAssetList();
         });
     }
