@@ -57,6 +57,9 @@ export class ActionApp {
 
         this.connectAssetEventStream();
 
+        // We call this before refreshData to ensure that its request gets in first:
+        this.restoreOpenAsset();
+
         this.refreshData();
     }
 
@@ -80,6 +83,27 @@ export class ActionApp {
     deleteFromState(key) {
         this.persistentState.delete(key);
         this.serializeStateToURL();
+    }
+
+    restoreOpenAsset() {
+        let assetId = this.persistentState.get('asset');
+        if (!assetId) return;
+
+        let allAssetsURL = this.urlTemplates.assetData.expand({
+            // This is a special-case for retrieving all assets regardless of status
+            action: 'assets'
+        });
+
+        this.fetchAssetPage(allAssetsURL + '?pk=' + assetId).then(() => {
+            this.assetListUpdateCallbacks.push(() => {
+                let element = document.getElementById(assetId);
+                if (!element) {
+                    console.warn('Expected to load asset with ID %s', assetId);
+                } else {
+                    this.openViewer(element);
+                }
+            });
+        });
     }
 
     setupGlobalKeyboardEvents() {
@@ -260,6 +284,9 @@ export class ActionApp {
         // been fetched which fetchNextAssetPage will empty:
         this.queuedAssetPageURLs = [];
 
+        // These will be processed after the next asset list update completes (possibly after a rAF / rIC chain)
+        this.assetListUpdateCallbacks = [];
+
         let loadMoreButton = $('#load-more-assets');
         loadMoreButton.addEventListener('click', () =>
             this.fetchNextAssetPage()
@@ -367,11 +394,11 @@ export class ActionApp {
             action: this.currentMode
         });
 
-        this.fetchAssetPage(url);
+        return this.fetchAssetPage(url);
     }
 
     fetchAssetPage(url) {
-        fetchJSON(url)
+        return fetchJSON(url)
             .then(data => {
                 data.objects.forEach(i => {
                     i.sent = data.sent;
@@ -571,9 +598,18 @@ export class ActionApp {
                 $('#visible-asset-count').textContent = visibleAssets.length;
 
                 this.assetList.scrollToActiveAsset();
+
+                this.runAssetListUpdateCallbacks();
                 this.attemptAssetLazyLoad();
             });
         });
+    }
+
+    runAssetListUpdateCallbacks() {
+        while (this.assetListUpdateCallbacks.length) {
+            let callback = this.assetListUpdateCallbacks.pop();
+            callback();
+        }
     }
 
     attemptAssetLazyLoad() {
@@ -642,6 +678,10 @@ export class ActionApp {
         // badging these as unavailable):
         if (!alwaysIncludedAssetIDs) {
             alwaysIncludedAssetIDs = [];
+        }
+
+        if (this.persistentState.has('asset')) {
+            alwaysIncludedAssetIDs.push(this.persistentState.get('asset'));
         }
 
         let currentCampaignId = this.campaignSelect.value;
