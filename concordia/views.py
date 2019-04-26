@@ -458,14 +458,14 @@ def annotate_children_with_progress_stats(children):
     for obj in children:
         counts = {}
 
-        for k, v in TranscriptionStatus.CHOICES:
+        for k, _ in TranscriptionStatus.CHOICES:
             counts[k] = getattr(obj, f"{k}_count", 0)
 
         obj.total_count = total = sum(counts.values())
 
         lowest_status = None
 
-        for k, v in TranscriptionStatus.CHOICES:
+        for k, _ in TranscriptionStatus.CHOICES:
             count = counts[k]
 
             if total > 0:

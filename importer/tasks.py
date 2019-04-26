@@ -278,7 +278,7 @@ def import_collection_task(self, import_job_pk):
 @update_task_status
 def import_collection(self, import_job):
     item_info = get_collection_items(normalize_collection_url(import_job.url))
-    for item_id, item_url in item_info:
+    for _, item_url in item_info:
         create_item_import_task.delay(import_job.pk, item_url)
 
 

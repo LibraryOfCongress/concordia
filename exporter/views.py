@@ -109,7 +109,7 @@ def do_bagit_export(assets, export_base_dir, export_filename_base):
 
     # Add attributions to the end of all text files found under asset_dest_path
     if hasattr(settings, "ATTRIBUTION_TEXT"):
-        for dirpath, dirnames, filenames in os.walk(export_base_dir, topdown=False):
+        for dirpath, _, filenames in os.walk(export_base_dir, topdown=False):
             for each_text_file in (i for i in filenames if i.endswith(".txt")):
                 this_text_file = os.path.join(dirpath, each_text_file)
                 with open(this_text_file, "a") as f:
