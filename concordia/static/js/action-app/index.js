@@ -6,7 +6,7 @@ import {
     unmount
 } from 'https://cdnjs.cloudflare.com/ajax/libs/redom/3.18.0/redom.es.min.js';
 
-import {$, $$} from './utils/dom.js';
+import {$, $$, setSelectValue} from './utils/dom.js';
 import {fetchJSON, getCachedData} from './utils/api.js';
 import {MetadataPanel, AssetList, AssetViewer} from './components.js';
 
@@ -49,6 +49,7 @@ export class ActionApp {
         this.setupToolbars();
 
         this.setupSharing();
+        this.setupPersistentStateManagement();
 
         this.setupModeSelector();
         this.setupAssetList();
@@ -57,6 +58,18 @@ export class ActionApp {
         this.connectAssetEventStream();
 
         this.refreshData();
+    }
+
+    setupPersistentStateManagement() {
+        this.persistentState = new URLSearchParams(
+            window.location.hash.replace(/^#/, '')
+        );
+    }
+
+    serializeStateToURL() {
+        let loc = new URL(window.location);
+        loc.hash = this.persistentState.toString();
+        window.history.replaceState(null, null, loc);
     }
 
     setupGlobalKeyboardEvents() {
@@ -90,18 +103,32 @@ export class ActionApp {
                 $$('button', this.modeSelection).forEach(inactiveElement => {
                     inactiveElement.classList.remove('active');
                 });
-                event.target.classList.add('active');
+
+                let target = event.target;
+
+                target.classList.add('active');
+
+                this.currentMode = target.value;
+                this.persistentState.set('mode', this.currentMode);
+
+                this.appElement.dataset.mode = this.currentMode;
+                $$('.current-mode').forEach(
+                    i => (i.textContent = this.currentMode)
+                );
+
                 this.updateAvailableCampaignFilters();
                 this.closeViewer();
                 this.refreshData();
             });
         });
-    }
 
-    getCurrentMode() {
-        this.currentMode = this.modeSelection.querySelector('.active').value;
-        this.appElement.dataset.mode = this.currentMode;
-        $$('.current-mode').forEach(i => (i.textContent = this.currentMode));
+        let mode = this.persistentState.get('mode') || 'review';
+        if (mode == 'transcribe' || mode == 'review') {
+            this.currentMode = mode;
+            $$('button', this.modeSelection).forEach(button => {
+                button.classList.toggle('active', button.value == mode);
+            });
+        }
     }
 
     setupToolbars() {
@@ -214,7 +241,7 @@ export class ActionApp {
     }
 
     refreshData() {
-        this.getCurrentMode();
+        this.serializeStateToURL();
         this.updateAssetList();
         this.fetchAssetData(); // This starts the fetch process going by calculating the appropriate base URL
     }
@@ -241,8 +268,11 @@ export class ActionApp {
 
         /* List sorting */
         this.sortModeSelector = $('#sort-mode');
+        setSelectValue(this.sortModeSelector, this.persistentState.get('sort'));
         this.sortMode = this.sortModeSelector.value;
         this.sortModeSelector.addEventListener('change', () => {
+            this.persistentState.set('sort', this.sortModeSelector.value);
+            this.serializeStateToURL();
             this.updateAssetList();
         });
 
@@ -266,11 +296,18 @@ export class ActionApp {
                 });
             })
             .then(() => {
+                setSelectValue(
+                    this.campaignSelect,
+                    this.persistentState.get('campaign')
+                );
                 this.updateAvailableCampaignFilters();
             });
-        this.campaignSelect.addEventListener('change', () =>
-            this.updateAssetList()
-        );
+
+        this.campaignSelect.addEventListener('change', () => {
+            this.persistentState.set('campaign', this.campaignSelect.value);
+            this.serializeStateToURL();
+            this.updateAssetList();
+        });
     }
 
     updateAvailableCampaignFilters() {
@@ -279,7 +316,6 @@ export class ActionApp {
             campaigns which you can actually work on
         */
 
-        // TODO: componentize the asset list controls
         $$('option', this.campaignSelect).forEach(optionElement => {
             let disabled;
             if (this.campaignSelect == 'review') {
