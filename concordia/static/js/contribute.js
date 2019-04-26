@@ -12,7 +12,7 @@ function unlockControls($container) {
     $container.find('button').removeAttr('disabled');
 }
 
-$(document).on('keydown', function(evt) {
+$(document).on('keydown', function(event) {
     /*
         Global keyboard event handlers
 
@@ -25,17 +25,17 @@ $(document).on('keydown', function(evt) {
     */
 
     if (
-        (evt.which == 112 || evt.which == 191) &&
-        !evt.target.tagName.match(/(INPUT|TEXTAREA)/i)
+        (event.which == 112 || event.which == 191) &&
+        !event.target.tagName.match(/(INPUT|TEXTAREA)/i)
     ) {
         // Either the F1 or ? keys were pressed outside of a text field so we'll show help:
         $('#keyboard-help-modal').modal('show');
         return false;
-    } else if (evt.which == 73 && evt.ctrlKey) {
+    } else if (event.which == 73 && event.ctrlKey) {
         // Control-I == switch to the image viewer
         document.querySelector('#asset-image .openseadragon-canvas').focus();
         return false;
-    } else if (evt.which == 84 && evt.ctrlKey) {
+    } else if (event.which == 84 && event.ctrlKey) {
         // Control-T == switch to the transcription field
         document.getElementById('transcription-input').focus();
         return false;
@@ -43,8 +43,8 @@ $(document).on('keydown', function(evt) {
 });
 
 var $captchaModal = $('#captcha-modal');
-var $captchaForm = $captchaModal.find('form').on('submit', function(evt) {
-    evt.preventDefault();
+var $captchaForm = $captchaModal.find('form').on('submit', function(event) {
+    event.preventDefault();
 
     var formData = $captchaForm.serializeArray();
 
@@ -86,8 +86,8 @@ $('form.ajax-submission').each(function(idx, formElement) {
 
     var $form = $(formElement);
 
-    $form.on('submit', function(evt) {
-        evt.preventDefault();
+    $form.on('submit', function(event) {
+        event.preventDefault();
 
         lockControls($form);
 
@@ -229,7 +229,7 @@ $transcriptionEditor
                 .removeAttr('hidden');
         }
     })
-    .on('form-submit-success', function(evt, extra) {
+    .on('form-submit-success', function(event, extra) {
         displayMessage(
             'info',
             "Successfully saved your work. Submit it for review when you're done",
@@ -248,7 +248,7 @@ $transcriptionEditor
         );
         $transcriptionEditor.trigger('update-ui-state');
     })
-    .on('form-submit-failure', function(evt, info) {
+    .on('form-submit-failure', function(event, info) {
         displayMessage(
             'error',
             'Unable to save your work: ' +
@@ -262,8 +262,8 @@ $transcriptionEditor
         $transcriptionEditor.trigger('update-ui-state');
     });
 
-$submitButton.on('click', function(evt) {
-    evt.preventDefault();
+$submitButton.on('click', function(event) {
+    event.preventDefault();
 
     $.ajax({
         url: $transcriptionEditor.data('submitUrl'),
@@ -335,15 +335,15 @@ function submitReview(status) {
 
 $('#accept-transcription-button')
     .removeAttr('disabled')
-    .on('click', function(evt) {
-        evt.preventDefault();
+    .on('click', function(event) {
+        event.preventDefault();
         submitReview('accept');
     });
 
 $('#reject-transcription-button')
     .removeAttr('disabled')
-    .on('click', function(evt) {
-        evt.preventDefault();
+    .on('click', function(event) {
+        event.preventDefault();
         submitReview('reject');
     });
 
@@ -357,14 +357,14 @@ function addNewTag() {
         return;
     }
 
-    var val = $.trim($newTagInput.val());
-    if (val) {
+    var value = $.trim($newTagInput.val());
+    if (value) {
         // Prevent adding tags which are already present:
         var dupeCount = $currentTagList
             .find('input[name="tags"]')
             .filter(function(idx, input) {
                 return (
-                    input.value.toLocaleLowerCase() == val.toLocaleLowerCase()
+                    input.value.toLocaleLowerCase() == value.toLocaleLowerCase()
                 );
             }).length;
 
@@ -377,8 +377,8 @@ function addNewTag() {
             $newTag
                 .find('input')
                 .removeAttr('disabled')
-                .val(val);
-            $newTag.find('label').append(document.createTextNode(val));
+                .val(value);
+            $newTag.find('label').append(document.createTextNode(value));
             $currentTagList.append($newTag);
         }
         $newTagInput.val('');
@@ -387,11 +387,11 @@ function addNewTag() {
 
 $tagEditor.find('#new-tag-button').on('click', addNewTag);
 $newTagInput.on('change', addNewTag);
-$newTagInput.on('keydown', function(evt) {
+$newTagInput.on('keydown', function(event) {
     // See https://github.com/LibraryOfCongress/concordia/issues/159 for the source of these values:
-    if (evt.which == '13' || evt.which == '188') {
+    if (event.which == '13' || event.which == '188') {
         // Either the enter or comma keys will add the tag and reset the input field:
-        evt.preventDefault();
+        event.preventDefault();
         addNewTag();
     }
 });
@@ -407,7 +407,7 @@ $tagEditor
         unlockControls($tagEditor);
         displayMessage('info', 'Your tags have been saved', 'tags-save-result');
     })
-    .on('form-submit-failure', function(evt, info) {
+    .on('form-submit-failure', function(event, info) {
         unlockControls($tagEditor);
 
         var message = 'Unable to save your tags: ';

@@ -33,13 +33,13 @@ $(function() {
 
 function buildErrorMessage(jqXHR, textStatus, errorThrown) {
     /* Construct a nice error message using optional JSON response context */
-    var errMessage;
+    var errorMessage;
     if (jqXHR.responseJSON && jqXHR.responseJSON.error) {
-        errMessage = jqXHR.responseJSON.error;
+        errorMessage = jqXHR.responseJSON.error;
     } else {
-        errMessage = textStatus + ' ' + errorThrown;
+        errorMessage = textStatus + ' ' + errorThrown;
     }
-    return errMessage;
+    return errorMessage;
 }
 
 function displayHtmlMessage(level, message, uniqueId) {
@@ -92,6 +92,7 @@ function loadLegacyPolyfill(scriptUrl, callback) {
     script.type = 'text/javascript';
     script.async = false;
     script.onload = callback;
+    // eslint-disable-next-line unicorn/prevent-abbreviations
     script.src = scriptUrl;
     document.body.appendChild(script);
 }
@@ -112,8 +113,8 @@ $(function() {
             if (cookie) {
                 warningLastShown = parseInt(cookie, 10);
             }
-        } catch (e) {
-            Sentry.captureMessage(e);
+        } catch (error) {
+            Sentry.captureException(error);
         }
 
         if (Date.now() - warningLastShown > 7 * 86400) {
@@ -149,8 +150,8 @@ $(function() {
 if (screenfull.enabled) {
     $('#go-fullscreen')
         .removeAttr('hidden')
-        .on('click', function(evt) {
-            evt.preventDefault();
+        .on('click', function(event) {
+            event.preventDefault();
             var targetElement = document.getElementById(this.dataset.target);
 
             if (screenfull.isFullscreen) {
