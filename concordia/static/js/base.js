@@ -31,6 +31,7 @@ $(function() {
     $('[data-toggle="popover"]').popover();
 });
 
+// eslint-disable-next-line no-unused-vars
 function buildErrorMessage(jqXHR, textStatus, errorThrown) {
     /* Construct a nice error message using optional JSON response context */
     var errorMessage;
@@ -91,6 +92,7 @@ function loadLegacyPolyfill(scriptUrl, callback) {
     var script = document.createElement('script');
     script.type = 'text/javascript';
     script.async = false;
+    // eslint-disable-next-line unicorn/prefer-add-event-listener
     script.onload = callback;
     // eslint-disable-next-line unicorn/prevent-abbreviations
     script.src = scriptUrl;
