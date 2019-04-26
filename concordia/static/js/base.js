@@ -197,3 +197,80 @@ $.ajax({url: '/account/ajax-messages/', method: 'GET', dataType: 'json'}).done(
         }
     }
 );
+
+/* Social share stuff */
+
+var hideTooltipCallback = function() {
+    // wait a couple seconds and then hide the tooltip.
+    var hideTooltip = function(tooltipButton) {
+        return function() {
+            tooltipButton.tooltip('hide');
+        };
+    };
+    setTimeout(hideTooltip($(this)), 3000);
+};
+
+function trackShareInteraction($element, interactionType) {
+    // Adobe analytics user interaction tracking
+    if ('loc_ux_tracking' in window) {
+        let loc_ux_tracking = window['loc_ux_tracking'];
+        loc_ux_tracking.trackUserInteractionEvent(
+            $element,
+            'Share Tool',
+            'click',
+            interactionType
+        );
+    }
+}
+
+var $copyUrlButton = $('#copy-url-button');
+var $facebookShareButton = $('#facebook-share-button');
+var $twitterShareButton = $('#twitter-share-button');
+
+$copyUrlButton.on('click', function() {
+    var $currentAssetUrl = $('#currentAssetUrl');
+    $currentAssetUrl.removeClass('d-none');
+    var currentAssetUrl = document.getElementById('currentAssetUrl');
+    currentAssetUrl.select();
+    var tooltipMessage = '';
+
+    trackShareInteraction($copyUrlButton, 'Link copy');
+
+    try {
+        document.execCommand('copy');
+        // Show the tooltip with a success message
+        tooltipMessage = 'This link has been copied to your clipboard';
+        $currentAssetUrl.addClass('d-none');
+        $copyUrlButton
+            .tooltip('dispose')
+            .tooltip({title: tooltipMessage})
+            .tooltip('show')
+            .on('shown.bs.tooltip', hideTooltipCallback);
+    } catch (error) {
+        if (typeof Sentry != 'undefined') {
+            Sentry.captureException(error);
+        }
+
+        // Display an error message in the tooltip
+        tooltipMessage =
+            '<p>Could not access your clipboard.</p><button class="btn btn-light btn-sm" id="dismiss-tooltip-button">Close</button>';
+        $currentAssetUrl.addClass('d-none');
+        $copyUrlButton
+            .tooltip('dispose')
+            .tooltip({title: tooltipMessage, html: true})
+            .tooltip('show');
+        $('#dismiss-tooltip-button').on('click', function() {
+            $copyUrlButton.tooltip('hide');
+        });
+    }
+});
+
+$facebookShareButton.on('click', function() {
+    trackShareInteraction($facebookShareButton, 'Facebook Share');
+    return true;
+});
+
+$twitterShareButton.on('click', function() {
+    trackShareInteraction($twitterShareButton, 'Twitter Share');
+    return true;
+});
