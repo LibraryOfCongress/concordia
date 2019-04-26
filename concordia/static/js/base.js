@@ -223,15 +223,21 @@ function trackShareInteraction($element, interactionType) {
     }
 }
 
-var $copyUrlButton = $('#copy-url-button');
-var $facebookShareButton = $('#facebook-share-button');
-var $twitterShareButton = $('#twitter-share-button');
+var $copyUrlButton = $('.copy-url-button');
+var $facebookShareButton = $('.facebook-share-button');
+var $twitterShareButton = $('.twitter-share-button');
 
-$copyUrlButton.on('click', function() {
-    var $currentAssetUrl = $('#currentAssetUrl');
-    $currentAssetUrl.removeClass('d-none');
-    var currentAssetUrl = document.getElementById('currentAssetUrl');
-    currentAssetUrl.select();
+$copyUrlButton.on('click', function(event) {
+    event.preventDefault();
+
+    // The asynchronous Clipboard API is not supported by Microsoft Edge or Internet Explorer:
+    // https://developer.mozilla.org/en-US/docs/Web/API/Clipboard/writeText#Browser_compatibility
+    // We'll use the older document.execCommand("copy") interface which requires a text input:
+    var $clipboardInput = $('<input type="text">')
+        .val($copyUrlButton.attr('href'))
+        .insertAfter($copyUrlButton);
+    $clipboardInput.get(0).select();
+
     var tooltipMessage = '';
 
     trackShareInteraction($copyUrlButton, 'Link copy');
@@ -240,7 +246,6 @@ $copyUrlButton.on('click', function() {
         document.execCommand('copy');
         // Show the tooltip with a success message
         tooltipMessage = 'This link has been copied to your clipboard';
-        $currentAssetUrl.addClass('d-none');
         $copyUrlButton
             .tooltip('dispose')
             .tooltip({title: tooltipMessage})
@@ -254,7 +259,6 @@ $copyUrlButton.on('click', function() {
         // Display an error message in the tooltip
         tooltipMessage =
             '<p>Could not access your clipboard.</p><button class="btn btn-light btn-sm" id="dismiss-tooltip-button">Close</button>';
-        $currentAssetUrl.addClass('d-none');
         $copyUrlButton
             .tooltip('dispose')
             .tooltip({title: tooltipMessage, html: true})
@@ -262,7 +266,11 @@ $copyUrlButton.on('click', function() {
         $('#dismiss-tooltip-button').on('click', function() {
             $copyUrlButton.tooltip('hide');
         });
+    } finally {
+        $clipboardInput.remove();
     }
+
+    return false;
 });
 
 $facebookShareButton.on('click', function() {

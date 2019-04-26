@@ -765,11 +765,6 @@ class AssetDetailView(DetailView):
 
         ctx["current_asset_url"] = self.request.build_absolute_uri()
 
-        ctx["tweet_text"] = "”%s” %s #ByThePeople @Crowd_LOC" % (
-            asset.item.title,
-            ctx["current_asset_url"],
-        )
-
         tag_groups = UserAssetTagCollection.objects.filter(asset__slug=asset.slug)
 
         tags = set()
