@@ -770,8 +770,6 @@ class AssetDetailView(DetailView):
             ctx["current_asset_url"],
         )
 
-        ctx["share_url"] = ctx["current_asset_url"]
-
         tag_groups = UserAssetTagCollection.objects.filter(asset__slug=asset.slug)
 
         tags = set()
