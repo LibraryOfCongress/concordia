@@ -1,5 +1,16 @@
 version: '3.6'
 services:
+    elasticsearch:
+        image: elasticsearch:6.7.0
+        ports:
+            - 9200:9200
+
+    redis:
+        hostname: redis
+        image: redis:latest
+        ports:
+            - 63791:6379
+
     db:
         image: postgres
         environment:
@@ -11,12 +22,6 @@ services:
         volumes:
             - ./postgresql:/docker-entrypoint-initdb.d
             - db_volume:/var/lib/postgresl/data/
-
-    redis:
-        hostname: redis
-        image: redis:latest
-        ports:
-            - 63791:6379
 
     app:
         build: .
@@ -64,11 +69,6 @@ services:
             - db
         volumes:
             - images_volume:/concordia_images
-
-    elasticsearch:
-        image: elasticsearch:6.7.0
-        ports:
-            - 9200:9200
 
     indexer:
         build:
