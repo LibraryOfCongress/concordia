@@ -54,7 +54,11 @@ services:
             S3_BUCKET_NAME: crowd-dev-content
             DJANGO_SETTINGS_MODULE: concordia.settings_docker
             DEBUG: ${DEBUG:-}
+            REDIS_ADDRESS: redis
         depends_on:
+            - redis
+            - db
+        links:
             - redis
             - db
         volumes:
@@ -90,9 +94,12 @@ services:
             POSTGRESQL_PW: ${POSTGRESQL_PW}
             DJANGO_SETTINGS_MODULE: concordia.settings_docker
             DEBUG: ${DEBUG:-}
+            REDIS_ADDRESS: redis
         depends_on:
             - redis
             - db
+        links:
+            - redis
 
 volumes:
     db_volume:
