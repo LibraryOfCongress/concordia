@@ -1,6 +1,3 @@
-### Start Docker containers with the following command :
-#  sudo make up
-
 version: '3.6'
 services:
     db:
