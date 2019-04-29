@@ -1,17 +1,20 @@
 version: '3.6'
 services:
     elasticsearch:
+        restart: unless-stopped
         image: elasticsearch:6.7.0
         ports:
             - 9200:9200
 
     redis:
-        hostname: redis
+        restart: unless-stopped
         image: redis:latest
+        hostname: redis
         ports:
             - 63791:6379
 
     db:
+        restart: unless-stopped
         image: postgres
         environment:
             POSTGRES_PASSWORD: ${POSTGRESQL_PW}
@@ -24,6 +27,7 @@ services:
             - db_volume:/var/lib/postgresl/data/
 
     app:
+        restart: unless-stopped
         build: .
         environment: &django-environment
             WAIT_HOSTS: db:5432, redis:6379
@@ -47,6 +51,7 @@ services:
             - 80:80
 
     importer:
+        restart: unless-stopped
         build:
             context: .
             dockerfile: importer/Dockerfile
@@ -61,6 +66,7 @@ services:
             - images_volume:/concordia_images
 
     indexer:
+        restart: unless-stopped
         build:
             context: .
             dockerfile: indexer/Dockerfile
@@ -75,6 +81,7 @@ services:
             - elasticsearch
 
     celerybeat:
+        restart: unless-stopped
         build:
             context: .
             dockerfile: celerybeat/Dockerfile
