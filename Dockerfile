@@ -1,5 +1,9 @@
 FROM python:3.7
 
+## Add the wait script to the image
+ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.2.1/wait /wait
+RUN chmod +x /wait
+
 ENV DEBIAN_FRONTEND="noninteractive"
 
 RUN echo "deb http://deb.debian.org/debian stretch-backports main" >> /etc/apt/sources.list.d/stretch-backports.list
@@ -35,9 +39,5 @@ RUN npm install --silent --global npm@latest && /usr/local/bin/npm install --sil
 RUN pipenv install --system --dev --deploy
 
 EXPOSE 80
-
-## Add the wait script to the image
-ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.2.1/wait /wait
-RUN chmod +x /wait
 
 CMD /wait && /bin/bash entrypoint.sh
