@@ -25,9 +25,7 @@ services:
 
     app:
         build: .
-        environment:
-            # The concordia app needs to wait for the db to completely start. Use docker-compose-wait
-            # as defined at https://github.com/ufoscout/docker-compose-wait
+        environment: &django-environment
             WAIT_HOSTS: db:5432, redis:6379
             POSTGRESQL_HOST: db
             POSTGRESQL_PW: ${POSTGRESQL_PW}
@@ -52,15 +50,7 @@ services:
         build:
             context: .
             dockerfile: importer/Dockerfile
-        environment:
-            WAIT_HOSTS: db:5432, redis:6379
-            POSTGRESQL_HOST: db
-            POSTGRESQL_PW: ${POSTGRESQL_PW}
-            S3_BUCKET_NAME: crowd-dev-content
-            DJANGO_SETTINGS_MODULE: concordia.settings_docker
-            DEBUG: ${DEBUG:-}
-            REDIS_ADDRESS: redis
-            REDIS_PORT: 6379
+        environment: *django-environment
         depends_on:
             - redis
             - db
@@ -75,12 +65,9 @@ services:
             context: .
             dockerfile: indexer/Dockerfile
         environment:
-            WAIT_HOSTS: db:5432, elasticsearch:9200
-            POSTGRESQL_HOST: db
-            POSTGRESQL_PW: ${POSTGRESQL_PW}
+            <<: *django-environment
+            WAIT_HOSTS: db:5432, redis:6379, elasticsearch:9200
             ELASTICSEARCH_ENDPOINT: http://elasticsearch:9200
-            DJANGO_SETTINGS_MODULE: concordia.settings_docker
-            DEBUG: ${DEBUG:-}
         depends_on:
             - db
             - elasticsearch
@@ -91,14 +78,7 @@ services:
         build:
             context: .
             dockerfile: celerybeat/Dockerfile
-        environment:
-            WAIT_HOSTS: db:5432, redis:6379
-            POSTGRESQL_HOST: db
-            POSTGRESQL_PW: ${POSTGRESQL_PW}
-            DJANGO_SETTINGS_MODULE: concordia.settings_docker
-            DEBUG: ${DEBUG:-}
-            REDIS_ADDRESS: redis
-            REDIS_PORT: 6379
+        environment: *django-environment
         depends_on:
             - redis
             - db
