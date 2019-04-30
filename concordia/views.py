@@ -49,7 +49,6 @@ from django.views.decorators.vary import vary_on_headers
 from django.views.generic import DetailView, FormView, ListView, TemplateView
 from django_registration.backends.activation.views import RegistrationView
 from flags.decorators import flag_required
-from flags.state import flag_enabled
 from ratelimit.decorators import ratelimit
 from ratelimit.mixins import RatelimitMixin
 from ratelimit.utils import is_ratelimited
@@ -750,8 +749,6 @@ class AssetDetailView(DetailView):
             .order_by("sequence")
             .values_list("sequence", "slug")
         )
-
-        ctx["social_share_flag"] = flag_enabled("SOCIAL_SHARE", request=self.request)
 
         image_url = asset_media_url(asset)
         if asset.download_url and "iiif" in asset.download_url:
