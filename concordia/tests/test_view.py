@@ -493,7 +493,7 @@ class TransactionalViewTests(JSONAssertMixin, TransactionTestCase):
         asset = create_asset()
 
         stale_reservation = AssetTranscriptionReservation(
-            user=get_anonymous_user(), asset=asset
+            user=get_anonymous_user(), asset=asset, reservation_token="stale"
         )
         stale_reservation.full_clean()
         stale_reservation.save()
