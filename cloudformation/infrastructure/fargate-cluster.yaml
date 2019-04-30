@@ -280,7 +280,7 @@ Resources:
               - ContainerPort: 80
         - Name: importer
           Cpu: 1024
-          Memory: 2048
+          Memory: 4096
           Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/concordia/importer:${ConcordiaVersion}'
           LogConfiguration:
             LogDriver: awslogs
