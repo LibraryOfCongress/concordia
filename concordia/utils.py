@@ -22,8 +22,8 @@ def request_accepts_json(request):
     return "application/json" in accept_header
 
 
-def get_or_create_reserve_id(request):
-    reserve_id = request.session.get("reserve_id", False)
-    if not reserve_id:
-        request.session["reserve_id"] = token_hex(25)
-    return reserve_id
+def get_or_create_reservation_token(request):
+    reservation_token = request.session.get("reservation_token", False)
+    if not reservation_token:
+        request.session["reservation_token"] = token_hex(25)
+    return reservation_token

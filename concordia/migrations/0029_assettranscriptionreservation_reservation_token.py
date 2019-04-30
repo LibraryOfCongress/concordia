@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name="assettranscriptionreservation",
-            name="reserve_id",
-            field=models.CharField(blank=True, max_length=50, null=True),
+            name="reservation_token",
+            field=models.CharField(max_length=50, default="migration"),
         )
     ]
