@@ -620,8 +620,7 @@ export class ActionApp {
         if (canEdit) {
             this.assetReservationURL = this.urlTemplates.assetReservation.expand(
                 {
-                    assetId: encodeURIComponent(asset.id),
-                    reserveId: encodeURIComponent(this.config.reserveId)
+                    assetId: encodeURIComponent(asset.id)
                 }
             );
 

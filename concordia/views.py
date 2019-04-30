@@ -1619,7 +1619,6 @@ def action_app(request):
                     ).replace("http", "ws"),
                     "campaignList": reverse("transcriptions:campaign-list"),
                 },
-                "reserveId": get_or_create_reservation_token(request),
                 "urlTemplates": {
                     "assetData": "/{action}.json",
                     "assetReservation": "/reserve-asset/{assetId}/",
