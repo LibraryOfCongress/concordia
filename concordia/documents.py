@@ -166,6 +166,16 @@ class AssetDocument(DocType):
 
     transcription_status = fields.KeywordField()
 
+    latest_transcription = fields.ObjectField(
+        properties={
+            "created_on": fields.DateField(),
+            "updated_on": fields.DateField(),
+            "accepted": fields.DateField(),
+            "rejected": fields.DateField(),
+            "submitted": fields.DateField(),
+        }
+    )
+
     class Meta:
         model = Asset
         fields = ["published", "difficulty", "slug", "sequence", "year"]

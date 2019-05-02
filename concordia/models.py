@@ -234,6 +234,9 @@ class Asset(MetricsModelMixin("asset"), models.Model):
             },
         )
 
+    def latest_transcription(self):
+        return self.transcription_set.order_by("-pk").first()
+
 
 class Tag(MetricsModelMixin("tag"), models.Model):
     TAG_VALIDATOR = RegexValidator(r"^[- _'\w]{1,50}$")
