@@ -1,7 +1,7 @@
 import os
 
 from .settings_template import *  # NOQA ignore=F405
-from .settings_template import DATABASES, INSTALLED_APPS, LOGGING, MIDDLEWARE
+from .settings_template import INSTALLED_APPS, LOGGING, MIDDLEWARE
 
 LOGGING["handlers"]["stream"]["level"] = "DEBUG"
 LOGGING["handlers"]["file"]["level"] = "DEBUG"
@@ -12,8 +12,6 @@ LOGGING["loggers"]["django"]["level"] = "DEBUG"
 LOGGING["loggers"]["celery"]["level"] = "DEBUG"
 
 DEBUG = True
-
-DATABASES["default"]["PORT"] = "54323"
 
 ALLOWED_HOSTS = ["127.0.0.1", "0.0.0.0", "*"]
 
