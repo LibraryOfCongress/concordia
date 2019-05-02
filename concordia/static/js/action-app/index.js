@@ -6,7 +6,7 @@ import {
     unmount
 } from 'https://cdnjs.cloudflare.com/ajax/libs/redom/3.18.0/redom.es.min.js';
 
-import {$, $$} from './utils/dom.js';
+import {$, $$, setSelectValue} from './utils/dom.js';
 import {fetchJSON, getCachedData} from './utils/api.js';
 import {MetadataPanel, AssetList, AssetViewer} from './components.js';
 
@@ -49,6 +49,7 @@ export class ActionApp {
         this.setupToolbars();
 
         this.setupSharing();
+        this.setupPersistentStateManagement();
 
         this.setupModeSelector();
         this.setupAssetList();
@@ -56,7 +57,53 @@ export class ActionApp {
 
         this.connectAssetEventStream();
 
+        // We call this before refreshData to ensure that its request gets in first:
+        this.restoreOpenAsset();
+
         this.refreshData();
+    }
+
+    setupPersistentStateManagement() {
+        this.persistentState = new URLSearchParams(
+            window.location.hash.replace(/^#/, '')
+        );
+    }
+
+    serializeStateToURL() {
+        let loc = new URL(window.location);
+        loc.hash = this.persistentState.toString();
+        window.history.replaceState(null, null, loc);
+    }
+
+    addToState(key, value) {
+        this.persistentState.set(key, value);
+        this.serializeStateToURL();
+    }
+
+    deleteFromState(key) {
+        this.persistentState.delete(key);
+        this.serializeStateToURL();
+    }
+
+    restoreOpenAsset() {
+        let assetId = this.persistentState.get('asset');
+        if (!assetId) return;
+
+        let allAssetsURL = this.urlTemplates.assetData.expand({
+            // This is a special-case for retrieving all assets regardless of status
+            action: 'assets'
+        });
+
+        this.fetchAssetPage(allAssetsURL + '?pk=' + assetId).then(() => {
+            this.assetListUpdateCallbacks.push(() => {
+                let element = document.getElementById(assetId);
+                if (!element) {
+                    console.warn('Expected to load asset with ID %s', assetId);
+                } else {
+                    this.openViewer(element);
+                }
+            });
+        });
     }
 
     setupGlobalKeyboardEvents() {
@@ -90,18 +137,32 @@ export class ActionApp {
                 $$('button', this.modeSelection).forEach(inactiveElement => {
                     inactiveElement.classList.remove('active');
                 });
-                event.target.classList.add('active');
+
+                let target = event.target;
+
+                target.classList.add('active');
+
+                this.currentMode = target.value;
+                this.addToState('mode', this.currentMode);
+
+                this.appElement.dataset.mode = this.currentMode;
+                $$('.current-mode').forEach(
+                    i => (i.textContent = this.currentMode)
+                );
+
                 this.updateAvailableCampaignFilters();
                 this.closeViewer();
                 this.refreshData();
             });
         });
-    }
 
-    getCurrentMode() {
-        this.currentMode = this.modeSelection.querySelector('.active').value;
-        this.appElement.dataset.mode = this.currentMode;
-        $$('.current-mode').forEach(i => (i.textContent = this.currentMode));
+        let mode = this.persistentState.get('mode') || 'review';
+        if (mode == 'transcribe' || mode == 'review') {
+            this.currentMode = mode;
+            $$('button', this.modeSelection).forEach(button => {
+                button.classList.toggle('active', button.value == mode);
+            });
+        }
     }
 
     setupToolbars() {
@@ -214,7 +275,6 @@ export class ActionApp {
     }
 
     refreshData() {
-        this.getCurrentMode();
         this.updateAssetList();
         this.fetchAssetData(); // This starts the fetch process going by calculating the appropriate base URL
     }
@@ -223,6 +283,9 @@ export class ActionApp {
         // We have a simple queue of URLs for asset pages which have not yet
         // been fetched which fetchNextAssetPage will empty:
         this.queuedAssetPageURLs = [];
+
+        // These will be processed after the next asset list update completes (possibly after a rAF / rIC chain)
+        this.assetListUpdateCallbacks = [];
 
         let loadMoreButton = $('#load-more-assets');
         loadMoreButton.addEventListener('click', () =>
@@ -241,8 +304,10 @@ export class ActionApp {
 
         /* List sorting */
         this.sortModeSelector = $('#sort-mode');
+        setSelectValue(this.sortModeSelector, this.persistentState.get('sort'));
         this.sortMode = this.sortModeSelector.value;
         this.sortModeSelector.addEventListener('change', () => {
+            this.addToState('sort', this.sortModeSelector.value);
             this.updateAssetList();
         });
 
@@ -266,11 +331,17 @@ export class ActionApp {
                 });
             })
             .then(() => {
+                setSelectValue(
+                    this.campaignSelect,
+                    this.persistentState.get('campaign')
+                );
                 this.updateAvailableCampaignFilters();
             });
-        this.campaignSelect.addEventListener('change', () =>
-            this.updateAssetList()
-        );
+
+        this.campaignSelect.addEventListener('change', () => {
+            this.addToState('campaign', this.campaignSelect.value);
+            this.updateAssetList();
+        });
     }
 
     updateAvailableCampaignFilters() {
@@ -279,7 +350,6 @@ export class ActionApp {
             campaigns which you can actually work on
         */
 
-        // TODO: componentize the asset list controls
         $$('option', this.campaignSelect).forEach(optionElement => {
             let disabled;
             if (this.campaignSelect == 'review') {
@@ -324,11 +394,11 @@ export class ActionApp {
             action: this.currentMode
         });
 
-        this.fetchAssetPage(url);
+        return this.fetchAssetPage(url);
     }
 
     fetchAssetPage(url) {
-        fetchJSON(url)
+        return fetchJSON(url)
             .then(data => {
                 data.objects.forEach(i => {
                     i.sent = data.sent;
@@ -528,9 +598,18 @@ export class ActionApp {
                 $('#visible-asset-count').textContent = visibleAssets.length;
 
                 this.assetList.scrollToActiveAsset();
+
+                this.runAssetListUpdateCallbacks();
                 this.attemptAssetLazyLoad();
             });
         });
+    }
+
+    runAssetListUpdateCallbacks() {
+        while (this.assetListUpdateCallbacks.length) {
+            let callback = this.assetListUpdateCallbacks.pop();
+            callback();
+        }
     }
 
     attemptAssetLazyLoad() {
@@ -601,6 +680,10 @@ export class ActionApp {
             alwaysIncludedAssetIDs = [];
         }
 
+        if (this.persistentState.has('asset')) {
+            alwaysIncludedAssetIDs.push(this.persistentState.get('asset'));
+        }
+
         let currentCampaignId = this.campaignSelect.value;
         if (currentCampaignId) {
             // The values specified in API responses are integers, not DOM strings:
@@ -647,6 +730,8 @@ export class ActionApp {
 
     openViewer(assetElement) {
         let asset = this.assets.get(assetElement.dataset.id);
+
+        this.addToState('asset', asset.id);
 
         this.updateSharing(asset.url, asset.title);
 
@@ -731,6 +816,8 @@ export class ActionApp {
 
         delete this.appElement.dataset.openAssetId;
         delete this.openAssetElement;
+
+        this.deleteFromState('asset');
 
         if (this.reservationTimer) {
             window.clearInterval(this.reservationTimer);
