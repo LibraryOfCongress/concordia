@@ -35,7 +35,7 @@ services:
             POSTGRESQL_PW: ${POSTGRESQL_PW}
             CONCORDIA_ENVIRONMENT: development
             S3_BUCKET_NAME: crowd-dev-content
-            DJANGO_SETTINGS_MODULE: concordia.settings_docker
+            DJANGO_SETTINGS_MODULE: ${DJANGO_SETTINGS_MODULE:-concordia.settings_docker}
             DEBUG: ${DEBUG:-}
             REDIS_ADDRESS: redis
             REDIS_PORT: 6379
