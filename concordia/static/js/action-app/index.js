@@ -240,29 +240,30 @@ export class ActionApp {
                     is not the same as the user who obtained the reservation,
                     then mark it unavailable
                     */
-                    if (
-                        !this.config.currentUser ||
-                        (this.config.currentUser &&
-                            this.config.currentUser != message.user_pk)
-                    ) {
-                        console.error(
-                            '// FIXME: handle asset reservation updates'
-                        );
-                        this.markAssetAsUnavailable(
-                            assetId,
-                            'Someone else is working on this'
-                        );
-                    }
+
+                    this.mergeAssetUpdate(assetId, {
+                        reservationToken: message.reservation_token
+                    });
+
                     break;
                 case 'asset_reservation_released':
-                    // FIXME: we need to test whether the user who reserved it is different than the user we're running as!
-                    console.error('// FIXME: handle asset reservation updates');
-                    this.markAssetAsAvailable(assetId);
+                    this.mergeAssetUpdate(assetId, {
+                        reservationToken: null
+                    });
+
                     break;
                 default:
                     console.warn(
                         `Unknown message type ${message.type}: ${message}`
                     );
+            }
+
+            // TODO: consider parking this behind requestAnimationFrame?
+            let assetListItem = this.assetList.lookup[assetId];
+            if (assetListItem) {
+                // If this is visible, we want to update the displayed asset
+                // list icon using the current value:
+                assetListItem.update(this.assets.get(assetId));
             }
         });
 
