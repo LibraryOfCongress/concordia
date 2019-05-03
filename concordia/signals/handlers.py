@@ -73,7 +73,6 @@ def send_asset_reservation_obtained(sender, **kwargs):
         sender=sender,
         message_type="asset_reservation_obtained",
         asset_pk=kwargs["asset_pk"],
-        user_pk=kwargs["user_pk"],
         reservation_token=kwargs["reservation_token"],
     )
 
@@ -84,20 +83,18 @@ def send_asset_reservation_released(sender, **kwargs):
         sender=sender,
         message_type="asset_reservation_released",
         asset_pk=kwargs["asset_pk"],
-        user_pk=kwargs["user_pk"],
         reservation_token=kwargs["reservation_token"],
     )
 
 
 def send_asset_reservation_message(
-    *, sender, message_type, asset_pk, user_pk, reservation_token
+    *, sender, message_type, asset_pk, reservation_token
 ):
     AsyncToSync(ASSET_CHANNEL_LAYER.group_send)(
         "asset_updates",
         {
             "type": message_type,
             "asset_pk": asset_pk,
-            "user_pk": user_pk,
             "reservation_token": reservation_token,
         },
     )

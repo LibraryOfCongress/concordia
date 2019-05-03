@@ -1193,13 +1193,10 @@ def reserve_asset(request, *, asset_pk):
     """
     Receives an asset PK and attempts to create/update a reservation for it
 
-    Returns HTTP 204 on success and HTTP 409 when the record is in use
-    """
+    Returns JSON message with reservation token on success
 
-    if not request.user.is_authenticated:
-        user = get_anonymous_user()
-    else:
-        user = request.user
+    Returns HTTP 409 when the record is in use
+    """
 
     timestamp = now()
 
@@ -1215,22 +1212,21 @@ def reserve_asset(request, *, asset_pk):
             (
                 "DELETE FROM concordia_assettranscriptionreservation "
                 "WHERE updated_on < %s "
-                "RETURNING asset_id AS asset_pk, user_id AS user_pk, reservation_token"
+                "RETURNING asset_id AS asset_pk, reservation_token"
             ),
             [cutoff],
         )
 
         if rows_to_release:
             expired_reservations.extend(
-                (row["asset_pk"], row["user_pk"], row["reservation_token"])
+                (row["asset_pk"], row["reservation_token"])
                 for row in rows_to_release.fetchall()
             )
 
-    for asset_pk, user_pk, reservation_token in expired_reservations:
+    for asset_pk, reservation_token in expired_reservations:
         reservation_released.send(
             sender="reserve_asset",
             asset_pk=asset_pk,
-            user_pk=user_pk,
             reservation_token=reservation_token,
         )
 
@@ -1243,14 +1239,14 @@ def reserve_asset(request, *, asset_pk):
             cursor.execute(
                 """
                 DELETE FROM concordia_assettranscriptionreservation
-                WHERE user_id = %s AND asset_id = %s and reservation_token = %s
+                WHERE asset_id = %s and reservation_token = %s
                 """,
-                [user.pk, asset_pk, reservation_token],
+                [asset_pk, reservation_token],
             )
 
         # We'll pass the message to the WebSocket listeners before returning it:
         msg = {"asset_pk": asset_pk, "reservation_token": reservation_token}
-        reservation_released.send(sender="reserve_asset", user_pk=user.pk, **msg)
+        reservation_released.send(sender="reserve_asset", **msg)
         return JsonResponse(msg)
 
     # We're relying on the database to meet our integrity requirements and since
@@ -1261,17 +1257,16 @@ def reserve_asset(request, *, asset_pk):
         cursor.execute(
             """
             INSERT INTO concordia_assettranscriptionreservation AS atr
-                (user_id, asset_id, reservation_token, created_on, updated_on)
-                VALUES (%s, %s, %s, current_timestamp, current_timestamp)
+                (asset_id, reservation_token, created_on, updated_on)
+                VALUES (%s, %s, current_timestamp, current_timestamp)
             ON CONFLICT (asset_id) DO UPDATE
                 SET updated_on = current_timestamp
                 WHERE (
-                    atr.user_id = excluded.user_id
-                    AND atr.asset_id = excluded.asset_id
+                    atr.asset_id = excluded.asset_id
                     AND atr.reservation_token = excluded.reservation_token
                 )
             """.strip(),
-            [user.pk, asset_pk, reservation_token],
+            [asset_pk, reservation_token],
         )
 
         if cursor.rowcount != 1:
@@ -1279,7 +1274,7 @@ def reserve_asset(request, *, asset_pk):
 
     # We'll pass the message to the WebSocket listeners before returning it:
     msg = {"asset_pk": asset_pk, "reservation_token": reservation_token}
-    reservation_obtained.send(sender="reserve_asset", user_pk=user.pk, **msg)
+    reservation_obtained.send(sender="reserve_asset", **msg)
     return JsonResponse(msg)
 
 
@@ -1291,7 +1286,7 @@ def redirect_to_next_asset(
     if asset:
         if mode == "transcribe":
             res = AssetTranscriptionReservation(
-                user=user, asset=asset, reservation_token=reservation_token
+                asset=asset, reservation_token=reservation_token
             )
             res.full_clean()
             res.save()
