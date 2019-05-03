@@ -746,6 +746,10 @@ export class ActionApp {
     }
 
     openViewer(assetElement) {
+        if (this.openAssetElement) {
+            this.releaseAsset();
+        }
+
         let asset = this.assets.get(assetElement.dataset.id);
 
         this.addToState('asset', asset.id);
