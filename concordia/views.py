@@ -1247,14 +1247,11 @@ def reserve_asset(request, *, asset_pk):
                 """,
                 [user.pk, asset_pk, reservation_token],
             )
-        # Notify the web socket of the reservation release
-        reservation_released.send(
-            sender="reserve_asset",
-            asset_pk=asset_pk,
-            user_pk=user.pk,
-            reservation_token=reservation_token,
-        )
-        return HttpResponse(status=204)
+
+        # We'll pass the message to the WebSocket listeners before returning it:
+        msg = {"asset_pk": asset_pk, "reservation_token": reservation_token}
+        reservation_released.send(sender="reserve_asset", user_pk=user.pk, **msg)
+        return JsonResponse(msg)
 
     # We're relying on the database to meet our integrity requirements and since
     # this is called periodically we want to be fairly fast until we switch to
@@ -1280,13 +1277,10 @@ def reserve_asset(request, *, asset_pk):
         if cursor.rowcount != 1:
             return HttpResponse(status=409)
 
-    reservation_obtained.send(
-        sender="reserve_asset",
-        asset_pk=asset_pk,
-        user_pk=user.pk,
-        reservation_token=reservation_token,
-    )
-    return HttpResponse(status=204)
+    # We'll pass the message to the WebSocket listeners before returning it:
+    msg = {"asset_pk": asset_pk, "reservation_token": reservation_token}
+    reservation_obtained.send(sender="reserve_asset", user_pk=user.pk, **msg)
+    return JsonResponse(msg)
 
 
 def redirect_to_next_asset(
