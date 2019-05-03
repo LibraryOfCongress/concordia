@@ -15,7 +15,7 @@ import {
 
 export class AssetTooltip {
     constructor() {
-        this.el = html('.asset-tooltip.text-white.p-2', [
+        this.el = html('.asset-tooltip', [
             html('.item-title'),
             html('.asset-title'),
             html('.difficulty-score-container', [
@@ -236,7 +236,7 @@ class Li {
 class AssetListItem {
     constructor([assetListObserver]) {
         this.el = html('li', {
-            class: 'asset rounded border',
+            class: 'asset border',
             tabIndex: 0
         });
 
@@ -256,7 +256,7 @@ class AssetListItem {
         }
 
         this.el.id = assetData.id;
-        this.el.classList.add('asset', 'rounded', 'border');
+        this.el.classList.add('asset', 'border');
         this.el.dataset.image = thumbnailUrl;
         this.el.dataset.id = assetData.id;
         this.el.dataset.difficulty = assetData.difficulty;

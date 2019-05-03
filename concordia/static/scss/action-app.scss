@@ -9,6 +9,10 @@ body.view-action-app {
     max-height: 100vh;
     display: flex;
     flex-direction: column;
+    font-family: 'Open Sans', sans-serif;
+    border: none;
+    min-width: map-get($container-max-widths, lg);
+    background-color: #fff;
 }
 
 main {
@@ -60,10 +64,13 @@ main {
         width: var(--asset-thumbnail-size);
         height: var(--asset-thumbnail-size);
         object-fit: contain;
-        border-width: 3px !important;
+        border-color: #808080 !important;
+        background-color: #f6f6f6;
         background-size: contain;
         background-repeat: no-repeat;
         background-position: center;
+        background-origin: content-box;
+        padding: 5px;
         cursor: pointer;
         transition-property: height, width;
         transition-duration: 0.1s;
@@ -82,11 +89,19 @@ main {
     }
 
     .asset-tooltip {
-        background-color: #000;
+        margin: -5px;
+        padding: 14px;
+        background-color: #fff;
+        font-size: 13px;
+        line-height: 1.4;
         pointer-events: none;
         overflow: hidden;
-        max-height: 100%;
-        max-width: 100%;
+        width: calc(100% + 10px);
+        height: calc(100% + 10px);
+        .item-title {
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
     }
 }
 
