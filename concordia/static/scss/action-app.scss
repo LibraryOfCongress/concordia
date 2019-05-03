@@ -1,10 +1,7 @@
 @import '../../../node_modules/bootstrap/scss/functions';
 @import '../../../node_modules/bootstrap/scss/variables';
 @import '../../../node_modules/bootstrap/scss/mixins';
-
-$concordia-app-footer-height: $line-height-lg * 1rem;
-$font-size-xs: $font-size-base * .8125; // Move to global variables location
-$line-height-xs: 1.4; // Move to global variables location
+@import 'variables';
 
 body.view-action-app {
     height: 100vh;

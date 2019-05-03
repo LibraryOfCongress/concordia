@@ -224,7 +224,8 @@ LOGGING = {
 # Django-specific settings above
 ################################################################################
 
-MEDIA_URL = "/media/"
+#MEDIA_URL = "/media/"
+MEDIA_URL = "https://crowd-media.loc.gov/"
 MEDIA_ROOT = os.path.join(SITE_ROOT_DIR, "media")
 
 LOGIN_URL = "login"
