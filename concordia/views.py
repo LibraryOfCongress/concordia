@@ -1593,6 +1593,7 @@ def action_app(request):
             "campaigns": Campaign.objects.published().order_by("title"),
             "app_parameters": {
                 "currentUser": request.user.pk,
+                "reservationToken": get_or_create_reservation_token(request),
                 "urls": {
                     "assetUpdateSocket": request.build_absolute_uri(
                         "/ws/asset/asset_updates/"
