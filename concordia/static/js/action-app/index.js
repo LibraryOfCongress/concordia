@@ -520,8 +520,8 @@ export class ActionApp {
             assetID = asset.id;
         }
 
-        // FIXME: the mergeAssetUpdate() process should trigger a call to this & update the asset list & viewer
-        // FIXME: decide what call signature will support specifying the displayed reason
+        // FIXME: mergeAssetUpdate() should trigger a call to this
+        // FIXME: mode changes should trigger reprocessing for the entire asset list
 
         if (!asset) {
             throw `No information for an asset with ID ${assetID}`;
@@ -560,10 +560,20 @@ export class ActionApp {
                 asset.status != 'in_progress'
             ) {
                 canEdit = false;
-                reason = 'this asset is not available for transcription';
+                reason = `assets with status ${
+                    asset.status
+                } are not available for transcription`;
             }
         } else {
             throw `Unexpected mode ${this.currentMode}`;
+        }
+
+        if (
+            asset.reservationToken &&
+            asset.reservationToken != this.config.reservationToken
+        ) {
+            canEdit = false;
+            reason = 'Another person is working on this asset';
         }
 
         console.info(
