@@ -86,24 +86,24 @@
         </nav>
     </header>
     <main id="action-app-main" class="d-flex">
-        <div id="editor-main" class="p-1 d-flex flex-grow-1">
+        <div id="editor-main" class="d-flex flex-grow-1">
             <div id="asset-list-container">
-                <form id="asset-list-controls" class="sticky-top bg-light form-inline flex-wrap justify-content-center" role="navigation">
-                    <div class="input-group input-group-sm m-1">
+                <form id="asset-list-controls" class="sticky-top form-inline flex-nowrap justify-content-center mb-3 py-3" role="navigation">
+                    <div class="input-group input-group-sm mx-2 flex-nowrap">
                         <div class="input-group-prepend">
-                            <span class="input-group-text">I want to:</span>
+                            <span class="input-group-text concordia-app-input-group-text">I want to</span>
                         </div>
 
-                        <div id="activity-mode-selection" class="btn-group btn-group-sm" role="group" aria-label="Activity mode">
-                            <button type="button" class="btn btn-outline-primary" value="transcribe">Transcribe</button>
-                            <button type="button" class="btn btn-outline-primary active" value="review">Review</button>
+                        <div id="activity-mode-selection" class="btn-group btn-group-sm rounded bg-white" role="group" aria-label="Activity mode">
+                            <button type="button" class="btn btn-outline-secondary" value="transcribe">Transcribe</button>
+                            <button type="button" class="btn btn-outline-secondary active" value="review">Review</button>
                         </div>
                     </div>
-                    <div class="input-group input-group-sm m-1">
+                    <div class="input-group input-group-sm mx-2 flex-nowrap">
                         <div class="input-group-prepend">
-                            <label class="input-group-text" for="sort-mode">Sort by:</label>
+                            <label class="input-group-text concordia-app-input-group-text" for="sort-mode">Sort by</label>
                         </div>
-                        <select class="custom-select custom-select-sm" id="sort-mode">
+                        <select class="custom-select custom-select-sm rounded-0" id="sort-mode">
                             <option value="recent">Most Recent</option>
                             <option value="easiest">Easiest</option>
                             <option value="hardest">Hardest</option>
@@ -112,19 +112,19 @@
                             <option value="year">Year</option>
                         </select>
                     </div>
-                    <div class="input-group input-group-sm m-1">
+                    <div class="input-group input-group-sm mx-2 flex-nowrap w-25">
                         <div class="input-group-prepend">
-                            <label class="input-group-text" for="selected-campaign">Campaign:</label>
+                            <label class="input-group-text concordia-app-input-group-text" for="selected-campaign">Campaign</label>
                         </div>
-                        <select class="custom-select custom-select-sm" id="selected-campaign">
+                        <select class="custom-select custom-select-sm rounded-0" id="selected-campaign">
                             <option value="">All</option>
                         </select>
                     </div>
 
-                    <div class="w-75 m-1 d-flex align-items-center justify-content-between">
-                        <span class="fas fa-compress-arrows-alt"></span>
+                    <div class="mx-2 d-flex align-items-center justify-content-between flex-nowrap">
+                        <span class="far fa-file-image concordia-app-range-min"></span>
                         <input type="range" class="form-input custom-range" id="asset-list-thumbnail-size" min="128" max="512" step="8" autocomplete="off">
-                        <span class="fas fa-expand-arrows-alt"></span>
+                        <span class="far fa-file-image concordia-app-range-max"></span>
                     </div>
                 </form>
 

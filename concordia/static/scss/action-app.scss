@@ -32,8 +32,27 @@ main {
     }
 }
 
+#asset-list-controls {
+    background-color: $gray-200 !important;
+    border-bottom: 1px solid $gray-600;
+}
+
 #asset-list-controls input[type='range'] {
     width: calc(100% - (2 * 1.5rem));
+}
+
+.concordia-app-input-group-text {
+    font-weight: bold;
+    border: none;
+    background-color: none;
+}
+
+.concordia-app-range-min {
+    font-size: $font-size-sm;
+}
+
+.concordia-app-range-max {
+    font-size: $concordia-app-font-size-xl;
 }
 
 #contribute-container {
@@ -92,8 +111,8 @@ main {
         margin: $asset-thumbnail-gap * -1;
         padding: 14px;
         background-color: $white;
-        font-size: $font-size-xs;
-        line-height: $line-height-xs;
+        font-size: $concordia-app-font-size-xs;
+        line-height: $concordia-app-line-height-xs;
         pointer-events: none;
         overflow: hidden;
         width: calc(100% + ($asset-thumbnail-gap * 2));
