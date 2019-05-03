@@ -229,7 +229,9 @@ export class ActionApp {
                         latest_transcription: message.latest_transcription,
                         status: message.status
                     };
+
                     this.mergeAssetUpdate(assetId, assetUpdate);
+
                     break;
                 }
                 case 'asset_reservation_obtained':
@@ -480,6 +482,8 @@ export class ActionApp {
                 oldData
             )} to ${JSON.stringify(mergedData)}`
         );
+
+        mergedData.editable = this.canEditAsset(mergedData);
 
         this.assets.set(assetId, mergedData);
     }

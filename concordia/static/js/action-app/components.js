@@ -261,6 +261,13 @@ class AssetListItem {
         this.el.dataset.id = assetData.id;
         this.el.dataset.difficulty = assetData.difficulty;
         this.el.dataset.status = assetData.status;
+
+        if (!assetData.editable.canEdit) {
+            this.el.dataset.unavailable = assetData.editable.reason;
+        } else {
+            delete this.el.dataset.unavailable;
+        }
+
         this.el.title = `${assetData.title} (${assetData.project.title})`;
     }
 }
