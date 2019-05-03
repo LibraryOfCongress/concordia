@@ -474,7 +474,9 @@ export class ActionApp {
         }
 
         for (let k of ['status', 'difficulty', 'latest_transcription']) {
-            mergedData[k] = freshestCopy[k];
+            if (k in freshestCopy) {
+                mergedData[k] = freshestCopy[k];
+            }
         }
 
         console.debug(
