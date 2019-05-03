@@ -3,6 +3,8 @@
 @import '../../../node_modules/bootstrap/scss/mixins';
 
 $concordia-app-footer-height: $line-height-lg * 1rem;
+$font-size-xs: $font-size-base * .8125; // Move to global variables location
+$line-height-xs: 1.4; // Move to global variables location
 
 body.view-action-app {
     height: 100vh;
@@ -12,7 +14,7 @@ body.view-action-app {
     font-family: 'Open Sans', sans-serif;
     border: none;
     min-width: map-get($container-max-widths, lg);
-    background-color: #fff;
+    background-color: $body-bg;
 }
 
 main {
@@ -52,6 +54,7 @@ main {
 }
 
 #asset-list {
+    $asset-thumbnail-gap: 5px;
     --asset-thumbnail-size: 256px;
     display: grid;
     column-gap: 1rem;
@@ -64,13 +67,13 @@ main {
         width: var(--asset-thumbnail-size);
         height: var(--asset-thumbnail-size);
         object-fit: contain;
-        border-color: #808080 !important;
+        border-color: $gray-600 !important;
         background-color: #f6f6f6;
         background-size: contain;
         background-repeat: no-repeat;
         background-position: center;
         background-origin: content-box;
-        padding: 5px;
+        padding: $asset-thumbnail-gap;
         cursor: pointer;
         transition-property: height, width;
         transition-duration: 0.1s;
@@ -89,15 +92,15 @@ main {
     }
 
     .asset-tooltip {
-        margin: -5px;
+        margin: $asset-thumbnail-gap * -1;
         padding: 14px;
-        background-color: #fff;
-        font-size: 13px;
-        line-height: 1.4;
+        background-color: $white;
+        font-size: $font-size-xs;
+        line-height: $line-height-xs;
         pointer-events: none;
         overflow: hidden;
-        width: calc(100% + 10px);
-        height: calc(100% + 10px);
+        width: calc(100% + ($asset-thumbnail-gap * 2));
+        height: calc(100% + ($asset-thumbnail-gap * 2));
         .item-title {
             font-weight: bold;
             margin-bottom: 1rem;
