@@ -416,29 +416,30 @@ class TransactionalViewTests(JSONAssertMixin, TransactionTestCase):
     def _asset_reservation_test_payload(self, user_id, anonymous=False):
         asset = create_asset()
 
-        # Acquire the reservation: 1 auth query + 1 expiry + 1 acquire + 1
+        # Acquire the reservation: 1 expiry + 1 acquire + 1
         # feature flag check + 1 session if not anonymous and using a database:
         if not anonymous and settings.SESSION_ENGINE.endswith("db"):
-            expected_queries = 5
-        else:
             expected_queries = 4
+        else:
+            expected_queries = 3
 
         with self.assertNumQueries(expected_queries):
             resp = self.client.post(reverse("reserve-asset", args=(asset.pk,)))
+        data = self.assertValidJSON(resp, expected_status=200)
 
         reservation = AssetTranscriptionReservation.objects.get()
-        self.assertEqual(reservation.reservation_token, resp["reservation_token"])
+        self.assertEqual(reservation.reservation_token, data["reservation_token"])
         self.assertEqual(reservation.asset, asset)
 
         # Confirm that an update did not change the pk when it updated the timestamp:
 
         with self.assertNumQueries(expected_queries):
             resp = self.client.post(reverse("reserve-asset", args=(asset.pk,)))
-
+        data = self.assertValidJSON(resp, expected_status=200)
         self.assertEqual(1, AssetTranscriptionReservation.objects.count())
         updated_reservation = AssetTranscriptionReservation.objects.get()
         self.assertEqual(
-            updated_reservation.reservation_token, resp["reservation_token"]
+            updated_reservation.reservation_token, data["reservation_token"]
         )
         self.assertEqual(updated_reservation.asset, asset)
         self.assertEqual(reservation.created_on, updated_reservation.created_on)
@@ -450,8 +451,9 @@ class TransactionalViewTests(JSONAssertMixin, TransactionTestCase):
             resp = self.client.post(
                 reverse("reserve-asset", args=(asset.pk,)), data={"release": True}
             )
+        data = self.assertValidJSON(resp, expected_status=200)
         self.assertEqual(
-            updated_reservation.reservation_token, resp["reservation_token"]
+            updated_reservation.reservation_token, data["reservation_token"]
         )
 
         self.assertEqual(0, AssetTranscriptionReservation.objects.count())
@@ -466,18 +468,17 @@ class TransactionalViewTests(JSONAssertMixin, TransactionTestCase):
         # We'll reserve the test asset as the anonymous user and then attempt
         # to edit it after logging in
 
-        # 5 queries =
-        # 1 auth query + 1 anonymous user creation
-        # + 1 expiry + 1 acquire + 1 feature flag
-        with self.assertNumQueries(5):
+        # 3 queries =
+        # 1 expiry + 1 acquire + 1 feature flag
+        with self.assertNumQueries(3):
             resp = self.client.post(reverse("reserve-asset", args=(asset.pk,)))
         self.assertEqual(200, resp.status_code)
         self.assertEqual(1, AssetTranscriptionReservation.objects.count())
 
         self.login_user()
 
-        # 1 auth query + 1 session check + 1 expiry + 1 acquire + 1 feature flag check
-        with self.assertNumQueries(5 if settings.SESSION_ENGINE.endswith("db") else 4):
+        # 1 session check + 1 expiry + 1 acquire + 1 feature flag check
+        with self.assertNumQueries(4 if settings.SESSION_ENGINE.endswith("db") else 3):
             resp = self.client.post(reverse("reserve-asset", args=(asset.pk,)))
         self.assertEqual(409, resp.status_code)
         self.assertEqual(1, AssetTranscriptionReservation.objects.count())
@@ -501,13 +502,14 @@ class TransactionalViewTests(JSONAssertMixin, TransactionTestCase):
 
         self.login_user()
 
-        # 1 auth query + 1 session check + 1 expiry + 1 acquire + 1 feature flag check
-        with self.assertNumQueries(5 if settings.SESSION_ENGINE.endswith("db") else 4):
+        # 1 session check + 1 expiry + 1 acquire + 1 feature flag check
+        with self.assertNumQueries(4 if settings.SESSION_ENGINE.endswith("db") else 3):
             resp = self.client.post(reverse("reserve-asset", args=(asset.pk,)))
 
+        data = self.assertValidJSON(resp, expected_status=200)
         self.assertEqual(1, AssetTranscriptionReservation.objects.count())
         reservation = AssetTranscriptionReservation.objects.get()
-        self.assertEqual(reservation.reservation_token, resp["reservation_token"])
+        self.assertEqual(reservation.reservation_token, data["reservation_token"])
 
     def test_anonymous_transcription_save_captcha(self):
         asset = create_asset()
