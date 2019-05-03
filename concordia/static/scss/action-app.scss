@@ -14,6 +14,10 @@ body.view-action-app {
     background-color: $body-bg;
 }
 
+.concordia-app-navbar-brand {
+    font-size: $concordia-app-font-size-xl;
+}
+
 main {
     flex-shrink: 1;
     max-height: inherit;

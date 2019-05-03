@@ -61,12 +61,12 @@
     {% csrf_token %}
     <header id="action-app-header">
         <nav id="action-app-global-controls" class="navbar navbar-expand-lg navbar-dark bg-dark" role="navigation">
-            <a class="navbar-brand mb-0 h1" href="{% url 'homepage' %}">
+            <a class="navbar-brand mb-0 concordia-app-navbar-brand" href="{% url 'homepage' %}">
                 <span class="fas fa-home"></span>
-                Home
+                <span class="sr-only">Home</span>
             </a>
             <ul class="navbar-nav flex-grow-1 text-center justify-content-center">
-                <li class="nav-item navbar-text current-mode">
+                <li class="nav-item navbar-text current-mode font-weight-bold text-white text-uppercase">
                 </li>
             </ul>
             <ul class="navbar-nav justify-content-end">
