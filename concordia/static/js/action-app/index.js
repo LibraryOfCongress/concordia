@@ -95,7 +95,7 @@ export class ActionApp {
         });
 
         this.fetchAssetPage(allAssetsURL + '?pk=' + assetId).then(() => {
-            this.assetListUpdateCallbacks.push(() => {
+            this.assetList.updateCallbacks.push(() => {
                 let element = document.getElementById(assetId);
                 if (!element) {
                     console.warn('Expected to load asset with ID %s', assetId);
@@ -286,9 +286,6 @@ export class ActionApp {
         // We have a simple queue of URLs for asset pages which have not yet
         // been fetched which fetchNextAssetPage will empty:
         this.queuedAssetPageURLs = [];
-
-        // These will be processed after the next asset list update completes (possibly after a rAF / rIC chain)
-        this.assetListUpdateCallbacks = [];
 
         let loadMoreButton = $('#load-more-assets');
         loadMoreButton.addEventListener('click', () =>
@@ -616,17 +613,9 @@ export class ActionApp {
 
                 this.assetList.scrollToActiveAsset();
 
-                this.runAssetListUpdateCallbacks();
                 this.attemptAssetLazyLoad();
             });
         });
-    }
-
-    runAssetListUpdateCallbacks() {
-        while (this.assetListUpdateCallbacks.length) {
-            let callback = this.assetListUpdateCallbacks.pop();
-            callback();
-        }
     }
 
     attemptAssetLazyLoad() {

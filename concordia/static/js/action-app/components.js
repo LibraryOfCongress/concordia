@@ -297,6 +297,9 @@ export class AssetList extends List {
             assetListObserver
         ]);
 
+        // These will be processed after the next asset list update completes (possibly after a rAF / rIC chain)
+        this.updateCallbacks = [];
+
         let assetOpenHandler = event => {
             let target = event.target;
             if (target && target.classList.contains('asset')) {
@@ -355,6 +358,11 @@ export class AssetList extends List {
 
     update(assets) {
         super.update(assets);
+
+        while (this.updateCallbacks.length) {
+            let callback = this.updateCallbacks.pop();
+            callback();
+        }
     }
 
     scrollToActiveAsset() {
