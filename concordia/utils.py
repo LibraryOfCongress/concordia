@@ -23,7 +23,6 @@ def request_accepts_json(request):
 
 
 def get_or_create_reservation_token(request):
-    reservation_token = request.session.get("reservation_token", False)
-    if not reservation_token:
+    if "reservation_token" not in request.session:
         request.session["reservation_token"] = token_hex(25)
-    return reservation_token
+    return request.session["reservation_token"]
