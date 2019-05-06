@@ -342,6 +342,14 @@ export class ActionApp {
             this.addToState('campaign', this.campaignSelect.value);
             this.updateAssetList();
         });
+
+        $('#asset-list-thumbnail-size').addEventListener('input', event => {
+            this.assetList.el.style.setProperty(
+                '--asset-thumbnail-size',
+                event.target.value + 'px'
+            );
+            this.attemptAssetLazyLoad();
+        });
     }
 
     updateAvailableCampaignFilters() {

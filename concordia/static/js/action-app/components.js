@@ -346,14 +346,6 @@ export class AssetList extends List {
 
         this.el.addEventListener('mouseout', handleTooltipHideEvent);
         this.el.addEventListener('focusout', handleTooltipHideEvent);
-
-        $('#asset-list-thumbnail-size').addEventListener('input', event => {
-            this.el.style.setProperty(
-                '--asset-thumbnail-size',
-                event.target.value + 'px'
-            );
-            this.attemptAssetLazyLoad();
-        });
     }
 
     update(assets) {
