@@ -485,12 +485,6 @@ export class ActionApp {
             }
         }
 
-        console.debug(
-            `Changing asset ${assetId} from ${JSON.stringify(
-                oldData
-            )} to ${JSON.stringify(mergedData)}`
-        );
-
         mergedData.editable = this.canEditAsset(mergedData);
 
         this.assets.set(assetId, mergedData);
