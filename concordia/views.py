@@ -69,7 +69,11 @@ from concordia.models import (
 )
 from concordia.signals.signals import reservation_obtained, reservation_released
 from concordia.templatetags.concordia_media_tags import asset_media_url
-from concordia.utils import get_anonymous_user, request_accepts_json
+from concordia.utils import (
+    get_anonymous_user,
+    get_or_create_reservation_token,
+    request_accepts_json,
+)
 from concordia.version import get_concordia_version
 
 logger = getLogger(__name__)
@@ -1175,17 +1179,14 @@ def reserve_asset(request, *, asset_pk):
     """
     Receives an asset PK and attempts to create/update a reservation for it
 
-    Returns HTTP 204 on success and HTTP 409 when the record is in use
-    """
+    Returns JSON message with reservation token on success
 
-    if not request.user.is_authenticated:
-        user = get_anonymous_user()
-    else:
-        user = request.user
+    Returns HTTP 409 when the record is in use
+    """
 
     timestamp = now()
 
-    # First clear old reservations, with a grace period.
+    # First clear old reservations, with a grace period:
     cutoff = timestamp - (
         timedelta(seconds=2 * settings.TRANSCRIPTION_RESERVATION_SECONDS)
     )
@@ -1197,20 +1198,25 @@ def reserve_asset(request, *, asset_pk):
             (
                 "DELETE FROM concordia_assettranscriptionreservation "
                 "WHERE updated_on < %s "
-                "RETURNING asset_id AS asset_pk, user_id AS user_pk"
+                "RETURNING asset_id AS asset_pk, reservation_token"
             ),
             [cutoff],
         )
 
         if rows_to_release:
             expired_reservations.extend(
-                (row["asset_pk"], row["user_pk"]) for row in rows_to_release.fetchall()
+                (row["asset_pk"], row["reservation_token"])
+                for row in rows_to_release.fetchall()
             )
 
-    for asset_pk, user_pk in expired_reservations:
+    for asset_pk, reservation_token in expired_reservations:
         reservation_released.send(
-            sender="reserve_asset", asset_pk=asset_pk, user_pk=user_pk
+            sender="reserve_asset",
+            asset_pk=asset_pk,
+            reservation_token=reservation_token,
         )
+
+    reservation_token = get_or_create_reservation_token(request)
 
     # If the browser is letting us know of a specific reservation release,
     # let it go even if it's within the grace period.
@@ -1219,15 +1225,15 @@ def reserve_asset(request, *, asset_pk):
             cursor.execute(
                 """
                 DELETE FROM concordia_assettranscriptionreservation
-                WHERE user_id = %s AND asset_id = %s
+                WHERE asset_id = %s and reservation_token = %s
                 """,
-                [user.pk, asset_pk],
+                [asset_pk, reservation_token],
             )
-        # Notify the web socket of the reservation release
-        reservation_released.send(
-            sender="reserve_asset", asset_pk=asset_pk, user_pk=user.pk
-        )
-        return HttpResponse(status=204)
+
+        # We'll pass the message to the WebSocket listeners before returning it:
+        msg = {"asset_pk": asset_pk, "reservation_token": reservation_token}
+        reservation_released.send(sender="reserve_asset", **msg)
+        return JsonResponse(msg)
 
     # We're relying on the database to meet our integrity requirements and since
     # this is called periodically we want to be fairly fast until we switch to
@@ -1237,34 +1243,37 @@ def reserve_asset(request, *, asset_pk):
         cursor.execute(
             """
             INSERT INTO concordia_assettranscriptionreservation AS atr
-                (user_id, asset_id, created_on, updated_on)
+                (asset_id, reservation_token, created_on, updated_on)
                 VALUES (%s, %s, current_timestamp, current_timestamp)
             ON CONFLICT (asset_id) DO UPDATE
                 SET updated_on = current_timestamp
                 WHERE (
-                    atr.user_id = excluded.user_id
-                    AND atr.asset_id = excluded.asset_id
+                    atr.asset_id = excluded.asset_id
+                    AND atr.reservation_token = excluded.reservation_token
                 )
             """.strip(),
-            [user.pk, asset_pk],
+            [asset_pk, reservation_token],
         )
 
         if cursor.rowcount != 1:
             return HttpResponse(status=409)
 
-    reservation_obtained.send(
-        sender="reserve_asset", asset_pk=asset_pk, user_pk=user.pk
-    )
-    return HttpResponse(status=204)
+    # We'll pass the message to the WebSocket listeners before returning it:
+    msg = {"asset_pk": asset_pk, "reservation_token": reservation_token}
+    reservation_obtained.send(sender="reserve_asset", **msg)
+    return JsonResponse(msg)
 
 
 def redirect_to_next_asset(
     potential_assets, mode, request, campaign, project_slug, user
 ):
     asset = potential_assets.first()
+    reservation_token = get_or_create_reservation_token(request)
     if asset:
         if mode == "transcribe":
-            res = AssetTranscriptionReservation(user=user, asset=asset)
+            res = AssetTranscriptionReservation(
+                asset=asset, reservation_token=reservation_token
+            )
             res.full_clean()
             res.save()
         return redirect(

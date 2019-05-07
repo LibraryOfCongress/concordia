@@ -2,6 +2,7 @@ from asgiref.sync import AsyncToSync
 from channels.layers import get_channel_layer
 from django.conf import settings
 from django.contrib.auth.models import Group
+from django.contrib.auth.signals import user_logged_in
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django_registration.signals import user_registered
@@ -11,6 +12,14 @@ from ..tasks import calculate_difficulty_values
 from .signals import reservation_obtained, reservation_released
 
 ASSET_CHANNEL_LAYER = get_channel_layer()
+
+
+@receiver(user_logged_in)
+def clear_reservation_token(sender, user, request, **kwargs):
+    try:
+        del request.session["reservation_token"]
+    except KeyError:
+        pass
 
 
 @receiver(user_registered)
@@ -73,7 +82,7 @@ def send_asset_reservation_obtained(sender, **kwargs):
         sender=sender,
         message_type="asset_reservation_obtained",
         asset_pk=kwargs["asset_pk"],
-        user_pk=kwargs["user_pk"],
+        reservation_token=kwargs["reservation_token"],
     )
 
 
@@ -83,12 +92,18 @@ def send_asset_reservation_released(sender, **kwargs):
         sender=sender,
         message_type="asset_reservation_released",
         asset_pk=kwargs["asset_pk"],
-        user_pk=kwargs["user_pk"],
+        reservation_token=kwargs["reservation_token"],
     )
 
 
-def send_asset_reservation_message(*, sender, message_type, asset_pk, user_pk):
+def send_asset_reservation_message(
+    *, sender, message_type, asset_pk, reservation_token
+):
     AsyncToSync(ASSET_CHANNEL_LAYER.group_send)(
         "asset_updates",
-        {"type": message_type, "asset_pk": asset_pk, "user_pk": user_pk},
+        {
+            "type": message_type,
+            "asset_pk": asset_pk,
+            "reservation_token": reservation_token,
+        },
     )
