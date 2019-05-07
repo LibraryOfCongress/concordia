@@ -2,6 +2,7 @@ from asgiref.sync import AsyncToSync
 from channels.layers import get_channel_layer
 from django.conf import settings
 from django.contrib.auth.models import Group
+from django.contrib.auth.signals import user_logged_in
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django_registration.signals import user_registered
@@ -11,6 +12,14 @@ from ..tasks import calculate_difficulty_values
 from .signals import reservation_obtained, reservation_released
 
 ASSET_CHANNEL_LAYER = get_channel_layer()
+
+
+@receiver(user_logged_in)
+def clear_reservation_token(sender, user, request, **kwargs):
+    try:
+        del request.session["reservation_token"]
+    except KeyError:
+        pass
 
 
 @receiver(user_registered)
