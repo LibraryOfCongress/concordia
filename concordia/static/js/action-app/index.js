@@ -134,25 +134,8 @@ export class ActionApp {
 
         $$('button', this.modeSelection).forEach(element => {
             element.addEventListener('click', event => {
-                $$('button', this.modeSelection).forEach(inactiveElement => {
-                    inactiveElement.classList.remove('active');
-                });
-
                 let target = event.target;
-
-                target.classList.add('active');
-
-                this.currentMode = target.value;
-                this.addToState('mode', this.currentMode);
-
-                this.appElement.dataset.mode = this.currentMode;
-                $$('.current-mode').forEach(
-                    i => (i.textContent = this.currentMode)
-                );
-
-                this.updateAvailableCampaignFilters();
-                this.closeViewer();
-                this.refreshData();
+                this.switchMode(target.value);
             });
         });
 
@@ -163,6 +146,24 @@ export class ActionApp {
                 button.classList.toggle('active', button.value == mode);
             });
         }
+    }
+
+    switchMode(newMode) {
+        console.info(`Switch mode from ${this.currentMode} to ${newMode}`);
+        this.currentMode = newMode;
+        this.appElement.dataset.mode = this.currentMode;
+        this.addToState('mode', this.currentMode);
+        this.queuedAssetPageURLs.length = 0;
+
+        $$('button', this.modeSelection).forEach(button => {
+            button.classList.toggle('active', button.value == newMode);
+        });
+
+        $$('.current-mode').forEach(i => (i.textContent = this.currentMode));
+
+        this.updateAvailableCampaignFilters();
+        this.closeViewer();
+        this.refreshData();
     }
 
     setupToolbars() {
@@ -413,6 +414,8 @@ export class ActionApp {
     }
 
     fetchAssetPage(url) {
+        let startingMode = this.currentMode;
+
         return fetchJSON(url)
             .then(data => {
                 data.objects.forEach(i => {
@@ -422,15 +425,23 @@ export class ActionApp {
 
                 $('#asset-count').textContent = this.assets.size;
 
-                if (data.pagination.next) {
-                    this.queuedAssetPageURLs.push(data.pagination.next);
-                }
-
-                if (this.assets.size < 300) {
-                    // We like to have a fair number of items to start with
-                    window.requestIdleCallback(
-                        this.fetchNextAssetPage.bind(this)
+                if (this.currentMode != startingMode) {
+                    console.warn(
+                        `Mode changed from ${startingMode} to ${
+                            this.currentMode
+                        } while request for ${url} was being processed; halting chained fetches`
                     );
+                } else {
+                    if (data.pagination.next) {
+                        this.queuedAssetPageURLs.push(data.pagination.next);
+                    }
+
+                    if (this.assets.size < 300) {
+                        // We like to have a fair number of items to start with
+                        window.requestIdleCallback(
+                            this.fetchNextAssetPage.bind(this)
+                        );
+                    }
                 }
             })
             .then(() => {
