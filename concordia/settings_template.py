@@ -224,8 +224,7 @@ LOGGING = {
 # Django-specific settings above
 ################################################################################
 
-#MEDIA_URL = "/media/"
-MEDIA_URL = "https://crowd-media.loc.gov/"
+MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(SITE_ROOT_DIR, "media")
 
 LOGIN_URL = "login"
@@ -311,7 +310,12 @@ TRANSCRIPTION_RESERVATION_SECONDS = 5 * 60
 DEFAULT_PAGE_TTL = 5 * 60
 
 # Feature flag for social share
-FLAGS = {"ACTIVITY_UI_ENABLED": [], "ADVERTISE_ACTIVITY_UI": []}
+FLAGS = {
+    "SOCIAL_SHARE": [],
+    "NEW_CAROUSEL_SLIDE": [],
+    "ACTIVITY_UI_ENABLED": [{"condition": "boolean", "value": True}],
+    "ADVERTISE_ACTIVITY_UI": [{"condition": "boolean", "value": False}],
+}
 ASGI_APPLICATION = "concordia.routing.application"
 
 CHANNEL_LAYERS = {
