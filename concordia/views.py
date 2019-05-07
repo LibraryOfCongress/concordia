@@ -1603,7 +1603,7 @@ def action_app(request):
                     "campaignList": reverse("transcriptions:campaign-list"),
                 },
                 "urlTemplates": {
-                    "assetData": "/{action}.json",
+                    "assetData": "/{action}.json?per_page=500",
                     "assetReservation": "/reserve-asset/{assetId}/",
                     "saveTranscription": "/assets/{assetId}/transcriptions/save/",
                     "submitTranscription": "/transcriptions/{transcriptionId}/submit/",
