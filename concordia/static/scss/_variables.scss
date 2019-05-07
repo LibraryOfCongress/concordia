@@ -1,7 +1,33 @@
+// global variables
+$blue: #00618e;
+$orange: #f05129;
+$accent: $orange;
+$default: $gray-300;
+$primary: $blue;
+
+$theme-colors: (
+    'accent': $orange,
+    'default': $gray-300,
+    'primary': $primary
+);
+
+$link-color: theme-color('primary');
+$link-hover-color: darken($link-color, 15%);
+
 // typography
+$concordia-app-font-size-xxs: $font-size-base * 0.75;
 $concordia-app-font-size-xs: $font-size-base * 0.8125;
 $concordia-app-font-size-xl: $font-size-base * 1.5;
 $concordia-app-line-height-xs: 1.4;
+
+// toolbar
+$concordia-app-toolbar-border: $gray-600;
+$concordia-app-toolbar-background: $gray-300;
+$concordia-app-active-color: $white;
+
+// thumbnail
+$concordia-app-thumbnail-width: 140px;
+$concordia-app-thumbnail-gap: 10px;
 
 // footer
 $concordia-app-footer-height: $line-height-lg * 1rem;

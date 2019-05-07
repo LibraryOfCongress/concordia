@@ -393,7 +393,9 @@ class ConditionalToolbar {
         this.children = children;
         this.message = html('div.text-center');
 
-        this.el = html('.control-toolbar.my-3.d-print-none.btn-row');
+        this.el = html(
+            '.concordia-app-control-toolbar.py-3.text-center.d-print-none'
+        );
     }
 
     update(active, reason) {

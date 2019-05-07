@@ -84,10 +84,11 @@ h1.header-text {
     color: var(--primary-color);
 }
 
-h2 {
+h2,
+.h2 {
     font-size: 1.5rem;
     line-height: 125%;
-    font-weight: bold;
+    font-weight: 700;
     color: var(--text-color-primary);
 }
 
@@ -102,7 +103,7 @@ h2 small {
 h3 {
     font-size: 1.25rem;
     line-height: 125%;
-    font-weight: bold;
+    font-weight: 700;
     color: var(--text-color-primary);
 }
 
@@ -110,7 +111,7 @@ h4 {
     font-family: 'Open Sans', sans-serif;
     font-size: 1.125rem;
     line-height: 125%;
-    font-weight: bold;
+    font-weight: 700;
     color: var(--text-color-primary);
 }
 
@@ -118,7 +119,7 @@ h5 {
     font-family: 'Open Sans', sans-serif;
     font-size: 1rem;
     line-height: 125%;
-    font-weight: bold;
+    font-weight: 400;
     font-weight: normal;
 }
 
@@ -126,7 +127,7 @@ h6 {
     font-family: 'Open Sans', sans-serif;
     font-size: 0.875rem;
     line-height: 125%;
-    font-weight: bold;
+    font-weight: 700;
     color: var(--text-color-primary);
 }
 

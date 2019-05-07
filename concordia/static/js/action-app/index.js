@@ -110,6 +110,16 @@ export class ActionApp {
 
         helpToggle.addEventListener('click', () => {
             helpPanel.toggleAttribute('hidden');
+            helpToggle.classList.toggle('hidden');
+            return false;
+        });
+
+        let gridToggle = $('#grid-toggle');
+        let gridPanel = $('#asset-list-container');
+
+        gridToggle.addEventListener('click', () => {
+            gridPanel.toggleAttribute('hidden');
+            gridToggle.classList.toggle('hidden');
             return false;
         });
     }

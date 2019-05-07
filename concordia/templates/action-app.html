@@ -61,7 +61,7 @@
     {% csrf_token %}
     <header id="action-app-header">
         <nav id="action-app-global-controls" class="navbar navbar-expand-lg navbar-dark bg-dark" role="navigation">
-            <a class="navbar-brand mb-0 concordia-app-navbar-brand" href="{% url 'homepage' %}">
+            <a class="navbar-brand mb-0 concordia-app-navbar-brand position-absolute" href="{% url 'homepage' %}">
                 <span class="fas fa-home"></span>
                 <span class="sr-only">Home</span>
             </a>
@@ -69,86 +69,13 @@
                 <li class="nav-item navbar-text current-mode font-weight-bold text-white text-uppercase">
                 </li>
             </ul>
-            <ul class="navbar-nav justify-content-end">
-                <li class="nav-item">
-                    <button hidden id="go-fullscreen" class="btn btn-link nav-link" data-target="body" title="Go fullscreen">
-                        <span class="fas fa-arrows-alt"></span>
-                        <span class="sr-only">Go fullscreen</span>
-                    </button>
-                </li>
-                <li class="nav-item">
-                    <button id="help-toggle" class="btn btn-link nav-link" href="{% url 'help-center' %}" title="Open Help">
-                        <span class="fas fa-question-circle"></span>
-                        <span class="sr-only">Help</span>
-                    </button>
-                </li>
-            </ul>
         </nav>
     </header>
-    <main id="action-app-main" class="d-flex">
+    <main id="action-app-main" class="d-flex flex-grow-1">
         <div id="editor-main" class="d-flex flex-grow-1">
-            <div id="asset-list-container">
-                <form id="asset-list-controls" class="sticky-top form-inline flex-nowrap justify-content-center mb-3 py-3" role="navigation">
-                    <div class="input-group input-group-sm mx-2 flex-nowrap">
-                        <div class="input-group-prepend">
-                            <span class="input-group-text concordia-app-input-group-text">I want to</span>
-                        </div>
-
-                        <div id="activity-mode-selection" class="btn-group btn-group-sm rounded bg-white" role="group" aria-label="Activity mode">
-                            <button type="button" class="btn btn-outline-secondary" value="transcribe">Transcribe</button>
-                            <button type="button" class="btn btn-outline-secondary active" value="review">Review</button>
-                        </div>
-                    </div>
-                    <div class="input-group input-group-sm mx-2 flex-nowrap">
-                        <div class="input-group-prepend">
-                            <label class="input-group-text concordia-app-input-group-text" for="sort-mode">Sort by</label>
-                        </div>
-                        <select class="custom-select custom-select-sm rounded-0" id="sort-mode">
-                            <option value="recent">Most Recent</option>
-                            <option value="easiest">Easiest</option>
-                            <option value="hardest">Hardest</option>
-                            <option value="item-id">Item ID</option>
-                            <option value="campaign">Campaign</option>
-                            <option value="year">Year</option>
-                        </select>
-                    </div>
-                    <div class="input-group input-group-sm mx-2 flex-nowrap w-25">
-                        <div class="input-group-prepend">
-                            <label class="input-group-text concordia-app-input-group-text" for="selected-campaign">Campaign</label>
-                        </div>
-                        <select class="custom-select custom-select-sm rounded-0" id="selected-campaign">
-                            <option value="">All</option>
-                        </select>
-                    </div>
-
-                    <div class="mx-2 d-flex align-items-center justify-content-between flex-nowrap">
-                        <span class="far fa-file-image concordia-app-range-min"></span>
-                        <input type="range" class="form-input custom-range" id="asset-list-thumbnail-size" min="128" max="512" step="8" autocomplete="off">
-                        <span class="far fa-file-image concordia-app-range-max"></span>
-                    </div>
-                </form>
-
-                <button id="close-viewer-button" class="btn btn-secondary btn-lg position-fixed mx-auto" aria-label="Close viewer">
-                    <span class="fas fa-th"></span>
-                    Expand
-                </button>
-
-                <button id="load-more-assets" class="btn btn-secondary btn-block btn-sm">Load more…</button>
-            </div>
             <div id="asset-viewer">
-                <div id="asset-metadata">
-                    <div class="hierarchy">
-                        <a class="item-title item-url" target="_blank"></a>
-                        <a class="asset-title asset-url" target="_blank"></a>
-                    </div>
-
-                    <div>
-                        {% share_buttons "SHARE_URL" "SHARE_TITLE" %}
-                        <button id="show-metadata-button" class="btn btn-secondary" data-toggle="modal" data-target="#asset-info-modal" aria-label="Show metadata">ℹ Info</button>
-                    </div>
-                </div>
                 <div id="contribute-container" class="flex-grow-1 d-flex h-100">
-                    <div id="viewer-column" class="pl-0 d-flex flex-column align-items-stretch bg-dark d-print-block">
+                    <div id="viewer-column" class="pl-0 d-flex flex-column align-items-stretch w-100 d-print-block">
                         <div id="viewer-controls" class="m-1 text-center d-print-none">
                             <div class="d-inline-flex justify-content-between">
                                 <div class="d-flex btn-group btn-group-sm m-1">
@@ -192,10 +119,27 @@
                                 </div>
                             </div>
                         </div>
-                        <div id="asset-image" class="h-100 bg-dark"></div>
+                        <div id="asset-image" class="h-100"></div>
                     </div>
 
-                    <div id="editor-column" class="d-flex pl-2 flex-column flex-grow-1 flex-nowrap justify-content-between h-100">
+                    <div id="editor-column" class="d-flex p-3 flex-column flex-grow-1 flex-nowrap justify-content-between h-100">
+                        <div id="asset-metadata" class="">
+                            <div class="d-flex mb-3">
+                                <div class="flex-grow-1">
+                                    <button id="show-metadata-button" class="btn btn-outline-primary btn-sm concordia-app-font-size-xxs" data-toggle="modal" data-target="#asset-info-modal" aria-label="Show metadata">More Info <i class="fas fa-angle-down"></i></button>
+                                </div>
+                                <div class="dropdown">
+                                    <button class="btn btn-outline-primary btn-sm dropdown-toggle dropdown-no-icon concordia-app-font-size-xxs" type="button" id="dropdownMenu2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="sr-only">Share</span> <i class="fas fa-share"></i></button>
+                                    <div class="dropdown-menu p-3" style="min-width: auto;" aria-labelledby="dropdownMenu2">
+                                        {% share_buttons "SHARE_URL" "SHARE_TITLE" %}
+                                    </div>
+                                </div>
+                            </div>
+                            <h1 class="h2 hierarchy mb-3">
+                                <a class="item-title item-url" target="_blank"></a>
+                                <a class="asset-title asset-url" target="_blank"></a>
+                            </h1>
+                        </div>
                     </div>
                 </div>
 
@@ -223,10 +167,67 @@
                 </div>
             </div>
         </div>
+        <div id="toolbar" class="asset-toolbar">
+            <button id="grid-toggle" class="btn btn-link" href="{% url 'help-center' %}" title="Open Help">
+                <span class="fas fa-th"></span>
+                <span class="sr-only">Grid list</span>
+            </button>
+            <button id="help-toggle" class="btn btn-link hidden" href="{% url 'help-center' %}" title="Open Help">
+                <span class="fas fa-question-circle"></span>
+                <span class="sr-only">Help</span>
+            </button>
+        </div>
+        <div id="asset-list-container">
+            <form id="asset-list-controls" class="sticky-top form-inline flex-nowrap justify-content-center mb-3 py-3" role="navigation">
+                <div class="input-group input-group-sm mx-2 flex-nowrap">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text concordia-app-input-group-text">I want to</span>
+                    </div>
 
+                    <div id="activity-mode-selection" class="btn-group btn-group-sm rounded bg-white" role="group" aria-label="Activity mode">
+                        <button type="button" class="btn btn-outline-secondary" value="transcribe">Transcribe</button>
+                        <button type="button" class="btn btn-outline-secondary active" value="review">Review</button>
+                    </div>
+                </div>
+                <div class="input-group input-group-sm mx-2 flex-nowrap">
+                    <div class="input-group-prepend">
+                        <label class="input-group-text concordia-app-input-group-text" for="sort-mode">Sort by</label>
+                    </div>
+                    <select class="custom-select custom-select-sm rounded-0" id="sort-mode">
+                        <option value="recent">Most Recent</option>
+                        <option value="easiest">Easiest</option>
+                        <option value="hardest">Hardest</option>
+                        <option value="item-id">Item ID</option>
+                        <option value="campaign">Campaign</option>
+                        <option value="year">Year</option>
+                    </select>
+                </div>
+                <div class="input-group input-group-sm mx-2 flex-nowrap w-25">
+                    <div class="input-group-prepend">
+                        <label class="input-group-text concordia-app-input-group-text" for="selected-campaign">Campaign</label>
+                    </div>
+                    <select class="custom-select custom-select-sm rounded-0" id="selected-campaign">
+                        <option value="">All</option>
+                    </select>
+                </div>
+
+                <div class="mx-2 d-flex align-items-center justify-content-between flex-nowrap">
+                    <span class="far fa-file-image concordia-app-range-min"></span>
+                    <input type="range" class="form-input" id="asset-list-thumbnail-size" min="128" max="512" step="8" autocomplete="off">
+                    <span class="far fa-file-image concordia-app-range-max"></span>
+                </div>
+            </form>
+
+            <button id="close-viewer-button" class="btn btn-link btn-small btn-block sticky-top bg-white rounded-0 concordia-app-browse-all-button" aria-label="Close viewer">
+                <span class="fas fa-angle-double-left"></span>
+                Browse All
+            </button>
+
+            <button id="load-more-assets" class="btn btn-secondary btn-block btn-sm">Load more…</button>
+        </div>
         <div id="help-panel" hidden>
             <section>
-                <h5>Quick Tips</h5>
+                <h4>Quick Tips</h4>
                 <ul>
                     <li>Type what you see. Preserve original spelling, punctuation, and line breaks.</li>
                     <li>Use brackets [ ] around deleted, illegible or partially legible text.</li>
@@ -235,9 +236,9 @@
                     <li>Include insertions where you would read them in the text.</li>
                 </ul>
             </section>
-
+            <hr />
             <section>
-                <h5>Keyboard Shortcuts</h5>
+                <h4>Keyboard Shortcuts</h4>
                 <table class="table table-compact table-responsive">
                     <tr>
                         <th><kbd>w</kbd>, up arrow</th>
@@ -288,7 +289,7 @@
             </p>
         </div>
     </main>
-    <footer id="action-app-footer" class="footer fixed-bottom bg-light">
+    <footer id="action-app-footer" class="footer fixed-bottom bg-light" style="display: none;">
         <div class="container">
             <div class="m-auto text-center text-muted">
                 Displaying <span id="visible-asset-count">0</span> of <span id="asset-count">0</span> assets
