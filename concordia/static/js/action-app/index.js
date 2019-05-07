@@ -278,6 +278,14 @@ export class ActionApp {
     }
 
     refreshData() {
+        console.time('Refreshing asset editability');
+
+        this.assets.forEach(asset => {
+            asset.editable = this.canEditAsset(asset);
+        });
+
+        console.timeEnd('Refreshing asset editability');
+
         this.updateAssetList();
         this.fetchAssetData(); // This starts the fetch process going by calculating the appropriate base URL
     }
@@ -521,7 +529,6 @@ export class ActionApp {
         }
 
         // FIXME: mergeAssetUpdate() should trigger a call to this
-        // FIXME: mode changes should trigger reprocessing for the entire asset list
 
         if (!asset) {
             throw `No information for an asset with ID ${assetID}`;
