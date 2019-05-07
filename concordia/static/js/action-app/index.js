@@ -581,7 +581,7 @@ export class ActionApp {
             reason = 'Another person is working on this asset';
         }
 
-        console.info(
+        console.debug(
             'Asset ID %s: editable=%s, reason="%s"',
             assetID,
             canEdit,
