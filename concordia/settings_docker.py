@@ -19,14 +19,6 @@ DJANGO_SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", get_random_secret_key())
 
 EMAIL_BACKEND = "django.core.mail.backends.dummy.EmailBackend"
 
-S3_BUCKET_NAME = os.getenv("S3_BUCKET_NAME")
-
-DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
-AWS_STORAGE_BUCKET_NAME = S3_BUCKET_NAME
-AWS_DEFAULT_ACL = None  # Don't set an ACL on the files, inherit the bucket ACLs
-
-MEDIA_URL = "https://%s.s3.amazonaws.com/" % S3_BUCKET_NAME
-
 ELASTICSEARCH_DSL_AUTOSYNC = os.getenv("ELASTICSEARCH_DSL_AUTOSYNC", False)
 
 INSTALLED_APPS += ["django_elasticsearch_dsl"]
