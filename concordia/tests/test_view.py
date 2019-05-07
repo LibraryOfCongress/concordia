@@ -475,6 +475,8 @@ class TransactionalViewTests(JSONAssertMixin, TransactionTestCase):
         self.assertEqual(200, resp.status_code)
         self.assertEqual(1, AssetTranscriptionReservation.objects.count())
 
+        # Clear the login session so the reservation_token will be regenerated:
+        self.client.logout()
         self.login_user()
 
         # 1 session check + 1 expiry + 1 acquire + 1 feature flag check
