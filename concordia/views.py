@@ -1585,6 +1585,7 @@ class ReviewListView(AssetListView):
 
 
 @flag_required("ACTIVITY_UI_ENABLED")
+@login_required
 def action_app(request):
     return render(
         request,
