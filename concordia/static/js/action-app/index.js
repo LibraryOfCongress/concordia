@@ -258,7 +258,6 @@ export class ActionApp {
                     );
             }
 
-            // TODO: consider parking this behind requestAnimationFrame?
             let assetListItem = this.assetList.lookup[assetId];
             if (assetListItem) {
                 // If this is visible, we want to update the displayed asset
@@ -703,7 +702,6 @@ export class ActionApp {
             currentCampaignId = parseInt(currentCampaignId, 10);
         }
 
-        // TODO: We should have a cleaner way to filter the assets which are in scope due to the current status & having been fully loaded
         let currentStatuses;
         let currentMode = this.currentMode;
         if (currentMode == 'review') {
