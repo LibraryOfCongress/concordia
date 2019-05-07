@@ -528,8 +528,6 @@ export class ActionApp {
             assetID = asset.id;
         }
 
-        // FIXME: mergeAssetUpdate() should trigger a call to this
-
         if (!asset) {
             throw `No information for an asset with ID ${assetID}`;
         }
