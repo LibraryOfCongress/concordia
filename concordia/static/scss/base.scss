@@ -1,8 +1,6 @@
 :root {
     --primary-color: #f05129;
     --primary-color-hover: rgba(188, 57, 1, 1); /* #BC3901 */
-    --secondary-color: rgba(0, 167, 228, 1); /* #00A7E4 */
-    --secondary-color-hover: rgba(0, 35, 71, 1); /* #002347 */
     --color-success: rgba(22, 201, 74, 1); /* #16C94A */
     --color-danger: rgba(254, 12, 11, 1); /* #FE0C0B */
     --color-warning: rgba(254, 153, 11, 1); /* #FE990B */
@@ -86,10 +84,11 @@ h1.header-text {
     color: var(--primary-color);
 }
 
-h2 {
+h2,
+.h2 {
     font-size: 1.5rem;
     line-height: 125%;
-    font-weight: bold;
+    font-weight: 700;
     color: var(--text-color-primary);
 }
 
@@ -104,7 +103,7 @@ h2 small {
 h3 {
     font-size: 1.25rem;
     line-height: 125%;
-    font-weight: bold;
+    font-weight: 700;
     color: var(--text-color-primary);
 }
 
@@ -112,7 +111,7 @@ h4 {
     font-family: 'Open Sans', sans-serif;
     font-size: 1.125rem;
     line-height: 125%;
-    font-weight: bold;
+    font-weight: 700;
     color: var(--text-color-primary);
 }
 
@@ -120,7 +119,7 @@ h5 {
     font-family: 'Open Sans', sans-serif;
     font-size: 1rem;
     line-height: 125%;
-    font-weight: bold;
+    font-weight: 400;
     font-weight: normal;
 }
 
@@ -128,7 +127,7 @@ h6 {
     font-family: 'Open Sans', sans-serif;
     font-size: 0.875rem;
     line-height: 125%;
-    font-weight: bold;
+    font-weight: 700;
     color: var(--text-color-primary);
 }
 
@@ -362,29 +361,6 @@ ul.nav-secondary {
 .btn.disabled,
 .btn:disabled {
     opacity: 0.3 !important;
-}
-
-.btn-secondary {
-    background-color: var(--secondary-color);
-    border-color: var(--secondary-color);
-    color: var(--text-color-offwhite);
-}
-
-.btn-secondary:hover {
-    background-color: var(--secondary-color-hover);
-    border-color: var(--secondary-color-hover);
-    color: var(--text-color-offwhite);
-}
-
-.btn-outline-secondary {
-    border-color: var(--secondary-color);
-    color: var(--secondary-color);
-}
-
-.btn-outline-secondary:hover {
-    border-color: var(--secondary-color-hover);
-    background-color: transparent;
-    color: var(--secondary-color-hover);
 }
 
 .btn-minimal-secondary {

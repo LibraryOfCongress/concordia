@@ -166,12 +166,23 @@ export class ActionApp {
         this.refreshData();
     }
 
+    // FIXME: replace with a generic function since we need to both show these side panels and hide the inactive ones
     setupToolbars() {
         let helpToggle = $('#help-toggle');
         let helpPanel = $('#help-panel');
 
         helpToggle.addEventListener('click', () => {
             helpPanel.toggleAttribute('hidden');
+            helpToggle.classList.toggle('hidden');
+            return false;
+        });
+
+        let assetListToggle = $('#asset-list-toggle');
+        let assetList = $('#asset-list-container');
+
+        assetListToggle.addEventListener('click', () => {
+            assetList.toggleAttribute('hidden');
+            assetListToggle.classList.toggle('hidden');
             return false;
         });
     }
