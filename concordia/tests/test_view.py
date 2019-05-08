@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 
 from captcha.models import CaptchaStore
 from django.conf import settings
-from django.test import TestCase, TransactionTestCase
+from django.test import TestCase, TransactionTestCase, override_settings
 from django.urls import reverse
 from django.utils.timezone import now
 
@@ -25,6 +25,7 @@ from .utils import (
 )
 
 
+@override_settings(RATELIMIT_ENABLE=False)
 class ConcordiaViewTests(JSONAssertMixin, TestCase):
     """
     This class contains the unit tests for the view in the concordia app.
@@ -361,6 +362,7 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
         self.assertIn("no-cache", resp["Cache-Control"])
 
 
+@override_settings(RATELIMIT_ENABLE=False)
 class TransactionalViewTests(JSONAssertMixin, TransactionTestCase):
     def login_user(self):
         """

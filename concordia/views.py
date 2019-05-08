@@ -1585,6 +1585,8 @@ class ReviewListView(AssetListView):
 
 
 @flag_required("ACTIVITY_UI_ENABLED")
+@login_required
+@never_cache
 def action_app(request):
     return render(
         request,
@@ -1593,6 +1595,7 @@ def action_app(request):
             "campaigns": Campaign.objects.published().order_by("title"),
             "app_parameters": {
                 "currentUser": request.user.pk,
+                "reservationToken": get_or_create_reservation_token(request),
                 "urls": {
                     "assetUpdateSocket": request.build_absolute_uri(
                         "/ws/asset/asset_updates/"
@@ -1600,7 +1603,7 @@ def action_app(request):
                     "campaignList": reverse("transcriptions:campaign-list"),
                 },
                 "urlTemplates": {
-                    "assetData": "/{action}.json",
+                    "assetData": "/{action}.json?per_page=500",
                     "assetReservation": "/reserve-asset/{assetId}/",
                     "saveTranscription": "/assets/{assetId}/transcriptions/save/",
                     "submitTranscription": "/transcriptions/{transcriptionId}/submit/",

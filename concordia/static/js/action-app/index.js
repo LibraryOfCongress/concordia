@@ -95,7 +95,7 @@ export class ActionApp {
         });
 
         this.fetchAssetPage(allAssetsURL + '?pk=' + assetId).then(() => {
-            this.assetListUpdateCallbacks.push(() => {
+            this.assetList.updateCallbacks.push(() => {
                 let element = document.getElementById(assetId);
                 if (!element) {
                     console.warn('Expected to load asset with ID %s', assetId);
@@ -134,25 +134,8 @@ export class ActionApp {
 
         $$('button', this.modeSelection).forEach(element => {
             element.addEventListener('click', event => {
-                $$('button', this.modeSelection).forEach(inactiveElement => {
-                    inactiveElement.classList.remove('active');
-                });
-
                 let target = event.target;
-
-                target.classList.add('active');
-
-                this.currentMode = target.value;
-                this.addToState('mode', this.currentMode);
-
-                this.appElement.dataset.mode = this.currentMode;
-                $$('.current-mode').forEach(
-                    i => (i.textContent = this.currentMode)
-                );
-
-                this.updateAvailableCampaignFilters();
-                this.closeViewer();
-                this.refreshData();
+                this.switchMode(target.value);
             });
         });
 
@@ -163,6 +146,24 @@ export class ActionApp {
                 button.classList.toggle('active', button.value == mode);
             });
         }
+    }
+
+    switchMode(newMode) {
+        console.info(`Switch mode from ${this.currentMode} to ${newMode}`);
+        this.currentMode = newMode;
+        this.appElement.dataset.mode = this.currentMode;
+        this.addToState('mode', this.currentMode);
+        this.queuedAssetPageURLs.length = 0;
+
+        $$('button', this.modeSelection).forEach(button => {
+            button.classList.toggle('active', button.value == newMode);
+        });
+
+        $$('.current-mode').forEach(i => (i.textContent = this.currentMode));
+
+        this.updateAvailableCampaignFilters();
+        this.closeViewer();
+        this.refreshData();
     }
 
     setupToolbars() {
@@ -229,7 +230,9 @@ export class ActionApp {
                         latest_transcription: message.latest_transcription,
                         status: message.status
                     };
+
                     this.mergeAssetUpdate(assetId, assetUpdate);
+
                     break;
                 }
                 case 'asset_reservation_obtained':
@@ -238,29 +241,29 @@ export class ActionApp {
                     is not the same as the user who obtained the reservation,
                     then mark it unavailable
                     */
-                    if (
-                        !this.config.currentUser ||
-                        (this.config.currentUser &&
-                            this.config.currentUser != message.user_pk)
-                    ) {
-                        console.error(
-                            '// FIXME: handle asset reservation updates'
-                        );
-                        this.markAssetAsUnavailable(
-                            assetId,
-                            'Someone else is working on this'
-                        );
-                    }
+
+                    this.mergeAssetUpdate(assetId, {
+                        reservationToken: message.reservation_token
+                    });
+
                     break;
                 case 'asset_reservation_released':
-                    // FIXME: we need to test whether the user who reserved it is different than the user we're running as!
-                    console.error('// FIXME: handle asset reservation updates');
-                    this.markAssetAsAvailable(assetId);
+                    this.mergeAssetUpdate(assetId, {
+                        reservationToken: null
+                    });
+
                     break;
                 default:
                     console.warn(
                         `Unknown message type ${message.type}: ${message}`
                     );
+            }
+
+            let assetListItem = this.assetList.lookup[assetId];
+            if (assetListItem) {
+                // If this is visible, we want to update the displayed asset
+                // list icon using the current value:
+                assetListItem.update(this.assets.get(assetId));
             }
         });
 
@@ -275,6 +278,14 @@ export class ActionApp {
     }
 
     refreshData() {
+        console.time('Refreshing asset editability');
+
+        this.assets.forEach(asset => {
+            asset.editable = this.canEditAsset(asset);
+        });
+
+        console.timeEnd('Refreshing asset editability');
+
         this.updateAssetList();
         this.fetchAssetData(); // This starts the fetch process going by calculating the appropriate base URL
     }
@@ -283,9 +294,6 @@ export class ActionApp {
         // We have a simple queue of URLs for asset pages which have not yet
         // been fetched which fetchNextAssetPage will empty:
         this.queuedAssetPageURLs = [];
-
-        // These will be processed after the next asset list update completes (possibly after a rAF / rIC chain)
-        this.assetListUpdateCallbacks = [];
 
         let loadMoreButton = $('#load-more-assets');
         loadMoreButton.addEventListener('click', () =>
@@ -341,6 +349,14 @@ export class ActionApp {
         this.campaignSelect.addEventListener('change', () => {
             this.addToState('campaign', this.campaignSelect.value);
             this.updateAssetList();
+        });
+
+        $('#asset-list-thumbnail-size').addEventListener('input', event => {
+            this.assetList.el.style.setProperty(
+                '--asset-thumbnail-size',
+                event.target.value + 'px'
+            );
+            this.attemptAssetLazyLoad();
         });
     }
 
@@ -398,6 +414,8 @@ export class ActionApp {
     }
 
     fetchAssetPage(url) {
+        let startingMode = this.currentMode;
+
         return fetchJSON(url)
             .then(data => {
                 data.objects.forEach(i => {
@@ -405,17 +423,23 @@ export class ActionApp {
                     this.createAsset(i);
                 });
 
-                $('#asset-count').textContent = this.assets.size;
-
-                if (data.pagination.next) {
-                    this.queuedAssetPageURLs.push(data.pagination.next);
-                }
-
-                if (this.assets.size < 300) {
-                    // We like to have a fair number of items to start with
-                    window.requestIdleCallback(
-                        this.fetchNextAssetPage.bind(this)
+                if (this.currentMode != startingMode) {
+                    console.warn(
+                        `Mode changed from ${startingMode} to ${
+                            this.currentMode
+                        } while request for ${url} was being processed; halting chained fetches`
                     );
+                } else {
+                    if (data.pagination.next) {
+                        this.queuedAssetPageURLs.push(data.pagination.next);
+                    }
+
+                    if (this.assets.size < 300) {
+                        // We like to have a fair number of items to start with
+                        window.requestIdleCallback(
+                            this.fetchNextAssetPage.bind(this)
+                        );
+                    }
                 }
             })
             .then(() => {
@@ -472,14 +496,12 @@ export class ActionApp {
         }
 
         for (let k of ['status', 'difficulty', 'latest_transcription']) {
-            mergedData[k] = freshestCopy[k];
+            if (k in freshestCopy) {
+                mergedData[k] = freshestCopy[k];
+            }
         }
 
-        console.debug(
-            `Changing asset ${assetId} from ${JSON.stringify(
-                oldData
-            )} to ${JSON.stringify(mergedData)}`
-        );
+        mergedData.editable = this.canEditAsset(mergedData);
 
         this.assets.set(assetId, mergedData);
     }
@@ -513,9 +535,6 @@ export class ActionApp {
             asset = assetObjectOrID;
             assetID = asset.id;
         }
-
-        // FIXME: the mergeAssetUpdate() process should trigger a call to this & update the asset list & viewer
-        // FIXME: decide what call signature will support specifying the displayed reason
 
         if (!asset) {
             throw `No information for an asset with ID ${assetID}`;
@@ -554,13 +573,23 @@ export class ActionApp {
                 asset.status != 'in_progress'
             ) {
                 canEdit = false;
-                reason = 'this asset is not available for transcription';
+                reason = `assets with status ${
+                    asset.status
+                } are not available for transcription`;
             }
         } else {
             throw `Unexpected mode ${this.currentMode}`;
         }
 
-        console.info(
+        if (
+            asset.reservationToken &&
+            asset.reservationToken != this.config.reservationToken
+        ) {
+            canEdit = false;
+            reason = 'Another person is working on this asset';
+        }
+
+        console.debug(
             'Asset ID %s: editable=%s, reason="%s"',
             assetID,
             canEdit,
@@ -595,21 +624,11 @@ export class ActionApp {
                 this.assetList.update(visibleAssets);
                 console.timeEnd('Updating asset list');
 
-                $('#visible-asset-count').textContent = visibleAssets.length;
-
                 this.assetList.scrollToActiveAsset();
 
-                this.runAssetListUpdateCallbacks();
                 this.attemptAssetLazyLoad();
             });
         });
-    }
-
-    runAssetListUpdateCallbacks() {
-        while (this.assetListUpdateCallbacks.length) {
-            let callback = this.assetListUpdateCallbacks.pop();
-            callback();
-        }
     }
 
     attemptAssetLazyLoad() {
@@ -690,7 +709,6 @@ export class ActionApp {
             currentCampaignId = parseInt(currentCampaignId, 10);
         }
 
-        // TODO: We should have a cleaner way to filter the assets which are in scope due to the current status & having been fully loaded
         let currentStatuses;
         let currentMode = this.currentMode;
         if (currentMode == 'review') {
@@ -729,6 +747,10 @@ export class ActionApp {
     }
 
     openViewer(assetElement) {
+        if (this.openAssetElement) {
+            this.releaseAsset();
+        }
+
         let asset = this.assets.get(assetElement.dataset.id);
 
         this.addToState('asset', asset.id);
