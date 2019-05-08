@@ -693,7 +693,6 @@ class ImageViewer {
             gestureSettingsTouch: {
                 pinchRotate: true
             },
-            showNavigator: true,
             showRotationControl: true,
             showReferenceStrip: true,
             showFlipControl: true,
