@@ -423,8 +423,6 @@ export class ActionApp {
                     this.createAsset(i);
                 });
 
-                $('#asset-count').textContent = this.assets.size;
-
                 if (this.currentMode != startingMode) {
                     console.warn(
                         `Mode changed from ${startingMode} to ${
@@ -625,8 +623,6 @@ export class ActionApp {
                 console.time('Updating asset list');
                 this.assetList.update(visibleAssets);
                 console.timeEnd('Updating asset list');
-
-                $('#visible-asset-count').textContent = visibleAssets.length;
 
                 this.assetList.scrollToActiveAsset();
 
