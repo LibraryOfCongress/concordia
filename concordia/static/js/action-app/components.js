@@ -394,7 +394,7 @@ class ConditionalToolbar {
         this.message = html('div.text-center');
 
         this.el = html(
-            '.concordia-app-control-toolbar.py-3.text-center.d-print-none'
+            '.concordia-app-transcription-toolbar.py-3.text-center.d-print-none'
         );
     }
 

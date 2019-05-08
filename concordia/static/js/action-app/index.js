@@ -104,6 +104,7 @@ export class ActionApp {
         $$('.current-mode').forEach(i => (i.textContent = this.currentMode));
     }
 
+    // FIXME: replace with a generic function since we need to both show these side panels and hide the inactive ones
     setupToolbars() {
         let helpToggle = $('#help-toggle');
         let helpPanel = $('#help-panel');
@@ -114,12 +115,12 @@ export class ActionApp {
             return false;
         });
 
-        let gridToggle = $('#grid-toggle');
-        let gridPanel = $('#asset-list-container');
+        let assetListToggle = $('#asset-list-toggle');
+        let assetList = $('#asset-list-container');
 
-        gridToggle.addEventListener('click', () => {
-            gridPanel.toggleAttribute('hidden');
-            gridToggle.classList.toggle('hidden');
+        assetListToggle.addEventListener('click', () => {
+            assetList.toggleAttribute('hidden');
+            assetListToggle.classList.toggle('hidden');
             return false;
         });
     }
@@ -345,8 +346,6 @@ export class ActionApp {
                     this.createAsset(i);
                 });
 
-                $('#asset-count').textContent = this.assets.size;
-
                 if (data.pagination.next) {
                     this.queuedAssetPageURLs.push(data.pagination.next);
                 }
@@ -534,8 +533,6 @@ export class ActionApp {
                 console.time('Updating asset list');
                 this.assetList.update(visibleAssets);
                 console.timeEnd('Updating asset list');
-
-                $('#visible-asset-count').textContent = visibleAssets.length;
 
                 this.assetList.scrollToActiveAsset();
                 this.attemptAssetLazyLoad();

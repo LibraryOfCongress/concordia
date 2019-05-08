@@ -156,7 +156,7 @@ main {
     #editor-main {
         display: none !important;
     }
-    #toolbar {
+    #action-app-toolbar {
         order: 2;
     }
     #asset-list-container {
@@ -165,7 +165,7 @@ main {
     #help-panel {
         order: 3;
     }
-    #grid-toggle {
+    #asset-list-toggle {
         display: none;
     }
     &[data-mode='transcribe'] {
@@ -205,19 +205,20 @@ main {
             flex-grow: 0;
             flex-shrink: 0;
             display: block;
-            width: ($concordia-app-thumbnail-gap * 2) +
-                $concordia-app-thumbnail-width;
-            padding: 0 $concordia-app-thumbnail-gap $concordia-app-thumbnail-gap;
+            width: ($concordia-app-asset-list-thumbnail-gap * 2) +
+                $concordia-app-asset-list-thumbnail-width;
+            padding: 0 $concordia-app-asset-list-thumbnail-gap
+                $concordia-app-asset-list-thumbnail-gap;
         }
         #asset-list {
             grid-template-columns: repeat(
                 auto-fill,
-                $concordia-app-thumbnail-width
+                $concordia-app-asset-list-thumbnail-width
             );
             row-gap: 0;
             .asset {
-                width: $concordia-app-thumbnail-width;
-                height: $concordia-app-thumbnail-width;
+                width: $concordia-app-asset-list-thumbnail-width;
+                height: $concordia-app-asset-list-thumbnail-width;
                 margin-bottom: -1px;
             }
         }
@@ -229,13 +230,13 @@ main {
             height: 100%;
         }
 
-        #toolbar {
+        #action-app-toolbar {
             order: 1;
         }
         #help-panel {
             order: 3;
         }
-        #grid-toggle {
+        #asset-list-toggle {
             display: block;
         }
     }
@@ -245,7 +246,7 @@ main {
     }
 }
 
-#toolbar {
+#action-app-toolbar {
     border-left: 1px solid $concordia-app-toolbar-border;
     border-right: 1px solid $concordia-app-toolbar-border;
     background-color: $concordia-app-toolbar-background;
@@ -385,7 +386,7 @@ main {
     }
 }
 
-.concordia-app-control-toolbar {
+.concordia-app-transcription-toolbar {
     > button {
         margin: 0 10px;
     }

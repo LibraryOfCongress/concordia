@@ -167,8 +167,8 @@
                 </div>
             </div>
         </div>
-        <div id="toolbar" class="asset-toolbar">
-            <button id="grid-toggle" class="btn btn-link" href="{% url 'help-center' %}" title="Open Help">
+        <div id="action-app-toolbar" class="asset-toolbar">
+            <button id="asset-list-toggle" class="btn btn-link" href="{% url 'help-center' %}" title="Open Help">
                 <span class="fas fa-th"></span>
                 <span class="sr-only">Grid list</span>
             </button>
@@ -289,11 +289,4 @@
             </p>
         </div>
     </main>
-    <footer id="action-app-footer" class="footer fixed-bottom bg-light" style="display: none;">
-        <div class="container">
-            <div class="m-auto text-center text-muted">
-                Displaying <span id="visible-asset-count">0</span> of <span id="asset-count">0</span> assets
-            </div>
-        </div>
-    </footer>
 {% endblock site-main %}
