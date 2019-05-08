@@ -1,20 +1,47 @@
 @import '../../../node_modules/bootstrap/scss/functions';
 @import '../../../node_modules/bootstrap/scss/variables';
 @import '../../../node_modules/bootstrap/scss/mixins';
+@import 'variables';
+@import '../../../node_modules/bootstrap/scss/reboot';
+@import '../../../node_modules/bootstrap/scss/buttons';
+@import '../../../node_modules/bootstrap/scss/button-group';
 
-$concordia-app-footer-height: $line-height-lg * 1rem;
+.btn {
+    font-weight: bold !important;
+}
+
+.concordia-app-font-size-xxs {
+    font-size: $concordia-app-font-size-xxs;
+}
+
+.concordia-app-font-size-xs {
+    font-size: $concordia-app-font-size-xs;
+}
+
+.dropdown-no-icon {
+    &::after {
+        content: none !important;
+    }
+}
 
 body.view-action-app {
     height: 100vh;
     max-height: 100vh;
     display: flex;
     flex-direction: column;
+    font-family: 'Open Sans', sans-serif;
+    border: none;
+    min-width: map-get($container-max-widths, lg);
+    background-color: $body-bg;
+}
+
+.concordia-app-navbar-brand {
+    font-size: $concordia-app-font-size-xl;
 }
 
 main {
     flex-shrink: 1;
     max-height: inherit;
-    margin-bottom: $concordia-app-footer-height; // Ensure that the fixed footer does not overlap content
 }
 
 #action-app-footer {
@@ -29,8 +56,27 @@ main {
     }
 }
 
+#asset-list-controls {
+    background-color: $gray-200 !important;
+    border-bottom: 1px solid $gray-600;
+}
+
 #asset-list-controls input[type='range'] {
     width: calc(100% - (2 * 1.5rem));
+}
+
+.concordia-app-input-group-text {
+    font-weight: bold;
+    border: none;
+    background-color: none;
+}
+
+.concordia-app-range-min {
+    font-size: $font-size-sm;
+}
+
+.concordia-app-range-max {
+    font-size: $concordia-app-font-size-xl;
 }
 
 #contribute-container {
@@ -48,6 +94,7 @@ main {
 }
 
 #asset-list {
+    $asset-thumbnail-gap: 5px;
     --asset-thumbnail-size: 256px;
     display: grid;
     column-gap: 1rem;
@@ -60,10 +107,13 @@ main {
         width: var(--asset-thumbnail-size);
         height: var(--asset-thumbnail-size);
         object-fit: contain;
-        border-width: 3px !important;
+        border-color: $gray-600 !important;
+        background-color: #f6f6f6;
         background-size: contain;
         background-repeat: no-repeat;
         background-position: center;
+        background-origin: content-box;
+        padding: $asset-thumbnail-gap;
         cursor: pointer;
         transition-property: height, width;
         transition-duration: 0.1s;
@@ -82,11 +132,19 @@ main {
     }
 
     .asset-tooltip {
-        background-color: #000;
+        margin: $asset-thumbnail-gap * -1;
+        padding: 14px;
+        background-color: $white;
+        font-size: $concordia-app-font-size-xs;
+        line-height: $concordia-app-line-height-xs;
         pointer-events: none;
         overflow: hidden;
-        max-height: 100%;
-        max-width: 100%;
+        width: calc(100% + ($asset-thumbnail-gap * 2));
+        height: calc(100% + ($asset-thumbnail-gap * 2));
+        .item-title {
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
     }
 }
 
@@ -95,6 +153,21 @@ main {
 }
 
 #action-app-main {
+    #editor-main {
+        display: none !important;
+    }
+    #action-app-toolbar {
+        order: 2;
+    }
+    #asset-list-container {
+        order: 1;
+    }
+    #help-panel {
+        order: 3;
+    }
+    #asset-list-toggle {
+        display: none;
+    }
     &[data-mode='transcribe'] {
         #reviewer-column {
             display: none;
@@ -115,6 +188,9 @@ main {
     }
 
     &[data-open-asset-id] {
+        #editor-main {
+            display: flex !important;
+        }
         #asset-viewer {
             flex-grow: 1;
             max-height: inherit;
@@ -125,16 +201,25 @@ main {
             display: none;
         }
         #asset-list-container {
+            order: 2;
             flex-grow: 0;
             flex-shrink: 0;
             display: block;
-            width: 128px;
+            width: ($concordia-app-asset-list-thumbnail-gap * 2) +
+                $concordia-app-asset-list-thumbnail-width;
+            padding: 0 $concordia-app-asset-list-thumbnail-gap
+                $concordia-app-asset-list-thumbnail-gap;
         }
         #asset-list {
-            grid-template-columns: repeat(auto-fill, 128px);
+            grid-template-columns: repeat(
+                auto-fill,
+                $concordia-app-asset-list-thumbnail-width
+            );
+            row-gap: 0;
             .asset {
-                width: 128px;
-                height: 128px;
+                width: $concordia-app-asset-list-thumbnail-width;
+                height: $concordia-app-asset-list-thumbnail-width;
+                margin-bottom: -1px;
             }
         }
         .asset-tooltip {
@@ -144,6 +229,16 @@ main {
             width: 100%;
             height: 100%;
         }
+
+        #action-app-toolbar {
+            order: 1;
+        }
+        #help-panel {
+            order: 3;
+        }
+        #asset-list-toggle {
+            display: block;
+        }
     }
 
     &:not([data-open-asset-id]) #close-viewer-button {
@@ -151,25 +246,43 @@ main {
     }
 }
 
-#asset-info-modal {
-    &.modal.show {
-        width: 100vw;
-        .modal-dialog {
-            max-width: 90vw;
+#action-app-toolbar {
+    border-left: 1px solid $concordia-app-toolbar-border;
+    border-right: 1px solid $concordia-app-toolbar-border;
+    background-color: $concordia-app-toolbar-background;
+    button {
+        border: 1px solid $concordia-app-toolbar-border;
+        border-right-color: $concordia-app-active-color;
+        border-radius: 0;
+        margin: -1px -1px 5px;
+        background-color: $concordia-app-active-color;
+        font-size: 20px;
+        &.hidden {
+            border-color: transparent;
+            background-color: transparent;
         }
     }
+}
+
+.concordia-app-browse-all-button {
+    font-size: $concordia-app-font-size-xxs;
+    font-weight: bold;
+    padding: 10px;
+}
+
+#asset-info-modal {
     .modal-body {
         max-height: 80vh;
         overflow-y: auto;
     }
+    * {
+        font-size: 1rem !important;
+    }
 }
 
 #asset-metadata {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
     .hierarchy {
-        max-width: 85%;
+        font-size: 1rem !important;
         a {
             text-decoration: underline;
         }
@@ -181,28 +294,47 @@ main {
     flex-basis: 50%;
 }
 
+#viewer-column {
+    position: relative;
+    #viewer-controls {
+        background-color: rgba(0, 0, 0, 0.5);
+        position: absolute !important;
+        padding: 5px;
+        left: 8px;
+        top: 8px;
+        z-index: 2;
+    }
+    #asset-image {
+        background-color: $black;
+    }
+}
+
 #reviewer-column {
     // We want this to be the full height of its containing element
     // with enough padding to not be covered by the footer:
     max-height: 100%;
-    padding-bottom: #{$concordia-app-footer-height};
 }
 
 #review-transcription-text {
+    border: 1px solid $gray-800;
+    padding: 10px;
     flex-grow: 1;
     flex-shrink: 1;
     max-height: 100%;
     overflow-y: scroll;
-
     white-space: pre-wrap;
-
     .nothing-to-transcribe & {
         font-style: oblique;
-
         display: flex;
         align-items: center;
         justify-content: center;
     }
+}
+
+#transcription-input {
+    border-radius: 0;
+    border: 1px dashed $gray-400;
+    background-color: $gray-100;
 }
 
 .unavailable {
@@ -245,15 +377,17 @@ main {
 }
 
 #help-panel {
-    flex-basis: 26rem;
-    ul {
-        padding-left: 1rem;
+    overflow: auto;
+    padding: 1rem;
+    flex-basis: 285px;
+    min-width: 285px;
+    * {
+        font-size: $concordia-app-font-size-xs;
     }
 }
 
-.control-toolbar {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-around;
-    align-items: center;
+.concordia-app-transcription-toolbar {
+    > button {
+        margin: 0 10px;
+    }
 }
