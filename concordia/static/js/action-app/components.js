@@ -13,6 +13,12 @@ import {
     List
 } from 'https://cdnjs.cloudflare.com/ajax/libs/redom/3.18.0/redom.es.min.js';
 
+export function conditionalUnmount(component) {
+    if (component.el.parentNode) {
+        unmount(component.el.parentNode, component);
+    }
+}
+
 export class AssetTooltip {
     constructor() {
         this.el = html('.asset-tooltip', [
@@ -738,12 +744,6 @@ class ImageViewer {
         }
 
         this.seadragon.open(tileSources, initialPage);
-    }
-}
-
-function conditionalUnmount(component) {
-    if (component.el.parentNode) {
-        unmount(component.el.parentNode, component);
     }
 }
 
