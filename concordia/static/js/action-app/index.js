@@ -1,14 +1,15 @@
 /* global Split jQuery URITemplate */
 /* eslint-disable no-console */
 
+import {mount} from 'https://cdnjs.cloudflare.com/ajax/libs/redom/3.18.0/redom.es.min.js';
 import {
-    mount,
-    unmount
-} from 'https://cdnjs.cloudflare.com/ajax/libs/redom/3.18.0/redom.es.min.js';
-
-import {$, $$, setSelectValue} from './utils/dom.js';
+    AssetList,
+    AssetViewer,
+    conditionalUnmount,
+    MetadataPanel
+} from './components.js';
 import {fetchJSON, getCachedData} from './utils/api.js';
-import {MetadataPanel, AssetList, AssetViewer} from './components.js';
+import {$, $$, setSelectValue} from './utils/dom.js';
 
 export class ActionApp {
     constructor(config) {
@@ -759,7 +760,7 @@ export class ActionApp {
 
     openViewer(assetElement) {
         if (this.openAssetElement) {
-            this.releaseAsset();
+            this.closeViewer();
         }
 
         let asset = this.assets.get(assetElement.dataset.id);
@@ -856,8 +857,8 @@ export class ActionApp {
             window.clearInterval(this.reservationTimer);
         }
 
-        if (this.metadataPanel && this.metadataPanel.el.parentNode) {
-            unmount(this.metadataPanel.el.parentNode, this.metadataPanel);
+        if (this.metadataPanel) {
+            conditionalUnmount(this.metadataPanel);
         }
 
         this.assetList.scrollToActiveAsset();

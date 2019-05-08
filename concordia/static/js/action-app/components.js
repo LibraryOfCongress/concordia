@@ -13,6 +13,12 @@ import {
     List
 } from 'https://cdnjs.cloudflare.com/ajax/libs/redom/3.18.0/redom.es.min.js';
 
+export function conditionalUnmount(component) {
+    if (component.el.parentNode) {
+        unmount(component.el.parentNode, component);
+    }
+}
+
 export class AssetTooltip {
     constructor() {
         this.el = html('.asset-tooltip', [
@@ -48,7 +54,7 @@ export class MetadataPanel {
         this.itemMetadata = new ItemMetadataDetails('Item', asset.item);
 
         this.el = html(
-            'div',
+            '#asset-metadata-panel',
             this.campaignMetadata,
             this.projectMetadata,
             this.itemMetadata
@@ -738,12 +744,6 @@ class ImageViewer {
         }
 
         this.seadragon.open(tileSources, initialPage);
-    }
-}
-
-function conditionalUnmount(component) {
-    if (component.el.parentNode) {
-        unmount(component.el.parentNode, component);
     }
 }
 
