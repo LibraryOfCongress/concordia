@@ -84,12 +84,12 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
         return reverse("transcriptions:campaign-detail", args=(self.slug,))
 
 
-class Theme(models.Model):
+class Topic(models.Model):
     title = models.CharField(blank=False, max_length=255)
     slug = models.SlugField(blank=False, allow_unicode=True, max_length=80)
     description = models.TextField(blank=True)
     thumbnail_image = models.ImageField(
-        upload_to="theme-thumbnails", blank=True, null=True
+        upload_to="topic-thumbnails", blank=True, null=True
     )
 
     class Meta:
@@ -99,7 +99,7 @@ class Theme(models.Model):
         return self.title
 
     def get_absolute_url(self):
-        return reverse("theme-detail", kwargs={"slug": self.slug})
+        return reverse("topic-detail", kwargs={"slug": self.slug})
 
 
 class Resource(MetricsModelMixin("resource"), models.Model):
@@ -110,7 +110,7 @@ class Resource(MetricsModelMixin("resource"), models.Model):
     campaign = models.ForeignKey(
         Campaign, on_delete=models.CASCADE, blank=True, null=True
     )
-    theme = models.ForeignKey(Theme, on_delete=models.CASCADE, blank=True, null=True)
+    topic = models.ForeignKey(Topic, on_delete=models.CASCADE, blank=True, null=True)
 
     def __str__(self):
         return self.title
@@ -132,7 +132,7 @@ class Project(MetricsModelMixin("project"), models.Model):
     description = models.TextField(blank=True)
     metadata = JSONField(default=metadata_default, blank=True, null=True)
 
-    themes = models.ManyToManyField(Theme)
+    topics = models.ManyToManyField(Topic)
 
     class Meta:
         unique_together = (("slug", "campaign"),)

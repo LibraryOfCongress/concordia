@@ -26,7 +26,7 @@ from ..models import (
     SimplePage,
     SiteReport,
     Tag,
-    Theme,
+    Topic,
     Transcription,
     UserAssetTagCollection,
 )
@@ -151,12 +151,12 @@ class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
 
 @admin.register(Resource)
 class ResourceAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
-    list_display = ("campaign", "theme", "sequence", "title", "resource_url")
-    list_display_links = ("campaign", "theme", "sequence", "title")
+    list_display = ("campaign", "topic", "sequence", "title", "resource_url")
+    list_display_links = ("campaign", "topic", "sequence", "title")
 
 
-@admin.register(Theme)
-class ThemeAdmin(admin.ModelAdmin):
+@admin.register(Topic)
+class TopicAdmin(admin.ModelAdmin):
     list_display = ("id", "title", "slug")
     list_display_links = ("id", "title", "slug")
 

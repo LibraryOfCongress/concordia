@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name="Theme",
+            name="Topic",
             fields=[
                 (
                     "id",
@@ -27,7 +27,7 @@ class Migration(migrations.Migration):
                 (
                     "thumbnail_image",
                     models.ImageField(
-                        blank=True, null=True, upload_to="theme-thumbnails"
+                        blank=True, null=True, upload_to="topic-thumbnails"
                     ),
                 ),
             ],
@@ -86,17 +86,17 @@ class Migration(migrations.Migration):
         migrations.AlterUniqueTogether(name="resource", unique_together=set()),
         migrations.AddField(
             model_name="project",
-            name="themes",
-            field=models.ManyToManyField(to="concordia.Theme"),
+            name="topics",
+            field=models.ManyToManyField(to="concordia.Topic"),
         ),
         migrations.AddField(
             model_name="resource",
-            name="theme",
+            name="topic",
             field=models.ForeignKey(
                 blank=True,
                 null=True,
                 on_delete=django.db.models.deletion.CASCADE,
-                to="concordia.Theme",
+                to="concordia.Topic",
             ),
         ),
     ]

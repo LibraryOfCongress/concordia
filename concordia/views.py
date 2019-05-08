@@ -53,7 +53,7 @@ from concordia.models import (
     Project,
     SimplePage,
     Tag,
-    Theme,
+    Topic,
     Transcription,
     TranscriptionStatus,
     UserAssetTagCollection,
@@ -475,11 +475,11 @@ def annotate_children_with_progress_stats(children):
 
 
 @method_decorator(default_cache_control, name="dispatch")
-class ThemeListView(APIListView):
-    template_name = "transcriptions/theme_list.html"
+class TopicListView(APIListView):
+    template_name = "transcriptions/topic_list.html"
     paginate_by = 10
-    queryset = Theme.objects.order_by("title")
-    context_object_name = "themes"
+    queryset = Topic.objects.order_by("title")
+    context_object_name = "topics"
 
     def serialize_context(self, context):
         data = super().serialize_context(context)
@@ -490,8 +490,8 @@ class ThemeListView(APIListView):
             status: f"{status}_count" for status in TranscriptionStatus.CHOICE_MAP
         }
 
-        theme_stats_qs = (
-            Theme.objects.filter(pk__in=[i["id"] for i in object_list])
+        topic_stats_qs = (
+            Topic.objects.filter(pk__in=[i["id"] for i in object_list])
             .annotate(
                 **{
                     v: Count(
@@ -509,27 +509,27 @@ class ThemeListView(APIListView):
             .values("pk", *status_count_keys.values())
         )
 
-        theme_asset_counts = {}
-        for theme_stats in theme_stats_qs:
-            theme_asset_counts[theme_stats.pop("pk")] = theme_stats
+        topic_asset_counts = {}
+        for topic_stats in topic_stats_qs:
+            topic_asset_counts[topic_stats.pop("pk")] = topic_stats
 
         for obj in object_list:
-            obj["asset_stats"] = theme_asset_counts[obj["id"]]
+            obj["asset_stats"] = topic_asset_counts[obj["id"]]
 
         return data
 
 
 @method_decorator(default_cache_control, name="dispatch")
 class TopicDetailView(APIDetailView):
-    template_name = "transcriptions/theme_detail.html"
-    context_object_name = "theme"
-    queryset = Theme.objects.order_by("title")
+    template_name = "transcriptions/topic_detail.html"
+    context_object_name = "topic"
+    queryset = Topic.objects.order_by("title")
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
 
         projects = (
-            ctx["theme"]
+            ctx["topic"]
             .project_set.published()
             .annotate(
                 **{
@@ -1689,7 +1689,7 @@ def action_app(request):
                         "/ws/asset/asset_updates/"
                     ).replace("http", "ws"),
                     "campaignList": reverse("transcriptions:campaign-list"),
-                    "themeList": reverse("theme-list"),
+                    "topicList": reverse("topic-list"),
                 },
                 "urlTemplates": {
                     "assetData": "/{action}/?per_page=500",
