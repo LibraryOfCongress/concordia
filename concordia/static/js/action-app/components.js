@@ -54,7 +54,7 @@ export class MetadataPanel {
         this.itemMetadata = new ItemMetadataDetails('Item', asset.item);
 
         this.el = html(
-            'div',
+            '#asset-metadata-panel',
             this.campaignMetadata,
             this.projectMetadata,
             this.itemMetadata
