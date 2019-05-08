@@ -715,10 +715,6 @@ class ImageViewer {
     }
 
     update(asset) {
-        if (this.seadragon.isOpen()) {
-            this.seadragon.close();
-        }
-
         let tileSources = [
             {
                 type: 'image',
@@ -742,7 +738,23 @@ class ImageViewer {
             });
         }
 
-        this.seadragon.open(tileSources, initialPage);
+        // We want to reload if the tile sources have actually changed but
+        // otherwise avoid interupting the user
+
+        let tilesChanged =
+            !this.seadragon.tileSources ||
+            tileSources.length != this.seadragon.tileSources.length ||
+            tileSources.some((tileSource, idx) => {
+                return tileSource.url != this.seadragon.tileSources[idx].url;
+            });
+
+        if (tilesChanged) {
+            if (this.seadragon.isOpen()) {
+                this.seadragon.close();
+            }
+
+            this.seadragon.open(tileSources, initialPage);
+        }
     }
 }
 
