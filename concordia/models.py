@@ -85,12 +85,17 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
 
 
 class Topic(models.Model):
+    objects = PublicationQuerySet.as_manager()
+
+    published = models.BooleanField(default=False, blank=True)
+
     title = models.CharField(blank=False, max_length=255)
     slug = models.SlugField(blank=False, allow_unicode=True, max_length=80)
     description = models.TextField(blank=True)
     thumbnail_image = models.ImageField(
         upload_to="topic-thumbnails", blank=True, null=True
     )
+    short_description = models.TextField(blank=True)
 
     class Meta:
         ordering = ["title"]
