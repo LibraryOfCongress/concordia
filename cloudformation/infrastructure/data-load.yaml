@@ -83,7 +83,6 @@ Resources:
                     echo "export ENV_NAME=${EnvironmentName}" >> /home/ec2-user/.bash_profile
                     source /home/ec2-user/.bash_profile
                     yum -y update
-                    yum -y install https://download.postgresql.org/pub/repos/yum/9.6/redhat/rhel-6-x86_64/pgdg-ami201503-96-9.6-2.noarch.rpm
                     yum -y install postgresql96
                     aws s3 cp s3://crowd-deployment/database-dumps/concordia.latest.dmp concordia.dmp
                     echo "${PostgresqlHost}:5432:*:concordia:${PostgresqlPassword}" >> /root/.pgpass
