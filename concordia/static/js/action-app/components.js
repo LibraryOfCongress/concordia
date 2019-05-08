@@ -261,6 +261,13 @@ class AssetListItem {
         this.el.dataset.id = assetData.id;
         this.el.dataset.difficulty = assetData.difficulty;
         this.el.dataset.status = assetData.status;
+
+        if (!assetData.editable.canEdit) {
+            this.el.dataset.unavailable = assetData.editable.reason;
+        } else {
+            delete this.el.dataset.unavailable;
+        }
+
         this.el.title = `${assetData.title} (${assetData.project.title})`;
     }
 }
@@ -289,6 +296,9 @@ export class AssetList extends List {
         super('ul#asset-list.list-unstyled', AssetListItem, 'id', [
             assetListObserver
         ]);
+
+        // These will be processed after the next asset list update completes (possibly after a rAF / rIC chain)
+        this.updateCallbacks = [];
 
         let assetOpenHandler = event => {
             let target = event.target;
@@ -336,18 +346,15 @@ export class AssetList extends List {
 
         this.el.addEventListener('mouseout', handleTooltipHideEvent);
         this.el.addEventListener('focusout', handleTooltipHideEvent);
-
-        $('#asset-list-thumbnail-size').addEventListener('input', event => {
-            this.el.style.setProperty(
-                '--asset-thumbnail-size',
-                event.target.value + 'px'
-            );
-            this.attemptAssetLazyLoad();
-        });
     }
 
     update(assets) {
         super.update(assets);
+
+        while (this.updateCallbacks.length) {
+            let callback = this.updateCallbacks.pop();
+            callback();
+        }
     }
 
     scrollToActiveAsset() {
