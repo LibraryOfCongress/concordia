@@ -61,7 +61,6 @@ Mappings:
             prod: crowd-export
 
 Parameters:
-
     ConcordiaVersion:
         Description: which version of the docker images to deploy
         Type: String
@@ -71,10 +70,10 @@ Parameters:
         Description: which type of environment we are setting up
         Type: String
         AllowedValues:
-            - "dev"
-            - "test"
-            - "stage"
-            - "prod"
+            - 'dev'
+            - 'test'
+            - 'stage'
+            - 'prod'
 
     FullEnvironmentName:
         Type: String
@@ -89,33 +88,63 @@ Parameters:
         Description: the canonical host name for this environment
         Type: String
         AllowedValues:
-            - "crowd-dev.loc.gov"
-            - "crowd-test.loc.gov"
-            - "crowd-stage.loc.gov"
-            - "crowd.loc.gov"
+            - 'crowd-dev.loc.gov'
+            - 'crowd-test.loc.gov'
+            - 'crowd-stage.loc.gov'
+            - 'crowd.loc.gov'
 
 Resources:
-
     VPC:
         Type: AWS::CloudFormation::Stack
         Properties:
-#            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/vpc.yaml" ]]
-            TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/vpc.yaml"
+            #            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/vpc.yaml" ]]
+            TemplateURL: 'https://s3.amazonaws.com/crowd-deployment/infrastructure/vpc.yaml'
             Parameters:
-                EnvironmentName:    !Ref AWS::StackName
-                VpcCIDR:            !FindInMap [EnvironmentMapping, VPCCIDRMap, !Ref EnvName]
-                PublicSubnet1CIDR:  !FindInMap [EnvironmentMapping, PublicSubnet1CIDRMap, !Ref EnvName]
-                PublicSubnet2CIDR:  !FindInMap [EnvironmentMapping, PublicSubnet2CIDRMap, !Ref EnvName]
-                PrivateSubnet1CIDR: !FindInMap [EnvironmentMapping, PrivateSubnet1CIDRMap, !Ref EnvName]
-                PrivateSubnet2CIDR: !FindInMap [EnvironmentMapping, PrivateSubnet2CIDRMap, !Ref EnvName]
-                AvailabilityZone1:  !FindInMap [EnvironmentMapping, AvailabilityZone1Map, !Ref EnvName]
-                AvailabilityZone2:  !FindInMap [EnvironmentMapping, AvailabilityZone2Map, !Ref EnvName]
+                EnvironmentName: !Ref AWS::StackName
+                VpcCIDR:
+                    !FindInMap [EnvironmentMapping, VPCCIDRMap, !Ref EnvName]
+                PublicSubnet1CIDR:
+                    !FindInMap [
+                        EnvironmentMapping,
+                        PublicSubnet1CIDRMap,
+                        !Ref EnvName,
+                    ]
+                PublicSubnet2CIDR:
+                    !FindInMap [
+                        EnvironmentMapping,
+                        PublicSubnet2CIDRMap,
+                        !Ref EnvName,
+                    ]
+                PrivateSubnet1CIDR:
+                    !FindInMap [
+                        EnvironmentMapping,
+                        PrivateSubnet1CIDRMap,
+                        !Ref EnvName,
+                    ]
+                PrivateSubnet2CIDR:
+                    !FindInMap [
+                        EnvironmentMapping,
+                        PrivateSubnet2CIDRMap,
+                        !Ref EnvName,
+                    ]
+                AvailabilityZone1:
+                    !FindInMap [
+                        EnvironmentMapping,
+                        AvailabilityZone1Map,
+                        !Ref EnvName,
+                    ]
+                AvailabilityZone2:
+                    !FindInMap [
+                        EnvironmentMapping,
+                        AvailabilityZone2Map,
+                        !Ref EnvName,
+                    ]
 
     NetworkACL:
         Type: AWS::CloudFormation::Stack
         Properties:
-#            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/network-acl.yaml" ]]
-            TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/network-acl.yaml"
+            #            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/network-acl.yaml" ]]
+            TemplateURL: 'https://s3.amazonaws.com/crowd-deployment/infrastructure/network-acl.yaml'
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
@@ -127,7 +156,7 @@ Resources:
     SecurityGroups:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/security-groups.yaml"
+            TemplateURL: 'https://s3.amazonaws.com/crowd-deployment/infrastructure/security-groups.yaml'
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
@@ -135,7 +164,7 @@ Resources:
     RDS:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/rds.yaml"
+            TemplateURL: 'https://s3.amazonaws.com/crowd-deployment/infrastructure/rds.yaml'
             Parameters:
                 DbPassword: !Sub '{{resolve:secretsmanager:crowd/${EnvName}/DB/MasterUserPassword:SecretString:password}}'
                 DatabaseSecurityGroup: !GetAtt SecurityGroups.Outputs.DatabaseSecurityGroup
@@ -145,7 +174,7 @@ Resources:
     ElastiCache:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/elasticache.yaml"
+            TemplateURL: 'https://s3.amazonaws.com/crowd-deployment/infrastructure/elasticache.yaml'
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 SecurityGroup: !GetAtt SecurityGroups.Outputs.CacheServiceSecurityGroup
@@ -154,7 +183,7 @@ Resources:
     FargateCluster:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/fargate-cluster.yaml"
+            TemplateURL: 'https://s3.amazonaws.com/crowd-deployment/infrastructure/fargate-cluster.yaml'
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 EnvName: !Ref EnvName
@@ -171,11 +200,20 @@ Resources:
                 CanonicalHostName: !Ref CanonicalHostName
                 DatabaseEndpoint: !GetAtt RDS.Outputs.DatabaseHostName
                 FullEnvironmentName: !Ref FullEnvironmentName
-                S3BucketName: !FindInMap [EnvironmentMapping, S3BucketNameMap, !Ref EnvName]
-                ExportS3BucketName: !FindInMap [EnvironmentMapping, ExportS3BucketNameMap, !Ref EnvName]
+                S3BucketName:
+                    !FindInMap [
+                        EnvironmentMapping,
+                        S3BucketNameMap,
+                        !Ref EnvName,
+                    ]
+                ExportS3BucketName:
+                    !FindInMap [
+                        EnvironmentMapping,
+                        ExportS3BucketNameMap,
+                        !Ref EnvName,
+                    ]
 
 Outputs:
-
     WebsiteServiceUrl:
         Description: The URL endpoint for the concordia website service
-        Value: !Join ["", [ !GetAtt FargateCluster.Outputs.LoadBalancerUrl, "/" ]]
+        Value: !Join ['', [!GetAtt FargateCluster.Outputs.LoadBalancerUrl, '/']]

@@ -4,7 +4,6 @@ Description: >
     by all of the other nested templates.
 
 Parameters:
-
     EnvironmentName:
         Description: An environment name that will be prefixed to resource names
         Type: String
@@ -30,15 +29,14 @@ Parameters:
         Type: AWS::EC2::Subnet::Id
 
 Resources:
-
     NetworkAcl:
         Type: AWS::EC2::NetworkAcl
         Properties:
             VpcId:
                 Ref: VPC
             Tags:
-            - Key: Name
-              Value: !Ref EnvironmentName
+                - Key: Name
+                  Value: !Ref EnvironmentName
 
     # TODO: Update these ACLs to the latest OCIO standard ones
     # NOTE: These rules are for dev / test / stage only
@@ -125,25 +123,25 @@ Resources:
             NetworkAclId: !Ref NetworkAcl
 
     subnetacl5:
-      Type: AWS::EC2::SubnetNetworkAclAssociation
-      Properties:
-        NetworkAclId: !Ref NetworkAcl
-        SubnetId: !Ref PrivateSubnet1
+        Type: AWS::EC2::SubnetNetworkAclAssociation
+        Properties:
+            NetworkAclId: !Ref NetworkAcl
+            SubnetId: !Ref PrivateSubnet1
 
     subnetacl6:
-      Type: AWS::EC2::SubnetNetworkAclAssociation
-      Properties:
-        NetworkAclId: !Ref NetworkAcl
-        SubnetId: !Ref PrivateSubnet2
+        Type: AWS::EC2::SubnetNetworkAclAssociation
+        Properties:
+            NetworkAclId: !Ref NetworkAcl
+            SubnetId: !Ref PrivateSubnet2
 
     subnetacl7:
-      Type: AWS::EC2::SubnetNetworkAclAssociation
-      Properties:
-        NetworkAclId: !Ref NetworkAcl
-        SubnetId: !Ref PublicSubnet1
+        Type: AWS::EC2::SubnetNetworkAclAssociation
+        Properties:
+            NetworkAclId: !Ref NetworkAcl
+            SubnetId: !Ref PublicSubnet1
 
     subnetacl8:
-      Type: AWS::EC2::SubnetNetworkAclAssociation
-      Properties:
-        NetworkAclId: !Ref NetworkAcl
-        SubnetId: !Ref PublicSubnet2
+        Type: AWS::EC2::SubnetNetworkAclAssociation
+        Properties:
+            NetworkAclId: !Ref NetworkAcl
+            SubnetId: !Ref PublicSubnet2

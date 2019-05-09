@@ -5,7 +5,6 @@ Description: >
     and default routes for them in the private subnets.
 
 Parameters:
-
     EnvironmentName:
         Description: An environment name that will be prefixed to resource names
         Type: String
@@ -51,7 +50,6 @@ Parameters:
         Default: 1
 
 Resources:
-
     VPC:
         Type: AWS::EC2::VPC
         Properties:
@@ -80,7 +78,7 @@ Resources:
         Type: AWS::EC2::Subnet
         Properties:
             VpcId: !Ref VPC
-            AvailabilityZone: !Select [ !Ref AvailabilityZone1, !GetAZs '' ]
+            AvailabilityZone: !Select [!Ref AvailabilityZone1, !GetAZs '']
             CidrBlock: !Ref PublicSubnet1CIDR
             MapPublicIpOnLaunch: true
             Tags:
@@ -91,7 +89,7 @@ Resources:
         Type: AWS::EC2::Subnet
         Properties:
             VpcId: !Ref VPC
-            AvailabilityZone: !Select [ !Ref AvailabilityZone2, !GetAZs '' ]
+            AvailabilityZone: !Select [!Ref AvailabilityZone2, !GetAZs '']
             CidrBlock: !Ref PublicSubnet2CIDR
             MapPublicIpOnLaunch: true
             Tags:
@@ -102,7 +100,7 @@ Resources:
         Type: AWS::EC2::Subnet
         Properties:
             VpcId: !Ref VPC
-            AvailabilityZone: !Select [ !Ref AvailabilityZone1, !GetAZs '' ]
+            AvailabilityZone: !Select [!Ref AvailabilityZone1, !GetAZs '']
             CidrBlock: !Ref PrivateSubnet1CIDR
             MapPublicIpOnLaunch: false
             Tags:
@@ -113,7 +111,7 @@ Resources:
         Type: AWS::EC2::Subnet
         Properties:
             VpcId: !Ref VPC
-            AvailabilityZone: !Select [ !Ref AvailabilityZone2, !GetAZs '' ]
+            AvailabilityZone: !Select [!Ref AvailabilityZone2, !GetAZs '']
             CidrBlock: !Ref PrivateSubnet2CIDR
             MapPublicIpOnLaunch: false
             Tags:
@@ -172,7 +170,6 @@ Resources:
             RouteTableId: !Ref PublicRouteTable
             SubnetId: !Ref PublicSubnet2
 
-
     PrivateRouteTable1:
         Type: AWS::EC2::RouteTable
         Properties:
@@ -216,18 +213,17 @@ Resources:
             SubnetId: !Ref PrivateSubnet2
 
 Outputs:
-
     VPC:
         Description: A reference to the created VPC
         Value: !Ref VPC
 
     PublicSubnets:
         Description: A list of the public subnets
-        Value: !Join [ ",", [ !Ref PublicSubnet1, !Ref PublicSubnet2 ]]
+        Value: !Join [',', [!Ref PublicSubnet1, !Ref PublicSubnet2]]
 
     PrivateSubnets:
         Description: A list of the private subnets
-        Value: !Join [ ",", [ !Ref PrivateSubnet1, !Ref PrivateSubnet2 ]]
+        Value: !Join [',', [!Ref PrivateSubnet1, !Ref PrivateSubnet2]]
 
     PublicSubnet1:
         Description: A reference to the public subnet in the 1st Availability Zone
