@@ -4,7 +4,6 @@ Description: >
     by all of the other nested templates.
 
 Parameters:
-
     EnvironmentName:
         Description: An environment name that will be prefixed to resource names
         Type: String
@@ -14,7 +13,6 @@ Parameters:
         Description: Choose which VPC the security groups should be deployed to
 
 Resources:
-
     # This security group defines who/where is allowed to access the ECS hosts directly.
     # By default we're just allowing access from the load balancer.  If you want to SSH
     # into the hosts, or expose non-load balanced services you can open their ports here.
@@ -99,7 +97,6 @@ Resources:
                   ToPort: 11211
 
 Outputs:
-
     ECSHostSecurityGroup:
         Description: A reference to the security group for ECS hosts
         Value: !Ref ECSHostSecurityGroup

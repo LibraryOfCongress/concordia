@@ -7,7 +7,6 @@ Description: >
     tag matching the feature branch name.
 
 Parameters:
-
     ConcordiaBranch:
         Description: which branch name to deploy
         Type: String
@@ -24,7 +23,6 @@ Parameters:
         Default: 100
 
 Resources:
-
     RDS:
         Type: AWS::CloudFormation::Stack
         Properties:
