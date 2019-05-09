@@ -429,7 +429,7 @@ class ConditionalToolbar {
 class ReviewerView {
     constructor(submitActionCallback) {
         this.el = html(
-            'div#reviewer-column.flex-column.flex-grow-1',
+            'div#reviewer-column.d-flex.flex-column.flex-grow-1',
             (this.displayText = html('#review-transcription-text')),
             (this.toolbar = new ConditionalToolbar([
                 (this.rejectButton = html(
