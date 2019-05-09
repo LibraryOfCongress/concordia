@@ -14,6 +14,11 @@ $theme-colors: (
 $link-color: theme-color('primary');
 $link-hover-color: darken($link-color, 15%);
 
+$sizes: (
+    60: 60%,
+    65: 65%
+);
+
 // typography
 $concordia-app-font-size-xxs: $font-size-base * 0.75;
 $concordia-app-font-size-xs: $font-size-base * 0.8125;
