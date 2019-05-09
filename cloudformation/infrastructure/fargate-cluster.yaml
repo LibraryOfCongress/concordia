@@ -222,7 +222,7 @@ Resources:
             NetworkMode: awsvpc
             RequiresCompatibilities:
                 - FARGATE
-            ExecutionRoleArn: !Sub 'arn:aws:iam::${AWS::AccountId}:role/role/ecsTaskExecutionRole'
+            ExecutionRoleArn: !GetAtt ConcordiaTaskRole.Arn
             TaskRoleArn: !Sub 'arn:aws:iam::${AWS::AccountId}:role/ConcordiaServerTaskRole-${EnvironmentName}'
             Volumes:
                 - Name: images_volume
