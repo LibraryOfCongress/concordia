@@ -204,9 +204,6 @@ main {
             order: 2;
             flex-grow: 0;
             flex-shrink: 0;
-            display: block;
-            width: ($concordia-app-asset-list-thumbnail-gap * 2) +
-                $concordia-app-asset-list-thumbnail-width;
             padding: 0 $concordia-app-asset-list-thumbnail-gap
                 $concordia-app-asset-list-thumbnail-gap;
         }
@@ -318,9 +315,7 @@ main {
 #review-transcription-text {
     border: 1px solid $gray-800;
     padding: 10px;
-    flex-grow: 1;
-    flex-shrink: 1;
-    max-height: 100%;
+    flex: 1 1 0;
     overflow-y: scroll;
     white-space: pre-wrap;
     .nothing-to-transcribe & {
