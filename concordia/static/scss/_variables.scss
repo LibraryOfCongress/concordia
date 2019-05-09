@@ -14,6 +14,9 @@ $theme-colors: (
 $link-color: theme-color('primary');
 $link-hover-color: darken($link-color, 15%);
 
+$kbd-color: $gray-900;
+$kbd-bg: $gray-200;
+
 $sizes: (
     60: 60%,
     65: 65%
