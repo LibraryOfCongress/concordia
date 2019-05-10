@@ -88,7 +88,6 @@ h2,
 .h2 {
     font-size: 1.5rem;
     line-height: 125%;
-    font-weight: 700;
     color: var(--text-color-primary);
 }
 
@@ -103,7 +102,6 @@ h2 small {
 h3 {
     font-size: 1.25rem;
     line-height: 125%;
-    font-weight: 700;
     color: var(--text-color-primary);
 }
 
@@ -111,7 +109,6 @@ h4 {
     font-family: 'Open Sans', sans-serif;
     font-size: 1.125rem;
     line-height: 125%;
-    font-weight: 700;
     color: var(--text-color-primary);
 }
 
@@ -119,7 +116,6 @@ h5 {
     font-family: 'Open Sans', sans-serif;
     font-size: 1rem;
     line-height: 125%;
-    font-weight: 400;
     font-weight: normal;
 }
 
@@ -127,7 +123,6 @@ h6 {
     font-family: 'Open Sans', sans-serif;
     font-size: 0.875rem;
     line-height: 125%;
-    font-weight: 700;
     color: var(--text-color-primary);
 }
 
@@ -1197,15 +1192,21 @@ div.related-links {
     background-image: url(../img/social-icons-sprite.png);
     background-position: -200px 0;
     background-repeat: no-repeat;
-}
-.bitmap-icon.github-icon {
-    background-position: 0 0;
-}
-.bitmap-icon.twitter-icon {
-    background-position: -40px 0;
-}
-.bitmap-icon.email-icon {
-    background-position: -80px 0;
+    &.github-icon {
+        background-position: 0 0;
+    }
+    &.twitter-icon {
+        background-position: -40px 0;
+    }
+    &.email-icon {
+        background-position: -80px 0;
+    }
+    &.facebook-icon {
+        background-position: -40px -36px;
+    }
+    &.copy-link-icon {
+        background-position: -80px -36px;
+    }
 }
 
 /* Registration page */

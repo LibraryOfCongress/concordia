@@ -61,12 +61,20 @@
     {% csrf_token %}
     <header id="action-app-header">
         <nav id="action-app-global-controls" class="navbar navbar-expand-lg navbar-dark bg-dark" role="navigation">
-            <a class="navbar-brand mb-0 concordia-app-navbar-brand position-absolute" href="{% url 'homepage' %}">
+            <a class="navbar-brand mb-0 concordia-app-navbar-brand" href="{% url 'homepage' %}">
                 <span class="fas fa-home"></span>
                 <span class="sr-only">Home</span>
             </a>
             <ul class="navbar-nav flex-grow-1 text-center justify-content-center">
                 <li class="nav-item navbar-text current-mode font-weight-bold text-white text-uppercase">
+                </li>
+            </ul>
+            <ul class="navbar-nav justify-content-end">
+                <li class="nav-item">
+                    <button hidden id="go-fullscreen" class="btn btn-link text-white" data-target="body" title="Go fullscreen">
+                        <span class="fas fa-expand"></span>
+                        <span class="sr-only">Go fullscreen</span>
+                    </button>
                 </li>
             </ul>
         </nav>
@@ -227,13 +235,23 @@
         </div>
         <div id="help-panel" hidden>
             <section>
-                <h4>Quick Tips</h4>
+                <h4>Transcription tips</h4>
                 <ul>
-                    <li>Type what you see. Preserve original spelling, punctuation, and line breaks.</li>
+                    <li>Type what you see: Preserve line breaks, original spelling, and punctuation.</li>
                     <li>Use brackets [ ] around deleted, illegible or partially legible text.</li>
-                    <li>Transcribe any words or letters you can't identify as ?.</li>
-                    <li>Use square brackets and asterisks around text from margins [ * * ].</li>
+                    <li>Use question mark ? for any words or letters you can't identify.</li>
+                    <li>Use square brackets and asterisks [ * * ] around text from margins.</li>
                     <li>Include insertions where you would read them in the text.</li>
+                    <li>Click “Save” to save work in progress and “Submit” when complete</li>
+                </ul>
+            </section>
+            <hr />
+            <section>
+                <h4>Review tips</h4>
+                <ul>
+                    <li>Carefully compare each line of the transcription to the original.</li>
+                    <li>Use “Transcription tips” as a guide.</li>
+                    <li>Click “Accept” if accurate or “Edit” if page needs correction.</li>
                 </ul>
             </section>
             <hr />

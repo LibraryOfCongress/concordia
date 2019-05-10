@@ -5,6 +5,7 @@
 @import '../../../node_modules/bootstrap/scss/reboot';
 @import '../../../node_modules/bootstrap/scss/buttons';
 @import '../../../node_modules/bootstrap/scss/button-group';
+@import '../../../node_modules/bootstrap/scss/type';
 @import '../../../node_modules/bootstrap/scss/code';
 @import '../../../node_modules/bootstrap/scss/utilities/sizing';
 
@@ -126,14 +127,43 @@ main {
         transition-duration: 0.1s;
 
         &[data-unavailable] {
-            filter: grayscale(0.9);
-
-            &::after {
-                content: '🔒' attr(data-unavailable);
-                text-align: center;
-                align-self: center;
+            position: relative;
+            &::before {
+                content: attr(data-unavailable);
                 width: 100%;
-                font-size: smaller;
+                position: absolute;
+                background-color: #beeaff;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                font-size: $concordia-app-font-size-xxs;
+                font-weight: bold;
+                padding: $concordia-app-data-unavailable-padding-y
+                    (
+                        ($concordia-app-data-unavailable-padding-x * 2) +
+                            $concordia-app-data-unavailable-icon-width
+                    )
+                    $concordia-app-data-unavailable-padding-y
+                    $concordia-app-data-unavailable-padding-x;
+                min-height: ($concordia-app-data-unavailable-padding-y * 2) +
+                    $concordia-app-data-unavailable-icon-width;
+            }
+            &::after {
+                content: '\f2bd';
+                /* stylelint-disable-next-line font-family-no-missing-generic-family-keyword */
+                font-family: 'Font Awesome 5 Free';
+                font-weight: 900;
+                font-size: $concordia-app-font-size-xl;
+                position: absolute;
+                right: $concordia-app-data-unavailable-padding-x;
+                bottom: 0;
+            }
+            &:hover,
+            &:focus {
+                &::before,
+                &::after {
+                    display: none;
+                }
             }
         }
     }
@@ -279,8 +309,11 @@ main {
         max-height: 80vh;
         overflow-y: auto;
     }
-    * {
+    *:not(.asset-title) {
         font-size: 1rem !important;
+    }
+    .asset-title {
+        font-size: $h4-font-size !important;
     }
 }
 
