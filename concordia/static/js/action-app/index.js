@@ -174,7 +174,6 @@ export class ActionApp {
 
         helpToggle.addEventListener('click', () => {
             helpPanel.toggleAttribute('hidden');
-            helpToggle.classList.toggle('hidden');
             return false;
         });
 
@@ -183,7 +182,6 @@ export class ActionApp {
 
         assetListToggle.addEventListener('click', () => {
             assetList.toggleAttribute('hidden');
-            assetListToggle.classList.toggle('hidden');
             return false;
         });
     }
