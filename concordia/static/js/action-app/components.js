@@ -694,7 +694,6 @@ class ImageViewer {
                 pinchRotate: true
             },
             showRotationControl: true,
-            showReferenceStrip: true,
             showFlipControl: true,
             sequenceMode: true,
             toolbar: 'viewer-controls',
