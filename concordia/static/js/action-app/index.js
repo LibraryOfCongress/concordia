@@ -556,14 +556,14 @@ export class ActionApp {
         let reason = '';
 
         if (asset.status == 'completed') {
-            reason = 'this asset has been completed';
+            reason = 'This page has already been completed';
             canEdit = false;
         } else if (this.currentMode == 'review') {
             if (asset.status != 'submitted') {
-                reason = 'asset has not been submitted for review';
+                reason = 'This page has not been submitted for review';
                 canEdit = false;
             } else if (!this.config.currentUser) {
-                reason = 'anonymous users cannot review';
+                reason = 'Anonymous users cannot review';
                 canEdit = false;
             } else if (!asset.latest_transcription) {
                 reason = 'no transcription';
@@ -573,19 +573,19 @@ export class ActionApp {
                 this.config.currentUser
             ) {
                 reason =
-                    'transcriptions must be reviewed by a different person';
+                    'Transcriptions must be reviewed by a different person';
                 canEdit = false;
             }
         } else if (this.currentMode == 'transcribe') {
             if (asset.status == 'submitted') {
                 canEdit = false;
-                reason = 'this asset has been submitted for review';
+                reason = 'This page has been submitted for review';
             } else if (
                 asset.status != 'not_started' &&
                 asset.status != 'in_progress'
             ) {
                 canEdit = false;
-                reason = `assets with status ${
+                reason = `Page with status ${
                     asset.status
                 } are not available for transcription`;
             }
@@ -598,7 +598,7 @@ export class ActionApp {
             asset.reservationToken != this.config.reservationToken
         ) {
             canEdit = false;
-            reason = 'Another person is working on this asset';
+            reason = 'Somebody else is working on this page';
         }
 
         console.debug(
