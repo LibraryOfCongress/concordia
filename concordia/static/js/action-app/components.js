@@ -24,10 +24,6 @@ export class AssetTooltip {
         this.el = html('.asset-tooltip', [
             html('.item-title'),
             html('.asset-title'),
-            html('.difficulty-score-container', [
-                text('Difficulty Score: '),
-                html('span.difficulty-score')
-            ]),
             html('.asset-year-container', [
                 text('Year: '),
                 html('span.asset-year')
@@ -37,7 +33,6 @@ export class AssetTooltip {
     update(asset) {
         $('.item-title', this.el).textContent = asset.item.title;
         $('.asset-title', this.el).textContent = 'Image ' + asset.sequence;
-        $('.difficulty-score', this.el).textContent = asset.difficulty;
         $('.asset-year', this.el).textContent = asset.year;
     }
 }
@@ -265,7 +260,6 @@ class AssetListItem {
         this.el.classList.add('asset', 'border');
         this.el.dataset.image = thumbnailUrl;
         this.el.dataset.id = assetData.id;
-        this.el.dataset.difficulty = assetData.difficulty;
         this.el.dataset.status = assetData.status;
 
         if (!assetData.editable.canEdit) {
