@@ -828,9 +828,14 @@ export class ActionApp {
 
         let {canEdit, reason} = this.canEditAsset(asset);
 
-        if (!this.assetReserved) {
+        if (this.assetReservationInProgress) {
             canEdit = false;
-            reason = 'Asset reservation in progress';
+            reason = 'Page reservation in progress';
+        } else {
+            if (!this.assetReserved) {
+                canEdit = false;
+                reason = 'Somebody else is working on this page.';
+            }
         }
 
         if (this.actionSubmissionInProgress) {
@@ -871,7 +876,7 @@ export class ActionApp {
         }
 
         let reservationURL = this.assetReservationURL;
-
+        this.assetReservationInProgress = true;
         jQuery
             .ajax({
                 url: reservationURL,
@@ -888,7 +893,7 @@ export class ActionApp {
                         this.assetReservationURL
                     }`;
                 }
-
+                this.assetReservationInProgress = false;
                 this.assetReserved = true;
                 this.updateViewer();
             })
@@ -898,6 +903,7 @@ export class ActionApp {
                     textStatus,
                     errorThrown
                 );
+                this.assetReservationInProgress = false;
                 this.assetReserved = false;
                 this.updateViewer();
             });
@@ -923,6 +929,7 @@ export class ActionApp {
 
         delete this.assetReservationURL;
         delete this.assetReserved;
+        delete this.assetReservationInProgress;
 
         this.updateViewer();
     }
