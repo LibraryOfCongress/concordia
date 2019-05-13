@@ -69,12 +69,34 @@ class MetadataDetails {
                 text(`${sectionName}: `),
                 html('span.title', text(initialData.title))
             ]),
-            html('div.details-body')
+            html(
+                'div.details-body.clearfix',
+                (this.thumbnailLink = html(
+                    'a',
+                    {target: '_blank', hidden: true},
+                    (this.thumbnailIcon = html(
+                        'img.img-thumbnail.img-fluid.w-25.float-right'
+                    ))
+                )),
+                (this.descriptionContainer = html('div'))
+            )
         ];
         this.el = html('details', {open: true}, this.children);
     }
     update(data) {
-        $('.details-body', this.el).textContent = data.description || '';
+        this.descriptionContainer.textContent = data.description || '';
+
+        if (data.thumbnail_image) {
+            // eslint-disable-next-line unicorn/prevent-abbreviations
+            this.thumbnailIcon.src = data.thumbnail_image;
+            this.thumbnailLink.href = data.url;
+            this.thumbnailLink.removeAttribute('hidden');
+        } else {
+            // eslint-disable-next-line unicorn/prevent-abbreviations
+            this.thumbnailIcon.src = undefined;
+            this.thumbnailLink.href = undefined;
+            this.thumbnailLink.setAttribute('hidden', 'hidden');
+        }
     }
 }
 
