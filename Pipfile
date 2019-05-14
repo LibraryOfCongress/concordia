@@ -4,7 +4,6 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-psycopg2-binary = "*"
 gunicorn = "*"
 celery = {extras = ["redis"],version = ">=4.3.0"}
 "boto3" = ">=1.9.16"
@@ -39,6 +38,7 @@ sentry-sdk = "*"
 channels = "*"
 channels-redis = "*"
 more-itertools = "*"
+psycopg2 = "*"
 
 [dev-packages]
 invoke = "*"
