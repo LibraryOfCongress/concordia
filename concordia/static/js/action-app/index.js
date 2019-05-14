@@ -280,6 +280,13 @@ export class ActionApp {
                         reservationToken: null
                     });
 
+                    if (
+                        this.appElement.dataset.openAssetId &&
+                        this.appElement.dataset.openAssetId == assetId
+                    ) {
+                        this.reserveAsset();
+                    }
+
                     break;
                 default:
                     console.warn(
@@ -894,6 +901,8 @@ export class ActionApp {
         }
 
         let reservationURL = this.assetReservationURL;
+
+        // TODO: record the last asset renewal time and don't renew early unless the ID has changed
 
         jQuery
             .ajax({
