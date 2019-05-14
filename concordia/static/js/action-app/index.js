@@ -47,7 +47,7 @@ export class ActionApp {
 
         this.setupGlobalKeyboardEvents();
 
-        this.setupToolbars();
+        this.setupSidebar();
 
         this.setupSharing();
         this.setupPersistentStateManagement();
@@ -167,24 +167,40 @@ export class ActionApp {
         this.refreshData();
     }
 
-    // FIXME: replace with a generic function since we need to both show these side panels and hide the inactive ones
-    setupToolbars() {
-        let helpToggle = $('#help-toggle');
-        let helpPanel = $('#help-panel');
+    setupSidebar() {
+        let sidebar = $('#action-app-sidebar');
+        let buttons = $$('.btn', sidebar);
 
-        helpToggle.addEventListener('click', () => {
-            helpPanel.toggleAttribute('hidden');
-            helpToggle.classList.toggle('hidden');
-            return false;
-        });
+        let hideTarget = (button, force) => {
+            let target = document.getElementById(button.dataset.target);
+            let hidden = target.toggleAttribute('hidden', force);
+            button.classList.toggle('active', !hidden);
+            return hidden;
+        };
 
-        let assetListToggle = $('#asset-list-toggle');
-        let assetList = $('#asset-list-container');
+        let toggleButton = clickedButton => {
+            let hidden = hideTarget(clickedButton);
 
-        assetListToggle.addEventListener('click', () => {
-            assetList.toggleAttribute('hidden');
-            assetListToggle.classList.toggle('hidden');
-            return false;
+            if (!hidden) {
+                // If we just made something visible we'll hide any other button's targets
+                // as long as they aren't pinned to apply only when an asset is open:
+                buttons
+                    .filter(button => button != clickedButton)
+                    .filter(
+                        button =>
+                            this.openAssetElement ||
+                            !('toggleableOnlyWhenOpen' in button.dataset)
+                    )
+                    .forEach(button => {
+                        hideTarget(button, true);
+                    });
+            }
+        };
+
+        buttons.forEach(button => {
+            button.addEventListener('click', event => {
+                toggleButton(event.currentTarget);
+            });
         });
     }
 

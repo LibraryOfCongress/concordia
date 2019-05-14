@@ -193,7 +193,7 @@ main {
     #editor-main {
         display: none !important;
     }
-    #action-app-toolbar {
+    #action-app-sidebar {
         order: 2;
     }
     #asset-list-container {
@@ -264,7 +264,7 @@ main {
             height: 100%;
         }
 
-        #action-app-toolbar {
+        #action-app-sidebar {
             order: 1;
         }
         #help-panel {
@@ -280,7 +280,7 @@ main {
     }
 }
 
-#action-app-toolbar {
+#action-app-sidebar {
     border-left: 1px solid $concordia-app-toolbar-border;
     border-right: 1px solid $concordia-app-toolbar-border;
     background-color: $concordia-app-toolbar-background;

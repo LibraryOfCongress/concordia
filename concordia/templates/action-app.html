@@ -175,12 +175,12 @@
                 </div>
             </div>
         </div>
-        <div id="action-app-toolbar" class="asset-toolbar">
-            <button id="asset-list-toggle" class="btn btn-link" href="{% url 'help-center' %}" title="Open Help">
+        <div id="action-app-sidebar">
+            <button id="asset-list-toggle" class="btn btn-link" title="Open asset list" data-target="asset-list-container" data-toggleable-only-when-open>
                 <span class="fas fa-th"></span>
-                <span class="sr-only">Grid list</span>
+                <span class="sr-only">Open asset list</span>
             </button>
-            <button id="help-toggle" class="btn btn-link hidden" href="{% url 'help-center' %}" title="Open Help">
+            <button id="help-toggle" class="btn btn-link" title="Open Help" data-target="help-panel">
                 <span class="fas fa-question-circle"></span>
                 <span class="sr-only">Help</span>
             </button>
