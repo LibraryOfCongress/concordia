@@ -232,9 +232,10 @@
 
             <button id="load-more-assets" class="btn btn-secondary btn-block btn-sm">Load more…</button>
         </div>
-        <div id="help-panel" hidden>
+        <aside id="help-panel" hidden>
+            <h2 class="sr-only">Help</h2>
             <section>
-                <h4>Transcription tips</h4>
+                <h3>Transcription tips</h3>
                 <ul>
                     <li>Type what you see: Preserve line breaks, original spelling, and punctuation.</li>
                     <li>Use brackets [ ] around deleted, illegible or partially legible text.</li>
@@ -246,7 +247,7 @@
             </section>
             <hr />
             <section>
-                <h4>Review tips</h4>
+                <h3>Review tips</h3>
                 <ul>
                     <li>Carefully compare each line of the transcription to the original.</li>
                     <li>Use “Transcription tips” as a guide.</li>
@@ -255,13 +256,14 @@
             </section>
             <hr />
             <section>
+                <h3 class="sr-only">More information</h3>
                 <p>
                 Find more detailed instructions in the <a href="{% url 'help-center' %}" target="_blank">Help Center</a>
                 </p>
             </section>
             <hr />
             <section>
-                <h4>Keyboard Shortcuts</h4>
+                <h3>Keyboard Shortcuts</h3>
                 <ul class="list-unstyled d-table">
                     <li class="d-table-row">
                         <div class="d-table-cell align-middle border-top py-2"><kbd>w</kbd> or <kbd>up</kbd></div>
@@ -306,6 +308,6 @@
                 </ul>
             </section>
 
-        </div>
+        </aside>
     </main>
 {% endblock site-main %}
