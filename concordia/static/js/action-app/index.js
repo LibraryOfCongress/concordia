@@ -787,22 +787,15 @@ export class ActionApp {
 
         // FIXME: refactor openAssetElement into a single open asset ID property & pass it to the respective list & viewer components
         this.openAssetElement = assetElement;
+        this.assetReservationURL = this.urlTemplates.assetReservation.expand({
+            assetId: encodeURIComponent(asset.id)
+        });
 
-        let {canEdit} = this.canEditAsset(asset);
-
-        if (canEdit) {
-            this.assetReservationURL = this.urlTemplates.assetReservation.expand(
-                {
-                    assetId: encodeURIComponent(asset.id)
-                }
-            );
-
-            this.reserveAsset();
-            this.reservationTimer = window.setInterval(
-                this.reserveAsset.bind(this),
-                30000
-            );
-        }
+        this.reserveAsset();
+        this.reservationTimer = window.setInterval(
+            this.reserveAsset.bind(this),
+            30000
+        );
 
         this.metadataPanel = new MetadataPanel(asset);
         mount(
@@ -881,8 +874,22 @@ export class ActionApp {
     }
 
     reserveAsset() {
+        // TODO: refactor open asset DOM/class references
+        if (!this.appElement.dataset.openAssetId) {
+            console.warn('reserveAsset called without an open asset?');
+            return;
+        }
+
         if (!this.assetReservationURL) {
             console.warn('reserveAsset called without asset reservation URL!');
+            return;
+        }
+
+        let asset = this.assets.get(this.appElement.dataset.openAssetId);
+        let {canEdit, reason} = this.canEditAsset(asset);
+
+        if (!canEdit) {
+            console.info(`Asset ${asset.id} cannot be edited: ${reason}`);
             return;
         }
 
