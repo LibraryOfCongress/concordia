@@ -844,7 +844,7 @@ export class ActionApp {
 
         let {canEdit, reason} = this.canEditAsset(asset);
 
-        if (!this.assetReserved) {
+        if (canEdit && !this.assetReserved) {
             canEdit = false;
             reason = 'Asset reservation in progress';
         }
