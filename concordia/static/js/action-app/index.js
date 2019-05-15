@@ -580,7 +580,7 @@ export class ActionApp {
         let reason = '';
 
         if (asset.status == 'completed') {
-            reason = 'This page has already been completed';
+            reason = 'This page has been completed';
             canEdit = false;
         } else if (this.currentMode == 'review') {
             if (asset.status != 'submitted') {
