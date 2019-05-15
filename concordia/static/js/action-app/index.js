@@ -936,7 +936,6 @@ export class ActionApp {
 
     releaseAsset() {
         if (!this.assetReservationURL) {
-            console.warn('releaseAsset called without asset reservation URL!');
             return;
         }
 
