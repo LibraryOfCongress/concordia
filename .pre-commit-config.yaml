@@ -61,7 +61,7 @@ repos:
                 - stylelint-config-prettier@5.1.0
                 - stylelint-config-recommended@2.2.0
     - repo: https://github.com/awslabs/cfn-python-lint
-      rev: v0.20.1
+      rev: v0.20.2
       hooks:
           - id: cfn-python-lint
             files: cloudformation/.*\.(json|yml|yaml)$
