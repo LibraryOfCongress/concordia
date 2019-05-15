@@ -994,6 +994,7 @@ export class ActionApp {
                     asset.latest_transcription.id = responseData.id;
                     asset.latest_transcription.text = responseData.text;
                     this.mergeAssetUpdate(responseData.asset.id, {
+                        sent: responseData.sent,
                         status: responseData.asset.status
                     });
                     updateViews();
@@ -1009,6 +1010,7 @@ export class ActionApp {
                     })
                 ).done(responseData => {
                     this.mergeAssetUpdate(responseData.asset.id, {
+                        sent: responseData.sent,
                         status: responseData.asset.status
                     });
                     updateViews();
@@ -1022,6 +1024,7 @@ export class ActionApp {
                     {action: 'accept'}
                 ).done(responseData => {
                     this.mergeAssetUpdate(responseData.asset.id, {
+                        sent: responseData.sent,
                         status: responseData.asset.status
                     });
                     this.releaseAsset();
@@ -1036,6 +1039,7 @@ export class ActionApp {
                     {action: 'reject'}
                 ).done(responseData => {
                     this.mergeAssetUpdate(responseData.asset.id, {
+                        sent: responseData.sent,
                         status: responseData.asset.status
                     });
                 });
