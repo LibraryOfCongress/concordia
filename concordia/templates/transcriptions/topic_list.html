@@ -24,7 +24,7 @@
                         <p class="mb-2 text-center"><img src="{{ MEDIA_URL }}{{ topic.thumbnail_image }}" class="img-fluid" alt="{{ topic.title }} image"></p>
                     </a>
                     <div class="col-md">
-                        <p>{{ topic.description|linebreaksbr }}</p>
+                        <p>{{ topic.short_description|linebreaksbr }}</p>
                         <a class="btn btn-primary" href="{% url 'topic-detail' topic.slug %}">View Projects</a>
                     </div>
                 </div>

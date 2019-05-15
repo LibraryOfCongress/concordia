@@ -478,7 +478,7 @@ def annotate_children_with_progress_stats(children):
 class TopicListView(APIListView):
     template_name = "transcriptions/topic_list.html"
     paginate_by = 10
-    queryset = Topic.objects.order_by("title")
+    queryset = Topic.objects.published().order_by("title")
     context_object_name = "topics"
 
     def serialize_context(self, context):
