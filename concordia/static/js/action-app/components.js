@@ -259,7 +259,7 @@ class Li {
 class AssetListItem {
     constructor([assetListObserver]) {
         this.el = html('li', {
-            class: 'asset border',
+            class: 'asset',
             tabIndex: 0
         });
 
@@ -279,7 +279,7 @@ class AssetListItem {
         }
 
         this.el.id = assetData.id;
-        this.el.classList.add('asset', 'border');
+        this.el.classList.add('asset');
         this.el.dataset.image = thumbnailUrl;
         this.el.dataset.id = assetData.id;
         this.el.dataset.status = assetData.status;
@@ -397,14 +397,13 @@ export class AssetList extends List {
     }
 
     setActiveAsset(assetElement) {
-        // TODO: stop using Bootstrap classes directly and toggle semantic classes only
         $$('.asset.asset-active', this.el).forEach(element => {
             if (element != assetElement) {
-                element.classList.remove('asset-active', 'border-primary');
+                element.classList.remove('asset-active');
             }
         });
 
-        assetElement.classList.add('asset-active', 'border-primary');
+        assetElement.classList.add('asset-active');
 
         this.scrollToActiveAsset();
     }
