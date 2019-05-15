@@ -1,11 +1,11 @@
 import json
 import os
 import re
-import time
 from datetime import timedelta
 from functools import wraps
 from logging import getLogger
 from smtplib import SMTPException
+from time import time
 from urllib.parse import urlencode
 
 import markdown
@@ -107,7 +107,7 @@ def default_cache_control(view_function):
 @never_cache
 def healthz(request):
     status = {
-        "current_time": time.time(),
+        "current_time": time(),
         "load_average": os.getloadavg(),
         "debug": settings.DEBUG,
     }
@@ -243,7 +243,7 @@ class ConcordiaLoginView(RatelimitMixin, LoginView):
             rate=self.ratelimit_rate,
         )
         recent_captcha = (
-            time.time() - request.session.get("captcha_validation_time", 0)
+            time() - request.session.get("captcha_validation_time", 0)
         ) < 86400
 
         if blocked and not recent_captcha:
@@ -255,7 +255,7 @@ class ConcordiaLoginView(RatelimitMixin, LoginView):
             return self.form_invalid(form)
 
     def form_valid(self, form):
-        self.request.session["captcha_validation_time"] = time.time()
+        self.request.session["captcha_validation_time"] = time()
         return super().form_valid(form)
 
 
@@ -796,7 +796,7 @@ def ajax_captcha(request):
             ).delete()
 
             if deleted > 0:
-                request.session["captcha_validation_time"] = time.time()
+                request.session["captcha_validation_time"] = time()
                 return JsonResponse({"valid": True})
 
     key = CaptchaStore.generate_key()
@@ -813,7 +813,7 @@ def validate_anonymous_captcha(view):
     def inner(request, *args, **kwargs):
         if not request.user.is_authenticated:
             captcha_last_validated = request.session.get("captcha_validation_time", 0)
-            age = time.time() - captcha_last_validated
+            age = time() - captcha_last_validated
             if age > settings.ANONYMOUS_CAPTCHA_VALIDATION_INTERVAL:
                 return ajax_captcha(request)
 
@@ -873,6 +873,7 @@ def save_transcription(request, *, asset_pk):
     return JsonResponse(
         {
             "id": transcription.pk,
+            "sent": time(),
             "submissionUrl": reverse("submit-transcription", args=(transcription.pk,)),
             "asset": {
                 "id": transcription.asset.id,
@@ -907,6 +908,7 @@ def submit_transcription(request, *, pk):
     return JsonResponse(
         {
             "id": transcription.pk,
+            "sent": time(),
             "asset": {
                 "id": transcription.asset.id,
                 "status": transcription.asset.transcription_status,
@@ -951,6 +953,7 @@ def review_transcription(request, *, pk):
     return JsonResponse(
         {
             "id": transcription.pk,
+            "sent": time(),
             "asset": {
                 "id": transcription.asset.id,
                 "status": transcription.asset.transcription_status,
