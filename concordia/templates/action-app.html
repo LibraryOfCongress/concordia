@@ -175,17 +175,17 @@
                 </div>
             </div>
         </div>
-        <div id="action-app-sidebar">
-            <button id="asset-list-toggle" class="btn btn-link" title="Open asset list" data-target="asset-list-container" data-toggleable-only-when-open>
+        <div id="action-app-sidebar" role="tablist" aria-label="Tabs">
+            <button id="asset-list-toggle" class="btn btn-link active" title="Open asset list" role="tab" aria-controls="asset-list-container" aria-selected="true" data-target="asset-list-container" data-toggleable-only-when-open>
                 <span class="fas fa-th"></span>
                 <span class="sr-only">Open asset list</span>
             </button>
-            <button id="help-toggle" class="btn btn-link" title="Open Help" data-target="help-panel">
+            <button id="help-toggle" class="btn btn-link" title="Open Help" role="tab" aria-controls="help-panel"  aria-selected="false" data-target="help-panel">
                 <span class="fas fa-question-circle"></span>
                 <span class="sr-only">Help</span>
             </button>
         </div>
-        <div id="asset-list-container">
+        <div id="asset-list-container" role="tabpanel" aria-labelledby="asset-list-toggle">
             <form id="asset-list-controls" class="sticky-top form-inline flex-nowrap justify-content-center mb-3 py-3" role="navigation">
                 <div class="input-group input-group-sm mx-2 flex-nowrap">
                     <div class="input-group-prepend">
@@ -232,7 +232,7 @@
 
             <button id="load-more-assets" class="btn btn-secondary btn-block btn-sm">Load more…</button>
         </div>
-        <aside id="help-panel" hidden>
+        <aside id="help-panel" role="tabpanel" aria-labelledby="help-toggle" hidden>
             <h2 class="sr-only">Help</h2>
             <section>
                 <h3>Transcription tips</h3>

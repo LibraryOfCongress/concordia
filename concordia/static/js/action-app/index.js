@@ -175,6 +175,11 @@ export class ActionApp {
             let target = document.getElementById(button.dataset.target);
             let hidden = target.toggleAttribute('hidden', force);
             button.classList.toggle('active', !hidden);
+            if (button.classList.contains('active')) {
+                button.setAttribute('aria-selected', 'true');
+            } else {
+                button.setAttribute('aria-selected', 'false');
+            }
             return hidden;
         };
 
