@@ -34,11 +34,6 @@ export class ActionApp {
         /*
             These will store *all* metadata retrieved from the API so it can be
             easily queried and updated.
-
-            Note that while the IDs returned from the server may currently be
-            numeric we index them as strings to avoid surprises in the future
-            and to avoid issues with DOM interfaces such as dataset which
-            convert arguments to strings.
         */
         this.assets = new Map();
         this.items = new Map();
@@ -86,9 +81,20 @@ export class ActionApp {
         this.serializeStateToURL();
     }
 
+    getAssetData(assetId) {
+        // Convenience accessor which type-checks
+        if (typeof assetId != 'number') {
+            assetId = Number(assetId);
+        }
+
+        return this.assets.get(assetId);
+    }
+
     restoreOpenAsset() {
         let assetId = this.persistentState.get('asset');
-        if (!assetId) return;
+        if (!assetId) {
+            return;
+        }
 
         let allAssetsURL = this.urlTemplates.assetData.expand({
             // This is a special-case for retrieving all assets regardless of status
@@ -101,7 +107,7 @@ export class ActionApp {
                 if (!element) {
                     console.warn('Expected to load asset with ID %s', assetId);
                 } else {
-                    this.openViewer(element);
+                    this.openViewer(assetId);
                 }
             });
         });
@@ -188,7 +194,7 @@ export class ActionApp {
                     .filter(button => button != clickedButton)
                     .filter(
                         button =>
-                            this.openAssetElement ||
+                            this.openAssetId ||
                             !('toggleableOnlyWhenOpen' in button.dataset)
                     )
                     .forEach(button => {
@@ -248,7 +254,7 @@ export class ActionApp {
 
             let data = JSON.parse(rawMessage.data);
             let message = data.message;
-            let assetId = message.asset_pk.toString();
+            let assetId = message.asset_pk;
 
             switch (message.type) {
                 case 'asset_update': {
@@ -280,10 +286,7 @@ export class ActionApp {
                         reservationToken: null
                     });
 
-                    if (
-                        this.appElement.dataset.openAssetId &&
-                        this.appElement.dataset.openAssetId == assetId
-                    ) {
+                    if (this.openAssetId && this.openAssetId == assetId) {
                         this.reserveAsset();
                     }
 
@@ -298,7 +301,7 @@ export class ActionApp {
             if (assetListItem) {
                 // If this is visible, we want to update the displayed asset
                 // list icon using the current value:
-                assetListItem.update(this.assets.get(assetId));
+                assetListItem.update(this.getAssetData(assetId));
             }
         });
 
@@ -340,8 +343,9 @@ export class ActionApp {
             }
         }).observe(loadMoreButton);
 
-        this.assetList = new AssetList(this.assets, {
-            open: targetElement => this.openViewer(targetElement)
+        this.assetList = new AssetList({
+            getAssetData: assetId => this.getAssetData(assetId),
+            open: targetElement => this.openViewer(targetElement.id)
         });
         mount($('#asset-list-container'), this.assetList, loadMoreButton);
 
@@ -514,7 +518,7 @@ export class ActionApp {
             of the fields which frequently change.
         */
 
-        let oldData = this.assets.get(assetId) || {};
+        let oldData = this.getAssetData(assetId) || {};
         let mergedData = Object.assign({}, oldData);
         mergedData = Object.assign(mergedData, newData);
 
@@ -542,10 +546,7 @@ export class ActionApp {
     }
 
     createAsset(assetData) {
-        // n.b. although we are currently using numeric keys, we're coding under
-        // the assumption that they will become opaque strings in the future:
-        let assetId = assetData.id.toString();
-
+        let assetId = assetData.id;
         this.mergeAssetUpdate(assetId, assetData);
     }
 
@@ -565,7 +566,7 @@ export class ActionApp {
 
         if (typeof assetObjectOrID == 'string') {
             assetID = assetObjectOrID;
-            asset = this.assets.get(assetObjectOrID);
+            asset = this.getAssetData(assetObjectOrID);
         } else {
             asset = assetObjectOrID;
             assetID = asset.id;
@@ -639,10 +640,8 @@ export class ActionApp {
             alwaysIncludedAssets = [];
         }
 
-        if (this.appElement.dataset.openAssetId) {
-            alwaysIncludedAssets.push(
-                Number(this.appElement.dataset.openAssetId)
-            );
+        if (this.openAssetId) {
+            alwaysIncludedAssets.push(this.openAssetId);
         }
 
         window.requestIdleCallback(() => {
@@ -781,19 +780,19 @@ export class ActionApp {
         return visibleAssets;
     }
 
-    openViewer(assetElement) {
-        if (this.openAssetElement) {
+    openViewer(assetId) {
+        if (this.openAssetId) {
             this.closeViewer();
         }
 
-        let asset = this.assets.get(assetElement.dataset.id);
+        let asset = this.getAssetData(assetId);
+
+        this.openAssetId = asset.id;
 
         this.addToState('asset', asset.id);
 
         this.updateSharing(asset.url, asset.title);
 
-        // FIXME: refactor openAssetElement into a single open asset ID property & pass it to the respective list & viewer components
-        this.openAssetElement = assetElement;
         this.assetReservationURL = this.urlTemplates.assetReservation.expand({
             assetId: encodeURIComponent(asset.id)
         });
@@ -825,22 +824,23 @@ export class ActionApp {
 
         window.requestAnimationFrame(() => {
             // This will trigger the CSS which displays the viewer:
-            this.appElement.dataset.openAssetId = asset.id;
+            this.appElement.dataset.openAssetId = this.openAssetId;
 
-            this.assetList.setActiveAsset(assetElement);
+            this.assetList.setActiveAsset(
+                document.getElementById(this.openAssetId)
+            );
 
             this.updateViewer();
         });
     }
 
     updateViewer() {
-        if (!this.appElement.dataset.openAssetId || !this.openAssetElement) {
+        if (!this.openAssetId) {
             console.warn('updateViewer() called without an open asset');
             return;
         }
 
-        let openAssetId = this.appElement.dataset.openAssetId;
-        let asset = this.assets.get(openAssetId);
+        let asset = this.getAssetData(this.openAssetId);
 
         let {canEdit, reason} = this.canEditAsset(asset);
 
@@ -865,7 +865,7 @@ export class ActionApp {
         this.releaseAsset();
 
         delete this.appElement.dataset.openAssetId;
-        delete this.openAssetElement;
+        delete this.openAssetId;
 
         this.deleteFromState('asset');
 
@@ -881,8 +881,7 @@ export class ActionApp {
     }
 
     reserveAsset() {
-        // TODO: refactor open asset DOM/class references
-        if (!this.appElement.dataset.openAssetId) {
+        if (!this.openAssetId) {
             console.warn('reserveAsset called without an open asset?');
             return;
         }
@@ -892,7 +891,7 @@ export class ActionApp {
             return;
         }
 
-        let asset = this.assets.get(this.appElement.dataset.openAssetId);
+        let asset = this.getAssetData(this.openAssetId);
         let {canEdit, reason} = this.canEditAsset(asset);
 
         if (!canEdit) {
@@ -911,7 +910,7 @@ export class ActionApp {
                 dataType: 'json'
             })
             .done(() => {
-                if (!this.openAssetElement) {
+                if (!this.openAssetId) {
                     throw 'Open asset was closed with a reservation request pending';
                 }
 
@@ -960,7 +959,7 @@ export class ActionApp {
     }
 
     handleAction(action, data) {
-        if (!this.appElement.dataset.openAssetId) {
+        if (!this.openAssetId) {
             console.error(
                 `Unexpected action with no open asset: ${action} with data ${data}`
             );
@@ -969,8 +968,7 @@ export class ActionApp {
             console.debug(`User action ${action} with data ${data}`);
         }
 
-        let openAssetId = this.appElement.dataset.openAssetId;
-        let asset = this.assets.get(openAssetId);
+        let asset = this.getAssetData(this.openAssetId);
         let currentTranscriptionId = asset.latest_transcription
             ? asset.latest_transcription.id
             : null;
@@ -984,7 +982,7 @@ export class ActionApp {
             case 'save':
                 this.postAction(
                     this.urlTemplates.saveTranscription.expand({
-                        assetId: openAssetId
+                        assetId: this.openAssetId
                     }),
                     {
                         text: data.text,

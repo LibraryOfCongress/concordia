@@ -295,7 +295,7 @@ class AssetListItem {
 }
 
 export class AssetList extends List {
-    constructor(assets, callbacks) {
+    constructor(callbacks) {
         // TODO: refactor this into a utility function
         let assetListObserver = new IntersectionObserver(entries => {
             entries
@@ -337,17 +337,17 @@ export class AssetList extends List {
             }
         });
 
-        this.setupTooltip(assets);
+        this.setupTooltip(callbacks.getAssetData);
     }
 
-    setupTooltip(assets) {
+    setupTooltip(getAssetData) {
         /* Tooltips */
         let tooltip = new AssetTooltip();
 
         const handleTooltipShowEvent = event => {
             let target = event.target;
             if (target && target.classList.contains('asset')) {
-                const asset = assets.get(target.dataset.id);
+                const asset = getAssetData(target.dataset.id);
                 tooltip.update(asset);
                 mount(target, tooltip);
             }
