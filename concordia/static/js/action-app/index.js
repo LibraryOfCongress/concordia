@@ -886,16 +886,16 @@ export class ActionApp {
             return;
         }
 
-        if (!this.assetReservationURL) {
-            console.warn('reserveAsset called without asset reservation URL!');
-            return;
-        }
-
         let asset = this.getAssetData(this.openAssetId);
         let {canEdit, reason} = this.canEditAsset(asset);
 
         if (!canEdit) {
             console.info(`Asset ${asset.id} cannot be edited: ${reason}`);
+            return;
+        }
+
+        if (!this.assetReservationURL) {
+            console.warn('reserveAsset called without asset reservation URL!');
             return;
         }
 
