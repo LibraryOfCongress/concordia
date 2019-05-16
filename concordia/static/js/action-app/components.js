@@ -259,7 +259,7 @@ class Li {
 class AssetListItem {
     constructor([assetListObserver]) {
         this.el = html('li', {
-            class: 'asset border',
+            class: 'asset',
             tabIndex: 0
         });
 
@@ -279,7 +279,7 @@ class AssetListItem {
         }
 
         this.el.id = assetData.id;
-        this.el.classList.add('asset', 'border');
+        this.el.classList.add('asset');
         this.el.dataset.image = thumbnailUrl;
         this.el.dataset.id = assetData.id;
         this.el.dataset.status = assetData.status;
@@ -295,7 +295,7 @@ class AssetListItem {
 }
 
 export class AssetList extends List {
-    constructor(assets, callbacks) {
+    constructor(callbacks) {
         // TODO: refactor this into a utility function
         let assetListObserver = new IntersectionObserver(entries => {
             entries
@@ -337,17 +337,17 @@ export class AssetList extends List {
             }
         });
 
-        this.setupTooltip(assets);
+        this.setupTooltip(callbacks.getAssetData);
     }
 
-    setupTooltip(assets) {
+    setupTooltip(getAssetData) {
         /* Tooltips */
         let tooltip = new AssetTooltip();
 
         const handleTooltipShowEvent = event => {
             let target = event.target;
             if (target && target.classList.contains('asset')) {
-                const asset = assets.get(target.dataset.id);
+                const asset = getAssetData(target.dataset.id);
                 tooltip.update(asset);
                 mount(target, tooltip);
             }
@@ -397,14 +397,13 @@ export class AssetList extends List {
     }
 
     setActiveAsset(assetElement) {
-        // TODO: stop using Bootstrap classes directly and toggle semantic classes only
         $$('.asset.asset-active', this.el).forEach(element => {
             if (element != assetElement) {
-                element.classList.remove('asset-active', 'border-primary');
+                element.classList.remove('asset-active');
             }
         });
 
-        assetElement.classList.add('asset-active', 'border-primary');
+        assetElement.classList.add('asset-active');
 
         this.scrollToActiveAsset();
     }
@@ -620,6 +619,23 @@ class TranscriberView {
     }
 
     update(asset) {
+        if (
+            this.currentAsset &&
+            this.currentAsset.id == asset.id &&
+            asset.latest_transcription &&
+            this.currentAsset.latest_transcription &&
+            this.currentAsset.latest_transcription.id ==
+                asset.latest_transcription.id &&
+            this.currentAsset.latest_transcription.text ==
+                asset.latest_transcription.text
+        ) {
+            // eslint-disable-next-line no-console
+            console.debug(
+                `Asset ${asset.id} unmodified; not resetting transcription view`
+            );
+            return;
+        }
+
         this.currentAsset = asset;
         let text = '';
         if (asset.latest_transcription && asset.latest_transcription.text) {

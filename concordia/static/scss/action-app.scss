@@ -110,12 +110,15 @@ main {
     grid-template-columns: repeat(auto-fill, var(--asset-thumbnail-size));
     grid-template-rows: auto;
     justify-content: center;
+
     .asset {
         display: flex;
         width: var(--asset-thumbnail-size);
         height: var(--asset-thumbnail-size);
         object-fit: contain;
-        border-color: $gray-600 !important;
+
+        border: $border-width solid $gray-600;
+
         background-color: #f6f6f6;
         background-size: contain;
         background-repeat: no-repeat;
@@ -125,6 +128,11 @@ main {
         cursor: pointer;
         transition-property: height, width;
         transition-duration: 0.1s;
+
+        &.asset-active {
+            outline: 2px auto $orange;
+            outline-offset: -2px;
+        }
 
         &[data-unavailable] {
             position: relative;

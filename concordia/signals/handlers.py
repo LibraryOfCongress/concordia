@@ -1,3 +1,5 @@
+from time import time
+
 from asgiref.sync import AsyncToSync
 from channels.layers import get_channel_layer
 from django.conf import settings
@@ -105,5 +107,6 @@ def send_asset_reservation_message(
             "type": message_type,
             "asset_pk": asset_pk,
             "reservation_token": reservation_token,
+            "sent": time(),
         },
     )
