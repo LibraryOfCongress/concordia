@@ -949,14 +949,17 @@ export class ActionApp {
                 dataType: 'json'
             })
             .done(() => {
-                if (!this.openAssetId) {
-                    throw 'Open asset was closed with a reservation request pending';
-                }
+                if (
+                    !this.openAssetId ||
+                    reservationURL != this.assetReservationURL
+                ) {
+                    console.warn(
+                        `User navigated before reservation for asset #${
+                            asset.id
+                        } was obtained: open asset ID = ${this.openAssetId}`
+                    );
 
-                if (reservationURL != this.assetReservationURL) {
-                    throw `Asset changed while reserving ${reservationURL} != ${
-                        this.assetReservationURL
-                    }`;
+                    this.releaseReservationURL(reservationURL);
                 }
 
                 this.clearError('reservation');
@@ -987,22 +990,28 @@ export class ActionApp {
             return;
         }
 
+        this.releaseReservationURL(this.assetReservationURL);
+
+        delete this.assetReservationURL;
+        delete this.assetReserved;
+
+        this.updateViewer();
+    }
+
+    releaseReservationURL(assetReservationURL) {
+        // Handle the low-level details of releasing an asset reservation
+
         let payload = {
             release: true,
             csrfmiddlewaretoken: $('input[name="csrfmiddlewaretoken"]').value
         };
 
         navigator.sendBeacon(
-            this.assetReservationURL,
+            assetReservationURL,
             new Blob([jQuery.param(payload)], {
                 type: 'application/x-www-form-urlencoded'
             })
         );
-
-        delete this.assetReservationURL;
-        delete this.assetReserved;
-
-        this.updateViewer();
     }
 
     handleAction(action, data) {
