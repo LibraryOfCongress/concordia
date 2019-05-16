@@ -1107,20 +1107,35 @@ export class ActionApp {
                 this.actionSubmissionInProgress = false;
                 this.updateViewer();
             })
-            .fail(function(jqXHR, textStatus) {
+            .done(() => {
+                this.clearError('user-action');
+            })
+            .fail((jqXHR, textStatus) => {
                 if (jqXHR.status == 401) {
                     alert(
                         '// FIXME: the CAPTCHA system is not implemented yet. Please hit the main site before returning to this page'
                     );
                 }
 
+                let details = jqXHR.responseJSON
+                    ? jqXHR.responseJSON.error
+                    : jqXHR.responseText;
+
+                if (!details) {
+                    details = textStatus;
+                }
+
                 console.error(
                     'POSTed action to %s failed: %s %s',
                     url,
                     textStatus,
-                    jqXHR.responseJSON
-                        ? jqXHR.responseJSON.error
-                        : jqXHR.responseText
+                    details
+                );
+
+                this.reportError(
+                    'user-action',
+                    'Unable to save your work',
+                    details
                 );
             });
     }
