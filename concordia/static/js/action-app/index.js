@@ -707,7 +707,7 @@ export class ActionApp {
                 keyFromAsset = asset => asset.item.item_id;
                 break;
             case 'recent':
-                keyFromAsset = asset => [asset.sent, asset.id];
+                keyFromAsset = asset => [-asset.sent, asset.id];
                 break;
             case 'year':
                 keyFromAsset = asset => asset.year;
