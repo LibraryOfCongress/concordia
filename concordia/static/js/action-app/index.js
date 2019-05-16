@@ -953,6 +953,8 @@ export class ActionApp {
                     }`;
                 }
 
+                this.clearError('reservation');
+
                 this.assetReserved = true;
                 this.updateViewer();
             })
@@ -962,6 +964,13 @@ export class ActionApp {
                     textStatus,
                     errorThrown
                 );
+
+                this.reportError(
+                    'reservation',
+                    `Unable to reserve asset`,
+                    errorThrown ? `${textStatus}: ${errorThrown}` : textStatus
+                );
+
                 this.assetReserved = false;
                 this.updateViewer();
             });
