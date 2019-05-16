@@ -19,6 +19,31 @@ export function conditionalUnmount(component) {
     }
 }
 
+export class Alert {
+    constructor(level = 'warning') {
+        this.el = html(
+            `.alert alert-${level} alert-dismissible fade show position-fixed fixed-bottom mb-0`,
+            {role: 'alert'},
+            (this.header = html('strong')),
+            (this.body = html('span')),
+            html(
+                'button.close',
+                {
+                    type: 'button',
+                    'data-dismiss': 'alert',
+                    'aria-label': 'Close'
+                },
+                html('span.fas.fa-times-circle', {'aria-hidden': 'true'})
+            )
+        );
+    }
+
+    update(header, body) {
+        this.header.textContent = header;
+        this.body.textContent = body;
+    }
+}
+
 export class AssetTooltip {
     constructor() {
         this.el = html('.asset-tooltip', [

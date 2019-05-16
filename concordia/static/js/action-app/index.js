@@ -3,6 +3,7 @@
 
 import {mount} from 'https://cdnjs.cloudflare.com/ajax/libs/redom/3.18.0/redom.es.min.js';
 import {
+    Alert,
     AssetList,
     AssetViewer,
     conditionalUnmount,
@@ -31,6 +32,8 @@ export class ActionApp {
 
         this.appElement = $('#action-app-main');
 
+        this.alerts = {};
+
         /*
             These will store *all* metadata retrieved from the API so it can be
             easily queried and updated.
@@ -57,6 +60,31 @@ export class ActionApp {
         this.restoreOpenAsset();
 
         this.refreshData();
+    }
+
+    reportError(category, header, body) {
+        let alert;
+
+        if (!this.alerts.hasOwnProperty(category)) {
+            alert = new Alert();
+            this.alerts[category] = alert;
+            mount(document.body, alert);
+            jQuery(alert.el)
+                .alert()
+                .on('closed.bs.alert', () => {
+                    delete this.alerts[category];
+                });
+        } else {
+            alert = this.alerts[category];
+        }
+
+        alert.update(header, body);
+    }
+
+    clearError(category) {
+        if (this.alerts.hasOwnProperty(category)) {
+            jQuery(this.alerts[category].el).alert('close');
+        }
     }
 
     setupPersistentStateManagement() {
