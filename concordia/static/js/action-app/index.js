@@ -87,6 +87,10 @@ export class ActionApp {
         }
     }
 
+    clearAllErrors() {
+        Object.keys(this.alerts).forEach(category => this.clearError(category));
+    }
+
     setupPersistentStateManagement() {
         this.persistentState = new URLSearchParams(
             window.location.hash.replace(/^#/, '')
@@ -909,6 +913,8 @@ export class ActionApp {
         if (this.metadataPanel) {
             conditionalUnmount(this.metadataPanel);
         }
+
+        this.clearAllErrors();
 
         this.assetList.scrollToActiveAsset();
     }
