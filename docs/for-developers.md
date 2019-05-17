@@ -171,10 +171,9 @@ $ dot -Tsvg <(pipenv run ./manage.py graph_models concordia importer) -o concord
 
 ### Installing front-end tools
 
-1. Use a package manager such as Yarn or NPM to install our development tools:
+1. Use NPM to install our development tools:
 
     ```bash
-    $ yarn install --dev
     $ npm install
     ```
 
@@ -192,8 +191,8 @@ catching low-hanging fruit and regressions. You run aXe against a development
 server by giving it one or more URLs:
 
 ```bash
-$ yarn run axe --show-errors http://localhost:8000/
-$ pipenv run ./manage.py print_frontend_test_urls | xargs yarn run axe --show-errors
+$ npx axe --show-errors http://localhost:8000/
+$ pipenv run ./manage.py print_frontend_test_urls | xargs npx axe --show-errors
 ```
 
 ### Static Image Compression
