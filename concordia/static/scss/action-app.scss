@@ -18,6 +18,10 @@ kbd {
     border: 1px solid $gray-400;
 }
 
+.alert strong + span::before {
+    content: ': ';
+}
+
 .concordia-app-font-size-xxs {
     font-size: $concordia-app-font-size-xxs;
 }

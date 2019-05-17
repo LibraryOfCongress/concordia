@@ -3,6 +3,7 @@
 
 import {mount} from 'https://cdnjs.cloudflare.com/ajax/libs/redom/3.18.0/redom.es.min.js';
 import {
+    Alert,
     AssetList,
     AssetViewer,
     conditionalUnmount,
@@ -31,6 +32,8 @@ export class ActionApp {
 
         this.appElement = $('#action-app-main');
 
+        this.alerts = {};
+
         /*
             These will store *all* metadata retrieved from the API so it can be
             easily queried and updated.
@@ -57,6 +60,35 @@ export class ActionApp {
         this.restoreOpenAsset();
 
         this.refreshData();
+    }
+
+    reportError(category, header, body) {
+        let alert;
+
+        if (!this.alerts.hasOwnProperty(category)) {
+            alert = new Alert();
+            this.alerts[category] = alert;
+            mount(document.body, alert);
+            jQuery(alert.el)
+                .alert()
+                .on('closed.bs.alert', () => {
+                    delete this.alerts[category];
+                });
+        } else {
+            alert = this.alerts[category];
+        }
+
+        alert.update(header, body);
+    }
+
+    clearError(category) {
+        if (this.alerts.hasOwnProperty(category)) {
+            jQuery(this.alerts[category].el).alert('close');
+        }
+    }
+
+    clearAllErrors() {
+        Object.keys(this.alerts).forEach(category => this.clearError(category));
     }
 
     setupPersistentStateManagement() {
@@ -872,6 +904,8 @@ export class ActionApp {
             conditionalUnmount(this.metadataPanel);
         }
 
+        this.clearAllErrors();
+
         this.assetList.scrollToActiveAsset();
     }
 
@@ -905,15 +939,20 @@ export class ActionApp {
                 dataType: 'json'
             })
             .done(() => {
-                if (!this.openAssetId) {
-                    throw 'Open asset was closed with a reservation request pending';
+                if (
+                    !this.openAssetId ||
+                    reservationURL != this.assetReservationURL
+                ) {
+                    console.warn(
+                        `User navigated before reservation for asset #${
+                            asset.id
+                        } was obtained: open asset ID = ${this.openAssetId}`
+                    );
+
+                    this.releaseReservationURL(reservationURL);
                 }
 
-                if (reservationURL != this.assetReservationURL) {
-                    throw `Asset changed while reserving ${reservationURL} != ${
-                        this.assetReservationURL
-                    }`;
-                }
+                this.clearError('reservation');
 
                 this.assetReserved = true;
                 this.updateViewer();
@@ -924,6 +963,13 @@ export class ActionApp {
                     textStatus,
                     errorThrown
                 );
+
+                this.reportError(
+                    'reservation',
+                    `Unable to reserve asset`,
+                    errorThrown ? `${textStatus}: ${errorThrown}` : textStatus
+                );
+
                 this.assetReserved = false;
                 this.updateViewer();
             });
@@ -934,22 +980,28 @@ export class ActionApp {
             return;
         }
 
+        this.releaseReservationURL(this.assetReservationURL);
+
+        delete this.assetReservationURL;
+        delete this.assetReserved;
+
+        this.updateViewer();
+    }
+
+    releaseReservationURL(assetReservationURL) {
+        // Handle the low-level details of releasing an asset reservation
+
         let payload = {
             release: true,
             csrfmiddlewaretoken: $('input[name="csrfmiddlewaretoken"]').value
         };
 
         navigator.sendBeacon(
-            this.assetReservationURL,
+            assetReservationURL,
             new Blob([jQuery.param(payload)], {
                 type: 'application/x-www-form-urlencoded'
             })
         );
-
-        delete this.assetReservationURL;
-        delete this.assetReserved;
-
-        this.updateViewer();
     }
 
     handleAction(action, data) {
@@ -1060,20 +1112,35 @@ export class ActionApp {
                 this.actionSubmissionInProgress = false;
                 this.updateViewer();
             })
-            .fail(function(jqXHR, textStatus) {
+            .done(() => {
+                this.clearError('user-action');
+            })
+            .fail((jqXHR, textStatus) => {
                 if (jqXHR.status == 401) {
                     alert(
                         '// FIXME: the CAPTCHA system is not implemented yet. Please hit the main site before returning to this page'
                     );
                 }
 
+                let details = jqXHR.responseJSON
+                    ? jqXHR.responseJSON.error
+                    : jqXHR.responseText;
+
+                if (!details) {
+                    details = textStatus;
+                }
+
                 console.error(
                     'POSTed action to %s failed: %s %s',
                     url,
                     textStatus,
-                    jqXHR.responseJSON
-                        ? jqXHR.responseJSON.error
-                        : jqXHR.responseText
+                    details
+                );
+
+                this.reportError(
+                    'user-action',
+                    'Unable to save your work',
+                    details
                 );
             });
     }
