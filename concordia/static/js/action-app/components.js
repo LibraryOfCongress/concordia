@@ -645,21 +645,35 @@ class TranscriberView {
     }
 
     update(asset) {
-        if (
-            this.currentAsset &&
-            this.currentAsset.id == asset.id &&
-            asset.latest_transcription &&
-            this.currentAsset.latest_transcription &&
-            this.currentAsset.latest_transcription.id ==
-                asset.latest_transcription.id &&
-            this.currentAsset.latest_transcription.text ==
-                asset.latest_transcription.text
-        ) {
-            // eslint-disable-next-line no-console
-            console.debug(
-                `Asset ${asset.id} unmodified; not resetting transcription view`
-            );
-            return;
+        if (this.currentAsset) {
+            /*
+                We want to avoid resetting the <textarea>'s value as long as the
+                upstream value has not changed to avoid losing unsaved work. If
+                the asset hasn't changed and the value of its latest
+                transcription hasn't changed we'll exit early.
+            */
+
+            if (this.currentAsset.id == asset.id) {
+                let noUpstream =
+                    !asset.latest_transcription &&
+                    !this.currentAsset.latest_transcription;
+
+                let upstreamUnchanged =
+                    this.currentAsset.latest_transcription &&
+                    asset.latest_transcription &&
+                    this.currentAsset.latest_transcription.id ==
+                        asset.latest_transcription.id;
+
+                if (noUpstream || upstreamUnchanged) {
+                    // eslint-disable-next-line no-console
+                    console.debug(
+                        `Asset ${
+                            asset.id
+                        } unmodified; not resetting transcription view`
+                    );
+                    return;
+                }
+            }
         }
 
         this.currentAsset = asset;
@@ -708,6 +722,7 @@ class TranscriberView {
 
     setEditorAvailability(enableEditing, reason) {
         this.toolbar.update(enableEditing, reason);
+        this.textarea.toggleAttribute('readonly', !enableEditing);
     }
 
     confirmNothingToTranscribeChange() {

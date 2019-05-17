@@ -422,6 +422,11 @@ main {
     border-radius: 0;
     border: 1px dashed $gray-400;
     background-color: $gray-100;
+
+    &:disabled,
+    &[readonly] {
+        background-color: $input-disabled-bg;
+    }
 }
 
 .unavailable {
