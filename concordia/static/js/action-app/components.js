@@ -722,6 +722,7 @@ class TranscriberView {
 
     setEditorAvailability(enableEditing, reason) {
         this.toolbar.update(enableEditing, reason);
+        this.textarea.toggleAttribute('readonly', !enableEditing);
     }
 
     confirmNothingToTranscribeChange() {
