@@ -147,7 +147,7 @@ class RelatedLink {
         this.el = html(
             'li.link',
             (this.title = html('h5.title')),
-            (this.link = html('a'))
+            (this.link = html('a', {target: '_blank'}))
         );
     }
     update(relatedLink) {
