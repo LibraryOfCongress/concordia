@@ -1,4 +1,4 @@
-/* global Split jQuery URITemplate */
+/* global Split jQuery URITemplate sortBy */
 /* eslint-disable no-console */
 
 import {mount} from 'https://cdnjs.cloudflare.com/ajax/libs/redom/3.18.0/redom.es.min.js';
@@ -707,7 +707,7 @@ export class ActionApp {
                 keyFromAsset = asset => asset.item.item_id;
                 break;
             case 'recent':
-                keyFromAsset = asset => [asset.sent, asset.id];
+                keyFromAsset = asset => [-asset.sent, asset.id];
                 break;
             case 'year':
                 keyFromAsset = asset => asset.year;
@@ -717,17 +717,7 @@ export class ActionApp {
                 keyFromAsset = asset => asset.id;
         }
 
-        return assetList.sort((a, b) => {
-            let aKey = keyFromAsset(a),
-                bKey = keyFromAsset(b);
-            if (aKey < bKey) {
-                return -1;
-            } else if (aKey > bKey) {
-                return 1;
-            } else {
-                return 0;
-            }
-        });
+        return sortBy(assetList, keyFromAsset);
     }
 
     getVisibleAssets(alwaysIncludedAssetIDs) {
