@@ -1,5 +1,6 @@
 {
     "devDependencies": {
+        "@pika/web": "^0.4.2",
         "axe-cli": "^3.0.0",
         "child_process": "^1.0.2",
         "eslint": "^5.16.0",
@@ -27,7 +28,8 @@
         "array-sort-by": "^1.2.1",
         "bootstrap": "4.3.1",
         "jquery": "^3.4.1",
-        "popper.js": "^1.14.7"
+        "popper.js": "^1.14.7",
+        "redom": "^3.20.1"
     },
     "name": "concordia",
     "version": "1.0.0",

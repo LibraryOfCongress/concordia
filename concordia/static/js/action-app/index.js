@@ -1,7 +1,9 @@
-/* global Split jQuery URITemplate sortBy */
+/* global Split jQuery URITemplate */
 /* eslint-disable no-console */
 
-import {mount} from 'https://cdnjs.cloudflare.com/ajax/libs/redom/3.18.0/redom.es.min.js';
+import {mount} from '../../web_modules/redom.js';
+import sortBy from '../../web_modules/array-sort-by.js';
+
 import {
     Alert,
     AssetList,
