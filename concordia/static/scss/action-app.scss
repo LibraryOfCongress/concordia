@@ -317,15 +317,26 @@ main {
 }
 
 #asset-info-modal {
+    .modal-dialog {
+        max-width: 60rem;
+    }
+
     .modal-body {
         max-height: 80vh;
         overflow-y: auto;
     }
+
     *:not(.asset-title) {
         font-size: 1rem !important;
     }
     .asset-title {
         font-size: $h4-font-size !important;
+    }
+
+    .details-body {
+        .description {
+            max-width: 40rem;
+        }
     }
 }
 
