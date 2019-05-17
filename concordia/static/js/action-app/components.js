@@ -124,7 +124,7 @@ class CampaignMetadataDetails extends MetadataDetails {
     constructor(sectionName, initialData) {
         super(sectionName, initialData);
 
-        this.relatedLinkTable = new RelatedLinkTable();
+        this.relatedLinkTable = new RelatedLinks();
     }
 
     onmount() {
@@ -142,32 +142,33 @@ class CampaignMetadataDetails extends MetadataDetails {
     }
 }
 
-class RelatedLinkTableRow {
+class RelatedLink {
     constructor() {
-        this.el = html('tr', html('th'), html('td'));
+        this.el = html(
+            'li.link',
+            (this.title = html('h5.title')),
+            (this.link = html('a', {target: '_blank'}))
+        );
     }
     update(relatedLink) {
-        this.el.querySelector('th').textContent = relatedLink.title;
-        setChildren(
-            this.el.querySelector('td'),
-            html('a', {href: relatedLink.url}, text(relatedLink.url))
-        );
+        this.title.textContent = relatedLink.title;
+        this.link.href = relatedLink.url;
+        this.link.textContent = relatedLink.url;
     }
 }
 
-class RelatedLinkTable {
+class RelatedLinks {
     constructor() {
-        this.tbody = list('tbody', RelatedLinkTableRow);
         this.el = html(
-            'table.related-links.table-sm',
+            '.related-links',
             {hidden: true},
-            html('caption', text('Related Links')),
-            this.tbody
+            html('h4.title', text('Related Links')),
+            (this.linkList = list('ul.list-unstyled', RelatedLink))
         );
     }
-    update(data) {
-        this.tbody.update(data);
-        setAttr(this.el, {hidden: data.length < 1});
+    update(links) {
+        this.linkList.update(links);
+        setAttr(this.el, {hidden: links.length < 1});
     }
 }
 
@@ -876,8 +877,13 @@ export class AssetViewer {
 
         this.imageView.update(asset);
 
+        let external_link = new URL(asset.resource_url);
+        if (external_link.hostname == 'www.loc.gov') {
+            external_link.searchParams.set('sp', asset.sequence);
+        }
+
         $$('a.asset-external-view', this.el).forEach(i => {
-            i.href = asset.resource_url;
+            i.href = external_link;
         });
 
         [
