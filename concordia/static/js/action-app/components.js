@@ -877,8 +877,13 @@ export class AssetViewer {
 
         this.imageView.update(asset);
 
+        let external_link = new URL(asset.resource_url);
+        if (external_link.hostname == 'www.loc.gov') {
+            external_link.searchParams.set('sp', asset.sequence);
+        }
+
         $$('a.asset-external-view', this.el).forEach(i => {
-            i.href = asset.resource_url;
+            i.href = external_link;
         });
 
         [
