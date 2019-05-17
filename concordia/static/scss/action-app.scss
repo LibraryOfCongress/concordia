@@ -338,6 +338,35 @@ main {
             max-width: 40rem;
         }
     }
+
+    .related-links {
+        background-color: unset;
+        border: unset;
+
+        .title {
+            text-align: center;
+        }
+
+        .link {
+            .title {
+                display: inline;
+
+                &::after {
+                    content: ': ';
+                }
+            }
+
+            a {
+                display: inline-block;
+                max-width: 100%;
+                vertical-align: top;
+
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                overflow: hidden;
+            }
+        }
+    }
 }
 
 #asset-metadata {
@@ -410,24 +439,6 @@ main {
 
 .current-mode {
     text-transform: capitalize;
-}
-
-.related-links {
-    table-layout: fixed;
-    caption {
-        caption-side: top-outside;
-        text-align: center;
-    }
-    td {
-        width: 50%;
-        max-width: 50%;
-        overflow: hidden;
-    }
-    a {
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        overflow: hidden;
-    }
 }
 
 .metadata-list .title {
