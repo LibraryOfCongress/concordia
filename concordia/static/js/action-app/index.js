@@ -43,6 +43,8 @@ export class ActionApp {
         this.projects = new Map();
         this.campaigns = new Map();
 
+        this.touchedAssetIDs = new Set();
+
         this.setupGlobalKeyboardEvents();
 
         this.setupSidebar();
@@ -681,18 +683,10 @@ export class ActionApp {
         return {canEdit, reason};
     }
 
-    updateAssetList(alwaysIncludedAssets) {
-        if (!alwaysIncludedAssets) {
-            alwaysIncludedAssets = [];
-        }
-
-        if (this.openAssetId) {
-            alwaysIncludedAssets.push(this.openAssetId);
-        }
-
+    updateAssetList() {
         window.requestIdleCallback(() => {
             console.time('Filtering assets');
-            let visibleAssets = this.getVisibleAssets(alwaysIncludedAssets);
+            let visibleAssets = this.getVisibleAssets();
             console.timeEnd('Filtering assets');
 
             console.time('Sorting assets');
@@ -761,16 +755,19 @@ export class ActionApp {
         return sortBy(assetList, keyFromAsset);
     }
 
-    getVisibleAssets(alwaysIncludedAssetIDs) {
+    getVisibleAssets() {
         // We allow passing a list of asset IDs which should always be included
         // to avoid jarring UI transitions (the display code is responsible for
         // badging these as unavailable):
-        if (!alwaysIncludedAssetIDs) {
-            alwaysIncludedAssetIDs = [];
+
+        let alwaysIncludedAssetIDs = new Set(this.touchedAssetIDs);
+
+        if (this.openAssetId) {
+            alwaysIncludedAssetIDs.add(this.openAssetId);
         }
 
         if (this.persistentState.has('asset')) {
-            alwaysIncludedAssetIDs.push(this.persistentState.get('asset'));
+            alwaysIncludedAssetIDs.add(this.persistentState.get('asset'));
         }
 
         let currentCampaignId = this.campaignSelect.value;
@@ -793,7 +790,7 @@ export class ActionApp {
         let visibleAssets = [];
 
         for (let asset of this.assets.values()) {
-            if (!alwaysIncludedAssetIDs.includes(asset.id)) {
+            if (!alwaysIncludedAssetIDs.has(asset.id)) {
                 if (!asset.thumbnailUrl) {
                     continue;
                 }
@@ -1032,6 +1029,8 @@ export class ActionApp {
             this.updateViewer();
             this.updateAssetList();
         };
+
+        this.touchedAssetIDs.add(asset.id);
 
         switch (action) {
             case 'save':
