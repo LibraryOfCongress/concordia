@@ -784,45 +784,26 @@ class ImageViewer {
     }
 
     update(asset) {
-        let tileSources = [
+        let tileSource = [
             {
                 type: 'image',
                 url: asset.imageUrl
             }
         ];
-        let initialPage = 0;
 
-        if (asset.previous_thumbnail) {
-            initialPage = 1;
-            tileSources.unshift({
-                type: 'image',
-                url: asset.previous_thumbnail
-            });
-        }
-
-        if (asset.next_thumbnail) {
-            tileSources.push({
-                type: 'image',
-                url: asset.next_thumbnail
-            });
-        }
-
-        // We want to reload if the tile sources have actually changed but
-        // otherwise avoid interupting the user
+        // We want to reload if the tile source has actually changed but
+        // otherwise avoid interrupting the user
 
         let tilesChanged =
             !this.seadragon.tileSources ||
-            tileSources.length != this.seadragon.tileSources.length ||
-            tileSources.some((tileSource, idx) => {
-                return tileSource.url != this.seadragon.tileSources[idx].url;
-            });
+            tileSource[0].url != this.seadragon.tileSources[0].url;
 
         if (tilesChanged) {
             if (this.seadragon.isOpen()) {
                 this.seadragon.close();
             }
 
-            this.seadragon.open(tileSources, initialPage);
+            this.seadragon.open(tileSource);
         }
     }
 }
