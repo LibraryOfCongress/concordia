@@ -464,6 +464,10 @@ export class ActionApp {
             this.closeViewer();
         });
 
+        $('#viewer-help').addEventListener('click', () => {
+            document.getElementById('help-toggle').click();
+        });
+
         this.assetViewSplitter = Split(['#viewer-column', '#editor-column'], {
             sizes: [50, 50],
             minSize: 300,
