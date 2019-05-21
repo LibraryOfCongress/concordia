@@ -638,12 +638,6 @@ class TranscriberView {
         );
     }
 
-    onmount() {
-        jQuery(this.el)
-            .find('[data-toggle="popover"]')
-            .popover();
-    }
-
     update(asset) {
         if (this.currentAsset) {
             /*
@@ -722,6 +716,15 @@ class TranscriberView {
 
     setEditorAvailability(enableEditing, reason) {
         this.toolbar.update(enableEditing, reason);
+
+        // Our toolbar has a popover which displays when editing is enabled
+        // (“Nothing to transcribe”'s help). At some point we might want to have
+        // that use lifecycle events but right now we have one place where we
+        // need to do this:
+        jQuery(this.el)
+            .find('[data-toggle="popover"]')
+            .popover(enableEditing ? 'enable' : 'disable');
+
         this.textarea.toggleAttribute('readonly', !enableEditing);
     }
 
