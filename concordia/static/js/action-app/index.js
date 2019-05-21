@@ -128,12 +128,17 @@ export class ActionApp {
             return;
         }
 
-        let allAssetsURL = this.urlTemplates.assetData.expand({
-            // This is a special-case for retrieving all assets regardless of status
-            action: 'assets'
-        });
+        let assetDataURL = new URL(
+            this.urlTemplates.assetData.expand({
+                // This is a special-case for retrieving all assets regardless of status
+                action: 'assets'
+            }),
+            document.location.href
+        );
 
-        this.fetchAssetPage(allAssetsURL + '?pk=' + assetId).then(() => {
+        assetDataURL.searchParams.set('pk', assetId);
+
+        this.fetchAssetPage(assetDataURL).then(() => {
             this.assetList.updateCallbacks.push(() => {
                 let element = document.getElementById(assetId);
                 if (!element) {
