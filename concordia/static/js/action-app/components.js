@@ -113,8 +113,8 @@ class MetadataDetails {
             this.thumbnailLink.removeAttribute('hidden');
         } else {
             // eslint-disable-next-line unicorn/prevent-abbreviations
-            this.thumbnailIcon.src = undefined;
-            this.thumbnailLink.href = undefined;
+            this.thumbnailIcon.src = '';
+            this.thumbnailLink.href = '';
             this.thumbnailLink.setAttribute('hidden', 'hidden');
         }
     }
