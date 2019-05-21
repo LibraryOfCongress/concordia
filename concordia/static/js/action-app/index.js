@@ -155,8 +155,8 @@ export class ActionApp {
                 case 'F1':
                     if (!event.target.tagName.match(/(INPUT|TEXTAREA)/i)) {
                         // Either the F1 or ? keys were pressed outside of a
-                        // text field so we'll open the global help modal:
-                        window.jQuery('#help-modal').modal('show');
+                        // text field so we'll open the help sidebar:
+                        document.getElementById('help-toggle').click();
                         return false;
                     }
                     break;
@@ -462,6 +462,10 @@ export class ActionApp {
 
         $('#close-viewer-button').addEventListener('click', () => {
             this.closeViewer();
+        });
+
+        $('#viewer-help').addEventListener('click', () => {
+            document.getElementById('help-toggle').click();
         });
 
         this.assetViewSplitter = Split(['#viewer-column', '#editor-column'], {

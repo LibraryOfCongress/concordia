@@ -768,7 +768,6 @@ class ImageViewer {
             },
             showRotationControl: true,
             showFlipControl: true,
-            sequenceMode: true,
             toolbar: 'viewer-controls',
             zoomInButton: 'viewer-zoom-in',
             zoomOutButton: 'viewer-zoom-out',
@@ -776,8 +775,6 @@ class ImageViewer {
             fullPageButton: 'viewer-full-page',
             rotateLeftButton: 'viewer-rotate-left',
             rotateRightButton: 'viewer-rotate-right',
-            nextButton: 'viewer-next-page',
-            previousButton: 'viewer-previous-page',
             flipButton: 'viewer-flip'
         });
     }
