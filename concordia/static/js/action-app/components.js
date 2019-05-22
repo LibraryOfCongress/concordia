@@ -787,19 +787,16 @@ class ImageViewer {
     }
 
     update(asset) {
-        let tileSource = [
-            {
-                type: 'image',
-                url: asset.imageUrl
-            }
-        ];
-
+        let tileSource = {
+            type: 'image',
+            url: asset.imageUrl
+        };
         // We want to reload if the tile source has actually changed but
         // otherwise avoid interrupting the user
 
         let tilesChanged =
-            !this.seadragon.tileSources ||
-            tileSource[0].url != this.seadragon.tileSources[0].url;
+            !this.seadragon.source ||
+            tileSource.url != this.seadragon.source.url;
 
         if (tilesChanged) {
             if (this.seadragon.isOpen()) {
