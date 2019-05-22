@@ -3,7 +3,7 @@ from functools import wraps
 
 from django.utils.text import slugify
 
-from concordia.models import Campaign, MediaType
+from concordia.models import Asset, Campaign, Item, MediaType, Project
 
 
 def ensure_slug(original_function):
@@ -27,13 +27,15 @@ def create_campaign(
     short_description="Short Description",
     description="Test Description",
     published=True,
+    do_save=True,
     **kwargs,
 ):
     campaign = Campaign(
         title=title, slug=slug, description=description, published=published, **kwargs
     )
     campaign.full_clean()
-    campaign.save()
+    if do_save:
+        campaign.save()
     return campaign
 
 
@@ -45,16 +47,18 @@ def create_project(
     slug="test-project",
     description="Test Description",
     published=True,
+    do_save=True,
     **kwargs,
 ):
     if campaign is None:
         campaign = create_campaign()
 
-    project = campaign.project_set.create(
-        title=title, slug=slug, published=True, **kwargs
+    project = Project(
+        campaign=campaign, title=title, slug=slug, published=True, **kwargs
     )
     project.full_clean()
-    project.save()
+    if do_save:
+        project.save()
     return project
 
 
@@ -65,16 +69,23 @@ def create_item(
     item_id="testitem.0123456789",
     item_url="http://example.com/item/testitem.0123456789/",
     published=True,
+    do_save=True,
     **kwargs,
 ):
     if project is None:
         project = create_project()
 
-    item = project.item_set.create(
-        title=title, item_id=item_id, item_url=item_url, published=True, **kwargs
+    item = Item(
+        project=project,
+        title=title,
+        item_id=item_id,
+        item_url=item_url,
+        published=True,
+        **kwargs,
     )
     item.full_clean()
-    item.save()
+    if do_save:
+        item.save()
     return item
 
 
@@ -87,11 +98,13 @@ def create_asset(
     media_type=MediaType.IMAGE,
     media_url="1.jpg",
     published=True,
+    do_save=True,
     **kwargs,
 ):
     if item is None:
         item = create_item()
-    asset = item.asset_set.create(
+    asset = Asset(
+        item=item,
         title=title,
         slug=slug,
         media_type=media_type,
@@ -100,7 +113,8 @@ def create_asset(
         **kwargs,
     )
     asset.full_clean()
-    asset.save()
+    if do_save:
+        asset.save()
     return asset
 
 

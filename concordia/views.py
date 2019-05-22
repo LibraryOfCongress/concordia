@@ -23,17 +23,7 @@ from django.core.exceptions import ValidationError
 from django.core.mail import EmailMultiAlternatives, send_mail
 from django.core.paginator import Paginator
 from django.db import connection
-from django.db.models import (
-    Case,
-    Count,
-    F,
-    IntegerField,
-    Max,
-    OuterRef,
-    Q,
-    Subquery,
-    When,
-)
+from django.db.models import Case, Count, IntegerField, Max, OuterRef, Q, Subquery, When
 from django.db.transaction import atomic
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -1402,16 +1392,26 @@ def redirect_to_next_transcribable_asset(request, *, campaign_slug):
 class AssetListView(APIListView):
     context_object_name = "assets"
     paginate_by = 50
+    queryset = Asset.objects.published()
 
     def get_queryset(self, *args, **kwargs):
-        qs = Asset.objects.published()
+        qs = super().get_queryset()
 
         pks = self.request.GET.getlist("pk")
+
         if pks:
             try:
                 qs = qs.filter(pk__in=pks)
             except (ValueError, TypeError):
                 raise Http404
+
+        latest_transcription_qs = (
+            Transcription.objects.filter(asset=OuterRef("pk"))
+            .order_by("-pk")
+            .values_list("pk", flat=True)
+        )
+
+        qs = qs.annotate(latest_transcription_pk=Subquery(latest_transcription_qs[:1]))
 
         return qs.prefetch_related("item", "item__project", "item__project__campaign")
 
@@ -1425,22 +1425,13 @@ class AssetListView(APIListView):
         ctx = super().get_context_data(**kwargs)
 
         assets = ctx["assets"]
-
         asset_pks = [i.pk for i in assets]
 
-        latest_transcription_qs = (
-            Transcription.objects.filter(asset__in=asset_pks)
-            .annotate(max_pk=Max("pk"))
-            .filter(pk=F("max_pk"))
-        )
-
-        # n.b. we use this as an opportunity to rename the user_id field to match
-        # what's being sent by the WebSocket update messages
         latest_transcriptions = {
-            asset_id: {"id": pk, "text": text, "submitted_by": user_id}
-            for asset_id, pk, user_id, text in latest_transcription_qs.values_list(
-                "asset_id", "pk", "user_id", "text"
-            )
+            asset_id: {"id": id, "submitted_by": user_id, "text": text}
+            for id, asset_id, user_id, text in Transcription.objects.filter(
+                pk__in=[i.latest_transcription_pk for i in assets]
+            ).values_list("id", "asset_id", "user_id", "text")
         }
 
         adjacent_asset_qs = Asset.objects.filter(
@@ -1469,7 +1460,7 @@ class AssetListView(APIListView):
         }
 
         for asset in assets:
-            asset.latest_transcription = latest_transcriptions.get(asset.id, None)
+            asset.latest_transcription = latest_transcriptions.get(asset.pk, None)
 
             asset.previous_sequence, asset.next_sequence = adjacent_seqs.get(
                 asset.id, (None, None)
