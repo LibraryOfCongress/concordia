@@ -1392,9 +1392,10 @@ def redirect_to_next_transcribable_asset(request, *, campaign_slug):
 class AssetListView(APIListView):
     context_object_name = "assets"
     paginate_by = 50
+    queryset = Asset.objects.published()
 
     def get_queryset(self, *args, **kwargs):
-        qs = Asset.objects.published()
+        qs = super().get_queryset()
 
         pks = self.request.GET.getlist("pk")
 
