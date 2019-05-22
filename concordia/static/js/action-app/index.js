@@ -187,21 +187,23 @@ export class ActionApp {
 
         let mode = this.persistentState.get('mode') || 'review';
         if (mode == 'transcribe' || mode == 'review') {
-            this.currentMode = mode;
-            $$('button', this.modeSelection).forEach(button => {
-                button.classList.toggle('active', button.value == mode);
-            });
+            this.switchMode(mode);
         } else {
             Sentry.captureMessage(`Setup requested for unknown ${mode} mode`);
         }
     }
 
     switchMode(newMode) {
-        console.info(`Switch mode from ${this.currentMode} to ${newMode}`);
+        // We'll distinguish between the initial mode setup and transitions:
+        let modeChanged = this.currentMode && this.currentMode != newMode;
+
+        console.info(
+            `switching to mode ${newMode} (previously ${this.currentMode})`
+        );
+
         this.currentMode = newMode;
         this.appElement.dataset.mode = this.currentMode;
         this.addToState('mode', this.currentMode);
-        this.queuedAssetPageURLs.length = 0;
 
         $$('button', this.modeSelection).forEach(button => {
             button.classList.toggle('active', button.value == newMode);
@@ -210,8 +212,12 @@ export class ActionApp {
         $$('.current-mode').forEach(i => (i.textContent = this.currentMode));
 
         this.updateAvailableCampaignFilters();
-        this.closeViewer();
-        this.refreshData();
+
+        if (modeChanged) {
+            this.queuedAssetPageURLs.length = 0;
+            this.closeViewer();
+            this.refreshData();
+        }
     }
 
     setupSidebar() {
