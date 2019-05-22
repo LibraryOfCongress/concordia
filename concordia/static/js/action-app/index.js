@@ -349,6 +349,12 @@ export class ActionApp {
                     );
             }
 
+            if (this.openAssetId && assetId == this.openAssetId) {
+                // Someone may be looking at an asset even if they have not
+                // locked it and this provides real-time updates:
+                this.updateViewer();
+            }
+
             let assetListItem = this.assetList.lookup[assetId];
             if (assetListItem) {
                 // If this is visible, we want to update the displayed asset
