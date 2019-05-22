@@ -67,6 +67,8 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
 
         self.assertIn("pagination", data)
 
+        self.assertAssetsHaveLatestTranscriptions(data["objects"])
+
         return resp, data
 
     def assertAssetStatuses(self, asset_list, expected_statuses):
@@ -78,6 +80,24 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
             ),
             [],
         )
+
+    def assertAssetsHaveLatestTranscriptions(self, asset_list):
+        asset_pks = {i["id"]: i for i in asset_list}
+
+        for asset in Asset.objects.filter(pk__in=asset_pks.keys()):
+            latest_trans = asset.transcription_set.latest("pk")
+
+            if latest_trans is None:
+                self.assertIsNone(asset_pks[asset.id]["latest_transcription"])
+            else:
+                self.assertDictEqual(
+                    asset_pks[asset.id]["latest_transcription"],
+                    {
+                        "id": latest_trans.pk,
+                        "text": latest_trans.text,
+                        "submitted_by": latest_trans.user_id,
+                    },
+                )
 
     def test_asset_list(self):
         resp, data = self.get_asset_list(reverse("assets-list-json"))
