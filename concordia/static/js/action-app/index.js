@@ -1,4 +1,4 @@
-/* global Split jQuery URITemplate sortBy */
+/* global Split jQuery URITemplate sortBy Sentry */
 /* eslint-disable no-console */
 
 import {mount} from 'https://cdnjs.cloudflare.com/ajax/libs/redom/3.18.0/redom.es.min.js';
@@ -191,6 +191,8 @@ export class ActionApp {
             $$('button', this.modeSelection).forEach(button => {
                 button.classList.toggle('active', button.value == mode);
             });
+        } else {
+            Sentry.captureMessage(`Setup requested for unknown ${mode} mode`);
         }
     }
 
