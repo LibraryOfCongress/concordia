@@ -1,7 +1,8 @@
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from django.utils.timezone import now
 
-from concordia.models import Asset, Item, Transcription, TranscriptionStatus
+from concordia.models import Asset, Item, Transcription, TranscriptionStatus, User
 from concordia.utils import get_anonymous_user
 
 from .utils import JSONAssertMixin, create_asset, create_item, create_project
@@ -11,7 +12,11 @@ from .utils import JSONAssertMixin, create_asset, create_item, create_project
 class ConcordiaViewTests(JSONAssertMixin, TestCase):
     @classmethod
     def setUpTestData(cls):
-        anon_user = get_anonymous_user()
+        cls.anon_user = get_anonymous_user()
+
+        cls.reviewer = User.objects.create_user(
+            username="reviewer", email="tester@example.com"
+        )
 
         project = create_project()
 
@@ -41,10 +46,16 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
                         asset=asset,
                         supersedes=last_t,
                         text=f"{asset} — {n}",
-                        user=anon_user,
+                        user=cls.anon_user,
                     )
                 )
+
         Transcription.objects.bulk_create(cls.transcriptions)
+
+        submitted_t = cls.transcriptions[-1]
+        submitted_t.submitted = now()
+        submitted_t.full_clean()
+        submitted_t.save()
 
     def get_asset_list(self, url, page_size=23):
         resp = self.client.get(url, {"per_page": page_size})
@@ -54,10 +65,7 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
         object_count = len(data["objects"])
         self.assertLessEqual(object_count, 23)
 
-        if object_count >= page_size:
-            self.assertIn("pagination", data)
-        else:
-            self.assertNotIn("pagination", data)
+        self.assertIn("pagination", data)
 
         return resp, data
 
@@ -86,3 +94,5 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
         resp, data = self.get_asset_list(reverse("review-assets-json"))
 
         self.assertAssetStatuses(data["objects"], [TranscriptionStatus.SUBMITTED])
+
+        self.assertGreater(len(data["objects"]), 0)
