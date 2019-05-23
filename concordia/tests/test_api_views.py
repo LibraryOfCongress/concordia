@@ -27,11 +27,14 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
             username="reviewer", email="tester@example.com"
         )
 
-        project = create_project()
+        cls.test_project = create_project()
 
         cls.items = [
             create_item(
-                item_id=f"item_{i}", title=f"Item {i}", project=project, do_save=False
+                item_id=f"item_{i}",
+                title=f"Item {i}",
+                project=cls.test_project,
+                do_save=False,
             )
             for i in range(0, 3)
         ]
@@ -66,7 +69,22 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
         submitted_t.full_clean()
         submitted_t.save()
 
-    def get_api_response(self, url, page_size=23, **request_args):
+    def get_api_response(self, url, **request_args):
+        """
+        This issues a call to one of our API views and confirms that the
+        response follows our basic conventions of returning a valid JSON
+        response
+        """
+
+        qs = {"format": "json"}
+        if request_args is not None:
+            qs.update(request_args)
+
+        resp = self.client.get(url, qs)
+        data = self.assertValidJSON(resp)
+        return resp, data
+
+    def get_api_list_response(self, url, page_size=23, **request_args):
         """
         This issues a call to one of our API views and confirms that the
         response follows our basic conventions of returning a top level object
@@ -77,14 +95,13 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
         if request_args is not None:
             qs.update(request_args)
 
-        resp = self.client.get(url, qs)
-        data = self.assertValidJSON(resp)
+        resp, data = self.get_api_response(url, **qs)
 
         self.assertIn("objects", data)
         self.assertIn("pagination", data)
 
         object_count = len(data["objects"])
-        self.assertLessEqual(object_count, 23)
+        self.assertLessEqual(object_count, page_size)
 
         self.assertAbsoluteURLs(data["objects"])
         self.assertAbsoluteURLs(data["pagination"])
@@ -148,12 +165,12 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
                 )
 
     def test_asset_list(self):
-        resp, data = self.get_api_response(reverse("assets-list-json"))
+        resp, data = self.get_api_list_response(reverse("assets-list-json"))
 
         self.assertAssetsHaveLatestTranscriptions(data["objects"])
 
     def test_transcribable_asset_list(self):
-        resp, data = self.get_api_response(reverse("transcribe-assets-json"))
+        resp, data = self.get_api_list_response(reverse("transcribe-assets-json"))
 
         self.assertAssetStatuses(
             data["objects"],
@@ -163,7 +180,7 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
         self.assertAssetsHaveLatestTranscriptions(data["objects"])
 
     def test_reviewable_asset_list(self):
-        resp, data = self.get_api_response(reverse("review-assets-json"))
+        resp, data = self.get_api_list_response(reverse("review-assets-json"))
 
         self.assertAssetStatuses(data["objects"], [TranscriptionStatus.SUBMITTED])
 
@@ -172,7 +189,7 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
         self.assertAssetsHaveLatestTranscriptions(data["objects"])
 
     def test_campaign_list(self):
-        resp, data = self.get_api_response(
+        resp, data = self.get_api_list_response(
             reverse("transcriptions:campaign-list"), format="json"
         )
 
@@ -189,3 +206,35 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
             self.assertIn("id", obj)
             self.assertIn("url", obj)
             self.assertDictContainsSubset(test_campaigns[obj["id"]], obj)
+
+    def test_campaign_detail(self):
+        resp, data = self.get_api_response(
+            reverse(
+                "transcriptions:campaign-detail",
+                kwargs={"slug": self.test_project.campaign.slug},
+            ),
+            format="json",
+        )
+
+        self.assertIn("object", data)
+        self.assertNotIn("objects", data)
+
+        serialized_project = data["object"]
+
+        self.assertIn("id", serialized_project)
+        self.assertIn("url", serialized_project)
+        campaign = self.test_project.campaign
+        self.assertDictContainsSubset(
+            {
+                "id": campaign.id,
+                "title": campaign.title,
+                "description": campaign.description,
+                "slug": campaign.slug,
+                "metadata": campaign.metadata,
+                "thumbnail_image": campaign.thumbnail_image,
+            },
+            serialized_project,
+        )
+        self.assertURLEqual(
+            serialized_project["url"], f"http://testserver{campaign.get_absolute_url()}"
+        )
