@@ -238,3 +238,44 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
         self.assertURLEqual(
             serialized_project["url"], f"http://testserver{campaign.get_absolute_url()}"
         )
+
+    def test_project_detail(self):
+        project = self.test_project
+
+        resp, data = self.get_api_list_response(project.get_absolute_url())
+
+        # Until we clean up the project view code, projects have two key
+        # elements: objects lists the children (i.e. items) and the project
+        # itself is in a second top-level “project” object:
+        self.assertIn("objects", data)
+        self.assertIn("project", data)
+        self.assertNotIn("object", data)
+
+        serialized_project = data["project"]
+
+        self.assertIn("id", serialized_project)
+        self.assertIn("url", serialized_project)
+
+        self.assertURLEqual(
+            serialized_project["url"], f"http://testserver{project.get_absolute_url()}"
+        )
+        self.assertDictContainsSubset(
+            {
+                "description": project.description,
+                "id": project.id,
+                "metadata": project.metadata,
+                "slug": project.slug,
+                "thumbnail_image": project.thumbnail_image,
+                "title": project.title,
+            },
+            serialized_project,
+        )
+
+        for obj in data["objects"]:
+            self.assertIn("description", obj)
+            self.assertIn("item_id", obj)
+            self.assertIn("item_url", obj)
+            self.assertIn("metadata", obj)
+            self.assertIn("thumbnail_url", obj)
+            self.assertIn("title", obj)
+            self.assertIn("url", obj)
