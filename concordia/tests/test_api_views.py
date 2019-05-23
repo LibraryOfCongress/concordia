@@ -115,8 +115,8 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
             return
 
         parsed = urlparse(url)
-        self.assertEqual(
-            parsed.scheme, "http", msg=f"Expected {url} to have HTTP scheme"
+        self.assertIn(
+            parsed.scheme, ["http", "https"], msg=f"Expected {url} to have HTTP scheme"
         )
 
         self.assertTrue(parsed.netloc)
@@ -276,3 +276,46 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
             self.assertIn("thumbnail_url", obj)
             self.assertIn("title", obj)
             self.assertIn("url", obj)
+
+    def test_item_detail(self):
+        item = self.test_project.item_set.first()
+        resp, data = self.get_api_list_response(item.get_absolute_url())
+
+        # Until we clean up the project view code, projects have two key
+        # elements: objects lists the children (i.e. items) and the project
+        # itself is in a second top-level “project” object:
+        self.assertIn("objects", data)
+        self.assertIn("item", data)
+        self.assertNotIn("object", data)
+
+        serialized_item = data["item"]
+
+        self.assertIn("id", serialized_item)
+        self.assertIn("url", serialized_item)
+        self.assertIn("thumbnail_url", serialized_item)
+
+        self.assertURLEqual(
+            serialized_item["url"], f"http://testserver{item.get_absolute_url()}"
+        )
+        self.assertDictContainsSubset(
+            {
+                "description": item.description,
+                "id": item.id,
+                "item_id": item.item_id,
+                "metadata": item.metadata,
+                "title": item.title,
+            },
+            serialized_item,
+        )
+
+        for obj in data["objects"]:
+            self.assertIn("description", obj)
+            self.assertIn("difficulty", obj)
+            self.assertIn("metadata", obj)
+            self.assertIn("image_url", obj)
+            self.assertIn("thumbnail_url", obj)
+            self.assertIn("resource_url", obj)
+            self.assertIn("title", obj)
+            self.assertIn("slug", obj)
+            self.assertIn("url", obj)
+            self.assertIn("year", obj)
