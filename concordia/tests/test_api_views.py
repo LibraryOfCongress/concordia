@@ -165,12 +165,12 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
                 )
 
     def test_asset_list(self):
-        resp, data = self.get_api_list_response(reverse("assets-list-json"))
+        resp, data = self.get_api_list_response(reverse("asset-list"))
 
         self.assertAssetsHaveLatestTranscriptions(data["objects"])
 
     def test_transcribable_asset_list(self):
-        resp, data = self.get_api_list_response(reverse("transcribe-assets-json"))
+        resp, data = self.get_api_list_response(reverse("transcribe-asset-list"))
 
         self.assertAssetStatuses(
             data["objects"],
@@ -180,7 +180,7 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
         self.assertAssetsHaveLatestTranscriptions(data["objects"])
 
     def test_reviewable_asset_list(self):
-        resp, data = self.get_api_list_response(reverse("review-assets-json"))
+        resp, data = self.get_api_list_response(reverse("review-asset-list"))
 
         self.assertAssetStatuses(data["objects"], [TranscriptionStatus.SUBMITTED])
 
