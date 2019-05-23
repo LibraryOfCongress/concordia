@@ -730,6 +730,14 @@ class AssetDetailView(APIDetailView):
             transcription_status = TranscriptionStatus.NOT_STARTED
         ctx["transcription_status"] = transcription_status
 
+        if (
+            transcription_status == TranscriptionStatus.NOT_STARTED
+            or transcription_status == TranscriptionStatus.IN_PROGRESS
+        ):
+            ctx["activity_mode"] = "transcribe"
+        if transcription_status == TranscriptionStatus.SUBMITTED:
+            ctx["activity_mode"] = "review"
+
         previous_asset = (
             item.asset_set.published()
             .filter(sequence__lt=asset.sequence)
