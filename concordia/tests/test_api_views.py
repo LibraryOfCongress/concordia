@@ -57,8 +57,17 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
         submitted_t.full_clean()
         submitted_t.save()
 
-    def get_asset_list(self, url, page_size=23):
-        resp = self.client.get(url, {"per_page": page_size})
+    def get_api_response(self, url, page_size=23, **request_args):
+        """
+        This issues a call to one of our API views and confirms that the
+        response follows our basic conventions
+        """
+
+        qs = {"per_page": page_size}
+        if request_args is not None:
+            qs.update(request_args)
+
+        resp = self.client.get(url, qs)
         data = self.assertValidJSON(resp)
 
         self.assertIn("objects", data)
@@ -66,8 +75,6 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
         self.assertLessEqual(object_count, 23)
 
         self.assertIn("pagination", data)
-
-        self.assertAssetsHaveLatestTranscriptions(data["objects"])
 
         return resp, data
 
@@ -100,19 +107,25 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
                 )
 
     def test_asset_list(self):
-        resp, data = self.get_asset_list(reverse("assets-list-json"))
+        resp, data = self.get_api_response(reverse("assets-list-json"))
+
+        self.assertAssetsHaveLatestTranscriptions(data["objects"])
 
     def test_transcribable_asset_list(self):
-        resp, data = self.get_asset_list(reverse("transcribe-assets-json"))
+        resp, data = self.get_api_response(reverse("transcribe-assets-json"))
 
         self.assertAssetStatuses(
             data["objects"],
             [TranscriptionStatus.NOT_STARTED, TranscriptionStatus.IN_PROGRESS],
         )
 
+        self.assertAssetsHaveLatestTranscriptions(data["objects"])
+
     def test_reviewable_asset_list(self):
-        resp, data = self.get_asset_list(reverse("review-assets-json"))
+        resp, data = self.get_api_response(reverse("review-assets-json"))
 
         self.assertAssetStatuses(data["objects"], [TranscriptionStatus.SUBMITTED])
 
         self.assertGreater(len(data["objects"]), 0)
+
+        self.assertAssetsHaveLatestTranscriptions(data["objects"])
