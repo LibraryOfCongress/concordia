@@ -651,6 +651,10 @@ class ItemDetailView(APIListView):
 
     def serialize_context(self, context):
         data = super().serialize_context(context)
+
+        for i, asset in enumerate(context["object_list"]):
+            data["objects"][i]["media_url"] = asset_media_url(asset)
+
         data["item"] = self.serialize_object(context["item"])
         return data
 
