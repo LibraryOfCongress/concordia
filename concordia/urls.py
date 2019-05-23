@@ -117,17 +117,11 @@ urlpatterns = [
         name="review-transcription",
     ),
     path("assets/<int:asset_pk>/tags/submit/", views.submit_tags, name="submit-tags"),
-    path("assets/", views.AssetListView.as_view(), name="assets-list"),
-    # TODO: decide whether we want to keep the .json URL formats or rely on ?format=json
-    path("assets.json", views.AssetListView.as_view(), name="assets-list-json"),
-    path("transcribe/", views.TranscribeListView.as_view(), name="transcribe-assets"),
+    path("assets/", views.AssetListView.as_view(), name="asset-list"),
     path(
-        "transcribe.json",
-        views.TranscribeListView.as_view(),
-        name="transcribe-assets-json",
+        "transcribe/", views.TranscribeListView.as_view(), name="transcribe-asset-list"
     ),
-    path("review/", views.ReviewListView.as_view(), name="review-assets"),
-    path("review.json", views.ReviewListView.as_view(), name="review-assets-json"),
+    path("review/", views.ReviewListView.as_view(), name="review-asset-list"),
     path("account/ajax-status/", views.ajax_session_status, name="ajax-session-status"),
     path("account/ajax-messages/", views.ajax_messages, name="ajax-messages"),
     path(
