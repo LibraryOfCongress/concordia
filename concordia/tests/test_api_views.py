@@ -1,3 +1,5 @@
+from urllib.parse import urlparse
+
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils.timezone import now
@@ -79,12 +81,43 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
         data = self.assertValidJSON(resp)
 
         self.assertIn("objects", data)
+        self.assertIn("pagination", data)
+
         object_count = len(data["objects"])
         self.assertLessEqual(object_count, 23)
 
-        self.assertIn("pagination", data)
+        self.assertAbsoluteURLs(data["objects"])
+        self.assertAbsoluteURLs(data["pagination"])
 
         return resp, data
+
+    def assertAbsoluteUrl(self, url, allow_none=True):
+        """Require a URL to either be None or an absolute URL"""
+
+        if url is None and allow_none:
+            return
+
+        parsed = urlparse(url)
+        self.assertEqual(
+            parsed.scheme, "http", msg=f"Expected {url} to have HTTP scheme"
+        )
+
+        self.assertTrue(parsed.netloc)
+
+    def assertAbsoluteURLs(self, data):
+        if isinstance(data, dict):
+            for k, v in data.items():
+                if k.endswith("url"):
+                    self.assertAbsoluteUrl(v)
+                elif isinstance(v, (dict, list)):
+                    self.assertAbsoluteURLs(v)
+        elif isinstance(data, list):
+            for i in data:
+                self.assertAbsoluteURLs(i)
+        else:
+            raise TypeError(
+                "assertAbsoluteURLs must be called with a dictionary or list"
+            )
 
     def assertAssetStatuses(self, asset_list, expected_statuses):
         asset_pks = [i["id"] for i in asset_list]
