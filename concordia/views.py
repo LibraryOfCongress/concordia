@@ -61,6 +61,7 @@ from concordia.signals.signals import reservation_obtained, reservation_released
 from concordia.templatetags.concordia_media_tags import asset_media_url
 from concordia.utils import (
     get_anonymous_user,
+    get_image_urls_from_asset,
     get_or_create_reservation_token,
     request_accepts_json,
 )
@@ -651,6 +652,14 @@ class ItemDetailView(APIListView):
 
     def serialize_context(self, context):
         data = super().serialize_context(context)
+
+        for i, asset in enumerate(context["object_list"]):
+            serialized_asset = data["objects"][i]
+            serialized_asset.pop("media_url")
+            image_url, thumbnail_url = get_image_urls_from_asset(asset)
+            serialized_asset["image_url"] = image_url
+            serialized_asset["thumbnail_url"] = thumbnail_url
+
         data["item"] = self.serialize_object(context["item"])
         return data
 
@@ -1474,13 +1483,7 @@ class AssetListView(APIListView):
         project = item.project
         campaign = project.campaign
 
-        image_url = asset_media_url(obj)
-        if obj.download_url and "iiif" in obj.download_url:
-            thumbnail_url = obj.download_url.replace(
-                "http://tile.loc.gov", "https://tile.loc.gov"
-            )
-        else:
-            thumbnail_url = image_url
+        image_url, thumbnail_url = get_image_urls_from_asset(obj)
 
         metadata = {
             "id": obj.pk,
