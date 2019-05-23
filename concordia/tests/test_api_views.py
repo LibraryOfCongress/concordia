@@ -189,9 +189,7 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
         self.assertAssetsHaveLatestTranscriptions(data["objects"])
 
     def test_campaign_list(self):
-        resp, data = self.get_api_list_response(
-            reverse("transcriptions:campaign-list"), format="json"
-        )
+        resp, data = self.get_api_list_response(reverse("transcriptions:campaign-list"))
 
         self.assertGreater(len(data["objects"]), 0)
 
@@ -212,8 +210,7 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
             reverse(
                 "transcriptions:campaign-detail",
                 kwargs={"slug": self.test_project.campaign.slug},
-            ),
-            format="json",
+            )
         )
 
         self.assertIn("object", data)
