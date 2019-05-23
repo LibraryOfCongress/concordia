@@ -2,7 +2,14 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils.timezone import now
 
-from concordia.models import Asset, Item, Transcription, TranscriptionStatus, User
+from concordia.models import (
+    Asset,
+    Campaign,
+    Item,
+    Transcription,
+    TranscriptionStatus,
+    User,
+)
 from concordia.utils import get_anonymous_user
 
 from .utils import JSONAssertMixin, create_asset, create_item, create_project
@@ -60,7 +67,8 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
     def get_api_response(self, url, page_size=23, **request_args):
         """
         This issues a call to one of our API views and confirms that the
-        response follows our basic conventions
+        response follows our basic conventions of returning a top level object
+        with members“objects” (list) and “pagination” (object).
         """
 
         qs = {"per_page": page_size}
@@ -129,3 +137,22 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
         self.assertGreater(len(data["objects"]), 0)
 
         self.assertAssetsHaveLatestTranscriptions(data["objects"])
+
+    def test_campaign_list(self):
+        resp, data = self.get_api_response(
+            reverse("transcriptions:campaign-list"), format="json"
+        )
+
+        self.assertGreater(len(data["objects"]), 0)
+
+        test_campaigns = {
+            i["id"]: i
+            for i in Campaign.objects.published().values(
+                "id", "title", "description", "short_description", "slug"
+            )
+        }
+
+        for obj in data["objects"]:
+            self.assertIn("id", obj)
+            self.assertIn("url", obj)
+            self.assertDictContainsSubset(test_campaigns[obj["id"]], obj)
