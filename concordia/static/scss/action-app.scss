@@ -181,15 +181,23 @@ main {
     }
 
     .asset-tooltip {
-        margin: $asset-thumbnail-gap * -1;
-        padding: 14px;
-        background-color: $white;
-        font-size: $concordia-app-font-size-xs;
-        line-height: $concordia-app-line-height-xs;
-        pointer-events: none;
-        overflow: hidden;
         width: calc(100% + ($asset-thumbnail-gap * 2));
         height: calc(100% + ($asset-thumbnail-gap * 2));
+
+        margin: $asset-thumbnail-gap * -1;
+        padding: 14px;
+
+        border: $border-width solid $gray-600;
+
+        overflow: hidden;
+
+        pointer-events: none;
+
+        background-color: $white;
+
+        font-size: $concordia-app-font-size-xs;
+        line-height: $concordia-app-line-height-xs;
+
         .item-title {
             font-weight: bold;
             margin-bottom: 1rem;
