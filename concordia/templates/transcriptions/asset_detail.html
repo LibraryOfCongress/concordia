@@ -519,7 +519,7 @@
 <script src="{% static 'js/contribute.js' %}"></script>
 <script src="{% static 'js/asset-reservation.js' %}"></script>
 <script>
-    if(localStorage.getItem("no-interface-banner")==null) {
+    if(!localStorage.getItem("no-interface-banner")) {
         $("#new-interface-banner").attr("hidden", false);
     }
     $("#no-interface-banner").click(function() {
