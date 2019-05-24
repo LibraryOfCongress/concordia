@@ -514,10 +514,10 @@ class ReviewerView {
 
         this.el.classList.toggle(
             'nothing-to-transcribe',
-            !asset.latest_transcription
+            !asset.latest_transcription.text
         );
 
-        if (asset.latest_transcription) {
+        if (asset.latest_transcription.text) {
             this.displayText.textContent = asset.latest_transcription.text;
         } else {
             this.displayText.innerHTML = 'Nothing to transcribe';
