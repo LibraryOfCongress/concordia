@@ -36,7 +36,4 @@ script:
     - git diff --name-only $TRAVIS_COMMIT_RANGE | xargs pipenv run pre-commit run --files
     - pipenv run safety check
 after_success:
-    - git fetch --unshallow --tags
-    - pipenv run coverage xml
-    - sonar-scanner -Dsonar.projectVersion="$(pipenv run python setup.py --version)"
-    - coveralls
+    - 'if [[ $TRAVIS_PYTHON_VERSION == "3.7" ]]; then git fetch --unshallow --tags; pipenv run coverage xml; sonar-scanner -Dsonar.projectVersion="$(pipenv run python setup.py --version)"; coveralls; fi'
