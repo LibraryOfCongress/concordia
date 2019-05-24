@@ -197,12 +197,11 @@ $ pipenv run ./manage.py print_frontend_test_urls | xargs npx axe --show-errors
 
 ### Static Image Compression
 
-The `concordia/static/img` directory has a Makefile which will run an
-[imagemin](http://github.com/imagemin/imagemin)-based toolchain. Use of other
-tools such as [ImageOptim](https://github.com/ImageOptim/ImageOptim) may yield
-better results at the expensive of portability and is encouraged at least for
-comparison purposes.
+When you update any of the files under `concordia/static/img`, please use an
+optimizer such as [ImageOptim](https://imageoptim.com) to losslessly compress
+JPEG, PNG, SVG, etc. files.
 
 ```bash
-$ make -C concordia/static/img/
+$ brew cask install imageoptim
+$ open -a ImageOptim concordia/static/img/
 ```

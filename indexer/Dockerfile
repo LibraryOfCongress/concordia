@@ -14,7 +14,6 @@ RUN apt-get update -qy && apt-get dist-upgrade -qy && apt-get install -o Dpkg::O
     libz-dev libfreetype6-dev \
     libmemcached-dev \
     libtiff-dev libjpeg-dev libopenjp2-7-dev libwebp-dev zlib1g-dev \
-    jpegoptim libjpeg-turbo-progs optipng advancecomp \
     graphviz \
     locales && apt-get -qy autoremove && apt-get -qy autoclean
 
