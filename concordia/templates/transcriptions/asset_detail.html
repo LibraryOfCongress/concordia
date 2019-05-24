@@ -32,10 +32,11 @@
 {% flag_enabled 'ADVERTISE_ACTIVITY_UI' as ADVERTISE_ACTIVITY_UI %}
 
 {% if ADVERTISE_ACTIVITY_UI and activity_mode %}
-    <div class="alert alert-dark alert-dismissible w-100" role="alert">
-        <a href="{% url 'action-app' %}#mode={{ activity_mode }}&asset={{ asset.pk }}" target="_blank">
+    <div class="alert alert-dark alert-dismissible w-100 text-center" id="new-interface-banner" role="alert" hidden>
+        <a class="btn btn-success" href="{% url 'action-app' %}#mode={{ activity_mode }}&asset={{ asset.pk }}" target="_blank">
             Try this page in our new interface
         </a>
+        <button type="button" class="btn btn-dark" id="no-interface-banner">Don't display this again</button>
         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
             <span aria-hidden="true">&times;</span>
         </button>
@@ -517,6 +518,16 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/openseadragon/2.4.0/openseadragon.min.js" integrity="sha256-grVJpqgDSGBx1q2llmvY+J5zU9hEHbO7UvftFY2bK1w=" crossorigin="anonymous"></script>
 <script src="{% static 'js/contribute.js' %}"></script>
 <script src="{% static 'js/asset-reservation.js' %}"></script>
+<script>
+    if(localStorage.getItem("no-interface-banner")==null) {
+        $("#new-interface-banner").attr("hidden", false);
+    }
+    $("#no-interface-banner").click(function() {
+        localStorage.setItem("no-interface-banner", true);
+        $("#new-interface-banner").attr("hidden", true);
+    })
+
+</script>
 <script>
     var seadragonViewer = OpenSeadragon({
         id: "asset-image",
