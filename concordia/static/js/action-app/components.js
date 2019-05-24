@@ -378,7 +378,7 @@ export class AssetList extends List {
                 tooltip.update(asset);
                 mount(target, tooltip);
                 popper = new Popper(target, tooltip.el, {
-                    placement: 'left'
+                    placement: 'bottom'
                 });
             }
         };
