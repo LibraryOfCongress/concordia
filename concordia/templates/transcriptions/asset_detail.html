@@ -519,14 +519,16 @@
 <script src="{% static 'js/contribute.js' %}"></script>
 <script src="{% static 'js/asset-reservation.js' %}"></script>
 <script>
-    if(!localStorage.getItem("no-interface-banner")) {
+    if (
+        !localStorage.getItem("no-interface-banner") &&
+        !(window.screen.width < 1024 || window.screen.height < 768)
+    ) {
         $("#new-interface-banner").attr("hidden", false);
     }
     $("#no-interface-banner").click(function() {
         localStorage.setItem("no-interface-banner", true);
         $("#new-interface-banner").attr("hidden", true);
-    })
-
+    });
 </script>
 <script>
     var seadragonViewer = OpenSeadragon({
