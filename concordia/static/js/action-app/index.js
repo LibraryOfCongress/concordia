@@ -978,17 +978,21 @@ export class ActionApp {
                 this.updateViewer();
             })
             .fail((jqXHR, textStatus, errorThrown) => {
-                console.error(
-                    'Unable to reserve asset: %s %s',
-                    textStatus,
-                    errorThrown
-                );
+                if (jqXHR.status != 409) {
+                    console.error(
+                        'Unable to reserve asset: %s %s',
+                        textStatus,
+                        errorThrown
+                    );
 
-                this.reportError(
-                    'reservation',
-                    `Unable to reserve asset`,
-                    errorThrown ? `${textStatus}: ${errorThrown}` : textStatus
-                );
+                    this.reportError(
+                        'reservation',
+                        `Unable to reserve asset`,
+                        errorThrown
+                            ? `${textStatus}: ${errorThrown}`
+                            : textStatus
+                    );
+                }
 
                 this.assetReserved = false;
                 this.updateViewer();
