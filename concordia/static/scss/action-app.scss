@@ -133,8 +133,13 @@ main {
         transition-property: height, width;
         transition-duration: 0.1s;
 
+        &:hover {
+            outline: 2px solid $blue;
+            outline-offset: -2px;
+        }
+
         &.asset-active {
-            outline: 2px auto $orange;
+            outline: 2px solid $orange;
             outline-offset: -2px;
         }
 
