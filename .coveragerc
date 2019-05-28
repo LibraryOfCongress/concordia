@@ -8,6 +8,7 @@ omit =
     */migrations/*
     */tests/*
     */settings*.py
+    */static/*
 
 [report]
 include =
@@ -18,3 +19,4 @@ omit =
     */migrations/*
     */tests/*
     */settings*.py
+    */static/*
