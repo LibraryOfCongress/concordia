@@ -7,8 +7,21 @@ from django.urls import reverse
 
 from concordia.models import SimplePage
 
+from .utils import JSONAssertMixin
+
 
 class TopLevelViewTests(JSONAssertMixin, TestCase):
+    def test_healthz(self):
+        data = self.assertValidJSON(self.client.get("/healthz"))
+
+        for k in (
+            "current_time",
+            "load_average",
+            "debug",
+            "database_has_data",
+            "application_version",
+        ):
+            self.assertIn(k, data)
 
     def test_contact_us_get(self):
         response = self.client.get(reverse("contact"))
