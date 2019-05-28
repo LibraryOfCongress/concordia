@@ -712,8 +712,6 @@ export class ActionApp {
                 this.assetList.update(visibleAssets);
                 console.timeEnd('Updating asset list');
 
-                this.assetList.scrollToActiveAsset();
-
                 this.attemptAssetLazyLoad();
             });
         });
