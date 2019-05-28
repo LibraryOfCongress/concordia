@@ -88,3 +88,25 @@ class TopLevelViewTests(JSONAssertMixin, TestCase):
             [(reverse("help-center"), s.title)], resp.context["breadcrumbs"]
         )
         self.assertEqual(resp.context["body"], f"<p>{s.body}</p>")
+
+    def test_nested_simple_page(self):
+        l1 = SimplePage.objects.create(
+            title="Help Center", body="not the real body", path=reverse("help-center")
+        )
+
+        l2 = SimplePage.objects.create(
+            title="Help Center Welcome Guide",
+            body="This is _not_ the real page",
+            path=reverse("welcome-guide"),
+        )
+
+        resp = self.client.get(reverse("welcome-guide"))
+        self.assertEqual(200, resp.status_code)
+        self.assertEqual(l2.title, resp.context["title"])
+        self.assertEqual(
+            resp.context["breadcrumbs"],
+            [(reverse("help-center"), l1.title), (reverse("welcome-guide"), l2.title)],
+        )
+        self.assertHTMLEqual(
+            resp.context["body"], f"<p>This is <em>not</em> the real page</p>"
+        )
