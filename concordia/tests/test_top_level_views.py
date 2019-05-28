@@ -23,6 +23,12 @@ class TopLevelViewTests(JSONAssertMixin, TestCase):
         ):
             self.assertIn(k, data)
 
+    def test_homepage(self):
+        response = self.client.get(reverse("homepage"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "home.html")
+
     def test_contact_us_get(self):
         response = self.client.get(reverse("contact"))
 
