@@ -47,6 +47,20 @@ class TopLevelViewTests(JSONAssertMixin, CreateTestUsers, TestCase):
             response.context["form"].initial["referrer"], test_http_referrer
         )
 
+    def test_contact_us_as_a_logged_in_user(self):
+        """
+        The contact form should pre-fill your email address if you're logged in
+        """
+
+        self.login_user()
+
+        response = self.client.get(reverse("contact"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "contact.html")
+
+        self.assertEqual(response.context["form"].initial["email"], self.user.email)
+
     def test_contact_us_post(self):
         post_data = {
             "email": "nobody@example.com",
