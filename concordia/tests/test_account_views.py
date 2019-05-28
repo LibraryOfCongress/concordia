@@ -26,10 +26,13 @@ class ConcordiaViewTests(
 
         response = self.client.get(reverse("user-profile"))
 
-        # validate the web page has the "tester" and "tester@example.com" as values
         self.assertEqual(response.status_code, 200)
         self.assertUncacheable(response)
         self.assertTemplateUsed(response, template_name="account/profile.html")
+
+        self.assertEqual(response.context["user"], self.user)
+        self.assertContains(response, self.user.username)
+        self.assertContains(response, self.user.email)
 
     def test_AccountProfileView_post(self):
         """
