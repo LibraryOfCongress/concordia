@@ -1,22 +1,22 @@
+"""
+Tests for for the top-level & “CMS” views
+"""
+
 from django.test import TestCase
 from django.urls import reverse
 
+from concordia.models import SimplePage
 
-class ViewTest_1st_level(TestCase):
-    """
-    This is a test case for testing all the first level views originated
-    from home pages.
 
-    """
+class TopLevelViewTests(JSONAssertMixin, TestCase):
 
     def test_contact_us_get(self):
-
         response = self.client.get(reverse("contact"))
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "contact.html")
 
-    def test_contact_us_get_pre_populate(self):
+    def test_contact_us_with_referrer(self):
         test_http_referrer = "http://foo/bar"
 
         response = self.client.get(reverse("contact"), HTTP_REFERER=test_http_referrer)
@@ -54,3 +54,18 @@ class ViewTest_1st_level(TestCase):
         self.assertEqual(
             {"email": ["Enter a valid email address."]}, response.context["form"].errors
         )
+
+    def test_simple_page(self):
+        s = SimplePage.objects.create(
+            title="Help Center 123",
+            body="not the real body",
+            path=reverse("help-center"),
+        )
+
+        resp = self.client.get(reverse("help-center"))
+        self.assertEqual(200, resp.status_code)
+        self.assertEqual(s.title, resp.context["title"])
+        self.assertEqual(
+            [(reverse("help-center"), s.title)], resp.context["breadcrumbs"]
+        )
+        self.assertEqual(resp.context["body"], f"<p>{s.body}</p>")
