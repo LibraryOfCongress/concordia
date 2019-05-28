@@ -15,11 +15,11 @@ from concordia.models import (
     AssetTranscriptionReservation,
     Transcription,
     TranscriptionStatus,
-    User,
 )
 from concordia.utils import get_anonymous_user
 
 from .utils import (
+    CreateTestUsers,
     JSONAssertMixin,
     create_asset,
     create_campaign,
@@ -29,24 +29,10 @@ from .utils import (
 
 
 @override_settings(RATELIMIT_ENABLE=False)
-class ConcordiaViewTests(JSONAssertMixin, TestCase):
+class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
     """
     This class contains the unit tests for the view in the concordia app.
     """
-
-    def login_user(self):
-        """
-        Create a user and log the user in
-        """
-
-        # create user and login
-        self.user = User.objects.create_user(
-            username="tester", email="tester@example.com"
-        )
-        self.user.set_password("top_secret")
-        self.user.save()
-
-        self.client.login(username="tester", password="top_secret")
 
     def test_campaign_list_view(self):
         """
@@ -273,21 +259,7 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
 
 
 @override_settings(RATELIMIT_ENABLE=False)
-class TransactionalViewTests(JSONAssertMixin, TransactionTestCase):
-    def login_user(self):
-        """
-        Create a user and log the user in
-        """
-
-        # create user and login
-        self.user = User.objects.create_user(
-            username="tester", email="tester@example.com"
-        )
-        self.user.set_password("top_secret")
-        self.user.save()
-
-        self.client.login(username="tester", password="top_secret")
-
+class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCase):
     def completeCaptcha(self, key=None):
         """Submit a CAPTCHA response using the provided challenge key"""
 
@@ -778,12 +750,10 @@ class TransactionalViewTests(JSONAssertMixin, TransactionTestCase):
         )
         data = self.assertValidJSON(resp, expected_status=200)
 
-        second_user = User.objects.create_user(
+        second_user = self.create_test_user(
             username="second_tester", email="second_tester@example.com"
         )
-        second_user.set_password("secret")
-        second_user.save()
-        self.client.login(username="second_tester", password="secret")
+        self.client.login(username=second_user.username, password=second_user.password)
 
         resp = self.client.post(
             reverse("submit-tags", kwargs={"asset_pk": asset.pk}),

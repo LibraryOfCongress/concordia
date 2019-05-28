@@ -1,9 +1,10 @@
 import json
 from functools import wraps
+from secrets import token_hex
 
 from django.utils.text import slugify
 
-from concordia.models import Asset, Campaign, Item, MediaType, Project
+from concordia.models import Asset, Campaign, Item, MediaType, Project, User
 
 
 def ensure_slug(original_function):
@@ -132,3 +133,32 @@ class JSONAssertMixin(object):
             raise
 
         return data
+
+
+class CreateTestUsers(object):
+    def login_user(self):
+        """
+        Create a user and log the user in
+        """
+
+        if not hasattr(self, "user"):
+            self.user = self.create_test_user("tester")
+
+        self.client.login(username=self.user.username, password=self.user.password)
+
+    def create_test_user(self, username, **kwargs):
+        """
+        Creates a test User account
+        """
+
+        if "email" not in kwargs:
+            kwargs["email"] = f"{username}@example.com"
+
+        user = User.objects.create_user(username=username, **kwargs)
+        fake_pw = token_hex(24)
+        user.set_password(fake_pw)
+        user.save()
+
+        user.password = fake_pw
+
+        return user

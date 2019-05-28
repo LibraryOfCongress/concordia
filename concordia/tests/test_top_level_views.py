@@ -7,10 +7,10 @@ from django.urls import reverse
 
 from concordia.models import SimplePage
 
-from .utils import JSONAssertMixin
+from .utils import CreateTestUsers, JSONAssertMixin
 
 
-class TopLevelViewTests(JSONAssertMixin, TestCase):
+class TopLevelViewTests(JSONAssertMixin, CreateTestUsers, TestCase):
     def test_healthz(self):
         data = self.assertValidJSON(self.client.get("/healthz"))
 

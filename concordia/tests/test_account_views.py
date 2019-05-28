@@ -6,28 +6,14 @@ from django.urls import reverse
 
 from concordia.models import User
 
-from .utils import JSONAssertMixin
+from .utils import CreateTestUsers, JSONAssertMixin
 
 
 @override_settings(RATELIMIT_ENABLE=False)
-class ConcordiaViewTests(JSONAssertMixin, TestCase):
+class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
     """
     This class contains the unit tests for the view in the concordia app.
     """
-
-    def login_user(self):
-        """
-        Create a user and log the user in
-        """
-
-        # create user and login
-        self.user = User.objects.create_user(
-            username="tester", email="tester@example.com"
-        )
-        self.user.set_password("top_secret")
-        self.user.save()
-
-        self.client.login(username="tester", password="top_secret")
 
     def test_AccountProfileView_get(self):
         """
