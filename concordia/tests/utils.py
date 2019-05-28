@@ -162,3 +162,14 @@ class CreateTestUsers(object):
         user.password = fake_pw
 
         return user
+
+
+class CacheControlAssertions(object):
+    def assertUncacheable(self, response):
+        self.assertIn("Cache-Control", response)
+        self.assertIn("no-cache", response["Cache-Control"])
+        self.assertIn("no-store", response["Cache-Control"])
+
+    def assertCachePrivate(self, response):
+        self.assertIn("Cache-Control", response)
+        self.assertIn("private", response["Cache-Control"])

@@ -7,10 +7,12 @@ from django.urls import reverse
 
 from concordia.models import SimplePage
 
-from .utils import CreateTestUsers, JSONAssertMixin
+from .utils import CacheControlAssertions, CreateTestUsers, JSONAssertMixin
 
 
-class TopLevelViewTests(JSONAssertMixin, CreateTestUsers, TestCase):
+class TopLevelViewTests(
+    JSONAssertMixin, CreateTestUsers, CacheControlAssertions, TestCase
+):
     def test_healthz(self):
         data = self.assertValidJSON(self.client.get("/healthz"))
 
@@ -33,6 +35,7 @@ class TopLevelViewTests(JSONAssertMixin, CreateTestUsers, TestCase):
         response = self.client.get(reverse("contact"))
 
         self.assertEqual(response.status_code, 200)
+        self.assertUncacheable(response)
         self.assertTemplateUsed(response, "contact.html")
 
     def test_contact_us_with_referrer(self):
@@ -41,6 +44,7 @@ class TopLevelViewTests(JSONAssertMixin, CreateTestUsers, TestCase):
         response = self.client.get(reverse("contact"), HTTP_REFERER=test_http_referrer)
 
         self.assertEqual(response.status_code, 200)
+        self.assertUncacheable(response)
         self.assertTemplateUsed(response, "contact.html")
 
         self.assertEqual(
@@ -57,6 +61,7 @@ class TopLevelViewTests(JSONAssertMixin, CreateTestUsers, TestCase):
         response = self.client.get(reverse("contact"))
 
         self.assertEqual(response.status_code, 200)
+        self.assertUncacheable(response)
         self.assertTemplateUsed(response, "contact.html")
 
         self.assertEqual(response.context["form"].initial["email"], self.user.email)
@@ -72,6 +77,7 @@ class TopLevelViewTests(JSONAssertMixin, CreateTestUsers, TestCase):
         response = self.client.post(reverse("contact"), post_data)
 
         self.assertEqual(response.status_code, 302)
+        self.assertUncacheable(response)
 
     def test_contact_us_post_invalid(self):
         post_data = {

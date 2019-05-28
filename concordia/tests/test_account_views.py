@@ -6,11 +6,13 @@ from django.urls import reverse
 
 from concordia.models import User
 
-from .utils import CreateTestUsers, JSONAssertMixin
+from .utils import CacheControlAssertions, CreateTestUsers, JSONAssertMixin
 
 
 @override_settings(RATELIMIT_ENABLE=False)
-class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
+class ConcordiaViewTests(
+    CreateTestUsers, JSONAssertMixin, CacheControlAssertions, TestCase
+):
     """
     This class contains the unit tests for the view in the concordia app.
     """
@@ -26,6 +28,7 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
 
         # validate the web page has the "tester" and "tester@example.com" as values
         self.assertEqual(response.status_code, 200)
+        self.assertUncacheable(response)
         self.assertTemplateUsed(response, template_name="account/profile.html")
 
     def test_AccountProfileView_post(self):
@@ -42,6 +45,7 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         )
 
         self.assertEqual(response.status_code, 302)
+        self.assertUncacheable(response)
         self.assertEqual(response.url, reverse("user-profile"))
 
         # Verify the User was correctly updated
@@ -58,37 +62,38 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         response = self.client.post(reverse("user-profile"), {"first_name": "Jimmy"})
 
         self.assertEqual(response.status_code, 200)
+        self.assertUncacheable(response)
 
         # Verify the User was not changed
         updated_user = User.objects.get(id=self.user.id)
         self.assertEqual(updated_user.first_name, "")
 
     def test_ajax_session_status_anon(self):
-        resp = self.client.get(reverse("ajax-session-status"))
-        data = self.assertValidJSON(resp)
+        response = self.client.get(reverse("ajax-session-status"))
+        self.assertCachePrivate(response)
+        data = self.assertValidJSON(response)
         self.assertEqual(data, {})
 
     def test_ajax_session_status(self):
         self.login_user()
 
-        resp = self.client.get(reverse("ajax-session-status"))
-        data = self.assertValidJSON(resp)
+        response = self.client.get(reverse("ajax-session-status"))
+        self.assertCachePrivate(response)
+        data = self.assertValidJSON(response)
 
         self.assertIn("links", data)
         self.assertIn("username", data)
 
         self.assertEqual(data["username"], self.user.username)
 
-        self.assertIn("private", resp["Cache-Control"])
-
     def test_ajax_messages(self):
         self.login_user()
 
-        resp = self.client.get(reverse("ajax-messages"))
-        data = self.assertValidJSON(resp)
+        response = self.client.get(reverse("ajax-messages"))
+        data = self.assertValidJSON(response)
 
         self.assertIn("messages", data)
 
         # This view cannot be cached because the messages would be displayed
         # multiple times:
-        self.assertIn("no-cache", resp["Cache-Control"])
+        self.assertUncacheable(response)
