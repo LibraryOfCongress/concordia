@@ -8,6 +8,7 @@ from concordia.models import (
     Asset,
     Campaign,
     Item,
+    Topic,
     Transcription,
     TranscriptionStatus,
     User,
@@ -187,6 +188,23 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
         self.assertGreater(len(data["objects"]), 0)
 
         self.assertAssetsHaveLatestTranscriptions(data["objects"])
+
+    def test_topic_list(self):
+        resp, data = self.get_api_list_response(reverse("topic-list"))
+
+        self.assertGreater(len(data["objects"]), 0)
+
+        test_topics = {
+            i["id"]: i
+            for i in Topic.objects.published().values(
+                "id", "title", "description", "short_description", "slug"
+            )
+        }
+
+        for obj in data["objects"]:
+            self.assertIn("id", obj)
+            self.assertIn("url", obj)
+            self.assertDictContainsSubset(test_topics[obj["id"]], obj)
 
     def test_campaign_list(self):
         resp, data = self.get_api_list_response(reverse("transcriptions:campaign-list"))

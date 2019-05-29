@@ -13,7 +13,7 @@
 {% endblock head_content %}
 
 {% block breadcrumbs %}
-    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'topic-list' %}">Topics</a></li>
+    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'campaign-topic-list' %}">Campaigns</a></li>
     <li class="breadcrumb-item active" aria-current="page" title="{{ topic.title }}">{{ topic.title }}</li>
 {% endblock breadcrumbs %}
 
@@ -37,6 +37,7 @@
             {% endif %}
         </div>
     </div>
+    {% include "fragments/transcription-progress-row.html" %}
     <div class="row">
         <div class="card-deck w-100 flex-column flex-sm-row justify-content-center align-items-center align-items-sm-stretch">
             {% for project in projects %}

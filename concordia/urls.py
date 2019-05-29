@@ -99,6 +99,11 @@ urlpatterns = [
     path("questions/", views.simple_page, name="questions"),
     path("contact/", views.ContactUsView.as_view(), name="contact"),
     path("act/", views.action_app, name="action-app"),
+    path(
+        "campaigns-topics/",
+        views.CampaignTopicListView.as_view(),
+        name="campaign-topic-list",
+    ),
     path("topics/", views.TopicListView.as_view(), name="topic-list"),
     path("topics/<uslug:slug>/", views.TopicDetailView.as_view(), name="topic-detail"),
     path("campaigns/", include(tx_urlpatterns, namespace="transcriptions")),

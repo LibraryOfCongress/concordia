@@ -520,6 +520,18 @@ class TopicListView(APIListView):
 
 
 @method_decorator(default_cache_control, name="dispatch")
+class CampaignTopicListView(TemplateView):
+    template_name = "transcriptions/campaign_topic_list.html"
+
+    def get(self, context):
+        data = {}
+        data["campaigns"] = Campaign.objects.published().order_by("ordering", "title")
+        data["topics"] = Topic.objects.published().order_by("title")
+
+        return render(self.request, self.template_name, data)
+
+
+@method_decorator(default_cache_control, name="dispatch")
 class TopicDetailView(APIDetailView):
     template_name = "transcriptions/topic_detail.html"
     context_object_name = "topic"
@@ -557,6 +569,25 @@ class TopicDetailView(APIDetailView):
         annotate_children_with_progress_stats(projects)
         ctx["projects"] = projects
 
+        topic_assets = Asset.objects.filter(
+            item__project__topics=self.object,
+            item__project__published=True,
+            item__published=True,
+            published=True,
+        )
+
+        calculate_asset_stats(topic_assets, ctx)
+
+        return ctx
+
+    def serialize_context(self, context):
+        ctx = super().serialize_context(context)
+        ctx["object"]["related_links"] = [
+            {"title": title, "url": url}
+            for title, url in self.object.resource_set.values_list(
+                "title", "resource_url"
+            )
+        ]
         return ctx
 
 
