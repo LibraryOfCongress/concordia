@@ -89,6 +89,9 @@ class Topic(models.Model):
 
     published = models.BooleanField(default=False, blank=True)
 
+    ordering = models.IntegerField(
+        default=0, help_text="Sort order override: lower values will be listed first"
+    )
     title = models.CharField(blank=False, max_length=255)
     slug = models.SlugField(blank=False, allow_unicode=True, max_length=80)
     description = models.TextField(blank=True)

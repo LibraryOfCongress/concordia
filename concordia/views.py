@@ -526,7 +526,7 @@ class CampaignTopicListView(TemplateView):
     def get(self, context):
         data = {}
         data["campaigns"] = Campaign.objects.published().order_by("ordering", "title")
-        data["topics"] = Topic.objects.published().order_by("title")
+        data["topics"] = Topic.objects.published().order_by("ordering", "title")
 
         return render(self.request, self.template_name, data)
 
