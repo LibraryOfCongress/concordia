@@ -1,3 +1,7 @@
+"""
+Tests for the core application features
+"""
+
 from datetime import datetime, timedelta
 
 from captcha.models import CaptchaStore
@@ -9,14 +13,13 @@ from django.utils.timezone import now
 from concordia.models import (
     Asset,
     AssetTranscriptionReservation,
-    SimplePage,
     Transcription,
     TranscriptionStatus,
-    User,
 )
 from concordia.utils import get_anonymous_user
 
 from .utils import (
+    CreateTestUsers,
     JSONAssertMixin,
     create_asset,
     create_campaign,
@@ -26,72 +29,10 @@ from .utils import (
 
 
 @override_settings(RATELIMIT_ENABLE=False)
-class ConcordiaViewTests(JSONAssertMixin, TestCase):
+class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
     """
     This class contains the unit tests for the view in the concordia app.
     """
-
-    def login_user(self):
-        """
-        Create a user and log the user in
-        """
-
-        # create user and login
-        self.user = User.objects.create_user(
-            username="tester", email="tester@example.com"
-        )
-        self.user.set_password("top_secret")
-        self.user.save()
-
-        self.client.login(username="tester", password="top_secret")
-
-    def test_AccountProfileView_get(self):
-        """
-        Test the http GET on route account/profile
-        """
-
-        self.login_user()
-
-        response = self.client.get(reverse("user-profile"))
-
-        # validate the web page has the "tester" and "tester@example.com" as values
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, template_name="account/profile.html")
-
-    def test_AccountProfileView_post(self):
-        """
-        This unit test tests the post entry for the route account/profile
-        :param self:
-        """
-        test_email = "tester@example.com"
-
-        self.login_user()
-
-        response = self.client.post(
-            reverse("user-profile"), {"email": test_email, "username": "tester"}
-        )
-
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, reverse("user-profile"))
-
-        # Verify the User was correctly updated
-        updated_user = User.objects.get(email=test_email)
-        self.assertEqual(updated_user.email, test_email)
-
-    def test_AccountProfileView_post_invalid_form(self):
-        """
-        This unit test tests the post entry for the route account/profile but
-        submits an invalid form
-        """
-        self.login_user()
-
-        response = self.client.post(reverse("user-profile"), {"first_name": "Jimmy"})
-
-        self.assertEqual(response.status_code, 200)
-
-        # Verify the User was not changed
-        updated_user = User.objects.get(id=self.user.id)
-        self.assertEqual(updated_user.first_name, "")
 
     def test_campaign_list_view(self):
         """
@@ -316,68 +257,21 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
         self.assertEqual(ctx["title"], item.project.campaign.title)
         self.assertEqual(ctx["total_asset_count"], 10)
 
-    def test_simple_page(self):
-        s = SimplePage.objects.create(
-            title="Help Center 123",
-            body="not the real body",
-            path=reverse("help-center"),
-        )
+    @override_settings(FLAGS={"ACTIVITY_UI_ENABLED": [("boolean", True)]})
+    def test_activity_ui_anonymous(self):
+        response = self.client.get(reverse("action-app"))
+        self.assertRedirects(response, "/account/login/?next=/act/")
 
-        resp = self.client.get(reverse("help-center"))
-        self.assertEqual(200, resp.status_code)
-        self.assertEqual(s.title, resp.context["title"])
-        self.assertEqual(
-            [(reverse("help-center"), s.title)], resp.context["breadcrumbs"]
-        )
-        self.assertEqual(resp.context["body"], f"<p>{s.body}</p>")
-
-    def test_ajax_session_status_anon(self):
-        resp = self.client.get(reverse("ajax-session-status"))
-        data = self.assertValidJSON(resp)
-        self.assertEqual(data, {})
-
-    def test_ajax_session_status(self):
+    @override_settings(FLAGS={"ACTIVITY_UI_ENABLED": [("boolean", True)]})
+    def test_activity_ui_logged_in(self):
         self.login_user()
-
-        resp = self.client.get(reverse("ajax-session-status"))
-        data = self.assertValidJSON(resp)
-
-        self.assertIn("links", data)
-        self.assertIn("username", data)
-
-        self.assertEqual(data["username"], self.user.username)
-
-        self.assertIn("private", resp["Cache-Control"])
-
-    def test_ajax_messages(self):
-        self.login_user()
-
-        resp = self.client.get(reverse("ajax-messages"))
-        data = self.assertValidJSON(resp)
-
-        self.assertIn("messages", data)
-
-        # This view cannot be cached because the messages would be displayed
-        # multiple times:
-        self.assertIn("no-cache", resp["Cache-Control"])
+        response = self.client.get(reverse("action-app"))
+        self.assertTemplateUsed(response, "action-app.html")
+        self.assertContains(response, "new ActionApp")
 
 
 @override_settings(RATELIMIT_ENABLE=False)
-class TransactionalViewTests(JSONAssertMixin, TransactionTestCase):
-    def login_user(self):
-        """
-        Create a user and log the user in
-        """
-
-        # create user and login
-        self.user = User.objects.create_user(
-            username="tester", email="tester@example.com"
-        )
-        self.user.set_password("top_secret")
-        self.user.save()
-
-        self.client.login(username="tester", password="top_secret")
-
+class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCase):
     def completeCaptcha(self, key=None):
         """Submit a CAPTCHA response using the provided challenge key"""
 
@@ -868,12 +762,10 @@ class TransactionalViewTests(JSONAssertMixin, TransactionTestCase):
         )
         data = self.assertValidJSON(resp, expected_status=200)
 
-        second_user = User.objects.create_user(
+        second_user = self.create_test_user(
             username="second_tester", email="second_tester@example.com"
         )
-        second_user.set_password("secret")
-        second_user.save()
-        self.client.login(username="second_tester", password="secret")
+        self.client.login(username=second_user.username, password=second_user.password)
 
         resp = self.client.post(
             reverse("submit-tags", kwargs={"asset_pk": asset.pk}),

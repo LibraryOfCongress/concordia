@@ -115,13 +115,11 @@ def healthz(request):
 @default_cache_control
 def simple_page(request, path=None):
     """
-    Serve static content from Markdown files
+    Basic content management using Markdown managed in the SimplePage model
 
-    Expects the request path with the addition of ".md" to match a file under
-    the top-level static-pages directory or the url dispatcher configuration to
-    pass a base_name parameter:
+    This expects a pre-existing URL path matching the path specified in the database::
 
-    path("foobar/", static_page, {"base_name": "some-weird-filename.md"})
+        path("about/", views.simple_page, name="about"),
     """
 
     if not path:
