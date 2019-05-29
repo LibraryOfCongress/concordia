@@ -15,7 +15,13 @@ from concordia.models import (
 )
 from concordia.utils import get_anonymous_user
 
-from .utils import JSONAssertMixin, create_asset, create_item, create_project
+from .utils import (
+    JSONAssertMixin,
+    create_asset,
+    create_item,
+    create_project,
+    create_topic,
+)
 
 
 @override_settings(RATELIMIT_ENABLE=False)
@@ -29,6 +35,8 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
         )
 
         cls.test_project = create_project()
+
+        cls.test_topic = create_topic(project=cls.test_project)
 
         cls.items = [
             create_item(
@@ -205,6 +213,33 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
             self.assertIn("id", obj)
             self.assertIn("url", obj)
             self.assertDictContainsSubset(test_topics[obj["id"]], obj)
+
+    def test_topic_detail(self):
+        resp, data = self.get_api_response(
+            reverse("topic-detail", kwargs={"slug": self.test_topic.slug})
+        )
+
+        self.assertIn("object", data)
+        self.assertNotIn("objects", data)
+
+        serialized_project = data["object"]
+
+        self.assertIn("id", serialized_project)
+        self.assertIn("url", serialized_project)
+        topic = self.test_topic
+        self.assertDictContainsSubset(
+            {
+                "id": topic.id,
+                "title": topic.title,
+                "description": topic.description,
+                "slug": topic.slug,
+                "thumbnail_image": topic.thumbnail_image,
+            },
+            serialized_project,
+        )
+        self.assertURLEqual(
+            serialized_project["url"], f"http://testserver{topic.get_absolute_url()}"
+        )
 
     def test_campaign_list(self):
         resp, data = self.get_api_list_response(reverse("transcriptions:campaign-list"))

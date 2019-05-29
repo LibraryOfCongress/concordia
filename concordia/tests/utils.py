@@ -4,7 +4,7 @@ from secrets import token_hex
 
 from django.utils.text import slugify
 
-from concordia.models import Asset, Campaign, Item, MediaType, Project, User
+from concordia.models import Asset, Campaign, Item, MediaType, Project, Topic, User
 
 
 def ensure_slug(original_function):
@@ -38,6 +38,34 @@ def create_campaign(
     if do_save:
         campaign.save()
     return campaign
+
+
+@ensure_slug
+def create_topic(
+    *,
+    project=None,
+    title="Test Topic",
+    slug="test-topic",
+    description="Test Description",
+    published=True,
+    do_save=True,
+    **kwargs,
+):
+    if project is None:
+        project = create_project()
+
+    topic = Topic(
+        title=title, slug=slug, description=description, published=published, **kwargs
+    )
+    topic.full_clean()
+    if do_save:
+        topic.save()
+
+    topic.project_set.add(project)
+
+    if do_save:
+        topic.save()
+    return topic
 
 
 @ensure_slug
