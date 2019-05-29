@@ -446,11 +446,6 @@ export class ActionApp {
                 );
                 this.updateAvailableCampaignFilters();
             });
-
-        this.campaignSelect.addEventListener('change', () => {
-            this.addToState('campaign', this.campaignSelect.value);
-            this.updateAssetList();
-        });
         fetchJSON(this.config.urls.topicList)
             .then(data => {
                 data.objects.forEach(topic => {
@@ -471,6 +466,11 @@ export class ActionApp {
             .then(() => {
                 this.updateAvailableCampaignFilters();
             });
+
+        this.campaignSelect.addEventListener('change', () => {
+            this.addToState('campaign', this.campaignSelect.value);
+            this.updateAssetList();
+        });
 
         $('#asset-list-thumbnail-size').addEventListener('input', event => {
             this.assetList.el.style.setProperty(
