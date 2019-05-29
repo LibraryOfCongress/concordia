@@ -257,6 +257,18 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         self.assertEqual(ctx["title"], item.project.campaign.title)
         self.assertEqual(ctx["total_asset_count"], 10)
 
+    @override_settings(FLAGS={"ACTIVITY_UI_ENABLED": [("boolean", True)]})
+    def test_activity_ui_anonymous(self):
+        response = self.client.get(reverse("action-app"))
+        self.assertRedirects(response, "/account/login/?next=/act/")
+
+    @override_settings(FLAGS={"ACTIVITY_UI_ENABLED": [("boolean", True)]})
+    def test_activity_ui_logged_in(self):
+        self.login_user()
+        response = self.client.get(reverse("action-app"))
+        self.assertTemplateUsed(response, "action-app.html")
+        self.assertContains(response, "new ActionApp")
+
 
 @override_settings(RATELIMIT_ENABLE=False)
 class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCase):
