@@ -186,11 +186,15 @@ export class ActionApp {
         });
 
         let mode = this.persistentState.get('mode') || 'review';
-        if (mode == 'transcribe' || mode == 'review') {
-            this.switchMode(mode);
-        } else {
-            Sentry.captureMessage(`Setup requested for unknown ${mode} mode`);
+        if (mode != 'transcribe' && mode != 'review') {
+            if (window.Sentry) {
+                Sentry.captureMessage(
+                    `Setup requested for unknown ${mode} mode`
+                );
+            }
+            mode = 'review';
         }
+        this.switchMode(mode);
     }
 
     switchMode(newMode) {
