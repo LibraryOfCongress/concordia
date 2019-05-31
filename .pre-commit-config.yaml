@@ -49,16 +49,16 @@ repos:
           - id: eslint
             additional_dependencies:
                 - eslint@5.16.0
-                - eslint-plugin-prettier@3.0.1
-                - prettier@1.17.0
-                - eslint-plugin-unicorn@8.0.2
+                - eslint-plugin-prettier@3.1.0
+                - prettier@1.17.1
+                - eslint-plugin-unicorn@9.0.0
     - repo: https://github.com/awebdeveloper/pre-commit-stylelint
       rev: 0.0.2
       hooks:
           - id: stylelint
             additional_dependencies:
-                - stylelint@9.10.1
-                - stylelint-config-prettier@5.1.0
+                - stylelint@10.0.1
+                - stylelint-config-prettier@5.2.0
                 - stylelint-config-recommended@2.2.0
     - repo: https://github.com/awslabs/cfn-python-lint
       rev: v0.20.2
