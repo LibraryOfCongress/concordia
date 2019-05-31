@@ -518,6 +518,13 @@ export class ActionApp {
         let startingMode = this.currentMode;
 
         return fetchJSON(url)
+            .catch(error => {
+                console.warn(
+                    `Failed to retrieve ${url}: ${error} — returning it to the queue`
+                );
+                this.queuedAssetPageURLs.push(url);
+                throw error;
+            })
             .then(data => {
                 data.objects.forEach(i => {
                     i.sent = data.sent;
