@@ -159,6 +159,7 @@ class ResourceAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
 class TopicAdmin(admin.ModelAdmin):
     list_display = ("id", "title", "slug")
     list_display_links = ("id", "title", "slug")
+    prepopulated_fields = {"slug": ("title",)}
 
 
 @admin.register(Project)
