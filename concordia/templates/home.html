@@ -27,8 +27,8 @@
                 </ol>
                 <div class="carousel-inner">
                     {% if NEW_CAROUSEL_SLIDE %}
-                        <div class="carousel-item active" data-title="Memorial Day Challenge" data-hero-text="Make it meaningful by reviewing soldiers' stories of service and sacrifice." data-link-url="{% url 'transcriptions:redirect-to-next-reviewable-asset' 'civil-war-soldiers-disabled-but-not-disheartened' %}">
-                            <img class="d-block w-100" src="{% static 'img/homepage-carousel/mem-day-challenge.jpg' %}" alt="Ornate left-handed penmanship specimen submitted by Alfred D. Whitehouse in which photograph portrait of Whitehouse is surrounded by caligraphy dedicating his work to his Union regiment. Whitehouse has a mustache and sideburns and wears a suit and bowtie.">
+                        <div class="carousel-item active" data-title="Join our cause!" data-hero-text="Transcribe and explore women's suffrage history through the lives of those who fought for the right to vote 100 years ago." data-link-url="{% url 'redirect-to-next-transcribable-topic-asset' 'suffrage-women-fight-for-the-vote' %}">
+                            <img class="d-block w-100" src="{% static 'img/homepage-carousel/suffrage.jpg' %}" alt="Carrie Chapman Catt stands with protesters advocating for women's right to vote. Some protesters carry banners and shields with state names, including Wyoming, California, Kansas. Some women are dressed in white, wearing crowns and carrying musical instruments, and American flags.">
                         </div>
                         {% if ADVERTISE_ACTIVITY_UI %}
                             <div class="carousel-item" data-overlay-position="top-right" data-title="Find your perfect page" data-hero-text="Log in or register to transcribe and review in our new way of browsing" data-link-url="{% url 'action-app' %}">
@@ -74,9 +74,9 @@
                 </a>
                 {% if NEW_CAROUSEL_SLIDE %}
                     <div class="carousel-overlay text-center d-flex flex-column justify-content-around align-items-center">
-                        <h1 class="title">Memorial Day Challenge</h1>
-                        <p class="hero-text mx-auto">Make it meaningful by reviewing soldiers' stories of service and sacrifice.</p>
-                        <a class="btn btn-primary btn-lg" href="{% url 'transcriptions:redirect-to-next-reviewable-asset' 'civil-war-soldiers-disabled-but-not-disheartened' %}">LET'S GO!</a>
+                        <h1 class="title">Join our cause!</h1>
+                        <p class="hero-text mx-auto">Transcribe and explore women's suffrage history through the lives of those who fought for the right to vote 100 years ago.</p>
+                        <a class="btn btn-primary btn-lg" href="{% url 'redirect-to-next-transcribable-topic-asset' 'suffrage-women-fight-for-the-vote' %}">LET'S GO!</a>
                     </div>
                 {% else %}
                     <div class="carousel-overlay text-center d-flex flex-column justify-content-around align-items-center">
