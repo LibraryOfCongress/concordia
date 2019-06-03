@@ -446,6 +446,12 @@ export class ActionApp {
                 );
                 this.updateAvailableCampaignFilters();
             });
+
+        this.campaignSelect.addEventListener('change', () => {
+            this.addToState('campaign', this.campaignSelect.value);
+            this.updateAssetList();
+        });
+
         fetchJSON(this.config.urls.topicList)
             .then(data => {
                 data.objects.forEach(topic => {
@@ -453,7 +459,7 @@ export class ActionApp {
                     o.value = topic.id;
                     o.textContent = topic.title;
 
-                    // TODO: this does not handle the case where the last assets of a campaign change state while the app is open
+                    // TODO: this does not handle the case where the last assets of a topic change state while the app is open
                     Object.entries(topic.asset_stats).forEach(
                         ([key, value]) => {
                             o.dataset[key] = value;
@@ -466,11 +472,6 @@ export class ActionApp {
             .then(() => {
                 this.updateAvailableCampaignFilters();
             });
-
-        this.campaignSelect.addEventListener('change', () => {
-            this.addToState('campaign', this.campaignSelect.value);
-            this.updateAssetList();
-        });
 
         $('#asset-list-thumbnail-size').addEventListener('input', event => {
             this.assetList.el.style.setProperty(
