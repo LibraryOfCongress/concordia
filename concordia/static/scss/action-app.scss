@@ -191,7 +191,7 @@ main {
         border: 2px solid $blue;
         pointer-events: none;
         background-color: $white;
-        font-size: $concordia-app-font-size-xxs !important;
+        font-size: $concordia-app-font-size-xxs;
         line-height: $concordia-app-line-height-xs;
         position: relative;
         z-index: 3;
@@ -273,9 +273,6 @@ main {
                 height: $concordia-app-asset-list-thumbnail-width;
                 margin-bottom: -1px;
             }
-        }
-        .asset-tooltip {
-            font-size: smaller;
         }
         #contribute-container {
             width: 100%;
