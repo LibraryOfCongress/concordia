@@ -117,12 +117,11 @@ main {
 
     .asset {
         display: flex;
+        align-items: flex-start;
         width: var(--asset-thumbnail-size);
         height: var(--asset-thumbnail-size);
         object-fit: contain;
-
         border: $border-width solid $gray-600;
-
         background-color: #f6f6f6;
         background-size: contain;
         background-repeat: no-repeat;
@@ -141,6 +140,8 @@ main {
         &.asset-active {
             outline: 2px solid $orange;
             outline-offset: -2px;
+            position: relative;
+            z-index: 1;
         }
 
         &[data-unavailable] {
@@ -186,23 +187,15 @@ main {
     }
 
     .asset-tooltip {
-        width: calc(100% + ($asset-thumbnail-gap * 2));
-        height: calc(100% + ($asset-thumbnail-gap * 2));
-
-        margin: $asset-thumbnail-gap * -1;
         padding: 14px;
-
-        border: $border-width solid $gray-600;
-
-        overflow: hidden;
-
+        border: 2px solid $blue;
         pointer-events: none;
-
         background-color: $white;
-
-        font-size: $concordia-app-font-size-xs;
+        font-size: $concordia-app-font-size-xxs !important;
         line-height: $concordia-app-line-height-xs;
-
+        position: relative;
+        z-index: 3;
+        margin: ($asset-thumbnail-gap + 1) * -1;
         .item-title {
             font-weight: bold;
             margin-bottom: 1rem;
