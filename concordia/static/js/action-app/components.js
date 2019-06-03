@@ -1,4 +1,4 @@
-/* global jQuery, OpenSeadragon, Popper */
+/* global jQuery, OpenSeadragon */
 
 import {$, $$} from './utils/dom.js';
 
@@ -369,7 +369,6 @@ export class AssetList extends List {
     setupTooltip(getAssetData) {
         /* Tooltips */
         let tooltip = new AssetTooltip();
-        let popper;
 
         const handleTooltipShowEvent = event => {
             let target = event.target;
@@ -377,15 +376,11 @@ export class AssetList extends List {
                 const asset = getAssetData(target.dataset.id);
                 tooltip.update(asset);
                 mount(target, tooltip);
-                popper = new Popper(target, tooltip.el, {
-                    placement: 'bottom'
-                });
             }
         };
 
         const handleTooltipHideEvent = () => {
             if (tooltip.el.parentNode) {
-                popper.destroy();
                 unmount(tooltip.el.parentNode, tooltip);
             }
         };
