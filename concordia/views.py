@@ -527,15 +527,7 @@ class CampaignTopicListView(TemplateView):
     def get(self, context):
         data = {}
         data["campaigns"] = Campaign.objects.published().order_by("ordering", "title")
-
-        for campaign in data["campaigns"]:
-            campaign.model_type = "Campaign"
-
         data["topics"] = Topic.objects.published().order_by("ordering", "title")
-
-        for topic in data["topics"]:
-            topic.model_type = "Topic"
-
         data["campaigns_topics"] = sorted(
             [*data["campaigns"], *data["topics"]], key=attrgetter("ordering", "title")
         )
