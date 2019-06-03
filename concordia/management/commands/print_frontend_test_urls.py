@@ -39,6 +39,8 @@ class Command(BaseCommand):
             reverse("password_reset"),
             reverse("login"),
             reverse("transcriptions:campaign-list"),
+            reverse("campaign-topic-list"),
+            reverse("topic-list"),
         ]
 
         # Database content

@@ -99,6 +99,23 @@ urlpatterns = [
     path("questions/", views.simple_page, name="questions"),
     path("contact/", views.ContactUsView.as_view(), name="contact"),
     path("act/", views.action_app, name="action-app"),
+    path(
+        "campaigns-topics/",
+        views.CampaignTopicListView.as_view(),
+        name="campaign-topic-list",
+    ),
+    path("topics/", views.TopicListView.as_view(), name="topic-list"),
+    path("topics/<uslug:slug>/", views.TopicDetailView.as_view(), name="topic-detail"),
+    path(
+        "topics/<uslug:topic_slug>/next-transcribable-asset/",
+        views.redirect_to_next_transcribable_topic_asset,
+        name="redirect-to-next-transcribable-topic-asset",
+    ),
+    path(
+        "topics/<uslug:topic_slug>/next-reviewable-asset/",
+        views.redirect_to_next_reviewable_topic_asset,
+        name="redirect-to-next-reviewable-topic-asset",
+    ),
     path("campaigns/", include(tx_urlpatterns, namespace="transcriptions")),
     path("reserve-asset/<int:asset_pk>/", views.reserve_asset, name="reserve-asset"),
     path(

@@ -4,6 +4,7 @@ import re
 from datetime import timedelta
 from functools import wraps
 from logging import getLogger
+from operator import attrgetter
 from smtplib import SMTPException
 from time import time
 from urllib.parse import urlencode
@@ -53,6 +54,7 @@ from concordia.models import (
     Project,
     SimplePage,
     Tag,
+    Topic,
     Transcription,
     TranscriptionStatus,
     UserAssetTagCollection,
@@ -474,11 +476,130 @@ def annotate_children_with_progress_stats(children):
 
 
 @method_decorator(default_cache_control, name="dispatch")
+class TopicListView(APIListView):
+    template_name = "transcriptions/topic_list.html"
+    paginate_by = 10
+    queryset = Topic.objects.published().order_by("ordering", "title")
+    context_object_name = "topics"
+
+    def serialize_context(self, context):
+        data = super().serialize_context(context)
+
+        object_list = data["objects"]
+
+        status_count_keys = {
+            status: f"{status}_count" for status in TranscriptionStatus.CHOICE_MAP
+        }
+
+        topic_stats_qs = (
+            Topic.objects.filter(pk__in=[i["id"] for i in object_list])
+            .annotate(
+                **{
+                    v: Count(
+                        "project__item__asset",
+                        filter=Q(
+                            project__published=True,
+                            project__item__published=True,
+                            project__item__asset__published=True,
+                            project__item__asset__transcription_status=k,
+                        ),
+                    )
+                    for k, v in status_count_keys.items()
+                }
+            )
+            .values("pk", *status_count_keys.values())
+        )
+
+        topic_asset_counts = {}
+        for topic_stats in topic_stats_qs:
+            topic_asset_counts[topic_stats.pop("pk")] = topic_stats
+
+        for obj in object_list:
+            obj["asset_stats"] = topic_asset_counts[obj["id"]]
+
+        return data
+
+
+@method_decorator(default_cache_control, name="dispatch")
+class CampaignTopicListView(TemplateView):
+    template_name = "transcriptions/campaign_topic_list.html"
+
+    def get(self, context):
+        data = {}
+        data["campaigns"] = Campaign.objects.published().order_by("ordering", "title")
+        data["topics"] = Topic.objects.published().order_by("ordering", "title")
+        data["campaigns_topics"] = sorted(
+            [*data["campaigns"], *data["topics"]], key=attrgetter("ordering", "title")
+        )
+
+        return render(self.request, self.template_name, data)
+
+
+@method_decorator(default_cache_control, name="dispatch")
+class TopicDetailView(APIDetailView):
+    template_name = "transcriptions/topic_detail.html"
+    context_object_name = "topic"
+    queryset = Topic.objects.published().order_by("title")
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+
+        projects = (
+            ctx["topic"]
+            .project_set.published()
+            .annotate(
+                **{
+                    f"{key}_count": Count(
+                        "item__asset",
+                        filter=Q(
+                            item__published=True,
+                            item__asset__published=True,
+                            item__asset__transcription_status=key,
+                        ),
+                    )
+                    for key in TranscriptionStatus.CHOICE_MAP.keys()
+                }
+            )
+        )
+
+        ctx["filters"] = filters = {}
+        status = self.request.GET.get("transcription_status")
+        if status in TranscriptionStatus.CHOICE_MAP:
+            projects = projects.exclude(**{f"{status}_count": 0})
+            # We only want to pass specific QS parameters to lower-level search pages:
+            filters["transcription_status"] = status
+        ctx["sublevel_querystring"] = urlencode(filters)
+
+        annotate_children_with_progress_stats(projects)
+        ctx["projects"] = projects
+
+        topic_assets = Asset.objects.filter(
+            item__project__topics=self.object,
+            item__project__published=True,
+            item__published=True,
+            published=True,
+        )
+
+        calculate_asset_stats(topic_assets, ctx)
+
+        return ctx
+
+    def serialize_context(self, context):
+        ctx = super().serialize_context(context)
+        ctx["object"]["related_links"] = [
+            {"title": title, "url": url}
+            for title, url in self.object.resource_set.values_list(
+                "title", "resource_url"
+            )
+        ]
+        return ctx
+
+
+@method_decorator(default_cache_control, name="dispatch")
 class CampaignDetailView(APIDetailView):
     template_name = "transcriptions/campaign_detail.html"
-
-    queryset = Campaign.objects.published().order_by("title")
     context_object_name = "campaign"
+    queryset = Campaign.objects.published().order_by("title")
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -1272,9 +1393,7 @@ def reserve_asset(request, *, asset_pk):
     return JsonResponse(msg)
 
 
-def redirect_to_next_asset(
-    potential_assets, mode, request, campaign, project_slug, user
-):
+def redirect_to_next_asset(potential_assets, mode, request, project_slug, user):
     asset = potential_assets.first()
     reservation_token = get_or_create_reservation_token(request)
     if asset:
@@ -1286,7 +1405,7 @@ def redirect_to_next_asset(
             res.save()
         return redirect(
             "transcriptions:asset-detail",
-            campaign.slug,
+            asset.item.project.campaign.slug,
             asset.item.project.slug,
             asset.item.item_id,
             asset.slug,
@@ -1296,81 +1415,12 @@ def redirect_to_next_asset(
 
         messages.info(request, no_pages_message % mode)
 
-        if project_slug:
-            return redirect(
-                "transcriptions:project-detail", campaign.slug, project_slug
-            )
-        else:
-            return redirect("transcriptions:campaign-detail", campaign.slug)
+        return redirect("homepage")
 
 
-@never_cache
-@atomic
-def redirect_to_next_reviewable_asset(request, *, campaign_slug):
-    campaign = get_object_or_404(Campaign.objects.published(), slug=campaign_slug)
-    project_slug = request.GET.get("project", "")
-    item_id = request.GET.get("item", "")
-    asset_id = request.GET.get("asset", 0)
-
-    if not request.user.is_authenticated:
-        user = get_anonymous_user()
-    else:
-        user = request.user
-
-    potential_assets = Asset.objects.select_for_update(skip_locked=True, of=("self",))
-    potential_assets = potential_assets.filter(
-        item__project__campaign=campaign,
-        item__project__published=True,
-        item__published=True,
-        published=True,
-    )
-    potential_assets = potential_assets.filter(
-        transcription_status=TranscriptionStatus.SUBMITTED
-    )
-    potential_assets = potential_assets.exclude(transcription__user=request.user.pk)
-    potential_assets = potential_assets.filter(assettranscriptionreservation=None)
-    potential_assets = potential_assets.select_related("item", "item__project")
-
-    # We'll favor assets which are in the same item or project as the original:
-    potential_assets = potential_assets.annotate(
-        same_project=Case(
-            When(item__project__slug=project_slug, then=1),
-            default=0,
-            output_field=IntegerField(),
-        ),
-        same_item=Case(
-            When(item__item_id=item_id, then=1), default=0, output_field=IntegerField()
-        ),
-        next_asset=Case(
-            When(pk__gt=asset_id, then=1), default=0, output_field=IntegerField()
-        ),
-    ).order_by("-next_asset", "-same_project", "-same_item", "sequence")
-
-    return redirect_to_next_asset(
-        potential_assets, "review", request, campaign, project_slug, user
-    )
-
-
-@never_cache
-@atomic
-def redirect_to_next_transcribable_asset(request, *, campaign_slug):
-    campaign = get_object_or_404(Campaign.objects.published(), slug=campaign_slug)
-    project_slug = request.GET.get("project", "")
-    item_id = request.GET.get("item", "")
-    asset_id = request.GET.get("asset", 0)
-
-    if not request.user.is_authenticated:
-        user = get_anonymous_user()
-    else:
-        user = request.user
-
-    potential_assets = Asset.objects.select_for_update(skip_locked=True, of=("self",))
-    potential_assets = potential_assets.filter(
-        item__project__campaign=campaign,
-        item__project__published=True,
-        item__published=True,
-        published=True,
-    )
+def filter_and_order_transcribable_assets(
+    potential_assets, project_slug, item_id, asset_id
+):
     potential_assets = potential_assets.filter(
         Q(transcription_status=TranscriptionStatus.NOT_STARTED)
         | Q(transcription_status=TranscriptionStatus.IN_PROGRESS)
@@ -1399,8 +1449,153 @@ def redirect_to_next_transcribable_asset(request, *, campaign_slug):
         ),
     ).order_by("-next_asset", "-unstarted", "-same_project", "-same_item", "sequence")
 
+    return potential_assets
+
+
+def filter_and_order_reviewable_assets(
+    potential_assets, project_slug, item_id, asset_id, user_pk
+):
+    potential_assets = potential_assets.filter(
+        transcription_status=TranscriptionStatus.SUBMITTED
+    )
+    potential_assets = potential_assets.exclude(transcription__user=user_pk)
+    potential_assets = potential_assets.filter(assettranscriptionreservation=None)
+    potential_assets = potential_assets.select_related("item", "item__project")
+
+    # We'll favor assets which are in the same item or project as the original:
+    potential_assets = potential_assets.annotate(
+        same_project=Case(
+            When(item__project__slug=project_slug, then=1),
+            default=0,
+            output_field=IntegerField(),
+        ),
+        same_item=Case(
+            When(item__item_id=item_id, then=1), default=0, output_field=IntegerField()
+        ),
+        next_asset=Case(
+            When(pk__gt=asset_id, then=1), default=0, output_field=IntegerField()
+        ),
+    ).order_by("-next_asset", "-same_project", "-same_item", "sequence")
+
+    return potential_assets
+
+
+@never_cache
+@atomic
+def redirect_to_next_reviewable_asset(request, *, campaign_slug):
+    campaign = get_object_or_404(Campaign.objects.published(), slug=campaign_slug)
+    project_slug = request.GET.get("project", "")
+    item_id = request.GET.get("item", "")
+    asset_id = request.GET.get("asset", 0)
+
+    if not request.user.is_authenticated:
+        user = get_anonymous_user()
+    else:
+        user = request.user
+
+    potential_assets = Asset.objects.select_for_update(skip_locked=True, of=("self",))
+    potential_assets = potential_assets.filter(
+        item__project__campaign=campaign,
+        item__project__published=True,
+        item__published=True,
+        published=True,
+    )
+
+    potential_assets = filter_and_order_reviewable_assets(
+        potential_assets, project_slug, item_id, asset_id, request.user.pk
+    )
+
     return redirect_to_next_asset(
-        potential_assets, "transcribe", request, campaign, project_slug, user
+        potential_assets, "review", request, project_slug, user
+    )
+
+
+@never_cache
+@atomic
+def redirect_to_next_transcribable_asset(request, *, campaign_slug):
+    campaign = get_object_or_404(Campaign.objects.published(), slug=campaign_slug)
+    project_slug = request.GET.get("project", "")
+    item_id = request.GET.get("item", "")
+    asset_id = request.GET.get("asset", 0)
+
+    if not request.user.is_authenticated:
+        user = get_anonymous_user()
+    else:
+        user = request.user
+
+    potential_assets = Asset.objects.select_for_update(skip_locked=True, of=("self",))
+    potential_assets = potential_assets.filter(
+        item__project__campaign=campaign,
+        item__project__published=True,
+        item__published=True,
+        published=True,
+    )
+    potential_assets = filter_and_order_transcribable_assets(
+        potential_assets, project_slug, item_id, asset_id
+    )
+
+    return redirect_to_next_asset(
+        potential_assets, "transcribe", request, project_slug, user
+    )
+
+
+@never_cache
+@atomic
+def redirect_to_next_reviewable_topic_asset(request, *, topic_slug):
+    topic = get_object_or_404(Topic.objects.published(), slug=topic_slug)
+    project_slug = request.GET.get("project", "")
+    item_id = request.GET.get("item", "")
+    asset_id = request.GET.get("asset", 0)
+
+    if not request.user.is_authenticated:
+        user = get_anonymous_user()
+    else:
+        user = request.user
+
+    potential_assets = Asset.objects.select_for_update(skip_locked=True, of=("self",))
+    potential_assets = potential_assets.filter(
+        item__project__topics__in=(topic,),
+        item__project__published=True,
+        item__published=True,
+        published=True,
+    )
+
+    potential_assets = filter_and_order_reviewable_assets(
+        potential_assets, project_slug, item_id, asset_id, request.user.pk
+    )
+
+    return redirect_to_next_asset(
+        potential_assets, "review", request, project_slug, user
+    )
+
+
+@never_cache
+@atomic
+def redirect_to_next_transcribable_topic_asset(request, *, topic_slug):
+    topic = get_object_or_404(Topic.objects.published(), slug=topic_slug)
+    project_slug = request.GET.get("project", "")
+    item_id = request.GET.get("item", "")
+    asset_id = request.GET.get("asset", 0)
+
+    if not request.user.is_authenticated:
+        user = get_anonymous_user()
+    else:
+        user = request.user
+
+    potential_assets = Asset.objects.select_for_update(skip_locked=True, of=("self",))
+    potential_assets = potential_assets.filter(
+        item__project__topics__in=(topic,),
+        item__project__published=True,
+        item__published=True,
+        published=True,
+    )
+
+    potential_assets = filter_and_order_transcribable_assets(
+        potential_assets, project_slug, item_id, asset_id
+    )
+
+    return redirect_to_next_asset(
+        potential_assets, "transcribe", request, project_slug, user
     )
 
 
@@ -1595,7 +1790,6 @@ def action_app(request):
         request,
         "action-app.html",
         {
-            "campaigns": Campaign.objects.published().order_by("title"),
             "app_parameters": {
                 "currentUser": request.user.pk,
                 "reservationToken": get_or_create_reservation_token(request),
@@ -1604,6 +1798,7 @@ def action_app(request):
                         "/ws/asset/asset_updates/"
                     ).replace("http", "ws"),
                     "campaignList": reverse("transcriptions:campaign-list"),
+                    "topicList": reverse("topic-list"),
                 },
                 "urlTemplates": {
                     "assetData": "/{action}/?per_page=500",
@@ -1612,6 +1807,6 @@ def action_app(request):
                     "submitTranscription": "/transcriptions/{transcriptionId}/submit/",
                     "reviewTranscription": "/transcriptions/{transcriptionId}/review/",
                 },
-            },
+            }
         },
     )

@@ -452,6 +452,27 @@ export class ActionApp {
             this.updateAssetList();
         });
 
+        fetchJSON(this.config.urls.topicList)
+            .then(data => {
+                data.objects.forEach(topic => {
+                    let o = document.createElement('option');
+                    o.value = topic.id;
+                    o.textContent = topic.title;
+
+                    // TODO: this does not handle the case where the last assets of a topic change state while the app is open
+                    Object.entries(topic.asset_stats).forEach(
+                        ([key, value]) => {
+                            o.dataset[key] = value;
+                        }
+                    );
+
+                    this.campaignSelect.appendChild(o);
+                });
+            })
+            .then(() => {
+                this.updateAvailableCampaignFilters();
+            });
+
         $('#asset-list-thumbnail-size').addEventListener('input', event => {
             this.assetList.el.style.setProperty(
                 '--asset-thumbnail-size',
