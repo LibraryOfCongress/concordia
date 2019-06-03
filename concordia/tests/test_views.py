@@ -816,12 +816,7 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
             )
         )
 
-        self.assertRedirects(
-            resp,
-            expected_url=reverse(
-                "transcriptions:campaign-detail", args=(campaign.slug,)
-            ),
-        )
+        self.assertRedirects(resp, expected_url=reverse("homepage"))
 
     def test_find_next_transcribable_project_redirect(self):
         asset = create_asset(transcription_status=TranscriptionStatus.SUBMITTED)
@@ -839,12 +834,7 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
             )
         )
 
-        self.assertRedirects(
-            resp,
-            expected_url=reverse(
-                "transcriptions:project-detail", args=(campaign.slug, project.slug)
-            ),
-        )
+        self.assertRedirects(resp, expected_url=reverse("homepage"))
 
     def test_find_next_transcribable_hierarchy(self):
         """Confirm that find-next-page selects assets in the expected order"""
