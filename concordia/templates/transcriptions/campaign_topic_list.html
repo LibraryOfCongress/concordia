@@ -20,13 +20,7 @@
             <li class="p-4 mb-1 bg-footer">
                 <h2 class="h1 mb-3">{{ campaign.title }}</h2>
                 <div class="row">
-                    <a class="col-md-5 order-md-2"
-                    {% if campaign.model_type == "Campaign" %}
-                        href="{% url 'transcriptions:campaign-detail' campaign.slug %}"
-                    {% else %}
-                        href="{% url 'topic-detail' campaign.slug %}"
-                    {% endif %}
-                    >
+                    <a class="col-md-5 order-md-2" href="{{ campaign.get_absolute_url }}">
                         <p class="mb-2 text-center"><img src="{{ MEDIA_URL }}{{ campaign.thumbnail_image }}" class="img-fluid" alt="{{ campaign.title }} image"></p>
                     </a>
                     <div class="col-md">
