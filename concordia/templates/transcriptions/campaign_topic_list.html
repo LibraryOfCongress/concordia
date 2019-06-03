@@ -16,30 +16,22 @@
 <div class="container py-3">
     <h1 class="sr-only">Campaigns</h1>
     <ul class="list-unstyled">
-        {% for campaign in campaigns %}
+        {% for campaign in campaigns_topics %}
             <li class="p-4 mb-1 bg-footer">
                 <h2 class="h1 mb-3">{{ campaign.title }}</h2>
                 <div class="row">
-                    <a class="col-md-5 order-md-2" href="{% url 'transcriptions:campaign-detail' campaign.slug %}">
+                    <a class="col-md-5 order-md-2"
+                    {% if campaign.model_type == "Campaign" %}
+                        href="{% url 'transcriptions:campaign-detail' campaign.slug %}"
+                    {% else %}
+                        href="{% url 'topic-detail' campaign.slug %}"
+                    {% endif %}
+                    >
                         <p class="mb-2 text-center"><img src="{{ MEDIA_URL }}{{ campaign.thumbnail_image }}" class="img-fluid" alt="{{ campaign.title }} image"></p>
                     </a>
                     <div class="col-md">
                         <p>{{ campaign.short_description|linebreaksbr }}</p>
                         <a class="btn btn-primary" href="{% url 'transcriptions:campaign-detail' campaign.slug %}">View Projects</a>
-                    </div>
-                </div>
-            </li>
-        {% endfor %}
-        {% for topic in topics %}
-            <li class="p-4 mb-1 bg-footer">
-                <h2 class="h1 mb-3">{{ topic.title }}</h2>
-                <div class="row">
-                    <a class="col-md-5 order-md-2" href="{% url 'topic-detail' topic.slug %}">
-                        <p class="mb-2 text-center"><img src="{{ MEDIA_URL }}{{ topic.thumbnail_image }}" class="img-fluid" alt="{{ topic.title }} image"></p>
-                    </a>
-                    <div class="col-md">
-                        <p>{{ topic.short_description|linebreaksbr }}</p>
-                        <a class="btn btn-primary" href="{% url 'topic-detail' topic.slug %}">View Projects</a>
                     </div>
                 </div>
             </li>

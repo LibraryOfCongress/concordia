@@ -100,9 +100,6 @@ class Topic(models.Model):
     )
     short_description = models.TextField(blank=True)
 
-    class Meta:
-        ordering = ["title"]
-
     def __str__(self):
         return self.title
 
