@@ -155,6 +155,7 @@ main {
                 left: 0;
                 right: 0;
                 font-size: $concordia-app-font-size-xxs;
+                line-height: $concordia-app-line-height-xxs;
                 font-weight: bold;
                 padding: $concordia-app-asset-unavailable-padding-y
                     (
@@ -187,12 +188,12 @@ main {
     }
 
     .asset-tooltip {
-        padding: 14px;
+        padding: $concordia-app-asset-list-text-padding;
         border: 2px solid $blue;
         pointer-events: none;
         background-color: $white;
         font-size: $concordia-app-font-size-xxs;
-        line-height: $concordia-app-line-height-xs;
+        line-height: $concordia-app-line-height-xxs;
         position: relative;
         z-index: 3;
         margin: ($asset-thumbnail-gap + 1) * -1;
