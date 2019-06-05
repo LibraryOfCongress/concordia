@@ -456,7 +456,7 @@ export class ActionApp {
             });
 
         this.campaignSelect.addEventListener('change', () => {
-            let campaignOrTopic = this.getCampaignOrTopic();
+            let campaignOrTopic = this.getSelectedOptionType();
             this.addToState(campaignOrTopic, this.campaignSelect.value);
             this.updateAssetList();
         });
@@ -465,6 +465,7 @@ export class ActionApp {
             .then(data => {
                 let topicOptGroup = document.createElement('optgroup');
                 topicOptGroup.label = 'Topics';
+                topicOptGroup.classList.add('topic-optgroup');
                 this.campaignSelect.appendChild(topicOptGroup);
 
                 data.objects.forEach(topic => {
@@ -805,12 +806,13 @@ export class ActionApp {
         return sortBy(assetList, keyFromAsset);
     }
 
-    getCampaignOrTopic() {
+    getSelectedOptionType() {
         let campaignOrTopic = 'campaign';
 
         if (
-            this.campaignSelect.options[this.campaignSelect.selectedIndex]
-                .parentElement.label == 'Topics'
+            this.campaignSelect.options[
+                this.campaignSelect.selectedIndex
+            ].parentElement.classList.contains('topic-optgroup')
         ) {
             campaignOrTopic = 'topic';
         }
@@ -846,13 +848,17 @@ export class ActionApp {
         let currentCampaignId;
         let currentTopicId;
         if (currentCampaignSelectValue) {
-            let campaignOrTopic = this.getCampaignOrTopic();
+            let campaignOrTopic = this.getSelectedOptionType();
+            currentCampaignSelectValue = parseInt(
+                currentCampaignSelectValue,
+                10
+            );
 
             // The values specified in API responses are integers, not DOM strings:
             if (campaignOrTopic == 'campaign') {
-                currentCampaignId = parseInt(currentCampaignSelectValue, 10);
+                currentCampaignId = currentCampaignSelectValue;
             } else {
-                currentTopicId = parseInt(currentCampaignSelectValue, 10);
+                currentTopicId = currentCampaignSelectValue;
             }
         }
 
