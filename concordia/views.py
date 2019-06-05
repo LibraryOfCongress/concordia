@@ -1718,12 +1718,14 @@ class AssetListView(APIListView):
         }
 
         if project.topics:
-            metadata["topics"] = {}
+            metadata["topics"] = []
 
             for topic in project.topics.all():
-                metadata["topics"]["id"] = topic.pk
-                metadata["topics"]["title"] = topic.title
-                metadata["topics"]["url"] = topic.get_absolute_url()
+                new_topic = {}
+                new_topic["id"] = topic.pk
+                new_topic["title"] = topic.title
+                new_topic["url"] = topic.get_absolute_url()
+                metadata["topics"].append(new_topic)
 
         # FIXME: we want to rework how this is done after deprecating Asset.media_url
         if obj.previous_sequence:
