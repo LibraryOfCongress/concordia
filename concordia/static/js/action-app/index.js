@@ -821,8 +821,8 @@ export class ActionApp {
     }
 
     assetHasTopic(asset, topicId) {
-        for (let topic in asset.topics) {
-            if (topic.id === topicId) {
+        for (let idx in asset.topics) {
+            if (asset.topics[idx].id === topicId) {
                 return true;
             }
         }
