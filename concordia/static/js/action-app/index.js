@@ -107,6 +107,11 @@ export class ActionApp {
 
     addToState(key, value) {
         this.persistentState.set(key, value);
+        if (key == 'campaign') {
+            this.persistentState.delete('topic');
+        } else if (key == 'topic') {
+            this.persistentState.delete('campaign');
+        }
         this.serializeStateToURL();
     }
 
@@ -424,6 +429,9 @@ export class ActionApp {
         this.campaignSelect = $('#selected-campaign');
         fetchJSON(this.config.urls.campaignList)
             .then(data => {
+                let campaignOptGroup = document.createElement('optgroup');
+                campaignOptGroup.label = 'Campaigns';
+                this.campaignSelect.appendChild(campaignOptGroup);
                 data.objects.forEach(campaign => {
                     let o = document.createElement('option');
                     o.value = campaign.id;
@@ -436,7 +444,7 @@ export class ActionApp {
                         }
                     );
 
-                    this.campaignSelect.appendChild(o);
+                    campaignOptGroup.appendChild(o);
                 });
             })
             .then(() => {
@@ -448,12 +456,17 @@ export class ActionApp {
             });
 
         this.campaignSelect.addEventListener('change', () => {
-            this.addToState('campaign', this.campaignSelect.value);
+            let campaignOrTopic = this.getCampaignOrTopic();
+            this.addToState(campaignOrTopic, this.campaignSelect.value);
             this.updateAssetList();
         });
 
         fetchJSON(this.config.urls.topicList)
             .then(data => {
+                let topicOptGroup = document.createElement('optgroup');
+                topicOptGroup.label = 'Topics';
+                this.campaignSelect.appendChild(topicOptGroup);
+
                 data.objects.forEach(topic => {
                     let o = document.createElement('option');
                     o.value = topic.id;
@@ -466,7 +479,7 @@ export class ActionApp {
                         }
                     );
 
-                    this.campaignSelect.appendChild(o);
+                    topicOptGroup.appendChild(o);
                 });
             })
             .then(() => {
@@ -792,6 +805,28 @@ export class ActionApp {
         return sortBy(assetList, keyFromAsset);
     }
 
+    getCampaignOrTopic() {
+        let campaignOrTopic = 'campaign';
+
+        if (
+            this.campaignSelect.options[this.campaignSelect.selectedIndex]
+                .parentElement.label == 'Topics'
+        ) {
+            campaignOrTopic = 'topic';
+        }
+
+        return campaignOrTopic;
+    }
+
+    assetHasTopic(asset, topicId) {
+        for (let topic in asset.topics) {
+            if (topic.id === topicId) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     getVisibleAssets() {
         // We allow passing a list of asset IDs which should always be included
         // to avoid jarring UI transitions (the display code is responsible for
@@ -807,10 +842,18 @@ export class ActionApp {
             alwaysIncludedAssetIDs.add(this.persistentState.get('asset'));
         }
 
-        let currentCampaignId = this.campaignSelect.value;
-        if (currentCampaignId) {
+        let currentCampaignSelectValue = this.campaignSelect.value;
+        let currentCampaignId;
+        let currentTopicId;
+        if (currentCampaignSelectValue) {
+            let campaignOrTopic = this.getCampaignOrTopic();
+
             // The values specified in API responses are integers, not DOM strings:
-            currentCampaignId = parseInt(currentCampaignId, 10);
+            if (campaignOrTopic == 'campaign') {
+                currentCampaignId = parseInt(currentCampaignSelectValue, 10);
+            } else {
+                currentTopicId = parseInt(currentCampaignSelectValue, 10);
+            }
         }
 
         let currentStatuses;
@@ -835,6 +878,13 @@ export class ActionApp {
                 if (
                     currentCampaignId &&
                     asset.campaign.id != currentCampaignId
+                ) {
+                    continue;
+                }
+
+                if (
+                    currentTopicId &&
+                    !this.assetHasTopic(asset, currentTopicId)
                 ) {
                     continue;
                 }

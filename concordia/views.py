@@ -1717,6 +1717,14 @@ class AssetListView(APIListView):
             },
         }
 
+        if project.topics:
+            metadata["topics"] = {}
+
+            for topic in project.topics.all():
+                metadata["topics"]["id"] = topic.pk
+                metadata["topics"]["title"] = topic.title
+                metadata["topics"]["url"] = topic.get_absolute_url()
+
         # FIXME: we want to rework how this is done after deprecating Asset.media_url
         if obj.previous_sequence:
             metadata["previous_thumbnail"] = re.sub(
