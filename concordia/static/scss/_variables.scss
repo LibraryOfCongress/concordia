@@ -30,6 +30,7 @@ $concordia-app-font-size-xxs: $font-size-base * 0.75;
 $concordia-app-font-size-xs: $font-size-base * 0.8125;
 $concordia-app-font-size-xl: $font-size-base * 1.5;
 $concordia-app-line-height-xs: 1.4;
+$concordia-app-line-height-xxs: 1.3;
 
 // toolbar
 $concordia-app-toolbar-border: $gray-600;
@@ -39,11 +40,12 @@ $concordia-app-active-color: $white;
 // thumbnail
 $concordia-app-asset-list-thumbnail-width: 140px;
 $concordia-app-asset-list-thumbnail-gap: 10px;
+$concordia-app-asset-list-text-padding: 8px;
 
 // asset unavailable
 $concordia-app-asset-unavailable-background: $blue-light;
-$concordia-app-asset-unavailable-padding-x: 10px;
-$concordia-app-asset-unavailable-padding-y: 6px;
+$concordia-app-asset-unavailable-padding-x: $concordia-app-asset-list-text-padding;
+$concordia-app-asset-unavailable-padding-y: $concordia-app-asset-list-text-padding;
 $concordia-app-asset-unavailable-icon-width: 24px;
 
 // footer
