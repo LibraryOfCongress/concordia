@@ -1,3 +1,5 @@
+/* global actionApp */
+
 require('dotenv').config();
 
 describe('action-app', () => {
@@ -18,5 +20,22 @@ describe('action-app', () => {
             return 'actionApp' in window;
         });
         expect(result).toBeTruthy();
+    });
+
+    it('The actionApp should load data', async () => {
+        await Promise.all([
+            page.waitForRequest(request => request.url().includes('/review/')),
+            page.evaluate(() => actionApp.fetchAssetData())
+        ]);
+        const loadedAssetCount = await page.evaluate(
+            () => actionApp.assets.size
+        );
+        expect(loadedAssetCount).toBeGreaterThan(0);
+    });
+
+    it('The actionApp should connect a web socket', async () => {
+        await page.waitForRequest(request =>
+            request.url().includes('/ws/asset/asset_updates/')
+        );
     });
 });
