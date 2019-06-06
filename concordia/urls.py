@@ -152,6 +152,10 @@ urlpatterns = [
     path("account/profile/", views.AccountProfileView.as_view(), name="user-profile"),
     path("account/", include("django_registration.backends.activation.urls")),
     path("account/", include("django.contrib.auth.urls")),
+    path(
+        ".well-known/change-password",  # https://wicg.github.io/change-password-url/
+        RedirectView.as_view(pattern_name="password_change"),
+    ),
     path("captcha/ajax/", views.ajax_captcha, name="ajax-captcha"),
     path("captcha/", include("captcha.urls")),
     path("admin/", admin.site.urls),
