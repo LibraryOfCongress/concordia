@@ -1,0 +1,14 @@
+env:
+    jest: true
+    node: true
+    browser: true
+extends:
+    - ../../../.eslintrc.yaml
+    - plugin:jest/recommended
+plugins:
+    - jest
+globals:
+    page: true
+    browser: true
+    context: true
+    jestPuppeteer: true
