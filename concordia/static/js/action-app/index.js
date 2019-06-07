@@ -565,9 +565,7 @@ export class ActionApp {
 
                 if (this.currentMode != startingMode) {
                     console.warn(
-                        `Mode changed from ${startingMode} to ${
-                            this.currentMode
-                        } while request for ${url} was being processed; halting chained fetches`
+                        `Mode changed from ${startingMode} to ${this.currentMode} while request for ${url} was being processed; halting chained fetches`
                     );
                 } else {
                     if (data.pagination.next) {
@@ -710,9 +708,7 @@ export class ActionApp {
                 asset.status != 'in_progress'
             ) {
                 canEdit = false;
-                reason = `Page with status ${
-                    asset.status
-                } are not available for transcription`;
+                reason = `Page with status ${asset.status} are not available for transcription`;
             }
         } else {
             throw `Unexpected mode ${this.currentMode}`;
@@ -1043,9 +1039,7 @@ export class ActionApp {
                     reservationURL != this.assetReservationURL
                 ) {
                     console.warn(
-                        `User navigated before reservation for asset #${
-                            asset.id
-                        } was obtained: open asset ID = ${this.openAssetId}`
+                        `User navigated before reservation for asset #${asset.id} was obtained: open asset ID = ${this.openAssetId}`
                     );
 
                     this.releaseReservationURL(reservationURL);

@@ -328,9 +328,7 @@ export class AssetList extends List {
                 .filter(i => i.isIntersecting)
                 .forEach(entry => {
                     let target = entry.target;
-                    target.style.backgroundImage = `url(${
-                        target.dataset.image
-                    })`;
+                    target.style.backgroundImage = `url(${target.dataset.image})`;
                     assetListObserver.unobserve(target);
                 });
         });
@@ -661,9 +659,7 @@ class TranscriberView {
                 if (noUpstream || upstreamUnchanged) {
                     // eslint-disable-next-line no-console
                     console.debug(
-                        `Asset ${
-                            asset.id
-                        } unmodified; not resetting transcription view`
+                        `Asset ${asset.id} unmodified; not resetting transcription view`
                     );
                     return;
                 }
