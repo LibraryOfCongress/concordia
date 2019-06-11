@@ -22,7 +22,7 @@
     <div class="row">
         <div class="col-md-9">
             <h1>{{ campaign.title }}</h1>
-            <p class="hero-text">{{ campaign.description|linebreaksbr }}</p>
+            <p class="hero-text">{{ campaign.description|safe }}</p>
         </div>
         <div class="col-md-3">
             {% if campaign.resource_set.all|length %}
