@@ -104,7 +104,7 @@ class MetadataDetails {
         this.el = html('details', {open: true}, this.children);
     }
     update(data) {
-        this.descriptionContainer.textContent = data.description || '';
+        this.descriptionContainer.innerHTML = data.description || '';
 
         if (data.thumbnail_image) {
             // eslint-disable-next-line unicorn/prevent-abbreviations
