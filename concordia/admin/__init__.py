@@ -23,6 +23,7 @@ from ..models import (
     Item,
     Project,
     Resource,
+    SimpleContentBlock,
     SimplePage,
     SiteReport,
     Tag,
@@ -397,6 +398,17 @@ class TranscriptionAdmin(admin.ModelAdmin):
         return truncatechars(obj.text, 100)
 
     truncated_text.short_description = "Text"
+
+
+@admin.register(SimpleContentBlock)
+class SimpleContentBlockAdmin(admin.ModelAdmin):
+    list_display = ("label", "created_on", "updated_on")
+    readonly_fields = ("created_on", "updated_on")
+
+    fieldsets = (
+        (None, {"fields": ("created_on", "updated_on", "label")}),
+        ("Body", {"classes": ("markdown-preview",), "fields": ("body",)}),
+    )
 
 
 @admin.register(SimplePage)
