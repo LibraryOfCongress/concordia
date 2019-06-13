@@ -800,7 +800,7 @@ class TagListView(ListView):
 
 
 @method_decorator(default_cache_control, name="dispatch")
-class TagDetailView(DetailView):
+class TagDetailView(APIDetailView):
     template_name = "tags/detail.html"
     context_object_name = "tag"
 
