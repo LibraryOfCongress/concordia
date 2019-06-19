@@ -5,13 +5,20 @@
 {% block extrahead %}
     {{ block.super }}
 
-    {% include 'fragments/codemirror-scripts-markdown.html' %}
+    {% include 'fragments/codemirror.html' %}
 {% endblock extrahead %}
 
 {% block content %}
     {{ block.super }}
 
-    <script src="{% static 'admin/editor-preview-markdown.js' %}"></script>
+    <template id="preview-head">{% spaceless %}
+        {% include "fragments/common-stylesheets.html" %}
+    {% endspaceless %}</template>
+
+    <script src="{% static 'admin/editor-preview.js' %}"></script>
+    <script>
+        setupCodeMirror(document.getElementById('id_body'), 'markdown');
+    </script>
 
     <style>
         .field-body > div {
