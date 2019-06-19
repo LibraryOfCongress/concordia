@@ -68,7 +68,7 @@
         .on('click', function(event) {
             event.preventDefault();
 
-            $formRow.find('.errorlist').remove();
+            $formRow.find('.errornote').remove();
 
             try {
                 var pretty = prettier.format(editor.getValue(), {
@@ -81,8 +81,8 @@
                 editor.setValue(pretty);
                 queueUpdate();
             } catch (error) {
-                $('<ul class="errorlist"></ul>')
-                    .append($('<li>').text(error))
+                $('<p class="errornote">')
+                    .text(error)
                     .appendTo($formRow);
             }
         });
