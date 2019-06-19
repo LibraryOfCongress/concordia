@@ -6,9 +6,7 @@
 
     var descriptionField = document.getElementById('id_description');
 
-    var preview = $(
-        '<iframe id="id_description_preview" class="container"></iframe>'
-    )
+    var preview = $('<iframe>')
         // Firefox and, reportedly, Safari have a quirk where the <iframe> body
         // is not correctly available until it “loads” the blank page:
         .on('load', function() {
