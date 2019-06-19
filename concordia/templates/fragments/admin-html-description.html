@@ -1,22 +1,22 @@
 
 {% load static %}
 
-    <template id="preview-head">{% spaceless %}
-        {% include "fragments/common-stylesheets.html" %}
-    {% endspaceless %}</template>
+<template id="preview-head">{% spaceless %}
+    {% include "fragments/common-stylesheets.html" %}
+{% endspaceless %}</template>
 
     <script src="{% static 'admin/editor-preview.js' %}"></script>
 
-    <style>
-        .field-description > div {
-            display: flex;
-            width: 100%;
-        }
+<style>
+    .field-description > div {
+        display: flex;
+        width: 100%;
+    }
 
-        .field-description > div > * {
-            flex-basis: 50%;
-            overflow-y: auto;
+    .field-description > div > * {
+        flex-basis: 50%;
+        overflow-y: auto;
 
-            min-height: 500px;
-        }
-    </style>
+        min-height: 500px;
+    }
+</style>
