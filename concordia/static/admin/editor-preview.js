@@ -1,8 +1,10 @@
 /* global CodeMirror prettier prettierPlugins django */
 
 (function($) {
-    var $bodyRow = $('.field-description');
-    $bodyRow.find('label').remove();
+    var $formRow = $('.field-description');
+    $formRow.find('label').remove();
+
+    var descriptionField = document.getElementById('id_description');
 
     var preview = $(
         '<iframe id="id_description_preview" class="container"></iframe>'
@@ -29,22 +31,26 @@
 
             queueUpdate();
         })
-        .insertAfter('#id_description')
+        .insertAfter(descriptionField)
         .get(0);
 
-    var editor = CodeMirror.fromTextArea(
-        document.getElementById('id_description'),
-        {
-            mode: {
-                name: 'xml',
-                htmlMode: true
-            },
-            lineNumbers: true,
-            highlightFormatting: true,
-            indentUnit: 4,
-            lineWrapping: true
+    function updatePreview() {
+        var main = preview.contentDocument.body.querySelector('main');
+        if (main) {
+            main.innerHTML = editor.getValue();
         }
-    );
+    }
+
+    var editor = CodeMirror.fromTextArea(descriptionField, {
+        mode: {
+            name: 'xml',
+            htmlMode: true
+        },
+        lineNumbers: true,
+        highlightFormatting: true,
+        indentUnit: 4,
+        lineWrapping: true
+    });
 
     var queuedUpdate;
 
@@ -57,15 +63,8 @@
         queuedUpdate = window.requestAnimationFrame(updatePreview);
     }
 
-    function updatePreview() {
-        var main = preview.contentDocument.body.querySelector('main');
-        if (main) {
-            main.innerHTML = editor.getValue();
-        }
-    }
-
     $('<button class="button">Run Prettier</button>')
-        .prependTo('.field-description')
+        .prependTo($formRow)
         .on('click', function(event) {
             event.preventDefault();
             var pretty = prettier.format(editor.getValue(), {
