@@ -52,6 +52,8 @@
         lineWrapping: true
     });
 
+    var editorLineWidgets = [];
+
     var queuedUpdate;
 
     editor.on('change', queueUpdate);
@@ -70,6 +72,10 @@
 
             $formRow.find('.errornote').remove();
 
+            editorLineWidgets.forEach(widget =>
+                editor.removeLineWidget(widget)
+            );
+
             try {
                 var pretty = prettier.format(editor.getValue(), {
                     parser: 'html',
@@ -84,6 +90,25 @@
                 $('<p class="errornote">')
                     .text(error)
                     .appendTo($formRow);
+
+                var lineWarning = document.createElement('div');
+                lineWarning.style.whiteSpace = 'nowrap';
+                lineWarning.style.overflow = 'hidden';
+
+                var icon = lineWarning.appendChild(
+                    document.createElement('span')
+                );
+                icon.style.marginRight = '1rem';
+                icon.innerHTML = '⚠️';
+                lineWarning.appendChild(document.createTextNode(error.message));
+
+                editorLineWidgets.push(
+                    editor.addLineWidget(
+                        error.loc.start.line - 1,
+                        lineWarning,
+                        {coverGutter: false, noHScroll: true}
+                    )
+                );
             }
         });
 })(django.jQuery);
