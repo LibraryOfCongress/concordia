@@ -1,7 +1,5 @@
 {% extends "admin/change_form.html" %}
 
-{% load static %}
-
 {% block extrahead %}
     {{ block.super }}
 
@@ -11,11 +9,6 @@
 {% block content %}
     {{ block.super }}
 
-    <template id="preview-head">{% spaceless %}
-        {% include "fragments/common-stylesheets.html" %}
-    {% endspaceless %}</template>
-
-    <script src="{% static 'admin/editor-preview.js' %}"></script>
     <script>
         setupCodeMirror(document.getElementById('id_body'), 'markdown');
     </script>

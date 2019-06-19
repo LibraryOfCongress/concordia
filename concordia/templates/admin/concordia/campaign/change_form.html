@@ -48,5 +48,7 @@
 {% block content %}
     {{ block.super }}
 
-    {% include 'fragments/admin-html-description.html' %}
+    <script>
+        setupCodeMirror(document.getElementById('id_description'), 'html');
+    </script>
 {% endblock content %}

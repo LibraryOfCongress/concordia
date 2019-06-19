@@ -1,3 +1,5 @@
+{% load static %}
+
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.47.0/codemirror.min.css" integrity="sha256-I8NyGs4wjbMuBSUE40o55W6k6P7tu/7G28/JGUUYCIs=" crossorigin="anonymous" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.47.0/addon/lint/lint.min.css" integrity="sha256-h8ssETVF7g7LAuYcBn+6AQDL1DLfLVwuiBrLrk3yHks=" crossorigin="anonymous" />
 
@@ -12,6 +14,8 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/remarkable/1.7.1/remarkable.min.js" integrity="sha256-ltAts6+/XysEs9E5RF/t0H+0eD3ET6NpbqzshWkqeic=" crossorigin="anonymous"></script>
 
+<script src="{% static 'admin/editor-preview.js' %}"></script>
+
 <style>
     .form-row.codemirror-with-preview > div {
         display: flex;
@@ -25,3 +29,7 @@
         min-height: 500px;
     }
 </style>
+
+<template id="preview-head">{% spaceless %}
+    {% include "fragments/common-stylesheets.html" %}
+{% endspaceless %}</template>
