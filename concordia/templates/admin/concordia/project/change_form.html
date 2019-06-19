@@ -1,6 +1,6 @@
 {% extends "admin/change_form.html" %}
 
-{% load i18n admin_urls %}
+{% load i18n admin_urls static %}
 
 {% block object-tools-items %}
     {% if original.pk %}
@@ -35,3 +35,33 @@
     {% endif %}
     {{ block.super }}
 {% endblock %}
+
+{% block extrahead %}
+    {{ block.super }}
+
+    {% include 'fragments/codemirror-scripts-html.html' %}
+{% endblock extrahead %}
+
+{% block content %}
+    {{ block.super }}
+
+    <template id="preview-head">{% spaceless %}
+        {% include "fragments/common-stylesheets.html" %}
+    {% endspaceless %}</template>
+
+    <script src="{% static 'admin/editor-preview.js' %}"></script>
+
+    <style>
+        .field-description > div {
+            display: flex;
+            width: 100%;
+        }
+
+        .field-description > div > * {
+            flex-basis: 50%;
+            overflow-y: auto;
+
+            min-height: 500px;
+        }
+    </style>
+{% endblock content %}
