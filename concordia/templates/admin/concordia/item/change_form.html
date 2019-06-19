@@ -36,26 +36,11 @@
     {% include 'fragments/codemirror-scripts-html.html' %}
 {% endblock extrahead %}
 
+
 {% block content %}
     {{ block.super }}
 
-    <template id="preview-head">{% spaceless %}
-        {% include "fragments/common-stylesheets.html" %}
-    {% endspaceless %}</template>
 
-    <script src="{% static 'admin/editor-preview.js' %}"></script>
+    {% include 'fragments/admin-html-description.html' %}
 
-    <style>
-        .field-description > div {
-            display: flex;
-            width: 100%;
-        }
-
-        .field-description > div > * {
-            flex-basis: 50%;
-            overflow-y: auto;
-
-            min-height: 500px;
-        }
-    </style>
 {% endblock content %}
