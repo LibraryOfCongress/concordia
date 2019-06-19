@@ -67,16 +67,23 @@
         .prependTo($formRow)
         .on('click', function(event) {
             event.preventDefault();
-            var pretty = prettier.format(editor.getValue(), {
-                parser: 'html',
-                plugins: prettierPlugins,
-                printWidth: 120,
-                tabWidth: 4
-            });
 
-            editor.setValue(pretty);
-            queueUpdate();
+            $formRow.find('.errorlist').remove();
 
-            return false;
+            try {
+                var pretty = prettier.format(editor.getValue(), {
+                    parser: 'html',
+                    plugins: prettierPlugins,
+                    printWidth: 120,
+                    tabWidth: 4
+                });
+
+                editor.setValue(pretty);
+                queueUpdate();
+            } catch (error) {
+                $('<ul class="errorlist"></ul>')
+                    .append($('<li>').text(error))
+                    .appendTo($formRow);
+            }
         });
 })(django.jQuery);
