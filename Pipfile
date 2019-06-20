@@ -38,6 +38,7 @@ channels = "*"
 channels-redis = "*"
 more-itertools = "*"
 psycopg2 = "*"
+bleach = "*"
 
 [dev-packages]
 invoke = "*"

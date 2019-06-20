@@ -1,4 +1,27 @@
+import bleach
 from django import forms
+
+ALLOWED_TAGS = bleach.sanitizer.ALLOWED_TAGS + [
+    "br",
+    "div",
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "h5",
+    "h6",
+    "hr",
+    "kbd",
+    "p",
+    "span",
+]
+ALLOWED_ATTRIBUTES = {
+    **bleach.sanitizer.ALLOWED_ATTRIBUTES,
+    "a": ["class", "id", "href", "title"],
+    "div": ["class", "id"],
+    "span": ["class", "id"],
+    "p": ["class", "id"],
+}
 
 
 class AdminItemImportForm(forms.Form):
@@ -12,3 +35,19 @@ class AdminProjectBulkImportForm(forms.Form):
         required=True,
         label="Spreadsheet containing the campaigns, projects, and items to import",
     )
+
+
+class BleachedDescriptionAdminForm(forms.ModelForm):
+    def clean_description(self):
+        return bleach.clean(
+            self.cleaned_data["description"],
+            tags=ALLOWED_TAGS,
+            attributes=ALLOWED_ATTRIBUTES,
+        )
+
+
+class SimpleContentBlockAdminForm(forms.ModelForm):
+    def clean_body(self):
+        return bleach.clean(
+            self.cleaned_data["body"], tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES
+        )

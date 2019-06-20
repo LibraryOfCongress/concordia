@@ -39,7 +39,11 @@ from .actions import (
     unpublish_item_action,
 )
 from .filters import AcceptedFilter, RejectedFilter, SubmittedFilter
-from .forms import AdminItemImportForm
+from .forms import (
+    AdminItemImportForm,
+    BleachedDescriptionAdminForm,
+    SimpleContentBlockAdminForm,
+)
 
 
 class ConcordiaUserAdmin(UserAdmin):
@@ -107,6 +111,8 @@ class CustomListDisplayFieldsMixin:
 
 @admin.register(Campaign)
 class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
+    form = BleachedDescriptionAdminForm
+
     list_display = (
         "title",
         "short_description",
@@ -165,6 +171,8 @@ class TopicAdmin(admin.ModelAdmin):
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
+    form = BleachedDescriptionAdminForm
+
     # todo: add foreignKey link for campaign
     list_display = ("id", "title", "slug", "campaign", "published")
 
@@ -402,6 +410,8 @@ class TranscriptionAdmin(admin.ModelAdmin):
 
 @admin.register(SimpleContentBlock)
 class SimpleContentBlockAdmin(admin.ModelAdmin):
+    form = SimpleContentBlockAdminForm
+
     list_display = ("label", "created_on", "updated_on")
     readonly_fields = ("created_on", "updated_on")
 
