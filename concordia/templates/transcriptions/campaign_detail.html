@@ -7,7 +7,7 @@
 
 {% block head_content %}
     <link rel="canonical" href="https://{{ request.get_host }}{{ request.path }}">
-    <meta name="description" content="{{ campaign.description|normalize_whitespace }}">
+    <meta name="description" content="{{ campaign.description|striptags|normalize_whitespace }}">
     <meta name="thumbnail" content="{{ MEDIA_URL }}{{ campaign.thumbnail_image }}">
     <meta property="og:image" content="{{ MEDIA_URL }}{{ campaign.thumbnail_image }}">
 {% endblock head_content %}
