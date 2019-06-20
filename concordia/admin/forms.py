@@ -13,6 +13,7 @@ BLOCK_ALLOWED_TAGS = FRAGMENT_ALLOWED_TAGS + [
     "h6",
     "hr",
     "p",
+    "section",
 ]
 
 ALLOWED_ATTRIBUTES = {
