@@ -28,7 +28,9 @@ from .utils import (
 )
 
 
-@override_settings(RATELIMIT_ENABLE=False)
+@override_settings(
+    RATELIMIT_ENABLE=False, SESSION_ENGINE="django.contrib.sessions.backends.cache"
+)
 class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
     """
     This class contains the unit tests for the view in the concordia app.
@@ -270,7 +272,9 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         self.assertContains(response, "new ActionApp")
 
 
-@override_settings(RATELIMIT_ENABLE=False)
+@override_settings(
+    RATELIMIT_ENABLE=False, SESSION_ENGINE="django.contrib.sessions.backends.cache"
+)
 class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCase):
     def completeCaptcha(self, key=None):
         """Submit a CAPTCHA response using the provided challenge key"""
