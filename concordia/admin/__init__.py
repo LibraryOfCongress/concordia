@@ -16,7 +16,6 @@ from tabular_export.admin import export_to_csv_action, export_to_excel_action
 from exporter import views as exporter_views
 from importer.tasks import import_items_into_project_from_url
 
-from ..forms import AdminItemImportForm
 from ..models import (
     Asset,
     Campaign,
@@ -40,6 +39,7 @@ from .actions import (
     unpublish_item_action,
 )
 from .filters import AcceptedFilter, RejectedFilter, SubmittedFilter
+from .forms import AdminItemImportForm
 
 
 class ConcordiaUserAdmin(UserAdmin):

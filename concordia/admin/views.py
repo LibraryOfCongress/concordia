@@ -13,8 +13,8 @@ from tabular_export.core import export_to_csv_response, flatten_queryset
 from importer.tasks import import_items_into_project_from_url
 from importer.utils.excel import slurp_excel
 
-from ..forms import AdminProjectBulkImportForm
 from ..models import Campaign, Project, SiteReport
+from .forms import AdminProjectBulkImportForm
 
 
 @never_cache
