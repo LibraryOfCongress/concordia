@@ -1,10 +1,12 @@
 {% extends "base.html" %}
 
 {% load staticfiles %}
+
+{% load feature_flags %}
+
 {% load concordia_media_tags %}
 {% load concordia_sharing_tags %}
-{% load feature_flags %}
-{% load simple_content_block %}
+{% load concordia_simple_content_blocks %}
 
 {% block title %}
 {{ asset.title }} ({{ asset.item.project.campaign.title }}: {{ asset.item.project.title }})
