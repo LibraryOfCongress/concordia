@@ -164,6 +164,8 @@ class ResourceAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
 
 @admin.register(Topic)
 class TopicAdmin(admin.ModelAdmin):
+    form = BleachedDescriptionAdminForm
+
     list_display = ("id", "title", "slug")
     list_display_links = ("id", "title", "slug")
     prepopulated_fields = {"slug": ("title",)}
