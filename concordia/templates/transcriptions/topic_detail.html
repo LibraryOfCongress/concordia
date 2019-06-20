@@ -22,7 +22,7 @@
     <div class="row">
         <div class="col-md-9">
             <h1>{{ topic.title }}</h1>
-            <p class="hero-text">{{ topic.description|safe }}</p>
+            <div class="hero-text">{{ topic.description|safe }}</div>
         </div>
         <div class="col-md-3">
             {% if topic.resource_set.all|length %}
