@@ -1,8 +1,9 @@
 import bleach
 from django import forms
 
-ALLOWED_TAGS = bleach.sanitizer.ALLOWED_TAGS + [
-    "br",
+FRAGMENT_ALLOWED_TAGS = bleach.sanitizer.ALLOWED_TAGS + ["br", "kbd", "span"]
+
+BLOCK_ALLOWED_TAGS = FRAGMENT_ALLOWED_TAGS + [
     "div",
     "h1",
     "h2",
@@ -11,10 +12,9 @@ ALLOWED_TAGS = bleach.sanitizer.ALLOWED_TAGS + [
     "h5",
     "h6",
     "hr",
-    "kbd",
     "p",
-    "span",
 ]
+
 ALLOWED_ATTRIBUTES = {
     **bleach.sanitizer.ALLOWED_ATTRIBUTES,
     "a": ["class", "id", "href", "title"],
@@ -41,7 +41,7 @@ class BleachedDescriptionAdminForm(forms.ModelForm):
     def clean_description(self):
         return bleach.clean(
             self.cleaned_data["description"],
-            tags=ALLOWED_TAGS,
+            tags=BLOCK_ALLOWED_TAGS,
             attributes=ALLOWED_ATTRIBUTES,
         )
 
@@ -49,5 +49,7 @@ class BleachedDescriptionAdminForm(forms.ModelForm):
 class SimpleContentBlockAdminForm(forms.ModelForm):
     def clean_body(self):
         return bleach.clean(
-            self.cleaned_data["body"], tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES
+            self.cleaned_data["body"],
+            tags=BLOCK_ALLOWED_TAGS,
+            attributes=ALLOWED_ATTRIBUTES,
         )
