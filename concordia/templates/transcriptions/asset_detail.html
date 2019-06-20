@@ -311,8 +311,7 @@
             </button>
             <div>
                 {% if SIMPLE_CONTENT_BLOCKS %}
-                    {% simple_content_block "classic_quicktips" as content_block %}
-                    {{ content_block|safe }}
+                    {% simple_content_block "classic_quicktips" %}
                 {% else %}
                     <ul>
                         <li>Transcribe original spelling, punctuation, word order, and any page numbers or catalog marks.</li>

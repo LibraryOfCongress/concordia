@@ -245,8 +245,7 @@
         </div>
         <aside id="help-panel" role="tabpanel" aria-labelledby="help-toggle" hidden>
             {% if SIMPLE_CONTENT_BLOCKS %}
-                {% simple_content_block "prototype_quicktips" as content_block %}
-                {{ content_block|safe }}
+                {% simple_content_block "prototype_quicktips" %}
             {% else %}
                 <h2 class="sr-only">Help</h2>
                 <section>
