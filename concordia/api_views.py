@@ -96,6 +96,38 @@ class APIDetailView(APIViewMixin, DetailView):
 class APIListView(APIViewMixin, ListView):
     """ListView which can also return JSON with consistent pagination"""
 
+    def render_to_response(self, context, **response_kwargs):
+        page_obj = context["page_obj"]
+
+        if page_obj:
+            per_page = context["paginator"].per_page
+
+            context["pagination"] = pagination = {
+                "first": self.build_url_for_page(1, per_page),
+                "last": self.build_url_for_page(page_obj.paginator.num_pages, per_page),
+            }
+            if page_obj.has_next():
+                pagination["next"] = self.build_url_for_page(
+                    page_obj.next_page_number(), per_page
+                )
+
+        response = super().render_to_response(context, **response_kwargs)
+
+        if "pagination" in context:
+            response["Link"] = ", ".join(
+                f'<{url}>; rel="{rel}"' for rel, url in pagination.items()
+            )
+
+        return response
+
+    def build_url_for_page(self, page_number, per_page):
+        qs = self.request.GET.copy()
+        qs["page"] = page_number
+        qs["per_page"] = per_page
+        return self.request.build_absolute_uri(
+            "%s?%s" % (self.request.path, qs.urlencode())
+        )
+
     def get_paginate_by(self, queryset):
         per_page = self.request.GET.get("per_page")
 
@@ -110,23 +142,7 @@ class APIListView(APIViewMixin, ListView):
             "sent": time(),
         }
 
-        page_obj = context["page_obj"]
-        if page_obj:
-            per_page = context["paginator"].per_page
-
-            data["pagination"] = pagination = {
-                "first": self.request.build_absolute_uri(
-                    "%s?page=%s&per_page=%d" % (self.request.path, 1, per_page)
-                ),
-                "last": self.request.build_absolute_uri(
-                    "%s?page=%s&per_page=%d"
-                    % (self.request.path, page_obj.paginator.num_pages, per_page)
-                ),
-            }
-            if page_obj.has_next():
-                pagination["next"] = self.request.build_absolute_uri(
-                    "%s?page=%s&per_page=%d"
-                    % (self.request.path, page_obj.next_page_number(), per_page)
-                )
+        if "pagination" in context:
+            data["pagination"] = context["pagination"]
 
         return data
