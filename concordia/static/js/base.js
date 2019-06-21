@@ -84,7 +84,11 @@ function displayMessage(level, message, uniqueId) {
 }
 
 function isOutdatedBrowser() {
-    /* See https://caniuse.com/#feat=css-supports-api */
+    /*
+        See https://caniuse.com/#feat=css-supports-api for the full matrix but
+        by now this is effectively the same as testing for IE11 vs. all of the
+        evergreen browsers:
+    */
     return typeof CSS == 'undefined' || !CSS.supports;
 }
 
@@ -128,6 +132,10 @@ $(function() {
             );
         }
 
+        /*
+            CSS variables are supported by everything except IE11:
+            https://caniuse.com/#feat=css-variables
+        */
         loadLegacyPolyfill(
             'https://cdn.jsdelivr.net/npm/css-vars-ponyfill@2.0.2/dist/css-vars-ponyfill.min.js',
             function() {
