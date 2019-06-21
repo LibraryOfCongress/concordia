@@ -11,9 +11,10 @@
         "gulp-sass": "^4.0.2",
         "gulp-sourcemaps": "^2.6.5",
         "prettier": "^1.18.1",
-        "stylelint": "^10.0.1",
+        "stylelint": "^10.1.0",
         "stylelint-config-prettier": "^5.2.0",
-        "stylelint-config-recommended": "^2.2.0"
+        "stylelint-config-recommended": "^2.2.0",
+        "stylelint-value-no-unknown-custom-properties": "^2.0.0"
     },
     "dependencies": {
         "array-sort-by": "^1.2.1",
