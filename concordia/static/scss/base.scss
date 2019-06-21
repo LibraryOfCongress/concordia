@@ -869,7 +869,7 @@ body.view-transcriptions--asset-detail main {
 
     background-color: rgba(250, 250, 250, 0.8);
     border-top: 1pt solid var(--bg-darkest-gray);
-    transition: height 1s linear 0;
+    transition: height 1s linear 0s;
 }
 
 #instruction-window.collapse {
