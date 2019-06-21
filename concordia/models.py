@@ -361,7 +361,7 @@ class SimpleContentBlock(models.Model):
     created_on = models.DateTimeField(editable=False, auto_now_add=True)
     updated_on = models.DateTimeField(editable=False, auto_now=True)
 
-    label = models.SlugField(
+    slug = models.SlugField(
         unique=True,
         max_length=255,
         help_text="Label that templates use to retrieve this block",
@@ -370,7 +370,7 @@ class SimpleContentBlock(models.Model):
     body = models.TextField()
 
     def __str__(self):
-        return f"SimpleContentBlock: {self.label}"
+        return f"SimpleContentBlock: {self.slug}"
 
 
 class SimplePage(models.Model):
