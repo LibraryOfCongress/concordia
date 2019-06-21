@@ -952,37 +952,37 @@ div.related-links {
 
 .alert.alert-primary {
     background-color: var(--primary-color);
-    border-color: none;
+    border-color: var(--primary-color);
     color: var(--text-color-offwhite);
 }
 
 .alert.alert-secondary {
     background-color: var(--secondary-color);
-    border-color: none;
+    border-color: var(--secondary-color);
     color: var(--text-color-primary);
 }
 
 .alert.alert-success {
     background-color: var(--color-success);
-    border-color: none;
+    border-color: var(--color-success);
     color: var(--text-color-offwhite);
 }
 
 .alert.alert-danger {
     background-color: var(--color-danger);
-    border-color: none;
+    border-color: var(--color-danger);
     color: var(--text-color-offwhite);
 }
 
 .alert.alert-warning {
     background-color: var(--color-warning);
-    border-color: none;
+    border-color: var(--color-warning);
     color: var(--text-color-primary);
 }
 
 .alert.alert-info {
     background-color: var(--color-info);
-    border-color: none;
+    border-color: var(--color-info);
     color: var(--text-color-primary);
 }
 
