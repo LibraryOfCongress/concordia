@@ -129,12 +129,12 @@ $(function() {
         }
 
         loadLegacyPolyfill(
-            'https://cdn.jsdelivr.net/npm/css-vars-ponyfill@1.12.0/dist/css-vars-ponyfill.min.js',
+            'https://cdn.jsdelivr.net/npm/css-vars-ponyfill@2.0.2/dist/css-vars-ponyfill.min.js',
             function() {
                 /* global cssVars */
                 cssVars({
                     legacyOnly: true,
-                    onlyVars: true,
+                    preserveStatic: true,
                     include: 'link[rel="stylesheet"][href^="/static/"]'
                 });
             }
