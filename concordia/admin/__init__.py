@@ -16,13 +16,13 @@ from tabular_export.admin import export_to_csv_action, export_to_excel_action
 from exporter import views as exporter_views
 from importer.tasks import import_items_into_project_from_url
 
-from ..forms import AdminItemImportForm
 from ..models import (
     Asset,
     Campaign,
     Item,
     Project,
     Resource,
+    SimpleContentBlock,
     SimplePage,
     SiteReport,
     Tag,
@@ -39,6 +39,11 @@ from .actions import (
     unpublish_item_action,
 )
 from .filters import AcceptedFilter, RejectedFilter, SubmittedFilter
+from .forms import (
+    AdminItemImportForm,
+    BleachedDescriptionAdminForm,
+    SimpleContentBlockAdminForm,
+)
 
 
 class ConcordiaUserAdmin(UserAdmin):
@@ -106,6 +111,8 @@ class CustomListDisplayFieldsMixin:
 
 @admin.register(Campaign)
 class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
+    form = BleachedDescriptionAdminForm
+
     list_display = (
         "title",
         "short_description",
@@ -157,6 +164,8 @@ class ResourceAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
 
 @admin.register(Topic)
 class TopicAdmin(admin.ModelAdmin):
+    form = BleachedDescriptionAdminForm
+
     list_display = ("id", "title", "slug")
     list_display_links = ("id", "title", "slug")
     prepopulated_fields = {"slug": ("title",)}
@@ -164,6 +173,8 @@ class TopicAdmin(admin.ModelAdmin):
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
+    form = BleachedDescriptionAdminForm
+
     # todo: add foreignKey link for campaign
     list_display = ("id", "title", "slug", "campaign", "published")
 
@@ -397,6 +408,19 @@ class TranscriptionAdmin(admin.ModelAdmin):
         return truncatechars(obj.text, 100)
 
     truncated_text.short_description = "Text"
+
+
+@admin.register(SimpleContentBlock)
+class SimpleContentBlockAdmin(admin.ModelAdmin):
+    form = SimpleContentBlockAdminForm
+
+    list_display = ("slug", "created_on", "updated_on")
+    readonly_fields = ("created_on", "updated_on")
+
+    fieldsets = (
+        (None, {"fields": ("created_on", "updated_on", "slug")}),
+        ("Body", {"classes": ("markdown-preview",), "fields": ("body",)}),
+    )
 
 
 @admin.register(SimplePage)

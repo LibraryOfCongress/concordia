@@ -7,7 +7,7 @@
 
 {% block head_content %}
     <link rel="canonical" href="https://{{ request.get_host }}{{ request.path }}">
-    <meta name="description" content="{{ topic.description|normalize_whitespace }}">
+    <meta name="description" content="{{ topic.description|striptags|normalize_whitespace }}">
     <meta name="thumbnail" content="{{ MEDIA_URL }}{{ topic.thumbnail_image }}">
     <meta property="og:image" content="{{ MEDIA_URL }}{{ topic.thumbnail_image }}">
 {% endblock head_content %}
@@ -22,7 +22,7 @@
     <div class="row">
         <div class="col-md-9">
             <h1>{{ topic.title }}</h1>
-            <p class="hero-text">{{ topic.description|linebreaksbr }}</p>
+            <div class="hero-text">{{ topic.description|safe }}</div>
         </div>
         <div class="col-md-3">
             {% if topic.resource_set.all|length %}

@@ -357,6 +357,22 @@ class AssetTranscriptionReservation(models.Model):
     updated_on = models.DateTimeField(auto_now=True)
 
 
+class SimpleContentBlock(models.Model):
+    created_on = models.DateTimeField(editable=False, auto_now_add=True)
+    updated_on = models.DateTimeField(editable=False, auto_now=True)
+
+    slug = models.SlugField(
+        unique=True,
+        max_length=255,
+        help_text="Label that templates use to retrieve this block",
+    )
+
+    body = models.TextField()
+
+    def __str__(self):
+        return f"SimpleContentBlock: {self.slug}"
+
+
 class SimplePage(models.Model):
     created_on = models.DateTimeField(editable=False, auto_now_add=True)
     updated_on = models.DateTimeField(editable=False, auto_now=True)
