@@ -10,23 +10,23 @@ class TestSimpleContentBlocks(TestCase):
         b = SimpleContentBlock()
         self.assertRaises(ValidationError, b.full_clean)
 
-        b = SimpleContentBlock(label="test")
+        b = SimpleContentBlock(slug="test")
         self.assertRaises(ValidationError, b.full_clean)
 
         b = SimpleContentBlock(body="test")
         self.assertRaises(ValidationError, b.full_clean)
 
-        b = SimpleContentBlock(label="test", body="test")
+        b = SimpleContentBlock(slug="test", body="test")
         b.save()
 
     def test_block_string_representation(self):
-        b = SimpleContentBlock(label="foo", body="bar")
+        b = SimpleContentBlock(slug="foo", body="bar")
         self.assertEqual(str(b), "SimpleContentBlock: foo")
 
 
 class TestSimpleContentBlockTags(TestCase):
     def test_basic_block(self):
-        SimpleContentBlock.objects.create(label="boring-block", body="Boring Block")
+        SimpleContentBlock.objects.create(slug="boring-block", body="Boring Block")
         context = Context()
         template = Template(
             """

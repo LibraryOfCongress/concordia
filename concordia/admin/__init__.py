@@ -414,11 +414,11 @@ class TranscriptionAdmin(admin.ModelAdmin):
 class SimpleContentBlockAdmin(admin.ModelAdmin):
     form = SimpleContentBlockAdminForm
 
-    list_display = ("label", "created_on", "updated_on")
+    list_display = ("slug", "created_on", "updated_on")
     readonly_fields = ("created_on", "updated_on")
 
     fieldsets = (
-        (None, {"fields": ("created_on", "updated_on", "label")}),
+        (None, {"fields": ("created_on", "updated_on", "slug")}),
         ("Body", {"classes": ("markdown-preview",), "fields": ("body",)}),
     )
 
