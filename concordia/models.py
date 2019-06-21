@@ -362,6 +362,7 @@ class SimpleContentBlock(models.Model):
     updated_on = models.DateTimeField(editable=False, auto_now=True)
 
     label = models.CharField(
+        unique=True,
         max_length=255,
         help_text="Label that is used to refer to this content in the code",
     )
