@@ -1,6 +1,7 @@
 :root {
     --primary-color: #f05129;
     --primary-color-hover: rgba(188, 57, 1, 1); /* #BC3901 */
+    --secondary-color: rgba(0, 167, 228, 1); /* #00A7E4 */
     --color-success: rgba(22, 201, 74, 1); /* #16C94A */
     --color-danger: rgba(254, 12, 11, 1); /* #FE0C0B */
     --color-warning: rgba(254, 153, 11, 1); /* #FE990B */
@@ -134,10 +135,6 @@ h6 {
     color: var(--primary-color);
 }
 
-.secondary-text {
-    color: var(--secondary-color);
-}
-
 .gray-text {
     color: var(--text-color-primary);
 }
@@ -153,16 +150,6 @@ a.primary-text {
 
 a.primary-text:hover {
     color: var(--primary-color-hover);
-    text-decoration: underline;
-}
-
-a.secondary-text {
-    color: var(--secondary-color);
-    text-decoration: none;
-}
-
-a.secondary-text:hover {
-    color: var(--secondary-color-hover);
     text-decoration: underline;
 }
 
@@ -356,18 +343,6 @@ ul.nav-secondary {
 .btn.disabled,
 .btn:disabled {
     opacity: 0.3 !important;
-}
-
-.btn-minimal-secondary {
-    background-color: transparent;
-    border-color: transparent;
-    color: var(--secondary-color);
-}
-
-.btn-minimal-secondary:hover {
-    background-color: var(--secondary-color);
-    border-color: transparent;
-    color: var(--text-color-offwhite);
 }
 
 .btn-secondary.disabled,
