@@ -51,20 +51,3 @@ class TestSimpleContentBlockTags(TestCase):
         rendered = template.render(context)
 
         self.assertEqual(rendered.strip(), "")
-
-    def test_block_with_template_markup(self):
-        SimpleContentBlock.objects.create(
-            label="block-with-template-markup",
-            body="""<a href="{% url 'homepage' %}"></a>""",
-        )
-        context = Context()
-        template = Template(
-            """
-            {% load concordia_simple_content_blocks %}
-            {% simple_content_block "block-with-template-markup" %}
-            """
-        )
-
-        rendered = template.render(context)
-
-        self.assertIn('<a href="/"></a>', rendered)
