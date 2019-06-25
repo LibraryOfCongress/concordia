@@ -28,7 +28,7 @@ Resources:
             ElasticsearchClusterConfig:
               InstanceCount: 1
               ZoneAwarenessEnabled: false
-              InstanceType: "r5.xlarge.elasticsearch"
+              InstanceType: "m4.xlarge.elasticsearch"
             EBSOptions:
               EBSEnabled: true
               Iops: 0
