@@ -11,12 +11,6 @@
    wget https://github.com/abutaha/aws-es-proxy/releases/download/v0.9/aws-es-proxy-0.9-linux-386
 ```
 
-1. Start aws-es-proxy (need to know ES endpoint URL).
-
-```
-   ./aws-es-proxy-0.9-linux-386 -endpoint \$ELASTICSEARCH_ENDPOINT -no-sign-reqs -listen 0.0.0.0:9200
-```
-
 1. Install nginx.
 
 ```
@@ -69,4 +63,10 @@ sudo yum install -y nginx
 ```
 sudo systemctl enable nginx
 sudo systemctl start nginx
+```
+
+1. Start aws-es-proxy (need to know ES endpoint URL).
+
+```
+   ./aws-es-proxy-0.9-linux-386 -endpoint \$ELASTICSEARCH_ENDPOINT -no-sign-reqs -listen 0.0.0.0:9200
 ```
