@@ -26,12 +26,9 @@ Resources:
         Properties:
             DomainName: !Sub "crowd-${EnvName}-vpc"
             ElasticsearchClusterConfig:
-              DedicatedMasterEnabled: false
               InstanceCount: 1
               ZoneAwarenessEnabled: false
               InstanceType: "r5.xlarge.elasticsearch"
-              DedicatedMasterType: "r5.xlarge.elasticsearch"
-              DedicatedMasterCount: 1
             EBSOptions:
               EBSEnabled: true
               Iops: 0
