@@ -249,3 +249,8 @@ def create_elasticsearch_indices():
 @task
 def populate_elasticsearch_indices():
     call_command("search_index", action="populate")
+
+
+@task
+def delete_elasticsearch_indices():
+    call_command("search_index", action="delete")
