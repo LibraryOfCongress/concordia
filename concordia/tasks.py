@@ -2,6 +2,7 @@ from logging import getLogger
 
 from celery import task
 from django.contrib.auth.models import User
+from django.core.management import call_command
 from django.db.models import Count
 from more_itertools.more import chunked
 
@@ -238,3 +239,13 @@ def populate_asset_years():
             updated_count += len(changed_assets)
 
     return updated_count
+
+
+@task
+def create_elasticsearch_indices():
+    call_command("search_index", action="create")
+
+
+@task
+def populate_elasticsearch_indices():
+    call_command("search_index", action="populate")
