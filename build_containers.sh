@@ -42,7 +42,6 @@ if [ $BUILD_ALL -eq 1 ]; then
 
     docker build -t concordia/importer --file importer/Dockerfile .
     docker build -t concordia/celerybeat --file celerybeat/Dockerfile .
-    docker build -t concordia/indexer --file indexer/Dockerfile .
 
     if [ $PUBLISH_CONTAINERS -eq 1 ]; then
         docker tag concordia/importer:latest "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia/importer:${VERSION_NUMBER}"
@@ -54,10 +53,5 @@ if [ $BUILD_ALL -eq 1 ]; then
         docker tag concordia/celerybeat:latest "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia/celerybeat:${TAG}"
         docker push "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia/celerybeat:${VERSION_NUMBER}"
         docker push "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia/celerybeat:${TAG}"
-
-        docker tag concordia/indexer:latest "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia/indexer:${VERSION_NUMBER}"
-        docker tag concordia/indexer:latest "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia/indexer:${TAG}"
-        docker push "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia/indexer:${VERSION_NUMBER}"
-        docker push "${AWS_ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com/concordia/indexer:${TAG}"
     fi
 fi

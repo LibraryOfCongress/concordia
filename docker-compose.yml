@@ -64,21 +64,6 @@ services:
         volumes:
             - images_volume:/concordia_images
 
-    indexer:
-        restart: unless-stopped
-        build:
-            context: .
-            dockerfile: indexer/Dockerfile
-        environment:
-            <<: *django-environment
-            WAIT_HOSTS: db:5432, redis:6379, elasticsearch:9200
-            ELASTICSEARCH_ENDPOINT: http://elasticsearch:9200
-        depends_on:
-            - db
-            - elasticsearch
-        links:
-            - elasticsearch
-
     celerybeat:
         restart: unless-stopped
         build:
