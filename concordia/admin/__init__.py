@@ -300,11 +300,11 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         "item__item_id",
     ]
     list_filter = (
+        "transcription_status",
         "published",
         "item__project__campaign",
         "item__project",
         "media_type",
-        "transcription_status",
     )
     actions = (publish_action, reopen_asset_action, unpublish_action)
     autocomplete_fields = ("item",)
