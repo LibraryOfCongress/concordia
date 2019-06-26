@@ -1,4 +1,5 @@
 from django.contrib.auth.models import User
+from django.db.models import Count
 from django_elasticsearch_dsl import DocType, Index, fields
 
 from .models import Asset, SiteReport, Transcription, UserAssetTagCollection
@@ -21,6 +22,12 @@ asset.settings(number_of_shards=1, number_of_replicas=0)
 
 @user.doc_type
 class UserDocument(DocType):
+    transcription_count = fields.IntegerField()
+
+    def prepare_transcription_count(self, instance):
+        qs = User.objects.filter(id=instance.id).annotate(Count("transcription"))
+        return qs[0].transcription__count
+
     class Meta:
         model = User
 
@@ -175,6 +182,13 @@ class AssetDocument(DocType):
             "submitted": fields.DateField(),
         }
     )
+
+    submission_count = fields.IntegerField()
+
+    def prepare_submission_count(self, instance):
+        return Transcription.objects.filter(
+            asset=instance, submitted__isnull=True
+        ).count()
 
     class Meta:
         model = Asset
