@@ -95,11 +95,11 @@ class ImportJobAdmin(TaskStatusModelAdmin):
         "status",
     )
     list_filter = (
-        "created_by",
-        "project",
         LastStartedFilter,
         CompletedFilter,
         FailedFilter,
+        "project",
+        "created_by",
     )
     search_fields = ("url", "status")
 
@@ -116,11 +116,11 @@ class ImportItemAdmin(TaskStatusModelAdmin):
         "status",
     )
     list_filter = (
-        "job__created_by",
-        "job__project",
         LastStartedFilter,
         CompletedFilter,
         FailedFilter,
+        "job__project",
+        "job__created_by",
     )
     search_fields = ("url", "status")
 
@@ -141,11 +141,11 @@ class ImportItemAssetAdmin(TaskStatusModelAdmin):
         "status",
     )
     list_filter = (
-        "import_item__job__created_by",
-        "import_item__job__project",
         LastStartedFilter,
         CompletedFilter,
         FailedFilter,
+        "import_item__job__project",
+        "import_item__job__created_by",
     )
     search_fields = ("url", "status")
     actions = (retry_download_task,)
