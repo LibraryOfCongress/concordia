@@ -20,11 +20,6 @@ User._meta.get_field("email").__dict__["_unique"] = True
 class UserProfile(MetricsModelMixin("userprofile"), models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
-    def transcription_count(self):
-        user_qs = User.get(self.user.id)
-        user_qs = user_qs.annotate(Count("transcription"))
-        return user_qs.transcription_count
-
 
 class TranscriptionStatus(object):
     """

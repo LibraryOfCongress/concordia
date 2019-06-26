@@ -1,15 +1,11 @@
+from django.contrib.auth.models import User
+from django.db.models import Count
 from django_elasticsearch_dsl import DocType, Index, fields
 
-from .models import (
-    Asset,
-    SiteReport,
-    Transcription,
-    UserAssetTagCollection,
-    UserProfile,
-)
+from .models import Asset, SiteReport, Transcription, UserAssetTagCollection
 
-user_profile = Index("user_profiles")
-user_profile.settings(number_of_shards=1, number_of_replicas=0)
+user = Index("users")
+user.settings(number_of_shards=1, number_of_replicas=0)
 
 tag_collection = Index("tags")
 tag_collection.settings(number_of_shards=1, number_of_replicas=0)
@@ -24,20 +20,18 @@ asset = Index("assets")
 asset.settings(number_of_shards=1, number_of_replicas=0)
 
 
-@user_profile.doc_type
-class UserProfileDocument(DocType):
-    transcription_count = fields.IntegerField(attr="transcription_count")
-    user = fields.ObjectField(
-        properties={
-            "last_login": fields.DateField(),
-            "date_joined": fields.DateField(),
-            "username": fields.KeywordField(),
-            "is_active": fields.BooleanField(),
-        }
-    )
+@user.doc_type
+class UserDocument(DocType):
+    transcription_count = fields.IntegerField()
+
+    def prepare_transcription_count(self, instance):
+        qs = User.objects.filter(id=instance.id).annotate(Count("transcription"))
+        return qs[0].transcription__count
 
     class Meta:
-        model = UserProfile
+        model = User
+
+        fields = ["last_login", "date_joined", "username", "is_active"]
 
 
 @site_report.doc_type
@@ -188,6 +182,13 @@ class AssetDocument(DocType):
             "submitted": fields.DateField(),
         }
     )
+
+    submission_count = fields.IntegerField()
+
+    def prepare_submission_count(self, instance):
+        return Transcription.objects.filter(
+            asset=instance, submitted__isnull=True
+        ).count()
 
     class Meta:
         model = Asset
