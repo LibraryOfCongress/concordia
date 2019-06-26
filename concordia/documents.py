@@ -1,10 +1,15 @@
-from django.contrib.auth.models import User
 from django_elasticsearch_dsl import DocType, Index, fields
 
-from .models import Asset, SiteReport, Transcription, UserAssetTagCollection
+from .models import (
+    Asset,
+    SiteReport,
+    Transcription,
+    UserAssetTagCollection,
+    UserProfile,
+)
 
-user = Index("users")
-user.settings(number_of_shards=1, number_of_replicas=0)
+user_profile = Index("user_profiles")
+user_profile.settings(number_of_shards=1, number_of_replicas=0)
 
 tag_collection = Index("tags")
 tag_collection.settings(number_of_shards=1, number_of_replicas=0)
@@ -19,12 +24,20 @@ asset = Index("assets")
 asset.settings(number_of_shards=1, number_of_replicas=0)
 
 
-@user.doc_type
-class UserDocument(DocType):
-    class Meta:
-        model = User
+@user_profile.doc_type
+class UserProfileDocument(DocType):
+    transcription_count = fields.IntegerField(attr="transcription_count")
+    user = fields.ObjectField(
+        properties={
+            "last_login": fields.DateField(),
+            "date_joined": fields.DateField(),
+            "username": fields.KeywordField(),
+            "is_active": fields.BooleanField(),
+        }
+    )
 
-        fields = ["last_login", "date_joined", "username", "is_active"]
+    class Meta:
+        model = UserProfile
 
 
 @site_report.doc_type
