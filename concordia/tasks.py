@@ -253,4 +253,4 @@ def populate_elasticsearch_indices():
 
 @task
 def delete_elasticsearch_indices():
-    call_command("search_index", action="delete")
+    call_command("search_index", "-f", action="delete")
