@@ -47,8 +47,8 @@ Mappings:
         ElasticsearchEndpoint:
             dev: 'https://vpc-crowd-dev-vpc-6xqqrxn5naqkvtdl6r6uanlhbe.us-east-1.es.amazonaws.com'
             test: 'https://vpc-crowd-test-vpc-63g3ylzduyzywhqbsqotnnm7ke.us-east-1.es.amazonaws.com'
-            stage: ''
-            prod: ''
+            stage: 'https://vpc-crowd-stage-vpc-x5lgoj5yo76dvrxpfhmusss2b4.us-east-1.es.amazonaws.com'
+            prod: 'https://vpc-crowd-prod-vpc-zl5xdhmtpr7squr6mtl7znqyqa.us-east-1.es.amazonaws.com'
 
         # The security group
         # Type: AWS::EC2::SecurityGroup::Id
