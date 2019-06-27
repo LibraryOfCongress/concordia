@@ -106,7 +106,7 @@ Resources:
             NetworkMode: awsvpc
             RequiresCompatibilities:
                 - FARGATE
-            ExecutionRoleArn: !Sub 'arn:aws:iam::${AWS::AccountId}:role/role/ecsTaskExecutionRole'
+            ExecutionRoleArn: !Sub 'arn:aws:iam::${AWS::AccountId}:role/ecsTaskExecutionRole'
             TaskRoleArn:
                 Fn::FindInMap:
                     - EnvironmentMapping
