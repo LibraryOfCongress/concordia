@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ("concordia", "0032_topic_ordering"),
+        ("concordia", "0033_simple_content_blocks"),
     ]
 
     operations = [
