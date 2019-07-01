@@ -48,7 +48,9 @@
     --top-tags-input: calc(50vh - 0.75rem);
 }
 
-html {
+html,
+body.view-transcriptions--asset-detail main,
+#contribute-main-content {
     /* This avoids browser inconsistencies when using the fullscreen API */
     color: var(--text-color-primary);
     background-color: var(--bg-offwhite);
