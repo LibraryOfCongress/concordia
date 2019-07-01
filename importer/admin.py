@@ -98,8 +98,8 @@ class ImportJobAdmin(TaskStatusModelAdmin):
         LastStartedFilter,
         CompletedFilter,
         FailedFilter,
+        ("created_by", admin.RelatedOnlyFieldListFilter),
         "project",
-        "created_by",
     )
     search_fields = ("url", "status")
 
@@ -119,8 +119,8 @@ class ImportItemAdmin(TaskStatusModelAdmin):
         LastStartedFilter,
         CompletedFilter,
         FailedFilter,
+        ("job__created_by", admin.RelatedOnlyFieldListFilter),
         "job__project",
-        "job__created_by",
     )
     search_fields = ("url", "status")
 
@@ -144,8 +144,8 @@ class ImportItemAssetAdmin(TaskStatusModelAdmin):
         LastStartedFilter,
         CompletedFilter,
         FailedFilter,
+        ("import_item__job__created_by", admin.RelatedOnlyFieldListFilter),
         "import_item__job__project",
-        "import_item__job__created_by",
     )
     search_fields = ("url", "status")
     actions = (retry_download_task,)
