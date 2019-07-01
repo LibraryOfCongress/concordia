@@ -87,7 +87,8 @@ Resources:
                     echo "export ENV_NAME=${EnvironmentName}" >> /home/ec2-user/.bash_profile
                     source /home/ec2-user/.bash_profile
                     yum -y update
-                    yum -y install postgresql96
+                    yum -y install postgresql96 git
+                    git clone https://github.com/LibraryOfCongress/concordia.git
                     aws s3 cp s3://crowd-deployment/database-dumps/concordia.latest.dmp concordia.dmp
 
             Tags:
@@ -130,7 +131,8 @@ Resources:
                     echo "export ENV_NAME=${EnvironmentName}" >> /home/ec2-user/.bash_profile
                     source /home/ec2-user/.bash_profile
                     yum -y update
-                    yum -y install postgresql96
+                    yum -y install postgresql96 git
+                    git clone https://github.com/LibraryOfCongress/concordia.git
                     aws s3 cp s3://crowd-deployment/database-dumps/concordia.latest.dmp concordia.dmp
             Tags:
                 - Key: Name
