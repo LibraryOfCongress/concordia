@@ -392,7 +392,7 @@ class SimplePage(models.Model):
 
 
 class SiteReport(models.Model):
-    created_on = models.DateTimeField(editable=False, auto_now_add=False)
+    created_on = models.DateTimeField(editable=False, auto_now_add=True)
     campaign = models.ForeignKey(
         Campaign, on_delete=models.DO_NOTHING, blank=True, null=True
     )
