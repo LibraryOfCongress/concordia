@@ -10,6 +10,8 @@ LOGGING["handlers"]["celery"]["level"] = "DEBUG"
 LOGGING["handlers"]["celery"]["filename"] = "./logs/concordia-celery.log"
 LOGGING["loggers"]["django"]["level"] = "DEBUG"
 LOGGING["loggers"]["celery"]["level"] = "DEBUG"
+LOGGING["loggers"]["django.utils.autoreload"] = {"level": "INFO"}
+LOGGING["loggers"]["django.template"] = {"level": "INFO"}
 
 DEBUG = True
 
