@@ -81,6 +81,7 @@ INSTALLED_APPS = [
     "django_celery_beat",
     "flags",
     "channels",
+    "django_admin_multiple_choice_list_filter",
 ]
 
 MIDDLEWARE = [

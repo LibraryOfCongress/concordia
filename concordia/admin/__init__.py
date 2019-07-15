@@ -11,6 +11,9 @@ from django.template.defaultfilters import truncatechars
 from django.urls import path
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html
+from django_admin_multiple_choice_list_filter.list_filters import (
+    MultipleChoiceListFilter,
+)
 from tabular_export.admin import export_to_csv_action, export_to_excel_action
 
 from exporter import views as exporter_views
@@ -46,6 +49,15 @@ from .forms import (
     BleachedDescriptionAdminForm,
     SimpleContentBlockAdminForm,
 )
+
+
+class ProjectListFilter(MultipleChoiceListFilter):
+    title = "Project"
+    parameter_name = "project__in"
+
+    def lookups(self, request, model_admin):
+        qs = Project.objects.all()
+        return [tuple(v.pk) for v in qs]
 
 
 class ConcordiaUserAdmin(UserAdmin):
@@ -266,7 +278,7 @@ class ItemAdmin(admin.ModelAdmin):
         "project__campaign__title",
         "project__title",
     ]
-    list_filter = ("published", "project__topics", "project__campaign", "project")
+    list_filter = ("published", "project__topics", "project__campaign", ProjectListFilter)
 
     actions = (publish_item_action, unpublish_item_action)
 
