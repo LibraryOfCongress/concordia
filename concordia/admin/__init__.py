@@ -302,6 +302,7 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     list_filter = (
         "transcription_status",
         "published",
+        "item__project__topics",
         "item__project__campaign",
         "item__project",
         "media_type",
