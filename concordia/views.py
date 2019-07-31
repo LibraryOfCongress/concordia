@@ -381,7 +381,8 @@ class HomeView(ListView):
 
         ctx["slides"] = CarouselSlide.objects.published().order_by("ordering")
 
-        ctx["firstslide"] = ctx["slides"][0]
+        if ctx["slides"]:
+            ctx["firstslide"] = ctx["slides"][0]
 
         return ctx
 
