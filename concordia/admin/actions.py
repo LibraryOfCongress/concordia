@@ -1,4 +1,4 @@
-import hashlib
+import uuid
 
 from django.contrib import messages
 from django.utils.timezone import now
@@ -9,15 +9,9 @@ from ..models import Asset, Transcription, TranscriptionStatus
 def anonymize_action(modeladmin, request, queryset):
     count = queryset.count()
     for user_account in queryset:
-        username_md5 = hashlib.md5()
-        email_md5 = hashlib.md5()
-        password_md5 = hashlib.md5()
-        username_md5.update(user_account.username.encode())
-        email_md5.update(user_account.email.encode())
-        password_md5.update(user_account.password.encode())
-        user_account.username = username_md5.hexdigest()
-        user_account.email = email_md5.hexdigest()
-        user_account.password = password_md5.hexdigest()
+        user_account.username = uuid.uuid4()
+        user_account.email = ""
+        user_account.password = ""
         user_account.save()
 
     messages.info(request, f"Anonymized {count} user accounts")
