@@ -50,6 +50,7 @@ from concordia.models import (
     Asset,
     AssetTranscriptionReservation,
     Campaign,
+    CarouselSlide,
     Item,
     Project,
     SimplePage,
@@ -374,6 +375,15 @@ class HomeView(ListView):
         .order_by("ordering", "title")
     )
     context_object_name = "campaigns"
+
+    def get_context_data(self, *args, **kwargs):
+        ctx = super().get_context_data(*args, **kwargs)
+
+        ctx["slides"] = CarouselSlide.objects.published().order_by("ordering")
+
+        ctx["firstslide"] = ctx["slides"][0]
+
+        return ctx
 
 
 @method_decorator(default_cache_control, name="dispatch")

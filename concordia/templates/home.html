@@ -14,7 +14,38 @@
     {% flag_enabled 'CAROUSEL_CMS' as CAROUSEL_CMS %}
 
     {% if CAROUSEL_CMS %}
+    <div class="row no-gutters px-sm-3">
+        <div class="col-12">
+            <div id="homepage-carousel" class="carousel slide" data-ride="carousel" data-pause="hover">
+                <ol class="carousel-indicators d-none d-lg-flex">
+                    {% for slide in slides %}
+                        <li data-target="#homepage-carousel" data-slide-to="{{ forloop.counter0 }}" {% if forloop.first %}class="active" {% endif %}></li>
+                    {% endfor %}
+                </ol>
 
+                <div class="carousel-inner">
+                    {% for slide in slides %}
+                        <div class="carousel-item {% if forloop.first %} active {% endif %}" {% if slide.overlay_position == "right" %} data-overlay-position="top-right" {% endif %} data-title="{{ slide.headline }}" data-hero-text="{{ slide.body }}" data-link-url="{{ slide.lets_go_url }}">
+                            <img class="d-block w-100" src="{{ MEDIA_URL }}{{ slide.carousel_image }}" alt="{{ slide.image_alt_text }}">
+                        </div>
+                    {% endfor %}
+                </div>
+                <a class="carousel-control-prev" href="#homepage-carousel" role="button" data-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="sr-only">Previous</span>
+                </a>
+                <a class="carousel-control-next" href="#homepage-carousel" role="button" data-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="sr-only">Next</span>
+                </a>
+                <div class="carousel-overlay text-center d-flex flex-column justify-content-around align-items-center">
+                    <h1 class="title">{{ firstslide.headline }}</h1>
+                    <p class="hero-text mx-auto">{{ firstslide.body }}</p>
+                    <a class="btn btn-primary btn-lg" href="{{ firstslide.lets_go_url }}">LET'S GO!</a>
+                </div>
+            </div>
+        </div>
+    </div>
     {% else %}
     <div class="row no-gutters px-sm-3">
         <div class="col-12">
