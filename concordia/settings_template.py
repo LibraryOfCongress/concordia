@@ -314,6 +314,7 @@ FLAGS = {
     "ACTIVITY_UI_ENABLED": [],
     "ADVERTISE_ACTIVITY_UI": [],
     "SIMPLE_CONTENT_BLOCKS": [],
+    "CAROUSEL_CMS": [],
 }
 ASGI_APPLICATION = "concordia.routing.application"
 

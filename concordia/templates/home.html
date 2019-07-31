@@ -11,11 +11,14 @@
 {% block main_content %}
     {% flag_enabled 'ADVERTISE_ACTIVITY_UI' as ADVERTISE_ACTIVITY_UI %}
     {% flag_enabled 'NEW_CAROUSEL_SLIDE' as NEW_CAROUSEL_SLIDE %}
+    {% flag_enabled 'CAROUSEL_CMS' as CAROUSEL_CMS %}
 
+    {% if CAROUSEL_CMS %}
+
+    {% else %}
     <div class="row no-gutters px-sm-3">
         <div class="col-12">
             <div id="homepage-carousel" class="carousel slide" data-ride="carousel" data-pause="hover">
-
                 <ol class="carousel-indicators d-none d-lg-flex">
                     <li data-target="#homepage-carousel" data-slide-to="0" class="active"></li>
                     <li data-target="#homepage-carousel" data-slide-to="1"></li>
@@ -88,6 +91,8 @@
             </div>
         </div>
     </div>
+    {% endif %}
+
     <div class="row no-gutters my-5 px-sm-3">
         <div id="homepage-contribute-container" class="col-12 bg-home-contribute p-3 p-md-4 p-xl-5">
            <div class="px-default ml-md-3 mb-3">
