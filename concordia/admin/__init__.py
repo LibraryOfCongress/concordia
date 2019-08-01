@@ -55,10 +55,7 @@ class ProjectListFilter(MultipleChoiceListFilter):
     title = "Project"
 
     def lookups(self, request, model_admin):
-        qs = Project.objects.all()
-        choices = []
-        for project in qs:
-            choices.append((project.pk, project.title))
+        choices = Project.objects.values_list("pk", "title")
         return tuple(choices)
 
 
@@ -289,7 +286,12 @@ class ItemAdmin(admin.ModelAdmin):
         "project__title",
     ]
 
-    list_filter = ("published", "project__topics", "project__campaign", ItemProjectListFilter)
+    list_filter = (
+        "published",
+        "project__topics",
+        "project__campaign",
+        ItemProjectListFilter,
+    )
 
     actions = (publish_item_action, unpublish_item_action)
 
