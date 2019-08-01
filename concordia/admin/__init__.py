@@ -53,11 +53,21 @@ from .forms import (
 
 class ProjectListFilter(MultipleChoiceListFilter):
     title = "Project"
-    parameter_name = "project__in"
 
     def lookups(self, request, model_admin):
         qs = Project.objects.all()
-        return [tuple(v.pk) for v in qs]
+        choices = []
+        for project in qs:
+            choices.append((project.pk, project.title))
+        return tuple(choices)
+
+
+class AssetProjectListFilter(ProjectListFilter):
+    parameter_name = "item__project__in"
+
+
+class ItemProjectListFilter(ProjectListFilter):
+    parameter_name = "project__in"
 
 
 class ConcordiaUserAdmin(UserAdmin):
@@ -278,7 +288,8 @@ class ItemAdmin(admin.ModelAdmin):
         "project__campaign__title",
         "project__title",
     ]
-    list_filter = ("published", "project__topics", "project__campaign", ProjectListFilter)
+
+    list_filter = ("published", "project__topics", "project__campaign", ItemProjectListFilter)
 
     actions = (publish_item_action, unpublish_item_action)
 
@@ -318,7 +329,7 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         "published",
         "item__project__topics",
         "item__project__campaign",
-        "item__project",
+        AssetProjectListFilter,
         "media_type",
     )
     actions = (publish_action, reopen_asset_action, unpublish_action)
