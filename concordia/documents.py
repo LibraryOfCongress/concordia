@@ -34,6 +34,7 @@ class SiteReportDocument(Document):
         settings = {"number_of_shards": 1, "number_of_replicas": 0}
 
     campaign = fields.ObjectField(properties={"slug": fields.KeywordField()})
+    topic = fields.ObjectField(properties={"slug": fields.KeywordField()})
 
     class Django:
         model = SiteReport
@@ -130,6 +131,9 @@ class TranscriptionDocument(Document):
                             "campaign": fields.ObjectField(
                                 properties={"slug": fields.KeywordField()}
                             ),
+                            "topics": fields.NestedField(
+                                properties={"slug": fields.KeywordField()}
+                            ),
                         }
                     ),
                 }
@@ -159,7 +163,10 @@ class TranscriptionDocument(Document):
             .get_queryset()
             .order_by("pk")
             .prefetch_related(
-                "asset__item", "asset__item__project", "asset__item__project__campaign"
+                "asset__item",
+                "asset__item__project",
+                "asset__item__project__topics",
+                "asset__item__project__campaign",
             )
         )
 
@@ -179,6 +186,9 @@ class AssetDocument(Document):
                 properties={
                     "slug": fields.KeywordField(),
                     "campaign": fields.ObjectField(
+                        properties={"slug": fields.KeywordField()}
+                    ),
+                    "topics": fields.NestedField(
                         properties={"slug": fields.KeywordField()}
                     ),
                 }
@@ -214,5 +224,10 @@ class AssetDocument(Document):
             super()
             .get_queryset()
             .order_by("pk")
-            .prefetch_related("item", "item__project", "item__project__campaign")
+            .prefetch_related(
+                "item",
+                "item__project",
+                "item__project__topics",
+                "item__project__campaign",
+            )
         )
