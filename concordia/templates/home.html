@@ -27,7 +27,7 @@
                 </ol>
                 <div class="carousel-inner">
                     {% if NEW_CAROUSEL_SLIDE %}
-                        <div class="carousel-item active" data-title="Join our cause!" data-hero-text="Transcribe and explore women's suffrage history through the lives of those who fought for the right to vote 100 years ago." data-link-url="{% url 'redirect-to-next-transcribable-topic-asset' 'suffrage-women-fight-for-the-vote' %}">
+                        <div class="carousel-item active" data-title="Join our cause!" data-hero-text="Women's suffrage review challenge August 12-19. Help complete pages and get to know the women who fought for change 100 years ago" data-link-url="{% url 'redirect-to-next-reviewable-topic-asset' 'suffrage-women-fight-for-the-vote' %}">
                             <img class="d-block w-100" src="{% static 'img/homepage-carousel/suffrage.jpg' %}" alt="Carrie Chapman Catt stands with protesters advocating for women's right to vote. Some protesters carry banners and shields with state names, including Wyoming, California, Kansas. Some women are dressed in white, wearing crowns and carrying musical instruments, and American flags.">
                         </div>
                         {% if ADVERTISE_ACTIVITY_UI %}
@@ -75,8 +75,8 @@
                 {% if NEW_CAROUSEL_SLIDE %}
                     <div class="carousel-overlay text-center d-flex flex-column justify-content-around align-items-center">
                         <h1 class="title">Join our cause!</h1>
-                        <p class="hero-text mx-auto">Transcribe and explore women's suffrage history through the lives of those who fought for the right to vote 100 years ago.</p>
-                        <a class="btn btn-primary btn-lg" href="{% url 'redirect-to-next-transcribable-topic-asset' 'suffrage-women-fight-for-the-vote' %}">LET'S GO!</a>
+                        <p class="hero-text mx-auto">Women's suffrage review challenge August 12-19. Help complete pages and get to know the women who fought for change 100 years ago</p>
+                        <a class="btn btn-primary btn-lg" href="{% url 'redirect-to-next-reviewable-topic-asset' 'suffrage-women-fight-for-the-vote' %}">LET'S GO!</a>
                     </div>
                 {% else %}
                     <div class="carousel-overlay text-center d-flex flex-column justify-content-around align-items-center">
