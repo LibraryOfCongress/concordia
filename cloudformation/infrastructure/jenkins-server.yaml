@@ -23,12 +23,12 @@ Resources:
                     - 'sg-f7985fb9'
                   SubnetId: 'subnet-3748107d'
             UserData:
-                Fn::Base64:
+                Fn::Base64: !Sub |
                     #!/bin/bash -xe
+                    echo "Running userdata for ${AWS::StackName}"
                     wget -q -O - https://pkg.jenkins.io/debian/jenkins.io.key | apt-key add -
                     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
                     sh -c 'echo deb http://pkg.jenkins.io/debian-stable binary/ > /etc/apt/sources.list.d/jenkins.list'
-                    apt-get update
                     add-apt-repository \
                       "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
                       $(lsb_release -cs) \
@@ -43,12 +43,13 @@ Resources:
                       gnupg-agent \
                       software-properties-common \
                       docker-ce docker-ce-cli containerd.io \
-                      openjdk-8-jdk jenkins
+                      openjdk-8-jdk jenkins \
+                      nginx
                     usermod -aG docker jenkins
-                    systemctl start jenkins
-                    systemctl enable jenkins
-                    systemctl start docker
-                    systemctl enable docker
+#                    systemctl start jenkins
+#                    systemctl enable jenkins
+#                    systemctl start docker
+#                    systemctl enable docker
             Tags:
                 - Key: Name
                   Value: Jenkins
