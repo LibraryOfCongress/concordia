@@ -16,14 +16,13 @@ class UserDocument(Document):
 
     transcription_count = fields.IntegerField()
 
+    class Django:
+        model = User
+        fields = ["last_login", "date_joined", "username", "is_active"]
+
     def prepare_transcription_count(self, instance):
         qs = User.objects.filter(id=instance.id).annotate(Count("transcription"))
         return qs[0].transcription__count
-
-    class Meta:
-        model = User
-
-        fields = ["last_login", "date_joined", "username", "is_active"]
 
 
 @registry.register_document
@@ -36,7 +35,7 @@ class SiteReportDocument(Document):
 
     campaign = fields.ObjectField(properties={"slug": fields.KeywordField()})
 
-    class Meta:
+    class Django:
         model = SiteReport
 
         fields = [
@@ -94,7 +93,7 @@ class TagCollectionDocument(Document):
     )
     user = fields.ObjectField(properties={"username": fields.TextField()})
 
-    class Meta:
+    class Django:
         model = UserAssetTagCollection
         fields = ["created_on", "updated_on"]
 
@@ -141,7 +140,7 @@ class TranscriptionDocument(Document):
     reviewed_by = fields.ObjectField(properties={"username": fields.KeywordField()})
     supersedes = fields.ObjectField(properties={"id": fields.IntegerField()})
 
-    class Meta:
+    class Django:
         model = Transcription
 
         fields = [
@@ -206,7 +205,7 @@ class AssetDocument(Document):
             asset=instance, submitted__isnull=True
         ).count()
 
-    class Meta:
+    class Django:
         model = Asset
         fields = ["published", "difficulty", "slug", "sequence", "year"]
 
