@@ -617,6 +617,10 @@ export class ActionApp {
             of the fields which frequently change.
         */
 
+        if (typeof assetId != 'number') {
+            assetId = Number(assetId);
+        }
+
         let oldData = this.getAssetData(assetId) || {};
         let mergedData = Object.assign({}, oldData);
         mergedData = Object.assign(mergedData, newData);
@@ -637,6 +641,10 @@ export class ActionApp {
             if (k in freshestCopy) {
                 mergedData[k] = freshestCopy[k];
             }
+        }
+
+        if (!('id' in mergedData)) {
+            mergedData.id = assetId;
         }
 
         mergedData.editable = this.canEditAsset(mergedData);
@@ -671,7 +679,7 @@ export class ActionApp {
             assetID = asset.id;
         }
 
-        if (!asset) {
+        if (!asset || !assetID) {
             throw `No information for an asset with ID ${assetID}`;
         }
 
