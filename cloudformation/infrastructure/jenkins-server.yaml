@@ -44,10 +44,9 @@ Resources:
                       software-properties-common \
                       docker-ce docker-ce-cli containerd.io \
                       openjdk-8-jdk jenkins \
-                      nginx
+                      nginx awscli
                     usermod -aG docker jenkins
                     snap install postgresql96
-                    pip3 install awscli --upgrade
             Tags:
                 - Key: Name
                   Value: Jenkins
