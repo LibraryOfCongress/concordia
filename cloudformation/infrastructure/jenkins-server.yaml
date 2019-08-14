@@ -46,10 +46,8 @@ Resources:
                       openjdk-8-jdk jenkins \
                       nginx
                     usermod -aG docker jenkins
-#                    systemctl start jenkins
-#                    systemctl enable jenkins
-#                    systemctl start docker
-#                    systemctl enable docker
+                    snap install postgresql96
+                    pip3 install awscli --upgrade
             Tags:
                 - Key: Name
                   Value: Jenkins
