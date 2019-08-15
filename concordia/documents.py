@@ -1,44 +1,41 @@
 from django.contrib.auth.models import User
 from django.db.models import Count
-from django_elasticsearch_dsl import DocType, Index, fields
+from django_elasticsearch_dsl import Document, fields
+from django_elasticsearch_dsl.registries import registry
 
 from .models import Asset, SiteReport, Transcription, UserAssetTagCollection
 
-user = Index("users")
-user.settings(number_of_shards=1, number_of_replicas=0)
 
-tag_collection = Index("tags")
-tag_collection.settings(number_of_shards=1, number_of_replicas=0)
+@registry.register_document
+class UserDocument(Document):
+    class Index:
+        # Name of the Elasticsearch index
+        name = "users"
+        # See Elasticsearch Indices API reference for available settings
+        settings = {"number_of_shards": 1, "number_of_replicas": 0}
 
-transcription = Index("transcriptions")
-transcription.settings(number_of_shards=1, number_of_replicas=0)
-
-site_report = Index("site_reports")
-site_report.settings(number_of_shards=1, number_of_replicas=0)
-
-asset = Index("assets")
-asset.settings(number_of_shards=1, number_of_replicas=0)
-
-
-@user.doc_type
-class UserDocument(DocType):
     transcription_count = fields.IntegerField()
+
+    class Django:
+        model = User
+        fields = ["last_login", "date_joined", "username", "is_active"]
 
     def prepare_transcription_count(self, instance):
         qs = User.objects.filter(id=instance.id).annotate(Count("transcription"))
         return qs[0].transcription__count
 
-    class Meta:
-        model = User
 
-        fields = ["last_login", "date_joined", "username", "is_active"]
+@registry.register_document
+class SiteReportDocument(Document):
+    class Index:
+        # Name of the Elasticsearch index
+        name = "site_reports"
+        # See Elasticsearch Indices API reference for available settings
+        settings = {"number_of_shards": 1, "number_of_replicas": 0}
 
-
-@site_report.doc_type
-class SiteReportDocument(DocType):
     campaign = fields.ObjectField(properties={"slug": fields.KeywordField()})
 
-    class Meta:
+    class Django:
         model = SiteReport
 
         fields = [
@@ -65,8 +62,14 @@ class SiteReportDocument(DocType):
         ]
 
 
-@tag_collection.doc_type
-class TagCollectionDocument(DocType):
+@registry.register_document
+class TagCollectionDocument(Document):
+    class Index:
+        # Name of the Elasticsearch index
+        name = "tags"
+        # See Elasticsearch Indices API reference for available settings
+        settings = {"number_of_shards": 1, "number_of_replicas": 0}
+
     tags = fields.NestedField(properties={"value": fields.TextField()})
     asset = fields.ObjectField(
         properties={
@@ -90,7 +93,7 @@ class TagCollectionDocument(DocType):
     )
     user = fields.ObjectField(properties={"username": fields.TextField()})
 
-    class Meta:
+    class Django:
         model = UserAssetTagCollection
         fields = ["created_on", "updated_on"]
 
@@ -105,8 +108,14 @@ class TagCollectionDocument(DocType):
         )
 
 
-@transcription.doc_type
-class TranscriptionDocument(DocType):
+@registry.register_document
+class TranscriptionDocument(Document):
+    class Index:
+        # Name of the Elasticsearch index
+        name = "transcriptions"
+        # See Elasticsearch Indices API reference for available settings
+        settings = {"number_of_shards": 1, "number_of_replicas": 0}
+
     asset = fields.ObjectField(
         properties={
             "title": fields.TextField(),
@@ -131,7 +140,7 @@ class TranscriptionDocument(DocType):
     reviewed_by = fields.ObjectField(properties={"username": fields.KeywordField()})
     supersedes = fields.ObjectField(properties={"id": fields.IntegerField()})
 
-    class Meta:
+    class Django:
         model = Transcription
 
         fields = [
@@ -155,8 +164,14 @@ class TranscriptionDocument(DocType):
         )
 
 
-@asset.doc_type
-class AssetDocument(DocType):
+@registry.register_document
+class AssetDocument(Document):
+    class Index:
+        # Name of the Elasticsearch index
+        name = "assets"
+        # See Elasticsearch Indices API reference for available settings
+        settings = {"number_of_shards": 1, "number_of_replicas": 0}
+
     item = fields.ObjectField(
         properties={
             "item_id": fields.KeywordField(),
@@ -190,7 +205,7 @@ class AssetDocument(DocType):
             asset=instance, submitted__isnull=True
         ).count()
 
-    class Meta:
+    class Django:
         model = Asset
         fields = ["published", "difficulty", "slug", "sequence", "year"]
 
