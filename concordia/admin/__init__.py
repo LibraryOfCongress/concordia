@@ -33,6 +33,7 @@ from ..models import (
 )
 from ..views import ReportCampaignView
 from .actions import (
+    anonymize_action,
     publish_action,
     publish_item_action,
     reopen_asset_action,
@@ -82,7 +83,7 @@ class ConcordiaUserAdmin(UserAdmin):
         )
 
     transcription_count.admin_order_field = "transcription__count"
-    actions = (export_users_as_csv, export_users_as_excel)
+    actions = (anonymize_action, export_users_as_csv, export_users_as_excel)
 
 
 admin.site.unregister(User)

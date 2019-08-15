@@ -1,7 +1,24 @@
+import uuid
+
 from django.contrib import messages
 from django.utils.timezone import now
 
 from ..models import Asset, Transcription, TranscriptionStatus
+
+
+def anonymize_action(modeladmin, request, queryset):
+    count = queryset.count()
+    for user_account in queryset:
+        user_account.username = "Anonymized %s" % uuid.uuid4()
+        user_account.email = ""
+        user_account.set_unusable_password()
+        user_account.is_active = False
+        user_account.save()
+
+    messages.info(request, f"Anonymized and disabled {count} user accounts")
+
+
+anonymize_action.short_description = "Anonymize and disable user accounts"
 
 
 def publish_item_action(modeladmin, request, queryset):
