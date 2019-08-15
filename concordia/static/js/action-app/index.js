@@ -67,7 +67,7 @@ export class ActionApp {
     reportError(category, header, body) {
         let alert;
 
-        if (!this.alerts.hasOwnProperty(category)) {
+        if (!Object.prototype.hasOwnProperty.call(this.alerts, category)) {
             alert = new Alert();
             this.alerts[category] = alert;
             mount(document.body, alert);
@@ -84,7 +84,7 @@ export class ActionApp {
     }
 
     clearError(category) {
-        if (this.alerts.hasOwnProperty(category)) {
+        if (Object.prototype.hasOwnProperty.call(this.alerts, category)) {
             jQuery(this.alerts[category].el).alert('close');
         }
     }
