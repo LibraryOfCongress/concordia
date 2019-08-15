@@ -16,7 +16,7 @@ RUN apt-get update -qy && apt-get dist-upgrade -qy && apt-get install -o Dpkg::O
     libtiff-dev libjpeg-dev libopenjp2-7-dev libwebp-dev zlib1g-dev \
     graphviz \
     locales \
-    nodejs && apt-get -qy -t stretch-backports install npm && apt-get -qy autoremove && apt-get -qy autoclean
+    nodejs node-gyp && apt-get -qy -t stretch-backports install npm && apt-get -qy autoremove && apt-get -qy autoclean
 
 RUN locale-gen en_US.UTF-8
 ENV LC_ALL=en_US.UTF-8
