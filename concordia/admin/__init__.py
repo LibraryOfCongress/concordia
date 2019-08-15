@@ -11,6 +11,9 @@ from django.template.defaultfilters import truncatechars
 from django.urls import path
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html
+from django_admin_multiple_choice_list_filter.list_filters import (
+    MultipleChoiceListFilter,
+)
 from tabular_export.admin import export_to_csv_action, export_to_excel_action
 
 from exporter import views as exporter_views
@@ -46,6 +49,22 @@ from .forms import (
     BleachedDescriptionAdminForm,
     SimpleContentBlockAdminForm,
 )
+
+
+class ProjectListFilter(MultipleChoiceListFilter):
+    title = "Project"
+
+    def lookups(self, request, model_admin):
+        choices = Project.objects.values_list("pk", "title")
+        return tuple(choices)
+
+
+class AssetProjectListFilter(ProjectListFilter):
+    parameter_name = "item__project__in"
+
+
+class ItemProjectListFilter(ProjectListFilter):
+    parameter_name = "project__in"
 
 
 class ConcordiaUserAdmin(UserAdmin):
@@ -266,7 +285,13 @@ class ItemAdmin(admin.ModelAdmin):
         "project__campaign__title",
         "project__title",
     ]
-    list_filter = ("published", "project__topics", "project__campaign", "project")
+
+    list_filter = (
+        "published",
+        "project__topics",
+        "project__campaign",
+        ItemProjectListFilter,
+    )
 
     actions = (publish_item_action, unpublish_item_action)
 
@@ -306,7 +331,7 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         "published",
         "item__project__topics",
         "item__project__campaign",
-        "item__project",
+        AssetProjectListFilter,
         "media_type",
     )
     actions = (publish_action, reopen_asset_action, unpublish_action)

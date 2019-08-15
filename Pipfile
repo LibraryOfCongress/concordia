@@ -39,6 +39,7 @@ channels-redis = "*"
 more-itertools = "*"
 psycopg2 = "*"
 bleach = "*"
+django-admin-multiple-choice-list-filter = "*"
 
 [dev-packages]
 invoke = "*"
