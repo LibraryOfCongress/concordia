@@ -21,6 +21,18 @@ class UserProfile(MetricsModelMixin("userprofile"), models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
 
+class OverlayPosition(object):
+    """
+    Used in carousel slide content management
+    """
+
+    LEFT = "left"
+    RIGHT = "right"
+
+    CHOICES = ((LEFT, "Left"), (RIGHT, "Right"))
+    CHOICE_MAP = dict(CHOICES)
+
+
 class TranscriptionStatus(object):
     """
     Status values used for rollup summaries of an asset's transcription status
@@ -389,6 +401,33 @@ class SimplePage(models.Model):
 
     def __str__(self):
         return f"SimplePage: {self.path}"
+
+
+class CarouselSlide(models.Model):
+    objects = PublicationQuerySet.as_manager()
+
+    created_on = models.DateTimeField(editable=False, auto_now_add=True)
+    updated_on = models.DateTimeField(editable=False, auto_now=True)
+
+    ordering = models.IntegerField(
+        default=0, help_text="Sort order: lower values will be listed first"
+    )
+    published = models.BooleanField(default=False, blank=True)
+
+    overlay_position = models.CharField(max_length=5, choices=OverlayPosition.CHOICES)
+
+    headline = models.CharField(max_length=255, blank=False)
+    body = models.TextField(blank=True)
+    image_alt_text = models.TextField(blank=True)
+
+    carousel_image = models.ImageField(
+        upload_to="carousel-slides", blank=True, null=True
+    )
+
+    lets_go_url = models.CharField(max_length=255)
+
+    def __str__(self):
+        return f"CarouselSlide: {self.headline}"
 
 
 class SiteReport(models.Model):

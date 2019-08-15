@@ -19,6 +19,7 @@ from importer.tasks import import_items_into_project_from_url
 from ..models import (
     Asset,
     Campaign,
+    CarouselSlide,
     Item,
     Project,
     Resource,
@@ -422,6 +423,12 @@ class SimpleContentBlockAdmin(admin.ModelAdmin):
         (None, {"fields": ("created_on", "updated_on", "slug")}),
         ("Body", {"classes": ("markdown-preview",), "fields": ("body",)}),
     )
+
+
+@admin.register(CarouselSlide)
+class CarouselSlideAdmin(admin.ModelAdmin):
+    list_display = ("headline", "published", "ordering")
+    readonly_fields = ("created_on", "updated_on")
 
 
 @admin.register(SimplePage)
