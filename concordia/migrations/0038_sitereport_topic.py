@@ -6,7 +6,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    dependencies = [("concordia", "0036_auto_20190703_1203")]
+    dependencies = [("concordia", "0037_carouselslide")]
 
     operations = [
         migrations.AddField(
