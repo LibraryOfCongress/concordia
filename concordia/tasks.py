@@ -143,7 +143,7 @@ def topic_report(topic):
     distinct_tag_list = set()
 
     for tag_collection in asset_tag_collections:
-        distinct_tag_list.add(tag_collection.tags.values_list("pk", flat=True))
+        distinct_tag_list.update(tag_collection.tags.values_list("pk", flat=True))
 
     distinct_tag_count = len(distinct_tag_list)
 
@@ -222,7 +222,7 @@ def campaign_report(campaign):
     distinct_tag_list = set()
 
     for tag_collection in asset_tag_collections:
-        distinct_tag_list.add(tag_collection.tags.values_list("pk", flat=True))
+        distinct_tag_list.update(tag_collection.tags.values_list("pk", flat=True))
 
     distinct_tag_count = len(distinct_tag_list)
 
