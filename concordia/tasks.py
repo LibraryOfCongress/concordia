@@ -121,7 +121,7 @@ def topic_report(topic):
     )
 
     items_published = Item.objects.published().filter(project__topics=topic).count()
-    items_unpublished = Item.objects.published().filter(project__topics=topic).count()
+    items_unpublished = Item.objects.unpublished().filter(project__topics=topic).count()
 
     projects_published = Project.objects.published().filter(topics=topic).count()
     projects_unpublished = Project.objects.unpublished().filter(topics=topic).count()
