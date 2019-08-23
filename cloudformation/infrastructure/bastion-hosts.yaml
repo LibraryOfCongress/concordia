@@ -57,9 +57,9 @@ Resources:
             ImageId:
                 Fn::FindInMap:
                     - AWSRegionToAMI
-                    - Ref: 'AWS::Region'
-                    - 'AMI'
-            InstanceType: 't2.medium'
+                    - Ref: "AWS::Region"
+                    - "AMI"
+            InstanceType: "t2.medium"
             IamInstanceProfile:
                 Fn::FindInMap:
                     - EnvironmentMapping
@@ -69,7 +69,7 @@ Resources:
                 Ref: KeyPairName
             NetworkInterfaces:
                 - AssociatePublicIpAddress: true
-                  DeviceIndex: '0'
+                  DeviceIndex: "0"
                   GroupSet:
                       - Fn::FindInMap:
                             - EnvironmentMapping
@@ -87,9 +87,9 @@ Resources:
                     echo "export ENV_NAME=${EnvironmentName}" >> /home/ec2-user/.bash_profile
                     source /home/ec2-user/.bash_profile
                     yum -y update
-                    yum -y install postgresql96 git
-                    git clone https://github.com/LibraryOfCongress/concordia.git
+                    yum -y install git
                     aws s3 cp s3://crowd-deployment/database-dumps/concordia.latest.dmp concordia.dmp
+                    amazon-linux-extras install -y postgresql9.6
 
             Tags:
                 - Key: Name
@@ -101,9 +101,9 @@ Resources:
             ImageId:
                 Fn::FindInMap:
                     - AWSRegionToAMI
-                    - Ref: 'AWS::Region'
-                    - 'AMI'
-            InstanceType: 't2.medium'
+                    - Ref: "AWS::Region"
+                    - "AMI"
+            InstanceType: "t2.medium"
             IamInstanceProfile:
                 Fn::FindInMap:
                     - EnvironmentMapping
@@ -113,7 +113,7 @@ Resources:
                 Ref: KeyPairName
             NetworkInterfaces:
                 - AssociatePublicIpAddress: true
-                  DeviceIndex: '0'
+                  DeviceIndex: "0"
                   GroupSet:
                       - Fn::FindInMap:
                             - EnvironmentMapping
@@ -131,9 +131,10 @@ Resources:
                     echo "export ENV_NAME=${EnvironmentName}" >> /home/ec2-user/.bash_profile
                     source /home/ec2-user/.bash_profile
                     yum -y update
-                    yum -y install postgresql96 git
-                    git clone https://github.com/LibraryOfCongress/concordia.git
+                    yum -y install git
                     aws s3 cp s3://crowd-deployment/database-dumps/concordia.latest.dmp concordia.dmp
+                    amazon-linux-extras install -y postgresql9.6
+
             Tags:
                 - Key: Name
                   Value: !Sub ${EnvironmentName}-BastionHost-2
