@@ -433,8 +433,9 @@ class CarouselSlide(models.Model):
 class SiteReport(models.Model):
     created_on = models.DateTimeField(editable=False, auto_now_add=True)
     campaign = models.ForeignKey(
-        Campaign, on_delete=models.DO_NOTHING, blank=True, null=True
+        Campaign, on_delete=models.SET_NULL, blank=True, null=True
     )
+    topic = models.ForeignKey(Topic, on_delete=models.SET_NULL, blank=True, null=True)
     assets_total = models.IntegerField(blank=True, null=True)
     assets_published = models.IntegerField(blank=True, null=True)
     assets_not_started = models.IntegerField(blank=True, null=True)

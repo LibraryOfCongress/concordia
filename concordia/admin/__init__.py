@@ -470,9 +470,9 @@ class SimplePageAdmin(admin.ModelAdmin):
 
 @admin.register(SiteReport)
 class SiteReportAdmin(admin.ModelAdmin):
-    list_display = ("created_on", "campaign")
+    list_display = ("created_on", "campaign", "topic")
 
-    list_filter = ("campaign",)
+    list_filter = ("campaign", "topic")
 
     def export_to_csv(self, request, queryset):
         return export_to_csv_action(
@@ -490,6 +490,7 @@ class SiteReportAdmin(admin.ModelAdmin):
         "created",
         "user",
         "campaign",
+        "topic",
         "project",
         "item",
         "asset",
