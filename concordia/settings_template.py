@@ -217,6 +217,11 @@ LOGGING = {
     "loggers": {
         "django": {"handlers": ["file", "stream"], "level": "DEBUG", "propagate": True},
         "celery": {"handlers": ["celery", "stream"], "level": "DEBUG"},
+        "concordia": {
+            "handlers": ["file", "stream"],
+            "level": "DEBUG",
+            "propagate": True,
+        },
     },
 }
 

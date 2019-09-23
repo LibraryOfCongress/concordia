@@ -1,4 +1,4 @@
-from logging import getLogger
+import logging
 from time import time
 
 from asgiref.sync import AsyncToSync
@@ -16,7 +16,7 @@ from .signals import reservation_obtained, reservation_released
 
 ASSET_CHANNEL_LAYER = get_channel_layer()
 
-logger = getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 @receiver(user_logged_in)
@@ -26,13 +26,11 @@ def clear_reservation_token(sender, user, request, **kwargs):
     except KeyError:
         pass
 
-    # TODO: WHy doesn't this work?
     logger.info("User logged in")
 
 
 @receiver(user_login_failed)
 def handle_user_login_failed(sender, credentials, request, **kwargs):
-    # TODO: WHy doesn't this work?
     logger.warning("User login failed")
 
 
