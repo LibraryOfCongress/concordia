@@ -1,10 +1,11 @@
+from logging import getLogger
 from time import time
 
 from asgiref.sync import AsyncToSync
 from channels.layers import get_channel_layer
 from django.conf import settings
 from django.contrib.auth.models import Group
-from django.contrib.auth.signals import user_logged_in
+from django.contrib.auth.signals import user_logged_in, user_login_failed
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django_registration.signals import user_registered
@@ -15,6 +16,8 @@ from .signals import reservation_obtained, reservation_released
 
 ASSET_CHANNEL_LAYER = get_channel_layer()
 
+logger = getLogger(__name__)
+
 
 @receiver(user_logged_in)
 def clear_reservation_token(sender, user, request, **kwargs):
@@ -22,6 +25,15 @@ def clear_reservation_token(sender, user, request, **kwargs):
         del request.session["reservation_token"]
     except KeyError:
         pass
+
+    # TODO: WHy doesn't this work?
+    logger.info("User logged in")
+
+
+@receiver(user_login_failed)
+def handle_user_login_failed(sender, credentials, request, **kwargs):
+    # TODO: WHy doesn't this work?
+    logger.warning("User login failed")
 
 
 @receiver(user_registered)
