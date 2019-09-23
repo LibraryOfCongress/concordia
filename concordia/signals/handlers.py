@@ -25,13 +25,12 @@ def clear_reservation_token(sender, user, request, **kwargs):
         del request.session["reservation_token"]
     except KeyError:
         pass
-
-    logger.info("User logged in")
+    logger.info("Successful user login with username %s", user)
 
 
 @receiver(user_login_failed)
 def handle_user_login_failed(sender, credentials, request, **kwargs):
-    logger.warning("User login failed")
+    logger.warning("Failed user login with username %s", credentials["username"])
 
 
 @receiver(user_registered)
