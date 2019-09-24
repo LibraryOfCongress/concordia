@@ -364,11 +364,17 @@ export class ActionApp {
                 this.updateViewer();
             }
 
-            let assetListItem = this.assetList.lookup[assetId];
-            if (assetListItem) {
-                // If this is visible, we want to update the displayed asset
-                // list icon using the current value:
-                assetListItem.update(this.getAssetData(assetId));
+            if (typeof this.assetList.lookup == 'undefined') {
+                console.warn(
+                    `Expected this.assetList to be an initialized List but found ${this.assetList}`
+                );
+            } else {
+                let assetListItem = this.assetList.lookup[assetId];
+                if (assetListItem) {
+                    // If this is visible, we want to update the displayed asset
+                    // list icon using the current value:
+                    assetListItem.update(this.getAssetData(assetId));
+                }
             }
         });
 
