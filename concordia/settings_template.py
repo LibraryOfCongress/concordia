@@ -219,7 +219,7 @@ LOGGING = {
         "celery": {"handlers": ["celery", "stream"], "level": "DEBUG"},
         "concordia": {
             "handlers": ["file", "stream"],
-            "level": "DEBUG",
+            "level": "INFO",
             "propagate": True,
         },
     },
