@@ -44,24 +44,24 @@ repos:
           - id: prettier
             files: \.(css|less|scss|ts|tsx|graphql|gql|json|js|jsx|md)$
     - repo: https://github.com/pre-commit/mirrors-eslint
-      rev: v6.1.0
+      rev: v6.4.0
       hooks:
           - id: eslint
             additional_dependencies:
-                - eslint@6.1.0
-                - eslint-plugin-prettier@3.1.0
+                - eslint@6.4.0
+                - eslint-plugin-prettier@3.1.1
                 - prettier@1.18.2
-                - eslint-plugin-unicorn@10.0.0
+                - eslint-plugin-unicorn@11.0.2
     - repo: https://github.com/awebdeveloper/pre-commit-stylelint
       rev: 0.0.2
       hooks:
           - id: stylelint
             additional_dependencies:
-                - stylelint@10.1.0
-                - stylelint-config-prettier@5.2.0
-                - stylelint-config-recommended@2.2.0
+                - stylelint@11.0.0
+                - stylelint-config-prettier@6.0.0
+                - stylelint-config-recommended@3.0.0
     - repo: https://github.com/awslabs/cfn-python-lint
-      rev: v0.23.1
+      rev: v0.24.1
       hooks:
           - id: cfn-python-lint
             files: cloudformation/.*\.(json|yml|yaml)$
