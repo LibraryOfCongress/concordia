@@ -1,12 +1,15 @@
 {% load custom_math %}
 Hi {{ user }},
 
-Thank you for joining crowd.loc.gov! Please verify your email address in the next {{ expiration_days |multiply:24 }} hours.
+Thank you for becoming a Library of Congress virtual volunteer with By the People! 
 
-To complete activation, please click the following link:
+To complete your activation, please verify your email address in the next {{ expiration_days |multiply:24 }} hours by clicking the link below: 
+
 https://{{ site }}{% url "django_registration_activate" activation_key %}
 
-Once you confirm your email, you'll be able to add tags and complete transcriptions by reviewing text - plus see a history of your work in your account page.
+Once your email has been verified, your account will be active! You'll be able to complete pages by reviewing other volunteers' transcriptions, tag pages, and see a history of your activity on your account page.
 
-Thanks,
--- The crowd.loc.gov team
+For instructions, head over to our Help Center located in the top navigation bar under "Help". 
+
+Happy transcribing,
+-- The By the People team
