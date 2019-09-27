@@ -40,6 +40,11 @@ Resources:
 
   LoadBalancerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W9
+            reason: "The CIDR block should only allow 140.147.*.* IPs so it should end in /16"
     Properties:
       VpcId: !Ref VPC
       GroupDescription: Access to the load balancer that sits in front of ECS
@@ -80,6 +85,11 @@ Resources:
 
   BastionHostSecurityGroup:
     Type: AWS::EC2::SecurityGroup
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W9
+            reason: "The CIDR block should only allow 140.147.*.* IPs so it should end in /16"
     Properties:
       VpcId: !Ref VPC
       GroupDescription: Bastion hosts for ECS access
