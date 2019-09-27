@@ -23,11 +23,15 @@ Resources:
             GroupDescription: Access to the ECS hosts and the tasks/containers that run on them
             SecurityGroupIngress:
                 - SourceSecurityGroupId: !Ref LoadBalancerSecurityGroup
-                  IpProtocol: '-1'
+                  IpProtocol: "-1"
                 - SourceSecurityGroupId: !Ref BastionHostSecurityGroup
                   IpProtocol: tcp
                   FromPort: 22
                   ToPort: 22
+            SecurityGroupEgress:
+                - Description: "Explicit outbound access"
+                  IpProtocol: "-1"
+
             Tags:
                 - Key: Name
                   Value: !Sub ${EnvironmentName}-ECS-Hosts
@@ -50,11 +54,14 @@ Resources:
                   IpProtocol: tcp
                   FromPort: 443
                   ToPort: 443
+            SecurityGroupEgress:
+                - Description: "Explicit outbound access"
+                  IpProtocol: "-1"
             Tags:
                 - Key: Name
                   Value: !Sub ${EnvironmentName}-LoadBalancers
                 - Key: AllowCloudFlareIngress
-                  Value: 'true'
+                  Value: "true"
 
     DatabaseSecurityGroup:
         Type: AWS::EC2::SecurityGroup
@@ -66,6 +73,9 @@ Resources:
                   IpProtocol: tcp
                   FromPort: 5432
                   ToPort: 5432
+            SecurityGroupEgress:
+                - Description: "Explicit outbound access"
+                  IpProtocol: "-1"
 
     BastionHostSecurityGroup:
         Type: AWS::EC2::SecurityGroup
@@ -77,6 +87,9 @@ Resources:
                   IpProtocol: tcp
                   FromPort: 22
                   ToPort: 22
+            SecurityGroupEgress:
+                - Description: "Explicit outbound access"
+                  IpProtocol: "-1"
             Tags:
                 - Key: Name
                   Value: !Sub ${EnvironmentName}-BastionHosts
@@ -87,14 +100,17 @@ Resources:
             VpcId: !Ref VPC
             GroupDescription: Access to cache services for ECS hosts
             SecurityGroupIngress:
-                - SourceSecurityGroupId: !Ref 'ECSHostSecurityGroup'
+                - SourceSecurityGroupId: !Ref "ECSHostSecurityGroup"
                   IpProtocol: tcp
                   FromPort: 6379
                   ToPort: 6379
-                - SourceSecurityGroupId: !Ref 'ECSHostSecurityGroup'
+                - SourceSecurityGroupId: !Ref "ECSHostSecurityGroup"
                   IpProtocol: tcp
                   FromPort: 11211
                   ToPort: 11211
+            SecurityGroupEgress:
+                - Description: "Explicit outbound access"
+                  IpProtocol: "-1"
 
 Outputs:
     ECSHostSecurityGroup:
