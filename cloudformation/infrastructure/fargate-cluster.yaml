@@ -115,8 +115,10 @@ Resources:
             Resource:
               - "arn:aws:kms:us-east-1:619333082511:key/concordia"
               - "arn:aws:secretsmanager:us-east-1:619333082511:secret:concordia/SMTP"
-              - !Sub "arn:aws:s3:::crowd-${EnvironmentName}*"
-              - !Sub "arn:aws:secretsmanager:us-east-1:619333082511:secret:crowd/${EnvironmentName}/*"
+              - !Sub "arn:aws:s3:::crowd-${EnvironmentName}-content"
+              - !Sub "arn:aws:s3:::crowd-${EnvironmentName}-export"
+              - !Sub "arn:aws:secretsmanager:us-east-1:619333082511:secret:crowd/${EnvironmentName}/Django/SecretKey"
+              - !Sub "arn:aws:secretsmanager:us-east-1:619333082511:secret:crowd/${EnvironmentName}/DB/MasterUserPassword"
 
   ConcordiaEC2Role:
     Type: AWS::IAM::Role
