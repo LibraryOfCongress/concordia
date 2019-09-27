@@ -130,10 +130,10 @@ At all times it should be possible to navigate from the crowdsourcing project, c
 
 These key features and approaches should be available for the long-term sustainability of the project:
 
-- Continuity with existing staff workflows, including work within CTS (content transfer system)
-- A pipeline for the queue of projects, as well as a monthly mechanism for proposing, identifying, and planning new collections for transcription including a recurring forum for nominating projects - perhaps even a sandbox or test space in which details of nominated collections may be stored or prepared
-- Collections management in bulk to support creating an extensive queue; storing offline in advance of campaign, collection, or other programming needs
-- Enabling Community Managers to post, launch and queue projects and campaigns via an administrative interface. Over time, this functionality can be expanded with a permissions-based self-service mechanism for curators and collections staff to identify, flag, or queue projects for transcription. This will likely require coherence with Library of Congress web services, Design &amp; Development, as well as the CTS workflow
+-   Continuity with existing staff workflows, including work within CTS (content transfer system)
+-   A pipeline for the queue of projects, as well as a monthly mechanism for proposing, identifying, and planning new collections for transcription including a recurring forum for nominating projects - perhaps even a sandbox or test space in which details of nominated collections may be stored or prepared
+-   Collections management in bulk to support creating an extensive queue; storing offline in advance of campaign, collection, or other programming needs
+-   Enabling Community Managers to post, launch and queue projects and campaigns via an administrative interface. Over time, this functionality can be expanded with a permissions-based self-service mechanism for curators and collections staff to identify, flag, or queue projects for transcription. This will likely require coherence with Library of Congress web services, Design &amp; Development, as well as the CTS workflow
 
 #### Applying our APIs
 
