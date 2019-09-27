@@ -1,58 +1,56 @@
 Description: >
-    This template deploys a VPC-based ElasticSearch cluster.
+  This template deploys a VPC-based ElasticSearch cluster.
 
 Parameters:
-    EnvName:
-        Type: String
-        Description: which environment to target
-        AllowedValues:
-            - 'dev'
-            - 'test'
-            - 'stage'
-            - 'prod'
-        ConstraintDescription: Must match a location for secret storage in secretsmanager
+  EnvName:
+    Type: String
+    Description: which environment to target
+    AllowedValues:
+      - "dev"
+      - "test"
+      - "stage"
+      - "prod"
+    ConstraintDescription: Must match a location for secret storage in secretsmanager
 
-    SecurityGroup:
-        Description: Select the Security Group to use for the ECS cluster hosts
-        Type: AWS::EC2::SecurityGroup::Id
+  SecurityGroup:
+    Description: Select the Security Group to use for the ECS cluster hosts
+    Type: AWS::EC2::SecurityGroup::Id
 
-    PrivateSubnet2:
-        Description: The private subnet in AZ2 for the VPC
-        Type: AWS::EC2::Subnet::Id
+  PrivateSubnet2:
+    Description: The private subnet in AZ2 for the VPC
+    Type: AWS::EC2::Subnet::Id
 
 Resources:
-    ESCluster:
-        Type: AWS::Elasticsearch::Domain
-        Properties:
-            DomainName: !Sub "crowd-${EnvName}-vpc"
-            ElasticsearchClusterConfig:
-              InstanceCount: 1
-              ZoneAwarenessEnabled: false
-              InstanceType: "m4.xlarge.elasticsearch"
-            ElasticsearchVersion: "6.7"
-            EBSOptions:
-              EBSEnabled: true
-              Iops: 0
-              VolumeSize: 10
-              VolumeType: "standard"
-            SnapshotOptions:
-              AutomatedSnapshotStartHour: 0
-            AccessPolicies:
-              Version: "2012-10-17"
-              Statement:
-                -
-                  Effect: "Allow"
-                  Principal:
-                    AWS: "*"
-                  Action: "es:*"
-                  Resource: !Sub "arn:aws:es:us-east-1:619333082511:domain/crowd-${EnvName}-vpc/*"
-            AdvancedOptions:
-                  rest.action.multi.allow_explicit_index: "true"
-            Tags:
-                - Key: Environment
-                  Value: !Ref EnvName
-            VPCOptions:
-                SubnetIds:
-                    - Ref: PrivateSubnet2
-                SecurityGroupIds:
-                    - Ref: SecurityGroup
+  ESCluster:
+    Type: AWS::Elasticsearch::Domain
+    Properties:
+      ElasticsearchClusterConfig:
+        InstanceCount: 1
+        ZoneAwarenessEnabled: false
+        InstanceType: "m4.xlarge.elasticsearch"
+      ElasticsearchVersion: "6.7"
+      EBSOptions:
+        EBSEnabled: true
+        Iops: 0
+        VolumeSize: 10
+        VolumeType: "standard"
+      SnapshotOptions:
+        AutomatedSnapshotStartHour: 0
+      AccessPolicies:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              AWS: "*"
+            Action: "es:*"
+            Resource: !Sub "arn:aws:es:us-east-1:619333082511:domain/crowd-${EnvName}-vpc/*"
+      AdvancedOptions:
+        rest.action.multi.allow_explicit_index: "true"
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvName
+      VPCOptions:
+        SubnetIds:
+          - Ref: PrivateSubnet2
+        SecurityGroupIds:
+          - Ref: SecurityGroup
