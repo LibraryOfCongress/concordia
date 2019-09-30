@@ -19,46 +19,55 @@ Mappings:
             test: 2
             stage: 2
             prod: 0
+            cftest2: 4
         AvailabilityZone2Map:
             dev: 1
             test: 3
             stage: 3
             prod: 1
+            cftest2: 5
         VPCCIDRMap:
             dev: 10.192.0.0/16
             test: 10.193.0.0/16
             stage: 10.194.0.0/16
             prod: 10.195.0.0/16
+            cftest2: 10.196.0.0/16
         PublicSubnet1CIDRMap:
             dev: 10.192.10.0/24
             test: 10.193.10.0/24
             stage: 10.194.10.0/24
             prod: 10.195.10.0/24
+            cftest2: 10.196.10.0/24
         PublicSubnet2CIDRMap:
             dev: 10.192.11.0/24
             test: 10.193.11.0/24
             stage: 10.194.11.0/24
             prod: 10.195.11.0/24
+            cftest2: 10.196.11.0/24
         PrivateSubnet1CIDRMap:
             dev: 10.192.20.0/24
             test: 10.193.20.0/24
             stage: 10.194.20.0/24
             prod: 10.195.20.0/24
+            cftest2: 10.196.20.0/24
         PrivateSubnet2CIDRMap:
             dev: 10.192.21.0/24
             test: 10.193.21.0/24
             stage: 10.194.21.0/24
             prod: 10.195.21.0/24
+            cftest2: 10.196.21.0/24
         S3BucketNameMap:
             dev: crowd-dev-content
             test: crowd-test-content
             stage: crowd-stage-content
             prod: crowd-content
+            cftest2: crowd-dev-content
         ExportS3BucketNameMap:
             dev: crowd-dev-export
             test: crowd-test-export
             stage: crowd-stage-export
             prod: crowd-export
+            cftest2: crowd-dev-export
 
 Parameters:
     ConcordiaVersion:
@@ -74,6 +83,7 @@ Parameters:
             - "test"
             - "stage"
             - "prod"
+            - "cftest2"
 
     FullEnvironmentName:
         Type: String
