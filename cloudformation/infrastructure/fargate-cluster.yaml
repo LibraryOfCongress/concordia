@@ -31,6 +31,16 @@ Parameters:
     Description: version of concordia docker images to pull and deploy
     Default: latest
 
+  DjangoKeyId:
+    Type: String
+    Description: unique ID appended to end of DjangoSecretKey ARN in secrets manager
+    Default: xxxxx
+
+  DbSecretId:
+    Type: String
+    Description: unique ID appended to end of DB password ARN in secrets manager
+    Default: xxxxx
+
   EnvName:
     Type: String
     Description: which environment to target
@@ -113,12 +123,12 @@ Resources:
               - "s3:ListBucket"
               - "s3:ListBucketMultipartUploads"
             Resource:
-              - "arn:aws:kms:us-east-1:619333082511:key/concordia"
-              - "arn:aws:secretsmanager:us-east-1:619333082511:secret:concordia/SMTP"
-              - !Sub "arn:aws:s3:::crowd-${EnvironmentName}-content"
-              - !Sub "arn:aws:s3:::crowd-${EnvironmentName}-export"
-              - !Sub "arn:aws:secretsmanager:us-east-1:619333082511:secret:crowd/${EnvironmentName}/Django/SecretKey"
-              - !Sub "arn:aws:secretsmanager:us-east-1:619333082511:secret:crowd/${EnvironmentName}/DB/MasterUserPassword"
+              - "arn:aws:kms:us-east-1:619333082511:key/d300e73d-9170-4001-933a-37af0bcdb956"
+              - "arn:aws:secretsmanager:us-east-1:619333082511:secret:concordia/SMTP-GVlolk"
+              - !Sub "arn:aws:s3:::crowd-${EnvironmentName}-content/*"
+              - !Sub "arn:aws:s3:::crowd-${EnvironmentName}-export/*"
+              - !Sub "arn:aws:secretsmanager:us-east-1:619333082511:secret:crowd/${EnvironmentName}/Django/SecretKey-${DjangoKeyId}"
+              - !Sub "arn:aws:secretsmanager:us-east-1:619333082511:secret:crowd/${EnvironmentName}/DB/MasterUserPassword-${DbSecretId}"
 
   ConcordiaEC2Role:
     Type: AWS::IAM::Role
