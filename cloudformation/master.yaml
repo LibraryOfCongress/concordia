@@ -1,5 +1,5 @@
 ---
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 Description: >
 
     This template deploys a VPC, with a pair of public and private subnets spread
@@ -70,35 +70,43 @@ Parameters:
         Description: which type of environment we are setting up
         Type: String
         AllowedValues:
-            - 'dev'
-            - 'test'
-            - 'stage'
-            - 'prod'
+            - "dev"
+            - "test"
+            - "stage"
+            - "prod"
 
     FullEnvironmentName:
         Type: String
         Description: Full name of deployment environment
         AllowedValues:
-            - 'development'
-            - 'test'
-            - 'staging'
-            - 'production'
+            - "development"
+            - "test"
+            - "staging"
+            - "production"
 
     CanonicalHostName:
         Description: the canonical host name for this environment
         Type: String
         AllowedValues:
-            - 'crowd-dev.loc.gov'
-            - 'crowd-test.loc.gov'
-            - 'crowd-stage.loc.gov'
-            - 'crowd.loc.gov'
+            - "crowd-dev.loc.gov"
+            - "crowd-test.loc.gov"
+            - "crowd-stage.loc.gov"
+            - "crowd.loc.gov"
+
+    DjangoKeyId:
+        Type: String
+        Description: unique ID appended to end of DjangoSecretKey ARN in secrets manager
+
+    DbSecretId:
+        Type: String
+        Description: unique ID appended to end of DB password ARN in secrets manager
 
 Resources:
     VPC:
         Type: AWS::CloudFormation::Stack
         Properties:
             #            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/vpc.yaml" ]]
-            TemplateURL: 'https://s3.amazonaws.com/crowd-deployment/infrastructure/vpc.yaml'
+            TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/vpc.yaml"
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 VpcCIDR:
@@ -144,7 +152,7 @@ Resources:
         Type: AWS::CloudFormation::Stack
         Properties:
             #            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/network-acl.yaml" ]]
-            TemplateURL: 'https://s3.amazonaws.com/crowd-deployment/infrastructure/network-acl.yaml'
+            TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/network-acl.yaml"
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
@@ -156,7 +164,7 @@ Resources:
     SecurityGroups:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: 'https://s3.amazonaws.com/crowd-deployment/infrastructure/security-groups.yaml'
+            TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/security-groups.yaml"
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
@@ -164,9 +172,9 @@ Resources:
     RDS:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: 'https://s3.amazonaws.com/crowd-deployment/infrastructure/rds.yaml'
+            TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/rds.yaml"
             Parameters:
-                DbPassword: !Sub '{{resolve:secretsmanager:crowd/${EnvName}/DB/MasterUserPassword:SecretString:password}}'
+                DbPassword: !Sub "{{resolve:secretsmanager:crowd/${EnvName}/DB/MasterUserPassword:SecretString:password}}"
                 DatabaseSecurityGroup: !GetAtt SecurityGroups.Outputs.DatabaseSecurityGroup
                 PrivateSubnet1: !GetAtt VPC.Outputs.PrivateSubnet1
                 PrivateSubnet2: !GetAtt VPC.Outputs.PrivateSubnet2
@@ -174,7 +182,7 @@ Resources:
     ElastiCache:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: 'https://s3.amazonaws.com/crowd-deployment/infrastructure/elasticache.yaml'
+            TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/elasticache.yaml"
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 SecurityGroup: !GetAtt SecurityGroups.Outputs.CacheServiceSecurityGroup
@@ -183,7 +191,7 @@ Resources:
     FargateCluster:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: 'https://s3.amazonaws.com/crowd-deployment/infrastructure/fargate-cluster.yaml'
+            TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/fargate-cluster.yaml"
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 EnvName: !Ref EnvName
@@ -200,6 +208,8 @@ Resources:
                 CanonicalHostName: !Ref CanonicalHostName
                 DatabaseEndpoint: !GetAtt RDS.Outputs.DatabaseHostName
                 FullEnvironmentName: !Ref FullEnvironmentName
+                DjangoKeyId: !Ref DjangoKeyId
+                DbSecretId: !Ref DbSecretId
                 S3BucketName:
                     !FindInMap [
                         EnvironmentMapping,
@@ -216,4 +226,4 @@ Resources:
 Outputs:
     WebsiteServiceUrl:
         Description: The URL endpoint for the concordia website service
-        Value: !Join ['', [!GetAtt FargateCluster.Outputs.LoadBalancerUrl, '/']]
+        Value: !Join ["", [!GetAtt FargateCluster.Outputs.LoadBalancerUrl, "/"]]

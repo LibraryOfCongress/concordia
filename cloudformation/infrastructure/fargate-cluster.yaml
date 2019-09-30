@@ -93,7 +93,7 @@ Parameters:
     Description: name of the S3 bucket (public) where exported transcriptions will be stored
 
 Resources:
-  ConcordiaServiceSecretAccessPolicy:
+  ConcordiaS3BucketAccessPolicy:
     Type: AWS::IAM::Policy
     Metadata:
       cfn_nag:
@@ -101,7 +101,51 @@ Resources:
           - id: W12
             reason: "S3 buckets must be specified with /* after the bucket name"
     Properties:
-      PolicyName: !Sub ReadOnlyAccessToConcordiaSecrets-${EnvironmentName}
+      PolicyName: !Sub ConcordiaServiceS3BucketAccess-${EnvironmentName}
+      Roles:
+        - !Ref "ConcordiaTaskRole"
+        - !Ref "ConcordiaEC2Role"
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - "s3:PutObject"
+              - "s3:GetObject"
+              - "s3:AbortMultipartUpload"
+              - "s3:ListMultipartUploadParts"
+              - "s3:ListBucket"
+              - "s3:ListBucketMultipartUploads"
+            Resource:
+              - !Sub "arn:aws:s3:::crowd-${EnvironmentName}-content/*"
+              - !Sub "arn:aws:s3:::crowd-${EnvironmentName}-export/*"
+
+  ConcordiaKMSAccessPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub ConcordiaServiceKMSAccess-${EnvironmentName}
+      Roles:
+        - !Ref "ConcordiaTaskRole"
+        - !Ref "ConcordiaEC2Role"
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - "kms:GetParametersForImport"
+              - "kms:GetKeyRotationStatus"
+              - "kms:GetKeyPolicy"
+              - "kms:DescribeKey"
+              - "kms:ListResourceTags"
+              - "kms:Decrypt"
+              - "kms:GenerateDataKey"
+            Resource:
+              - "arn:aws:kms:us-east-1:619333082511:key/d300e73d-9170-4001-933a-37af0bcdb956"
+
+  ConcordiaServiceSecretAccessPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub ConcordiaServiceSecretAccess-${EnvironmentName}
       Roles:
         - !Ref "ConcordiaTaskRole"
         - !Ref "ConcordiaEC2Role"
@@ -114,24 +158,8 @@ Resources:
               - "secretsmanager:GetSecretValue"
               - "secretsmanager:DescribeSecret"
               - "secretsmanager:ListSecretVersionIds"
-              - "kms:GetParametersForImport"
-              - "kms:GetKeyRotationStatus"
-              - "kms:GetKeyPolicy"
-              - "kms:DescribeKey"
-              - "kms:ListResourceTags"
-              - "kms:Decrypt"
-              - "kms:GenerateDataKey"
-              - "s3:PutObject"
-              - "s3:GetObject"
-              - "s3:AbortMultipartUpload"
-              - "s3:ListMultipartUploadParts"
-              - "s3:ListBucket"
-              - "s3:ListBucketMultipartUploads"
             Resource:
-              - "arn:aws:kms:us-east-1:619333082511:key/d300e73d-9170-4001-933a-37af0bcdb956"
               - "arn:aws:secretsmanager:us-east-1:619333082511:secret:concordia/SMTP-GVlolk"
-              - !Sub "arn:aws:s3:::crowd-${EnvironmentName}-content/*"
-              - !Sub "arn:aws:s3:::crowd-${EnvironmentName}-export/*"
               - !Sub "arn:aws:secretsmanager:us-east-1:619333082511:secret:crowd/${EnvironmentName}/Django/SecretKey-${DjangoKeyId}"
               - !Sub "arn:aws:secretsmanager:us-east-1:619333082511:secret:crowd/${EnvironmentName}/DB/MasterUserPassword-${DbSecretId}"
 
