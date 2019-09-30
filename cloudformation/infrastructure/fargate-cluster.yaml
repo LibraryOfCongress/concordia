@@ -95,6 +95,11 @@ Parameters:
 Resources:
   ConcordiaServiceSecretAccessPolicy:
     Type: AWS::IAM::Policy
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W12
+            reason: "S3 buckets must be specified with /* after the bucket name"
     Properties:
       PolicyName: !Sub ReadOnlyAccessToConcordiaSecrets-${EnvironmentName}
       Roles:
