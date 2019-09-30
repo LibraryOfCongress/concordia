@@ -49,6 +49,7 @@ Parameters:
       - "test"
       - "stage"
       - "prod"
+      - "cftest2"
     ConstraintDescription: Must match a location for secret storage in secretsmanager
 
   FullEnvironmentName:
