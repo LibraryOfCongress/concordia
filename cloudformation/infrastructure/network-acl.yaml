@@ -46,10 +46,11 @@ Resources:
         Properties:
             CidrBlock: 0.0.0.0/0
             Egress: true
-            Protocol: 1
+            Protocol: -1
             RuleAction: allow
             RuleNumber: 100
             NetworkAclId: !Ref NetworkAcl
+
     acl5:
         Type: AWS::EC2::NetworkAclEntry
         Properties:

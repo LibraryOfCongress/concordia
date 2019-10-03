@@ -24,7 +24,7 @@ Parameters:
 Mappings:
     AWSRegionToAMI:
         us-east-1:
-            AMI: ami-0080e4c5bc078760e
+            AMI: ami-0b898040803850657
 
     EnvironmentMapping:
         IamInstanceProfileName:
@@ -54,9 +54,9 @@ Resources:
             ImageId:
                 Fn::FindInMap:
                     - AWSRegionToAMI
-                    - Ref: 'AWS::Region'
-                    - 'AMI'
-            InstanceType: 't1.micro'
+                    - Ref: "AWS::Region"
+                    - "AMI"
+            InstanceType: "t1.micro"
             IamInstanceProfile:
                 Fn::FindInMap:
                     - EnvironmentMapping
@@ -65,7 +65,7 @@ Resources:
             InstanceInitiatedShutdownBehavior: terminate
             NetworkInterfaces:
                 - AssociatePublicIpAddress: true
-                  DeviceIndex: '0'
+                  DeviceIndex: "0"
                   GroupSet:
                       - Fn::FindInMap:
                             - EnvironmentMapping
@@ -83,7 +83,7 @@ Resources:
                     echo "export ENV_NAME=${EnvironmentName}" >> /home/ec2-user/.bash_profile
                     source /home/ec2-user/.bash_profile
                     yum -y update
-                    yum -y install postgresql96
+                    amazon-linux-extras install -y postgresql9.6
                     aws s3 cp s3://crowd-deployment/database-dumps/concordia.latest.dmp concordia.dmp
                     echo "${PostgresqlHost}:5432:*:concordia:${PostgresqlPassword}" >> /root/.pgpass
                     chmod 0600 /root/.pgpass

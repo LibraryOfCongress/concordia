@@ -2,7 +2,7 @@
 
 This README, and set of CloudFormation templates, is based on the AWS sample templates at [ecs-refarch-cloudformation](https://s3.amazonaws.com/ecs-refarch-cloudformation/master.yaml).
 
-The sample templates have been modified and new templates have been added. For the Concordia dev environment, CloudFormation templates are deployed from the [rstorey-concordia-refarch S3 bucket](https://s3.amazonaws.com/rstorey-concordia-refarch/master.yaml).
+The sample templates have been modified and new templates have been added.
 
 To use these templates:
 

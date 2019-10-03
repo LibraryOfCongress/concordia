@@ -1,5 +1,5 @@
 ---
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 Description: >
 
     This template deploys a VPC, with a pair of public and private subnets spread
@@ -19,46 +19,55 @@ Mappings:
             test: 2
             stage: 2
             prod: 0
+            cftest2: 0
         AvailabilityZone2Map:
             dev: 1
             test: 3
             stage: 3
             prod: 1
+            cftest2: 1
         VPCCIDRMap:
             dev: 10.192.0.0/16
             test: 10.193.0.0/16
             stage: 10.194.0.0/16
             prod: 10.195.0.0/16
+            cftest2: 10.196.0.0/16
         PublicSubnet1CIDRMap:
             dev: 10.192.10.0/24
             test: 10.193.10.0/24
             stage: 10.194.10.0/24
             prod: 10.195.10.0/24
+            cftest2: 10.196.10.0/24
         PublicSubnet2CIDRMap:
             dev: 10.192.11.0/24
             test: 10.193.11.0/24
             stage: 10.194.11.0/24
             prod: 10.195.11.0/24
+            cftest2: 10.196.11.0/24
         PrivateSubnet1CIDRMap:
             dev: 10.192.20.0/24
             test: 10.193.20.0/24
             stage: 10.194.20.0/24
             prod: 10.195.20.0/24
+            cftest2: 10.196.20.0/24
         PrivateSubnet2CIDRMap:
             dev: 10.192.21.0/24
             test: 10.193.21.0/24
             stage: 10.194.21.0/24
             prod: 10.195.21.0/24
+            cftest2: 10.196.21.0/24
         S3BucketNameMap:
             dev: crowd-dev-content
             test: crowd-test-content
             stage: crowd-stage-content
             prod: crowd-content
+            cftest2: crowd-dev-content
         ExportS3BucketNameMap:
             dev: crowd-dev-export
             test: crowd-test-export
             stage: crowd-stage-export
             prod: crowd-export
+            cftest2: crowd-dev-export
 
 Parameters:
     ConcordiaVersion:
@@ -70,35 +79,44 @@ Parameters:
         Description: which type of environment we are setting up
         Type: String
         AllowedValues:
-            - 'dev'
-            - 'test'
-            - 'stage'
-            - 'prod'
+            - "dev"
+            - "test"
+            - "stage"
+            - "prod"
+            - "cftest2"
 
     FullEnvironmentName:
         Type: String
         Description: Full name of deployment environment
         AllowedValues:
-            - 'development'
-            - 'test'
-            - 'staging'
-            - 'production'
+            - "development"
+            - "test"
+            - "staging"
+            - "production"
 
     CanonicalHostName:
         Description: the canonical host name for this environment
         Type: String
         AllowedValues:
-            - 'crowd-dev.loc.gov'
-            - 'crowd-test.loc.gov'
-            - 'crowd-stage.loc.gov'
-            - 'crowd.loc.gov'
+            - "crowd-dev.loc.gov"
+            - "crowd-test.loc.gov"
+            - "crowd-stage.loc.gov"
+            - "crowd.loc.gov"
+
+    DjangoKeyId:
+        Type: String
+        Description: unique ID appended to end of DjangoSecretKey ARN in secrets manager
+
+    DbSecretId:
+        Type: String
+        Description: unique ID appended to end of DB password ARN in secrets manager
 
 Resources:
     VPC:
         Type: AWS::CloudFormation::Stack
         Properties:
             #            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/vpc.yaml" ]]
-            TemplateURL: 'https://s3.amazonaws.com/crowd-deployment/infrastructure/vpc.yaml'
+            TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/vpc.yaml"
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 VpcCIDR:
@@ -144,7 +162,7 @@ Resources:
         Type: AWS::CloudFormation::Stack
         Properties:
             #            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/network-acl.yaml" ]]
-            TemplateURL: 'https://s3.amazonaws.com/crowd-deployment/infrastructure/network-acl.yaml'
+            TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/network-acl.yaml"
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
@@ -156,7 +174,7 @@ Resources:
     SecurityGroups:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: 'https://s3.amazonaws.com/crowd-deployment/infrastructure/security-groups.yaml'
+            TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/security-groups.yaml"
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
@@ -164,9 +182,10 @@ Resources:
     RDS:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: 'https://s3.amazonaws.com/crowd-deployment/infrastructure/rds.yaml'
+            TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/rds.yaml"
             Parameters:
-                DbPassword: !Sub '{{resolve:secretsmanager:crowd/${EnvName}/DB/MasterUserPassword:SecretString:password}}'
+                DbUsername: !Sub "{{resolve:secretsmanager:crowd/${EnvName}/DB/MasterUserPassword:SecretString:username}}"
+                DbPassword: !Sub "{{resolve:secretsmanager:crowd/${EnvName}/DB/MasterUserPassword:SecretString:password}}"
                 DatabaseSecurityGroup: !GetAtt SecurityGroups.Outputs.DatabaseSecurityGroup
                 PrivateSubnet1: !GetAtt VPC.Outputs.PrivateSubnet1
                 PrivateSubnet2: !GetAtt VPC.Outputs.PrivateSubnet2
@@ -174,7 +193,7 @@ Resources:
     ElastiCache:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: 'https://s3.amazonaws.com/crowd-deployment/infrastructure/elasticache.yaml'
+            TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/elasticache.yaml"
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 SecurityGroup: !GetAtt SecurityGroups.Outputs.CacheServiceSecurityGroup
@@ -183,7 +202,7 @@ Resources:
     FargateCluster:
         Type: AWS::CloudFormation::Stack
         Properties:
-            TemplateURL: 'https://s3.amazonaws.com/crowd-deployment/infrastructure/fargate-cluster.yaml'
+            TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/fargate-cluster.yaml"
             Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 EnvName: !Ref EnvName
@@ -200,6 +219,8 @@ Resources:
                 CanonicalHostName: !Ref CanonicalHostName
                 DatabaseEndpoint: !GetAtt RDS.Outputs.DatabaseHostName
                 FullEnvironmentName: !Ref FullEnvironmentName
+                DjangoKeyId: !Ref DjangoKeyId
+                DbSecretId: !Ref DbSecretId
                 S3BucketName:
                     !FindInMap [
                         EnvironmentMapping,
@@ -216,4 +237,4 @@ Resources:
 Outputs:
     WebsiteServiceUrl:
         Description: The URL endpoint for the concordia website service
-        Value: !Join ['', [!GetAtt FargateCluster.Outputs.LoadBalancerUrl, '/']]
+        Value: !Join ["", [!GetAtt FargateCluster.Outputs.LoadBalancerUrl, "/"]]
