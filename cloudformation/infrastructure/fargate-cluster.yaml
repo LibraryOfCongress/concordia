@@ -161,8 +161,8 @@ Resources:
               - "secretsmanager:ListSecretVersionIds"
             Resource:
               - "arn:aws:secretsmanager:us-east-1:619333082511:secret:concordia/SMTP-GVlolk"
-              - !Sub "arn:aws:secretsmanager:us-east-1:619333082511:secret:crowd/${EnvironmentName}/Django/SecretKey-${DjangoKeyId}"
-              - !Sub "arn:aws:secretsmanager:us-east-1:619333082511:secret:crowd/${EnvironmentName}/DB/MasterUserPassword-${DbSecretId}"
+              - !Sub "arn:aws:secretsmanager:us-east-1:619333082511:secret:crowd/${EnvName}/Django/SecretKey-${DjangoKeyId}"
+              - !Sub "arn:aws:secretsmanager:us-east-1:619333082511:secret:crowd/${EnvName}/DB/MasterUserPassword-${DbSecretId}"
 
   ConcordiaEC2Role:
     Type: AWS::IAM::Role
