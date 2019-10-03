@@ -33,7 +33,7 @@ Resources:
       SecurityGroupEgress:
         - Description: "Explicit outbound access"
           IpProtocol: "-1"
-          CidrIp: 0.0.0.0/32
+          CidrIp: 0.0.0.0/0
 
       Tags:
         - Key: Name
@@ -63,7 +63,7 @@ Resources:
       SecurityGroupEgress:
         - Description: "Explicit outbound access"
           IpProtocol: "-1"
-          CidrIp: 0.0.0.0/32
+          CidrIp: 0.0.0.0/0
       Tags:
         - Key: Name
           Value: !Sub ${EnvironmentName}-LoadBalancers
@@ -84,7 +84,7 @@ Resources:
       SecurityGroupEgress:
         - Description: "Explicit outbound access"
           IpProtocol: "-1"
-          CidrIp: 0.0.0.0/32
+          CidrIp: 0.0.0.0/0
 
   BastionHostSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -105,7 +105,7 @@ Resources:
       SecurityGroupEgress:
         - Description: "Explicit outbound access"
           IpProtocol: "-1"
-          CidrIp: 0.0.0.0/32
+          CidrIp: 0.0.0.0/0
       Tags:
         - Key: Name
           Value: !Sub ${EnvironmentName}-BastionHosts
@@ -129,7 +129,7 @@ Resources:
       SecurityGroupEgress:
         - Description: "Explicit outbound access"
           IpProtocol: "-1"
-          CidrIp: 0.0.0.0/32
+          CidrIp: 0.0.0.0/0
 
 Outputs:
   ECSHostSecurityGroup:
