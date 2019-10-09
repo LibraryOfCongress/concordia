@@ -334,7 +334,14 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         AssetProjectListFilter,
         "media_type",
     )
-    actions = (publish_action, reopen_asset_action, unpublish_action)
+
+    actions = (
+        publish_action,
+        reopen_asset_action,
+        unpublish_action,
+        export_to_csv_action,
+        export_to_excel_action,
+    )
     autocomplete_fields = ("item",)
     ordering = ("item__item_id", "sequence")
 
@@ -431,6 +438,8 @@ class TranscriptionAdmin(admin.ModelAdmin):
         "supersedes",
         "text",
     )
+
+    actions = (export_to_csv_action, export_to_excel_action)
 
     def truncated_text(self, obj):
         return truncatechars(obj.text, 100)
