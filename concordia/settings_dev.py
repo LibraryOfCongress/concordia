@@ -6,11 +6,13 @@ from .settings_template import INSTALLED_APPS, LOGGING, MIDDLEWARE
 LOGGING["handlers"]["stream"]["level"] = "DEBUG"
 LOGGING["handlers"]["file"]["level"] = "DEBUG"
 LOGGING["handlers"]["celery"]["level"] = "DEBUG"
-LOGGING["loggers"]["django"]["level"] = "DEBUG"
-LOGGING["loggers"]["celery"]["level"] = "DEBUG"
-LOGGING["loggers"]["concordia"]["level"] = "DEBUG"
-LOGGING["loggers"]["django.utils.autoreload"] = {"level": "INFO"}
-LOGGING["loggers"]["django.template"] = {"level": "INFO"}
+LOGGING["loggers"] = {
+    "django": {"handlers": ["file", "stream"], "level": "DEBUG"},
+    "celery": {"handlers": ["celery", "stream"], "level": "DEBUG"},
+    "concordia": {"handlers": ["file", "stream"], "level": "DEBUG"},
+    "django.utils.autoreload": {"level": "INFO"},
+    "django.template": {"level": "INFO"},
+}
 
 DEBUG = True
 

@@ -215,9 +215,9 @@ LOGGING = {
         },
     },
     "loggers": {
-        "django": {"handlers": ["file", "stream"], "level": "INFO", "propagate": True},
-        "celery": {"handlers": ["celery", "stream"], "level": "INFO"},
-        "concordia": {"handlers": ["file", "stream"], "level": "INFO"},
+        "django": {"handlers": ["file"], "level": "INFO"},
+        "celery": {"handlers": ["celery"], "level": "INFO"},
+        "concordia": {"handlers": ["file"], "level": "INFO"},
     },
 }
 
