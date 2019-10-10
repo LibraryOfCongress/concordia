@@ -5,11 +5,10 @@ from .settings_template import INSTALLED_APPS, LOGGING, MIDDLEWARE
 
 LOGGING["handlers"]["stream"]["level"] = "DEBUG"
 LOGGING["handlers"]["file"]["level"] = "DEBUG"
-LOGGING["handlers"]["file"]["filename"] = "./logs/concordia-web.log"
 LOGGING["handlers"]["celery"]["level"] = "DEBUG"
-LOGGING["handlers"]["celery"]["filename"] = "./logs/concordia-celery.log"
 LOGGING["loggers"]["django"]["level"] = "DEBUG"
 LOGGING["loggers"]["celery"]["level"] = "DEBUG"
+LOGGING["loggers"]["concordia"]["level"] = "DEBUG"
 LOGGING["loggers"]["django.utils.autoreload"] = {"level": "INFO"}
 LOGGING["loggers"]["django.template"] = {"level": "INFO"}
 
