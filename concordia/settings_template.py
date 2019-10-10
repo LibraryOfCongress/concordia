@@ -196,10 +196,10 @@ LOGGING = {
             "level": "INFO",
             "formatter": "long",
         },
-        "null": {"level": "DEBUG", "class": "logging.NullHandler"},
+        "null": {"level": "INFO", "class": "logging.NullHandler"},
         "file": {
             "class": "logging.handlers.TimedRotatingFileHandler",
-            "level": "DEBUG",
+            "level": "INFO",
             "formatter": "long",
             "filename": "{}/logs/concordia.log".format(SITE_ROOT_DIR),
             "when": "H",
@@ -207,7 +207,7 @@ LOGGING = {
             "backupCount": 16,
         },
         "celery": {
-            "level": "DEBUG",
+            "level": "INFO",
             "class": "logging.handlers.RotatingFileHandler",
             "filename": "{}/logs/celery.log".format(SITE_ROOT_DIR),
             "formatter": "long",
@@ -215,13 +215,9 @@ LOGGING = {
         },
     },
     "loggers": {
-        "django": {"handlers": ["file", "stream"], "level": "DEBUG", "propagate": True},
-        "celery": {"handlers": ["celery", "stream"], "level": "DEBUG"},
-        "concordia": {
-            "handlers": ["file", "stream"],
-            "level": "INFO",
-            "propagate": True,
-        },
+        "django": {"handlers": ["file"], "level": "INFO"},
+        "celery": {"handlers": ["celery"], "level": "INFO"},
+        "concordia": {"handlers": ["file"], "level": "INFO"},
     },
 }
 
