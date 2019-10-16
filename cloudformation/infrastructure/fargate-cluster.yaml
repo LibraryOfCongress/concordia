@@ -273,7 +273,6 @@ Resources:
       ContainerDefinitions:
         - Name: app
           Cpu: 2048
-          Memory: 8192
           Image: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/concordia:${ConcordiaVersion}"
           LogConfiguration:
             LogDriver: awslogs
@@ -321,7 +320,6 @@ Resources:
             - ContainerPort: 80
         - Name: importer
           Cpu: 1024
-          Memory: 4096
           Image: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/concordia/importer:${ConcordiaVersion}"
           LogConfiguration:
             LogDriver: awslogs
@@ -367,7 +365,6 @@ Resources:
               ContainerPath: /concordia_images
         - Name: celerybeat
           Cpu: 1024
-          Memory: 2048
           Image: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/concordia/celerybeat:${ConcordiaVersion}"
           LogConfiguration:
             LogDriver: awslogs
