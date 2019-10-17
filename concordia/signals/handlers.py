@@ -4,11 +4,13 @@ from time import time
 from asgiref.sync import AsyncToSync
 from channels.layers import get_channel_layer
 from django.conf import settings
+from django.contrib.auth import login as auth_login
 from django.contrib.auth.models import Group
 from django.contrib.auth.signals import user_logged_in, user_login_failed
+from django.core.mail import send_mail
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from django_registration.signals import user_registered
+from django_registration.signals import user_activated, user_registered
 
 from ..models import Asset, Transcription, TranscriptionStatus
 from ..tasks import calculate_difficulty_values
@@ -33,8 +35,32 @@ def handle_user_login_failed(sender, credentials, request, **kwargs):
     logger.warning("Failed user login with username %s", credentials["username"])
 
 
+@receiver(user_activated)
+def user_successfully_activated(sender, user, request, **kwargs):
+    logger.info("Received user activation signal for %s", user.username)
+
+    # Send welcome email
+    send_mail(
+        "Welcome to By The People at crowd.loc.gov",
+        "Thanks for registering. This is the text of the welcome email.",
+        "crowd@loc.gov",
+        [user.email],
+        fail_silently=False,
+    )
+
+    # Log the user in, if this isn't the result of a password reset
+    # The password reset form automatically logs the user in and activates.
+    # But when it does so, it sends None for the request.
+    # So when the user activates without resetting the password, the behavior
+    # should be the same - the user should be automatically logged in.
+    if request:
+        auth_login(request, user)
+
+
 @receiver(user_registered)
 def add_user_to_newsletter(sender, user, request, **kwargs):
+    # If the user checked the newsletter checkbox,
+    # add them to the Newsletter group
     if (
         request.POST
         and "newsletterOptIn" in request.POST

@@ -9,6 +9,7 @@ from django.contrib.auth.forms import (
 )
 from django_registration.backends.activation.views import RegistrationView
 from django_registration.forms import RegistrationForm
+from django_registration.signals import user_activated
 
 User = get_user_model()
 
@@ -31,7 +32,11 @@ class ActivateAndSetPasswordForm(SetPasswordForm):
     # has confirmed their email address, so
     # set is_active to True.
     def save(self, commit=True):
-        self.user.is_active = True
+        if not self.user.is_active:
+            self.user.is_active = True
+            # send user_activation signal so that the user will
+            # receive a welcome email
+            user_activated.send(sender=self.__class__, user=self.user, request=None)
         return super().save()
 
 
