@@ -53,6 +53,7 @@ from concordia.forms import (
     ActivateAndSetPasswordForm,
     AllowInactivePasswordResetForm,
     ContactUsForm,
+    UserLoginForm,
     UserProfileForm,
     UserRegistrationForm,
 )
@@ -245,6 +246,7 @@ class ConcordiaLoginView(RatelimitMixin, LoginView):
     ratelimit_rate = "3/15m"
     ratelimit_method = "POST"
     ratelimit_block = False
+    form_class = UserLoginForm
 
     def post(self, request, *args, **kwargs):
         form = self.get_form()

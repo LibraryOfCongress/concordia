@@ -1,9 +1,19 @@
+from logging import getLogger
+
 from django import forms
 from django.contrib.auth import get_user_model
-from django.contrib.auth.forms import PasswordResetForm, SetPasswordForm
+from django.contrib.auth.forms import (
+    AuthenticationForm,
+    PasswordResetForm,
+    SetPasswordForm,
+)
+from django_registration.backends.activation.views import RegistrationView
 from django_registration.forms import RegistrationForm
 
 User = get_user_model()
+
+
+logger = getLogger(__name__)
 
 
 class AllowInactivePasswordResetForm(PasswordResetForm):
@@ -41,6 +51,22 @@ class UserRegistrationForm(RegistrationForm):
                 " 150 characters or fewer."
             )
         }
+
+
+class UserLoginForm(AuthenticationForm):
+    def confirm_login_allowed(self, user):
+        # If the user provided a correct username and password combination,
+        # but has not yet confirmed their email,
+        # resend the email activation request and display a custom message.
+        if not user.is_active:
+            logger.warning("Inactive user tried to log in with valid credentials.")
+            view = RegistrationView(request=self.request)
+            view.send_activation_email(user)
+
+            raise forms.ValidationError(
+                "Please check your email and click the link to activate your account.",
+                code="inactive",
+            )
 
 
 class UserProfileForm(forms.Form):
