@@ -33,6 +33,7 @@ class ActivateAndSetPasswordForm(SetPasswordForm):
     # set is_active to True.
     def save(self, commit=True):
         if not self.user.is_active:
+            logger.info("Activated user %s due to password reset", self.user.username)
             self.user.is_active = True
             # send user_activation signal so that the user will
             # receive a welcome email
