@@ -311,13 +311,15 @@ TRANSCRIPTION_RESERVATION_SECONDS = 5 * 60
 #: Web cache policy settings
 DEFAULT_PAGE_TTL = 5 * 60
 
-# Feature flag for social share
+# Feature flags
 FLAGS = {
     "ACTIVITY_UI_ENABLED": [],
     "ADVERTISE_ACTIVITY_UI": [],
     "SIMPLE_CONTENT_BLOCKS": [],
     "CAROUSEL_CMS": [],
+    "SEND_WELCOME_EMAIL": [],
 }
+
 ASGI_APPLICATION = "concordia.routing.application"
 
 CHANNEL_LAYERS = {

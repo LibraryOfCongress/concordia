@@ -10,7 +10,9 @@ from django.contrib.auth.signals import user_logged_in, user_login_failed
 from django.core.mail import send_mail
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.template import loader
 from django_registration.signals import user_activated, user_registered
+from flags.state import flag_enabled
 
 from ..models import Asset, Transcription, TranscriptionStatus
 from ..tasks import calculate_difficulty_values
@@ -39,15 +41,6 @@ def handle_user_login_failed(sender, credentials, request, **kwargs):
 def user_successfully_activated(sender, user, request, **kwargs):
     logger.info("Received user activation signal for %s", user.username)
 
-    # Send welcome email
-    send_mail(
-        "Welcome to By The People at crowd.loc.gov",
-        "Thanks for registering. This is the text of the welcome email.",
-        "crowd@loc.gov",
-        [user.email],
-        fail_silently=False,
-    )
-
     # Log the user in, if this isn't the result of a password reset
     # The password reset form automatically logs the user in and activates.
     # But when it does so, it sends None for the request.
@@ -55,6 +48,22 @@ def user_successfully_activated(sender, user, request, **kwargs):
     # should be the same - the user should be automatically logged in.
     if request:
         auth_login(request, user)
+
+    if flag_enabled("SEND_WELCOME_EMAIL"):
+        body_template = loader.get_template("emails/welcome_email_body.txt")
+        body_message = body_template.render()
+
+        subject_template = loader.get_template("emails/welcome_email_subject.txt")
+        subject_message = subject_template.render()
+
+        # Send welcome email
+        send_mail(
+            subject_message,
+            body_message,
+            settings.DEFAULT_FROM_EMAIL,
+            [user.email],
+            fail_silently=False,
+        )
 
 
 @receiver(user_registered)
