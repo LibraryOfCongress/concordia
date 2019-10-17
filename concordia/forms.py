@@ -1,8 +1,28 @@
 from django import forms
 from django.contrib.auth import get_user_model
+from django.contrib.auth.forms import PasswordResetForm, SetPasswordForm
 from django_registration.forms import RegistrationForm
 
 User = get_user_model()
+
+
+class AllowInactivePasswordResetForm(PasswordResetForm):
+    def get_users(self, email):
+        # Allow inactive users to reset their passwords and confirm their email
+        # account in one step.
+        all_users = User._default_manager.filter(
+            **{"%s__iexact" % User.get_email_field_name(): email}
+        )
+        return (u for u in all_users if u.has_usable_password())
+
+
+class ActivateAndSetPasswordForm(SetPasswordForm):
+    # A successful password reset means the user
+    # has confirmed their email address, so
+    # set is_active to True.
+    def save(self, commit=True):
+        self.user.is_active = True
+        return super().save()
 
 
 class UserRegistrationForm(RegistrationForm):

@@ -150,6 +150,16 @@ urlpatterns = [
         "account/login/", views.ConcordiaLoginView.as_view(), name="registration_login"
     ),
     path("account/profile/", views.AccountProfileView.as_view(), name="user-profile"),
+    path(
+        "account/password_reset/",
+        views.ConcordiaPasswordResetRequestView.as_view(),
+        name="password_reset",
+    ),
+    path(
+        "account/reset/<uidb64>/<token>/",
+        views.ConcordiaPasswordResetConfirmView.as_view(),
+        name="password_reset_confirm",
+    ),
     path("account/", include("django_registration.backends.activation.urls")),
     path("account/", include("django.contrib.auth.urls")),
     path(
