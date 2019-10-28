@@ -7,13 +7,17 @@ dist: xenial
 sudo: required
 addons:
     sonarcloud:
-        organization: 'libraryofcongress'
+        organization: "libraryofcongress"
 python:
-    - '3.7'
-    - '3.8-dev'
+    - "3.7"
+    - "3.8"
+    - "3.8-dev"
+    - "nightly"
 matrix:
     allow_failures:
-        - python: 3.8-dev
+        - python:
+              - 3.8-dev
+              - nightly
 services:
     - postgresql
     - redis-server
