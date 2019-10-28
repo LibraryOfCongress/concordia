@@ -37,10 +37,7 @@ class ConcordiaViewTests(
             {"username": self.user.username, "password": self.user.password},
         )
 
-        self.assertContains(
-            response,
-            "Please check your email and click the link to activate your account.",
-        )
+        self.assertContains(response, "This account has not yet been activated.")
 
         self.assertEqual(len(mail.outbox), 1)
 
