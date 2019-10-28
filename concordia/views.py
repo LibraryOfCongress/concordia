@@ -18,7 +18,11 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
-from django.contrib.auth.views import LoginView
+from django.contrib.auth.views import (
+    LoginView,
+    PasswordResetConfirmView,
+    PasswordResetView,
+)
 from django.contrib.messages import get_messages
 from django.core.exceptions import ValidationError
 from django.core.mail import EmailMultiAlternatives, send_mail
@@ -45,7 +49,14 @@ from ratelimit.mixins import RatelimitMixin
 from ratelimit.utils import is_ratelimited
 
 from concordia.api_views import APIDetailView, APIListView
-from concordia.forms import ContactUsForm, UserProfileForm, UserRegistrationForm
+from concordia.forms import (
+    ActivateAndSetPasswordForm,
+    AllowInactivePasswordResetForm,
+    ContactUsForm,
+    UserLoginForm,
+    UserProfileForm,
+    UserRegistrationForm,
+)
 from concordia.models import (
     Asset,
     AssetTranscriptionReservation,
@@ -198,6 +209,18 @@ def ajax_messages(request):
     )
 
 
+class ConcordiaPasswordResetConfirmView(PasswordResetConfirmView):
+    # Automatically log a user in following a successful password reset
+    post_reset_login = True
+    form_class = ActivateAndSetPasswordForm
+
+
+class ConcordiaPasswordResetRequestView(PasswordResetView):
+    # Allow inactive users to reset their password and activate their account
+    # in one step
+    form_class = AllowInactivePasswordResetForm
+
+
 def registration_rate(self, group, request):
     registration_form = UserRegistrationForm(request.POST)
     if registration_form.is_valid():
@@ -223,6 +246,7 @@ class ConcordiaLoginView(RatelimitMixin, LoginView):
     ratelimit_rate = "3/15m"
     ratelimit_method = "POST"
     ratelimit_block = False
+    form_class = UserLoginForm
 
     def post(self, request, *args, **kwargs):
         form = self.get_form()

@@ -267,8 +267,8 @@ ANONYMOUS_CAPTCHA_VALIDATION_INTERVAL = 86400
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 WHITENOISE_ROOT = os.path.join(SITE_ROOT_DIR, "static")
 
-PASSWORD_RESET_TIMEOUT_DAYS = 2
-ACCOUNT_ACTIVATION_DAYS = 2
+PASSWORD_RESET_TIMEOUT_DAYS = 7
+ACCOUNT_ACTIVATION_DAYS = 7
 REGISTRATION_OPEN = True  # set to false to temporarily disable registrations
 
 MESSAGE_STORAGE = "django.contrib.messages.storage.session.SessionStorage"
@@ -311,13 +311,15 @@ TRANSCRIPTION_RESERVATION_SECONDS = 5 * 60
 #: Web cache policy settings
 DEFAULT_PAGE_TTL = 5 * 60
 
-# Feature flag for social share
+# Feature flags
 FLAGS = {
     "ACTIVITY_UI_ENABLED": [],
     "ADVERTISE_ACTIVITY_UI": [],
     "SIMPLE_CONTENT_BLOCKS": [],
     "CAROUSEL_CMS": [],
+    "SEND_WELCOME_EMAIL": [],
 }
+
 ASGI_APPLICATION = "concordia.routing.application"
 
 CHANNEL_LAYERS = {
