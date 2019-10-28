@@ -349,6 +349,12 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         qs = super().get_queryset(request)
         return qs.select_related("item").order_by("item__item_id", "sequence")
 
+    def lookup_allowed(self, key, value):
+        if key in ("item__project__id__exact"):
+            return True
+        else:
+            return super().lookup_allowed(key, value)
+
     def item_id(self, obj):
         return obj.item.item_id
 
