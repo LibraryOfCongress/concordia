@@ -70,7 +70,13 @@ class UserLoginForm(AuthenticationForm):
             view.send_activation_email(user)
 
             raise forms.ValidationError(
-                "Please check your email and click the link to activate your account.",
+                (
+                    "This account has not yet been activated. ",
+                    "An activation email has been sent to the email "
+                    "address associated with this account. ",
+                    "Please check for this message and click the link "
+                    "to finish your account registration.",
+                ),
                 code="inactive",
             )
 

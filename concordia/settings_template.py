@@ -267,8 +267,8 @@ ANONYMOUS_CAPTCHA_VALIDATION_INTERVAL = 86400
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 WHITENOISE_ROOT = os.path.join(SITE_ROOT_DIR, "static")
 
-PASSWORD_RESET_TIMEOUT_DAYS = 2
-ACCOUNT_ACTIVATION_DAYS = 2
+PASSWORD_RESET_TIMEOUT_DAYS = 7
+ACCOUNT_ACTIVATION_DAYS = 7
 REGISTRATION_OPEN = True  # set to false to temporarily disable registrations
 
 MESSAGE_STORAGE = "django.contrib.messages.storage.session.SessionStorage"
