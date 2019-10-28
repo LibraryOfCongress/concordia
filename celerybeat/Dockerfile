@@ -1,4 +1,4 @@
-FROM python:3.7
+FROM python:3.8
 
 ## Add the wait script to the image
 ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.2.1/wait /wait

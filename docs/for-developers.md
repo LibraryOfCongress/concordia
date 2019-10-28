@@ -84,7 +84,7 @@ virtualenv environment:
     -   `postgresql`
     -   `node` & `npm` for the front-end tools
 
-1.  Ensure that you have Python 3.7 or later installed
+1.  Ensure that you have Python 3.8 or later installed
 
 1.  Install [pipenv](https://docs.pipenv.org/) either using a tool like
     [Homebrew](https://brew.sh) (`brew install pipenv`) or using `pip`:
