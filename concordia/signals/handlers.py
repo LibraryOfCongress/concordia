@@ -7,7 +7,7 @@ from django.conf import settings
 from django.contrib.auth import login as auth_login
 from django.contrib.auth.models import Group
 from django.contrib.auth.signals import user_logged_in, user_login_failed
-from django.core.mail import send_mail
+from django.core.mail import EmailMultiAlternatives
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.template import loader
@@ -50,20 +50,24 @@ def user_successfully_activated(sender, user, request, **kwargs):
         auth_login(request, user)
 
     if flag_enabled("SEND_WELCOME_EMAIL"):
-        body_template = loader.get_template("emails/welcome_email_body.txt")
-        body_message = body_template.render()
+        text_body_template = loader.get_template("emails/welcome_email_body.txt")
+        text_body_message = text_body_template.render()
+
+        html_body_template = loader.get_template("emails/welcome_email_body.html")
+        html_body_message = html_body_template.render()
 
         subject_template = loader.get_template("emails/welcome_email_subject.txt")
         subject_message = subject_template.render()
 
         # Send welcome email
-        send_mail(
-            subject_message,
-            body_message,
-            settings.DEFAULT_FROM_EMAIL,
-            [user.email],
-            fail_silently=False,
+        message = EmailMultiAlternatives(
+            subject=subject_message,
+            body=text_body_message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[user.email],
+            reply_to=[settings.DEFAULT_FROM_EMAIL],
         )
+        message.attach_alternative(html_body_message, "text/html")
 
 
 @receiver(user_registered)
