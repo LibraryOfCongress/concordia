@@ -1217,6 +1217,14 @@ div.related-links {
     max-width: 30rem;
 }
 
+/* This is here to fix
+    https://github.com/LibraryOfCongress/concordia/issues/1127
+    until https://github.com/twbs/bootstrap/issues/29439 is fixed */
+
+#registration-form-container .invalid-feedback {
+    display: block;
+}
+
 /* print */
 @media print {
     @page {
