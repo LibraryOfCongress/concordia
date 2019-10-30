@@ -61,6 +61,14 @@ class UserRegistrationForm(RegistrationForm):
 
 class UserLoginForm(AuthenticationForm):
     def confirm_login_allowed(self, user):
+        inactive_message = (
+            "This account has not yet been activated. "
+            "An activation email has been sent to the email "
+            "address associated with this account. "
+            "Please check for this message and click the link "
+            "to finish your account registration."
+        )
+
         # If the user provided a correct username and password combination,
         # but has not yet confirmed their email,
         # resend the email activation request and display a custom message.
@@ -69,16 +77,7 @@ class UserLoginForm(AuthenticationForm):
             view = RegistrationView(request=self.request)
             view.send_activation_email(user)
 
-            raise forms.ValidationError(
-                (
-                    "This account has not yet been activated. ",
-                    "An activation email has been sent to the email "
-                    "address associated with this account. ",
-                    "Please check for this message and click the link "
-                    "to finish your account registration.",
-                ),
-                code="inactive",
-            )
+            raise forms.ValidationError(inactive_message, code="inactive")
 
 
 class UserProfileForm(forms.Form):

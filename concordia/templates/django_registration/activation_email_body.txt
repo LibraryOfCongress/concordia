@@ -3,7 +3,7 @@ Hi {{ user }},
 
 Thank you for becoming a Library of Congress virtual volunteer with By the People!
 
-To complete your activation, please verify your email address in the next {{ expiration_days |multiply:24 }} hours by clicking the link below:
+To complete your activation, please verify your email address in the next {{ expiration_days }} days by clicking the link below:
 
 https://{{ site }}{% url "django_registration_activate" activation_key %}
 
