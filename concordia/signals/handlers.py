@@ -61,13 +61,14 @@ def user_successfully_activated(sender, user, request, **kwargs):
 
         # Send welcome email
         message = EmailMultiAlternatives(
-            subject=subject_message,
+            subject=subject_message.rstrip(),
             body=text_body_message,
             from_email=settings.DEFAULT_FROM_EMAIL,
             to=[user.email],
             reply_to=[settings.DEFAULT_FROM_EMAIL],
         )
         message.attach_alternative(html_body_message, "text/html")
+        message.send()
 
 
 @receiver(user_registered)
