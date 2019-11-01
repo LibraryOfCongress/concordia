@@ -1,13 +1,9 @@
 import os
 
-from django.core.management.utils import get_random_secret_key
-
 from .settings_template import *  # NOQA ignore=F405
 from .settings_template import INSTALLED_APPS
 
 DEBUG = os.getenv("DEBUG", "").lower() == "true"
-
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", get_random_secret_key())
 
 EMAIL_BACKEND = "django.core.mail.backends.dummy.EmailBackend"
 
