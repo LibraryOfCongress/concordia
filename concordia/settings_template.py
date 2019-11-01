@@ -2,6 +2,7 @@ import os
 
 import sentry_sdk
 from django.contrib import messages
+from django.core.management.utils import get_random_secret_key
 from sentry_sdk.integrations.django import DjangoIntegration
 
 from concordia.version import get_concordia_version
@@ -10,14 +11,13 @@ from concordia.version import get_concordia_version
 CONCORDIA_APP_DIR = os.path.abspath(os.path.dirname(__file__))
 SITE_ROOT_DIR = os.path.dirname(CONCORDIA_APP_DIR)
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-secret-key"
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", get_random_secret_key())
 
 CONCORDIA_ENVIRONMENT = os.environ.get("CONCORDIA_ENVIRONMENT", "development")
 
 # Optional SMTP authentication information for EMAIL_HOST.
 EMAIL_HOST_USER = ""
-EMAIL_HOST_PASSWORD = ""
+EMAIL_HOST_PASSWORD = ""  # nosec
 EMAIL_USE_TLS = False
 DEFAULT_FROM_EMAIL = "crowd@loc.gov"
 
@@ -232,7 +232,7 @@ MEDIA_ROOT = os.path.join(SITE_ROOT_DIR, "media")
 LOGIN_URL = "login"
 
 PASSWORD_VALIDATOR = (
-    "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
+    "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"  # nosec
 )
 
 AUTH_PASSWORD_VALIDATORS = [

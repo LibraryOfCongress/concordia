@@ -7,7 +7,7 @@ DATABASES["default"].update({"PASSWORD": "", "USER": "postgres"})
 
 DEFAULT_TO_EMAIL = "rstorey@loc.gov"
 
-ALLOWED_HOSTS = ["127.0.0.1", "0.0.0.0"]
+ALLOWED_HOSTS = ["127.0.0.1", "0.0.0.0"]  # nosec
 
 EMAIL_BACKEND = "django.core.mail.backends.dummy.EmailBackend"
 
