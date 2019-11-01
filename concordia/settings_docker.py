@@ -7,7 +7,7 @@ from .settings_template import INSTALLED_APPS
 
 DEBUG = os.getenv("DEBUG", "").lower() == "true"
 
-DJANGO_SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", get_random_secret_key())
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", get_random_secret_key())
 
 EMAIL_BACKEND = "django.core.mail.backends.dummy.EmailBackend"
 
