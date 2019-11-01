@@ -16,10 +16,12 @@ LOGGING["loggers"] = {
 
 DEBUG = True
 
-ALLOWED_HOSTS = ["127.0.0.1", "0.0.0.0", "*"]
+ALLOWED_HOSTS = ["127.0.0.1", "0.0.0.0", "*"]  # nosec
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-EMAIL_FILE_PATH = "/tmp/concordia-messages"  # change this to a proper location
+EMAIL_FILE_PATH = (
+    "/tmp/concordia-messages"  # nosec — change this to a proper location for deployment
+)
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "")
 DEFAULT_TO_EMAIL = DEFAULT_FROM_EMAIL
 

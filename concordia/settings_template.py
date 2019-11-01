@@ -17,7 +17,7 @@ CONCORDIA_ENVIRONMENT = os.environ.get("CONCORDIA_ENVIRONMENT", "development")
 
 # Optional SMTP authentication information for EMAIL_HOST.
 EMAIL_HOST_USER = ""
-EMAIL_HOST_PASSWORD = ""
+EMAIL_HOST_PASSWORD = ""  # nosec
 EMAIL_USE_TLS = False
 DEFAULT_FROM_EMAIL = "crowd@loc.gov"
 
@@ -232,7 +232,7 @@ MEDIA_ROOT = os.path.join(SITE_ROOT_DIR, "media")
 LOGIN_URL = "login"
 
 PASSWORD_VALIDATOR = (
-    "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
+    "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"  # nosec
 )
 
 AUTH_PASSWORD_VALIDATORS = [
