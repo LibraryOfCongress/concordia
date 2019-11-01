@@ -16,10 +16,19 @@
         "stylelint-config-recommended": "^3.0.0"
     },
     "dependencies": {
+        "@fortawesome/fontawesome-free": "^5.8.2",
         "array-sort-by": "^1.2.1",
         "bootstrap": "4.3.1",
+        "codemirror": "^5.47.0",
         "jquery": "^3.4.1",
-        "popper.js": "^1.15.0"
+        "js-cookie": "^2.2.0",
+        "openseadragon": "^2.4.0",
+        "popper.js": "^1.15.0",
+        "redom": "^3.18.0",
+        "remarkable": "^1.7.1",
+        "screenfull": "^3.3.3",
+        "split.js": "^1.5.10",
+        "urijs": "^1.19.1"
     },
     "name": "concordia",
     "version": "1.0.0",

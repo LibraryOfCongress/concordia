@@ -40,11 +40,12 @@ more-itertools = "*"
 psycopg2 = "*"
 bleach = "*"
 django-admin-multiple-choice-list-filter = "*"
+django-npm = "*"
 
 [dev-packages]
 invoke = "*"
 django-extensions = "*"
-black = "==19.3b0"
+black = "==19.10b0"
 isort = "*"
 django-debug-toolbar = "*"
 "flake8" = "*"
