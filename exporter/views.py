@@ -70,6 +70,31 @@ def get_original_asset_id(download_url):
         return download_url
 
 
+def write_item_resource_file(assets, export_base_dir):
+    item_resource_file = os.path.join(export_base_dir, "item-resource-urls.txt")
+
+    with open(item_resource_file, "a") as f:
+
+        # Find the URL for the item that starts with http://www.loc.gov/resource/
+        items = Item.objects.filter(asset__in=assets)
+
+        for item in items:
+            item_resource_url = ""
+            for item_url in item.metadata["item"]["aka"]:
+                if "http://www.loc.gov/resource/" in item_url:
+                    item_resource_url = item_url
+                    break
+
+            if item_resource_url != "":
+                f.write(item_resource_url)
+                f.write("\n")
+            else:
+                logger.error(
+                    "Could not determine item resource URL for item %s", item.item_id
+                )
+                raise AssertionError
+
+
 def do_bagit_export(assets, export_base_dir, export_filename_base):
     """
     Executes bagit.py to turn temp directory into LC-specific bagit strucutre.
@@ -84,7 +109,6 @@ def do_bagit_export(assets, export_base_dir, export_filename_base):
 
         asset_id = asset_id.replace(":", "/")
         asset_path, asset_filename = os.path.split(asset_id)
-        item_path, item_filename = os.path.split(asset_path)
 
         asset_dest_path = os.path.join(export_base_dir, asset_path)
         os.makedirs(asset_dest_path, exist_ok=True)
@@ -99,14 +123,6 @@ def do_bagit_export(assets, export_base_dir, export_filename_base):
             with open(asset_text_output_path, "w") as f:
                 f.write(asset.latest_transcription)
 
-            # Append this asset transcription to the item transcription
-            item_text_output_path = os.path.join(
-                asset_dest_path, "%s.txt" % item_filename
-            )
-            with open(item_text_output_path, "a") as f:
-                f.write(asset.latest_transcription or "")
-                f.write("\n\n")
-
     # Add attributions to the end of all text files found under asset_dest_path
     if hasattr(settings, "ATTRIBUTION_TEXT"):
         for dirpath, _, filenames in os.walk(export_base_dir, topdown=False):
@@ -115,6 +131,8 @@ def do_bagit_export(assets, export_base_dir, export_filename_base):
                 with open(this_text_file, "a") as f:
                     f.write("\n\n")
                     f.write(settings.ATTRIBUTION_TEXT)
+
+    write_item_resource_file(assets, export_base_dir)
 
     # Turn Structure into bagit format
     bagit.make_bag(
