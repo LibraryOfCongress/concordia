@@ -80,19 +80,21 @@ def write_item_resource_file(assets, export_base_dir):
 
         for item in items:
             item_resource_url = ""
-            for item_url in item.metadata["item"]["aka"]:
-                if "http://www.loc.gov/resource/" in item_url:
-                    item_resource_url = item_url
-                    break
+            if item.metadata:
+                for item_url in item.metadata["item"]["aka"]:
+                    if "http://www.loc.gov/resource/" in item_url:
+                        item_resource_url = item_url
+                        break
 
-            if item_resource_url != "":
-                f.write(item_resource_url)
-                f.write("\n")
-            else:
-                logger.error(
-                    "Could not determine item resource URL for item %s", item.item_id
-                )
-                raise AssertionError
+                if item_resource_url != "":
+                    f.write(item_resource_url)
+                    f.write("\n")
+                else:
+                    logger.error(
+                        "Could not determine item resource URL for item %s",
+                        item.item_id,
+                    )
+                    raise AssertionError
 
 
 def do_bagit_export(assets, export_base_dir, export_filename_base):
