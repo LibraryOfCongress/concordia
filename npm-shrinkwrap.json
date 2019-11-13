@@ -2534,6 +2534,12 @@
             "integrity": "sha512-a1hQMktqW9Nmqr5aktAux3JMNqaucxGcjtjWnZLHX7yyPCmlSV3M54nGYbqT8K+0GhF3NBgmJCc3ma+WOgX8Jg==",
             "dev": true
         },
+        "flatten": {
+            "version": "1.0.2",
+            "resolved": "https://registry.npmjs.org/flatten/-/flatten-1.0.2.tgz",
+            "integrity": "sha1-2uRqnXj74lKSJYzB54CkHZXAN4I=",
+            "dev": true
+        },
         "flush-write-stream": {
             "version": "1.1.1",
             "resolved": "https://registry.npmjs.org/flush-write-stream/-/flush-write-stream-1.1.1.tgz",
@@ -5688,6 +5694,17 @@
             "integrity": "sha512-LmeoohTpp/K4UiyQCwuGWlONxXamGzCMtFxLq4W1nZVGIQLYvMCJx3yAF9qyyuFpflABI9yVdtJAqbihOsCsJQ==",
             "dev": true
         },
+        "postcss-values-parser": {
+            "version": "2.0.1",
+            "resolved": "https://registry.npmjs.org/postcss-values-parser/-/postcss-values-parser-2.0.1.tgz",
+            "integrity": "sha512-2tLuBsA6P4rYTNKCXYG/71C7j1pU6pK503suYOmn4xYrQIzW+opD+7FAFNuGSdZC/3Qfy334QbeMu7MEb8gOxg==",
+            "dev": true,
+            "requires": {
+                "flatten": "^1.0.2",
+                "indexes-of": "^1.0.1",
+                "uniq": "^1.0.1"
+            }
+        },
         "prelude-ls": {
             "version": "1.1.2",
             "resolved": "https://registry.npmjs.org/prelude-ls/-/prelude-ls-1.1.2.tgz",
@@ -7038,6 +7055,15 @@
             "resolved": "https://registry.npmjs.org/stylelint-config-recommended/-/stylelint-config-recommended-3.0.0.tgz",
             "integrity": "sha512-F6yTRuc06xr1h5Qw/ykb2LuFynJ2IxkKfCMf+1xqPffkxh0S09Zc902XCffcsw/XMFq/OzQ1w54fLIDtmRNHnQ==",
             "dev": true
+        },
+        "stylelint-value-no-unknown-custom-properties": {
+            "version": "2.0.0",
+            "resolved": "https://registry.npmjs.org/stylelint-value-no-unknown-custom-properties/-/stylelint-value-no-unknown-custom-properties-2.0.0.tgz",
+            "integrity": "sha512-iA7pLNBRCrRi35rUpF3bS4zpPWQtk1YxqKC0MhgOvhI1XDciE/FaAQoFgn65vGMEyQ0Q3PPGfWawn7sVd/thXQ==",
+            "dev": true,
+            "requires": {
+                "postcss-values-parser": "^2.0.0"
+            }
         },
         "sugarss": {
             "version": "2.0.0",
