@@ -69,4 +69,3 @@ has instructions about how to run the test suite for Python code and perform var
 front-end tests. Because accessibility is an important topic we additionally have two
 separate documents detailing how we [expect people to be able to use the site](accessibility-goals.md)
 and how we [attempt to enable people to accomplish those goals](accessibility-techniques.md).
-
