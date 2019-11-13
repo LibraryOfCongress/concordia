@@ -11,7 +11,7 @@ import {
     setChildren,
     setAttr,
     List
-} from 'https://cdnjs.cloudflare.com/ajax/libs/redom/3.18.0/redom.es.min.js';
+} from 'https://cdnjs.cloudflare.com/ajax/libs/redom/3.24.1/redom.es.min.js';
 
 export function conditionalUnmount(component) {
     if (component.el.parentNode) {
