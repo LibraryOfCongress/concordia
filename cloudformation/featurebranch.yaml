@@ -29,6 +29,7 @@ Resources:
             TemplateURL: 'https://s3.amazonaws.com/crowd-deployment/infrastructure/rds.yaml'
             Parameters:
                 DbPassword: '{{resolve:secretsmanager:crowd/test/DB/MasterUserPassword:SecretString:password}}'
+                DbUsername: !Sub '{{resolve:secretsmanager:crowd/test/DB/MasterUserPassword:SecretString:username}}'
                 DatabaseSecurityGroup: 'sg-0496910b800de2869'
                 PrivateSubnet1: 'subnet-0aa55b322229b945a'
                 PrivateSubnet2: 'subnet-0f65558b319b2d4dc'
