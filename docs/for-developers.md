@@ -84,7 +84,7 @@ virtualenv environment:
     -   `postgresql`
     -   `node` & `npm` for the front-end tools
 
-1.  Ensure that you have Python 3.7 or later installed
+1.  Ensure that you have Python 3.8 or later installed
 
 1.  Install [pipenv](https://docs.pipenv.org/) either using a tool like
     [Homebrew](https://brew.sh) (`brew install pipenv`) or using `pip`:
@@ -191,8 +191,8 @@ catching low-hanging fruit and regressions. You run aXe against a development
 server by giving it one or more URLs:
 
 ```bash
-$ npx axe --show-errors http://localhost:8000/
-$ pipenv run ./manage.py print_frontend_test_urls | xargs npx axe --show-errors
+$ npx axe-cli --show-errors http://localhost:8000/
+$ pipenv run ./manage.py print_frontend_test_urls | xargs npx axe-cli --show-errors
 ```
 
 ### Static Image Compression

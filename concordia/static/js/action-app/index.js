@@ -1,7 +1,7 @@
 /* global Split jQuery URITemplate sortBy Sentry */
 /* eslint-disable no-console */
 
-import {mount} from 'https://cdnjs.cloudflare.com/ajax/libs/redom/3.18.0/redom.es.min.js';
+import {mount} from '../../redom/dist/redom.es.min.js';
 import {
     Alert,
     AssetList,
@@ -364,11 +364,17 @@ export class ActionApp {
                 this.updateViewer();
             }
 
-            let assetListItem = this.assetList.lookup[assetId];
-            if (assetListItem) {
-                // If this is visible, we want to update the displayed asset
-                // list icon using the current value:
-                assetListItem.update(this.getAssetData(assetId));
+            if (typeof this.assetList.lookup == 'undefined') {
+                console.warn(
+                    `Expected this.assetList to be an initialized List but found ${this.assetList}`
+                );
+            } else {
+                let assetListItem = this.assetList.lookup[assetId];
+                if (assetListItem) {
+                    // If this is visible, we want to update the displayed asset
+                    // list icon using the current value:
+                    assetListItem.update(this.getAssetData(assetId));
+                }
             }
         });
 
@@ -557,6 +563,13 @@ export class ActionApp {
         let startingMode = this.currentMode;
 
         return fetchJSON(url)
+            .catch(error => {
+                console.warn(
+                    `Failed to retrieve ${url}: ${error} — returning it to the queue`
+                );
+                this.queuedAssetPageURLs.push(url);
+                throw error;
+            })
             .then(data => {
                 data.objects.forEach(i => {
                     i.sent = data.sent;
@@ -617,6 +630,10 @@ export class ActionApp {
             of the fields which frequently change.
         */
 
+        if (typeof assetId != 'number') {
+            assetId = Number(assetId);
+        }
+
         let oldData = this.getAssetData(assetId) || {};
         let mergedData = Object.assign({}, oldData);
         mergedData = Object.assign(mergedData, newData);
@@ -637,6 +654,10 @@ export class ActionApp {
             if (k in freshestCopy) {
                 mergedData[k] = freshestCopy[k];
             }
+        }
+
+        if (!('id' in mergedData)) {
+            mergedData.id = assetId;
         }
 
         mergedData.editable = this.canEditAsset(mergedData);
@@ -671,7 +692,7 @@ export class ActionApp {
             assetID = asset.id;
         }
 
-        if (!asset) {
+        if (!asset || !assetID) {
             throw `No information for an asset with ID ${assetID}`;
         }
 

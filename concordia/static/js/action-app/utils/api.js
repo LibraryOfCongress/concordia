@@ -6,11 +6,46 @@ export function fetchJSON(originalURL) {
     qs.set('format', 'json');
     let finalURL = `${url.origin}${url.pathname}?${qs}`;
 
-    console.time(`Fetch ${url}`);
+    return fetchURL(finalURL).then(response => response.json());
+}
 
-    return fetch(finalURL).then(response => {
-        console.timeEnd(`Fetch ${url}`);
-        return response.json();
+function fetchURL(url, retryLimit = 5) {
+    /*
+
+        If everything succeeds we will log the timing and return the response
+
+        If an error occurs it will be retried up to retryLimit times with a
+        timed back-off mechanism before finally being rejected.
+    */
+
+    return new Promise((resolve, reject) => {
+        let retryCount = 0;
+
+        function fetchWrapper() {
+            console.time(`Fetch ${url} (retry ${retryCount})`);
+
+            return fetch(url)
+                .then(response => {
+                    console.timeEnd(`Fetch ${url} (retry ${retryCount})`);
+                    resolve(response);
+                })
+                .catch(error => {
+                    retryCount++;
+                    if (retryCount < retryLimit) {
+                        console.error(`Retrying ${url}: ${error}`);
+                        setTimeout(
+                            fetchWrapper.bind(this),
+                            250 * 2 ** retryCount
+                        );
+                    } else {
+                        console.error(
+                            `Failed to fetch ${url} after ${retryCount} retries: ${error}`
+                        );
+                        reject(error);
+                    }
+                });
+        }
+        fetchWrapper();
     });
 }
 

@@ -9,7 +9,6 @@ addons:
     sonarcloud:
         organization: "libraryofcongress"
 python:
-    - "3.7"
     - "3.8"
     - "3.8-dev"
     - "nightly"
@@ -39,5 +38,6 @@ script:
     - git fetch --unshallow
     - git diff --name-only $TRAVIS_COMMIT_RANGE | xargs pipenv run pre-commit run --files
     - pipenv run safety check
+    - npx --quiet csstree-validator static/css/
 after_success:
     - 'if [[ $TRAVIS_PYTHON_VERSION == "3.7" ]]; then git fetch --unshallow --tags; pipenv run coverage xml; sonar-scanner -Dsonar.projectVersion="$(pipenv run python setup.py --version)"; coveralls; fi'
