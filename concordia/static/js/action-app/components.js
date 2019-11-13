@@ -1,17 +1,17 @@
-/* global jQuery, OpenSeadragon */
-
-import {$, $$} from './utils/dom.js';
+/* global jQuery, OpenSeadragon, STATIC_URL */
 
 import {
     html,
-    text,
     list,
+    List,
     mount,
-    unmount,
-    setChildren,
     setAttr,
-    List
-} from 'https://cdnjs.cloudflare.com/ajax/libs/redom/3.24.1/redom.es.min.js';
+    List,
+    setChildren,
+    text,
+    unmount
+} from '../../redom/dist/redom.es.min.js';
+import {$, $$} from './utils/dom.js';
 
 export function conditionalUnmount(component) {
     if (component.el.parentNode) {
@@ -760,8 +760,7 @@ class ImageViewer {
 
         this.seadragon = new OpenSeadragon({
             element: this.el,
-            prefixUrl:
-                'https://cdnjs.cloudflare.com/ajax/libs/openseadragon/2.4.0/images/',
+            prefixUrl: `${STATIC_URL}openseadragon/build/openseadragon/images/`,
             gestureSettingsTouch: {
                 pinchRotate: true
             },

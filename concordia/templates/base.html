@@ -1,5 +1,5 @@
 {% spaceless %}
-{% load staticfiles %}
+{% load static staticfiles %}
 {% endspaceless %}<!DOCTYPE html>
 <html lang="en">
 
@@ -183,6 +183,10 @@
           }
         </script>
     {% endif %}
+
+    <script>
+        window.STATIC_URL = "{% get_static_prefix %}";
+    </script>
 
     {% include "fragments/common-scripts.html" %}
 

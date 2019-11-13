@@ -36,10 +36,43 @@ LOGOUT_REDIRECT_URL = "/"
 ROOT_URLCONF = "concordia.urls"
 STATIC_ROOT = "static-files"
 STATIC_URL = "/static/"
+
+STATICFILES_FINDERS = [
+    # We let the filesystem override the app directories so Gulp can pre-process
+    # files if needed:
+    "django.contrib.staticfiles.finders.FileSystemFinder",
+    "django.contrib.staticfiles.finders.AppDirectoriesFinder",
+    # See https://github.com/kevin1024/django-npm
+    "npm.finders.NpmFinder",
+]
+
 STATICFILES_DIRS = [
-    os.path.join(CONCORDIA_APP_DIR, "static"),
     os.path.join(SITE_ROOT_DIR, "static"),
 ]
+
+NPM_FILE_PATTERNS = {
+    "redom": ["dist/*"],
+    "split.js": ["dist/*"],
+    "array-sort-by": ["dist/*"],
+    "urijs": ["src/*"],
+    "openseadragon": ["build/*"],
+    "codemirror": ["lib/*", "addon/*", "mode/*"],
+    "prettier": ["*.js"],
+    "remarkable": ["dist/*"],
+    "jquery": ["dist/*"],
+    "js-cookie": ["src/*"],
+    "popper.js": ["dist/*"],
+    "bootstrap": ["dist/*"],
+    "screenfull": ["dist/*"],
+    "@fortawesome/fontawesome-free/": [
+        "css/*",
+        "js/*",
+        "sprites/*",
+        "svgs/*",
+        "webfonts/*",
+    ],
+}
+
 TEMPLATE_DEBUG = False
 TIME_ZONE = "America/New_York"
 USE_I18N = True

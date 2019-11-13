@@ -46,6 +46,7 @@ services:
             - images_volume:/concordia_images
         links:
             - redis
+            - db
         ports:
             - 80:80
 

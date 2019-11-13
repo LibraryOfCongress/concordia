@@ -1,7 +1,7 @@
 /* global Split jQuery URITemplate sortBy Sentry */
 /* eslint-disable no-console */
 
-import {mount} from 'https://cdnjs.cloudflare.com/ajax/libs/redom/3.24.1/redom.es.min.js';
+import {mount} from '../../redom/dist/redom.es.min.js';
 import {
     Alert,
     AssetList,
