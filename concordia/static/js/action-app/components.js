@@ -6,7 +6,6 @@ import {
     List,
     mount,
     setAttr,
-    List,
     setChildren,
     text,
     unmount
