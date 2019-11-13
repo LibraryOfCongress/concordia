@@ -1,4 +1,4 @@
-FROM python:3.8
+FROM python:3.8-slim
 
 ## Add the wait script to the image
 ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.2.1/wait /wait
@@ -8,13 +8,14 @@ ENV DEBIAN_FRONTEND="noninteractive"
 
 RUN echo "deb http://deb.debian.org/debian stretch-backports main" >> /etc/apt/sources.list.d/stretch-backports.list
 
-# Pillow/Imaging: https://pillow.readthedocs.io/en/latest/installation.html#external-libraries
 RUN apt-get update -qy && apt-get dist-upgrade -qy && apt-get install -o Dpkg::Options::='--force-confnew' -qy \
     git curl \
-    libz-dev libfreetype6-dev \
     libmemcached-dev \
+    # Pillow/Imaging: https://pillow.readthedocs.io/en/latest/installation.html#external-libraries
+    libz-dev libfreetype6-dev \
     libtiff-dev libjpeg-dev libopenjp2-7-dev libwebp-dev zlib1g-dev \
-    graphviz \
+    # Postgres client library to build psycopg2
+    libpq-dev \
     locales \
     nodejs node-gyp && apt-get -qy -t stretch-backports install npm && apt-get -qy autoremove && apt-get -qy autoclean
 
@@ -35,7 +36,7 @@ COPY . /app
 
 RUN npm install --silent --global npm@latest && /usr/local/bin/npm install --silent && npx gulp build
 
-RUN pipenv install --system --dev --deploy
+RUN pipenv install --system --dev --deploy && rm -rf ~/.cache/
 
 EXPOSE 80
 

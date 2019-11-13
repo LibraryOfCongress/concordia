@@ -191,8 +191,8 @@ catching low-hanging fruit and regressions. You run aXe against a development
 server by giving it one or more URLs:
 
 ```bash
-$ npx axe --show-errors http://localhost:8000/
-$ pipenv run ./manage.py print_frontend_test_urls | xargs npx axe --show-errors
+$ npx axe-cli --show-errors http://localhost:8000/
+$ pipenv run ./manage.py print_frontend_test_urls | xargs npx axe-cli --show-errors
 ```
 
 ### Static Image Compression
