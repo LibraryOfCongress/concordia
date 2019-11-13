@@ -6,9 +6,12 @@
         <div class="col-md-8 mx-auto p-3">
             <h2>Account Activation Complete</h2>
             <p>
-                Welcome back! Your registration is now complete. Go ahead and <a href="{% url 'login' %}">Login</a>.
+            Welcome back! Your registration is now complete and you are logged in.
+            </p>
+            <p>
+            Visit the <a href="{% url 'welcome-guide' %}">By the People Welcome Guide</a> for instructions and help getting started.
+            Or, <a href="{% url 'redirect-to-next-transcribable-topic-asset' 'suffrage-women-fight-for-the-vote' %}">jump right in</a> to a page that needs your help!
             </p>
         </div>
     </div>
 {% endblock main_content %}
-

@@ -1,6 +1,22 @@
 [run]
 branch = true
-source =
-    concordia
-    importer
-    exporter
+include =
+    concordia/*
+    importer/*
+    exporter/*
+omit =
+    */migrations/*
+    */tests/*
+    */settings*.py
+    */static/*
+
+[report]
+include =
+    concordia/*
+    importer/*
+    exporter/*
+omit =
+    */migrations/*
+    */tests/*
+    */settings*.py
+    */static/*

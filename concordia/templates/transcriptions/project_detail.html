@@ -7,13 +7,13 @@
 
 {% block head_content %}
     <link rel="canonical" href="https://{{ request.get_host }}{{ request.path }}">
-    <meta name="description" content="{{ project.description|normalize_whitespace }}">
+    <meta name="description" content="{{ project.description|striptags|normalize_whitespace }}">
     <meta name="thumbnail" content="{{ MEDIA_URL }}{{ project.thumbnail_image }}">
     <meta property="og:image" content="{{ MEDIA_URL }}{{ project.thumbnail_image }}">
 {% endblock head_content %}
 
 {% block breadcrumbs %}
-    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaign-list' %}">Campaigns</a></li>
+    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'campaign-topic-list' %}">Campaigns</a></li>
     <li class="breadcrumb-item">
         <a class="primary-text" href="{% url 'transcriptions:campaign-detail' campaign.slug %}?{{ sublevel_querystring }}" title="{{ campaign.title }}">{{ campaign.title }}</a>
     </li>
@@ -25,7 +25,7 @@
     <div class="row">
         <div class="col-12">
             <h1 class="m-3">{{ project.title }}</h1>
-            <p class="m-3 hero-text">{{ project.description|linebreaksbr }}</p>
+            <div class="m-3 hero-text">{{ project.description|safe }}</div>
         </div>
     </div>
     {% include "fragments/transcription-progress-row.html" %}
@@ -39,7 +39,7 @@
 
                     <div class="progress w-100 my-2">
                         <div title="Completed" class="progress-bar bg-completed" role="progressbar" style="width: {{ item.completed_percent }}%" aria-valuenow="{{ item.completed_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
-                        <div title="Submitted for Review" class="progress-bar bg-submitted" role="progressbar" style="width: {{ item.submitted_percent }}%" aria-valuenow="{{ item.submitted_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        <div title="Needs Review" class="progress-bar bg-submitted" role="progressbar" style="width: {{ item.submitted_percent }}%" aria-valuenow="{{ item.submitted_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
                         <div title="In Progress" class="progress-bar bg-in_progress" role="progressbar" style="width: {{ item.in_progress_percent }}%" aria-valuenow="{{ item.in_progress_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
                     </div>
 

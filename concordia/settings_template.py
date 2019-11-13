@@ -1,21 +1,23 @@
-# TODO: use correct copyright header
 import os
 
-import raven
+import sentry_sdk
 from django.contrib import messages
+from django.core.management.utils import get_random_secret_key
+from sentry_sdk.integrations.django import DjangoIntegration
+
+from concordia.version import get_concordia_version
 
 # Build paths inside the project like this: os.path.join(SITE_ROOT_DIR, ...)
 CONCORDIA_APP_DIR = os.path.abspath(os.path.dirname(__file__))
 SITE_ROOT_DIR = os.path.dirname(CONCORDIA_APP_DIR)
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-secret-key"
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", get_random_secret_key())
 
 CONCORDIA_ENVIRONMENT = os.environ.get("CONCORDIA_ENVIRONMENT", "development")
 
 # Optional SMTP authentication information for EMAIL_HOST.
 EMAIL_HOST_USER = ""
-EMAIL_HOST_PASSWORD = ""
+EMAIL_HOST_PASSWORD = ""  # nosec
 EMAIL_USE_TLS = False
 DEFAULT_FROM_EMAIL = "crowd@loc.gov"
 
@@ -53,10 +55,11 @@ DATABASES = {
         "PASSWORD": os.getenv("POSTGRESQL_PW"),
         "HOST": os.getenv("POSTGRESQL_HOST", "localhost"),
         "PORT": os.getenv("POSTGRESQL_PORT", "5432"),
-        "CONN_MAX_AGE": 15 * 60,  # Keep database connections open for 15 minutes
+        # Change this back to 15 minutes (15*60) once celery regression
+        # is fixed  see https://github.com/celery/celery/issues/4878
+        "CONN_MAX_AGE": 0,  # 15 minutes
     }
 }
-
 
 INSTALLED_APPS = [
     "concordia.apps.ConcordiaAdminConfig",  # Replaces 'django.contrib.admin'
@@ -67,8 +70,6 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.sites",
     "django.contrib.staticfiles",
-    "raven.contrib.django.raven_compat",
-    "maintenance_mode",
     "bootstrap4",
     "bittersweet",
     "concordia.apps.ConcordiaAppConfig",
@@ -78,6 +79,9 @@ INSTALLED_APPS = [
     "django_prometheus_metrics",
     "robots",
     "django_celery_beat",
+    "flags",
+    "channels",
+    "django_admin_multiple_choice_list_filter",
 ]
 
 MIDDLEWARE = [
@@ -91,8 +95,8 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "maintenance_mode.middleware.MaintenanceModeMiddleware",
     "ratelimit.middleware.RatelimitMiddleware",
+    "flags.middleware.FlagConditionsMiddleware",
 ]
 
 RATELIMIT_VIEW = "concordia.views.ratelimit_view"
@@ -128,7 +132,6 @@ MEMCACHED_ADDRESS = os.getenv("MEMCACHED_ADDRESS", "")
 MEMCACHED_PORT = os.getenv("MEMCACHED_PORT", "")
 
 if MEMCACHED_ADDRESS and MEMCACHED_PORT:
-
     CACHES = {
         "default": {
             "BACKEND": "django.core.cache.backends.memcached.MemcachedCache",
@@ -137,9 +140,7 @@ if MEMCACHED_ADDRESS and MEMCACHED_PORT:
     }
 
     SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
-
 else:
-
     CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
 
     SESSION_ENGINE = "django.contrib.sessions.backends.db"
@@ -151,9 +152,15 @@ HAYSTACK_CONNECTIONS = {
     }
 }
 
-# Celery settings
-CELERY_BROKER_URL = "pyamqp://guest@rabbit"
-CELERY_RESULT_BACKEND = "rpc://"
+REDIS_ADDRESS = os.environ.get("REDIS_ADDRESS", "localhost")
+REDIS_PORT = os.environ.get("REDIS_PORT", "")
+if REDIS_PORT.isdigit():
+    REDIS_PORT = int(REDIS_PORT)
+else:
+    REDIS_PORT = 6379
+
+CELERY_BROKER_URL = f"redis://{REDIS_ADDRESS}:{REDIS_PORT}/0"
+CELERY_RESULT_BACKEND = f"redis://{REDIS_ADDRESS}:{REDIS_PORT}/0"
 
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
@@ -189,10 +196,10 @@ LOGGING = {
             "level": "INFO",
             "formatter": "long",
         },
-        "null": {"level": "DEBUG", "class": "logging.NullHandler"},
+        "null": {"level": "INFO", "class": "logging.NullHandler"},
         "file": {
             "class": "logging.handlers.TimedRotatingFileHandler",
-            "level": "DEBUG",
+            "level": "INFO",
             "formatter": "long",
             "filename": "{}/logs/concordia.log".format(SITE_ROOT_DIR),
             "when": "H",
@@ -200,21 +207,17 @@ LOGGING = {
             "backupCount": 16,
         },
         "celery": {
-            "level": "DEBUG",
+            "level": "INFO",
             "class": "logging.handlers.RotatingFileHandler",
             "filename": "{}/logs/celery.log".format(SITE_ROOT_DIR),
             "formatter": "long",
             "maxBytes": 1024 * 1024 * 100,  # 100 mb
         },
-        "sentry": {
-            "level": "WARNING",
-            "class": "raven.contrib.django.raven_compat.handlers.SentryHandler",
-        },
     },
     "loggers": {
-        "django": {"handlers": ["file", "stream"], "level": "DEBUG", "propagate": True},
-        "celery": {"handlers": ["celery", "stream"], "level": "DEBUG"},
-        "sentry.errors": {"level": "INFO", "handlers": ["stream"], "propagate": False},
+        "django": {"handlers": ["file"], "level": "INFO"},
+        "celery": {"handlers": ["celery"], "level": "INFO"},
+        "concordia": {"handlers": ["file"], "level": "INFO"},
     },
 }
 
@@ -229,7 +232,7 @@ MEDIA_ROOT = os.path.join(SITE_ROOT_DIR, "media")
 LOGIN_URL = "login"
 
 PASSWORD_VALIDATOR = (
-    "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
+    "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"  # nosec
 )
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -264,8 +267,8 @@ ANONYMOUS_CAPTCHA_VALIDATION_INTERVAL = 86400
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 WHITENOISE_ROOT = os.path.join(SITE_ROOT_DIR, "static")
 
-PASSWORD_RESET_TIMEOUT_DAYS = 2
-ACCOUNT_ACTIVATION_DAYS = 2
+PASSWORD_RESET_TIMEOUT_DAYS = 7
+ACCOUNT_ACTIVATION_DAYS = 7
 REGISTRATION_OPEN = True  # set to false to temporarily disable registrations
 
 MESSAGE_STORAGE = "django.contrib.messages.storage.session.SessionStorage"
@@ -275,11 +278,14 @@ MESSAGE_TAGS = {messages.ERROR: "danger"}
 SENTRY_BACKEND_DSN = os.environ.get("SENTRY_BACKEND_DSN", "")
 SENTRY_FRONTEND_DSN = os.environ.get("SENTRY_FRONTEND_DSN", "")
 
-RAVEN_CONFIG = {
-    "dsn": SENTRY_BACKEND_DSN,
-    "environment": CONCORDIA_ENVIRONMENT,
-    "release": raven.fetch_git_sha(SITE_ROOT_DIR),
-}
+APPLICATION_VERSION = get_concordia_version()
+
+sentry_sdk.init(
+    dsn=SENTRY_BACKEND_DSN,
+    environment=CONCORDIA_ENVIRONMENT,
+    release=APPLICATION_VERSION,
+    integrations=[DjangoIntegration()],
+)
 
 # When the MAINTENANCE_MODE setting is true, this template will be used to
 # generate a 503 response:
@@ -304,3 +310,21 @@ TRANSCRIPTION_RESERVATION_SECONDS = 5 * 60
 
 #: Web cache policy settings
 DEFAULT_PAGE_TTL = 5 * 60
+
+# Feature flags
+FLAGS = {
+    "ACTIVITY_UI_ENABLED": [],
+    "ADVERTISE_ACTIVITY_UI": [],
+    "SIMPLE_CONTENT_BLOCKS": [],
+    "CAROUSEL_CMS": [],
+    "SEND_WELCOME_EMAIL": [],
+}
+
+ASGI_APPLICATION = "concordia.routing.application"
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {"hosts": [(REDIS_ADDRESS, REDIS_PORT)]},
+    }
+}

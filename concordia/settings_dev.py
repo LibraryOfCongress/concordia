@@ -1,27 +1,27 @@
 import os
 
 from .settings_template import *  # NOQA ignore=F405
-from .settings_template import DATABASES, INSTALLED_APPS, LOGGING, MIDDLEWARE
+from .settings_template import INSTALLED_APPS, LOGGING, MIDDLEWARE
 
 LOGGING["handlers"]["stream"]["level"] = "DEBUG"
 LOGGING["handlers"]["file"]["level"] = "DEBUG"
-LOGGING["handlers"]["file"]["filename"] = "./logs/concordia-web.log"
 LOGGING["handlers"]["celery"]["level"] = "DEBUG"
-LOGGING["handlers"]["celery"]["filename"] = "./logs/concordia-celery.log"
-LOGGING["loggers"]["django"]["level"] = "DEBUG"
-LOGGING["loggers"]["celery"]["level"] = "DEBUG"
+LOGGING["loggers"] = {
+    "django": {"handlers": ["file", "stream"], "level": "DEBUG"},
+    "celery": {"handlers": ["celery", "stream"], "level": "DEBUG"},
+    "concordia": {"handlers": ["file", "stream"], "level": "DEBUG"},
+    "django.utils.autoreload": {"level": "INFO"},
+    "django.template": {"level": "INFO"},
+}
 
 DEBUG = True
 
-DATABASES["default"]["PORT"] = "54323"
-
-ALLOWED_HOSTS = ["127.0.0.1", "0.0.0.0", "*"]
-
-CELERY_BROKER_URL = "pyamqp://guest@localhost"
-CELERY_RESULT_BACKEND = "rpc://"
+ALLOWED_HOSTS = ["127.0.0.1", "0.0.0.0", "*"]  # nosec
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-EMAIL_FILE_PATH = "/tmp/concordia-messages"  # change this to a proper location
+EMAIL_FILE_PATH = (
+    "/tmp/concordia-messages"  # nosec — change this to a proper location for deployment
+)
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "")
 DEFAULT_TO_EMAIL = DEFAULT_FROM_EMAIL
 

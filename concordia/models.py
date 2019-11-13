@@ -6,6 +6,7 @@ from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
+from django.db.models import Count
 from django.urls import reverse
 from django_prometheus_metrics.models import MetricsModelMixin
 
@@ -18,6 +19,18 @@ User._meta.get_field("email").__dict__["_unique"] = True
 
 class UserProfile(MetricsModelMixin("userprofile"), models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+
+class OverlayPosition(object):
+    """
+    Used in carousel slide content management
+    """
+
+    LEFT = "left"
+    RIGHT = "right"
+
+    CHOICES = ((LEFT, "Left"), (RIGHT, "Right"))
+    CHOICE_MAP = dict(CHOICES)
 
 
 class TranscriptionStatus(object):
@@ -34,7 +47,7 @@ class TranscriptionStatus(object):
     CHOICES = (
         (NOT_STARTED, "Not Started"),
         (IN_PROGRESS, "In Progress"),
-        (SUBMITTED, "Submitted for Review"),
+        (SUBMITTED, "Needs Review"),
         (COMPLETED, "Completed"),
     )
     CHOICE_MAP = dict(CHOICES)
@@ -48,16 +61,16 @@ class MediaType:
     CHOICES = ((IMAGE, "Image"), (AUDIO, "Audio"), (VIDEO, "Video"))
 
 
-class PublicationManager(models.Manager):
+class PublicationQuerySet(models.QuerySet):
     def published(self):
-        return self.get_queryset().filter(published=True)
+        return self.filter(published=True)
 
     def unpublished(self):
-        return self.get_queryset().filter(published=False)
+        return self.filter(published=False)
 
 
 class Campaign(MetricsModelMixin("campaign"), models.Model):
-    objects = PublicationManager()
+    objects = PublicationQuerySet.as_manager()
 
     published = models.BooleanField(default=False, blank=True)
 
@@ -67,7 +80,7 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
     display_on_homepage = models.BooleanField(default=True)
 
     title = models.CharField(max_length=80)
-    slug = models.SlugField(max_length=80, unique=True)
+    slug = models.SlugField(max_length=80, unique=True, allow_unicode=True)
     description = models.TextField(blank=True)
     thumbnail_image = models.ImageField(
         upload_to="campaign-thumbnails", blank=True, null=True
@@ -83,37 +96,60 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
         return reverse("transcriptions:campaign-detail", args=(self.slug,))
 
 
+class Topic(models.Model):
+    objects = PublicationQuerySet.as_manager()
+
+    published = models.BooleanField(default=False, blank=True)
+
+    ordering = models.IntegerField(
+        default=0, help_text="Sort order override: lower values will be listed first"
+    )
+    title = models.CharField(blank=False, max_length=255)
+    slug = models.SlugField(blank=False, allow_unicode=True, max_length=80)
+    description = models.TextField(blank=True)
+    thumbnail_image = models.ImageField(
+        upload_to="topic-thumbnails", blank=True, null=True
+    )
+    short_description = models.TextField(blank=True)
+
+    def __str__(self):
+        return self.title
+
+    def get_absolute_url(self):
+        return reverse("topic-detail", kwargs={"slug": self.slug})
+
+
 class Resource(MetricsModelMixin("resource"), models.Model):
     sequence = models.PositiveIntegerField(default=1)
     title = models.CharField(blank=False, max_length=255)
     resource_url = models.URLField()
 
-    campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
-
-    class Meta:
-        unique_together = (("campaign", "sequence"),)
-        ordering = ["campaign", "sequence"]
+    campaign = models.ForeignKey(
+        Campaign, on_delete=models.CASCADE, blank=True, null=True
+    )
+    topic = models.ForeignKey(Topic, on_delete=models.CASCADE, blank=True, null=True)
 
     def __str__(self):
         return self.title
 
 
 class Project(MetricsModelMixin("project"), models.Model):
-    objects = PublicationManager()
+    objects = PublicationQuerySet.as_manager()
 
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
 
     published = models.BooleanField(default=False, blank=True)
 
     title = models.CharField(max_length=80)
-    slug = models.SlugField(max_length=80)
+    slug = models.SlugField(max_length=80, allow_unicode=True)
     thumbnail_image = models.ImageField(
         upload_to="project-thumbnails", blank=True, null=True
     )
 
     description = models.TextField(blank=True)
-    category = models.CharField(max_length=12, blank=True)
     metadata = JSONField(default=metadata_default, blank=True, null=True)
+
+    topics = models.ManyToManyField(Topic)
 
     class Meta:
         unique_together = (("slug", "campaign"),)
@@ -130,7 +166,7 @@ class Project(MetricsModelMixin("project"), models.Model):
 
 
 class Item(MetricsModelMixin("item"), models.Model):
-    objects = PublicationManager()
+    objects = PublicationQuerySet.as_manager()
 
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
 
@@ -167,15 +203,26 @@ class Item(MetricsModelMixin("item"), models.Model):
         )
 
 
+class AssetQuerySet(PublicationQuerySet):
+    def add_contribution_counts(self):
+        """Add annotations for the number of transcriptions & users"""
+
+        return self.annotate(
+            transcription_count=Count("transcription", distinct=True),
+            transcriber_count=Count("transcription__user", distinct=True),
+            reviewer_count=Count("transcription__reviewed_by", distinct=True),
+        )
+
+
 class Asset(MetricsModelMixin("asset"), models.Model):
-    objects = PublicationManager()
+    objects = AssetQuerySet.as_manager()
 
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
 
     published = models.BooleanField(default=False, blank=True)
 
     title = models.CharField(max_length=100)
-    slug = models.SlugField(max_length=100)
+    slug = models.SlugField(max_length=100, allow_unicode=True)
 
     description = models.TextField(blank=True)
     # TODO: do we really need this given that we import in lock-step sequence
@@ -185,6 +232,7 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         max_length=4, choices=MediaType.CHOICES, db_index=True
     )
     sequence = models.PositiveIntegerField(default=1)
+    year = models.CharField(blank=True, max_length=50)
 
     # The original ID of the image resource on loc.gov
     resource_url = models.URLField(max_length=255, blank=True, null=True)
@@ -202,6 +250,8 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         choices=TranscriptionStatus.CHOICES,
     )
 
+    difficulty = models.PositiveIntegerField(default=0, blank=True, null=True)
+
     class Meta:
         unique_together = (("slug", "item"),)
 
@@ -218,6 +268,9 @@ class Asset(MetricsModelMixin("asset"), models.Model):
                 "slug": self.slug,
             },
         )
+
+    def latest_transcription(self):
+        return self.transcription_set.order_by("-pk").first()
 
 
 class Tag(MetricsModelMixin("tag"), models.Model):
@@ -283,8 +336,13 @@ class Transcription(MetricsModelMixin("transcription"), models.Model):
         return f"Transcription #{self.pk}"
 
     def clean(self):
-        if self.user and self.reviewed_by and self.user == self.reviewed_by:
-            raise ValidationError("Transcriptions cannot be self-reviewed")
+        if (
+            self.user
+            and self.reviewed_by
+            and self.user == self.reviewed_by
+            and self.accepted
+        ):
+            raise ValidationError("Transcriptions cannot be self-accepted")
         if self.accepted and self.rejected:
             raise ValidationError("Transcriptions cannot be both accepted and rejected")
         return super().clean()
@@ -305,10 +363,26 @@ class AssetTranscriptionReservation(models.Model):
     """
 
     asset = models.OneToOneField(Asset, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    reservation_token = models.CharField(max_length=50)
 
     created_on = models.DateTimeField(editable=False, auto_now_add=True)
     updated_on = models.DateTimeField(auto_now=True)
+
+
+class SimpleContentBlock(models.Model):
+    created_on = models.DateTimeField(editable=False, auto_now_add=True)
+    updated_on = models.DateTimeField(editable=False, auto_now=True)
+
+    slug = models.SlugField(
+        unique=True,
+        max_length=255,
+        help_text="Label that templates use to retrieve this block",
+    )
+
+    body = models.TextField()
+
+    def __str__(self):
+        return f"SimpleContentBlock: {self.slug}"
 
 
 class SimplePage(models.Model):
@@ -329,26 +403,54 @@ class SimplePage(models.Model):
         return f"SimplePage: {self.path}"
 
 
+class CarouselSlide(models.Model):
+    objects = PublicationQuerySet.as_manager()
+
+    created_on = models.DateTimeField(editable=False, auto_now_add=True)
+    updated_on = models.DateTimeField(editable=False, auto_now=True)
+
+    ordering = models.IntegerField(
+        default=0, help_text="Sort order: lower values will be listed first"
+    )
+    published = models.BooleanField(default=False, blank=True)
+
+    overlay_position = models.CharField(max_length=5, choices=OverlayPosition.CHOICES)
+
+    headline = models.CharField(max_length=255, blank=False)
+    body = models.TextField(blank=True)
+    image_alt_text = models.TextField(blank=True)
+
+    carousel_image = models.ImageField(
+        upload_to="carousel-slides", blank=True, null=True
+    )
+
+    lets_go_url = models.CharField(max_length=255)
+
+    def __str__(self):
+        return f"CarouselSlide: {self.headline}"
+
+
 class SiteReport(models.Model):
     created_on = models.DateTimeField(editable=False, auto_now_add=True)
     campaign = models.ForeignKey(
-        Campaign, on_delete=models.DO_NOTHING, blank=True, null=True
+        Campaign, on_delete=models.SET_NULL, blank=True, null=True
     )
-    assets_total = models.IntegerField()
-    assets_published = models.IntegerField()
-    assets_not_started = models.IntegerField()
-    assets_in_progress = models.IntegerField()
-    assets_waiting_review = models.IntegerField()
-    assets_completed = models.IntegerField()
-    assets_unpublished = models.IntegerField()
-    items_published = models.IntegerField()
-    items_unpublished = models.IntegerField()
-    projects_published = models.IntegerField()
-    projects_unpublished = models.IntegerField()
-    anonymous_transcriptions = models.IntegerField()
-    transcriptions_saved = models.IntegerField()
-    distinct_tags = models.IntegerField()
-    tag_uses = models.IntegerField()
+    topic = models.ForeignKey(Topic, on_delete=models.SET_NULL, blank=True, null=True)
+    assets_total = models.IntegerField(blank=True, null=True)
+    assets_published = models.IntegerField(blank=True, null=True)
+    assets_not_started = models.IntegerField(blank=True, null=True)
+    assets_in_progress = models.IntegerField(blank=True, null=True)
+    assets_waiting_review = models.IntegerField(blank=True, null=True)
+    assets_completed = models.IntegerField(blank=True, null=True)
+    assets_unpublished = models.IntegerField(blank=True, null=True)
+    items_published = models.IntegerField(blank=True, null=True)
+    items_unpublished = models.IntegerField(blank=True, null=True)
+    projects_published = models.IntegerField(blank=True, null=True)
+    projects_unpublished = models.IntegerField(blank=True, null=True)
+    anonymous_transcriptions = models.IntegerField(blank=True, null=True)
+    transcriptions_saved = models.IntegerField(blank=True, null=True)
+    distinct_tags = models.IntegerField(blank=True, null=True)
+    tag_uses = models.IntegerField(blank=True, null=True)
     campaigns_published = models.IntegerField(blank=True, null=True)
     campaigns_unpublished = models.IntegerField(blank=True, null=True)
     users_registered = models.IntegerField(blank=True, null=True)

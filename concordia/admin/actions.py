@@ -1,6 +1,24 @@
-from django.contrib import messages
+import uuid
 
-from ..models import Asset
+from django.contrib import messages
+from django.utils.timezone import now
+
+from ..models import Asset, Transcription, TranscriptionStatus
+
+
+def anonymize_action(modeladmin, request, queryset):
+    count = queryset.count()
+    for user_account in queryset:
+        user_account.username = "Anonymized %s" % uuid.uuid4()
+        user_account.email = ""
+        user_account.set_unusable_password()
+        user_account.is_active = False
+        user_account.save()
+
+    messages.info(request, f"Anonymized and disabled {count} user accounts")
+
+
+anonymize_action.short_description = "Anonymize and disable user accounts"
 
 
 def publish_item_action(modeladmin, request, queryset):
@@ -57,3 +75,39 @@ def unpublish_action(modeladmin, request, queryset):
 
 
 unpublish_action.short_description = "Unpublish selected"
+
+
+def reopen_asset_action(modeladmin, request, queryset):
+
+    # Can only reopen completed assets
+    assets = queryset.filter(transcription_status=TranscriptionStatus.COMPLETED)
+
+    # Count the number of assets that will become reopened
+    count = assets.count()
+
+    """
+    For each asset, create a new transcription that:
+    - supersedes the currently-latest transcription
+    - has rejected set to now
+    - has reviewed_by set to the current user
+    - has the same transcription text as the latest transcription
+    Don't use bulk_create because then the post-save signal will not be sent.
+
+    """
+    for asset in assets:
+        latest_transcription = asset.transcription_set.order_by("-pk").first()
+        new_transcription = Transcription(
+            supersedes=latest_transcription,
+            rejected=now(),
+            reviewed_by=request.user,
+            text=latest_transcription.text,
+            asset=asset,
+            user=request.user,
+        )
+        new_transcription.full_clean()
+        new_transcription.save()
+
+    messages.info(request, f"Reopened {count} assets")
+
+
+reopen_asset_action.short_description = "Reopen selected assets"

@@ -2,16 +2,22 @@ from __future__ import absolute_import, unicode_literals
 
 import os
 
+import sentry_sdk
 from celery import Celery
-from raven import Client
-from raven.contrib.celery import register_logger_signal, register_signal
+from sentry_sdk.integrations.celery import CeleryIntegration
+
+from concordia.version import get_concordia_version
 
 SENTRY_BACKEND_DSN = os.environ.get("SENTRY_BACKEND_DSN", None)
 
 if SENTRY_BACKEND_DSN:
-    client = Client(SENTRY_BACKEND_DSN)
-    register_logger_signal(client)
-    register_signal(client)
+    CONCORDIA_ENVIRONMENT = os.environ.get("CONCORDIA_ENVIRONMENT", None)
+    sentry_sdk.init(
+        SENTRY_BACKEND_DSN,
+        environment=CONCORDIA_ENVIRONMENT,
+        release=get_concordia_version(),
+        integrations=[CeleryIntegration()],
+    )
 
 app = Celery("concordia")
 

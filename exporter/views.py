@@ -14,7 +14,7 @@ from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
 from tabular_export.core import export_to_csv_response, flatten_queryset
 
-from concordia.models import Asset, Transcription, TranscriptionStatus
+from concordia.models import Asset, Item, Transcription, TranscriptionStatus
 
 logger = getLogger(__name__)
 
@@ -28,6 +28,22 @@ def get_latest_transcription_data(asset_qs):
 
     assets = asset_qs.annotate(latest_transcription=Subquery(latest_trans_subquery[:1]))
     return assets
+
+
+def remove_incomplete_items(item_qs):
+    incomplete_item_assets = Asset.objects.filter(
+        item__in=item_qs,
+        transcription_status__in=(
+            TranscriptionStatus.NOT_STARTED,
+            TranscriptionStatus.IN_PROGRESS,
+            TranscriptionStatus.SUBMITTED,
+        ),
+    )
+    item_qs = item_qs.exclude(asset__in=incomplete_item_assets)
+    asset_qs = Asset.objects.filter(item__in=item_qs).order_by(
+        "item__project", "item", "sequence"
+    )
+    return asset_qs
 
 
 def get_original_asset_id(download_url):
@@ -54,6 +70,33 @@ def get_original_asset_id(download_url):
         return download_url
 
 
+def write_item_resource_file(assets, export_base_dir):
+    item_resource_file = os.path.join(export_base_dir, "item-resource-urls.txt")
+
+    with open(item_resource_file, "a") as f:
+
+        # Find the URL for the item that starts with http://www.loc.gov/resource/
+        items = Item.objects.filter(asset__in=assets)
+
+        for item in items:
+            item_resource_url = ""
+            if item.metadata:
+                for item_url in item.metadata["item"]["aka"]:
+                    if "http://www.loc.gov/resource/" in item_url:
+                        item_resource_url = item_url
+                        break
+
+                if item_resource_url != "":
+                    f.write(item_resource_url)
+                    f.write("\n")
+                else:
+                    logger.error(
+                        "Could not determine item resource URL for item %s",
+                        item.item_id,
+                    )
+                    raise AssertionError
+
+
 def do_bagit_export(assets, export_base_dir, export_filename_base):
     """
     Executes bagit.py to turn temp directory into LC-specific bagit strucutre.
@@ -68,7 +111,6 @@ def do_bagit_export(assets, export_base_dir, export_filename_base):
 
         asset_id = asset_id.replace(":", "/")
         asset_path, asset_filename = os.path.split(asset_id)
-        item_path, item_filename = os.path.split(asset_path)
 
         asset_dest_path = os.path.join(export_base_dir, asset_path)
         os.makedirs(asset_dest_path, exist_ok=True)
@@ -83,22 +125,16 @@ def do_bagit_export(assets, export_base_dir, export_filename_base):
             with open(asset_text_output_path, "w") as f:
                 f.write(asset.latest_transcription)
 
-            # Append this asset transcription to the item transcription
-            item_text_output_path = os.path.join(
-                asset_dest_path, "%s.txt" % item_filename
-            )
-            with open(item_text_output_path, "a") as f:
-                f.write(asset.latest_transcription or "")
-                f.write("\n\n")
-
     # Add attributions to the end of all text files found under asset_dest_path
     if hasattr(settings, "ATTRIBUTION_TEXT"):
-        for dirpath, dirnames, filenames in os.walk(export_base_dir, topdown=False):
+        for dirpath, _, filenames in os.walk(export_base_dir, topdown=False):
             for each_text_file in (i for i in filenames if i.endswith(".txt")):
                 this_text_file = os.path.join(dirpath, each_text_file)
                 with open(this_text_file, "a") as f:
                     f.write("\n\n")
                     f.write(settings.ATTRIBUTION_TEXT)
+
+    write_item_resource_file(assets, export_base_dir)
 
     # Turn Structure into bagit format
     bagit.make_bag(
@@ -213,12 +249,11 @@ class ExportProjectToBagIt(TemplateView):
     def get(self, request, *args, **kwargs):
         campaign_slug = self.kwargs["campaign_slug"]
         project_slug = self.kwargs["project_slug"]
-        asset_qs = Asset.objects.filter(
-            item__project__campaign__slug=campaign_slug,
-            item__project__slug=project_slug,
-            transcription_status=TranscriptionStatus.COMPLETED,
-        ).order_by("item", "sequence")
 
+        item_qs = Item.objects.filter(
+            project__campaign__slug=campaign_slug, project__slug=project_slug
+        )
+        asset_qs = remove_incomplete_items(item_qs)
         assets = get_latest_transcription_data(asset_qs)
 
         export_filename_base = "%s-%s" % (campaign_slug, project_slug)
@@ -229,15 +264,13 @@ class ExportProjectToBagIt(TemplateView):
             return do_bagit_export(assets, export_base_dir, export_filename_base)
 
 
-class ExportCampaignToBagit(TemplateView):
+class ExportCampaignToBagIt(TemplateView):
     @method_decorator(staff_member_required)
     def get(self, request, *args, **kwargs):
         campaign_slug = self.kwargs["campaign_slug"]
-        asset_qs = Asset.objects.filter(
-            item__project__campaign__slug=campaign_slug,
-            transcription_status=TranscriptionStatus.COMPLETED,
-        ).order_by("item__project", "item", "sequence")
 
+        item_qs = Item.objects.filter(project__campaign__slug=campaign_slug)
+        asset_qs = remove_incomplete_items(item_qs)
         assets = get_latest_transcription_data(asset_qs)
 
         export_filename_base = "%s" % (campaign_slug,)

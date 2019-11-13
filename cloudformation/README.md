@@ -2,7 +2,7 @@
 
 This README, and set of CloudFormation templates, is based on the AWS sample templates at [ecs-refarch-cloudformation](https://s3.amazonaws.com/ecs-refarch-cloudformation/master.yaml).
 
-The sample templates have been modified and new templates have been added. For the Concordia dev environment, CloudFormation templates are deployed from the [rstorey-concordia-refarch S3 bucket](https://s3.amazonaws.com/rstorey-concordia-refarch/master.yaml).
+The sample templates have been modified and new templates have been added.
 
 To use these templates:
 
@@ -13,7 +13,7 @@ cd cloudformation
 ./sync_templates.sh
 ```
 
-2.  Read [how to get started with AWS ECR](https://docs.aws.amazon.com/AmazonECR/latest/userguide/ECR_GetStarted.html) and follow the instructions to create three ECR repositories named `concordia`, `concordia/importer` and `rabbitmq`.
+2.  Read [how to get started with AWS ECR](https://docs.aws.amazon.com/AmazonECR/latest/userguide/ECR_GetStarted.html) and follow the instructions to create an ECR repository for each docker image that will be deployed.
 3.  Set a BUILD_NUMBER in your environment and run `./build_containers.sh`
 4.  Create a KMS key for this project.
 5.  Populate the secrets in `create_secrets.sh` and run that script to create a new set of secrets.

@@ -1,0 +1,35 @@
+{% load static %}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.47.0/codemirror.min.css" integrity="sha256-I8NyGs4wjbMuBSUE40o55W6k6P7tu/7G28/JGUUYCIs=" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.47.0/addon/lint/lint.min.css" integrity="sha256-h8ssETVF7g7LAuYcBn+6AQDL1DLfLVwuiBrLrk3yHks=" crossorigin="anonymous" />
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.47.0/codemirror.min.js" integrity="sha256-2I1PtOi9LsvUCUPXmB064faXMlnry57bYMG9OrM4njM=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.47.0/mode/xml/xml.min.js" integrity="sha256-ZhQvi0y/HBV02Ej24EigSb5UyIhHe5COCWNRv/0Bd5E=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.42.0/mode/markdown/markdown.min.js" integrity="sha256-BZXkUzlSBobUXEiSFbDIbTc/DOqhNdegF/iK5m99kbk=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.47.0/addon/lint/html-lint.min.js" integrity="sha256-vOWYBWvJsde6+FhqzeSDEDQ9zPr+nxddU/aNFZZlAnU=" crossorigin="anonymous"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/prettier@1.18.2/standalone.js" integrity="sha256-68qdCZqOnVhBcKyo2Gj5B04siWoudM7FPD09pNiufUg=" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/prettier@1.18.2/parser-html.js" integrity="sha256-HMHrh/8RSHun1m3bTUvNkE+0VJPIq809sZO7hBbfTpw=" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/prettier@1.18.2/parser-markdown.js" integrity="sha256-/hsaJovIJClmr/rPO+ttcsRz312/ooRRbErF9Abicxk=" crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/remarkable/1.7.1/remarkable.min.js" integrity="sha256-ltAts6+/XysEs9E5RF/t0H+0eD3ET6NpbqzshWkqeic=" crossorigin="anonymous"></script>
+
+<script src="{% static 'admin/editor-preview.js' %}"></script>
+
+<style>
+    .form-row.codemirror-with-preview > div {
+        display: flex;
+        width: 100%;
+    }
+
+    .form-row.codemirror-with-preview > div > * {
+        flex-basis: 50%;
+        overflow-y: auto;
+
+        min-height: 500px;
+    }
+</style>
+
+<template id="preview-head">{% spaceless %}
+    {% include "fragments/common-stylesheets.html" %}
+{% endspaceless %}</template>

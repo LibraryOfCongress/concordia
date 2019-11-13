@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 Parameters:
     DatabaseSecurityGroup:
         Description: Sets the security group to use for RDS database access
@@ -8,9 +8,14 @@ Parameters:
         Description: A reference to the private subnet in the 1st Availability Zone
         Type: AWS::EC2::Subnet::Id
 
-    PrivateSubnet2: 
+    PrivateSubnet2:
         Description: A reference to the private subnet in the 2nd Availability Zone
         Type: AWS::EC2::Subnet::Id
+
+    DbUsername:
+        Description: The username to use for the database
+        Type: String
+        NoEcho: true
 
     DbPassword:
         Description: The password to use for the database
@@ -18,43 +23,43 @@ Parameters:
         NoEcho: true
 
 Resources:
-  PostgresSubnetGroup:
-    Type: AWS::RDS::DBSubnetGroup
-    Properties:
-      DBSubnetGroupDescription: Created from the RDS Management Console
-      SubnetIds:
-      - Ref: PrivateSubnet1
-      - Ref: PrivateSubnet2
+    PostgresSubnetGroup:
+        Type: AWS::RDS::DBSubnetGroup
+        Properties:
+            DBSubnetGroupDescription: Created from the RDS Management Console
+            SubnetIds:
+                - Ref: PrivateSubnet1
+                - Ref: PrivateSubnet2
 
-  PostgresService:
-    Type: AWS::RDS::DBInstance
-    Properties:
-      AllocatedStorage: '20'
-      AllowMajorVersionUpgrade: false
-      AutoMinorVersionUpgrade: true
-      DBInstanceClass: db.t2.medium
-      Port: '5432'
-      PubliclyAccessible: false      
-      StorageType: gp2
-      BackupRetentionPeriod: '7'
-      MasterUsername: concordia
-      MasterUserPassword: !Ref DbPassword
-      PreferredBackupWindow: 03:47-04:17
-      PreferredMaintenanceWindow: sun:07:14-sun:07:44
-      DBName: concordia
-      Engine: postgres
-      EngineVersion: 9.6.6
-      LicenseModel: postgresql-license
-      DBSubnetGroupName:
-        Ref: PostgresSubnetGroup
-      VPCSecurityGroups:
-      - Ref: DatabaseSecurityGroup
-      Tags:
-      - Key: workload-type
-        Value: other
+    PostgresService:
+        Type: AWS::RDS::DBInstance
+        Properties:
+            AllocatedStorage: "20"
+            AllowMajorVersionUpgrade: false
+            AutoMinorVersionUpgrade: true
+            DBInstanceClass: db.t2.medium
+            Port: "5432"
+            PubliclyAccessible: false
+            StorageType: gp2
+            StorageEncrypted: True
+            BackupRetentionPeriod: 31
+            MasterUsername: !Ref DbUsername
+            MasterUserPassword: !Ref DbPassword
+            PreferredBackupWindow: 03:47-04:17
+            PreferredMaintenanceWindow: sun:07:14-sun:07:44
+            DBName: concordia
+            Engine: postgres
+            EngineVersion: 9.6.6
+            LicenseModel: postgresql-license
+            DBSubnetGroupName:
+                Ref: PostgresSubnetGroup
+            VPCSecurityGroups:
+                - Ref: DatabaseSecurityGroup
+            Tags:
+                - Key: workload-type
+                  Value: other
 
 Outputs:
     DatabaseHostName:
-        Description : "Hostname for the relational database service"
-        Value : !GetAtt PostgresService.Endpoint.Address
-    
+        Description: "Hostname for the relational database service"
+        Value: !GetAtt PostgresService.Endpoint.Address

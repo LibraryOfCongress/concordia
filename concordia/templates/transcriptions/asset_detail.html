@@ -2,7 +2,11 @@
 
 {% load staticfiles %}
 
+{% load feature_flags %}
+
 {% load concordia_media_tags %}
+{% load concordia_sharing_tags %}
+{% load concordia_simple_content_blocks %}
 
 {% block title %}
 {{ asset.title }} ({{ asset.item.project.campaign.title }}: {{ asset.item.project.title }})
@@ -10,6 +14,11 @@
 
 {% block head_content %}
     <link rel="canonical" href="https://{{ request.get_host }}{{ request.path }}">
+    <meta property="og.url" content="https://{{ request.get_host }}{{ request.path }}" />
+    <meta property="og.title" content="{{ asset.item.title }}" />
+    <meta property="og.description" content="{{ asset.item.project.description }}" />
+    <meta property="og.type" content="website" />
+    <meta property="og.image" content="{{ thumbnail_url }}" />
 {% endblock head_content %}
 
 {% block breadcrumbs %}
@@ -23,9 +32,25 @@
 {% block extra_main_classes %}flex-grow-1 d-flex flex-column{% endblock %}
 
 {% block main_content %}
-<div id="contribute-main-content" class="container-fluid flex-grow-1 d-flex flex-column">
-    <div id="navigation-container" class="row p-2">
-        <nav id="asset-navigation" class="d-flex flex-grow-1 justify-content-between align-items-center" role="navigation">
+{% flag_enabled 'ADVERTISE_ACTIVITY_UI' as ADVERTISE_ACTIVITY_UI %}
+{% flag_enabled 'SIMPLE_CONTENT_BLOCKS' as SIMPLE_CONTENT_BLOCKS %}
+
+{% if ADVERTISE_ACTIVITY_UI and activity_mode %}
+    <div class="alert alert-dark alert-dismissible w-100 text-center" id="new-interface-banner" role="alert" hidden>
+        <a class="btn btn-success" href="{% url 'action-app' %}#mode={{ activity_mode }}&asset={{ asset.pk }}" target="_blank">
+            Try this page in our new interface
+        </a>
+        <button type="button" class="btn btn-dark" id="no-interface-banner">Don't display this again</button>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+{% endif %}
+
+
+<div id="contribute-main-content" class="container-fluid flex-grow-1 d-flex flex-column d-print-block">
+    <div id="navigation-container" class="row p-2 d-print-none">
+        <nav id="asset-navigation" class="d-flex flex-grow-1 justify-content-between align-items-center d-print-block" role="navigation">
             <div class="d-flex align-items-center">
                 <form onsubmit="document.location.href = document.getElementById('asset-selection').value; return false">
                     <div class="input-group input-group-sm">
@@ -53,60 +78,61 @@
                         <span class="sr-only">Next Page</span>
                     </a>
                 </div>
+
+                <div class="btn-group btn-group-sm ml-2">
+                    <button hidden id="go-fullscreen" class="btn btn-default" data-target="contribute-main-content">
+                        <span class="fas fa-arrows-alt"></span>
+                        Fullscreen
+                    </button>
+                </div>
             </div>
+
+            {% share_buttons current_asset_url asset.item.title %}
 
             {% if asset.resource_url %}
-                <div class="btn-group btn-group-sm ml-2">
-                    <a class="btn btn-default" target="_blank" href="{{ asset.resource_url }}?sp={{ asset.sequence }}">View on www.loc.gov</a>
+                <div class="btn-group btn-group-sm ml-2" role="navigation" aria-label="Link to the original source for this item">
+                    <a class="btn btn-default" target="_blank" title="View the original source for this item in a new tab" href="{{ asset.resource_url }}?sp={{ asset.sequence }}">View on www.loc.gov <i class="fa fa-external-link-alt"></i></a>
                 </div>
             {% endif %}
-
-            <div class="btn-group btn-group-sm ml-2">
-                <button hidden id="go-fullscreen" class="btn btn-default" data-target="contribute-main-content">
-                    <span class="fas fa-arrows-alt"></span>
-                    Fullscreen
-                </button>
-            </div>
 
             <div class="btn-group btn-group-sm align-self-end" role="navigation" aria-label="Link to the next editable page">
                 <a class="btn btn-default" title="Move to the next page in this item that needs help" href="{{ next_open_asset_url }}">Find a new page &rarr;</a>
           </div>
         </nav>
     </div>
-    <div id="contribute-container" class="row flex-grow-1 pb-2">
-        <div id="viewer-column" class="pl-0 d-flex flex-column align-items-stretch bg-dark">
-            <div id="viewer-controls" class="m-1 text-center">
+    <div id="contribute-container" class="row flex-grow-1 pb-2 d-print-block">
+        <div id="viewer-column" class="pl-0 d-flex flex-column align-items-stretch bg-dark d-print-block">
+            <div id="viewer-controls" class="m-1 text-center d-print-none">
                 <div class="d-inline-flex justify-content-between">
                     <div class="d-flex btn-group btn-group-sm m-1">
-                        <button id="viewer-home" class="btn btn-default">
+                        <button id="viewer-home" class="btn btn-default" title="Fit Image to Viewport">
                             <span class="fas fa-compress"></span>
-                            <span class="sr-only">Home</span>
                         </button>
                     </div>
                     <div class="d-flex btn-group btn-group-sm m-1">
-                        <button id="viewer-zoom-in" class="btn btn-default">
+                        <button id="viewer-zoom-in" class="btn btn-default" title="Zoom In">
                             <span class="fas fa-search-plus"></span>
-                            <span class="sr-only">Zoom In</span>
                         </button>
-                        <button id="viewer-zoom-out" class="btn btn-default">
+                        <button id="viewer-zoom-out" class="btn btn-default" title="Zoom Out">
                             <span class="fas fa-search-minus"></span>
-                            <span class="sr-only">Zoom Out</span>
                         </button>
                     </div>
                     <div class="d-flex btn-group btn-group-sm m-1">
-                        <button id="viewer-rotate-left" class="btn btn-default">
+                        <button id="viewer-rotate-left" class="btn btn-default" title="Rotate Left">
                             <span class="fas fa-undo"></span>
-                            <span class="sr-only">Rotate Left</span>
                         </button>
-                        <button id="viewer-rotate-right" class="btn btn-default">
+                        <button id="viewer-rotate-right" class="btn btn-default" title="Rotate Right">
                             <span class="fas fa-redo"></span>
-                            <span class="sr-only">Rotate Right</span>
                         </button>
                     </div>
                     <div class="d-flex btn-group btn-group-sm m-1">
-                        <button id="viewer-full-page" class="btn btn-default">
+                        <button id="viewer-flip" class="btn btn-default" title="Flip">
+                            <span class="fas fa-exchange-alt"></span>
+                        </button>
+                    </div>
+                    <div class="d-flex btn-group btn-group-sm m-1">
+                        <button id="viewer-full-page" class="btn btn-default" title="View Full Screen">
                             <span class="fas fa-expand"></span>
-                            <span class="sr-only">Full Page</span>
                         </button>
                     </div>
 
@@ -117,16 +143,15 @@
                     </div>
                 </div>
             </div>
-
-            <div id="asset-image" class="h-100 bg-dark"></div>
+            <div id="asset-image" class="h-100 bg-dark d-print-none"></div>
         </div>
 
-        <div id="editor-column" class="d-flex flex-column flex-nowrap justify-content-between">
-            <div class="flex-grow-1 d-flex flex-column">
+        <div id="editor-column" class="d-flex flex-column flex-nowrap justify-content-between d-print-block">
+            <div class="flex-grow-1 d-flex flex-column d-print-block">
                 <div class="tx-status-display">
                     <span class="tx-submitted" {% if transcription_status != 'submitted' %}hidden{% endif %}>
                         <span class="fas fa-list"></span>
-                        Submitted for Review
+                        Needs review
                     </span>
                     <span class="tx-completed" {% if transcription_status != 'completed' %}hidden{% endif %}>
                         <span class="fas fa-check"></span>
@@ -146,18 +171,32 @@
                     </span>
                 </div>
 
-                <form id="transcription-editor" class="ajax-submission flex-grow-1 d-flex flex-column" method="post" action="{% url 'save-transcription' asset_pk=asset.pk %}" data-transcription-status="{{ transcription_status }}" {% if transcription %}data-transcription-id="{{ transcription.pk|default:'' }}" {% if transcription.submitted %}data-unsaved-changes="true"{% endif %} data-submit-url="{% url 'submit-transcription' pk=transcription.pk %}" data-review-url="{% url 'review-transcription' pk=transcription.pk %}"{% endif %}>
+                <form id="transcription-editor" class="ajax-submission flex-grow-1 d-flex flex-column d-print-block" method="post" action="{% url 'save-transcription' asset_pk=asset.pk %}" data-transcription-status="{{ transcription_status }}" {% if transcription %}data-transcription-id="{{ transcription.pk|default:'' }}" {% if transcription.submitted %}data-unsaved-changes="true"{% endif %} data-submit-url="{% url 'submit-transcription' pk=transcription.pk %}" data-review-url="{% url 'review-transcription' pk=transcription.pk %}"{% endif %}>
                     {% csrf_token %}
                     <input type="hidden" name="supersedes" value="{{ transcription.pk|default:'' }}" />
 
-                    <h2>Transcription</h2>
+                    <h2>
+                        {% if transcription_status == 'not_started' %}
+                            Transcribe this page.
+                        {% elif transcription_status == 'in_progress' %}
+                            Someone started this transcription. Can you finish it?
+                        {% elif transcription_status == 'submitted' %}
+                            Check this transcription thoroughly. Accept if correct!
+                        {% elif transcription_status == 'completed' %}
+                            This transcription is finished! You can read and add tags.
+                        {% else %}
+                            Transcription
+                        {% endif %}
+                    </h2>
 
                     {% spaceless %}
-                        <textarea readonly class="form-control w-100 rounded flex-grow-1" name="text" id="transcription-input" placeholder="{% if transcription_status == 'not_started' or transcription_status == 'in_progress' %}Go ahead, start typing. You got this!{% else %}Nothing to transcribe{% endif %}" aria-label="Transcription input">
+                        <textarea readonly class="form-control w-100 rounded flex-grow-1 d-print-none" name="text" id="transcription-input" placeholder="{% if transcription_status == 'not_started' or transcription_status == 'in_progress' %}Go ahead, start typing. You got this!{% else %}Nothing to transcribe{% endif %}" aria-label="Transcription input">
                             {{ transcription.text }}
                         </textarea>
 
-                        <div class="my-3 d-flex flex-wrap justify-content-around align-items-center btn-row">
+                        <div class="print-transcription-text" aria-hidden="true" style="display: none;">{{ transcription.text }}</div>
+
+                        <div class="my-3 d-print-none d-flex flex-wrap justify-content-around align-items-center btn-row">
                             {% if transcription_status == 'not_started' or transcription_status == 'in_progress' %}
                                 <div class="form-check w-100 text-center mt-0 mb-3">
                                     <input id="nothing-to-transcribe" type="checkbox" class="form-check-input" />
@@ -180,11 +219,13 @@
                                         <a href="{% url 'login' %}?next={{ request.path|urlencode }}">login</a>
                                         to help review
                                     </p>
-                                {% elif transcription.user.pk == user.pk %}
-                                    <p class="help-text">You submitted this transcription for review by another user.</p>
                                 {% else %}
                                     <button id="reject-transcription-button" disabled type="button" class="btn btn-primary" title="Correct errors you see in the text">Edit</button>
-                                    <button id="accept-transcription-button" disabled type="button" class="btn btn-primary" title="Confirm that the text is accurately transcribed">Accept</button>
+                                    {% if transcription.user.pk == user.pk %}
+                                        <p class="help-text">You submitted this transcription. You can re-open it for editing if you wish to make changes before another volunteer reviews it.</p>
+                                    {% else %}
+                                        <button id="accept-transcription-button" disabled type="button" class="btn btn-primary" title="Confirm that the text is accurately transcribed">Accept</button>
+                                    {% endif %}
                                 {% endif %}
                             {% endif %}
                         </div>
@@ -197,30 +238,32 @@
 
                     <h2>Tags</h2>
 
-                    {% if user.is_authenticated %}
-                        <div class="form-row">
-                            <div class="input-group">
-                                <input type="text" id="new-tag-input" class="form-control" placeholder="Add a new tag…" aria-label="Add a new tag" pattern="[- _'\w]{1,50}">
-                                <div class="input-group-append">
-                                    <button id="new-tag-button" class="btn btn-outline-primary" type="button" title="Add tags to the page">Add</button>
-                                </div>
-                                <div class="invalid-feedback">
-                                    Tags must be between 1-50 characters and may contain only letters, numbers, dashes, underscores, apostrophes, and spaces
+                    <div class="d-print-none">
+                        {% if user.is_authenticated %}
+                            <div class="form-row">
+                                <div class="input-group">
+                                    <input type="text" id="new-tag-input" class="form-control" placeholder="Add a new tag…" aria-label="Add a new tag" pattern="[- _'\w]{1,50}">
+                                    <div class="input-group-append">
+                                        <button id="new-tag-button" class="btn btn-outline-primary" type="button" title="Add tags to the page">Add</button>
+                                    </div>
+                                    <div class="invalid-feedback">
+                                        Tags must be between 1-50 characters and may contain only letters, numbers, dashes, underscores, apostrophes, and spaces
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    {% else %}
-                        <p class="help-text anonymous-only text-center">
-                            Want to tag this page?
+                        {% else %}
+                            <p class="help-text anonymous-only text-center d-print-none">
+                                Want to tag this page?
 
-                            <a href="{% url 'registration_register' %}">Register</a>
-                            or
-                            <a href="{% url 'login' %}?next={{ request.path|urlencode }}">login</a>
-                            to add tags.
-                        </p>
-                    {% endif %}
+                                <a href="{% url 'registration_register' %}">Register</a>
+                                or
+                                <a href="{% url 'login' %}?next={{ request.path|urlencode }}">login</a>
+                                to add tags.
+                            </p>
+                        {% endif %}
+                    </div>
 
-                    <ul id="current-tags" class="d-flex flex-wrap list-unstyled mb-0">
+                    <ul id="current-tags" class="d-flex flex-wrap list-unstyled mb-0 d-print-block">
                         <li id="tag-template" hidden>
                             <label>
                                 <input type="hidden" name="tags" value="" disabled />
@@ -242,7 +285,7 @@
                         {% endfor %}
                     </ul>
 
-                    <div class="form-row btn-row authenticated-only" hidden>
+                    <div class="form-row btn-row authenticated-only d-print-none" hidden>
                         <button id="save-tags-button" type="submit" class="btn btn-primary mx-auto" title="Save tags that you’ve added to the page">
                             Save Tags
                         </button>
@@ -251,7 +294,7 @@
             </div>
         </div>
     </div>
-    <div id="help-container" class="row justify-content-center">
+    <div id="help-container" class="row justify-content-center d-print-none">
         <p>Need help?</p>
 
         <button id="instruction-button" class="btn btn-secondary" type="button" data-toggle="collapse" data-target="#instruction-window" aria-expanded="false" aria-controls="instruction-window">
@@ -267,14 +310,18 @@
                 <span aria-hidden="true">&times;</span>
             </button>
             <div>
-                <ul>
-                    <li>Type what you see. Preserve original spelling, punctuation, and line breaks.</li>
-                    <li>Use brackets [ ] around deleted, illegible or partially legible text.</li>
-                    <li>Transcribe any words or letters you can't identify as ?.</li>
-                    <li>Use square brackets and asterisks around text from margins [ * * ].</li>
-                    <li>Include insertions where you would read them in the text.</li>
-                </ul>
-                Find more detailed instructions in the <a href="{% url 'help-center' %}">Help Center</a>
+                {% if SIMPLE_CONTENT_BLOCKS %}
+                    {% simple_content_block "classic_quicktips" %}
+                {% else %}
+                    <ul>
+                        <li>Transcribe original spelling, punctuation, word order, and any page numbers or catalog marks.</li>
+                        <li>Preserve line breaks except when a word breaks over a line or page. Then transcribe it on the line or page where it starts.</li>
+                        <li>Use brackets [ ] around deleted, illegible or partially legible text, and square brackets and asterisks around text in margins [ * * ].</li>
+                        <li>Transcribe any words or letters you can't identify as [?].</li>
+                        <li>Include insertions where you would read them in the text.</li>
+                    </ul>
+                    Find more detailed instructions in the <a href="{% url 'help-center' %}">Help Center</a>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -371,18 +418,27 @@
                 <div class="modal-body">
                     <p>
                         This page has been submitted for review.
-                        <br>
-                         You can stay on this page to add tags or go to the next
-                         page needing transcription.
+                    </p>
+                    <p>
+                        What do you want to do next?
                     </p>
                 </div>
-                <div class="modal-footer justify-content-around">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">
-                        Add Tags
-                    </button>
-                    <a class="btn btn-primary" href="{{ next_open_asset_url }}">
-                        Find a new page
-                    </a>
+                <div class="modal-footer d-block text-center">
+                    <p>
+                        <a class="btn btn-primary" href="{{ next_review_asset_url }}">
+                            Review a new page
+                        </a>
+                    </p>
+                    <p>
+                        <a class="btn btn-primary" href="{{ next_open_asset_url }}">
+                            Transcribe a new page
+                        </a>
+                    </p>
+                    <p>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">
+                            Add Tags
+                        </button>
+                    </p>
                 </div>
             </div>
         </div>
@@ -398,40 +454,55 @@
                 </div>
                 <div class="modal-body">
                     <p>
-                        Your review decision has been saved.
-                        <br>
-                        You can stay on this page to add tags or go to the next
-                        page needing transcription.
+                        Thanks for your help - we've saved your decision.
+                    </p>
+                    <p>
+                        What do you want to do next?
                     </p>
                 </div>
-                <div class="modal-footer justify-content-around">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">
-                        Add Tags
-                    </button>
-                    <a class="btn btn-primary" href="{{ next_open_asset_url }}">
-                        Find a new page
-                    </a>
+                <div class="modal-footer d-block text-center">
+                    <p>
+                        <a class="btn btn-primary" href="{{ next_review_asset_url }}">
+                            Review a new page
+                        </a>
+                    </p>
+                    <p>
+                        <a class="btn btn-primary" href="{{ next_open_asset_url }}">
+                            Transcribe a new page
+                        </a>
+                    </p>
+                    <p>
+                        <button type="button" class="btn btn-default" data-dismiss="modal">
+                            Add Tags
+                        </button>
+                    </p>
                 </div>
             </div>
         </div>
     </div>
-    <div id="captcha-modal" class="modal" tabindex="-1" role="dialog">
-        <form action="{% url 'ajax-captcha' %}" class="modal-dialog modal-dialog-centered" role="document">
+    <div id="captcha-modal" class="modal" tabindex="-1" role="alertdialog" aria-labeledby="captcha-modal-title" aria-describedby="captcha-modal-description">
+        <form action="{% url 'ajax-captcha' %}" class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Please confirm you are not a robot</h5>
+                    <h5 id="captcha-modal-title" class="modal-title">Please confirm you are not a robot</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body">
                     <div class="form-row">
-                        <div class="help-text">
+                        <div id="captcha-modal-description" class="help-text">
+                            <p class="sr-only">
+                                To prevent abuse non-logged in users are
+                                required to solve a captcha periodically. An
+                                audio alternative is under development. You may
+                                also avoid this challenge by
+                                <a href="{% url 'login' %}?next={{ request.path|urlencode }}" rel="nofollow">logging in</a>.
+                            </p>
                             Before continuing please enter the letters in the image
                             below so we know you are a human:
                         </div>
                         <img id="captcha-image" class="d-block my-3 mx-auto border rounded">
-
                     </div>
                     <div class="form-row">
                         <input name="response" class="form-control" autocomplete="off">
@@ -447,13 +518,26 @@
         </form>
     </div>
 </div>
+<div class="print-transcription-image d-none d-print-block"><img class="img-fluid" alt="Scanned image of the current content page" src="{% asset_media_url asset %}"></div>
 {% endblock main_content %}
 
 {% block body_scripts %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/split.js/1.5.7/split.min.js" integrity="sha256-5yDKs5ugoDk4mCCvU/PO5w9hf69jESN2hzbEuMCq0hk=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/split.js/1.5.10/split.min.js" integrity="sha256-voAP1SafVzHBtUVXxB6ZuQB5mIZu6h0veHhhzwXcthQ=" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/openseadragon/2.4.0/openseadragon.min.js" integrity="sha256-grVJpqgDSGBx1q2llmvY+J5zU9hEHbO7UvftFY2bK1w=" crossorigin="anonymous"></script>
 <script src="{% static 'js/contribute.js' %}"></script>
 <script src="{% static 'js/asset-reservation.js' %}"></script>
+<script>
+    if (
+        !localStorage.getItem("no-interface-banner") &&
+        !(window.screen.width < 1024 || window.screen.height < 768)
+    ) {
+        $("#new-interface-banner").attr("hidden", false);
+    }
+    $("#no-interface-banner").click(function() {
+        localStorage.setItem("no-interface-banner", true);
+        $("#new-interface-banner").attr("hidden", true);
+    });
+</script>
 <script>
     var seadragonViewer = OpenSeadragon({
         id: "asset-image",
@@ -468,13 +552,15 @@
         },
         showNavigator:  true,
         showRotationControl: true,
+        showFlipControl: true,
         toolbar: "viewer-controls",
         zoomInButton: "viewer-zoom-in",
         zoomOutButton: "viewer-zoom-out",
         homeButton: "viewer-home",
         fullPageButton: "viewer-full-page",
         rotateLeftButton: "viewer-rotate-left",
-        rotateRightButton: "viewer-rotate-right"
+        rotateRightButton: "viewer-rotate-right",
+        flipButton: "viewer-flip",
     });
 </script>
 
@@ -496,10 +582,15 @@
     });
 </script>
 
-{% if transcription_status == "not_started" or transcription_status == "in_progress" %}
-    <script>
-        attemptToReserveAsset("{% url 'reserve-asset-for-transcription' asset.pk %}");
-    </script>
-{% endif %}
-
+<script>
+    {% if transcription_status == "not_started" or transcription_status == "in_progress" %}
+        attemptToReserveAsset("{% url 'reserve-asset' asset.pk %}",
+        "",
+        "transcribe", true);
+    {% elif user.is_authenticated %}
+        attemptToReserveAsset("{% url 'reserve-asset' asset.pk %}",
+        "{% url 'transcriptions:redirect-to-next-reviewable-asset' asset.item.project.campaign.slug %}",
+        "review", true);
+    {% endif %}
+</script>
 {% endblock body_scripts %}

@@ -1,129 +1,175 @@
 Description: >
-    This template deploys a fargate cluster to the provided VPC and subnets
+  This template deploys a fargate cluster to the provided VPC and subnets
 
 Parameters:
+  EnvironmentName:
+    Description: An environment name that will be prefixed to resource names
+    Type: String
 
-    EnvironmentName:
-        Description: An environment name that will be prefixed to resource names
-        Type: String
+  PublicSubnets:
+    Description: The subnets for the load balancer
+    Type: List<AWS::EC2::Subnet::Id>
 
-    PublicSubnets:
-        Description: The subnets for the load balancer
-        Type: List<AWS::EC2::Subnet::Id>
+  PrivateSubnets:
+    Description: Choose which subnets this ECS cluster should be deployed to
+    Type: List<AWS::EC2::Subnet::Id>
 
-    PrivateSubnets:
-        Description: Choose which subnets this ECS cluster should be deployed to
-        Type: List<AWS::EC2::Subnet::Id>
+  SecurityGroup:
+    Description: Select the Security Group to use for the ECS cluster hosts
+    Type: AWS::EC2::SecurityGroup::Id
 
-    SecurityGroup:
-        Description: Select the Security Group to use for the ECS cluster hosts
-        Type: AWS::EC2::SecurityGroup::Id
+  LoadBalancerSecurityGroup:
+    Description: The SecurityGroup for load balancer
+    Type: AWS::EC2::SecurityGroup::Id
 
-    LoadBalancerSecurityGroup:
-        Description: The SecurityGroup for load balancer
-        Type: AWS::EC2::SecurityGroup::Id
+  VpcId:
+    Description: The Id of the VPC for this cluster
+    Type: AWS::EC2::VPC::Id
 
-    VpcId:
-        Description: The Id of the VPC for this cluster
-        Type: AWS::EC2::VPC::Id
+  ConcordiaVersion:
+    Type: String
+    Description: version of concordia docker images to pull and deploy
+    Default: latest
 
-    ConcordiaVersion:
-        Type: String
-        Description: version of concordia, concordia/importer, and rabbitmq docker images to pull and deploy
-        Default: latest
+  DjangoKeyId:
+    Type: String
+    Description: unique ID appended to end of DjangoSecretKey ARN in secrets manager
+    Default: xxxxx
 
-    EnvName:
-        Type: String
-        Description: which environment to target
-        AllowedValues:
-            - 'dev'
-            - 'test'
-            - 'stage'
-            - 'prod'
-        ConstraintDescription: Must match a location for secret storage in secretsmanager
+  DbSecretId:
+    Type: String
+    Description: unique ID appended to end of DB password ARN in secrets manager
+    Default: xxxxx
 
-    FullEnvironmentName:
-        Type: String
-        Description: Full name of deployment environment
-        AllowedValues:
-            - 'development'
-            - 'test'
-            - 'staging'
-            - 'production'
+  EnvName:
+    Type: String
+    Description: which environment to target
+    AllowedValues:
+      - "dev"
+      - "test"
+      - "stage"
+      - "prod"
+      - "cftest2"
+    ConstraintDescription: Must match a location for secret storage in secretsmanager
 
-    RedisAddress:
-        Type: String
-        Description: Redis endpoint address
+  FullEnvironmentName:
+    Type: String
+    Description: Full name of deployment environment
+    AllowedValues:
+      - "development"
+      - "test"
+      - "staging"
+      - "production"
 
-    RedisPort:
-        Type: String
-        Description: Redis endpoint port
+  RedisAddress:
+    Type: String
+    Description: Redis endpoint address
 
-    MemcachedAddress:
-        Type: String
-        Description: memcached endpoint address
+  RedisPort:
+    Type: String
+    Description: Redis endpoint port
 
-    MemcachedPort:
-        Type: String
-        Description: memcached endpoint port
+  MemcachedAddress:
+    Type: String
+    Description: memcached endpoint address
 
-    CanonicalHostName:
-        Type: String
-        Description: canonical host name of the application, e.g. crowd-test.loc.gov
+  MemcachedPort:
+    Type: String
+    Description: memcached endpoint port
 
-    DatabaseEndpoint:
-        Type: String
-        Description: Host name of the Postgres RDS service
+  CanonicalHostName:
+    Type: String
+    Description: canonical host name of the application, e.g. crowd-test.loc.gov
 
-    S3BucketName:
-        Type: String
-        Description: name of the S3 bucket (public) where collection images will be stored
+  DatabaseEndpoint:
+    Type: String
+    Description: Host name of the Postgres RDS service
 
-    ExportS3BucketName:
-        Type: String
-        Description: name of the S3 bucket (public) where exported transcriptions will be stored
+  S3BucketName:
+    Type: String
+    Description: name of the S3 bucket (public) where collection images will be stored
 
+  ExportS3BucketName:
+    Type: String
+    Description: name of the S3 bucket (public) where exported transcriptions will be stored
 
 Resources:
+  ConcordiaS3BucketAccessPolicy:
+    Type: AWS::IAM::Policy
+    Metadata:
+      cfn_nag:
+        rules_to_suppress:
+          - id: W12
+            reason: "S3 buckets must be specified with /* after the bucket name"
+    Properties:
+      PolicyName: !Sub ConcordiaServiceS3BucketAccess-${EnvironmentName}
+      Roles:
+        - !Ref "ConcordiaTaskRole"
+        - !Ref "ConcordiaEC2Role"
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - "s3:PutObject"
+              - "s3:GetObject"
+              - "s3:AbortMultipartUpload"
+              - "s3:ListMultipartUploadParts"
+              - "s3:ListBucket"
+              - "s3:ListBucketMultipartUploads"
+            Resource:
+              - !Sub "arn:aws:s3:::crowd-${EnvironmentName}-content/*"
+              - !Sub "arn:aws:s3:::crowd-${EnvironmentName}-export/*"
+
+  ConcordiaKMSAccessPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub ConcordiaServiceKMSAccess-${EnvironmentName}
+      Roles:
+        - !Ref "ConcordiaTaskRole"
+        - !Ref "ConcordiaEC2Role"
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - "kms:GetParametersForImport"
+              - "kms:GetKeyRotationStatus"
+              - "kms:GetKeyPolicy"
+              - "kms:DescribeKey"
+              - "kms:ListResourceTags"
+              - "kms:Decrypt"
+              - "kms:GenerateDataKey"
+            Resource:
+              - "arn:aws:kms:us-east-1:619333082511:key/d300e73d-9170-4001-933a-37af0bcdb956"
 
   ConcordiaServiceSecretAccessPolicy:
-      Type: AWS::IAM::Policy
-      Properties:
-        PolicyName: !Sub ReadOnlyAccessToConcordiaSecrets-${EnvironmentName}
-        Roles:
-          - !Ref 'ConcordiaTaskRole'
-          - !Ref 'ConcordiaEC2Role'
-        PolicyDocument:
-          Version: '2012-10-17'
-          Statement:
-            - Effect: Allow
-              Action:
-              - 'secretsmanager:GetResourcePolicy'
-              - 'secretsmanager:GetSecretValue'
-              - 'secretsmanager:DescribeSecret'
-              - 'secretsmanager:ListSecretVersionIds'
-              - 'kms:GetParametersForImport'
-              - 'kms:GetKeyRotationStatus'
-              - 'kms:GetKeyPolicy'
-              - 'kms:DescribeKey'
-              - 'kms:ListResourceTags'
-              - 'kms:Decrypt'
-              - 'kms:GenerateDataKey'
-              - 's3:PutObject'
-              - 's3:GetObject'
-              - 's3:AbortMultipartUpload'
-              - 's3:ListMultipartUploadParts'
-              - 's3:ListBucket'
-              - 's3:ListBucketMultipartUploads'
-              Resource:
-                - "*"
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub ConcordiaServiceSecretAccess-${EnvironmentName}
+      Roles:
+        - !Ref "ConcordiaTaskRole"
+        - !Ref "ConcordiaEC2Role"
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - "secretsmanager:GetResourcePolicy"
+              - "secretsmanager:GetSecretValue"
+              - "secretsmanager:DescribeSecret"
+              - "secretsmanager:ListSecretVersionIds"
+            Resource:
+              - "arn:aws:secretsmanager:us-east-1:619333082511:secret:concordia/SMTP-GVlolk"
+              - !Sub "arn:aws:secretsmanager:us-east-1:619333082511:secret:crowd/${EnvName}/Django/SecretKey-${DjangoKeyId}"
+              - !Sub "arn:aws:secretsmanager:us-east-1:619333082511:secret:crowd/${EnvName}/DB/MasterUserPassword-${DbSecretId}"
 
   ConcordiaEC2Role:
     Type: AWS::IAM::Role
     Properties:
       Path: /
       AssumeRolePolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
           - Effect: Allow
             Principal:
@@ -138,14 +184,13 @@ Resources:
     Properties:
       Path: /
       Roles:
-        - !Ref 'ConcordiaEC2Role'
+        - !Ref "ConcordiaEC2Role"
 
   ConcordiaTaskRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub ConcordiaServerTaskRole-${EnvironmentName}
       AssumeRolePolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
           - Effect: Allow
             Principal:
@@ -179,13 +224,9 @@ Resources:
   LoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
-        Name: !Ref EnvironmentName
-        Subnets: !Ref PublicSubnets
-        SecurityGroups:
-            - !Ref LoadBalancerSecurityGroup
-        Tags:
-            - Key: Name
-              Value: !Ref EnvironmentName
+      Subnets: !Ref PublicSubnets
+      SecurityGroups:
+        - !Ref LoadBalancerSecurityGroup
 
   ExternalLoadBalancerListener:
     Properties:
@@ -194,7 +235,7 @@ Resources:
         # instead of forward to target group
         - TargetGroupArn: !Ref ConcordiaExternalTargetGroup
           Type: forward
-      LoadBalancerArn:  !Ref LoadBalancer
+      LoadBalancerArn: !Ref LoadBalancer
       Port: 80
       Protocol: HTTP
     Type: AWS::ElasticLoadBalancingV2::Listener
@@ -202,11 +243,11 @@ Resources:
   SecureExternalLoadBalancerListener:
     Properties:
       Certificates:
-        - CertificateArn: !Sub 'arn:aws:iam::${AWS::AccountId}:server-certificate/${CanonicalHostName}'
+        - CertificateArn: !Sub "arn:aws:iam::${AWS::AccountId}:server-certificate/${CanonicalHostName}"
       DefaultActions:
         - TargetGroupArn: !Ref ConcordiaExternalTargetGroup
           Type: forward
-      LoadBalancerArn:  !Ref LoadBalancer
+      LoadBalancerArn: !Ref LoadBalancer
       Port: 443
       Protocol: HTTPS
     Type: AWS::ElasticLoadBalancingV2::Listener
@@ -220,166 +261,151 @@ Resources:
     Type: AWS::ECS::TaskDefinition
     Properties:
       Family: !Sub crowd-${EnvName}
-      Cpu: '4096'
-      Memory: '16384'
+      Cpu: "4096"
+      Memory: "16384"
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE
-      ExecutionRoleArn: ecsTaskExecutionRole
-      TaskRoleArn: !Sub 'arn:aws:iam::${AWS::AccountId}:role/ConcordiaServerTaskRole-${EnvironmentName}'
+      ExecutionRoleArn: !GetAtt ConcordiaTaskRole.Arn
+      TaskRoleArn: !GetAtt ConcordiaTaskRole.Arn
       Volumes:
         - Name: images_volume
       ContainerDefinitions:
         - Name: app
           Cpu: 2048
-          Memory: 8192
-          Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/concordia:${ConcordiaVersion}'
+          Image: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/concordia:${ConcordiaVersion}"
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: !Ref 'ConcordiaAppLogsGroup'
-              awslogs-region: !Ref 'AWS::Region'
+              awslogs-group: !Ref "ConcordiaAppLogsGroup"
+              awslogs-region: !Ref "AWS::Region"
               awslogs-stream-prefix: ConcordiaServer
           Environment:
-              - Name: AWS
-                Value: '1'
-              - Name: ENV_NAME
-                Value: !Ref EnvName
-              - Name: CONCORDIA_ENVIRONMENT
-                Value: !Ref FullEnvironmentName
-              - Name: S3_BUCKET_NAME
-                Value: !Ref S3BucketName
-              - Name: EXPORT_S3_BUCKET_NAME
-                Value: !Ref ExportS3BucketName
-              - Name: CELERY_BROKER_URL
-                Value: pyamqp://guest@localhost:5672
-              - Name: AWS_DEFAULT_REGION
-                Value: !Ref AWS::Region
-              - Name: SENTRY_BACKEND_DSN
-                Value: http://34db819263f34c28809da045f841f045@sentry-internal.devops.cloud/2
-              - Name: SENTRY_FRONTEND_DSN
-                Value: https://48ec47f15e484502a29879e40ed2e0c3@crowd-sentry.loc.gov/3
-              - Name: REDIS_ADDRESS
-                Value: !Ref RedisAddress
-              - Name: REDIS_PORT
-                Value: !Ref RedisPort
-              - Name: MEMCACHED_ADDRESS
-                Value: !Ref MemcachedAddress
-              - Name: MEMCACHED_PORT
-                Value: !Ref MemcachedPort
-              - Name: POSTGRESQL_HOST
-                Value: !Ref DatabaseEndpoint
-              - Name: HOST_NAME
-                Value: !Ref CanonicalHostName
-              - Name: DJANGO_SETTINGS_MODULE
-                Value: concordia.settings_ecs  
+            - Name: AWS
+              Value: "1"
+            - Name: ENV_NAME
+              Value: !Ref EnvName
+            - Name: CONCORDIA_ENVIRONMENT
+              Value: !Ref FullEnvironmentName
+            - Name: S3_BUCKET_NAME
+              Value: !Ref S3BucketName
+            - Name: EXPORT_S3_BUCKET_NAME
+              Value: !Ref ExportS3BucketName
+            - Name: CELERY_BROKER_URL
+              Value: !Sub "redis://${RedisAddress}:${RedisPort}/0"
+            - Name: AWS_DEFAULT_REGION
+              Value: !Ref AWS::Region
+            - Name: SENTRY_BACKEND_DSN
+              Value: https://6727341eabcd47e3a48ce300432e840b@errorlogging.loc.gov/5
+            - Name: SENTRY_FRONTEND_DSN
+              Value: https://77a13a941ffd485dbf41dbf8e7a0bdd0@errorlogging.loc.gov/4
+            - Name: REDIS_ADDRESS
+              Value: !Ref RedisAddress
+            - Name: REDIS_PORT
+              Value: !Ref RedisPort
+            - Name: MEMCACHED_ADDRESS
+              Value: !Ref MemcachedAddress
+            - Name: MEMCACHED_PORT
+              Value: !Ref MemcachedPort
+            - Name: POSTGRESQL_HOST
+              Value: !Ref DatabaseEndpoint
+            - Name: HOST_NAME
+              Value: !Ref CanonicalHostName
+            - Name: DJANGO_SETTINGS_MODULE
+              Value: concordia.settings_ecs
           MountPoints:
-              - SourceVolume: images_volume
-                ContainerPath: /concordia_images
+            - SourceVolume: images_volume
+              ContainerPath: /concordia_images
           PortMappings:
-              - ContainerPort: 80
-        - Name: rabbit
-          Cpu: 1024
-          Memory: 2048
-          Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/rabbitmq:${ConcordiaVersion}'
-          PortMappings:
-            - ContainerPort: 5672
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-group: !Ref 'ConcordiaAppLogsGroup'
-              awslogs-region: !Ref 'AWS::Region'
-              awslogs-stream-prefix: ConcordiaCron
+            - ContainerPort: 80
         - Name: importer
           Cpu: 1024
-          Memory: 2048
-          Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/concordia/importer:${ConcordiaVersion}'
+          Image: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/concordia/importer:${ConcordiaVersion}"
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: !Ref 'ConcordiaAppLogsGroup'
-              awslogs-region: !Ref 'AWS::Region'
+              awslogs-group: !Ref "ConcordiaAppLogsGroup"
+              awslogs-region: !Ref "AWS::Region"
               awslogs-stream-prefix: ConcordiaWorker
           Environment:
-              - Name: AWS
-                Value: '1'
-              - Name: ENV_NAME
-                Value: !Ref EnvName
-              - Name: CONCORDIA_ENVIRONMENT
-                Value: !Ref FullEnvironmentName
-              - Name: S3_BUCKET_NAME
-                Value: !Ref S3BucketName
-              - Name: EXPORT_S3_BUCKET_NAME
-                Value: !Ref ExportS3BucketName
-              - Name: CELERY_BROKER_URL
-                Value: pyamqp://guest@localhost:5672
-              - Name: AWS_DEFAULT_REGION
-                Value: !Ref AWS::Region
-              - Name: SENTRY_BACKEND_DSN
-                Value: http://34db819263f34c28809da045f841f045@sentry-internal.devops.cloud/2
-              - Name: SENTRY_FRONTEND_DSN
-                Value: https://48ec47f15e484502a29879e40ed2e0c3@crowd-sentry.loc.gov/3
-              - Name: REDIS_ADDRESS
-                Value: !Ref RedisAddress
-              - Name: REDIS_PORT
-                Value: !Ref RedisPort
-              - Name: MEMCACHED_ADDRESS
-                Value: !Ref MemcachedAddress
-              - Name: MEMCACHED_PORT
-                Value: !Ref MemcachedPort
-              - Name: POSTGRESQL_HOST
-                Value: !Ref DatabaseEndpoint
-              - Name: HOST_NAME
-                Value: !Ref CanonicalHostName
-              - Name: DJANGO_SETTINGS_MODULE
-                Value: concordia.settings_ecs
+            - Name: AWS
+              Value: "1"
+            - Name: ENV_NAME
+              Value: !Ref EnvName
+            - Name: CONCORDIA_ENVIRONMENT
+              Value: !Ref FullEnvironmentName
+            - Name: S3_BUCKET_NAME
+              Value: !Ref S3BucketName
+            - Name: EXPORT_S3_BUCKET_NAME
+              Value: !Ref ExportS3BucketName
+            - Name: CELERY_BROKER_URL
+              Value: !Sub "redis://${RedisAddress}:${RedisPort}/0"
+            - Name: AWS_DEFAULT_REGION
+              Value: !Ref AWS::Region
+            - Name: SENTRY_BACKEND_DSN
+              Value: https://6727341eabcd47e3a48ce300432e840b@errorlogging.loc.gov/5
+            - Name: SENTRY_FRONTEND_DSN
+              Value: https://77a13a941ffd485dbf41dbf8e7a0bdd0@errorlogging.loc.gov/4
+            - Name: REDIS_ADDRESS
+              Value: !Ref RedisAddress
+            - Name: REDIS_PORT
+              Value: !Ref RedisPort
+            - Name: MEMCACHED_ADDRESS
+              Value: !Ref MemcachedAddress
+            - Name: MEMCACHED_PORT
+              Value: !Ref MemcachedPort
+            - Name: POSTGRESQL_HOST
+              Value: !Ref DatabaseEndpoint
+            - Name: HOST_NAME
+              Value: !Ref CanonicalHostName
+            - Name: DJANGO_SETTINGS_MODULE
+              Value: concordia.settings_ecs
           MountPoints:
-              - SourceVolume: images_volume
-                ContainerPath: /concordia_images
+            - SourceVolume: images_volume
+              ContainerPath: /concordia_images
         - Name: celerybeat
           Cpu: 1024
-          Memory: 2048
-          Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/concordia/celerybeat:${ConcordiaVersion}'
+          Image: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/concordia/celerybeat:${ConcordiaVersion}"
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: !Ref 'ConcordiaAppLogsGroup'
-              awslogs-region: !Ref 'AWS::Region'
+              awslogs-group: !Ref "ConcordiaAppLogsGroup"
+              awslogs-region: !Ref "AWS::Region"
               awslogs-stream-prefix: ConcordiaWorker
           Environment:
-              - Name: AWS
-                Value: '1'
-              - Name: ENV_NAME
-                Value: !Ref EnvName
-              - Name: CONCORDIA_ENVIRONMENT
-                Value: !Ref FullEnvironmentName
-              - Name: S3_BUCKET_NAME
-                Value: !Ref S3BucketName
-              - Name: EXPORT_S3_BUCKET_NAME
-                Value: !Ref ExportS3BucketName
-              - Name: CELERY_BROKER_URL
-                Value: pyamqp://guest@localhost:5672
-              - Name: AWS_DEFAULT_REGION
-                Value: !Ref AWS::Region
-              - Name: SENTRY_BACKEND_DSN
-                Value: http://34db819263f34c28809da045f841f045@sentry-internal.devops.cloud/2
-              - Name: SENTRY_FRONTEND_DSN
-                Value: https://48ec47f15e484502a29879e40ed2e0c3@crowd-sentry.loc.gov/3
-              - Name: REDIS_ADDRESS
-                Value: !Ref RedisAddress
-              - Name: REDIS_PORT
-                Value: !Ref RedisPort
-              - Name: MEMCACHED_ADDRESS
-                Value: !Ref MemcachedAddress
-              - Name: MEMCACHED_PORT
-                Value: !Ref MemcachedPort
-              - Name: POSTGRESQL_HOST
-                Value: !Ref DatabaseEndpoint
-              - Name: HOST_NAME
-                Value: !Ref CanonicalHostName
-              - Name: DJANGO_SETTINGS_MODULE
-                Value: concordia.settings_ecs  
-                
+            - Name: AWS
+              Value: "1"
+            - Name: ENV_NAME
+              Value: !Ref EnvName
+            - Name: CONCORDIA_ENVIRONMENT
+              Value: !Ref FullEnvironmentName
+            - Name: S3_BUCKET_NAME
+              Value: !Ref S3BucketName
+            - Name: EXPORT_S3_BUCKET_NAME
+              Value: !Ref ExportS3BucketName
+            - Name: CELERY_BROKER_URL
+              Value: !Sub "redis://${RedisAddress}:${RedisPort}/0"
+            - Name: AWS_DEFAULT_REGION
+              Value: !Ref AWS::Region
+            - Name: SENTRY_BACKEND_DSN
+              Value: https://6727341eabcd47e3a48ce300432e840b@errorlogging.loc.gov/5
+            - Name: SENTRY_FRONTEND_DSN
+              Value: https://77a13a941ffd485dbf41dbf8e7a0bdd0@errorlogging.loc.gov/4
+            - Name: REDIS_ADDRESS
+              Value: !Ref RedisAddress
+            - Name: REDIS_PORT
+              Value: !Ref RedisPort
+            - Name: MEMCACHED_ADDRESS
+              Value: !Ref MemcachedAddress
+            - Name: MEMCACHED_PORT
+              Value: !Ref MemcachedPort
+            - Name: POSTGRESQL_HOST
+              Value: !Ref DatabaseEndpoint
+            - Name: HOST_NAME
+              Value: !Ref CanonicalHostName
+            - Name: DJANGO_SETTINGS_MODULE
+              Value: concordia.settings_ecs
+
   ConcordiaExternalService:
     Type: AWS::ECS::Service
     DependsOn: ExternalLoadBalancerListener
@@ -397,12 +423,11 @@ Resources:
           Subnets: !Ref PrivateSubnets
       TaskDefinition: !Ref ConcordiaTask
       LoadBalancers:
-        - ContainerName: 'app'
+        - ContainerName: "app"
           ContainerPort: 80
           TargetGroupArn: !Ref ConcordiaExternalTargetGroup
 
 Outputs:
-
   LoadBalancerUrl:
     Description: The URL of the ALB
     Value: !GetAtt LoadBalancer.DNSName

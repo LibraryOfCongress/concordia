@@ -77,7 +77,7 @@ class TaskStatusModelAdmin(admin.ModelAdmin):
                 self.generate_natural_timestamp_display_property(field_name),
             )
 
-        return super().__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
 
 class ImportJobAdmin(TaskStatusModelAdmin):
@@ -95,11 +95,11 @@ class ImportJobAdmin(TaskStatusModelAdmin):
         "status",
     )
     list_filter = (
-        "created_by",
-        "project",
         LastStartedFilter,
         CompletedFilter,
         FailedFilter,
+        ("created_by", admin.RelatedOnlyFieldListFilter),
+        "project",
     )
     search_fields = ("url", "status")
 
@@ -116,11 +116,11 @@ class ImportItemAdmin(TaskStatusModelAdmin):
         "status",
     )
     list_filter = (
-        "job__created_by",
-        "job__project",
         LastStartedFilter,
         CompletedFilter,
         FailedFilter,
+        ("job__created_by", admin.RelatedOnlyFieldListFilter),
+        "job__project",
     )
     search_fields = ("url", "status")
 
@@ -141,11 +141,11 @@ class ImportItemAssetAdmin(TaskStatusModelAdmin):
         "status",
     )
     list_filter = (
-        "import_item__job__created_by",
-        "import_item__job__project",
         LastStartedFilter,
         CompletedFilter,
         FailedFilter,
+        ("import_item__job__created_by", admin.RelatedOnlyFieldListFilter),
+        "import_item__job__project",
     )
     search_fields = ("url", "status")
     actions = (retry_download_task,)

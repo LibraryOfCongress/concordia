@@ -1,17 +1,15 @@
-Description:
-  This template deploys a bastion host in each of the public subnets.
+Description: This template deploys a bastion host in each of the public subnets.
 
 Parameters:
-
     EnvironmentName:
         Description: An environment name that will be prefixed to resource names
         Type: String
         AllowedValues:
-          - dev
-          - test
-          - stage
-          - prod
-    
+            - dev
+            - test
+            - stage
+            - prod
+
     KeyPairName:
         Description: key pair (within this region) for ECS instances access
         Type: String
@@ -19,8 +17,8 @@ Parameters:
 Mappings:
     AWSRegionToAMI:
         us-east-1:
-            AMI: ami-0080e4c5bc078760e
-    
+            AMI: ami-0b898040803850657
+
     EnvironmentMapping:
         IamInstanceProfileName:
             dev: crowd-dev-FargateCluster-WFCY4I0U7JSM-ConcordiaInstanceProfile-RQHLRZADDM9M
@@ -35,7 +33,7 @@ Mappings:
             test: subnet-06f443ea589879e8d
             stage: subnet-06f40e2fc8d891692
             prod: subnet-09fdaf1c5c73f588f
-    
+
         # The ID of the public subnet in the second AZ
         # Type: AWS::EC2::Subnet::Id
         PublicSubnet2:
@@ -53,86 +51,90 @@ Mappings:
             prod: sg-066c68e77787b2a10
 
 Resources:
-
     Bastion1:
         Type: AWS::EC2::Instance
-        Properties: 
-            ImageId: 
-                Fn::FindInMap: 
-                - AWSRegionToAMI
-                - Ref: "AWS::Region"
-                - "AMI"
-            InstanceType: "t1.micro"
-            IamInstanceProfile: 
-                Fn::FindInMap: 
+        Properties:
+            ImageId:
+                Fn::FindInMap:
+                    - AWSRegionToAMI
+                    - Ref: "AWS::Region"
+                    - "AMI"
+            InstanceType: "t2.medium"
+            IamInstanceProfile:
+                Fn::FindInMap:
                     - EnvironmentMapping
                     - IamInstanceProfileName
                     - Ref: EnvironmentName
-            KeyName: 
+            KeyName:
                 Ref: KeyPairName
-            NetworkInterfaces: 
+            NetworkInterfaces:
                 - AssociatePublicIpAddress: true
                   DeviceIndex: "0"
-                  GroupSet: 
-                    - Fn::FindInMap: 
-                        - EnvironmentMapping
-                        - BastionHostsSecurityGroup
-                        - Ref: EnvironmentName
-                  SubnetId: 
-                    Fn::FindInMap: 
-                        - EnvironmentMapping
-                        - PublicSubnet1
-                        - Ref: EnvironmentName
+                  GroupSet:
+                      - Fn::FindInMap:
+                            - EnvironmentMapping
+                            - BastionHostsSecurityGroup
+                            - Ref: EnvironmentName
+                  SubnetId:
+                      Fn::FindInMap:
+                          - EnvironmentMapping
+                          - PublicSubnet1
+                          - Ref: EnvironmentName
             UserData:
                 Fn::Base64: !Sub |
-                  #!/bin/bash -xe
-                  echo "Running userdata for ${EnvironmentName}"
-                  yum -y update
-                  yum -y install https://download.postgresql.org/pub/repos/yum/9.6/redhat/rhel-6-x86_64/pgdg-ami201503-96-9.6-2.noarch.rpm
-                  yum -y install postgresql96
-                  aws s3 cp s3://crowd-deployment/database-dumps/concordia.latest.dmp concordia.dmp
-                
+                    #!/bin/bash -xe
+                    echo "Running userdata for ${EnvironmentName}"
+                    echo "export ENV_NAME=${EnvironmentName}" >> /home/ec2-user/.bash_profile
+                    source /home/ec2-user/.bash_profile
+                    yum -y update
+                    yum -y install git
+                    aws s3 cp s3://crowd-deployment/database-dumps/concordia.latest.dmp concordia.dmp
+                    amazon-linux-extras install -y postgresql9.6
+
             Tags:
                 - Key: Name
-                  Value: !Sub ${EnvironmentName}-BastionHost-1     
+                  Value: !Sub ${EnvironmentName}-BastionHost-1
 
     Bastion2:
         Type: AWS::EC2::Instance
-        Properties: 
-            ImageId: 
-                Fn::FindInMap: 
-                - AWSRegionToAMI
-                - Ref: "AWS::Region"
-                - "AMI"
-            InstanceType: "t1.micro"
-            IamInstanceProfile: 
-                Fn::FindInMap: 
+        Properties:
+            ImageId:
+                Fn::FindInMap:
+                    - AWSRegionToAMI
+                    - Ref: "AWS::Region"
+                    - "AMI"
+            InstanceType: "t2.medium"
+            IamInstanceProfile:
+                Fn::FindInMap:
                     - EnvironmentMapping
                     - IamInstanceProfileName
                     - Ref: EnvironmentName
-            KeyName: 
+            KeyName:
                 Ref: KeyPairName
-            NetworkInterfaces: 
+            NetworkInterfaces:
                 - AssociatePublicIpAddress: true
                   DeviceIndex: "0"
-                  GroupSet: 
-                    - Fn::FindInMap: 
-                        - EnvironmentMapping
-                        - BastionHostsSecurityGroup
-                        - Ref: EnvironmentName
-                  SubnetId: 
-                    Fn::FindInMap: 
-                        - EnvironmentMapping
-                        - PublicSubnet2
-                        - Ref: EnvironmentName
+                  GroupSet:
+                      - Fn::FindInMap:
+                            - EnvironmentMapping
+                            - BastionHostsSecurityGroup
+                            - Ref: EnvironmentName
+                  SubnetId:
+                      Fn::FindInMap:
+                          - EnvironmentMapping
+                          - PublicSubnet2
+                          - Ref: EnvironmentName
             UserData:
                 Fn::Base64: !Sub |
-                  #!/bin/bash -xe
-                  echo "Running userdata for ${EnvironmentName}"
-                  yum -y update
-                  yum -y install https://download.postgresql.org/pub/repos/yum/9.6/redhat/rhel-6-x86_64/pgdg-ami201503-96-9.6-2.noarch.rpm
-                  yum -y install postgresql96
-                  aws s3 cp s3://crowd-deployment/database-dumps/concordia.latest.dmp concordia.dmp
+                    #!/bin/bash -xe
+                    echo "Running userdata for ${EnvironmentName}"
+                    echo "export ENV_NAME=${EnvironmentName}" >> /home/ec2-user/.bash_profile
+                    source /home/ec2-user/.bash_profile
+                    yum -y update
+                    yum -y install git
+                    aws s3 cp s3://crowd-deployment/database-dumps/concordia.latest.dmp concordia.dmp
+                    amazon-linux-extras install -y postgresql9.6
+
             Tags:
                 - Key: Name
                   Value: !Sub ${EnvironmentName}-BastionHost-2

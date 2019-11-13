@@ -1,26 +1,16 @@
 import json
 import os
 
-from django.core.management.utils import get_random_secret_key
-
 from .secrets import get_secret
 from .settings_template import *  # NOQA ignore=F405
-from .settings_template import CONCORDIA_ENVIRONMENT, DATABASES, INSTALLED_APPS, LOGGING
-
-LOGGING["handlers"]["stream"]["level"] = "INFO"
-LOGGING["handlers"]["file"]["level"] = "INFO"
-LOGGING["handlers"]["file"]["filename"] = "./logs/concordia-web.log"
-LOGGING["handlers"]["celery"]["level"] = "INFO"
-LOGGING["handlers"]["celery"]["filename"] = "./logs/concordia-celery.log"
-LOGGING["loggers"]["django"]["level"] = "INFO"
-LOGGING["loggers"]["celery"]["level"] = "INFO"
+from .settings_template import CONCORDIA_ENVIRONMENT, DATABASES, INSTALLED_APPS
 
 if os.getenv("AWS"):
     ENV_NAME = os.getenv("ENV_NAME")
 
     django_secret_json = get_secret("crowd/%s/Django/SecretKey" % ENV_NAME)
     django_secret = json.loads(django_secret_json)
-    DJANGO_SECRET_KEY = django_secret["DjangoSecretKey"]
+    SECRET_KEY = django_secret["DjangoSecretKey"]
 
     postgres_secret_json = get_secret("crowd/%s/DB/MasterUserPassword" % ENV_NAME)
     postgres_secret = json.loads(postgres_secret_json)
@@ -34,7 +24,6 @@ if os.getenv("AWS"):
     EMAIL_HOST_PASSWORD = smtp_secret["Password"]
 
 else:
-    DJANGO_SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", get_random_secret_key())
     EMAIL_HOST = os.environ.get("EMAIL_HOST", "localhost")
     EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
     EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
@@ -49,8 +38,8 @@ DEFAULT_TO_EMAIL = DEFAULT_FROM_EMAIL
 
 CSRF_COOKIE_SECURE = True
 
-CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "pyamqp://guest@rabbit:5672")
-CELERY_RESULT_BACKEND = "rpc://"
+CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL")
+CELERY_RESULT_BACKEND = CELERY_BROKER_URL
 
 S3_BUCKET_NAME = os.getenv("S3_BUCKET_NAME")
 EXPORT_S3_BUCKET_NAME = os.getenv("EXPORT_S3_BUCKET_NAME")
@@ -87,3 +76,6 @@ ATTRIBUTION_TEXT = (
     "Transcribed and reviewed by volunteers participating in the "
     "By The People project at crowd.loc.gov."
 )
+
+if os.getenv("USE_PERSISTENT_DATABASE_CONNECTIONS"):
+    DATABASES["default"].update({"CONN_MAX_AGE": 15 * 60})

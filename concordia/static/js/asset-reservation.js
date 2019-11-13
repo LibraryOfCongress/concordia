@@ -1,7 +1,12 @@
-/* global jQuery displayMessage buildErrorMessage */
+/* global jQuery displayMessage displayHtmlMessage buildErrorMessage */
 /* exported attemptToReserveAsset */
 
-function attemptToReserveAsset(reservationURL) {
+function attemptToReserveAsset(
+    reservationURL,
+    findANewPageURL,
+    actionType,
+    firstTime
+) {
     var $transcriptionEditor = jQuery('#transcription-editor');
 
     jQuery
@@ -14,13 +19,36 @@ function attemptToReserveAsset(reservationURL) {
             $transcriptionEditor
                 .data('hasReservation', true)
                 .trigger('update-ui-state');
+
+            // If the asset was successfully reserved, continue reserving it
+            window.setTimeout(
+                attemptToReserveAsset,
+                60000,
+                reservationURL,
+                findANewPageURL,
+                actionType,
+                false
+            );
         })
         .fail(function(jqXHR, textStatus, errorThrown) {
             if (jqXHR.status == 409) {
-                $transcriptionEditor
-                    .data('hasReservation', false)
-                    .trigger('update-ui-state');
-                jQuery('#asset-reservation-failure-modal').modal();
+                if (actionType == 'transcribe') {
+                    $transcriptionEditor
+                        .data('hasReservation', false)
+                        .trigger('update-ui-state');
+                    if (firstTime) {
+                        jQuery('#asset-reservation-failure-modal').modal();
+                    }
+                } else {
+                    displayHtmlMessage(
+                        'warning',
+                        'There are other reviewers on this page.' +
+                            ' <a href="' +
+                            findANewPageURL +
+                            '">Find a new page to review</a>',
+                        'transcription-reservation'
+                    );
+                }
             } else {
                 displayMessage(
                     'error',
@@ -29,9 +57,6 @@ function attemptToReserveAsset(reservationURL) {
                     'transcription-reservation'
                 );
             }
-        })
-        .always(function() {
-            window.setTimeout(attemptToReserveAsset, 60000, reservationURL);
         });
 
     window.addEventListener('beforeunload', function() {

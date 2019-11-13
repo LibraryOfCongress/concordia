@@ -1,0 +1,327 @@
+{% extends "base.html" %}
+
+{% load staticfiles %}
+
+{% load feature_flags %}
+
+{% load concordia_sharing_tags %}
+{% load concordia_simple_content_blocks %}
+
+{% block title %}By the People{% endblock title %}
+
+{% block head_content %}
+    <link rel="canonical" href="https://{{ request.get_host }}{{ request.path }}">
+    <link rel="stylesheet" href="{% static 'css/action-app.css' %}">
+
+    <script>
+        (function() {
+            if ("requestIdleCallback" in window) return;
+
+            var s = document.createElement('script');
+            s.async = false;
+            s.src = "https://cdn.jsdelivr.net/npm/requestidlecallback@0.3.0/index.min.js";
+            document.head.appendChild(s);
+        })();
+    </script>
+    <script>
+        // Used from https://developer.mozilla.org/en-US/docs/Web/API/Element/toggleAttribute#Polyfill under the MDN license
+        if (!Element.prototype.toggleAttribute) {
+            Element.prototype.toggleAttribute = function(name, force) {
+                if (force !== void 0) force = !!force;
+
+                if (this.getAttribute(name) !== null) {
+                    if (force) return true;
+                    this.removeAttribute(name);
+                    return false;
+                } else {
+                    if (force === false) return false;
+                    this.setAttribute(name, '');
+                    return true;
+                }
+            };
+        }
+    </script>
+{% endblock head_content %}
+
+{% block body_scripts %}
+    <script>
+        if (window.screen.width < 1024 || window.screen.height < 768) {
+            alert("This application is still under development and has not yet been optimized for small screens");
+        }
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/split.js/1.5.10/split.min.js" integrity="sha256-voAP1SafVzHBtUVXxB6ZuQB5mIZu6h0veHhhzwXcthQ=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/openseadragon/2.4.0/openseadragon.min.js" integrity="sha256-grVJpqgDSGBx1q2llmvY+J5zU9hEHbO7UvftFY2bK1w=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/URI.js/1.19.1/URI.min.js" integrity="sha256-D3tK9Rf/fVqBf6YDM8Q9NCNf/6+F2NOKnYSXHcl0keU=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/URI.js/1.19.1/URITemplate.min.js" integrity="sha256-LIw9ihYxDmHK4yHsnaQuuH6vWWX+2PtEYqj/EcEJNfg=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/array-sort-by@1.2.1/dist/sort-by.min.js" integrity="sha256-ZSshktBu+pa8OKW2vtaIS5DmOklB9+p7OMhVwhjJAlA=" crossorigin="anonymous"></script>
+
+    {{ app_parameters|json_script:"app-parameters" }}
+
+    <script>
+        var appConfig = JSON.parse(document.getElementById('app-parameters').textContent);
+    </script>
+
+    <script type="module">
+        import { ActionApp } from "{% static 'js/action-app/index.js' %}";
+        window.actionApp = new ActionApp(appConfig);
+    </script>
+
+    <script nomodule>
+        if (confirm("This application is still under development and does not yet support older browsers. Would you like to return to the main site?")) {
+            window.location.href = "{% url 'homepage' %}";
+        }
+    </script>
+{% endblock body_scripts %}
+
+{% comment %} This app is close to a full-screen view so we suppress the standard header & footer {% endcomment %}
+{% block site-header %}{% endblock site-header %}
+{% block breadcrumbs-container %}{% endblock breadcrumbs-container %}
+{% block site-footer %}{% endblock site-footer %}
+
+{% block site-main %}
+    {% flag_enabled 'SIMPLE_CONTENT_BLOCKS' as SIMPLE_CONTENT_BLOCKS %}
+    {% csrf_token %}
+    <header id="action-app-header">
+        <nav id="action-app-global-controls" class="navbar navbar-expand-lg navbar-dark bg-dark" role="navigation">
+            <a class="navbar-brand mb-0 concordia-app-navbar-brand" href="{% url 'homepage' %}">
+                <span class="fas fa-home"></span>
+                <span class="sr-only">Home</span>
+            </a>
+            <ul class="navbar-nav flex-grow-1 text-center justify-content-center">
+                <li class="nav-item navbar-text current-mode font-weight-bold text-white text-uppercase">
+                </li>
+            </ul>
+            <ul class="navbar-nav justify-content-end">
+                <li class="nav-item">
+                    <button hidden id="go-fullscreen" class="btn btn-link text-white" data-target="body" title="Go fullscreen">
+                        <span class="fas fa-expand"></span>
+                        <span class="sr-only">Go fullscreen</span>
+                    </button>
+                </li>
+            </ul>
+        </nav>
+    </header>
+    <main id="action-app-main" class="d-flex flex-grow-1">
+        <div id="editor-main" class="d-flex flex-grow-1">
+            <div id="asset-viewer">
+                <div id="contribute-container" class="flex-grow-1 d-flex h-100">
+                    <div id="viewer-column" class="pl-0 d-flex flex-column align-items-stretch w-100 d-print-block">
+                        <div id="viewer-controls" class="m-1 text-center d-print-none">
+                            <div class="d-inline-flex justify-content-between">
+                                <div class="d-flex btn-group btn-group-sm m-1">
+                                    <button id="viewer-home" class="btn btn-default" title="Fit Image to Viewport">
+                                        <span class="fas fa-compress"></span>
+                                    </button>
+                                    <button id="viewer-zoom-in" class="btn btn-default" title="Zoom In">
+                                        <span class="fas fa-search-plus"></span>
+                                    </button>
+                                    <button id="viewer-zoom-out" class="btn btn-default" title="Zoom Out">
+                                        <span class="fas fa-search-minus"></span>
+                                    </button>
+                                </div>
+                                <div class="d-flex btn-group btn-group-sm m-1">
+                                    <button id="viewer-rotate-left" class="btn btn-default" title="Rotate Left">
+                                        <span class="fas fa-undo"></span>
+                                    </button>
+                                    <button id="viewer-rotate-right" class="btn btn-default" title="Rotate Right">
+                                        <span class="fas fa-redo"></span>
+                                    </button>
+                                </div>
+                                <div class="d-flex btn-group btn-group-sm m-1">
+                                    <button id="viewer-flip" class="btn btn-default" title="Flip">
+                                        <span class="fas fa-exchange-alt"></span>
+                                    </button>
+                                </div>
+                                <div class="d-flex btn-group btn-group-sm m-1">
+                                    <button id="viewer-help" type="button" class="btn btn-default">
+                                        <span class="fas fa-question-circle" aria-label="Open Help"></span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="asset-image" class="h-100"></div>
+                    </div>
+
+                    <div id="editor-column" class="d-flex p-3 flex-column flex-grow-1 flex-nowrap justify-content-between h-100">
+                        <div id="asset-metadata" class="">
+                            <div class="d-flex mb-3">
+                                <div class="flex-grow-1">
+                                    <button id="show-metadata-button" class="btn btn-outline-primary btn-sm concordia-app-font-size-xxs" data-toggle="modal" data-target="#asset-info-modal" aria-label="Show metadata">More Info</button>
+                                </div>
+                                <div class="dropdown">
+                                    <button class="btn btn-outline-primary btn-sm dropdown-toggle dropdown-no-icon concordia-app-font-size-xxs" type="button" id="dropdownMenu2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="sr-only">Share</span> <i class="fas fa-share"></i></button>
+                                    <div class="dropdown-menu dropdown-menu-right p-3" style="min-width: auto;" aria-labelledby="dropdownMenu2">
+                                        {% share_buttons "SHARE_URL" "SHARE_TITLE" %}
+                                    </div>
+                                </div>
+                            </div>
+                            <h1 class="h2 hierarchy mb-3">
+                                <a class="item-title item-url" target="_blank"></a>
+                                <a class="asset-title asset-url" target="_blank"></a>
+                            </h1>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="asset-info-modal" class="modal" tabindex="-1" role="dialog">
+                    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title"><span class="asset-title">More Information</span></h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                            </div>
+                            <div class="modal-footer d-flex justify-content-center">
+                                <div class="btn-group btn-group-sm">
+                                    <a class="asset-external-view btn btn-link" target="_blank">View item on www.loc.gov</a>
+                                    <a class="campaign-url btn btn-link" target="_blank">View Campaign</a>
+                                    <a class="project-url btn btn-link" target="_blank">View Project</a>
+                                    <a class="item-url btn btn-link" target="_blank">View Item</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="action-app-sidebar" role="tablist" aria-label="Tabs">
+            <button id="asset-list-toggle" class="btn btn-link active" title="Open asset list" role="tab" aria-controls="asset-list-container" aria-selected="true" data-target="asset-list-container" data-toggleable-only-when-open>
+                <span class="fas fa-th"></span>
+                <span class="sr-only">Open asset list</span>
+            </button>
+            <button id="help-toggle" class="btn btn-link" title="Open Help" role="tab" aria-controls="help-panel"  aria-selected="false" data-target="help-panel">
+                <span class="fas fa-question-circle"></span>
+                <span class="sr-only">Help</span>
+            </button>
+        </div>
+        <div id="asset-list-container" role="tabpanel" aria-labelledby="asset-list-toggle">
+            <form id="asset-list-controls" class="sticky-top form-inline flex-nowrap justify-content-center mb-3 py-3" role="navigation">
+                <div class="input-group input-group-sm mx-2 flex-nowrap">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text concordia-app-input-group-text">I want to</span>
+                    </div>
+
+                    <div id="activity-mode-selection" class="btn-group btn-group-sm rounded bg-white" role="group" aria-label="Activity mode">
+                        <button type="button" class="btn btn-outline-secondary" value="transcribe">Transcribe</button>
+                        <button type="button" class="btn btn-outline-secondary active" value="review">Review</button>
+                    </div>
+                </div>
+                <div class="input-group input-group-sm mx-2 flex-nowrap">
+                    <div class="input-group-prepend">
+                        <label class="input-group-text concordia-app-input-group-text" for="sort-mode">Sort by</label>
+                    </div>
+                    <select class="custom-select custom-select-sm rounded-0" id="sort-mode">
+                        <option value="recent">Most Recently Updated</option>
+                        <option value="hardest">Most Difficult</option>
+                        <option value="year">Year</option>
+                    </select>
+                </div>
+                <div class="input-group input-group-sm mx-2 flex-nowrap w-25">
+                    <div class="input-group-prepend">
+                        <label class="input-group-text concordia-app-input-group-text" for="selected-campaign">Campaign</label>
+                    </div>
+                    <select class="custom-select custom-select-sm rounded-0" id="selected-campaign">
+                        <option value="">All</option>
+                    </select>
+                </div>
+
+                <div class="mx-2 d-flex align-items-center justify-content-between flex-nowrap">
+                    <span class="far fa-file-image concordia-app-range-min"></span>
+                    <input type="range" class="form-input" id="asset-list-thumbnail-size" min="128" max="512" step="8" autocomplete="off">
+                    <span class="far fa-file-image concordia-app-range-max"></span>
+                </div>
+            </form>
+
+            <button id="close-viewer-button" class="btn btn-link btn-small btn-block sticky-top bg-white rounded-0 concordia-app-browse-all-button" aria-label="Close viewer">
+                <span class="fas fa-angle-double-left"></span>
+                Browse All
+            </button>
+
+            <button id="load-more-assets" class="btn btn-secondary btn-block btn-sm">Load more…</button>
+        </div>
+        <aside id="help-panel" role="tabpanel" aria-labelledby="help-toggle" hidden>
+            {% if SIMPLE_CONTENT_BLOCKS %}
+                {% simple_content_block "prototype_quicktips" %}
+            {% else %}
+                <h2 class="sr-only">Help</h2>
+                <section>
+                    <h3>Transcription tips</h3>
+                    <ul>
+                        <li>Type what you see: Preserve line breaks, original spelling, and punctuation.</li>
+                        <li>Use brackets [ ] around deleted, illegible or partially legible text.</li>
+                        <li>Use question mark ? for any words or letters you can't identify.</li>
+                        <li>Use square brackets and asterisks [ * * ] around text from margins.</li>
+                        <li>Include insertions where you would read them in the text.</li>
+                        <li>Click “Save” to save work in progress and “Submit” when complete</li>
+                    </ul>
+                </section>
+                <hr />
+                <section>
+                    <h3>Review tips</h3>
+                    <ul>
+                        <li>Carefully compare each line of the transcription to the original.</li>
+                        <li>Use “Transcription tips” as a guide.</li>
+                        <li>Click “Accept” if accurate or “Edit” if page needs correction.</li>
+                    </ul>
+                </section>
+                <hr />
+                <section>
+                    <h3 class="sr-only">More information</h3>
+                    <p>
+                    Find more detailed instructions in the <a href="{% url 'help-center' %}" target="_blank">Help Center</a>
+                    </p>
+                </section>
+                <hr />
+                <section>
+                    <h3>Keyboard Shortcuts</h3>
+                    <ul class="list-unstyled d-table">
+                        <li class="d-table-row">
+                            <div class="d-table-cell align-middle border-top py-2"><kbd>w</kbd> or <kbd>up</kbd></div>
+                            <div class="d-table-cell align-middle border-top py-2 pl-2 w-60">Scroll the viewport up</div>
+                        </li>
+                        <li class="d-table-row">
+                            <div class="d-table-cell align-middle border-top py-2"><kbd>s</kbd> or <kbd>down</kbd></div>
+                            <div class="d-table-cell align-middle border-top py-2 pl-2">Scroll the viewport down</div>
+                        </li>
+                        <li class="d-table-row">
+                            <div class="d-table-cell align-middle border-top py-2"><kbd>a</kbd> or <kbd>left</kbd></div>
+                            <div class="d-table-cell align-middle border-top py-2 pl-2">Scroll the viewport left</div>
+                        </li>
+                        <li class="d-table-row">
+                            <div class="d-table-cell align-middle border-top py-2"><kbd>d</kbd> or <kbd>right</kbd></div>
+                            <div class="d-table-cell align-middle border-top py-2 pl-2">Scroll the viewport right</div>
+                        </li>
+                        <li class="d-table-row">
+                            <div class="d-table-cell align-middle border-top py-2"><kbd>0</kbd></div>
+                            <div class="d-table-cell align-middle border-top py-2 pl-2">Fit the entire image to the viewport</div>
+                        </li>
+                        <li class="d-table-row">
+                            <div class="d-table-cell align-middle border-top py-2"><kbd>-</kbd> or <kbd>_</kbd></div>
+                            <div class="d-table-cell align-middle border-top py-2 pl-2">Zoom the viewport out</div>
+                        </li>
+                        <li class="d-table-row">
+                            <div class="d-table-cell align-middle border-top py-2"><kbd>=</kbd> or <kbd>+</kbd></div>
+                            <div class="d-table-cell align-middle border-top py-2 pl-2">Zoom the viewport in</div>
+                        </li>
+                        <li class="d-table-row">
+                            <div class="d-table-cell align-middle border-top py-2"><kbd>r</kbd></div>
+                            <div class="d-table-cell align-middle border-top py-2 pl-2">Rotate the viewport clockwise</div>
+                        </li>
+                        <li class="d-table-row">
+                            <div class="d-table-cell align-middle border-top py-2"><kbd>R</kbd></div>
+                            <div class="d-table-cell align-middle border-top py-2 pl-2">Rotate the viewport counterclockwise</div>
+                        </li>
+                        <li class="d-table-row">
+                            <div class="d-table-cell align-middle border-top py-2"><kbd>f</kbd></div>
+                            <div class="d-table-cell align-middle border-top py-2 pl-2">Flip the viewport horizontally</div>
+                        </li>
+                    </ul>
+                </section>
+            {% endif %}
+        </aside>
+    </main>
+{% endblock site-main %}

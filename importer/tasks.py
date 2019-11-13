@@ -11,10 +11,13 @@ from urllib.parse import parse_qsl, urlencode, urljoin, urlparse, urlsplit, urlu
 
 import requests
 from celery import group, task
+from django.core.cache import cache
 from django.db.transaction import atomic
-from django.template.defaultfilters import slugify
+from django.utils.text import slugify
 from django.utils.timezone import now
+from requests.adapters import HTTPAdapter
 from requests.exceptions import HTTPError
+from requests.packages.urllib3.util.retry import Retry
 
 from concordia.models import Asset, Item, MediaType
 from concordia.storage import ASSET_STORAGE
@@ -39,6 +42,26 @@ ACCEPTED_P1_URL_PREFIXES = [
     "photos",
     "websites",
 ]
+
+
+def requests_retry_session(
+    retries=10,
+    backoff_factor=0.3,
+    status_forcelist=(429, 500, 502, 503, 504),
+    session=None,
+):
+    session = session or requests.Session()
+    retry = Retry(
+        total=retries,
+        read=retries,
+        connect=retries,
+        backoff_factor=backoff_factor,
+        status_forcelist=status_forcelist,
+    )
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
+    return session
 
 
 def update_task_status(f):
@@ -134,8 +157,12 @@ def get_collection_items(collection_url):
     current_page_url = collection_url
 
     while current_page_url:
-        resp = requests.get(current_page_url)
-        resp.raise_for_status()
+        resp = cache.get(current_page_url)
+        if resp is None:
+            resp = requests_retry_session().get(current_page_url)
+            # 48-hour timeout
+            cache.set(current_page_url, resp, timeout=(3600 * 48))
+
         data = resp.json()
 
         if "results" not in data:
@@ -145,11 +172,10 @@ def get_collection_items(collection_url):
         for result in data["results"]:
             try:
                 item_info = get_item_info_from_result(result)
-            except Exception as exc:
+            except Exception:
                 logger.warning(
-                    "Skipping result from %s which did not match expected format: %s",
+                    "Skipping result from %s which did not match expected format:",
                     resp.url,
-                    exc,
                     exc_info=True,
                     extra={"data": {"result": result, "url": resp.url}},
                 )
@@ -252,7 +278,7 @@ def import_collection_task(self, import_job_pk):
 @update_task_status
 def import_collection(self, import_job):
     item_info = get_collection_items(normalize_collection_url(import_job.url))
-    for item_id, item_url in item_info:
+    for _, item_url in item_info:
         create_item_import_task.delay(import_job.pk, item_url)
 
 
@@ -329,7 +355,7 @@ def import_item(self, import_item):
         item_asset = Asset(
             item=import_item.item,
             title=asset_title,
-            slug=slugify(asset_title),
+            slug=slugify(asset_title, allow_unicode=True),
             sequence=idx,
             media_url=f"{idx}.jpg",
             media_type=MediaType.IMAGE,
@@ -464,13 +490,9 @@ def download_asset(self, import_asset):
 
             ASSET_STORAGE.save(asset_filename, temp_file)
 
-    except Exception as exc:
-        logger.error(
-            "Unable to download %s to %s: %s",
-            import_asset.url,
-            asset_filename,
-            exc,
-            exc_info=True,
+    except Exception:
+        logger.exception(
+            "Unable to download %s to %s", import_asset.url, asset_filename
         )
 
         raise

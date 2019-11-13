@@ -11,7 +11,7 @@ from concordia.models import Asset
 
 
 class Command(BaseCommand):
-    help = "Print URLs for front-end testing"
+    help = "Print URLs for front-end testing"  # NOQA: A003
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -24,7 +24,6 @@ class Command(BaseCommand):
         paths = [
             reverse("homepage"),
             reverse("about"),
-            reverse("latest"),
             reverse("contact"),
             # Help pages
             reverse("help-center"),
@@ -40,6 +39,8 @@ class Command(BaseCommand):
             reverse("password_reset"),
             reverse("login"),
             reverse("transcriptions:campaign-list"),
+            reverse("campaign-topic-list"),
+            reverse("topic-list"),
         ]
 
         # Database content

@@ -3,28 +3,26 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: >
     Deploy a feature branch to a subdomain of crowd-test.loc.gov
     using pre-existing infrastructure.
-    Assumes docker images have been published to ECR with 
+    Assumes docker images have been published to ECR with
     tag matching the feature branch name.
 
 Parameters:
-
     ConcordiaBranch:
         Description: which branch name to deploy
         Type: String
         Default: release
-    
+
     AbbreviatedName:
         Description: an abbreviation used for creating short-named cloudformation resources
         Type: String
         Default: rel
-    
+
     Priority:
         Type: Number
         Description: Priority of the subdomain listener rule, must be unique in the set of listener rules
         Default: 100
 
 Resources:
-
     RDS:
         Type: AWS::CloudFormation::Stack
         Properties:

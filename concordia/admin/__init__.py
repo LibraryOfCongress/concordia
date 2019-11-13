@@ -11,32 +11,60 @@ from django.template.defaultfilters import truncatechars
 from django.urls import path
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html
+from django_admin_multiple_choice_list_filter.list_filters import (
+    MultipleChoiceListFilter,
+)
 from tabular_export.admin import export_to_csv_action, export_to_excel_action
 
 from exporter import views as exporter_views
 from importer.tasks import import_items_into_project_from_url
 
-from ..forms import AdminItemImportForm
 from ..models import (
     Asset,
     Campaign,
+    CarouselSlide,
     Item,
     Project,
     Resource,
+    SimpleContentBlock,
     SimplePage,
     SiteReport,
     Tag,
+    Topic,
     Transcription,
     UserAssetTagCollection,
 )
 from ..views import ReportCampaignView
 from .actions import (
+    anonymize_action,
     publish_action,
     publish_item_action,
+    reopen_asset_action,
     unpublish_action,
     unpublish_item_action,
 )
 from .filters import AcceptedFilter, RejectedFilter, SubmittedFilter
+from .forms import (
+    AdminItemImportForm,
+    BleachedDescriptionAdminForm,
+    SimpleContentBlockAdminForm,
+)
+
+
+class ProjectListFilter(MultipleChoiceListFilter):
+    title = "Project"
+
+    def lookups(self, request, model_admin):
+        choices = Project.objects.values_list("pk", "title")
+        return tuple(choices)
+
+
+class AssetProjectListFilter(ProjectListFilter):
+    parameter_name = "item__project__in"
+
+
+class ItemProjectListFilter(ProjectListFilter):
+    parameter_name = "project__in"
 
 
 class ConcordiaUserAdmin(UserAdmin):
@@ -74,7 +102,7 @@ class ConcordiaUserAdmin(UserAdmin):
         )
 
     transcription_count.admin_order_field = "transcription__count"
-    actions = (export_users_as_csv, export_users_as_excel)
+    actions = (anonymize_action, export_users_as_csv, export_users_as_excel)
 
 
 admin.site.unregister(User)
@@ -104,6 +132,8 @@ class CustomListDisplayFieldsMixin:
 
 @admin.register(Campaign)
 class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
+    form = BleachedDescriptionAdminForm
+
     list_display = (
         "title",
         "short_description",
@@ -134,7 +164,7 @@ class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
             ),
             path(
                 "exportBagIt/<path:campaign_slug>",
-                exporter_views.ExportCampaignToBagit.as_view(),
+                exporter_views.ExportCampaignToBagIt.as_view(),
                 name=f"{app_label}_{model_name}_export-bagit",
             ),
             path(
@@ -149,26 +179,30 @@ class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
 
 @admin.register(Resource)
 class ResourceAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
-    list_display = ("campaign", "sequence", "title", "resource_url")
+    list_display = ("campaign", "topic", "sequence", "title", "resource_url")
+    list_display_links = ("campaign", "topic", "sequence", "title")
+
+
+@admin.register(Topic)
+class TopicAdmin(admin.ModelAdmin):
+    form = BleachedDescriptionAdminForm
+
+    list_display = ("id", "title", "slug")
+    list_display_links = ("id", "title", "slug")
+    prepopulated_fields = {"slug": ("title",)}
 
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
+    form = BleachedDescriptionAdminForm
+
     # todo: add foreignKey link for campaign
-    list_display = (
-        "id",
-        "title",
-        "slug",
-        "category",
-        "campaign",
-        "truncated_metadata",
-        "published",
-    )
+    list_display = ("id", "title", "slug", "campaign", "published")
 
     list_display_links = ("id", "title", "slug")
     prepopulated_fields = {"slug": ("title",)}
     search_fields = ["title", "campaign__title"]
-    list_filter = ("published", "category", "campaign")
+    list_filter = ("published", "topics", "campaign")
 
     actions = (publish_action, unpublish_action)
 
@@ -251,7 +285,13 @@ class ItemAdmin(admin.ModelAdmin):
         "project__campaign__title",
         "project__title",
     ]
-    list_filter = ("published", "project__campaign", "project")
+
+    list_filter = (
+        "published",
+        "project__topics",
+        "project__campaign",
+        ItemProjectListFilter,
+    )
 
     actions = (publish_item_action, unpublish_item_action)
 
@@ -270,7 +310,9 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         "published",
         "transcription_status",
         "item_id",
+        "year",
         "sequence",
+        "difficulty",
         "truncated_media_url",
         "media_type",
         "truncated_metadata",
@@ -285,19 +327,33 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         "item__item_id",
     ]
     list_filter = (
-        "published",
-        "item__project__campaign",
-        "item__project",
-        "media_type",
         "transcription_status",
+        "published",
+        "item__project__topics",
+        "item__project__campaign",
+        AssetProjectListFilter,
+        "media_type",
     )
-    actions = (publish_action, unpublish_action)
+
+    actions = (
+        publish_action,
+        reopen_asset_action,
+        unpublish_action,
+        export_to_csv_action,
+        export_to_excel_action,
+    )
     autocomplete_fields = ("item",)
     ordering = ("item__item_id", "sequence")
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         return qs.select_related("item").order_by("item__item_id", "sequence")
+
+    def lookup_allowed(self, key, value):
+        if key in ("item__project__id__exact"):
+            return True
+        else:
+            return super().lookup_allowed(key, value)
 
     def item_id(self, obj):
         return obj.item.item_id
@@ -389,16 +445,37 @@ class TranscriptionAdmin(admin.ModelAdmin):
         "text",
     )
 
+    actions = (export_to_csv_action, export_to_excel_action)
+
     def truncated_text(self, obj):
         return truncatechars(obj.text, 100)
 
     truncated_text.short_description = "Text"
 
 
+@admin.register(SimpleContentBlock)
+class SimpleContentBlockAdmin(admin.ModelAdmin):
+    form = SimpleContentBlockAdminForm
+
+    list_display = ("slug", "created_on", "updated_on")
+    readonly_fields = ("created_on", "updated_on")
+
+    fieldsets = (
+        (None, {"fields": ("created_on", "updated_on", "slug")}),
+        ("Body", {"classes": ("markdown-preview",), "fields": ("body",)}),
+    )
+
+
+@admin.register(CarouselSlide)
+class CarouselSlideAdmin(admin.ModelAdmin):
+    list_display = ("headline", "published", "ordering")
+    readonly_fields = ("created_on", "updated_on")
+
+
 @admin.register(SimplePage)
 class SimplePageAdmin(admin.ModelAdmin):
     list_display = ("path", "title", "created_on", "updated_on")
-    readonly_fields = ("path", "created_on", "updated_on")
+    readonly_fields = ("created_on", "updated_on")
 
     fieldsets = (
         (None, {"fields": ("created_on", "updated_on", "path", "title")}),
@@ -408,9 +485,9 @@ class SimplePageAdmin(admin.ModelAdmin):
 
 @admin.register(SiteReport)
 class SiteReportAdmin(admin.ModelAdmin):
-    list_display = ("created_on", "campaign")
+    list_display = ("created_on", "campaign", "topic")
 
-    list_filter = ("campaign",)
+    list_filter = ("campaign", "topic")
 
     def export_to_csv(self, request, queryset):
         return export_to_csv_action(
@@ -428,6 +505,7 @@ class SiteReportAdmin(admin.ModelAdmin):
         "created",
         "user",
         "campaign",
+        "topic",
         "project",
         "item",
         "asset",

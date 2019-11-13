@@ -65,7 +65,7 @@ same package versions which you used during development.
 Instead of doing `docker-compose up` as above, instead start everything except the app:
 
 ```bash
-$ docker-compose up -d db rabbit importer
+$ docker-compose up -d db redis importer
 ```
 
 This will run the database in a container to ensure that it always matches the
@@ -84,7 +84,7 @@ virtualenv environment:
     -   `postgresql`
     -   `node` & `npm` for the front-end tools
 
-1.  Ensure that you have Python 3.6 or later installed
+1.  Ensure that you have Python 3.7 or later installed
 
 1.  Install [pipenv](https://docs.pipenv.org/) either using a tool like
     [Homebrew](https://brew.sh) (`brew install pipenv`) or using `pip`:
@@ -127,6 +127,19 @@ virtualenv environment:
     $ pipenv run ./manage.py migrate
     ```
 
+1.  In another terminal, start Gulp to watch for changes to the SCSS files and
+    compile them to CSS:
+
+    ```bash
+    $ npx gulp
+    ```
+
+    If you only want to compile them a single time without live updates:
+
+    ```bash
+    $ npx gulp build
+    ```
+
 1.  Start the development server:
 
     ```bash
@@ -135,7 +148,7 @@ virtualenv environment:
 
 #### Import Data
 
-Once the database, rabbitMQ service, importer and the application
+Once the database, redis service, importer and the application
 are running, you're ready to import data.
 First, [create a Django admin user](https://docs.djangoproject.com/en/2.1/intro/tutorial02/#creating-an-admin-user)
 and log in as that user.
@@ -158,10 +171,9 @@ $ dot -Tsvg <(pipenv run ./manage.py graph_models concordia importer) -o concord
 
 ### Installing front-end tools
 
-1. Use a package manager such as Yarn or NPM to install our development tools:
+1. Use NPM to install our development tools:
 
     ```bash
-    $ yarn install --dev
     $ npm install
     ```
 
@@ -179,18 +191,17 @@ catching low-hanging fruit and regressions. You run aXe against a development
 server by giving it one or more URLs:
 
 ```bash
-$ yarn run axe --show-errors http://localhost:8000/
-$ pipenv run ./manage.py print_frontend_test_urls | xargs yarn run axe --show-errors
+$ npx axe --show-errors http://localhost:8000/
+$ pipenv run ./manage.py print_frontend_test_urls | xargs npx axe --show-errors
 ```
 
 ### Static Image Compression
 
-The `concordia/static/img` directory has a Makefile which will run an
-[imagemin](http://github.com/imagemin/imagemin)-based toolchain. Use of other
-tools such as [ImageOptim](https://github.com/ImageOptim/ImageOptim) may yield
-better results at the expensive of portability and is encouraged at least for
-comparison purposes.
+When you update any of the files under `concordia/static/img`, please use an
+optimizer such as [ImageOptim](https://imageoptim.com) to losslessly compress
+JPEG, PNG, SVG, etc. files.
 
 ```bash
-$ make -C concordia/static/img/
+$ brew cask install imageoptim
+$ open -a ImageOptim concordia/static/img/
 ```

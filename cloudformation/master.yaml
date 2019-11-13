@@ -1,16 +1,16 @@
 ---
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 Description: >
 
-    This template deploys a VPC, with a pair of public and private subnets spread 
-    across two Availabilty Zones. It deploys an Internet Gateway, with a default 
-    route on the public subnets. It deploys a pair of NAT Gateways (one in each AZ), 
+    This template deploys a VPC, with a pair of public and private subnets spread
+    across two Availabilty Zones. It deploys an Internet Gateway, with a default
+    route on the public subnets. It deploys a pair of NAT Gateways (one in each AZ),
     and default routes for them in the private subnets.
 
     It then deploys a Fargate ECS cluster distributed across multiple
-    Availability Zones. 
+    Availability Zones.
 
-    Finally, it deploys crowd ECS services from containers published in 
+    Finally, it deploys crowd ECS services from containers published in
     Amazon EC2 Container Registry (Amazon ECR).
 Mappings:
     EnvironmentMapping:
@@ -19,54 +19,62 @@ Mappings:
             test: 2
             stage: 2
             prod: 0
+            cftest2: 0
         AvailabilityZone2Map:
             dev: 1
             test: 3
             stage: 3
             prod: 1
+            cftest2: 1
         VPCCIDRMap:
             dev: 10.192.0.0/16
             test: 10.193.0.0/16
             stage: 10.194.0.0/16
             prod: 10.195.0.0/16
+            cftest2: 10.196.0.0/16
         PublicSubnet1CIDRMap:
             dev: 10.192.10.0/24
             test: 10.193.10.0/24
             stage: 10.194.10.0/24
             prod: 10.195.10.0/24
+            cftest2: 10.196.10.0/24
         PublicSubnet2CIDRMap:
             dev: 10.192.11.0/24
             test: 10.193.11.0/24
             stage: 10.194.11.0/24
             prod: 10.195.11.0/24
+            cftest2: 10.196.11.0/24
         PrivateSubnet1CIDRMap:
             dev: 10.192.20.0/24
             test: 10.193.20.0/24
             stage: 10.194.20.0/24
             prod: 10.195.20.0/24
+            cftest2: 10.196.20.0/24
         PrivateSubnet2CIDRMap:
             dev: 10.192.21.0/24
             test: 10.193.21.0/24
             stage: 10.194.21.0/24
             prod: 10.195.21.0/24
+            cftest2: 10.196.21.0/24
         S3BucketNameMap:
             dev: crowd-dev-content
             test: crowd-test-content
             stage: crowd-stage-content
             prod: crowd-content
+            cftest2: crowd-dev-content
         ExportS3BucketNameMap:
             dev: crowd-dev-export
             test: crowd-test-export
             stage: crowd-stage-export
             prod: crowd-export
+            cftest2: crowd-dev-export
 
 Parameters:
-
     ConcordiaVersion:
         Description: which version of the docker images to deploy
         Type: String
         Default: latest
-    
+
     EnvName:
         Description: which type of environment we are setting up
         Type: String
@@ -75,15 +83,16 @@ Parameters:
             - "test"
             - "stage"
             - "prod"
+            - "cftest2"
 
     FullEnvironmentName:
         Type: String
         Description: Full name of deployment environment
         AllowedValues:
-            - 'development'
-            - 'test'
-            - 'staging'
-            - 'production'
+            - "development"
+            - "test"
+            - "staging"
+            - "production"
 
     CanonicalHostName:
         Description: the canonical host name for this environment
@@ -92,32 +101,69 @@ Parameters:
             - "crowd-dev.loc.gov"
             - "crowd-test.loc.gov"
             - "crowd-stage.loc.gov"
-            - "crowd-prod.loc.gov"
             - "crowd.loc.gov"
-            
-Resources:
 
+    DjangoKeyId:
+        Type: String
+        Description: unique ID appended to end of DjangoSecretKey ARN in secrets manager
+
+    DbSecretId:
+        Type: String
+        Description: unique ID appended to end of DB password ARN in secrets manager
+
+Resources:
     VPC:
         Type: AWS::CloudFormation::Stack
         Properties:
-#            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/vpc.yaml" ]]
+            #            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/vpc.yaml" ]]
             TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/vpc.yaml"
             Parameters:
-                EnvironmentName:    !Ref AWS::StackName
-                VpcCIDR:            !FindInMap [EnvironmentMapping, VPCCIDRMap, !Ref EnvName]
-                PublicSubnet1CIDR:  !FindInMap [EnvironmentMapping, PublicSubnet1CIDRMap, !Ref EnvName]
-                PublicSubnet2CIDR:  !FindInMap [EnvironmentMapping, PublicSubnet2CIDRMap, !Ref EnvName]
-                PrivateSubnet1CIDR: !FindInMap [EnvironmentMapping, PrivateSubnet1CIDRMap, !Ref EnvName]
-                PrivateSubnet2CIDR: !FindInMap [EnvironmentMapping, PrivateSubnet2CIDRMap, !Ref EnvName]
-                AvailabilityZone1:  !FindInMap [EnvironmentMapping, AvailabilityZone1Map, !Ref EnvName]
-                AvailabilityZone2:  !FindInMap [EnvironmentMapping, AvailabilityZone2Map, !Ref EnvName]
+                EnvironmentName: !Ref AWS::StackName
+                VpcCIDR:
+                    !FindInMap [EnvironmentMapping, VPCCIDRMap, !Ref EnvName]
+                PublicSubnet1CIDR:
+                    !FindInMap [
+                        EnvironmentMapping,
+                        PublicSubnet1CIDRMap,
+                        !Ref EnvName,
+                    ]
+                PublicSubnet2CIDR:
+                    !FindInMap [
+                        EnvironmentMapping,
+                        PublicSubnet2CIDRMap,
+                        !Ref EnvName,
+                    ]
+                PrivateSubnet1CIDR:
+                    !FindInMap [
+                        EnvironmentMapping,
+                        PrivateSubnet1CIDRMap,
+                        !Ref EnvName,
+                    ]
+                PrivateSubnet2CIDR:
+                    !FindInMap [
+                        EnvironmentMapping,
+                        PrivateSubnet2CIDRMap,
+                        !Ref EnvName,
+                    ]
+                AvailabilityZone1:
+                    !FindInMap [
+                        EnvironmentMapping,
+                        AvailabilityZone1Map,
+                        !Ref EnvName,
+                    ]
+                AvailabilityZone2:
+                    !FindInMap [
+                        EnvironmentMapping,
+                        AvailabilityZone2Map,
+                        !Ref EnvName,
+                    ]
 
     NetworkACL:
         Type: AWS::CloudFormation::Stack
         Properties:
-#            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/network-acl.yaml" ]]
+            #            TemplateURL: !Join [ "/", [ !Ref BasePath, "/infrastructure/network-acl.yaml" ]]
             TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/network-acl.yaml"
-            Parameters: 
+            Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
                 PublicSubnet1: !GetAtt VPC.Outputs.PublicSubnet1
@@ -129,7 +175,7 @@ Resources:
         Type: AWS::CloudFormation::Stack
         Properties:
             TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/security-groups.yaml"
-            Parameters: 
+            Parameters:
                 EnvironmentName: !Ref AWS::StackName
                 VPC: !GetAtt VPC.Outputs.VPC
 
@@ -138,7 +184,8 @@ Resources:
         Properties:
             TemplateURL: "https://s3.amazonaws.com/crowd-deployment/infrastructure/rds.yaml"
             Parameters:
-                DbPassword: !Sub '{{resolve:secretsmanager:crowd/${EnvName}/DB/MasterUserPassword:SecretString:password}}'
+                DbUsername: !Sub "{{resolve:secretsmanager:crowd/${EnvName}/DB/MasterUserPassword:SecretString:username}}"
+                DbPassword: !Sub "{{resolve:secretsmanager:crowd/${EnvName}/DB/MasterUserPassword:SecretString:password}}"
                 DatabaseSecurityGroup: !GetAtt SecurityGroups.Outputs.DatabaseSecurityGroup
                 PrivateSubnet1: !GetAtt VPC.Outputs.PrivateSubnet1
                 PrivateSubnet2: !GetAtt VPC.Outputs.PrivateSubnet2
@@ -172,11 +219,22 @@ Resources:
                 CanonicalHostName: !Ref CanonicalHostName
                 DatabaseEndpoint: !GetAtt RDS.Outputs.DatabaseHostName
                 FullEnvironmentName: !Ref FullEnvironmentName
-                S3BucketName: !FindInMap [EnvironmentMapping, S3BucketNameMap, !Ref EnvName]
-                ExportS3BucketName: !FindInMap [EnvironmentMapping, ExportS3BucketNameMap, !Ref EnvName]
+                DjangoKeyId: !Ref DjangoKeyId
+                DbSecretId: !Ref DbSecretId
+                S3BucketName:
+                    !FindInMap [
+                        EnvironmentMapping,
+                        S3BucketNameMap,
+                        !Ref EnvName,
+                    ]
+                ExportS3BucketName:
+                    !FindInMap [
+                        EnvironmentMapping,
+                        ExportS3BucketNameMap,
+                        !Ref EnvName,
+                    ]
 
 Outputs:
-
-    WebsiteServiceUrl: 
+    WebsiteServiceUrl:
         Description: The URL endpoint for the concordia website service
-        Value: !Join ["", [ !GetAtt FargateCluster.Outputs.LoadBalancerUrl, "/" ]]
+        Value: !Join ["", [!GetAtt FargateCluster.Outputs.LoadBalancerUrl, "/"]]
