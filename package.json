@@ -26,7 +26,7 @@
         "openseadragon": "^2.4.0",
         "popper.js": "^1.15.0",
         "redom": "^3.18.0",
-        "remarkable": "^1.7.1",
+        "remarkable": "^2.0.0",
         "screenfull": "^3.3.3",
         "split.js": "^1.5.10",
         "urijs": "^1.19.1"

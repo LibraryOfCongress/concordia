@@ -1,4 +1,4 @@
-/* global Remarkable CodeMirror prettier prettierPlugins django */
+/* global CodeMirror prettier prettierPlugins django */
 
 (function($) {
     window.setupCodeMirror = function(textarea, flavor) {
@@ -9,7 +9,7 @@
                 break;
 
             case 'markdown':
-                var md = new Remarkable({html: true});
+                var md = new window.remarkable.Remarkable({html: true});
                 converter = input => md.render(input);
                 break;
             default:
