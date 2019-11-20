@@ -92,7 +92,7 @@ class TagCollectionDocument(Document):
             ),
         }
     )
-    user = fields.ObjectField(properties={"username": fields.TextField()})
+    user = fields.ObjectField(properties={"id": fields.IntegerField()})
 
     class Django:
         model = UserAssetTagCollection
@@ -140,8 +140,8 @@ class TranscriptionDocument(Document):
             ),
         }
     )
-    user = fields.ObjectField(properties={"username": fields.KeywordField()})
-    reviewed_by = fields.ObjectField(properties={"username": fields.KeywordField()})
+    user = fields.ObjectField(properties={"id": fields.IntegerField()})
+    reviewed_by = fields.ObjectField(properties={"id": fields.IntegerField()})
     supersedes = fields.ObjectField(properties={"id": fields.IntegerField()})
 
     class Django:
