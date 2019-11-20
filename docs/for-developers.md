@@ -119,16 +119,16 @@ virtualenv environment:
     You can use this to set any other values you want to customize, such as
     `POSTGRESQL_PW` or `POSTGRESQL_HOST`.
 
-##### Start the application server
+##### Install front end
 
-1.  Apply any database migrations:
+1. Use NPM to install our development tools:
 
     ```bash
-    $ pipenv run ./manage.py migrate
+    $ npm install
     ```
 
-1.  In another terminal, start Gulp to watch for changes to the SCSS files and
-    compile them to CSS:
+1. In another terminal, start Gulp to watch for changes to the SCSS files and
+   compile them to CSS:
 
     ```bash
     $ npx gulp
@@ -138,6 +138,20 @@ virtualenv environment:
 
     ```bash
     $ npx gulp build
+    ```
+
+1)  Collect Django static files:
+
+    ```bash
+    $ pipenv run ./manage.py collectstatic
+    ```
+
+##### Start the application server
+
+1.  Apply any database migrations:
+
+    ```bash
+    $ pipenv run ./manage.py migrate
     ```
 
 1.  Start the development server:
@@ -167,15 +181,9 @@ django-extensions `graph_models` command:
 $ dot -Tsvg <(pipenv run ./manage.py graph_models concordia importer) -o concordia.svg
 ```
 
-## Front-End Tools
+## Other Front-End Tools
 
-### Installing front-end tools
-
-1. Use NPM to install our development tools:
-
-    ```bash
-    $ npm install
-    ```
+### Public-facing URLs
 
 1. If you need a list of public-facing URLs for testing, there's a management
    command which may be helpful:
