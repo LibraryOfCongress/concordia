@@ -18,7 +18,7 @@ class UserDocument(Document):
 
     class Django:
         model = User
-        fields = ["last_login", "date_joined", "username", "is_active"]
+        fields = ["last_login", "date_joined", "is_active", "id"]
 
     def prepare_transcription_count(self, instance):
         qs = User.objects.filter(id=instance.id).annotate(Count("transcription"))
