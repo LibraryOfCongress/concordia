@@ -829,15 +829,23 @@ export class AssetViewer {
         this.submitActionCallback(action, data);
     }
 
-    setMode(newMode) {
-        if (this.mode == newMode) return;
+    setMode(newMode, assetStatus) {
+        if (this.mode == newMode && this.el.dataset.assetStatus == assetStatus)
+            return;
 
         this.mode = newMode;
+        this.el.dataset.assetStatus = assetStatus;
 
-        if (this.mode == 'review') {
+        if (
+            this.mode == 'review' &&
+            (assetStatus == 'submitted' || assetStatus == 'completed')
+        ) {
             this.activeView = this.reviewerView;
             conditionalUnmount(this.transcriberView);
-        } else {
+        } else if (this.mode == 'review' && assetStatus == 'in_progress') {
+            this.activeView = this.transcriberView;
+            conditionalUnmount(this.reviewerView);
+        } else if (this.mode == 'transcribe') {
             this.activeView = this.transcriberView;
             conditionalUnmount(this.reviewerView);
         }
@@ -854,9 +862,7 @@ export class AssetViewer {
     }
 
     update({editable: {canEdit, reason}, mode, asset}) {
-        this.setMode(mode);
-
-        this.el.dataset.assetStatus = asset.status;
+        this.setMode(mode, asset.status);
 
         this.activeView.update(asset);
 

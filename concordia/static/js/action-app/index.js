@@ -703,10 +703,7 @@ export class ActionApp {
             reason = 'This page has been completed';
             canEdit = false;
         } else if (this.currentMode == 'review') {
-            if (asset.status != 'submitted') {
-                reason = 'This page has not been submitted for review';
-                canEdit = false;
-            } else if (!this.config.currentUser) {
+            if (!this.config.currentUser) {
                 reason = 'Anonymous users cannot review';
                 canEdit = false;
             } else if (!asset.latest_transcription) {
