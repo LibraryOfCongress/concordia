@@ -18,7 +18,7 @@ class UserDocument(Document):
 
     class Django:
         model = User
-        fields = ["last_login", "date_joined", "username", "is_active"]
+        fields = ["last_login", "date_joined", "is_active", "id"]
 
     def prepare_transcription_count(self, instance):
         qs = User.objects.filter(id=instance.id).annotate(Count("transcription"))
@@ -92,7 +92,7 @@ class TagCollectionDocument(Document):
             ),
         }
     )
-    user = fields.ObjectField(properties={"username": fields.TextField()})
+    user = fields.ObjectField(properties={"id": fields.IntegerField()})
 
     class Django:
         model = UserAssetTagCollection
@@ -140,8 +140,8 @@ class TranscriptionDocument(Document):
             ),
         }
     )
-    user = fields.ObjectField(properties={"username": fields.KeywordField()})
-    reviewed_by = fields.ObjectField(properties={"username": fields.KeywordField()})
+    user = fields.ObjectField(properties={"id": fields.IntegerField()})
+    reviewed_by = fields.ObjectField(properties={"id": fields.IntegerField()})
     supersedes = fields.ObjectField(properties={"id": fields.IntegerField()})
 
     class Django:
