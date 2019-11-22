@@ -199,7 +199,7 @@ class RawMetadataDisplay {
         );
     }
     update(data) {
-        // TODO: JSON key sorting, highlighting, URL -> link conversion, etc.?
+        // TODO: [2020-10-31] JSON key sorting, highlighting, URL -> link conversion, etc.?
         this.el.querySelector('pre').textContent = !data
             ? ''
             : JSON.stringify(data, null, 2);
@@ -296,7 +296,7 @@ class AssetListItem {
         if (thumbnailUrl.includes('/iiif/')) {
             // We'll adjust the IIIF image URLs not to return something larger
             // than we're going to use:
-            // FIXME: this is an ugly, ugly kludge and should be replaced with something like https://www.npmjs.com/package/iiif-image
+            // FIXME: [2020-10-31] this is an ugly, ugly kludge and should be replaced with something like https://www.npmjs.com/package/iiif-image
             thumbnailUrl = thumbnailUrl.replace(
                 /([/]iiif[/].+[/]full)[/]pct:100[/](0[/]default.jpg)$/,
                 '$1/!512,512/$2'
@@ -321,7 +321,7 @@ class AssetListItem {
 
 export class AssetList extends List {
     constructor(callbacks) {
-        // TODO: refactor this into a utility function
+        // TODO: [2020-10-31] refactor this into a utility function
         let assetListObserver = new IntersectionObserver(entries => {
             entries
                 .filter(i => i.isIntersecting)
@@ -813,7 +813,7 @@ export class AssetViewer {
             this.submitAction.bind(this)
         );
 
-        // FIXME: finish pulling in the rest of this structure so it will all be created normally
+        // FIXME: [2020-10-31] finish pulling in the rest of this structure so it will all be created normally
         let element = document.getElementById('asset-viewer');
         element.remove();
         this.el = element;
