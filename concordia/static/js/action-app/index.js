@@ -710,6 +710,7 @@ export class ActionApp {
             } else if (
                 asset.latest_transcription.submitted_by ==
                     this.config.currentUser &&
+                this.assetViewer.activeView &&
                 this.assetViewer.activeView.viewType == 'review'
             ) {
                 reason =
