@@ -709,7 +709,8 @@ export class ActionApp {
                 canEdit = false;
             } else if (
                 asset.latest_transcription.submitted_by ==
-                this.config.currentUser
+                    this.config.currentUser &&
+                this.assetViewer.activeView.viewType == 'review'
             ) {
                 reason =
                     'Transcriptions must be reviewed by a different person';

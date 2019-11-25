@@ -466,6 +466,8 @@ class ConditionalToolbar {
 
 class ReviewerView {
     constructor(submitActionCallback) {
+        this.viewType = 'review';
+
         this.el = html(
             'div#reviewer-column.d-flex.flex-column.flex-grow-1',
             (this.displayText = html('#review-transcription-text')),
@@ -528,6 +530,8 @@ class ReviewerView {
 
 class TranscriberView {
     constructor(submitActionCallback) {
+        this.viewType = 'transcribe';
+
         this.toolbar = new ConditionalToolbar([
             html(
                 'div',
