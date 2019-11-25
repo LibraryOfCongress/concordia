@@ -218,8 +218,6 @@ export class ActionApp {
             button.classList.toggle('active', button.value == newMode);
         });
 
-        $$('.current-mode').forEach(i => (i.textContent = this.currentMode));
-
         this.updateAvailableCampaignFilters();
 
         if (modeChanged) {

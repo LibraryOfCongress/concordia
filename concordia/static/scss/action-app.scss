@@ -223,24 +223,6 @@ main {
     #asset-list-toggle {
         display: none;
     }
-    &[data-mode='transcribe'] {
-        #reviewer-column {
-            display: none;
-        }
-        #transcriber-column {
-            display: flex;
-        }
-    }
-
-    &[data-mode='review'] {
-        #transcriber-column {
-            display: none;
-        }
-
-        #reviewer-column {
-            display: flex;
-        }
-    }
 
     &[data-open-asset-id] {
         #editor-main {
@@ -443,10 +425,6 @@ main {
 [readonly] + label,
 [disabled] + label {
     color: #999;
-}
-
-.current-mode {
-    text-transform: capitalize;
 }
 
 .metadata-list .title {

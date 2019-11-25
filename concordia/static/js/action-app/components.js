@@ -434,7 +434,7 @@ export class AssetList extends List {
 
 class ConditionalToolbar {
     /*
-        This provides the behaviour used on the reviewer and asset views’
+        This provides the behavior used on the reviewer and asset views’
         toolbars which either display buttons or a message explaining why you
         cannot make changes
     */
@@ -655,7 +655,12 @@ class TranscriberView {
                     this.currentAsset.latest_transcription.id ==
                         asset.latest_transcription.id;
 
-                if (noUpstream || upstreamUnchanged) {
+                let assetStatusUnchanged =
+                    this.currentAsset.status &&
+                    asset.status &&
+                    this.currentAsset.status == asset.status;
+
+                if (noUpstream || upstreamUnchanged || assetStatusUnchanged) {
                     // eslint-disable-next-line no-console
                     console.debug(
                         `Asset ${asset.id} unmodified; not resetting transcription view`
