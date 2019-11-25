@@ -223,6 +223,24 @@ main {
     #asset-list-toggle {
         display: none;
     }
+    &[data-mode='transcribe'] {
+        #reviewer-column {
+            display: none;
+        }
+        #transcriber-column {
+            display: flex;
+        }
+    }
+
+    &[data-mode='review'] {
+        #transcriber-column {
+            display: flex;
+        }
+
+        #reviewer-column {
+            display: flex;
+        }
+    }
 
     &[data-open-asset-id] {
         #editor-main {
