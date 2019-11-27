@@ -1051,9 +1051,16 @@ def submit_transcription(request, *, pk):
     transcription = get_object_or_404(Transcription, pk=pk)
 
     if (
-        transcription.submitted
-        or transcription.asset.transcription_set.filter(supersedes=pk).exists()
-    ):
+        transcription.submitted and not transcription.rejected
+    ) or transcription.asset.transcription_set.filter(supersedes=pk).exists():
+        logger.warning(
+            (
+                "Submit for review was attempted for invalid transcription "
+                "record: submitted: %s pk: %d"
+            ),
+            str(transcription.submitted),
+            pk,
+        )
         return JsonResponse(
             {
                 "error": "This transcription has already been updated."
@@ -1063,6 +1070,7 @@ def submit_transcription(request, *, pk):
         )
 
     transcription.submitted = now()
+    transcription.rejected = None
     transcription.full_clean()
     transcription.save()
 
