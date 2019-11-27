@@ -391,7 +391,7 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         """
         asset = create_asset()
 
-        stale_reservation = AssetTranscriptionReservation(
+        stale_reservation = AssetTranscriptionReservation(  # nosec
             asset=asset, reservation_token="stale"
         )
         stale_reservation.full_clean()
