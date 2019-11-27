@@ -589,7 +589,7 @@
         "transcribe", true);
     {% elif user.is_authenticated %}
         attemptToReserveAsset("{% url 'reserve-asset' asset.pk %}",
-        "{% url 'transcriptions:redirect-to-next-reviewable-asset' asset.item.project.campaign.slug %}",
+        "{% url 'transcriptions:redirect-to-next-reviewable-campaign-asset' asset.item.project.campaign.slug %}",
         "review", true);
     {% endif %}
 </script>
