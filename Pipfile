@@ -9,7 +9,7 @@ celery = {extras = ["redis"],version = ">=4.3.0"}
 "boto3" = ">=1.9.16"
 botocore = '>=1.12.16'
 requests = "*"
-Django = "~=2.2.4"
+Django = "~=2.2.8"
 Pillow = "*"
 bagit = "*"
 django-registration = "*"
