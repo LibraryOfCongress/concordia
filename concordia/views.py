@@ -272,7 +272,14 @@ class ConcordiaLoginView(RatelimitMixin, LoginView):
 
     def form_valid(self, form):
         self.request.session["captcha_validation_time"] = time()
-        return super().form_valid(form)
+
+        user = form.get_user()
+
+        if user.is_staff:
+            logger.info("Staff tried to log in using the regular form, redirecting")
+            return redirect(reverse("admin:login"))
+        else:
+            return super().form_valid(form)
 
 
 def ratelimit_view(request, exception=None):
