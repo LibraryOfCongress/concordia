@@ -839,8 +839,12 @@ export class AssetViewer {
     }
 
     setMode(newMode, assetStatus) {
-        if (this.mode == newMode && this.el.dataset.assetStatus == assetStatus)
+        if (
+            this.mode == newMode &&
+            this.el.dataset.assetStatus == assetStatus
+        ) {
             return;
+        }
 
         this.mode = newMode;
         this.el.dataset.assetStatus = assetStatus;
