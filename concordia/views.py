@@ -277,7 +277,7 @@ class ConcordiaLoginView(RatelimitMixin, LoginView):
 
         if user.is_staff:
             logger.info("Staff tried to log in using the regular form, redirecting")
-            return redirect("/admin/login")
+            return redirect(reverse("admin:login"))
         else:
             return super().form_valid(form)
 
