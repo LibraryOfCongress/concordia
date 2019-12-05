@@ -18,7 +18,7 @@ export class ActionApp {
             Rough flow:
             1. Get references for key DOM elements
             2. Fetch the list of assets
-            3. TODO: register for updates
+            3. TODO: [2020-10-31] register for updates
             4. Populate the DOM with assets
             5. Add filtering & scroll event handlers
         */
@@ -218,8 +218,6 @@ export class ActionApp {
             button.classList.toggle('active', button.value == newMode);
         });
 
-        $$('.current-mode').forEach(i => (i.textContent = this.currentMode));
-
         this.updateAvailableCampaignFilters();
 
         if (modeChanged) {
@@ -233,7 +231,7 @@ export class ActionApp {
         let sidebar = $('#action-app-sidebar');
         let buttons = $$('.btn', sidebar);
 
-        let hideTarget = (button, force) => {
+        function hideTarget(button, force) {
             let target = document.getElementById(button.dataset.target);
             let hidden = target.toggleAttribute('hidden', force);
             button.classList.toggle('active', !hidden);
@@ -243,7 +241,7 @@ export class ActionApp {
                 button.setAttribute('aria-selected', 'false');
             }
             return hidden;
-        };
+        }
 
         let toggleButton = clickedButton => {
             let hidden = hideTarget(clickedButton);
@@ -443,7 +441,7 @@ export class ActionApp {
                     o.value = campaign.id;
                     o.textContent = campaign.title;
 
-                    // TODO: this does not handle the case where the last assets of a campaign change state while the app is open
+                    // TODO: [2020-10-31] this does not handle the case where the last assets of a campaign change state while the app is open
                     Object.entries(campaign.asset_stats).forEach(
                         ([key, value]) => {
                             o.dataset[key] = value;
@@ -479,7 +477,7 @@ export class ActionApp {
                     o.value = topic.id;
                     o.textContent = topic.title;
 
-                    // TODO: this does not handle the case where the last assets of a topic change state while the app is open
+                    // TODO: [2020-10-31] this does not handle the case where the last assets of a topic change state while the app is open
                     Object.entries(topic.asset_stats).forEach(
                         ([key, value]) => {
                             o.dataset[key] = value;
@@ -703,10 +701,7 @@ export class ActionApp {
             reason = 'This page has been completed';
             canEdit = false;
         } else if (this.currentMode == 'review') {
-            if (asset.status != 'submitted') {
-                reason = 'This page has not been submitted for review';
-                canEdit = false;
-            } else if (!this.config.currentUser) {
+            if (!this.config.currentUser) {
                 reason = 'Anonymous users cannot review';
                 canEdit = false;
             } else if (!asset.latest_transcription) {
@@ -714,7 +709,9 @@ export class ActionApp {
                 canEdit = false;
             } else if (
                 asset.latest_transcription.submitted_by ==
-                this.config.currentUser
+                    this.config.currentUser &&
+                this.assetViewer.activeView &&
+                this.assetViewer.activeView.viewType == 'review'
             ) {
                 reason =
                     'Transcriptions must be reviewed by a different person';
@@ -1046,7 +1043,7 @@ export class ActionApp {
 
         let reservationURL = this.assetReservationURL;
 
-        // TODO: record the last asset renewal time and don't renew early unless the ID has changed
+        // TODO: [2020-10-31] record the last asset renewal time and don't renew early unless the ID has changed
 
         jQuery
             .ajax({
@@ -1122,6 +1119,11 @@ export class ActionApp {
         );
     }
 
+    updateViews() {
+        this.updateViewer();
+        this.updateAssetList();
+    }
+
     handleAction(action, data) {
         if (!this.openAssetId) {
             console.error(
@@ -1136,11 +1138,6 @@ export class ActionApp {
         let currentTranscriptionId = asset.latest_transcription
             ? asset.latest_transcription.id
             : null;
-
-        let updateViews = () => {
-            this.updateViewer();
-            this.updateAssetList();
-        };
 
         this.touchedAssetIDs.add(asset.id);
 
@@ -1164,7 +1161,7 @@ export class ActionApp {
                         sent: responseData.sent,
                         status: responseData.asset.status
                     });
-                    updateViews();
+                    this.updateViews();
                 });
                 break;
             case 'submit':
@@ -1180,7 +1177,7 @@ export class ActionApp {
                         sent: responseData.sent,
                         status: responseData.asset.status
                     });
-                    updateViews();
+                    this.updateViews();
                 });
                 break;
             case 'accept':
@@ -1195,7 +1192,7 @@ export class ActionApp {
                         status: responseData.asset.status
                     });
                     this.releaseAsset();
-                    updateViews();
+                    this.updateViews();
                 });
                 break;
             case 'reject':
@@ -1220,7 +1217,7 @@ export class ActionApp {
         this.actionSubmissionInProgress = true;
         this.updateViewer();
 
-        // FIXME: switch to Fetch API once we add CSRF compatibility
+        // FIXME: [2020-10-31] switch to Fetch API once we add CSRF compatibility
         return jQuery
             .ajax({
                 url: url,

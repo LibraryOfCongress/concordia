@@ -199,7 +199,7 @@ class RawMetadataDisplay {
         );
     }
     update(data) {
-        // TODO: JSON key sorting, highlighting, URL -> link conversion, etc.?
+        // TODO: [2020-10-31] JSON key sorting, highlighting, URL -> link conversion, etc.?
         this.el.querySelector('pre').textContent = !data
             ? ''
             : JSON.stringify(data, null, 2);
@@ -296,7 +296,7 @@ class AssetListItem {
         if (thumbnailUrl.includes('/iiif/')) {
             // We'll adjust the IIIF image URLs not to return something larger
             // than we're going to use:
-            // FIXME: this is an ugly, ugly kludge and should be replaced with something like https://www.npmjs.com/package/iiif-image
+            // FIXME: [2020-10-31] this is an ugly, ugly kludge and should be replaced with something like https://www.npmjs.com/package/iiif-image
             thumbnailUrl = thumbnailUrl.replace(
                 /([/]iiif[/].+[/]full)[/]pct:100[/](0[/]default.jpg)$/,
                 '$1/!512,512/$2'
@@ -321,7 +321,7 @@ class AssetListItem {
 
 export class AssetList extends List {
     constructor(callbacks) {
-        // TODO: refactor this into a utility function
+        // TODO: [2020-10-31] refactor this into a utility function
         let assetListObserver = new IntersectionObserver(entries => {
             entries
                 .filter(i => i.isIntersecting)
@@ -434,7 +434,7 @@ export class AssetList extends List {
 
 class ConditionalToolbar {
     /*
-        This provides the behaviour used on the reviewer and asset views’
+        This provides the behavior used on the reviewer and asset views’
         toolbars which either display buttons or a message explaining why you
         cannot make changes
     */
@@ -466,6 +466,8 @@ class ConditionalToolbar {
 
 class ReviewerView {
     constructor(submitActionCallback) {
+        this.viewType = 'review';
+
         this.el = html(
             'div#reviewer-column.d-flex.flex-column.flex-grow-1',
             (this.displayText = html('#review-transcription-text')),
@@ -528,6 +530,8 @@ class ReviewerView {
 
 class TranscriberView {
     constructor(submitActionCallback) {
+        this.viewType = 'transcribe';
+
         this.toolbar = new ConditionalToolbar([
             html(
                 'div',
@@ -655,7 +659,12 @@ class TranscriberView {
                     this.currentAsset.latest_transcription.id ==
                         asset.latest_transcription.id;
 
-                if (noUpstream || upstreamUnchanged) {
+                let assetStatusUnchanged =
+                    this.currentAsset.status &&
+                    asset.status &&
+                    this.currentAsset.status == asset.status;
+
+                if (noUpstream || upstreamUnchanged || assetStatusUnchanged) {
                     // eslint-disable-next-line no-console
                     console.debug(
                         `Asset ${asset.id} unmodified; not resetting transcription view`
@@ -813,7 +822,7 @@ export class AssetViewer {
             this.submitAction.bind(this)
         );
 
-        // FIXME: finish pulling in the rest of this structure so it will all be created normally
+        // FIXME: [2020-10-31] finish pulling in the rest of this structure so it will all be created normally
         let element = document.getElementById('asset-viewer');
         element.remove();
         this.el = element;
@@ -829,15 +838,27 @@ export class AssetViewer {
         this.submitActionCallback(action, data);
     }
 
-    setMode(newMode) {
-        if (this.mode == newMode) return;
+    setMode(newMode, assetStatus) {
+        if (
+            this.mode == newMode &&
+            this.el.dataset.assetStatus == assetStatus
+        ) {
+            return;
+        }
 
         this.mode = newMode;
+        this.el.dataset.assetStatus = assetStatus;
 
-        if (this.mode == 'review') {
+        if (
+            this.mode == 'review' &&
+            (assetStatus == 'submitted' || assetStatus == 'completed')
+        ) {
             this.activeView = this.reviewerView;
             conditionalUnmount(this.transcriberView);
-        } else {
+        } else if (this.mode == 'review' && assetStatus == 'in_progress') {
+            this.activeView = this.transcriberView;
+            conditionalUnmount(this.reviewerView);
+        } else if (this.mode == 'transcribe') {
             this.activeView = this.transcriberView;
             conditionalUnmount(this.reviewerView);
         }
@@ -854,9 +875,7 @@ export class AssetViewer {
     }
 
     update({editable: {canEdit, reason}, mode, asset}) {
-        this.setMode(mode);
-
-        this.el.dataset.assetStatus = asset.status;
+        this.setMode(mode, asset.status);
 
         this.activeView.update(asset);
 

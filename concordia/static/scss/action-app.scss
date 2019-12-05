@@ -234,7 +234,7 @@ main {
 
     &[data-mode='review'] {
         #transcriber-column {
-            display: none;
+            display: flex;
         }
 
         #reviewer-column {
@@ -443,10 +443,6 @@ main {
 [readonly] + label,
 [disabled] + label {
     color: #999;
-}
-
-.current-mode {
-    text-transform: capitalize;
 }
 
 .metadata-list .title {
