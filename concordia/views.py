@@ -1050,9 +1050,10 @@ def save_transcription(request, *, asset_pk):
 def submit_transcription(request, *, pk):
     transcription = get_object_or_404(Transcription, pk=pk)
 
-    if (
-        transcription.submitted and not transcription.rejected
-    ) or transcription.asset.transcription_set.filter(supersedes=pk).exists():
+    is_superseded = transcription.asset.transcription_set.filter(supersedes=pk).exists()
+    is_already_submitted = transcription.submitted and not transcription.rejected
+
+    if is_already_submitted or is_superseded:
         logger.warning(
             (
                 "Submit for review was attempted for invalid transcription "
