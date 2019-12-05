@@ -1561,22 +1561,11 @@ def redirect_to_next_reviewable_asset(request):
     )
 
 
-@never_cache
-@atomic
-def redirect_to_next_transcribable_asset(request):
-    campaign = Campaign.objects.published().order_by("ordering")[0]
-    project_slug = request.GET.get("project", "")
-    item_id = request.GET.get("item", "")
-    asset_id = request.GET.get("asset", 0)
-
-    if not request.user.is_authenticated:
-        user = get_anonymous_user()
-    else:
-        user = request.user
-
+def find_transcribable_assets(campaign_counter, project_slug, item_id, asset_id):
+    campaigns = Campaign.objects.published().order_by("ordering")
     potential_assets = Asset.objects.select_for_update(skip_locked=True, of=("self",))
     potential_assets = potential_assets.filter(
-        item__project__campaign=campaign,
+        item__project__campaign=campaigns[campaign_counter],
         item__project__published=True,
         item__published=True,
         published=True,
@@ -1584,6 +1573,31 @@ def redirect_to_next_transcribable_asset(request):
     potential_assets = filter_and_order_transcribable_assets(
         potential_assets, project_slug, item_id, asset_id
     )
+
+    return potential_assets
+
+
+@never_cache
+@atomic
+def redirect_to_next_transcribable_asset(request):
+
+    if not request.user.is_authenticated:
+        user = get_anonymous_user()
+    else:
+        user = request.user
+
+    project_slug = request.GET.get("project", "")
+    item_id = request.GET.get("item", "")
+    asset_id = request.GET.get("asset", 0)
+
+    potential_assets = None
+    campaign_counter = 0
+
+    while not potential_assets:
+        potential_assets = find_transcribable_assets(
+            campaign_counter, project_slug, item_id, asset_id
+        )
+        campaign_counter = campaign_counter + 1
 
     return redirect_to_next_asset(
         potential_assets, "transcribe", request, project_slug, user
