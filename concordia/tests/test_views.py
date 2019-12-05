@@ -391,7 +391,7 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         """
         asset = create_asset()
 
-        stale_reservation = AssetTranscriptionReservation(
+        stale_reservation = AssetTranscriptionReservation(  # nosec
             asset=asset, reservation_token="stale"
         )
         stale_reservation.full_clean()
@@ -789,7 +789,7 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
 
         resp = self.client.get(
             reverse(
-                "transcriptions:redirect-to-next-transcribable-asset",
+                "transcriptions:redirect-to-next-transcribable-campaign-asset",
                 kwargs={"campaign_slug": campaign.slug},
             )
         )
@@ -802,7 +802,7 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
 
         resp = self.client.get(
             reverse(
-                "transcriptions:redirect-to-next-transcribable-asset",
+                "transcriptions:redirect-to-next-transcribable-campaign-asset",
                 kwargs={"campaign_slug": campaign.slug},
             )
         )
@@ -815,7 +815,7 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
 
         resp = self.client.get(
             reverse(
-                "transcriptions:redirect-to-next-transcribable-asset",
+                "transcriptions:redirect-to-next-transcribable-campaign-asset",
                 kwargs={"campaign_slug": campaign.slug},
             )
         )
@@ -831,7 +831,7 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
             "%s?project=%s"
             % (
                 reverse(
-                    "transcriptions:redirect-to-next-transcribable-asset",
+                    "transcriptions:redirect-to-next-transcribable-campaign-asset",
                     kwargs={"campaign_slug": campaign.slug},
                 ),
                 project.slug,
@@ -878,7 +878,7 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         self.assertRedirects(
             self.client.get(
                 reverse(
-                    "transcriptions:redirect-to-next-transcribable-asset",
+                    "transcriptions:redirect-to-next-transcribable-campaign-asset",
                     kwargs={"campaign_slug": campaign.slug},
                 ),
                 {"project": project.slug, "item": item.item_id, "asset": asset.pk},
@@ -893,7 +893,7 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         self.assertRedirects(
             self.client.get(
                 reverse(
-                    "transcriptions:redirect-to-next-transcribable-asset",
+                    "transcriptions:redirect-to-next-transcribable-campaign-asset",
                     kwargs={"campaign_slug": campaign.slug},
                 ),
                 {"project": project.slug, "item": item.item_id, "asset": asset.pk},
@@ -908,7 +908,7 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         self.assertRedirects(
             self.client.get(
                 reverse(
-                    "transcriptions:redirect-to-next-transcribable-asset",
+                    "transcriptions:redirect-to-next-transcribable-campaign-asset",
                     kwargs={"campaign_slug": campaign.slug},
                 ),
                 {"project": project.slug, "item": item.item_id, "asset": asset.pk},
@@ -923,7 +923,7 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         self.assertRedirects(
             self.client.get(
                 reverse(
-                    "transcriptions:redirect-to-next-transcribable-asset",
+                    "transcriptions:redirect-to-next-transcribable-campaign-asset",
                     kwargs={"campaign_slug": campaign.slug},
                 ),
                 {"project": project.slug, "item": item.item_id, "asset": asset.pk},

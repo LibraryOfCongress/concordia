@@ -9,7 +9,7 @@ CLASSIFIERS = """\
 Environment :: Web Environment
 Framework :: Django
 Programming Language :: Python
-Programming Language :: Python :: 3.7
+Programming Language :: Python :: 3.8
 """.splitlines()
 
 with open("README.md", "r") as f:

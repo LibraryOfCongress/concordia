@@ -80,7 +80,6 @@ main {
 .concordia-app-input-group-text {
     font-weight: bold;
     border: none;
-    background-color: none;
 }
 
 .concordia-app-range-min {
@@ -235,7 +234,7 @@ main {
 
     &[data-mode='review'] {
         #transcriber-column {
-            display: none;
+            display: flex;
         }
 
         #reviewer-column {
@@ -444,10 +443,6 @@ main {
 [readonly] + label,
 [disabled] + label {
     color: #999;
-}
-
-.current-mode {
-    text-transform: capitalize;
 }
 
 .metadata-list .title {

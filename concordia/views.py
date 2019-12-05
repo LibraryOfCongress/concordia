@@ -272,7 +272,14 @@ class ConcordiaLoginView(RatelimitMixin, LoginView):
 
     def form_valid(self, form):
         self.request.session["captcha_validation_time"] = time()
-        return super().form_valid(form)
+
+        user = form.get_user()
+
+        if user.is_staff:
+            logger.info("Staff tried to log in using the regular form, redirecting")
+            return redirect(reverse("admin:login"))
+        else:
+            return super().form_valid(form)
 
 
 def ratelimit_view(request, exception=None):
@@ -855,7 +862,7 @@ class AssetDetailView(APIDetailView):
 
         ctx["next_open_asset_url"] = "%s?%s" % (
             reverse(
-                "transcriptions:redirect-to-next-transcribable-asset",
+                "transcriptions:redirect-to-next-transcribable-campaign-asset",
                 kwargs={"campaign_slug": project.campaign.slug},
             ),
             urlencode(
@@ -865,7 +872,7 @@ class AssetDetailView(APIDetailView):
 
         ctx["next_review_asset_url"] = "%s?%s" % (
             reverse(
-                "transcriptions:redirect-to-next-reviewable-asset",
+                "transcriptions:redirect-to-next-reviewable-campaign-asset",
                 kwargs={"campaign_slug": project.campaign.slug},
             ),
             urlencode(
@@ -1050,10 +1057,18 @@ def save_transcription(request, *, asset_pk):
 def submit_transcription(request, *, pk):
     transcription = get_object_or_404(Transcription, pk=pk)
 
-    if (
-        transcription.submitted
-        or transcription.asset.transcription_set.filter(supersedes=pk).exists()
-    ):
+    is_superseded = transcription.asset.transcription_set.filter(supersedes=pk).exists()
+    is_already_submitted = transcription.submitted and not transcription.rejected
+
+    if is_already_submitted or is_superseded:
+        logger.warning(
+            (
+                "Submit for review was attempted for invalid transcription "
+                "record: submitted: %s pk: %d"
+            ),
+            str(transcription.submitted),
+            pk,
+        )
         return JsonResponse(
             {
                 "error": "This transcription has already been updated."
@@ -1063,6 +1078,7 @@ def submit_transcription(request, *, pk):
         )
 
     transcription.submitted = now()
+    transcription.rejected = None
     transcription.full_clean()
     transcription.save()
 
@@ -1517,7 +1533,66 @@ def filter_and_order_reviewable_assets(
 
 @never_cache
 @atomic
-def redirect_to_next_reviewable_asset(request, *, campaign_slug):
+def redirect_to_next_reviewable_asset(request):
+    campaign = Campaign.objects.published().order_by("ordering")[0]
+    project_slug = request.GET.get("project", "")
+    item_id = request.GET.get("item", "")
+    asset_id = request.GET.get("asset", 0)
+
+    if not request.user.is_authenticated:
+        user = get_anonymous_user()
+    else:
+        user = request.user
+
+    potential_assets = Asset.objects.select_for_update(skip_locked=True, of=("self",))
+    potential_assets = potential_assets.filter(
+        item__project__campaign=campaign,
+        item__project__published=True,
+        item__published=True,
+        published=True,
+    )
+
+    potential_assets = filter_and_order_reviewable_assets(
+        potential_assets, project_slug, item_id, asset_id, request.user.pk
+    )
+
+    return redirect_to_next_asset(
+        potential_assets, "review", request, project_slug, user
+    )
+
+
+@never_cache
+@atomic
+def redirect_to_next_transcribable_asset(request):
+    campaign = Campaign.objects.published().order_by("ordering")[0]
+    project_slug = request.GET.get("project", "")
+    item_id = request.GET.get("item", "")
+    asset_id = request.GET.get("asset", 0)
+
+    if not request.user.is_authenticated:
+        user = get_anonymous_user()
+    else:
+        user = request.user
+
+    potential_assets = Asset.objects.select_for_update(skip_locked=True, of=("self",))
+    potential_assets = potential_assets.filter(
+        item__project__campaign=campaign,
+        item__project__published=True,
+        item__published=True,
+        published=True,
+    )
+    potential_assets = filter_and_order_transcribable_assets(
+        potential_assets, project_slug, item_id, asset_id
+    )
+
+    return redirect_to_next_asset(
+        potential_assets, "transcribe", request, project_slug, user
+    )
+
+
+@never_cache
+@atomic
+def redirect_to_next_reviewable_campaign_asset(request, *, campaign_slug):
     campaign = get_object_or_404(Campaign.objects.published(), slug=campaign_slug)
     project_slug = request.GET.get("project", "")
     item_id = request.GET.get("item", "")
@@ -1547,7 +1622,7 @@ def redirect_to_next_reviewable_asset(request, *, campaign_slug):
 
 @never_cache
 @atomic
-def redirect_to_next_transcribable_asset(request, *, campaign_slug):
+def redirect_to_next_transcribable_campaign_asset(request, *, campaign_slug):
     campaign = get_object_or_404(Campaign.objects.published(), slug=campaign_slug)
     project_slug = request.GET.get("project", "")
     item_id = request.GET.get("item", "")

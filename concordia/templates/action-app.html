@@ -7,7 +7,7 @@
 {% load concordia_sharing_tags %}
 {% load concordia_simple_content_blocks %}
 
-{% block title %}By the People{% endblock title %}
+{% block title %}{% endblock title %}
 
 {% block head_content %}
     <link rel="canonical" href="https://{{ request.get_host }}{{ request.path }}">
@@ -50,11 +50,11 @@
         }
     </script>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/split.js/1.5.10/split.min.js" integrity="sha256-voAP1SafVzHBtUVXxB6ZuQB5mIZu6h0veHhhzwXcthQ=" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/openseadragon/2.4.0/openseadragon.min.js" integrity="sha256-grVJpqgDSGBx1q2llmvY+J5zU9hEHbO7UvftFY2bK1w=" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/URI.js/1.19.1/URI.min.js" integrity="sha256-D3tK9Rf/fVqBf6YDM8Q9NCNf/6+F2NOKnYSXHcl0keU=" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/URI.js/1.19.1/URITemplate.min.js" integrity="sha256-LIw9ihYxDmHK4yHsnaQuuH6vWWX+2PtEYqj/EcEJNfg=" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/array-sort-by@1.2.1/dist/sort-by.min.js" integrity="sha256-ZSshktBu+pa8OKW2vtaIS5DmOklB9+p7OMhVwhjJAlA=" crossorigin="anonymous"></script>
+    <script src="{% static 'split.js/dist/split.min.js' %}"></script>
+    <script src="{% static 'openseadragon/build/openseadragon/openseadragon.min.js' %}"></script>
+    <script src="{% static 'urijs/src/URI.min.js' %}"></script>
+    <script src="{% static 'urijs/src/URITemplate.js' %}"></script>
+    <script src="{% static 'array-sort-by/dist/sort-by.min.js' %}"></script>
 
     {{ app_parameters|json_script:"app-parameters" }}
 
@@ -88,10 +88,6 @@
                 <span class="fas fa-home"></span>
                 <span class="sr-only">Home</span>
             </a>
-            <ul class="navbar-nav flex-grow-1 text-center justify-content-center">
-                <li class="nav-item navbar-text current-mode font-weight-bold text-white text-uppercase">
-                </li>
-            </ul>
             <ul class="navbar-nav justify-content-end">
                 <li class="nav-item">
                     <button hidden id="go-fullscreen" class="btn btn-link text-white" data-target="body" title="Go fullscreen">

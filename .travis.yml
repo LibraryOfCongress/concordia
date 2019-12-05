@@ -7,12 +7,11 @@ dist: xenial
 sudo: required
 addons:
     sonarcloud:
-        organization: "libraryofcongress"
+        organization: 'libraryofcongress'
 python:
-    - "3.7"
-    - "3.8"
-    - "3.8-dev"
-    - "nightly"
+    - '3.8'
+    - '3.8-dev'
+    - 'nightly'
 matrix:
     allow_failures:
         - python:
@@ -21,6 +20,9 @@ matrix:
 services:
     - postgresql
     - redis-server
+cache:
+    directories:
+        - $HOME/.cache/pre-commit
 before_script:
     - psql -c 'create database concordia;' -U postgres
 install:
@@ -39,5 +41,6 @@ script:
     - git fetch --unshallow
     - git diff --name-only $TRAVIS_COMMIT_RANGE | xargs pipenv run pre-commit run --files
     - pipenv run safety check
+    - npx --quiet csstree-validator static/css/
 after_success:
     - 'if [[ $TRAVIS_PYTHON_VERSION == "3.7" ]]; then git fetch --unshallow --tags; pipenv run coverage xml; sonar-scanner -Dsonar.projectVersion="$(pipenv run python setup.py --version)"; coveralls; fi'

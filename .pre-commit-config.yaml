@@ -42,7 +42,7 @@ repos:
       rev: 1.18.2
       hooks:
           - id: prettier
-            files: \.(css|less|scss|ts|tsx|graphql|gql|json|js|jsx|md)$
+            files: \.(css|less|scss|ts|tsx|graphql|gql|json|js|jsx|md|yaml|yml)$
     - repo: https://github.com/pre-commit/mirrors-eslint
       rev: v6.6.0
       hooks:

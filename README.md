@@ -7,6 +7,8 @@ Concordia is a platform developed by the Library of Congress (LOC) for crowdsour
 
 The application asks volunteers to transcribe and tag digitized images of manuscripts and typed materials from the Library’s collections that cannot be translated well by optical character recognition (OCR). All transcriptions are made by volunteers and reviewed by volunteers. The completed transcriptions will be returned to back to [loc.gov](https://www.loc.gov/) to improve search, readability, and access to handwritten and typed documents.
 
+Concordia is a user-centered project centering the principles of trust and approachability. [Read our full design principles here](https://github.com/LibraryOfCongress/concordia/blob/master/docs/design-principles.md).
+
 Concordia leverages the [LOC’s API](https://libraryofcongress.github.io/data-exploration/) to pull materials from the Library's catalog. In future developments, completed transcriptions will be exported as a single document, in bulk by item, project or campaign, or as BagIt bags.
 
 _Concordia and crowd.loc.gov are supported by the National Digital Library Trust Fund._

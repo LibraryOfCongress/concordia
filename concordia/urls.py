@@ -59,13 +59,13 @@ tx_urlpatterns = (
         # n.b. this must be above project-detail to avoid being seen as a project slug:
         path(
             "<uslug:campaign_slug>/next-transcribable-asset/",
-            views.redirect_to_next_transcribable_asset,
-            name="redirect-to-next-transcribable-asset",
+            views.redirect_to_next_transcribable_campaign_asset,
+            name="redirect-to-next-transcribable-campaign-asset",
         ),
         path(
             "<uslug:campaign_slug>/next-reviewable-asset/",
-            views.redirect_to_next_reviewable_asset,
-            name="redirect-to-next-reviewable-asset",
+            views.redirect_to_next_reviewable_campaign_asset,
+            name="redirect-to-next-reviewable-campaign-asset",
         ),
         path(
             "<uslug:campaign_slug>/<uslug:slug>/",
@@ -115,6 +115,16 @@ urlpatterns = [
         "topics/<uslug:topic_slug>/next-reviewable-asset/",
         views.redirect_to_next_reviewable_topic_asset,
         name="redirect-to-next-reviewable-topic-asset",
+    ),
+    path(
+        "next-transcribable-asset/",
+        views.redirect_to_next_transcribable_asset,
+        name="redirect-to-next-transcribable-asset",
+    ),
+    path(
+        "next-reviewable-asset/",
+        views.redirect_to_next_reviewable_asset,
+        name="redirect-to-next-reviewable-asset",
     ),
     path("campaigns/", include(tx_urlpatterns, namespace="transcriptions")),
     path("reserve-asset/<int:asset_pk>/", views.reserve_asset, name="reserve-asset"),

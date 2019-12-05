@@ -114,7 +114,7 @@ Resources:
             NetworkMode: awsvpc
             RequiresCompatibilities:
                 - FARGATE
-            ExecutionRoleArn: !Sub 'arn:aws:iam::${AWS::AccountId}:role/role/ConcordiaTaskRole'
+            ExecutionRoleArn: !Sub 'arn:aws:iam::${AWS::AccountId}:role/ConcordiaServerTaskRole-crowd-test'
             TaskRoleArn: !Sub 'arn:aws:iam::${AWS::AccountId}:role/ConcordiaServerTaskRole-crowd-test'
             Volumes:
                 - Name: images_volume
