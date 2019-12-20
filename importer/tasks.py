@@ -298,6 +298,7 @@ def redownload_image_task(self, asset_pk):
     that asset
     """
     asset = Asset.objects.get(pk=asset_pk)
+    logger.info("Redownloading %s to %s", asset.download_url, asset.get_absolute_url())
     return download_asset(self, None, asset)
 
 
