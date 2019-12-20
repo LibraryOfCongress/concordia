@@ -290,6 +290,25 @@ def import_collection(self, import_job):
     retry_jitter=True,
     retry_kwargs={"max_retries": 12},
 )
+def redownload_image_task(self, asset_pk):
+    """
+    Given a tile.loc.gov URL and an existing asset object,
+    download the image from tile.loc.gov and save it
+    to asset storage, replacing any existing image for
+    that asset
+    """
+    asset = Asset.objects.get(pk=asset_pk)
+    return download_asset(self, None, asset)
+
+
+@task(
+    bind=True,
+    autoretry_for=(HTTPError,),
+    retry_backoff=True,
+    retry_backoff_max=8 * 60 * 60,
+    retry_jitter=True,
+    retry_kwargs={"max_retries": 12},
+)
 def create_item_import_task(self, import_job_pk, item_url):
     """
     Create an ImportItem record using the provided import job and URL by
@@ -454,23 +473,33 @@ def download_asset_task(self, import_asset_pk):
     qs = ImportItemAsset.objects.select_related("import_item__item__project__campaign")
     import_asset = qs.get(pk=import_asset_pk)
 
-    return download_asset(self, import_asset)
+    return download_asset(self, import_asset, None)
 
 
-@update_task_status
-def download_asset(self, import_asset):
+def download_asset(self, import_asset, redownload_asset):
     """
-    Download the URL specified for an ImportItemAsset and save it to working
+    Download the URL specified for an Asset and save it to working
     storage
     """
-
-    item = import_asset.import_item.item
+    if import_asset:
+        item = import_asset.import_item.item
+        download_url = import_asset.url
+        asset = import_asset.asset
+    elif redownload_asset:
+        item = redownload_asset.item
+        download_url = redownload_asset.download_url
+        asset = redownload_asset
+    else:
+        logger.exception(
+            "download_asset was called without an import asset or a redownload asset"
+        )
+        raise
 
     asset_filename = os.path.join(
         item.project.campaign.slug,
         item.project.slug,
         item.item_id,
-        "%d.jpg" % import_asset.sequence_number,
+        "%d.jpg" % asset.sequence,
     )
 
     try:
@@ -478,7 +507,7 @@ def download_asset(self, import_asset):
         # and after that completes successfully will upload it
         # to the defined ASSET_STORAGE.
         with NamedTemporaryFile(mode="x+b") as temp_file:
-            resp = requests.get(import_asset.url, stream=True)
+            resp = requests.get(download_url, stream=True)
             resp.raise_for_status()
 
             for chunk in resp.iter_content(chunk_size=256 * 1024):
@@ -491,8 +520,6 @@ def download_asset(self, import_asset):
             ASSET_STORAGE.save(asset_filename, temp_file)
 
     except Exception:
-        logger.exception(
-            "Unable to download %s to %s", import_asset.url, asset_filename
-        )
+        logger.exception("Unable to download %s to %s", download_url, asset_filename)
 
         raise

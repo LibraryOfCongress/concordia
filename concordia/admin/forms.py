@@ -38,6 +38,12 @@ class AdminProjectBulkImportForm(forms.Form):
     )
 
 
+class AdminRedownloadImagesForm(forms.Form):
+    spreadsheet_file = forms.FileField(
+        required=True, label="Spreadsheet containing the URLs of assets to re-download",
+    )
+
+
 class BleachedDescriptionAdminForm(forms.ModelForm):
     def clean_description(self):
         return bleach.clean(
