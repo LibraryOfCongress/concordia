@@ -25,20 +25,50 @@
     <div id="content-main">
         {% if assets_to_download %}
             <h2>Affected Assets</h2>
-            <ul>
+            <table>
+                <tr>
+                <td></td>
+                <td>Asset admin</td>
+                <td>Asset download URL</td>
+                <td>Asset public site</td>
+                <td>Publication status</td>
+                <td>Asset Status</td>
+                <td>Correct asset for this transcription</td>
+                <td>Transcription text</td>
+                </tr>
                 <!-- display the affected asset ID with link to asset -->
                 {% for asset in assets_to_download %}
-                    <li>
+                    <tr>
+                        <td>
+                            {{ forloop.counter }}
+                        </td>
+                        <td>
                         <a target="_blank" href="{% url 'admin:concordia_asset_change' object_id=asset.pk %}">{{ asset }}</a>
-                    </li>
+                        </td>
+                        <td>{{ asset.download_url }}</td>
+                        <td><a href="{{ asset.get_absolute_url }}">{{ asset.get_absolute_url }}</a></td>
+                        <td>{{ asset.published }}</td>
+                        <td>{{ asset.transcription_status }}</td>
+                        <td>
+                        {% with asset_pk=asset.pk %}
+                        {% if asset_pk in asset_map %}
+                            {% for key, value in asset_map.items %}
+                                {{ key }}:{{ value }} <br>
+                            {% endfor %}
+                        {% endif %}
+                        {% endwith %}
+                        </td>
+                        <td><pre>{{ asset.latest_transcription.text }}</pre></td>
+                    </tr>
                 {% endfor %}
-            </ul>
+            </table>
         {% else %}
             <p>
-                The spreadsheet must follow this convention:
-
+                The spreadsheet should have two columns headed "download_url" and "real_file_url".
+                The "download_url" column contains the asset download URLs that need to be replaced in asset storage.
+                The optional "real_file_url" column also contains asset download URLs, but these are the correct download URLs for
+                the images that are being replaced.
             </p>
-
             <div>
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}

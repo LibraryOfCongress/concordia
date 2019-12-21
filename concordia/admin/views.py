@@ -31,6 +31,7 @@ def redownload_images_view(request):
 
         if form.is_valid():
             context["assets_to_download"] = assets_to_download = []
+            context["asset_map"] = asset_map = {}
 
             rows = slurp_excel(request.FILES["spreadsheet_file"])
             required_fields = [
@@ -45,6 +46,8 @@ def redownload_images_view(request):
                     continue
 
                 download_url = row["download_url"]
+                # optional real_file_url data
+                real_file_url = row["real_file_url"]
 
                 if not download_url:
                     if not any(row.values()):
@@ -72,9 +75,31 @@ def redownload_images_view(request):
                         redownload_image_task.delay(asset.pk)
                         assets_to_download.append(asset)
 
-                    messages.info(
-                        request, f"Queued download for {download_url}",
-                    )
+                        if real_file_url:
+                            correct_assets = Asset.objects.filter(
+                                download_url=real_file_url
+                            )
+                            for correct_asset in correct_assets:
+                                messages.info(
+                                    request,
+                                    f"The correct asset for the transcription currently belonging to {asset.slug} is {correct_asset.slug}",
+                                )
+                                correct_asset_details = {
+                                    "slug": correct_asset.slug,
+                                    "pk": correct_asset.pk,
+                                }
+                                asset_map.update({asset.pk: correct_asset_details})
+
+                    if not assets:
+                        messages.warning(
+                            request,
+                            f"Couldn't find a matching asset for download URL {download_url}",
+                        )
+
+                    else:
+                        messages.info(
+                            request, f"Queued download for {download_url}",
+                        )
                 except Exception as exc:
                     messages.error(
                         request,
