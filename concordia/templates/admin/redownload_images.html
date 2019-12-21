@@ -49,14 +49,9 @@
                         <td><a href="{{ asset.get_absolute_url }}">{{ asset.get_absolute_url }}</a></td>
                         <td>{{ asset.published }}</td>
                         <td>{{ asset.transcription_status }}</td>
-                        <td>
-                        {% with asset_pk=asset.pk %}
-                        {% if asset_pk in asset_map %}
-                            {% for key, value in asset_map.items %}
-                                {{ key }}:{{ value }} <br>
-                            {% endfor %}
+                        <td>{% if asset.correct_asset_pk %}
+                        <a target="_blank" href="{% url 'admin:concordia_asset_change' object_id=asset.correct_asset_pk %}">{{ asset.correct_asset_slug }}</a>
                         {% endif %}
-                        {% endwith %}
                         </td>
                         <td><pre>{{ asset.latest_transcription.text }}</pre></td>
                     </tr>

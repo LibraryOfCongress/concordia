@@ -31,7 +31,6 @@ def redownload_images_view(request):
 
         if form.is_valid():
             context["assets_to_download"] = assets_to_download = []
-            context["asset_map"] = asset_map = {}
 
             rows = slurp_excel(request.FILES["spreadsheet_file"])
             required_fields = [
@@ -73,27 +72,21 @@ def redownload_images_view(request):
                     assets = Asset.objects.filter(download_url=download_url)
                     for asset in assets:
                         redownload_image_task.delay(asset.pk)
-                        assets_to_download.append(asset)
 
                         if real_file_url:
                             correct_assets = Asset.objects.filter(
                                 download_url=real_file_url
                             )
                             for correct_asset in correct_assets:
-                                messages.info(
-                                    request,
-                                    f"The correct asset for the transcription currently belonging to {asset.slug} is {correct_asset.slug}",
-                                )
-                                correct_asset_details = {
-                                    "slug": correct_asset.slug,
-                                    "pk": correct_asset.pk,
-                                }
-                                asset_map.update({asset.pk: correct_asset_details})
+                                asset.correct_asset_pk = correct_asset.pk
+                                asset.correct_asset_slug = correct_asset.slug
+
+                        assets_to_download.append(asset)
 
                     if not assets:
                         messages.warning(
                             request,
-                            f"Couldn't find a matching asset for download URL {download_url}",
+                            f"No matching asset for download URL {download_url}",
                         )
 
                     else:
