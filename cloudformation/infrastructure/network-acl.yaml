@@ -50,7 +50,6 @@ Resources:
             RuleAction: allow
             RuleNumber: 100
             NetworkAclId: !Ref NetworkAcl
-
     acl5:
         Type: AWS::EC2::NetworkAclEntry
         Properties:
@@ -66,6 +65,14 @@ Resources:
             Protocol: -1
             RuleAction: deny
             RuleNumber: 11
+            NetworkAclId: !Ref NetworkAcl
+    acl6b:
+        Type: AWS::EC2::NetworkAclEntry
+        Properties:
+            CidrBlock: 140.147.236.213/32
+            Protocol: -1
+            RuleAction: deny
+            RuleNumber: 12
             NetworkAclId: !Ref NetworkAcl
     acl7:
         Type: AWS::EC2::NetworkAclEntry
