@@ -1,0 +1,88 @@
+{% extends "admin/base.html" %}
+
+{% block messages %}
+    {% comment %} This is displayed elswhere {% endcomment %}
+{% endblock messages %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <style>
+        .message-error, .message-warning {
+            font-weight: bold;
+        }
+
+        .message-error {
+            color: #dc3545;
+        }
+
+        .message-warning {
+            color: #ffc107;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div id="content-main">
+        {% if assets_to_download %}
+            <h2>Affected Assets</h2>
+            <table>
+                <tr>
+                <td></td>
+                <td>Asset admin</td>
+                <td>Asset download URL</td>
+                <td>Asset public site</td>
+                <td>Publication status</td>
+                <td>Asset Status</td>
+                <td>Correct asset for this transcription</td>
+                <td>Transcription text</td>
+                </tr>
+                <!-- display the affected asset ID with link to asset -->
+                {% for asset in assets_to_download %}
+                    <tr>
+                        <td>
+                            {{ forloop.counter }}
+                        </td>
+                        <td>
+                        <a target="_blank" href="{% url 'admin:concordia_asset_change' object_id=asset.pk %}">{{ asset }}</a>
+                        </td>
+                        <td>{{ asset.download_url }}</td>
+                        <td><a href="{{ asset.get_absolute_url }}">{{ asset.get_absolute_url }}</a></td>
+                        <td>{{ asset.published }}</td>
+                        <td>{{ asset.transcription_status }}</td>
+                        <td>{% if asset.correct_asset_pk %}
+                        <a target="_blank" href="{% url 'admin:concordia_asset_change' object_id=asset.correct_asset_pk %}">{{ asset.correct_asset_slug }}</a>
+                        {% endif %}
+                        </td>
+                        <td><pre>{{ asset.latest_transcription.text }}</pre></td>
+                    </tr>
+                {% endfor %}
+            </table>
+        {% else %}
+            <p>
+                The spreadsheet should have two columns headed "download_url" and "real_file_url".
+                The "download_url" column contains the asset download URLs that need to be replaced in asset storage.
+                The optional "real_file_url" column also contains asset download URLs, but these are the correct download URLs for
+                the images that are being replaced.
+            </p>
+            <div>
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <div class="submit-row">
+                        <button type="submit">Re-download images</button>
+                    </div>
+                </form>
+            </div>
+        {% endif %}
+
+
+        {% if messages %}
+            <h4>Messages</h4>
+            <ul>
+                {% for message in messages %}
+                    <li class="message {% if message.level >= DEFAULT_MESSAGE_LEVELS.ERROR %}message-error{% elif message.level >= DEFAULT_MESSAGE_LEVELS.WARNING %}message-warning{% endif %}">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+{% endblock content %}

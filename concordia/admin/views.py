@@ -10,11 +10,100 @@ from django.utils.text import slugify
 from django.views.decorators.cache import never_cache
 from tabular_export.core import export_to_csv_response, flatten_queryset
 
-from importer.tasks import import_items_into_project_from_url
+from importer.tasks import import_items_into_project_from_url, redownload_image_task
 from importer.utils.excel import slurp_excel
 
-from ..models import Campaign, Project, SiteReport
-from .forms import AdminProjectBulkImportForm
+from ..models import Asset, Campaign, Project, SiteReport
+from .forms import AdminProjectBulkImportForm, AdminRedownloadImagesForm
+
+
+@never_cache
+@staff_member_required
+@permission_required("concordia.add_item")
+@permission_required("concordia.change_item")
+def redownload_images_view(request):
+    request.current_app = "admin"
+
+    context = {"title": "Redownload Images"}
+
+    if request.method == "POST":
+        form = AdminRedownloadImagesForm(request.POST, request.FILES)
+
+        if form.is_valid():
+            context["assets_to_download"] = assets_to_download = []
+
+            rows = slurp_excel(request.FILES["spreadsheet_file"])
+            required_fields = [
+                "download_url",
+            ]
+            for idx, row in enumerate(rows):
+                missing_fields = [i for i in required_fields if i not in row]
+                if missing_fields:
+                    messages.warning(
+                        request, f"Skipping row {idx}: missing fields {missing_fields}"
+                    )
+                    continue
+
+                download_url = row["download_url"]
+                # optional real_file_url data
+                real_file_url = row["real_file_url"]
+
+                if not download_url:
+                    if not any(row.values()):
+                        # No messages for completely blank rows
+                        continue
+
+                    warning_message = (
+                        f"Skipping row {idx}: the required field "
+                        "download_url is empty"
+                    )
+                    messages.warning(request, warning_message)
+                    continue
+
+                if not download_url.startswith("http"):
+                    messages.warning(
+                        request, f"Skipping unrecognized URL value: {download_url}"
+                    )
+                    continue
+
+                try:
+                    # Use the download_url to look up the related asset.
+                    # Then queue the task to redownload the image file.
+                    assets = Asset.objects.filter(download_url=download_url)
+                    for asset in assets:
+                        redownload_image_task.delay(asset.pk)
+
+                        if real_file_url:
+                            correct_assets = Asset.objects.filter(
+                                download_url=real_file_url
+                            )
+                            for correct_asset in correct_assets:
+                                asset.correct_asset_pk = correct_asset.pk
+                                asset.correct_asset_slug = correct_asset.slug
+
+                        assets_to_download.append(asset)
+
+                    if not assets:
+                        messages.warning(
+                            request,
+                            f"No matching asset for download URL {download_url}",
+                        )
+
+                    else:
+                        messages.info(
+                            request, f"Queued download for {download_url}",
+                        )
+                except Exception as exc:
+                    messages.error(
+                        request,
+                        f"Unhandled error attempting to import {download_url}: {exc}",
+                    )
+    else:
+        form = AdminRedownloadImagesForm()
+
+    context["form"] = form
+
+    return render(request, "admin/redownload_images.html", context)
 
 
 @never_cache
