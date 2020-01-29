@@ -351,6 +351,7 @@ FLAGS = {
     "SIMPLE_CONTENT_BLOCKS": [],
     "CAROUSEL_CMS": [],
     "SEND_WELCOME_EMAIL": [],
+    "DISPLAY_ITEM_DESCRIPTION": [],
 }
 
 ASGI_APPLICATION = "concordia.routing.application"
