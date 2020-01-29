@@ -12,11 +12,13 @@ python:
     - '3.8'
     - '3.8-dev'
     - 'nightly'
-matrix:
+jobs:
     allow_failures:
-        - python:
-              - 3.8-dev
-              - nightly
+        - language: python
+          python: 3.8-dev
+        - language: python
+          python: nightly
+
 services:
     - postgresql
     - redis-server
