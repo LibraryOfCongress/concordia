@@ -1,3 +1,4 @@
+import datetime
 from logging import getLogger
 
 from celery import task
@@ -8,6 +9,7 @@ from more_itertools.more import chunked
 
 from concordia.models import (
     Asset,
+    AssetTranscriptionReservation,
     Campaign,
     Item,
     Project,
@@ -20,6 +22,17 @@ from concordia.models import (
 from concordia.utils import get_anonymous_user
 
 logger = getLogger(__name__)
+
+
+@task
+def release_asset_reservations():
+    right_now = datetime.datetime.now()
+    yesterday = right_now - datetime.timedelta(hours=24)
+    old_reservations = AssetTranscriptionReservation.objects.filter(
+        created_on__lt=yesterday
+    )
+    for reservation in old_reservations:
+        logger.info(reservation)
 
 
 @task
