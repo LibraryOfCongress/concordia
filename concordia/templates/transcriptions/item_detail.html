@@ -3,6 +3,7 @@
 {% load humanize %}
 {% load staticfiles %}
 {% load concordia_media_tags %}
+{% load feature_flags %}
 
 {% block title %}
 {{ item.title }} ({{ campaign.title }}: {{ project.title }})
@@ -20,11 +21,15 @@
 {% endblock breadcrumbs%}
 
 {% block main_content %}
+{% flag_enabled 'DISPLAY_ITEM_DESCRIPTION' as DISPLAY_ITEM_DESCRIPTION %}
+
 <div class="container py-3">
     <div class="row">
         <div class="col-md-10">
             <h1 class="m-3">{{ item.title }}</h1>
-            <div class="m-3 hero-text">{{ item.description|safe }}</div>
+            {% if DISPLAY_ITEM_DESCRIPTION %}
+                <div class="m-3 hero-text">{{ item.description|safe }}</div>
+            {% endif %}
         </div>
         <div class="col-md-2 align-bottom">
             <div class="m-3">
