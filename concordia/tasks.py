@@ -56,8 +56,9 @@ def expire_inactive_asset_reservations():
 def tombstone_old_active_asset_reservations():
     timestamp = datetime.datetime.now()
 
-    cutoff = timestamp - (datetime.timedelta(minutes=5))
-    # hours=settings.TRANSCRIPTION_RESERVATION_TOMBSTONE_HOURS
+    cutoff = timestamp - (
+        datetime.timedelta(hours=settings.TRANSCRIPTION_RESERVATION_TOMBSTONE_HOURS)
+    )
 
     old_reservations = AssetTranscriptionReservation.objects.filter(
         created_on__lt=cutoff, tombstoned__in=(None, False)
@@ -72,8 +73,11 @@ def tombstone_old_active_asset_reservations():
 def delete_old_tombstoned_reservations():
     timestamp = datetime.datetime.now()
 
-    cutoff = timestamp - (datetime.timedelta(minutes=10))
-    # hours=settings.TRANSCRIPTION_RESERVATION_TOMBSTONE_LENGTH_HOURS
+    cutoff = timestamp - (
+        datetime.timedelta(
+            hours=settings.TRANSCRIPTION_RESERVATION_TOMBSTONE_LENGTH_HOURS
+        )
+    )
 
     old_reservations = AssetTranscriptionReservation.objects.filter(
         tombstoned__exact=True, updated_on__lt=cutoff
