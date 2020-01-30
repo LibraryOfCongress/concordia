@@ -35,13 +35,15 @@ def expire_inactive_asset_reservations():
         datetime.timedelta(seconds=2 * settings.TRANSCRIPTION_RESERVATION_SECONDS)
     )
 
-    logger.info("Clearing reservations with last reserve time older than %s" % cutoff)
+    logger.debug("Clearing reservations with last reserve time older than %s" % cutoff)
     expired_reservations = AssetTranscriptionReservation.objects.filter(
         last_reserve_time__lt=cutoff, tombstoned__in=(None, False)
     )
 
     for reservation in expired_reservations:
-        logger.info("Expired reservation with token %s" % reservation.reservation_token)
+        logger.debug(
+            "Expired reservation with token %s" % reservation.reservation_token
+        )
         reservation_released.send(
             sender="reserve_asset",
             asset_pk=reservation.asset.pk,
@@ -61,7 +63,7 @@ def tombstone_old_active_asset_reservations():
         created_on__lt=cutoff, tombstoned__in=(None, False)
     )
     for reservation in old_reservations:
-        logger.info("Tombstoning reservation %s " % reservation.reservation_token)
+        logger.debug("Tombstoning reservation %s " % reservation.reservation_token)
         reservation.tombstoned = True
         reservation.save()
 
@@ -77,7 +79,7 @@ def delete_old_tombstoned_reservations():
         tombstoned__exact=True, updated_on__lt=cutoff
     )
     for reservation in old_reservations:
-        logger.info(
+        logger.debug(
             "Deleting old tombstoned reservation %s" % reservation.reservation_token
         )
         reservation.delete()
