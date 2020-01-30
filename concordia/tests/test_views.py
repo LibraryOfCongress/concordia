@@ -319,9 +319,9 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         # Acquire the reservation: 1 acquire + 1
         # feature flag check + 1 session if not anonymous and using a database:
         if not anonymous and settings.SESSION_ENGINE.endswith("db"):
-            expected_queries = 3
+            expected_queries = 4
         else:
-            expected_queries = 2
+            expected_queries = 3
 
         with self.assertNumQueries(expected_queries):
             resp = self.client.post(reverse("reserve-asset", args=(asset.pk,)))
