@@ -1,7 +1,6 @@
 import json
 import os
 import re
-from datetime import timedelta
 from functools import wraps
 from logging import getLogger
 from operator import attrgetter
@@ -1364,38 +1363,6 @@ def reserve_asset(request, *, asset_pk):
     Returns HTTP 409 when the record is in use
     """
 
-    timestamp = now()
-
-    # First clear old reservations, with a grace period:
-    cutoff = timestamp - (
-        timedelta(seconds=2 * settings.TRANSCRIPTION_RESERVATION_SECONDS)
-    )
-
-    expired_reservations = []
-
-    with connection.cursor() as cursor:
-        rows_to_release = cursor.execute(
-            (
-                "DELETE FROM concordia_assettranscriptionreservation "
-                "WHERE updated_on < %s "
-                "RETURNING asset_id AS asset_pk, reservation_token"
-            ),
-            [cutoff],
-        )
-
-        if rows_to_release:
-            expired_reservations.extend(
-                (row["asset_pk"], row["reservation_token"])
-                for row in rows_to_release.fetchall()
-            )
-
-    for asset_pk, reservation_token in expired_reservations:
-        reservation_released.send(
-            sender="reserve_asset",
-            asset_pk=asset_pk,
-            reservation_token=reservation_token,
-        )
-
     reservation_token = get_or_create_reservation_token(request)
 
     # If the browser is letting us know of a specific reservation release,
@@ -1412,6 +1379,7 @@ def reserve_asset(request, *, asset_pk):
 
         # We'll pass the message to the WebSocket listeners before returning it:
         msg = {"asset_pk": asset_pk, "reservation_token": reservation_token}
+        logger.debug("Releasing reservation with token %s" % reservation_token)
         reservation_released.send(sender="reserve_asset", **msg)
         return JsonResponse(msg)
 
@@ -1423,19 +1391,23 @@ def reserve_asset(request, *, asset_pk):
         cursor.execute(
             """
             INSERT INTO concordia_assettranscriptionreservation AS atr
-                (asset_id, reservation_token, created_on, updated_on)
-                VALUES (%s, %s, current_timestamp, current_timestamp)
-            ON CONFLICT (asset_id) DO UPDATE
-                SET updated_on = current_timestamp
+                (asset_id, reservation_token, tombstoned, created_on,
+                updated_on, last_reserve_time)
+                VALUES (%s, %s, FALSE, current_timestamp,
+                current_timestamp, current_timestamp)
+            ON CONFLICT (asset_id, tombstoned) DO UPDATE
+                SET last_reserve_time = current_timestamp
                 WHERE (
                     atr.asset_id = excluded.asset_id
                     AND atr.reservation_token = excluded.reservation_token
+                    AND atr.tombstoned != TRUE
                 )
             """.strip(),
             [asset_pk, reservation_token],
         )
 
         if cursor.rowcount != 1:
+            logger.debug("Reservation row count %d" % cursor.rowcount)
             return HttpResponse(status=409)
 
     # We'll pass the message to the WebSocket listeners before returning it:

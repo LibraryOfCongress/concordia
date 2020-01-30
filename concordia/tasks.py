@@ -2,6 +2,7 @@ import datetime
 from logging import getLogger
 
 from celery import task
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.management import call_command
 from django.db.models import Count
@@ -19,20 +20,67 @@ from concordia.models import (
     Transcription,
     UserAssetTagCollection,
 )
+from concordia.signals.signals import reservation_released
 from concordia.utils import get_anonymous_user
 
 logger = getLogger(__name__)
 
 
 @task
-def release_asset_reservations():
-    right_now = datetime.datetime.now()
-    yesterday = right_now - datetime.timedelta(hours=24)
+def expire_inactive_asset_reservations():
+    timestamp = datetime.datetime.now()
+
+    # Clear old reservations, with a grace period:
+    cutoff = timestamp - (
+        datetime.timedelta(seconds=2 * settings.TRANSCRIPTION_RESERVATION_SECONDS)
+    )
+
+    logger.info("Clearing reservations with last reserve time older than %s" % cutoff)
+    expired_reservations = AssetTranscriptionReservation.objects.filter(
+        last_reserve_time__lt=cutoff, tombstoned__in=(None, False)
+    )
+
+    for reservation in expired_reservations:
+        logger.info("Expired reservation with token %s" % reservation.reservation_token)
+        reservation_released.send(
+            sender="reserve_asset",
+            asset_pk=reservation.asset.pk,
+            reservation_token=reservation.reservation_token,
+        )
+        reservation.delete()
+
+
+@task
+def tombstone_old_active_asset_reservations():
+    timestamp = datetime.datetime.now()
+
+    cutoff = timestamp - (datetime.timedelta(minutes=5))
+    # hours=settings.TRANSCRIPTION_RESERVATION_TOMBSTONE_HOURS
+
     old_reservations = AssetTranscriptionReservation.objects.filter(
-        created_on__lt=yesterday
+        created_on__lt=cutoff, tombstoned__in=(None, False)
     )
     for reservation in old_reservations:
-        logger.info(reservation)
+        logger.info("Tombstoning reservation %s " % reservation.reservation_token)
+        reservation.tombstoned = True
+        reservation.save()
+
+
+@task
+def delete_old_tombstoned_reservations():
+    timestamp = datetime.datetime.now()
+
+    cutoff = timestamp - (datetime.timedelta(minutes=10))
+    # hours=settings.TRANSCRIPTION_RESERVATION_TOMBSTONE_LENGTH_HOURS
+
+    old_reservations = AssetTranscriptionReservation.objects.filter(
+        tombstoned__exact=True, updated_on__lt=cutoff
+    )
+    for reservation in old_reservations:
+        logger.info(
+            "Deleting old tombstoned reservation %s" % reservation.reservation_token
+        )
+        reservation.delete()
 
 
 @task
