@@ -316,12 +316,12 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
     def _asset_reservation_test_payload(self, user_id, anonymous=False):
         asset = create_asset()
 
-        # Acquire the reservation: 1 expiry + 1 acquire + 1
+        # Acquire the reservation: 1 acquire + 1
         # feature flag check + 1 session if not anonymous and using a database:
         if not anonymous and settings.SESSION_ENGINE.endswith("db"):
-            expected_queries = 4
-        else:
             expected_queries = 3
+        else:
+            expected_queries = 2
 
         with self.assertNumQueries(expected_queries):
             resp = self.client.post(reverse("reserve-asset", args=(asset.pk,)))
@@ -343,7 +343,7 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         )
         self.assertEqual(updated_reservation.asset, asset)
         self.assertEqual(reservation.created_on, updated_reservation.created_on)
-        self.assertLess(reservation.updated_on, updated_reservation.updated_on)
+        self.assertLess(reservation.created_on, updated_reservation.updated_on)
 
         # Release the reservation now that we're done:
 
@@ -379,8 +379,8 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         self.client.logout()
         self.login_user()
 
-        # 1 session check + 1 expiry + 1 acquire + 1 feature flag check
-        with self.assertNumQueries(4 if settings.SESSION_ENGINE.endswith("db") else 3):
+        # 1 session check + 1 acquire + 1 feature flag check
+        with self.assertNumQueries(3 if settings.SESSION_ENGINE.endswith("db") else 2):
             resp = self.client.post(reverse("reserve-asset", args=(asset.pk,)))
         self.assertEqual(409, resp.status_code)
         self.assertEqual(1, AssetTranscriptionReservation.objects.count())
@@ -404,8 +404,8 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
 
         self.login_user()
 
-        # 1 session check + 1 expiry + 1 acquire + 1 feature flag check
-        with self.assertNumQueries(4 if settings.SESSION_ENGINE.endswith("db") else 3):
+        # 1 session check + 1 acquire + 1 feature flag check
+        with self.assertNumQueries(3 if settings.SESSION_ENGINE.endswith("db") else 2):
             resp = self.client.post(reverse("reserve-asset", args=(asset.pk,)))
 
         data = self.assertValidJSON(resp, expected_status=200)
