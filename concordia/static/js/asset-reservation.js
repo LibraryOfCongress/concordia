@@ -42,6 +42,11 @@ function attemptToReserveAsset(reservationURL, findANewPageURL, actionType) {
                         'transcription-reservation'
                     );
                 }
+            } else if (jqXHR.status == 408) {
+                $transcriptionEditor
+                    .data('hasReservation', false)
+                    .trigger('update-ui-state');
+                jQuery('#asset-reservation-failure-modal').modal();
             } else {
                 displayMessage(
                     'error',

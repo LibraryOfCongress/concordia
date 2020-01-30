@@ -362,7 +362,7 @@ class AssetTranscriptionReservation(models.Model):
     Records a user's reservation to transcribe a particular asset
     """
 
-    asset = models.OneToOneField(Asset, on_delete=models.CASCADE)
+    asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
     reservation_token = models.CharField(max_length=50)
 
     created_on = models.DateTimeField(editable=False, auto_now_add=True)
