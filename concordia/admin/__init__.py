@@ -312,7 +312,6 @@ class AssetTranscriptionReservationAdmin(
     list_display = (
         "created_on",
         "updated_on",
-        "last_reserve_time",
         "asset",
         "reservation_token",
         "tombstoned",

@@ -1436,9 +1436,9 @@ def obtain_tombstoned_reservation(asset_pk, reservation_token):
             """
             INSERT INTO concordia_assettranscriptionreservation AS atr
                 (asset_id, reservation_token, tombstoned, created_on,
-                updated_on, last_reserve_time)
+                updated_on)
                 VALUES (%s, %s, FALSE, current_timestamp,
-                current_timestamp, current_timestamp)
+                current_timestamp)
             """.strip(),
             [asset_pk, reservation_token],
         )
@@ -1453,7 +1453,7 @@ def update_reservation(asset_pk, reservation_token):
         cursor.execute(
             """
         UPDATE concordia_assettranscriptionreservation AS atr
-            SET last_reserve_time = current_timestamp
+            SET updated_on = current_timestamp
             WHERE (
                 atr.asset_id = %s
                 AND atr.reservation_token = %s
@@ -1474,9 +1474,9 @@ def obtain_reservation(asset_pk, reservation_token):
             """
         INSERT INTO concordia_assettranscriptionreservation AS atr
             (asset_id, reservation_token, tombstoned, created_on,
-            updated_on, last_reserve_time)
+            updated_on)
             VALUES (%s, %s, FALSE, current_timestamp,
-            current_timestamp, current_timestamp)
+            current_timestamp)
         """.strip(),
             [asset_pk, reservation_token],
         )

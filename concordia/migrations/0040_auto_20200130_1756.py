@@ -13,11 +13,6 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name="assettranscriptionreservation",
-            name="last_reserve_time",
-            field=models.DateTimeField(auto_now_add=True, null=True),
-        ),
-        migrations.AddField(
-            model_name="assettranscriptionreservation",
             name="tombstoned",
             field=models.BooleanField(blank=True, default=False, null=True),
         ),

@@ -37,7 +37,7 @@ def expire_inactive_asset_reservations():
 
     logger.debug("Clearing reservations with last reserve time older than %s" % cutoff)
     expired_reservations = AssetTranscriptionReservation.objects.filter(
-        last_reserve_time__lt=cutoff, tombstoned__in=(None, False)
+        updated_on__lt=cutoff, tombstoned__in=(None, False)
     )
 
     for reservation in expired_reservations:
