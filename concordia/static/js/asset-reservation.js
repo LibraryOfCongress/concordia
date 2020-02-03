@@ -1,6 +1,5 @@
 /* global jQuery displayMessage displayHtmlMessage buildErrorMessage */
 /* exported attemptToReserveAsset */
-/* eslint no-unused-vars: "off" */
 
 function attemptToReserveAsset(reservationURL, findANewPageURL, actionType) {
     var $transcriptionEditor = jQuery('#transcription-editor');

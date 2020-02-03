@@ -17,3 +17,6 @@ rules:
 env:
     browser: true
     es6: true
+parserOptions:
+    sourceType: script
+    ecmaVersion": '2018'
