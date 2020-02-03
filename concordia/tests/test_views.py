@@ -328,9 +328,9 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         # Release the reservation: 1 feature flag check +
         # 1 release + 1 session if not anonymous and using a database:
         if not anonymous and settings.SESSION_ENGINE.endswith("db"):
-            expected_release_queries = 4
-        else:
             expected_release_queries = 3
+        else:
+            expected_release_queries = 2
 
         with self.assertNumQueries(expected_acquire_queries):
             resp = self.client.post(reverse("reserve-asset", args=(asset.pk,)))
@@ -415,8 +415,13 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
 
         self.login_user()
 
-        # 1 session check + 1 acquire + 1 feature flag check
-        with self.assertNumQueries(3 if settings.SESSION_ENGINE.endswith("db") else 2):
+        # 1 session check + 1 reservation check + 1 acquire + 1 feature flag check
+        if settings.SESSION_ENGINE.endswith("db"):
+            expected_queries = 4
+        else:
+            expected_queries = 3
+
+        with self.assertNumQueries(expected_queries):
             resp = self.client.post(reverse("reserve-asset", args=(asset.pk,)))
 
         data = self.assertValidJSON(resp, expected_status=200)
