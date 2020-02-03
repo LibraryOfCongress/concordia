@@ -16,6 +16,7 @@ from concordia.models import (
     Transcription,
     TranscriptionStatus,
 )
+from concordia.tasks import expire_inactive_asset_reservations
 from concordia.utils import get_anonymous_user
 
 from .utils import (
@@ -317,13 +318,21 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         asset = create_asset()
 
         # Acquire the reservation: 1 acquire + 1
-        # feature flag check + 1 session if not anonymous and using a database:
+        # feature flag check + 1 reservation check
+        # + 1 session if not anonymous and using a database:
         if not anonymous and settings.SESSION_ENGINE.endswith("db"):
-            expected_queries = 4
+            expected_acquire_queries = 4
         else:
-            expected_queries = 3
+            expected_acquire_queries = 3
 
-        with self.assertNumQueries(expected_queries):
+        # Release the reservation: 1 feature flag check +
+        # 1 release + 1 session if not anonymous and using a database:
+        if not anonymous and settings.SESSION_ENGINE.endswith("db"):
+            expected_release_queries = 4
+        else:
+            expected_release_queries = 3
+
+        with self.assertNumQueries(expected_acquire_queries):
             resp = self.client.post(reverse("reserve-asset", args=(asset.pk,)))
         data = self.assertValidJSON(resp, expected_status=200)
 
@@ -333,7 +342,7 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
 
         # Confirm that an update did not change the pk when it updated the timestamp:
 
-        with self.assertNumQueries(expected_queries):
+        with self.assertNumQueries(expected_acquire_queries):
             resp = self.client.post(reverse("reserve-asset", args=(asset.pk,)))
         data = self.assertValidJSON(resp, expected_status=200)
         self.assertEqual(1, AssetTranscriptionReservation.objects.count())
@@ -347,7 +356,7 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
 
         # Release the reservation now that we're done:
 
-        with self.assertNumQueries(expected_queries):
+        with self.assertNumQueries(expected_release_queries):
             resp = self.client.post(
                 reverse("reserve-asset", args=(asset.pk,)), data={"release": True}
             )
@@ -401,6 +410,8 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         AssetTranscriptionReservation.objects.update(
             created_on=old_timestamp, updated_on=old_timestamp
         )
+
+        expire_inactive_asset_reservations()
 
         self.login_user()
 
