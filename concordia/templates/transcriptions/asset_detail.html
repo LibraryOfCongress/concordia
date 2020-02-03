@@ -586,11 +586,11 @@
     {% if transcription_status == "not_started" or transcription_status == "in_progress" %}
         attemptToReserveAsset("{% url 'reserve-asset' asset.pk %}",
         "",
-        "transcribe", true);
+        "transcribe");
     {% elif user.is_authenticated %}
         attemptToReserveAsset("{% url 'reserve-asset' asset.pk %}",
         "{% url 'transcriptions:redirect-to-next-reviewable-campaign-asset' asset.item.project.campaign.slug %}",
-        "review", true);
+        "review");
     {% endif %}
 </script>
 {% endblock body_scripts %}

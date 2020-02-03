@@ -21,6 +21,7 @@ from importer.tasks import import_items_into_project_from_url
 
 from ..models import (
     Asset,
+    AssetTranscriptionReservation,
     Campaign,
     CarouselSlide,
     Item,
@@ -302,6 +303,21 @@ class ItemAdmin(admin.ModelAdmin):
 
     def campaign_title(self, obj):
         return obj.project.campaign.title
+
+
+@admin.register(AssetTranscriptionReservation)
+class AssetTranscriptionReservationAdmin(
+    admin.ModelAdmin, CustomListDisplayFieldsMixin
+):
+    list_display = (
+        "created_on",
+        "updated_on",
+        "asset",
+        "reservation_token",
+        "tombstoned",
+    )
+    list_display_links = ("reservation_token", "created_on")
+    readonly_fields = ("asset", "created_on", "updated_on")
 
 
 @admin.register(Asset)

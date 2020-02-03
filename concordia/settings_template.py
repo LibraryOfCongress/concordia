@@ -341,6 +341,12 @@ BOOTSTRAP4 = {"required_css_class": "form-group-required"}
 #: Number of seconds an asset reservation is valid for
 TRANSCRIPTION_RESERVATION_SECONDS = 5 * 60
 
+#: Number of hours until an asset reservation is tombstoned
+TRANSCRIPTION_RESERVATION_TOMBSTONE_HOURS = 72
+
+#: Number of hours until a tombstoned reservation is deleted
+TRANSCRIPTION_RESERVATION_TOMBSTONE_LENGTH_HOURS = 48
+
 #: Web cache policy settings
 DEFAULT_PAGE_TTL = 5 * 60
 

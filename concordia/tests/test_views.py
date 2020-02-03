@@ -16,6 +16,7 @@ from concordia.models import (
     Transcription,
     TranscriptionStatus,
 )
+from concordia.tasks import expire_inactive_asset_reservations
 from concordia.utils import get_anonymous_user
 
 from .utils import (
@@ -316,14 +317,22 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
     def _asset_reservation_test_payload(self, user_id, anonymous=False):
         asset = create_asset()
 
-        # Acquire the reservation: 1 expiry + 1 acquire + 1
-        # feature flag check + 1 session if not anonymous and using a database:
+        # Acquire the reservation: 1 acquire + 1
+        # feature flag check + 1 reservation check
+        # + 1 session if not anonymous and using a database:
         if not anonymous and settings.SESSION_ENGINE.endswith("db"):
-            expected_queries = 4
+            expected_acquire_queries = 4
         else:
-            expected_queries = 3
+            expected_acquire_queries = 3
 
-        with self.assertNumQueries(expected_queries):
+        # Release the reservation: 1 feature flag check +
+        # 1 release + 1 session if not anonymous and using a database:
+        if not anonymous and settings.SESSION_ENGINE.endswith("db"):
+            expected_release_queries = 3
+        else:
+            expected_release_queries = 2
+
+        with self.assertNumQueries(expected_acquire_queries):
             resp = self.client.post(reverse("reserve-asset", args=(asset.pk,)))
         data = self.assertValidJSON(resp, expected_status=200)
 
@@ -333,7 +342,7 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
 
         # Confirm that an update did not change the pk when it updated the timestamp:
 
-        with self.assertNumQueries(expected_queries):
+        with self.assertNumQueries(expected_acquire_queries):
             resp = self.client.post(reverse("reserve-asset", args=(asset.pk,)))
         data = self.assertValidJSON(resp, expected_status=200)
         self.assertEqual(1, AssetTranscriptionReservation.objects.count())
@@ -343,11 +352,11 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         )
         self.assertEqual(updated_reservation.asset, asset)
         self.assertEqual(reservation.created_on, updated_reservation.created_on)
-        self.assertLess(reservation.updated_on, updated_reservation.updated_on)
+        self.assertLess(reservation.created_on, updated_reservation.updated_on)
 
         # Release the reservation now that we're done:
 
-        with self.assertNumQueries(expected_queries):
+        with self.assertNumQueries(expected_release_queries):
             resp = self.client.post(
                 reverse("reserve-asset", args=(asset.pk,)), data={"release": True}
             )
@@ -379,8 +388,8 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         self.client.logout()
         self.login_user()
 
-        # 1 session check + 1 expiry + 1 acquire + 1 feature flag check
-        with self.assertNumQueries(4 if settings.SESSION_ENGINE.endswith("db") else 3):
+        # 1 session check + 1 acquire + 1 feature flag check
+        with self.assertNumQueries(3 if settings.SESSION_ENGINE.endswith("db") else 2):
             resp = self.client.post(reverse("reserve-asset", args=(asset.pk,)))
         self.assertEqual(409, resp.status_code)
         self.assertEqual(1, AssetTranscriptionReservation.objects.count())
@@ -402,10 +411,17 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
             created_on=old_timestamp, updated_on=old_timestamp
         )
 
+        expire_inactive_asset_reservations()
+
         self.login_user()
 
-        # 1 session check + 1 expiry + 1 acquire + 1 feature flag check
-        with self.assertNumQueries(4 if settings.SESSION_ENGINE.endswith("db") else 3):
+        # 1 session check + 1 reservation check + 1 acquire + 1 feature flag check
+        if settings.SESSION_ENGINE.endswith("db"):
+            expected_queries = 4
+        else:
+            expected_queries = 3
+
+        with self.assertNumQueries(expected_queries):
             resp = self.client.post(reverse("reserve-asset", args=(asset.pk,)))
 
         data = self.assertValidJSON(resp, expected_status=200)

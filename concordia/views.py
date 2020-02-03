@@ -1,7 +1,6 @@
 import json
 import os
 import re
-from datetime import timedelta
 from functools import wraps
 from logging import getLogger
 from operator import attrgetter
@@ -1364,38 +1363,6 @@ def reserve_asset(request, *, asset_pk):
     Returns HTTP 409 when the record is in use
     """
 
-    timestamp = now()
-
-    # First clear old reservations, with a grace period:
-    cutoff = timestamp - (
-        timedelta(seconds=2 * settings.TRANSCRIPTION_RESERVATION_SECONDS)
-    )
-
-    expired_reservations = []
-
-    with connection.cursor() as cursor:
-        rows_to_release = cursor.execute(
-            (
-                "DELETE FROM concordia_assettranscriptionreservation "
-                "WHERE updated_on < %s "
-                "RETURNING asset_id AS asset_pk, reservation_token"
-            ),
-            [cutoff],
-        )
-
-        if rows_to_release:
-            expired_reservations.extend(
-                (row["asset_pk"], row["reservation_token"])
-                for row in rows_to_release.fetchall()
-            )
-
-    for asset_pk, reservation_token in expired_reservations:
-        reservation_released.send(
-            sender="reserve_asset",
-            asset_pk=asset_pk,
-            reservation_token=reservation_token,
-        )
-
     reservation_token = get_or_create_reservation_token(request)
 
     # If the browser is letting us know of a specific reservation release,
@@ -1412,6 +1379,7 @@ def reserve_asset(request, *, asset_pk):
 
         # We'll pass the message to the WebSocket listeners before returning it:
         msg = {"asset_pk": asset_pk, "reservation_token": reservation_token}
+        logger.debug("Releasing reservation with token %s" % reservation_token)
         reservation_released.send(sender="reserve_asset", **msg)
         return JsonResponse(msg)
 
@@ -1419,29 +1387,103 @@ def reserve_asset(request, *, asset_pk):
     # this is called periodically we want to be fairly fast until we switch to
     # something like Redis.
 
+    reservations = AssetTranscriptionReservation.objects.filter(
+        asset_id__exact=asset_pk
+    )
+
+    # Default: pretend there is no activity on the asset
+    is_it_already_mine = False
+    am_i_tombstoned = False
+    is_someone_else_tombstoned = False
+    is_someone_else_active = False
+
+    if reservations:
+        for reservation in reservations:
+            if reservation.tombstoned:
+                if reservation.reservation_token == reservation_token:
+                    am_i_tombstoned = True
+                else:
+                    is_someone_else_tombstoned = True
+            else:
+                if reservation.reservation_token == reservation_token:
+                    is_it_already_mine = True
+                if not is_it_already_mine:
+                    is_someone_else_active = True
+
+        if am_i_tombstoned:
+            return HttpResponse(status=408)  # Request Timed Out
+
+        if is_someone_else_active:
+            return HttpResponse(status=409)  # Conflict
+
+        if is_it_already_mine:
+            # This user already has the reservation and it's not tombstoned
+            msg = update_reservation(asset_pk, reservation_token)
+
+        if is_someone_else_tombstoned:
+            msg = obtain_tombstoned_reservation(asset_pk, reservation_token)
+
+    else:
+        # No reservations = no activity = go ahead and do an insert
+        msg = obtain_reservation(asset_pk, reservation_token)
+
+    return JsonResponse(msg)
+
+
+def obtain_tombstoned_reservation(asset_pk, reservation_token):
     with connection.cursor() as cursor:
         cursor.execute(
             """
             INSERT INTO concordia_assettranscriptionreservation AS atr
-                (asset_id, reservation_token, created_on, updated_on)
-                VALUES (%s, %s, current_timestamp, current_timestamp)
-            ON CONFLICT (asset_id) DO UPDATE
-                SET updated_on = current_timestamp
-                WHERE (
-                    atr.asset_id = excluded.asset_id
-                    AND atr.reservation_token = excluded.reservation_token
-                )
+                (asset_id, reservation_token, tombstoned, created_on,
+                updated_on)
+                VALUES (%s, %s, FALSE, current_timestamp,
+                current_timestamp)
             """.strip(),
             [asset_pk, reservation_token],
         )
-
-        if cursor.rowcount != 1:
-            return HttpResponse(status=409)
-
     # We'll pass the message to the WebSocket listeners before returning it:
     msg = {"asset_pk": asset_pk, "reservation_token": reservation_token}
     reservation_obtained.send(sender="reserve_asset", **msg)
-    return JsonResponse(msg)
+    return msg
+
+
+def update_reservation(asset_pk, reservation_token):
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+        UPDATE concordia_assettranscriptionreservation AS atr
+            SET updated_on = current_timestamp
+            WHERE (
+                atr.asset_id = %s
+                AND atr.reservation_token = %s
+                AND atr.tombstoned != TRUE
+                )
+        """.strip(),
+            [asset_pk, reservation_token],
+        )
+    # We'll pass the message to the WebSocket listeners before returning it:
+    msg = {"asset_pk": asset_pk, "reservation_token": reservation_token}
+    reservation_obtained.send(sender="reserve_asset", **msg)
+    return msg
+
+
+def obtain_reservation(asset_pk, reservation_token):
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+        INSERT INTO concordia_assettranscriptionreservation AS atr
+            (asset_id, reservation_token, tombstoned, created_on,
+            updated_on)
+            VALUES (%s, %s, FALSE, current_timestamp,
+            current_timestamp)
+        """.strip(),
+            [asset_pk, reservation_token],
+        )
+    # We'll pass the message to the WebSocket listeners before returning it:
+    msg = {"asset_pk": asset_pk, "reservation_token": reservation_token}
+    reservation_obtained.send(sender="reserve_asset", **msg)
+    return msg
 
 
 def redirect_to_next_asset(potential_assets, mode, request, project_slug, user):

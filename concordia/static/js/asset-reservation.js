@@ -1,12 +1,7 @@
 /* global jQuery displayMessage displayHtmlMessage buildErrorMessage */
 /* exported attemptToReserveAsset */
 
-function attemptToReserveAsset(
-    reservationURL,
-    findANewPageURL,
-    actionType,
-    firstTime
-) {
+function attemptToReserveAsset(reservationURL, findANewPageURL, actionType) {
     var $transcriptionEditor = jQuery('#transcription-editor');
 
     jQuery
@@ -26,8 +21,7 @@ function attemptToReserveAsset(
                 60000,
                 reservationURL,
                 findANewPageURL,
-                actionType,
-                false
+                actionType
             );
         })
         .fail(function(jqXHR, textStatus, errorThrown) {
@@ -36,9 +30,7 @@ function attemptToReserveAsset(
                     $transcriptionEditor
                         .data('hasReservation', false)
                         .trigger('update-ui-state');
-                    if (firstTime) {
-                        jQuery('#asset-reservation-failure-modal').modal();
-                    }
+                    jQuery('#asset-reservation-failure-modal').modal();
                 } else {
                     displayHtmlMessage(
                         'warning',
@@ -49,6 +41,11 @@ function attemptToReserveAsset(
                         'transcription-reservation'
                     );
                 }
+            } else if (jqXHR.status == 408) {
+                $transcriptionEditor
+                    .data('hasReservation', false)
+                    .trigger('update-ui-state');
+                jQuery('#asset-reservation-failure-modal').modal();
             } else {
                 displayMessage(
                     'error',
