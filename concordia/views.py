@@ -1363,7 +1363,7 @@ def reserve_asset(request, *, asset_pk):
     Returns HTTP 409 when the record is in use
     """
 
-    reservation_token = get_or_create_reservation_token(request)
+    reservation_token = get_or_create_reservation_token(request.session)
 
     # If the browser is letting us know of a specific reservation release,
     # let it go even if it's within the grace period.
@@ -1477,7 +1477,7 @@ def obtain_reservation(asset_pk, reservation_token):
 
 def redirect_to_next_asset(potential_assets, mode, request, project_slug, user):
     asset = potential_assets.first()
-    reservation_token = get_or_create_reservation_token(request)
+    reservation_token = get_or_create_reservation_token(request.session)
     if asset:
         if mode == "transcribe":
             res = AssetTranscriptionReservation(
@@ -1957,7 +1957,7 @@ def action_app(request):
         {
             "app_parameters": {
                 "currentUser": request.user.pk,
-                "reservationToken": get_or_create_reservation_token(request),
+                "reservationToken": get_or_create_reservation_token(request.session),
                 "urls": {
                     "assetUpdateSocket": request.build_absolute_uri(
                         "/ws/asset/asset_updates/"

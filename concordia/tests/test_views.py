@@ -3,7 +3,6 @@ Tests for the core application features
 """
 
 from datetime import datetime, timedelta
-from secrets import token_hex
 
 from captcha.models import CaptchaStore
 from django.conf import settings
@@ -22,7 +21,7 @@ from concordia.tasks import (
     expire_inactive_asset_reservations,
     tombstone_old_active_asset_reservations,
 )
-from concordia.utils import get_anonymous_user
+from concordia.utils import get_anonymous_user, get_or_create_reservation_token
 
 from .utils import (
     CreateTestUsers,
@@ -443,8 +442,8 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         """
         asset = create_asset()
         self.login_user()
-
-        reservation_token = token_hex(25)
+        fake_session = dict()
+        reservation_token = get_or_create_reservation_token(fake_session)
 
         session = self.client.session
         session["reservation_token"] = reservation_token
@@ -506,7 +505,8 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         """
         asset = create_asset()
         self.login_user()
-        reservation_token = token_hex(25)
+        fake_session = dict()
+        reservation_token = get_or_create_reservation_token(fake_session)
 
         session = self.client.session
         session["reservation_token"] = reservation_token
