@@ -470,7 +470,7 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         reservation = AssetTranscriptionReservation.objects.get()
         self.assertEqual(reservation.tombstoned, True)
 
-        # 1 session check + 1 reservation check + 1 acquire + 1 feature flag check
+        # 1 session check + 1 reservation check + 1 feature flag check
         if settings.SESSION_ENGINE.endswith("db"):
             expected_queries = 3
         else:
@@ -479,21 +479,24 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         with self.assertNumQueries(expected_queries):
             resp = self.client.post(reverse("reserve-asset", args=(asset.pk,)))
 
-        data = self.assertValidJSON(resp, expected_status=408)
+        self.assertEqual(resp.status_code, 408)
         self.assertEqual(1, AssetTranscriptionReservation.objects.count())
         reservation = AssetTranscriptionReservation.objects.get()
-        self.assertEqual(reservation.reservation_token, data["reservation_token"])
+        self.assertEqual(reservation.reservation_token, reservation_token)
 
         self.client.logout()
+
+        # 1 session check + 1 reservation check + 1 acquire + 1 feature flag check
+        if settings.SESSION_ENGINE.endswith("db"):
+            expected_queries = 4
+        else:
+            expected_queries = 3
 
         with self.assertNumQueries(expected_queries):
             resp = self.client.post(reverse("reserve-asset", args=(asset.pk,)))
 
-        data = self.assertValidJSON(resp, expected_status=200)
+        self.assertValidJSON(resp, expected_status=200)
         self.assertEqual(2, AssetTranscriptionReservation.objects.count())
-        reservation = AssetTranscriptionReservation.objects.get()
-        self.assertEqual(reservation.reservation_token, data["reservation_token"])
-        self.assertEqual(reservation.tombstoned, False)
 
     def test_asset_reservation_tombstone_expiration(self):
         """
