@@ -442,7 +442,7 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         """
         asset = create_asset()
         self.login_user()
-        fake_session = dict()
+        fake_session = {"session": {}}
         reservation_token = get_or_create_reservation_token(fake_session)
 
         session = self.client.session
@@ -505,7 +505,7 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         """
         asset = create_asset()
         self.login_user()
-        fake_session = dict()
+        fake_session = {"session": {}}
         reservation_token = get_or_create_reservation_token(fake_session)
 
         session = self.client.session
