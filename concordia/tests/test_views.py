@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 
 from captcha.models import CaptchaStore
 from django.conf import settings
-from django.test import TestCase, TransactionTestCase, override_settings
+from django.test import RequestFactory, TestCase, TransactionTestCase, override_settings
 from django.urls import reverse
 from django.utils.timezone import now
 
@@ -442,8 +442,10 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         """
         asset = create_asset()
         self.login_user()
-        fake_session = {"session": {}}
-        reservation_token = get_or_create_reservation_token(fake_session)
+        request_factory = RequestFactory()
+        request = request_factory.get("/")
+        request.session = dict()
+        reservation_token = get_or_create_reservation_token(request)
 
         session = self.client.session
         session["reservation_token"] = reservation_token
@@ -505,8 +507,10 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         """
         asset = create_asset()
         self.login_user()
-        fake_session = {"session": {}}
-        reservation_token = get_or_create_reservation_token(fake_session)
+        request_factory = RequestFactory()
+        request = request_factory.get("/")
+        request.session = dict()
+        reservation_token = get_or_create_reservation_token(request)
 
         session = self.client.session
         session["reservation_token"] = reservation_token
