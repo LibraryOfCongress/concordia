@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 
 from captcha.models import CaptchaStore
 from django.conf import settings
-from django.test import TestCase, TransactionTestCase, override_settings
+from django.test import RequestFactory, TestCase, TransactionTestCase, override_settings
 from django.urls import reverse
 from django.utils.timezone import now
 
@@ -16,8 +16,12 @@ from concordia.models import (
     Transcription,
     TranscriptionStatus,
 )
-from concordia.tasks import expire_inactive_asset_reservations
-from concordia.utils import get_anonymous_user
+from concordia.tasks import (
+    delete_old_tombstoned_reservations,
+    expire_inactive_asset_reservations,
+    tombstone_old_active_asset_reservations,
+)
+from concordia.utils import get_anonymous_user, get_or_create_reservation_token
 
 from .utils import (
     CreateTestUsers,
@@ -428,6 +432,126 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         self.assertEqual(1, AssetTranscriptionReservation.objects.count())
         reservation = AssetTranscriptionReservation.objects.get()
         self.assertEqual(reservation.reservation_token, data["reservation_token"])
+
+    def test_asset_reservation_tombstone(self):
+        """
+        Simulate a tombstoned reservation which should:
+            - return 408 during the tombstone period
+            - during the tombstone period, another user may
+              obtain the reservation but the original user may not
+        """
+        asset = create_asset()
+        self.login_user()
+        request_factory = RequestFactory()
+        request = request_factory.get("/")
+        request.session = dict()
+        reservation_token = get_or_create_reservation_token(request)
+
+        session = self.client.session
+        session["reservation_token"] = reservation_token
+        session.save()
+
+        tombstone_reservation = AssetTranscriptionReservation(  # nosec
+            asset=asset, reservation_token=reservation_token
+        )
+        tombstone_reservation.full_clean()
+        tombstone_reservation.save()
+        # Backdate the object as if it was created hours ago,
+        # even if it was recently updated
+        old_timestamp = datetime.now() - timedelta(
+            hours=settings.TRANSCRIPTION_RESERVATION_TOMBSTONE_HOURS + 1
+        )
+        current_timestamp = datetime.now()
+        AssetTranscriptionReservation.objects.update(
+            created_on=old_timestamp, updated_on=current_timestamp
+        )
+
+        tombstone_old_active_asset_reservations()
+        self.assertEqual(1, AssetTranscriptionReservation.objects.count())
+        reservation = AssetTranscriptionReservation.objects.get()
+        self.assertEqual(reservation.tombstoned, True)
+
+        # 1 session check + 1 reservation check + 1 feature flag check
+        if settings.SESSION_ENGINE.endswith("db"):
+            expected_queries = 3
+        else:
+            expected_queries = 2
+
+        with self.assertNumQueries(expected_queries):
+            resp = self.client.post(reverse("reserve-asset", args=(asset.pk,)))
+
+        self.assertEqual(resp.status_code, 408)
+        self.assertEqual(1, AssetTranscriptionReservation.objects.count())
+        reservation = AssetTranscriptionReservation.objects.get()
+        self.assertEqual(reservation.reservation_token, reservation_token)
+
+        self.client.logout()
+
+        # 1 session check + 1 reservation check + 1 acquire + 1 feature flag check
+        if settings.SESSION_ENGINE.endswith("db"):
+            expected_queries = 4
+        else:
+            expected_queries = 3
+
+        with self.assertNumQueries(expected_queries):
+            resp = self.client.post(reverse("reserve-asset", args=(asset.pk,)))
+
+        self.assertValidJSON(resp, expected_status=200)
+        self.assertEqual(2, AssetTranscriptionReservation.objects.count())
+
+    def test_asset_reservation_tombstone_expiration(self):
+        """
+        Simulate a tombstoned reservation which should expire after
+        the configured period of time, allowing the original user
+        to reserve the asset again
+        """
+        asset = create_asset()
+        self.login_user()
+        request_factory = RequestFactory()
+        request = request_factory.get("/")
+        request.session = dict()
+        reservation_token = get_or_create_reservation_token(request)
+
+        session = self.client.session
+        session["reservation_token"] = reservation_token
+        session.save()
+
+        tombstone_reservation = AssetTranscriptionReservation(  # nosec
+            asset=asset, reservation_token=reservation_token
+        )
+        tombstone_reservation.full_clean()
+        tombstone_reservation.save()
+        # Backdate the object as if it was created hours ago
+        # and tombstoned hours ago
+        old_timestamp = datetime.now() - timedelta(
+            hours=settings.TRANSCRIPTION_RESERVATION_TOMBSTONE_HOURS
+            + settings.TRANSCRIPTION_RESERVATION_TOMBSTONE_LENGTH_HOURS
+            + 1
+        )
+        not_as_old_timestamp = datetime.now() - timedelta(
+            hours=settings.TRANSCRIPTION_RESERVATION_TOMBSTONE_LENGTH_HOURS + 1
+        )
+        AssetTranscriptionReservation.objects.update(
+            created_on=old_timestamp, updated_on=not_as_old_timestamp, tombstoned=True
+        )
+
+        delete_old_tombstoned_reservations()
+        self.assertEqual(0, AssetTranscriptionReservation.objects.count())
+
+        # 1 session check + 1 reservation check + 1 acquire + 1 feature flag check
+        if settings.SESSION_ENGINE.endswith("db"):
+            expected_queries = 4
+        else:
+            expected_queries = 3
+
+        with self.assertNumQueries(expected_queries):
+            resp = self.client.post(reverse("reserve-asset", args=(asset.pk,)))
+
+        data = self.assertValidJSON(resp, expected_status=200)
+        self.assertEqual(1, AssetTranscriptionReservation.objects.count())
+        reservation = AssetTranscriptionReservation.objects.get()
+        self.assertEqual(reservation.reservation_token, data["reservation_token"])
+        self.assertEqual(reservation.tombstoned, False)
 
     def test_anonymous_transcription_save_captcha(self):
         asset = create_asset()

@@ -1391,13 +1391,24 @@ def reserve_asset(request, *, asset_pk):
             if reservation.tombstoned:
                 if reservation.reservation_token == reservation_token:
                     am_i_tombstoned = True
+                    logger.debug("I'm tombstoned %s" % reservation_token)
                 else:
                     is_someone_else_tombstoned = True
+                    logger.debug(
+                        "Someone else is tombstoned %s" % reservation.reservation_token
+                    )
             else:
                 if reservation.reservation_token == reservation_token:
                     is_it_already_mine = True
+                    logger.debug(
+                        "I already have this active reservation %s" % reservation_token
+                    )
                 if not is_it_already_mine:
                     is_someone_else_active = True
+                    logger.debug(
+                        "Someone else has this active reservation %s"
+                        % reservation.reservation_token
+                    )
 
         if am_i_tombstoned:
             return HttpResponse(status=408)  # Request Timed Out
@@ -1408,33 +1419,20 @@ def reserve_asset(request, *, asset_pk):
         if is_it_already_mine:
             # This user already has the reservation and it's not tombstoned
             msg = update_reservation(asset_pk, reservation_token)
+            logger.debug("Updating reservation %s" % reservation_token)
 
         if is_someone_else_tombstoned:
-            msg = obtain_tombstoned_reservation(asset_pk, reservation_token)
+            msg = obtain_reservation(asset_pk, reservation_token)
+            logger.debug(
+                "Obtaining reservation for %s from tombstoned user" % reservation_token
+            )
 
     else:
         # No reservations = no activity = go ahead and do an insert
         msg = obtain_reservation(asset_pk, reservation_token)
+        logger.debug("No activity, just get the reservation %s" % reservation_token)
 
     return JsonResponse(msg)
-
-
-def obtain_tombstoned_reservation(asset_pk, reservation_token):
-    with connection.cursor() as cursor:
-        cursor.execute(
-            """
-            INSERT INTO concordia_assettranscriptionreservation AS atr
-                (asset_id, reservation_token, tombstoned, created_on,
-                updated_on)
-                VALUES (%s, %s, FALSE, current_timestamp,
-                current_timestamp)
-            """.strip(),
-            [asset_pk, reservation_token],
-        )
-    # We'll pass the message to the WebSocket listeners before returning it:
-    msg = {"asset_pk": asset_pk, "reservation_token": reservation_token}
-    reservation_obtained.send(sender="reserve_asset", **msg)
-    return msg
 
 
 def update_reservation(asset_pk, reservation_token):
