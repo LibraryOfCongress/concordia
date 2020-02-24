@@ -90,6 +90,22 @@ urlpatterns = [
     path("help-center/how-to-transcribe/", views.simple_page, name="how-to-transcribe"),
     path("help-center/how-to-review/", views.simple_page, name="how-to-review"),
     path("help-center/how-to-tag/", views.simple_page, name="how-to-tag"),
+    path(
+        "help-center/welcome-guide-esp/",
+        views.simple_page,
+        name="welcome-guide-spanish",
+    ),
+    path(
+        "help-center/how-to-transcribe-esp/",
+        views.simple_page,
+        name="how-to-transcribe-spanish",
+    ),
+    path(
+        "help-center/how-to-review-esp/",
+        views.simple_page,
+        name="how-to-review-spanish",
+    ),
+    path("help-center/how-to-tag-esp/", views.simple_page, name="how-to-tag-spanish"),
     path("for-educators/", views.simple_page, name="for-educators"),
     path("resources/", views.simple_page, name="resources"),
     path(
