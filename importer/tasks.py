@@ -477,6 +477,10 @@ def download_asset_task(self, import_asset_pk):
     return download_asset(self, import_asset, None)
 
 
+# FIXME: allow the redownload_images task to be run with this decorator
+# present in the code. The redownload images feature will not work
+# while the @update_task_status decorator is here
+@update_task_status
 def download_asset(self, import_asset, redownload_asset):
     """
     Download the URL specified for an Asset and save it to working
