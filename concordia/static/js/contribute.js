@@ -43,6 +43,7 @@ $(document).on('keydown', function(event) {
 });
 
 var $captchaModal = $('#captcha-modal');
+var $triggeringCaptchaForm = false;
 var $captchaForm = $captchaModal.find('form').on('submit', function(event) {
     event.preventDefault();
 
@@ -56,6 +57,10 @@ var $captchaForm = $captchaModal.find('form').on('submit', function(event) {
     })
         .done(function() {
             $captchaModal.modal('hide');
+            if ($triggeringCaptchaForm) {
+                $triggeringCaptchaForm.submit();
+            }
+            $triggeringCaptchaForm = false;
         })
         .fail(function(jqXHR) {
             if (jqXHR.status == 401) {
@@ -115,15 +120,17 @@ $('form.ajax-submission').each(function(idx, formElement) {
                     $captchaModal
                         .find('#captcha-image')
                         .attr('src', jqXHR.responseJSON.image);
+                    $triggeringCaptchaForm = $form;
                     $captchaModal.modal();
+                } else {
+                    $form.trigger('form-submit-failure', {
+                        textStatus: textStatus,
+                        errorThrown: errorThrown,
+                        requestData: formData,
+                        $form: $form,
+                        jqXHR: jqXHR
+                    });
                 }
-                $form.trigger('form-submit-failure', {
-                    textStatus: textStatus,
-                    errorThrown: errorThrown,
-                    requestData: formData,
-                    $form: $form,
-                    jqXHR: jqXHR
-                });
             });
 
         return false;
