@@ -64,12 +64,17 @@
                 The optional "real_file_url" column also contains asset download URLs, but these are the correct download URLs for
                 the images that are being replaced.
             </p>
+            <p><strong>
+                This feature will not work unless either the @update_task_status decorator is removed from the download_asset task,
+                or this task has its own database representation that will allow the decorator to be in place while invoked via this feature.
+            </strong>
+            </p>
             <div>
                 <form method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                     {{ form.as_p }}
                     <div class="submit-row">
-                        <button type="submit">Re-download images</button>
+                        <button type="submit" disabled="disabled">Re-download images</button>
                     </div>
                 </form>
             </div>
