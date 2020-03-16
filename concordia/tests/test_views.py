@@ -117,9 +117,7 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         """
         c = create_topic(title="GET Topic", slug="get-topic")
 
-        response = self.client.get(
-            reverse("transcriptions:topic-detail", args=(c.slug,))
-        )
+        response = self.client.get(reverse("topic-detail", args=(c.slug,)))
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(
@@ -131,9 +129,7 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
             title="GET Unlisted Topic", unlisted=True, slug="get-unlisted-topic"
         )
 
-        response2 = self.client.get(
-            reverse("transcriptions:topic-detail", args=(c2.slug,))
-        )
+        response2 = self.client.get(reverse("topic-detail", args=(c2.slug,)))
 
         self.assertEqual(response2.status_code, 200)
         self.assertTemplateUsed(
