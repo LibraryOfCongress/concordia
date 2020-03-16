@@ -46,12 +46,15 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         """
         Test the GET method for route /campaigns-topics
         """
-        topic = create_topic(title="A Listed Topic")
-        unlisted_topic = create_topic(title="An Unlisted Topic", unlisted=True)
-
         campaign = create_campaign(title="Hello Everyone")
+        topic_project = create_project(campaign=campaign)
         unlisted_campaign = create_campaign(
             title="Hello to only certain people", unlisted=True
+        )
+        unlisted_topic_project = create_project(campaign=unlisted_campaign)
+        topic = create_topic(title="A Listed Topic", project=topic_project)
+        unlisted_topic = create_topic(
+            title="An Unlisted Topic", unlisted=True, project=unlisted_topic_project
         )
 
         response = self.client.get(reverse("campaign-topic-list"))
@@ -69,8 +72,17 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         """
         Test the GET method for route /topics
         """
-        topic = create_topic(title="A Listed Topic")
-        unlisted_topic = create_topic(title="An Unlisted Topic", unlisted=True)
+        campaign = create_campaign(title="Hello Everyone")
+        topic_project = create_project(campaign=campaign)
+        unlisted_campaign = create_campaign(
+            title="Hello to only certain people", unlisted=True
+        )
+        unlisted_topic_project = create_project(campaign=unlisted_campaign)
+
+        topic = create_topic(title="A Listed Topic", project=topic_project)
+        unlisted_topic = create_topic(
+            title="An Unlisted Topic", unlisted=True, project=unlisted_topic_project
+        )
 
         response = self.client.get(reverse("topic-list"))
 
@@ -85,9 +97,9 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         """
         Test the GET method for route /campaigns
         """
-        campaign = create_campaign(title="Hello Everyone")
+        campaign = create_campaign(title="Hello Everyone 2")
         unlisted_campaign = create_campaign(
-            title="Hello to only certain people", unlisted=True
+            title="Hello to only certain people 2", unlisted=True
         )
 
         response = self.client.get(reverse("transcriptions:campaign-list"))
