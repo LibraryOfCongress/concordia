@@ -111,6 +111,36 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         self.assertContains(response, campaign.title)
         self.assertNotContains(response, unlisted_campaign.title)
 
+    def test_topic_detail_view(self):
+        """
+        Test GET on route /topics/<slug-value> (topic)
+        """
+        c = create_topic(title="GET Topic", slug="get-topic")
+
+        response = self.client.get(
+            reverse("transcriptions:topic-detail", args=(c.slug,))
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, template_name="transcriptions/topic_detail.html"
+        )
+        self.assertContains(response, c.title)
+
+        c2 = create_topic(
+            title="GET Unlisted Topic", unlisted=True, slug="get-unlisted-topic"
+        )
+
+        response2 = self.client.get(
+            reverse("transcriptions:topic-detail", args=(c2.slug,))
+        )
+
+        self.assertEqual(response2.status_code, 200)
+        self.assertTemplateUsed(
+            response2, template_name="transcriptions/topic_detail.html"
+        )
+        self.assertContains(response2, c2.title)
+
     def test_campaign_detail_view(self):
         """
         Test GET on route /campaigns/<slug-value> (campaign)
@@ -126,6 +156,20 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
             response, template_name="transcriptions/campaign_detail.html"
         )
         self.assertContains(response, c.title)
+
+        c2 = create_campaign(
+            title="GET Unlisted Campaign", unlisted=True, slug="get-unlisted-campaign"
+        )
+
+        response2 = self.client.get(
+            reverse("transcriptions:campaign-detail", args=(c2.slug,))
+        )
+
+        self.assertEqual(response2.status_code, 200)
+        self.assertTemplateUsed(
+            response2, template_name="transcriptions/campaign_detail.html"
+        )
+        self.assertContains(response2, c2.title)
 
     def test_campaign_unicode_slug(self):
         """Confirm that Unicode characters are usable in Campaign URLs"""
