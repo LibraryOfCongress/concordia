@@ -139,15 +139,16 @@ class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         "title",
         "short_description",
         "published",
+        "unlisted",
         "display_on_homepage",
         "ordering",
         "truncated_metadata",
     )
-    list_editable = ("display_on_homepage", "ordering", "published")
+    list_editable = ("display_on_homepage", "ordering", "published", "unlisted")
     list_display_links = ("title",)
     prepopulated_fields = {"slug": ("title",)}
     search_fields = ["title", "description"]
-    list_filter = ("published", "display_on_homepage")
+    list_filter = ("published", "display_on_homepage", "unlisted")
 
     actions = (publish_action, unpublish_action)
 
@@ -188,7 +189,16 @@ class ResourceAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
 class TopicAdmin(admin.ModelAdmin):
     form = BleachedDescriptionAdminForm
 
-    list_display = ("id", "title", "slug")
+    list_display = (
+        "id",
+        "title",
+        "slug",
+        "short_description",
+        "published",
+        "unlisted",
+        "ordering",
+    )
+
     list_display_links = ("id", "title", "slug")
     prepopulated_fields = {"slug": ("title",)}
 

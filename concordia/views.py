@@ -411,7 +411,7 @@ class CampaignListView(APIListView):
     template_name = "transcriptions/campaign_list.html"
     paginate_by = 10
 
-    queryset = Campaign.objects.published().order_by("ordering", "title")
+    queryset = Campaign.objects.published().listed().order_by("ordering", "title")
     context_object_name = "campaigns"
 
     def serialize_context(self, context):
@@ -509,7 +509,7 @@ def annotate_children_with_progress_stats(children):
 class TopicListView(APIListView):
     template_name = "transcriptions/topic_list.html"
     paginate_by = 10
-    queryset = Topic.objects.published().order_by("ordering", "title")
+    queryset = Topic.objects.published().listed().order_by("ordering", "title")
     context_object_name = "topics"
 
     def serialize_context(self, context):
@@ -556,7 +556,9 @@ class CampaignTopicListView(TemplateView):
 
     def get(self, context):
         data = {}
-        data["campaigns"] = Campaign.objects.published().order_by("ordering", "title")
+        data["campaigns"] = (
+            Campaign.objects.published().listed().order_by("ordering", "title")
+        )
         data["topics"] = Topic.objects.published().order_by("ordering", "title")
         data["campaigns_topics"] = sorted(
             [*data["campaigns"], *data["topics"]], key=attrgetter("ordering", "title")
@@ -569,7 +571,7 @@ class CampaignTopicListView(TemplateView):
 class TopicDetailView(APIDetailView):
     template_name = "transcriptions/topic_detail.html"
     context_object_name = "topic"
-    queryset = Topic.objects.published().order_by("title")
+    queryset = Topic.objects.published().listed().order_by("title")
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
