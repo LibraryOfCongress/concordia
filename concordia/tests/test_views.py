@@ -125,6 +125,7 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         )
         self.assertContains(response, c.title)
 
+    def test_unlisted_topic_detail_view(self):
         c2 = create_topic(
             title="GET Unlisted Topic", unlisted=True, slug="get-unlisted-topic"
         )
