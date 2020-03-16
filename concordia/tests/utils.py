@@ -28,11 +28,17 @@ def create_campaign(
     short_description="Short Description",
     description="Test Description",
     published=True,
+    unlisted=False,
     do_save=True,
     **kwargs,
 ):
     campaign = Campaign(
-        title=title, slug=slug, description=description, published=published, **kwargs
+        title=title,
+        slug=slug,
+        description=description,
+        unlisted=unlisted,
+        published=published,
+        **kwargs,
     )
     campaign.full_clean()
     if do_save:
@@ -48,6 +54,7 @@ def create_topic(
     slug="test-topic",
     description="Test Description",
     published=True,
+    unlisted=False,
     do_save=True,
     **kwargs,
 ):
@@ -55,7 +62,12 @@ def create_topic(
         project = create_project()
 
     topic = Topic(
-        title=title, slug=slug, description=description, published=published, **kwargs
+        title=title,
+        slug=slug,
+        description=description,
+        unlisted=unlisted,
+        published=published,
+        **kwargs,
     )
     topic.full_clean()
     if do_save:
