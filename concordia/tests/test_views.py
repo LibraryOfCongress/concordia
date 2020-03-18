@@ -30,6 +30,7 @@ from .utils import (
     create_campaign,
     create_item,
     create_project,
+    create_topic,
 )
 
 
@@ -41,18 +42,101 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
     This class contains the unit tests for the view in the concordia app.
     """
 
+    def test_campaign_topic_list_view(self):
+        """
+        Test the GET method for route /campaigns-topics
+        """
+        campaign = create_campaign(title="Hello Everyone")
+        topic_project = create_project(campaign=campaign)
+        unlisted_campaign = create_campaign(
+            title="Hello to only certain people", unlisted=True
+        )
+        unlisted_topic_project = create_project(campaign=unlisted_campaign)
+        topic = create_topic(title="A Listed Topic", project=topic_project)
+        unlisted_topic = create_topic(
+            title="An Unlisted Topic", unlisted=True, project=unlisted_topic_project
+        )
+
+        response = self.client.get(reverse("campaign-topic-list"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, template_name="transcriptions/campaign_topic_list.html"
+        )
+        self.assertContains(response, topic.title)
+        self.assertNotContains(response, unlisted_topic.title)
+        self.assertContains(response, campaign.title)
+        self.assertNotContains(response, unlisted_campaign.title)
+
+    def test_topic_list_view(self):
+        """
+        Test the GET method for route /topics
+        """
+        campaign = create_campaign(title="Hello Everyone")
+        topic_project = create_project(campaign=campaign)
+        unlisted_campaign = create_campaign(
+            title="Hello to only certain people", unlisted=True
+        )
+        unlisted_topic_project = create_project(campaign=unlisted_campaign)
+
+        topic = create_topic(title="A Listed Topic", project=topic_project)
+        unlisted_topic = create_topic(
+            title="An Unlisted Topic", unlisted=True, project=unlisted_topic_project
+        )
+
+        response = self.client.get(reverse("topic-list"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, template_name="transcriptions/topic_list.html"
+        )
+        self.assertContains(response, topic.title)
+        self.assertNotContains(response, unlisted_topic.title)
+
     def test_campaign_list_view(self):
         """
         Test the GET method for route /campaigns
         """
+        campaign = create_campaign(title="Hello Everyone 2")
+        unlisted_campaign = create_campaign(
+            title="Hello to only certain people 2", unlisted=True
+        )
+
         response = self.client.get(reverse("transcriptions:campaign-list"))
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(
             response, template_name="transcriptions/campaign_list.html"
         )
+        self.assertContains(response, campaign.title)
+        self.assertNotContains(response, unlisted_campaign.title)
 
-        # TODO: insert campaign and test its presence
+    def test_topic_detail_view(self):
+        """
+        Test GET on route /topics/<slug-value> (topic)
+        """
+        c = create_topic(title="GET Topic", slug="get-topic")
+
+        response = self.client.get(reverse("topic-detail", args=(c.slug,)))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, template_name="transcriptions/topic_detail.html"
+        )
+        self.assertContains(response, c.title)
+
+    def test_unlisted_topic_detail_view(self):
+        c2 = create_topic(
+            title="GET Unlisted Topic", unlisted=True, slug="get-unlisted-topic"
+        )
+
+        response2 = self.client.get(reverse("topic-detail", args=(c2.slug,)))
+
+        self.assertEqual(response2.status_code, 200)
+        self.assertTemplateUsed(
+            response2, template_name="transcriptions/topic_detail.html"
+        )
+        self.assertContains(response2, c2.title)
 
     def test_campaign_detail_view(self):
         """
@@ -69,6 +153,20 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
             response, template_name="transcriptions/campaign_detail.html"
         )
         self.assertContains(response, c.title)
+
+        c2 = create_campaign(
+            title="GET Unlisted Campaign", unlisted=True, slug="get-unlisted-campaign"
+        )
+
+        response2 = self.client.get(
+            reverse("transcriptions:campaign-detail", args=(c2.slug,))
+        )
+
+        self.assertEqual(response2.status_code, 200)
+        self.assertTemplateUsed(
+            response2, template_name="transcriptions/campaign_detail.html"
+        )
+        self.assertContains(response2, c2.title)
 
     def test_campaign_unicode_slug(self):
         """Confirm that Unicode characters are usable in Campaign URLs"""

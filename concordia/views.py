@@ -390,6 +390,7 @@ class HomeView(ListView):
 
     queryset = (
         Campaign.objects.published()
+        .listed()
         .filter(display_on_homepage=True)
         .order_by("ordering", "title")
     )
@@ -411,7 +412,7 @@ class CampaignListView(APIListView):
     template_name = "transcriptions/campaign_list.html"
     paginate_by = 10
 
-    queryset = Campaign.objects.published().order_by("ordering", "title")
+    queryset = Campaign.objects.published().listed().order_by("ordering", "title")
     context_object_name = "campaigns"
 
     def serialize_context(self, context):
@@ -509,7 +510,7 @@ def annotate_children_with_progress_stats(children):
 class TopicListView(APIListView):
     template_name = "transcriptions/topic_list.html"
     paginate_by = 10
-    queryset = Topic.objects.published().order_by("ordering", "title")
+    queryset = Topic.objects.published().listed().order_by("ordering", "title")
     context_object_name = "topics"
 
     def serialize_context(self, context):
@@ -556,8 +557,12 @@ class CampaignTopicListView(TemplateView):
 
     def get(self, context):
         data = {}
-        data["campaigns"] = Campaign.objects.published().order_by("ordering", "title")
-        data["topics"] = Topic.objects.published().order_by("ordering", "title")
+        data["campaigns"] = (
+            Campaign.objects.published().listed().order_by("ordering", "title")
+        )
+        data["topics"] = (
+            Topic.objects.published().listed().order_by("ordering", "title")
+        )
         data["campaigns_topics"] = sorted(
             [*data["campaigns"], *data["topics"]], key=attrgetter("ordering", "title")
         )
@@ -1563,7 +1568,7 @@ def filter_and_order_reviewable_assets(
 @never_cache
 @atomic
 def redirect_to_next_reviewable_asset(request):
-    campaign = Campaign.objects.published().order_by("ordering")[0]
+    campaign = Campaign.objects.published().listed().order_by("ordering")[0]
     project_slug = request.GET.get("project", "")
     item_id = request.GET.get("item", "")
     asset_id = request.GET.get("asset", 0)
@@ -1591,7 +1596,7 @@ def redirect_to_next_reviewable_asset(request):
 
 
 def find_transcribable_assets(campaign_counter, project_slug, item_id, asset_id):
-    campaigns = Campaign.objects.published().order_by("ordering")
+    campaigns = Campaign.objects.published().listed().order_by("ordering")
     potential_assets = Asset.objects.select_for_update(skip_locked=True, of=("self",))
     potential_assets = potential_assets.filter(
         item__project__campaign=campaigns[campaign_counter],
@@ -1636,7 +1641,9 @@ def redirect_to_next_transcribable_asset(request):
 @never_cache
 @atomic
 def redirect_to_next_reviewable_campaign_asset(request, *, campaign_slug):
-    campaign = get_object_or_404(Campaign.objects.published(), slug=campaign_slug)
+    campaign = get_object_or_404(
+        Campaign.objects.published().listed(), slug=campaign_slug
+    )
     project_slug = request.GET.get("project", "")
     item_id = request.GET.get("item", "")
     asset_id = request.GET.get("asset", 0)
@@ -1666,7 +1673,9 @@ def redirect_to_next_reviewable_campaign_asset(request, *, campaign_slug):
 @never_cache
 @atomic
 def redirect_to_next_transcribable_campaign_asset(request, *, campaign_slug):
-    campaign = get_object_or_404(Campaign.objects.published(), slug=campaign_slug)
+    campaign = get_object_or_404(
+        Campaign.objects.published().listed(), slug=campaign_slug
+    )
     project_slug = request.GET.get("project", "")
     item_id = request.GET.get("item", "")
     asset_id = request.GET.get("asset", 0)
@@ -1695,7 +1704,7 @@ def redirect_to_next_transcribable_campaign_asset(request, *, campaign_slug):
 @never_cache
 @atomic
 def redirect_to_next_reviewable_topic_asset(request, *, topic_slug):
-    topic = get_object_or_404(Topic.objects.published(), slug=topic_slug)
+    topic = get_object_or_404(Topic.objects.published().listed(), slug=topic_slug)
     project_slug = request.GET.get("project", "")
     item_id = request.GET.get("item", "")
     asset_id = request.GET.get("asset", 0)
@@ -1725,7 +1734,7 @@ def redirect_to_next_reviewable_topic_asset(request, *, topic_slug):
 @never_cache
 @atomic
 def redirect_to_next_transcribable_topic_asset(request, *, topic_slug):
-    topic = get_object_or_404(Topic.objects.published(), slug=topic_slug)
+    topic = get_object_or_404(Topic.objects.published().listed(), slug=topic_slug)
     project_slug = request.GET.get("project", "")
     item_id = request.GET.get("item", "")
     asset_id = request.GET.get("asset", 0)
@@ -1898,7 +1907,7 @@ class TranscribeListView(AssetListView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx["campaigns"] = Campaign.objects.published().order_by("title")
+        ctx["campaigns"] = Campaign.objects.published().listed().order_by("title")
         return ctx
 
     def get_queryset(self):
@@ -1925,7 +1934,7 @@ class ReviewListView(AssetListView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx["campaigns"] = Campaign.objects.published().order_by("title")
+        ctx["campaigns"] = Campaign.objects.published().listed().order_by("title")
         return ctx
 
     def get_queryset(self):

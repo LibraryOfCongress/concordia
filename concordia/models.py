@@ -69,10 +69,19 @@ class PublicationQuerySet(models.QuerySet):
         return self.filter(published=False)
 
 
+class UnlistedPublicationQuerySet(PublicationQuerySet):
+    def listed(self):
+        return self.filter(unlisted=False)
+
+    def unlisted(self):
+        return self.filter(unlisted=True)
+
+
 class Campaign(MetricsModelMixin("campaign"), models.Model):
-    objects = PublicationQuerySet.as_manager()
+    objects = UnlistedPublicationQuerySet.as_manager()
 
     published = models.BooleanField(default=False, blank=True)
+    unlisted = models.BooleanField(default=False, blank=True)
 
     ordering = models.IntegerField(
         default=0, help_text="Sort order override: lower values will be listed first"
@@ -97,9 +106,10 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
 
 
 class Topic(models.Model):
-    objects = PublicationQuerySet.as_manager()
+    objects = UnlistedPublicationQuerySet.as_manager()
 
     published = models.BooleanField(default=False, blank=True)
+    unlisted = models.BooleanField(default=False, blank=True)
 
     ordering = models.IntegerField(
         default=0, help_text="Sort order override: lower values will be listed first"
