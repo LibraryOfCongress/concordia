@@ -1573,6 +1573,8 @@ def redirect_to_next_reviewable_asset(request):
     item_id = request.GET.get("item", "")
     asset_id = request.GET.get("asset", 0)
 
+    # FIXME: ensure the project belongs to the campaign
+
     if not request.user.is_authenticated:
         user = get_anonymous_user()
     else:
@@ -1604,6 +1606,8 @@ def find_transcribable_assets(campaign_counter, project_slug, item_id, asset_id)
         item__published=True,
         published=True,
     )
+    # FIXME: if project is specified, the campaign can only be
+    # that project's campaign
     potential_assets = filter_and_order_transcribable_assets(
         potential_assets, project_slug, item_id, asset_id
     )
@@ -1614,7 +1618,7 @@ def find_transcribable_assets(campaign_counter, project_slug, item_id, asset_id)
 @never_cache
 @atomic
 def redirect_to_next_transcribable_asset(request):
-
+    # Campaign is not specified, but project / item / asset may be
     if not request.user.is_authenticated:
         user = get_anonymous_user()
     else:
@@ -1623,6 +1627,9 @@ def redirect_to_next_transcribable_asset(request):
     project_slug = request.GET.get("project", "")
     item_id = request.GET.get("item", "")
     asset_id = request.GET.get("asset", 0)
+
+    # FIXME: if the project is specified, select the campaign
+    # to which it belongs
 
     potential_assets = None
     campaign_counter = 0
@@ -1641,9 +1648,8 @@ def redirect_to_next_transcribable_asset(request):
 @never_cache
 @atomic
 def redirect_to_next_reviewable_campaign_asset(request, *, campaign_slug):
-    campaign = get_object_or_404(
-        Campaign.objects.published().listed(), slug=campaign_slug
-    )
+    # Campaign is specified: may be listed or unlisted
+    campaign = get_object_or_404(Campaign.objects.published(), slug=campaign_slug)
     project_slug = request.GET.get("project", "")
     item_id = request.GET.get("item", "")
     asset_id = request.GET.get("asset", 0)
@@ -1673,9 +1679,8 @@ def redirect_to_next_reviewable_campaign_asset(request, *, campaign_slug):
 @never_cache
 @atomic
 def redirect_to_next_transcribable_campaign_asset(request, *, campaign_slug):
-    campaign = get_object_or_404(
-        Campaign.objects.published().listed(), slug=campaign_slug
-    )
+    # Campaign is specified: may be listed or unlisted
+    campaign = get_object_or_404(Campaign.objects.published(), slug=campaign_slug)
     project_slug = request.GET.get("project", "")
     item_id = request.GET.get("item", "")
     asset_id = request.GET.get("asset", 0)
@@ -1704,7 +1709,8 @@ def redirect_to_next_transcribable_campaign_asset(request, *, campaign_slug):
 @never_cache
 @atomic
 def redirect_to_next_reviewable_topic_asset(request, *, topic_slug):
-    topic = get_object_or_404(Topic.objects.published().listed(), slug=topic_slug)
+    # Topic is specified: may be listed or unlisted
+    topic = get_object_or_404(Topic.objects.published(), slug=topic_slug)
     project_slug = request.GET.get("project", "")
     item_id = request.GET.get("item", "")
     asset_id = request.GET.get("asset", 0)
@@ -1734,7 +1740,8 @@ def redirect_to_next_reviewable_topic_asset(request, *, topic_slug):
 @never_cache
 @atomic
 def redirect_to_next_transcribable_topic_asset(request, *, topic_slug):
-    topic = get_object_or_404(Topic.objects.published().listed(), slug=topic_slug)
+    # Topic is specified: may be listed or unlisted
+    topic = get_object_or_404(Topic.objects.published(), slug=topic_slug)
     project_slug = request.GET.get("project", "")
     item_id = request.GET.get("item", "")
     asset_id = request.GET.get("asset", 0)
