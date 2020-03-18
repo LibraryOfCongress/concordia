@@ -1020,7 +1020,32 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         self.assertEqual(["bar", "foo", "quux"], data["user_tags"])
         self.assertEqual(["baaz", "bar", "foo", "quux"], data["all_tags"])
 
-    def test_find_next_transcribable(self):
+    def test_find_next_transcribable_no_campaign(self):
+        asset1 = create_asset(slug="test-asset-1")
+        asset2 = create_asset(item=asset1.item, slug="test-asset-2")
+        resp = self.client.get(reverse("redirect-to-next-transcribable-asset"))
+
+        self.assertRedirects(resp, expected_url=asset2.get_absolute_url())
+
+    def test_find_next_reviewable_no_campaign(self):
+        anon = get_anonymous_user()
+
+        asset1 = create_asset(slug="test-asset-1")
+        asset2 = create_asset(item=asset1.item, slug="test-asset-2")
+
+        t1 = Transcription(asset=asset1, user=anon, text="test", submitted=now())
+        t1.full_clean()
+        t1.save()
+
+        t2 = Transcription(asset=asset2, user=anon, text="test", submitted=now())
+        t2.full_clean()
+        t2.save()
+
+        response = self.client.get(reverse("redirect-to-next-reviewable-asset"))
+
+        self.assertRedirects(response, expected_url=asset2.get_absolute_url())
+
+    def test_find_next_transcribable_campaign(self):
         asset1 = create_asset(slug="test-asset-1")
         asset2 = create_asset(item=asset1.item, slug="test-asset-2")
         campaign = asset1.item.project.campaign
@@ -1034,7 +1059,22 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
 
         self.assertRedirects(resp, expected_url=asset2.get_absolute_url())
 
-    def test_find_next_reviewable(self):
+    def test_find_next_transcribable_topic(self):
+        asset1 = create_asset(slug="test-asset-1")
+        create_asset(item=asset1.item, slug="test-asset-2")
+        project = asset1.item.project
+        topic = create_topic(project=project)
+
+        resp = self.client.get(
+            reverse(
+                "redirect-to-next-transcribable-topic-asset",
+                kwargs={"topic_slug": topic.slug},
+            )
+        )
+
+        self.assertRedirects(resp, expected_url=asset1.get_absolute_url())
+
+    def test_find_next_reviewable_campaign(self):
         anon = get_anonymous_user()
 
         asset1 = create_asset(slug="test-review-asset-1")
@@ -1059,7 +1099,72 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
 
         self.assertRedirects(response, expected_url=asset2.get_absolute_url())
 
-    def test_find_next_transcribable_unlisted(self):
+    def test_find_next_reviewable_topic(self):
+        anon = get_anonymous_user()
+
+        asset1 = create_asset(slug="test-review-asset-1")
+        asset2 = create_asset(item=asset1.item, slug="test-review-asset-2")
+        project = asset1.item.project
+        topic = create_topic(project=project)
+
+        t1 = Transcription(asset=asset1, user=anon, text="test", submitted=now())
+        t1.full_clean()
+        t1.save()
+
+        t2 = Transcription(asset=asset2, user=anon, text="test", submitted=now())
+        t2.full_clean()
+        t2.save()
+
+        response = self.client.get(
+            reverse(
+                "redirect-to-next-reviewable-topic-asset",
+                kwargs={"topic_slug": topic.slug},
+            )
+        )
+
+        self.assertRedirects(response, expected_url=asset1.get_absolute_url())
+
+    def test_find_next_reviewable_unlisted_campaign(self):
+        anon = get_anonymous_user()
+
+        unlisted_campaign = create_campaign(
+            slug="campaign-transcribe-redirect-unlisted",
+            title="Test Unlisted Review Redirect Campaign",
+            unlisted=True,
+        )
+        unlisted_project = create_project(
+            title="Unlisted Project",
+            slug="unlisted-project",
+            campaign=unlisted_campaign,
+        )
+        unlisted_item = create_item(
+            title="Unlisted Item",
+            item_id="unlisted-item",
+            item_url="https://blah.com/unlisted-item",
+            project=unlisted_project,
+        )
+
+        asset1 = create_asset(slug="test-asset-1", item=unlisted_item)
+        asset2 = create_asset(item=asset1.item, slug="test-asset-2")
+
+        t1 = Transcription(asset=asset1, user=anon, text="test", submitted=now())
+        t1.full_clean()
+        t1.save()
+
+        t2 = Transcription(asset=asset2, user=anon, text="test", submitted=now())
+        t2.full_clean()
+        t2.save()
+
+        response = self.client.get(
+            reverse(
+                "transcriptions:redirect-to-next-reviewable-campaign-asset",
+                kwargs={"campaign_slug": unlisted_campaign.slug},
+            )
+        )
+
+        self.assertRedirects(response, expected_url=asset2.get_absolute_url())
+
+    def test_find_next_transcribable_unlisted_campaign(self):
         unlisted_campaign = create_campaign(
             slug="campaign-transcribe-redirect-unlisted",
             title="Test Unlisted Transcribe Redirect Campaign",
