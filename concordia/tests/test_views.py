@@ -1122,7 +1122,7 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
             )
         )
 
-        self.assertRedirects(response, expected_url=asset1.get_absolute_url())
+        self.assertRedirects(response, expected_url=asset2.get_absolute_url())
 
     def test_find_next_reviewable_unlisted_campaign(self):
         anon = get_anonymous_user()
