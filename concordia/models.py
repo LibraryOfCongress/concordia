@@ -98,6 +98,11 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
 
     metadata = JSONField(default=metadata_default, blank=True, null=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=["published", "unlisted"]),
+        ]
+
     def __str__(self):
         return self.title
 
@@ -121,6 +126,11 @@ class Topic(models.Model):
         upload_to="topic-thumbnails", blank=True, null=True
     )
     short_description = models.TextField(blank=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["published", "unlisted"]),
+        ]
 
     def __str__(self):
         return self.title
@@ -264,6 +274,10 @@ class Asset(MetricsModelMixin("asset"), models.Model):
 
     class Meta:
         unique_together = (("slug", "item"),)
+        indexes = [
+            models.Index(fields=["id", "published", "transcription_status"]),
+            models.Index(fields=["published", "transcription_status"]),
+        ]
 
     def __str__(self):
         return self.title
