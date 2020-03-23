@@ -268,6 +268,7 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         max_length=20,
         default=TranscriptionStatus.NOT_STARTED,
         choices=TranscriptionStatus.CHOICES,
+        db_index=True,
     )
 
     difficulty = models.PositiveIntegerField(default=0, blank=True, null=True)
