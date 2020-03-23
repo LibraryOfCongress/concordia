@@ -80,8 +80,8 @@ class UnlistedPublicationQuerySet(PublicationQuerySet):
 class Campaign(MetricsModelMixin("campaign"), models.Model):
     objects = UnlistedPublicationQuerySet.as_manager()
 
-    published = models.BooleanField(default=False, blank=True)
-    unlisted = models.BooleanField(default=False, blank=True)
+    published = models.BooleanField(default=False, blank=True, db_index=True)
+    unlisted = models.BooleanField(default=False, blank=True, db_index=True)
 
     ordering = models.IntegerField(
         default=0, help_text="Sort order override: lower values will be listed first"
@@ -108,8 +108,8 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
 class Topic(models.Model):
     objects = UnlistedPublicationQuerySet.as_manager()
 
-    published = models.BooleanField(default=False, blank=True)
-    unlisted = models.BooleanField(default=False, blank=True)
+    published = models.BooleanField(default=False, blank=True, db_index=True)
+    unlisted = models.BooleanField(default=False, blank=True, db_index=True)
 
     ordering = models.IntegerField(
         default=0, help_text="Sort order override: lower values will be listed first"
@@ -148,7 +148,7 @@ class Project(MetricsModelMixin("project"), models.Model):
 
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
 
-    published = models.BooleanField(default=False, blank=True)
+    published = models.BooleanField(default=False, blank=True, db_index=True)
 
     title = models.CharField(max_length=80)
     slug = models.SlugField(max_length=80, allow_unicode=True)
@@ -180,7 +180,7 @@ class Item(MetricsModelMixin("item"), models.Model):
 
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
 
-    published = models.BooleanField(default=False, blank=True)
+    published = models.BooleanField(default=False, blank=True, db_index=True)
 
     title = models.CharField(max_length=600)
     item_url = models.URLField(max_length=255)
@@ -229,7 +229,7 @@ class Asset(MetricsModelMixin("asset"), models.Model):
 
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
 
-    published = models.BooleanField(default=False, blank=True)
+    published = models.BooleanField(default=False, blank=True, db_index=True)
 
     title = models.CharField(max_length=100)
     slug = models.SlugField(max_length=100, allow_unicode=True)
