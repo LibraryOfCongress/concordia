@@ -1373,7 +1373,7 @@ def reserve_asset(request, *, asset_pk):
 
         # We'll pass the message to the WebSocket listeners before returning it:
         msg = {"asset_pk": asset_pk, "reservation_token": reservation_token}
-        logger.debug("Releasing reservation with token %s" % reservation_token)
+        logger.info("Releasing reservation with token %s", reservation_token)
         reservation_released.send(sender="reserve_asset", **msg)
         return JsonResponse(msg)
 
@@ -1396,23 +1396,23 @@ def reserve_asset(request, *, asset_pk):
             if reservation.tombstoned:
                 if reservation.reservation_token == reservation_token:
                     am_i_tombstoned = True
-                    logger.debug("I'm tombstoned %s" % reservation_token)
+                    logger.debug("I'm tombstoned %s", reservation_token)
                 else:
                     is_someone_else_tombstoned = True
                     logger.debug(
-                        "Someone else is tombstoned %s" % reservation.reservation_token
+                        "Someone else is tombstoned %s", reservation.reservation_token
                     )
             else:
                 if reservation.reservation_token == reservation_token:
                     is_it_already_mine = True
                     logger.debug(
-                        "I already have this active reservation %s" % reservation_token
+                        "I already have this active reservation %s", reservation_token
                     )
                 if not is_it_already_mine:
                     is_someone_else_active = True
                     logger.debug(
-                        "Someone else has this active reservation %s"
-                        % reservation.reservation_token
+                        "Someone else has this active reservation %s",
+                        reservation.reservation_token,
                     )
 
         if am_i_tombstoned:
@@ -1424,18 +1424,18 @@ def reserve_asset(request, *, asset_pk):
         if is_it_already_mine:
             # This user already has the reservation and it's not tombstoned
             msg = update_reservation(asset_pk, reservation_token)
-            logger.debug("Updating reservation %s" % reservation_token)
+            logger.debug("Updating reservation %s", reservation_token)
 
         if is_someone_else_tombstoned:
             msg = obtain_reservation(asset_pk, reservation_token)
             logger.debug(
-                "Obtaining reservation for %s from tombstoned user" % reservation_token
+                "Obtaining reservation for %s from tombstoned user", reservation_token
             )
 
     else:
         # No reservations = no activity = go ahead and do an insert
         msg = obtain_reservation(asset_pk, reservation_token)
-        logger.debug("No activity, just get the reservation %s" % reservation_token)
+        logger.debug("No activity, just get the reservation %s", reservation_token)
 
     return JsonResponse(msg)
 
