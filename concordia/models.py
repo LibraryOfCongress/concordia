@@ -158,7 +158,7 @@ class Project(MetricsModelMixin("project"), models.Model):
 
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
 
-    published = models.BooleanField(default=False, blank=True, db_index=True)
+    published = models.BooleanField(default=False, blank=True)
 
     title = models.CharField(max_length=80)
     slug = models.SlugField(max_length=80, allow_unicode=True)
@@ -174,6 +174,7 @@ class Project(MetricsModelMixin("project"), models.Model):
     class Meta:
         unique_together = (("slug", "campaign"),)
         ordering = ["title"]
+        indexes = [models.Index(fields=["id", "campaign", "published"])]
 
     def __str__(self):
         return self.title
@@ -190,7 +191,7 @@ class Item(MetricsModelMixin("item"), models.Model):
 
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
 
-    published = models.BooleanField(default=False, blank=True, db_index=True)
+    published = models.BooleanField(default=False, blank=True)
 
     title = models.CharField(max_length=600)
     item_url = models.URLField(max_length=255)
@@ -208,6 +209,7 @@ class Item(MetricsModelMixin("item"), models.Model):
 
     class Meta:
         unique_together = (("item_id", "project"),)
+        indexes = [models.Index(fields=["project", "published"])]
 
     def __str__(self):
         return f"{self.item_id}: {self.title}"
@@ -276,7 +278,7 @@ class Asset(MetricsModelMixin("asset"), models.Model):
     class Meta:
         unique_together = (("slug", "item"),)
         indexes = [
-            models.Index(fields=["id", "published", "transcription_status"]),
+            models.Index(fields=["id", "item", "published", "transcription_status"]),
             models.Index(fields=["published", "transcription_status"]),
         ]
 
