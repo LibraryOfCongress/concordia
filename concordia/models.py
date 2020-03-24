@@ -80,8 +80,8 @@ class UnlistedPublicationQuerySet(PublicationQuerySet):
 class Campaign(MetricsModelMixin("campaign"), models.Model):
     objects = UnlistedPublicationQuerySet.as_manager()
 
-    published = models.BooleanField(default=False, blank=True)
-    unlisted = models.BooleanField(default=False, blank=True)
+    published = models.BooleanField(default=False, blank=True, db_index=True)
+    unlisted = models.BooleanField(default=False, blank=True, db_index=True)
 
     ordering = models.IntegerField(
         default=0, help_text="Sort order override: lower values will be listed first"
@@ -98,6 +98,11 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
 
     metadata = JSONField(default=metadata_default, blank=True, null=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=["published", "unlisted"]),
+        ]
+
     def __str__(self):
         return self.title
 
@@ -108,8 +113,8 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
 class Topic(models.Model):
     objects = UnlistedPublicationQuerySet.as_manager()
 
-    published = models.BooleanField(default=False, blank=True)
-    unlisted = models.BooleanField(default=False, blank=True)
+    published = models.BooleanField(default=False, blank=True, db_index=True)
+    unlisted = models.BooleanField(default=False, blank=True, db_index=True)
 
     ordering = models.IntegerField(
         default=0, help_text="Sort order override: lower values will be listed first"
@@ -121,6 +126,11 @@ class Topic(models.Model):
         upload_to="topic-thumbnails", blank=True, null=True
     )
     short_description = models.TextField(blank=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["published", "unlisted"]),
+        ]
 
     def __str__(self):
         return self.title
@@ -148,7 +158,7 @@ class Project(MetricsModelMixin("project"), models.Model):
 
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
 
-    published = models.BooleanField(default=False, blank=True)
+    published = models.BooleanField(default=False, blank=True, db_index=True)
 
     title = models.CharField(max_length=80)
     slug = models.SlugField(max_length=80, allow_unicode=True)
@@ -180,7 +190,7 @@ class Item(MetricsModelMixin("item"), models.Model):
 
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
 
-    published = models.BooleanField(default=False, blank=True)
+    published = models.BooleanField(default=False, blank=True, db_index=True)
 
     title = models.CharField(max_length=600)
     item_url = models.URLField(max_length=255)
@@ -229,7 +239,7 @@ class Asset(MetricsModelMixin("asset"), models.Model):
 
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
 
-    published = models.BooleanField(default=False, blank=True)
+    published = models.BooleanField(default=False, blank=True, db_index=True)
 
     title = models.CharField(max_length=100)
     slug = models.SlugField(max_length=100, allow_unicode=True)
@@ -258,12 +268,17 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         max_length=20,
         default=TranscriptionStatus.NOT_STARTED,
         choices=TranscriptionStatus.CHOICES,
+        db_index=True,
     )
 
     difficulty = models.PositiveIntegerField(default=0, blank=True, null=True)
 
     class Meta:
         unique_together = (("slug", "item"),)
+        indexes = [
+            models.Index(fields=["id", "published", "transcription_status"]),
+            models.Index(fields=["published", "transcription_status"]),
+        ]
 
     def __str__(self):
         return self.title
@@ -341,6 +356,11 @@ class Transcription(MetricsModelMixin("transcription"), models.Model):
     )
 
     text = models.TextField(blank=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["asset", "user"]),
+        ]
 
     def __str__(self):
         return f"Transcription #{self.pk}"
