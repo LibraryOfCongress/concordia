@@ -365,6 +365,10 @@ ASGI_APPLICATION = "concordia.routing.application"
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {"hosts": [(REDIS_ADDRESS, REDIS_PORT)]},
+        "CONFIG": {
+            "hosts": [(REDIS_ADDRESS, REDIS_PORT)],
+            "capacity": 1500,
+            "expiry": 10,
+        },
     }
 }
