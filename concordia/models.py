@@ -357,6 +357,11 @@ class Transcription(MetricsModelMixin("transcription"), models.Model):
 
     text = models.TextField(blank=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=["asset", "user"]),
+        ]
+
     def __str__(self):
         return f"Transcription #{self.pk}"
 
