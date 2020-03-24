@@ -1511,7 +1511,9 @@ def filter_and_order_transcribable_assets(
         | Q(transcription_status=TranscriptionStatus.IN_PROGRESS)
     )
 
-    potential_assets = potential_assets.filter(assettranscriptionreservation=None)
+    potential_assets = potential_assets.exclude(
+        pk__in=Subquery(AssetTranscriptionReservation.objects.values("asset_id"))
+    )
     potential_assets = potential_assets.select_related("item", "item__project")
 
     # We'll favor assets which are in the same item or project as the original:
@@ -1544,7 +1546,9 @@ def filter_and_order_reviewable_assets(
         transcription_status=TranscriptionStatus.SUBMITTED
     )
     potential_assets = potential_assets.exclude(transcription__user=user_pk)
-    potential_assets = potential_assets.filter(assettranscriptionreservation=None)
+    potential_assets = potential_assets.exclude(
+        pk__in=Subquery(AssetTranscriptionReservation.objects.values("asset_id"))
+    )
     potential_assets = potential_assets.select_related("item", "item__project")
 
     # We'll favor assets which are in the same item or project as the original:
