@@ -459,7 +459,7 @@ def calculate_asset_stats(asset_qs, ctx):
         "user_id", "reviewed_by"
     )
     user_ids = set()
-    for i, j in trans_qs:
+    for i, j in trans_qs.iterator():
         user_ids.add(i)
         user_ids.add(j)
 
