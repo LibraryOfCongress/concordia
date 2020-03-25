@@ -16,7 +16,6 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth.models import User
 from django.contrib.auth.views import (
     LoginView,
     PasswordResetConfirmView,
@@ -456,10 +455,15 @@ class CampaignListView(APIListView):
 def calculate_asset_stats(asset_qs, ctx):
     asset_count = asset_qs.count()
 
-    trans_qs = Transcription.objects.filter(asset__in=asset_qs)
-    ctx["contributor_count"] = User.objects.filter(
-        Q(pk__in=trans_qs.values("user_id")) | Q(pk__in=trans_qs.values("reviewed_by"))
-    ).count()
+    trans_qs = Transcription.objects.filter(asset__in=asset_qs).values_list(
+        "user_id", "reviewed_by"
+    )
+    user_ids = set()
+    for i, j in trans_qs:
+        user_ids.add(i)
+        user_ids.add(j)
+
+    ctx["contributor_count"] = len(user_ids)
 
     asset_state_qs = asset_qs.values_list("transcription_status")
     asset_state_qs = asset_state_qs.annotate(Count("transcription_status")).order_by()
