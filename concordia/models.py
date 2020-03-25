@@ -158,7 +158,7 @@ class Project(MetricsModelMixin("project"), models.Model):
 
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
 
-    published = models.BooleanField(default=False, blank=True)
+    published = models.BooleanField(default=False, blank=True, db_index=True)
 
     title = models.CharField(max_length=80)
     slug = models.SlugField(max_length=80, allow_unicode=True)
