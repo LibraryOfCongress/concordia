@@ -16,7 +16,7 @@
     {% if CAROUSEL_CMS %}
     <div class="row no-gutters px-sm-3">
         <div class="col-12">
-            <div id="homepage-carousel" class="carousel slide" data-ride="carousel" data-pause="hover">
+            <div id="homepage-carousel" class="carousel slide" data-ride="carousel" data-pause="hover" {% if slides.0.overlay_position == "right" %} data-overlay-position="top-right" {% endif %}>
                 <ol class="carousel-indicators d-none d-lg-flex">
                     {% for slide in slides %}
                         <li data-target="#homepage-carousel" data-slide-to="{{ forloop.counter0 }}" {% if forloop.first %}class="active" {% endif %}></li>
