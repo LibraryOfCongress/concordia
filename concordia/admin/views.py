@@ -9,7 +9,7 @@ from django.shortcuts import render
 from django.utils.text import slugify
 from django.views.decorators.cache import never_cache
 from tabular_export.core import export_to_csv_response, flatten_queryset
-
+from concordia.converters import SlugConverter
 from importer.tasks import import_items_into_project_from_url, redownload_image_task
 from importer.utils.excel import slurp_excel
 
@@ -130,6 +130,7 @@ def admin_bulk_import_view(request):
                 "Campaign",
                 "Campaign Short Description",
                 "Campaign Long Description",
+                "Project Slug"
                 "Project",
                 "Project Description",
                 "Import URLs",
@@ -159,6 +160,11 @@ def admin_bulk_import_view(request):
                     continue
 
                 try:
+                    
+                    pattern = re.compile(SlugConverter.regex)
+                    project_slug = row["Project Slug"] 
+                    if bool(pattern.match(project_slug)) != True:
+                        messages.warning(request, "Project slug doesn't match pattern")
                     campaign, created = validated_get_or_create(
                         Campaign,
                         title=campaign_title,
@@ -184,12 +190,16 @@ def admin_bulk_import_view(request):
                     )
 
                 try:
+                    pattern = re.compile(SlugConverter.regex)
+                    project_slug = row["Project Slug"] 
+                    if bool(pattern.match(project_slug)) != True:
+                        messages.warning(request, "Project slug doesn't match pattern")
                     project, created = validated_get_or_create(
                         Project,
                         title=project_title,
                         campaign=campaign,
                         defaults={
-                            "slug": slugify(project_title, allow_unicode=True),
+                            "slug": row["Project Slug"] or slugify(project_title, allow_unicode=True),
                             "description": row["Project Description"] or "",
                             "campaign": campaign,
                         },
