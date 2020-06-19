@@ -130,7 +130,8 @@ def admin_bulk_import_view(request):
                 "Campaign",
                 "Campaign Short Description",
                 "Campaign Long Description",
-                "Project Slug"
+                "Campaign Slug",
+                "Project Slug",
                 "Project",
                 "Project Description",
                 "Import URLs",
@@ -162,14 +163,14 @@ def admin_bulk_import_view(request):
                 try:
                     
                     pattern = re.compile(SlugConverter.regex)
-                    project_slug = row["Project Slug"] 
+                    project_slug = row["Campaign Slug"] 
                     if bool(pattern.match(project_slug)) != True:
-                        messages.warning(request, "Project slug doesn't match pattern")
+                        messages.warning(request, "Campaign slug doesn't match pattern")
                     campaign, created = validated_get_or_create(
                         Campaign,
                         title=campaign_title,
                         defaults={
-                            "slug": row["Project Slug"] or slugify(campaign_title, allow_unicode=True),
+                            "slug": row["Campaign Slug"] or slugify(campaign_title, allow_unicode=True),
                             "description": row["Campaign Long Description"] or "",
                             "short_description": row["Campaign Short Description"]
                             or "",
