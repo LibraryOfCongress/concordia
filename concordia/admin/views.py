@@ -163,7 +163,7 @@ def admin_bulk_import_view(request):
                         Campaign,
                         title=campaign_title,
                         defaults={
-                            "slug": slugify(campaign_title, allow_unicode=True),
+                            "slug": row["Project Slug"] or slugify(campaign_title, allow_unicode=True),
                             "description": row["Campaign Long Description"] or "",
                             "short_description": row["Campaign Short Description"]
                             or "",
