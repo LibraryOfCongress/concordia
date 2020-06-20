@@ -116,7 +116,7 @@ def redownload_images_view(request):
 @permission_required("concordia.change_item")
 def admin_bulk_import_view(request):
     request.current_app = "admin"
-
+    pattern = re.compile(SlugConverter.regex)
     context = {"title": "Bulk Import"}
 
     if request.method == "POST":
@@ -162,9 +162,9 @@ def admin_bulk_import_view(request):
 
                 try:
                     
-                    pattern = re.compile(SlugConverter.regex)
-                    project_slug = row["Campaign Slug"] 
-                    if not pattern.match(project_slug):
+                    
+                    campaign_slug = row["Campaign Slug"] 
+                    if not pattern.match(campaign_slug):
                         messages.warning(request, "Campaign slug doesn't match pattern")
                     campaign, created = validated_get_or_create(
                         Campaign,
@@ -191,9 +191,9 @@ def admin_bulk_import_view(request):
                     )
 
                 try:
-                    pattern = re.compile(SlugConverter.regex)
+                    
                     project_slug = row["Project Slug"] 
-                    if bool(pattern.match(project_slug)) != True:
+                    if not pattern.match(project_slug):
                         messages.warning(request, "Project slug doesn't match pattern")
                     project, created = validated_get_or_create(
                         Project,
