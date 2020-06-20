@@ -1,5 +1,4 @@
 import re
-
 from bittersweet.models import validated_get_or_create
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
@@ -12,7 +11,6 @@ from tabular_export.core import export_to_csv_response, flatten_queryset
 from concordia.converters import SlugConverter
 from importer.tasks import import_items_into_project_from_url, redownload_image_task
 from importer.utils.excel import slurp_excel
-
 from ..models import Asset, Campaign, Project, SiteReport
 from .forms import AdminProjectBulkImportForm, AdminRedownloadImagesForm
 
