@@ -164,7 +164,7 @@ def admin_bulk_import_view(request):
                     
                     pattern = re.compile(SlugConverter.regex)
                     project_slug = row["Campaign Slug"] 
-                    if bool(pattern.match(project_slug)) != True:
+                    if not pattern.match(project_slug):
                         messages.warning(request, "Campaign slug doesn't match pattern")
                     campaign, created = validated_get_or_create(
                         Campaign,
