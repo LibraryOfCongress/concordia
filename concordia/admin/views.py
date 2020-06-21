@@ -159,16 +159,16 @@ def admin_bulk_import_view(request):
                     continue
 
                 try:
-                    
-                    
-                    campaign_slug = row["Campaign Slug"] 
+
+                    campaign_slug = row["Campaign Slug"]
                     if not pattern.match(campaign_slug):
                         messages.warning(request, "Campaign slug doesn't match pattern")
                     campaign, created = validated_get_or_create(
                         Campaign,
                         title=campaign_title,
                         defaults={
-                            "slug": row["Campaign Slug"] or slugify(campaign_title, allow_unicode=True),
+                            "slug": row["Campaign Slug"]
+                            or slugify(campaign_title, allow_unicode=True),
                             "description": row["Campaign Long Description"] or "",
                             "short_description": row["Campaign Short Description"]
                             or "",
@@ -189,8 +189,8 @@ def admin_bulk_import_view(request):
                     )
 
                 try:
-                    
-                    project_slug = row["Project Slug"] 
+
+                    project_slug = row["Project Slug"]
                     if not pattern.match(project_slug):
                         messages.warning(request, "Project slug doesn't match pattern")
                     project, created = validated_get_or_create(
@@ -198,7 +198,8 @@ def admin_bulk_import_view(request):
                         title=project_title,
                         campaign=campaign,
                         defaults={
-                            "slug": row["Project Slug"] or slugify(project_title, allow_unicode=True),
+                            "slug": row["Project Slug"]
+                            or slugify(project_title, allow_unicode=True),
                             "description": row["Project Description"] or "",
                             "campaign": campaign,
                         },
