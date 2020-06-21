@@ -163,7 +163,7 @@ def admin_bulk_import_view(request):
                     
                     campaign_slug = row["Campaign Slug"] 
                     if not pattern.match(campaign_slug):
-                        messages.warning(request, "Campaign slug doesn't match pattern.")
+                        messages.warning(request, "Campaign slug doesn't match pattern")
                     campaign, created = validated_get_or_create(
                         Campaign,
                         title=campaign_title,
@@ -192,7 +192,7 @@ def admin_bulk_import_view(request):
                     
                     project_slug = row["Project Slug"] 
                     if not pattern.match(project_slug):
-                        messages.warning(request, "Project slug doesn't match pattern.")
+                        messages.warning(request, "Project slug doesn't match pattern")
                     project, created = validated_get_or_create(
                         Project,
                         title=project_title,
