@@ -1,4 +1,5 @@
 import re
+
 from bittersweet.models import validated_get_or_create
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
@@ -8,11 +9,15 @@ from django.shortcuts import render
 from django.utils.text import slugify
 from django.views.decorators.cache import never_cache
 from tabular_export.core import export_to_csv_response, flatten_queryset
+
 from concordia.converters import SlugConverter
 from importer.tasks import import_items_into_project_from_url, redownload_image_task
 from importer.utils.excel import slurp_excel
+
 from ..models import Asset, Campaign, Project, SiteReport
 from .forms import AdminProjectBulkImportForm, AdminRedownloadImagesForm
+
+# comment
 
 
 @never_cache
@@ -162,7 +167,9 @@ def admin_bulk_import_view(request):
 
                     campaign_slug = row["Campaign Slug"]
                     if not pattern.match(campaign_slug):
-                        messages.warning(request, "Campaign slug doesn't match pattern")
+                        messages.warning(
+                            request, "Campaign slug doesn't match pattern."
+                        )
                     campaign, created = validated_get_or_create(
                         Campaign,
                         title=campaign_title,
@@ -192,7 +199,7 @@ def admin_bulk_import_view(request):
 
                     project_slug = row["Project Slug"]
                     if not pattern.match(project_slug):
-                        messages.warning(request, "Project slug doesn't match pattern")
+                        messages.warning(request, "Project slug doesn't match pattern.")
                     project, created = validated_get_or_create(
                         Project,
                         title=project_title,
