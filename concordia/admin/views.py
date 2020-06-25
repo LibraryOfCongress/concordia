@@ -10,11 +10,14 @@ from django.utils.text import slugify
 from django.views.decorators.cache import never_cache
 from tabular_export.core import export_to_csv_response, flatten_queryset
 
+from concordia.converters import SlugConverter
 from importer.tasks import import_items_into_project_from_url, redownload_image_task
 from importer.utils.excel import slurp_excel
 
 from ..models import Asset, Campaign, Project, SiteReport
 from .forms import AdminProjectBulkImportForm, AdminRedownloadImagesForm
+
+# comment
 
 
 @never_cache
@@ -116,7 +119,7 @@ def redownload_images_view(request):
 @permission_required("concordia.change_item")
 def admin_bulk_import_view(request):
     request.current_app = "admin"
-
+    pattern = re.compile(SlugConverter.regex)
     context = {"title": "Bulk Import"}
 
     if request.method == "POST":
@@ -130,6 +133,8 @@ def admin_bulk_import_view(request):
                 "Campaign",
                 "Campaign Short Description",
                 "Campaign Long Description",
+                "Campaign Slug",
+                "Project Slug",
                 "Project",
                 "Project Description",
                 "Import URLs",
@@ -159,11 +164,18 @@ def admin_bulk_import_view(request):
                     continue
 
                 try:
+
+                    campaign_slug = row["Campaign Slug"]
+                    if not pattern.match(campaign_slug):
+                        messages.warning(
+                            request, "Campaign slug doesn't match pattern."
+                        )
                     campaign, created = validated_get_or_create(
                         Campaign,
                         title=campaign_title,
                         defaults={
-                            "slug": slugify(campaign_title, allow_unicode=True),
+                            "slug": row["Campaign Slug"]
+                            or slugify(campaign_title, allow_unicode=True),
                             "description": row["Campaign Long Description"] or "",
                             "short_description": row["Campaign Short Description"]
                             or "",
@@ -184,12 +196,17 @@ def admin_bulk_import_view(request):
                     )
 
                 try:
+
+                    project_slug = row["Project Slug"]
+                    if not pattern.match(project_slug):
+                        messages.warning(request, "Project slug doesn't match pattern.")
                     project, created = validated_get_or_create(
                         Project,
                         title=project_title,
                         campaign=campaign,
                         defaults={
-                            "slug": slugify(project_title, allow_unicode=True),
+                            "slug": row["Project Slug"]
+                            or slugify(project_title, allow_unicode=True),
                             "description": row["Project Description"] or "",
                             "campaign": campaign,
                         },
