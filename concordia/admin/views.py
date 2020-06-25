@@ -17,8 +17,6 @@ from importer.utils.excel import slurp_excel
 from ..models import Asset, Campaign, Project, SiteReport
 from .forms import AdminProjectBulkImportForm, AdminRedownloadImagesForm
 
-# comment
-
 
 @never_cache
 @staff_member_required
