@@ -1,3 +1,4 @@
+import logging
 from urllib.parse import urljoin
 
 from django.conf import settings
@@ -50,6 +51,8 @@ from .forms import (
     BleachedDescriptionAdminForm,
     SimpleContentBlockAdminForm,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class ProjectListFilter(MultipleChoiceListFilter):
@@ -232,6 +235,12 @@ class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         ]
 
         return custom_urls + urls
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        # call boto 3 to move the stuff
+        new_campaign_slug = obj.campaign.slug
+        logger.info("New campaign slug is %s", new_campaign_slug)
 
     @method_decorator(permission_required("concordia.add_campaign"))
     @method_decorator(permission_required("concordia.change_campaign"))
