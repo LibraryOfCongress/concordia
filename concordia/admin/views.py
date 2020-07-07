@@ -162,7 +162,7 @@ def admin_bulk_import_view(request):
                     continue
 
                 try:
-
+                    # Read Campaign slug value from excel
                     campaign_slug = row["Campaign Slug"]
                     if campaign_slug and not pattern.match(campaign_slug):
                         messages.warning(
@@ -194,7 +194,7 @@ def admin_bulk_import_view(request):
                     )
 
                 try:
-
+                    # Read Project slug value from excel
                     project_slug = row["Project Slug"]
                     if project_slug and not pattern.match(project_slug):
                         messages.warning(request, "Project slug doesn't match pattern.")
