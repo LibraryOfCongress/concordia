@@ -1,5 +1,9 @@
+import logging
+import os
 from urllib.parse import urljoin
 
+import boto3
+import boto3.session
 from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
@@ -58,6 +62,9 @@ class ProjectListFilter(MultipleChoiceListFilter):
     def lookups(self, request, model_admin):
         choices = Project.objects.values_list("pk", "title")
         return tuple(choices)
+
+
+logger = logging.getLogger(__name__)
 
 
 class AssetProjectListFilter(ProjectListFilter):
@@ -205,6 +212,7 @@ class TopicAdmin(admin.ModelAdmin):
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
+    AWS_DEFAULT_REGION = os.getenv("AWS_DEFAULT_REGION", "us-east-1")
     form = BleachedDescriptionAdminForm
 
     # todo: add foreignKey link for campaign
@@ -232,6 +240,53 @@ class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         ]
 
         return custom_urls + urls
+
+    def save_model(self, request, obj, form, change):
+
+        old_campaign = Project.objects.get(pk=obj.pk).campaign.slug
+        old_project = Project.objects.get(pk=obj.pk).slug
+
+        super().save_model(request, obj, form, change)
+        # call boto3 api to move project files from older campaign to newer campaign
+        # call boto3 api to update project name within same campaigns and transfer files
+        try:
+
+            new_campaign = obj.campaign.slug
+            new_project = obj.slug
+            aws_profile = "AWSCrowdlocgov"
+            bucket_name = "crowd-dev-content"
+            session = boto3.session.Session(profile_name=aws_profile)
+            s3_resource = session.resource("s3")
+            top_level_bucket = s3_resource.Bucket(bucket_name)
+            filter_from = old_campaign + "/" + old_project
+            if old_campaign != new_campaign or old_project != new_project:
+                print("Transfer files")
+                for obj in top_level_bucket.objects.filter(
+                    Prefix=filter_from + "/"
+                ).all():
+                    # print(obj.key.replace(old_campaign,new_campaign).replace(old_project,new_project))
+                    s3_resource.Object(
+                        bucket_name,
+                        obj.key.replace(old_campaign, new_campaign).replace(
+                            old_project, new_project
+                        ),
+                    ).copy_from(CopySource=bucket_name + "/" + obj.key)
+
+                res = []
+                bucket = s3_resource.Bucket(bucket_name)
+                for obj_version in bucket.object_versions.filter(
+                    Prefix=filter_from + "/"
+                ).all():
+                    res.append(
+                        {"Key": obj_version.object_key, "VersionId": obj_version.id}
+                    )
+                    # print(res)
+
+                if res != []:
+                    bucket.delete_objects(Delete={"Objects": res})
+
+        except Exception as error_message:
+            print(error_message)
 
     @method_decorator(permission_required("concordia.add_campaign"))
     @method_decorator(permission_required("concordia.change_campaign"))
