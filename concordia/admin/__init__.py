@@ -254,7 +254,7 @@ class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
             new_campaign = obj.campaign.slug
             new_project = obj.slug
             aws_profile = "AWSCrowdlocgov"
-            bucket_name = "crowd-dev-content"
+            bucket_name = getattr(settings, "S3_BUCKET_NAME", None)
             session = boto3.session.Session(profile_name=aws_profile)
             s3_resource = session.resource("s3")
             top_level_bucket = s3_resource.Bucket(bucket_name)
