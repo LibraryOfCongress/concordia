@@ -260,7 +260,7 @@ class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
             top_level_bucket = s3_resource.Bucket(bucket_name)
             filter_from = old_campaign + "/" + old_project
             if old_campaign != new_campaign or old_project != new_project:
-                print("Transfer files")
+
                 for obj in top_level_bucket.objects.filter(
                     Prefix=filter_from + "/"
                 ).all():
