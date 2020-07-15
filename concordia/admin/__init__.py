@@ -1,5 +1,4 @@
 import logging
-import os
 from urllib.parse import urljoin
 
 import boto3
@@ -212,7 +211,7 @@ class TopicAdmin(admin.ModelAdmin):
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
-    AWS_DEFAULT_REGION = os.getenv("AWS_DEFAULT_REGION", "us-east-1")
+
     form = BleachedDescriptionAdminForm
 
     # todo: add foreignKey link for campaign
@@ -248,12 +247,10 @@ class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
 
         super().save_model(request, obj, form, change)
         # call boto3 api to move project files from older campaign to newer campaign
-        # call boto3 api to update project name within same campaigns and transfer files
         try:
 
             new_campaign = obj.campaign.slug
             new_project = obj.slug
-            # aws_profile = "AWSCrowdlocgov"
             bucket_name = getattr(settings, "S3_BUCKET_NAME", None)
             session = boto3.session.Session()
             s3_resource = session.resource("s3")
@@ -264,7 +261,7 @@ class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
                 for obj in top_level_bucket.objects.filter(
                     Prefix=filter_from + "/"
                 ).all():
-                    # print(obj.key.replace(old_campaign,new_campaign).replace(old_project,new_project))
+
                     s3_resource.Object(
                         bucket_name,
                         obj.key.replace(old_campaign, new_campaign).replace(
@@ -280,13 +277,13 @@ class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
                     res.append(
                         {"Key": obj_version.object_key, "VersionId": obj_version.id}
                     )
-                    # print(res)
 
                 if res != []:
                     bucket.delete_objects(Delete={"Objects": res})
 
         except Exception as error_message:
-            print(error_message)
+            logger.error(error_message)
+            raise
 
     @method_decorator(permission_required("concordia.add_campaign"))
     @method_decorator(permission_required("concordia.change_campaign"))

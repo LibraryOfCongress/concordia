@@ -45,4 +45,3 @@ SHELL_PLUS_PRE_IMPORTS = [
     ("concordia.utils", "get_anonymous_user"),
     ("concordia.models", "TranscriptionStatus"),
 ]
-S3_BUCKET_NAME = "crowd-dev-content"
