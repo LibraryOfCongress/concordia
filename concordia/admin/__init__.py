@@ -281,8 +281,10 @@ class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
                 if res != []:
                     bucket.delete_objects(Delete={"Objects": res})
 
-        except Exception as error_message:
-            logger.error(error_message)
+        except Exception:
+            logger.exception(
+                "Unhandled exception saving from %s to %s", new_campaign, new_project
+            )
             raise
 
     @method_decorator(permission_required("concordia.add_campaign"))
