@@ -10,7 +10,6 @@ from django.utils.text import slugify
 from django.views.decorators.cache import never_cache
 from tabular_export.core import export_to_csv_response, flatten_queryset
 
-from concordia.converters import SlugConverter
 from importer.tasks import import_items_into_project_from_url, redownload_image_task
 from importer.utils.excel import slurp_excel
 
@@ -117,7 +116,8 @@ def redownload_images_view(request):
 @permission_required("concordia.change_item")
 def admin_bulk_import_view(request):
     request.current_app = "admin"
-    pattern = re.compile(SlugConverter.regex)
+    url_regex = r"[-\w+]+"
+    pattern = re.compile(url_regex)
     context = {"title": "Bulk Import"}
 
     if request.method == "POST":
@@ -162,9 +162,9 @@ def admin_bulk_import_view(request):
                     continue
 
                 try:
-
+                    # Read Campaign slug value from excel
                     campaign_slug = row["Campaign Slug"]
-                    if not pattern.match(campaign_slug):
+                    if campaign_slug and not pattern.match(campaign_slug):
                         messages.warning(
                             request, "Campaign slug doesn't match pattern."
                         )
@@ -194,9 +194,9 @@ def admin_bulk_import_view(request):
                     )
 
                 try:
-
+                    # Read Project slug value from excel
                     project_slug = row["Project Slug"]
-                    if not pattern.match(project_slug):
+                    if project_slug and not pattern.match(project_slug):
                         messages.warning(request, "Project slug doesn't match pattern.")
                     project, created = validated_get_or_create(
                         Project,
