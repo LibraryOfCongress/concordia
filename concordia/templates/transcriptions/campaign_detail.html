@@ -30,6 +30,9 @@
                     <h4>Related Links</h4>
                     <div class="list-group">
                         {% for resource in campaign.resource_set.all %}
+                        {% if 'loc.gov' in resource.resource_url   %}
+                            <a class="list-group-item" href="{{ resource.resource_url }}" target="_blank">{{ resource.title }}</a>
+                        {%else%}
                             <a class="list-group-item" href="{{ resource.resource_url }}" target="_blank">{{ resource.title }} <i class="fa fa-external-link-alt"></i></a>
                         {% endfor %}
                     </div>
