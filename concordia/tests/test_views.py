@@ -491,7 +491,7 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         self.login_user()
 
         # 1 session check + 1 acquire
-        with self.assertNumQueries(2 if settings.SESSION_ENGINE.endswith("db") else 2):
+        with self.assertNumQueries(2 if settings.SESSION_ENGINE.endswith("db") else 1):
             resp = self.client.post(reverse("reserve-asset", args=(asset.pk,)))
         self.assertEqual(409, resp.status_code)
         self.assertEqual(1, AssetTranscriptionReservation.objects.count())
