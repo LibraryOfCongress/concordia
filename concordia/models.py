@@ -301,7 +301,7 @@ class Asset(MetricsModelMixin("asset"), models.Model):
 
 
 class Tag(MetricsModelMixin("tag"), models.Model):
-    TAG_VALIDATOR = RegexValidator(r"^[- _'\w]{1,50}$")
+    TAG_VALIDATOR = RegexValidator(r"^[- _À-ž'\w]{1,50}$")
     value = models.CharField(max_length=50, validators=[TAG_VALIDATOR])
 
     def __str__(self):

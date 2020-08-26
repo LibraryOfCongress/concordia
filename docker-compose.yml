@@ -24,7 +24,7 @@ services:
             - 54323:5432
         volumes:
             - ./postgresql:/docker-entrypoint-initdb.d
-            - db_volume:/var/lib/postgresl/data/
+            - db_volume:/var/lib/postgresql/data/
 
     app:
         restart: unless-stopped

@@ -419,20 +419,20 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
     def _asset_reservation_test_payload(self, user_id, anonymous=False):
         asset = create_asset()
 
-        # Acquire the reservation: 1 acquire + 1
-        # feature flag check + 1 reservation check
+        # Acquire the reservation: 1 acquire
+        # + 1 reservation check
         # + 1 session if not anonymous and using a database:
         if not anonymous and settings.SESSION_ENGINE.endswith("db"):
-            expected_acquire_queries = 4
-        else:
             expected_acquire_queries = 3
+        else:
+            expected_acquire_queries = 2
 
-        # Release the reservation: 1 feature flag check +
+        # Release the reservation:
         # 1 release + 1 session if not anonymous and using a database:
         if not anonymous and settings.SESSION_ENGINE.endswith("db"):
-            expected_release_queries = 3
-        else:
             expected_release_queries = 2
+        else:
+            expected_release_queries = 1
 
         with self.assertNumQueries(expected_acquire_queries):
             resp = self.client.post(reverse("reserve-asset", args=(asset.pk,)))
@@ -480,8 +480,8 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         # to edit it after logging in
 
         # 3 queries =
-        # 1 expiry + 1 acquire + 1 feature flag
-        with self.assertNumQueries(3):
+        # 1 expiry + 1 acquire
+        with self.assertNumQueries(2):
             resp = self.client.post(reverse("reserve-asset", args=(asset.pk,)))
         self.assertEqual(200, resp.status_code)
         self.assertEqual(1, AssetTranscriptionReservation.objects.count())
@@ -490,8 +490,8 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         self.client.logout()
         self.login_user()
 
-        # 1 session check + 1 acquire + 1 feature flag check
-        with self.assertNumQueries(3 if settings.SESSION_ENGINE.endswith("db") else 2):
+        # 1 session check + 1 acquire
+        with self.assertNumQueries(2 if settings.SESSION_ENGINE.endswith("db") else 1):
             resp = self.client.post(reverse("reserve-asset", args=(asset.pk,)))
         self.assertEqual(409, resp.status_code)
         self.assertEqual(1, AssetTranscriptionReservation.objects.count())
@@ -517,11 +517,11 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
 
         self.login_user()
 
-        # 1 session check + 1 reservation check + 1 acquire + 1 feature flag check
+        # 1 session check + 1 reservation check + 1 acquire
         if settings.SESSION_ENGINE.endswith("db"):
-            expected_queries = 4
-        else:
             expected_queries = 3
+        else:
+            expected_queries = 2
 
         with self.assertNumQueries(expected_queries):
             resp = self.client.post(reverse("reserve-asset", args=(asset.pk,)))
@@ -569,11 +569,11 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         reservation = AssetTranscriptionReservation.objects.get()
         self.assertEqual(reservation.tombstoned, True)
 
-        # 1 session check + 1 reservation check + 1 feature flag check
+        # 1 session check + 1 reservation check
         if settings.SESSION_ENGINE.endswith("db"):
-            expected_queries = 3
-        else:
             expected_queries = 2
+        else:
+            expected_queries = 1
 
         with self.assertNumQueries(expected_queries):
             resp = self.client.post(reverse("reserve-asset", args=(asset.pk,)))
@@ -585,11 +585,11 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
 
         self.client.logout()
 
-        # 1 session check + 1 reservation check + 1 acquire + 1 feature flag check
+        # 1 session check + 1 reservation check + 1 acquire
         if settings.SESSION_ENGINE.endswith("db"):
-            expected_queries = 4
-        else:
             expected_queries = 3
+        else:
+            expected_queries = 2
 
         with self.assertNumQueries(expected_queries):
             resp = self.client.post(reverse("reserve-asset", args=(asset.pk,)))
@@ -636,11 +636,11 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         delete_old_tombstoned_reservations()
         self.assertEqual(0, AssetTranscriptionReservation.objects.count())
 
-        # 1 session check + 1 reservation check + 1 acquire + 1 feature flag check
+        # 1 session check + 1 reservation check + 1 acquire
         if settings.SESSION_ENGINE.endswith("db"):
-            expected_queries = 4
-        else:
             expected_queries = 3
+        else:
+            expected_queries = 2
 
         with self.assertNumQueries(expected_queries):
             resp = self.client.post(reverse("reserve-asset", args=(asset.pk,)))
@@ -963,6 +963,24 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         self.login_user()
 
         test_tags = ["foo", "bar"]
+
+        resp = self.client.post(
+            reverse("submit-tags", kwargs={"asset_pk": asset.pk}),
+            data={"tags": test_tags},
+        )
+        data = self.assertValidJSON(resp, expected_status=200)
+        self.assertIn("user_tags", data)
+        self.assertIn("all_tags", data)
+
+        self.assertEqual(sorted(test_tags), data["user_tags"])
+        self.assertEqual(sorted(test_tags), data["all_tags"])
+
+    def test_tag_submission_with_diacritics(self):
+        asset = create_asset()
+
+        self.login_user()
+
+        test_tags = ["Café", "château", "señor", "façade"]
 
         resp = self.client.post(
             reverse("submit-tags", kwargs={"asset_pk": asset.pk}),

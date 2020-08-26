@@ -12,9 +12,9 @@ stack templates.
 ### Docker Compose
 
 ```bash
-$ git clone https://github.com/LibraryOfCongress/concordia.git
-$ cd concordia
-$ docker-compose up
+git clone https://github.com/LibraryOfCongress/concordia.git
+cd concordia
+docker-compose up
 ```
 
 Browse to [localhost](http://localhost)
@@ -25,7 +25,7 @@ before you run `docker-compose up` for the `app` container. The easiest way to
 do this permanently is to add it to the `.env` file:
 
 ```bash
-$ echo DEBUG=true >> .env
+echo DEBUG=true >> .env
 ```
 
 ### Local Development Environment
@@ -44,19 +44,40 @@ environment, it must be added to the Pipfile and the Pipfile.lock file.
 This can be done with the command:
 
 ```bash
-$ pipenv install <package>
+pipenv install <package>
 ```
 
 If the dependency you are installing is only of use for developers, mark it as
 such using `--dev` so it will not be deployed to servers — for example:
 
 ```bash
-$ pipenv install --dev django-debug-toolbar
+pipenv install --dev django-debug-toolbar
 ```
 
 Both the `Pipfile` and the `Pipfile.lock` files must be committed to the source
 code repository any time you change them to ensure that all testing uses the
 same package versions which you used during development.
+
+#### Running the unit tests
+
+Use the `settings_local_test` Django settings in your environment. Your `.env` file should look something like:
+
+```bash
+POSTGRESQL_PW=password
+DJANGO_SETTINGS_MODULE=concordia.settings_local_test
+```
+
+Bring up the docker database and redis servers:
+
+```bash
+docker-compose up -d db redis
+```
+
+Then execute the tests:
+
+```bash
+pipenv run ./manage.py test
+```
 
 #### Setting up a local development server
 
@@ -65,7 +86,7 @@ same package versions which you used during development.
 Instead of doing `docker-compose up` as above, instead start everything except the app:
 
 ```bash
-$ docker-compose up -d db redis importer
+docker-compose up -d db redis importer
 ```
 
 This will run the database in a container to ensure that it always matches the
@@ -78,42 +99,42 @@ delete the local container so it will be rebuilt the next time you run
 These steps only need to be performed the first time you setup a fresh
 virtualenv environment:
 
-1.  Ensure that you have the necessary C library dependencies available:
+1. Ensure that you have the necessary C library dependencies available:
 
-    -   `libmemcached`
-    -   `postgresql`
-    -   `node` & `npm` for the front-end tools
+    - `libmemcached`
+    - `postgresql`
+    - `node` & `npm` for the front-end tools
 
-1.  Ensure that you have Python 3.8 or later installed
+1. Ensure that you have Python 3.8 or later installed
 
-1.  Install [pipenv](https://docs.pipenv.org/) either using a tool like
-    [Homebrew](https://brew.sh) (`brew install pipenv`) or using `pip`:
+1. Install [pipenv](https://docs.pipenv.org/) either using a tool like
+   [Homebrew](https://brew.sh) (`brew install pipenv`) or using `pip`:
 
     ```bash
-    $ pip3 install pipenv
+    pip3 install pipenv
     ```
 
-1.  Let Pipenv create the virtual environment and install all of the packages,
-    including our developer tools:
+1. Let Pipenv create the virtual environment and install all of the packages,
+   including our developer tools:
 
     ```bash
-    $ pipenv install --dev
+    pipenv install --dev
     ```
 
     n.b. if `libmemcached` is installed using Homebrew you will need to [set the CFLAGS long enough to build it](https://stackoverflow.com/questions/14803310/error-when-install-pylibmc-using-pip#comment94853072_19432949):
 
     ```bash
-    $ CFLAGS=$(pkg-config --cflags libmemcached) LDFLAGS=$(pkg-config --libs libmemcached) pipenv install --dev
+    CFLAGS=$(pkg-config --cflags libmemcached) LDFLAGS=$(pkg-config --libs libmemcached) pipenv install --dev
     ```
 
     Once it has been installed you will not need to repeat this process unless
     you upgrade the version of libmemcached or Python installed on your system.
 
-1.  Configure the Django settings module in the `.env` file which Pipenv will use
-    to automatically populate the environment for every command it runs:
+1. Configure the Django settings module in the `.env` file which Pipenv will use
+   to automatically populate the environment for every command it runs:
 
     ```bash
-    $ echo DJANGO_SETTINGS_MODULE="concordia.settings_dev" >> .env
+    echo DJANGO_SETTINGS_MODULE="concordia.settings_dev" >> .env
     ```
 
     You can use this to set any other values you want to customize, such as
@@ -124,40 +145,40 @@ virtualenv environment:
 1. Use NPM to install our development tools:
 
     ```bash
-    $ npm install
+    npm install
     ```
 
 1. In another terminal, start Gulp to watch for changes to the SCSS files and
    compile them to CSS:
 
     ```bash
-    $ npx gulp
+    npx gulp
     ```
 
     If you only want to compile them a single time without live updates:
 
     ```bash
-    $ npx gulp build
+    npx gulp build
     ```
 
-1)  Collect Django static files:
+1) Collect Django static files:
 
     ```bash
-    $ pipenv run ./manage.py collectstatic
+    pipenv run ./manage.py collectstatic
     ```
 
 ##### Start the application server
 
-1.  Apply any database migrations:
+1. Apply any database migrations:
 
     ```bash
-    $ pipenv run ./manage.py migrate
+    pipenv run ./manage.py migrate
     ```
 
-1.  Start the development server:
+1. Start the development server:
 
     ```bash
-    $ pipenv run ./manage.py runserver
+    pipenv run ./manage.py runserver
     ```
 
 #### Import Data
@@ -178,7 +199,7 @@ To generate a model graph, make sure that you have GraphViz installed (e.g.
 django-extensions `graph_models` command:
 
 ```bash
-$ dot -Tsvg <(pipenv run ./manage.py graph_models concordia importer) -o concordia.svg
+dot -Tsvg <(pipenv run ./manage.py graph_models concordia importer) -o concordia.svg
 ```
 
 ## Other Front-End Tools
@@ -189,7 +210,7 @@ $ dot -Tsvg <(pipenv run ./manage.py graph_models concordia importer) -o concord
    command which may be helpful:
 
     ```bash
-    $ pipenv run ./manage.py print_frontend_test_urls
+    pipenv run ./manage.py print_frontend_test_urls
     ```
 
 ### Accessibility testing using aXe
@@ -199,8 +220,8 @@ catching low-hanging fruit and regressions. You run aXe against a development
 server by giving it one or more URLs:
 
 ```bash
-$ npx axe-cli --show-errors http://localhost:8000/
-$ pipenv run ./manage.py print_frontend_test_urls | xargs npx axe-cli --show-errors
+npx axe-cli --show-errors http://localhost:8000/
+pipenv run ./manage.py print_frontend_test_urls | xargs npx axe-cli --show-errors
 ```
 
 ### Static Image Compression
@@ -210,6 +231,6 @@ optimizer such as [ImageOptim](https://imageoptim.com) to losslessly compress
 JPEG, PNG, SVG, etc. files.
 
 ```bash
-$ brew cask install imageoptim
-$ open -a ImageOptim concordia/static/img/
+brew cask install imageoptim
+open -a ImageOptim concordia/static/img/
 ```
