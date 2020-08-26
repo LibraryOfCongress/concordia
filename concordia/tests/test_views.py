@@ -975,6 +975,24 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         self.assertEqual(sorted(test_tags), data["user_tags"])
         self.assertEqual(sorted(test_tags), data["all_tags"])
 
+    def test_tag_submission_with_diacritics(self):
+        asset = create_asset()
+
+        self.login_user()
+
+        test_tags = ["Café", "château", "señor", "façade"]
+
+        resp = self.client.post(
+            reverse("submit-tags", kwargs={"asset_pk": asset.pk}),
+            data={"tags": test_tags},
+        )
+        data = self.assertValidJSON(resp, expected_status=200)
+        self.assertIn("user_tags", data)
+        self.assertIn("all_tags", data)
+
+        self.assertEqual(sorted(test_tags), data["user_tags"])
+        self.assertEqual(sorted(test_tags), data["all_tags"])
+
     def test_tag_submission_with_multiple_users(self):
         asset = create_asset()
         self.login_user()
