@@ -1,5 +1,6 @@
 import logging
 from urllib.parse import urljoin
+
 from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin

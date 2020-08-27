@@ -10,7 +10,10 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveIndex(model_name="asset", name="concordia_a_id_0c37bf_idx",),
+        migrations.RemoveIndex(
+            model_name="asset",
+            name="concordia_a_id_0c37bf_idx",
+        ),
         migrations.AlterField(
             model_name="item",
             name="published",
