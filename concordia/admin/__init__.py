@@ -310,13 +310,13 @@ class ItemAdmin(admin.ModelAdmin):
 
     actions = (publish_item_action, unpublish_item_action)
 
-    def get_deleted_objects(self, objs, request):
+    def get_deleted_objects(self, objs, request):  
         deleted_objects = [str(obj) for obj in objs]
-        model_count = {'Items': len(deleted_objects)}
-        perms_needed = []
+        perms_needed = set()
         protected = []
+        model_count = {'Items': len(deleted_objects)}
         return (deleted_objects, model_count, perms_needed, protected)
-        
+
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         qs = qs.select_related("project", "project__campaign")
