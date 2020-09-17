@@ -314,7 +314,13 @@ class ItemAdmin(admin.ModelAdmin):
 
     def get_deleted_objects(self, objs, request):
 
-        deleted_objects = [str(obj) for obj in objs]
+        if len(objs) < 30:
+            deleted_objects = [str(obj) for obj in objs]
+        else:
+            deleted_objects = [str(obj) for obj in objs[:3]]
+            deleted_objects.append(
+                f"… and {len(objs) - 3} more {Item._meta.verbose_name_plural}"
+            )
         perms_needed = set()
         for model in (Item, Asset, Transcription):
             perm = "%s.%s" % (
