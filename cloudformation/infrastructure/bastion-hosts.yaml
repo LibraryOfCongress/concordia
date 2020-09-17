@@ -57,9 +57,9 @@ Resources:
             ImageId:
                 Fn::FindInMap:
                     - AWSRegionToAMI
-                    - Ref: "AWS::Region"
-                    - "AMI"
-            InstanceType: "t2.medium"
+                    - Ref: 'AWS::Region'
+                    - 'AMI'
+            InstanceType: 't2.medium'
             IamInstanceProfile:
                 Fn::FindInMap:
                     - EnvironmentMapping
@@ -69,7 +69,7 @@ Resources:
                 Ref: KeyPairName
             NetworkInterfaces:
                 - AssociatePublicIpAddress: true
-                  DeviceIndex: "0"
+                  DeviceIndex: '0'
                   GroupSet:
                       - Fn::FindInMap:
                             - EnvironmentMapping
@@ -101,9 +101,9 @@ Resources:
             ImageId:
                 Fn::FindInMap:
                     - AWSRegionToAMI
-                    - Ref: "AWS::Region"
-                    - "AMI"
-            InstanceType: "t2.medium"
+                    - Ref: 'AWS::Region'
+                    - 'AMI'
+            InstanceType: 't2.medium'
             IamInstanceProfile:
                 Fn::FindInMap:
                     - EnvironmentMapping
@@ -113,7 +113,7 @@ Resources:
                 Ref: KeyPairName
             NetworkInterfaces:
                 - AssociatePublicIpAddress: true
-                  DeviceIndex: "0"
+                  DeviceIndex: '0'
                   GroupSet:
                       - Fn::FindInMap:
                             - EnvironmentMapping

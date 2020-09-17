@@ -54,9 +54,9 @@ Resources:
             ImageId:
                 Fn::FindInMap:
                     - AWSRegionToAMI
-                    - Ref: "AWS::Region"
-                    - "AMI"
-            InstanceType: "t1.micro"
+                    - Ref: 'AWS::Region'
+                    - 'AMI'
+            InstanceType: 't1.micro'
             IamInstanceProfile:
                 Fn::FindInMap:
                     - EnvironmentMapping
@@ -65,7 +65,7 @@ Resources:
             InstanceInitiatedShutdownBehavior: terminate
             NetworkInterfaces:
                 - AssociatePublicIpAddress: true
-                  DeviceIndex: "0"
+                  DeviceIndex: '0'
                   GroupSet:
                       - Fn::FindInMap:
                             - EnvironmentMapping
