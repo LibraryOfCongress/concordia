@@ -1,8 +1,9 @@
 import logging
 from urllib.parse import urljoin
+
 from django.conf import settings
-from django.contrib.auth import get_permission_codename
 from django.contrib import admin
+from django.contrib.auth import get_permission_codename
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.models import User
@@ -311,20 +312,27 @@ class ItemAdmin(admin.ModelAdmin):
 
     actions = (publish_item_action, unpublish_item_action)
 
-    def get_deleted_objects(self, objs, request):  
- 
+    def get_deleted_objects(self, objs, request):
+
         deleted_objects = [str(obj) for obj in objs]
         perms_needed = set()
         for model in (Item, Asset, Transcription):
-            perm = '%s.%s' % (model._meta.app_label, get_permission_codename('delete', model._meta))
+            perm = "%s.%s" % (
+                model._meta.app_label,
+                get_permission_codename("delete", model._meta),
+            )
             if not request.user.has_perm(perm):
                 perms_needed.add(model._meta.verbose_name)
         protected = []
         model_count = {
             Item._meta.verbose_name_plural: len(objs),
-            Asset._meta.verbose_name_plural: Asset.objects.filter(item__in=objs).count(),
-            Transcription._meta.verbose_name_plural: Transcription.objects.filter(asset__item__in=objs).count(),
-                }
+            Asset._meta.verbose_name_plural: Asset.objects.filter(
+                item__in=objs
+            ).count(),
+            Transcription._meta.verbose_name_plural: Transcription.objects.filter(
+                asset__item__in=objs
+            ).count(),
+        }
         return (deleted_objects, model_count, perms_needed, protected)
 
     def get_queryset(self, request):
