@@ -314,7 +314,14 @@ class ItemAdmin(admin.ModelAdmin):
 
     def get_deleted_objects(self, objs, request):
 
-        deleted_objects = [str(obj) for obj in objs]
+        if len(objs) < 30:
+            deleted_objects = [str(obj) for obj in objs]
+        else:
+            deleted_objects = [str(obj) for obj in objs[:3]]
+            deleted_objects.append(
+                f"… and {len(objs) - 3} more {Item._meta.verbose_name_plural}"
+            )
+
         perms_needed = set()
         for model in (Item, Asset, Transcription):
             perm = "%s.%s" % (
@@ -324,6 +331,7 @@ class ItemAdmin(admin.ModelAdmin):
             if not request.user.has_perm(perm):
                 perms_needed.add(model._meta.verbose_name)
         protected = []
+
         model_count = {
             Item._meta.verbose_name_plural: len(objs),
             Asset._meta.verbose_name_plural: Asset.objects.filter(
@@ -333,6 +341,7 @@ class ItemAdmin(admin.ModelAdmin):
                 asset__item__in=objs
             ).count(),
         }
+
         return (deleted_objects, model_count, perms_needed, protected)
 
     def get_queryset(self, request):
