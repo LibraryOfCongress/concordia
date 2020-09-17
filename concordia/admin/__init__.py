@@ -330,6 +330,7 @@ class ItemAdmin(admin.ModelAdmin):
             if not request.user.has_perm(perm):
                 perms_needed.add(model._meta.verbose_name)
         protected = []
+
         model_count = {
             Item._meta.verbose_name_plural: len(objs),
             Asset._meta.verbose_name_plural: Asset.objects.filter(
@@ -339,6 +340,7 @@ class ItemAdmin(admin.ModelAdmin):
                 asset__item__in=objs
             ).count(),
         }
+
         return (deleted_objects, model_count, perms_needed, protected)
 
     def get_queryset(self, request):
