@@ -24,17 +24,16 @@ Parameters:
 Mappings:
     EnvironmentMapping:
         ListenerArn:
-            dev:  'arn:aws:elasticloadbalancing:us-east-1:619333082511:listener/app/crowd-dev/112d22a79e25de0b/8bb4cb9c8b054e91'
+            dev: 'arn:aws:elasticloadbalancing:us-east-1:619333082511:listener/app/crowd-dev/112d22a79e25de0b/8bb4cb9c8b054e91'
             test: 'arn:aws:elasticloadbalancing:us-east-1:619333082511:listener/app/crowd-test/81e4820e354ea810/187fd94e534ad833'
             stage: 'arn:aws:elasticloadbalancing:us-east-1:619333082511:listener/app/crowd-stage/7d954bca84b62358/ab34414a68f355f2'
             prod: 'arn:aws:elasticloadbalancing:us-east-1:619333082511:listener/app/crowd-prod/746d0ae14ecc23e4/747212dd4e5706be'
 
         TaskRoleArn:
-          dev: 'arn:aws:iam::619333082511:role/ConcordiaServerTaskRole-crowd-dev'
-          test: 'arn:aws:iam::619333082511:role/ConcordiaServerTaskRole-crowd-test'
-          stage: 'arn:aws:iam::619333082511:role/ConcordiaServerTaskRole-crowd-stage'
-          prod: 'arn:aws:iam::619333082511:role/ConcordiaServerTaskRole-crowd-prod'
-
+            dev: 'arn:aws:iam::619333082511:role/ConcordiaServerTaskRole-crowd-dev'
+            test: 'arn:aws:iam::619333082511:role/ConcordiaServerTaskRole-crowd-test'
+            stage: 'arn:aws:iam::619333082511:role/ConcordiaServerTaskRole-crowd-stage'
+            prod: 'arn:aws:iam::619333082511:role/ConcordiaServerTaskRole-crowd-prod'
 
         # The ID of a private subnet
         # Type: AWS::EC2::Subnet::Id
@@ -57,7 +56,6 @@ Mappings:
             test: sg-09bc01194e6c52cb9
             stage: sg-0f6145067777b1cc3
             prod: sg-031594e2cfc8b25c7
-
 
 Resources:
     KibanaLogsGroup:
@@ -89,12 +87,12 @@ Resources:
             Conditions:
                 - Field: path-pattern
                   Values:
-                      - "/_plugin/kibana*"
+                      - '/_plugin/kibana*'
             ListenerArn:
-              Fn::FindInMap:
-                  - EnvironmentMapping
-                  - ListenerArn
-                  - Ref: EnvName
+                Fn::FindInMap:
+                    - EnvironmentMapping
+                    - ListenerArn
+                    - Ref: EnvName
             Priority: !Ref Priority
 
     KibanaTask:
@@ -146,14 +144,14 @@ Resources:
                 AwsvpcConfiguration:
                     SecurityGroups:
                         - Fn::FindInMap:
-                            - EnvironmentMapping
-                            - SecurityGroup
-                            - Ref: EnvName
+                              - EnvironmentMapping
+                              - SecurityGroup
+                              - Ref: EnvName
                     Subnets:
                         - Fn::FindInMap:
-                            - EnvironmentMapping
-                            - PrivateSubnet1
-                            - Ref: EnvName
+                              - EnvironmentMapping
+                              - PrivateSubnet1
+                              - Ref: EnvName
             TaskDefinition: !Ref KibanaTask
             LoadBalancers:
                 - ContainerName: 'kibana'
