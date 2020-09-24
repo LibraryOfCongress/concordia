@@ -15,7 +15,7 @@ def retry_download_task(modeladmin, request, queryset):
     pks = queryset.values_list("pk", flat=True)
     for pk in pks:
         download_asset_task.delay(pk)
-    messages.add_message(request, messages.INFO, f"Queued %d tasks" % len(pks))
+    messages.add_message(request, messages.INFO, "Queued %d tasks" % len(pks))
 
 
 retry_download_task.short_description = "Retry import"

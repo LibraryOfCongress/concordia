@@ -91,7 +91,8 @@ def redownload_images_view(request):
 
                     else:
                         messages.info(
-                            request, f"Queued download for {download_url}",
+                            request,
+                            f"Queued download for {download_url}",
                         )
                 except Exception as exc:
                     messages.error(
