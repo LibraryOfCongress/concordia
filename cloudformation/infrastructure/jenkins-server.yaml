@@ -1,11 +1,9 @@
 Description: This template deploys an Ubuntu jenkins server in the default VPC.
 
 Parameters:
-
     KeyPairName:
         Description: key pair (within this region) for EC2 instance access
         Type: String
-
 
 Resources:
     Jenkins:
@@ -19,14 +17,14 @@ Resources:
             BlockDeviceMappings:
                 - DeviceName: /dev/sda1
                   Ebs:
-                    VolumeSize: 128
-                    VolumeType: gp2
-                    DeleteOnTermination: true
+                      VolumeSize: 128
+                      VolumeType: gp2
+                      DeleteOnTermination: true
             NetworkInterfaces:
                 - AssociatePublicIpAddress: true
                   DeviceIndex: '0'
                   GroupSet:
-                    - 'sg-f7985fb9'
+                      - 'sg-f7985fb9'
                   SubnetId: 'subnet-3748107d'
             UserData:
                 Fn::Base64: !Sub |
