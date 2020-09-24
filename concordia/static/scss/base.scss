@@ -811,9 +811,10 @@ body.view-transcriptions--asset-detail main {
 
 .help-center-card {
     color: #fff;
-    width: 300px;
+    // width: 300px;
     height: 225px;
     background-color: var(--primary-color);
+    margin-bottom:1rem;
 }
 
 .help-center-card a {
@@ -995,6 +996,7 @@ div.related-links {
     background-color: var(--bg-lightest-gray);
     border-top: 1px solid var(--bg-medium-gray);
     padding: 22px 0;
+
 }
 
 .footer-crowd-row {
