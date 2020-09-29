@@ -504,9 +504,9 @@ ul.nav-secondary {
 }
 
 .concordia-object-card .card-title {
-    top: 0;
+    bottom: 0;
     padding: 2px;
-
+    margin-bottom: 0;
     font-weight: bold;
     color: var(--text-color-offwhite);
     background-color: var(--light-shadow-color);
@@ -517,7 +517,7 @@ ul.nav-secondary {
 }
 
 .concordia-object-card .card-actions {
-    bottom: 0;
+    top: 0;
 }
 
 .concordia-object-card .card-actions .btn-default:not(:hover) {
