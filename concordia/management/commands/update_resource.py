@@ -8,10 +8,10 @@ class Command(BaseCommand):
         assets = Asset.objects.filter(item_id=2010414646, published=False)
         for asset in assets:
             convert_resource = (
-                asset.resource_url[0:38]
-                + asset.download_url[67:83]
+                asset.resource_url[0:37]
+                + asset.download_url[67:82]
                 + "/?sp="
-                + asset.download_url[84:88]
+                + asset.download_url[84:87]
             )
             asset.resource_url = convert_resource
             print(asset.resource_url)
