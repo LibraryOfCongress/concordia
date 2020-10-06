@@ -12,7 +12,7 @@ class Command(BaseCommand):
                 asset.resource_url[0:37]
                 + asset.download_url[66:82].replace(":", "")
                 + "?sp="
-                + url_pieces[5][0:3]
+                + url_pieces[6][0:4]
             )
             asset.resource_url = convert_resource
             print(asset.resource_url)
