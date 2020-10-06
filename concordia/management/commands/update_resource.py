@@ -14,7 +14,6 @@ class Command(BaseCommand):
                 fourth,
                 fifth,
                 sixth,
-                seventh,
             ) = asset.download_url.split(":")
             convert_resource = (
                 asset.resource_url[0:37]
