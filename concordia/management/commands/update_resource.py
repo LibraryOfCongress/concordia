@@ -7,11 +7,14 @@ class Command(BaseCommand):
     def handle(self, *, verbosity, **kwargs):
         assets = Asset.objects.filter(item__item_id="2010414646")
         for asset in assets:
+            first, second, third, fourth, fifth, sixth, seventh = asset.download_url(
+                ":"
+            )
             convert_resource = (
                 asset.resource_url[0:37]
                 + asset.download_url[66:82].replace(":", "")
                 + "?sp="
-                + asset.download_url[84:87]
+                + sixth[0, 3]
             )
             asset.resource_url = convert_resource
             print(asset.resource_url)
