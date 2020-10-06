@@ -9,7 +9,7 @@ class Command(BaseCommand):
         for asset in assets:
             convert_resource = (
                 asset.resource_url[0:37]
-                + asset.download_url[67:82]
+                + asset.download_url[65:80]
                 + "/?sp="
                 + asset.download_url[84:87]
             )
