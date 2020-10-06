@@ -14,7 +14,7 @@ class Command(BaseCommand):
                 asset.resource_url[0:37]
                 + asset.download_url[66:82].replace(":", "")
                 + "?sp="
-                + sixth[0, 3]
+                + sixth[0:3]
             )
             asset.resource_url = convert_resource
             print(asset.resource_url)
