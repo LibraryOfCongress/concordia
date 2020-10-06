@@ -15,3 +15,4 @@ class Command(BaseCommand):
             )
             asset.resource_url = convert_resource
             print(asset.resource_url)
+            asset.save()
