@@ -5,7 +5,7 @@ from ...models import Asset
 
 class Command(BaseCommand):
     def handle(self, *, verbosity, **kwargs):
-        assets = Asset.objects.filter(item_id=2010414646, published=False)
+        assets = Asset.objects.filter(item__item_id="2010414646")
         for asset in assets:
             convert_resource = (
                 asset.resource_url[0:37]

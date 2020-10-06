@@ -103,7 +103,7 @@ def update_asset_status(sender, *, instance, **kwargs):
     calculate_difficulty_values(Asset.objects.filter(pk=instance.asset.pk))
 
 
-@receiver(post_save, sender=Asset)
+# @receiver(post_save, sender=Asset)
 def send_asset_update(*, instance, **kwargs):
     latest_trans = None
 
