@@ -36,3 +36,5 @@ env/
 concordia/settings_dev_*.py
 version.txt
 static-files
+terraform/.terraform
+terraform/*.tfvars

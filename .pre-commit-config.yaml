@@ -73,3 +73,7 @@ repos:
       rev: 1.6.2
       hooks:
           - id: bandit
+    - repo: https://github.com/antonbabenko/pre-commit-terraform
+      rev: v1.27.0
+      hooks:
+          - id: terraform_fmt
