@@ -490,17 +490,11 @@ ul.nav-secondary {
     }
 }
 
-.concordia-object-card[data-transcription-status='completed']:not(:hover) {
-    opacity: 0.5;
-}
-
 .concordia-object-card .card-title,
 .concordia-object-card .card-actions {
     position: absolute;
     left: 0;
     right: 0;
-
-    color: var(--text-color-offwhite);
 }
 
 .concordia-object-card .card-title {
@@ -508,12 +502,8 @@ ul.nav-secondary {
     padding: 2px;
     margin-bottom: 0;
     font-weight: bold;
-    color: var(--text-color-offwhite);
-    background-color: var(--light-shadow-color);
-}
-
-.concordia-object-card .card-title:hover {
-    background-color: var(--shadow-color);
+    font-size: 0.875rem; // add this line
+    position: static; // add this line
 }
 
 .concordia-object-card .card-actions {
@@ -521,7 +511,9 @@ ul.nav-secondary {
 }
 
 .concordia-object-card .card-actions .btn-default:not(:hover) {
-    background-color: var(--light-shadow-color);
+    background-color: var(--shadow-color); // add this line
+    border-color: var(--shadow-color); // add this line
+    color: #fff; // add this line
 }
 
 .concordia-object-card .card-img-container {
