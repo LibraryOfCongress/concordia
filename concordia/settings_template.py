@@ -14,7 +14,7 @@ SITE_ROOT_DIR = os.path.dirname(CONCORDIA_APP_DIR)
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", get_random_secret_key())
 
 CONCORDIA_ENVIRONMENT = os.environ.get("CONCORDIA_ENVIRONMENT", "development")
-
+DATA_UPLOAD_MAX_MEMORY_SIZE = None
 # Optional SMTP authentication information for EMAIL_HOST.
 EMAIL_HOST_USER = ""
 EMAIL_HOST_PASSWORD = ""  # nosec
