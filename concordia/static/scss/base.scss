@@ -497,6 +497,10 @@ ul.nav-secondary {
     right: 0;
 }
 
+.concordia-object-card[data-transcription-status='completed']:not(:hover) {
+    opacity: 0.5;
+}
+
 .concordia-object-card .card-title {
     bottom: 0;
     padding: 2px;
