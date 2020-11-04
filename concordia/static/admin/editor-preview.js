@@ -20,7 +20,7 @@
             .parents('.form-row')
             .first();
         $formRow.addClass('codemirror-with-preview');
-        $formRow.find('label').remove();
+        //$formRow.find('label').remove();
 
         var preview = $('<iframe>')
             // Firefox and, reportedly, Safari have a quirk where the <iframe> body
