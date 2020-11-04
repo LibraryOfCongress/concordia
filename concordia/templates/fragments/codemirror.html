@@ -20,14 +20,23 @@
     .form-row.codemirror-with-preview > div {
         display: flex;
         width: 100%;
+        flex-wrap: wrap;
     }
 
     .form-row.codemirror-with-preview > div > * {
         flex-basis: 50%;
         overflow-y: auto;
-
+        box-sizing: border-box;
         min-height: 500px;
     }
+
+    .form-row.codemirror-with-preview > div > label {
+        flex-basis: 100%;
+        min-height: 0;
+        font-weight: bold;
+        color: #333;
+    }
+
 </style>
 
 <template id="preview-head">{% spaceless %}
