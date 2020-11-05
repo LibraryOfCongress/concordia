@@ -1,5 +1,4 @@
 /* global CodeMirror prettier prettierPlugins django */
-
 (function($) {
     window.setupCodeMirror = function(textarea, flavor) {
         var converter;
