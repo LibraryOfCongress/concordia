@@ -10,7 +10,11 @@ from django.utils.text import slugify
 from django.views.decorators.cache import never_cache
 from tabular_export.core import export_to_csv_response, flatten_queryset
 
-from importer.tasks import import_items_into_project_from_url, redownload_image_task
+from importer.tasks import (
+    import_item_count_from_url,
+    import_items_into_project_from_url,
+    redownload_image_task,
+)
 from importer.utils.excel import slurp_excel
 
 from ..models import Asset, Campaign, Project, SiteReport
@@ -105,6 +109,99 @@ def redownload_images_view(request):
     context["form"] = form
 
     return render(request, "admin/redownload_images.html", context)
+
+
+@never_cache
+@staff_member_required
+@permission_required("concordia.add_campaign")
+@permission_required("concordia.change_campaign")
+@permission_required("concordia.add_project")
+@permission_required("concordia.change_project")
+@permission_required("concordia.add_item")
+@permission_required("concordia.change_item")
+def admin_bulk_import_review(request):
+    request.current_app = "admin"
+    url_regex = r"[-\w+]+"
+    pattern = re.compile(url_regex)
+    context = {"title": "Bulk Import Review"}
+
+    if request.method == "POST":
+        form = AdminProjectBulkImportForm(request.POST, request.FILES)
+
+        if form.is_valid():
+
+            rows = slurp_excel(request.FILES["spreadsheet_file"])
+            required_fields = [
+                "Campaign",
+                "Campaign Short Description",
+                "Campaign Long Description",
+                "Campaign Slug",
+                "Project Slug",
+                "Project",
+                "Project Description",
+                "Import URLs",
+            ]
+            for idx, row in enumerate(rows):
+                missing_fields = [i for i in required_fields if i not in row]
+                if missing_fields:
+                    messages.warning(
+                        request, f"Skipping row {idx}: missing fields {missing_fields}"
+                    )
+                    continue
+
+                campaign_title = row["Campaign"]
+                project_title = row["Project"]
+                import_url_blob = row["Import URLs"]
+
+                if not all((campaign_title, project_title, import_url_blob)):
+                    if not any(row.values()):
+                        # No messages for completely blank rows
+                        continue
+
+                    warning_message = (
+                        f"Skipping row {idx}: at least one required field "
+                        "(Campaign, Project, Import URLs) is empty"
+                    )
+                    messages.warning(request, warning_message)
+                    continue
+
+                # Read Campaign slug value from excel
+                campaign_slug = row["Campaign Slug"]
+                if campaign_slug and not pattern.match(campaign_slug):
+                    messages.warning(request, "Campaign slug doesn't match pattern.")
+
+                    # Read Project slug value from excel
+                project_slug = row["Project Slug"]
+                if project_slug and not pattern.match(project_slug):
+                    messages.warning(request, "Project slug doesn't match pattern.")
+
+                potential_urls = filter(None, re.split(r"[\s]+", import_url_blob))
+                for url in potential_urls:
+                    if not url.startswith("http"):
+                        messages.warning(
+                            request, f"Skipping unrecognized URL value: {url}"
+                        )
+                        continue
+
+                    try:
+
+                        count = import_item_count_from_url(url)
+
+                        messages.info(
+                            request,
+                            f"{project_title} - [{url}] : {count}",
+                        )
+                    except Exception as exc:
+                        messages.error(
+                            request,
+                            f"Unhandled error attempting to count {url}: {exc}",
+                        )
+    else:
+        form = AdminProjectBulkImportForm()
+
+    context["form"] = form
+
+    return render(request, "admin/bulk_review.html", context)
 
 
 @never_cache

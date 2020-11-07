@@ -1,0 +1,87 @@
+{% extends "admin/base.html" %}
+
+{% block messages %}
+    {% comment %} This is displayed elswhere {% endcomment %}
+{% endblock messages %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <style>
+        .message-error, .message-warning {
+            font-weight: bold;
+        }
+
+        .message-error {
+            color: #dc3545;
+        }
+
+        .message-warning {
+            color: #ffc107;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div id="content-main">
+        {% if import_jobs %}
+            <h2>Import Tasks</h2>
+            <ul>
+                {% for import_job in import_jobs %}
+                    <li>
+                        <a target="_blank" href="{% url 'admin:importer_importjob_change' object_id=import_job.pk %}">{{ import_job }}</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>
+                The spreadsheet must follow this convention:
+                <ol>
+                    <li>A header row must include the columns Campaign, Campaign Short Description, Campaign Long Description, Campaign Slug, Project Slug, Project, Project Description, and Import URLs</li>
+                    <li>The header names are case sensitive but may occur in any order and other columns will be ignored</li>
+                    <li>Project titles (in the Project column) must be 80 characters or less.</li>
+                    <li>The Campaign, Project, and Import URLs columns must have values or the row will be skipped</li>
+                    <li>
+                        The Import URLs column may contain one or more URLs
+                        separated by spaces or newlines. Do not include commas or
+                        semicolons as those are valid URL characters and will be
+                        treated as part of the URL.
+                    </li>
+                    <li>
+                        Campaigns and Projects will be created if they do not
+                        exist but existing records will not be modified. If you
+                        want to recreate them, delete the old records before
+                        running the importer.
+                    </li>
+                    <li>
+                        Items will be added to projects but items which have
+                        already been imported into that project will be skipped.
+                        This means that you can add multiple items to a project
+                        both by having the “Import URLs” cell contain multiple
+                        URLs or by duplicating the row with new ”Import URLs”
+                        values.
+                    </li>
+                </ol>
+            </p>
+
+            <div>
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <div class="submit-row">
+                        <button type="submit">Review!</button>
+                    </div>
+                </form>
+            </div>
+        {% endif %}
+
+
+        {% if messages %}
+            <h4>Messages</h4>
+            <ul>
+                {% for message in messages %}
+                    <li class="message {% if message.level >= DEFAULT_MESSAGE_LEVELS.ERROR %}message-error{% elif message.level >= DEFAULT_MESSAGE_LEVELS.WARNING %}message-warning{% endif %}">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
+{% endblock content %}

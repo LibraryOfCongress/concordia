@@ -8,6 +8,7 @@ class ConcordiaAdminSite(admin.AdminSite):
 
     def get_urls(self):
         from concordia.admin.views import (
+            admin_bulk_import_review,
             admin_bulk_import_view,
             admin_site_report_view,
             redownload_images_view,
@@ -17,6 +18,7 @@ class ConcordiaAdminSite(admin.AdminSite):
 
         custom_urls = [
             path("bulk-import/", admin_bulk_import_view, name="bulk-import"),
+            path("bulk-review/", admin_bulk_import_review, name="bulk-review"),
             path("site-report/", admin_site_report_view, name="site-report"),
             path(
                 "redownload-images/", redownload_images_view, name="redownload-images"
