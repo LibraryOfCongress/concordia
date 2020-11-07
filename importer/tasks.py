@@ -239,6 +239,16 @@ def get_item_info_from_result(result):
     return m.group(1), item_url
 
 
+def import_item_count_from_url(import_url):
+    """
+    Given a loc.gov URL, return count of files from the resources section
+    """
+    resp = requests.get(import_url, params={"fo": "json"})
+    resp.raise_for_status()
+    item_data = resp.json()
+    return len(item_data["resources"][0]["files"])
+
+
 def import_items_into_project_from_url(requesting_user, project, import_url):
     """
     Given a loc.gov URL, return the task ID for the import task
