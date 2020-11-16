@@ -239,7 +239,7 @@ def get_item_info_from_result(result):
     return m.group(1), item_url
 
 
-def import_item_count_from_url(import_url):
+async def import_item_count_from_url(import_url):
     """
     Given a loc.gov URL, return count of files from the resources section
     """

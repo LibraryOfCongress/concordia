@@ -1,3 +1,4 @@
+import asyncio
 import re
 
 from bittersweet.models import validated_get_or_create
@@ -124,6 +125,8 @@ def admin_bulk_import_review(request):
     url_regex = r"[-\w+]+"
     pattern = re.compile(url_regex)
     context = {"title": "Bulk Import Review"}
+    event_loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(event_loop)
 
     if request.method == "POST":
         form = AdminProjectBulkImportForm(request.POST, request.FILES)
@@ -141,61 +144,71 @@ def admin_bulk_import_review(request):
                 "Project Description",
                 "Import URLs",
             ]
-            for idx, row in enumerate(rows):
-                missing_fields = [i for i in required_fields if i not in row]
-                if missing_fields:
-                    messages.warning(
-                        request, f"Skipping row {idx}: missing fields {missing_fields}"
-                    )
-                    continue
-
-                campaign_title = row["Campaign"]
-                project_title = row["Project"]
-                import_url_blob = row["Import URLs"]
-
-                if not all((campaign_title, project_title, import_url_blob)):
-                    if not any(row.values()):
-                        # No messages for completely blank rows
-                        continue
-
-                    warning_message = (
-                        f"Skipping row {idx}: at least one required field "
-                        "(Campaign, Project, Import URLs) is empty"
-                    )
-                    messages.warning(request, warning_message)
-                    continue
-
-                # Read Campaign slug value from excel
-                campaign_slug = row["Campaign Slug"]
-                if campaign_slug and not pattern.match(campaign_slug):
-                    messages.warning(request, "Campaign slug doesn't match pattern.")
-
-                    # Read Project slug value from excel
-                project_slug = row["Project Slug"]
-                if project_slug and not pattern.match(project_slug):
-                    messages.warning(request, "Project slug doesn't match pattern.")
-
-                potential_urls = filter(None, re.split(r"[\s]+", import_url_blob))
-                for url in potential_urls:
-                    if not url.startswith("http"):
+            try:
+                for idx, row in enumerate(rows):
+                    missing_fields = [i for i in required_fields if i not in row]
+                    if missing_fields:
                         messages.warning(
-                            request, f"Skipping unrecognized URL value: {url}"
+                            request,
+                            f"Skipping row {idx}: missing fields {missing_fields}",
                         )
                         continue
 
-                    try:
+                    campaign_title = row["Campaign"]
+                    project_title = row["Project"]
+                    import_url_blob = row["Import URLs"]
 
-                        count = import_item_count_from_url(url)
+                    if not all((campaign_title, project_title, import_url_blob)):
+                        if not any(row.values()):
+                            # No messages for completely blank rows
+                            continue
 
-                        messages.info(
-                            request,
-                            f"{project_title} - [{url}] : {count}",
+                        warning_message = (
+                            f"Skipping row {idx}: at least one required field "
+                            "(Campaign, Project, Import URLs) is empty"
                         )
-                    except Exception as exc:
-                        messages.error(
-                            request,
-                            f"Unhandled error attempting to count {url}: {exc}",
+                        messages.warning(request, warning_message)
+                        continue
+
+                    # Read Campaign slug value from excel
+                    campaign_slug = row["Campaign Slug"]
+                    if campaign_slug and not pattern.match(campaign_slug):
+                        messages.warning(
+                            request, "Campaign slug doesn't match pattern."
                         )
+
+                        # Read Project slug value from excel
+                    project_slug = row["Project Slug"]
+                    if project_slug and not pattern.match(project_slug):
+                        messages.warning(request, "Project slug doesn't match pattern.")
+
+                    potential_urls = filter(None, re.split(r"[\s]+", import_url_blob))
+                    for url in potential_urls:
+                        if not url.startswith("http"):
+                            messages.warning(
+                                request, f"Skipping unrecognized URL value: {url}"
+                            )
+                            continue
+
+                        try:
+
+                            count = event_loop.run_until_complete(
+                                import_item_count_from_url(url)
+                            )
+                            # count = import_item_count_from_url(url)
+
+                            messages.info(
+                                request,
+                                f"{project_title} - [{url}] : {count}",
+                            )
+                        except Exception as exc:
+                            messages.error(
+                                request,
+                                f"Unhandled error attempting to count {url}: {exc}",
+                            )
+            finally:
+                event_loop.close()
+
     else:
         form = AdminProjectBulkImportForm()
 
