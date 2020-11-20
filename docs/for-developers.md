@@ -4,7 +4,7 @@
 
 This application can run on a single Docker host using docker-compose.
 (recommended for development environments). For production, see the
-[cloudformation](cloudformation/) directory for AWS Elastic Container Service
+[cloudformation](https://github.com/LibraryOfCongress/concordia/tree/master/cloudformation) directory for AWS Elastic Container Service
 stack templates.
 
 ## Running Concordia
@@ -58,28 +58,9 @@ Both the `Pipfile` and the `Pipfile.lock` files must be committed to the source
 code repository any time you change them to ensure that all testing uses the
 same package versions which you used during development.
 
-#### Running the unit tests
-
-Use the `settings_local_test` Django settings in your environment. Your `.env` file should look something like:
-
-```bash
-POSTGRESQL_PW=password
-DJANGO_SETTINGS_MODULE=concordia.settings_local_test
-```
-
-Bring up the docker database and redis servers:
-
-```bash
-docker-compose up -d db redis
-```
-
-Then execute the tests:
-
-```bash
-pipenv run ./manage.py test
-```
-
 #### Setting up a local development server
+
+##### See section - [Ensuring your work follows the Library's coding standards](https://github.com/LibraryOfCongress/concordia/blob/master/docs/how-we-work.md#ensuring-your-work-follows-the-librarys-coding-standards) in How We Work
 
 ##### Start the support services
 
@@ -140,6 +121,8 @@ virtualenv environment:
     You can use this to set any other values you want to customize, such as
     `POSTGRESQL_PW` or `POSTGRESQL_HOST`.
 
+    n.b to allow a local server to connect to the dockerized db set `POSTGRESQL_PORT=54323` - the db containers external postgres port.
+
 ##### Install front end
 
 1. Use NPM to install our development tools:
@@ -180,6 +163,27 @@ virtualenv environment:
     ```bash
     pipenv run ./manage.py runserver
     ```
+
+#### Running the unit tests
+
+Use the `settings_local_test` Django settings in your environment. Your `.env` file should look something like:
+
+```bash
+POSTGRESQL_PW=password
+DJANGO_SETTINGS_MODULE=concordia.settings_local_test
+```
+
+Bring up the docker database and redis servers:
+
+```bash
+docker-compose up -d db redis
+```
+
+Then execute the tests:
+
+```bash
+pipenv run ./manage.py test
+```
 
 #### Import Data
 

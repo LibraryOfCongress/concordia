@@ -158,9 +158,11 @@ The easiest way to install the site is using [Pipenv](https://pipenv.readthedocs
 Now every time you make a commit in Git the various tools listed in the next
 section will automatically run and report any problems.
 
+n.b. Each time you check out a new copy of this Git repository, run pre-commit install.
+
 #### Configure your editor with helpful tools:
 
-[setup.cfg](setup.cfg) contains configuration for pycodestyle, [isort](https://pypi.org/project/isort/) and flake8.
+[setup.cfg](https://github.com/LibraryOfCongress/concordia/blob/master/setup.cfg) contains configuration for pycodestyle, [isort](https://pypi.org/project/isort/) and flake8.
 
 Configure your editor to run black and isort on each file at save time.
 
