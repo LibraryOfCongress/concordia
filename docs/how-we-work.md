@@ -162,7 +162,7 @@ n.b. Each time you check out a new copy of this Git repository, run `pre-commit 
 
 #### Configure your editor with helpful tools:
 
-[setup.cfg](https://github.com/LibraryOfCongress/concordia/blob/master/setup.cfg) contains configuration for pycodestyle, [isort](https://pypi.org/project/isort/) and flake8.
+[setup.cfg](https://github.com/LibraryOfCongress/concordia/blob/master/setup.cfg) contains configuration for [pycodestyle](https://pypi.org/project/pycodestyle/), [isort](https://pypi.org/project/isort/) and [flake8](https://pypi.org/project/flake8/).
 
 Configure your editor to run black and isort on each file at save time.
 
