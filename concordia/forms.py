@@ -109,7 +109,7 @@ class ContactUsForm(forms.Form):
     subject = forms.CharField(label="Subject:", required=True)
 
     link = forms.URLField(
-        label="Have a specific page you need help with? Add the link below:",
+        label="Have a specific page you need help with? Add the link below (optional):",
         required=False,
     )
 
