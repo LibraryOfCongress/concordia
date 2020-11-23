@@ -132,7 +132,7 @@ def admin_bulk_import_review(request):
         form = AdminProjectBulkImportForm(request.POST, request.FILES)
 
         if form.is_valid():
-
+            total_count = 0
             rows = slurp_excel(request.FILES["spreadsheet_file"])
             required_fields = [
                 "Campaign",
@@ -183,6 +183,7 @@ def admin_bulk_import_review(request):
                         messages.warning(request, "Project slug doesn't match pattern.")
 
                     potential_urls = filter(None, re.split(r"[\s]+", import_url_blob))
+
                     for url in potential_urls:
                         if not url.startswith("http"):
                             messages.warning(
@@ -195,7 +196,7 @@ def admin_bulk_import_review(request):
                             count = event_loop.run_until_complete(
                                 import_item_count_from_url(url)
                             )
-                            # count = import_item_count_from_url(url)
+                            total_count = total_count + count
 
                             messages.info(
                                 request,
@@ -207,6 +208,10 @@ def admin_bulk_import_review(request):
                                 f"Unhandled error attempting to count {url}: {exc}",
                             )
             finally:
+                messages.info(
+                    request,
+                    f"Total Asset Count: {total_count}",
+                )
                 event_loop.close()
 
     else:
