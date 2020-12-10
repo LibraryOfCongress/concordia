@@ -263,7 +263,7 @@ def import_item_count_from_url(import_url):
         resp.raise_for_status()
         item_data = resp.json()
         output = len(item_data["resources"][0]["files"])
-        return f"{import_url} {output}", output
+        return f"{import_url} - Asset Count: {output}", output
 
     except Exception as exc:
         return f"{exc}", 0
