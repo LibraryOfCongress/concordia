@@ -233,7 +233,7 @@ def admin_bulk_import_review(request):
 
                 messages.info(request, f"Total Asset Count:{sum_count}")
             finally:
-                messages.info(request, "********************************************")
+                messages.info(request, "**********************************************")
 
     else:
         form = AdminProjectBulkImportForm()
