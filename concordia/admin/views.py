@@ -1,5 +1,5 @@
-import asyncio
 import re
+import time
 
 from bittersweet.models import validated_get_or_create
 from django.contrib import messages
@@ -12,7 +12,7 @@ from django.views.decorators.cache import never_cache
 from tabular_export.core import export_to_csv_response, flatten_queryset
 
 from importer.tasks import (
-    import_item_count_from_url,
+    fetch_all_urls,
     import_items_into_project_from_url,
     redownload_image_task,
 )
@@ -120,19 +120,35 @@ def redownload_images_view(request):
 @permission_required("concordia.change_project")
 @permission_required("concordia.add_item")
 @permission_required("concordia.change_item")
+def celery_task_review(request):
+    request.current_app = "admin"
+    context = {"title": "Active Celery Tasks"}
+    return render(request, "admin/celery_task.html", context)
+
+
+@never_cache
+@staff_member_required
+@permission_required("concordia.add_campaign")
+@permission_required("concordia.change_campaign")
+@permission_required("concordia.add_project")
+@permission_required("concordia.change_project")
+@permission_required("concordia.add_item")
+@permission_required("concordia.change_item")
 def admin_bulk_import_review(request):
     request.current_app = "admin"
     url_regex = r"[-\w+]+"
     pattern = re.compile(url_regex)
     context = {"title": "Bulk Import Review"}
-    event_loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(event_loop)
-
+    # event_loop = asyncio.new_event_loop()
+    # asyncio.set_event_loop(event_loop)
+    urls = []
+    all_urls = []
+    url_counter = 0
+    sum_count = 0
     if request.method == "POST":
         form = AdminProjectBulkImportForm(request.POST, request.FILES)
 
         if form.is_valid():
-            total_count = 0
             rows = slurp_excel(request.FILES["spreadsheet_file"])
             required_fields = [
                 "Campaign",
@@ -192,27 +208,30 @@ def admin_bulk_import_review(request):
                             continue
 
                         try:
+                            urls.append(url)
+                            url_counter = url_counter + 1
 
-                            count = event_loop.run_until_complete(
-                                import_item_count_from_url(url)
-                            )
-                            total_count = total_count + count
+                            if url_counter == 30:
+                                all_urls.append(urls)
+                                url_counter = 0
+                                urls = []
 
-                            messages.info(
-                                request,
-                                f"{project_title} - [{url}] : {count}",
-                            )
                         except Exception as exc:
                             messages.error(
                                 request,
                                 f"Unhandled error attempting to count {url}: {exc}",
                             )
+
+                all_urls.append(urls)
+                for i, val in enumerate(all_urls):
+                    return_result = fetch_all_urls(val)
+                    messages.info(request, f"Asset Count:{return_result[0]}")
+                    sum_count = sum_count + return_result[1]
+                    time.sleep(10)
+
+                messages.info(request, f"Total Asset Count:{sum_count}")
             finally:
-                messages.info(
-                    request,
-                    f"Total Asset Count: {total_count}",
-                )
-                event_loop.close()
+                messages.info(request, "All processes Complete")
 
     else:
         form = AdminProjectBulkImportForm()
