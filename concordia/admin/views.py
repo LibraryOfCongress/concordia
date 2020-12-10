@@ -225,13 +225,15 @@ def admin_bulk_import_review(request):
                 all_urls.append(urls)
                 for i, val in enumerate(all_urls):
                     return_result = fetch_all_urls(val)
-                    messages.info(request, f"Asset Count:{return_result[0]}")
+                    for res in return_result[0]:
+                        messages.info(request, f"{res}")
+
                     sum_count = sum_count + return_result[1]
                     time.sleep(10)
 
                 messages.info(request, f"Total Asset Count:{sum_count}")
             finally:
-                messages.info(request, "All processes Complete")
+                messages.info(request, "**********************************************")
 
     else:
         form = AdminProjectBulkImportForm()
