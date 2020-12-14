@@ -241,7 +241,7 @@ def get_item_info_from_result(result):
 
 
 def fetch_all_urls(items):
-    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=25) as executor:
         result = executor.map(import_item_count_from_url, items)
     finals = []
     totals = 0
