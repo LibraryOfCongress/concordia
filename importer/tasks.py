@@ -241,7 +241,7 @@ def get_item_info_from_result(result):
 
 
 def fetch_all_urls(items):
-    with concurrent.futures.ThreadPoolExecutor(max_workers=15) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
         result = executor.map(import_item_count_from_url, items)
     finals = []
     totals = 0
@@ -266,7 +266,7 @@ def import_item_count_from_url(import_url):
         return f"{import_url} - Asset Count: {output}", output
 
     except Exception as exc:
-        return f"{exc}", 0
+        return f"Unhandled exception importing {import_url} {exc}", 0
 
 
 def import_items_into_project_from_url(requesting_user, project, import_url):
