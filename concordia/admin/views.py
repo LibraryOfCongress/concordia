@@ -211,7 +211,7 @@ def admin_bulk_import_review(request):
                             urls.append(url)
                             url_counter = url_counter + 1
 
-                            if url_counter == 79:
+                            if url_counter == 50:
                                 all_urls.append(urls)
                                 url_counter = 0
                                 urls = []
@@ -229,7 +229,7 @@ def admin_bulk_import_review(request):
                         messages.info(request, f"{res}")
 
                     sum_count = sum_count + return_result[1]
-                    time.sleep(61)
+                    time.sleep(75)
 
                 messages.info(request, f"Total Asset Count:{sum_count}")
             finally:
