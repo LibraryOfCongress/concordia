@@ -229,11 +229,11 @@ def admin_bulk_import_review(request):
                         messages.info(request, f"{res}")
 
                     sum_count = sum_count + return_result[1]
-                    time.sleep(10)
+                    time.sleep(25)
 
                 messages.info(request, f"Total Asset Count:{sum_count}")
             finally:
-                messages.info(request, "**********************************************")
+                messages.info(request, "All Processes Completed")
 
     else:
         form = AdminProjectBulkImportForm()
