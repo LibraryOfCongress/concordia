@@ -211,7 +211,7 @@ def admin_bulk_import_review(request):
                             urls.append(url)
                             url_counter = url_counter + 1
 
-                            if url_counter == 45:
+                            if url_counter == 50:
                                 all_urls.append(urls)
                                 url_counter = 0
                                 urls = []
