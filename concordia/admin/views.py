@@ -128,6 +128,7 @@ def celery_task_review(request):
     request.current_app = "admin"
     url_regex = r"[-\w+]+"
     pattern = re.compile(url_regex)
+    counter = 0
     context = {"title": "Active Celery Tasks"}
     celery = Celery("concordia")
     celery.config_from_object("django.conf:settings", namespace="CELERY")
@@ -204,6 +205,7 @@ def celery_task_review(request):
                                 messages.info(
                                     request, f"Url: {url} - Status: {res.status}"
                                 )
+                                counter = counter + 1
                                 break
 
                         except Exception as exc:
@@ -213,7 +215,7 @@ def celery_task_review(request):
                             )
 
             finally:
-                messages.info(request, "All Processes Completed")
+                messages.info(request, f"{counter} Processed")
 
     else:
         form = AdminProjectBulkImportForm()
