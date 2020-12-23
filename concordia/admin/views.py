@@ -13,7 +13,7 @@ from django.utils.text import slugify
 from django.views.decorators.cache import never_cache
 from tabular_export.core import export_to_csv_response, flatten_queryset
 
-from importer.models import ImportItem
+from importer.models import ImportItem, ImportItemAsset
 from importer.tasks import (
     fetch_all_urls,
     import_items_into_project_from_url,
@@ -206,6 +206,23 @@ def celery_task_review(request):
                                     request, f"Url: {url} - Status: {res.status}"
                                 )
                                 counter = counter + 1
+                                assettasks = ImportItemAsset.objects.filter(
+                                    import_item_id=asset.pk
+                                )
+                                countasset = 0
+                                for assettask in assettasks:
+                                    if assettask.status == "":
+                                        messages.info(
+                                            request,
+                                            f"-{assettask.url}-{assettask.status}",
+                                        )
+                                    elif assettask.status != "":
+                                        messages.warning(
+                                            request,
+                                            f"-{assettask.url}-{assettask.status}",
+                                        )
+                                countasset = countasset + 1
+                                messages.info(request, f"{countasset} Assets Processed")
                                 break
 
                         except Exception as exc:
@@ -215,7 +232,7 @@ def celery_task_review(request):
                             )
 
             finally:
-                messages.info(request, f"{counter} Processed")
+                messages.info(request, f"{counter} Items Processed")
 
     else:
         form = AdminProjectBulkImportForm()
