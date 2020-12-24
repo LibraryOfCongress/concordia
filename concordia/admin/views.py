@@ -211,17 +211,12 @@ def celery_task_review(request):
                                 )
                                 countasset = 0
                                 for assettask in assettasks:
-                                    if assettask.status == "":
+                                    if assettask.status != "":
                                         messages.info(
                                             request,
-                                            f"-{assettask.url}-{assettask.status}",
+                                            f"{assettask.url}-{assettask.status}",
                                         )
-                                    elif assettask.status != "":
-                                        messages.warning(
-                                            request,
-                                            f"-{assettask.url}-{assettask.status}",
-                                        )
-                                countasset = countasset + 1
+                                    countasset = countasset + 1
                                 messages.info(request, f"{countasset} Assets Processed")
                                 break
 
