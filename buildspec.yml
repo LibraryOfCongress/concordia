@@ -1,0 +1,25 @@
+version: 0.2
+
+env:
+    variables:
+        TAG: 'latest'
+        BUILD_ALL: 1
+        CLUSTER_NAME: 'crowd-dev'
+        SERVICE_NAME: 'crowd-dev-FargateCluster-WFCY4I0U7JSM-ConcordiaExternalService-1VDVTI071TMIR'
+        AWS_REGION: 'us-east-1'
+
+phases:
+    install:
+        commands:
+            - echo Entered the install phase...
+            - yum update -y
+    build:
+        commands:
+            - echo Entered the build phase...
+            - echo Build started on `date`
+            - ./build_containers.sh
+    post_build:
+        commands:
+            - echo Entered the post_build phase...
+            - aws ecs update-service --region $AWS_REGION --cluster $CLUSTER_NAME --service $SERVICE_NAME --force-new-deployment
+            - echo Build completed on `date`
