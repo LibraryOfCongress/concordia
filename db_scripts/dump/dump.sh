@@ -10,19 +10,22 @@ if [[ -z "${ENV_NAME}" ]]; then
     exit 1
 fi
 
-if [ $ENV_NAME = "prod" ]; then
-    echo "This script should not be run in the production environment."
+if [ $ENV_NAME != "prod" ]; then
+    echo "This script should only be run in the production environment."
     exit 1
 fi
 
+TODAY=$(date +%Y%m%d)
 POSTGRESQL_PW="$(aws secretsmanager get-secret-value --region us-east-1 --secret-id crowd/${ENV_NAME}/DB/MasterUserPassword | python -c 'import json,sys;Secret=json.load(sys.stdin);SecretString=json.loads(Secret["SecretString"]);print(SecretString["password"])')"
-# TODO: look up the RDS endpoint for this environment
-POSTGRESQL_HOST=${POSTGRESQL_HOST:-localhost}
-DUMP_FILE=/concordia.dmp
+POSTGRESQL_HOST="$(aws ssm get-parameter-value --region us-east-1 --name /concordia/${ENV_NAME}/db.url | python -c 'import json,sys;Parameter=json.load(sys.stdin);ParameterString=json.loads(Parameter["Parameter"]);print(ParameterString["Value"])')"
+DUMP_FILE=concordia.dmp
 
 echo "${POSTGRESQL_HOST}:5432:*:concordia:${POSTGRESQL_PW}" > ~/.pgpass
 chmod 600 ~/.pgpass
 
-psql -U concordia -h "$POSTGRESQL_HOST" -d postgres -c "select pg_terminate_backend(pid) from pg_stat_activity where datname='concordia';"
-psql -U concordia -h "$POSTGRESQL_HOST" -d postgres -c "drop database concordia;"
-pg_restore --create --clean -U concordia -h "${POSTGRESQL_HOST}" -Fc --dbname=postgres --no-owner --no-acl "${DUMP_FILE}"
+pg_dump -Fc --clean --create --no-owner --no-acl -U concordia -h "${POSTGRESQL_HOST}" concordia -f "${DUMP_FILE}"
+
+if [ -s $DUMP_FILE ]; then
+    aws s3 cp "${DUMP_FILE}" "s3://crowd-deployment/database-dumps/concordia.${TODAY}.dmp"
+    aws s3 cp "${DUMP_FILE}" s3://crowd-deployment/database-dumps/concordia.latest.dmp
+fi
