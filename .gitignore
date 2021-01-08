@@ -38,4 +38,3 @@ concordia/settings_dev.py
 version.txt
 static-files
 package.json
-npm-shrinkwrap.json
