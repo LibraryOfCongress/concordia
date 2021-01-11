@@ -1,107 +1,59 @@
-{% extends "base.html" %} {% load staticfiles %} {% load concordia_text_tags %}
+{% extends "base.html" %}
+
+{% load staticfiles %}
+{% load concordia_text_tags %}
+
 {% block title %}{{ project.title }} ({{ campaign.title }}){% endblock title %}
+
 {% block head_content %}
 <link rel="canonical" href="https://{{ request.get_host }}{{ request.path }}" />
-<meta
-    name="description"
-    content="{{ project.description|striptags|normalize_whitespace }}"
-/>
+<meta name="description" content="{{ project.description|striptags|normalize_whitespace }}" />
 <meta name="thumbnail" content="{{ MEDIA_URL }}{{ project.thumbnail_image }}" />
-<meta
-    property="og:image"
-    content="{{ MEDIA_URL }}{{ project.thumbnail_image }}"
-/>
-{% endblock head_content %} {% block breadcrumbs %}
-<li class="breadcrumb-item">
-    <a class="primary-text" href="{% url 'campaign-topic-list' %}">Campaigns</a>
-</li>
-<li class="breadcrumb-item">
-    <a
-        class="primary-text"
-        href="{% url 'transcriptions:campaign-detail' campaign.slug %}?{{ sublevel_querystring }}"
-        title="{{ campaign.title }}"
-        >{{ campaign.title }}</a
-    >
-</li>
-<li
-    class="breadcrumb-item active"
-    aria-current="page"
-    title="{{ project.title }}"
->
-    {{ project.title }}
-</li>
-{% endblock breadcrumbs %} {% block main_content %}
-<div class="container py-3">
-    <div class="row">
-        <div class="col-12">
-            <h1>{{ project.title }}</h1>
-            <div class="hero-text">{{ project.description|safe }}</div>
-        </div>
-    </div>
-    {% include "fragments/transcription-progress-row.html" %}
-    <div class="row">
-        <div
-            class="card-deck w-100 flex-column flex-sm-row justify-content-center align-items-center align-items-sm-stretch"
-        >
-            {% for item in items %}
-            <div
-                class="col-12 col-md-4 col-lg-3 m-2 p-1 concordia-object-card card bg-lightest-gray shadow-regular align-items-center"
-                data-transcription-status="{{ item.lowest_transcription_status }}"
-            >
-                <a
-                    href="{% url 'transcriptions:item-detail' campaign.slug project.slug item.item_id %}?{{ sublevel_querystring }}"
-                >
-                    <img
-                        class="card-img card-img-campaign"
-                        alt="{{ item.title }}"
-                        src="{{ item.thumbnail_url }}"
-                    />
-                </a>
+<meta property="og:image" content="{{ MEDIA_URL }}{{ project.thumbnail_image }}" />
+{% endblock head_content %}
 
-                <div class="progress w-100 my-2">
-                    <div
-                        title="Completed"
-                        class="progress-bar bg-completed"
-                        role="progressbar"
-                        style="width: {{ item.completed_percent }}%"
-                        aria-valuenow="{{ item.completed_percent }}"
-                        aria-valuemin="0"
-                        aria-valuemax="100"
-                    ></div>
-                    <div
-                        title="Needs Review"
-                        class="progress-bar bg-submitted"
-                        role="progressbar"
-                        style="width: {{ item.submitted_percent }}%"
-                        aria-valuenow="{{ item.submitted_percent }}"
-                        aria-valuemin="0"
-                        aria-valuemax="100"
-                    ></div>
-                    <div
-                        title="In Progress"
-                        class="progress-bar bg-in_progress"
-                        role="progressbar"
-                        style="width: {{ item.in_progress_percent }}%"
-                        aria-valuenow="{{ item.in_progress_percent }}"
-                        aria-valuemin="0"
-                        aria-valuemax="100"
-                    ></div>
-                </div>
+{% block breadcrumbs %}
+    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'campaign-topic-list' %}">Campaigns</a></li>
+    <li class="breadcrumb-item">
+        <a class="primary-text" href="{% url 'transcriptions:campaign-detail' campaign.slug %}?{{ sublevel_querystring }}" title="{{ campaign.title }}">{{ campaign.title }}</a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page" title="{{ project.title }}">{{ project.title }}</li>
+{% endblock breadcrumbs %}
 
-                <h6 class="text-center primary-text">
-                    <a
-                        href="{% url 'transcriptions:item-detail' campaign.slug project.slug item.item_id %}?{{ sublevel_querystring }}"
-                        class="campaign-image-link"
-                    >
-                        {{ item.title }}
-                    </a>
-                </h6>
+{% block main_content %}
+    <div class="container py-3">
+        <div class="row">
+            <div class="col-12">
+                <h1>{{ project.title }}</h1>
+                <div class="hero-text">{{ project.description|safe }}</div>
             </div>
-            {% endfor %}
+        </div>
+        {% include "fragments/transcription-progress-row.html" %}
+        <div class="row">
+            <div class="card-deck w-100 flex-column flex-sm-row justify-content-center align-items-center align-items-sm-stretch">
+                {% for item in items %}
+                    <div class="col-12 col-md-4 col-lg-3 m-2 p-1 concordia-object-card card bg-lightest-gray shadow-regular align-items-center" data-transcription-status="{{ item.lowest_transcription_status }}">
+                        <a href="{% url 'transcriptions:item-detail' campaign.slug project.slug item.item_id %}?{{ sublevel_querystring }}">
+                            <img class="card-img card-img-campaign" alt="{{ item.title }}" src="{{ item.thumbnail_url }}" />
+                        </a>
+
+                        <div class="progress w-100 my-2">
+                            <div title="Completed" class="progress-bar bg-completed" role="progressbar" style="width: {{ item.completed_percent }}%" aria-valuenow="{{ item.completed_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            <div title="Needs Review" class="progress-bar bg-submitted" role="progressbar" style="width: {{ item.submitted_percent }}%" aria-valuenow="{{ item.submitted_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            <div title="In Progress" class="progress-bar bg-in_progress" role="progressbar" style="width: {{ item.in_progress_percent }}%" aria-valuenow="{{ item.in_progress_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+
+                        <h6 class="text-center primary-text">
+                            <a href="{% url 'transcriptions:item-detail' campaign.slug project.slug item.item_id %}?{{ sublevel_querystring }}" class="campaign-image-link">
+                                {{ item.title }}
+                            </a>
+                        </h6>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="row">
+            {% include "fragments/standard-pagination.html" %}
         </div>
     </div>
-    <div class="row">
-        {% include "fragments/standard-pagination.html" %}
-    </div>
-</div>
 {% endblock main_content %}
