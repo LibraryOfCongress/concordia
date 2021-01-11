@@ -675,12 +675,6 @@ ul.nav-secondary {
  * This page wants to display as much as possible and so the entire page is a flex column
  */
 
-body.view-transcriptions--asset-detail main {
-    min-height: 740px;
-    height: var(--height-main);
-    background-color: inherit;
-}
-
 #contribute-main-content {
     position: relative;
 }
