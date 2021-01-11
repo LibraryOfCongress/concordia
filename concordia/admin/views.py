@@ -186,10 +186,9 @@ def celery_task_review(request):
                             )
                         countasset = countasset + 1
                         totalcount = totalcount + 1
-                    proj_dict["succesful"] = asset_succesful
-                    proj_dict["incomplete"] = asset_incomplete
-                    proj_dict["failure"] = asset_failure
-                    break
+            proj_dict["succesful"] = asset_succesful
+            proj_dict["incomplete"] = asset_incomplete
+            proj_dict["failure"] = asset_failure
             all_projects.append(proj_dict)
         messages.info(request, f"{totalcount} Total Assets Processed")
         context["totalassets"] = totalcount
