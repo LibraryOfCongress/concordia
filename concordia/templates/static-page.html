@@ -1,18 +1,13 @@
-{% extends "base.html" %}
-
-{% block title %}{{ title }}{% endblock title %}
-
-{% block breadcrumbs %}
-    {% for link, title in breadcrumbs %}
-        {% if forloop.last %}
-            <li class="breadcrumb-item active" title="{{ title }}">{{ title }}</li>
-        {% else %}
-            <li class="breadcrumb-item"><a class="primary-text" href="{{ link }}" title="{{ title }}">{{ title }}</a></li>
-        {% endif %}
-    {% endfor %}
-{% endblock breadcrumbs %}
-
-{% block main_content %}
+{% extends "base.html" %} {% block title %}{{ title }}{% endblock title %} {%
+block breadcrumbs %} {% for link, title in breadcrumbs %} {% if forloop.last %}
+<li class="breadcrumb-item active" title="{{ title }}">{{ title }}</li>
+{% else %}
+<li class="breadcrumb-item">
+    <a class="primary-text" href="{{ link }}" title="{{ title }}"
+        >{{ title }}</a
+    >
+</li>
+{% endif %} {% endfor %} {% endblock breadcrumbs %} {% block main_content %}
 <div class="container">
     <div class="row">
         <div class="col">
