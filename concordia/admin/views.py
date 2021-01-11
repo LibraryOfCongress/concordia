@@ -135,7 +135,6 @@ def celery_task_review(request):
     celery.config_from_object("django.conf:settings", namespace="CELERY")
     context["campaigns"] = all_campaigns = []
     context["projects"] = all_projects = []
-
     id = request.GET.get('id')
  
     if id is not None:
