@@ -1,5 +1,7 @@
 import re
 import time
+from urllib.parse import parse_qs, urlparse
+
 from bittersweet.models import validated_get_or_create
 from celery import Celery
 from celery.result import AsyncResult
@@ -11,7 +13,7 @@ from django.shortcuts import render
 from django.utils.text import slugify
 from django.views.decorators.cache import never_cache
 from tabular_export.core import export_to_csv_response, flatten_queryset
-from urllib.parse import urlparse, parse_qs
+
 from importer.models import ImportItem, ImportItemAsset, ImportJob
 from importer.tasks import (
     fetch_all_urls,
@@ -128,15 +130,15 @@ def celery_task_review(request):
     totalcount = 0
     counter = 0
     asset_succesful = 0
-    asset_incomplete=0
+    asset_incomplete = 0
     asset_failure = 0
     context = {"title": "Active Importer Tasks"}
     celery = Celery("concordia")
     celery.config_from_object("django.conf:settings", namespace="CELERY")
     context["campaigns"] = all_campaigns = []
     context["projects"] = all_projects = []
-    id = request.GET.get('id')
- 
+    id = request.GET.get("id")
+
     if id is not None:
         context["campaigns"] = []
         form = AdminProjectBulkImportForm()
@@ -149,18 +151,16 @@ def celery_task_review(request):
             proj_dict["title"] = project.title
             proj_dict["id"] = project.pk
             messages.info(request, f"{project.title}")
-            importjobs = ImportJob.objects.filter(project_id=project.pk).order_by("-created")
+            importjobs = ImportJob.objects.filter(project_id=project.pk).order_by(
+                "-created"
+            )
             for importjob in importjobs:
                 job_id = importjob.pk
-                assets = ImportItem.objects.filter(job_id=job_id).order_by(
-                                    "-created"
-                                )
+                assets = ImportItem.objects.filter(job_id=job_id).order_by("-created")
                 for asset in assets:
                     res = AsyncResult(str(asset.task_id))
                     counter = counter + 1
-                    assettasks = ImportItemAsset.objects.filter(
-                                        import_item_id=asset.pk
-                                    )
+                    assettasks = ImportItemAsset.objects.filter(import_item_id=asset.pk)
                     countasset = 0
                     for assettask in assettasks:
                         if assettask.failed != None:
@@ -169,7 +169,10 @@ def celery_task_review(request):
                                 request,
                                 f"{assettask.url}-{assettask.status}",
                             )
-                        elif assettask.completed == None and assettask.last_started != None:
+                        elif (
+                            assettask.completed == None
+                            and assettask.last_started != None
+                        ):
                             asset_incomplete = asset_incomplete + 1
                             messages.warning(
                                 request,
@@ -187,18 +190,14 @@ def celery_task_review(request):
                     proj_dict["incomplete"] = asset_incomplete
                     proj_dict["failure"] = asset_failure
                     break
-            all_projects.append(
-                    proj_dict
-                        )
+            all_projects.append(proj_dict)
         messages.info(request, f"{totalcount} Total Assets Processed")
         context["totalassets"] = totalcount
 
     else:
         context["projects"] = []
         for campaigns in Campaign.objects.all():
-            all_campaigns.append(
-                    campaigns
-                        )
+            all_campaigns.append(campaigns)
         form = AdminProjectBulkImportForm()
 
     context["form"] = form
