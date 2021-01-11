@@ -37,4 +37,3 @@ concordia/settings_dev_*.py
 concordia/settings_dev.py
 version.txt
 static-files
-package.json
