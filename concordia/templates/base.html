@@ -31,24 +31,25 @@
 
 <body id="body" class="view-{{ VIEW_NAME_FOR_CSS }} section-{{ PATH_LEVEL_1|default:'homepage' }} environment-{{ CONCORDIA_ENVIRONMENT }} {% block extra_body_classes %}{% endblock %} d-print-block">
     {% block site-header %}
-        <header role="banner" aria-label="site navigation">
-            <nav class="navbar navbar-expand-lg flex-row navbar-offwhite bg-offwhite justify-content-between align-items-end d-print-block">
-                <div class="navbar-brand d-flex align-items-stretch">
-                    <a href="https://www.loc.gov">
-                        <img src="{% static 'img/LoC-logo.svg' %}" alt="Library of Congress logo">
+        <header class="border-bottom" role="banner" aria-label="site navigation">
+            <nav class="container navbar navbar-light navbar-expand-lg align-items-lg-end py-3 d-print-block">
+                <div class="navbar-brand d-flex align-items-center">
+                    <a class="logo-loc" href="https://www.loc.gov" title="Library of Congress">
+                        <img class="img-fluid" src="{% static 'img/LoC-logo.svg' %}" width="170" height="97" alt="Library of Congress logo">
                     </a>
-                    <span class="d-none d-sm-block vl mx-2"></span>
-                    <h1 class="header-text m-0 d-none d-sm-flex align-items-center">
-                        <div>
-                            <a class="gray-text" href="/">By The People</a>
-                        </div>
+                    <h1 class="logo-by-the-people m-0 -d-flex -align-items-center">
+                        <a class="d-flex" href="/" title="By the People">
+                            <img class="img-fluid" src="{% static 'img/logo-by-the-people.svg' %}" width="260" height="27" alt="" aria-hidden="true">
+                            <span class="sr-only">By The People</span>
+                        </a>
                     </h1>
                 </div>
-                <button class="navbar-toggler navbar-light d-print-none" type="button" data-toggle="collapse" data-target="#nav-menu" aria-controls="nav-menu" aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
+                <button class="navbar-toggler navbar-light border-0 d-print-none" type="button" data-toggle="collapse" data-target="#nav-menu" aria-controls="nav-menu" aria-expanded="false" aria-label="Toggle navigation">
+                    <i class="fas fa-bars"></i>
+                    <span class="sr-only">Menu</span>
                 </button>
                 <div class="collapse navbar-collapse text-center d-print-none" id="nav-menu">
-                    <ul class="navbar-nav ml-auto d-print-none">
+                    <ul class="navbar-nav ml-auto d-print-none small">
                         <li class="nav-item">
                             <a class="nav-link {% if PATH_LEVEL_1 == 'about'%}active{% endif %}" href="{% url 'about' %}">About</a>
                         </li>
@@ -79,12 +80,12 @@
                     </ul>
                 </div>
 
-                <ul class="nav-secondary anonymous-only list-unstyled d-none d-lg-flex d-print-none">
+                <ul class="nav-secondary anonymous-only list-unstyled d-none d-lg-flex d-print-none small">
                     <li class="nav-item">
-                        <a class="nav-link nav-secondary nav-link-login" href="{% url 'login' %}?next={{ request.path|urlencode }}" rel="nofollow">Login</a>
+                        <a class="nav-link nav-secondary nav-link-login text-dark" href="{% url 'login' %}?next={{ request.path|urlencode }}" rel="nofollow">Login</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link nav-secondary nav-link-register" href="{% url 'registration_register' %}" rel="nofollow">Register</a>
+                        <a class="nav-link nav-secondary nav-link-register text-dark" href="{% url 'registration_register' %}" rel="nofollow">Register</a>
                     </li>
                 </ul>
             </nav>
@@ -92,9 +93,9 @@
     {% endblock site-header %}
 
     {% block breadcrumbs-container %}
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb bg-offwhite my-0">
-                <li class="breadcrumb-item"><a class="primary-text" href="/">Home</a></li>
+        <nav class="container breadcrumb-wrapper" aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/">Home</a></li>
                 {% block breadcrumbs %}{% endblock breadcrumbs %}
             </ol>
         </nav>
@@ -120,48 +121,49 @@
         </main>
     {% endblock site-main %}
     {% block site-footer %}
-        <footer class="footer-crowd footer d-print-none" role="contentinfo">
-            <div class="footer-crowd-row">
-                <div class="footer-crowd-social">
-                    <h2>Follow Us</h2>
-                    <ul class="links-social list-unstyled">
-                        <li class="link-github">
-                            <a href="https://github.com/LibraryOfCongress/concordia" title="GitHub">
-                                <span class="bitmap-icon github-icon"></span>
-                            </a>
-                        </li>
-                        <li class="link-twitter">
-                            <a href="https://www.twitter.com/Crowd_LOC" title="Twitter">
-                                <span class="bitmap-icon twitter-icon"></span>
-                            </a>
-                        </li>
-                        <li class="link-email">
-                            <a href="https://updates.loc.gov/accounts/USLOC/subscriber/new?topic_id=USLOC_175" title="Newsletter">
-                                <span class="bitmap-icon email-icon"></span>
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-                <div class="footer-crowd-links">
-                    <ul class="list-unstyled">
-                        <li><a href="/for-educators/">For Educators</a></li>
-                        <li><a href="https://historyhub.history.gov/community/crowd-loc">Discuss</a></li>
-                        <li><a href="/contact/">Contact Us</a></li>
-                        <li><a href="/help-center/">Help</a></li>
-                    </ul>
-                </div>
-                <div class="footer-crowd-links-aside">
-                    <ul class="links-aside list-unstyled">
-                        <li><a href="https://www.loc.gov/accessibility/">Accessibility</a></li>
-                        <li><a href="https://www.loc.gov/legal/">Legal</a></li>
-                        <li><a href="https://www.loc.gov/about/office-of-the-inspector-general/">Inspector General</a></li>
-                        <li><a href="https://www.loc.gov/legal/standard-disclaimer-for-external-links/">External Link Disclaimer</a></li>
-                    </ul>
-
-                    <ul class="links-intersites list-unstyled">
-                        <li class="intersites-link-congress"><a href="https://www.congress.gov/" aria-label="Congress.gov"></a></li>
-                        <li class="intersites-link-copyright"><a href="https://copyright.gov" aria-label="United States Copyright Office"></a></li>
-                    </ul>
+        <footer class="footer bg-light border-top py-4 d-print-none">
+            <div class="container">
+                <div class="row">
+                    <div class="col-12 col-lg-auto">
+                        <h2 class="h3 font-weight-normal text-center text-lg-left">Follow Us</h2>
+                        <ul class="list-unstyled list-inline mb-0 text-center text-lg-left">
+                            <li class="list-inline-item link-github">
+                                <a href="https://github.com/LibraryOfCongress/concordia" title="GitHub">
+                                    <span class="bitmap-icon github-icon"></span>
+                                </a>
+                            </li>
+                            <li class="list-inline-item link-twitter">
+                                <a href="https://www.twitter.com/Crowd_LOC" title="Twitter">
+                                    <span class="bitmap-icon twitter-icon"></span>
+                                </a>
+                            </li>
+                            <li class="list-inline-item link-email">
+                                <a href="https://updates.loc.gov/accounts/USLOC/subscriber/new?topic_id=USLOC_175" title="Newsletter">
+                                    <span class="bitmap-icon email-icon"></span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="footer-links col-12 col-lg">
+                        <ul class="list-unstyled list-inline small font-weight-bold mb-0 text-center text-lg-left">
+                            <li class="list-inline-item mb-1"><a href="/for-educators/">For Educators</a></li>
+                            <li class="list-inline-item mb-1"><a href="https://historyhub.history.gov/community/crowd-loc">Discuss</a></li>
+                            <li class="list-inline-item mb-1"><a href="/contact/">Contact Us</a></li>
+                            <li class="list-inline-item"><a href="/help-center/">Help</a></li>
+                        </ul>
+                    </div>
+                    <div class="col-12 col-lg-auto align-self-center">
+                        <ul class="list-unstyled list-inline small text-center text-lg-left">
+                            <li class="list-inline-item"><a href="https://www.loc.gov/accessibility/">Accessibility</a></li>
+                            <li class="list-inline-item"><a href="https://www.loc.gov/legal/">Legal</a></li>
+                            <li class="list-inline-item"><a href="https://www.loc.gov/about/office-of-the-inspector-general/">Inspector General</a></li>
+                            <li class="list-inline-item"><a href="https://www.loc.gov/legal/standard-disclaimer-for-external-links/">External Link Disclaimer</a></li>
+                        </ul>
+                        <ul class="list-unstyled list-inline mb-0 text-center text-lg-left">
+                            <li class="list-inline-item intersites-link-congress"><a href="https://www.congress.gov/"><span class="sr-only">Congress.gov</span></a></li>
+                            <li class="list-inline-item intersites-link-copyright"><a href="https://copyright.gov"><span class="sr-only">Copyright.gov</span></a></li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </footer>
