@@ -157,7 +157,7 @@ $(function() {
     }
 });
 
-if (screenfull.enabled) {
+if (screenfull.isEnabled) {
     $('#go-fullscreen')
         .removeAttr('hidden')
         .on('click', function(event) {
