@@ -52,7 +52,7 @@ def get_original_asset_id(download_url):
     that identifies this image uniquely on loc.gov
     """
     if download_url.startswith("http://tile.loc.gov/"):
-        pattern = r"/service:([A-Za-z0-9:\-]+)/"
+        pattern = r"/service:([A-Za-z0-9:\-\_]+)/"
         asset_id = re.search(pattern, download_url)
         if not asset_id:
             logger.error(
