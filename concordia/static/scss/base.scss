@@ -144,6 +144,7 @@ $hr-border-color: $gray-500;
 html,
 body.view-transcriptions--asset-detail main,
 #contribute-main-content {
+    background-color: $white;
     color: $gray-900;
 }
 
@@ -157,6 +158,9 @@ body {
 
 main {
     flex: 1 1 0%;
+    body.view-transcriptions--asset-detail & {
+        flex-basis: 100vh;
+    }
 }
 
 .font-serif {
