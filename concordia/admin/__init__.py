@@ -54,6 +54,71 @@ from .forms import (
 )
 
 
+class CampaignProjectListFilter(admin.SimpleListFilter):
+    """
+    This filter is an example of how to combine two different Filters to work together.
+    """
+
+    # Title displayed on the list filter URL
+    title = "ProjectRedux"
+    # Model field name:
+    parameter_name = "project"
+    # Custom attributes
+    related_filter_parameter = "project__campaign__id__exact"
+
+    def lookups(self, request, model_admin):
+        list_of_questions = []
+        queryset = Project.objects.order_by("campaign_id")
+        if self.related_filter_parameter in request.GET:
+            queryset = queryset.filter(
+                campaign_id=request.GET[self.related_filter_parameter]
+            )
+        for project in queryset:
+            list_of_questions.append((str(project.id), project.title))
+        return sorted(list_of_questions, key=lambda tp: tp[1])
+
+    def queryset(self, request, queryset):
+        # Compare the requested value to decide how to filter the queryset.
+        if self.value():
+            return queryset.filter(project_id=self.value())
+        return queryset
+
+
+class ItemProjectListFilter2(CampaignProjectListFilter):
+    parameter_name = "project__in"
+
+
+class ProjectItemListFilter(admin.SimpleListFilter):
+    #  modification of filter above but for asset through item
+    # Title displayed on the list filter URL
+    title = "ProjectRedux"
+    # Model field name:
+    parameter_name = "project"
+    # Custom attributes
+    related_filter_parameter = "item__project__campaign__id__exact"
+
+    def lookups(self, request, model_admin):
+        list_of_questions = []
+        queryset = Project.objects.order_by("campaign_id")
+        if self.related_filter_parameter in request.GET:
+            queryset = queryset.filter(
+                campaign_id=request.GET[self.related_filter_parameter]
+            )
+        for project in queryset:
+            list_of_questions.append((str(project.id), project.title))
+        return sorted(list_of_questions, key=lambda tp: tp[1])
+
+    def queryset(self, request, queryset):
+        # Compare the requested value to decide how to filter the queryset.
+        if self.value():
+            return queryset.filter(item__project_id=self.value())
+        return queryset
+
+
+class AssetProjectListFilter2(ProjectItemListFilter):
+    parameter_name = "item__project__in"
+
+
 class ProjectListFilter(MultipleChoiceListFilter):
     title = "Project"
 
@@ -307,7 +372,8 @@ class ItemAdmin(admin.ModelAdmin):
         "published",
         "project__topics",
         "project__campaign",
-        ItemProjectListFilter,
+        ItemProjectListFilter2,
+        # ItemProjectListFilter,
     )
 
     actions = (publish_item_action, unpublish_item_action)
@@ -394,7 +460,8 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         "published",
         "item__project__topics",
         "item__project__campaign",
-        AssetProjectListFilter,
+        AssetProjectListFilter2,
+        # AssetProjectListFilter,
         "media_type",
     )
 
