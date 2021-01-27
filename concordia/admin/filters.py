@@ -1,5 +1,7 @@
 from django.contrib import admin
 
+from ..models import Project
+
 
 class NullableTimestampFilter(admin.SimpleListFilter):
     """
@@ -42,3 +44,55 @@ class RejectedFilter(NullableTimestampFilter):
     title = "Rejected"
     parameter_name = "rejected"
     lookup_labels = ("Pending", "Rejected")
+
+
+class CampaignProjectListFilter(admin.SimpleListFilter):
+    """
+    Base class for admin campaign project filters
+    """
+
+    # Title displayed on the list filter URL
+    title = "ProjectRedux"
+    # Model field name:
+    parameter_name = "project"
+    # Custom attributes
+    related_filter_parameter = ""
+    project_ref = ""
+
+    def lookups(self, request, model_admin):
+
+        list_of_questions = []
+        queryset = Project.objects.order_by("campaign_id")
+        if self.related_filter_parameter in request.GET:
+            queryset = queryset.filter(
+                campaign_id=request.GET[self.related_filter_parameter]
+            )
+        for project in queryset:
+            list_of_questions.append((str(project.id), project.title))
+        return sorted(list_of_questions, key=lambda tp: tp[1])
+
+    def queryset(self, request, queryset):
+        # fkey_field = self.project_ref
+        if self.value():
+            # return queryset.filter(project_id=self.value())
+            return queryset.filter(project_ref=self.value())
+            # return queryset.filter(fkey_field=self.value())
+        return queryset
+
+
+class ItemProjectListFilter2(CampaignProjectListFilter):
+    parameter_name = "project__in"
+    related_filter_parameter = "project__campaign__id__exact"
+    project_ref = "project_id"
+
+
+class AssetProjectListFilter2(CampaignProjectListFilter):
+    parameter_name = "item__project__in"
+    related_filter_parameter = "item__project__campaign__id__exact"
+    project_ref = "item__project_id"
+
+
+class TranscriptionProjectListFilter(CampaignProjectListFilter):
+    parameter_name = "asset__item__project__in"
+    related_filter_parameter = "asset__item__project__campaign__id__exact"
+    project_ref = "asset__item__project_id"
