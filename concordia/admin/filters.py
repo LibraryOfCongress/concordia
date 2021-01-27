@@ -72,11 +72,11 @@ class CampaignProjectListFilter(admin.SimpleListFilter):
         return sorted(list_of_questions, key=lambda tp: tp[1])
 
     def queryset(self, request, queryset):
-        # fkey_field = self.project_ref
+        fkey_field = self.project_ref
         if self.value():
             # return queryset.filter(project_id=self.value())
-            return queryset.filter(project_ref=self.value())
-            # return queryset.filter(fkey_field=self.value())
+            # return queryset.filter(project_ref=self.value())
+            return queryset.filter(**{fkey_field: self.value()})
         return queryset
 
 
