@@ -74,8 +74,6 @@ class CampaignProjectListFilter(admin.SimpleListFilter):
     def queryset(self, request, queryset):
         fkey_field = self.project_ref
         if self.value():
-            # return queryset.filter(project_id=self.value())
-            # return queryset.filter(project_ref=self.value())
             return queryset.filter(**{fkey_field: self.value()})
         return queryset
 

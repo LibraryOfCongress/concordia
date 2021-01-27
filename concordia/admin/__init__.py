@@ -315,7 +315,6 @@ class ItemAdmin(admin.ModelAdmin):
         "project__topics",
         "project__campaign",
         ItemProjectListFilter2,
-        # ItemProjectListFilter,
     )
 
     actions = (publish_item_action, unpublish_item_action)
@@ -403,7 +402,6 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         "item__project__topics",
         "item__project__campaign",
         AssetProjectListFilter2,
-        # AssetProjectListFilter,
         "media_type",
     )
 
@@ -499,7 +497,6 @@ class TranscriptionAdmin(admin.ModelAdmin):
         AcceptedFilter,
         RejectedFilter,
         "asset__item__project__campaign",
-        # "asset__item__project",
         TranscriptionProjectListFilter,
     )
 
