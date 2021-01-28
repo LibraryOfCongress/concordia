@@ -1,7 +1,7 @@
 from django.contrib import admin, messages
 from django.contrib.humanize.templatetags.humanize import naturaltime
 
-from concordia.admin.filters import NullableTimestampFilter
+from concordia.admin.filters import CampaignProjectListFilter, NullableTimestampFilter
 
 from .models import ImportItem, ImportItemAsset, ImportJob
 from .tasks import download_asset_task
@@ -37,6 +37,24 @@ class FailedFilter(NullableTimestampFilter):
     title = "Failed"
     parameter_name = "failed"
     lookup_labels = ("Has not failed", "Has failed")
+
+
+class ImportJobProjectListFilter(CampaignProjectListFilter):
+    parameter_name = "project__in"
+    related_filter_parameter = "project__campaign__id__exact"
+    project_ref = "project_id"
+
+
+class ImportJobItemProjectListFilter(CampaignProjectListFilter):
+    parameter_name = "job__project__in"
+    related_filter_parameter = "job__project__campaign__id__exact"
+    project_ref = "job__project_id"
+
+
+class ImportJobAssetProjectListFilter(CampaignProjectListFilter):
+    parameter_name = "import_item__job__project__in"
+    related_filter_parameter = "import_item__job__project__campaign__id__exact"
+    project_ref = "import_item__job__project_id"
 
 
 class TaskStatusModelAdmin(admin.ModelAdmin):
@@ -99,7 +117,8 @@ class ImportJobAdmin(TaskStatusModelAdmin):
         CompletedFilter,
         FailedFilter,
         ("created_by", admin.RelatedOnlyFieldListFilter),
-        "project",
+        "project__campaign",
+        ImportJobProjectListFilter,
     )
     search_fields = ("url", "status")
 
@@ -120,7 +139,8 @@ class ImportItemAdmin(TaskStatusModelAdmin):
         CompletedFilter,
         FailedFilter,
         ("job__created_by", admin.RelatedOnlyFieldListFilter),
-        "job__project",
+        "job__project__campaign",
+        ImportJobItemProjectListFilter,
     )
     search_fields = ("url", "status")
 
@@ -145,7 +165,8 @@ class ImportItemAssetAdmin(TaskStatusModelAdmin):
         CompletedFilter,
         FailedFilter,
         ("import_item__job__created_by", admin.RelatedOnlyFieldListFilter),
-        "import_item__job__project",
+        "import_item__job__project__campaign",
+        ImportJobAssetProjectListFilter,
     )
     search_fields = ("url", "status")
     actions = (retry_download_task,)
