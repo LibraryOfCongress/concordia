@@ -46,7 +46,14 @@ from .actions import (
     unpublish_action,
     unpublish_item_action,
 )
-from .filters import AcceptedFilter, RejectedFilter, SubmittedFilter
+from .filters import (
+    AcceptedFilter,
+    AssetProjectListFilter2,
+    ItemProjectListFilter2,
+    RejectedFilter,
+    SubmittedFilter,
+    TranscriptionProjectListFilter,
+)
 from .forms import (
     AdminItemImportForm,
     BleachedDescriptionAdminForm,
@@ -307,7 +314,7 @@ class ItemAdmin(admin.ModelAdmin):
         "published",
         "project__topics",
         "project__campaign",
-        ItemProjectListFilter,
+        ItemProjectListFilter2,
     )
 
     actions = (publish_item_action, unpublish_item_action)
@@ -394,7 +401,7 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         "published",
         "item__project__topics",
         "item__project__campaign",
-        AssetProjectListFilter,
+        AssetProjectListFilter2,
         "media_type",
     )
 
@@ -490,7 +497,7 @@ class TranscriptionAdmin(admin.ModelAdmin):
         AcceptedFilter,
         RejectedFilter,
         "asset__item__project__campaign",
-        "asset__item__project",
+        TranscriptionProjectListFilter,
     )
 
     search_fields = ["text", "user__username", "user__email"]
