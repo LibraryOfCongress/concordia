@@ -6,6 +6,7 @@ from django.contrib.auth.forms import (
     AuthenticationForm,
     PasswordResetForm,
     SetPasswordForm,
+    UsernameField,
 )
 from django_registration.backends.activation.views import RegistrationView
 from django_registration.forms import RegistrationForm
@@ -60,6 +61,11 @@ class UserRegistrationForm(RegistrationForm):
 
 
 class UserLoginForm(AuthenticationForm):
+    username = UsernameField(
+        label="Username or email address",
+        widget=forms.TextInput(attrs={"autofocus": True}),
+    )
+
     def confirm_login_allowed(self, user):
         inactive_message = (
             "This account has not yet been activated. "
