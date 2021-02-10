@@ -27,3 +27,5 @@ chmod 600 ~/.pgpass
 psql -U concordia -h "$POSTGRESQL_HOST" -d postgres -c "select pg_terminate_backend(pid) from pg_stat_activity where datname='concordia';"
 psql -U concordia -h "$POSTGRESQL_HOST" -d postgres -c "drop database concordia;"
 pg_restore --create --clean -U concordia -h "${POSTGRESQL_HOST}" -Fc --dbname=postgres --no-owner --no-acl "${DUMP_FILE}"
+
+aws s3 sync s3://crowd-content s3://crowd-content-${ENV_NAME}
