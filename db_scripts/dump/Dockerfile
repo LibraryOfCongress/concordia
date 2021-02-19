@@ -1,5 +1,4 @@
 FROM git.loc.gov:4567/devops/docker-hub-mirror/amazonlinux:2
-USER concordia
 RUN yum update -y && amazon-linux-extras install -y postgresql9.6 \
     && yum -y install unzip \
     && curl -sL https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip \
@@ -12,5 +11,4 @@ RUN yum update -y && amazon-linux-extras install -y postgresql9.6 \
     /usr/local/aws-cli/v2/*/dist/awscli/data/ac.index \
     /usr/local/aws-cli/v2/*/dist/awscli/examples
 COPY dump.sh .
-
 CMD ["./dump.sh"]
