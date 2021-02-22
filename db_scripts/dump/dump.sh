@@ -17,7 +17,7 @@ fi
 
 TODAY=$(date +%Y%m%d)
 POSTGRESQL_PW="$(aws secretsmanager get-secret-value --region us-east-1 --secret-id crowd/${ENV_NAME}/DB/MasterUserPassword | python -c 'import json,sys;Secret=json.load(sys.stdin);SecretString=json.loads(Secret["SecretString"]);print(SecretString["password"])')"
-POSTGRESQL_HOST="$(aws ssm get-parameter-value --region us-east-1 --name /concordia/${ENV_NAME}/db.url | python -c 'import json,sys;Parameter=json.load(sys.stdin);ParameterString=json.loads(Parameter["Parameter"]);print(ParameterString["Value"])')"
+POSTGRESQL_HOST="$(aws ssm get-parameter --region us-east-1 --name /concordia/${ENV_NAME}/db.url | python -c 'import json,sys;Parameter=json.load(sys.stdin);ParameterString=json.loads(Parameter["Parameter"]);print(ParameterString["Value"])')"
 DUMP_FILE=concordia.dmp
 
 echo "${POSTGRESQL_HOST}:5432:*:concordia:${POSTGRESQL_PW}" > ~/.pgpass
