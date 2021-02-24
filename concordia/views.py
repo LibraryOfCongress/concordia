@@ -302,7 +302,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
     # instances with annotations
 
     allow_empty = True
-    ordering = ("-created_on",)
+    ordering = ("created_on",)
     paginate_by = 12
 
     def post(self, *args, **kwargs):
@@ -314,7 +314,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
             Q(user=self.request.user) | Q(reviewed_by=self.request.user)
         ).distinct("asset")
 
-        assets = Asset.objects.filter(transcription__in=transcriptions)
+        assets = Asset.objects.filter(transcription__in=transcriptions).order_by("-last_transcribed")
         assets = assets.select_related(
             "item", "item__project", "item__project__campaign"
         )
@@ -344,7 +344,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
                 asset.last_interaction_type = "transcribed"
 
             object_list.append(
-                (asset.item.project.campaign, asset.item.project, asset.item, asset)
+                (asset.item, asset)
             )
 
         user = self.request.user
