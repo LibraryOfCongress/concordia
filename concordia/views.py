@@ -314,7 +314,9 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
             Q(user=self.request.user) | Q(reviewed_by=self.request.user)
         ).distinct("asset")
 
-        assets = Asset.objects.filter(transcription__in=transcriptions)
+        assets = Asset.objects.filter(transcription__in=transcriptions).order_by(
+            "-last_transcribed"
+        )
         assets = assets.select_related(
             "item", "item__project", "item__project__campaign"
         )
@@ -343,9 +345,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
                 asset.last_interaction_time = asset.last_transcribed
                 asset.last_interaction_type = "transcribed"
 
-            object_list.append(
-                (asset.item.project.campaign, asset.item.project, asset.item, asset)
-            )
+            object_list.append((asset.item, asset))
 
         user = self.request.user
         ctx["contributed_campaigns"] = (
