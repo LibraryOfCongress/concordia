@@ -14,7 +14,7 @@
     {% flag_enabled 'CAROUSEL_CMS' as CAROUSEL_CMS %}
 
     {% if CAROUSEL_CMS %}
-    <div id="homepage-carousel" class="carousel slide container" style="padding-left: 0; padding-right: 0;" data-ride="carousel" data-pause="hover" {% if slides.0.overlay_position == "right" %} data-overlay-position="top-right" {% endif %}>
+    <div id="homepage-carousel" class="carousel slide container" style="padding-left: 0; padding-right: 0;" data-ride="carousel" data-pause="hover">
         <ol class="carousel-indicators d-none d-lg-flex">
             {% for slide in slides %}
                 <li data-target="#homepage-carousel" data-slide-to="{{ forloop.counter0 }}" {% if forloop.first %}class="active" {% endif %}></li>

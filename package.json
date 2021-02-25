@@ -25,7 +25,7 @@
         "js-cookie": "^2.2.1",
         "node-sass": "^5.0.0",
         "openseadragon": "^2.4.2",
-        "popper.js": "^1.15.0",
+        "popper.js": "^1.16.1",
         "redom": "^3.27.1",
         "remarkable": "^2.0.1",
         "screenfull": "^5.1.0",
