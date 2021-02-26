@@ -20,7 +20,7 @@ POSTGRESQL_PW="$(aws secretsmanager get-secret-value --region us-east-1 --secret
 POSTGRESQL_HOST="$(aws ssm get-parameter --region us-east-1 --name /concordia/${ENV_NAME}/db.url | python -c 'import json,sys;ParameterInput=json.load(sys.stdin);Parameter=ParameterInput["Parameter"];print(Parameter["Value"])')"
 DUMP_FILE=concordia.dmp
 
-echo "${POSTGRESQL_HOST}:54323:*:concordia:${POSTGRESQL_PW}" > ~/.pgpass
+echo "${POSTGRESQL_HOST}:5432:*:concordia:${POSTGRESQL_PW}" > ~/.pgpass
 chmod 600 ~/.pgpass
 
 pg_dump -Fc --clean --create --no-owner --no-acl -U concordia -h "${POSTGRESQL_HOST}" concordia -f "${DUMP_FILE}"
