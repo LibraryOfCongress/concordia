@@ -59,6 +59,8 @@
                     <thead>
                         <tr>
                             <th>Campaign</th>
+                            <th><abbr title="Total number of times you saved, submitted a transcription">Transcribed</abbr></th>
+                            <th><abbr title="Total number of times you reviewed a transcription">Reviewed</abbr></th>
                             <th><abbr title="Total number of times you saved, submitted, or reviewed a transcription">Actions</abbr></th>
                         </tr>
                     </thead>
@@ -68,6 +70,8 @@
                                 <th>
                                     <a href="{{ campaign.get_absolute_url }}">{{ campaign.title }}</a>
                                 </th>
+                                <td class="text-right">{{ campaign.transcribe_count|intcomma }}</td>
+                                <td class="text-right">{{ campaign.review_count|intcomma }}</td>
                                 <td class="text-right">{{ campaign.action_count|intcomma }}</td>
                             </tr>
                         {% endfor %}
