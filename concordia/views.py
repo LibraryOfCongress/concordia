@@ -345,7 +345,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
                 asset.last_interaction_time = asset.last_transcribed
                 asset.last_interaction_type = "transcribed"
 
-            object_list.append((asset.item, asset))
+            object_list.append((asset))
 
         user = self.request.user
         ctx["contributed_campaigns"] = (
