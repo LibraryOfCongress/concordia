@@ -348,7 +348,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
             object_list.append((asset))
 
         user = self.request.user
-        ctx["contributed_campaigns"] = (
+        contributed_campaigns = (
             Campaign.objects.annotate(
                 action_count=Count(
                     "project__item__asset__transcription",
@@ -367,7 +367,12 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
             .exclude(action_count=0)
             .order_by("title")
         )
+        totalCount = 0
+        ctx["contributed_campaigns"] = contributed_campaigns
+        for campaign in contributed_campaigns:
+            totalCount = totalCount + campaign.action_count
 
+        ctx["totalCount"] = totalCount
         return ctx
 
     def get_initial(self):
