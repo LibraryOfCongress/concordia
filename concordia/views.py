@@ -368,11 +368,18 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
             .order_by("title")
         )
         totalCount = 0
+        totalTranscriptions = 0
+        totalReviews = 0
+
         ctx["contributed_campaigns"] = contributed_campaigns
         for campaign in contributed_campaigns:
             totalCount = totalCount + campaign.action_count
+            totalReviews = totalReviews + campaign.review_count
+            totalTranscriptions = totalTranscriptions + campaign.transcribe_count
 
         ctx["totalCount"] = totalCount
+        ctx["totalReviews"] = totalReviews
+        ctx["totalTranscriptions"] = totalTranscriptions
         return ctx
 
     def get_initial(self):
