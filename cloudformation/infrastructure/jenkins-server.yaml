@@ -1,19 +1,12 @@
 Description: This template deploys an Ubuntu jenkins server in the default VPC.
 
-Parameters:
-    KeyPairName:
-        Description: key pair (within this region) for EC2 instance access
-        Type: String
-
 Resources:
     Jenkins:
         Type: AWS::EC2::Instance
         Properties:
-            ImageId: 'ami-07d0cf3af28718ef8'
+            ImageId: 'ami-042e8287309f5df03'
             InstanceType: 't2.large'
             IamInstanceProfile: 'concordia-jenkins-ec2-role'
-            KeyName:
-                Ref: KeyPairName
             BlockDeviceMappings:
                 - DeviceName: /dev/sda1
                   Ebs:
