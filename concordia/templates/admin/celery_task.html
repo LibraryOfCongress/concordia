@@ -64,10 +64,10 @@
                 <td>{{ project.title }}</td>
                 <td>{{ project.succesful }}</td>
                 <td><a
-                        href="/admin/importer/importitemasset/?completed=null&import_item__job__project__campaign__id__exact={{project.campaign.id}}&import_item__job__project__in={{ project.id}}&last_started=not-null">
+                        href="/admin/importer/importitemasset/?completed=null&import_item__job__project__campaign__id__exact={{project.campaign.pk}}&import_item__job__project__in={{ project.id}}&last_started=not-null">
                         {{ project.incomplete }}</a></td>
                 <td><a
-                        href="/admin/importer/importitemasset/?failed=not-null&import_item__job__project__campaign__id__exact={{project.campaign.id}}&import_item__job__project__in={{ project.id}}&last_started=not-null">
+                        href="/admin/importer/importitemasset/?failed=not-null&import_item__job__project__campaign__id__exact={{project.campaign.pk}}&import_item__job__project__in={{ project.id}}&last_started=not-null">
                         {{ project.failure }}</a></td>
             </tr>
             {% endfor %}
