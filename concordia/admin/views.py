@@ -150,6 +150,7 @@ def celery_task_review(request):
             proj_dict = {}
             proj_dict["title"] = project.title
             proj_dict["id"] = project.pk
+            proj_dict["campaign_id"] = id
             messages.info(request, f"{project.title}")
             importjobs = ImportJob.objects.filter(project_id=project.pk).order_by(
                 "-created"
