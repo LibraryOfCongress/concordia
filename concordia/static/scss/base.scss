@@ -8,6 +8,7 @@ $orange: #fc4c02;
 $dark: #000;
 $accent: $orange;
 
+$gray-100: #f6f6f6;
 $gray-200: #efefef;
 $light: $gray-200;
 
@@ -484,32 +485,26 @@ ul.nav-secondary {
  * List-like displays for items and assets
  */
 
-.card-deck .card.concordia-object-card {
-    position: relative;
-    flex-grow: 0;
-    flex-basis: 200px;
+ .concordia-object-card-row {
+     margin: 0 -6px;
+ }
 
-    width: 200px;
-    min-height: 300px;
+ .concordia-object-card-col {
+     padding: 6px;
+     @include media-breakpoint-up(xl) {
+         flex: 0 0 20%;
+         max-width: 20%;
+     }
+ }
 
-    margin: 0.25rem;
+ .concordia-object-card {
+     background-color: $gray-100;
+     overflow: hidden;
+ }
 
-    justify-content: start;
-    align-items: center;
-
-    background-color: var(--bg-lightest-gray);
-}
-
-.card-deck .card.concordia-object-card > * {
-    /* This is only necessary for IE11 */
-    max-width: 100%;
-}
-
-@media screen and (max-width: 576px) {
-    .card-deck .card.concordia-object-card {
-        flex-basis: auto;
-    }
-}
+ .concordia-object-card-title {
+     padding: 12px 10px;
+ }
 
 .concordia-object-card .card-title,
 .concordia-object-card .card-actions {
@@ -518,8 +513,16 @@ ul.nav-secondary {
     right: 0;
 }
 
-.concordia-object-card[data-transcription-status='completed']:not(:hover) {
+.concordia-object-card[data-transcription-status='completed']:not(:hover) .card-img {
     opacity: 0.5;
+}
+
+.concordia-object-card .card-img {
+	transition: .3s ease-in-out;
+}
+.concordia-object-card:hover .card-img,
+.concordia-object-card:focus .card-img {
+	transform: scale(1.05);
 }
 
 .concordia-object-card .card-title {
@@ -533,6 +536,12 @@ ul.nav-secondary {
 
 .concordia-object-card .card-actions {
     top: 0;
+}
+
+.concordia-object-card .card-actions .btn,
+.concordia-object-card .card-img {
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
 }
 
 .concordia-object-card .card-actions .btn-default:not(:hover) {
@@ -550,6 +559,8 @@ ul.nav-secondary {
 .card.concordia-object-card .progress {
     height: 1em;
     border-radius: 0;
+    position: relative;
+    z-index: 2;
 }
 
 /*

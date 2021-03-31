@@ -31,40 +31,41 @@
             </div>
             <div class="col-md-2 align-bottom">
                 <div>
-                    <a href="{{ item.item_url }}" class="btn btn-default" title="View the original source for this item in a new tab" target="_blank">View this item on www.loc.gov<i class="fa fa-external-link-alt"></i></a>
+                    <a href="{{ item.item_url }}" class="btn btn-light" title="View the original source for this item in a new tab" target="_blank">View this item on www.loc.gov<i class="fa fa-external-link-alt"></i></a>
                 </div>
             </div>
         </div>
         {% include "fragments/transcription-progress-row.html" %}
-        <div class="card-deck justify-content-center align-items-center align-items-sm-stretch">
+        <div class="row concordia-object-card-row">
             {% for a in assets %}
                 {% url 'transcriptions:asset-detail' a.item.project.campaign.slug a.item.project.slug a.item.item_id a.slug as asset_detail_url %}
-
-                <div class="card concordia-object-card" data-transcription-status="{{ a.transcription_status }}">
-                    <a class="card-img-container" href="{{ asset_detail_url }}">
-                        <img class="card-img" alt="{{ a.slug }}" src="{% asset_media_url a %}" />
-                    </a>
-                    <a class="card-title" href="{{ asset_detail_url }}">
-                        #{{ a.sequence }}
-                    </a>
-                    <div class="card-actions">
-                        <a class="btn btn-sm btn-block btn-default" href="{{ asset_detail_url }}">
-                            {% if a.transcription_status == 'submitted' %}
-                                <span class="fas fa-list tx-submitted"></span>
-                                Review
-                            {% elif a.transcription_status == 'completed' %}
-                                <span class="fas fa-check tx-completed"></span>
-                                Complete
-                            {% else %}
-                                <span class="fas fa-edit tx-edit"></span>
-                                Transcribe
-                            {% endif %}
+                <div class="col-6 col-md-4 col-lg-3 concordia-object-card-col">
+                    <div class="h-100 card concordia-object-card border" data-transcription-status="{{ a.transcription_status }}">
+                        <a class="card-img-container" href="{{ asset_detail_url }}">
+                            <img class="card-img" alt="{{ a.slug }}" src="{% asset_media_url a %}" />
                         </a>
+                        <a class="card-title text-center" href="{{ asset_detail_url }}">
+                            #{{ a.sequence }}
+                        </a>
+                        <div class="card-actions">
+                            <a class="btn btn-sm btn-block {% if a.transcription_status != 'completed' %}btn-primary{% else %}btn-default{% endif %}" href="{{ asset_detail_url }}">
+                                {% if a.transcription_status == 'submitted' %}
+                                    <span class="fas fa-list tx-submitted"></span>
+                                    Review
+                                {% elif a.transcription_status == 'completed' %}
+                                    <span class="fas fa-check tx-completed"></span>
+                                    Complete
+                                {% else %}
+                                    <span class="fas fa-edit tx-edit"></span>
+                                    Transcribe
+                                {% endif %}
+                            </a>
+                        </div>
                     </div>
                 </div>
             {% endfor %}
         </div>
-        <div class="row">
+        <div class="row mt-4">
             {% include "fragments/standard-pagination.html" %}
         </div>
     </div>

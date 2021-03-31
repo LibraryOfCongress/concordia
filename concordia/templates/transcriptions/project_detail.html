@@ -29,30 +29,39 @@
             </div>
         </div>
         {% include "fragments/transcription-progress-row.html" %}
-        <div class="row">
-            <div class="card-deck w-100 flex-column flex-sm-row justify-content-center align-items-center align-items-sm-stretch">
-                {% for item in items %}
-                    <div class="col-12 col-md-4 col-lg-3 m-2 p-1 concordia-object-card card bg-lightest-gray shadow-regular align-items-center" data-transcription-status="{{ item.lowest_transcription_status }}">
+        <div class="row concordia-object-card-row">
+            {% for item in items %}
+                <div class="col-6 col-md-4 col-lg-3 concordia-object-card-col">
+                    <div class="h-100 concordia-object-card card border" data-transcription-status="{{ item.lowest_transcription_status }}">
                         <a href="{% url 'transcriptions:item-detail' campaign.slug project.slug item.item_id %}?{{ sublevel_querystring }}">
                             <img class="card-img card-img-campaign" alt="{{ item.title }}" src="{{ item.thumbnail_url }}" />
                         </a>
 
-                        <div class="progress w-100 my-2">
+                        <div class="progress w-100">
                             <div title="Completed" class="progress-bar bg-completed" role="progressbar" style="width: {{ item.completed_percent }}%" aria-valuenow="{{ item.completed_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
                             <div title="Needs Review" class="progress-bar bg-submitted" role="progressbar" style="width: {{ item.submitted_percent }}%" aria-valuenow="{{ item.submitted_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
                             <div title="In Progress" class="progress-bar bg-in_progress" role="progressbar" style="width: {{ item.in_progress_percent }}%" aria-valuenow="{{ item.in_progress_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
                         </div>
 
-                        <h6 class="text-center primary-text">
+                        <h6 class="text-center primary-text m-0 concordia-object-card-title">
                             <a href="{% url 'transcriptions:item-detail' campaign.slug project.slug item.item_id %}?{{ sublevel_querystring }}" class="campaign-image-link">
                                 {{ item.title }}
                             </a>
                         </h6>
+
+                        {% if item.lowest_transcription_status == 'completed' %}
+                        <div class="card-actions">
+                            <a class="btn btn-sm btn-block btn-default" href="{% url 'transcriptions:item-detail' campaign.slug project.slug item.item_id %}?{{ sublevel_querystring }}">
+                                <span class="fas fa-check tx-completed"></span>
+                                Complete
+                            </a>
+                        </div>
+                        {% endif %}
                     </div>
-                {% endfor %}
-            </div>
+                </div>
+            {% endfor %}
         </div>
-        <div class="row">
+        <div class="row mt-4">
             {% include "fragments/standard-pagination.html" %}
         </div>
     </div>
