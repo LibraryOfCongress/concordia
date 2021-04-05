@@ -337,7 +337,14 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         obj_list = ctx.pop("object_list")
         ctx["object_list"] = object_list = []
 
+        q = self.request.GET.get("campaign_slug", None)
+        if q:
+            campaign_slug = q
+        else:
+            campaign_slug = -1
+
         for asset in obj_list:
+
             if asset.last_reviewed:
                 asset.last_interaction_time = asset.last_reviewed
                 asset.last_interaction_type = "reviewed"
@@ -345,9 +352,14 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
                 asset.last_interaction_time = asset.last_transcribed
                 asset.last_interaction_type = "transcribed"
 
-            object_list.append((asset))
+            if int(campaign_slug) == -1:
+                object_list.append((asset))
+            else:
+                if asset.item.project.campaign.id == int(campaign_slug):
+                    object_list.append((asset))
 
         user = self.request.user
+
         contributed_campaigns = (
             Campaign.objects.annotate(
                 action_count=Count(
@@ -372,6 +384,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         totalReviews = 0
 
         ctx["contributed_campaigns"] = contributed_campaigns
+
         for campaign in contributed_campaigns:
             totalCount = totalCount + campaign.action_count
             totalReviews = totalReviews + campaign.review_count

@@ -69,7 +69,7 @@
                             <tr>
                                 <td></td>
                                 <td>
-                                    <a href="{{ campaign.get_absolute_url }}">{{ campaign.title }}</a>
+                                    <a href="?campaign_slug={{ campaign.pk }}">{{ campaign.title }}</a>
                                 </td>
                                 <td>{{ campaign.transcribe_count|intcomma }}</td>
                                 <td>{{ campaign.review_count|intcomma }}</td>
