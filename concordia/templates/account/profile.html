@@ -69,7 +69,7 @@
                             <tr>
                                 <td></td>
                                 <td>
-                                    <a href="{{ campaign.get_absolute_url }}">{{ campaign.title }}</a>
+                                    <a href="?campaign_slug={{ campaign.pk }}">{{ campaign.title }}</a>
                                 </td>
                                 <td>{{ campaign.transcribe_count|intcomma }}</td>
                                 <td>{{ campaign.review_count|intcomma }}</td>
@@ -78,7 +78,7 @@
                         {% endfor %}
                         <tr>
                             <td></td>
-                            <td><b>All Campaigns</b></td>
+                            <td><b>  <a href="">All Campaigns</a></b></td>
                             <td><b>{{ totalTranscriptions|intcomma }}</b></td>
                             <td><b>{{ totalReviews|intcomma }}</b></td>
                             <td><b>{{ totalCount|intcomma }}</b></td>
