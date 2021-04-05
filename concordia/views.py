@@ -359,7 +359,6 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
                 if asset.item.project.campaign.id == int(campaignSlug):
                     object_list.append((asset))
 
-        obj_list = ctx["object_list"]
         user = self.request.user
 
         contributed_campaigns = (
