@@ -314,9 +314,16 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
             Q(user=self.request.user) | Q(reviewed_by=self.request.user)
         ).distinct("asset")
 
-        assets = Asset.objects.filter(transcription__in=transcriptions).order_by(
-            "-last_transcribed"
-        )
+        qId = self.request.GET.get("campaign_slug", None)
+
+        if qId:
+            campaignSlug = qId
+        else:
+            campaignSlug = -1
+
+        assets = Asset.objects.filter(
+            transcription__in=transcriptions, item__project__campaign__pk=campaignSlug
+        ).order_by("-last_transcribed")
         assets = assets.select_related(
             "item", "item__project", "item__project__campaign"
         )
@@ -359,7 +366,6 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
                 if asset.item.project.campaign.id == int(campaignSlug):
                     object_list.append((asset))
 
-        obj_list = ctx["object_list"]
         user = self.request.user
 
         contributed_campaigns = (
