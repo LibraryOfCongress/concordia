@@ -338,6 +338,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         ctx["object_list"] = object_list = []
 
         q = self.request.GET.get("campaign_slug", None)
+
         if q:
             campaign_slug = q
         else:
