@@ -337,10 +337,10 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         obj_list = ctx.pop("object_list")
         ctx["object_list"] = object_list = []
 
-        campaignSlug = self.request.GET.get("campaign_slug", None)
+        qId = self.request.GET.get("campaign_slug", None)
 
-        if q:
-            campaignSlug = q
+        if qId:
+            campaignSlug = qId
         else:
             campaignSlug = -1
 
