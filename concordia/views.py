@@ -337,12 +337,12 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         obj_list = ctx.pop("object_list")
         ctx["object_list"] = object_list = []
 
-        q = self.request.GET.get("campaign_slug", None)
+        campaignSlug = self.request.GET.get("campaign_slug", None)
 
         if q:
-            campaign_slug = q
+            campaignSlug = q
         else:
-            campaign_slug = -1
+            campaignSlug = -1
 
         for asset in obj_list:
 
@@ -353,10 +353,10 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
                 asset.last_interaction_time = asset.last_transcribed
                 asset.last_interaction_type = "transcribed"
 
-            if int(campaign_slug) == -1:
+            if int(campaignSlug) == -1:
                 object_list.append((asset))
             else:
-                if asset.item.project.campaign.id == int(campaign_slug):
+                if asset.item.project.campaign.id == int(campaignSlug):
                     object_list.append((asset))
 
         user = self.request.user
