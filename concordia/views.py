@@ -318,12 +318,16 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
 
         if qId:
             campaignSlug = qId
+            assets = Asset.objects.filter(
+                transcription__in=transcriptions,
+                item__project__campaign__pk=campaignSlug,
+            ).order_by("-last_transcribed")
         else:
             campaignSlug = -1
+            assets = Asset.objects.filter(transcription__in=transcriptions).order_by(
+                "-last_transcribed"
+            )
 
-        assets = Asset.objects.filter(
-            transcription__in=transcriptions, item__project__campaign__pk=campaignSlug
-        ).order_by("-last_transcribed")
         assets = assets.select_related(
             "item", "item__project", "item__project__campaign"
         )
