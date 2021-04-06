@@ -78,7 +78,7 @@
                         {% endfor %}
                         <tr>
                             <td></td>
-                            <td><b>  <a href="">All Campaigns</a></b></td>
+                            <td><b>  <a href="/account/profile">All Campaigns</a></b></td>
                             <td><b>{{ totalTranscriptions|intcomma }}</b></td>
                             <td><b>{{ totalReviews|intcomma }}</b></td>
                             <td><b>{{ totalCount|intcomma }}</b></td>
@@ -99,7 +99,7 @@
 
                     <tbody>
                         {% for asset in object_list %}
-                        
+
 
                             <tr class={{asset.item.project.campaign.id}}>
                                 <td><abbr title="{{ asset.last_interaction_time|date:'SHORT_DATE_FORMAT' }}">{{ asset.last_interaction_time }}</abbr></td>
