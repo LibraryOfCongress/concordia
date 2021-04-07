@@ -5,8 +5,9 @@
 /* colors */
 $blue: #0076ad;
 $orange: #fc4c02;
-$dark: #000;
+$dark: #242424;
 $accent: $orange;
+$secondary: #545454;
 
 $gray-100: #f6f6f6;
 $gray-200: #efefef;
@@ -94,6 +95,12 @@ $hr-border-color: $gray-500;
 
 @import '../../../node_modules/bootstrap/scss/bootstrap';
 
+/* progress */
+$bg-completed: $dark;
+$bg-submitted: $blue;
+$bg-in-progress: lighten($blue, 30%);
+$bg-not-started: #fff;
+
 /* revisit and cleanup css variables below */
 :root {
     --primary-color: #f05129;
@@ -117,10 +124,6 @@ $hr-border-color: $gray-500;
     --bg-divider: rgba(189, 189, 189, 1); /* #BDBDBD */
     --bg-card-title: rgba(51, 51, 51, 0.7); /* #333333 */
     --bg-loading: rgba(51, 51, 51, 0.5); /* #333333 */
-    --bg-completed: #00618e;
-    --bg-submitted: #2e91bf;
-    --bg-in_progress: #80cef3;
-    --bg-not_started: #e9ecef;
 
     --shadow-color: rgba(51, 51, 51, 0.8); /* #333333 */
     --light-shadow-color: rgba(51, 51, 51, 0.4); /* #333333 */
@@ -265,19 +268,20 @@ p.hero-secondary.offwhite-text {
 }
 
 .bg-completed {
-    background-color: var(--bg-completed);
+    background-color: $bg-completed;
 }
 
 .bg-submitted {
-    background-color: var(--bg-submitted);
+    background-color: $bg-submitted;
 }
 
 .bg-in_progress {
-    background-color: var(--bg-in_progress);
+    background-color: $bg-in-progress;
 }
 
 .bg-not_started {
-    background-color: var(--bg-not_started);
+    background-color: $bg-not-started;
+    border: 1px solid $blue;
 }
 
 input {
@@ -420,6 +424,10 @@ ul.nav-secondary {
 
 /* Cards */
 
+$card-img-height: 14.8rem;
+$card-btn-height: 31px;
+$card-progress-height: 12px;
+
 .card-body {
     padding: 1rem 0.5rem;
 }
@@ -427,7 +435,7 @@ ul.nav-secondary {
 .card-img-campaign {
     object-position: center top;
     object-fit: cover;
-    height: 13.25rem;
+    height: $card-img-height;
 }
 
 .card-img-overlay {
@@ -500,6 +508,9 @@ ul.nav-secondary {
  .concordia-object-card {
      background-color: $gray-100;
      overflow: hidden;
+     .view-transcriptions--item-detail & {
+         padding-top: 31px;
+     }
  }
 
  .concordia-object-card-title {
@@ -514,7 +525,7 @@ ul.nav-secondary {
 }
 
 .concordia-object-card[data-transcription-status='completed']:not(:hover) .card-img {
-    opacity: 0.5;
+    opacity: 0.4;
 }
 
 .concordia-object-card .card-img {
@@ -535,10 +546,21 @@ ul.nav-secondary {
 }
 
 .concordia-object-card .card-actions {
-    top: 0;
+    top: calc(#{$card-img-height} - #{$card-btn-height - $card-progress-height});
+    z-index: 3;
+    .view-transcriptions--item-detail & {
+        top: 0;
+    }
 }
 
-.concordia-object-card .card-actions .btn,
+.concordia-object-card .card-actions .btn {
+    height: $card-btn-height;
+    border-radius: 0;
+    .view-transcriptions--item-detail & {
+        border-radius: 0.2rem 0.2rem 0 0;
+    }
+}
+
 .concordia-object-card .card-img {
     border-bottom-right-radius: 0;
     border-bottom-left-radius: 0;
@@ -557,10 +579,21 @@ ul.nav-secondary {
 }
 
 .card.concordia-object-card .progress {
-    height: 1em;
+    height: $card-progress-height;
     border-radius: 0;
     position: relative;
     z-index: 2;
+}
+
+.progress {
+    background-color: #f6f6f6;
+    background-color: #E5F7FF;
+    &::after {
+        content: "";
+        background-color: #fff;
+        box-shadow: inset 0 0 1px 1px $blue;
+        flex: 1 1 0%;
+    }
 }
 
 /*
@@ -568,7 +601,8 @@ ul.nav-secondary {
  */
 
 #progress-bar {
-    height: 2rem;
+    height: 1rem;
+    border-radius: 0;
 }
 
 #progress-stats {
