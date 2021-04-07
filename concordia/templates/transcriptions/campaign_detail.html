@@ -42,7 +42,7 @@
         </div>
     </div>
     {% include "fragments/transcription-progress-row.html" %}
-    <div class="row concordia-object-card-row">
+    <div class="row justify-content-center concordia-object-card-row">
         {% for project in projects %}
             <div class="col-6 col-md-4 col-lg-3 concordia-object-card-col">
                 <div class="h-100 concordia-object-card card border" data-transcription-status="{{ project.lowest_transcription_status }}">
@@ -59,12 +59,12 @@
                     </div>
 
                     <h6 class="text-center primary-text m-0 concordia-object-card-title">
-                        <a href="{{ project_url }}?{{ sublevel_querystring }}">{{ project.title }}</a>
+                        <a{% if project.lowest_transcription_status == 'completed' %} class="text-dark"{% endif %} href="{{ project_url }}?{{ sublevel_querystring }}">{{ project.title }}</a>
                     </h6>
 
                     {% if project.lowest_transcription_status == 'completed' %}
                     <div class="card-actions">
-                        <a class="btn btn-sm btn-block btn-default" href="{{ project_url }}?{{ sublevel_querystring }}">
+                        <a class="btn btn-sm btn-block btn-dark" href="{{ project_url }}?{{ sublevel_querystring }}">
                             <span class="fas fa-check tx-completed"></span>
                             Complete
                         </a>
