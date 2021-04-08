@@ -376,8 +376,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
             Campaign.objects.annotate(
                 action_count=Count(
                     "project__item__asset__transcription",
-                    filter=Q(project__item__asset__transcription__user=user)
-                    | Q(project__item__asset__transcription__reviewed_by=user),
+                    filter=Q(project__item__asset__transcription__user=user),
                 ),
                 transcribe_count=Count(
                     "project__item__asset__transcription",
@@ -398,7 +397,8 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         ctx["contributed_campaigns"] = contributed_campaigns
 
         for campaign in contributed_campaigns:
-            totalCount = totalCount + campaign.action_count
+            campaign.action_count = campaign.action_count + campaign.review_count
+            totalCount = totalCount + campaign.review_count + campaign.transcribe_count
             totalReviews = totalReviews + campaign.review_count
             totalTranscriptions = totalTranscriptions + campaign.transcribe_count
 
