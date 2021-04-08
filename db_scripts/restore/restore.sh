@@ -2,8 +2,7 @@
 
 set -eu -o pipefail
 
-# aws cloudformation create-stack --region us-east-1 --stack-name $ENV_NAME-bastionhosts --template-url https://s3.amazonaws.com/crowd-deployment/infrastructure/bastion-hosts.yaml --parameters ParameterKey=EnvironmentName,ParameterValue=$ENV_NAME ParameterKey=KeyPairName,ParameterValue=rstorey@loc.gov --disable-rollback
-# aws cloudformation delete-stack --region us-east-1 --stack-name $ENV_NAME-bastionhosts
+export PATH=$HOME/.local/bin:$PATH
 
 if [[ -z "${ENV_NAME}" ]]; then
     echo "ENV_NAME must be set prior to running this script."
@@ -24,7 +23,7 @@ aws s3 cp s3://crowd-deployment/database-dumps/concordia.latest.dmp ${DUMP_FILE}
 echo "${POSTGRESQL_HOST}:5432:*:concordia:${POSTGRESQL_PW}" > ~/.pgpass
 chmod 600 ~/.pgpass
 
-aws s3 sync s3://crowd-content s3://crowd-content-${ENV_NAME}
+aws s3 sync s3://crowd-content s3://crowd-${ENV_NAME}-content
 
 psql -U concordia -h "$POSTGRESQL_HOST" -d postgres -c "select pg_terminate_backend(pid) from pg_stat_activity where datname='concordia';"
 psql -U concordia -h "$POSTGRESQL_HOST" -d postgres -c "drop database concordia;"
