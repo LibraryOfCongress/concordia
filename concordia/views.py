@@ -371,6 +371,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
                     object_list.append((asset))
 
         user = self.request.user
+        object_list.sort(key=lambda x: x.last_interaction_time, reverse=True)
 
         contributed_campaigns = (
             Campaign.objects.annotate(
