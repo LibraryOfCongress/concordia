@@ -308,26 +308,14 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
     def post(self, *args, **kwargs):
         self.object_list = self.get_queryset()
         return super().post(*args, **kwargs)
-
+       
     def get_queryset(self):
         transcriptions = Transcription.objects.filter(
             Q(user=self.request.user) | Q(reviewed_by=self.request.user)
         ).distinct("asset")
-
-        qId = self.request.GET.get("campaign_slug", None)
-
-        if qId:
-            campaignSlug = qId
-            assets = Asset.objects.filter(
-                transcription__in=transcriptions,
-                item__project__campaign__pk=campaignSlug,
-            ).order_by("-last_transcribed")
-        else:
-            campaignSlug = -1
-            assets = Asset.objects.filter(transcription__in=transcriptions).order_by(
-                "-last_transcribed"
-            )
-
+        assets = Asset.objects.filter(transcription__in=transcriptions).order_by(
+            "-last_transcribed"
+        )
         assets = assets.select_related(
             "item", "item__project", "item__project__campaign"
         )
@@ -347,37 +335,24 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         ctx = super().get_context_data(*args, **kwargs)
         obj_list = ctx.pop("object_list")
         ctx["object_list"] = object_list = []
-
-        qId = self.request.GET.get("campaign_slug", None)
-
-        if qId:
-            campaignSlug = qId
-        else:
-            campaignSlug = -1
-
         for asset in obj_list:
-
             if asset.last_reviewed:
                 asset.last_interaction_time = asset.last_reviewed
                 asset.last_interaction_type = "reviewed"
             else:
                 asset.last_interaction_time = asset.last_transcribed
                 asset.last_interaction_type = "transcribed"
-
-            if int(campaignSlug) == -1:
-                object_list.append((asset))
-            else:
-                if asset.item.project.campaign.id == int(campaignSlug):
-                    object_list.append((asset))
+            object_list.append(
+                (asset.item.project.campaign, asset.item.project, asset.item, asset)
+            )
 
         user = self.request.user
-        object_list.sort(key=lambda x: x.last_interaction_time, reverse=True)
-
-        contributed_campaigns = (
+        ctx["contributed_campaigns"] = (
             Campaign.objects.annotate(
                 action_count=Count(
                     "project__item__asset__transcription",
-                    filter=Q(project__item__asset__transcription__user=user),
+                    filter=Q(project__item__asset__transcription__user=user)
+                    | Q(project__item__asset__transcription__reviewed_by=user),
                 ),
                 transcribe_count=Count(
                     "project__item__asset__transcription",
@@ -391,23 +366,8 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
             .exclude(action_count=0)
             .order_by("title")
         )
-        totalCount = 0
-        totalTranscriptions = 0
-        totalReviews = 0
 
-        ctx["contributed_campaigns"] = contributed_campaigns
-
-        for campaign in contributed_campaigns:
-            campaign.action_count = campaign.action_count + campaign.review_count
-            totalCount = totalCount + campaign.review_count + campaign.transcribe_count
-            totalReviews = totalReviews + campaign.review_count
-            totalTranscriptions = totalTranscriptions + campaign.transcribe_count
-
-        ctx["totalCount"] = totalCount
-        ctx["totalReviews"] = totalReviews
-        ctx["totalTranscriptions"] = totalTranscriptions
         return ctx
-
     def get_initial(self):
         initial = super().get_initial()
         initial["email"] = self.request.user.email
