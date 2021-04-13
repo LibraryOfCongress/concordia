@@ -1,11 +1,8 @@
 {% extends "base.html" %}
-
 {% load staticfiles %}
 {% load humanize %}
 {% load bootstrap4 %}
-
 {% block title %}User Profile{% endblock title %}
-
 {% block main_content %}
 <div class="container bg-main">
     <div class="row justify-content-center">
@@ -13,9 +10,7 @@
             <h2>Account Information</h2>
             <form class="form col-md-8" action="{% url 'user-profile' %}" method="POST" enctype="multipart/form-data">
                 {% csrf_token %}
-
                 {% comment %} We want to list the username but it's not an editable field {% endcomment %}
-
                 <div class="form-group ">
                     <label><b>Username</b></label>
                     <input type="text" readonly class="form-control-plaintext" value="{{ user.username }}">
@@ -23,9 +18,7 @@
                         Member since {{ user.date_joined|date:"SHORT_DATE_FORMAT" }}
                     </small>
                 </div>
-
                 {% bootstrap_form form %}
-
                 {% buttons %}
                     <button type="submit" class="btn btn-primary">
                         Save
@@ -49,44 +42,28 @@
             <hr>
         </div>
     </div>
-
     {% if object_list %}
         <div class="row justify-content-center">
             <div class="col-12 col-md-10">
                 <h2>My Contributions</h2>
-                <div>Click on a campaign title to see only those actions. Click "All Campaigns" to view all.</div>
-                <table id="tblTranscription" class="table table-striped table-sm table-responsive-sm">
+                <table class="table table-striped table-sm table-responsive-sm">
                     <thead>
                         <tr>
-                            <th></th>
                             <th>Campaign</th>
-                            <th><abbr title="Total number of times you saved, submitted a transcription">Transcribed</abbr></th>
-                            <th><abbr title="Total number of times you reviewed a transcription">Reviewed</abbr></th>
-                            <th><abbr title="Total number of times you saved, submitted, or reviewed a transcription">Total Actions</abbr></th>
+                            <th><abbr title="Total number of times you saved, submitted, or reviewed a transcription">Actions</abbr></th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for campaign in contributed_campaigns %}
                             <tr>
-                                <td></td>
-                                <td>
-                                    <a class="campaign" id={{campaign.id}} href="?campaign_slug={{ campaign.pk }}">{{ campaign.title }}</a>
-                                </td>
-                                <td>{{ campaign.transcribe_count|intcomma }}</td>
-                                <td>{{ campaign.review_count|intcomma }}</td>
-                                <td>{{ campaign.action_count|intcomma }}</td>
+                                <th>
+                                    <a href="{{ campaign.get_absolute_url }}">{{ campaign.title }}</a>
+                                </th>
+                                <td class="text-right">{{ campaign.action_count|intcomma }}</td>
                             </tr>
                         {% endfor %}
-                        <tr>
-                            <td></td>
-                            <td class="campaign" id="-1"><b>  <a style="color:#000000;" href="/account/profile">All Campaigns</a></b></td>
-                            <td><b>{{ totalTranscriptions|intcomma }}</b></td>
-                            <td><b>{{ totalReviews|intcomma }}</b></td>
-                            <td><b>{{ totalCount|intcomma }}</b></td>
-                        </tr>
                     </tbody>
                 </table>
-             
                 <table class="table table-striped table-responsive-sm">
                     <thead>
                         <tr class="text-center">
@@ -99,28 +76,31 @@
                     </thead>
 
                     <tbody>
-                        {% for asset in object_list %}
+                        {% for campaign, project, item, asset in object_list %}
+                            {% ifchanged campaign.title project.title %}
+                                <tr>
+                                    <th colspan="5">
+                                        <h3>
+                                            <a href="{{ campaign.get_absolute_url }}">{{ campaign.title }}</a>:
+                                            <a href="{{ project.get_absolute_url }}">{{ project.title }}</a>
+                                        </h3>
+                                    </th>
+                                </tr>
+                            {% endifchanged %}
 
-
-                            <tr class={{asset.item.project.campaign.id}}>
+                            <tr>
                                 <td><abbr title="{{ asset.last_interaction_time|date:'SHORT_DATE_FORMAT' }}">{{ asset.last_interaction_time }}</abbr></td>
                                 <td>{{ asset.last_interaction_type.title }}</td>
-                                <td><a href="{{ asset.item.get_absolute_url }}">{{ asset.item.title }}</a></td>
+                                <td><a href="{{ item.get_absolute_url }}">{{ item.title }}</a></td>
                                 <td class="text-right"><a href="{{ asset.get_absolute_url }}">{{ asset.sequence }}</a></td>
                                 <td>{{ asset.get_transcription_status_display }}</td>
                             </tr>
                         {% endfor %}
                     </tbody>
                 </table>
-
                 <div>{% include "fragments/standard-pagination.html" %}</div>
             </div>
         </div>
     {% endif %}
 </div>
 {% endblock main_content %}
-
-{% block body_scripts %}
-    {{ block.super }}
-    <script src="{% static 'js/campaign-selection.js' %}"></script>
-{% endblock body_scripts %}
