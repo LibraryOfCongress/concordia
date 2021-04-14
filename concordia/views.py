@@ -7,7 +7,6 @@ from operator import attrgetter
 from smtplib import SMTPException
 from time import time
 from urllib.parse import urlencode
-
 import markdown
 from captcha.fields import CaptchaField
 from captcha.helpers import captcha_image_url
