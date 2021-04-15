@@ -65,9 +65,9 @@
                         <li id="topnav-help-dropdown" class="nav-item dropdown nav-dropdown">
                             <a id="topnav-help-dropdown-toggle" class="nav-link dropdown-toggle {% if PATH_LEVEL_1 == 'help-center'%}active{% endif %}" href="{% url 'help-center' %}" rel="nofollow" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">How-To</a>
                             <div class="dropdown-menu" aria-labelledby="topnav-help-dropdown-toggle">
+                                <a class="dropdown-item" href="{% url 'welcome-guide' %}" rel="nofollow">Get Started</a>
                                 <a class="dropdown-item" href="{% url 'how-to-transcribe' %}" rel="nofollow">Transcribe</a>
                                 <a class="dropdown-item" href="{% url 'how-to-review' %}" rel="nofollow">Review</a>
-                                <a class="dropdown-item" href="{% url 'welcome-guide' %}" rel="nofollow">Get Started</a>
                                 <a class="dropdown-item" href="{% url 'how-to-tag' %}" rel="nofollow">Tag</a>
                             </div>
                         </li>
