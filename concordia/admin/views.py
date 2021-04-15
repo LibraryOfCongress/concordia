@@ -131,6 +131,8 @@ def celery_task_review(request):
     counter = 0
     asset_succesful = 0
     asset_incomplete = 0
+    asset_unstarted_incomplete = 0
+    asset_unstarted_failure = 0
     asset_failure = 0
     context = {"title": "Active Importer Tasks"}
     celery = Celery("concordia")
@@ -147,6 +149,8 @@ def celery_task_review(request):
             asset_succesful = 0
             asset_failure = 0
             asset_incomplete = 0
+            asset_unstarted_incomplete = 0
+            asset_unstarted_failure = 0
             proj_dict = {}
             proj_dict["title"] = project.title
             proj_dict["id"] = project.pk
@@ -164,7 +168,7 @@ def celery_task_review(request):
                     assettasks = ImportItemAsset.objects.filter(import_item_id=asset.pk)
                     countasset = 0
                     for assettask in assettasks:
-                        if assettask.failed != None:
+                        if assettask.failed != None and assettask.last_started != None:
                             asset_failure = asset_failure + 1
                             messages.warning(
                                 request,
@@ -179,6 +183,23 @@ def celery_task_review(request):
                                 request,
                                 f"{assettask.url}-{assettask.status}",
                             )
+                        elif (
+                            assettask.completed == None
+                            and assettask.last_started == None
+                        ):
+                            asset_unstarted_incomplete = asset_unstarted_incomplete + 1
+                            messages.warning(
+                                request,
+                                f"{assettask.url}-{assettask.status}",
+                            )
+                        elif (
+                            assettask.failed != None and assettask.last_started == None
+                        ):
+                            asset_unstarted_failure = asset_unstarted_failure + 1
+                            messages.warning(
+                                request,
+                                f"{assettask.url}-{assettask.status}",
+                            )
                         else:
                             asset_succesful = asset_succesful + 1
                             messages.info(
@@ -189,6 +210,8 @@ def celery_task_review(request):
                         totalcount = totalcount + 1
             proj_dict["succesful"] = asset_succesful
             proj_dict["incomplete"] = asset_incomplete
+            proj_dict["unstarted_incomplete"] = asset_unstarted_incomplete
+            proj_dict["unstarted_failure"] = asset_unstarted_failure
             proj_dict["failure"] = asset_failure
             all_projects.append(proj_dict)
         messages.info(request, f"{totalcount} Total Assets Processed")
