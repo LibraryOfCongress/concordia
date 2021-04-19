@@ -300,7 +300,6 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
     # along with their most recent action on each asset. This will be
     # presented in the template as a standard paginated list of Asset
     # instances with annotations
-
     allow_empty = True
     ordering = ("-created_on",)
     paginate_by = 12
