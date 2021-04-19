@@ -341,7 +341,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
                 filter=Q(transcription__reviewed_by=self.request.user),
             ),
         )
-        #return assets
+        # return assets
         return transcriptions
 
     def get_context_data(self, *args, **kwargs):
