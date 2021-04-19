@@ -299,7 +299,6 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
     # along with their most recent action on each asset. This will be
     # presented in the template as a standard paginated list of Asset
     # instances with annotations
-
     allow_empty = True
     ordering = ("-created_on",)
     paginate_by = 12
@@ -340,8 +339,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
                 filter=Q(transcription__reviewed_by=self.request.user),
             ),
         )
-        # return assets
-        return transcriptions
+        return assets
 
     def get_context_data(self, *args, **kwargs):
         ctx = super().get_context_data(*args, **kwargs)
@@ -398,7 +396,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         ctx["contributed_campaigns"] = contributed_campaigns
 
         for campaign in contributed_campaigns:
-            campaign.action_count = campaign.action_count + campaign.review_count
+            campaign.action_count = campaign.transcribe_count + campaign.review_count
             totalCount = totalCount + campaign.review_count + campaign.transcribe_count
             totalReviews = totalReviews + campaign.review_count
             totalTranscriptions = totalTranscriptions + campaign.transcribe_count
