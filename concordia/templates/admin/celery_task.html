@@ -56,8 +56,7 @@
                     <th>Succesful</th>
                     <th>Started-Incomplete</th>
                     <th>Started-Failed</th>
-                    <th>Unstarted-Incomplete</th>
-                    <th>Unstarted-Failed</th>
+                    <th>Unstarted</th>
                     <th></th>
                 </tr>
             </thead>
@@ -72,11 +71,8 @@
                         href="/admin/importer/importitemasset/?failed=not-null&import_item__job__project__campaign__id__exact={{project.campaign_id}}&import_item__job__project__in={{ project.id}}&last_started=not-null">
                         {{ project.failure }}</a></td>
                 <td><a
-                        href="/admin/importer/importitemasset/?completed=null&import_item__job__project__campaign__id__exact={{project.campaign_id}}&import_item__job__project__in={{ project.id}}&last_started=null">
-                            {{ project.unstarted_incomplete }}</a></td>
-                <td><a
-                        href="/admin/importer/importitemasset/?failed=not-null&import_item__job__project__campaign__id__exact={{project.campaign_id}}&import_item__job__project__in={{ project.id}}&last_started=null">
-                            {{ project.unstarted_failure }}</a></td>
+                        href="/admin/importer/importitemasset/?import_item__job__project__campaign__id__exact={{project.campaign_id}}&import_item__job__project__in={{ project.id}}&last_started=null">
+                            {{ project.unstarted }}</a></td>
             </tr>
             {% endfor %}
         </table>
