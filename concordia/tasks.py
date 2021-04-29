@@ -1,7 +1,6 @@
 import datetime
 from logging import getLogger
 
-from celery import task
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.management import call_command
@@ -23,10 +22,12 @@ from concordia.models import (
 from concordia.signals.signals import reservation_released
 from concordia.utils import get_anonymous_user
 
+from .celery import app as celery_app
+
 logger = getLogger(__name__)
 
 
-@task
+@celery_app.task
 def expire_inactive_asset_reservations():
     timestamp = datetime.datetime.now()
 
@@ -52,7 +53,7 @@ def expire_inactive_asset_reservations():
         reservation.delete()
 
 
-@task
+@celery_app.task
 def tombstone_old_active_asset_reservations():
     timestamp = datetime.datetime.now()
 
@@ -69,7 +70,7 @@ def tombstone_old_active_asset_reservations():
         reservation.save()
 
 
-@task
+@celery_app.task
 def delete_old_tombstoned_reservations():
     timestamp = datetime.datetime.now()
 
@@ -89,7 +90,7 @@ def delete_old_tombstoned_reservations():
         reservation.delete()
 
 
-@task
+@celery_app.task
 def site_report():
 
     report = {
@@ -313,7 +314,7 @@ def campaign_report(campaign):
     site_report.save()
 
 
-@task
+@celery_app.task
 def calculate_difficulty_values(asset_qs=None):
     """
     Calculate the difficulty scores for the provided AssetQuerySet and update
@@ -352,7 +353,7 @@ def calculate_difficulty_values(asset_qs=None):
     return updated_count
 
 
-@task
+@celery_app.task
 def populate_asset_years():
     """
     Pull out date info from raw Item metadata and populate it for each Asset
@@ -385,16 +386,16 @@ def populate_asset_years():
     return updated_count
 
 
-@task
+@celery_app.task
 def create_elasticsearch_indices():
     call_command("search_index", action="create")
 
 
-@task
+@celery_app.task
 def populate_elasticsearch_indices():
     call_command("search_index", action="populate")
 
 
-@task
+@celery_app.task
 def delete_elasticsearch_indices():
     call_command("search_index", "-f", action="delete")
