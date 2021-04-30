@@ -288,6 +288,111 @@ def ratelimit_view(request, exception=None):
 
     return response
 
+@login_required
+@never_cache
+def AccountLetterView(request):
+
+    date_today = datetime.datetime.now()
+    username = request.user.username
+
+    transcriptions = Transcription.objects.filter(Q(user=request.user)).distinct(
+        "asset"
+    )
+
+    reviews = Transcription.objects.filter(Q(reviewed_by=request.user)).distinct(
+        "asset"
+    )
+
+    transcription_assets = Asset.objects.filter(transcription__in=transcriptions)
+    review_assets = Asset.objects.filter(transcription__in=reviews)
+
+    totalTranscriptions = len(transcription_assets)
+    totalReviews = len(review_assets)
+
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=11)
+    pdf.cell(60, 25, txt="Library of Congress", ln=1, align="L")
+    pdf.cell(60, 5, txt="101 Independence Avenue SE", ln=1, align="L")
+    pdf.cell(60, 5, txt="Washington, DC 20540", ln=1, align="L")
+    pdf.cell(60, 20, txt=date_today.strftime("%x"), ln=1, align="L")
+    pdf.cell(60, 10, txt="To whom it may concern,", ln=1, align="L")
+    pdf.cell(
+        140,
+        5,
+        txt="I am writing to confirm this volunteer's participation in the Library of Congress, virtual volunteering program By ",
+        ln=1,
+        align="L",
+    )
+    pdf.cell(
+        75,
+        5,
+        txt="the People (https://crowd.loc.gov). ",
+        align="L",
+        link="https://crowd.loc.gov",
+    )
+    pdf.cell(
+        90,
+        5,
+        txt="The project invites anyone to help the Library by transcribing, tagging  ",
+        ln=1,
+        align="C",
+    )
+    pdf.cell(
+        120,
+        5,
+        txt="and reviewing transcriptions of digitized historical documents from the Library's collections. These transcriptions ",
+        ln=1,
+        align="L",
+    )
+    pdf.cell(
+        120,
+        5,
+        txt="make the content of handwritten and other documents keyword searchable on the Librarys main website",
+        ln=1,
+        align="L",
+    )
+    pdf.cell(52, 5, txt="(https://loc.gov), ", align="L", link="https://loc.gov")
+    pdf.cell(
+        120,
+        5,
+        txt="open new avenues of digital research and improve accessibility, including for people with visual ",
+        ln=1,
+        align="C",
+    )
+    pdf.cell(120, 5, txt="or cognitive disabilities. ", ln=1, align="L")
+    pdf.cell(120, 5, txt="", ln=1, align="L")
+    pdf.cell(
+        120,
+        5,
+        txt="They registered as a By the People volunteer on REGISTRATION DATE as "
+        + username
+        + ". They made "
+        + str(totalTranscriptions),
+        ln=1,
+        align="L",
+    )
+    pdf.cell(
+        120,
+        5,
+        txt="edits to transcriptions on the site and reviewed "
+        + str(totalReviews)
+        + " transcriptions by other volunteers. Their user profile ",
+        ln=1,
+        align="L",
+    )
+    pdf.cell(120, 5, txt="provides further details.", ln=1, align="L")
+    pdf.cell(100, 12, txt="Best,", ln=1, align="L")
+    pdf.cell(110, 10, txt="Lauren Algee", ln=1, align="L")
+    pdf.cell(120, 5, txt="Community Manager, By the People", ln=1, align="L")
+    pdf.cell(120, 5, txt="Digital Content Management Section", ln=1, align="L")
+    pdf.cell(120, 5, txt="Library of Congress", ln=1, align="L")
+    pdf.output("letter.pdf", "F")
+    with open("letter.pdf", "rb") as f:
+        response = HttpResponse(content=f.read(), content_type="application/pdf")
+        response["Content-Disposition"] = "attachment; filename=letter.pdf"
+        os.remove("letter.pdf")
+        return response
 
 @method_decorator(never_cache, name="dispatch")
 class AccountProfileView(LoginRequiredMixin, FormView, ListView):
