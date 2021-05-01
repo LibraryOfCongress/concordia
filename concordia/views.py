@@ -290,6 +290,7 @@ def ratelimit_view(request, exception=None):
 
     return response
 
+
 @login_required
 @never_cache
 def AccountLetterView(request):
@@ -394,7 +395,8 @@ def AccountLetterView(request):
         response = HttpResponse(content=f.read(), content_type="application/pdf")
         response["Content-Disposition"] = "attachment; filename=letter.pdf"
         os.remove("letter.pdf")
-        return response 
+        return response
+
 
 @method_decorator(never_cache, name="dispatch")
 class AccountProfileView(LoginRequiredMixin, FormView, ListView):
