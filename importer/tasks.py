@@ -11,7 +11,7 @@ from tempfile import NamedTemporaryFile
 from urllib.parse import parse_qsl, urlencode, urljoin, urlparse, urlsplit, urlunsplit
 
 import requests
-from celery import group, task
+from celery import group
 from django.core.cache import cache
 from django.db.transaction import atomic
 from django.utils.text import slugify
@@ -23,6 +23,8 @@ from requests.packages.urllib3.util.retry import Retry
 from concordia.models import Asset, Item, MediaType
 from concordia.storage import ASSET_STORAGE
 from importer.models import ImportItem, ImportItemAsset, ImportJob
+
+from .celery import app
 
 logger = getLogger(__name__)
 
@@ -299,7 +301,7 @@ def import_items_into_project_from_url(requesting_user, project, import_url):
     return import_job
 
 
-@task(bind=True)
+@app.task(bind=True)
 def import_collection_task(self, import_job_pk):
     import_job = ImportJob.objects.get(pk=import_job_pk)
     return import_collection(self, import_job)
@@ -312,7 +314,7 @@ def import_collection(self, import_job):
         create_item_import_task.delay(import_job.pk, item_url)
 
 
-@task(
+@app.task(
     bind=True,
     autoretry_for=(HTTPError,),
     retry_backoff=True,
@@ -332,7 +334,7 @@ def redownload_image_task(self, asset_pk):
     return download_asset(self, None, asset)
 
 
-@task(
+@app.task(
     bind=True,
     autoretry_for=(HTTPError,),
     retry_backoff=True,
@@ -383,7 +385,7 @@ def create_item_import_task(self, import_job_pk, item_url):
     return import_item_task.delay(import_item.pk)
 
 
-@task(bind=True)
+@app.task(bind=True)
 def import_item_task(self, import_item_pk):
     i = ImportItem.objects.select_related("item").get(pk=import_item_pk)
     return import_item(self, i)
@@ -490,7 +492,7 @@ def get_asset_urls_from_item_resources(resources):
     return assets, item_resource_url
 
 
-@task(
+@app.task(
     bind=True,
     autoretry_for=(HTTPError,),
     retry_backoff=True,

@@ -36,7 +36,7 @@
 <div class="table-responsive-md">
     <table id="progress-stats" class="table table-sm font-weight-light">
         <tbody>
-            {% for key, label, value in transcription_status_counts reversed %}
+            {% for key, label, value in transcription_status_counts %}
             <tr
                 class="{% if filters.transcription_status == key %}table-secondary{% endif %}"
             >

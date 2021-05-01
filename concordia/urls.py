@@ -84,6 +84,7 @@ tx_urlpatterns = (
 urlpatterns = [
     path("", views.HomeView.as_view(), name="homepage"),
     path("healthz", views.healthz, name="health-check"),
+    path("letter", views.AccountLetterView, name="user-letter"),
     path("about/", views.simple_page, name="about"),
     path("help-center/", views.simple_page, name="help-center"),
     path("help-center/welcome-guide/", views.simple_page, name="welcome-guide"),
