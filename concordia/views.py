@@ -46,7 +46,6 @@ from flags.decorators import flag_required
 from ratelimit.decorators import ratelimit
 from ratelimit.mixins import RatelimitMixin
 from ratelimit.utils import is_ratelimited
-
 from concordia.api_views import APIDetailView, APIListView
 from concordia.forms import (
     ActivateAndSetPasswordForm,
