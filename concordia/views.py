@@ -322,7 +322,9 @@ def AccountLetterView(request):
     pdf.cell(
         140,
         5,
-        txt="I am writing to confirm this volunteer's participation in the Library of Congress, virtual volunteering program By ",
+        txt="I am writing to confirm this volunteer's participation in "
+        " the Library of Congress,"
+        " virtual volunteering program By ",
         ln=1,
         align="L",
     )
@@ -343,14 +345,18 @@ def AccountLetterView(request):
     pdf.cell(
         120,
         5,
-        txt="and reviewing transcriptions of digitized historical documents from the Library's collections. These transcriptions ",
+        txt="and reviewing transcriptions of digitized historical "
+        " documents from the Library's "
+        " collections. These transcriptions ",
         ln=1,
         align="L",
     )
     pdf.cell(
         120,
         5,
-        txt="make the content of handwritten and other documents keyword searchable on the Librarys main website",
+        txt="make the content of handwritten and other documents "
+        " keyword searchable on the "
+        " Librarys main website",
         ln=1,
         align="L",
     )
@@ -358,7 +364,8 @@ def AccountLetterView(request):
     pdf.cell(
         120,
         5,
-        txt="open new avenues of digital research and improve accessibility, including for people with visual ",
+        txt="open new avenues of digital research and improve "
+        " accessibility, including for people with visual ",
         ln=1,
         align="C",
     )
