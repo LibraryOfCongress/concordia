@@ -312,19 +312,19 @@ def AccountLetterView(request):
     totalReviews = len(review_assets)
 
     pdf = FPDF()
-    path= os.path.dirname(os.path.abspath(__file__)) + "/static/img/logo.jpg"
+    path = os.path.dirname(os.path.abspath(__file__)) + "/static/img/logo.jpg"
     pdf.add_page()
-    pdf.image(path, x =10, y = 2, w=60)
+    pdf.image(path, x=10, y=2, w=60)
     pdf.set_font("Arial", size=11)
-    pdf.cell(60, 25, txt="Library of Congress", ln=1, align="L")
-    pdf.cell(60, 5, txt="101 Independence Avenue SE", ln=1, align="L")
-    pdf.cell(60, 5, txt="Washington, DC 20540", ln=1, align="L")
+    pdf.cell(60, 40, txt="Library of Congress", ln=1, align="L")
+    pdf.cell(30, 5, txt="101 Independence Avenue SE", ln=1, align="L")
+    pdf.cell(30, 5, txt="Washington, DC 20540", ln=1, align="L")
     pdf.cell(60, 20, txt=date_today.strftime("%x"), ln=1, align="L")
     pdf.cell(60, 10, txt="To whom it may concern,", ln=1, align="L")
     pdf.cell(
         140,
         5,
-        txt="I am writing to confirm this volunteer's participation in "
+        txt="I am writing to confirm this volunteer's participation in"
         " the Library of Congress,"
         " virtual volunteering program By ",
         ln=1,
@@ -333,14 +333,14 @@ def AccountLetterView(request):
     pdf.cell(
         75,
         5,
-        txt="the People (https://crowd.loc.gov). ",
+        txt="the People (https://crowd.loc.gov).",
         align="L",
         link="https://crowd.loc.gov",
     )
     pdf.cell(
         90,
         5,
-        txt="The project invites anyone to help the Library by transcribing, tagging  ",
+        txt=" The project invites anyone to help the Library by transcribing, tagging  ",
         ln=1,
         align="C",
     )
