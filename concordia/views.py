@@ -296,6 +296,7 @@ def AccountLetterView(request):
 
     date_today = datetime.datetime.now()
     username = request.user.username
+    join_date = request.user.date_joined
 
     transcriptions = Transcription.objects.filter(Q(user=request.user)).distinct(
         "asset"
@@ -316,10 +317,13 @@ def AccountLetterView(request):
     pdf.add_page()
     pdf.image(path, x=10, y=2, w=60)
     pdf.set_font("Arial", size=11)
-    pdf.cell(60, 40, txt="Library of Congress", ln=1, align="L")
+    pdf.cell(60, 40, txt="", ln=1, align="L")
+    pdf.cell(30, 5, txt="Library of Congress", ln=1, align="L")
     pdf.cell(30, 5, txt="101 Independence Avenue SE", ln=1, align="L")
     pdf.cell(30, 5, txt="Washington, DC 20540", ln=1, align="L")
-    pdf.cell(60, 20, txt=date_today.strftime("%x"), ln=1, align="L")
+    pdf.cell(
+        60, 20, txt=datetime.date.strftime(date_today, "%m/%d/%Y"), ln=1, align="L"
+    )
     pdf.cell(60, 10, txt="To whom it may concern,", ln=1, align="L")
     pdf.cell(
         140,
@@ -376,7 +380,9 @@ def AccountLetterView(request):
     pdf.cell(
         120,
         5,
-        txt="They registered as a By the People volunteer on REGISTRATION DATE as "
+        txt="They registered as a By the People volunteer on "
+        + datetime.date.strftime(join_date, "%m/%d/%Y")
+        + " as "
         + username
         + ". They made "
         + str(totalTranscriptions),
