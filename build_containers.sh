@@ -12,11 +12,13 @@ VENV=".venv-${BUILD_NUMBER}"
 
 # Initialize new venv
 python3 -m venv "${VENV}"
-
-# Update pip
 source "${VENV}/bin/activate"
 
-pip3 install pipenv
+# Update pip
+pip3 install -U pip
+pip3 install -U setuptools
+pip3 install -U pipenv
+
 pipenv install --dev --deploy
 
 FULL_VERSION_NUMBER="$(python3 setup.py --version)"
