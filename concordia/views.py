@@ -295,22 +295,34 @@ def ratelimit_view(request, exception=None):
 def AccountLetterView(request):
     # Generates a transcription contribution pdf letter for the user and downloads it
     date_today = datetime.datetime.now()
-    username = request.user.username
+    username = request.user.email
     join_date = request.user.date_joined
 
-    transcriptions = Transcription.objects.filter(Q(user=request.user)).distinct(
-        "asset"
+    totalTranscriptions = 0
+    totalReviews = 0
+    user = request.user
+    contributed_campaigns = (
+        Campaign.objects.annotate(
+            action_count=Count(
+                "project__item__asset__transcription",
+                filter=Q(project__item__asset__transcription__user=user),
+            ),
+            transcribe_count=Count(
+                "project__item__asset__transcription",
+                filter=Q(project__item__asset__transcription__user=user),
+            ),
+            review_count=Count(
+                "project__item__asset__transcription",
+                Q(project__item__asset__transcription__reviewed_by=user),
+            ),
+        )
+        .exclude(action_count=0)
+        .order_by("title")
     )
 
-    reviews = Transcription.objects.filter(Q(reviewed_by=request.user)).distinct(
-        "asset"
-    )
-
-    transcription_assets = Asset.objects.filter(transcription__in=transcriptions)
-    review_assets = Asset.objects.filter(transcription__in=reviews)
-
-    totalTranscriptions = len(transcription_assets)
-    totalReviews = len(review_assets)
+    for campaign in contributed_campaigns:
+        totalReviews = totalReviews + campaign.review_count
+        totalTranscriptions = totalTranscriptions + campaign.transcribe_count
 
     pdf = FPDF()
     path = os.path.dirname(os.path.abspath(__file__)) + "/static/img/logo.jpg"
@@ -329,22 +341,24 @@ def AccountLetterView(request):
         140,
         5,
         txt="I am writing to confirm this volunteer's participation in"
-        " the Library of Congress,"
-        " virtual volunteering program By ",
+        " the Library of Congress"
+        " virtual volunteering program ",
         ln=1,
         align="L",
     )
+    pdf.set_font("Arial", "I", 11)
     pdf.cell(
-        75,
+        62,
         5,
-        txt="the People (https://crowd.loc.gov).",
+        txt="By the People ",
         align="L",
         link="https://crowd.loc.gov",
     )
+    pdf.set_font("Arial", size=11)
     pdf.cell(
         90,
         5,
-        txt=" The project invites anyone to help the Library by transcribing, tagging  ",
+        txt=" (https://crowd.loc.gov). The project invites anyone to help the Library by transcribing, tagging  ",
         ln=1,
         align="C",
     )
@@ -362,7 +376,7 @@ def AccountLetterView(request):
         5,
         txt="make the content of handwritten and other documents "
         " keyword searchable on the "
-        " Librarys main website",
+        " Library's main website",
         ln=1,
         align="L",
     )
@@ -370,7 +384,7 @@ def AccountLetterView(request):
     pdf.cell(
         120,
         5,
-        txt="open new avenues of digital research and improve "
+        txt=" open new avenues of digital research, and improve "
         " accessibility, including for people with visual ",
         ln=1,
         align="C",
@@ -401,9 +415,10 @@ def AccountLetterView(request):
     pdf.cell(120, 5, txt="provides further details.", ln=1, align="L")
     pdf.cell(100, 12, txt="Best,", ln=1, align="L")
     pdf.cell(110, 10, txt="Lauren Algee", ln=1, align="L")
-    pdf.cell(120, 5, txt="Community Manager, By the People", ln=1, align="L")
-    pdf.cell(120, 5, txt="Digital Content Management Section", ln=1, align="L")
-    pdf.cell(120, 5, txt="Library of Congress", ln=1, align="L")
+    pdf.cell(120, 5, txt="crowd@loc.gov", ln=1, align="L")
+    pdf.cell(130, 5, txt="Community Manager, By the People", ln=1, align="L")
+    pdf.cell(140, 5, txt="Digital Content Management Section", ln=1, align="L")
+    pdf.cell(150, 5, txt="Library of Congress", ln=1, align="L")
     pdf.output("letter.pdf", "F")
     with open("letter.pdf", "rb") as f:
         response = HttpResponse(content=f.read(), content_type="application/pdf")
