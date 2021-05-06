@@ -391,28 +391,34 @@ def AccountLetterView(request):
     )
     pdf.cell(120, 5, txt="or cognitive disabilities. ", ln=1, align="L")
     pdf.cell(120, 5, txt="", ln=1, align="L")
+    pdf.cell(36, 5, txt="They registered as a ", ln=0, align="L")
+    pdf.set_font("Arial", "I", 11)
+    pdf.cell(24, 5, txt="By the People", ln=0, align="L")
+    pdf.set_font("Arial", size=11)
     pdf.cell(
-        120,
+        0,
         5,
-        txt="They registered as a By the People volunteer on "
+        txt=" volunteer on "
         + datetime.date.strftime(join_date, "%m/%d/%Y")
         + " as "
         + username
-        + ". They made "
-        + str(totalTranscriptions),
+        + ". They made ",
         ln=1,
         align="L",
     )
     pdf.cell(
-        120,
+        0,
         5,
-        txt="edits to transcriptions on the site and reviewed "
+        txt=""
+        + str(totalTranscriptions)
+        + " edits to transcriptions"
+        + " on the site and reviewed "
         + str(totalReviews)
-        + " transcriptions by other volunteers. Their user profile ",
+        + " transcriptions by other volunteers. ",
         ln=1,
         align="L",
     )
-    pdf.cell(120, 5, txt="provides further details.", ln=1, align="L")
+    pdf.cell(0, 5, txt="Their user profile provides further details.", ln=1, align="L")
     pdf.cell(100, 12, txt="Best,", ln=1, align="L")
     pdf.cell(110, 10, txt="Lauren Algee", ln=1, align="L")
     pdf.cell(120, 5, txt="crowd@loc.gov", ln=1, align="L")
