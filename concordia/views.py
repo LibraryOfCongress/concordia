@@ -365,8 +365,8 @@ def AccountLetterView(request):
         120,
         5,
         txt="and reviewing transcriptions of digitized historical "
-        " documents from the Library's "
-        " collections. These transcriptions ",
+        "documents from the Library's "
+        "collections. These transcriptions ",
         ln=1,
         align="L",
     )
@@ -374,8 +374,8 @@ def AccountLetterView(request):
         120,
         5,
         txt="make the content of handwritten and other documents "
-        " keyword searchable on the "
-        " Library's main website",
+        "keyword searchable on the "
+        "Library's main website",
         ln=1,
         align="L",
     )
@@ -384,7 +384,7 @@ def AccountLetterView(request):
         120,
         5,
         txt=" open new avenues of digital research, and improve "
-        " accessibility, including for people with visual ",
+        "accessibility, including for people with visual ",
         ln=1,
         align="C",
     )
