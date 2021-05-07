@@ -293,7 +293,7 @@ def ratelimit_view(request, exception=None):
 @login_required
 @never_cache
 def AccountLetterView(request):
-    # Generates a transcription contribution pdf letter for the user and downloads it
+    # Generates a transcriptions and reviews contribution pdf letter for the user and downloads it
     date_today = datetime.datetime.now()
     username = request.user.email
     join_date = request.user.date_joined
