@@ -71,9 +71,8 @@ Each ticket will include acceptance tests, especially for new user facing functi
 
 Testers will identify issues - HIGH, LOW, or NONE. Here are the criteria for each of the levels:
 
--   HIGH: Does not meet the acceptace criteria and can not complete the acceptance test.
--   LOW: Does meet both acceptace criteria and and acceptance tests, but can see opportunities for enhancements.
--   NONE: Meets both accpetance criteria and acceptance tests
+-   FAIL: Does not meet the acceptace criteria and can not complete the acceptance test.
+-   PASS: Does meet both acceptace criteria and and acceptance tests. When a ticket passes but there are noticable opportunities for improvements or enhancements, close the ticket and create a new ticket and add to the backlog. 
 
 If all user acceptance criteria has been met, the ticket will be closed and moved to done.
 
@@ -83,10 +82,27 @@ Final step: Technical lead will create a release with all tickets that are done.
 
 If feature testers find issues to address:
 
--   HIGH: comment and @ the developer in the feature ticket
--   LOW: open a new FEATURE ticket. This ticket will be added to the backlog and up for priortization in alignment meeting and backlog grooming. Link to related ticket by adding the issue #.
+-   FAIL: comment and @ the developer in the feature ticket
+-   Enhancements or Improvements: open a new FEATURE ticket. This ticket will be added to the backlog and up for priortization in alignment meeting and backlog grooming. Link to related ticket by adding the issue #.
 
-If a HIGH issue needs to be addressed, tester should expect to be available to respond to developers questions and retest until acceptance criteria is met.
+If a FAIL issue needs to be addressed, tester should expect to be available to respond to developers questions and retest until acceptance criteria is met.
+
+### Ticket Movement in a Sprint
+
+**For a new feature ticket:**
+
+1. Ticket is generated as an issue and placed in the backlog in GitHub
+2. Product owner will place priority tickets in a sprint
+3. Product Manager will ensure all acceptance criteria has been articulated and assign developer
+4. Developer will move to In Progress when ticket is being worked on
+5. When Developer has completed initial code will move code into crowd-test.loc.gov 
+6. Developer moves ticket into test assigned Product Owner to review feature needs
+7. Product Owner test the feature and test if Acceptance Criteria is met, provides feedback to devs if needed
+8. Product Owner approves feature then assigns to QA
+9. QA will affirm AC and test broader functionality and accessibility. Will pass/fail ticket. Outcome of testing will be written in comments.  
+    - If pass, QA will close ticket and move to Done.
+    - If fail, QA will move ticket back into In Progress and assigned back to developer 
+10. If additional issues are found in testing that are not related to the feature of functionality, new tickets will be written by QA and added to the backlog. Ticket will be assigned to PO for further ticket development and grooming.
 
 ### Branch strategy and Pull Request Process
 
