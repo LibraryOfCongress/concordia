@@ -323,7 +323,6 @@ def AccountLetterView(request):
     for campaign in contributed_campaigns:
         totalReviews = totalReviews + campaign.review_count
         totalTranscriptions = totalTranscriptions + campaign.transcribe_count
-
     pdf = FPDF()
     path = os.path.dirname(os.path.abspath(__file__)) + "/static/img/logo.jpg"
     pdf.add_page()
@@ -391,9 +390,9 @@ def AccountLetterView(request):
     )
     pdf.cell(120, 5, txt="or cognitive disabilities. ", ln=1, align="L")
     pdf.cell(120, 5, txt="", ln=1, align="L")
-    pdf.cell(36, 5, txt="They registered as a ", ln=0, align="L")
+    pdf.cell(37, 5, txt="They registered as a ", ln=0, align="L")
     pdf.set_font("Arial", "I", 11)
-    pdf.cell(24, 5, txt="By the People", ln=0, align="L")
+    pdf.cell(24, 5, txt="By the People", ln=0, align="L", link="https://loc.gov")
     pdf.set_font("Arial", size=11)
     pdf.cell(
         0,
@@ -410,10 +409,10 @@ def AccountLetterView(request):
         0,
         5,
         txt=""
-        + str(totalTranscriptions)
+        + "{:,}".format(totalTranscriptions)
         + " edits to transcriptions"
         + " on the site and reviewed "
-        + str(totalReviews)
+        + "{:,}".format(totalReviews)
         + " transcriptions by other volunteers. Their user profile",
         ln=1,
         align="L",
