@@ -401,7 +401,8 @@ def AccountLetterView(request):
         + datetime.date.strftime(join_date, "%m/%d/%Y")
         + " as "
         + username
-        + ". They made ",
+        + ". They made "
+        + "{:,}".format(totalTranscriptions),
         ln=1,
         align="L",
     )
@@ -409,8 +410,7 @@ def AccountLetterView(request):
         0,
         5,
         txt=""
-        + "{:,}".format(totalTranscriptions)
-        + " edits to transcriptions"
+        + "edits to transcriptions"
         + " on the site and reviewed "
         + "{:,}".format(totalReviews)
         + " transcriptions by other volunteers. Their user profile",
