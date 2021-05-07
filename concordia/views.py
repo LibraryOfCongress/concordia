@@ -414,11 +414,11 @@ def AccountLetterView(request):
         + " edits to transcriptions"
         + " on the site and reviewed "
         + str(totalReviews)
-        + " transcriptions by other volunteers. ",
+        + " transcriptions by other volunteers. Their user profile",
         ln=1,
         align="L",
     )
-    pdf.cell(0, 5, txt="Their user profile provides further details.", ln=1, align="L")
+    pdf.cell(0, 5, txt="provides further details.", ln=1, align="L")
     pdf.cell(100, 12, txt="Best,", ln=1, align="L")
     pdf.cell(110, 10, txt="Lauren Algee", ln=1, align="L")
     pdf.cell(120, 5, txt="crowd@loc.gov", ln=1, align="L")
