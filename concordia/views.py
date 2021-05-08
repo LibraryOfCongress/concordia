@@ -403,7 +403,7 @@ def AccountLetterView(request):
         + username
         + ". They made "
         + "{:,}".format(totalTranscriptions)
-        + "edits to ",
+        + " edits to ",
         ln=1,
         align="L",
     )
