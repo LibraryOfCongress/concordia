@@ -427,7 +427,7 @@ def AccountLetterView(request):
     pdf.cell(80, 5, txt="By the People", ln=1, align="C")
     pdf.set_font("Arial", size=11)
     pdf.cell(140, 5, txt="Digital Content Management Section", ln=1, align="L")
-    pdf.cell(150, 5, txt="Library of Congress", ln=1, align="L")
+    pdf.cell(150, 5, txt="Library of Congress ", ln=1, align="L")
     pdf.output("letter.pdf", "F")
     with open("letter.pdf", "rb") as f:
         response = HttpResponse(content=f.read(), content_type="application/pdf")
