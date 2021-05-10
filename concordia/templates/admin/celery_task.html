@@ -54,8 +54,9 @@
                 <tr>
                     <th>Project Title</th>
                     <th>Succesful</th>
-                    <th>Incomplete</th>
-                    <th>Failed</th>
+                    <th>Started-Incomplete</th>
+                    <th>Started-Failed</th>
+                    <th>Unstarted</th>
                     <th></th>
                 </tr>
             </thead>
@@ -69,6 +70,9 @@
                 <td><a
                         href="/admin/importer/importitemasset/?failed=not-null&import_item__job__project__campaign__id__exact={{project.campaign_id}}&import_item__job__project__in={{ project.id}}&last_started=not-null">
                         {{ project.failure }}</a></td>
+                <td><a
+                        href="/admin/importer/importitemasset/?import_item__job__project__campaign__id__exact={{project.campaign_id}}&import_item__job__project__in={{ project.id}}&last_started=null">
+                            {{ project.unstarted }}</a></td>
             </tr>
             {% endfor %}
         </table>

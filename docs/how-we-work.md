@@ -27,17 +27,9 @@ This team participates in stand ups, product alignment, backlog grooming and ret
 
 Each sprint is three weeks long. We have a sprint kick off the first day of the new sprint. There are five basic meeting rhythms:
 
--   **Daily standups at 10:30 - 10:45 am**
-    -   Structure: Each team member talks says what they completed yesterday, what they will work on today, and any blockers
--   **Alignment every Tuesday at 3:00 – 4:30 pm**
-    -   Structure: Community managers support product owner in identifying user facing priorities in the backlog
--   **Backlog grooming Thursday at 3:00 – 4:30 pm**
+-   **Backlog grooming and Sprint Planning Monday at 1:00 – 3:30 pm**
     -   Structure: tickets in the backlog are sorted by priority, the team adds acceptance criteria, estimates size, and assigns the tasks to a team member.
--   **Sprint planning every third Wednesday at 3:00 – 4:30 pm**
-    -   Structure: tickets are pulled into the next sprint, the team reviews or confirms acceptance criteria, estimates size, and assigns the tasks to a team member
--   **Sprint kick off first Monday at 10:30 – 11:00 pm**
-    -   Structure: Begins the next sprint. Any last minute questions about acceptance criteria will be addressed here. No additional tickets can be pulled into a sprint at this point. Questions about future tickets will take place in alignment and backlog grooming.
--   **Demo and retrospectives are held on third Thursday at the end of the sprint 10:30 am - 12:00 pm**
+-   **Demo and retrospectives are held on every three weeks on Monday at 1:00 - 2:00 pm**
     -   At the end of each sprint, Developers or content writers demo completed work in the sprint for the larger library stakeholders. During demo, we will confirm if the user acceptance criteria is met and moved to be tested. Following the demo, the team will go through a retrospective. These are held back-to-back, on the same day
 
 All meetings are held in person, on Slack or WebEx, a video teleconference application.
@@ -79,9 +71,8 @@ Each ticket will include acceptance tests, especially for new user facing functi
 
 Testers will identify issues - HIGH, LOW, or NONE. Here are the criteria for each of the levels:
 
--   HIGH: Does not meet the acceptace criteria and can not complete the acceptance test.
--   LOW: Does meet both acceptace criteria and and acceptance tests, but can see opportunities for enhancements.
--   NONE: Meets both accpetance criteria and acceptance tests
+-   FAIL: Does not meet the acceptace criteria and can not complete the acceptance test.
+-   PASS: Does meet both acceptace criteria and and acceptance tests. When a ticket passes but there are noticable opportunities for improvements or enhancements, close the ticket and create a new ticket and add to the backlog. 
 
 If all user acceptance criteria has been met, the ticket will be closed and moved to done.
 
@@ -91,10 +82,27 @@ Final step: Technical lead will create a release with all tickets that are done.
 
 If feature testers find issues to address:
 
--   HIGH: comment and @ the developer in the feature ticket
--   LOW: open a new FEATURE ticket. This ticket will be added to the backlog and up for priortization in alignment meeting and backlog grooming. Link to related ticket by adding the issue #.
+-   FAIL: comment and @ the developer in the feature ticket
+-   Enhancements or Improvements: open a new FEATURE ticket. This ticket will be added to the backlog and up for priortization in alignment meeting and backlog grooming. Link to related ticket by adding the issue #.
 
-If a HIGH issue needs to be addressed, tester should expect to be available to respond to developers questions and retest until acceptance criteria is met.
+If a FAIL issue needs to be addressed, tester should expect to be available to respond to developers questions and retest until acceptance criteria is met.
+
+### Ticket Movement in a Sprint
+
+**For a new feature ticket:**
+
+1. Ticket is generated as an issue and placed in the backlog in GitHub
+2. Product owner will place priority tickets in a sprint
+3. Product Manager will ensure all acceptance criteria has been articulated and assign developer
+4. Developer will move to In Progress when ticket is being worked on
+5. When Developer has completed initial code will move code into crowd-test.loc.gov 
+6. Developer moves ticket into test assigned Product Owner to review feature needs
+7. Product Owner test the feature and test if Acceptance Criteria is met, provides feedback to devs if needed
+8. Product Owner approves feature then assigns to QA
+9. QA will affirm AC and test broader functionality and accessibility. Will pass/fail ticket. Outcome of testing will be written in comments.  
+    - If pass, QA will close ticket and move to Done.
+    - If fail, QA will move ticket back into In Progress and assigned back to developer 
+10. If additional issues are found in testing that are not related to the feature of functionality, new tickets will be written by QA and added to the backlog. Ticket will be assigned to PO for further ticket development and grooming.
 
 ### Branch strategy and Pull Request Process
 
