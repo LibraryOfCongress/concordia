@@ -17,7 +17,7 @@
     <h1 class="sr-only">Topics</h1>
     <ul class="list-unstyled">
         {% for topic in topics %}
-            <li class="p-4 mb-1 bg-footer">
+            <li class="p-4 mb-1 bg-light">
                 <h2 class="h1 mb-3">{{ topic.title }}</h2>
                 <div class="row">
                     <a class="col-md-5 order-md-2" href="{% url 'topic-detail' topic.slug %}">

@@ -17,7 +17,7 @@
     <h1 class="sr-only">Campaigns</h1>
     <ul class="list-unstyled">
         {% for campaign in campaigns_topics %}
-            <li class="p-4 mb-1 bg-footer">
+            <li class="p-4 mb-1 bg-light">
                 <h2 class="h1 mb-3">{{ campaign.title }}</h2>
                 <div class="row">
                     <a class="col-md-5 order-md-2" href="{{ campaign.get_absolute_url }}">
