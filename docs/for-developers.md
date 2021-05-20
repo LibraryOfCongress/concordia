@@ -67,7 +67,7 @@ same package versions which you used during development.
 Instead of doing `docker-compose up` as above, instead start everything except the app:
 
 ```bash
-docker-compose up -d db redis importer
+docker-compose up -d db redis importer celerybeat
 ```
 
 This will run the database in a container to ensure that it always matches the
