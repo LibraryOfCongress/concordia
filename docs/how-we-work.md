@@ -104,6 +104,23 @@ If a FAIL issue needs to be addressed, tester should expect to be available to r
     - If fail, QA will move ticket back into In Progress and assigned back to developer 
 10. If additional issues are found in testing that are not related to the feature of functionality, new tickets will be written by QA and added to the backlog. Ticket will be assigned to PO for further ticket development and grooming.
 
+**For system wide upgrades**
+
+1. Ticket is generated as an issue and placed in the backlog in GitHub
+2. Technical Lead will place priority tickets in a sprint
+3. Product Manager will ensure all acceptance criteria has been articualted and assign developer
+4. Developer will move to In Progress when ticket is being worked on     
+5. Unit testing incorporated into the code pipeline
+    - Manually run unit tests
+    - CI/CD integration 
+6. Move ticket into test and assign peer review testing by developer
+    - If fail, developer provides feedback, moves ticket back to In Progress and assigns to the original dev
+    - If pass, assign to QA for regression testing 
+8. Tester will copy the [Regression Testing Checklist](https://staff.loc.gov/wikis/x/UomCBQ) as a comment in the ticket 
+9. Tester will go through all the functionality described in the checklist 
+    - If fail, provides feedback in the comments, moves ticket back to In Progress and assigns to dev
+    - If pass, checks boxes to show that all main functionality are working and moves ticket to done
+
 ### Branch strategy and Pull Request Process
 
 #### Git branching strategy
