@@ -18,7 +18,7 @@ $navy: #002347;
 $dark: $gray-900;
 $accent: $orange;
 $error: $red;
-$light: $gray-200;
+$light: $gray-100;
 $secondary: $gray-700;
 
 $theme-colors: (
@@ -41,8 +41,8 @@ $sizes: (
 );
 
 // typography
-$font-family-sans-serif: 'Open Sans', sans-serif;
-$font-family-serif: 'Roboto Slab', serif;
+$font-family-sans-serif: 'Open Sans', Arial, Helvetica, sans-serif;
+$font-family-serif: 'Roboto Slab', Arial, Helvetica, serif;
 $headings-font-weight: 700;
 
 // Breadcrumbs
