@@ -323,7 +323,7 @@ def AccountLetterView(request):
     for campaign in contributed_campaigns:
         totalReviews = totalReviews + campaign.review_count
         totalTranscriptions = totalTranscriptions + campaign.transcribe_count
-    pdf = FPDF()
+    pdf = FPDF(orientation="P", unit="mm", format="A4")
     path = os.path.dirname(os.path.abspath(__file__)) + "/static/img/logo.jpg"
     pdf.add_page()
     pdf.image(path, x=10, y=2, w=60)
