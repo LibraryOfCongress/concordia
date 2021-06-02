@@ -165,12 +165,12 @@ main {
 }
 
 .font-serif {
-    font-family: 'Roboto Slab', serif;
+    font-family: $font-family-serif;
 }
 
 h1,
 .h1 {
-    font-family: 'Roboto Slab', serif;
+    font-family: $font-family-serif;
     font-weight: bold;
 }
 
@@ -181,13 +181,13 @@ a .campaign-title:hover,
 }
 
 p.hero-secondary {
-    font-family: 'Open Sans', sans-serif;
+    font-family: $font-family-sans-serif;
     font-size: 1.125rem;
     color: $dark;
 }
 
 p.hero-secondary.offwhite-text {
-    font-family: 'Open Sans', sans-serif;
+    font-family: $font-family-sans-serif;
     font-size: 1.125rem;
     color: #fff;
 }
