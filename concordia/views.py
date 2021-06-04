@@ -336,6 +336,7 @@ def AccountLetterView(request):
         link="https://www.loc.gov/",
         alt_text="Library Logo",
     )
+    pdf.set_title(title="Service Letter")
     pdf.set_font("Arial", size=11)
     pdf.cell(60, 40, txt="", ln=1, align="L")
     pdf.cell(30, 5, txt="Library of Congress", ln=1, align="L")
