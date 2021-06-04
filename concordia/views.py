@@ -324,9 +324,18 @@ def AccountLetterView(request):
         totalReviews = totalReviews + campaign.review_count
         totalTranscriptions = totalTranscriptions + campaign.transcribe_count
     pdf = FPDF(orientation="P", unit="mm", format="A4")
+    pdf.set_margin(1)
     path = os.path.dirname(os.path.abspath(__file__)) + "/static/img/logo.jpg"
     pdf.add_page()
-    pdf.image(path, x=10, y=2, w=60)
+    pdf.image(
+        path,
+        x=10,
+        y=2,
+        w=60,
+        type="",
+        link="https://www.loc.gov/",
+        alt_text="Library Logo",
+    )
     pdf.set_font("Arial", size=11)
     pdf.cell(60, 40, txt="", ln=1, align="L")
     pdf.cell(30, 5, txt="Library of Congress", ln=1, align="L")
