@@ -336,6 +336,10 @@ def AccountLetterView(request):
         link="https://www.loc.gov/",
         alt_text="Library Logo",
     )
+    pdf.set_author("By The People")
+    pdf.set_creator("Concordia")
+    pdf.set_subject("BTP Service Letter")
+    pdf.set_keywords("SL Concordia BTP")
     pdf.set_title(title="Service Letter")
     pdf.set_font("Arial", size=11)
     pdf.cell(60, 40, txt="", ln=1, align="L")
