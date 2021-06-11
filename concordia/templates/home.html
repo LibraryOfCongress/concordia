@@ -9,6 +9,24 @@
 {% block extra_main_classes %}{% endblock %}
 
 {% block main_content %}
+
+{% flag_enabled 'ADVERTISE_ACTIVITY_UI' as ADVERTISE_ACTIVITY_UI %}
+
+    {% if ADVERTISE_ACTIVITY_UI %}
+    <div id="homepage-contribute-container" class="container my-4"></div>
+    <div class="px-default ml-md-3 mb-5">
+        <div class="alert alert-dark alert-dismissible w-100 text-center" id="new-interface-banner" role="alert" hidden>
+            <a class="btn btn-success" href="https://www.research.net/r/btp-volunteer-survey" target="_blank">
+                Let us know what motivates you! Take a short survey to help us improve our program
+            </a>
+            <button type="button" class="btn btn-dark" id="no-interface-banner">Don't display this again</button>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    </div>
+    </div>
+    {% endif %}
     <div id="homepage-contribute-container" class="container my-4">
        <div class="px-default ml-md-3 mb-5">
             <h2 class="text-center font-serif">Be a virtual volunteer!</h2>
@@ -183,5 +201,16 @@
 
 
 {% block body_scripts %}
-
+<script>
+    if (
+        !localStorage.getItem("no-interface-banner") &&
+        !(window.screen.width < 1024 || window.screen.height < 768)
+    ) {
+        $("#new-interface-banner").attr("hidden", false);
+    }
+    $("#no-interface-banner").click(function() {
+        localStorage.setItem("no-interface-banner", true);
+        $("#new-interface-banner").attr("hidden", true);
+    });
+</script>
 {% endblock body_scripts %}
