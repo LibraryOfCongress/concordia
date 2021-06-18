@@ -27,6 +27,7 @@
     </div>
     </div>
     {% endif %}
+    
     <div id="homepage-contribute-container" class="container my-4">
        <div class="px-default ml-md-3 mb-5">
             <h2 class="text-center font-serif">Be a virtual volunteer!</h2>
@@ -199,18 +200,6 @@
     </div>
 {% endblock main_content %}
 
-
 {% block body_scripts %}
-<script type="text/javascript">
-    if (
-        !localStorage.getItem("no-interface-banner") &&
-        !(window.screen.width < 1024 || window.screen.height < 768)
-    ) {
-        $("#new-interface-banner").attr("hidden", false);
-    }
-    $("#no-interface-banner").click(function() {
-        localStorage.setItem("no-interface-banner", true);
-        $("#new-interface-banner").attr("hidden", true);
-    });
-</script>
+
 {% endblock body_scripts %}
