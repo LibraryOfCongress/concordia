@@ -13,11 +13,8 @@ stack templates.
 
 ```bash
 git clone https://github.com/LibraryOfCongress/concordia.git
-cd concordia
-docker-compose up
 ```
 
-Browse to [localhost](http://localhost)
 
 If you're intending to edit static resources, templates, etc. and would like to
 enable Django's DEBUG mode ensure that your environment has `DEBUG=true` set
@@ -57,6 +54,19 @@ pipenv install --dev django-debug-toolbar
 Both the `Pipfile` and the `Pipfile.lock` files must be committed to the source
 code repository any time you change them to ensure that all testing uses the
 same package versions which you used during development.
+
+```bash
+POSTGRESQL_PW=password
+DJANGO_SETTINGS_MODULE=concordia.settings_dev
+```
+
+
+```bash
+cd concordia
+docker-compose up
+```
+
+Browse to [localhost](http://localhost)
 
 #### Setting up a local development server
 
