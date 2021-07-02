@@ -391,7 +391,7 @@ def create_elasticsearch_indices():
     call_command("search_index", action="create")
 
 
-@celery_app.task(time_limt=20)
+@celery_app.task
 def populate_elasticsearch_indices():
     call_command("search_index", action="populate")
 
