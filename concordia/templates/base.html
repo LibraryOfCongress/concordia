@@ -202,7 +202,7 @@
 
     <script type="text/javascript">
         if (
-        !localStorage.getItem("no-interface-banner") && typeof(Storage) !== "undefined"
+            typeof(Storage) !== "undefined"  && !localStorage.getItem("no-interface-banner") 
     ) {
         $("#new-interface-banner").attr("hidden", false);
     }
