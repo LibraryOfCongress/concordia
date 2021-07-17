@@ -30,7 +30,7 @@
         "remarkable": "^2.0.1",
         "screenfull": "^5.1.0",
         "split.js": "^1.6.2",
-        "urijs": "^1.19.6"
+        "urijs": "^1.19.7"
     },
     "name": "concordia",
     "version": "1.0.0",
