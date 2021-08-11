@@ -1,5 +1,5 @@
 FROM git.loc.gov:4567/devops/docker-hub-mirror/amazonlinux:2
-RUN yum update -y && amazon-linux-extras install -y postgres12 \
+RUN yum update -y && amazon-linux-extras install -y postgresql12 \
     && yum -y install unzip \
     && curl -sL https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o awscliv2.zip \
     && unzip awscliv2.zip \
