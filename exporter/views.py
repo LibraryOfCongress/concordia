@@ -53,7 +53,7 @@ def get_original_asset_id(download_url):
     """
     download_url = download_url.replace("https", "http")
     if download_url.startswith("http://tile.loc.gov/"):
-        pattern = r"/service:([A-Za-z0-9:.-_]+)|/master/([A-Za-z0-9:.-_/]+)/"
+        pattern = r"/service:([A-Za-z0-9:.\-\_]+)/|/master/([A-Za-z0-9:.\-\_\/]+)/"
         asset_id = re.search(pattern, download_url)
         if not asset_id:
             logger.error(
