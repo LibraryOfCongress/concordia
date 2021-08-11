@@ -49,7 +49,7 @@ Resources:
             PreferredMaintenanceWindow: sun:07:14-sun:07:44
             DBName: concordia
             Engine: postgres
-            EngineVersion: 9.6.6
+            EngineVersion: '12.5'
             LicenseModel: postgresql-license
             DBSubnetGroupName:
                 Ref: PostgresSubnetGroup

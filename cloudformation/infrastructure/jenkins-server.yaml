@@ -43,7 +43,7 @@ Resources:
                       openjdk-8-jdk jenkins \
                       nginx awscli
                     usermod -aG docker jenkins
-                    snap install postgresql96
+                    snap install postgresql12
                     pip3 install awscli --upgrade
             Tags:
                 - Key: Name
