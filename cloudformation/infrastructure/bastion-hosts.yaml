@@ -89,7 +89,7 @@ Resources:
                     yum -y update
                     yum -y install git
                     aws s3 cp s3://crowd-deployment/database-dumps/concordia.latest.dmp concordia.dmp
-                    amazon-linux-extras install -y postgresql9.6
+                    amazon-linux-extras install -y postgresql12
 
             Tags:
                 - Key: Name
@@ -133,7 +133,7 @@ Resources:
                     yum -y update
                     yum -y install git
                     aws s3 cp s3://crowd-deployment/database-dumps/concordia.latest.dmp concordia.dmp
-                    amazon-linux-extras install -y postgresql9.6
+                    amazon-linux-extras install -y postgresql12
 
             Tags:
                 - Key: Name

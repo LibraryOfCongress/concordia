@@ -83,7 +83,7 @@ Resources:
                     echo "export ENV_NAME=${EnvironmentName}" >> /home/ec2-user/.bash_profile
                     source /home/ec2-user/.bash_profile
                     yum -y update
-                    amazon-linux-extras install -y postgresql9.6
+                    amazon-linux-extras install -y postgresql12
                     aws s3 cp s3://crowd-deployment/database-dumps/concordia.latest.dmp concordia.dmp
                     echo "${PostgresqlHost}:5432:*:concordia:${PostgresqlPassword}" >> /root/.pgpass
                     chmod 0600 /root/.pgpass

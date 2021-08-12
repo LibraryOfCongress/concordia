@@ -28,7 +28,7 @@ Resources:
                 InstanceCount: 1
                 ZoneAwarenessEnabled: false
                 InstanceType: 'm4.xlarge.elasticsearch'
-            ElasticsearchVersion: '6.7'
+            ElasticsearchVersion: '6.8'
             EBSOptions:
                 EBSEnabled: true
                 Iops: 0
