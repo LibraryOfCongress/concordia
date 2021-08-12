@@ -61,7 +61,10 @@ def get_original_asset_id(download_url):
             )
             raise AssertionError
         else:
-            matching_asset_id = asset_id.group(1)
+            if asset_id.group(1):
+                matching_asset_id = asset_id.group(1)
+            else:
+                matching_asset_id = asset_id.group(2)
             logger.debug(
                 "Found asset ID %s in download URL %s", matching_asset_id, download_url
             )
