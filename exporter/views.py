@@ -3,6 +3,11 @@ import re
 import shutil
 import tempfile
 from logging import getLogger
+import sys
+import csv
+import json
+import requests
+import time
 
 import bagit
 import boto3
@@ -17,6 +22,148 @@ from tabular_export.core import export_to_csv_response, flatten_queryset
 from concordia.models import Asset, Item, Transcription, TranscriptionStatus
 
 logger = getLogger(__name__)
+
+# Get the JSON for any loc.gov URL
+# Will retry until it has valid JSON
+# Returns the JSON, or 404 if status == 404
+def get_locgov_json(url, locgov_server):
+    loc_json = None
+    while loc_json == None:
+        r = requests.get(url)
+        try:
+            loc_json = json.loads(r.text)
+        except:
+            time.sleep(5)
+            pass
+    if "status" in loc_json and loc_json["status"] == 404:
+        return 404
+    return loc_json
+
+
+# Return the Item JSON for a loc.gov /item
+def locgov_item(item, locgov_server):
+    url_start = "https://%s.loc.gov/item/" % locgov_server
+    url = url_start + item + "/?fo=json&at=item"
+    item_json = get_locgov_json(url)
+    if item_json == 404:
+        return 404
+    return item_json["item"]
+
+
+# Returns the Resources given an Item URL
+# This should have file data for all files in all of the item's resources
+def locgov_item_resources(item, locgov_server):
+    url_start = "https://%s.loc.gov/item/" % locgov_server
+    url = url_start + item + "/?fo=json&at=resources"
+    resources_json = get_locgov_json(url, "www")
+    if resources_json == 404:
+        return 404
+    return resources_json["resources"]
+
+
+# Get the Item for a given Resource
+def locgov_resource_item_section(resource, locgov_server):
+    if not resource.endswith("/"):
+        resource = resource + "/"
+    url = resource + "?fo=json&at=item"
+    item_json = get_locgov_json(url, locgov_server)
+
+    if item_json == 404:
+        return 404
+    return item_json["item"]
+
+
+# Script to generate concatinated transcription files, and make resource dirs for receive to CTS
+# Run script in data directory
+# at same level as item-resource-urls.txt
+
+
+def locgov_create_resources(resource_dir):
+
+    # cwd = os.getcwd()
+    cwd = resource_dir
+    item_file = os.path.join(cwd, "item-resource-urls.txt")
+
+    # resource for txt looks like = 'http://www.loc.gov/resource/mss85943.002514/'
+
+    # Resource TXT file has repeated rows - get all unique Resource URLS
+    resource_urls = []
+    with open(item_file, "r", encoding="utf-8") as item_txt:
+        for line in item_txt:
+            r = line.strip()
+            if r not in resource_urls:
+                resource_urls.append(r)
+
+    for resource in resource_urls:
+        resource_id = resource.split("/")[-2]
+
+        # Filename of concat file will be last section of Resource URL, after the period
+        concat_filename = resource.rsplit(".", 1)[-1].replace("/", "") + ".txt"
+
+        # Get the item for the resource - stored in item['id']
+        item = locgov_resource_item_section(resource, "www")
+        # item_id = item['id']  #when ['item']['id'] is a item id (not a loc.gov/item url)
+        item_id = item["id"].split("/")[
+            -2
+        ]  # when ['item']['id'] is a loc.gov/item url (not item id)
+
+        # Get the resources for that item, and find the resource that is this resource
+        # (May be multiple resources per item)
+        # Get the files list for that resource
+        resources = locgov_item_resources(item_id, "www")
+        for r in resources:
+            if resource_id in r["url"]:
+                files = r["files"]
+
+        # Get the expected list of text files matching each TIFF from the files list
+        # Text file should be located at filepath matching TIFF after /master
+        txt_files = []
+        for f in files:
+            for s in f:
+                if s["mimetype"] == "image/tiff":
+                    txt_files.append(
+                        s["url"].rsplit("/master", 1)[-1].replace(".tif", ".txt")
+                    )
+
+        # Path to new concat_file - filepath of first text file, minus the filename of that file,
+        #  adding on concat_filename
+        concat_file = cwd + txt_files[0].rsplit("/", 1)[0] + "/" + concat_filename
+
+        # Open/create the concat file, append each txt file, if it exists
+        # (Some txt files may not exist because there was no content to transcribe)
+        # Each line from txt appended, unless it contains 'crowd.loc.gov'
+        with open(concat_file, "w", encoding="utf-8") as concat_write:
+            attribution = ""
+            for t in txt_files:
+                trans_file = cwd + t
+                if os.path.isfile(trans_file):
+                    with open(trans_file, "r", encoding="utf-8") as trans_file:
+                        for l in trans_file:
+                            if "crowd.loc.gov" in l:
+                                attribution = l
+                                continue
+                            else:
+                                concat_write.write(l)
+            concat_write.write(attribution)
+
+        # Make resource dir if it does not exist - named by resource id, swapping . for -
+        # copy in concat file
+        resource_dir = cwd + "/" + resource_id.replace(".", "-")
+        if not os.path.isdir(resource_dir):
+            os.mkdir(resource_dir)
+            print("making dir: ", resource_dir)
+        new_concat_file = resource_dir + "/" + concat_filename
+        copy = concat_file + " -> " + new_concat_file
+        shutil.copyfile(concat_file, new_concat_file)
+
+        # copy all of the resource's txt files into the new resource dir
+        for t in txt_files:
+            trans_file = cwd + t
+            trans_filename = t.rsplit("/", 1)[-1]
+            new_trans_file = resource_dir + "/" + trans_filename
+            if os.path.isfile(trans_file):
+                copy = trans_file + " -> " + new_trans_file
+                shutil.copyfile(trans_file, new_trans_file)
 
 
 def get_latest_transcription_data(asset_qs):
@@ -155,6 +302,8 @@ def do_bagit_export(assets, export_base_dir, export_filename_base):
         },
     )
 
+    export_dir = export_base_dir + "/data"
+    locgov_create_resources(export_dir)
     # Build .zip file of bagit formatted Campaign Folder
     archive_name = export_base_dir
     shutil.make_archive(archive_name, "zip", export_base_dir)
