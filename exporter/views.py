@@ -35,102 +35,111 @@ def get_locgov_json(url, locgov_server):
         except:
             time.sleep(5)
             pass
-    if 'status' in loc_json and loc_json['status'] == 404:
+    if "status" in loc_json and loc_json["status"] == 404:
         return 404
     return loc_json
 
+
 # Return the Item JSON for a loc.gov /item
 def locgov_item(item, locgov_server):
-    url_start = 'https://%s.loc.gov/item/' % locgov_server
-    url = url_start + item + '/?fo=json&at=item'
+    url_start = "https://%s.loc.gov/item/" % locgov_server
+    url = url_start + item + "/?fo=json&at=item"
     item_json = get_locgov_json(url)
     if item_json == 404:
         return 404
-    return item_json['item']
+    return item_json["item"]
+
 
 # Returns the Resources given an Item URL
 # This should have file data for all files in all of the item's resources
 def locgov_item_resources(item, locgov_server):
-    url_start = 'https://%s.loc.gov/item/' % locgov_server
-    url = url_start + item + '/?fo=json&at=resources'
+    url_start = "https://%s.loc.gov/item/" % locgov_server
+    url = url_start + item + "/?fo=json&at=resources"
     resources_json = get_locgov_json(url, "www")
     if resources_json == 404:
         return 404
-    return resources_json['resources']
+    return resources_json["resources"]
+
 
 # Get the Item for a given Resource
 def locgov_resource_item_section(resource, locgov_server):
-    if not resource.endswith('/'):
-        resource = resource + '/'
-    url = resource + '?fo=json&at=item'
+    if not resource.endswith("/"):
+        resource = resource + "/"
+    url = resource + "?fo=json&at=item"
     item_json = get_locgov_json(url, locgov_server)
 
     if item_json == 404:
         return 404
-    return item_json['item']
+    return item_json["item"]
+
 
 # Script to generate concatinated transcription files, and make resource dirs for receive to CTS
 # Run script in data directory
 # at same level as item-resource-urls.txt
 
+
 def locgov_create_resources(resource_dir):
 
-    #cwd = os.getcwd()
+    # cwd = os.getcwd()
     cwd = resource_dir
-    item_file = os.path.join(cwd, 'item-resource-urls.txt')
+    item_file = os.path.join(cwd, "item-resource-urls.txt")
 
     # resource for txt looks like = 'http://www.loc.gov/resource/mss85943.002514/'
 
     # Resource TXT file has repeated rows - get all unique Resource URLS
     resource_urls = []
-    with open(item_file, 'r', encoding='utf-8') as item_txt:
+    with open(item_file, "r", encoding="utf-8") as item_txt:
         for line in item_txt:
             r = line.strip()
             if r not in resource_urls:
                 resource_urls.append(r)
 
     for resource in resource_urls:
-        resource_id = resource.split('/')[-2]
+        resource_id = resource.split("/")[-2]
 
         # Filename of concat file will be last section of Resource URL, after the period
-        concat_filename = resource.rsplit('.', 1)[-1].replace('/', '') + '.txt'
+        concat_filename = resource.rsplit(".", 1)[-1].replace("/", "") + ".txt"
 
         # Get the item for the resource - stored in item['id']
-        item = locgov_resource_item_section(resource, 'www')
+        item = locgov_resource_item_section(resource, "www")
         # item_id = item['id']  #when ['item']['id'] is a item id (not a loc.gov/item url)
-        item_id = item['id'].split('/')[-2]  #when ['item']['id'] is a loc.gov/item url (not item id)
+        item_id = item["id"].split("/")[
+            -2
+        ]  # when ['item']['id'] is a loc.gov/item url (not item id)
 
         # Get the resources for that item, and find the resource that is this resource
         # (May be multiple resources per item)
         # Get the files list for that resource
-        resources = locgov_item_resources(item_id, 'www')
+        resources = locgov_item_resources(item_id, "www")
         for r in resources:
-            if resource_id in r['url']:
-                files = r['files']
+            if resource_id in r["url"]:
+                files = r["files"]
 
         # Get the expected list of text files matching each TIFF from the files list
         # Text file should be located at filepath matching TIFF after /master
         txt_files = []
         for f in files:
             for s in f:
-                if s['mimetype'] == 'image/tiff':
-                    txt_files.append(s['url'].rsplit('/master', 1)[-1].replace('.tif', '.txt'))
+                if s["mimetype"] == "image/tiff":
+                    txt_files.append(
+                        s["url"].rsplit("/master", 1)[-1].replace(".tif", ".txt")
+                    )
 
         # Path to new concat_file - filepath of first text file, minus the filename of that file,
         #  adding on concat_filename
-        concat_file = cwd + txt_files[0].rsplit('/', 1)[0] + '/' + concat_filename
+        concat_file = cwd + txt_files[0].rsplit("/", 1)[0] + "/" + concat_filename
 
         # Open/create the concat file, append each txt file, if it exists
         # (Some txt files may not exist because there was no content to transcribe)
         # Each line from txt appended, unless it contains 'crowd.loc.gov'
-        with open(concat_file, 'w', encoding='utf-8') as concat_write:
-            attribution = ''
+        with open(concat_file, "w", encoding="utf-8") as concat_write:
+            attribution = ""
             for t in txt_files:
                 trans_file = cwd + t
                 if os.path.isfile(trans_file):
-                    with open(trans_file, 'r', encoding='utf-8') as trans_file:
+                    with open(trans_file, "r", encoding="utf-8") as trans_file:
                         for l in trans_file:
-                            if 'crowd.loc.gov' in l:
+                            if "crowd.loc.gov" in l:
                                 attribution = l
                                 continue
                             else:
@@ -139,21 +148,21 @@ def locgov_create_resources(resource_dir):
 
         # Make resource dir if it does not exist - named by resource id, swapping . for -
         # copy in concat file
-        resource_dir = cwd + '/' + resource_id.replace('.', '-')
+        resource_dir = cwd + "/" + resource_id.replace(".", "-")
         if not os.path.isdir(resource_dir):
             os.mkdir(resource_dir)
-            print('making dir: ', resource_dir)
-        new_concat_file = resource_dir + '/' + concat_filename
-        copy = concat_file + ' -> ' + new_concat_file
+            print("making dir: ", resource_dir)
+        new_concat_file = resource_dir + "/" + concat_filename
+        copy = concat_file + " -> " + new_concat_file
         shutil.copyfile(concat_file, new_concat_file)
 
         # copy all of the resource's txt files into the new resource dir
         for t in txt_files:
             trans_file = cwd + t
-            trans_filename = t.rsplit('/', 1)[-1]
-            new_trans_file = resource_dir + '/' + trans_filename
+            trans_filename = t.rsplit("/", 1)[-1]
+            new_trans_file = resource_dir + "/" + trans_filename
             if os.path.isfile(trans_file):
-                copy = trans_file + ' -> ' + new_trans_file
+                copy = trans_file + " -> " + new_trans_file
                 shutil.copyfile(trans_file, new_trans_file)
 
 
