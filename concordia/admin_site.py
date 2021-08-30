@@ -13,6 +13,7 @@ class ConcordiaAdminSite(admin.AdminSite):
             admin_site_report_view,
             celery_task_review,
             redownload_images_view,
+            process_bagit_view,
         )
 
         urls = super().get_urls()
@@ -25,6 +26,7 @@ class ConcordiaAdminSite(admin.AdminSite):
             path(
                 "redownload-images/", redownload_images_view, name="redownload-images"
             ),
+            path("process-bagit/", process_bagit_view, name="process-bagit"),
         ]
 
         return custom_urls + urls
