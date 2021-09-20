@@ -7,18 +7,26 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('concordia', '0049_auto_20200324_2004'),
+        ("concordia", "0049_auto_20200324_2004"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='project',
-            name='ordering',
-            field=models.IntegerField(default=0, help_text='Sort order override: lower values will be listed first'),
+            model_name="project",
+            name="ordering",
+            field=models.IntegerField(
+                default=0,
+                help_text="Sort order override: lower values will be listed first",
+            ),
         ),
         migrations.AlterField(
-            model_name='tag',
-            name='value',
-            field=models.CharField(max_length=50, validators=[django.core.validators.RegexValidator("^[- _À-ž'\\w]{1,50}$")]),
+            model_name="tag",
+            name="value",
+            field=models.CharField(
+                max_length=50,
+                validators=[
+                    django.core.validators.RegexValidator("^[- _À-ž'\\w]{1,50}$")
+                ],
+            ),
         ),
     ]
