@@ -222,7 +222,7 @@ class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
 
     # todo: add foreignKey link for campaign
     list_display = ("id", "title", "slug", "campaign", "published", "ordering")
-    list_editable = "ordering"
+    list_editable = ("ordering",)
     list_display_links = ("id", "title", "slug")
     prepopulated_fields = {"slug": ("title",)}
     search_fields = ["title", "campaign__title"]
