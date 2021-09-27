@@ -139,11 +139,6 @@ body {
 
 main {
     flex: 1 1 0%;
-    body.view-transcriptions--asset-detail & {
-        @include media-breakpoint-up(md) {
-            flex-basis: 100vh;
-        }
-    }
 }
 
 .close {
@@ -626,6 +621,12 @@ $card-progress-height: 12px;
     padding-bottom: 3px;
 }
 
+#contribute-container {
+    @include media-breakpoint-up(md) {
+        height: calc(100vh - 53px);
+    }
+}
+
 @include media-breakpoint-down(sm) {
     #contribute-container {
         flex-direction: column !important;
@@ -755,6 +756,15 @@ $card-progress-height: 12px;
 /*
  * Tag input on the asset detail page
  */
+#tag-label {
+    [data-toggle="collapse"][aria-expanded="true"] .fas:before {
+        content: "\f146";
+    }
+
+    [data-toggle="collapse"].collapsed .fas:before {
+        content: "\f0fe";
+    }
+}
 
 #current-tags {
     margin: 5px -2px 0;
