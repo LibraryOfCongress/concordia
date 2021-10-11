@@ -876,7 +876,7 @@ class CampaignDetailView(APIDetailView):
                     for key in TranscriptionStatus.CHOICE_MAP
                 }
             )
-            .order_by("ordering", "title", "-not_started_count")
+            .order_by("ordering", "title")
         )
 
         ctx["filters"] = filters = {}
