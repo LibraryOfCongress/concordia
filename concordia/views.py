@@ -816,6 +816,7 @@ class TopicDetailView(APIDetailView):
                     for key in TranscriptionStatus.CHOICE_MAP.keys()
                 }
             )
+            .order_by("campaign", "ordering", "title")
         )
 
         ctx["filters"] = filters = {}
