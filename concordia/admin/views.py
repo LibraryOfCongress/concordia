@@ -31,6 +31,7 @@ from importer.tasks import (
 from importer.utils.excel import slurp_excel
 from concordia.models import Asset, Item, Transcription, TranscriptionStatus
 from django.db.models import OuterRef, Subquery
+from exporter.views import do_bagit_export
 from ..models import Asset, Campaign, Project, SiteReport
 from .forms import (
     AdminProjectBulkImportForm,
