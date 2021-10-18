@@ -29,7 +29,8 @@ from importer.tasks import (
     redownload_image_task,
 )
 from importer.utils.excel import slurp_excel
-
+from concordia.models import Asset, Item, Transcription, TranscriptionStatus
+from django.db.models import OuterRef, Subquery
 from ..models import Asset, Campaign, Project, SiteReport
 from .forms import (
     AdminProjectBulkImportForm,
@@ -315,6 +316,84 @@ def redownload_images_view(request):
     context["form"] = form
 
     return render(request, "admin/redownload_images.html", context)
+
+
+@never_cache
+@staff_member_required
+@permission_required("concordia.add_campaign")
+@permission_required("concordia.change_campaign")
+@permission_required("concordia.add_project")
+@permission_required("concordia.change_project")
+@permission_required("concordia.add_item")
+@permission_required("concordia.change_item")
+def project_level_export(request):
+
+    request.current_app = "admin"
+    context = {"title": "Project Level Exporter"}
+    form = AdminProjectBulkImportForm()
+    context["campaigns"] = all_campaigns = []
+    context["projects"] = all_projects = []
+    id = request.GET.get("id")
+
+    if request.method == "POST":
+
+        project_list = request.POST.getlist("project_name")
+        campaign_slug = request.GET.get("slug")
+
+        item_qs = Item.objects.filter(
+            project__campaign__slug=campaign_slug, project__id__in=project_list
+        )
+        incomplete_item_assets = Asset.objects.filter(
+            item__in=item_qs,
+            transcription_status__in=(
+                TranscriptionStatus.NOT_STARTED,
+                TranscriptionStatus.IN_PROGRESS,
+                TranscriptionStatus.SUBMITTED,
+            ),
+        )
+        item_qs = item_qs.exclude(asset__in=incomplete_item_assets)
+        asset_qs = Asset.objects.filter(item__in=item_qs).order_by(
+            "item__project", "item", "sequence"
+        )
+        item_qs = asset_qs
+
+        latest_trans_subquery = (
+            Transcription.objects.filter(asset=OuterRef("pk"))
+            .order_by("-pk")
+            .values("text")
+        )
+
+        assets = asset_qs.annotate(
+            latest_transcription=Subquery(latest_trans_subquery[:1])
+        )
+
+        export_filename_base = "%s" % (campaign_slug,)
+
+        with tempfile.TemporaryDirectory(
+            prefix=export_filename_base
+        ) as export_base_dir:
+            return do_bagit_export(assets, export_base_dir, export_filename_base)
+
+    if id is not None:
+        context["campaigns"] = []
+        form = AdminProjectBulkImportForm()
+        projects = Project.objects.filter(campaign_id=int(id))
+        for project in projects:
+
+            proj_dict = {}
+            proj_dict["title"] = project.title
+            proj_dict["id"] = project.pk
+            proj_dict["campaign_id"] = id
+            all_projects.append(proj_dict)
+
+    else:
+        context["projects"] = []
+        for campaigns in Campaign.objects.all():
+            all_campaigns.append(campaigns)
+        form = AdminProjectBulkImportForm()
+
+    context["form"] = form
+    return render(request, "admin/project_level_export.html", context)
 
 
 @never_cache

@@ -1,0 +1,88 @@
+{% extends "admin/base.html" %}
+
+{% block messages %}
+{% comment %} This is displayed elswhere {% endcomment %}
+{% endblock messages %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+    .message-error,
+    .message-warning {
+        font-weight: bold;
+    }
+
+    .message-error {
+        color: #dc3545;
+    }
+
+    .message-warning {
+        color: #ffc107;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    {% if campaigns %}
+    <h2>Campaigns</h2>
+    <ul>
+        <table>
+            <thead>
+                <tr>
+                    <th>Campaign Title</th>
+                    <th></th>
+                </tr>
+            </thead>
+            {% for campaign in campaigns %}
+            <tr>
+                <td>{{ campaign.title }}</td>
+                <td><a href="?id={{ campaign.id}}&slug={{ campaign.slug }}">List Projects</a></td>
+            </tr>
+            {% endfor %}
+        </table>
+    </ul>
+
+    {% else %}
+
+    {% if projects %}
+    <span><a href="/admin/project-level-export">All Campaigns</a></span>
+    <h2>Projects</h2>
+    <form method="post" id="registration-form" class="form-register">
+        {% csrf_token %}
+    <ul>
+        <table>
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Project Title</th>
+                    <th></th>
+                </tr>
+            </thead>
+            {% for project in projects %}
+            <tr>
+                <td><input type="checkbox" id="{{project.id}}" name="project_name" value="{{project.id}}"></td>
+                <td>{{ project.title }}</td>
+
+            </tr>
+            {% endfor %}
+        </table>
+        <input type="submit" value="Submit">
+    </ul>
+
+    </form>
+
+    {% endif %}
+    {% endif %}
+    {% if messages %}
+    <h4>Messages</h4>
+    <ul>
+        {% for message in messages %}
+        <li
+            class="message {% if message.level >= DEFAULT_MESSAGE_LEVELS.ERROR %}message-error{% elif message.level >= DEFAULT_MESSAGE_LEVELS.WARNING %}message-warning{% endif %}">
+            {{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+</div>
+{% endblock content %}
