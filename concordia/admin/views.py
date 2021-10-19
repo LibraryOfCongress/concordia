@@ -330,7 +330,7 @@ def redownload_images_view(request):
 def project_level_export(request):
 
     request.current_app = "admin"
-    context = {"title": "Project Level Exporter"}
+    context = {"title": "Project Level Bagit Exporter"}
     form = AdminProjectBulkImportForm()
     context["campaigns"] = all_campaigns = []
     context["projects"] = all_projects = []
