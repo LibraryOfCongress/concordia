@@ -34,5 +34,6 @@ if [ -s $DUMP_FILE ]; then
     aws s3 cp "${DUMP_FILE}" "s3://crowd-deployment/database-dumps/concordia.${TODAY}.dmp"
     aws s3 cp "${DUMP_FILE}" s3://crowd-deployment/database-dumps/concordia.latest.dmp
     aws s3api put-object-tagging --bucket 'crowd-deployment' --key database-dumps/concordia.${TODAY}.dmp --tagging '{"TagSet": [{ "Key": "first-dmp-of-quarter", "Value": "'${TAGVALUE}'" }]}'
+    aws s3api put-object-tagging --bucket 'crowd-deployment' --key database-dumps/concordia.latest.dmp --tagging '{"TagSet": [{ "Key": "first-dmp-of-quarter", "Value": "'${TAGVALUE}'" }]}'
 fi
 echo $?
