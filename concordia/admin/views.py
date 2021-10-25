@@ -341,6 +341,15 @@ def project_level_export(request):
         project_list = request.POST.getlist("project_name")
         campaign_slug = request.GET.get("slug")
 
+        project_qs = Project.objects.filter(
+            id__in=project_list, campaign__slug=campaign_slug
+        )
+
+        proj_titles = "_"
+
+        for proj in project_qs:
+            proj_titles = proj_titles + proj.slug + "_"
+
         item_qs = Item.objects.filter(
             project__campaign__slug=campaign_slug, project__id__in=project_list
         )
@@ -368,7 +377,10 @@ def project_level_export(request):
             latest_transcription=Subquery(latest_trans_subquery[:1])
         )
 
-        export_filename_base = "%s" % (campaign_slug,)
+        export_filename_base = "%s%s" % (
+            campaign_slug,
+            proj_titles,
+        )
 
         with tempfile.TemporaryDirectory(
             prefix=export_filename_base
