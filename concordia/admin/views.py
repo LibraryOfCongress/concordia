@@ -341,14 +341,7 @@ def project_level_export(request):
         project_list = request.POST.getlist("project_name")
         campaign_slug = request.GET.get("slug")
 
-        project_qs = Project.objects.filter(
-            id__in=project_list, campaign__slug=campaign_slug
-        )
-
-        proj_titles = "_"
-
-        for proj in project_qs:
-            proj_titles = proj_titles + proj.slug + "_"
+        proj_titles = "_projects"
 
         item_qs = Item.objects.filter(
             project__campaign__slug=campaign_slug, project__id__in=project_list
