@@ -548,7 +548,10 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
             Campaign.objects.annotate(
                 action_count=Count(
                     "project__item__asset__transcription",
-                    filter=Q(project__item__asset__transcription__user=user),
+                    filter=Q(
+                        project__item__asset__transcription__user=user,
+                        project__item__asset__transcription__reviewed_by=user,
+                    ),
                 ),
                 transcribe_count=Count(
                     "project__item__asset__transcription",
@@ -556,10 +559,10 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
                 ),
                 review_count=Count(
                     "project__item__asset__transcription",
-                    Q(project__item__asset__transcription__reviewed_by=user),
+                    filter=Q(project__item__asset__transcription__reviewed_by=user),
                 ),
             )
-            .exclude(action_count=0)
+            .exclude(action_count=0, review_count=0)
             .order_by("title")
         )
         totalCount = 0
