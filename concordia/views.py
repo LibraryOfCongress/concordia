@@ -305,7 +305,8 @@ def AccountLetterView(request):
         Campaign.objects.annotate(
             action_count=Count(
                 "project__item__asset__transcription",
-                filter=Q(project__item__asset__transcription__user=user),
+                filter=Q(project__item__asset__transcription__user=user)
+                | Q(project__item__asset__transcription__reviewed_by=user),
             ),
             transcribe_count=Count(
                 "project__item__asset__transcription",
@@ -313,7 +314,7 @@ def AccountLetterView(request):
             ),
             review_count=Count(
                 "project__item__asset__transcription",
-                Q(project__item__asset__transcription__reviewed_by=user),
+                filter=Q(project__item__asset__transcription__reviewed_by=user),
             ),
         )
         .exclude(action_count=0)
@@ -483,7 +484,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
     def get_queryset(self):
         transcriptions = Transcription.objects.filter(
             Q(user=self.request.user) | Q(reviewed_by=self.request.user)
-        ).distinct("asset")
+        )
 
         qId = self.request.GET.get("campaign_slug", None)
 
