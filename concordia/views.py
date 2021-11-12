@@ -562,7 +562,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
                     filter=Q(project__item__asset__transcription__reviewed_by=user),
                 ),
             )
-            .exclude(action_count=0, review_count=0)
+            .exclude(transcribe_count=0, review_count=0)
             .order_by("title")
         )
         totalCount = 0
