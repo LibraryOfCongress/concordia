@@ -208,9 +208,9 @@ wish to make available.
 
 #### Data Model Graph
 
-To generate a model graph, make sure that you have GraphViz installed (e.g.
+To generate a model graph, make sure that you have [GraphViz](https://graphviz.org/doc/info/command.html) installed (e.g.
 `brew install graphviz` or `apt-get install graphviz`) and use the
-django-extensions `graph_models` command:
+[django-extensions `graph_models`](https://django-extensions.readthedocs.io/en/latest/graph_models.html) command:
 
 ```bash
 dot -Tsvg <(pipenv run ./manage.py graph_models concordia importer) -o concordia.svg
