@@ -1,9 +1,14 @@
 import uuid
+from logging import getLogger
 
+import boto3
+from django.conf import settings
 from django.contrib import messages
 from django.utils.timezone import now
 
 from ..models import Asset, Transcription, TranscriptionStatus
+
+logger = getLogger(__name__)
 
 
 def anonymize_action(modeladmin, request, queryset):
@@ -19,6 +24,18 @@ def anonymize_action(modeladmin, request, queryset):
 
 
 anonymize_action.short_description = "Anonymize and disable user accounts"
+
+
+def delete_asset_with_s3_delete(modeladmin, request, queryset):
+    s3_client = boto3.client("s3")
+    for asset in queryset:
+        response = s3_client.delete_object(
+            Bucket=settings.S3_BUCKET_NAME, Key=asset.get_storage_url()
+        )
+        logger.info(response)
+
+
+delete_asset_with_s3_delete.short_description = "Delete asset and image files"
 
 
 def publish_item_action(modeladmin, request, queryset):
