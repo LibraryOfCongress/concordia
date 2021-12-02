@@ -33,6 +33,7 @@ def delete_asset_with_s3_delete(modeladmin, request, queryset):
             Bucket=settings.S3_BUCKET_NAME, Key=asset.get_storage_url()
         )
         logger.info(response)
+        asset.delete()
 
 
 delete_asset_with_s3_delete.short_description = "Delete asset and image files"
