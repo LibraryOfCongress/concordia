@@ -475,7 +475,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
     # instances with annotations
     allow_empty = True
     ordering = ("-created_on",)
-    paginate_by = 20
+    paginate_by = 30
 
     def post(self, *args, **kwargs):
         self.object_list = self.get_queryset()
