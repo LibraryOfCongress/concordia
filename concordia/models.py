@@ -109,6 +109,10 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
     def get_absolute_url(self):
         return reverse("transcriptions:campaign-detail", args=(self.slug,))
 
+    def get_storage_url(self):
+        s3_target = "/" + self.slug
+        return s3_target
+
 
 class Topic(models.Model):
     objects = UnlistedPublicationQuerySet.as_manager()
@@ -187,6 +191,10 @@ class Project(MetricsModelMixin("project"), models.Model):
             kwargs={"campaign_slug": self.campaign.slug, "slug": self.slug},
         )
 
+    def get_storage_url(self):
+        s3_target = "/" + self.campaign.slug + "/" + self.slug
+        return s3_target
+
 
 class Item(MetricsModelMixin("item"), models.Model):
     objects = PublicationQuerySet.as_manager()
@@ -225,6 +233,17 @@ class Item(MetricsModelMixin("item"), models.Model):
                 "item_id": self.item_id,
             },
         )
+
+    def get_storage_url(self):
+        s3_target = (
+            "/"
+            + self.project.campaign.slug
+            + "/"
+            + self.project.slug
+            + "/"
+            + self.item_id
+        )
+        return s3_target
 
 
 class AssetQuerySet(PublicationQuerySet):
@@ -300,6 +319,27 @@ class Asset(MetricsModelMixin("asset"), models.Model):
 
     def latest_transcription(self):
         return self.transcription_set.order_by("-pk").first()
+
+    def get_storage_url(self):
+        s3_target = (
+            "/"
+            + self.item.project.campaign.slug
+            + "/"
+            + self.item.project.slug
+            + "/"
+            + self.item.item_id
+            + "/"
+            + self.media_url
+        )
+        return s3_target
+
+    def get_storage_urlv2(self):
+        return "/".join(
+            self.item.project.campaign.slug,
+            self.item.project.slug,
+            self.item.item_id,
+            self.media_url,
+        )
 
 
 class Tag(MetricsModelMixin("tag"), models.Model):
