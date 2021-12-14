@@ -40,6 +40,7 @@ from ..models import (
 from ..views import ReportCampaignView
 from .actions import (
     anonymize_action,
+    delete_asset_with_s3_delete,
     publish_action,
     publish_item_action,
     reopen_asset_action,
@@ -411,6 +412,7 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         unpublish_action,
         export_to_csv_action,
         export_to_excel_action,
+        delete_asset_with_s3_delete,
     )
     autocomplete_fields = ("item",)
     ordering = ("item__item_id", "sequence")

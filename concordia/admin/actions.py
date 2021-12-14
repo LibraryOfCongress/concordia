@@ -27,16 +27,25 @@ anonymize_action.short_description = "Anonymize and disable user accounts"
 
 
 def delete_asset_with_s3_delete(modeladmin, request, queryset):
+
+    # Count the number of assets that will become reopened
+    count = queryset.count()
+
     s3_client = boto3.client("s3")
     for asset in queryset:
         response = s3_client.delete_object(
-            Bucket=settings.S3_BUCKET_NAME, Key=asset.get_storage_url()
+            Bucket=settings.S3_BUCKET_NAME,
+            Key=asset.get_storage_url(),
         )
         logger.info(response)
         asset.delete()
 
+    messages.info(request, f"Deleted {count} assets and S3 objects")
 
-delete_asset_with_s3_delete.short_description = "Delete asset and image files"
+
+delete_asset_with_s3_delete.short_description = (
+    "Delete asset, related FK records, and image files"
+)
 
 
 def publish_item_action(modeladmin, request, queryset):
