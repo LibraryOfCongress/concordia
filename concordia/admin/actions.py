@@ -35,7 +35,7 @@ def delete_asset_with_s3_delete(modeladmin, request, queryset):
     for asset in queryset:
         response = s3_client.delete_object(
             Bucket=settings.S3_BUCKET_NAME,
-            Key=asset.get_storage_url(),
+            Key=asset.get_storage_key(),
         )
         logger.info(response)
         asset.delete()
