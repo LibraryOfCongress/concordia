@@ -342,6 +342,8 @@ def AccountLetterView(request):
     pdf.set_subject("BTP Service Letter")
     pdf.set_keywords("SL Concordia BTP")
     pdf.set_title(title="Service Letter")
+    pdf.set_lang("en-US")
+    pdf.set_producer("Concordia")
     pdf.set_font("Arial", size=11)
     pdf.cell(60, 40, txt="", ln=1, align="L")
     pdf.cell(30, 5, txt="   Library of Congress", ln=1, align="L")
