@@ -8,7 +8,7 @@ from django.contrib.auth import login as auth_login
 from django.contrib.auth.models import Group
 from django.contrib.auth.signals import user_logged_in, user_login_failed
 from django.core.mail import EmailMultiAlternatives
-from django.db.models.signals import post_save
+from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from django.template import loader
 from django_registration.signals import user_activated, user_registered
@@ -159,3 +159,8 @@ def send_asset_reservation_message(
             "sent": time(),
         },
     )
+
+
+@receiver(post_delete, sender=Asset)
+def remove_file_from_s3(sender, instance, using, **kwargs):
+    instance.storage_image.delete(save=False)
