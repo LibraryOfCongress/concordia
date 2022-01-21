@@ -49,7 +49,10 @@ from .actions import (
 from .filters import (
     AcceptedFilter,
     AssetProjectListFilter2,
-    CampaignListFilter,
+    ProjectCampaignListFilter,
+    AssetCampaignListFilter,
+    ItemCampaignListFilter,
+    TranscriptionCampaignListFilter,
     ItemProjectListFilter2,
     RejectedFilter,
     SubmittedFilter,
@@ -227,9 +230,15 @@ class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     list_display_links = ("id", "title", "slug")
     prepopulated_fields = {"slug": ("title",)}
     search_fields = ["title", "campaign__title"]
-    list_filter = ("published", "topics", "campaign")
+    list_filter = ("published", "topics", ProjectCampaignListFilter)
 
     actions = (publish_action, unpublish_action)
+
+    def lookup_allowed(self, key, value):
+        if key in ("campaign__id__exact"):
+            return True
+        else:
+            return super().lookup_allowed(key, value)
 
     def get_urls(self):
         urls = super().get_urls()
@@ -314,11 +323,17 @@ class ItemAdmin(admin.ModelAdmin):
     list_filter = (
         "published",
         "project__topics",
-        "project__campaign",
+        ItemCampaignListFilter,
         ItemProjectListFilter2,
     )
 
     actions = (publish_item_action, unpublish_item_action)
+
+    def lookup_allowed(self, key, value):
+        if key in ("project__campaign__id__exact"):
+            return True
+        else:
+            return super().lookup_allowed(key, value)
 
     def get_deleted_objects(self, objs, request):
 
@@ -401,7 +416,7 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         "transcription_status",
         "published",
         "item__project__topics",
-        CampaignListFilter,
+        AssetCampaignListFilter,
         AssetProjectListFilter2,
         "media_type",
     )
@@ -497,7 +512,7 @@ class TranscriptionAdmin(admin.ModelAdmin):
         SubmittedFilter,
         AcceptedFilter,
         RejectedFilter,
-        "asset__item__project__campaign",
+        TranscriptionCampaignListFilter,
         TranscriptionProjectListFilter,
     )
 
@@ -517,6 +532,12 @@ class TranscriptionAdmin(admin.ModelAdmin):
     )
 
     actions = (export_to_csv_action, export_to_excel_action)
+
+    def lookup_allowed(self, key, value):
+        if key in ("asset__item__project__campaign__id__exact"):
+            return True
+        else:
+            return super().lookup_allowed(key, value)
 
     def truncated_text(self, obj):
         return truncatechars(obj.text, 100)
