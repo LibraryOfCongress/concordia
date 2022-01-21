@@ -302,15 +302,6 @@ class Asset(MetricsModelMixin("asset"), models.Model):
     def latest_transcription(self):
         return self.transcription_set.order_by("-pk").first()
 
-    def get_storage_key(self):
-        s3_target = [
-            self.item.project.campaign.slug,
-            self.item.project.slug,
-            self.item.item_id,
-            self.media_url,
-        ]
-        return "/".join(s3_target)
-
     def get_storage_path(self, filename):
         s3_relative_path = "/".join(
             [
