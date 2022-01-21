@@ -49,6 +49,7 @@ from .actions import (
 from .filters import (
     AcceptedFilter,
     AssetProjectListFilter2,
+    CampaignListFilter,
     ItemProjectListFilter2,
     RejectedFilter,
     SubmittedFilter,
@@ -400,7 +401,7 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         "transcription_status",
         "published",
         "item__project__topics",
-        "item__project__campaign",
+        CampaignListFilter,
         AssetProjectListFilter2,
         "media_type",
     )
@@ -420,7 +421,7 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         return qs.select_related("item").order_by("item__item_id", "sequence")
 
     def lookup_allowed(self, key, value):
-        if key in ("item__project__id__exact"):
+        if key in ("item__project__id__exact", "item__project__campaign__id__exact"):
             return True
         else:
             return super().lookup_allowed(key, value)

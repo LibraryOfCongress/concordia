@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from ..models import Project
+from ..models import Project, Campaign
 
 
 class NullableTimestampFilter(admin.SimpleListFilter):
@@ -44,6 +44,33 @@ class RejectedFilter(NullableTimestampFilter):
     title = "Rejected"
     parameter_name = "rejected"
     lookup_labels = ("Pending", "Rejected")
+
+
+class CampaignListFilter(admin.SimpleListFilter):
+    """
+    Base class for admin campaign campaign filters
+    """
+
+    # Title displayed on the list filter URL
+    title = "Campaigns"
+    # Model field name:
+    parameter_name = "item__project__campaign__id__exact"
+    # Custom attributes
+    project_ref = "item__project__campaign__id__exact"
+
+    def lookups(self, request, model_admin):
+
+        list_of_questions = []
+        queryset = Campaign.objects.order_by("id")
+        for campaign in queryset:
+            list_of_questions.append((str(campaign.id), campaign.title))
+        return sorted(list_of_questions, key=lambda tp: tp[1])
+
+    def queryset(self, request, queryset):
+        fkey_field = self.project_ref
+        if self.value():
+            return queryset.filter(**{fkey_field: self.value()})
+        return queryset
 
 
 class CampaignProjectListFilter(admin.SimpleListFilter):
