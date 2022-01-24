@@ -401,6 +401,13 @@ def import_item(self, import_item):
     asset_urls, item_resource_url = get_asset_urls_from_item_resources(
         import_item.item.metadata.get("resources", [])
     )
+    relative_asset_file_path = "/".join(
+        [
+            import_item.item.project.campaign.slug,
+            import_item.item.project.slug,
+            import_item.item.item_id,
+        ]
+    )
 
     for idx, asset_url in enumerate(asset_urls, start=1):
         asset_title = f"{import_item.item.item_id}-{idx}"
@@ -413,6 +420,7 @@ def import_item(self, import_item):
             media_type=MediaType.IMAGE,
             download_url=asset_url,
             resource_url=item_resource_url,
+            storage_image="/".join([relative_asset_file_path, f"{idx}.jpg"]),
         )
         item_asset.full_clean()
         item_assets.append(item_asset)

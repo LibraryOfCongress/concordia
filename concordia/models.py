@@ -1,3 +1,4 @@
+import os.path
 from logging import getLogger
 
 from django.conf import settings
@@ -300,6 +301,21 @@ class Asset(MetricsModelMixin("asset"), models.Model):
 
     def latest_transcription(self):
         return self.transcription_set.order_by("-pk").first()
+
+    def get_storage_path(self, filename):
+        s3_relative_path = "/".join(
+            [
+                self.item.project.campaign.slug,
+                self.item.project.slug,
+                self.item.item_id,
+            ]
+        )
+        filename = self.media_url
+        return os.path.join(s3_relative_path, filename)
+
+    storage_image = models.ImageField(
+        upload_to=get_storage_path, max_length=255, blank=True, null=True
+    )
 
 
 class Tag(MetricsModelMixin("tag"), models.Model):

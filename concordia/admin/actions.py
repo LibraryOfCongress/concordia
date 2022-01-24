@@ -1,9 +1,12 @@
 import uuid
+from logging import getLogger
 
 from django.contrib import messages
 from django.utils.timezone import now
 
 from ..models import Asset, Transcription, TranscriptionStatus
+
+logger = getLogger(__name__)
 
 
 def anonymize_action(modeladmin, request, queryset):
