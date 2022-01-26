@@ -480,6 +480,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
 
     def post(self, *args, **kwargs):
         self.object_list = self.get_queryset()
+        self.object_list.sort(key=lambda x: x.last_interaction_time, reverse=True)
         return super().post(*args, **kwargs)
 
     def get_queryset(self):
