@@ -353,6 +353,52 @@ def calculate_difficulty_values(asset_qs=None):
     return updated_count
 
 
+# modify above def for storage_image populate
+@celery_app.task
+def populate_storage_image_values(asset_qs=None):
+    """
+    For Assets that existed prior to implementing the storage_image ImageField, build
+     the relative S3 storage key for the asset and update the storage_image value
+    """
+
+    # only fetch assest with no storgae image value
+    asset_qs = (
+        Asset.objects.filter(storage_image__isnull=True)
+        .order_by("title")
+        .prefetch_related("item")
+    )
+
+    updated_count = 0
+
+    # We'll process assets in chunks using an iterator to avoid saving objects
+    # which will never be used again in memory. We will build the S3 relative key for
+    # each existing asset and pass them to bulk_update() to be saved in a single query.
+    for asset_chunk in chunked(asset_qs.iterator(), 3000):
+        changed_assets = []
+
+        for asset in asset_chunk:
+            asset.storage_image = "/".join(
+                [
+                    asset.item.project.campaign.slug,
+                    asset.item.project.slug,
+                    asset.item.item_id,
+                    asset.media_url,
+                ]
+            )
+            changed_assets.append(asset)
+
+        if changed_assets:
+            # We will only save the new storage image value both for performance
+            # and to avoid any possibility of race conditions causing stale data
+            # to be saved:
+            Asset.objects.bulk_update(changed_assets, ["storage_image"])
+            updated_count += len(changed_assets)
+
+        logger.debug("Storage image updated count %s" % updated_count)
+
+    return updated_count
+
+
 @celery_app.task
 def populate_asset_years():
     """
