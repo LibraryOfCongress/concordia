@@ -135,9 +135,9 @@ class SiteCampaignListFilter(admin.SimpleListFilter):
     # Title displayed on the list filter URL
     title = "Campaign"
     # Model field name:
-    parameter_name = "item__project__campaign__id__exact"
+    parameter_name = "campaign__id__exact"
     # Custom attributes
-    project_ref = "item__project__campaign__id__exact"
+    project_ref = "campaign__id__exact"
 
     def lookups(self, request, model_admin):
 
