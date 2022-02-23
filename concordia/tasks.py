@@ -363,9 +363,9 @@ def populate_storage_image_values(asset_qs=None):
 
     # only fetch assest with no storgae image value
     asset_qs = (
-        Asset.objects.filter(storage_image__isnull=True).order_by("id")
-        # .prefetch_related("item__project__campaign")[:20000]
-        .select_related("item__project__campaign")[:25000]
+        Asset.objects.filter(storage_image__isnull=True)
+        .order_by("id")
+        .prefetch_related("item__project__campaign")[:20000]
     )
 
     updated_count = 0
