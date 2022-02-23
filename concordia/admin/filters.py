@@ -127,6 +127,33 @@ class AssetCampaignListFilter(admin.SimpleListFilter):
         return queryset
 
 
+class SiteCampaignListFilter(admin.SimpleListFilter):
+    """
+    Base class for admin campaign filters
+    """
+
+    # Title displayed on the list filter URL
+    title = "Campaign"
+    # Model field name:
+    parameter_name = "campaign__id__exact"
+    # Custom attributes
+    project_ref = "campaign__id__exact"
+
+    def lookups(self, request, model_admin):
+
+        list_of_questions = []
+        queryset = Campaign.objects.order_by("id")
+        for campaign in queryset:
+            list_of_questions.append((str(campaign.id), campaign.title))
+        return sorted(list_of_questions, key=lambda tp: tp[1])
+
+    def queryset(self, request, queryset):
+        fkey_field = self.project_ref
+        if self.value():
+            return queryset.filter(**{fkey_field: self.value()})
+        return queryset
+
+
 class TranscriptionCampaignListFilter(admin.SimpleListFilter):
     """
     Base class for admin campaign filters

@@ -53,6 +53,7 @@ from .filters import (
     AssetCampaignListFilter,
     ItemCampaignListFilter,
     TranscriptionCampaignListFilter,
+    SiteCampaignListFilter,
     ItemProjectListFilter2,
     RejectedFilter,
     SubmittedFilter,
@@ -579,7 +580,7 @@ class SimplePageAdmin(admin.ModelAdmin):
 class SiteReportAdmin(admin.ModelAdmin):
     list_display = ("created_on", "campaign", "topic")
 
-    list_filter = ("campaign", "topic")
+    list_filter = (SiteCampaignListFilter, "topic")
 
     def export_to_csv(self, request, queryset):
         return export_to_csv_action(
