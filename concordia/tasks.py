@@ -364,7 +364,7 @@ def populate_storage_image_values(asset_qs=None):
     asset_qs = (
         Asset.objects.filter(storage_image__isnull=True)
         .order_by("id")
-        .select_related("item__project__campaign")[:30000]
+        .select_related("item__project__campaign")[:20000]
     )
 
     logger.debug("Start storage image chunking")
