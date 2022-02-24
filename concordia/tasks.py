@@ -364,7 +364,7 @@ def populate_storage_image_values(asset_qs=None):
     asset_qs = (
         Asset.objects.filter(storage_image__isnull=True)
         .order_by("id")
-        .select_related("item__project__campaign")[:50000]
+        .select_related("item__project__campaign")[:30000]
     )
 
     logger.debug("Start storage image chunking")
@@ -374,7 +374,7 @@ def populate_storage_image_values(asset_qs=None):
     # We'll process assets in chunks using an iterator to avoid saving objects
     # which will never be used again in memory. We will build the S3 relative key for
     # each existing asset and pass them to bulk_update() to be saved in a single query.
-    for asset_chunk in chunked(asset_qs.iterator(), 3000):
+    for asset_chunk in chunked(asset_qs.iterator(), 2000):
 
         for asset in asset_chunk:
             asset.storage_image = "/".join(
