@@ -147,7 +147,6 @@ class SiteCampaignListFilter(admin.SimpleListFilter):
         queryset = Campaign.objects.order_by("id")
         for campaign in queryset:
             list_of_questions.append((str(campaign.id), campaign.title))
-        list_of_questions.append((str("0"), "-"))
         return sorted(list_of_questions, key=lambda tp: tp[1])
 
     def queryset(self, request, queryset):
