@@ -147,16 +147,14 @@ class SiteCampaignListFilter(admin.SimpleListFilter):
         queryset = Campaign.objects.order_by("id")
         for campaign in queryset:
             list_of_questions.append((str(campaign.id), campaign.title))
-        list_of_questions.append("0", "-")
+        list_of_questions.append((str("0"), "-"))
         return sorted(list_of_questions, key=lambda tp: tp[1])
 
     def queryset(self, request, queryset):
         fkey_field = self.project_ref
         fnull_field = self.null_ref
-        if self.value() != "0":
+        if self.value():
             return queryset.filter(**{fkey_field: self.value()})
-        else:
-            return queryset.filter(**{fnull_field: "True"})
         return queryset
 
 
