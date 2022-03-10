@@ -153,7 +153,7 @@ class SiteCampaignListFilter(admin.SimpleListFilter):
     def queryset(self, request, queryset):
         fkey_field = self.project_ref
         fnull_field = self.null_ref
-        if self.value() != "0":
+        if self.value() != 0:
             return queryset.filter(**{fkey_field: self.value()})
         else:
             return queryset.filter(**{fnull_field: "True"})
