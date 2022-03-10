@@ -138,6 +138,8 @@ class SiteCampaignListFilter(admin.SimpleListFilter):
     parameter_name = "campaign__id__exact"
     # Custom attributes
     project_ref = "campaign__id__exact"
+    # Null attribute
+    null_ref = "campaign_isnull"
 
     def lookups(self, request, model_admin):
 
@@ -145,12 +147,16 @@ class SiteCampaignListFilter(admin.SimpleListFilter):
         queryset = Campaign.objects.order_by("id")
         for campaign in queryset:
             list_of_questions.append((str(campaign.id), campaign.title))
+        list_of_questions.append(True, "-")
         return sorted(list_of_questions, key=lambda tp: tp[1])
 
     def queryset(self, request, queryset):
         fkey_field = self.project_ref
-        if self.value():
+        fnull_field = self.null_ref
+        if self.value() != True:
             return queryset.filter(**{fkey_field: self.value()})
+        else:
+            return queryset.filter(**{fnull_field: self.value()})
         return queryset
 
 
