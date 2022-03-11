@@ -75,7 +75,7 @@ def get_original_asset_id(download_url):
 
 
 def write_distinct_asset_resource_file(assets, export_base_dir):
-    asset_resource_file = os.path.join(export_base_dir, "asset-resource-urls.txt")
+    asset_resource_file = os.path.join(export_base_dir, "item-resource-urls.txt")
 
     with open(asset_resource_file, "a") as f:
 
