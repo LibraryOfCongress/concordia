@@ -440,7 +440,7 @@ def populate_asset_years():
             Asset.objects.bulk_update(changed_assets, ["year"])
             updated_count += len(changed_assets)
 
-    return (updated_count,)
+    return updated_count
 
 
 @celery_app.task
