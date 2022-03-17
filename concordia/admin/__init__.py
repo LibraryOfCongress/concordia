@@ -580,7 +580,7 @@ class SimplePageAdmin(admin.ModelAdmin):
 class SiteReportAdmin(admin.ModelAdmin):
     list_display = ("created_on", "campaign", "topic")
 
-    list_filter = (SiteCampaignListFilter, "topic")
+    list_filter = (SiteCampaignListFilter, "campaign", "topic")
 
     def export_to_csv(self, request, queryset):
         return export_to_csv_action(
