@@ -1,14 +1,14 @@
+import datetime
 import json
 import os
 import re
-import datetime
-from fpdf import FPDF
 from functools import wraps
 from logging import getLogger
 from operator import attrgetter
 from smtplib import SMTPException
 from time import time
 from urllib.parse import urlencode
+
 import markdown
 from captcha.fields import CaptchaField
 from captcha.helpers import captcha_image_url
@@ -43,9 +43,11 @@ from django.views.decorators.vary import vary_on_headers
 from django.views.generic import FormView, ListView, TemplateView
 from django_registration.backends.activation.views import RegistrationView
 from flags.decorators import flag_required
+from fpdf import FPDF
 from ratelimit.decorators import ratelimit
 from ratelimit.mixins import RatelimitMixin
 from ratelimit.utils import is_ratelimited
+
 from concordia.api_views import APIDetailView, APIListView
 from concordia.forms import (
     ActivateAndSetPasswordForm,
@@ -293,7 +295,10 @@ def ratelimit_view(request, exception=None):
 @login_required
 @never_cache
 def AccountLetterView(request):
-    # Generates a transcriptions and reviews contribution pdf letter for the user and downloads it
+    """
+    Generates a transcriptions and reviews contribution pdf letter for the
+    user and downloads it
+    """
     date_today = datetime.datetime.now()
     username = request.user.email
     join_date = request.user.date_joined
@@ -385,15 +390,16 @@ def AccountLetterView(request):
     pdf.cell(
         120,
         5,
-        txt="   by transcribing, tagging and reviewing transcriptions of digitized historical "
-        "documents from ",
+        txt="   by transcribing, tagging and reviewing transcriptions of "
+        "digitized historical documents from ",
         ln=1,
         align="L",
     )
     pdf.cell(
         120,
         5,
-        txt="   the Library's collections. These transcriptions make the content of handwritten and other documents ",
+        txt="   the Library's collections. These transcriptions make the "
+        "content of handwritten and other documents ",
         ln=1,
         align="L",
     )
@@ -414,7 +420,8 @@ def AccountLetterView(request):
     pdf.cell(
         120,
         5,
-        txt="   research, and improve accessibility, including for people with visual or cognitive disabilities. ",
+        txt="   research, and improve accessibility, including for people with visual "
+        "or cognitive disabilities. ",
         ln=1,
         align="L",
     )
@@ -476,7 +483,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
     # presented in the template as a standard paginated list of Asset
     # instances with annotations
     allow_empty = True
-    paginate_by = 30
+    paginate_by = 20
 
     def post(self, *args, **kwargs):
         self.object_list = self.get_queryset()
@@ -486,7 +493,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
     def get_queryset(self):
         transcriptions = Transcription.objects.filter(
             Q(user=self.request.user) | Q(reviewed_by=self.request.user)
-        )
+        ).distinct("asset")
 
         qId = self.request.GET.get("campaign_slug", None)
 
