@@ -85,7 +85,7 @@
                             <tr>
                                 <td></td>
                                 <td>
-                                    <a class="campaign" id={{campaign.id}} href="?campaign_slug={{ campaign.pk }}">{{ campaign.title }}</a>
+                                    <a class="campaign" id={{campaign.id}} href="{{ campaign.get_absolute_url }}">{{ campaign.title }}</a>
                                 </td>
                                 <td>{{ campaign.transcribe_count|intcomma }}</td>
                                 <td>{{ campaign.review_count|intcomma }}</td>
@@ -107,8 +107,8 @@
                         <tr class="text-center">
                             <th>Date</th>
                             <th>Item</th>
-                            <th>Pages</th>
-                            <th>Your Contributions</th>
+                            <th>Page</th>
+                            <th>Your Contribution</th>
                             <th>Current Status</th>
                         </tr>
                     </thead>

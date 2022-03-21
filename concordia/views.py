@@ -511,7 +511,8 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
 
         assets = assets.select_related(
             "item", "item__project", "item__project__campaign"
-        )
+        ).only("item__title", "item__project__campaign__title")
+
         assets = assets.annotate(
             last_transcribed=Max(
                 "transcription__created_on",
