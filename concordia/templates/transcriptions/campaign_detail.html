@@ -25,7 +25,7 @@
             <div class="hero-text">{{ campaign.description|safe }}</div>
         </div>
         <div class="col-md-3">
-            {% if campaign.resource_set.all|length %}
+            {% if campaign.resource_set.order_by("sequence").all|length %}
                 <aside class="mb-3 mt-4 mt-md-0 p-3 bg-light border">
                     <h4 class="mb-3">Related Links</h4>
                     <ul class="list-unstyled m-0">

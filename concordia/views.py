@@ -856,9 +856,9 @@ class TopicDetailView(APIDetailView):
     def serialize_context(self, context):
         ctx = super().serialize_context(context)
         ctx["object"]["related_links"] = [
-            {"title": title, "url": url}
-            for title, url in self.object.resource_set.values_list(
-                "title", "resource_url"
+            {"title": title, "url": url, "sequence": sequence}
+            for title, url, sequence in self.object.resource_set.values_list(
+                "title", "resource_url", "sequence"
             )
         ]
         return ctx
