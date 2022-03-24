@@ -85,7 +85,7 @@
                             <tr>
                                 <td></td>
                                 <td>
-                                    <a class="campaign" id={{campaign.id}} href="{{ campaign.get_absolute_url }}">{{ campaign.title }}</a>
+                                    <a class="campaign" id={{campaign.id}} href="?campaign_slug={{ campaign.id }}">{{ campaign.title }}</a>
                                 </td>
                                 <td>{{ campaign.transcribe_count|intcomma }}</td>
                                 <td>{{ campaign.review_count|intcomma }}</td>
@@ -128,7 +128,9 @@
                     </tbody>
                 </table>
 
-                <div>{% include "fragments/standard-pagination.html" %}</div>
+                <div class="row">
+                    {% include "fragments/standard-pagination.html" %}
+                </div>
             </div>
         </div>
     {% endif %}
