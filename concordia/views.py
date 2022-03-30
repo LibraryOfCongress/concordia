@@ -483,7 +483,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
     # presented in the template as a standard paginated list of Asset
     # instances with annotations
     allow_empty = True
-    # paginate_by = 30
+    paginate_by = 30
 
     def post(self, *args, **kwargs):
         self.object_list = self.get_queryset()
