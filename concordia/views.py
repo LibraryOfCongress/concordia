@@ -487,13 +487,12 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
 
     def post(self, *args, **kwargs):
         self.object_list = self.get_queryset()
-        self.object_list.sort(key=lambda x: x.last_interaction_time, reverse=True)
         return super().post(*args, **kwargs)
 
     def get_queryset(self):
         transcriptions = Transcription.objects.filter(
             Q(user=self.request.user) | Q(reviewed_by=self.request.user)
-        )
+        ).distinct("asset")
 
         qId = self.request.GET.get("campaign_slug", None)
 
@@ -502,11 +501,11 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
             assets = Asset.objects.filter(
                 transcription__in=transcriptions,
                 item__project__campaign__pk=campaignSlug,
-            ).order_by("-last_transcribed", "-last_reviewed", "-id")
+            ).order_by("-latest_date", "-id")
         else:
             campaignSlug = -1
             assets = Asset.objects.filter(transcription__in=transcriptions).order_by(
-                "-last_transcribed", "-last_reviewed", "-id"
+                "-latest_date", "-id"
             )
 
         assets = assets.select_related(
@@ -521,6 +520,11 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
             last_reviewed=Max(
                 "transcription__updated_on",
                 filter=Q(transcription__reviewed_by=self.request.user),
+            ),
+            latest_date=Max(
+                "transcription__updated_on",
+                filter=Q(transcription__user=self.request.user)
+                | Q(transcription__reviewed_by=self.request.user),
             ),
         )
         return assets
