@@ -514,7 +514,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
 
         assets = assets.annotate(
             last_transcribed=Max(
-                "transcription__updated_on",
+                "transcription__created_on",
                 filter=Q(transcription__user=self.request.user),
             ),
             last_reviewed=Max(
