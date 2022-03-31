@@ -28,6 +28,7 @@ from django.core.mail import EmailMultiAlternatives, send_mail
 from django.core.paginator import Paginator
 from django.db import connection
 from django.db.models import Case, Count, IntegerField, Max, OuterRef, Q, Subquery, When
+from django.db.models.functions import Greatest
 from django.db.transaction import atomic
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -501,11 +502,11 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
             assets = Asset.objects.filter(
                 transcription__in=transcriptions,
                 item__project__campaign__pk=campaignSlug,
-            ).order_by("-latest_date", "-id")
+            ).order_by("-latest_activity", "-id")
         else:
             campaignSlug = -1
             assets = Asset.objects.filter(transcription__in=transcriptions).order_by(
-                "-latest_date", "-id"
+                "-latest_activity", "-id"
             )
 
         assets = assets.select_related(
@@ -521,8 +522,9 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
                 "transcription__updated_on",
                 filter=Q(transcription__reviewed_by=self.request.user),
             ),
-            latest_date=Max(
-                "transcription__updated_on",
+            latest_activity=Greatest(
+                "last_transcribed",
+                "last_reviewed",
                 filter=Q(transcription__user=self.request.user)
                 | Q(transcription__reviewed_by=self.request.user),
             ),
@@ -544,10 +546,8 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         for asset in obj_list:
 
             if asset.last_reviewed:
-                asset.last_interaction_time = asset.last_reviewed
                 asset.last_interaction_type = "reviewed"
             else:
-                asset.last_interaction_time = asset.last_transcribed
                 asset.last_interaction_type = "transcribed"
 
             if int(campaignSlug) == -1:
@@ -557,7 +557,6 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
                     object_list.append((asset))
 
         user = self.request.user
-        object_list.sort(key=lambda x: x.last_interaction_time, reverse=True)
 
         contributed_campaigns = (
             Campaign.objects.annotate(
