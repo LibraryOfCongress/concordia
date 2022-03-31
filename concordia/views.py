@@ -493,7 +493,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
     def get_queryset(self):
         transcriptions = Transcription.objects.filter(
             Q(user=self.request.user) | Q(reviewed_by=self.request.user)
-        ).distinct("asset")
+        )
 
         qId = self.request.GET.get("campaign_slug", None)
 
@@ -860,7 +860,7 @@ class TopicDetailView(APIDetailView):
         ctx = super().serialize_context(context)
         ctx["object"]["related_links"] = [
             {"title": title, "url": url}
-            for title, url in self.object.resource_set.values_list(
+            for title, url, sequence in self.object.resource_set.values_list(
                 "title", "resource_url"
             )
         ]
