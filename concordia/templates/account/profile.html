@@ -118,7 +118,7 @@
 
 
                             <tr class={{asset.item.project.campaign.id}}>
-                                <td><abbr title="{{ asset.last_interaction_time|date:'SHORT_DATE_FORMAT' }}">{{ asset.last_interaction_time }}</abbr></td>
+                                <td><abbr title="{{ asset.latest_activity|date:'SHORT_DATE_FORMAT' }}">{{ asset.latest_activity }}</abbr></td>
                                 <td><a href="{{ asset.item.get_absolute_url }}">{{ asset.item.title }}</a></td>
                                 <td class="text-right"><a href="{{ asset.get_absolute_url }}">{{ asset.sequence }}</a></td>
                                 <td>{{ asset.last_interaction_type.title }}</td>
