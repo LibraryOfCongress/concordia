@@ -483,11 +483,10 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
     # presented in the template as a standard paginated list of Asset
     # instances with annotations
     allow_empty = True
-    paginate_by = 30
+    paginate_by = 12
 
     def post(self, *args, **kwargs):
         self.object_list = self.get_queryset()
-        self.object_list.sort(key=lambda x: x.last_interaction_time, reverse=True)
         return super().post(*args, **kwargs)
 
     def get_queryset(self):
@@ -502,16 +501,17 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
             assets = Asset.objects.filter(
                 transcription__in=transcriptions,
                 item__project__campaign__pk=campaignSlug,
-            ).order_by("-last_transcribed")
+            ).order_by("-latest_date", "-id")
         else:
             campaignSlug = -1
             assets = Asset.objects.filter(transcription__in=transcriptions).order_by(
-                "-last_transcribed"
+                "-latest_date", "-id"
             )
 
         assets = assets.select_related(
             "item", "item__project", "item__project__campaign"
         )
+
         assets = assets.annotate(
             last_transcribed=Max(
                 "transcription__created_on",
@@ -520,6 +520,11 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
             last_reviewed=Max(
                 "transcription__updated_on",
                 filter=Q(transcription__reviewed_by=self.request.user),
+            ),
+            latest_date=Max(
+                "transcription__updated_on",
+                filter=Q(transcription__user=self.request.user)
+                | Q(transcription__reviewed_by=self.request.user),
             ),
         )
         return assets
