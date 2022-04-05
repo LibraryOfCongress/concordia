@@ -296,7 +296,7 @@ AUTHENTICATION_BACKENDS = [
 CAPTCHA_CHALLENGE_FUNCT = "captcha.helpers.random_char_challenge"
 #: Anonymous sessions require captcha validation every day by default:
 ANONYMOUS_CAPTCHA_VALIDATION_INTERVAL = 86400
-CAPTCHA_IMAGE_SIZE = [150, 150]
+CAPTCHA_IMAGE_SIZE = [150, 100]
 CAPTCHA_FONT_SIZE = 40
 
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
