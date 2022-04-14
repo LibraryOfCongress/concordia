@@ -29,7 +29,7 @@
                 <aside class="mb-3 mt-4 mt-md-0 p-3 bg-light border">
                     <h4 class="mb-3">Related Links</h4>
                     <ul class="list-unstyled m-0">
-                        {% for resource in campaign.resource_set.order_by("-sequence").all %}
+                        {% for resource in campaign.resource_set.all %}
                         {% if 'loc.gov' in resource.resource_url   %}
                             <li class="mb-3"><a href="{{ resource.resource_url }}" target="_blank">{{ resource.title }}</a></li>
                         {%else%}
