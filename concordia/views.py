@@ -921,7 +921,7 @@ class CampaignDetailView(APIDetailView):
         ctx = super().serialize_context(context)
         ctx["object"]["related_links"] = [
             {"title": title, "url": url}
-            for title, url in self.object.resource_set.values_list(
+            for title, url in self.object.resource_set.order_by("sequence").values_list(
                 "title", "resource_url"
             )
         ]
