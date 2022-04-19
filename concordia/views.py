@@ -28,6 +28,7 @@ from django.core.mail import EmailMultiAlternatives, send_mail
 from django.core.paginator import Paginator
 from django.db import connection
 from django.db.models import Case, Count, IntegerField, Max, OuterRef, Q, Subquery, When
+from django.db.models.functions import Greatest
 from django.db.transaction import atomic
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -297,6 +298,7 @@ def ratelimit_view(request, exception=None):
 def AccountLetterView(request):
     # Generates a transcriptions and reviews contribution pdf letter
     # for the user and downloads it
+
     date_today = datetime.datetime.now()
     username = request.user.email
     join_date = request.user.date_joined
@@ -481,11 +483,10 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
     # presented in the template as a standard paginated list of Asset
     # instances with annotations
     allow_empty = True
-    paginate_by = 30
+    paginate_by = 12
 
     def post(self, *args, **kwargs):
         self.object_list = self.get_queryset()
-        self.object_list.sort(key=lambda x: x.last_interaction_time, reverse=True)
         return super().post(*args, **kwargs)
 
     def get_queryset(self):
@@ -500,16 +501,17 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
             assets = Asset.objects.filter(
                 transcription__in=transcriptions,
                 item__project__campaign__pk=campaignSlug,
-            ).order_by("-last_transcribed")
+            ).order_by("-latest_activity", "-id")
         else:
             campaignSlug = -1
             assets = Asset.objects.filter(transcription__in=transcriptions).order_by(
-                "-last_transcribed"
+                "-latest_activity", "-id"
             )
 
         assets = assets.select_related(
             "item", "item__project", "item__project__campaign"
         )
+
         assets = assets.annotate(
             last_transcribed=Max(
                 "transcription__created_on",
@@ -518,6 +520,12 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
             last_reviewed=Max(
                 "transcription__updated_on",
                 filter=Q(transcription__reviewed_by=self.request.user),
+            ),
+            latest_activity=Greatest(
+                "last_transcribed",
+                "last_reviewed",
+                filter=Q(transcription__user=self.request.user)
+                | Q(transcription__reviewed_by=self.request.user),
             ),
         )
         return assets
@@ -537,10 +545,8 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         for asset in obj_list:
 
             if asset.last_reviewed:
-                asset.last_interaction_time = asset.last_reviewed
                 asset.last_interaction_type = "reviewed"
             else:
-                asset.last_interaction_time = asset.last_transcribed
                 asset.last_interaction_type = "transcribed"
 
             if int(campaignSlug) == -1:
@@ -550,7 +556,6 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
                     object_list.append((asset))
 
         user = self.request.user
-        object_list.sort(key=lambda x: x.last_interaction_time, reverse=True)
 
         contributed_campaigns = (
             Campaign.objects.annotate(

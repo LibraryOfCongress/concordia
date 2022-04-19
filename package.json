@@ -23,14 +23,14 @@
         "codemirror": "^5.58.2",
         "jquery": "^3.5.1",
         "js-cookie": "^2.2.1",
-        "node-sass": "^7.0.0",
+        "node-sass": "^7.0.1",
         "openseadragon": "^2.4.2",
         "popper.js": "^1.16.1",
         "redom": "^3.27.1",
         "remarkable": "^2.0.1",
         "screenfull": "^5.1.0",
         "split.js": "^1.6.2",
-        "urijs": "^1.19.10"
+        "urijs": "^1.19.11"
     },
     "name": "concordia",
     "version": "1.0.0",
