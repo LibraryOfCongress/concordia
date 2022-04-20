@@ -48,15 +48,17 @@ from .actions import (
 )
 from .filters import (
     AcceptedFilter,
-    AssetProjectListFilter2,
-    ProjectCampaignListFilter,
     AssetCampaignListFilter,
+    AssetProjectListFilter2,
     ItemCampaignListFilter,
-    TranscriptionCampaignListFilter,
-    SiteCampaignListFilter,
     ItemProjectListFilter2,
+    ProjectCampaignListFilter,
     RejectedFilter,
+    ResourceCampaignListFilter,
+    SiteCampaignListFilter,
+    SiteCampaignNullListFilter,
     SubmittedFilter,
+    TranscriptionCampaignListFilter,
     TranscriptionProjectListFilter,
 )
 from .forms import (
@@ -200,6 +202,7 @@ class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
 class ResourceAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     list_display = ("campaign", "topic", "sequence", "title", "resource_url")
     list_display_links = ("campaign", "topic", "sequence", "title")
+    list_filter = (ResourceCampaignListFilter, "title")
 
 
 @admin.register(Topic)
@@ -580,7 +583,7 @@ class SimplePageAdmin(admin.ModelAdmin):
 class SiteReportAdmin(admin.ModelAdmin):
     list_display = ("created_on", "campaign", "topic")
 
-    list_filter = (SiteCampaignListFilter, "campaign", "topic")
+    list_filter = (SiteCampaignNullListFilter, "topic", SiteCampaignListFilter)
 
     def export_to_csv(self, request, queryset):
         return export_to_csv_action(
