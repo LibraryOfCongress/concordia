@@ -144,7 +144,7 @@ class SiteCampaignListFilter(admin.SimpleListFilter):
 
 class ResourceCampaignListFilter(admin.SimpleListFilter):
     """
-    Class for Site Report campaign isNull filter
+    Base class for admin campaign filters
     """
 
     # Title displayed on the list filter URL
