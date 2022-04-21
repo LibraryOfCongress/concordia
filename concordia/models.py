@@ -150,6 +150,9 @@ class Resource(MetricsModelMixin("resource"), models.Model):
     )
     topic = models.ForeignKey(Topic, on_delete=models.CASCADE, blank=True, null=True)
 
+    class Meta:
+        ordering = ("sequence",)
+
     def __str__(self):
         return self.title
 

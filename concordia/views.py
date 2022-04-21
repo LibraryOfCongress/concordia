@@ -1,14 +1,14 @@
+import datetime
 import json
 import os
 import re
-import datetime
-from fpdf import FPDF
 from functools import wraps
 from logging import getLogger
 from operator import attrgetter
 from smtplib import SMTPException
 from time import time
 from urllib.parse import urlencode
+
 import markdown
 from captcha.fields import CaptchaField
 from captcha.helpers import captcha_image_url
@@ -28,6 +28,7 @@ from django.core.mail import EmailMultiAlternatives, send_mail
 from django.core.paginator import Paginator
 from django.db import connection
 from django.db.models import Case, Count, IntegerField, Max, OuterRef, Q, Subquery, When
+from django.db.models.functions import Greatest
 from django.db.transaction import atomic
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -43,9 +44,11 @@ from django.views.decorators.vary import vary_on_headers
 from django.views.generic import FormView, ListView, TemplateView
 from django_registration.backends.activation.views import RegistrationView
 from flags.decorators import flag_required
+from fpdf import FPDF
 from ratelimit.decorators import ratelimit
 from ratelimit.mixins import RatelimitMixin
 from ratelimit.utils import is_ratelimited
+
 from concordia.api_views import APIDetailView, APIListView
 from concordia.forms import (
     ActivateAndSetPasswordForm,
@@ -293,7 +296,9 @@ def ratelimit_view(request, exception=None):
 @login_required
 @never_cache
 def AccountLetterView(request):
-    # Generates a transcriptions and reviews contribution pdf letter for the user and downloads it
+    # Generates a transcriptions and reviews contribution pdf letter
+    # for the user and downloads it
+
     date_today = datetime.datetime.now()
     username = request.user.email
     join_date = request.user.date_joined
@@ -385,15 +390,16 @@ def AccountLetterView(request):
     pdf.cell(
         120,
         5,
-        txt="   by transcribing, tagging and reviewing transcriptions of digitized historical "
-        "documents from ",
+        txt="   by transcribing, tagging and reviewing transcriptions of "
+        "digitized historical documents from ",
         ln=1,
         align="L",
     )
     pdf.cell(
         120,
         5,
-        txt="   the Library's collections. These transcriptions make the content of handwritten and other documents ",
+        txt="   the Library's collections. These transcriptions make the "
+        "content of handwritten and other documents ",
         ln=1,
         align="L",
     )
@@ -414,7 +420,8 @@ def AccountLetterView(request):
     pdf.cell(
         120,
         5,
-        txt="   research, and improve accessibility, including for people with visual or cognitive disabilities. ",
+        txt="   research, and improve accessibility, including for people with visual "
+        "or cognitive disabilities. ",
         ln=1,
         align="L",
     )
@@ -476,11 +483,10 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
     # presented in the template as a standard paginated list of Asset
     # instances with annotations
     allow_empty = True
-    paginate_by = 30
+    paginate_by = 12
 
     def post(self, *args, **kwargs):
         self.object_list = self.get_queryset()
-        self.object_list.sort(key=lambda x: x.last_interaction_time, reverse=True)
         return super().post(*args, **kwargs)
 
     def get_queryset(self):
@@ -495,16 +501,17 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
             assets = Asset.objects.filter(
                 transcription__in=transcriptions,
                 item__project__campaign__pk=campaignSlug,
-            ).order_by("-last_transcribed")
+            ).order_by("-latest_activity", "-id")
         else:
             campaignSlug = -1
             assets = Asset.objects.filter(transcription__in=transcriptions).order_by(
-                "-last_transcribed"
+                "-latest_activity", "-id"
             )
 
         assets = assets.select_related(
             "item", "item__project", "item__project__campaign"
         )
+
         assets = assets.annotate(
             last_transcribed=Max(
                 "transcription__created_on",
@@ -513,6 +520,12 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
             last_reviewed=Max(
                 "transcription__updated_on",
                 filter=Q(transcription__reviewed_by=self.request.user),
+            ),
+            latest_activity=Greatest(
+                "last_transcribed",
+                "last_reviewed",
+                filter=Q(transcription__user=self.request.user)
+                | Q(transcription__reviewed_by=self.request.user),
             ),
         )
         return assets
@@ -532,10 +545,8 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         for asset in obj_list:
 
             if asset.last_reviewed:
-                asset.last_interaction_time = asset.last_reviewed
                 asset.last_interaction_type = "reviewed"
             else:
-                asset.last_interaction_time = asset.last_transcribed
                 asset.last_interaction_type = "transcribed"
 
             if int(campaignSlug) == -1:
@@ -545,7 +556,6 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
                     object_list.append((asset))
 
         user = self.request.user
-        object_list.sort(key=lambda x: x.last_interaction_time, reverse=True)
 
         contributed_campaigns = (
             Campaign.objects.annotate(
@@ -849,7 +859,7 @@ class TopicDetailView(APIDetailView):
         ctx = super().serialize_context(context)
         ctx["object"]["related_links"] = [
             {"title": title, "url": url}
-            for title, url in self.object.resource_set.values_list(
+            for title, url, sequence in self.object.resource_set.values_list(
                 "title", "resource_url"
             )
         ]

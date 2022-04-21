@@ -44,9 +44,8 @@ services:
         volumes:
             - .:/app
             - images_volume:/concordia_images
-        links:
-            - redis
-            - db
+        networks:
+            - default
         ports:
             - 80:80
 
@@ -59,9 +58,8 @@ services:
         depends_on:
             - redis
             - db
-        links:
-            - redis
-            - db
+        networks:
+            - default
         volumes:
             - images_volume:/concordia_images
 
@@ -74,9 +72,12 @@ services:
         depends_on:
             - redis
             - db
-        links:
-            - redis
+        networks:
+            - default
 
 volumes:
     db_volume:
     images_volume:
+
+networks:
+    default:

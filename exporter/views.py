@@ -74,31 +74,29 @@ def get_original_asset_id(download_url):
         return download_url
 
 
-def write_item_resource_file(assets, export_base_dir):
-    item_resource_file = os.path.join(export_base_dir, "item-resource-urls.txt")
+def write_distinct_asset_resource_file(assets, export_base_dir):
+    asset_resource_file = os.path.join(export_base_dir, "item-resource-urls.txt")
 
-    with open(item_resource_file, "a") as f:
+    with open(asset_resource_file, "a") as f:
 
-        # Find the URL for the item that starts with http://www.loc.gov/resource/
-        items = Item.objects.filter(asset__in=assets)
+        # write to file a list of distinct resource_url values for the selected assets
+        distinct_resource_urls = (
+            Asset.objects.filter(pk__in=assets)
+            .order_by("resource_url")
+            .values_list("resource_url", flat=True)
+            .distinct("resource_url")
+        )
 
-        for item in items:
-            item_resource_url = ""
-            if item.metadata:
-                for item_url in item.metadata["item"]["aka"]:
-                    if "http://www.loc.gov/resource/" in item_url:
-                        item_resource_url = item_url
-                        break
-
-                if item_resource_url != "":
-                    f.write(item_resource_url)
-                    f.write("\n")
-                else:
-                    logger.error(
-                        "Could not determine item resource URL for item %s",
-                        item.item_id,
-                    )
-                    raise AssertionError
+        for url in distinct_resource_urls:
+            if url:
+                f.write(url)
+                f.write("\n")
+            else:
+                logger.error(
+                    "No resource URL found for asset %s",
+                    assets.title,
+                )
+                raise AssertionError
 
 
 def do_bagit_export(assets, export_base_dir, export_filename_base):
@@ -138,7 +136,7 @@ def do_bagit_export(assets, export_base_dir, export_filename_base):
                     f.write("\n\n")
                     f.write(settings.ATTRIBUTION_TEXT)
 
-    write_item_resource_file(assets, export_base_dir)
+    write_distinct_asset_resource_file(assets, export_base_dir)
 
     # Turn Structure into bagit format
     bagit.make_bag(
@@ -202,6 +200,7 @@ class ExportCampaignToCSV(TemplateView):
                 "item__title",
                 "item__item_id",
                 "title",
+                "id",
                 "transcription_status",
                 "download_url",
                 "latest_transcription",
@@ -213,6 +212,7 @@ class ExportCampaignToCSV(TemplateView):
                 "item__item_id": "ItemId",
                 "item_id": "ItemId",
                 "title": "Asset",
+                "id": "AssetId",
                 "transcription_status": "AssetStatus",
                 "download_url": "DownloadUrl",
                 "latest_transcription": "Transcription",
