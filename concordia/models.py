@@ -508,7 +508,7 @@ class SiteReport(models.Model):
     users_activated = models.IntegerField(blank=True, null=True)
 
     class Meta:
-        ordering = ("created_on",)
+        ordering = ("-created_on",)
 
     # We have several places where these are exported as CSV/Excel. By default
     # the ORM will be told to retrieve these fields & lookups:
