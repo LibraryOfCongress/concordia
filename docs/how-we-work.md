@@ -2,9 +2,9 @@
 
 ## Principles
 
-Our basic principles are those familiar to anybody who has contributed to a prominent open source project, or deployed code in a modern software environment:
+Our basic principles are:
 
--   We produce open source software, created and maintained in repositories where it may be inspected by the public who places their trust in it and copied for use by other agencies or institutions.
+-   We produce open source software, shared in repositories where it may be inspected by the public who places their trust in it and copied for use by other agencies or institutions.
 -   We adhere to the basic practices of agile software development, using the Scrum development framework.
 -   We practice human-centered design. Everything that we produce is highly accessible, per [WCAG 2.1](https://www.w3.org/TR/WCAG21/).
 -   Finally, we believe in having the relevant decision-makers at the table during all meetings, to maximize efficiency and maintain momentum.
@@ -27,12 +27,10 @@ This team participates in stand ups, product alignment, backlog grooming and ret
 
 Each sprint is three weeks long. We have a sprint kick off the first day of the new sprint. There are five basic meeting rhythms:
 
--   **Backlog grooming and Sprint Planning Monday at 1:00 – 3:30 pm**
+-   **Backlog grooming and Sprint Planning, every 2 weeks**
     -   Structure: tickets in the backlog are sorted by priority, the team adds acceptance criteria, estimates size, and assigns the tasks to a team member.
--   **Demo and retrospectives are held on every three weeks on Monday at 1:00 - 2:00 pm**
+-   **Demo and retrospectives, every 2 weeks**
     -   At the end of each sprint, Developers or content writers demo completed work in the sprint for the larger library stakeholders. During demo, we will confirm if the user acceptance criteria is met and moved to be tested. Following the demo, the team will go through a retrospective. These are held back-to-back, on the same day
-
-All meetings are held in person, on Slack or WebEx, a video teleconference application.
 
 ## Definition of Done
 
@@ -74,7 +72,7 @@ Testers will identify issues - HIGH, LOW, or NONE. Here are the criteria for eac
 -   FAIL: Does not meet the acceptace criteria and can not complete the acceptance test.
 -   PASS: Does meet both acceptace criteria and and acceptance tests. When a ticket passes but there are noticable opportunities for improvements or enhancements, close the ticket and create a new ticket and add to the backlog. 
 
-If all user acceptance criteria has been met, the ticket will be closed and moved to done.
+If all user acceptance criteria has been met, the ticket will be closed and moved to Done column.
 
 Final step: Technical lead will create a release with all tickets that are done.
 
@@ -91,7 +89,7 @@ If a FAIL issue needs to be addressed, tester should expect to be available to r
 
 **For a new feature ticket:**
 
-1. Ticket is generated as an issue and placed in the backlog in GitHub
+1. Ticket is generated as an issue and placed in the backlog
 2. Product owner will place priority tickets in a sprint
 3. Product Manager will ensure all acceptance criteria has been articulated and assign developer
 4. Developer will move to In Progress when ticket is being worked on
