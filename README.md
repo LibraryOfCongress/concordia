@@ -13,6 +13,8 @@ Concordia leverages the [LOC’s API](https://libraryofcongress.github.io/data-e
 
 The Library of Congress publishes Concordia-created transcriptions on [loc.gov](https://www.loc.gov/) to improve search, readability, and access to handwritten and typed documents. Individual transcriptions are published alongside the transcribed images in digital collections and transcriptions are also published in bulk as [datasets](https://www.loc.gov/search/?fa=contributor:by+the+people+%28program%29).
 
+Concordia code and the By the People transcriptions are released into the public domain. Anyone is free to use or reuse the data. [More info on our licensing page](https://github.com/LibraryOfCongress/concordia/blob/main/LICENSE.md).
+
 _Concordia and By the People are supported by the National Digital Library Trust Fund._
 
 ## Want to help?
