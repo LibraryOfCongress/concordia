@@ -3,15 +3,17 @@
 
 # Welcome to Concordia
 
-Concordia is a platform developed by the Library of Congress (LOC) for crowdsourcing transcription and tagging of text in digitized images. The first iteration of Concordia was launched as crowd.loc.gov in the autumn of 2018.
+Concordia is a platform developed by the Library of Congress (LOC) for crowdsourcing transcription and tagging of text in digitized images with the dual goals of collection enhancement and public engagement. Concordia is a user-centered project centering the principles of trust and approachability. [Read our full design principles here](https://github.com/LibraryOfCongress/concordia/blob/master/docs/design-principles.md).
 
-The application asks volunteers to transcribe and tag digitized images of manuscripts and typed materials from the Library’s collections that cannot be translated well by optical character recognition (OCR). All transcriptions are made by volunteers and reviewed by volunteers. The completed transcriptions will be returned to back to [loc.gov](https://www.loc.gov/) to improve search, readability, and access to handwritten and typed documents.
+LOC launched the first iteration of Concordia as [By the People at crowd.loc.gov](https://crowd.loc.gov/) in October 2018.
 
-Concordia is a user-centered project centering the principles of trust and approachability. [Read our full design principles here](https://github.com/LibraryOfCongress/concordia/blob/master/docs/design-principles.md).
+The application invites volunteers to transcribe and tag digitized images of manuscripts and typed materials from the Library’s collections. All transcriptions are made by volunteers and reviewed by volunteers. It takes at least one volunteer to transcribe a page and at least one other volunteer to review and mark it complete. Some complex documents may pass through both transcription and review many times before they are accepted as complete. 
 
-Concordia leverages the [LOC’s API](https://libraryofcongress.github.io/data-exploration/) to pull materials from the Library's catalog. In future developments, completed transcriptions will be exported as a single document, in bulk by item, project or campaign, or as BagIt bags.
+Concordia leverages the [LOC’s API](https://libraryofcongress.github.io/data-exploration/) to pull materials from the Library's catalog. Completed transcriptions can be exported out of the application in a single CSV or individual TXT files in a BagIt bag. 
 
-_Concordia and crowd.loc.gov are supported by the National Digital Library Trust Fund._
+The Library of Congress publishes Concordia-created transcriptions on [loc.gov](https://www.loc.gov/) to improve search, readability, and access to handwritten and typed documents. Individual transcriptions are published alongside the transcribed images in digital collections and transcriptions are also published in bulk as [datasets](https://www.loc.gov/search/?fa=contributor:by+the+people+%28program%29).
+
+_Concordia and By the People are supported by the National Digital Library Trust Fund._
 
 ## Want to help?
 
