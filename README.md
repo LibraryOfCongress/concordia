@@ -15,6 +15,8 @@ The Library of Congress publishes transcriptions created by volunteers through C
 
 Concordia code and the By the People transcriptions are released into the public domain. Anyone is free to use or reuse the data. [More info on our licensing page](https://github.com/LibraryOfCongress/concordia/blob/main/LICENSE.md).
 
+As of May 2022 the Library of Congress Concordia development team has moved issues out of Github to an internal system due to reporting needs.  Open github issue tickets may not be active or up-to-date. We continue to publish our code here as it is released.
+
 _Concordia and By the People are supported by the National Digital Library Trust Fund._
 
 ## Want to help?
