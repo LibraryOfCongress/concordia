@@ -11,7 +11,7 @@ The application invites volunteers to transcribe and tag digitized images of man
 
 Concordia leverages the [LOC’s API](https://libraryofcongress.github.io/data-exploration/) to pull materials from the Library's catalog. Completed transcriptions can be exported out of the application in a single CSV or individual TXT files in a BagIt bag. 
 
-The Library of Congress publishes volunteer-created transcriptions on [loc.gov](https://www.loc.gov/) to improve search, readability, and access to handwritten and typed documents. Individual transcriptions are published alongside the transcribed images in digital collections and transcriptions are also published in bulk as [datasets](https://www.loc.gov/search/?fa=contributor:by+the+people+%28program%29).
+The Library of Congress publishes transcriptions created by volunteers through Concordia on [loc.gov](https://www.loc.gov/) to improve search, readability, and access to handwritten and typed documents. Individual transcriptions are published alongside the transcribed images in digital collections and transcriptions are also published in bulk as [datasets](https://www.loc.gov/search/?fa=contributor:by+the+people+%28program%29).
 
 Concordia code and the By the People transcriptions are released into the public domain. Anyone is free to use or reuse the data. [More info on our licensing page](https://github.com/LibraryOfCongress/concordia/blob/main/LICENSE.md).
 
