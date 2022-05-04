@@ -7,6 +7,10 @@ from sentry_sdk.integrations.django import DjangoIntegration
 
 from concordia.version import get_concordia_version
 
+# New in 3.2, if no field in a model is defined with primary_key=True an implicit
+# primary key is added. This can now be controlled by via the defaukt below
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
 # Build paths inside the project like this: os.path.join(SITE_ROOT_DIR, ...)
 CONCORDIA_APP_DIR = os.path.abspath(os.path.dirname(__file__))
 SITE_ROOT_DIR = os.path.dirname(CONCORDIA_APP_DIR)
