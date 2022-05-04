@@ -1438,7 +1438,7 @@ class ContactUsView(FormView):
         ):
             initial["email"] = self.request.user.email
 
-        initial["referrer"] = self.request.META.get("HTTP_REFERER")
+        initial["referrer"] = self.request.headers.get("Referer")
 
         return initial
 
