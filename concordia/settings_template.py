@@ -157,13 +157,13 @@ TEMPLATES = [
                 "concordia.context_processors.system_configuration",
                 "concordia.context_processors.site_navigation",
             ],
+            "libraries": {
+                "staticfiles": "django.templatetags.static",
+            },
             "loaders": [
                 "django.template.loaders.filesystem.Loader",
                 "django.template.loaders.app_directories.Loader",
             ],
-            "libraries": {
-                "staticfiles": "django.templatetags.static",
-            },
         },
     }
 ]
