@@ -310,7 +310,7 @@ CAPTCHA_FONT_SIZE = 40
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 WHITENOISE_ROOT = os.path.join(SITE_ROOT_DIR, "static")
 
-PASSWORD_RESET_TIMEOUT_DAYS = 7
+PASSWORD_RESET_TIMEOUT = 604800
 ACCOUNT_ACTIVATION_DAYS = 7
 REGISTRATION_OPEN = True  # set to false to temporarily disable registrations
 
