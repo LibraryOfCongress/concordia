@@ -175,7 +175,7 @@ MEMCACHED_PORT = os.getenv("MEMCACHED_PORT", "")
 if MEMCACHED_ADDRESS and MEMCACHED_PORT:
     CACHES = {
         "default": {
-            "BACKEND": "django.core.cache.backends.memcached.MemcachedCache",
+            "BACKEND": "django.core.cache.backends.memcached.PyMemcacheCache",
             "LOCATION": "{}:{}".format(MEMCACHED_ADDRESS, MEMCACHED_PORT),
         }
     }
