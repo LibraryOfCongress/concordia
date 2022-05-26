@@ -8,6 +8,7 @@ import bagit
 import boto3
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.postgres.aggregates.general import StringAgg
 from django.db.models import OuterRef, Subquery
 from django.http import HttpResponse, HttpResponseRedirect
 from django.utils.decorators import method_decorator
@@ -27,6 +28,13 @@ def get_latest_transcription_data(asset_qs):
     )
 
     assets = asset_qs.annotate(latest_transcription=Subquery(latest_trans_subquery[:1]))
+    return assets
+
+
+def get_tag_values(asset_qs):
+    assets = asset_qs.annotate(
+        tag_values=StringAgg("userassettagcollection__tags__value", ";")
+    )
     return assets
 
 
@@ -191,6 +199,7 @@ class ExportCampaignToCSV(TemplateView):
             item__project__campaign__slug=self.kwargs["campaign_slug"]
         )
         assets = get_latest_transcription_data(asset_qs)
+        assets = get_tag_values(assets)
 
         headers, data = flatten_queryset(
             assets,
@@ -204,6 +213,7 @@ class ExportCampaignToCSV(TemplateView):
                 "transcription_status",
                 "download_url",
                 "latest_transcription",
+                "tag_values",
             ],
             extra_verbose_names={
                 "item__project__campaign__title": "Campaign",
@@ -216,6 +226,7 @@ class ExportCampaignToCSV(TemplateView):
                 "transcription_status": "AssetStatus",
                 "download_url": "DownloadUrl",
                 "latest_transcription": "Transcription",
+                "tag_values": "Tags",
             },
         )
 
