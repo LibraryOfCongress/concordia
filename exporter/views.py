@@ -33,7 +33,7 @@ def get_latest_transcription_data(asset_qs):
 
 def get_tag_values(asset_qs):
     assets = asset_qs.annotate(
-        tag_values=StringAgg("userassettagcollection__tags__value", ";")
+        tag_values=StringAgg("userassettagcollection__tags__value", "; ")
     )
     return assets
 
