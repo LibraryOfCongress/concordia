@@ -15,7 +15,6 @@ stack templates.
 git clone https://github.com/LibraryOfCongress/concordia.git
 ```
 
-
 If you're intending to edit static resources, templates, etc. and would like to
 enable Django's DEBUG mode ensure that your environment has `DEBUG=true` set
 before you run `docker-compose up` for the `app` container. The easiest way to
@@ -55,11 +54,18 @@ Both the `Pipfile` and the `Pipfile.lock` files must be committed to the source
 code repository any time you change them to ensure that all testing uses the
 same package versions which you used during development.
 
-```bash
-POSTGRESQL_PW=password
-DJANGO_SETTINGS_MODULE=concordia.settings_dev
-```
+#### Launching the environnment
 
+In order to successfully launch the environment, the environment variables
+`POSTGRESQL_PW` and `DJANGO_SETTINGS_MODULE` must be set. `POSTGRESQL_PW`
+may be set to any value (which will become the database password for the
+environment), but `DJANGO_SETTINGS_MODULE` should be set to
+`concordia.settings_dev` to use the development settings file.
+
+```bash
+export POSTGRESQL_PW=password
+export DJANGO_SETTINGS_MODULE=concordia.settings_dev
+```
 
 ```bash
 cd concordia
