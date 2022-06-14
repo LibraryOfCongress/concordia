@@ -24,6 +24,59 @@ do this permanently is to add it to the `.env` file:
 echo DEBUG=true >> .env
 ```
 
+##### Install the application virtual environment
+
+These steps only need to be performed the first time you setup a fresh
+virtualenv environment:
+
+1. Ensure that you have the necessary C library dependencies available:
+
+    - `libmemcached`
+    - `postgresql`
+    - `node` & `npm` for the front-end tools
+
+1. Ensure that you have Python 3.8 or later installed
+
+1. Install [pipenv](https://docs.pipenv.org/) either using a tool like
+   [Homebrew](https://brew.sh) (`brew install pipenv`) or using `pip`:
+
+    ```bash
+    pip3 install pipenv
+    ```
+
+1. If you encounter errors installing psycopg, you may need to set LDFLAGS in your environment variables.
+
+1. Let Pipenv create the virtual environment and install all of the packages,
+   including our developer tools:
+
+    ```bash
+    pipenv install --dev
+    ```
+
+    n.b. if `libmemcached` is installed using Homebrew you will need to [set the CFLAGS long enough to build it](https://stackoverflow.com/questions/14803310/error-when-install-pylibmc-using-pip#comment94853072_19432949):
+
+    ```bash
+    CFLAGS=$(pkg-config --cflags libmemcached) LDFLAGS=$(pkg-config --libs libmemcached) pipenv install --dev
+    ```
+
+    Once it has been installed you will not need to repeat this process unless
+    you upgrade the version of libmemcached or Python installed on your system.
+
+1. Configure the Django settings module in the `.env` file which Pipenv will use
+   to automatically populate the environment for every command it runs:
+
+    ```bash
+    echo DJANGO_SETTINGS_MODULE="concordia.settings_dev" >> .env
+    ```
+
+    You can use this to set any other values you want to customize, such as
+    `POSTGRESQL_PW` or `POSTGRESQL_HOST`.
+
+    n.b to allow a local server to connect to the dockerized db set `POSTGRESQL_PORT=54323` - the db containers external postgres port.
+
+1. Make sure that [redis](https://redis.io/docs/getting-started/) is installed and
+   running.
+
 ### Local Development Environment
 
 You will likely want to run the Django development server on your localhost
@@ -91,55 +144,13 @@ expected version and configuration. If you want to reset the database, simply
 delete the local container so it will be rebuilt the next time you run
 `docker-compose up`: `docker-compose rm --stop db`.
 
-##### Install the application virtual environment
-
-These steps only need to be performed the first time you setup a fresh
-virtualenv environment:
-
-1. Ensure that you have the necessary C library dependencies available:
-
-    - `libmemcached`
-    - `postgresql`
-    - `node` & `npm` for the front-end tools
-
-1. Ensure that you have Python 3.8 or later installed
-
-1. Install [pipenv](https://docs.pipenv.org/) either using a tool like
-   [Homebrew](https://brew.sh) (`brew install pipenv`) or using `pip`:
-
-    ```bash
-    pip3 install pipenv
-    ```
-
-1. Let Pipenv create the virtual environment and install all of the packages,
-   including our developer tools:
-
-    ```bash
-    pipenv install --dev
-    ```
-
-    n.b. if `libmemcached` is installed using Homebrew you will need to [set the CFLAGS long enough to build it](https://stackoverflow.com/questions/14803310/error-when-install-pylibmc-using-pip#comment94853072_19432949):
-
-    ```bash
-    CFLAGS=$(pkg-config --cflags libmemcached) LDFLAGS=$(pkg-config --libs libmemcached) pipenv install --dev
-    ```
-
-    Once it has been installed you will not need to repeat this process unless
-    you upgrade the version of libmemcached or Python installed on your system.
-
-1. Configure the Django settings module in the `.env` file which Pipenv will use
-   to automatically populate the environment for every command it runs:
-
-    ```bash
-    echo DJANGO_SETTINGS_MODULE="concordia.settings_dev" >> .env
-    ```
-
-    You can use this to set any other values you want to customize, such as
-    `POSTGRESQL_PW` or `POSTGRESQL_HOST`.
-
-    n.b to allow a local server to connect to the dockerized db set `POSTGRESQL_PORT=54323` - the db containers external postgres port.
-
 ##### Install front end
+
+1. Install Node 12. If you're on MacOS, you can install it using brew:
+
+    ```bash
+    brew install node@12
+    ```
 
 1. Use NPM to install our development tools:
 
@@ -158,6 +169,12 @@ virtualenv environment:
 
     ```bash
     npx gulp build
+    ```
+
+1) You may need to manually create a logs directory.
+
+    ```bash
+    mkdir logs
     ```
 
 1) Collect Django static files:
