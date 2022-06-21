@@ -53,6 +53,8 @@ class ViewTest_Exporter(TestCase):
             sequence=1,
         )
 
+        self.asset_id = asset.id
+
         # add a Transcription object
         transcription1 = Transcription(
             asset=asset,
@@ -76,17 +78,18 @@ class ViewTest_Exporter(TestCase):
         )
 
         expected_response_content = (
-            "b'Campaign,Project,Item,ItemId,Asset,"
-            "AssetStatus,DownloadUrl,Transcription\\r\\n'"
+            "b'Campaign,Project,Item,ItemId,Asset,AssetId,AssetStatus,"
+            "DownloadUrl,Transcription,Tags\\r\\n'"
             "b'Test Campaign,Test Project,Test Item,"
-            "testitem.0123456789,TestAsset,completed,"
+            f"testitem.0123456789,TestAsset,{self.asset_id},completed,"
             "http://tile.loc.gov/image-services/"
             "iiif/service:mss:mal:003:0036300:002/full"
-            "/pct:25/0/default.jpg,Sample\\r\\n'"
+            "/pct:25/0/default.jpg,Sample,\\r\\n'"
         )
 
         self.assertEqual(response.status_code, 200)
         response_content = "".join(map(str, response.streaming_content))
+
         self.assertEqual(response_content, expected_response_content)
 
     def test_bagit_export(self):
