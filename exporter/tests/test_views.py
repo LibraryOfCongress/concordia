@@ -18,6 +18,8 @@ DOWNLOAD_URL = (
     "service:mss:mal:003:0036300:002/full/pct:25/0/default.jpg"
 )
 
+RESOURCE_URL = "https://www.loc.gov/resource/mal.0043300/"
+
 
 class ViewTest_Exporter(TestCase):
     """
@@ -33,7 +35,9 @@ class ViewTest_Exporter(TestCase):
         user.set_password("top_secret")
         user.save()
 
-        self.assertTrue(self.client.login(username="tester", password="top_secret"))
+        self.assertTrue(
+            self.client.login(username="tester", password="top_secret")  # nosec
+        )
 
         campaign = create_campaign(published=True)
         project = create_project(campaign=campaign, published=True)
@@ -44,6 +48,7 @@ class ViewTest_Exporter(TestCase):
             title="TestAsset",
             description="Asset Description",
             download_url=DOWNLOAD_URL,
+            resource_url=RESOURCE_URL,
             media_type=MediaType.IMAGE,
             sequence=1,
         )
@@ -86,7 +91,7 @@ class ViewTest_Exporter(TestCase):
 
     def test_bagit_export(self):
         """
-        Test Campaign export as CSV
+        Test Campaign export as Bagit
         """
 
         campaign_slug = "test-campaign"
