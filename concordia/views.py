@@ -501,12 +501,10 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
             assets = Asset.objects.filter(
                 transcription__in=transcriptions,
                 item__project__campaign__pk=campaignSlug,
-            ).order_by("-latest_activity", "-id")
+            )
         else:
             campaignSlug = -1
-            assets = Asset.objects.filter(transcription__in=transcriptions).order_by(
-                "-latest_activity", "-id"
-            )
+            assets = Asset.objects.filter(transcription__in=transcriptions)
 
         assets = assets.select_related(
             "item", "item__project", "item__project__campaign"
@@ -528,7 +526,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
                 | Q(transcription__reviewed_by=self.request.user),
             ),
         )
-        return assets
+        return assets.order_by("-latest_activity", "-id")
 
     def get_context_data(self, *args, **kwargs):
         ctx = super().get_context_data(*args, **kwargs)
