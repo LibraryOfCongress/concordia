@@ -22,6 +22,7 @@ from concordia.tasks import (
     tombstone_old_active_asset_reservations,
 )
 from concordia.utils import get_anonymous_user, get_or_create_reservation_token
+from concordia.views import AccountProfileView
 
 from .utils import (
     CreateTestUsers,
@@ -32,6 +33,37 @@ from .utils import (
     create_project,
     create_topic,
 )
+
+
+def setup_view(view, request, user=None, *args, **kwargs):
+    """
+    https://stackoverflow.com/a/33647251/10320488
+    """
+    if user:
+        request.user = user
+    view.request = request
+    view.args = args
+    view.kwargs = kwargs
+    return view
+
+
+class AccountProfileViewTests(CreateTestUsers, TestCase):
+    """
+    This class contains the unit tests for the AccountProfileView.
+    """
+
+    def test_get_queryset(self):
+        """
+        Test the get_queryset method
+        """
+        self.login_user()
+        v = setup_view(
+            AccountProfileView(),
+            RequestFactory().get("account/password_reset/"),
+            user=self.user,
+        )
+        qs = v.get_queryset()
+        self.assertEqual(qs.count(), 0)
 
 
 @override_settings(
