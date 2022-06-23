@@ -91,18 +91,18 @@ def write_distinct_asset_resource_file(assets, export_base_dir):
         distinct_resource_urls = (
             Asset.objects.filter(pk__in=assets)
             .order_by("resource_url")
-            .values_list("resource_url", flat=True)
+            .values_list("resource_url", "title")
             .distinct("resource_url")
         )
 
-        for url in distinct_resource_urls:
+        for url, title in distinct_resource_urls:
             if url:
                 f.write(url)
                 f.write("\n")
             else:
                 logger.error(
                     "No resource URL found for asset %s",
-                    assets.title,
+                    title,
                 )
                 raise AssertionError
 
