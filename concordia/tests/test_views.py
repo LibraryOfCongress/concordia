@@ -6,7 +6,14 @@ from datetime import datetime, timedelta
 
 from captcha.models import CaptchaStore
 from django.conf import settings
-from django.test import RequestFactory, TestCase, TransactionTestCase, override_settings
+from django.http import HttpResponse
+from django.test import (
+    Client,
+    RequestFactory,
+    TestCase,
+    TransactionTestCase,
+    override_settings,
+)
 from django.urls import reverse
 from django.utils.timezone import now
 
@@ -73,6 +80,17 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
     """
     This class contains the unit tests for the view in the concordia app.
     """
+
+    def test_ratelimit_view(self):
+        c = Client()
+        headers = {}
+        response = c.get("/error/429/", **headers)
+        self.assertIsInstance(response, HttpResponse)
+        self.assertEqual(response.status_code, 429)
+
+        headers["x-requested-with"] = "XMLHttpRequest"
+        response = c.get("/error/429/", **headers)
+        self.assertEqual(response.status_code, 429)
 
     def test_campaign_topic_list_view(self):
         """
