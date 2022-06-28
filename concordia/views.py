@@ -283,7 +283,9 @@ def ratelimit_view(request, exception=None):
     if exception is not None:
         ctx["exception"]: str(exception)
 
-    if request.is_ajax() or request_accepts_json(request):
+    if request.headers.get(
+        "x-requested-with"
+    ) == "XMLHttpRequest" or request_accepts_json(request):
         response = JsonResponse(ctx, status=status_code)
     else:
         response = render(request, "429.html", context=ctx, status=status_code)
