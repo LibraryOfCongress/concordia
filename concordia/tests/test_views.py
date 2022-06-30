@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 
 from captcha.models import CaptchaStore
 from django.conf import settings
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.test import (
     Client,
     RequestFactory,
@@ -83,13 +83,13 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
 
     def test_ratelimit_view(self):
         c = Client()
-        headers = {}
-        response = c.get("/error/429/", **headers)
+        response = c.get("/error/429/")
         self.assertIsInstance(response, HttpResponse)
         self.assertEqual(response.status_code, 429)
 
-        headers["x-requested-with"] = "XMLHttpRequest"
+        headers = {"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"}
         response = c.get("/error/429/", **headers)
+        self.assertIsInstance(response, JsonResponse)
         self.assertEqual(response.status_code, 429)
 
     def test_campaign_topic_list_view(self):
