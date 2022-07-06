@@ -1025,7 +1025,7 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         second_user = self.create_test_user(
             username="second_tester", email="second_tester@example.com"
         )
-        self.client.login(username=second_user.username, password=second_user.password)
+        self.client.login(username=second_user.username, password=second_user._password)
 
         resp = self.client.post(
             reverse("submit-tags", kwargs={"asset_pk": asset.pk}),
