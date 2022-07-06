@@ -2,28 +2,30 @@ from locust import TaskSet, between
 from locust.contrib.fasthttp import FastHttpLocust
 
 
-def campaigns_topics(l):
-    l.client.get("/campaigns-topics")
+def campaigns_topics(user):
+    user.client.get("/campaigns-topics/")
 
 
-def about(l):
-    l.client.get("/about")
+def about(user):
+    user.client.get("/about/")
 
 
-def index(l):
-    l.client.get("/")
+def index(user):
+    user.client.get("/")
 
 
-def resources(l):
-    l.client.get("/resources")
+def resources(user):
+    user.client.get("/resources/")
 
 
-def herencia(l):
-    l.client.get("/campaigns/herencia-centuries-of-spanish-legal-documents/")
+def herencia(user):
+    user.client.get("/campaigns/herencia-centuries-of-spanish-legal-documents/")
 
 
-def suffrage_next_asset(l):
-    l.client.get("/topics/suffrage-women-fight-for-the-vote/next-transcribable-asset/")
+def suffrage_next_asset(user):
+    user.client.get(
+        "/topics/suffrage-women-fight-for-the-vote/next-transcribable-asset/"
+    )
 
 
 class UserBehavior(TaskSet):
