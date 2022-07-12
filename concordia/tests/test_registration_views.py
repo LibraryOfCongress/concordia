@@ -1,9 +1,7 @@
 """
 Tests for user registration-related views
 """
-import unittest
 from logging import getLogger
-from secrets import token_hex
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
@@ -21,8 +19,8 @@ User = get_user_model()
 logger = getLogger(__name__)
 
 
-INTERNAL_RESET_URL_TOKEN = "set-password"
-INTERNAL_RESET_SESSION_TOKEN = "_password_reset_token"
+INTERNAL_RESET_URL_TOKEN = "set-password"  # nosec
+INTERNAL_RESET_SESSION_TOKEN = "_password_reset_token"  # nosec
 
 
 @override_settings(RATELIMIT_ENABLE=False)
@@ -34,7 +32,7 @@ class ConcordiaViewTests(
 
         response = self.client.post(
             reverse("registration_login"),
-            {"username": self.user.username, "password": self.user.password},
+            {"username": self.user.username, "password": self.user._password},
         )
 
         self.assertContains(response, "This account has not yet been activated.")
@@ -48,10 +46,9 @@ class ConcordiaViewTests(
 
         self.assertEqual(len(mail.outbox), 1)
 
-    @unittest.skip
     def test_password_reset_will_activate_user(self):
         self.user = self.create_inactive_user("tester2")
-        fake_pw = token_hex(24)
+        fake_pw = "ASdf12&&"
         new_password_data = {"new_password1": fake_pw, "new_password2": fake_pw}
         password_reset_token = default_token_generator.make_token(self.user)
         uidb64 = urlsafe_base64_encode(force_bytes(self.user.pk))
@@ -68,10 +65,7 @@ class ConcordiaViewTests(
             new_password_data,
         )
 
-        self.assertEqual(confirm_response.status_code, 200)
-        self.assertTemplateUsed(
-            confirm_response, template_name="registration/password_reset_complete.html"
-        )
+        self.assertRedirects(confirm_response, "/account/reset/done/")
         self.assertUncacheable(confirm_response)
 
         # Verify the User was correctly activated
