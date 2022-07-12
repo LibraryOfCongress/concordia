@@ -267,7 +267,7 @@ class="text-dark">Tags ({{ tags|length }})</span></a></h2>
                                     <input type="hidden" name="tags" value="{{ tag }}" />
                                     {{ tag }}
                                 </label>
-                                <button type="button" class="close" data-dismiss="alert" aria-label="Remove previous tag">
+                                <button type="button" class="close authenticated-only" data-dismiss="alert" aria-label="Remove previous tag" hidden>
                                     <span aria-hidden="true" class="fas fa-times"></span>
                                 </button>
                             </li>
