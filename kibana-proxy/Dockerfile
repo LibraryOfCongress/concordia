@@ -3,7 +3,7 @@ FROM ubuntu:latest
 RUN apt-get update
 RUN apt-get install -y wget
 
-RUN wget https://github.com/abutaha/aws-es-proxy/releases/download/v0.9/aws-es-proxy-0.9-linux-386
+RUN wget https://github.com/abutaha/aws-es-proxy/releases/download/v1.3/aws-es-proxy-1.3-linux-386
 
 RUN chmod u+x /aws-es-proxy-0.9-linux-386
 
