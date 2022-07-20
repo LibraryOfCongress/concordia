@@ -6,10 +6,10 @@
 {% block title %}{{ project.title }} ({{ campaign.title }}){% endblock title %}
 
 {% block head_content %}
-<link rel="canonical" href="https://{{ request.get_host }}{{ request.path }}" />
-<meta name="description" content="{{ project.description|striptags|normalize_whitespace }}" />
-<meta name="thumbnail" content="{{ MEDIA_URL }}{{ project.thumbnail_image }}" />
-<meta property="og:image" content="{{ MEDIA_URL }}{{ project.thumbnail_image }}" />
+    <link rel="canonical" href="https://{{ request.get_host }}{{ request.path }}" />
+    <meta name="description" content="{{ project.description|striptags|normalize_whitespace }}" />
+    <meta name="thumbnail" content="{{ MEDIA_URL }}{{ project.thumbnail_image }}" />
+    <meta property="og:image" content="{{ MEDIA_URL }}{{ project.thumbnail_image }}" />
 {% endblock head_content %}
 
 {% block breadcrumbs %}
@@ -50,12 +50,12 @@
                         </h6>
 
                         {% if item.lowest_transcription_status == 'completed' %}
-                        <div class="card-actions">
-                            <a class="btn btn-sm btn-block btn-dark" href="{% url 'transcriptions:item-detail' campaign.slug project.slug item.item_id %}?{{ sublevel_querystring }}">
-                                <span class="fas fa-check tx-completed"></span>
-                                Complete
-                            </a>
-                        </div>
+                            <div class="card-actions">
+                                <a class="btn btn-sm btn-block btn-dark" href="{% url 'transcriptions:item-detail' campaign.slug project.slug item.item_id %}?{{ sublevel_querystring }}">
+                                    <span class="fas fa-check tx-completed"></span>
+                                    Complete
+                                </a>
+                            </div>
                         {% endif %}
                     </div>
                 </div>
