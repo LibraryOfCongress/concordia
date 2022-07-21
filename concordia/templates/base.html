@@ -6,7 +6,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-        <title>By the People {% block title %}{% if title %}{{ title }}{% else %}Untitled{% endif %}{% endblock title %}</title>
+        <title>{% block full_title %}By the People {% block title %}{% if title %}{{ title }}{% else %}Untitled{% endif %}{% endblock title %}{% endblock full_title %}</title>
         <meta name="description" content="Crowdsourcing project By the People invites anyone to become a Library of Congress virtual volunteer. Explore, transcribe, review, and tag digital collections to improve search and readability and open new avenues of research.">
         <link rel="shortcut icon" href="{% static 'favicon.ico' %}">
         {% include "fragments/common-stylesheets.html" %}
@@ -29,7 +29,7 @@
         {% endif %}
     </head>
 
-    <body id="body" class="view-{{ VIEW_NAME_FOR_CSS }} section-{{ PATH_LEVEL_1|default:'homepage' }} environment-{{ CONCORDIA_ENVIRONMENT }} {% block extra_body_classes %}{% endblock %} d-print-block">
+    <body id="body" class="{% block body_classes %}view-{{ VIEW_NAME_FOR_CSS }} section-{{ PATH_LEVEL_1|default:'homepage' }} environment-{{ CONCORDIA_ENVIRONMENT }} {% block extra_body_classes %}{% endblock %} d-print-block {% endblock body_classes %}">
         {% block site-header %}
             <header class="border-bottom" role="banner" aria-label="site navigation">
                 <nav class="container navbar navbar-light navbar-expand-lg align-items-lg-end py-3 d-print-block">
