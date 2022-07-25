@@ -1,17 +1,17 @@
 {% extends "base.html" %}
 
 {% block main_content %}
-    <div class="container">
-        <div class="row">
-            <div class="col-md-8 mx-auto p-3">
-                <h2>Thank you for joining By the People!</h2>
-                <p>
-                    We are excited for you to get started! First, complete your registration by checking your email inbox for an activation link. Click the link in the email within 7 days to activate your account.
-                </p>
-                <p>
-                    Activated and ready to jump in? <a href="{% url 'welcome-guide' %}">Read our Welcome Guide</a>.
-                </p>
-            </div>
+<div class="container">
+    <div class="row">
+        <div class="col-md-8 mx-auto p-3">
+            <h2>Thank you for joining By the People!</h2>
+            <p>
+                We are excited for you to get started! First, complete your registration by checking your email inbox for an activation link. Click the link in the email within 7 days to activate your account.
+            </p>
+            <p>
+                Activated and ready to jump in? <a href="{% url 'welcome-guide' %}">Read our Welcome Guide</a>.
+            </p>
         </div>
     </div>
+</div>
 {% endblock main_content %}

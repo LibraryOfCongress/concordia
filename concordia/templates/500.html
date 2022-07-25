@@ -35,14 +35,14 @@
             <nav>
                 <ul class="nav justify-content-center">
                     {% if request %}
-                        <li class="nav-item">
-                            <a
-                                class="nav-link"
-                                href="{{ request.META.HTTP_REFERER }}"
-                            >
-                                &laquo; Go Back
-                            </a>
-                        </li>
+                    <li class="nav-item">
+                        <a
+                            class="nav-link"
+                            href="{{ request.META.HTTP_REFERER }}"
+                        >
+                            &laquo; Go Back
+                        </a>
+                    </li>
                     {% endif %}
                     <li class="nav-item">
                         <a class="nav-link" href="/">Go Home &raquo;</a>

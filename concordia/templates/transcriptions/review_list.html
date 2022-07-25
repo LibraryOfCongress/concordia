@@ -6,7 +6,7 @@
 
 
 {% block title %}
-    Things to Review
+Things to Review
 {% endblock title %}
 
 {% block head_content %}
@@ -18,41 +18,41 @@
 {% endblock breadcrumbs%}
 
 {% block main_content %}
-    <div class="container py-3">
-        <div class="row">
-            {% include "fragments/activity-filter-sort.html" %}
-        </div>
+<div class="container py-3">
+    <div class="row">
+        {% include "fragments/activity-filter-sort.html" %}
+    </div>
 
-        <div class="row">
-            {% include "fragments/standard-pagination.html" %}
-        </div>
+    <div class="row">
+        {% include "fragments/standard-pagination.html" %}
+    </div>
 
-        <div class="card-deck justify-content-center align-items-center align-items-sm-stretch">
-            {% for a in assets %}
-                {% url 'transcriptions:asset-detail' a.item.project.campaign.slug a.item.project.slug a.item.item_id a.slug as asset_detail_url %}
+    <div class="card-deck justify-content-center align-items-center align-items-sm-stretch">
+        {% for a in assets %}
+            {% url 'transcriptions:asset-detail' a.item.project.campaign.slug a.item.project.slug a.item.item_id a.slug as asset_detail_url %}
 
-                <div class="card concordia-object-card" data-transcription-status="{{ a.transcription_status }}">
-                    <a class="card-img-container" href="{{ asset_detail_url }}">
-                        <img class="card-img" alt="{{ a.slug }}" src="{% asset_media_url a %}">
-                    </a>
+            <div class="card concordia-object-card" data-transcription-status="{{ a.transcription_status }}">
+                <a class="card-img-container" href="{{ asset_detail_url }}">
+                    <img class="card-img" alt="{{ a.slug }}" src="{% asset_media_url a %}">
+                </a>
 
-                    <a class="card-title" href="{{ asset_detail_url }}">
-                        Score:     {{ a.difficulty }}
+                <a class="card-title" href="{{ asset_detail_url }}">
+                    Score:     {{ a.difficulty }}
 
-                    </a>
+                </a>
 
-                    <div class="card-actions">
-                        <a class="btn btn-sm btn-block btn-primary" href="{{ asset_detail_url }}">
+                <div class="card-actions">
+                    <a class="btn btn-sm btn-block btn-primary" href="{{ asset_detail_url }}">
                             <span class="fas fa-list tx-submitted"></span>
                             Review
-                        </a>
-                    </div>
+                    </a>
                 </div>
-            {% endfor %}
-        </div>
-
-        <div class="row">
-            {% include "fragments/standard-pagination.html" %}
-        </div>
+            </div>
+        {% endfor %}
     </div>
+
+    <div class="row">
+        {% include "fragments/standard-pagination.html" %}
+    </div>
+</div>
 {% endblock main_content %}
