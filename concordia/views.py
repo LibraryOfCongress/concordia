@@ -342,7 +342,6 @@ def AccountLetterView(request):
         link="https://www.loc.gov/",
         alt_text="Library Logo",
     )
-    pdf.set_margin(13)
     pdf.set_author("By The People")
     pdf.set_creator("Concordia")
     pdf.set_subject("BTP Service Letter")
@@ -352,116 +351,119 @@ def AccountLetterView(request):
     pdf.set_producer("Concordia")
     pdf.set_font("Arial", size=11)
     pdf.cell(60, 40, txt="", ln=1, align="L")
-    pdf.cell(30, 5, txt="Library of Congress", ln=1, align="L")
-    pdf.cell(30, 5, txt="101 Independence Avenue SE", ln=1, align="L")
-    pdf.cell(30, 5, txt="Washington, DC 20540", ln=1, align="L")
+    pdf.cell(30, 5, txt="   Library of Congress", ln=1, align="L")
+    pdf.cell(30, 5, txt="   101 Independence Avenue SE", ln=1, align="L")
+    pdf.cell(30, 5, txt="   Washington, DC 20540", ln=1, align="L")
     pdf.cell(
         60,
         20,
-        txt=datetime.date.strftime(date_today, "%m/%d/%Y"),
+        txt="   " + datetime.date.strftime(date_today, "%m/%d/%Y"),
         ln=1,
         align="L",
     )
-    pdf.cell(60, 10, txt="To whom it may concern,", ln=1, align="L")
+    pdf.cell(60, 10, txt="  To whom it may concern,", ln=1, align="L")
     pdf.cell(
         140,
         5,
-        txt="I am writing to confirm this volunteer's participation in "
-        + "the Library of Congress "
-        + "virtual volunteering ",
+        txt="   I am writing to confirm this volunteer's participation in"
+        " the Library of Congress"
+        " virtual volunteering ",
         ln=1,
         align="L",
     )
-    pdf.cell(16, 5, txt="program ", align="L")
     pdf.set_font("Arial", "I", 11)
     pdf.cell(
-        25,
+        60,
         5,
-        txt="By the People",
+        txt="   program By the People ",
         align="L",
         link="https://crowd.loc.gov",
     )
     pdf.set_font("Arial", size=11)
     pdf.cell(
-        120,
+        90,
         5,
-        txt="(https://crowd.loc.gov). The project invites anyone to help the Library ",
-        ln=1,
-        align="L",
-    )
-    pdf.cell(
-        120,
-        5,
-        txt="by transcribing, tagging, and reviewing transcriptions of "
-        + "digitized historical documents from ",
-        ln=1,
-        align="L",
-    )
-    pdf.cell(
-        120,
-        5,
-        txt="the Library's collections. Transcriptions make the "
-        + "content of handwritten and other documents ",
-        ln=1,
-        align="L",
-    )
-    pdf.cell(
-        85,
-        5,
-        txt="keyword searchable on the Library's main website (https://loc.gov), ",
-        align="L",
-        link="https://loc.gov",
-    )
-    pdf.cell(
-        113,
-        5,
-        txt="open new avenues of digital ",
+        txt=" (https://crowd.loc.gov). The project invites anyone to help the Library ",
         ln=1,
         align="C",
     )
     pdf.cell(
         120,
         5,
-        txt="research, and improve accessibility, including for people with visual "
-        + "or cognitive disabilities.",
+        txt="   by transcribing, tagging and reviewing transcriptions of "
+        "digitized historical documents from ",
+        ln=1,
+        align="L",
+    )
+    pdf.cell(
+        120,
+        5,
+        txt="   the Library's collections. These transcriptions make the "
+        "content of handwritten and other documents ",
+        ln=1,
+        align="L",
+    )
+    pdf.cell(
+        85,
+        5,
+        txt="   keyword searchable on the Library's main website (https://loc.gov), ",
+        align="L",
+        link="https://loc.gov",
+    )
+    pdf.cell(
+        120,
+        5,
+        txt=" open new avenues of digital ",
+        ln=1,
+        align="C",
+    )
+    pdf.cell(
+        120,
+        5,
+        txt="   research, and improve accessibility, including for people with visual "
+        "or cognitive disabilities. ",
         ln=1,
         align="L",
     )
     pdf.cell(120, 5, txt="", ln=1, align="L")
-    pdf.multi_cell(
+    pdf.cell(40, 5, txt="   They registered as a ", ln=0, align="L")
+    pdf.set_font("Arial", "I", 11)
+    pdf.cell(24, 5, txt="By the People", ln=0, align="L", link="https://loc.gov")
+    pdf.set_font("Arial", size=11)
+    pdf.cell(
         0,
         5,
-        txt="They registered as a "
-        + "__By the People__ "
-        + "volunteer on "
-        + datetime.date.strftime(join_date, "%m/%d/%Y ")
-        + "as "
+        txt=" volunteer on "
+        + datetime.date.strftime(join_date, "%m/%d/%Y")
+        + " as "
         + username
         + ". They made "
-        + "{:,} ".format(totalTranscriptions)
-        + "edits "
+        + "{:,}".format(totalTranscriptions)
+        + " edits ",
+        ln=1,
+        align="L",
+    )
+    pdf.cell(
+        0,
+        5,
+        txt="   "
         + "to transcriptions"
         + " on the site and reviewed "
-        + "{:,} ".format(totalReviews)
-        + "transcriptions by other volunteers. Their user profile "
-        + "provides further details.",
+        + "{:,}".format(totalReviews)
+        + " transcriptions by other volunteers. Their user profile  ",
         ln=1,
         align="L",
-        markdown=True,
     )
-    pdf.cell(100, 12, txt="Best,", ln=1, align="L")
-    pdf.cell(110, 10, txt="Lauren Algee", ln=1, align="L")
-    pdf.cell(120, 5, txt="crowd@loc.gov", ln=1, align="L")
-    pdf.cell(
-        14,
-        5,
-        txt="Community Manager, __By the People__",
-        ln=1,
-        align="L",
-        markdown=True,
-    )
-    pdf.cell(140, 5, txt="Digital Content Management Section", ln=1, align="L")
-    pdf.cell(150, 5, txt="Library of Congress ", ln=1, align="L")
+    pdf.cell(0, 5, txt="   provides further details.", ln=1, align="L")
+    pdf.cell(100, 12, txt="   Best,", ln=1, align="L")
+    pdf.cell(110, 10, txt="   Lauren Algee", ln=1, align="L")
+    pdf.cell(120, 5, txt="   crowd@loc.gov", ln=1, align="L")
+    pdf.cell(14, 5, txt="   Community Manager, ", align="L")
+    pdf.set_font("Arial", "I", 11)
+    pdf.cell(80, 5, txt="By the People", ln=1, align="C")
+    pdf.set_font("Arial", size=11)
+    pdf.cell(140, 5, txt="   Digital Content Management Section", ln=1, align="L")
+    pdf.cell(150, 5, txt="   Library of Congress ", ln=1, align="L")
     pdf.output("letter.pdf", "F")
     with open("letter.pdf", "rb") as f:
         response = HttpResponse(content=f.read(), content_type="application/pdf")
