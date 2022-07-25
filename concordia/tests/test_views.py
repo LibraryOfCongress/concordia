@@ -15,6 +15,7 @@ from concordia.models import (
     AssetTranscriptionReservation,
     Transcription,
     TranscriptionStatus,
+    UserAssetTagCollection,
 )
 from concordia.tasks import (
     delete_old_tombstoned_reservations,
@@ -31,6 +32,7 @@ from .utils import (
     create_item,
     create_project,
     create_topic,
+    create_user_asset_tag_collection,
 )
 
 
@@ -373,6 +375,46 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         response = self.client.get(reverse("action-app"))
         self.assertTemplateUsed(response, "action-app.html")
         self.assertContains(response, "new ActionApp")
+
+    def test_submit_tags(self):
+        self.login_user()
+        user2 = self.create_test_user("tester2")
+
+        asset = create_asset()
+        tags = [
+            "Agnes Coombs",
+            "Babbitt's soap",
+            "Mr Fred L Ward",
+            "Mrs Ellen Spencer Mussey",
+            "most letterhead not transcribed",
+            "tin wash boiler",
+        ]
+        (
+            user_asset_tag_collection,
+            created,
+        ) = UserAssetTagCollection.objects.get_or_create(asset=asset, user=self.user)
+        user_asset_tag_collection2 = create_user_asset_tag_collection(
+            asset=asset,
+            user=user2,
+            tags=tags
+            + [
+                "Houston",
+            ],
+        )
+        self.assertIn(
+            "Agnes Coombs",
+            user_asset_tag_collection2.tags.values_list("value", flat=True),
+        )
+        resp = self.client.post(
+            reverse("submit-tags", args=(asset.pk,)),
+            data={
+                "tags": tags,
+            },
+        )
+        self.assertValidJSON(resp, expected_status=200)
+        tag_values = user_asset_tag_collection.tags.values_list("value", flat=True)
+        self.assertIn("Agnes Coombs", tag_values)
+        self.assertNotIn("Houston", tag_values)
 
 
 @override_settings(

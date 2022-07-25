@@ -4,7 +4,17 @@ from secrets import token_hex
 
 from django.utils.text import slugify
 
-from concordia.models import Asset, Campaign, Item, MediaType, Project, Topic, User
+from concordia.models import (
+    Asset,
+    Campaign,
+    Item,
+    MediaType,
+    Project,
+    Tag,
+    Topic,
+    User,
+    UserAssetTagCollection,
+)
 
 
 def ensure_slug(original_function):
@@ -159,6 +169,37 @@ def create_asset(
     return asset
 
 
+def create_tag(
+    *,
+    value="Test Tag",
+    do_save=True,
+    **kwargs,
+):
+    tag = Tag(value=value)
+    if do_save:
+        tag.save()
+    return tag
+
+
+def create_user_asset_tag_collection(
+    asset=None,
+    user=None,
+    tags=[],
+    do_save=True,
+    **kwargs,
+):
+    if asset is None:
+        asset = create_asset()
+    if user is None:
+        user = CreateTestUsers().create_user("Test user")
+    user_asset_tag_collection = UserAssetTagCollection(asset=asset, user=user)
+    if do_save:
+        user_asset_tag_collection.save()
+        for tag in tags:
+            user_asset_tag_collection.tags.add(create_tag(value=tag))
+    return user_asset_tag_collection
+
+
 class JSONAssertMixin(object):
     def assertValidJSON(self, response, expected_status=200):
         """
@@ -184,7 +225,7 @@ class CreateTestUsers(object):
         if not hasattr(self, "user"):
             self.user = self.create_test_user("tester")
 
-        self.client.login(username=self.user.username, password=self.user._password)
+        self.client.login(username=self.user.username, password=self.user.password)
 
     def create_user(self, username, is_active=True, **kwargs):
         if "email" not in kwargs:
@@ -196,7 +237,7 @@ class CreateTestUsers(object):
         user.set_password(fake_pw)
         user.save()
 
-        user._password = fake_pw
+        user.password = fake_pw
 
         return user
 
