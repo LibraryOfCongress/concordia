@@ -1,24 +1,48 @@
-{% extends "error.html" %}
+{% spaceless %}
+    {% load staticfiles %}
+{% endspaceless %}<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <title>{% block title %}404 Error{% endblock title %}</title>
+        <link rel="shortcut icon" href="{% static 'favicon.ico' %}">
+        {% include "fragments/common-stylesheets.html" %}
+        <style>
+            body {
+                height: 100vh;
+                width: 100vw;
+                margin: 0;
+                padding: 0;
+            }
 
-{% block full_title %}404 Error{% endblock full_title %}
+            #error-message {
+                max-width: 30em;
+            }
+        </style>
+    </head>
+    <body class="d-flex justify-content-center align-items-center text-center">
+        <div id="error-message">
+            <h1>HTTP 404 Error</h1>
 
-{% block error_message %}
-    <h1>HTTP 404 Error</h1>
+            <p>
+                The requested page was not found.
+            </p>
 
-    <p>
-        The requested page was not found.
-    </p>
+            <nav>
+                <ul class="nav justify-content-center">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ request.META.HTTP_REFERER }}">
+                            &laquo; Go Back
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Go Home &raquo;</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
 
-    <nav>
-        <ul class="nav justify-content-center">
-            <li class="nav-item">
-                <a class="nav-link" href="{{ request.META.HTTP_REFERER }}">
-                    &laquo; Go Back
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="/">Go Home &raquo;</a>
-            </li>
-        </ul>
-    </nav>
-{% endblock error_message %}
+        {% include "fragments/common-scripts.html" %}
+    </body>
+</html>
