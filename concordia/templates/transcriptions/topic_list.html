@@ -13,26 +13,26 @@
 {% endblock breadcrumbs %}
 
 {% block main_content %}
-    <div class="container py-3">
-        <h1 class="sr-only">Topics</h1>
-        <ul class="list-unstyled">
-            {% for topic in topics %}
-                <li class="p-4 mb-1 bg-light">
-                    <h2 class="h1 mb-3">{{ topic.title }}</h2>
-                    <div class="row">
-                        <a class="col-md-5 order-md-2" href="{% url 'topic-detail' topic.slug %}">
-                            <p class="mb-2 text-center"><img src="{{ MEDIA_URL }}{{ topic.thumbnail_image }}" class="img-fluid" alt="{{ topic.title }} image"></p>
-                        </a>
-                        <div class="col-md">
-                            <p>{{ topic.short_description|safe }}</p>
-                            <a class="btn btn-primary" href="{% url 'topic-detail' topic.slug %}">View Projects</a>
-                        </div>
+<div class="container py-3">
+    <h1 class="sr-only">Topics</h1>
+    <ul class="list-unstyled">
+        {% for topic in topics %}
+            <li class="p-4 mb-1 bg-light">
+                <h2 class="h1 mb-3">{{ topic.title }}</h2>
+                <div class="row">
+                    <a class="col-md-5 order-md-2" href="{% url 'topic-detail' topic.slug %}">
+                        <p class="mb-2 text-center"><img src="{{ MEDIA_URL }}{{ topic.thumbnail_image }}" class="img-fluid" alt="{{ topic.title }} image"></p>
+                    </a>
+                    <div class="col-md">
+                        <p>{{ topic.short_description|safe }}</p>
+                        <a class="btn btn-primary" href="{% url 'topic-detail' topic.slug %}">View Projects</a>
                     </div>
-                </li>
-            {% endfor %}
-        </ul>
-        <div class="row">
-            {% include "fragments/standard-pagination.html" %}
-        </div>
+                </div>
+            </li>
+        {% endfor %}
+    </ul>
+    <div class="row">
+        {% include "fragments/standard-pagination.html" %}
     </div>
+</div>
 {% endblock main_content %}
