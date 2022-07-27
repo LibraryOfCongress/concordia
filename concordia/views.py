@@ -1404,7 +1404,10 @@ def submit_tags(request, *, asset_pk):
 
     for tag in existing_user_tags:
         if tag not in all_submitted_tags:
-            user_tags.tags.remove(tag)
+            for collection in UserAssetTagCollection.objects.filter(asset=asset):
+                user_tags.tags.remove(tag)
+                if tag in collection.tags.all():
+                    collection.tags.remove(tag)
 
     all_tags_qs = Tag.objects.filter(userassettagcollection__asset__pk=asset_pk)
     all_tags = all_tags_qs.order_by("value")

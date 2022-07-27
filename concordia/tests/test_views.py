@@ -15,7 +15,6 @@ from concordia.models import (
     AssetTranscriptionReservation,
     Transcription,
     TranscriptionStatus,
-    UserAssetTagCollection,
 )
 from concordia.tasks import (
     delete_old_tombstoned_reservations,
@@ -389,10 +388,11 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
             "most letterhead not transcribed",
             "tin wash boiler",
         ]
-        (
-            user_asset_tag_collection,
-            created,
-        ) = UserAssetTagCollection.objects.get_or_create(asset=asset, user=self.user)
+        user_asset_tag_collection = create_user_asset_tag_collection(
+            asset=asset,
+            user=self.user,
+            tags=tags,
+        )
         user_asset_tag_collection2 = create_user_asset_tag_collection(
             asset=asset,
             user=user2,
@@ -403,6 +403,18 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         )
         self.assertIn(
             "Agnes Coombs",
+            user_asset_tag_collection.tags.values_list("value", flat=True),
+        )
+        self.assertIn(
+            "Agnes Coombs",
+            user_asset_tag_collection2.tags.values_list("value", flat=True),
+        )
+        self.assertNotIn(
+            "Houston",
+            user_asset_tag_collection.tags.values_list("value", flat=True),
+        )
+        self.assertIn(
+            "Houston",
             user_asset_tag_collection2.tags.values_list("value", flat=True),
         )
         resp = self.client.post(
@@ -412,9 +424,18 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
             },
         )
         self.assertValidJSON(resp, expected_status=200)
+        self.assertJSONEqual(str(resp.content, encoding="utf8"), {"user_tags": tags})
         tag_values = user_asset_tag_collection.tags.values_list("value", flat=True)
         self.assertIn("Agnes Coombs", tag_values)
         self.assertNotIn("Houston", tag_values)
+        self.assertIn(
+            "Agnes Coombs",
+            user_asset_tag_collection2.tags.values_list("value", flat=True),
+        )
+        self.assertNotIn(
+            "Houston",
+            user_asset_tag_collection2.tags.values_list("value", flat=True),
+        )
 
 
 @override_settings(
