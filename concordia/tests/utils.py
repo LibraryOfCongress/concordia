@@ -184,7 +184,7 @@ class CreateTestUsers(object):
         if not hasattr(self, "user"):
             self.user = self.create_test_user("tester")
 
-        self.client.login(username=self.user.username, password=self.user.password)
+        self.client.login(username=self.user.username, password=self.user._password)
 
     def create_user(self, username, is_active=True, **kwargs):
         if "email" not in kwargs:
@@ -196,7 +196,7 @@ class CreateTestUsers(object):
         user.set_password(fake_pw)
         user.save()
 
-        user.password = fake_pw
+        user._password = fake_pw
 
         return user
 

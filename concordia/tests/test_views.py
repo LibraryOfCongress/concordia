@@ -1075,7 +1075,7 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         second_user = self.create_test_user(
             username="second_tester", email="second_tester@example.com"
         )
-        self.client.login(username=second_user.username, password=second_user.password)
+        self.client.login(username=second_user.username, password=second_user._password)
 
         resp = self.client.post(
             reverse("submit-tags", kwargs={"asset_pk": asset.pk}),
@@ -1090,10 +1090,10 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
 
     def test_find_next_transcribable_no_campaign(self):
         asset1 = create_asset(slug="test-asset-1")
-        asset2 = create_asset(item=asset1.item, slug="test-asset-2")
+        create_asset(item=asset1.item, slug="test-asset-2")
         resp = self.client.get(reverse("redirect-to-next-transcribable-asset"))
 
-        self.assertRedirects(resp, expected_url=asset2.get_absolute_url())
+        self.assertRedirects(resp, expected_url=asset1.get_absolute_url())
 
     def test_find_next_reviewable_no_campaign(self):
         anon = get_anonymous_user()
@@ -1111,11 +1111,11 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
 
         response = self.client.get(reverse("redirect-to-next-reviewable-asset"))
 
-        self.assertRedirects(response, expected_url=asset2.get_absolute_url())
+        self.assertRedirects(response, expected_url=asset1.get_absolute_url())
 
     def test_find_next_transcribable_campaign(self):
         asset1 = create_asset(slug="test-asset-1")
-        asset2 = create_asset(item=asset1.item, slug="test-asset-2")
+        create_asset(item=asset1.item, slug="test-asset-2")
         campaign = asset1.item.project.campaign
 
         resp = self.client.get(
@@ -1125,7 +1125,7 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
             )
         )
 
-        self.assertRedirects(resp, expected_url=asset2.get_absolute_url())
+        self.assertRedirects(resp, expected_url=asset1.get_absolute_url())
 
     def test_find_next_transcribable_topic(self):
         asset1 = create_asset(slug="test-asset-1")
@@ -1165,7 +1165,7 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
             )
         )
 
-        self.assertRedirects(response, expected_url=asset2.get_absolute_url())
+        self.assertRedirects(response, expected_url=asset1.get_absolute_url())
 
     def test_find_next_reviewable_topic(self):
         anon = get_anonymous_user()
@@ -1190,7 +1190,7 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
             )
         )
 
-        self.assertRedirects(response, expected_url=asset2.get_absolute_url())
+        self.assertRedirects(response, expected_url=asset1.get_absolute_url())
 
     def test_find_next_reviewable_unlisted_campaign(self):
         anon = get_anonymous_user()
@@ -1230,7 +1230,7 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
             )
         )
 
-        self.assertRedirects(response, expected_url=asset2.get_absolute_url())
+        self.assertRedirects(response, expected_url=asset1.get_absolute_url())
 
     def test_find_next_transcribable_unlisted_campaign(self):
         unlisted_campaign = create_campaign(
@@ -1251,7 +1251,7 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         )
 
         asset1 = create_asset(slug="test-asset-1", item=unlisted_item)
-        asset2 = create_asset(item=asset1.item, slug="test-asset-2")
+        create_asset(item=asset1.item, slug="test-asset-2")
 
         response = self.client.get(
             reverse(
@@ -1260,7 +1260,7 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
             )
         )
 
-        self.assertRedirects(response, expected_url=asset2.get_absolute_url())
+        self.assertRedirects(response, expected_url=asset1.get_absolute_url())
 
     def test_find_next_transcribable_single_asset(self):
         asset = create_asset()
