@@ -1,8 +1,7 @@
 from django.conf import settings
-from django.conf.urls import url
 from django.contrib import admin
 from django.http import Http404, HttpResponseForbidden
-from django.urls import include, path
+from django.urls import include, path, re_path
 from django.urls.converters import register_converter
 from django.views.defaults import page_not_found, permission_denied, server_error
 from django.views.generic import RedirectView
@@ -202,7 +201,7 @@ urlpatterns = [
     path("error/404/", page_not_found, {"exception": Http404()}),
     path("error/429/", views.ratelimit_view),
     path("error/403/", permission_denied, {"exception": HttpResponseForbidden()}),
-    url("", include("django_prometheus_metrics.urls")),
+    re_path("", include("django_prometheus_metrics.urls")),
     path("robots.txt", include("robots.urls")),
 ]
 

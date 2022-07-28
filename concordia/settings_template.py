@@ -7,6 +7,11 @@ from sentry_sdk.integrations.django import DjangoIntegration
 
 from concordia.version import get_concordia_version
 
+# New in 3.2, if no field in a model is defined with primary_key=True an implicit
+# primary key is added. This can now be controlled by changing the value below
+# 3.2 default value is BigAutoField. But migrations does not support M2M PK
+DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
+
 # Build paths inside the project like this: os.path.join(SITE_ROOT_DIR, ...)
 CONCORDIA_APP_DIR = os.path.abspath(os.path.dirname(__file__))
 SITE_ROOT_DIR = os.path.dirname(CONCORDIA_APP_DIR)
@@ -88,9 +93,7 @@ DATABASES = {
         "PASSWORD": os.getenv("POSTGRESQL_PW"),
         "HOST": os.getenv("POSTGRESQL_HOST", "localhost"),
         "PORT": os.getenv("POSTGRESQL_PORT", "5432"),
-        # Change this back to 15 minutes (15*60) once celery regression
-        # is fixed  see https://github.com/celery/celery/issues/4878
-        "CONN_MAX_AGE": 0,  # 15 minutes
+        "CONN_MAX_AGE": 900,  # 15 minutes
     }
 }
 
@@ -153,6 +156,9 @@ TEMPLATES = [
                 "concordia.context_processors.system_configuration",
                 "concordia.context_processors.site_navigation",
             ],
+            "libraries": {
+                "staticfiles": "django.templatetags.static",
+            },
             "loaders": [
                 "django.template.loaders.filesystem.Loader",
                 "django.template.loaders.app_directories.Loader",
@@ -167,7 +173,7 @@ MEMCACHED_PORT = os.getenv("MEMCACHED_PORT", "")
 if MEMCACHED_ADDRESS and MEMCACHED_PORT:
     CACHES = {
         "default": {
-            "BACKEND": "django.core.cache.backends.memcached.MemcachedCache",
+            "BACKEND": "django.core.cache.backends.memcached.PyMemcacheCache",
             "LOCATION": "{}:{}".format(MEMCACHED_ADDRESS, MEMCACHED_PORT),
         }
     }
@@ -303,7 +309,7 @@ CAPTCHA_FONT_SIZE = 40
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 WHITENOISE_ROOT = os.path.join(SITE_ROOT_DIR, "static")
 
-PASSWORD_RESET_TIMEOUT_DAYS = 7
+PASSWORD_RESET_TIMEOUT = 604800
 ACCOUNT_ACTIVATION_DAYS = 7
 REGISTRATION_OPEN = True  # set to false to temporarily disable registrations
 
