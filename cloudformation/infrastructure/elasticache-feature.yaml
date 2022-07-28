@@ -12,7 +12,7 @@ Parameters:
 
     CacheNodeType:
         Type: String
-        Default: cache.m1.small
+        Default: cache.m5.large
 
 Resources:
     MemcachedService:

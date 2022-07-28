@@ -17,6 +17,7 @@ from django_admin_multiple_choice_list_filter.list_filters import (
     MultipleChoiceListFilter,
 )
 from tabular_export.admin import export_to_csv_action, export_to_excel_action
+from tabular_export.core import export_to_csv_response, flatten_queryset
 
 from exporter import views as exporter_views
 from importer.tasks import import_items_into_project_from_url
@@ -482,6 +483,39 @@ class TagAdmin(admin.ModelAdmin):
     list_display_links = ("id", "value")
 
     search_fields = ["value"]
+
+    actions = ("export_tags_as_csv",)
+
+    def export_tags_as_csv(self, request, queryset):
+        tags = queryset.prefetch_related(
+            "userassettagcollection", "userassettagcollection__asset"
+        ).order_by("userassettagcollection__asset_id")
+
+        headers, data = flatten_queryset(
+            tags,
+            field_names=[
+                "value",
+                "userassettagcollection__created_on",
+                "userassettagcollection__user_id",
+                "userassettagcollection__asset_id",
+                "userassettagcollection__asset__title",
+                "userassettagcollection__asset__download_url",
+                "userassettagcollection__asset__resource_url",
+                "userassettagcollection__asset__item__project__campaign__slug",
+            ],
+            extra_verbose_names={
+                "value": "tag value",
+                "userassettagcollection__created_on": "user asset tag collection date created",  # noqa: E501
+                "userassettagcollection__user_id": "user asset tag collection user_id",
+                "userassettagcollection__asset_id": "asset id",
+                "userassettagcollection__asset__title": "asset title",
+                "userassettagcollection__asset__download_url": "asset download url",
+                "userassettagcollection__asset__resource_url": "asset resource url",
+                "userassettagcollection__asset__item__project__campaign__slug": "campaign slug",  # noqa: E501
+            },
+        )
+
+        return export_to_csv_response("tags.csv", headers, data)
 
 
 @admin.register(UserAssetTagCollection)
