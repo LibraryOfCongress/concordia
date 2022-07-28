@@ -37,25 +37,25 @@
     <table id="progress-stats" class="table table-sm font-weight-light">
         <tbody>
             {% for key, label, value in transcription_status_counts %}
-                <tr
-                    class="{% if filters.transcription_status == key %}table-secondary{% endif %}"
-                >
-                    <th class="text-nowrap">
-                        <a href="?transcription_status={{ key|urlencode }}">
-                            <span
-                                class="transcription-status-key bg-{{ key }}"
-                            ></span>
-                            {{ label }}
-                        </a>
-                    </th>
-                    <td class="text-right">
-                        <a href="?transcription_status={{ key|urlencode }}">
-                            <abbr title="{{ value|intcomma }} pages"
+            <tr
+                class="{% if filters.transcription_status == key %}table-secondary{% endif %}"
+            >
+                <th class="text-nowrap">
+                    <a href="?transcription_status={{ key|urlencode }}">
+                        <span
+                            class="transcription-status-key bg-{{ key }}"
+                        ></span>
+                        {{ label }}
+                    </a>
+                </th>
+                <td class="text-right">
+                    <a href="?transcription_status={{ key|urlencode }}">
+                        <abbr title="{{ value|intcomma }} pages"
                             >{{ value|intcomma }}</abbr
-                                >
-                            </a>
-                        </td>
-                    </tr>
+                        >
+                    </a>
+                </td>
+            </tr>
             {% endfor %}
         </tbody>
     </table>
