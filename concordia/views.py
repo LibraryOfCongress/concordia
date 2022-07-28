@@ -283,9 +283,7 @@ def ratelimit_view(request, exception=None):
     if exception is not None:
         ctx["exception"]: str(exception)
 
-    if request.headers.get(
-        "x-requested-with"
-    ) == "XMLHttpRequest" or request_accepts_json(request):
+    if request.is_ajax() or request_accepts_json(request):
         response = JsonResponse(ctx, status=status_code)
     else:
         response = render(request, "429.html", context=ctx, status=status_code)
@@ -501,10 +499,12 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
             assets = Asset.objects.filter(
                 transcription__in=transcriptions,
                 item__project__campaign__pk=campaignSlug,
-            )
+            ).order_by("-latest_activity", "-id")
         else:
             campaignSlug = -1
-            assets = Asset.objects.filter(transcription__in=transcriptions)
+            assets = Asset.objects.filter(transcription__in=transcriptions).order_by(
+                "-latest_activity", "-id"
+            )
 
         assets = assets.select_related(
             "item", "item__project", "item__project__campaign"
@@ -526,7 +526,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
                 | Q(transcription__reviewed_by=self.request.user),
             ),
         )
-        return assets.order_by("-latest_activity", "-id")
+        return assets
 
     def get_context_data(self, *args, **kwargs):
         ctx = super().get_context_data(*args, **kwargs)
@@ -1436,7 +1436,7 @@ class ContactUsView(FormView):
         ):
             initial["email"] = self.request.user.email
 
-        initial["referrer"] = self.request.headers.get("Referer")
+        initial["referrer"] = self.request.META.get("HTTP_REFERER")
 
         return initial
 

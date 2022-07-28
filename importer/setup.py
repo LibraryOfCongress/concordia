@@ -9,7 +9,7 @@ Environment :: Web Environment
 Framework :: Django :: 2.0
 Development Status :: 2 - Pre-Alpha
 Programming Language :: Python
-Programming Language :: Python :: 3.10
+Programming Language :: Python :: 3.8
 """.splitlines()
 
 with open("README.rst", "r") as f:

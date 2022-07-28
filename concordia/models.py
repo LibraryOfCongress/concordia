@@ -3,10 +3,11 @@ from logging import getLogger
 
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
-from django.db.models import Count, JSONField
+from django.db.models import Count
 from django.urls import reverse
 from django_prometheus_metrics.models import MetricsModelMixin
 

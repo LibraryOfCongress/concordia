@@ -19,7 +19,7 @@ def get_anonymous_user():
 
 
 def request_accepts_json(request):
-    accept_header = request.headers.get("Accept", "*/*")
+    accept_header = request.META.get("HTTP_ACCEPT", "*/*")
 
     return "application/json" in accept_header
 
