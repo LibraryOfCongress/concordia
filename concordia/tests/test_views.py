@@ -6,7 +6,14 @@ from datetime import datetime, timedelta
 
 from captcha.models import CaptchaStore
 from django.conf import settings
-from django.test import RequestFactory, TestCase, TransactionTestCase, override_settings
+from django.http import HttpResponse, JsonResponse
+from django.test import (
+    Client,
+    RequestFactory,
+    TestCase,
+    TransactionTestCase,
+    override_settings,
+)
 from django.urls import reverse
 from django.utils.timezone import now
 
@@ -22,6 +29,7 @@ from concordia.tasks import (
     tombstone_old_active_asset_reservations,
 )
 from concordia.utils import get_anonymous_user, get_or_create_reservation_token
+from concordia.views import AccountProfileView
 
 from .utils import (
     CreateTestUsers,
@@ -35,6 +43,37 @@ from .utils import (
 )
 
 
+def setup_view(view, request, user=None, *args, **kwargs):
+    """
+    https://stackoverflow.com/a/33647251/10320488
+    """
+    if user:
+        request.user = user
+    view.request = request
+    view.args = args
+    view.kwargs = kwargs
+    return view
+
+
+class AccountProfileViewTests(CreateTestUsers, TestCase):
+    """
+    This class contains the unit tests for the AccountProfileView.
+    """
+
+    def test_get_queryset(self):
+        """
+        Test the get_queryset method
+        """
+        self.login_user()
+        v = setup_view(
+            AccountProfileView(),
+            RequestFactory().get("account/password_reset/"),
+            user=self.user,
+        )
+        qs = v.get_queryset()
+        self.assertEqual(qs.count(), 0)
+
+
 @override_settings(
     RATELIMIT_ENABLE=False, SESSION_ENGINE="django.contrib.sessions.backends.cache"
 )
@@ -42,6 +81,17 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
     """
     This class contains the unit tests for the view in the concordia app.
     """
+
+    def test_ratelimit_view(self):
+        c = Client()
+        response = c.get("/error/429/")
+        self.assertIsInstance(response, HttpResponse)
+        self.assertEqual(response.status_code, 429)
+
+        headers = {"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"}
+        response = c.get("/error/429/", **headers)
+        self.assertIsInstance(response, JsonResponse)
+        self.assertEqual(response.status_code, 429)
 
     def test_campaign_topic_list_view(self):
         """
