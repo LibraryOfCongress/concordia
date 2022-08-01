@@ -19,14 +19,14 @@
 {% endblock breadcrumbs%}
 
 {% block main_content %}
-{% flag_enabled 'DISPLAY_ITEM_DESCRIPTION' as DISPLAY_ITEM_DESCRIPTION %}
+    {% flag_enabled 'DISPLAY_ITEM_DESCRIPTION' as DISPLAY_ITEM_DESCRIPTION %}
 
     <div class="container py-3">
         <div class="row">
             <div class="col-md-10">
                 <h1>{{ item.title }}</h1>
                 {% if DISPLAY_ITEM_DESCRIPTION %}
-                <div class="m-3 hero-text">{{ item.description|safe }}</div>
+                    <div class="m-3 hero-text">{{ item.description|safe }}</div>
                 {% endif %}
             </div>
             <div class="col-md-2 align-bottom">
