@@ -217,13 +217,13 @@ class JSONAssertMixin(object):
 
 
 class CreateTestUsers(object):
-    def login_user(self):
+    def login_user(self, username="tester"):
         """
         Create a user and log the user in
         """
 
         if not hasattr(self, "user"):
-            self.user = self.create_test_user("tester")
+            self.user = self.create_test_user(username)
 
         self.client.login(username=self.user.username, password=self.user.password)
 

@@ -39,7 +39,6 @@ from .utils import (
     create_item,
     create_project,
     create_topic,
-    create_user_asset_tag_collection,
 )
 
 
@@ -424,68 +423,6 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         response = self.client.get(reverse("action-app"))
         self.assertTemplateUsed(response, "action-app.html")
         self.assertContains(response, "new ActionApp")
-
-    def test_submit_tags(self):
-        self.login_user()
-        user2 = self.create_test_user("tester2")
-
-        asset = create_asset()
-        tags = [
-            "Agnes Coombs",
-            "Babbitt's soap",
-            "Mr Fred L Ward",
-            "Mrs Ellen Spencer Mussey",
-            "most letterhead not transcribed",
-            "tin wash boiler",
-        ]
-        user_asset_tag_collection = create_user_asset_tag_collection(
-            asset=asset,
-            user=self.user,
-            tags=tags,
-        )
-        user_asset_tag_collection2 = create_user_asset_tag_collection(
-            asset=asset,
-            user=user2,
-            tags=tags
-            + [
-                "Houston",
-            ],
-        )
-        self.assertIn(
-            "Agnes Coombs",
-            user_asset_tag_collection.tags.values_list("value", flat=True),
-        )
-        self.assertIn(
-            "Agnes Coombs",
-            user_asset_tag_collection2.tags.values_list("value", flat=True),
-        )
-        self.assertNotIn(
-            "Houston",
-            user_asset_tag_collection.tags.values_list("value", flat=True),
-        )
-        self.assertIn(
-            "Houston",
-            user_asset_tag_collection2.tags.values_list("value", flat=True),
-        )
-        resp = self.client.post(
-            reverse("submit-tags", args=(asset.pk,)),
-            data={
-                "tags": tags,
-            },
-        )
-        self.assertValidJSON(resp, expected_status=200)
-        self.assertJSONEqual(str(resp.content, encoding="utf8"), {"user_tags": tags})
-        tag_values = user_asset_tag_collection.tags.values_list("value", flat=True)
-        self.assertIn("Agnes Coombs", tag_values)
-        self.assertNotIn("Houston", tag_values)
-        self.assertIn(
-            "Agnes Coombs",
-            user_asset_tag_collection2.tags.values_list("value", flat=True),
-        )
-        self.assertNotIn(
-            "Houston",
-            user_asset_tag_collection2.tags.values_list("value", flat=True),
-        )
 
 
 @override_settings(
@@ -1150,6 +1087,59 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         # values, they should not be stored:
         self.assertEqual(["bar", "foo", "quux"], data["user_tags"])
         self.assertEqual(["baaz", "bar", "foo", "quux"], data["all_tags"])
+
+    def test_tag_deletion(self):
+        asset = create_asset()
+        self.login_user()
+
+        test_tags = ["foo", "bar"]
+        resp = self.client.post(
+            reverse("submit-tags", kwargs={"asset_pk": asset.pk}),
+            data={"tags": test_tags},
+        )
+        test_tags = [
+            "foo",
+        ]
+        resp = self.client.post(
+            reverse("submit-tags", kwargs={"asset_pk": asset.pk}),
+            data={"tags": test_tags},
+        )
+        data = self.assertValidJSON(resp, expected_status=200)
+        self.assertIn("user_tags", data)
+        self.assertIn("all_tags", data)
+
+        self.assertEqual(sorted(test_tags), data["user_tags"])
+        self.assertEqual(sorted(test_tags), data["all_tags"])
+
+    def test_tag_deletion_with_multiple_users(self):
+        asset = create_asset()
+        self.login_user()
+        test_tags = ["foo", "bar"]
+        resp = self.client.post(
+            reverse("submit-tags", kwargs={"asset_pk": asset.pk}),
+            data={"tags": test_tags},
+        )
+        data = self.assertValidJSON(resp, expected_status=200)
+        self.assertIn("user_tags", data)
+        self.assertIn("all_tags", data)
+        self.assertEqual(sorted(test_tags), data["user_tags"])
+        self.assertEqual(sorted(test_tags), data["all_tags"])
+
+        self.client.logout()
+
+        self.login_user("tester")
+        test_tags = [
+            "foo",
+        ]
+        resp = self.client.post(
+            reverse("submit-tags", kwargs={"asset_pk": asset.pk}),
+            data={"tags": test_tags},
+        )
+        data = self.assertValidJSON(resp, expected_status=200)
+        self.assertIn("user_tags", data)
+        self.assertIn("all_tags", data)
+        self.assertEqual(sorted(test_tags), data["user_tags"])
+        self.assertEqual(sorted(test_tags), data["all_tags"])
 
     def test_find_next_transcribable_no_campaign(self):
         asset1 = create_asset(slug="test-asset-1")
