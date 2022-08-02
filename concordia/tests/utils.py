@@ -4,17 +4,7 @@ from secrets import token_hex
 
 from django.utils.text import slugify
 
-from concordia.models import (
-    Asset,
-    Campaign,
-    Item,
-    MediaType,
-    Project,
-    Tag,
-    Topic,
-    User,
-    UserAssetTagCollection,
-)
+from concordia.models import Asset, Campaign, Item, MediaType, Project, Topic, User
 
 
 def ensure_slug(original_function):
@@ -167,37 +157,6 @@ def create_asset(
     if do_save:
         asset.save()
     return asset
-
-
-def create_tag(
-    *,
-    value="Test Tag",
-    do_save=True,
-    **kwargs,
-):
-    tag = Tag(value=value)
-    if do_save:
-        tag.save()
-    return tag
-
-
-def create_user_asset_tag_collection(
-    asset=None,
-    user=None,
-    tags=[],
-    do_save=True,
-    **kwargs,
-):
-    if asset is None:
-        asset = create_asset()
-    if user is None:
-        user = CreateTestUsers().create_user("Test user")
-    user_asset_tag_collection = UserAssetTagCollection(asset=asset, user=user)
-    if do_save:
-        user_asset_tag_collection.save()
-        for tag in tags:
-            user_asset_tag_collection.tags.add(create_tag(value=tag))
-    return user_asset_tag_collection
 
 
 class JSONAssertMixin(object):
