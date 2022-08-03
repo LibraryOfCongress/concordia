@@ -13,8 +13,6 @@ repos:
       rev: 'v1.5.1'
       hooks:
           - id: djhtml
-          - id: djcss
-          - id: djjs
     - repo: https://github.com/ambv/black
       rev: 22.3.0
       hooks:
