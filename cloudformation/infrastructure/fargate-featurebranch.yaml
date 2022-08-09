@@ -109,8 +109,8 @@ Resources:
         Type: AWS::ECS::TaskDefinition
         Properties:
             Family: !Sub crowd-${ConcordiaVersion}
-            Cpu: '2048'
-            Memory: '8192'
+            Cpu: '4096'
+            Memory: '30720'
             NetworkMode: awsvpc
             RequiresCompatibilities:
                 - FARGATE
@@ -121,7 +121,6 @@ Resources:
             ContainerDefinitions:
                 - Name: app
                   Cpu: 2048
-                  Memory: 8192
                   Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/concordia:${ConcordiaVersion}'
                   LogConfiguration:
                       LogDriver: awslogs
@@ -167,6 +166,93 @@ Resources:
                         ContainerPath: /concordia_images
                   PortMappings:
                       - ContainerPort: 80
+                - Name: importer
+                  Cpu: 1024
+                  Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/concordia/importer:${ConcordiaVersion}'
+                  LogConfiguration:
+                      LogDriver: awslogs
+                      Options:
+                          awslogs-group: !Ref 'ConcordiaAppLogsGroup'
+                          awslogs-region: !Ref 'AWS::Region'
+                          awslogs-stream-prefix: ConcordiaWorker
+                  Environment:
+                      - Name: AWS
+                        Value: '1'
+                      - Name: ENV_NAME
+                        Value: !Ref EnvName
+                      - Name: CONCORDIA_ENVIRONMENT
+                        Value: !Ref FullEnvironmentName
+                      - Name: S3_BUCKET_NAME
+                        Value: !Ref S3BucketName
+                      - Name: EXPORT_S3_BUCKET_NAME
+                        Value: !Ref ExportS3BucketName
+                      - Name: CELERY_BROKER_URL
+                        Value: !Sub 'redis://${RedisAddress}:${RedisPort}/0'
+                      - Name: AWS_DEFAULT_REGION
+                        Value: !Ref AWS::Region
+                      - Name: SENTRY_BACKEND_DSN
+                        Value: https://6727341eabcd47e3a48ce300432e840b@errorlogging.loc.gov/5
+                      - Name: SENTRY_FRONTEND_DSN
+                        Value: https://77a13a941ffd485dbf41dbf8e7a0bdd0@errorlogging.loc.gov/4
+                      - Name: REDIS_ADDRESS
+                        Value: !Ref RedisAddress
+                      - Name: REDIS_PORT
+                        Value: !Ref RedisPort
+                      - Name: MEMCACHED_ADDRESS
+                        Value: !Ref MemcachedAddress
+                      - Name: MEMCACHED_PORT
+                        Value: !Ref MemcachedPort
+                      - Name: POSTGRESQL_HOST
+                        Value: !Ref DatabaseEndpoint
+                      - Name: HOST_NAME
+                        Value: !Ref CanonicalHostName
+                      - Name: DJANGO_SETTINGS_MODULE
+                        Value: concordia.settings_ecs
+                  MountPoints:
+                      - SourceVolume: images_volume
+                        ContainerPath: /concordia_images
+                - Name: celerybeat
+                  Cpu: 1024
+                  Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/concordia/celerybeat:${ConcordiaVersion}'
+                  LogConfiguration:
+                      LogDriver: awslogs
+                      Options:
+                          awslogs-group: !Ref 'ConcordiaAppLogsGroup'
+                          awslogs-region: !Ref 'AWS::Region'
+                          awslogs-stream-prefix: ConcordiaWorker
+                  Environment:
+                      - Name: AWS
+                        Value: '1'
+                      - Name: ENV_NAME
+                        Value: !Ref EnvName
+                      - Name: CONCORDIA_ENVIRONMENT
+                        Value: !Ref FullEnvironmentName
+                      - Name: S3_BUCKET_NAME
+                        Value: !Ref S3BucketName
+                      - Name: EXPORT_S3_BUCKET_NAME
+                        Value: !Ref ExportS3BucketName
+                      - Name: CELERY_BROKER_URL
+                        Value: !Sub 'redis://${RedisAddress}:${RedisPort}/0'
+                      - Name: AWS_DEFAULT_REGION
+                        Value: !Ref AWS::Region
+                      - Name: SENTRY_BACKEND_DSN
+                        Value: https://6727341eabcd47e3a48ce300432e840b@errorlogging.loc.gov/5
+                      - Name: SENTRY_FRONTEND_DSN
+                        Value: https://77a13a941ffd485dbf41dbf8e7a0bdd0@errorlogging.loc.gov/4
+                      - Name: REDIS_ADDRESS
+                        Value: !Ref RedisAddress
+                      - Name: REDIS_PORT
+                        Value: !Ref RedisPort
+                      - Name: MEMCACHED_ADDRESS
+                        Value: !Ref MemcachedAddress
+                      - Name: MEMCACHED_PORT
+                        Value: !Ref MemcachedPort
+                      - Name: POSTGRESQL_HOST
+                        Value: !Ref DatabaseEndpoint
+                      - Name: HOST_NAME
+                        Value: !Ref CanonicalHostName
+                      - Name: DJANGO_SETTINGS_MODULE
+                        Value: concordia.settings_ecs
 
     ConcordiaExternalService:
         Type: AWS::ECS::Service
