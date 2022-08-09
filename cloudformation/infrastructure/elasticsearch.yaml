@@ -27,12 +27,12 @@ Resources:
             ElasticsearchClusterConfig:
                 InstanceCount: 1
                 ZoneAwarenessEnabled: false
-                InstanceType: 'm4.xlarge.elasticsearch'
-            ElasticsearchVersion: '6.8'
+                InstanceType: 'm5.xlarge.elasticsearch'
+            ElasticsearchVersion: '7.10'
             EBSOptions:
                 EBSEnabled: true
                 Iops: 0
-                VolumeSize: 10
+                VolumeSize: 20
                 VolumeType: 'standard'
             SnapshotOptions:
                 AutomatedSnapshotStartHour: 0
