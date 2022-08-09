@@ -25,6 +25,7 @@ from importer.tasks import import_items_into_project_from_url
 from ..models import (
     Asset,
     AssetTranscriptionReservation,
+    Banner,
     Campaign,
     CarouselSlide,
     Item,
@@ -127,6 +128,8 @@ class ConcordiaUserAdmin(UserAdmin):
 
 admin.site.unregister(User)
 admin.site.register(User, ConcordiaUserAdmin)
+
+admin.site.register(Banner)
 
 
 class CustomListDisplayFieldsMixin:
