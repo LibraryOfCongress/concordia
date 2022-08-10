@@ -24,7 +24,7 @@ Parameters:
 Mappings:
     AWSRegionToAMI:
         us-east-1:
-            AMI: ami-0b898040803850657
+            AMI: ami-0cabc39acf991f4f1
 
     EnvironmentMapping:
         IamInstanceProfileName:
@@ -56,7 +56,7 @@ Resources:
                     - AWSRegionToAMI
                     - Ref: 'AWS::Region'
                     - 'AMI'
-            InstanceType: 't1.micro'
+            InstanceType: 't2.medium'
             IamInstanceProfile:
                 Fn::FindInMap:
                     - EnvironmentMapping
