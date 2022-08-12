@@ -457,6 +457,9 @@ class SimplePage(models.Model):
 
 
 class Banner(models.Model):
+    created_on = models.DateTimeField(editable=False, auto_now_add=True)
+    updated_on = models.DateTimeField(editable=False, auto_now=True)
+
     text = models.CharField(max_length=255)
     link = models.CharField(max_length=255)
     open_in_new_window_tab = models.BooleanField(default=True, blank=True)

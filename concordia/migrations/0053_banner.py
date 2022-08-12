@@ -22,6 +22,8 @@ class Migration(migrations.Migration):
                         verbose_name="ID",
                     ),
                 ),
+                ("created_on", models.DateTimeField(auto_now_add=True)),
+                ("updated_on", models.DateTimeField(auto_now=True)),
                 ("text", models.CharField(max_length=255)),
                 ("link", models.CharField(max_length=255)),
                 (
