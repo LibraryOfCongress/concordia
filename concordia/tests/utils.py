@@ -176,15 +176,15 @@ class JSONAssertMixin(object):
 
 
 class CreateTestUsers(object):
-    def login_user(self):
+    def login_user(self, username="tester"):
         """
         Create a user and log the user in
         """
 
         if not hasattr(self, "user"):
-            self.user = self.create_test_user("tester")
+            self.user = self.create_test_user(username)
 
-        self.client.login(username=self.user.username, password=self.user._password)
+        self.client.login(username=self.user.username, password=self.user.password)
 
     def create_user(self, username, is_active=True, **kwargs):
         if "email" not in kwargs:
@@ -196,7 +196,7 @@ class CreateTestUsers(object):
         user.set_password(fake_pw)
         user.save()
 
-        user._password = fake_pw
+        user.password = fake_pw
 
         return user
 

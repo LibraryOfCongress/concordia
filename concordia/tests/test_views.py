@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 
 from captcha.models import CaptchaStore
 from django.conf import settings
+from django.contrib.auth.models import User
 from django.http import HttpResponse, JsonResponse
 from django.test import (
     Client,
@@ -1087,6 +1088,77 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         # values, they should not be stored:
         self.assertEqual(["bar", "foo", "quux"], data["user_tags"])
         self.assertEqual(["baaz", "bar", "foo", "quux"], data["all_tags"])
+
+    def test_tag_deletion(self):
+        asset = create_asset()
+        self.login_user()
+
+        initial_tags = ["foo", "bar"]
+        resp = self.client.post(
+            reverse("submit-tags", kwargs={"asset_pk": asset.pk}),
+            data={"tags": initial_tags},
+        )
+        updated_tags = [
+            "foo",
+        ]
+        resp = self.client.post(
+            reverse("submit-tags", kwargs={"asset_pk": asset.pk}),
+            data={"tags": updated_tags},
+        )
+        data = self.assertValidJSON(resp, expected_status=200)
+        self.assertIn("user_tags", data)
+        self.assertIn("all_tags", data)
+
+        self.assertCountEqual(updated_tags, data["user_tags"])
+        self.assertCountEqual(updated_tags, data["all_tags"])
+
+    def test_tag_deletion_with_multiple_users(self):
+        asset = create_asset()
+        self.login_user("first_user")
+        initial_tags = ["foo", "bar"]
+        resp = self.client.post(
+            reverse("submit-tags", kwargs={"asset_pk": asset.pk}),
+            data={"tags": initial_tags},
+        )
+        self.assertIn(
+            "first_user",
+            asset.userassettagcollection_set.values().values_list(
+                "user__username", flat=True
+            ),
+        )
+        data = self.assertValidJSON(resp, expected_status=200)
+        self.assertIn("user_tags", data)
+        self.assertIn("all_tags", data)
+        self.assertCountEqual(initial_tags, data["user_tags"])
+        self.assertCountEqual(initial_tags, data["all_tags"])
+
+        self.client.logout()
+
+        # self.login_user("second_user")
+        second_user = self.create_test_user("second_user")
+        self.client.login(username=second_user.username, password=second_user.password)
+        updated_tags = [
+            "foo",
+        ]
+        resp = self.client.post(
+            reverse("submit-tags", kwargs={"asset_pk": asset.pk}),
+            data={"tags": updated_tags},
+        )
+        data = self.assertValidJSON(resp, expected_status=200)
+
+        self.assertIn(
+            "second_user",
+            asset.userassettagcollection_set.values().values_list(
+                "user__username", flat=True
+            ),
+        )
+        self.assertEqual(asset.userassettagcollection_set.count(), 2)
+        self.assertEqual(
+            User.objects.filter(userassettagcollection__asset=asset).count(), 2
+        )
+        self.assertIn("user_tags", data)
+        self.assertIn("all_tags", data)
+        self.assertCountEqual(updated_tags, data["user_tags"])
 
     def test_find_next_transcribable_no_campaign(self):
         asset1 = create_asset(slug="test-asset-1")
