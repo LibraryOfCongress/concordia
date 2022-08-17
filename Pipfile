@@ -41,7 +41,7 @@ psycopg2 = ">=2.9"
 bleach = "*"
 django-admin-multiple-choice-list-filter = "*"
 django-npm = "*"
-fpdf2 = "*"
+fpdf2 = "==2.5.5"
 pymemcache = "*"
 
 [dev-packages]

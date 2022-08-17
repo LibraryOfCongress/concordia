@@ -44,7 +44,7 @@ from django.views.decorators.vary import vary_on_headers
 from django.views.generic import FormView, ListView, TemplateView
 from django_registration.backends.activation.views import RegistrationView
 from flags.decorators import flag_required
-from fpdf import FPDF
+from fpdf import FPDF, ViewerPreferences
 from ratelimit.decorators import ratelimit
 from ratelimit.mixins import RatelimitMixin
 from ratelimit.utils import is_ratelimited
@@ -352,6 +352,7 @@ def AccountLetterView(request):
     pdf.set_title(title="Service Letter")
     pdf.set_lang("en-US")
     pdf.set_producer("Concordia")
+    pdf.viewer_preferences = ViewerPreferences(display_doc_title=True)
     pdf.set_font("Arial", size=11)
     pdf.cell(60, 40, txt="", ln=1, align="L")
     pdf.cell(30, 5, txt="Library of Congress", ln=1, align="L")
