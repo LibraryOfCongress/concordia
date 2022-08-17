@@ -61,6 +61,7 @@ from concordia.forms import (
 from concordia.models import (
     Asset,
     AssetTranscriptionReservation,
+    Banner,
     Campaign,
     CarouselSlide,
     Item,
@@ -627,6 +628,10 @@ class HomeView(ListView):
 
     def get_context_data(self, *args, **kwargs):
         ctx = super().get_context_data(*args, **kwargs)
+
+        banner = Banner.objects.first()
+        if banner is not None:
+            ctx["banner"] = banner
 
         ctx["slides"] = CarouselSlide.objects.published().order_by("ordering")
 
