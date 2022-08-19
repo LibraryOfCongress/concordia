@@ -17,7 +17,7 @@
             <div class="px-default ml-md-3 mb-5">
                 <div class="alert alert-dark alert-dismissible w-100 text-center" id="new-interface-banner" role="alert" hidden>
                     {% if banner %}
-                        <a class="btn btn-success" href="{{ banner.link }}"{% if banner.open_in_new_window_tab %} target="_blank"{% endif %}>
+                        <a class="btn btn-success"{% if banner.link %} href="{{ banner.link }}"{% if banner.open_in_new_window_tab %} target="_blank"{% endif %}{% endif %}>
                             {{ banner.text }}
                         </a>
                     {% else %}

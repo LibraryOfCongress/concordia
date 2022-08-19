@@ -461,7 +461,7 @@ class Banner(models.Model):
     updated_on = models.DateTimeField(editable=False, auto_now=True)
 
     text = models.CharField(max_length=255)
-    link = models.CharField(max_length=255)
+    link = models.CharField(max_length=255, blank=True, null=True)
     open_in_new_window_tab = models.BooleanField(default=True, blank=True)
 
     def __str__(self):

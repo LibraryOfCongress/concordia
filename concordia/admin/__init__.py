@@ -129,7 +129,13 @@ class ConcordiaUserAdmin(UserAdmin):
 admin.site.unregister(User)
 admin.site.register(User, ConcordiaUserAdmin)
 
-admin.site.register(Banner)
+
+class BannerAdmin(admin.ModelAdmin):
+    list_display = ("text", "link")
+    search_fields = ("text", "link")
+
+
+admin.site.register(Banner, BannerAdmin)
 
 
 class CustomListDisplayFieldsMixin:
