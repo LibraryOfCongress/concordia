@@ -63,6 +63,7 @@ jobs:
 
             - run: |
                   pip install "pipenv>=2022.8.5"
+                  pipenv --python /usr/lib/python3
                   pipenv install --dev --deploy
 
             - name: Perform CodeQL Analysis
