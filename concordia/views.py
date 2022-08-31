@@ -1408,12 +1408,13 @@ def submit_tags(request, *, asset_pk):
         if tag not in existing_user_tags:
             user_tags.tags.add(tag)
 
-    for tag in existing_user_tags:
+    all_tags_qs = Tag.objects.filter(userassettagcollection__asset__pk=asset_pk)
+
+    for tag in all_tags_qs:
         if tag not in all_submitted_tags:
             for collection in asset.userassettagcollection_set.all():
                 collection.tags.remove(tag)
 
-    all_tags_qs = Tag.objects.filter(userassettagcollection__asset__pk=asset_pk)
     all_tags = all_tags_qs.order_by("value")
 
     final_user_tags = user_tags.tags.order_by("value").values_list("value", flat=True)

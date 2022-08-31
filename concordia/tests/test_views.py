@@ -1094,7 +1094,7 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         self.login_user()
 
         initial_tags = ["foo", "bar"]
-        resp = self.client.post(
+        self.client.post(
             reverse("submit-tags", kwargs={"asset_pk": asset.pk}),
             data={"tags": initial_tags},
         )
