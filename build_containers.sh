@@ -16,6 +16,7 @@ source "${VENV}/bin/activate"
 
 # Update pip
 pip3 install -U pip
+pip3 install packaging
 pip3 install -U setuptools
 pip3 install -U pipenv
 
