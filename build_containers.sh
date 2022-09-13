@@ -16,10 +16,11 @@ source "${VENV}/bin/activate"
 
 # Update pip
 pip3 install -U pip
+pip3 install packaging
 pip3 install -U setuptools
 pip3 install -U pipenv
 
-pipenv install --dev --system --deploy
+pipenv install --dev --deploy
 
 FULL_VERSION_NUMBER="$(python3 setup.py --version)"
 VERSION_NUMBER=$(echo "${FULL_VERSION_NUMBER}" | cut -d '+' -f 1)
