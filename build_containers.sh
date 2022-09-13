@@ -17,7 +17,7 @@ source "${VENV}/bin/activate"
 # Update pip
 pip3 install -U pip
 pip3 install -U setuptools
-pip3 install -U pipenv
+pip3 install -U pipenv==2022.8.30
 
 pipenv install --dev --deploy
 
