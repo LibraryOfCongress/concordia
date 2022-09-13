@@ -12,7 +12,7 @@ function unlockControls($container) {
     $container.find('button').removeAttr('disabled');
 }
 
-$(document).on('keydown', function(event) {
+$(document).on('keydown', function (event) {
     /*
         Global keyboard event handlers
 
@@ -26,7 +26,7 @@ $(document).on('keydown', function(event) {
 
     if (
         (event.which == 112 || event.which == 191) &&
-        !event.target.tagName.match(/(INPUT|TEXTAREA)/i)
+        !event.target.tagName.match(/(INPUT|TEXTAREA)/i) // eslint-disable-line  unicorn/prefer-regexp-test, unicorn/better-regex
     ) {
         // Either the F1 or ? keys were pressed outside of a text field so we'll show help:
         $('#keyboard-help-modal').modal('show');
@@ -44,7 +44,7 @@ $(document).on('keydown', function(event) {
 
 var $captchaModal = $('#captcha-modal');
 var $triggeringCaptchaForm = false;
-var $captchaForm = $captchaModal.find('form').on('submit', function(event) {
+var $captchaForm = $captchaModal.find('form').on('submit', function (event) {
     event.preventDefault();
 
     var formData = $captchaForm.serializeArray();
@@ -53,16 +53,16 @@ var $captchaForm = $captchaModal.find('form').on('submit', function(event) {
         url: $captchaForm.attr('action'),
         method: 'POST',
         dataType: 'json',
-        data: $.param(formData)
+        data: $.param(formData),
     })
-        .done(function() {
+        .done(function () {
             $captchaModal.modal('hide');
             if ($triggeringCaptchaForm) {
                 $triggeringCaptchaForm.submit();
             }
             $triggeringCaptchaForm = false;
         })
-        .fail(function(jqXHR) {
+        .fail(function (jqXHR) {
             if (jqXHR.status == 401) {
                 $captchaModal.find('[name=key]').val(jqXHR.responseJSON.key);
                 $captchaModal
@@ -72,7 +72,7 @@ var $captchaForm = $captchaModal.find('form').on('submit', function(event) {
         });
 });
 
-$('form.ajax-submission').each(function(idx, formElement) {
+$('form.ajax-submission').each(function (index, formElement) {
     /*
     Generic AJAX submission logic which takes a form and POSTs its data to the
     configured action URL, locking the controls until it gets a response either
@@ -91,7 +91,7 @@ $('form.ajax-submission').each(function(idx, formElement) {
 
     var $form = $(formElement);
 
-    $form.on('submit', function(event) {
+    $form.on('submit', function (event) {
         event.preventDefault();
 
         lockControls($form);
@@ -102,17 +102,17 @@ $('form.ajax-submission').each(function(idx, formElement) {
             url: $form.attr('action'),
             method: 'POST',
             dataType: 'json',
-            data: $.param(formData)
+            data: $.param(formData),
         })
-            .done(function(data, textStatus) {
+            .done(function (data, textStatus) {
                 $form.trigger('form-submit-success', {
                     textStatus: textStatus,
                     requestData: formData,
                     responseData: data,
-                    $form: $form
+                    $form: $form,
                 });
             })
-            .fail(function(jqXHR, textStatus, errorThrown) {
+            .fail(function (jqXHR, textStatus, errorThrown) {
                 if (jqXHR.status == 401) {
                     $captchaModal
                         .find('[name=key]')
@@ -128,7 +128,7 @@ $('form.ajax-submission').each(function(idx, formElement) {
                         errorThrown: errorThrown,
                         requestData: formData,
                         $form: $form,
-                        jqXHR: jqXHR
+                        jqXHR: jqXHR,
                     });
                 }
             });
@@ -146,7 +146,7 @@ var $submitButton = $transcriptionEditor
     .first();
 var $nothingToTranscribeCheckbox = $transcriptionEditor
     .find('#nothing-to-transcribe')
-    .on('change', function() {
+    .on('change', function () {
         var $textarea = $transcriptionEditor.find('textarea');
         if (this.checked) {
             if ($textarea.val()) {
@@ -166,8 +166,14 @@ var $nothingToTranscribeCheckbox = $transcriptionEditor
         $transcriptionEditor.trigger('update-ui-state');
     });
 
+let firstEditorUpdate = true;
+let editorPlaceholderText = $transcriptionEditor
+    .find('textarea')
+    .attr('placeholder');
+let editorNothingToTranscribePlaceholderText = 'Nothing to transcribe';
+
 $transcriptionEditor
-    .on('update-ui-state', function() {
+    .on('update-ui-state', function () {
         /*
          * All controls are locked when the user does not have the write lock
          *
@@ -197,16 +203,31 @@ $transcriptionEditor
                 data.transcriptionStatus == 'submitted'
             ) {
                 $textarea.attr('readonly', 'readonly');
+                if ($nothingToTranscribeCheckbox.prop('checked')) {
+                    $textarea.attr(
+                        'placeholder',
+                        editorNothingToTranscribePlaceholderText
+                    );
+                }
             } else {
                 $textarea.removeAttr('readonly');
+                $textarea.attr('placeholder', editorPlaceholderText);
             }
 
             if (data.transcriptionId && !data.unsavedChanges) {
                 // We have a transcription ID and it's not stale, so we can submit the transcription for review:
                 $saveButton.attr('disabled', 'disabled');
                 $submitButton.removeAttr('disabled');
-                if (!$textarea.val()) {
+                // We only want to do this the first time the editor ui is updated (i.e., on first load)
+                // because otherwise it's impossible to uncheck the 'Nothing to transcribe' checkbox
+                // since this code would just immediately mark it checked again.
+                if (!$textarea.val() && firstEditorUpdate) {
                     $nothingToTranscribeCheckbox.prop('checked', true);
+                    $textarea.attr('readonly', 'readonly');
+                    $textarea.attr(
+                        'placeholder',
+                        editorNothingToTranscribePlaceholderText
+                    );
                 }
             } else {
                 // Unsaved changes are in the textarea and we're in transcribe mode
@@ -235,8 +256,9 @@ $transcriptionEditor
                 .filter('.tx-edit-conflict')
                 .removeAttr('hidden');
         }
+        firstEditorUpdate = false;
     })
-    .on('form-submit-success', function(event, extra) {
+    .on('form-submit-success', function (event, extra) {
         displayMessage(
             'info',
             "Successfully saved your work. Submit it for review when you're done",
@@ -244,7 +266,7 @@ $transcriptionEditor
         );
         $transcriptionEditor.data({
             transcriptionId: extra.responseData.id,
-            unsavedChanges: false
+            unsavedChanges: false,
         });
         $transcriptionEditor
             .find('input[name="supersedes"]')
@@ -255,7 +277,7 @@ $transcriptionEditor
         );
         $transcriptionEditor.trigger('update-ui-state');
     })
-    .on('form-submit-failure', function(event, info) {
+    .on('form-submit-failure', function (event, info) {
         displayMessage(
             'error',
             'Unable to save your work: ' +
@@ -269,15 +291,15 @@ $transcriptionEditor
         $transcriptionEditor.trigger('update-ui-state');
     });
 
-$submitButton.on('click', function(event) {
+$submitButton.on('click', function (event) {
     event.preventDefault();
 
     $.ajax({
         url: $transcriptionEditor.data('submitUrl'),
         method: 'POST',
-        dataType: 'json'
+        dataType: 'json',
     })
-        .done(function() {
+        .done(function () {
             $('.tx-status-display')
                 .children()
                 .attr('hidden', 'hidden')
@@ -285,11 +307,11 @@ $submitButton.on('click', function(event) {
                 .removeAttr('hidden');
             $('#successful-submission-modal')
                 .modal()
-                .on('hidden.bs.modal', function() {
+                .on('hidden.bs.modal', function () {
                     window.location.reload(true);
                 });
         })
-        .fail(function(jqXHR, textStatus, errorThrown) {
+        .fail(function (jqXHR, textStatus, errorThrown) {
             displayMessage(
                 'error',
                 'Unable to save your work: ' +
@@ -301,10 +323,10 @@ $submitButton.on('click', function(event) {
 
 $transcriptionEditor
     .find('textarea')
-    .each(function(idx, textarea) {
+    .each(function (index, textarea) {
         textarea.value = $.trim(textarea.value);
     })
-    .on('change input', function() {
+    .on('change input', function () {
         $transcriptionEditor.data('unsavedChanges', true);
         $transcriptionEditor.trigger('update-ui-state');
     });
@@ -316,21 +338,21 @@ function submitReview(status) {
         method: 'POST',
         dataType: 'json',
         data: {
-            action: status
-        }
+            action: status,
+        },
     })
-        .done(function() {
+        .done(function () {
             if (status == 'reject') {
                 window.location.reload(true);
             } else {
                 $('#review-accepted-modal')
                     .modal()
-                    .on('hidden.bs.modal', function() {
+                    .on('hidden.bs.modal', function () {
                         window.location.reload(true);
                     });
             }
         })
-        .fail(function(jqXHR, textStatus, errorThrown) {
+        .fail(function (jqXHR, textStatus, errorThrown) {
             displayMessage(
                 'error',
                 'Unable to save your review: ' +
@@ -342,14 +364,14 @@ function submitReview(status) {
 
 $('#accept-transcription-button')
     .removeAttr('disabled')
-    .on('click', function(event) {
+    .on('click', function (event) {
         event.preventDefault();
         submitReview('accept');
     });
 
 $('#reject-transcription-button')
     .removeAttr('disabled')
-    .on('click', function(event) {
+    .on('click', function (event) {
         event.preventDefault();
         submitReview('reject');
     });
@@ -369,7 +391,7 @@ function addNewTag() {
         // Prevent adding tags which are already present:
         var dupeCount = $currentTagList
             .find('input[name="tags"]')
-            .filter(function(idx, input) {
+            .filter(function (index, input) {
                 return (
                     input.value.toLocaleLowerCase() == value.toLocaleLowerCase()
                 );
@@ -381,10 +403,7 @@ function addNewTag() {
                 .clone()
                 .removeAttr('id')
                 .removeAttr('hidden');
-            $newTag
-                .find('input')
-                .removeAttr('disabled')
-                .val(value);
+            $newTag.find('input').removeAttr('disabled').val(value);
             $newTag.find('label').append(document.createTextNode(value));
             $currentTagList.append($newTag);
         }
@@ -394,7 +413,7 @@ function addNewTag() {
 
 $tagEditor.find('#new-tag-button').on('click', addNewTag);
 $newTagInput.on('change', addNewTag);
-$newTagInput.on('keydown', function(event) {
+$newTagInput.on('keydown', function (event) {
     // See https://github.com/LibraryOfCongress/concordia/issues/159 for the source of these values:
     if (event.which == '13' || event.which == '188') {
         // Either the enter or comma keys will add the tag and reset the input field:
@@ -403,18 +422,16 @@ $newTagInput.on('keydown', function(event) {
     }
 });
 
-$currentTagList.on('click', '.close', function() {
-    $(this)
-        .parents('li')
-        .remove();
+$currentTagList.on('click', '.close', function () {
+    $(this).parents('li').remove();
 });
 
 $tagEditor
-    .on('form-submit-success', function() {
+    .on('form-submit-success', function () {
         unlockControls($tagEditor);
         displayMessage('info', 'Your tags have been saved', 'tags-save-result');
     })
-    .on('form-submit-failure', function(event, info) {
+    .on('form-submit-failure', function (event, info) {
         unlockControls($tagEditor);
 
         var message = 'Unable to save your tags: ';
