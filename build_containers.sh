@@ -19,7 +19,7 @@ pip3 install -U pip
 pip3 install -U setuptools
 pip3 install -U pipenv==2022.8.30
 
-pipenv install --dev --deploy
+pipenv install --dev --system --deploy
 
 FULL_VERSION_NUMBER="$(python3 setup.py --version)"
 VERSION_NUMBER=$(echo "${FULL_VERSION_NUMBER}" | cut -d '+' -f 1)
