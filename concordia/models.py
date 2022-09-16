@@ -463,6 +463,7 @@ class Banner(models.Model):
     text = models.CharField(max_length=255)
     link = models.CharField(max_length=255)
     open_in_new_window_tab = models.BooleanField(default=True, blank=True)
+    active = models.BooleanField(default=False, blank=True)
 
     def __str__(self):
         return f"Banner: {self.text}"
