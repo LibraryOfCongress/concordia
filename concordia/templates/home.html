@@ -10,9 +10,9 @@
 
 {% block main_content %}
 
-    {% flag_enabled 'ADVERTISE_ACTIVITY_UI' as ADVERTISE_ACTIVITY_UI %}
+    {% flag_enabled 'SHOW_BANNER' as SHOW_BANNER %}
 
-    {% if ADVERTISE_ACTIVITY_UI %}
+    {% if SHOW_BANNER %}
         <div id="homepage-contribute-container" class="container my-4">
             <div class="px-default ml-md-3 mb-5">
                 <div class="alert alert-dark alert-dismissible w-100 text-center" id="new-interface-banner" role="alert" hidden>
