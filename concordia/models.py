@@ -78,10 +78,16 @@ class UnlistedPublicationQuerySet(PublicationQuerySet):
 
 
 class Campaign(MetricsModelMixin("campaign"), models.Model):
+    class Status(models.IntegerChoices):
+        ACTIVE = 1
+        COMPLETED = 2
+        RETIRED = 3
+
     objects = UnlistedPublicationQuerySet.as_manager()
 
     published = models.BooleanField(default=False, blank=True, db_index=True)
     unlisted = models.BooleanField(default=False, blank=True, db_index=True)
+    status = models.IntegerField(choices=Status.choices, default=Status.ACTIVE)
 
     ordering = models.IntegerField(
         default=0, help_text="Sort order override: lower values will be listed first"
