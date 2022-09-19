@@ -366,6 +366,7 @@ FLAGS = {
     "SIMPLE_CONTENT_BLOCKS": [],
     "CAROUSEL_CMS": [],
     "SEND_WELCOME_EMAIL": [],
+    "SHOW_BANNER": [],
     "DISPLAY_ITEM_DESCRIPTION": [],
 }
 
