@@ -629,7 +629,7 @@ class HomeView(ListView):
     def get_context_data(self, *args, **kwargs):
         ctx = super().get_context_data(*args, **kwargs)
 
-        banner = Banner.objects.first()
+        banner = Banner.objects.filter(active=True).first()
         if banner is not None:
             ctx["banner"] = banner
 
