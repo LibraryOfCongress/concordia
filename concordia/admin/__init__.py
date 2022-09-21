@@ -176,7 +176,7 @@ class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     list_display_links = ("title",)
     prepopulated_fields = {"slug": ("title",)}
     search_fields = ["title", "description"]
-    list_filter = ("published", "display_on_homepage", "unlisted")
+    list_filter = ("published", "display_on_homepage", "unlisted", "status")
 
     actions = (publish_action, unpublish_action)
 
