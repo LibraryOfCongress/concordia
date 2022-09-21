@@ -512,6 +512,19 @@ $card-progress-height: 12px;
     vertical-align: baseline;
 }
 
+// Campaign small blocks
+
+.small-campaign-title {
+    min-height: 6ex;
+}
+
+.small-campaign-description {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+}
+
 /*
  * Homepage customizations
  */

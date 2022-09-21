@@ -694,6 +694,19 @@ class CampaignListView(APIListView):
         return data
 
 
+@method_decorator(default_cache_control, name="dispatch")
+class CompletedCampaignListView(APIListView):
+    template_name = "transcriptions/campaign_list_small_blocks.html"
+
+    queryset = (
+        Campaign.objects.published()
+        .listed()
+        .filter(status__in=[Campaign.Status.COMPLETED, Campaign.Status.RETIRED])
+        .order_by("ordering", "title")
+    )
+    context_object_name = "campaigns"
+
+
 def calculate_asset_stats(asset_qs, ctx):
     asset_count = asset_qs.count()
 

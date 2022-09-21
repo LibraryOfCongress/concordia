@@ -17,6 +17,11 @@ tx_urlpatterns = (
     [
         path("", views.CampaignListView.as_view(), name="campaign-list"),
         path(
+            "completed/",
+            views.CompletedCampaignListView.as_view(),
+            name="completed-campaign-list",
+        ),
+        path(
             "<uslug:slug>/", views.CampaignDetailView.as_view(), name="campaign-detail"
         ),
         path(
