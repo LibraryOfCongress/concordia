@@ -1,0 +1,15 @@
+{% load truncation %}
+
+<li class="col-sm-4 mb-4">
+    <a href="{% url 'transcriptions:campaign-detail' campaign.slug %}">
+        <div class="aspect-ratio-box">
+            <div class="aspect-ratio-box-inner-wrapper">
+                <img src="{{ MEDIA_URL }}{{ campaign.thumbnail_image }}" class="img-fluid" alt="" loading="lazy">
+            </div>
+        </div>
+        <span class="d-block h4 mt-2 small-campaign-title">{{ campaign.title }}</span>
+    </a>
+    {% if show_description %}
+        <p class="small-campaign-description">{{ campaign.short_description|striptags|truncatechars_on_word_break:160 }}</p>
+    {% endif %}
+</li>
