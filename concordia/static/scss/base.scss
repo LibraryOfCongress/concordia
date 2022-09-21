@@ -457,6 +457,25 @@ $card-progress-height: 12px;
     z-index: 2;
 }
 
+.topic-list {
+    display: flex;
+    list-style: none;
+    overflow: auto;
+    padding-inline-start: 0;
+}
+
+.topic-list li {
+    border: 1px solid #0076ad;
+    margin-right: 10px;
+    text-align: center;
+    width: 210px;
+}
+
+.topic-list li a {
+    border: none;
+    margin-left: 0;
+}
+
 .progress {
     background-color: #f6f6f6;
     background-color: #e5f7ff;

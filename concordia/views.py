@@ -649,6 +649,13 @@ class CampaignListView(APIListView):
     queryset = Campaign.objects.published().listed().order_by("ordering", "title")
     context_object_name = "campaigns"
 
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
+        data["topics"] = (
+            Topic.objects.published().listed().order_by("ordering", "title")
+        )
+        return data
+
     def serialize_context(self, context):
         data = super().serialize_context(context)
 
