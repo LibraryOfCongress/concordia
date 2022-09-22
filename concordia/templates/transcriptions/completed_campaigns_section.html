@@ -1,0 +1,7 @@
+<h2>Completed Campaigns</h2>
+<h4 class="section-link"><a href="{% url 'transcriptions:completed-campaign-list' %}">See All Completed Campaigns &raquo;</a></h4>
+<ul class="list-unstyled row">
+    {% for campaign in completed_campaigns|slice:6 %}
+        {% include "transcriptions/campaign_small_block.html" %}
+    {% endfor %}
+</ul>
