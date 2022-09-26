@@ -870,11 +870,10 @@ class CampaignTopicListView(TemplateView):
                     for k, v in status_count_keys.items()
                 }
             )
+            .annotate(needs_review_count=F("in_progress_count") + F("submitted_count"))
             .annotate(
                 completed_percent=F("completed_count") * 100 / F("asset_count"),
-                submitted_percent=(F("not_started_count") + F("submitted_count"))
-                * 100
-                / F("asset_count"),
+                submitted_percent=F("needs_review_count") * 100 / F("asset_count"),
             )
             .order_by("ordering", "title")
         )
