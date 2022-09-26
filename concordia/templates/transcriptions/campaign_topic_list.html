@@ -2,19 +2,19 @@
 
 {% load staticfiles %}
 
-{% block title %}Campaigns{% endblock title %}
+{% block title %}Active Campaigns{% endblock title %}
 
 {% block head_content %}
     <link rel="canonical" href="https://{{ request.get_host }}{{ request.path }}">
 {% endblock head_content %}
 
 {% block breadcrumbs %}
-    <li class="breadcrumb-item active" aria-current="page">Campaigns</li>
+    <li class="breadcrumb-item active" aria-current="page">Active Campaigns</li>
 {% endblock breadcrumbs %}
 
 {% block main_content %}
     <div class="container py-3">
-        <h1 class="sr-only">Campaigns</h1>
+        <h1>Active Campaigns</h1>
         {% if topics %}
             <h3><a href="{% url 'topic-list' %}">Explore by topic</a></h3>
             <ul class="topic-list">
@@ -43,8 +43,6 @@
                 </li>
             {% endfor %}
         </ul>
-        <div class="row">
-            {% include "fragments/standard-pagination.html" %}
-        </div>
+        {% include "transcriptions/completed_campaigns_section.html" %}
     </div>
 {% endblock main_content %}

@@ -644,15 +644,25 @@ class HomeView(ListView):
 @method_decorator(default_cache_control, name="dispatch")
 class CampaignListView(APIListView):
     template_name = "transcriptions/campaign_list.html"
-    paginate_by = 10
 
-    queryset = Campaign.objects.published().listed().order_by("ordering", "title")
+    queryset = (
+        Campaign.objects.published()
+        .listed()
+        .filter(status=Campaign.Status.ACTIVE)
+        .order_by("ordering", "title")
+    )
     context_object_name = "campaigns"
 
     def get_context_data(self, **kwargs):
         data = super().get_context_data(**kwargs)
         data["topics"] = (
             Topic.objects.published().listed().order_by("ordering", "title")
+        )
+        data["completed_campaigns"] = (
+            Campaign.objects.published()
+            .listed()
+            .filter(status__in=[Campaign.Status.COMPLETED, Campaign.Status.RETIRED])
+            .order_by("ordering", "title")
         )
         return data
 
@@ -692,6 +702,19 @@ class CampaignListView(APIListView):
             obj["asset_stats"] = campaign_asset_counts[obj["id"]]
 
         return data
+
+
+@method_decorator(default_cache_control, name="dispatch")
+class CompletedCampaignListView(APIListView):
+    template_name = "transcriptions/campaign_list_small_blocks.html"
+
+    queryset = (
+        Campaign.objects.published()
+        .listed()
+        .filter(status__in=[Campaign.Status.COMPLETED, Campaign.Status.RETIRED])
+        .order_by("ordering", "title")
+    )
+    context_object_name = "campaigns"
 
 
 def calculate_asset_stats(asset_qs, ctx):
@@ -804,13 +827,22 @@ class CampaignTopicListView(TemplateView):
     def get(self, context):
         data = {}
         data["campaigns"] = (
-            Campaign.objects.published().listed().order_by("ordering", "title")
+            Campaign.objects.published()
+            .listed()
+            .filter(status=Campaign.Status.ACTIVE)
+            .order_by("ordering", "title")
         )
         data["topics"] = (
             Topic.objects.published().listed().order_by("ordering", "title")[:5]
         )
         data["campaigns_topics"] = sorted(
             [*data["campaigns"], *data["topics"]], key=attrgetter("ordering", "title")
+        )
+        data["completed_campaigns"] = (
+            Campaign.objects.published()
+            .listed()
+            .filter(status__in=[Campaign.Status.COMPLETED, Campaign.Status.RETIRED])
+            .order_by("ordering", "title")
         )
 
         return render(self.request, self.template_name, data)

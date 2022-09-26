@@ -358,6 +358,12 @@ $card-progress-height: 12px;
     overflow: hidden;
 }
 
+.section-link {
+    text-decoration: underline;
+    padding-top: 1em;
+    padding-bottom: 0.25em;
+}
+
 /*
  * List-like displays for items and assets
  */
@@ -510,6 +516,19 @@ $card-progress-height: 12px;
     height: 0.6em;
     width: 0.6em;
     vertical-align: baseline;
+}
+
+// Campaign small blocks
+
+.small-campaign-title {
+    min-height: 6ex;
+}
+
+.small-campaign-description {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
 }
 
 /*
