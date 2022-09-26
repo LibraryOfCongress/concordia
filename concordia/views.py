@@ -27,7 +27,17 @@ from django.core.exceptions import ValidationError
 from django.core.mail import EmailMultiAlternatives, send_mail
 from django.core.paginator import Paginator
 from django.db import connection
-from django.db.models import Case, Count, IntegerField, Max, OuterRef, Q, Subquery, When
+from django.db.models import (
+    Case,
+    Count,
+    F,
+    IntegerField,
+    Max,
+    OuterRef,
+    Q,
+    Subquery,
+    When,
+)
 from django.db.models.functions import Greatest
 from django.db.transaction import atomic
 from django.http import Http404, HttpResponse, JsonResponse
@@ -825,11 +835,47 @@ class CampaignTopicListView(TemplateView):
     template_name = "transcriptions/campaign_topic_list.html"
 
     def get(self, context):
+        status_count_keys = {
+            status: f"{status}_count" for status in TranscriptionStatus.CHOICE_MAP
+        }
+        # status_percent_keys = {
+        #     status: f"{status}_percent" for status in TranscriptionStatus.CHOICE_MAP
+        # }
         data = {}
         data["campaigns"] = (
             Campaign.objects.published()
             .listed()
             .filter(status=Campaign.Status.ACTIVE)
+            .annotate(
+                asset_count=Count(
+                    "project__item__asset",
+                    filter=Q(
+                        project__published=True,
+                        project__item__published=True,
+                        project__item__asset__published=True,
+                    ),
+                )
+            )
+            .annotate(
+                **{
+                    v: Count(
+                        "project__item__asset",
+                        filter=Q(
+                            project__published=True,
+                            project__item__published=True,
+                            project__item__asset__published=True,
+                            project__item__asset__transcription_status=k,
+                        ),
+                    )
+                    for k, v in status_count_keys.items()
+                }
+            )
+            .annotate(
+                completed_percent=F("completed_count") * 100 / F("asset_count"),
+                submitted_percent=(F("not_started_count") + F("submitted_count"))
+                * 100
+                / F("asset_count"),
+            )
             .order_by("ordering", "title")
         )
         data["topics"] = (

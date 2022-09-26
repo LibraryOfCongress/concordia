@@ -26,6 +26,23 @@
                         <div class="col-md">
                             <p>{{ campaign.short_description|safe }}</p>
                             <a class="btn btn-primary" href="{{ campaign.get_absolute_url }}">View Projects</a>
+                            <div class="progress" asset-count="{{ campaign.asset_count }}">
+                                <div
+                                    class="progress-bar bg-completed"
+                                    role="progressbar"
+                                    style="width: {{ campaign.completed_percent }}%"
+                                    aria-valuenow="{{ campaign.completed_percent }}"
+                                    completed-count="{{ campaign.completed_count}}"
+                                ></div>
+                                <div
+                                    class="progress-bar bg-submitted"
+                                    role="progressbar"
+                                    style="width: {{ campaign.submitted_percent }}%"
+                                    aria-valuenow="{{ campaign.submitted_percent }}"
+                                    not-started-count="{{ campaign.not_started_count }}"
+                                    submitted-count="{{ campaign.submitted_count }}"
+                                ></div>
+                            </div>
                         </div>
                     </div>
                 </li>
