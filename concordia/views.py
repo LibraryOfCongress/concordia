@@ -878,7 +878,7 @@ class CampaignTopicListView(TemplateView):
             .order_by("ordering", "title")
         )
         data["topics"] = (
-            Topic.objects.published().listed().order_by("ordering", "title")
+            Topic.objects.published().listed().order_by("ordering", "title")[:5]
         )
         data["campaigns_topics"] = sorted(
             [*data["campaigns"], *data["topics"]], key=attrgetter("ordering", "title")
@@ -891,6 +891,13 @@ class CampaignTopicListView(TemplateView):
         )
 
         return render(self.request, self.template_name, data)
+
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
+        data["topics"] = (
+            Topic.objects.published().listed().order_by("ordering", "title")
+        )
+        return data
 
 
 @method_decorator(default_cache_control, name="dispatch")
