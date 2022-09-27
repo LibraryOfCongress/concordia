@@ -96,6 +96,10 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
 
     title = models.CharField(max_length=80)
     slug = models.SlugField(max_length=80, unique=True, allow_unicode=True)
+
+    launch_date = models.DateField(null=True, blank=True)
+    completed_date = models.DateField(null=True, blank=True)
+
     description = models.TextField(blank=True)
     thumbnail_image = models.ImageField(
         upload_to="campaign-thumbnails", blank=True, null=True
@@ -145,9 +149,28 @@ class Topic(models.Model):
         return reverse("topic-detail", kwargs={"slug": self.slug})
 
 
+class ResourceTypeQuerySet(models.QuerySet):
+    def related_links(self):
+        return self.filter(resource_type=Resource.ResourceType.RELATED_LINK)
+
+    def completed_transcription_links(self):
+        return self.filter(
+            resource_type=Resource.ResourceType.COMPLETED_TRANSCRIPTION_LINK
+        )
+
+
 class Resource(MetricsModelMixin("resource"), models.Model):
+    class ResourceType(models.IntegerChoices):
+        RELATED_LINK = 1
+        COMPLETED_TRANSCRIPTION_LINK = 2
+
+    objects = ResourceTypeQuerySet.as_manager()
+
     sequence = models.PositiveIntegerField(default=1)
     title = models.CharField(blank=False, max_length=255)
+    resource_type = models.IntegerField(
+        choices=ResourceType.choices, default=ResourceType.RELATED_LINK
+    )
     resource_url = models.URLField()
 
     campaign = models.ForeignKey(

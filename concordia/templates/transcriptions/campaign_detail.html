@@ -25,11 +25,11 @@
                 <div class="hero-text">{{ campaign.description|safe }}</div>
             </div>
             <div class="col-md-3">
-                {% if campaign.resource_set.all|length %}
+                {% if campaign.resource_set.related_links %}
                     <aside class="mb-3 mt-4 mt-md-0 p-3 bg-light border">
                         <h4 class="mb-3">Related Links</h4>
                         <ul class="list-unstyled m-0">
-                            {% for resource in campaign.resource_set.all %}
+                            {% for resource in campaign.resource_set.related_links %}
                                 {% if 'loc.gov' in resource.resource_url   %}
                                     <li class="mb-3"><a href="{{ resource.resource_url }}" target="_blank">{{ resource.title }}</a></li>
                                 {%else%}

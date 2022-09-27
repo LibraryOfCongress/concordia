@@ -919,6 +919,7 @@ class TopicDetailView(APIDetailView):
 @method_decorator(default_cache_control, name="dispatch")
 class CampaignDetailView(APIDetailView):
     template_name = "transcriptions/campaign_detail.html"
+    completed_template_name = "transcriptions/campaign_detail_completed.html"
     context_object_name = "campaign"
     queryset = Campaign.objects.published().order_by("title")
 
@@ -975,6 +976,12 @@ class CampaignDetailView(APIDetailView):
             )
         ]
         return ctx
+
+    def get_template_names(self):
+        if self.object:
+            if self.object.status == Campaign.Status.COMPLETED:
+                return [self.completed_template_name]
+        return super().get_template_names()
 
 
 @method_decorator(default_cache_control, name="dispatch")
