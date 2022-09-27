@@ -493,6 +493,11 @@ $card-progress-height: 12px;
     }
 }
 
+.campaign-progress {
+    height: 35px;
+    margin-top: 20px;
+}
+
 /*
  * Progress displays
  */
@@ -500,6 +505,11 @@ $card-progress-height: 12px;
 #progress-bar {
     height: 1rem;
     border-radius: 0;
+}
+
+.progress-legend {
+    font-size: 12px;
+    margin-top: 5px;
 }
 
 #progress-stats {
