@@ -27,17 +27,7 @@ from django.core.exceptions import ValidationError
 from django.core.mail import EmailMultiAlternatives, send_mail
 from django.core.paginator import Paginator
 from django.db import connection
-from django.db.models import (
-    Case,
-    Count,
-    F,
-    IntegerField,
-    Max,
-    OuterRef,
-    Q,
-    Subquery,
-    When,
-)
+from django.db.models import Case, Count, IntegerField, Max, OuterRef, Q, Subquery, When
 from django.db.models.functions import Greatest
 from django.db.transaction import atomic
 from django.http import Http404, HttpResponse, JsonResponse
@@ -69,6 +59,7 @@ from concordia.forms import (
     UserRegistrationForm,
 )
 from concordia.models import (
+    STATUS_COUNT_KEYS,
     Asset,
     AssetTranscriptionReservation,
     Banner,
@@ -681,10 +672,6 @@ class CampaignListView(APIListView):
 
         object_list = data["objects"]
 
-        status_count_keys = {
-            status: f"{status}_count" for status in TranscriptionStatus.CHOICE_MAP
-        }
-
         campaign_stats_qs = (
             Campaign.objects.filter(pk__in=[i["id"] for i in object_list])
             .annotate(
@@ -698,10 +685,10 @@ class CampaignListView(APIListView):
                             project__item__asset__transcription_status=k,
                         ),
                     )
-                    for k, v in status_count_keys.items()
+                    for k, v in STATUS_COUNT_KEYS.items()
                 }
             )
-            .values("pk", *status_count_keys.values())
+            .values("pk", *STATUS_COUNT_KEYS.values())
         )
 
         campaign_asset_counts = {}
@@ -797,10 +784,6 @@ class TopicListView(APIListView):
 
         object_list = data["objects"]
 
-        status_count_keys = {
-            status: f"{status}_count" for status in TranscriptionStatus.CHOICE_MAP
-        }
-
         topic_stats_qs = (
             Topic.objects.filter(pk__in=[i["id"] for i in object_list])
             .annotate(
@@ -814,10 +797,10 @@ class TopicListView(APIListView):
                             project__item__asset__transcription_status=k,
                         ),
                     )
-                    for k, v in status_count_keys.items()
+                    for k, v in STATUS_COUNT_KEYS.items()
                 }
             )
-            .values("pk", *status_count_keys.values())
+            .values("pk", *STATUS_COUNT_KEYS.values())
         )
 
         topic_asset_counts = {}
@@ -835,81 +818,18 @@ class CampaignTopicListView(TemplateView):
     template_name = "transcriptions/campaign_topic_list.html"
 
     def get(self, context):
-        status_count_keys = {
-            status: f"{status}_count" for status in TranscriptionStatus.CHOICE_MAP
-        }
-        # status_percent_keys = {
-        #     status: f"{status}_percent" for status in TranscriptionStatus.CHOICE_MAP
-        # }
         data = {}
         data["campaigns"] = (
             Campaign.objects.published()
             .listed()
             .filter(status=Campaign.Status.ACTIVE)
-            .annotate(
-                asset_count=Count(
-                    "project__item__asset",
-                    filter=Q(
-                        project__published=True,
-                        project__item__published=True,
-                        project__item__asset__published=True,
-                    ),
-                )
-            )
-            .annotate(
-                **{
-                    v: Count(
-                        "project__item__asset",
-                        filter=Q(
-                            project__published=True,
-                            project__item__published=True,
-                            project__item__asset__published=True,
-                            project__item__asset__transcription_status=k,
-                        ),
-                    )
-                    for k, v in status_count_keys.items()
-                }
-            )
-            .annotate(needs_review_count=F("in_progress_count") + F("submitted_count"))
-            .annotate(
-                completed_percent=F("completed_count") * 100 / F("asset_count"),
-                submitted_percent=F("needs_review_count") * 100 / F("asset_count"),
-            )
+            .annotated()
             .order_by("ordering", "title")
         )
         data["topics"] = (
             Topic.objects.published()
             .listed()
-            .annotate(
-                asset_count=Count(
-                    "project__item__asset",
-                    filter=Q(
-                        project__published=True,
-                        project__item__published=True,
-                        project__item__asset__published=True,
-                    ),
-                )
-            )
-            .filter(asset_count__gt=0)
-            .annotate(
-                **{
-                    v: Count(
-                        "project__item__asset",
-                        filter=Q(
-                            project__published=True,
-                            project__item__published=True,
-                            project__item__asset__published=True,
-                            project__item__asset__transcription_status=k,
-                        ),
-                    )
-                    for k, v in status_count_keys.items()
-                }
-            )
-            .annotate(needs_review_count=F("in_progress_count") + F("submitted_count"))
-            .annotate(
-                completed_percent=F("completed_count") * 100 / F("asset_count"),
-                submitted_percent=F("needs_review_count") * 100 / F("asset_count"),
-            )
+            .annotated()
             .order_by("ordering", "title")[:5]
         )
         data["campaigns_topics"] = sorted(
