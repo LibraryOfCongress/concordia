@@ -878,7 +878,39 @@ class CampaignTopicListView(TemplateView):
             .order_by("ordering", "title")
         )
         data["topics"] = (
-            Topic.objects.published().listed().order_by("ordering", "title")[:5]
+            Topic.objects.published()
+            .listed()
+            .annotate(
+                asset_count=Count(
+                    "project__item__asset",
+                    filter=Q(
+                        project__published=True,
+                        project__item__published=True,
+                        project__item__asset__published=True,
+                    ),
+                )
+            )
+            .filter(asset_count__gt=0)
+            .annotate(
+                **{
+                    v: Count(
+                        "project__item__asset",
+                        filter=Q(
+                            project__published=True,
+                            project__item__published=True,
+                            project__item__asset__published=True,
+                            project__item__asset__transcription_status=k,
+                        ),
+                    )
+                    for k, v in status_count_keys.items()
+                }
+            )
+            .annotate(needs_review_count=F("in_progress_count") + F("submitted_count"))
+            .annotate(
+                completed_percent=F("completed_count") * 100 / F("asset_count"),
+                submitted_percent=F("needs_review_count") * 100 / F("asset_count"),
+            )
+            .order_by("ordering", "title")[:5]
         )
         data["campaigns_topics"] = sorted(
             [*data["campaigns"], *data["topics"]], key=attrgetter("ordering", "title")

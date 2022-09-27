@@ -38,7 +38,7 @@
                         <div class="col-md">
                             <p>{{ campaign.short_description|safe }}</p>
                             <a class="btn btn-primary" href="{{ campaign.get_absolute_url }}">View Projects</a>
-                            <div class="progress campaign-progress">
+                            <div class="progress campaign-progress" asset-count="{{ campaign.asset_count }}">
                                 <div
                                     class="progress-bar bg-completed"
                                     role="progressbar"
