@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% load staticfiles %}
+{% load humanize %}
+{% load concordia_text_tags %}
+
+{% block title %}{{ campaign.title }}{% endblock title %}
+
+{% block head_content %}
+    <link rel="canonical" href="https://{{ request.get_host }}{{ request.path }}">
+    <meta name="description" content="{{ campaign.description|striptags|normalize_whitespace }}">
+    <meta name="thumbnail" content="{{ MEDIA_URL }}{{ campaign.thumbnail_image }}">
+    <meta property="og:image" content="{{ MEDIA_URL }}{{ campaign.thumbnail_image }}">
+{% endblock head_content %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'campaign-topic-list' %}">Campaigns</a></li>
+    <li class="breadcrumb-item active" aria-current="page" title="{{ campaign.title }}">{{ campaign.title }}</li>
+{% endblock breadcrumbs %}
+
+{% block main_content %}
+    <div class="container py-3">
+        <div class="row">
+            <div class="col-md-12">
+                <h4 class="section-link"><a href="{% url 'transcriptions:campaign-list' %}">Explore all of our currently active campaigns.</a></h4>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <h1>{{ campaign.title }}</h1>
+                <div class="completed-bar"><h3 class="completed-text">100% Complete</h3></div>
+                <hr class="landing-divider" />
+                <span><strong>Completed Page{{ completed_count|pluralize }}:</strong> {{ completed_count|intcomma }}</span><br />
+                <span><strong>Registered Contributor{{ contributor_count|pluralize }}:</strong> {{ contributor_count|intcomma }}</span>
+                <hr class="landing-divider" />
+                {% if campaign.launch_date and campaign.completed_date %}
+                    <p><strong>Launched {{ campaign.launch_date }} and completed {{ campaign.completed_date }}.</strong></p>
+                {% endif %}
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="hero-text">{{ campaign.description|safe }}</div>
+            </div>
+        </div>
+        {% with campaign.resource_set.completed_transcription_links as resources %}
+            {% if resources %}
+                <div class="row completed-transcription">
+                    <div class="col-md-12">
+                        <h3>View and Search Completed Transcriptions</h3>
+                        <ul class="list-unstyled m-0">
+                            {% for resource in resources %}
+                                <li class="mb-3">
+                                    <a class="underline-link" href="{{ resource.resource_url }}" target="_blank">{{ resource.title }}</a>
+                                    {% if 'loc.gov' not in resource.resource_url  %}
+                                        <i class="fa fa-external-link-alt"></i>
+                                    {% endif %}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            {% endif %}
+        {% endwith %}
+        <div class="row justify-content-center concordia-object-card-row">
+            <div class="row justify-content-center concordia-object-card-row completed-card-container">
+                {% for project in projects %}
+                    <div class="col-6 col-md-4 col-lg-3 concordia-object-card-col-completed">
+                        <div class="h-100 concordia-object-card card border" data-transcription-status="complete">
+                            {% url 'transcriptions:project-detail' campaign.slug project.slug as project_url %}
+
+                            <a href="{{ project_url }}?{{ sublevel_querystring }}" aria-hidden="true">
+                                <img class="card-img card-img-campaign" src="{{ MEDIA_URL }}{{ project.thumbnail_image }}" alt="{{ project.title }}">
+                            </a>
+
+                            <div class="progress w-100">
+                                <div title="Completed" class="progress-bar bg-completed" role="progressbar" style="width: 100%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+
+                            <h6 class="text-center primary-text m-0 concordia-object-card-title">
+                                <a class="underline-link" href="{{ project_url }}?{{ sublevel_querystring }}">{{ project.title }}</a>
+                            </h6>
+                            <div class="card-actions">
+                                <a class="btn btn-sm btn-block btn-dark" href="{{ project_url }}?{{ sublevel_querystring }}">
+                                    <span class="fas fa-check tx-completed"></span>
+                                    Complete
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% with campaign.resource_set.related_links as resources %}
+            {% if resources %}
+                <div class="row completed-related-links">
+                    <div class="col-md-12">
+                        <aside class="mb-3 mt-4 mt-md-0 p-3 bg-light">
+                            <h4 class="mb-3">Related Links</h4>
+                            <ul class="list-unstyled m-0">
+                                {% for resource in resources %}
+                                    <li class="mb-3">
+                                        <a class="underline-link" href="{{ resource.resource_url }}" target="_blank">{{ resource.title }}</a>
+                                        {% if 'loc.gov' not in resource.resource_url  %}
+                                            <i class="fa fa-external-link-alt"></i>
+                                        {% endif %}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </aside>
+                    </div>
+                </div>
+            {% endif %}
+        {% endwith %}
+    </div>
+{% endblock main_content %}

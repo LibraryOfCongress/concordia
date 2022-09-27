@@ -205,6 +205,23 @@ p.hero-secondary.offwhite-text {
     border: 1px solid $primary;
 }
 
+.completed-bar {
+    background-color: $navy;
+    color: $white;
+}
+
+.completed-text {
+    padding: 0.3em;
+}
+
+.completed-transcription {
+    padding-top: 0.5em;
+}
+
+.completed-related-links {
+    padding-top: 1em;
+}
+
 input {
     color: $dark;
     background-color: #fff;
@@ -283,6 +300,10 @@ ul.nav-secondary {
     border-right: 1px solid $border-color;
     margin: 0 15px 0 0 !important;
     padding-right: 15px;
+}
+
+.landing-divider {
+    margin: 0.25em;
 }
 
 /* Forms */
@@ -364,6 +385,10 @@ $card-progress-height: 12px;
     padding-bottom: 0.25em;
 }
 
+.underline-link {
+    text-decoration: underline;
+}
+
 /*
  * List-like displays for items and assets
  */
@@ -372,12 +397,29 @@ $card-progress-height: 12px;
     margin: 0 -6px;
 }
 
+.completed-card-row {
+    padding-top: 0.25em;
+}
+
+.completed-card-container {
+    width: 90%;
+}
+
 .concordia-object-card-col {
     padding: 6px;
 
     @include media-breakpoint-up(xl) {
         flex: 0 0 20%;
         max-width: 20%;
+    }
+}
+
+.concordia-object-card-col-completed {
+    padding: 6px;
+
+    @include media-breakpoint-up(xl) {
+        flex: 0 0 25%;
+        max-width: 25%;
     }
 }
 

@@ -27,9 +27,9 @@
                 {% endfor %}
             </ul>
         {% endif %}
-        <ul class="list-unstyled">
+        <ul id="campaign-list" class="list-unstyled">
             {% for campaign in campaigns_topics %}
-                <li class="p-4 mb-1 bg-light">
+                <li class="p-4 mb-1 bg-light" {% if forloop.counter > 10 %}hidden{% endif %}>
                     <h2 class="h1 mb-3">{{ campaign.title }}</h2>
                     <div class="row">
                         <a class="col-md-5 order-md-2" href="{{ campaign.get_absolute_url }}">
@@ -65,6 +65,29 @@
                 </li>
             {% endfor %}
         </ul>
+        {% with campaigns_topics|length as campaigns_count %}
+            {% if campaigns_count > 10 %}
+                <div class="align-items-center justify-content-center row">
+                    <a id="show-more" class="btn btn-primary">Show More Campaigns ({{ campaigns_count|add:"-10" }})</a>
+                </div>
+            {% endif %}
+        {% endwith %}
         {% include "transcriptions/completed_campaigns_section.html" %}
     </div>
 {% endblock main_content %}
+
+{% block body_scripts %}
+    <script>
+        let showMoreButton = document.getElementById("show-more");
+        let campaignList = document.getElementById("campaign-list");
+        if (showMoreButton){
+            showMoreButton.addEventListener("click", function(event){
+                for (const child of campaignList.children){
+                    child.hidden = false;
+                }
+                showMoreButton.parentElement.hidden = true;
+                event.preventDefault();
+            });
+        }
+    </script>
+{% endblock body_scripts %}
