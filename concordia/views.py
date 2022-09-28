@@ -59,6 +59,7 @@ from concordia.forms import (
     UserRegistrationForm,
 )
 from concordia.models import (
+    STATUS_COUNT_KEYS,
     Asset,
     AssetTranscriptionReservation,
     Banner,
@@ -671,10 +672,6 @@ class CampaignListView(APIListView):
 
         object_list = data["objects"]
 
-        status_count_keys = {
-            status: f"{status}_count" for status in TranscriptionStatus.CHOICE_MAP
-        }
-
         campaign_stats_qs = (
             Campaign.objects.filter(pk__in=[i["id"] for i in object_list])
             .annotate(
@@ -688,10 +685,10 @@ class CampaignListView(APIListView):
                             project__item__asset__transcription_status=k,
                         ),
                     )
-                    for k, v in status_count_keys.items()
+                    for k, v in STATUS_COUNT_KEYS.items()
                 }
             )
-            .values("pk", *status_count_keys.values())
+            .values("pk", *STATUS_COUNT_KEYS.values())
         )
 
         campaign_asset_counts = {}
@@ -787,10 +784,6 @@ class TopicListView(APIListView):
 
         object_list = data["objects"]
 
-        status_count_keys = {
-            status: f"{status}_count" for status in TranscriptionStatus.CHOICE_MAP
-        }
-
         topic_stats_qs = (
             Topic.objects.filter(pk__in=[i["id"] for i in object_list])
             .annotate(
@@ -804,10 +797,10 @@ class TopicListView(APIListView):
                             project__item__asset__transcription_status=k,
                         ),
                     )
-                    for k, v in status_count_keys.items()
+                    for k, v in STATUS_COUNT_KEYS.items()
                 }
             )
-            .values("pk", *status_count_keys.values())
+            .values("pk", *STATUS_COUNT_KEYS.values())
         )
 
         topic_asset_counts = {}
@@ -830,10 +823,14 @@ class CampaignTopicListView(TemplateView):
             Campaign.objects.published()
             .listed()
             .filter(status=Campaign.Status.ACTIVE)
+            .annotated()
             .order_by("ordering", "title")
         )
         data["topics"] = (
-            Topic.objects.published().listed().order_by("ordering", "title")[:5]
+            Topic.objects.published()
+            .listed()
+            .annotated()
+            .order_by("ordering", "title")[:5]
         )
         data["campaigns_topics"] = sorted(
             [*data["campaigns"], *data["topics"]], key=attrgetter("ordering", "title")

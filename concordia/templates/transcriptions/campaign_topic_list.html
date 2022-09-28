@@ -38,6 +38,28 @@
                         <div class="col-md">
                             <p>{{ campaign.short_description|safe }}</p>
                             <a class="btn btn-primary" href="{{ campaign.get_absolute_url }}">View Projects</a>
+                            <div class="progress campaign-progress" asset-count="{{ campaign.asset_count }}">
+                                <div
+                                    class="progress-bar bg-completed"
+                                    role="progressbar"
+                                    style="width: {{ campaign.completed_percent }}%"
+                                    aria-valuenow="{{ campaign.completed_percent }}"
+                                ></div>
+                                <div
+                                    class="progress-bar bg-submitted"
+                                    role="progressbar"
+                                    style="width: {{ campaign.submitted_percent }}%"
+                                    aria-valuenow="{{ campaign.submitted_percent }}"
+                                ></div>
+                            </div>
+                            <div class="progress-legend">
+                                {% if campaign.completed_percent %}
+                                    {{ campaign.completed_percent }}% Completed
+                                {% endif %}
+                                {% if campaign.submitted_percent %}
+                                    {{ campaign.submitted_percent }}% Needs Review
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
                 </li>

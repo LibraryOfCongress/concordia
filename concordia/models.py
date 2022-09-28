@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
-from django.db.models import Count, JSONField
+from django.db.models import Count, F, JSONField, Q
 from django.urls import reverse
 from django_prometheus_metrics.models import MetricsModelMixin
 
@@ -53,6 +53,11 @@ class TranscriptionStatus(object):
     CHOICE_MAP = dict(CHOICES)
 
 
+STATUS_COUNT_KEYS = {
+    status: f"{status}_count" for status in TranscriptionStatus.CHOICE_MAP
+}
+
+
 class MediaType:
     IMAGE = "IMG"
     AUDIO = "AUD"
@@ -70,6 +75,40 @@ class PublicationQuerySet(models.QuerySet):
 
 
 class UnlistedPublicationQuerySet(PublicationQuerySet):
+    def annotated(self):
+        return (
+            self.annotate(
+                asset_count=Count(
+                    "project__item__asset",
+                    filter=Q(
+                        project__published=True,
+                        project__item__published=True,
+                        project__item__asset__published=True,
+                    ),
+                )
+            )
+            .filter(asset_count__gt=0)
+            .annotate(
+                **{
+                    v: Count(
+                        "project__item__asset",
+                        filter=Q(
+                            project__published=True,
+                            project__item__published=True,
+                            project__item__asset__published=True,
+                            project__item__asset__transcription_status=k,
+                        ),
+                    )
+                    for k, v in STATUS_COUNT_KEYS.items()
+                }
+            )
+            .annotate(needs_review_count=F("in_progress_count") + F("submitted_count"))
+            .annotate(
+                completed_percent=F("completed_count") * 100 / F("asset_count"),
+                submitted_percent=F("needs_review_count") * 100 / F("asset_count"),
+            )
+        )
+
     def listed(self):
         return self.filter(unlisted=False)
 
