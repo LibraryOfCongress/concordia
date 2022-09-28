@@ -1,19 +1,20 @@
-name: Build and Test
+name: 'Build and Test'
 
 on:
     workflow_dispatch:
     push:
-        branches: [main]
+        branches: ['main', 'release']
     pull_request:
-        branches: [main]
+        branches: ['main']
     schedule:
-        - cron: '20 23 * * 2'
+        - cron: '20 22 * * 2'
 
 jobs:
     build:
+        name: Build
         runs-on: ubuntu-latest
         strategy:
-            max-parallel: 4
+            max-parallel: 3
             matrix:
                 python-version: [3.8, 3.9, 3.10]
 
@@ -36,13 +37,11 @@ jobs:
                   pip3 install -U packaging
                   pip3 install -U setuptools
                   pip3 install -U pipenv
-
                   pipenv install --dev --system --deploy
-
                   python3 setup.py build
 
-            - name: Build the Docker image
             - uses: actions/checkout@v3
+            - name: Build the Docker image
               run: docker build . --file Dockerfile --tag concordia:$(date +%s) .
 
             - name: Run Tests
