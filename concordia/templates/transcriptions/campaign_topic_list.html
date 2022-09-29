@@ -52,12 +52,12 @@
                                     aria-valuenow="{{ campaign.submitted_percent }}"
                                 ></div>
                             </div>
-                            <div class="progress-legend">
+                            <div class="progress-bar-label">
                                 {% if campaign.completed_percent %}
-                                    {{ campaign.completed_percent }}% Completed
+                                    <span>{{ campaign.completed_percent }}% Completed</span>
                                 {% endif %}
                                 {% if campaign.submitted_percent %}
-                                    {{ campaign.submitted_percent }}% Needs Review
+                                    <span>{{ campaign.submitted_percent }}% Needs Review</span>
                                 {% endif %}
                             </div>
                         </div>
