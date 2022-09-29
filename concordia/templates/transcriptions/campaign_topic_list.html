@@ -16,16 +16,18 @@
     <div class="container py-3">
         <h1>Active Campaigns</h1>
         {% if topics %}
-            <h3><a href="{% url 'topic-list' %}">Explore by topic</a></h3>
-            <ul class="topic-list">
-                {% for topic in topics %}
-                    <li class="page-item">
-                        <a class="page-link" href="{% url 'topic-detail' topic.slug %}">
-                            {{ topic.title }}
-                        </a>
-                    </li>
-                {% endfor %}
-            </ul>
+            <div class="topic-list">
+                <a href="{% url 'topic-list' %}">Explore by topic</a>
+                <ul>
+                    {% for topic in topics %}
+                        <li class="page-item">
+                            <a class="page-link" href="{% url 'topic-detail' topic.slug %}">
+                                {{ topic.title }}
+                            </a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
         {% endif %}
         <ul id="campaign-list" class="list-unstyled">
             {% for campaign in campaigns %}
