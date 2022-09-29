@@ -4,7 +4,6 @@ import os
 import re
 from functools import wraps
 from logging import getLogger
-from operator import attrgetter
 from smtplib import SMTPException
 from time import time
 from urllib.parse import urlencode
@@ -827,13 +826,7 @@ class CampaignTopicListView(TemplateView):
             .order_by("ordering", "title")
         )
         data["topics"] = (
-            Topic.objects.published()
-            .listed()
-            .annotated()
-            .order_by("ordering", "title")[:5]
-        )
-        data["campaigns_topics"] = sorted(
-            [*data["campaigns"], *data["topics"]], key=attrgetter("ordering", "title")
+            Topic.objects.published().listed().order_by("ordering", "title")[:5]
         )
         data["completed_campaigns"] = (
             Campaign.objects.published()

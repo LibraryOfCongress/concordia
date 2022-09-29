@@ -28,7 +28,7 @@
             </ul>
         {% endif %}
         <ul id="campaign-list" class="list-unstyled">
-            {% for campaign in campaigns_topics %}
+            {% for campaign in campaigns %}
                 <li class="p-4 mb-1 bg-light" {% if forloop.counter > 10 %}hidden{% endif %}>
                     <h2 class="h1 mb-3">{{ campaign.title }}</h2>
                     <div class="row">
@@ -65,7 +65,7 @@
                 </li>
             {% endfor %}
         </ul>
-        {% with campaigns_topics|length as campaigns_count %}
+        {% with campaigns|length as campaigns_count %}
             {% if campaigns_count > 10 %}
                 <div class="align-items-center justify-content-center row">
                     <a id="show-more" class="btn btn-primary">Show More Campaigns ({{ campaigns_count|add:"-10" }})</a>
