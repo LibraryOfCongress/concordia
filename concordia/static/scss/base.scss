@@ -506,16 +506,16 @@ $card-progress-height: 12px;
 }
 
 .topic-list {
-    display: flex;
-    list-style: none;
+    border-spacing: 10px;
     overflow: auto;
     padding-inline-start: 0;
 }
 
 .topic-list li {
     border: 1px solid #0076ad;
-    margin-right: 10px;
+    display: table-cell;
     text-align: center;
+    vertical-align: middle;
     width: 210px;
 }
 
