@@ -48,6 +48,6 @@ jobs:
 
             - name: Run Tests
               run: |
-                  docker-compose up -d db
                   export DJANGO_SETTING_MODULE=concordia.settings_test
-                  pipenv run manage.py test concordia
+                  docker-compose up -d db
+                  pipenv run ./manage.py test concordia
