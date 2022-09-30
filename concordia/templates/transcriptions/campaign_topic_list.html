@@ -22,7 +22,7 @@
                     {% for topic in topics %}
                         <li class="page-item">
                             <a class="page-link" href="{% url 'topic-detail' topic.slug %}">
-                                {{ topic.title }}
+                                <button>{{ topic.title }}</button>
                             </a>
                         </li>
                     {% endfor %}

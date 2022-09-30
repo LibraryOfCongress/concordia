@@ -509,6 +509,20 @@ $card-progress-height: 12px;
     border: none;
     font-weight: 700;
     margin-left: 0;
+    padding: 0;
+}
+
+.topic-list button {
+    background-color: white;
+    border: 0.12rem solid #0076ad;
+    color: #0076ad;
+    font-weight: 700;
+    height: 44px;
+    width: 210px;
+}
+
+.topic-list button:hover {
+    background-color: #efefef;
 }
 
 .topic-list ul {
@@ -518,7 +532,6 @@ $card-progress-height: 12px;
 }
 
 .topic-list li {
-    border: 0.12rem solid #0076ad;
     display: table-cell;
     text-align: center;
     vertical-align: middle;
