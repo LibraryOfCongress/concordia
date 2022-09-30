@@ -43,8 +43,8 @@ jobs:
                   pipenv install --dev --system --deploy
                   python3 setup.py build
 
-            - name: Build the Docker image
-              run: docker build -t concordia .
+            # - name: Build the Docker image
+            #   run: docker build -t concordia .
 
             - name: Run Tests
               run: |
