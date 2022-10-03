@@ -910,6 +910,7 @@ class TopicDetailView(APIDetailView):
 class CampaignDetailView(APIDetailView):
     template_name = "transcriptions/campaign_detail.html"
     completed_template_name = "transcriptions/campaign_detail_completed.html"
+    retired_template_name = "transcriptions/campaign_detail_retired.html"
     context_object_name = "campaign"
     queryset = Campaign.objects.published().order_by("title")
 
@@ -971,6 +972,8 @@ class CampaignDetailView(APIDetailView):
         if self.object:
             if self.object.status == Campaign.Status.COMPLETED:
                 return [self.completed_template_name]
+            elif self.object.status == Campaign.Status.RETIRED:
+                return [self.retired_template_name]
         return super().get_template_names()
 
 
