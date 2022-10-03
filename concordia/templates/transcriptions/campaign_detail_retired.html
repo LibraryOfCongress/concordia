@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% load staticfiles %}
+{% load humanize %}
+{% load concordia_text_tags %}
+
+{% block title %}{{ campaign.title }}{% endblock title %}
+
+{% block head_content %}
+    <link rel="canonical" href="https://{{ request.get_host }}{{ request.path }}">
+    <meta name="description" content="{{ campaign.description|striptags|normalize_whitespace }}">
+    <meta name="thumbnail" content="{{ MEDIA_URL }}{{ campaign.thumbnail_image }}">
+    <meta property="og:image" content="{{ MEDIA_URL }}{{ campaign.thumbnail_image }}">
+{% endblock head_content %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'campaign-topic-list' %}">Campaigns</a></li>
+    <li class="breadcrumb-item active" aria-current="page" title="{{ campaign.title }}">{{ campaign.title }}</li>
+{% endblock breadcrumbs %}
+
+{% block main_content %}
+    <div class="container py-3">
+        <div class="row">
+            <div class="col-md-12">
+                <h4 class="section-link"><a href="{% url 'campaign-topic-list' %}">Explore all of our currently active campaigns.</a></h4>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-12">
+                <h1>{{ campaign.title }}</h1>
+                <div class="retired-bar"><h3 class="retired-text">All pages transcribed. {% if campaign.completed_date %}Completed {{ campaign.completed_date }}.{% endif %}</h3></div>
+                <hr class="landing-divider" />
+                <span><strong>Completed Page{{ completed_count|pluralize }}:</strong> {{ completed_count|intcomma }}</span><br />
+                <span><strong>Registered Contributor{{ contributor_count|pluralize }}:</strong> {{ contributor_count|intcomma }}</span>
+                <hr class="landing-divider" />
+                {% if campaign.launch_date %}
+                    <p><strong>Launched {{ campaign.launch_date }}.</strong></p>
+                {% endif %}
+            </div>
+        </div>
+        <div class="row mb-3">
+            <div class="col-md-12">
+                <div class="hero-text">{{ campaign.description|safe }}</div>
+            </div>
+        </div>
+        {% with campaign.resource_set.completed_transcription_links as resources %}
+            {% if resources %}
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <h3>View and Search Completed Transcriptions</h3>
+                        <ul class="list-unstyled m-0">
+                            {% for resource in resources %}
+                                <li class="mb-2">
+                                    <a class="underline-link" href="{{ resource.resource_url }}" target="_blank">{{ resource.title }}</a>
+                                    {% if 'loc.gov' not in resource.resource_url  %}
+                                        <i class="fa fa-external-link-alt"></i>
+                                    {% endif %}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            {% endif %}
+        {% endwith %}
+        {% with campaign.resource_set.related_links as resources %}
+            {% if resources %}
+                <div class="row">
+                    <div class="col-md-12">
+                        <h3>Related Links</h3>
+                        <ul class="list-unstyled m-0">
+                            {% for resource in resources %}
+                                <li class="mb-2">
+                                    <a class="underline-link" href="{{ resource.resource_url }}" target="_blank">{{ resource.title }}</a>
+                                    {% if 'loc.gov' not in resource.resource_url  %}
+                                        <i class="fa fa-external-link-alt"></i>
+                                    {% endif %}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            {% endif %}
+        {% endwith %}
+    </div>
+{% endblock main_content %}

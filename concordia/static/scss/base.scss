@@ -222,6 +222,15 @@ p.hero-secondary.offwhite-text {
     padding-top: 1em;
 }
 
+.retired-bar {
+    background-color: $blue;
+    color: $white;
+}
+
+.retired-text {
+    padding: 0.3em;
+}
+
 input {
     color: $dark;
     background-color: #fff;
