@@ -575,12 +575,11 @@ $card-progress-height: 12px;
 .progress-bar-label {
     font-size: 14px;
     margin-top: 5px;
+    margin-right: 5px;
 }
 
-.progress-bar-label span:first-child {
-    border-right: 1px solid black;
-    margin-right: 5px;
-    padding-right: 10px;
+.progress-bar-label span:nth-child(2) {
+    margin-left: 5px;
 }
 
 #progress-stats {

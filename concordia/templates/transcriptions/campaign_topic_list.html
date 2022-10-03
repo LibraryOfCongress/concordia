@@ -57,6 +57,7 @@
                             <div class="progress-bar-label">
                                 {% if campaign.completed_percent %}
                                     <span>{{ campaign.completed_percent }}% Completed</span>
+                                    {% if campaign.submitted_percent %} | {%endif %}
                                 {% endif %}
                                 {% if campaign.submitted_percent %}
                                     <span>{{ campaign.submitted_percent }}% Needs Review</span>
