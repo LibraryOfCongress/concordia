@@ -40,7 +40,7 @@
                         <div class="col-md">
                             <p>{{ campaign.short_description|safe }}</p>
                             <a class="btn btn-primary" href="{{ campaign.get_absolute_url }}">View Projects</a>
-                            <div class="progress campaign-progress" asset-count="{{ campaign.asset_count }}">
+                            <div class="progress campaign-progress">
                                 <div
                                     class="progress-bar bg-completed"
                                     role="progressbar"
@@ -56,11 +56,11 @@
                             </div>
                             <div class="progress-bar-label">
                                 {% if campaign.completed_percent %}
-                                    <span>{{ campaign.completed_percent }}% Completed</span>
+                                    <span>{{ campaign.completed_percent|floatformat:"0" }}% Completed</span>
                                     {% if campaign.submitted_percent %} | {%endif %}
                                 {% endif %}
                                 {% if campaign.submitted_percent %}
-                                    <span>{{ campaign.submitted_percent }}% Needs Review</span>
+                                    <span>{{ campaign.submitted_percent|floatformat:"0" }}% Needs Review</span>
                                 {% endif %}
                             </div>
                         </div>

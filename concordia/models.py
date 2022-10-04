@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models import Count, F, JSONField, Q
+from django.db.models.functions import Round
 from django.urls import reverse
 from django_prometheus_metrics.models import MetricsModelMixin
 
@@ -104,8 +105,12 @@ class UnlistedPublicationQuerySet(PublicationQuerySet):
             )
             .annotate(needs_review_count=F("in_progress_count") + F("submitted_count"))
             .annotate(
-                completed_percent=F("completed_count") * 100 / F("asset_count"),
-                submitted_percent=F("needs_review_count") * 100 / F("asset_count"),
+                completed_percent=Round(
+                    100.0 * F("completed_count") / F("asset_count")
+                ),
+                submitted_percent=Round(
+                    100.0 * F("needs_review_count") / F("asset_count")
+                ),
             )
         )
 
