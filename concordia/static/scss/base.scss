@@ -527,7 +527,8 @@ $card-progress-height: 12px;
     color: #0076ad;
     font-weight: 700;
     height: 44px;
-    width: 210px;
+    overflow: hidden;
+    width: 100%;
 }
 
 .topic-list button:hover {
