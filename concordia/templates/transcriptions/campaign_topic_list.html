@@ -18,10 +18,10 @@
         {% if topics %}
             <div class="topic-list">
                 <a href="{% url 'topic-list' %}">Explore by topic</a>
-                <ul>
+                <ul class="list-inline">
                     {% for topic in topics %}
-                        <li class="page-item">
-                            <a class="page-link" href="{% url 'topic-detail' topic.slug %}">
+                        <li class="list-inline-item page-item">
+                            <a class="btn btn btn-outline-primary page-link" href="{% url 'topic-detail' topic.slug %}">
                                 <button>{{ topic.title }}</button>
                             </a>
                         </li>
