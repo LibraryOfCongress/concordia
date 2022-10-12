@@ -1091,7 +1091,9 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         # Even though the user submitted (through some horrible bug) duplicate
         # values, they should not be stored:
         self.assertEqual(["bar", "foo", "quux"], data["user_tags"])
-        self.assertEqual(["baaz", "bar", "foo", "quux"], data["all_tags"])
+        # Users are allowed to delete other users' tags, so since the second
+        # user didn't send the "baaz" tag, it was removed
+        self.assertEqual(["bar", "foo", "quux"], data["all_tags"])
 
     def test_tag_deletion(self):
         asset = create_asset()
