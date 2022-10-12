@@ -29,6 +29,7 @@ def create_campaign(
     description="Test Description",
     published=True,
     unlisted=False,
+    status=Campaign.Status.ACTIVE,
     do_save=True,
     **kwargs,
 ):

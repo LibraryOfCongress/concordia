@@ -99,10 +99,14 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         """
         campaign = create_campaign(title="Hello Everyone")
         topic_project = create_project(campaign=campaign)
+        campaign_item = create_item(project=topic_project)
+        create_asset(item=campaign_item)
         unlisted_campaign = create_campaign(
             title="Hello to only certain people", unlisted=True
         )
         unlisted_topic_project = create_project(campaign=unlisted_campaign)
+        unlisted_campaign_item = create_item(project=unlisted_topic_project)
+        create_asset(item=unlisted_campaign_item)
         topic = create_topic(title="A Listed Topic", project=topic_project)
         unlisted_topic = create_topic(
             title="An Unlisted Topic", unlisted=True, project=unlisted_topic_project
