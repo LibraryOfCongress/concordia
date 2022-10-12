@@ -32,7 +32,7 @@ class ConcordiaViewTests(
 
         response = self.client.post(
             reverse("registration_login"),
-            {"username": self.user.username, "password": self.user.password},
+            {"username": self.user.username, "password": self.user._password},
         )
 
         self.assertContains(response, "This account has not yet been activated.")
