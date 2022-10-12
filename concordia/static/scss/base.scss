@@ -514,40 +514,6 @@ $card-progress-height: 12px;
     z-index: 2;
 }
 
-.topic-list a {
-    border: none;
-    font-weight: 700;
-    margin-left: 0;
-    padding: 0;
-}
-
-.topic-list button {
-    background-color: white;
-    border: 0.12rem solid #0076ad;
-    color: #0076ad;
-    font-weight: 700;
-    height: 44px;
-    overflow: hidden;
-    width: 100%;
-}
-
-.topic-list button:hover {
-    background-color: #efefef;
-}
-
-.topic-list ul {
-    border-spacing: 10px;
-    overflow: auto;
-    padding-inline-start: 0;
-}
-
-.topic-list li {
-    display: table-cell;
-    text-align: center;
-    vertical-align: middle;
-    width: 210px;
-}
-
 .progress {
     background-color: #f6f6f6;
     background-color: #e5f7ff;

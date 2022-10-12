@@ -16,13 +16,13 @@
     <div class="container py-3">
         <h1>Active Campaigns</h1>
         {% if topics %}
-            <div class="topic-list">
-                <a href="{% url 'topic-list' %}">Explore by topic</a>
+            <div>
+                <h2 class="h5"><a href="{% url 'topic-list' %}">Explore by topic</a></h2>
                 <ul class="list-inline">
                     {% for topic in topics %}
-                        <li class="list-inline-item page-item">
-                            <a class="btn btn btn-outline-primary page-link" href="{% url 'topic-detail' topic.slug %}">
-                                <button>{{ topic.title }}</button>
+                        <li class="list-inline-item my-1 ">
+                            <a class="btn btn-outline-primary" href="{% url 'topic-detail' topic.slug %}">
+                                {{ topic.title }}
                             </a>
                         </li>
                     {% endfor %}
