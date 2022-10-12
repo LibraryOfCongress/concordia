@@ -1142,7 +1142,7 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
 
         # self.login_user("second_user")
         second_user = self.create_test_user("second_user")
-        self.client.login(username=second_user.username, password=second_user.password)
+        self.client.login(username=second_user.username, password=second_user._password)
         updated_tags = [
             "foo",
         ]
