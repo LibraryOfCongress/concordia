@@ -518,14 +518,19 @@
     <script src="{% static 'js/asset-reservation.js' %}"></script>
     <script>
         if (
-            !localStorage.getItem("no-interface-banner") &&
+            typeof(Storage) !== "undefined" &&
             !(window.screen.width < 1024 || window.screen.height < 768)
         ) {
-            $("#new-interface-banner").attr("hidden", false);
+            for(var i in localStorage)
+            {
+                if ($('#' + i).hasClass("alert")) {
+                    $('#' + i).attr("hidden", true);
+                }
+            }
         }
-        $("#no-interface-banner").click(function() {
-            localStorage.setItem("no-interface-banner", true);
-            $("#new-interface-banner").attr("hidden", true);
+        $("#no-interface-banner").click(function(event) {
+            localStorage.setItem(event.target.parentElement.id, true);
+            $('#' + event.target.parentElement.id).attr("hidden", true);
         });
     </script>
     <script>
