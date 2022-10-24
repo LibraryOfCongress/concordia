@@ -223,8 +223,9 @@ p.hero-secondary.offwhite-text {
 }
 
 .retired-bar {
-    background-color: $blue;
-    color: $white;
+    background-color: $light;
+    color: $blue;
+    border: 2px solid $blue;
 }
 
 .retired-text {
