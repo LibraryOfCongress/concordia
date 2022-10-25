@@ -14,21 +14,16 @@
                 <form class="form col-md-8" action="{% url 'user-profile' %}" method="POST" enctype="multipart/form-data">
                     {% csrf_token %}
 
-                    {% comment %} We want to list the username but it's not an editable field {% endcomment %}
-
                     <div class="form-group ">
-                        <label><b>Username</b></label>
-                        <input type="text" readonly class="form-control-plaintext" value="{{ user.username }}">
-                        <small class="form-text text-muted">
-                            Member since {{ user.date_joined|date:"SHORT_DATE_FORMAT" }}
-                        </small>
+                        <label><b>User Name</b></label>: {{ user.username }}<br/>
+                        <label><b>Member since: </b></label> {{ user.date_joined|date:"SHORT_DATE_FORMAT" }}
                     </div>
 
                     {% bootstrap_form form %}
 
                     {% buttons %}
                         <button type="submit" class="btn btn-primary">
-                            Save
+                            Save Change
                         </button>
                     {% endbuttons %}
                 </form>
