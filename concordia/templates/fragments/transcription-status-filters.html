@@ -1,11 +1,23 @@
-<div class="btn-group btn-group-sm btn-group-toggle flex-wrap justify-content-center">
-    {% for url, classes, key, label in status_choices %}
+<div class="btn-group btn-group-toggle flex-wrap justify-content-center
+    {% if size == "large" %}
+        btn-group-xl w-100
+    {% else %}
+        btn-group-sm
+    {% endif %}
+">
+    {% for url, classes, key, label, count in status_choices %}
         <a class="btn btn-outline-dark {{ classes }}" href="{{ url|default:"?" }}">
             {% if key %}
-                <span class="transcription-status-key bg-{{ key }}"></span>
+                <span class="bg-{{ key }}
+                    {% if size == "large" %}
+                        transcription-status-key-lg
+                    {% else %}
+                        transcription-status-key
+                    {% endif %}
+                "></span>
             {% endif %}
 
-            {{ label }}
+            {{ label }} {% if size == "large" and count %}({{ count}}){% endif %}
         </a>
     {% endfor %}
 </div>
