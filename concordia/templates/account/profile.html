@@ -19,13 +19,11 @@
                         <label><b>Member since: </b></label> {{ user.date_joined|date:"SHORT_DATE_FORMAT" }}
                     </div>
 
-                    {% bootstrap_form form %}
-
-                    {% buttons %}
-                        <button type="submit" class="btn btn-primary">
-                            Save Change
-                        </button>
-                    {% endbuttons %}
+                    <strong>Email address: </strong>{% bootstrap_label user.email label_for="id_email" %}
+                    <div class="input-group mb-3">
+                        {% bootstrap_field form.email form_group_class="" %}
+                        {% bootstrap_button "Save Change" button_type="submit" button_class="btn btn-primary input-group-append" %}
+                    </div>
                 </form>
             </div>
         </div>
