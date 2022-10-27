@@ -2,7 +2,7 @@
     type="{{ widget.type }}"
     name="{{ widget.name }}"
     {% if widget.value != None %}
-        value="Change your email address"
+        placeholder="Change your email address"
     {% endif %}
     {% for name, value in widget.attrs.items %}
         {% if value is not False %}

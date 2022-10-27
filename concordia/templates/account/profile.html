@@ -14,7 +14,7 @@
                 <form class="form col-md-8" action="{% url 'user-profile' %}" method="POST" enctype="multipart/form-data">
                     {% csrf_token %}
 
-                    <div class="form-group ">
+                    <div class="form-group">
                         <label><b>User Name</b></label>: {{ user.username }}<br/>
                         <label><b>Member since: </b></label> {{ user.date_joined|date:"SHORT_DATE_FORMAT" }}
                     </div>
@@ -22,7 +22,7 @@
                     <strong>Email address: </strong>{% bootstrap_label user.email label_for="id_email" %}
                     <div class="input-group mb-3">
                         {% bootstrap_field form.email form_group_class="" %}
-                        {% bootstrap_button "Save Change" button_type="submit" button_class="btn btn-primary input-group-append" %}
+                        {% bootstrap_button "Save Change" button_type="submit" button_class="btn btn-primary input-group-append rounded-0" %}
                     </div>
                 </form>
             </div>
