@@ -87,7 +87,9 @@ Resources:
                     aws s3 cp s3://crowd-deployment/database-dumps/concordia.latest.dmp concordia.dmp
                     echo "${PostgresqlHost}:5432:*:concordia:${PostgresqlPassword}" >> /root/.pgpass
                     chmod 0600 /root/.pgpass
-                    pg_restore --create --clean -Fc -U concordia -h ${PostgresqlHost} --dbname=postgres --no-password --no-owner --no-acl concordia.dmp
+                    psql -U concordia -h "$POSTGRESQL_HOST" -d postgres -c "select pg_terminate_backend(pid) from pg_stat_activity where datname='concordia';"
+                    psql -U concordia -h "$POSTGRESQL_HOST" -d postgres -c "drop database concordia;"
+                    pg_restore --create -Fc -U concordia -h ${PostgresqlHost} --dbname=postgres --no-password --no-owner --no-acl concordia.dmp
                     shutdown -h now
             Tags:
                 - Key: Name
