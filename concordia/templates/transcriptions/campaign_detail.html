@@ -27,7 +27,7 @@
             </div>
         </div>
         <div class="row">
-            <div class="col-12 col-lg">
+            <div class="col-12 col-lg pt-1 pb-1">
                 <div class="progress campaign-page-progress">
                     <div
                         title="Completed ({{ completed_count|intcomma }} page{{ completed_count|pluralize }})"
@@ -69,13 +69,13 @@
             </div>
         </div>
         <div class="row">
-            <div class="col-12 col-lg">
+            <div class="col-12 col-lg pb-1">
                 <ul class="progress-bar-labels list-unstyled m-0 p-1">
                     {% if completed_percent %}
                         <li>{{ completed_percent }}% Completed</li>
                     {% endif %}
                     {% if submitted_percent %}
-                        <li>{{ submitted_percent }}% Submitted</li>
+                        <li>{{ submitted_percent }}% Needs Review</li>
                     {% endif %}
                     {% if in_progress_percent %}
                         <li>{{ in_progress_percent }}% In Progress</li>
@@ -86,14 +86,12 @@
                 </div>
             </div>
             <div class="row">
-                <div class="col-md-12">
+                <div class="col-md-12 pt-1 pb-1">
                     <hr class="landing-divider" />
-                    <span><strong>Completed Page{{ completed_count|pluralize }}:</strong> {{ completed_count|intcomma }}</span>
-                    <br />
-                    <span><strong>Registered Contributor{{ contributor_count|pluralize }}:</strong> {{ contributor_count|intcomma }}</span>
+                    <p class="mb-1"><strong>Completed Page{{ completed_count|pluralize }}:</strong> {{ completed_count|intcomma }}</p>
+                    <p class="mb-1"><strong>Registered Contributor{{ contributor_count|pluralize }}:</strong> {{ contributor_count|intcomma }}</p>
                     {% if campaign.launch_date %}
-                        <br />
-                        <span><strong>Launched {{ campaign.launch_date }}.</strong></span>
+                        <p class="mb-1"><strong>Launched {{ campaign.launch_date }}.</strong></p>
                     {% endif %}
                     <hr class="landing-divider" />
                 </div>
@@ -130,7 +128,7 @@
                 </div>
             </div>
             <div class="row justify-content-center concordia-object-card-row">
-                <div class="concordia-object-card-container">
+                <div class="concordia-object-card-container justify-content-center">
                     {% for project in projects %}
                         <div class="col-6 concordia-object-card-col">
                             <div class="h-100 concordia-object-card card border" data-transcription-status="{{ project.lowest_transcription_status }}">
