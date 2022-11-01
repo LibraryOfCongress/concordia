@@ -17,7 +17,7 @@
                 "></span>
             {% endif %}
 
-            {{ label }} {% if size == "large" and count %}({{ count}}){% endif %}
+            {{ label }} {% if size == "large" and count >= 0 %}({{ count}}){% endif %}
         </a>
     {% endfor %}
 </div>
