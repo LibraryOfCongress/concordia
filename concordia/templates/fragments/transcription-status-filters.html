@@ -1,3 +1,5 @@
+{% load humanize %}
+
 <div class="btn-group btn-group-toggle flex-wrap justify-content-center
     {% if size == "large" %}
         btn-group-xl w-100
@@ -17,7 +19,7 @@
                 "></span>
             {% endif %}
 
-            {{ label }} {% if size == "large" and count >= 0 %}({{ count}}){% endif %}
+            {{ label }} {% if size == "large" and count >= 0 %}({{ count|intcomma }}){% endif %}
         </a>
     {% endfor %}
 </div>
