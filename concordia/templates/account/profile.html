@@ -6,12 +6,16 @@
 
 {% block title %}User Profile{% endblock title %}
 
+{% block breadcrumbs %}
+    <li class="breadcrumb-item active" aria-current="page">Account</li>
+{% endblock breadcrumbs %}
+
 {% block main_content %}
     <div class="container bg-main">
         <div class="row justify-content-start">
             <div class="col-12 col-md-10">
-                <h2>Account Information</h2>
-                <form class="form col-md-8" action="{% url 'user-profile' %}" method="POST" enctype="multipart/form-data">
+                <h2>Account Settings</h2>
+                <form class="form" action="{% url 'user-profile' %}" method="POST" enctype="multipart/form-data">
                     {% csrf_token %}
 
                     <div class="form-group">
@@ -20,9 +24,11 @@
                     </div>
 
                     <strong>Email address: </strong><span class="font-weight-normal">{% bootstrap_label user.email label_for="id_email" %}</span>
-                    <div class="input-group mb-3">
-                        {% bootstrap_field form.email form_group_class="" %}
-                        {% bootstrap_button "Save Change" button_type="submit" button_class="btn btn-primary input-group-append rounded-0" %}
+                    <div class="col-sm-4">
+                        <div class="input-group mb-3">
+                            {% bootstrap_field form.email form_group_class="" %}
+                            {% bootstrap_button "Save Change" button_type="submit" button_class="btn btn-primary input-group-append rounded-0" %}
+                        </div>
                     </div>
                 </form>
             </div>
@@ -33,29 +39,31 @@
             </div>
         </div>
         <div class="row justify-content-start">
-            <h2>Password Options</h2>
-            <div class="row justify-content-start">
-                <div class="btn-row">
-                    <a class="btn btn-primary" href="{% url 'password_change' %}">Change Password</a>
+            <div class="col-12 col-md-10">
+                <h3>Password Options</h3>
+                <div class="row justify-content-start">
+                    <div class="btn-row col-md-10">
+                        <a class="btn btn-primary rounded-0" href="{% url 'password_change' %}">Change Password</a>
+                    </div>
                 </div>
             </div>
         </div>
         <div class="row justify-content-start">
-            <div class="col-8">
+            <div class="col-10">
                 <hr>
             </div>
         </div>
         <div class="row justify-content-start">
             <div class="col-12 col-md-10">
-                <h2>Service Letter</h2>
+                <h3>Service Letter</h3>
                 <div>Using <i>By the People</i> to fulfill service requirements? Download a letter verifying your volunteer contributions.<br/><a href="/resources">Find more info on service documentation here.</a></div>
                 <div class="row justify-content-start">
-                    <div class="btn-row">
-                        <a class="btn btn-primary" href="/letter">Download Letter</a>
+                    <div class="btn-row col-md-10">
+                        <a class="btn btn-primary rounded-0" href="/letter">Download Letter</a>
                     </div>
                 </div>
                 <div class="row justify-content-start">
-                    <div class="col-8">
+                    <div class="col-10">
                         <hr>
                     </div>
                 </div>
