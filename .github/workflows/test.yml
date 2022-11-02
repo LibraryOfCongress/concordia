@@ -79,7 +79,7 @@ jobs:
                   pip3 install -U packaging
                   pip3 install -U setuptools
                   pip3 install -U pipenv
-                  pipenv install --dev -deploy
+                  pipenv install --dev --deploy
                   ##  We want to have safety available but aren't putting it in the dev tools:
                   pipenv run pip install safety
 
