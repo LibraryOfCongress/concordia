@@ -54,6 +54,18 @@ jobs:
               run: |
                   sudo apt-get install -qy libmemcached-dev libz-dev libfreetype6-dev libtiff-dev libjpeg-dev libopenjp2-7-dev libwebp-dev zlib1g-dev libpq-dev
 
+            # Install psql tool
+            # psql not provided in image from the box
+            - name: Install psql
+              run: |
+                  apt-get update
+                  apt-get install --yes --no-install-recommends postgresql-client
+
+            - name: Install node and npm
+              uses: actions/setup-node@v3
+              with:
+                  node-version: '12'
+
             - name: Checkout repository
               uses: actions/checkout@v3
 
@@ -75,11 +87,6 @@ jobs:
                   POSTGRES_HOST: localhost
                   # The default PostgreSQL port
                   POSTGRES_PORT: 5432
-
-            - name: Install node and npm
-              uses: actions/setup-node@v3
-              with:
-                  node-version: '12'
 
             - name: Install Python Dependencies
               run: |
