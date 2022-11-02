@@ -58,8 +58,8 @@ jobs:
             # psql not provided in image from the box
             - name: Install psql
               run: |
-                  apt-get update
-                  apt-get install --yes --no-install-recommends postgresql-client
+                  sudo apt-get update
+                  sudo apt-get install --yes --no-install-recommends postgresql-client
 
             - name: Install node and npm
               uses: actions/setup-node@v3
