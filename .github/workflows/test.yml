@@ -84,7 +84,7 @@ jobs:
                   psql -c 'create database concordia:' -U postgres
               env:
                   # The hostname used to communicate with the PostgreSQL service container
-                  POSTGRES_HOST: localhost
+                  POSTGRES_HOST: postgres
                   # The default PostgreSQL port
                   POSTGRES_PORT: 5432
 
@@ -111,11 +111,11 @@ jobs:
                   npx --quiet csstree-validator static/css/
               env:
                   # The hostname used to communicate with the PostgreSQL service container
-                  POSTGRES_HOST: localhost
+                  POSTGRES_HOST: postgres
                   # The default PostgreSQL port
                   POSTGRES_PORT: 5432
                   # The hostname used to communicate with the Redis service container
-                  REDIS_HOST: localhost
+                  REDIS_HOST: redis
                   # The default Redis port
                   REDIS_PORT: 6379
                   # COMMIT_RANGE: ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}
