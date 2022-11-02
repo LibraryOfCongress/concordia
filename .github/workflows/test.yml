@@ -25,6 +25,7 @@ jobs:
                 # Provide the password for postgres
                 env:
                     POSTGRES_PASSWORD: postgres
+                    POSTGRES_DB: concordia
                 # Set health checks to wait until postgres has started
                 options: >-
                     --health-cmd pg_isready
@@ -54,13 +55,6 @@ jobs:
               run: |
                   sudo apt-get install -qy libmemcached-dev libz-dev libfreetype6-dev libtiff-dev libjpeg-dev libopenjp2-7-dev libwebp-dev zlib1g-dev libpq-dev
 
-            # Install psql tool
-            # psql not provided in image from the box
-            - name: Install psql
-              run: |
-                  sudo apt-get update
-                  sudo apt-get install --yes --no-install-recommends postgresql-client
-
             - name: Install node and npm
               uses: actions/setup-node@v3
               with:
@@ -78,15 +72,6 @@ jobs:
 
             - name: Display Python version
               run: python -c "import sys; print(sys.version)"
-
-            - name: Create concordia database
-              run: |
-                  psql -c 'create database concordia:' -U postgres
-              env:
-                  # The hostname used to communicate with the PostgreSQL service container
-                  POSTGRES_HOST: postgres
-                  # The default PostgreSQL port
-                  POSTGRES_PORT: 5432
 
             - name: Install Python Dependencies
               run: |
@@ -111,11 +96,11 @@ jobs:
                   npx --quiet csstree-validator static/css/
               env:
                   # The hostname used to communicate with the PostgreSQL service container
-                  POSTGRES_HOST: postgres
+                  POSTGRES_HOST: localhost
                   # The default PostgreSQL port
                   POSTGRES_PORT: 5432
                   # The hostname used to communicate with the Redis service container
-                  REDIS_HOST: redis
+                  REDIS_HOST: localhost
                   # The default Redis port
                   REDIS_PORT: 6379
                   # COMMIT_RANGE: ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}
