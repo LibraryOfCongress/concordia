@@ -4,6 +4,7 @@
     {% if widget.value != None %}
         placeholder="Change your email address"
     {% endif %}
+    class="form-control font-italic"
     {% for name, value in widget.attrs.items %}
         {% if value is not False %}
             {{ name }}

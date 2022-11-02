@@ -8,7 +8,7 @@
 
 {% block main_content %}
     <div class="container bg-main">
-        <div class="row justify-content-center">
+        <div class="row justify-content-start">
             <div class="col-12 col-md-10">
                 <h2>Account Information</h2>
                 <form class="form col-md-8" action="{% url 'user-profile' %}" method="POST" enctype="multipart/form-data">
@@ -19,7 +19,7 @@
                         <label><b>Member since: </b></label> {{ user.date_joined|date:"SHORT_DATE_FORMAT" }}
                     </div>
 
-                    <strong>Email address: </strong>{% bootstrap_label user.email label_for="id_email" %}
+                    <strong>Email address: </strong><span class="font-weight-normal">{% bootstrap_label user.email label_for="id_email" %}</span>
                     <div class="input-group mb-3">
                         {% bootstrap_field form.email form_group_class="" %}
                         {% bootstrap_button "Save Change" button_type="submit" button_class="btn btn-primary input-group-append rounded-0" %}
@@ -27,31 +27,34 @@
                 </form>
             </div>
         </div>
-        <div class="row justify-content-center">
+        <div class="row justify-content-start">
             <div class="col-8">
                 <hr>
             </div>
         </div>
-        <div class="row justify-content-center">
-            <div class="btn-row">
-                <a class="btn btn-secondary" href="{% url 'password_change' %}">Change Password</a>
+        <div class="row justify-content-start">
+            <h2>Password Options</h2>
+            <div class="row justify-content-start">
+                <div class="btn-row">
+                    <a class="btn btn-primary" href="{% url 'password_change' %}">Change Password</a>
+                </div>
             </div>
         </div>
-        <div class="row justify-content-center">
+        <div class="row justify-content-start">
             <div class="col-8">
                 <hr>
             </div>
         </div>
-        <div class="row justify-content-center">
+        <div class="row justify-content-start">
             <div class="col-12 col-md-10">
                 <h2>Service Letter</h2>
                 <div>Using <i>By the People</i> to fulfill service requirements? Download a letter verifying your volunteer contributions.<br/><a href="/resources">Find more info on service documentation here.</a></div>
-                <div class="row justify-content-center">
+                <div class="row justify-content-start">
                     <div class="btn-row">
-                        <a class="btn btn-secondary" href="/letter">Download Letter</a>
+                        <a class="btn btn-primary" href="/letter">Download Letter</a>
                     </div>
                 </div>
-                <div class="row justify-content-center">
+                <div class="row justify-content-start">
                     <div class="col-8">
                         <hr>
                     </div>
@@ -59,7 +62,7 @@
             </div>
         </div>
         {% if object_list %}
-            <div class="row justify-content-center">
+            <div class="row justify-content-start">
                 <div class="col-12 col-md-10">
                     <h2>My Contributions</h2>
                     <div>Click on a campaign title to see only those actions. Click "All Campaigns" to view all.</div>
