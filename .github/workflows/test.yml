@@ -24,8 +24,7 @@ jobs:
                 image: postgres
                 # Provide the password for postgres
                 env:
-                    POSTGRES_DB: postgres
-                    POSTGRES_USER: concordia
+                    POSTGRES_DB: concordia
                     POSTGRES_PASSWORD: postgres
                 # Set health checks to wait until postgres has started
                 options: >-
@@ -96,13 +95,13 @@ jobs:
                   pipenv run safety check
                   npx --quiet csstree-validator static/css/
               env:
-                  PGPASSWORD: postgres
+                  PGPASSWORD:
                   # The hostname used to communicate with the PostgreSQL service container
-                  POSTGRES_HOST: postgres
+                  POSTGRES_HOST: localhost
                   # The default PostgreSQL port
                   POSTGRES_PORT: 5432
                   # The hostname used to communicate with the Redis service container
-                  REDIS_HOST: redis
+                  REDIS_HOST: localhost
                   # The default Redis port
                   REDIS_PORT: 6379
                   # COMMIT_RANGE: ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}
