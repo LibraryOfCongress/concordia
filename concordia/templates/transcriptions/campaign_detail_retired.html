@@ -22,61 +22,71 @@
     <div class="container py-3">
         <div class="row">
             <div class="col-md-12">
-                <h4 class="section-link"><a href="{% url 'campaign-topic-list' %}">Explore all of our currently active campaigns.</a></h4>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-md-12">
                 <h1>{{ campaign.title }}</h1>
-                <div class="retired-bar"><h3 class="retired-text">All pages transcribed. {% if campaign.completed_date %}Completed {{ campaign.completed_date }}.{% endif %}</h3></div>
+                <div class="retired-bar mb-2"><h3 class="p-2 mb-0">Campaign retired. All transcriptions available in LOC.gov</h3></div>
                 <hr class="landing-divider" />
-                <span><strong>Completed Page{{ completed_count|pluralize }}:</strong> {{ completed_count|intcomma }}</span><br />
+                <span><strong>Completed Page{{ completed_count|pluralize }}:</strong> {{ completed_count|intcomma }}</span>
+                <br />
                 <span><strong>Registered Contributor{{ contributor_count|pluralize }}:</strong> {{ contributor_count|intcomma }}</span>
-                <hr class="landing-divider" />
-                {% if campaign.launch_date %}
-                    <p><strong>Launched {{ campaign.launch_date }}.</strong></p>
+                {% if campaign.launch_date and campaign.completed_date %}
+                    <br />
+                    <span><strong>Launched {{ campaign.launch_date }} and completed {{ campaign.completed_date }}.</strong></span>
                 {% endif %}
-            </div>
-        </div>
-        <div class="row mb-3">
-            <div class="col-md-12">
-                <div class="hero-text">{{ campaign.description|safe }}</div>
+                <hr class="landing-divider" />
             </div>
         </div>
         {% with campaign.resource_set.completed_transcription_links as resources %}
             {% if resources %}
-                <div class="row mb-3">
+                <div class="row mt-2">
                     <div class="col-md-12">
-                        <h3>View and Search Completed Transcriptions</h3>
-                        <ul class="list-unstyled m-0">
-                            {% for resource in resources %}
-                                <li class="mb-2">
+                        <aside class="mb-3 mt-md-0 p-3 bg-light">
+                            <h3 class="mb-3">View and Search Completed Transcriptions</h3>
+                            <ul class="list-unstyled m-0">
+                                {% for resource in resources %}
+                                    {% if forloop.last %}
+                                        <li>
+                                    {% else %}
+                                        <li class="mb-3">
+                                    {% endif %}
                                     <a class="underline-link" href="{{ resource.resource_url }}" target="_blank">{{ resource.title }}</a>
                                     {% if 'loc.gov' not in resource.resource_url  %}
                                         <i class="fa fa-external-link-alt"></i>
                                     {% endif %}
-                                </li>
-                            {% endfor %}
-                        </ul>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </aside>
                     </div>
                 </div>
             {% endif %}
         {% endwith %}
+        <div class="row mb-3">
+            <div class="col-md-12">
+                <h3>About this Campaign</h3>
+                <div class="hero-text">{{ campaign.description|safe }}</div>
+            </div>
+        </div>
         {% with campaign.resource_set.related_links as resources %}
             {% if resources %}
-                <div class="row">
+                <div class="row mt-2">
                     <div class="col-md-12">
-                        <h3>Related Links</h3>
-                        <ul class="list-unstyled m-0">
-                            {% for resource in resources %}
-                                <li class="mb-2">
+                        <aside class="mb-3 mt-md-0 p-3 bg-light">
+                            <h3 class="mb-3">Helpful Links</h3>
+                            <ul class="list-unstyled m-0">
+                                {% for resource in resources %}
+                                    {% if forloop.last %}
+                                        <li>
+                                    {% else %}
+                                        <li class="mb-3">
+                                    {% endif %}
                                     <a class="underline-link" href="{{ resource.resource_url }}" target="_blank">{{ resource.title }}</a>
                                     {% if 'loc.gov' not in resource.resource_url  %}
                                         <i class="fa fa-external-link-alt"></i>
                                     {% endif %}
-                                </li>
-                            {% endfor %}
-                        </ul>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </aside>
                     </div>
                 </div>
             {% endif %}
