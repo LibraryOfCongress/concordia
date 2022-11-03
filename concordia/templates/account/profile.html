@@ -9,15 +9,9 @@
 {% block main_content %}
     <div class="container bg-main">
         <ul class="nav nav-tabs" id="nav-tab" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="contributions-tab" data-bs-toggle="tab" data-bs-target="#contributions" type="button" role="tab" aria-controls="contributions" aria-selected="true">My Contributions</button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="pages-tab" data-bs-toggle="tab" data-bs-target="#pages" type="button" role="tab" aria-controls="pages" aria-selected="false">Recent Pages Worked On</button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button" role="tab" aria-controls="settings" aria-selected="false">Account Settings</button>
-            </li>
+            <a class="nav-link active font-weight-bold" id="contributions-tab" data-bs-toggle="tab" data-bs-target="#contributions" type="button" role="tab" aria-controls="contributions" aria-selected="true">My Contributions</a>
+            <a class="nav-link font-weight-bold" id="pages-tab" data-bs-toggle="tab" data-bs-target="#pages" type="button" role="tab" aria-controls="pages" aria-selected="false">Recent Pages Worked On</a>
+            <a class="nav-link font-weight-bold" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button" role="tab" aria-controls="settings" aria-selected="false">Account Settings</a>
         </ul>
         <div class="tab-content" id="nav-tabContent">
             <div class="tab-pane fade" id="settings" role="tabpanel" aria-labelledby="settings-tab">
