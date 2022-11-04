@@ -514,6 +514,7 @@
 {% block body_scripts %}
     <script src="{% static 'split.js/dist/split.min.js' %}"></script>
     <script src="{% static 'openseadragon/build/openseadragon/openseadragon.min.js' %}"></script>
+    <script src="{% static 'openseadragon-filtering/openseadragon-filtering.js' %}"></script>
     <script src="{% static 'js/contribute.js' %}"></script>
     <script src="{% static 'js/asset-reservation.js' %}"></script>
     <script>
@@ -556,6 +557,7 @@
             rotateLeftButton: "viewer-rotate-left",
             rotateRightButton: "viewer-rotate-right",
             flipButton: "viewer-flip",
+            crossOriginPolicy: "Anonymous"
         });
     </script>
 
