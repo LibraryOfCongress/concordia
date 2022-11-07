@@ -258,6 +258,10 @@ ul.nav-secondary {
     }
 }
 
+.flex-initial {
+    flex: initial !important;
+}
+
 /*
  * vertical and horizontal dividers
  */
@@ -399,24 +403,14 @@ $card-progress-height: 12px;
     margin: 0 -6px;
 }
 
-.completed-card-row {
+.concordia-object-card-container {
+    display: flex;
+    flex-wrap: wrap;
+    width: 90%;
     padding-top: 0.25em;
 }
 
-.completed-card-container {
-    width: 90%;
-}
-
 .concordia-object-card-col {
-    padding: 6px;
-
-    @include media-breakpoint-up(xl) {
-        flex: 0 0 20%;
-        max-width: 20%;
-    }
-}
-
-.concordia-object-card-col-completed {
     padding: 6px;
 
     @include media-breakpoint-up(xl) {
@@ -508,7 +502,6 @@ $card-progress-height: 12px;
 }
 
 .progress {
-    background-color: #f6f6f6;
     background-color: #e5f7ff;
     &::after {
         content: '';
@@ -516,6 +509,10 @@ $card-progress-height: 12px;
         box-shadow: inset 0 0 1px 1px $primary;
         flex: 1 1 0%;
     }
+}
+
+.campaign-page-progress {
+    height: 2.5rem;
 }
 
 .campaign-progress {
@@ -549,6 +546,23 @@ $card-progress-height: 12px;
 #progress-stats th {
     font-size: inherit;
     font-weight: inherit;
+}
+
+.progress-bar-labels li {
+    float: left;
+}
+
+.progress-bar-labels li + li::before {
+    content: '|';
+    padding: 0 0.5em;
+}
+
+.transcription-status-key-lg {
+    display: inline-block;
+    height: 1em;
+    width: 1em;
+    vertical-align: top;
+    margin: 0.25rem !important;
 }
 
 .transcription-status-key {

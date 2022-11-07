@@ -66,9 +66,9 @@
             </div>
         </div>
         <div class="row justify-content-center concordia-object-card-row">
-            <div class="row justify-content-center concordia-object-card-row completed-card-container">
+            <div class="concordia-object-card-container justify-content-center pt-3">
                 {% for project in projects %}
-                    <div class="col-6 col-md-4 col-lg-3 concordia-object-card-col-completed">
+                    <div class="col-6 col-md-4 col-lg-3 concordia-object-card-col">
                         <div class="h-100 concordia-object-card card border" data-transcription-status="complete">
                             {% url 'transcriptions:project-detail' campaign.slug project.slug as project_url %}
 

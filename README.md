@@ -1,5 +1,5 @@
-[![Build Status](https://travis-ci.org/LibraryOfCongress/concordia.svg?branch=master)](https://travis-ci.org/LibraryOfCongress/concordia)
-[![Coverage Status](https://coveralls.io/repos/github/LibraryOfCongress/concordia/badge.svg?branch=master)](https://coveralls.io/github/LibraryOfCongress/concordia?branch=master)
+[![Build Status](https://travis-ci.org/LibraryOfCongress/concordia.svg?branch=main)](https://travis-ci.org/LibraryOfCongress/concordia)
+[![Coverage Status](https://coveralls.io/repos/github/LibraryOfCongress/concordia/badge.svg?branch=main)](https://coveralls.io/github/LibraryOfCongress/concordia?branch=main)
 
 # Welcome to Concordia
 
