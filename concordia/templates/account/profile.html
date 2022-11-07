@@ -6,67 +6,71 @@
 
 {% block title %}User Profile{% endblock title %}
 
+{% block breadcrumbs %}
+    <li class="breadcrumb-item active" aria-current="page">Account</li>
+{% endblock breadcrumbs %}
+
 {% block main_content %}
     <div class="container bg-main">
-        <div class="row justify-content-center">
+        <div class="row justify-content-start">
             <div class="col-12 col-md-10">
-                <h2>Account Information</h2>
-                <form class="form col-md-8" action="{% url 'user-profile' %}" method="POST" enctype="multipart/form-data">
+                <h2>Account Settings</h2>
+                <form class="form" action="{% url 'user-profile' %}" method="POST" enctype="multipart/form-data">
                     {% csrf_token %}
 
-                    {% comment %} We want to list the username but it's not an editable field {% endcomment %}
-
-                    <div class="form-group ">
-                        <label><b>Username</b></label>
-                        <input type="text" readonly class="form-control-plaintext" value="{{ user.username }}">
-                        <small class="form-text text-muted">
-                            Member since {{ user.date_joined|date:"SHORT_DATE_FORMAT" }}
-                        </small>
+                    <div class="form-group">
+                        <label><b>User Name</b></label>: {{ user.username }}<br/>
+                        <label><b>Member since: </b></label> {{ user.date_joined|date:"SHORT_DATE_FORMAT" }}
                     </div>
 
-                    {% bootstrap_form form %}
-
-                    {% buttons %}
-                        <button type="submit" class="btn btn-primary">
-                            Save
-                        </button>
-                    {% endbuttons %}
+                    <strong>Email address: </strong><span class="font-weight-normal">{% bootstrap_label user.email label_for="id_email" %}</span>
+                    <div class="input-group mb-3" style="max-width: 450px;">
+                        <input type="email" name="email" placeholder="Change your email address" class="form-control font-italic" title="" required="" id="id_email">
+                        <div class="input-group-append">
+                            {% bootstrap_button "Save Change" button_type="submit" button_class="btn btn-primary rounded-0" %}
+                        </div>
+                    </div>
                 </form>
             </div>
         </div>
-        <div class="row justify-content-center">
+        <div class="row justify-content-start">
             <div class="col-8">
                 <hr>
             </div>
         </div>
-        <div class="row justify-content-center">
-            <div class="btn-row">
-                <a class="btn btn-secondary" href="{% url 'password_change' %}">Change Password</a>
-            </div>
-        </div>
-        <div class="row justify-content-center">
-            <div class="col-8">
-                <hr>
-            </div>
-        </div>
-        <div class="row justify-content-center">
+        <div class="row justify-content-start">
             <div class="col-12 col-md-10">
-                <h2>Service Letter</h2>
-                <div>Using <i>By the People</i> to fulfill service requirements? Download a letter verifying your volunteer contributions.<br/><a href="/resources">Find more info on service documentation here.</a></div>
-                <div class="row justify-content-center">
-                    <div class="btn-row">
-                        <a class="btn btn-secondary" href="/letter">Download Letter</a>
+                <h3>Password Options</h3>
+                <div class="row justify-content-start">
+                    <div class="btn-row col-md-10">
+                        <a class="btn btn-primary rounded-0" href="{% url 'password_change' %}">Change Password</a>
                     </div>
                 </div>
-                <div class="row justify-content-center">
-                    <div class="col-8">
+            </div>
+        </div>
+        <div class="row justify-content-start">
+            <div class="col-10">
+                <hr>
+            </div>
+        </div>
+        <div class="row justify-content-start">
+            <div class="col-12 col-md-10">
+                <h3>Service Letter</h3>
+                <div>Using <i>By the People</i> to fulfill service requirements? Download a letter verifying your volunteer contributions.<br/><a href="/resources">Find more info on service documentation here.</a></div>
+                <div class="row justify-content-start">
+                    <div class="btn-row col-md-10">
+                        <a class="btn btn-primary rounded-0" href="/letter">Download Letter</a>
+                    </div>
+                </div>
+                <div class="row justify-content-start">
+                    <div class="col-10">
                         <hr>
                     </div>
                 </div>
             </div>
         </div>
         {% if object_list %}
-            <div class="row justify-content-center">
+            <div class="row justify-content-start">
                 <div class="col-12 col-md-10">
                     <h2>My Contributions</h2>
                     <div>Click on a campaign title to see only those actions. Click "All Campaigns" to view all.</div>
