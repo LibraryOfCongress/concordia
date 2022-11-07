@@ -24,10 +24,10 @@
                     </div>
 
                     <strong>Email address: </strong><span class="font-weight-normal">{% bootstrap_label user.email label_for="id_email" %}</span>
-                    <div class="col-sm-4">
-                        <div class="input-group mb-3">
-                            {% bootstrap_field form.email form_group_class="" %}
-                            {% bootstrap_button "Save Change" button_type="submit" button_class="btn btn-primary input-group-append rounded-0" %}
+                    <div class="input-group mb-3" style="max-width: 450px;">
+                        <input type="email" name="email" placeholder="Change your email address" class="form-control font-italic" title="" required="" id="id_email">
+                        <div class="input-group-append">
+                            {% bootstrap_button "Save Change" button_type="submit" button_class="btn btn-primary rounded-0" %}
                         </div>
                     </div>
                 </form>
