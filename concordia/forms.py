@@ -12,6 +12,8 @@ from django_registration.backends.activation.views import RegistrationView
 from django_registration.forms import RegistrationForm
 from django_registration.signals import user_activated
 
+from concordia.widgets import EmailWidget
+
 User = get_user_model()
 
 
@@ -87,9 +89,7 @@ class UserLoginForm(AuthenticationForm):
 
 
 class UserProfileForm(forms.Form):
-    email = forms.CharField(
-        label="Email address", required=True, widget=forms.EmailInput()
-    )
+    email = forms.CharField(label="", required=True, widget=EmailWidget)
 
     def __init__(self, *, request, **kwargs):
         self.request = request
