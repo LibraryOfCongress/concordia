@@ -849,6 +849,26 @@ $card-progress-height: 12px;
     margin: auto;
 }
 
+#image-filters .btn-dark {
+    text-decoration: underline;
+    border-radius: 0;
+
+    &:hover,
+    &:focus,
+    &.active {
+        color: $dark;
+        background-color: $light;
+        text-decoration: none;
+        font-weight: 400;
+        border-color: $light;
+    }
+}
+
+#filter-tabs {
+    background-color: $light;
+    height: 3em;
+}
+
 /*
  * Tag input on the asset detail page
  */

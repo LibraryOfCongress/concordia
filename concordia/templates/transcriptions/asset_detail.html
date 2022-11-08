@@ -128,6 +128,91 @@
                                 <span class="fas fa-question-circle" aria-label="Open Help"></span>
                             </button>
                         </div>
+
+                        <div class="d-flex btn-group m-1">
+                            <button type="button" class="btn btn-dark" title="Image Filters" data-toggle="collapse" data-target="#image-filters">
+                                <span class="fas fa-sliders-h" aria-label="Image Filters"></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div id="image-filters" class="m-1 text-center d-print-none collapse">
+                    <hr class="m-0" />
+                    <ul class="d-inline-flex mt-1 btn-group nav nav-tabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button id="viewer-gamma" class="btn btn-dark nav-link active" title="Adjust gamma" data-toggle="tab" data-target="#gamma-filter" role="tab">
+                                Gamma
+                            </a>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button id="viewer-invert" class="btn btn-dark nav-link" title="Invert colors" data-toggle="tab" data-target="#invert-filter" role="tab">
+                                Invert
+                            </a>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button id="viewer-threshold" class="btn btn-dark nav-link" title="Adjust threshold" data-toggle="tab" data-target="#threshold-filter" role="tab">
+                                Threshold
+                            </a>
+                        </li>
+                    </ul>
+                    <div id="filter-tabs" class="tab-content">
+                        <div id="gamma-filter" class="tab-pane pt-1 show active" role="tabpanel">
+                            <form id="gamma-form">
+                                <input
+                                    type="number"
+                                    id="gamma"
+                                    name="gamma"
+                                    min="0"
+                                    max="5"
+                                    step="0.01"
+                                    value="1"
+                                    oninput="this.nextElementSibling.value = this.value"
+                                />
+                                <input
+                                    type="range"
+                                    id="gamma-range"
+                                    name="gamma-range"
+                                    min="0"
+                                    max="5"
+                                    step="0.01"
+                                    value="1"
+                                    oninput="this.previousElementSibling.value = this.value"
+                                />
+                                <input type="reset" class="btn btn-link" value="Reset filter" />
+                            </form>
+                        </div>
+                        <div id="invert-filter" class="tab-pane pt-2" role="tabpanel" style="background-color: white;">
+                            <form id="invert-form" class="float-left">
+                                <label for="invert">Off</label>
+                                <div class="custom-control custom-switch custom-control-inline">
+                                    <input type="checkbox" id="invert" name="invert" class="custom-control-input" role="switch" />
+                                    <label class="custom-control-label" for="invert">On</label>
+                                </div>
+                            </form>
+                        </div>
+                        <div id="threshold-filter" class="tab-pane pt-1" role="tabpanel">
+                            <form id="threshold-form">
+                                <input
+                                    type="number"
+                                    name="threshold"
+                                    id="threshold"
+                                    min="0"
+                                    max="255"
+                                    value="0"
+                                    oninput="this.nextElementSibling.value = this.value"
+                                />
+                                <input
+                                    type="range"
+                                    id="threshold-range"
+                                    name="threshold-range"
+                                    min="0"
+                                    max="255"
+                                    value="0"
+                                    oninput="this.previousElementSibling.value = this.value"
+                                />
+                                <input type="reset" class="btn btn-link">Reset filter</input>
+                            </form>
+                        </div>
                     </div>
                 </div>
                 <div id="asset-image" class="h-100 bg-dark d-print-none"></div>
@@ -534,6 +619,7 @@
             $('#' + event.target.parentElement.id).attr("hidden", true);
         });
     </script>
+
     <script>
         var seadragonViewer = OpenSeadragon({
             id: "asset-image",
@@ -558,6 +644,69 @@
             rotateRightButton: "viewer-rotate-right",
             flipButton: "viewer-flip",
             crossOriginPolicy: "Anonymous"
+        });
+
+        let availableFilters = [
+            {
+                formId: 'gamma-form',
+                inputId: 'gamma',
+                getFilter: function () {
+                    value = document.getElementById(this.inputId).value;
+                    if(!Number.isNaN(value) && value != 1 && value >= 0 && value <= 5){
+                        return OpenSeadragon.Filters.GAMMA(value);
+                    }
+                },
+            },
+            {
+                formId: 'invert-form',
+                inputId: 'invert',
+                getFilter: function() {
+                    value = document.getElementById(this.inputId).checked;
+                    if(value){
+                        return OpenSeadragon.Filters.INVERT();
+                    }
+                }
+            },
+            {
+                formId: 'threshold-form',
+                inputId: 'threshold',
+                getFilter: function() {
+                    value = document.getElementById(this.inputId).value;
+                    if(!Number.isNaN(value) && value > 0 && value <= 255){
+                        return OpenSeadragon.Filters.THRESHOLDING(value);
+                    }
+                }
+            }
+        ];
+
+        function updateFilters() {
+            let filters = [];
+            availableFilters.forEach(function (filterData) {
+                let filter = filterData.getFilter();
+                if(filter){
+                    filters.push(filter);
+                }
+            });
+            seadragonViewer.setFilterOptions({
+                filters: {
+                    processors: filters,
+                },
+            });
+        }
+
+        availableFilters.forEach(function (filterData) {
+            form = document.getElementById(filterData.formId)
+            if(form){
+                form.addEventListener('change', updateFilters);
+                form.addEventListener('reset', function(){
+                    setTimeout(updateFilters);
+                });
+            }
+            input = document.getElementById(filterData.inputId)
+            if(input){
+                input.addEventListener('keyup', debounce(() => updateFilters()));
+                input.addEventListener('wheel', debounce(() => updateFilters()));
+            }
         });
     </script>
 

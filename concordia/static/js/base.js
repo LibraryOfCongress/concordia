@@ -1,7 +1,7 @@
 /* global $ Cookies screenfull Sentry */
 /* exported displayMessage displayHtmlMessage buildErrorMessage */
 
-(function() {
+(function () {
     /*
         Configure jQuery to use CSRF tokens automatically — see
         https://docs.djangoproject.com/en/2.1/ref/csrf/#setting-the-token-on-the-ajax-request
@@ -19,15 +19,15 @@
     }
 
     $.ajaxSetup({
-        beforeSend: function(xhr, settings) {
+        beforeSend: function (xhr, settings) {
             if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
                 xhr.setRequestHeader('X-CSRFToken', CSRFCookie);
             }
-        }
+        },
     });
 })();
 
-$(function() {
+$(function () {
     $('[data-toggle="popover"]').popover();
 });
 
@@ -35,6 +35,7 @@ $(function() {
 function buildErrorMessage(jqXHR, textStatus, errorThrown) {
     /* Construct a nice error message using optional JSON response context */
     var errorMessage;
+    // eslint-disable-next-line unicorn/prefer-ternary
     if (jqXHR.responseJSON && jqXHR.responseJSON.error) {
         errorMessage = jqXHR.responseJSON.error;
     } else {
@@ -100,10 +101,10 @@ function loadLegacyPolyfill(scriptUrl, callback) {
     script.onload = callback;
     // eslint-disable-next-line unicorn/prevent-abbreviations
     script.src = scriptUrl;
-    document.body.appendChild(script);
+    document.body.append(script);
 }
 
-$(function() {
+$(function () {
     if (isOutdatedBrowser()) {
         var theMessage =
             'You are using an outdated browser. This website fully supports the current ' +
@@ -117,7 +118,7 @@ $(function() {
         try {
             var cookie = Cookies.get(warningCookie);
             if (cookie) {
-                warningLastShown = parseInt(cookie, 10);
+                warningLastShown = Number.parseInt(cookie, 10);
             }
         } catch (error) {
             Sentry.captureException(error);
@@ -126,7 +127,7 @@ $(function() {
         if (Date.now() - warningLastShown > 7 * 86400) {
             displayHtmlMessage('danger', theMessage).on(
                 'closed.bs.alert',
-                function() {
+                function () {
                     Cookies.set(warningCookie, Date.now());
                 }
             );
@@ -138,19 +139,19 @@ $(function() {
         */
         loadLegacyPolyfill(
             'https://cdn.jsdelivr.net/npm/css-vars-ponyfill@2.0.2/dist/css-vars-ponyfill.min.js',
-            function() {
+            function () {
                 /* global cssVars */
                 cssVars({
                     legacyOnly: true,
                     preserveStatic: true,
-                    include: 'link[rel="stylesheet"][href^="/static/"]'
+                    include: 'link[rel="stylesheet"][href^="/static/"]',
                 });
             }
         );
     }
 
     if (location.hash && $('#faqAccordion').length > 0) {
-        $(location.hash).on('shown.bs.collapse', function() {
+        $(location.hash).on('shown.bs.collapse', function () {
             window.location = location.hash;
         });
         $(location.hash).collapse('show');
@@ -160,7 +161,7 @@ $(function() {
 if (screenfull.isEnabled) {
     $('#go-fullscreen')
         .removeAttr('hidden')
-        .on('click', function(event) {
+        .on('click', function (event) {
             event.preventDefault();
             var targetElement = document.getElementById(this.dataset.target);
 
@@ -176,8 +177,8 @@ $.ajax({
     url: '/account/ajax-status/',
     method: 'GET',
     dataType: 'json',
-    cache: true
-}).done(function(data) {
+    cache: true,
+}).done(function (data) {
     if (!data.username) {
         return;
     }
@@ -186,35 +187,48 @@ $.ajax({
     $('.authenticated-only').removeAttr('hidden');
     if (data.links) {
         var $accountMenu = $('#topnav-account-dropdown .dropdown-menu');
-        data.links.forEach(function(i) {
+        data.links.forEach(function (link) {
             $('<a>')
                 .addClass('dropdown-item')
-                .attr('href', i.url)
-                .text(i.title)
+                .attr('href', link.url)
+                .text(link.title)
                 .prependTo($accountMenu);
         });
     }
 });
 
 $.ajax({url: '/account/ajax-messages/', method: 'GET', dataType: 'json'}).done(
-    function(data) {
+    function (data) {
         if (data.messages) {
-            data.messages.forEach(function(message) {
+            data.messages.forEach(function (message) {
                 displayMessage(message.level, message.message);
             });
         }
     }
 );
 
+// eslint-disable-next-line no-unused-vars
+function debounce(function_, timeout = 300) {
+    // Based on https://www.freecodecamp.org/news/javascript-debounce-example/
+    let timer;
+    return (...arguments_) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+            function_.apply(this, arguments_);
+        }, timeout);
+    };
+}
+
 /* Social share stuff */
 
-var hideTooltipCallback = function() {
-    // wait a couple seconds and then hide the tooltip.
-    var hideTooltip = function(tooltipButton) {
-        return function() {
-            tooltipButton.tooltip('hide');
-        };
+var hideTooltip = function (tooltipButton) {
+    return function () {
+        tooltipButton.tooltip('hide');
     };
+};
+
+var hideTooltipCallback = function () {
+    // wait a couple seconds and then hide the tooltip.
     setTimeout(hideTooltip($(this)), 3000);
 };
 
@@ -235,7 +249,7 @@ var $copyUrlButton = $('.copy-url-button');
 var $facebookShareButton = $('.facebook-share-button');
 var $twitterShareButton = $('.twitter-share-button');
 
-$copyUrlButton.on('click', function(event) {
+$copyUrlButton.on('click', function (event) {
     event.preventDefault();
 
     // The asynchronous Clipboard API is not supported by Microsoft Edge or Internet Explorer:
@@ -271,7 +285,7 @@ $copyUrlButton.on('click', function(event) {
             .tooltip('dispose')
             .tooltip({title: tooltipMessage, html: true})
             .tooltip('show');
-        $('#dismiss-tooltip-button').on('click', function() {
+        $('#dismiss-tooltip-button').on('click', function () {
             $copyUrlButton.tooltip('hide');
         });
     } finally {
@@ -281,12 +295,12 @@ $copyUrlButton.on('click', function(event) {
     return false;
 });
 
-$facebookShareButton.on('click', function() {
+$facebookShareButton.on('click', function () {
     trackShareInteraction($facebookShareButton, 'Facebook Share');
     return true;
 });
 
-$twitterShareButton.on('click', function() {
+$twitterShareButton.on('click', function () {
     trackShareInteraction($twitterShareButton, 'Twitter Share');
     return true;
 });
