@@ -166,7 +166,7 @@
                                     max="5"
                                     step="0.01"
                                     value="1"
-                                    oninput="this.nextElementSibling.value = this.value"
+                                    oninput="updateNextSibling(this)"
                                 />
                                 <input
                                     type="range"
@@ -176,7 +176,7 @@
                                     max="5"
                                     step="0.01"
                                     value="1"
-                                    oninput="this.previousElementSibling.value = this.value"
+                                    oninput="updatePreviousSibling(this)"
                                 />
                                 <input type="reset" class="btn btn-link" value="Reset filter" />
                             </form>
@@ -199,7 +199,7 @@
                                     min="0"
                                     max="255"
                                     value="0"
-                                    oninput="this.nextElementSibling.value = this.value"
+                                    oninput="updateNextSibling(this)"
                                 />
                                 <input
                                     type="range"
@@ -208,9 +208,9 @@
                                     min="0"
                                     max="255"
                                     value="0"
-                                    oninput="this.previousElementSibling.value = this.value"
+                                    oninput="updatePreviousSibling(this)"
                                 />
-                                <input type="reset" class="btn btn-link">Reset filter</input>
+                                <input type="reset" class="btn btn-link" value="Reset filter" />
                             </form>
                         </div>
                     </div>
@@ -755,5 +755,15 @@
                 return event.returnValue = "The transcription you've started has not been saved.";
             }
         });
+    </script>
+
+    <script>
+        function updateNextSibling(element){
+            element.nextElementSibling.value = element.value;
+        }
+
+        function updatePreviousSibling(element){
+            element.previousElementSibling.value = element.value;
+        }
     </script>
 {% endblock body_scripts %}
