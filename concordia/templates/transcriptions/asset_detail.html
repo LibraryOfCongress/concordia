@@ -142,17 +142,17 @@
                         <li class="nav-item" role="presentation">
                             <button id="viewer-gamma" class="btn btn-dark nav-link active" title="Adjust gamma" data-toggle="tab" data-target="#gamma-filter" role="tab">
                                 Gamma
-                            </a>
+                            </button>
                         </li>
                         <li class="nav-item" role="presentation">
                             <button id="viewer-invert" class="btn btn-dark nav-link" title="Invert colors" data-toggle="tab" data-target="#invert-filter" role="tab">
                                 Invert
-                            </a>
+                            </button>
                         </li>
                         <li class="nav-item" role="presentation">
                             <button id="viewer-threshold" class="btn btn-dark nav-link" title="Adjust threshold" data-toggle="tab" data-target="#threshold-filter" role="tab">
                                 Threshold
-                            </a>
+                            </button>
                         </li>
                     </ul>
                     <div id="filter-tabs" class="tab-content">
@@ -183,11 +183,12 @@
                         </div>
                         <div id="invert-filter" class="tab-pane pt-2" role="tabpanel" style="background-color: white;">
                             <form id="invert-form" class="float-left">
-                                <label for="invert">Off</label>
-                                <div class="custom-control custom-switch custom-control-inline">
+                                <label class="ml-2 align-middle" for="invert">Off</label>
+                                <div class="custom-control custom-switch custom-control-inline ml-1 mr-2">
                                     <input type="checkbox" id="invert" name="invert" class="custom-control-input" role="switch" />
-                                    <label class="custom-control-label" for="invert">On</label>
+                                    <label class="custom-control-label" for="invert" />
                                 </div>
+                                <label class="align-middle" for="invert">On</label>
                             </form>
                         </div>
                         <div id="threshold-filter" class="tab-pane pt-1" role="tabpanel">

@@ -861,12 +861,60 @@ $card-progress-height: 12px;
         text-decoration: none;
         font-weight: 400;
         border-color: $light;
+        outline: none;
+        box-shadow: none;
     }
 }
 
 #filter-tabs {
     background-color: $light;
     height: 3em;
+
+    & .custom-control-label::before {
+        height: 1.5rem;
+        width: 2.75rem;
+        border-radius: 4rem;
+    }
+
+    & .custom-control-label::after {
+        width: calc(1.5rem - 4px);
+        height: calc(1.5rem - 4px);
+        border-radius: 1.25rem;
+    }
+
+    & .custom-control-input:checked ~ .custom-control-label::after {
+        transform: translateX(1.25rem);
+    }
+
+    & .custom-control-input ~ .custom-control-label::before {
+        border-color: $dark !important;
+    }
+
+    & .custom-control-input ~ .custom-control-label::after {
+        background-color: $white !important;
+        border: solid 1px $dark !important;
+        left: calc(-2.25rem + 4px);
+    }
+
+    & .custom-control-input:focus ~ .custom-control-label::before {
+        border-color: $dark !important;
+    }
+
+    & .custom-control-input:checked ~ .custom-control-label::before {
+        border-color: $dark !important;
+        background-color: $dark !important;
+    }
+
+    & .custom-control-input:active ~ .custom-control-label::before {
+        background-color: $dark !important;
+        border-color: $dark !important;
+    }
+
+    &
+        .custom-control-input:focus:not(:checked)
+        ~ .custom-control-label::before {
+        border-color: $dark !important;
+    }
 }
 
 /*
