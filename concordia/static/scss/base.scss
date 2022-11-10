@@ -1023,3 +1023,20 @@ div.related-links {
         display: inline-block;
     }
 }
+
+/* Profile page */
+.view-user-profile .nav-tabs .nav-item {
+    padding: 0.5rem 0.5rem;
+}
+
+.view-user-profile a.nav-item {
+    border-bottom: 1px solid $gray-600;
+    color: #0076ad;
+    font-weight: bold;
+}
+
+.view-user-profile a.nav-item.active {
+    border: 1px solid $gray-600;
+    border-bottom: none;
+    color: $gray-800;
+}
