@@ -1108,6 +1108,16 @@ div.related-links {
     display: block;
 }
 
+/* Profile page */
+.contribution-table a {
+    text-decoration: underline;
+}
+
+.contribution-table thead th {
+    border-bottom: 1px solid #000;
+    border-top: 1px solid #000;
+}
+
 /* print */
 @media print {
     @page {
