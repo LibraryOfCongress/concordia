@@ -850,6 +850,136 @@ $card-progress-height: 12px;
 }
 
 /*
+ * Image filter controls
+*/
+
+#image-filters .btn-dark {
+    text-decoration: underline;
+    border-radius: 0;
+
+    &:hover,
+    &:focus,
+    &.active {
+        color: $dark;
+        background-color: $light;
+        text-decoration: none;
+        font-weight: 400;
+        border-color: $light;
+        outline: none;
+        box-shadow: none;
+    }
+}
+
+#filter-tabs {
+    background-color: $light;
+    height: 3em;
+
+    & .custom-control-label::before {
+        height: 1.5rem;
+        width: 2.75rem;
+        border-radius: 4rem;
+    }
+
+    & .custom-control-label::after {
+        width: calc(1.5rem - 4px);
+        height: calc(1.5rem - 4px);
+        border-radius: 1.25rem;
+    }
+
+    & .custom-control-input:checked ~ .custom-control-label::after {
+        transform: translateX(1.25rem);
+    }
+
+    & .custom-control-input ~ .custom-control-label::before {
+        border-color: $dark !important;
+    }
+
+    & .custom-control-input ~ .custom-control-label::after {
+        background-color: $white !important;
+        border: solid 1px $dark !important;
+        left: calc(-2.25rem + 4px);
+    }
+
+    & .custom-control-input:focus ~ .custom-control-label::before {
+        border-color: $dark !important;
+    }
+
+    & .custom-control-input:checked ~ .custom-control-label::before {
+        border-color: $dark !important;
+        background-color: $dark !important;
+    }
+
+    & .custom-control-input:active ~ .custom-control-label::before {
+        background-color: $dark !important;
+        border-color: $dark !important;
+    }
+
+    &
+        .custom-control-input:focus:not(:checked)
+        ~ .custom-control-label::before {
+        border-color: $dark !important;
+    }
+}
+
+.filter-slider {
+    appearance: none;
+    border: solid 1px $dark;
+    height: 0.5em;
+    background: $white;
+}
+
+.filter-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 1.1em;
+    height: 1.5em;
+    background: $primary;
+    cursor: pointer;
+    border-radius: 20%;
+}
+
+.filter-slider::-moz-range-thumb {
+    appearance: none;
+    width: 1.1em;
+    height: 1.5em;
+    background: $primary;
+    cursor: pointer;
+    border-radius: 20%;
+}
+
+.number-input {
+    border: solid 1px $primary;
+    background-color: $white;
+
+    & input[type='number'] {
+        border: none;
+        appearance: textfield;
+        -webkit-appearance: textfield;
+        -moz-appearance: textfield;
+        height: 100%;
+        width: 100%;
+    }
+
+    & input[type='number']::-webkit-inner-spin-button,
+    input[type='number']::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+    }
+
+    & input[type='number']:focus {
+        outline: none;
+    }
+
+    & .arrow-button {
+        background-color: $primary;
+        color: $white;
+        font-size: 0.8em;
+        width: 100%;
+        border: none;
+        padding: 0;
+    }
+}
+
+/*
  * Tag input on the asset detail page
  */
 #tag-label {

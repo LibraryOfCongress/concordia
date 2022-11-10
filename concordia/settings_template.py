@@ -61,6 +61,7 @@ NPM_FILE_PATTERNS = {
     "array-sort-by": ["dist/*"],
     "urijs": ["src/*"],
     "openseadragon": ["build/*"],
+    "openseadragon-filtering": ["openseadragon-filtering.js"],
     "codemirror": ["lib/*", "addon/*", "mode/*"],
     "prettier": ["*.js"],
     "remarkable": ["dist/*"],
