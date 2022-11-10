@@ -849,6 +849,10 @@ $card-progress-height: 12px;
     margin: auto;
 }
 
+/*
+ * Image filter controls
+*/
+
 #image-filters .btn-dark {
     text-decoration: underline;
     border-radius: 0;
@@ -914,6 +918,64 @@ $card-progress-height: 12px;
         .custom-control-input:focus:not(:checked)
         ~ .custom-control-label::before {
         border-color: $dark !important;
+    }
+}
+
+.filter-slider {
+    appearance: none;
+    border: solid 1px $dark;
+    height: 0.5em;
+    background: $white;
+}
+
+.filter-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 1.1em;
+    height: 1.5em;
+    background: $primary;
+    cursor: pointer;
+    border-radius: 20%;
+}
+
+.filter-slider::-moz-range-thumb {
+    appearance: none;
+    width: 1.1em;
+    height: 1.5em;
+    background: $primary;
+    cursor: pointer;
+    border-radius: 20%;
+}
+
+.number-input {
+    border: solid 1px $primary;
+    background-color: $white;
+
+    & input[type='number'] {
+        border: none;
+        appearance: textfield;
+        -webkit-appearance: textfield;
+        -moz-appearance: textfield;
+        height: 100%;
+        width: 100%;
+    }
+
+    & input[type='number']::-webkit-inner-spin-button,
+    input[type='number']::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+    }
+
+    & input[type='number']:focus {
+        outline: none;
+    }
+
+    & .arrow-button {
+        background-color: $primary;
+        color: $white;
+        font-size: 0.8em;
+        width: 100%;
+        border: none;
+        padding: 0;
     }
 }
 
