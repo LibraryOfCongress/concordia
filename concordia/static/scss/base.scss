@@ -1100,6 +1100,19 @@ div.related-links {
     max-width: 30rem;
 }
 
+/* Profile page */
+.contribution-highlight {
+    background-color: #f6f6f6;
+    border: 1px solid black;
+    font-weight: bold;
+    height: 85px;
+    margin-right: 10px;
+    padding-bottom: 15px;
+    padding-top: 25px;
+    width: 32%;
+    text-align: center;
+}
+
 /* This is here to fix
     https://github.com/LibraryOfCongress/concordia/issues/1127
     until https://github.com/twbs/bootstrap/issues/29439 is fixed */
