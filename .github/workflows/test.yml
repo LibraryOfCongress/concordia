@@ -95,7 +95,8 @@ jobs:
                   pipenv run safety check
                   npx --quiet csstree-validator static/css/
               env:
-                  PGPASSWORD: ''
+                  POSTGRES_PW: postgres #haven't tried this yet - but this is the var in the app vs GH service
+                  #PGPASSWORD: ''
                   # The hostname used to communicate with the PostgreSQL service container
                   POSTGRES_HOST: localhost
                   # The default PostgreSQL port
