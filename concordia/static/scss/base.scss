@@ -1100,19 +1100,6 @@ div.related-links {
     max-width: 30rem;
 }
 
-/* Profile page */
-.contribution-highlight {
-    background-color: #f6f6f6;
-    border: 1px solid black;
-    font-weight: bold;
-    height: 85px;
-    margin-right: 10px;
-    padding-bottom: 15px;
-    padding-top: 25px;
-    width: 32%;
-    text-align: center;
-}
-
 /* This is here to fix
     https://github.com/LibraryOfCongress/concordia/issues/1127
     until https://github.com/twbs/bootstrap/issues/29439 is fixed */
@@ -1122,7 +1109,32 @@ div.related-links {
 }
 
 /* Profile page */
+.contribution-highlight {
+    background-color: #f6f6f6;
+    border: 1px solid black;
+    font-weight: bold;
+    height: 125px;
+    margin-right: 10px;
+    padding-bottom: 15px;
+    padding-top: 5px;
+    width: 32%;
+    text-align: center;
+}
+
+.contribution-highlight .value {
+    color: $blue;
+    font-size: xxx-large;
+}
+
+.contribution-highlight .label {
+    font-size: large;
+}
+
 .contribution-table a {
+    text-decoration: underline;
+}
+
+.all-campaigns {
     text-decoration: underline;
 }
 
@@ -1184,7 +1196,7 @@ div.related-links {
 
 .view-user-profile a.nav-item {
     border-bottom: 1px solid $gray-600;
-    color: #0076ad;
+    color: $blue;
     font-weight: bold;
 }
 
