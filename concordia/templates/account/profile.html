@@ -148,7 +148,7 @@
             <div class="tab-pane fade" id="pages" role="tabpanel">
                 {% if object_list %}
                     <div class="row justify-content-start">
-                        <div class="col-12 col-md-10">
+                        <div class="col-md">
                             <h2>Recent Pages Worked On</h2>
                             <div>View all the pages you worked on to in the last 6 months.</div>
                             <table class="table table-striped table-responsive-sm">
@@ -164,7 +164,7 @@
 
                                 <tbody>
                                     {% for asset in object_list %}
-                                        <tr class={{asset.item.project.campaign.id}}>
+                                        <tr class="{{ asset.item.project.campaign.id }} recent-page">
                                             <td><abbr title="{{ asset.latest_activity|date:'SHORT_DATE_FORMAT' }}">{{ asset.latest_activity }}</abbr></td>
                                             <td><a href="{{ asset.item.get_absolute_url }}">{{ asset.item.title }}</a></td>
                                             <td class="text-right"><a href="{{ asset.get_absolute_url }}">{{ asset.sequence }}</a></td>
