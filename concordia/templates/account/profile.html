@@ -74,7 +74,7 @@
                         <h3>Service Letter</h3>
                         <div>Using <i>By the People</i> to fulfill service requirements? Download a letter verifying your volunteer contributions.<br/><a href="/resources">Find more info on service documentation here.</a></div>
                         <div class="row justify-content-start">
-                            <div class="btn-row">
+                            <div class="btn-row col-md-10">
                                 <a class="btn btn-primary rounded-0" href="/letter">Download Letter</a>
                             </div>
                         </div>
@@ -86,54 +86,71 @@
                     </div>
                 </div>
             </div>
-            <div class="tab-pane fade" id="pages" role="tabpanel">
-                {% if object_list %}
-                    <div class="row justify-content-start">
-                        <div class="col-12 col-md-10">
-                            <h2>My Contributions</h2>
-                            <div>Click on a campaign title to see only those actions. Click "All Campaigns" to view all.</div>
-                            <table id="tblTranscription" class="table table-striped table-sm table-responsive-sm contribution-table">
-                                <thead>
-                                    <tr>
-                                        <th></th>
-                                        <th>Campaign</th>
-                                        <th><abbr title="Total number of times you saved, submitted a transcription" class="text-decoration-none">Saves & Submits</abbr></th>
-                                        <th><abbr title="Total number of times you reviewed a transcription" class="text-decoration-none">Reviews</abbr></th>
-                                        <th><abbr title="Total number of times you saved, submitted, or reviewed a transcription" class="text-decoration-none">Total Actions</abbr></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td></td>
-                                        <td class="campaign" id="-1"><b>  <a href="{% url 'campaign-topic-list' %}">All Campaigns</a></b></td>
-                                        <td><b>{{ totalTranscriptions|intcomma }}</b></td>
-                                        <td><b>{{ totalReviews|intcomma }}</b></td>
-                                        <td><b>{{ totalCount|intcomma }}</b></td>
-                                    </tr>
-                                    {% for campaign in contributed_campaigns %}
-                                        <tr>
-                                            <td></td>
-                                            <td>
-                                                <a class="campaign" id={{campaign.id}} href="{% url 'transcriptions:campaign-detail' campaign.slug %}">
-                                                    {{ campaign.title }}
-                                                </a>
-                                            </td>
-                                            <td>{{ campaign.transcribe_count|intcomma }}</td>
-                                            <td>{{ campaign.review_count|intcomma }}</td>
-                                            <td>{{ campaign.action_count|intcomma }}</td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                {% endif %}
-            </div>
             <div class="tab-pane fade show active" id="contributions" role="tabpanel">
                 {% if object_list %}
                     <div class="row justify-content-start">
-                        <div class="col-12 col-md-10">
+                        <div class="col-md">
+                            <h2>My Contributions</h2>
+                            <table id="tblTranscription" class="table table-striped table-sm table-responsive-sm contribution-table">
+                                <div class="row">
+                                    <div class="contribution-highlight">
+                                        <div class="value">{{ contributed_campaigns|length|intcomma }}</div>
+                                        <p class="label">Campaigns</p>
+                                    </div>
+                                    <div class="contribution-highlight">
+                                        <div class="value">{{ object_list|length|intcomma }}</div>
+                                        <p class="label">Pages Worked On</p>
+                                    </div>
+                                    <div class="contribution-highlight">
+                                        <div class="value">{{ totalCount|intcomma }}</div>
+                                        <p class="label">Actions</p>
+                                    </div>
+                                </div>
+                                <table id="tblTranscription" class="table table-striped table-sm table-responsive-sm">
+                                    <thead>
+                                        <tr>
+                                            <th></th>
+                                            <th>Campaign</th>
+                                            <th><abbr title="Total number of times you saved, submitted a transcription" class="text-decoration-none">Saves & Submits</abbr></th>
+                                            <th><abbr title="Total number of times you reviewed a transcription" class="text-decoration-none">Reviews</abbr></th>
+                                            <th><abbr title="Total number of times you saved, submitted, or reviewed a transcription" class="text-decoration-none">Total Actions</abbr></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td></td>
+                                            <td class="campaign all-campaigns" id="-1">
+                                                <b><a href="{% url 'campaign-topic-list' %}">All Campaigns</a></b>
+                                            </td>
+                                            <td><b>{{ totalTranscriptions|intcomma }}</b></td>
+                                            <td><b>{{ totalReviews|intcomma }}</b></td>
+                                            <td><b>{{ totalCount|intcomma }}</b></td>
+                                        </tr>
+                                        {% for campaign in contributed_campaigns %}
+                                            <tr>
+                                                <td></td>
+                                                <td>
+                                                    <a class="campaign" id={{campaign.id}} href="{% url 'transcriptions:campaign-detail' campaign.slug %}">
+                                                        {{ campaign.title }}
+                                                    </a>
+                                                </td>
+                                                <td>{{ campaign.transcribe_count|intcomma }}</td>
+                                                <td>{{ campaign.review_count|intcomma }}</td>
+                                                <td>{{ campaign.action_count|intcomma }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                {% endif %}
+            </div>
+            <div class="tab-pane fade" id="pages" role="tabpanel">
+                {% if object_list %}
+                    <div class="row justify-content-start">
+                        <div class="col-md">
                             <h2>Recent Pages Worked On</h2>
+                            <div>View all the pages you worked on to in the last 6 months.</div>
                             <table class="table table-striped table-responsive-sm">
                                 <thead>
                                     <tr class="text-center">
@@ -147,7 +164,7 @@
 
                                 <tbody>
                                     {% for asset in object_list %}
-                                        <tr class={{asset.item.project.campaign.id}}>
+                                        <tr class="{{ asset.item.project.campaign.id }} recent-page">
                                             <td><abbr title="{{ asset.latest_activity|date:'SHORT_DATE_FORMAT' }}">{{ asset.latest_activity }}</abbr></td>
                                             <td><a href="{{ asset.item.get_absolute_url }}">{{ asset.item.title }}</a></td>
                                             <td class="text-right"><a href="{{ asset.get_absolute_url }}">{{ asset.sequence }}</a></td>
