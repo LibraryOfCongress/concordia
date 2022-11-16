@@ -92,46 +92,50 @@
                 <div id="viewer-controls" class="m-1 text-center d-print-none">
                     <div class="d-inline-flex justify-content-between">
                         <div class="d-flex btn-group m-1">
-                            <button id="viewer-home" class="btn btn-dark" title="Fit Image to Viewport">
+                            <button type="button" id="viewer-home" class="btn btn-dark viewer-control-button" title="Fit Image to Viewport">
                                 <span class="fas fa-compress"></span>
                             </button>
                         </div>
+
                         <div class="d-flex btn-group m-1">
-                            <button id="viewer-zoom-in" class="btn btn-dark" title="Zoom In">
+                            <button id="viewer-zoom-in" class="btn btn-dark viewer-control-button" title="Zoom In">
                                 <span class="fas fa-search-plus"></span>
                             </button>
                             <button id="viewer-zoom-out" class="btn btn-dark" title="Zoom Out">
                                 <span class="fas fa-search-minus"></span>
                             </button>
                         </div>
+
                         <div class="d-flex btn-group m-1">
-                            <button id="viewer-rotate-left" class="btn btn-dark" title="Rotate Left">
+                            <button id="viewer-rotate-left" class="btn btn-dark viewer-control-button" title="Rotate Left">
                                 <span class="fas fa-undo"></span>
                             </button>
-                            <button id="viewer-rotate-right" class="btn btn-dark" title="Rotate Right">
+                            <button id="viewer-rotate-right" class="btn btn-dark viewer-control-button" title="Rotate Right">
                                 <span class="fas fa-redo"></span>
                             </button>
                         </div>
+
                         <div class="d-flex btn-group m-1">
-                            <button id="viewer-flip" class="btn btn-dark" title="Flip">
+                            <button id="viewer-flip" class="btn btn-dark viewer-control-button" title="Flip">
                                 <span class="fas fa-exchange-alt"></span>
                             </button>
                         </div>
+
                         <div class="d-flex btn-group m-1">
-                            <button id="viewer-full-page" class="btn btn-dark" title="View Full Screen">
+                            <button type="button" class="btn btn-dark extra-control-button" title="Image Filters" data-toggle="collapse" data-target="#image-filters">
+                                <span class="fas fa-sliders-h" aria-label="Image Filters"></span>
+                            </button>
+                        </div>
+
+                        <div class="d-flex btn-group m-1">
+                            <button id="viewer-full-page" class="btn btn-dark viewer-control-button" title="View Full Screen">
                                 <span class="fas fa-expand"></span>
                             </button>
                         </div>
 
                         <div class="d-flex btn-group m-1">
-                            <button type="button" class="btn btn-dark" title="Open Help" data-toggle="modal" data-target="#keyboard-help-modal">
+                            <button type="button" class="btn btn-dark extra-control-button" title="Open Help" data-toggle="modal" data-target="#keyboard-help-modal">
                                 <span class="fas fa-question-circle" aria-label="Open Help"></span>
-                            </button>
-                        </div>
-
-                        <div class="d-flex btn-group m-1">
-                            <button type="button" class="btn btn-dark" title="Image Filters" data-toggle="collapse" data-target="#image-filters">
-                                <span class="fas fa-sliders-h" aria-label="Image Filters"></span>
                             </button>
                         </div>
                     </div>
@@ -677,6 +681,25 @@
             rotateRightButton: "viewer-rotate-right",
             flipButton: "viewer-flip",
             crossOriginPolicy: "Anonymous"
+        });
+
+        // The buttons configured as controls for the viewer don't properly get focus
+        // when clicked. This mostly isn't a problem, but causes odd-looking behavior
+        // when one of the extra buttons in the control bar is clicked (and therefore
+        // focused) first--clicking the control button leaves the focus on the extra
+        // button.
+        // TODO: Attempting to add focus to the clicked button here doesn't consistently
+        // work for unknown reasons, so it just removes focus from the extra buttons
+        // for now
+        let viewerControlButtons = document.querySelectorAll('.viewer-control-button');
+        viewerControlButtons.forEach(function(node){
+            node.addEventListener('click', function(event){
+                focusedButton = document.querySelector('.extra-control-button:focus');
+                if(focusedButton){
+                    focusedButton.blur();
+                }
+
+            })
         });
 
         /*
