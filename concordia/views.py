@@ -555,6 +555,12 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
                 if asset.item.project.campaign.id == int(campaignSlug):
                     object_list.append((asset))
 
+        # CONCD-189 only show pages from the last 6 months
+        SIX_MONTHS_AGO = datetime.datetime.today() - datetime.timedelta(days=6 * 30)
+        ctx["recent_pages"] = self.object_list.filter(
+            latest_activity__gte=SIX_MONTHS_AGO
+        )
+
         user = self.request.user
 
         contributed_campaigns = (
