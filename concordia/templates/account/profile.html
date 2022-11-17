@@ -146,7 +146,7 @@
                 {% endif %}
             </div>
             <div class="tab-pane fade" id="pages" role="tabpanel">
-                {% if object_list %}
+                {% if recent_pages %}
                     <div class="row justify-content-start">
                         <div class="col-md">
                             <h2>Recent Pages Worked On</h2>
@@ -163,7 +163,7 @@
                                 </thead>
 
                                 <tbody>
-                                    {% for asset in object_list %}
+                                    {% for asset in recent_pages %}
                                         <tr class="{{ asset.item.project.campaign.id }} recent-page">
                                             <td><abbr title="{{ asset.latest_activity|date:'SHORT_DATE_FORMAT' }}">{{ asset.latest_activity }}</abbr></td>
                                             <td><a href="{{ asset.item.get_absolute_url }}">{{ asset.item.title }}</a></td>
