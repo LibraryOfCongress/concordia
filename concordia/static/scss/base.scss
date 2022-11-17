@@ -1130,6 +1130,11 @@ div.related-links {
     font-size: large;
 }
 
+.contribution-table th {
+    border-top: 1px solid $dark;
+    border-bottom: 1px solid $dark;
+}
+
 .contribution-table a {
     text-decoration: underline;
 }
