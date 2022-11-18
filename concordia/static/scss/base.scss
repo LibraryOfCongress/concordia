@@ -1114,7 +1114,7 @@ div.related-links {
     border: 1px solid black;
     font-weight: bold;
     height: 125px;
-    margin-right: 10px;
+    margin-right: 2%;
     padding-bottom: 15px;
     padding-top: 5px;
     width: 32%;
@@ -1128,6 +1128,11 @@ div.related-links {
 
 .contribution-highlight .label {
     font-size: large;
+}
+
+.contribution-table th {
+    border-top: 1px solid $dark;
+    border-bottom: 1px solid $dark;
 }
 
 .contribution-table a {
