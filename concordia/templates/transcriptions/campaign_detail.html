@@ -1,7 +1,9 @@
 {% extends "base.html" %}
 
 {% load staticfiles %}
+{% load humanize %}
 {% load concordia_text_tags %}
+{% load concordia_filtering_tags %}
 
 {% block title %}{{ campaign.title }}{% endblock title %}
 
@@ -20,59 +22,143 @@
 {% block main_content %}
     <div class="container py-3">
         <div class="row">
-            <div class="col-md-9">
+            <div class="col-md-12">
                 <h1>{{ campaign.title }}</h1>
-                <div class="hero-text">{{ campaign.description|safe }}</div>
-            </div>
-            <div class="col-md-3">
-                {% if campaign.resource_set.related_links %}
-                    <aside class="mb-3 mt-4 mt-md-0 p-3 bg-light border">
-                        <h4 class="mb-3">Related Links</h4>
-                        <ul class="list-unstyled m-0">
-                            {% for resource in campaign.resource_set.related_links %}
-                                {% if 'loc.gov' in resource.resource_url   %}
-                                    <li class="mb-3"><a href="{{ resource.resource_url }}" target="_blank">{{ resource.title }}</a></li>
-                                {%else%}
-                                    <li class="mb-3"><a href="{{ resource.resource_url }}" target="_blank">{{ resource.title }} <i class="fa fa-external-link-alt"></i></a></li>
-                                {% endif %}
-                            {% endfor %}
-                        </ul>
-                    </aside>
-                {% endif %}
             </div>
         </div>
-        {% include "fragments/transcription-progress-row.html" %}
-        <div class="row justify-content-center concordia-object-card-row">
-            {% for project in projects %}
-                <div class="col-6 col-md-4 col-lg-3 concordia-object-card-col">
-                    <div class="h-100 concordia-object-card card border" data-transcription-status="{{ project.lowest_transcription_status }}">
-                        {% url 'transcriptions:project-detail' campaign.slug project.slug as project_url %}
-
-                        <a href="{{ project_url }}?{{ sublevel_querystring }}" aria-hidden="true">
-                            <img class="card-img card-img-campaign" src="{{ MEDIA_URL }}{{ project.thumbnail_image }}" alt="{{ project.title }}">
-                        </a>
-
-                        <div class="progress w-100">
-                            <div title="Completed" class="progress-bar bg-completed" role="progressbar" style="width: {{ project.completed_percent }}%" aria-valuenow="{{ project.completed_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
-                            <div title="Needs Review" class="progress-bar bg-submitted" role="progressbar" style="width: {{ project.submitted_percent }}%" aria-valuenow="{{ project.submitted_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
-                            <div title="In Progress" class="progress-bar bg-in_progress" role="progressbar" style="width: {{ project.in_progress_percent }}%" aria-valuenow="{{ project.in_progress_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
-                        </div>
-
-                        <h6 class="text-center primary-text m-0 concordia-object-card-title">
-                            <a{% if project.lowest_transcription_status == 'completed' %} class="text-dark"{% endif %} href="{{ project_url }}?{{ sublevel_querystring }}">{{ project.title }}</a>
-                        </h6>
-
-                        {% if project.lowest_transcription_status == 'completed' %}
-                            <div class="card-actions">
-                                <a class="btn btn-sm btn-block btn-dark" href="{{ project_url }}?{{ sublevel_querystring }}">
-                                    <span class="fas fa-check tx-completed"></span>
-                                    Complete
-                                </a>
-                            </div>
-                        {% endif %}
-                    </div>
+        <div class="row">
+            <div class="col-12 col-lg pt-1 pb-1">
+                <div class="progress campaign-page-progress">
+                    <div
+                        title="Completed ({{ completed_count|intcomma }} page{{ completed_count|pluralize }})"
+                        class="progress-bar bg-completed"
+                        role="progressbar"
+                        style="width: {{ completed_percent }}%"
+                        aria-valuenow="{{ completed_percent }}"
+                        aria-valuemin="0"
+                        aria-valuemax="100"
+                    ></div>
+                    <div
+                        title="Needs Review ({{ submitted_count|intcomma }} page{{ submitted_count|pluralize }})"
+                        class="progress-bar bg-submitted"
+                        role="progressbar"
+                        style="width: {{ submitted_percent }}%"
+                        aria-valuenow="{{ submitted_percent }}"
+                        aria-valuemin="0"
+                        aria-valuemax="100"
+                    ></div>
+                    <div
+                        title="In Progress ({{ in_progress_count|intcomma }} page{{ in_progress_count|pluralize }})"
+                        class="progress-bar bg-in_progress"
+                        role="progressbar"
+                        style="width: {{ in_progress_percent }}%"
+                        aria-valuenow="{{ in_progress_percent }}"
+                        aria-valuemin="0"
+                        aria-valuemax="100"
+                    ></div>
+                    <div
+                        title="Not Started ({{ not_started_count|intcomma }} page{{ not_started_count|pluralize }})"
+                        class="progress-bar bg-not_started"
+                        role="progressbar"
+                        style="width: {{ not_started_percent }}%"
+                        aria-valuenow="{{ not_started_percent }}"
+                        aria-valuemin="0"
+                        aria-valuemax="100"
+                    ></div>
                 </div>
-            {% endfor %}
+            </div>
         </div>
-    </div>
+        <div class="row">
+            <div class="col-12 col-lg pb-1">
+                <ul class="progress-bar-labels list-unstyled m-0 p-1">
+                    {% if completed_percent %}
+                        <li>{{ completed_percent }}% Completed</li>
+                    {% endif %}
+                    {% if submitted_percent %}
+                        <li>{{ submitted_percent }}% Needs Review</li>
+                    {% endif %}
+                    {% if in_progress_percent %}
+                        <li>{{ in_progress_percent }}% In Progress</li>
+                    {% endif %}
+                    {% if not_started_percent %}
+                        <li>{{ not_started_percent }}% Not Started</li>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12 pt-1 pb-1">
+                    <hr class="landing-divider" />
+                    <p class="mb-1"><strong>Completed Page{{ completed_count|pluralize }}:</strong> {{ completed_count|intcomma }}</p>
+                    <p class="mb-1"><strong>Registered Contributor{{ contributor_count|pluralize }}:</strong> {{ contributor_count|intcomma }}</p>
+                    {% if campaign.launch_date %}
+                        <p class="mb-1"><strong>Launched {{ campaign.launch_date }}.</strong></p>
+                    {% endif %}
+                    <hr class="landing-divider" />
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-9">
+                    <div class="hero-text">{{ campaign.description|safe }}</div>
+                </div>
+                <div class="col-md-3">
+                    {% if campaign.resource_set.related_links %}
+                        <aside class="mb-3 mt-4 mt-md-0 p-3 bg-light">
+                            <h4 class="mb-3">Helpful Links</h4>
+                            <ul class="list-unstyled m-0">
+                                {% for resource in campaign.resource_set.related_links %}
+                                    {% if 'loc.gov' in resource.resource_url   %}
+                                        <li class="mb-3"><a href="{{ resource.resource_url }}" target="_blank">{{ resource.title }}</a></li>
+                                    {%else%}
+                                        <li class="mb-3"><a href="{{ resource.resource_url }}" target="_blank">{{ resource.title }} <i class="fa fa-external-link-alt"></i></a></li>
+                                    {% endif %}
+                                {% endfor %}
+                            </ul>
+                        </aside>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12 col-lg mt-4">
+                    <h3>Filter pages:</h2>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12 col-lg text-center">
+                    {% transcription_status_filters transcription_status_counts request.GET.transcription_status "large" True %}
+                </div>
+            </div>
+            <div class="row justify-content-center concordia-object-card-row">
+                <div class="concordia-object-card-container justify-content-center">
+                    {% for project in projects %}
+                        <div class="col-6 concordia-object-card-col">
+                            <div class="h-100 concordia-object-card card border" data-transcription-status="{{ project.lowest_transcription_status }}">
+                                {% url 'transcriptions:project-detail' campaign.slug project.slug as project_url %}
+
+                                <a href="{{ project_url }}?{{ sublevel_querystring }}" aria-hidden="true">
+                                    <img class="card-img card-img-campaign" src="{{ MEDIA_URL }}{{ project.thumbnail_image }}" alt="{{ project.title }}">
+                                </a>
+
+                                <div class="progress w-100">
+                                    <div title="Completed" class="progress-bar bg-completed" role="progressbar" style="width: {{ project.completed_percent }}%" aria-valuenow="{{ project.completed_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                    <div title="Needs Review" class="progress-bar bg-submitted" role="progressbar" style="width: {{ project.submitted_percent }}%" aria-valuenow="{{ project.submitted_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                    <div title="In Progress" class="progress-bar bg-in_progress" role="progressbar" style="width: {{ project.in_progress_percent }}%" aria-valuenow="{{ project.in_progress_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+
+                                <h6 class="text-center primary-text m-0 concordia-object-card-title">
+                                    <a{% if project.lowest_transcription_status == 'completed' %} class="text-dark"{% endif %} href="{{ project_url }}?{{ sublevel_querystring }}">{{ project.title }}</a>
+                                </h6>
+
+                                {% if project.lowest_transcription_status == 'completed' %}
+                                    <div class="card-actions">
+                                        <a class="btn btn-sm btn-block btn-dark" href="{{ project_url }}?{{ sublevel_querystring }}">
+                                            <span class="fas fa-check tx-completed"></span>
+                                            Complete
+                                        </a>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
 {% endblock main_content %}

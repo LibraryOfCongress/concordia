@@ -260,6 +260,9 @@ Resources:
             Cluster: crowd-test
             LaunchType: FARGATE
             DeploymentConfiguration:
+                DeploymentCircuitBreaker:
+                    Enable: true
+                    Rollback: false
                 MaximumPercent: 200
                 MinimumHealthyPercent: 75
             DesiredCount: 1

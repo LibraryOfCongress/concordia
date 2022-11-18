@@ -92,41 +92,163 @@
                 <div id="viewer-controls" class="m-1 text-center d-print-none">
                     <div class="d-inline-flex justify-content-between">
                         <div class="d-flex btn-group m-1">
-                            <button id="viewer-home" class="btn btn-dark" title="Fit Image to Viewport">
+                            <button type="button" id="viewer-home" class="btn btn-dark viewer-control-button" title="Fit Image to Viewport">
                                 <span class="fas fa-compress"></span>
                             </button>
                         </div>
+
                         <div class="d-flex btn-group m-1">
-                            <button id="viewer-zoom-in" class="btn btn-dark" title="Zoom In">
+                            <button id="viewer-zoom-in" class="btn btn-dark viewer-control-button" title="Zoom In">
                                 <span class="fas fa-search-plus"></span>
                             </button>
                             <button id="viewer-zoom-out" class="btn btn-dark" title="Zoom Out">
                                 <span class="fas fa-search-minus"></span>
                             </button>
                         </div>
+
                         <div class="d-flex btn-group m-1">
-                            <button id="viewer-rotate-left" class="btn btn-dark" title="Rotate Left">
+                            <button id="viewer-rotate-left" class="btn btn-dark viewer-control-button" title="Rotate Left">
                                 <span class="fas fa-undo"></span>
                             </button>
-                            <button id="viewer-rotate-right" class="btn btn-dark" title="Rotate Right">
+                            <button id="viewer-rotate-right" class="btn btn-dark viewer-control-button" title="Rotate Right">
                                 <span class="fas fa-redo"></span>
                             </button>
                         </div>
+
                         <div class="d-flex btn-group m-1">
-                            <button id="viewer-flip" class="btn btn-dark" title="Flip">
+                            <button id="viewer-flip" class="btn btn-dark viewer-control-button" title="Flip">
                                 <span class="fas fa-exchange-alt"></span>
                             </button>
                         </div>
+
                         <div class="d-flex btn-group m-1">
-                            <button id="viewer-full-page" class="btn btn-dark" title="View Full Screen">
+                            <button type="button" class="btn btn-dark extra-control-button" title="Image Filters" data-toggle="collapse" data-target="#image-filters">
+                                <span class="fas fa-sliders-h" aria-label="Image Filters"></span>
+                            </button>
+                        </div>
+
+                        <div class="d-flex btn-group m-1">
+                            <button id="viewer-full-page" class="btn btn-dark viewer-control-button" title="View Full Screen">
                                 <span class="fas fa-expand"></span>
                             </button>
                         </div>
 
                         <div class="d-flex btn-group m-1">
-                            <button type="button" class="btn btn-dark" title="Open Help" data-toggle="modal" data-target="#keyboard-help-modal">
+                            <button type="button" class="btn btn-dark extra-control-button" title="Open Help" data-toggle="modal" data-target="#keyboard-help-modal">
                                 <span class="fas fa-question-circle" aria-label="Open Help"></span>
                             </button>
+                        </div>
+                    </div>
+                </div>
+                <div id="image-filters" class="m-1 text-center d-print-none collapse">
+                    <hr class="m-0" />
+                    <ul class="d-inline-flex mt-1 btn-group nav nav-tabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button id="viewer-gamma" class="btn btn-dark nav-link active" title="Adjust gamma" data-toggle="tab" data-target="#gamma-filter" role="tab">
+                                Gamma
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button id="viewer-invert" class="btn btn-dark nav-link" title="Invert colors" data-toggle="tab" data-target="#invert-filter" role="tab">
+                                Invert
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button id="viewer-threshold" class="btn btn-dark nav-link" title="Adjust threshold" data-toggle="tab" data-target="#threshold-filter" role="tab">
+                                Threshold
+                            </button>
+                        </li>
+                    </ul>
+                    <div id="filter-tabs" class="tab-content">
+                        <div id="gamma-filter" class="tab-pane pt-1 pl-3 show active" role="tabpanel">
+                            <form id="gamma-form" class="form-inline">
+                                <div class="row ml-0 mr-3 number-input">
+                                    <div class="col p-1">
+                                        <input
+                                            type="number"
+                                            id="gamma"
+                                            name="gamma"
+                                            min="0"
+                                            max="5"
+                                            step="0.01"
+                                            value="1.00"
+                                        />
+                                    </div>
+                                    <div class="col p-0">
+                                        <div class="row m-0">
+                                            <button type="button" class="arrow-button" onclick="stepUp('gamma')">
+                                                <span class="fas fa-chevron-up" />
+                                            </button>
+                                        </div>
+                                        <div class="row m-0">
+                                            <button type="button" class="arrow-button" onclick="stepDown('gamma')">
+                                                <span class="fas fa-chevron-down" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <input
+                                    type="range"
+                                    id="gamma-range"
+                                    name="gamma-range"
+                                    min="0"
+                                    max="5"
+                                    step="0.01"
+                                    value="1.00"
+                                    class="filter-slider flex-grow-1"
+                                />
+                                <input type="reset" class="btn btn-link underline-link font-weight-bold" value="Reset filter" />
+                            </form>
+                        </div>
+                        <div id="invert-filter" class="tab-pane pt-2" role="tabpanel" style="background-color: white;">
+                            <form id="invert-form" class="float-left">
+                                <label class="ml-2 align-middle" for="invert">Off</label>
+                                <div class="custom-control custom-switch custom-control-inline ml-1 mr-2">
+                                    <input type="checkbox" id="invert" name="invert" class="custom-control-input" role="switch" />
+                                    <label class="custom-control-label" for="invert" />
+                                </div>
+                                <label class="align-middle" for="invert">On</label>
+                            </form>
+                        </div>
+                        <div id="threshold-filter" class="tab-pane pt-1 pl-3" role="tabpanel">
+                            <form id="threshold-form" class="form-inline">
+                                <div class="row ml-0 mr-3 number-input">
+                                    <div class="col p-1">
+                                        <input
+                                            type="number"
+                                            id="threshold"
+                                            name="threshold"
+                                            min="0"
+                                            max="255"
+                                            step="1"
+                                            value="0"
+                                        />
+                                    </div>
+                                    <div class="col p-0">
+                                        <div class="row m-0">
+                                            <button type="button" class="arrow-button" onclick="stepUp('threshold')">
+                                                <span class="fas fa-chevron-up" />
+                                            </button>
+                                        </div>
+                                        <div class="row m-0">
+                                            <button type="button" class="arrow-button" onclick="stepDown('threshold')">
+                                                <span class="fas fa-chevron-down" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <input
+                                    type="range"
+                                    id="threshold-range"
+                                    name="threshold-range"
+                                    min="0"
+                                    max="255"
+                                    step="1"
+                                    value="0"
+                                    class="filter-slider flex-grow-1"
+                                />
+                                <input type="reset" class="btn btn-link underline-link font-weight-bold" value="Reset filter" />
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -514,20 +636,27 @@
 {% block body_scripts %}
     <script src="{% static 'split.js/dist/split.min.js' %}"></script>
     <script src="{% static 'openseadragon/build/openseadragon/openseadragon.min.js' %}"></script>
+    <script src="{% static 'openseadragon-filtering/openseadragon-filtering.js' %}"></script>
     <script src="{% static 'js/contribute.js' %}"></script>
     <script src="{% static 'js/asset-reservation.js' %}"></script>
     <script>
         if (
-            !localStorage.getItem("no-interface-banner") &&
+            typeof(Storage) !== "undefined" &&
             !(window.screen.width < 1024 || window.screen.height < 768)
         ) {
-            $("#new-interface-banner").attr("hidden", false);
+            for(var i in localStorage)
+            {
+                if ($('#' + i).hasClass("alert")) {
+                    $('#' + i).attr("hidden", true);
+                }
+            }
         }
-        $("#no-interface-banner").click(function() {
-            localStorage.setItem("no-interface-banner", true);
-            $("#new-interface-banner").attr("hidden", true);
+        $("#no-interface-banner").click(function(event) {
+            localStorage.setItem(event.target.parentElement.id, true);
+            $('#' + event.target.parentElement.id).attr("hidden", true);
         });
     </script>
+
     <script>
         var seadragonViewer = OpenSeadragon({
             id: "asset-image",
@@ -535,7 +664,7 @@
             "{% static 'openseadragon/build/openseadragon/images/' %}",
             tileSources: {
                 type: "image",
-                url: "{% asset_media_url asset %}"
+                url: "{% asset_media_url asset %}?canvas"
             },
             gestureSettingsTouch: {
                 pinchRotate: true
@@ -551,6 +680,100 @@
             rotateLeftButton: "viewer-rotate-left",
             rotateRightButton: "viewer-rotate-right",
             flipButton: "viewer-flip",
+            crossOriginPolicy: "Anonymous"
+        });
+
+        // The buttons configured as controls for the viewer don't properly get focus
+        // when clicked. This mostly isn't a problem, but causes odd-looking behavior
+        // when one of the extra buttons in the control bar is clicked (and therefore
+        // focused) first--clicking the control button leaves the focus on the extra
+        // button.
+        // TODO: Attempting to add focus to the clicked button here doesn't consistently
+        // work for unknown reasons, so it just removes focus from the extra buttons
+        // for now
+        let viewerControlButtons = document.querySelectorAll('.viewer-control-button');
+        viewerControlButtons.forEach(function(node){
+            node.addEventListener('click', function(event){
+                focusedButton = document.querySelector('.extra-control-button:focus');
+                if(focusedButton){
+                    focusedButton.blur();
+                }
+
+            })
+        });
+
+        /*
+         * Image filter handling
+        */
+
+        let availableFilters = [
+            {
+                formId: 'gamma-form',
+                inputId: 'gamma',
+                getFilter: function () {
+                    value = document.getElementById(this.inputId).value;
+                    if(!Number.isNaN(value) && value != 1 && value >= 0 && value <= 5){
+                        return OpenSeadragon.Filters.GAMMA(value);
+                    }
+                },
+            },
+            {
+                formId: 'invert-form',
+                inputId: 'invert',
+                getFilter: function() {
+                    value = document.getElementById(this.inputId).checked;
+                    if(value){
+                        return OpenSeadragon.Filters.INVERT();
+                    }
+                }
+            },
+            {
+                formId: 'threshold-form',
+                inputId: 'threshold',
+                getFilter: function() {
+                    value = document.getElementById(this.inputId).value;
+                    if(!Number.isNaN(value) && value > 0 && value <= 255){
+                        return OpenSeadragon.Filters.THRESHOLDING(value);
+                    }
+                }
+            }
+        ];
+
+        function updateFilters() {
+            let filters = [];
+            availableFilters.forEach(function (filterData) {
+                let filter = filterData.getFilter();
+                if(filter){
+                    filters.push(filter);
+                }
+            });
+            seadragonViewer.setFilterOptions({
+                filters: {
+                    processors: filters,
+                },
+            });
+        }
+
+        availableFilters.forEach(function (filterData) {
+            form = document.getElementById(filterData.formId)
+            if(form){
+                form.addEventListener('change', updateFilters);
+                form.addEventListener('reset', function(){
+                    // We use setTimeout to push the updateFilters
+                    // call to the next event cycle in order to
+                    // call it after the form is reset, instead
+                    // of before, which is when this listener
+                    // triggers
+                    setTimeout(updateFilters);
+                });
+            }
+            input = document.getElementById(filterData.inputId)
+            if(input){
+                // We use debounce here so that updateFilters is only called once,
+                // after the user stops typing or scrolling with their mousewheel
+                input.addEventListener('keyup', debounce(() => updateFilters()));
+                input.addEventListener('wheel', debounce(() => updateFilters()));
+            }
         });
     </script>
 
@@ -598,6 +821,49 @@
                 // Some browsers ignore this value and always display a built-in message instead
                 return event.returnValue = "The transcription you've started has not been saved.";
             }
+        });
+    </script>
+
+    <script>
+        /*
+         * Image filter form handling
+        */
+        function stepUp(id){
+            let input = document.getElementById(id);
+            input.stepUp();
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+            return false;
+        }
+
+        function stepDown(id){
+            let input = document.getElementById(id);
+            input.stepDown();
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+            return false;
+        }
+
+        let gammaNumber = document.getElementById("gamma");
+        let gammaRange = document.getElementById("gamma-range");
+
+        gammaNumber.addEventListener('input', function(){
+            gammaRange.value = gammaNumber.value;
+        });
+
+        gammaRange.addEventListener('input', function(){
+            gammaNumber.value = gammaRange.value;
+        });
+
+        let thresholdNumber = document.getElementById("threshold");
+        let thresholdRange = document.getElementById("threshold-range");
+
+        thresholdNumber.addEventListener('input', function(){
+            thresholdRange.value = thresholdNumber.value;
+        });
+
+        thresholdRange.addEventListener('input', function(){
+            thresholdNumber.value = thresholdRange.value;
         });
     </script>
 {% endblock body_scripts %}

@@ -214,12 +214,14 @@ p.hero-secondary.offwhite-text {
     padding: 0.3em;
 }
 
-.completed-transcription {
-    padding-top: 0.5em;
+.retired-bar {
+    background-color: $light;
+    color: $blue;
+    border: 2px solid $blue;
 }
 
-.completed-related-links {
-    padding-top: 1em;
+.retired-text {
+    padding: 0.3em;
 }
 
 input {
@@ -254,6 +256,10 @@ ul.nav-secondary {
             border-right: 1px solid $border-color;
         }
     }
+}
+
+.flex-initial {
+    flex: initial !important;
 }
 
 /*
@@ -397,24 +403,14 @@ $card-progress-height: 12px;
     margin: 0 -6px;
 }
 
-.completed-card-row {
+.concordia-object-card-container {
+    display: flex;
+    flex-wrap: wrap;
+    width: 90%;
     padding-top: 0.25em;
 }
 
-.completed-card-container {
-    width: 90%;
-}
-
 .concordia-object-card-col {
-    padding: 6px;
-
-    @include media-breakpoint-up(xl) {
-        flex: 0 0 20%;
-        max-width: 20%;
-    }
-}
-
-.concordia-object-card-col-completed {
     padding: 6px;
 
     @include media-breakpoint-up(xl) {
@@ -505,27 +501,7 @@ $card-progress-height: 12px;
     z-index: 2;
 }
 
-.topic-list {
-    display: flex;
-    list-style: none;
-    overflow: auto;
-    padding-inline-start: 0;
-}
-
-.topic-list li {
-    border: 1px solid #0076ad;
-    margin-right: 10px;
-    text-align: center;
-    width: 210px;
-}
-
-.topic-list li a {
-    border: none;
-    margin-left: 0;
-}
-
 .progress {
-    background-color: #f6f6f6;
     background-color: #e5f7ff;
     &::after {
         content: '';
@@ -533,6 +509,10 @@ $card-progress-height: 12px;
         box-shadow: inset 0 0 1px 1px $primary;
         flex: 1 1 0%;
     }
+}
+
+.campaign-page-progress {
+    height: 2.5rem;
 }
 
 .campaign-progress {
@@ -549,9 +529,14 @@ $card-progress-height: 12px;
     border-radius: 0;
 }
 
-.progress-legend {
-    font-size: 12px;
+.progress-bar-label {
+    font-size: 14px;
     margin-top: 5px;
+    margin-right: 5px;
+}
+
+.progress-bar-label span:nth-child(2) {
+    margin-left: 5px;
 }
 
 #progress-stats {
@@ -561,6 +546,23 @@ $card-progress-height: 12px;
 #progress-stats th {
     font-size: inherit;
     font-weight: inherit;
+}
+
+.progress-bar-labels li {
+    float: left;
+}
+
+.progress-bar-labels li + li::before {
+    content: '|';
+    padding: 0 0.5em;
+}
+
+.transcription-status-key-lg {
+    display: inline-block;
+    height: 1em;
+    width: 1em;
+    vertical-align: top;
+    margin: 0.25rem !important;
 }
 
 .transcription-status-key {
@@ -848,6 +850,136 @@ $card-progress-height: 12px;
 }
 
 /*
+ * Image filter controls
+*/
+
+#image-filters .btn-dark {
+    text-decoration: underline;
+    border-radius: 0;
+
+    &:hover,
+    &:focus,
+    &.active {
+        color: $dark;
+        background-color: $light;
+        text-decoration: none;
+        font-weight: 400;
+        border-color: $light;
+        outline: none;
+        box-shadow: none;
+    }
+}
+
+#filter-tabs {
+    background-color: $light;
+    height: 3em;
+
+    & .custom-control-label::before {
+        height: 1.5rem;
+        width: 2.75rem;
+        border-radius: 4rem;
+    }
+
+    & .custom-control-label::after {
+        width: calc(1.5rem - 4px);
+        height: calc(1.5rem - 4px);
+        border-radius: 1.25rem;
+    }
+
+    & .custom-control-input:checked ~ .custom-control-label::after {
+        transform: translateX(1.25rem);
+    }
+
+    & .custom-control-input ~ .custom-control-label::before {
+        border-color: $dark !important;
+    }
+
+    & .custom-control-input ~ .custom-control-label::after {
+        background-color: $white !important;
+        border: solid 1px $dark !important;
+        left: calc(-2.25rem + 4px);
+    }
+
+    & .custom-control-input:focus ~ .custom-control-label::before {
+        border-color: $dark !important;
+    }
+
+    & .custom-control-input:checked ~ .custom-control-label::before {
+        border-color: $dark !important;
+        background-color: $dark !important;
+    }
+
+    & .custom-control-input:active ~ .custom-control-label::before {
+        background-color: $dark !important;
+        border-color: $dark !important;
+    }
+
+    &
+        .custom-control-input:focus:not(:checked)
+        ~ .custom-control-label::before {
+        border-color: $dark !important;
+    }
+}
+
+.filter-slider {
+    appearance: none;
+    border: solid 1px $dark;
+    height: 0.5em;
+    background: $white;
+}
+
+.filter-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 1.1em;
+    height: 1.5em;
+    background: $primary;
+    cursor: pointer;
+    border-radius: 20%;
+}
+
+.filter-slider::-moz-range-thumb {
+    appearance: none;
+    width: 1.1em;
+    height: 1.5em;
+    background: $primary;
+    cursor: pointer;
+    border-radius: 20%;
+}
+
+.number-input {
+    border: solid 1px $primary;
+    background-color: $white;
+
+    & input[type='number'] {
+        border: none;
+        appearance: textfield;
+        -webkit-appearance: textfield;
+        -moz-appearance: textfield;
+        height: 100%;
+        width: 100%;
+    }
+
+    & input[type='number']::-webkit-inner-spin-button,
+    input[type='number']::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+    }
+
+    & input[type='number']:focus {
+        outline: none;
+    }
+
+    & .arrow-button {
+        background-color: $primary;
+        color: $white;
+        font-size: 0.8em;
+        width: 100%;
+        border: none;
+        padding: 0;
+    }
+}
+
+/*
  * Tag input on the asset detail page
  */
 #tag-label {
@@ -976,6 +1108,45 @@ div.related-links {
     display: block;
 }
 
+/* Profile page */
+.contribution-highlight {
+    background-color: #f6f6f6;
+    border: 1px solid black;
+    font-weight: bold;
+    height: 125px;
+    margin-right: 10px;
+    padding-bottom: 15px;
+    padding-top: 5px;
+    width: 32%;
+    text-align: center;
+}
+
+.contribution-highlight .value {
+    color: $blue;
+    font-size: xxx-large;
+}
+
+.contribution-highlight .label {
+    font-size: large;
+}
+
+.contribution-table a {
+    text-decoration: underline;
+}
+
+.recent-page a {
+    text-decoration: underline;
+}
+
+.all-campaigns {
+    text-decoration: underline;
+}
+
+.contribution-table thead th {
+    border-bottom: 1px solid #000;
+    border-top: 1px solid #000;
+}
+
 /* print */
 @media print {
     @page {
@@ -1020,4 +1191,21 @@ div.related-links {
         color: #000;
         display: inline-block;
     }
+}
+
+/* Profile page */
+.view-user-profile .nav-tabs .nav-item {
+    padding: 0.5rem 0.5rem;
+}
+
+.view-user-profile a.nav-item {
+    border-bottom: 1px solid $gray-600;
+    color: $blue;
+    font-weight: bold;
+}
+
+.view-user-profile a.nav-item.active {
+    border: 1px solid $gray-600;
+    border-bottom: none;
+    color: $gray-800;
 }

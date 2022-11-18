@@ -271,14 +271,18 @@ because it's not worth dealing with IE11 compatibility {% endcomment %}
 
         <script type="text/javascript">
             if (
-                typeof(Storage) !== "undefined"  &&
-                !localStorage.getItem("no-interface-banner")
+                typeof(Storage) !== "undefined"
             ) {
-                $("#new-interface-banner").attr("hidden", false);
+                for(var i in localStorage)
+                {
+                    if ($('#' + i).hasClass("alert")) {
+                        $('#' + i).attr("hidden", true);
+                    }
+                }
             }
-            $("#no-interface-banner").click(function() {
-                localStorage.setItem("no-interface-banner", true);
-                $("#new-interface-banner").attr("hidden", true);
+            $("#no-interface-banner").click(function(event) {
+                localStorage.setItem(event.target.parentElement.id, true);
+                $('#' + event.target.parentElement.id).attr("hidden", true);
             });
 
             if (typeof _satellite == "undefined") {

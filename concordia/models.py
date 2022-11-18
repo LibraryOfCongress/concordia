@@ -104,8 +104,8 @@ class UnlistedPublicationQuerySet(PublicationQuerySet):
             )
             .annotate(needs_review_count=F("in_progress_count") + F("submitted_count"))
             .annotate(
-                completed_percent=F("completed_count") * 100 / F("asset_count"),
-                submitted_percent=F("needs_review_count") * 100 / F("asset_count"),
+                completed_percent=100 * F("completed_count") / F("asset_count"),
+                submitted_percent=100 * F("needs_review_count") / F("asset_count"),
             )
         )
 
@@ -528,13 +528,14 @@ class Banner(models.Model):
     created_on = models.DateTimeField(editable=False, auto_now_add=True)
     updated_on = models.DateTimeField(editable=False, auto_now=True)
 
+    slug = models.SlugField(max_length=80, unique=True, allow_unicode=True)
     text = models.CharField(max_length=255)
     link = models.CharField(max_length=255)
     open_in_new_window_tab = models.BooleanField(default=True, blank=True)
     active = models.BooleanField(default=False, blank=True)
 
     def __str__(self):
-        return f"Banner: {self.text}"
+        return f"Banner: {self.slug}"
 
 
 class CarouselSlide(models.Model):

@@ -4,7 +4,6 @@ import os
 import re
 from functools import wraps
 from logging import getLogger
-from operator import attrgetter
 from smtplib import SMTPException
 from time import time
 from urllib.parse import urlencode
@@ -556,6 +555,12 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
                 if asset.item.project.campaign.id == int(campaignSlug):
                     object_list.append((asset))
 
+        # CONCD-189 only show pages from the last 6 months
+        SIX_MONTHS_AGO = datetime.datetime.today() - datetime.timedelta(days=6 * 30)
+        ctx["recent_pages"] = self.object_list.filter(
+            latest_activity__gte=SIX_MONTHS_AGO
+        )
+
         user = self.request.user
 
         contributed_campaigns = (
@@ -827,13 +832,7 @@ class CampaignTopicListView(TemplateView):
             .order_by("ordering", "title")
         )
         data["topics"] = (
-            Topic.objects.published()
-            .listed()
-            .annotated()
-            .order_by("ordering", "title")[:5]
-        )
-        data["campaigns_topics"] = sorted(
-            [*data["campaigns"], *data["topics"]], key=attrgetter("ordering", "title")
+            Topic.objects.published().listed().order_by("ordering", "title")[:5]
         )
         data["completed_campaigns"] = (
             Campaign.objects.published()
@@ -917,6 +916,7 @@ class TopicDetailView(APIDetailView):
 class CampaignDetailView(APIDetailView):
     template_name = "transcriptions/campaign_detail.html"
     completed_template_name = "transcriptions/campaign_detail_completed.html"
+    retired_template_name = "transcriptions/campaign_detail_retired.html"
     context_object_name = "campaign"
     queryset = Campaign.objects.published().order_by("title")
 
@@ -978,6 +978,8 @@ class CampaignDetailView(APIDetailView):
         if self.object:
             if self.object.status == Campaign.Status.COMPLETED:
                 return [self.completed_template_name]
+            elif self.object.status == Campaign.Status.RETIRED:
+                return [self.retired_template_name]
         return super().get_template_names()
 
 

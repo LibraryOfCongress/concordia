@@ -23,7 +23,7 @@
         <div class="row">
             <div class="col-md-12">
                 <h1>{{ campaign.title }}</h1>
-                <div class="completed-bar"><h3 class="completed-text">100% Complete</h3></div>
+                <div class="retired-bar mb-2"><h3 class="p-2 mb-0">Campaign retired. All transcriptions available in LOC.gov</h3></div>
                 <hr class="landing-divider" />
                 <span><strong>Completed Page{{ completed_count|pluralize }}:</strong> {{ completed_count|intcomma }}</span>
                 <br />
@@ -60,38 +60,10 @@
                 </div>
             {% endif %}
         {% endwith %}
-        <div class="row">
+        <div class="row mb-3">
             <div class="col-md-12">
+                <h3>About this Campaign</h3>
                 <div class="hero-text">{{ campaign.description|safe }}</div>
-            </div>
-        </div>
-        <div class="row justify-content-center concordia-object-card-row">
-            <div class="concordia-object-card-container justify-content-center pt-3">
-                {% for project in projects %}
-                    <div class="col-6 col-md-4 col-lg-3 concordia-object-card-col">
-                        <div class="h-100 concordia-object-card card border" data-transcription-status="complete">
-                            {% url 'transcriptions:project-detail' campaign.slug project.slug as project_url %}
-
-                            <a href="{{ project_url }}?{{ sublevel_querystring }}" aria-hidden="true">
-                                <img class="card-img card-img-campaign" src="{{ MEDIA_URL }}{{ project.thumbnail_image }}" alt="{{ project.title }}">
-                            </a>
-
-                            <div class="progress w-100">
-                                <div title="Completed" class="progress-bar bg-completed" role="progressbar" style="width: 100%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
-                            </div>
-
-                            <h6 class="text-center primary-text m-0 concordia-object-card-title">
-                                <a class="underline-link" href="{{ project_url }}?{{ sublevel_querystring }}">{{ project.title }}</a>
-                            </h6>
-                            <div class="card-actions">
-                                <a class="btn btn-sm btn-block btn-dark" href="{{ project_url }}?{{ sublevel_querystring }}">
-                                    <span class="fas fa-check tx-completed"></span>
-                                    Complete
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                {% endfor %}
             </div>
         </div>
         {% with campaign.resource_set.related_links as resources %}

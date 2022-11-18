@@ -99,10 +99,14 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         """
         campaign = create_campaign(title="Hello Everyone")
         topic_project = create_project(campaign=campaign)
+        campaign_item = create_item(project=topic_project)
+        create_asset(item=campaign_item)
         unlisted_campaign = create_campaign(
             title="Hello to only certain people", unlisted=True
         )
         unlisted_topic_project = create_project(campaign=unlisted_campaign)
+        unlisted_campaign_item = create_item(project=unlisted_topic_project)
+        create_asset(item=unlisted_campaign_item)
         topic = create_topic(title="A Listed Topic", project=topic_project)
         unlisted_topic = create_topic(
             title="An Unlisted Topic", unlisted=True, project=unlisted_topic_project
@@ -1087,7 +1091,9 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         # Even though the user submitted (through some horrible bug) duplicate
         # values, they should not be stored:
         self.assertEqual(["bar", "foo", "quux"], data["user_tags"])
-        self.assertEqual(["baaz", "bar", "foo", "quux"], data["all_tags"])
+        # Users are allowed to delete other users' tags, so since the second
+        # user didn't send the "baaz" tag, it was removed
+        self.assertEqual(["bar", "foo", "quux"], data["all_tags"])
 
     def test_tag_deletion(self):
         asset = create_asset()
@@ -1136,7 +1142,7 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
 
         # self.login_user("second_user")
         second_user = self.create_test_user("second_user")
-        self.client.login(username=second_user.username, password=second_user.password)
+        self.client.login(username=second_user.username, password=second_user._password)
         updated_tags = [
             "foo",
         ]
