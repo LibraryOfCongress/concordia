@@ -89,7 +89,6 @@ jobs:
                   npx gulp build
                   pipenv run ./manage.py collectstatic --no-input
                   pipenv run coverage run ./manage.py test
-                  npx --quiet csstree-validator static/css/
               env:
                   PGPASSWORD: postgres
                   # The hostname used to communicate with the PostgreSQL service container
