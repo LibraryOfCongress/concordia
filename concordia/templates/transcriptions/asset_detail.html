@@ -128,7 +128,7 @@
                         </div>
 
                         <div class="d-flex btn-group m-1">
-                            <button id="viewer-full-page" class="btn btn-dark viewer-control-button" title="View Full Screen">
+                            <button type="button" id="viewer-fullscreen" class="btn btn-dark extra-control-button" title="View Full Screen" data-target="#viewer-column">
                                 <span class="fas fa-expand"></span>
                             </button>
                         </div>
@@ -137,6 +137,66 @@
                             <button type="button" class="btn btn-dark extra-control-button" title="Open Help" data-toggle="modal" data-target="#keyboard-help-modal">
                                 <span class="fas fa-question-circle" aria-label="Open Help"></span>
                             </button>
+                        </div>
+                    </div>
+                </div>
+                <div id="keyboard-help-modal" class="modal" tabindex="-1" role="dialog">
+                    <div class="modal-dialog modal-dialog-centered" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Keyboard Shortcuts</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <h6>Viewer Shortcuts</h6>
+                                <table class="table table-compact table-responsive">
+                                    <tr>
+                                        <th><kbd>w</kbd>, up arrow</th>
+                                        <td>Scroll the viewport up</td>
+                                    </tr>
+                                    <tr>
+                                        <th><kbd>s</kbd>, down arrow</th>
+                                        <td>Scroll the viewport down</td>
+                                    </tr>
+                                    <tr>
+                                        <th><kbd>a</kbd>, left arrow</th>
+                                        <td>Scroll the viewport left</td>
+                                    </tr>
+                                    <tr>
+                                        <th><kbd>d</kbd>, right arrow </th>
+                                        <td>Scroll the viewport right</td>
+                                    </tr>
+                                    <tr>
+                                        <th><kbd>0</kbd></th>
+                                        <td>Fit the entire image to the viewport</td>
+                                    </tr>
+                                    <tr>
+                                        <th><kbd>-</kbd>, <kbd>_</kbd>, Shift+<kbd>W</kbd>, Shift+Up arrow</th>
+                                        <td>Zoom the viewport out</td>
+                                    </tr>
+                                    <tr>
+                                        <th><kbd>=</kbd>, <kbd>+</kbd>, Shift+<kbd>S</kbd>, Shift+Down arrow</th>
+                                        <td>Scroll the viewport in</td>
+                                    </tr>
+                                    <tr>
+                                        <th><kbd>r</kbd></th>
+                                        <td>Rotate the viewport clockwise</td>
+                                    </tr>
+                                    <tr>
+                                        <th><kbd>R</kbd></th>
+                                        <td>Rotate the viewport counterclockwise</td>
+                                    </tr>
+                                    <tr>
+                                        <th><kbd>f</kbd></th>
+                                        <td>Flip the viewport horizontally</td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -434,66 +494,6 @@
                 </div>
             </div>
         </div>
-        <div id="keyboard-help-modal" class="modal" tabindex="-1" role="dialog">
-            <div class="modal-dialog modal-dialog-centered" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Keyboard Shortcuts</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <h6>Viewer Shortcuts</h6>
-                        <table class="table table-compact table-responsive">
-                            <tr>
-                                <th><kbd>w</kbd>, up arrow</th>
-                                <td>Scroll the viewport up</td>
-                            </tr>
-                            <tr>
-                                <th><kbd>s</kbd>, down arrow</th>
-                                <td>Scroll the viewport down</td>
-                            </tr>
-                            <tr>
-                                <th><kbd>a</kbd>, left arrow</th>
-                                <td>Scroll the viewport left</td>
-                            </tr>
-                            <tr>
-                                <th><kbd>d</kbd>, right arrow </th>
-                                <td>Scroll the viewport right</td>
-                            </tr>
-                            <tr>
-                                <th><kbd>0</kbd></th>
-                                <td>Fit the entire image to the viewport</td>
-                            </tr>
-                            <tr>
-                                <th><kbd>-</kbd>, <kbd>_</kbd>, Shift+<kbd>W</kbd>, Shift+Up arrow</th>
-                                <td>Zoom the viewport out</td>
-                            </tr>
-                            <tr>
-                                <th><kbd>=</kbd>, <kbd>+</kbd>, Shift+<kbd>S</kbd>, Shift+Down arrow</th>
-                                <td>Scroll the viewport in</td>
-                            </tr>
-                            <tr>
-                                <th><kbd>r</kbd></th>
-                                <td>Rotate the viewport clockwise</td>
-                            </tr>
-                            <tr>
-                                <th><kbd>R</kbd></th>
-                                <td>Rotate the viewport counterclockwise</td>
-                            </tr>
-                            <tr>
-                                <th><kbd>f</kbd></th>
-                                <td>Flip the viewport horizontally</td>
-                            </tr>
-                        </table>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
-                    </div>
-                </div>
-            </div>
-        </div>
         <div id="asset-reservation-failure-modal" class="modal" tabindex="-1" role="dialog">
             <div class="modal-dialog modal-dialog-centered" role="document">
                 <div class="modal-content">
@@ -676,12 +676,27 @@
             zoomInButton: "viewer-zoom-in",
             zoomOutButton: "viewer-zoom-out",
             homeButton: "viewer-home",
-            fullPageButton: "viewer-full-page",
             rotateLeftButton: "viewer-rotate-left",
             rotateRightButton: "viewer-rotate-right",
             flipButton: "viewer-flip",
             crossOriginPolicy: "Anonymous"
         });
+
+        // We need to define our own fullscreen function rather than using OpenSeadragon's
+        // because the built-in fullscreen function overwrites the DOM with the viewer,
+        // breaking our extra controls, such as the image filters.
+        if (screenfull.isEnabled) {
+            let fullscreenButton = document.querySelector("#viewer-fullscreen");
+            fullscreenButton.addEventListener('click', function(event) {
+                event.preventDefault();
+                let targetElement = document.querySelector(fullscreenButton.dataset.target);
+                if(screenfull.isFullscreen){
+                    screenfull.exit();
+                } else {
+                    screenfull.request(targetElement);
+                }
+            });
+        }
 
         // The buttons configured as controls for the viewer don't properly get focus
         // when clicked. This mostly isn't a problem, but causes odd-looking behavior
