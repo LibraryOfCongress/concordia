@@ -36,9 +36,9 @@
                             {% comment %} We want to list the username but it's not an editable field {% endcomment %}
 
                             <div class="form-group ">
-                                <label><b>User Name</b></label>: {{ user.username }}<br/>
-                                <input type="text" readonly class="form-control-plaintext" value="{{ user.username }}">
-                                <label><b>Member since: </b></label> {{ user.date_joined|date:"SHORT_DATE_FORMAT" }}
+                                <div>
+                                    <label><b>User Name</b></label>: {{ user.username }}
+                                </div>
                             </div>
 
                             <strong>Email address: </strong><span class="font-weight-normal">{% bootstrap_label user.email label_for="id_email" %}</span>
@@ -52,13 +52,7 @@
                     </div>
                 </div>
                 <div class="row justify-content-start">
-                    <div class="col-8">
-                        <hr>
-                    </div>
-                </div>
-                <div class="row justify-content-start">
                     <div class="col-12 col-md-10">
-                        <h3>Password Options</h3>
                         <div class="row justify-content-start">
                             <div class="btn-row col-md-10">
                                 <a class="btn btn-primary rounded-0" href="{% url 'password_change' %}">Change Password</a>
@@ -71,22 +65,6 @@
                         <hr>
                     </div>
                 </div>
-                <div class="row justify-content-start">
-                    <div class="col-12 col-md-10">
-                        <h3>Service Letter</h3>
-                        <div>Using <i>By the People</i> to fulfill service requirements? Download a letter verifying your volunteer contributions.<br/><a href="/resources">Find more info on service documentation here.</a></div>
-                        <div class="row justify-content-start">
-                            <div class="btn-row col-md-10">
-                                <a class="btn btn-primary rounded-0" href="/letter">Download Letter</a>
-                            </div>
-                        </div>
-                        <div class="row justify-content-start">
-                            <div class="col-10">
-                                <hr>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
             <div class="tab-pane fade show active" id="contributions" role="tabpanel">
                 {% if object_list %}
@@ -94,6 +72,9 @@
                         <div class="col-md">
                             <div class="row">
                                 <h2>My Contributions</h2>
+                            </div>
+                            <div>
+                                <label><b>Member since: </b></label> {{ user.date_joined|date:"SHORT_DATE_FORMAT" }}
                             </div>
                             <div class="row">
                                 <div class="contribution-highlight">
@@ -145,6 +126,22 @@
                                         {% endfor %}
                                     </tbody>
                                 </table>
+                            </div>
+                            <div class="row justify-content-start">
+                                <div class="col-12 col-md-10">
+                                    <h3>Service Letter</h3>
+                                    <div class="service-letter-description">Using <i>By the People</i> to fulfill service requirements? Download a letter verifying your volunteer contributions.<br/><a href="/resources">Find more info on service documentation here.</a></div>
+                                    <div class="row justify-content-start">
+                                        <div class="btn-row col-md-10">
+                                            <a class="btn btn-primary rounded-0" href="/letter">Download Letter</a>
+                                        </div>
+                                    </div>
+                                    <div class="row justify-content-start">
+                                        <div class="col-10">
+                                            <hr>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
