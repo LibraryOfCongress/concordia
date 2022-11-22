@@ -1203,18 +1203,10 @@ div.related-links {
 }
 
 /* Profile page */
-.view-user-profile .nav-tabs .nav-item {
-    padding: 0.5rem 0.5rem;
+.view-user-profile .nav-tabs {
+    border-bottom: 1px solid #000;
 }
-
-.view-user-profile a.nav-item {
-    border-bottom: 1px solid $gray-600;
-    color: $blue;
-    font-weight: bold;
-}
-
-.view-user-profile a.nav-item.active {
-    border: 1px solid $gray-600;
-    border-bottom: none;
-    color: $gray-800;
+.view-user-profile .nav-tabs .nav-link.active,
+.view-user-profile .nav-tabs .nav-item.show .nav-link {
+    border-color: #000 #000 #fff;
 }

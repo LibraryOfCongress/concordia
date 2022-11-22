@@ -12,19 +12,17 @@
 
 {% block main_content %}
     <div class="container bg-main">
-        <div class="row">
-            <ul class="nav nav-tabs" id="nav-tab" role="tablist">
-                <li>
-                    <a class="nav-item active font-weight-bold" id="contributions-tab" data-toggle="tab" data-target="#contributions" type="button" role="tab">My Contributions</a>
-                </li>
-                <li>
-                    <a class="nav-item font-weight-bold" id="pages-tab" data-toggle="tab" data-target="#pages" type="button" role="tab" aria-controls="pages">Recent Pages Worked On</a>
-                </li>
-                <li>
-                    <a class="nav-item font-weight-bold" id="settings-tab" data-toggle="tab" data-target="#settings" type="button" role="tab">Account Settings</a>
-                </li>
-            </ul>
-        </div>
+        <ul class="nav nav-tabs mb-4" id="nav-tab" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active font-weight-bold" id="contributions-tab" data-toggle="tab" data-target="#contributions" type="button" role="tab">My Contributions</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link font-weight-bold" id="pages-tab" data-toggle="tab" data-target="#pages" type="button" role="tab" aria-controls="pages">Recent Pages Worked On</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link font-weight-bold" id="settings-tab" data-toggle="tab" data-target="#settings" type="button" role="tab">Account Settings</a>
+            </li>
+        </ul>
         <div class="tab-content" id="nav-tabContent">
             <div class="tab-pane fade" id="settings" role="tabpanel">
                 <div class="row justify-content-start">
@@ -68,15 +66,15 @@
             </div>
             <div class="tab-pane fade show active" id="contributions" role="tabpanel">
                 {% if object_list %}
-                    <div class="row justify-content-start">
+                    <div class="d-flex justify-content-start">
                         <div class="col-md">
-                            <div class="row">
+                            <div class="d-flex">
                                 <h2>My Contributions</h2>
                             </div>
                             <div>
                                 <label><b>Member since: </b></label> {{ user.date_joined|date:"SHORT_DATE_FORMAT" }}
                             </div>
-                            <div class="row">
+                            <div class="d-flex">
                                 <div class="contribution-highlight">
                                     <div class="value">{{ contributed_campaigns|length|intcomma }}</div>
                                     <p class="label">Campaigns</p>
