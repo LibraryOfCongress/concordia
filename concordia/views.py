@@ -594,6 +594,9 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
             totalReviews = totalReviews + campaign.review_count
             totalTranscriptions = totalTranscriptions + campaign.transcribe_count
 
+        q = Q(transcription__user=user) | Q(transcription__reviewed_by=user)
+        ctx["pages_worked_on"] = Asset.objects.filter(q).count()
+
         ctx["totalCount"] = totalCount
         ctx["totalReviews"] = totalReviews
         ctx["totalTranscriptions"] = totalTranscriptions
