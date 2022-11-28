@@ -520,6 +520,10 @@ $card-progress-height: 12px;
     margin-top: 20px;
 }
 
+.page-item.disabled .page-link {
+    color: black;
+}
+
 /*
  * Progress displays
  */
