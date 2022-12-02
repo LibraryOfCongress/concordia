@@ -528,6 +528,9 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
                 | Q(transcription__reviewed_by=self.request.user),
             ),
         )
+        # CONCD-189 only show pages from the last 6 months
+        SIX_MONTHS_AGO = datetime.datetime.today() - datetime.timedelta(days=6 * 30)
+        assets = assets.filter(latest_activity__gte=SIX_MONTHS_AGO)
         return assets.order_by("-latest_activity", "-id")
 
     def get_context_data(self, *args, **kwargs):
@@ -554,12 +557,6 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
             else:
                 if asset.item.project.campaign.id == int(campaignSlug):
                     object_list.append((asset))
-
-        # CONCD-189 only show pages from the last 6 months
-        SIX_MONTHS_AGO = datetime.datetime.today() - datetime.timedelta(days=6 * 30)
-        ctx["recent_pages"] = self.object_list.filter(
-            latest_activity__gte=SIX_MONTHS_AGO
-        )
 
         user = self.request.user
 
