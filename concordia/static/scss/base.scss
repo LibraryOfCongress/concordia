@@ -1116,12 +1116,11 @@ div.related-links {
 .contribution-highlight {
     background-color: #f6f6f6;
     border: 1px solid black;
+    flex: 1;
     font-weight: bold;
-    height: 125px;
-    margin-right: 2%;
+    margin: 0.5rem;
     padding-bottom: 15px;
     padding-top: 5px;
-    width: 32%;
     text-align: center;
 }
 
