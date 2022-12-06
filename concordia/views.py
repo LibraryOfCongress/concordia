@@ -492,8 +492,9 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         return super().post(*args, **kwargs)
 
     def get_queryset(self):
+        user = self.request.user
         transcriptions = Transcription.objects.filter(
-            Q(user=self.request.user) | Q(reviewed_by=self.request.user)
+            Q(user=user) | Q(reviewed_by=user)
         )
 
         qId = self.request.GET.get("campaign_slug", None)
@@ -515,17 +516,16 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         assets = assets.annotate(
             last_transcribed=Max(
                 "transcription__created_on",
-                filter=Q(transcription__user=self.request.user),
+                filter=Q(transcription__user=user),
             ),
             last_reviewed=Max(
                 "transcription__updated_on",
-                filter=Q(transcription__reviewed_by=self.request.user),
+                filter=Q(transcription__reviewed_by=user),
             ),
             latest_activity=Greatest(
                 "last_transcribed",
                 "last_reviewed",
-                filter=Q(transcription__user=self.request.user)
-                | Q(transcription__reviewed_by=self.request.user),
+                filter=Q(transcription__user=user) | Q(transcription__reviewed_by=user),
             ),
         )
         # CONCD-189 only show pages from the last 6 months
