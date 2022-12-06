@@ -538,6 +538,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         obj_list = ctx.pop("object_list")
         ctx["object_list"] = object_list = []
 
+        ctx["active_tab"] = self.request.GET.get("tab", "contributions")
         qId = self.request.GET.get("campaign_slug", None)
 
         if qId:
