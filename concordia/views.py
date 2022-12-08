@@ -485,7 +485,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
     # presented in the template as a standard paginated list of Asset
     # instances with annotations
     allow_empty = True
-    paginate_by = 12
+    paginate_by = 30
 
     def post(self, *args, **kwargs):
         self.object_list = self.get_queryset()
@@ -538,7 +538,11 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         obj_list = ctx.pop("object_list")
         ctx["object_list"] = object_list = []
 
-        ctx["active_tab"] = self.request.GET.get("tab", "contributions")
+        ctx["active_tab"] = (
+            "pages"
+            if self.request.GET.get("page", None) is not None
+            else self.request.GET.get("tab", "contributions")
+        )
         qId = self.request.GET.get("campaign_slug", None)
 
         if qId:
