@@ -3,7 +3,7 @@ name: Test
 on:
     workflow_dispatch:
     push:
-        branches: [main, release]
+        branches: [main, release, fetaure-*]
     pull_request:
         branches: [main]
 
