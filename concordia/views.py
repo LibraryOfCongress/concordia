@@ -493,9 +493,14 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
 
     def get_queryset(self):
         user = self.request.user
-        transcriptions = Transcription.objects.filter(
-            Q(user=user) | Q(reviewed_by=user)
-        )
+        activity = self.request.GET.get("activity", None)
+        if activity == "transcribed":
+            q = Q(user=user)
+        elif activity == "reviewed":
+            q = Q(reviewed_by=user)
+        else:
+            q = Q(user=user) | Q(reviewed_by=user)
+        transcriptions = Transcription.objects.filter(q)
 
         qId = self.request.GET.get("campaign_slug", None)
 
@@ -538,11 +543,12 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         obj_list = ctx.pop("object_list")
         ctx["object_list"] = object_list = []
 
-        ctx["active_tab"] = (
-            "pages"
-            if self.request.GET.get("page", None) is not None
-            else self.request.GET.get("tab", "contributions")
-        )
+        page = self.request.GET.get("page", None)
+        activity = self.request.GET.get("activity", None)
+        if page is not None or activity is not None:
+            ctx["active_tab"] = "pages"
+        else:
+            ctx["active_tab"] = self.request.GET.get("tab", "contributions")
         qId = self.request.GET.get("campaign_slug", None)
 
         if qId:
