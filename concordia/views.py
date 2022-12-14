@@ -497,6 +497,21 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
             Q(user=user) | Q(reviewed_by=user)
         )
 
+        status_list = self.request.GET.get("status", None)
+        if status_list is not None:
+            if "completed" == status_list:
+                transcriptions = transcriptions.filter(accepted__isnull=False)
+            else:
+                transcriptions = transcriptions.filter(accepted__isnull=True)
+                if "submitted" == status_list:
+                    transcriptions = transcriptions.filter(
+                        submitted__isnull=False, rejected__isnull=True
+                    )
+                elif "in_progress" == status_list:
+                    transcriptions = transcriptions.filter(
+                        Q(submitted=False) | Q(rejected=True)
+                    )
+
         qId = self.request.GET.get("campaign_slug", None)
 
         if qId:
@@ -538,9 +553,11 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         obj_list = ctx.pop("object_list")
         ctx["object_list"] = object_list = []
 
+        page = self.request.GET.get("page", None)
+        status = self.request.GET.get("status", None)
         ctx["active_tab"] = (
             "pages"
-            if self.request.GET.get("page", None) is not None
+            if page or status is not None
             else self.request.GET.get("tab", "contributions")
         )
         qId = self.request.GET.get("campaign_slug", None)

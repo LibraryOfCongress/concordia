@@ -3,6 +3,7 @@
 {% load staticfiles %}
 {% load humanize %}
 {% load bootstrap4 %}
+{% load bittersweet_querystring %}
 
 {% block title %}User Profile{% endblock title %}
 
@@ -157,8 +158,15 @@
                                         <th>Date</th>
                                         <th>Item</th>
                                         <th>Page</th>
+                                        <th>
+                                            <div class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Status</div>
+                                            <div class="dropdown-menu border border-primary">
+                                                <a class="dropdown-item border-bottom border-primary" href="?{% qs_alter request.GET %}">In Progress</a>
+                                                <a class="dropdown-item border-bottom border-primary" href="">Needs Review</a>
+                                                <a class="dropdown-item" href="">Completed</a>
+                                            </div>
+                                        </th>
                                         <th>Your Contribution</th>
-                                        <th>Current Status</th>
                                     </tr>
                                 </thead>
 
