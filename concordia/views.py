@@ -497,20 +497,28 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
             Q(user=user) | Q(reviewed_by=user)
         )
 
-        status_list = self.request.GET.get("status", None)
-        if status_list is not None:
-            if "completed" == status_list:
-                transcriptions = transcriptions.filter(accepted__isnull=False)
+        status_list = self.request.GET.getlist("status")
+        if status_list:
+            q = Q()
+            q_accepted = Q(accepted__isnull=False)
+            q_submitted = Q(submitted__isnull=False, rejected__isnull=True)
+            if "completed" in status_list:
+                q = q_accepted
+                if "submitted" in status_list:
+                    if "in_progress" not in status_list:
+                        q |= q_submitted
+                else:
+                    if "in_progress" in status_list:
+                        q |= ~q_submitted
             else:
-                transcriptions = transcriptions.filter(accepted__isnull=True)
-                if "submitted" == status_list:
-                    transcriptions = transcriptions.filter(
-                        submitted__isnull=False, rejected__isnull=True
-                    )
-                elif "in_progress" == status_list:
-                    transcriptions = transcriptions.filter(
-                        Q(submitted=False) | Q(rejected=True)
-                    )
+                if "in_progress" in status_list:
+                    q = ~q_accepted
+                    if "submitted" not in status_list:
+                        q &= q_submitted
+                else:
+                    if "submitted" in status_list:
+                        q = ~q_submitted
+            transcriptions = transcriptions.filter(q)
 
         qId = self.request.GET.get("campaign_slug", None)
 
