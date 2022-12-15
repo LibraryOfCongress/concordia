@@ -590,6 +590,7 @@ class SiteReport(models.Model):
     campaigns_unpublished = models.IntegerField(blank=True, null=True)
     users_registered = models.IntegerField(blank=True, null=True)
     users_activated = models.IntegerField(blank=True, null=True)
+    registered_contributors = models.IntegerField(blank=True, null=True)
 
     class Meta:
         ordering = ("-created_on",)
@@ -618,4 +619,5 @@ class SiteReport(models.Model):
         "campaigns_unpublished",
         "users_registered",
         "users_activated",
+        "registered_contributors",
     ]

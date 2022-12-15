@@ -294,6 +294,20 @@ def campaign_report(campaign):
 
     distinct_tag_count = len(distinct_tag_list)
 
+    campaign_assets = Asset.objects.filter(
+        item__project__campaign=campaign,
+        item__project__published=True,
+        item__published=True,
+        published=True,
+    )
+    asset_transcriptions = Transcription.objects.filter(
+        asset__in=campaign_assets
+    ).values_list("user_id", "reviewed_by")
+    user_ids = set(
+        [user_id for transcription in asset_transcriptions for user_id in transcription]
+    )
+    registered_contributor_count = len(user_ids)
+
     site_report = SiteReport()
     site_report.campaign = campaign
     site_report.assets_total = assets_total
@@ -311,6 +325,7 @@ def campaign_report(campaign):
     site_report.transcriptions_saved = transcriptions_saved
     site_report.distinct_tags = distinct_tag_count
     site_report.tag_uses = tag_count
+    site_report.registered_contributors = registered_contributor_count
     site_report.save()
 
 
