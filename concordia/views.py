@@ -67,6 +67,7 @@ from concordia.models import (
     Item,
     Project,
     SimplePage,
+    SiteReport,
     Tag,
     Topic,
     Transcription,
@@ -957,45 +958,52 @@ class CampaignDetailView(APIDetailView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-
-        projects = (
-            ctx["campaign"]
-            .project_set.published()
-            .annotate(
-                **{
-                    f"{key}_count": Count(
-                        "item__asset",
-                        filter=Q(
-                            item__published=True,
-                            item__asset__published=True,
-                            item__asset__transcription_status=key,
-                        ),
-                    )
-                    for key in TranscriptionStatus.CHOICE_MAP
-                }
+        if self.object and self.object.status == Campaign.Status.RETIRED:
+            latest_report = SiteReport.objects.filter(campaign=ctx["campaign"]).latest(
+                "created_on"
             )
-            .order_by("ordering", "title")
-        )
+            ctx["completed_count"] = latest_report.assets_completed
+            ctx["contributor_count"] = latest_report.registered_contributors
+        else:
+            projects = (
+                ctx["campaign"]
+                .project_set.published()
+                .annotate(
+                    **{
+                        f"{key}_count": Count(
+                            "item__asset",
+                            filter=Q(
+                                item__published=True,
+                                item__asset__published=True,
+                                item__asset__transcription_status=key,
+                            ),
+                        )
+                        for key in TranscriptionStatus.CHOICE_MAP
+                    }
+                )
+                .order_by("ordering", "title")
+            )
 
-        ctx["filters"] = filters = {}
-        status = self.request.GET.get("transcription_status")
-        if status in TranscriptionStatus.CHOICE_MAP:
-            projects = projects.exclude(**{f"{status}_count": 0})
-            # We only want to pass specific QS parameters to lower-level search pages:
-            filters["transcription_status"] = status
-        ctx["sublevel_querystring"] = urlencode(filters)
+            ctx["filters"] = filters = {}
+            status = self.request.GET.get("transcription_status")
+            if status in TranscriptionStatus.CHOICE_MAP:
+                projects = projects.exclude(**{f"{status}_count": 0})
+                # We only want to pass specific QS parameters
+                # to lower-level search pages:
+                filters["transcription_status"] = status
+            ctx["sublevel_querystring"] = urlencode(filters)
 
-        annotate_children_with_progress_stats(projects)
-        ctx["projects"] = projects
+            annotate_children_with_progress_stats(projects)
+            ctx["projects"] = projects
 
-        campaign_assets = Asset.objects.filter(
-            item__project__campaign=self.object,
-            item__project__published=True,
-            item__published=True,
-            published=True,
-        )
+            campaign_assets = Asset.objects.filter(
+                item__project__campaign=self.object,
+                item__project__published=True,
+                item__published=True,
+                published=True,
+            )
 
-        calculate_asset_stats(campaign_assets, ctx)
+            calculate_asset_stats(campaign_assets, ctx)
 
         return ctx
 
