@@ -360,10 +360,13 @@ def populate_storage_image_values(asset_qs=None):
     the relative S3 storage key for the asset and update the storage_image value
     """
     # As a reference point - how many records have a null storage image field?
-    asset_storage_qs = Asset.objects.filter(storage_image__isnull=True)
-    storage_image_null_count = asset_storage_qs.count()
+    asset_storage_qs = Asset.objects.filter(
+        storage_image__isnull=True
+    ) | Asset.objects.filter(storage_image__exact="")
+    storage_image_empty_count = asset_storage_qs.count()
     asset_qs = (
         Asset.objects.filter(storage_image__isnull=True)
+        | Asset.objects.filter(storage_image__exact="")
         .order_by("id")
         .select_related("item__project__campaign")
         .only(
@@ -378,7 +381,7 @@ def populate_storage_image_values(asset_qs=None):
             "item__project__campaign__slug",
         )[:20000]
     )
-    logger.debug("Total Storage image null count %s" % storage_image_null_count)
+    logger.debug("Total Storage image empty count %s" % storage_image_empty_count)
     logger.debug("Start storage image chunking")
 
     updated_count = 0
@@ -407,7 +410,7 @@ def populate_storage_image_values(asset_qs=None):
 
         logger.debug("Storage image updated count %s" % updated_count)
 
-    return updated_count, storage_image_null_count
+    return updated_count, storage_image_empty_count
 
 
 @celery_app.task
