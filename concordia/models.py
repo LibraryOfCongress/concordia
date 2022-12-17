@@ -224,6 +224,25 @@ class Resource(MetricsModelMixin("resource"), models.Model):
         return self.title
 
 
+class ResourceFile(models.Model):
+    name = models.CharField(blank=False, max_length=255)
+    resource = models.FileField(upload_to="cm-uploads/resources/%Y/")
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+    def delete(self, *args, **kwargs):
+        storage = self.resource.storage
+
+        if storage.exists(self.resource.name):
+            self.resource.delete(save=False)
+
+        super().delete(*args, **kwargs)
+
+
 class Project(MetricsModelMixin("project"), models.Model):
     objects = PublicationQuerySet.as_manager()
 
