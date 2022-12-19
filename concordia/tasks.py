@@ -379,7 +379,7 @@ def populate_storage_image_values(asset_qs=None):
             "item__project__slug",
             "item__project__campaign",
             "item__project__campaign__slug",
-        )[:20000]
+        )[:10000]
     )
     logger.debug("Total Storage image empty count %s" % storage_image_empty_count)
     logger.debug("Start storage image chunking")
