@@ -515,7 +515,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
             campaignSlug = -1
             assets = Asset.objects.filter(transcription__in=transcriptions)
         status_list = self.request.GET.getlist("status")
-        if status_list:
+        if status_list and status_list != []:
             if "completed" not in status_list:
                 assets = assets.exclude(
                     transcription_status=TranscriptionStatus.COMPLETED
@@ -560,9 +560,11 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
 
         page = self.request.GET.get("page", None)
         activity = self.request.GET.get("activity", None)
-        status = self.request.GET.get("status", None)
-        if page is not None or activity is not None or status is not None:
+        status_list = self.request.GET.get("status", None)
+        if page is not None or activity is not None or status_list is not None:
             ctx["active_tab"] = "pages"
+            if status_list is not None:
+                ctx["status_list"] = status_list
         else:
             ctx["active_tab"] = self.request.GET.get("tab", "contributions")
         qId = self.request.GET.get("campaign_slug", None)
