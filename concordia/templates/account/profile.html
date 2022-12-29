@@ -161,16 +161,16 @@
                                         <th>
                                             <div class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Activity</div>
                                             <div class="dropdown-menu border border-primary">
-                                                <a class="dropdown-item border-bottom border-primary" href="?{% qs_alter request.GET %}">In Progress</a>
-                                                <a class="dropdown-item border-bottom border-primary" href="">Needs Review</a>
-                                                <a class="dropdown-item" href="">Completed</a>
+                                                <a class="dropdown-item border-bottom border-primary" href="?{% qs_alter request.GET activity='reviewed' %}">Reviewed</a>
+                                                <a class="dropdown-item" href="?{% qs_alter request.GET activity='transcribed' %}">Transcribed</a>
                                             </div>
                                         </th>
                                         <th>
                                             <div class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Status</div>
                                             <div class="dropdown-menu border border-primary">
-                                                <a class="dropdown-item border-bottom border-primary" href="?{% qs_alter request.GET activity='reviewed' %}">Reviewed</a>
-                                                <a class="dropdown-item" href="?{% qs_alter request.GET activity='transcribed' %}">Transcribed</a>
+                                                <a class="dropdown-item border-bottom border-primary" href="?{% qs_alter request.GET status='in_progress' delete:page %}">In Progress</a>
+                                                <a class="dropdown-item border-bottom border-primary" href="?{% qs_alter request.GET status='submitted' delete:page %}">Needs Review</a>
+                                                <a class="dropdown-item" href="?{% qs_alter request.GET status='completed' delete:page %}">Completed</a>
                                             </div>
                                         </th>
                                     </tr>

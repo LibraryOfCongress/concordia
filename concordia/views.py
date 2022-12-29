@@ -503,29 +503,6 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
             q = Q(user=user) | Q(reviewed_by=user)
         transcriptions = Transcription.objects.filter(q)
 
-        status_list = self.request.GET.getlist("status")
-        if status_list:
-            q = Q()
-            q_accepted = Q(accepted__isnull=False)
-            q_submitted = Q(submitted__isnull=False, rejected__isnull=True)
-            if "completed" in status_list:
-                q = q_accepted
-                if "submitted" in status_list:
-                    if "in_progress" not in status_list:
-                        q |= q_submitted
-                else:
-                    if "in_progress" in status_list:
-                        q |= ~q_submitted
-            else:
-                if "in_progress" in status_list:
-                    q = ~q_accepted
-                    if "submitted" not in status_list:
-                        q &= q_submitted
-                else:
-                    if "submitted" in status_list:
-                        q = ~q_submitted
-            transcriptions = transcriptions.filter(q)
-
         qId = self.request.GET.get("campaign_slug", None)
 
         if qId:
@@ -537,6 +514,20 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         else:
             campaignSlug = -1
             assets = Asset.objects.filter(transcription__in=transcriptions)
+        status_list = self.request.GET.getlist("status")
+        if status_list:
+            if "completed" not in status_list:
+                assets = assets.exclude(
+                    transcription_status=TranscriptionStatus.COMPLETED
+                )
+            if "submitted" not in status_list:
+                assets = assets.exclude(
+                    transcription_status=TranscriptionStatus.SUBMITTED
+                )
+            if "in_progress" not in status_list:
+                assets = assets.exclude(
+                    transcription_status=TranscriptionStatus.IN_PROGRESS
+                )
 
         assets = assets.select_related(
             "item", "item__project", "item__project__campaign"
