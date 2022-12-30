@@ -515,6 +515,10 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
             campaignSlug = -1
             assets = Asset.objects.filter(transcription__in=transcriptions)
 
+        campaign_id = self.request.GET.get("campaign", None)
+        if campaign_id is not None:
+            assets = assets.filter(item__project__campaign__pk=campaign_id)
+
         assets = assets.select_related(
             "item", "item__project", "item__project__campaign"
         )
@@ -545,8 +549,9 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         ctx["object_list"] = object_list = []
 
         page = self.request.GET.get("page", None)
+        campaign = self.request.GET.get("campaign", None)
         activity = self.request.GET.get("activity", None)
-        if page is not None or activity is not None:
+        if page is not None or activity is not None or campaign is not None:
             ctx["active_tab"] = "pages"
         else:
             ctx["active_tab"] = self.request.GET.get("tab", "contributions")
