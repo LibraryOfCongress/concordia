@@ -560,7 +560,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
 
         page = self.request.GET.get("page", None)
         activity = self.request.GET.get("activity", None)
-        status_list = self.request.GET.get("status", None)
+        status_list = self.request.GET.getlist("status")
         if page is not None or activity is not None or status_list is not None:
             ctx["active_tab"] = "pages"
             if status_list is not None:
