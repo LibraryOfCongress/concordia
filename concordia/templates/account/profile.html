@@ -156,7 +156,16 @@
                                 <thead>
                                     <tr class="text-center">
                                         <th>Date</th>
-                                        <th>Item</th>
+                                        <th>
+                                            <div class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Campaign</div>
+                                            <div class="dropdown-menu border border-primary">
+                                                {% for campaign in contributed_campaigns %}
+                                                    <a class="dropdown-item{% if not forloop.last %} border-bottom border-primary{% endif %}" href="?{% qs_alter request.GET campaign=campaign.pk delete:page %}">
+                                                        {{ campaign.title }}
+                                                    </a>
+                                                {% endfor %}
+                                            </div>
+                                        </th>
                                         <th>Page</th>
                                         <th>
                                             <div class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Your Contribution</div>
