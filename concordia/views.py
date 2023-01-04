@@ -567,6 +567,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
                 ctx["status_list"] = status_list
         else:
             ctx["active_tab"] = self.request.GET.get("tab", "contributions")
+        ctx["activity"] = activity
         qId = self.request.GET.get("campaign_slug", None)
 
         if qId:
