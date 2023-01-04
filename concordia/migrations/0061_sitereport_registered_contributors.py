@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("concordia", "0058_banner_slug"),
+        ("concordia", "0060_alter_resourcefile_resource"),
     ]
 
     operations = [

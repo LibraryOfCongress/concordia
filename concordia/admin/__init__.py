@@ -31,6 +31,7 @@ from ..models import (
     Item,
     Project,
     Resource,
+    ResourceFile,
     SimpleContentBlock,
     SimplePage,
     SiteReport,
@@ -212,6 +213,30 @@ class ResourceAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     list_display = ("campaign", "topic", "sequence", "title", "resource_url")
     list_display_links = ("campaign", "topic", "sequence", "title")
     list_filter = (ResourceCampaignListFilter, "title")
+
+
+@admin.register(ResourceFile)
+class ResourceFileAdmin(admin.ModelAdmin):
+    # Bulk delete bypasses file deletion, so we don't want any bulk actions
+    actions = None
+    list_display = ("name", "resource_url")
+    readonly_fields = ("resource_url",)
+
+    def resource_url(self, obj):
+        # Boto3 adds a querystring parameters to the URL to allow access
+        # to private files. In this case, all files are public, and we
+        # we don't want the querystring, so we remove it.
+        # This looks hacky, but seems to be the least hacky way to do
+        # this without a third-party library.
+        return obj.resource.url.split("?")[0]
+
+    def get_fields(self, request, obj=None):
+        # We want don't want to display the resource field except during
+        # creation, since uploading a new file will leave behind the original
+        # as an orphan.
+        if obj:
+            return ("name", "resource_url")
+        return ("name", "resource")
 
 
 @admin.register(Topic)
