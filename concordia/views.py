@@ -492,7 +492,17 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         self.object_list = self.get_queryset()
         return super().post(*args, **kwargs)
 
-    def get_queryset(self):
+    def _get_transcriptions(self, activity=None):
+        user = self.request.user
+        if activity == "transcribed":
+            q = Q(user=user)
+        elif activity == "reviewed":
+            q = Q(reviewed_by=user)
+        else:
+            q = Q(user=user) | Q(reviewed_by=user)
+        return Transcription.objects.filter(q)
+
+    def _get_assets(self, campaign_id=None):
         user = self.request.user
         activity = self.request.GET.get("activity", None)
         if activity == "transcribed":
@@ -515,7 +525,6 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
             campaignSlug = -1
             assets = Asset.objects.filter(transcription__in=transcriptions)
 
-        campaign_id = self.request.GET.get("campaign", None)
         if campaign_id is not None:
             assets = assets.filter(item__project__campaign__pk=campaign_id)
 
@@ -542,6 +551,10 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         SIX_MONTHS_AGO = datetime.datetime.today() - datetime.timedelta(days=6 * 30)
         assets = assets.filter(latest_activity__gte=SIX_MONTHS_AGO)
         return assets.order_by("-latest_activity", "-id")
+
+    def get_queryset(self):
+        campaign_id = self.request.GET.get("campaign", None)
+        return self._get_assets(campaign_id=campaign_id)
 
     def get_context_data(self, *args, **kwargs):
         ctx = super().get_context_data(*args, **kwargs)
@@ -574,6 +587,9 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
             else:
                 if asset.item.project.campaign.id == int(campaignSlug):
                     object_list.append((asset))
+        assets = self._get_assets()
+        campaigns = Campaign.objects.filter(project__item__asset__in=assets).distinct()
+        ctx["recent_campaigns"] = campaigns.order_by("title")
 
         user = self.request.user
 
