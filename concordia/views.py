@@ -492,7 +492,8 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         self.object_list = self.get_queryset()
         return super().post(*args, **kwargs)
 
-    def _get_assets(self, campaign_id=None):
+    def get_queryset(self):
+        campaign_id = self.request.GET.get("campaign", None)
         user = self.request.user
         activity = self.request.GET.get("activity", None)
         if activity == "transcribed":
@@ -541,10 +542,6 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         if campaign_id is not None:
             assets = self.assets.filter(item__project__campaign__pk=campaign_id)
         return assets
-
-    def get_queryset(self):
-        campaign_id = self.request.GET.get("campaign", None)
-        return self._get_assets(campaign_id=campaign_id)
 
     def get_context_data(self, *args, **kwargs):
         ctx = super().get_context_data(*args, **kwargs)
