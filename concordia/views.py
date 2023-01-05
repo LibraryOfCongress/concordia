@@ -492,16 +492,6 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         self.object_list = self.get_queryset()
         return super().post(*args, **kwargs)
 
-    def _get_transcriptions(self, activity=None):
-        user = self.request.user
-        if activity == "transcribed":
-            q = Q(user=user)
-        elif activity == "reviewed":
-            q = Q(reviewed_by=user)
-        else:
-            q = Q(user=user) | Q(reviewed_by=user)
-        return Transcription.objects.filter(q)
-
     def _get_assets(self, campaign_id=None):
         user = self.request.user
         activity = self.request.GET.get("activity", None)
