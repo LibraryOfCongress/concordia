@@ -515,9 +515,6 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
             campaignSlug = -1
             assets = Asset.objects.filter(transcription__in=transcriptions)
 
-        if campaign_id is not None:
-            assets = assets.filter(item__project__campaign__pk=campaign_id)
-
         assets = assets.select_related(
             "item", "item__project", "item__project__campaign"
         )
@@ -540,7 +537,10 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         # CONCD-189 only show pages from the last 6 months
         SIX_MONTHS_AGO = datetime.datetime.today() - datetime.timedelta(days=6 * 30)
         assets = assets.filter(latest_activity__gte=SIX_MONTHS_AGO)
-        return assets.order_by("-latest_activity", "-id")
+        self.assets = assets = assets.order_by("-latest_activity", "-id")
+        if campaign_id is not None:
+            assets = self.assets.filter(item__project__campaign__pk=campaign_id)
+        return assets
 
     def get_queryset(self):
         campaign_id = self.request.GET.get("campaign", None)
@@ -577,9 +577,8 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
             else:
                 if asset.item.project.campaign.id == int(campaignSlug):
                     object_list.append((asset))
-        assets = self._get_assets()
-        campaigns = Campaign.objects.filter(project__item__asset__in=assets).distinct()
-        ctx["recent_campaigns"] = campaigns.order_by("title")
+        recent_campaigns = Campaign.objects.filter(project__item__asset__in=self.assets)
+        ctx["recent_campaigns"] = recent_campaigns.distinct().order_by("title")
 
         user = self.request.user
 
