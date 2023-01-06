@@ -540,7 +540,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         assets = assets.filter(latest_activity__gte=SIX_MONTHS_AGO)
         self.assets = assets = assets.order_by("-latest_activity", "-id")
         if campaign_id is not None:
-            assets = self.assets.filter(item__project__campaign__pk=campaign_id)
+            assets = assets.filter(item__project__campaign__pk=campaign_id)
         return assets
 
     def get_context_data(self, *args, **kwargs):
@@ -582,7 +582,8 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
                 if asset.item.project.campaign.id == int(campaignSlug):
                     object_list.append((asset))
         recent_campaigns = Campaign.objects.filter(project__item__asset__in=self.assets)
-        ctx["recent_campaigns"] = recent_campaigns.distinct().order_by("title")
+        recent_campaigns = recent_campaigns.distinct().order_by("title")
+        ctx["recent_campaigns"] = recent_campaigns.values("pk", "title")
 
         user = self.request.user
 
