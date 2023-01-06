@@ -101,25 +101,25 @@
                                     </thead>
                                     <tbody>
                                         <tr>
-                                            <td></td>
-                                            <td class="campaign all-campaigns" id="-1">
+                                            <td class="py-2"></td>
+                                            <td class="campaign all-campaigns py-2" id="-1">
                                                 <b><a href="{% url 'campaign-topic-list' %}">All Campaigns</a></b>
                                             </td>
-                                            <td><b>{{ totalTranscriptions|intcomma }}</b></td>
-                                            <td><b>{{ totalReviews|intcomma }}</b></td>
-                                            <td><b>{{ totalCount|intcomma }}</b></td>
+                                            <td class="py-2"><b>{{ totalTranscriptions|intcomma }}</b></td>
+                                            <td class="py-2"><b>{{ totalReviews|intcomma }}</b></td>
+                                            <td class="py-2"><b>{{ totalCount|intcomma }}</b></td>
                                         </tr>
                                         {% for campaign in contributed_campaigns %}
                                             <tr>
                                                 <td></td>
                                                 <td>
-                                                    <a class="campaign" id={{campaign.id}} href="{% url 'transcriptions:campaign-detail' campaign.slug %}">
+                                                    <a class="campaign py-2" id={{campaign.id}} href="{% url 'transcriptions:campaign-detail' campaign.slug %}">
                                                         {{ campaign.title }}
                                                     </a>
                                                 </td>
-                                                <td>{{ campaign.transcribe_count|intcomma }}</td>
-                                                <td>{{ campaign.review_count|intcomma }}</td>
-                                                <td>{{ campaign.action_count|intcomma }}</td>
+                                                <td class="py-2">{{ campaign.transcribe_count|intcomma }}</td>
+                                                <td class="py-2">{{ campaign.review_count|intcomma }}</td>
+                                                <td class="py-2">{{ campaign.action_count|intcomma }}</td>
                                             </tr>
                                         {% endfor %}
                                     </tbody>
