@@ -159,8 +159,11 @@
                                         <th>
                                             <div class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Campaign</div>
                                             <div class="dropdown-menu border border-primary">
+                                                {% if campaign %}
+                                                    <a class="dropdown-item border-bottom border-primary" href="?{% qs_alter request.GET delete:campaign %}">Show All</a>
+                                                {% endif %}
                                                 {% for recent_campaign in recent_campaigns %}
-                                                    <a class="dropdown-item{% if not forloop.last %} border-bottom border-primary{% endif %}{% if campaign == recent_campaign.pk %} font-weight-bold{% endif %}" href="?{% qs_alter request.GET campaign=recent_campaign.pk delete:page %}">
+                                                    <a class="dropdown-item{% if not forloop.first %} border-top border-primary{% endif %}{% if campaign == recent_campaign.pk %} font-weight-bold{% endif %}" href="?{% qs_alter request.GET campaign=recent_campaign.pk delete:page %}">
                                                         {{ recent_campaign.title }}
                                                     </a>
                                                 {% endfor %}
@@ -170,9 +173,11 @@
                                         <th>
                                             <div class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Your Contribution</div>
                                             <div class="dropdown-menu border border-primary">
-                                                <a class="dropdown-item" href="?{% qs_alter request.GET delete:activity %}">Show All</a>
-                                                <a class="dropdown-item border-top border-primary{% if activity == 'reviewed' %} font-weight-bold{% endif %}" href="?{% qs_alter request.GET activity='reviewed' %}">Reviewed</a>
-                                                <a class="dropdown-item border-top border-primary{% if activity == 'transcribed' %} font-weight-bold{% endif %}" href="?{% qs_alter request.GET activity='transcribed' %}">Transcribed</a>
+                                                {% if activity %}
+                                                    <a class="dropdown-item border-bottom border-primary" href="?{% qs_alter request.GET delete:activity %}">Show All</a>
+                                                {% endif %}
+                                                <a class="dropdown-item border-bottom border-primary{% if activity == 'reviewed' %} font-weight-bold{% endif %}" href="?{% qs_alter request.GET activity='reviewed' %}">Reviewed</a>
+                                                <a class="dropdown-item{% if activity == 'transcribed' %} font-weight-bold{% endif %}" href="?{% qs_alter request.GET activity='transcribed' %}">Transcribed</a>
                                             </div>
                                         </th>
                                         <th>
