@@ -159,9 +159,9 @@
                                         <th>
                                             <div class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Campaign</div>
                                             <div class="dropdown-menu border border-primary">
-                                                {% for campaign in recent_campaigns %}
-                                                    <a class="dropdown-item{% if not forloop.last %} border-bottom border-primary{% endif %}{% if campaign == campaign.pk %} font-weight-bold{% endif %}" href="?{% qs_alter request.GET campaign=campaign.pk delete:page %}">
-                                                        {{ campaign.title }}
+                                                {% for recent_campaign in recent_campaigns %}
+                                                    <a class="dropdown-item{% if not forloop.last %} border-bottom border-primary{% endif %}{% if campaign == recent_campaign.pk %} font-weight-bold{% endif %}" href="?{% qs_alter request.GET campaign=recent_campaign.pk delete:page %}">
+                                                        {{ recent_campaign.title }}
                                                     </a>
                                                 {% endfor %}
                                             </div>
