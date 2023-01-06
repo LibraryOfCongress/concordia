@@ -551,10 +551,15 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         page = self.request.GET.get("page", None)
         campaign = self.request.GET.get("campaign", None)
         activity = self.request.GET.get("activity", None)
-        if page is not None or activity is not None or campaign is not None:
+        status_list = self.request.GET.getlist("status")
+        if any([activity, campaign, page, status_list]):
             ctx["active_tab"] = "pages"
+            if status_list is not None:
+                ctx["status_list"] = status_list
         else:
             ctx["active_tab"] = self.request.GET.get("tab", "contributions")
+        ctx["activity"] = activity
+
         qId = self.request.GET.get("campaign_slug", None)
 
         if qId:
