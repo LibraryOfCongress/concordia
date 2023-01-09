@@ -493,6 +493,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         return super().post(*args, **kwargs)
 
     def get_queryset(self):
+        campaign_id = self.request.GET.get("campaign", None)
         user = self.request.user
         activity = self.request.GET.get("activity", None)
         if activity == "transcribed":
@@ -551,7 +552,10 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         # CONCD-189 only show pages from the last 6 months
         SIX_MONTHS_AGO = datetime.datetime.today() - datetime.timedelta(days=6 * 30)
         assets = assets.filter(latest_activity__gte=SIX_MONTHS_AGO)
-        return assets.order_by("-latest_activity", "-id")
+        self.assets = assets = assets.order_by("-latest_activity", "-id")
+        if campaign_id is not None:
+            assets = assets.filter(item__project__campaign__pk=campaign_id)
+        return assets
 
     def get_context_data(self, *args, **kwargs):
         ctx = super().get_context_data(*args, **kwargs)
@@ -559,15 +563,19 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         ctx["object_list"] = object_list = []
 
         page = self.request.GET.get("page", None)
+        campaign = self.request.GET.get("campaign", None)
         activity = self.request.GET.get("activity", None)
         status_list = self.request.GET.getlist("status")
-        if page is not None or activity is not None or status_list is not None:
+        if any([activity, campaign, page, status_list]):
             ctx["active_tab"] = "pages"
+            if campaign is not None:
+                ctx["campaign"] = int(campaign)
             if status_list is not None:
                 ctx["status_list"] = status_list
         else:
             ctx["active_tab"] = self.request.GET.get("tab", "contributions")
         ctx["activity"] = activity
+
         qId = self.request.GET.get("campaign_slug", None)
 
         if qId:
@@ -587,6 +595,9 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
             else:
                 if asset.item.project.campaign.id == int(campaignSlug):
                     object_list.append((asset))
+        recent_campaigns = Campaign.objects.filter(project__item__asset__in=self.assets)
+        recent_campaigns = recent_campaigns.distinct().order_by("title")
+        ctx["recent_campaigns"] = recent_campaigns.values("pk", "title")
 
         user = self.request.user
 
