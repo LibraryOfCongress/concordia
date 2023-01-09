@@ -1154,6 +1154,11 @@ table.table thead.border-y th {
     background-color: $light;
 }
 
+#nav-tabContent .dropdown-menu a:hover {
+    background-color: $navy;
+    color: $light;
+}
+
 .email-address {
     margin-bottom: ($spacer * 2.75) !important;
     max-width: 450px;

@@ -67,6 +67,7 @@ from concordia.models import (
     Item,
     Project,
     SimplePage,
+    SiteReport,
     Tag,
     Topic,
     Transcription,
@@ -492,10 +493,16 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         return super().post(*args, **kwargs)
 
     def get_queryset(self):
+        campaign_id = self.request.GET.get("campaign", None)
         user = self.request.user
-        transcriptions = Transcription.objects.filter(
-            Q(user=user) | Q(reviewed_by=user)
-        )
+        activity = self.request.GET.get("activity", None)
+        if activity == "transcribed":
+            q = Q(user=user)
+        elif activity == "reviewed":
+            q = Q(reviewed_by=user)
+        else:
+            q = Q(user=user) | Q(reviewed_by=user)
+        transcriptions = Transcription.objects.filter(q)
 
         qId = self.request.GET.get("campaign_slug", None)
 
@@ -508,6 +515,20 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         else:
             campaignSlug = -1
             assets = Asset.objects.filter(transcription__in=transcriptions)
+        status_list = self.request.GET.getlist("status")
+        if status_list and status_list != []:
+            if "completed" not in status_list:
+                assets = assets.exclude(
+                    transcription_status=TranscriptionStatus.COMPLETED
+                )
+            if "submitted" not in status_list:
+                assets = assets.exclude(
+                    transcription_status=TranscriptionStatus.SUBMITTED
+                )
+            if "in_progress" not in status_list:
+                assets = assets.exclude(
+                    transcription_status=TranscriptionStatus.IN_PROGRESS
+                )
 
         assets = assets.select_related(
             "item", "item__project", "item__project__campaign"
@@ -531,18 +552,30 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         # CONCD-189 only show pages from the last 6 months
         SIX_MONTHS_AGO = datetime.datetime.today() - datetime.timedelta(days=6 * 30)
         assets = assets.filter(latest_activity__gte=SIX_MONTHS_AGO)
-        return assets.order_by("-latest_activity", "-id")
+        self.assets = assets = assets.order_by("-latest_activity", "-id")
+        if campaign_id is not None:
+            assets = assets.filter(item__project__campaign__pk=campaign_id)
+        return assets
 
     def get_context_data(self, *args, **kwargs):
         ctx = super().get_context_data(*args, **kwargs)
         obj_list = ctx.pop("object_list")
         ctx["object_list"] = object_list = []
 
-        ctx["active_tab"] = (
-            "pages"
-            if self.request.GET.get("page", None) is not None
-            else self.request.GET.get("tab", "contributions")
-        )
+        page = self.request.GET.get("page", None)
+        campaign = self.request.GET.get("campaign", None)
+        activity = self.request.GET.get("activity", None)
+        status_list = self.request.GET.getlist("status")
+        if any([activity, campaign, page, status_list]):
+            ctx["active_tab"] = "pages"
+            if campaign is not None:
+                ctx["campaign"] = int(campaign)
+            if status_list is not None:
+                ctx["status_list"] = status_list
+        else:
+            ctx["active_tab"] = self.request.GET.get("tab", "contributions")
+        ctx["activity"] = activity
+
         qId = self.request.GET.get("campaign_slug", None)
 
         if qId:
@@ -562,6 +595,9 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
             else:
                 if asset.item.project.campaign.id == int(campaignSlug):
                     object_list.append((asset))
+        recent_campaigns = Campaign.objects.filter(project__item__asset__in=self.assets)
+        recent_campaigns = recent_campaigns.distinct().order_by("title")
+        ctx["recent_campaigns"] = recent_campaigns.values("pk", "title")
 
         user = self.request.user
 
@@ -927,45 +963,52 @@ class CampaignDetailView(APIDetailView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-
-        projects = (
-            ctx["campaign"]
-            .project_set.published()
-            .annotate(
-                **{
-                    f"{key}_count": Count(
-                        "item__asset",
-                        filter=Q(
-                            item__published=True,
-                            item__asset__published=True,
-                            item__asset__transcription_status=key,
-                        ),
-                    )
-                    for key in TranscriptionStatus.CHOICE_MAP
-                }
+        if self.object and self.object.status == Campaign.Status.RETIRED:
+            latest_report = SiteReport.objects.filter(campaign=ctx["campaign"]).latest(
+                "created_on"
             )
-            .order_by("ordering", "title")
-        )
+            ctx["completed_count"] = latest_report.assets_completed
+            ctx["contributor_count"] = latest_report.registered_contributors
+        else:
+            projects = (
+                ctx["campaign"]
+                .project_set.published()
+                .annotate(
+                    **{
+                        f"{key}_count": Count(
+                            "item__asset",
+                            filter=Q(
+                                item__published=True,
+                                item__asset__published=True,
+                                item__asset__transcription_status=key,
+                            ),
+                        )
+                        for key in TranscriptionStatus.CHOICE_MAP
+                    }
+                )
+                .order_by("ordering", "title")
+            )
 
-        ctx["filters"] = filters = {}
-        status = self.request.GET.get("transcription_status")
-        if status in TranscriptionStatus.CHOICE_MAP:
-            projects = projects.exclude(**{f"{status}_count": 0})
-            # We only want to pass specific QS parameters to lower-level search pages:
-            filters["transcription_status"] = status
-        ctx["sublevel_querystring"] = urlencode(filters)
+            ctx["filters"] = filters = {}
+            status = self.request.GET.get("transcription_status")
+            if status in TranscriptionStatus.CHOICE_MAP:
+                projects = projects.exclude(**{f"{status}_count": 0})
+                # We only want to pass specific QS parameters
+                # to lower-level search pages:
+                filters["transcription_status"] = status
+            ctx["sublevel_querystring"] = urlencode(filters)
 
-        annotate_children_with_progress_stats(projects)
-        ctx["projects"] = projects
+            annotate_children_with_progress_stats(projects)
+            ctx["projects"] = projects
 
-        campaign_assets = Asset.objects.filter(
-            item__project__campaign=self.object,
-            item__project__published=True,
-            item__published=True,
-            published=True,
-        )
+            campaign_assets = Asset.objects.filter(
+                item__project__campaign=self.object,
+                item__project__published=True,
+                item__published=True,
+                published=True,
+            )
 
-        calculate_asset_stats(campaign_assets, ctx)
+            calculate_asset_stats(campaign_assets, ctx)
 
         return ctx
 
