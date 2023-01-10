@@ -5,7 +5,7 @@ on:
     push:
         branches: [main, release, 'feature-*']
     pull_request:
-        branches: [main]
+        branches: [main, 'feature-*']
 
 env:
     PIPENV_IGNORE_VIRTUALENVS: 1
