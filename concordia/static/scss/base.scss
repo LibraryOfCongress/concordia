@@ -524,6 +524,12 @@ $card-progress-height: 12px;
     color: black;
 }
 
+.page-item.active .page-link {
+    background-color: #fff;
+    border-color: #efefef;
+    color: $gray-800;
+}
+
 /*
  * Progress displays
  */
