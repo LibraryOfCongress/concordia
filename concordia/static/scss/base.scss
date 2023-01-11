@@ -1165,6 +1165,10 @@ table.table thead.border-y th {
     color: $light;
 }
 
+.change-options {
+    background-color: $gray-200;
+}
+
 .email-address {
     margin-bottom: ($spacer * 2.75) !important;
     max-width: 450px;

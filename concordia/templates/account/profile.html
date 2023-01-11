@@ -29,18 +29,17 @@
                 <div class="row justify-content-start">
                     <div class="col-12 col-md-10">
                         <h2>Account Settings</h2>
+                        <div class="mb-3">
+                            <span class="font-weight-bold">User Name</span>: {{ user.username }}
+                        </div>
+                        <div class="mb-3">
+                            <span class="font-weight-bold">Email address</span>: {{ user.email }}
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-10 py-3 change-options">
                         <form class="form" action="{% url 'user-profile' %}" method="POST" enctype="multipart/form-data">
                             {% csrf_token %}
 
-                            {% comment %} We want to list the username but it's not an editable field {% endcomment %}
-
-                            <div class="form-group ">
-                                <div>
-                                    <label><b>User Name</b></label>: {{ user.username }}
-                                </div>
-                            </div>
-
-                            <strong>Email address: </strong><span class="font-weight-normal">{% bootstrap_label user.email label_for="id_email" %}</span>
                             <div class="input-group email-address">
                                 <input type="email" name="email" placeholder="Change your email address" class="form-control font-italic" title="" required="" id="id_email">
                                 <div class="input-group-append">
@@ -48,18 +47,12 @@
                                 </div>
                             </div>
                         </form>
-                    </div>
-                </div>
-                <div class="row justify-content-start">
-                    <div class="col-12 col-md-10">
                         <div class="row justify-content-start">
                             <div class="btn-row col-md-10">
                                 <a class="btn btn-primary rounded-0" href="{% url 'password_change' %}">Change Password</a>
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="row justify-content-start">
                     <div class="col-10">
                         <hr>
                     </div>
