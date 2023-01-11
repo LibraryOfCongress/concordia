@@ -524,6 +524,12 @@ $card-progress-height: 12px;
     color: black;
 }
 
+.page-item.active .page-link {
+    background-color: #fff;
+    border-color: #efefef;
+    color: $gray-800;
+}
+
 /*
  * Progress displays
  */
@@ -1133,11 +1139,6 @@ div.related-links {
     font-size: large;
 }
 
-.contribution-table th {
-    border-top: 1px solid $dark;
-    border-bottom: 1px solid $dark;
-}
-
 .contribution-table a {
     text-decoration: underline;
 }
@@ -1150,9 +1151,22 @@ div.related-links {
     text-decoration: underline;
 }
 
-.contribution-table thead th {
+table.table thead.border-y th {
     border-bottom: 1px solid #000;
     border-top: 1px solid #000;
+}
+
+.service-letter {
+    background-color: $light;
+}
+
+#nav-tabContent .dropdown-menu a:hover {
+    background-color: $navy;
+    color: $light;
+}
+
+.change-options {
+    background-color: $gray-200;
 }
 
 .email-address {
