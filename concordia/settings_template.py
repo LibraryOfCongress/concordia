@@ -66,6 +66,7 @@ NPM_FILE_PATTERNS = {
     "prettier": ["*.js"],
     "remarkable": ["dist/*"],
     "jquery": ["dist/*"],
+    "jquery-ui": ["dist/*"],
     "js-cookie": ["src/*"],
     "popper.js": ["dist/*"],
     "bootstrap": ["dist/*"],

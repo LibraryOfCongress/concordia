@@ -151,7 +151,8 @@
                             <table class="table table-striped table-responsive-sm">
                                 <thead class="border-y">
                                     <tr class="text-left">
-                                        <th>Date</th>
+                                        <th><!--input type="text" id="datepicker"--><button class="btn btn-secondary dropdown-toggle" type="button" id="datepicker" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Date</button></th>
+                                        <th><!--input type="text" id="datepicker"--><button class="btn btn-secondary dropdown-toggle" type="button" id="datepicker" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Date</button></th>
                                         <th>
                                             <div class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Campaign</div>
                                             <div class="dropdown-menu border border-primary">
@@ -214,4 +215,12 @@
 {% block body_scripts %}
     {{ block.super }}
     <script src="{% static 'js/campaign-selection.js' %}"></script>
+    <script>
+        $(function() {
+            $("#datepicker").datepicker();
+            $("#format").on("change", function() {
+                $("#datepicker").datepicker("option", "dateFormat", $(this).val() );
+            });
+        });
+    </script>
 {% endblock body_scripts %}
