@@ -70,6 +70,7 @@ NPM_FILE_PATTERNS = {
     "popper.js": ["dist/*"],
     "bootstrap": ["dist/*"],
     "screenfull": ["dist/*"],
+    "@duetds/date-picker/": ["dist/*"],
     "@fortawesome/fontawesome-free/": [
         "css/*",
         "js/*",
