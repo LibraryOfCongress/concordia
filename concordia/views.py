@@ -549,6 +549,16 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
                 filter=Q(transcription__user=user) | Q(transcription__reviewed_by=user),
             ),
         )
+        fmt = "%Y-%m-%d"
+        start = self.request.GET.get("start", None)
+        if start is not None:
+            start_date = datetime.datetime.strptime(start, fmt)
+            assets = assets.filter(latest_activity__gte=start_date)
+        end = self.request.GET.get("end", None)
+        if end is not None:
+            end_date = datetime.datetime.strptime(end, fmt)
+            end_date += datetime.timedelta(hours=11, minutes=59, seconds=59)
+            assets = assets.filter(latest_activity__lte=end_date)
         # CONCD-189 only show pages from the last 6 months
         SIX_MONTHS_AGO = datetime.datetime.today() - datetime.timedelta(days=6 * 30)
         assets = assets.filter(latest_activity__gte=SIX_MONTHS_AGO)
@@ -566,7 +576,9 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         campaign = self.request.GET.get("campaign", None)
         activity = self.request.GET.get("activity", None)
         status_list = self.request.GET.getlist("status")
-        if any([activity, campaign, page, status_list]):
+        start = self.request.GET.get("start", None)
+        end = self.request.GET.get("end", None)
+        if any([activity, campaign, page, status_list, start, end]):
             ctx["active_tab"] = "pages"
             if campaign is not None:
                 ctx["campaign"] = int(campaign)
