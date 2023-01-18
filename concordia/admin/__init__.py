@@ -171,6 +171,8 @@ class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         "unlisted",
         "display_on_homepage",
         "ordering",
+        "launch_date",
+        "completed_date",
     )
     list_editable = (
         "display_on_homepage",
@@ -178,6 +180,8 @@ class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         "published",
         "unlisted",
         "status",
+        "launch_date",
+        "completed_date",
     )
     list_display_links = ("title",)
     prepopulated_fields = {"slug": ("title",)}
