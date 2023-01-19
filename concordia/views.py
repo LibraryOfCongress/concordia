@@ -551,11 +551,11 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         )
         fmt = "%Y-%m-%d"
         start = self.request.GET.get("start", None)
-        if start is not None:
+        if start is not None and len(start) > 0:
             start_date = datetime.datetime.strptime(start, fmt)
             assets = assets.filter(latest_activity__gte=start_date)
         end = self.request.GET.get("end", None)
-        if end is not None:
+        if end is not None and len(end) > 0:
             end_date = datetime.datetime.strptime(end, fmt)
             end_date += datetime.timedelta(hours=11, minutes=59, seconds=59)
             assets = assets.filter(latest_activity__lte=end_date)
