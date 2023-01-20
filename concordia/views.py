@@ -551,14 +551,27 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         )
         fmt = "%Y-%m-%d"
         start = self.request.GET.get("start", None)
+        end = self.request.GET.get("end", None)
+        start_date = None
         if start is not None and len(start) > 0:
             start_date = datetime.datetime.strptime(start, fmt)
-            assets = assets.filter(latest_activity__gte=start_date)
-        end = self.request.GET.get("end", None)
+        end_date = None
         if end is not None and len(end) > 0:
             end_date = datetime.datetime.strptime(end, fmt)
-            end_date += datetime.timedelta(hours=11, minutes=59, seconds=59)
-            assets = assets.filter(latest_activity__lte=end_date)
+        if start_date is not None and end_date is not None:
+            assets = assets.filter(
+                latest_activity__gte=start_date,
+                latest_activity__year__lte=end_date.year,
+                latest_activity__month__lte=end_date.month,
+                latest_activity__day__lte=end_date.day,
+            )
+        elif start_date is not None or end_date is not None:
+            date = start_date if start_date else end_date
+            assets = assets.filter(
+                latest_activity__year=date.year,
+                latest_activity__month=date.month,
+                latest_activity__day=date.day,
+            )
         # CONCD-189 only show pages from the last 6 months
         SIX_MONTHS_AGO = datetime.datetime.today() - datetime.timedelta(days=6 * 30)
         assets = assets.filter(latest_activity__gte=SIX_MONTHS_AGO)
