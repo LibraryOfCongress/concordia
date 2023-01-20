@@ -29,7 +29,7 @@
                 <div class="row justify-content-start">
                     <div class="col-12 col-md-10">
                         <h2>Account Settings</h2>
-                        <div class="mb-3">
+                        <div style="margin-bottom: 20px;">
                             <span class="font-weight-bold">User Name</span>: {{ user.username }}
                         </div>
                         <div class="mb-3">
@@ -40,7 +40,7 @@
                         <form class="form" action="{% url 'user-profile' %}" method="POST" enctype="multipart/form-data">
                             {% csrf_token %}
 
-                            <div class="input-group email-address">
+                            <div class="input-group mb-3 email-address">
                                 <input type="email" name="email" placeholder="Change your email address" class="form-control font-italic" title="" required="" id="id_email">
                                 <div class="input-group-append">
                                     {% bootstrap_button "Save Change" button_type="submit" button_class="btn btn-primary rounded-0" %}
@@ -120,17 +120,12 @@
                                 </table>
                             </div>
                             <div class="d-flex justify-content-start service-letter">
-                                <div class="col-12 col-md-10">
+                                <div class="col-12 col-md-10 py-3">
                                     <h3>Service Letter</h3>
                                     <div class="mb-3">Using <i>By the People</i> to fulfill service requirements? Download a letter verifying your volunteer contributions.<br/><a href="/resources">Find more info on service documentation here.</a></div>
                                     <div class="row justify-content-start">
                                         <div class="btn-row col-md-10">
                                             <a class="btn btn-primary rounded-0" href="/letter">Download Letter</a>
-                                        </div>
-                                    </div>
-                                    <div class="row justify-content-start">
-                                        <div class="col-10">
-                                            <hr>
                                         </div>
                                     </div>
                                 </div>
@@ -178,7 +173,7 @@
                                         </th>
                                         <th>Page</th>
                                         <th>
-                                            <div class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Activity</div>
+                                            <div class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Your Contribution</div>
                                             <div class="dropdown-menu border border-primary">
                                                 {% if activity %}
                                                     <a class="dropdown-item border-bottom border-primary" href="?{% qs_alter request.GET delete:activity %}">Show All</a>
