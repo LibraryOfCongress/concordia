@@ -70,7 +70,7 @@ Each ticket will include acceptance tests, especially for new user facing functi
 Testers will identify issues - HIGH, LOW, or NONE. Here are the criteria for each of the levels:
 
 -   FAIL: Does not meet the acceptace criteria and can not complete the acceptance test.
--   PASS: Does meet both acceptace criteria and and acceptance tests. When a ticket passes but there are noticable opportunities for improvements or enhancements, close the ticket and create a new ticket and add to the backlog. 
+-   PASS: Does meet both acceptace criteria and and acceptance tests. When a ticket passes but there are noticable opportunities for improvements or enhancements, close the ticket and create a new ticket and add to the backlog.
 
 If all user acceptance criteria has been met, the ticket will be closed and moved to Done column.
 
@@ -93,13 +93,13 @@ If a FAIL issue needs to be addressed, tester should expect to be available to r
 2. Product owner will place priority tickets in a sprint
 3. Product Manager will ensure all acceptance criteria has been articulated and assign developer
 4. Developer will move to In Progress when ticket is being worked on
-5. When Developer has completed initial code will move code into crowd-test.loc.gov 
+5. When Developer has completed initial code will move code into crowd-test.loc.gov
 6. Developer moves ticket into test assigned Product Owner to review feature needs
 7. Product Owner test the feature and test if Acceptance Criteria is met, provides feedback to devs if needed
 8. Product Owner approves feature then assigns to QA
-9. QA will affirm AC and test broader functionality and accessibility. Will pass/fail ticket. Outcome of testing will be written in comments.  
+9. QA will affirm AC and test broader functionality and accessibility. Will pass/fail ticket. Outcome of testing will be written in comments.
     - If pass, QA will close ticket and move to Done.
-    - If fail, QA will move ticket back into In Progress and assigned back to developer 
+    - If fail, QA will move ticket back into In Progress and assigned back to developer
 10. If additional issues are found in testing that are not related to the feature of functionality, new tickets will be written by QA and added to the backlog. Ticket will be assigned to PO for further ticket development and grooming.
 
 **For system wide upgrades**
@@ -107,15 +107,15 @@ If a FAIL issue needs to be addressed, tester should expect to be available to r
 1. Ticket is generated as an issue and placed in the backlog in GitHub
 2. Technical Lead will place priority tickets in a sprint
 3. Product Manager will ensure all acceptance criteria has been articualted and assign developer
-4. Developer will move to In Progress when ticket is being worked on     
+4. Developer will move to In Progress when ticket is being worked on
 5. Unit testing incorporated into the code pipeline
     - Manually run unit tests
-    - CI/CD integration 
+    - CI/CD integration
 6. Move ticket into test and assign peer review testing by developer
     - If fail, developer provides feedback, moves ticket back to In Progress and assigns to the original dev
-    - If pass, assign to QA for regression testing 
-8. Tester will copy the [Regression Testing Checklist](https://staff.loc.gov/wikis/x/UomCBQ) as a comment in the ticket 
-9. Tester will go through all the functionality described in the checklist 
+    - If pass, assign to QA for regression testing
+7. Tester will copy the [Regression Testing Checklist](https://staff.loc.gov/wikis/x/UomCBQ) as a comment in the ticket
+8. Tester will go through all the functionality described in the checklist
     - If fail, provides feedback in the comments, moves ticket back to In Progress and assigns to dev
     - If pass, checks boxes to show that all main functionality are working and moves ticket to done
 

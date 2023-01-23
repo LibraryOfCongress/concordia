@@ -5,10 +5,10 @@ import {
     list,
     List,
     mount,
-    setAttr,
+    setAttr as setAttribute,
     setChildren,
     text,
-    unmount
+    unmount,
 } from '../../redom/dist/redom.es.min.js';
 import {$, $$} from './utils/dom.js';
 
@@ -30,7 +30,7 @@ export class Alert {
                 {
                     type: 'button',
                     'data-dismiss': 'alert',
-                    'aria-label': 'Close'
+                    'aria-label': 'Close',
                 },
                 html('span.fas.fa-times-circle', {'aria-hidden': 'true'})
             )
@@ -50,8 +50,8 @@ export class AssetTooltip {
             html('.asset-title'),
             html('.asset-year-container', [
                 text('Year: '),
-                html('span.asset-year')
-            ])
+                html('span.asset-year'),
+            ]),
         ]);
     }
     update(asset) {
@@ -86,7 +86,7 @@ class MetadataDetails {
         this.children = [
             html('summary.h3', [
                 text(`${sectionName}: `),
-                html('span.title', text(initialData.title))
+                html('span.title', text(initialData.title)),
             ]),
             html(
                 'div.details-body.clearfix',
@@ -98,7 +98,7 @@ class MetadataDetails {
                     ))
                 )),
                 (this.descriptionContainer = html('div'))
-            )
+            ),
         ];
         this.el = html('details', {open: true}, this.children);
     }
@@ -167,7 +167,7 @@ class RelatedLinks {
     }
     update(links) {
         this.linkList.update(links);
-        setAttr(this.el, {hidden: links.length < 1});
+        setAttribute(this.el, {hidden: links.length === 0});
     }
 }
 
@@ -214,7 +214,7 @@ class FeaturedMetadata extends List {
         const FEATURED_KEYS = [
             'dates',
             'contributor_names',
-            'subject_headings'
+            'subject_headings',
         ];
 
         let featured = Object.entries(data)
@@ -233,11 +233,11 @@ class FeaturedMetadata extends List {
                 // arrays with mixed data-types but the code below attempts to
                 // be defensive in the latter case.
                 if (Array.isArray(value)) {
-                    value.forEach(i => {
-                        if (typeof i == 'string') {
-                            values.push(i);
+                    value.forEach((index) => {
+                        if (typeof index == 'string') {
+                            values.push(index);
                         } else {
-                            values.push(...Object.keys(i));
+                            values.push(...Object.keys(index));
                         }
                     });
                 } else {
@@ -285,7 +285,7 @@ class AssetListItem {
     constructor([assetListObserver]) {
         this.el = html('li', {
             class: 'asset',
-            tabIndex: 0
+            tabIndex: 0,
         });
 
         assetListObserver.observe(this.el);
@@ -298,7 +298,7 @@ class AssetListItem {
             // than we're going to use:
             // FIXME: [2020-10-31] this is an ugly, ugly kludge and should be replaced with something like https://www.npmjs.com/package/iiif-image
             thumbnailUrl = thumbnailUrl.replace(
-                /([/]iiif[/].+[/]full)[/]pct:100[/](0[/]default.jpg)$/,
+                /(\/iiif\/.+\/full)\/pct:100\/(0\/default.jpg)$/,
                 '$1/!512,512/$2'
             );
         }
@@ -322,10 +322,10 @@ class AssetListItem {
 export class AssetList extends List {
     constructor(callbacks) {
         // TODO: [2020-10-31] refactor this into a utility function
-        let assetListObserver = new IntersectionObserver(entries => {
+        let assetListObserver = new IntersectionObserver((entries) => {
             entries
-                .filter(i => i.isIntersecting)
-                .forEach(entry => {
+                .filter((index) => index.isIntersecting)
+                .forEach((entry) => {
                     let target = entry.target;
                     target.style.backgroundImage = `url(${target.dataset.image})`;
                     assetListObserver.unobserve(target);
@@ -339,13 +339,13 @@ export class AssetList extends List {
         */
 
         super('ul#asset-list.list-unstyled', AssetListItem, 'id', [
-            assetListObserver
+            assetListObserver,
         ]);
 
         // These will be processed after the next asset list update completes (possibly after a rAF / rIC chain)
         this.updateCallbacks = [];
 
-        let assetOpenHandler = event => {
+        let assetOpenHandler = (event) => {
             let target = event.target;
             if (target && target.classList.contains('asset')) {
                 callbacks.open(target);
@@ -354,7 +354,7 @@ export class AssetList extends List {
         };
 
         this.el.addEventListener('click', assetOpenHandler);
-        this.el.addEventListener('keydown', event => {
+        this.el.addEventListener('keydown', (event) => {
             if (event.key == 'Enter' || event.key == ' ') {
                 return assetOpenHandler(event);
             }
@@ -367,7 +367,7 @@ export class AssetList extends List {
         /* Tooltips */
         let tooltip = new AssetTooltip();
 
-        const handleTooltipShowEvent = event => {
+        const handleTooltipShowEvent = (event) => {
             let target = event.target;
             if (target && target.classList.contains('asset')) {
                 const asset = getAssetData(target.dataset.id);
@@ -396,7 +396,7 @@ export class AssetList extends List {
     update(assets) {
         super.update(assets);
 
-        while (this.updateCallbacks.length) {
+        while (this.updateCallbacks.length > 0) {
             let callback = this.updateCallbacks.pop();
             callback();
         }
@@ -412,7 +412,7 @@ export class AssetList extends List {
                     activeAsset.scrollIntoView({
                         behavior: 'smooth',
                         block: 'center',
-                        inline: 'nearest'
+                        inline: 'nearest',
                     });
                 });
             });
@@ -420,7 +420,7 @@ export class AssetList extends List {
     }
 
     setActiveAsset(assetElement) {
-        $$('.asset.asset-active', this.el).forEach(element => {
+        $$('.asset.asset-active', this.el).forEach((element) => {
             if (element != assetElement) {
                 element.classList.remove('asset-active');
             }
@@ -478,7 +478,7 @@ class ReviewerView {
                         id: 'reject-transcription-button',
                         type: 'button',
                         class: 'btn btn-primary',
-                        title: 'Correct errors you see in the text'
+                        title: 'Correct errors you see in the text',
                     },
                     text('Edit')
                 )),
@@ -488,20 +488,20 @@ class ReviewerView {
                         id: 'accept-transcription-button',
                         type: 'button',
                         class: 'btn btn-primary',
-                        title: 'Confirm that the text is accurately transcribed'
+                        title: 'Confirm that the text is accurately transcribed',
                     },
                     text('Accept')
-                ))
+                )),
             ]))
         );
 
-        this.rejectButton.addEventListener('click', event => {
+        this.rejectButton.addEventListener('click', (event) => {
             event.preventDefault();
             submitActionCallback('reject');
             return false;
         });
 
-        this.acceptButton.addEventListener('click', event => {
+        this.acceptButton.addEventListener('click', (event) => {
             event.preventDefault();
             submitActionCallback('accept');
             return false;
@@ -542,13 +542,13 @@ class TranscriberView {
                     class: 'form-check-input',
                     onchange: () => {
                         this.confirmNothingToTranscribeChange();
-                    }
+                    },
                 })),
                 html(
                     'label',
                     {
                         class: 'form-check-label',
-                        for: 'nothing-to-transcribe'
+                        for: 'nothing-to-transcribe',
                     },
                     text('Nothing to transcribe')
                 ),
@@ -564,11 +564,11 @@ class TranscriberView {
                         title: 'Help',
                         'data-html': 'true',
                         'data-content':
-                            'If it looks like there’s nothing to transcribe, use this button and then Submit. Not sure? Check these tips: <a target="_blank" href="/help-center/how-to-transcribe/">how to transcribe</a>'
+                            'If it looks like there’s nothing to transcribe, use this button and then Submit. Not sure? Check these tips: <a target="_blank" href="/help-center/how-to-transcribe/">how to transcribe</a>',
                     },
                     html('span', {
                         class: 'fas fa-question-circle',
-                        'aria-label': 'Open Help'
+                        'aria-label': 'Open Help',
                     })
                 )
             ),
@@ -579,15 +579,15 @@ class TranscriberView {
                     type: 'submit',
                     class: 'btn btn-primary',
                     title: 'Save the text you entered above',
-                    onclick: event => {
+                    onclick: (event) => {
                         event.preventDefault();
                         this.lastLoadedText = this.textarea.value;
                         submitActionCallback('save', {
-                            text: this.textarea.value
+                            text: this.textarea.value,
                         });
                         this.updateAvailableToolbarActions();
                         return false;
-                    }
+                    },
                 },
                 text('Save')
             )),
@@ -598,16 +598,15 @@ class TranscriberView {
                     disabled: true,
                     type: 'button',
                     class: 'btn btn-primary',
-                    title:
-                        'Request another volunteer to review the text you entered above',
-                    onclick: event => {
+                    title: 'Request another volunteer to review the text you entered above',
+                    onclick: (event) => {
                         event.preventDefault();
                         submitActionCallback('submit');
                         return false;
-                    }
+                    },
                 },
                 text('Submit for Review')
-            ))
+            )),
         ]);
 
         this.el = html(
@@ -617,11 +616,10 @@ class TranscriberView {
                 'form',
                 {
                     id: 'transcription-editor',
-                    class: 'flex-grow-1 d-flex flex-column'
+                    class: 'flex-grow-1 d-flex flex-column',
                 },
                 (this.textarea = html('textarea', {
-                    class:
-                        'form-control w-100 rounded flex-grow-1 d-print-none',
+                    class: 'form-control w-100 rounded flex-grow-1 d-print-none',
                     name: 'text',
                     placeholder: 'Go ahead, start typing. You got this!',
                     id: 'transcription-input',
@@ -632,7 +630,7 @@ class TranscriberView {
                             this.nothingToTranscribeCheckbox.checked = false;
                         }
                         this.updateAvailableToolbarActions();
-                    }
+                    },
                 })),
                 this.toolbar
             )
@@ -640,37 +638,28 @@ class TranscriberView {
     }
 
     update(asset) {
-        if (this.currentAsset) {
-            /*
-                We want to avoid resetting the <textarea>'s value as long as the
-                upstream value has not changed to avoid losing unsaved work. If
-                the asset hasn't changed and the value of its latest
-                transcription hasn't changed we'll exit early.
-            */
+        if (this.currentAsset && this.currentAsset.id == asset.id) {
+            let noUpstream =
+                !asset.latest_transcription &&
+                !this.currentAsset.latest_transcription;
 
-            if (this.currentAsset.id == asset.id) {
-                let noUpstream =
-                    !asset.latest_transcription &&
-                    !this.currentAsset.latest_transcription;
+            let upstreamUnchanged =
+                this.currentAsset.latest_transcription &&
+                asset.latest_transcription &&
+                this.currentAsset.latest_transcription.id ==
+                    asset.latest_transcription.id;
 
-                let upstreamUnchanged =
-                    this.currentAsset.latest_transcription &&
-                    asset.latest_transcription &&
-                    this.currentAsset.latest_transcription.id ==
-                        asset.latest_transcription.id;
+            let assetStatusUnchanged =
+                this.currentAsset.status &&
+                asset.status &&
+                this.currentAsset.status == asset.status;
 
-                let assetStatusUnchanged =
-                    this.currentAsset.status &&
-                    asset.status &&
-                    this.currentAsset.status == asset.status;
-
-                if (noUpstream || upstreamUnchanged || assetStatusUnchanged) {
-                    // eslint-disable-next-line no-console
-                    console.debug(
-                        `Asset ${asset.id} unmodified; not resetting transcription view`
-                    );
-                    return;
-                }
+            if (noUpstream || upstreamUnchanged || assetStatusUnchanged) {
+                // eslint-disable-next-line no-console
+                console.debug(
+                    `Asset ${asset.id} unmodified; not resetting transcription view`
+                );
+                return;
             }
         }
 
@@ -711,10 +700,10 @@ class TranscriberView {
         enableSubmit = unmodified;
         enableNTT = true;
 
-        setAttr(this.saveButton, {disabled: !enableSave});
-        setAttr(this.submitButton, {disabled: !enableSubmit});
-        setAttr(this.nothingToTranscribeCheckbox, {
-            disabled: !enableNTT
+        setAttribute(this.saveButton, {disabled: !enableSave});
+        setAttribute(this.submitButton, {disabled: !enableSubmit});
+        setAttribute(this.nothingToTranscribeCheckbox, {
+            disabled: !enableNTT,
         });
     }
 
@@ -743,8 +732,8 @@ class TranscriberView {
                 )
             ) {
                 nothingToTranscribe = false;
-                setAttr(this.nothingToTranscribeCheckbox, {
-                    checked: false
+                setAttribute(this.nothingToTranscribeCheckbox, {
+                    checked: false,
                 });
             } else {
                 // Clear the transcription text as requested:
@@ -752,8 +741,8 @@ class TranscriberView {
             }
         }
 
-        setAttr(this.textarea, {
-            disabled: nothingToTranscribe
+        setAttribute(this.textarea, {
+            disabled: nothingToTranscribe,
         });
 
         this.updateAvailableToolbarActions();
@@ -770,7 +759,7 @@ class ImageViewer {
             element: this.el,
             prefixUrl: `${STATIC_URL}openseadragon/build/openseadragon/images/`,
             gestureSettingsTouch: {
-                pinchRotate: true
+                pinchRotate: true,
             },
             showRotationControl: true,
             showFlipControl: true,
@@ -781,7 +770,7 @@ class ImageViewer {
             fullPageButton: 'viewer-full-page',
             rotateLeftButton: 'viewer-rotate-left',
             rotateRightButton: 'viewer-rotate-right',
-            flipButton: 'viewer-flip'
+            flipButton: 'viewer-flip',
         });
     }
 
@@ -792,7 +781,7 @@ class ImageViewer {
     update(asset) {
         let tileSource = {
             type: 'image',
-            url: asset.imageUrl
+            url: asset.imageUrl,
         };
         // We want to reload if the tile source has actually changed but
         // otherwise avoid interrupting the user
@@ -827,7 +816,7 @@ export class AssetViewer {
         element.remove();
         this.el = element;
 
-        setAttr(this.el, {class: 'initialized'});
+        setAttribute(this.el, {class: 'initialized'});
     }
 
     onmount() {
@@ -888,27 +877,27 @@ export class AssetViewer {
             external_link.searchParams.set('sp', asset.sequence);
         }
 
-        $$('a.asset-external-view', this.el).forEach(i => {
-            i.href = external_link;
+        $$('a.asset-external-view', this.el).forEach((index) => {
+            index.href = external_link;
         });
 
         [
             ['asset', asset],
             ['item', asset.item],
             ['project', asset.project],
-            ['campaign', asset.campaign]
+            ['campaign', asset.campaign],
         ].forEach(([prefix, data]) => {
-            $$(`a.${prefix}-url`, this.el).forEach(link => {
+            $$(`a.${prefix}-url`, this.el).forEach((link) => {
                 link.href = data.url;
             });
 
-            $$(`.${prefix}-title`, this.el).forEach(element => {
+            $$(`.${prefix}-title`, this.el).forEach((element) => {
                 element.textContent = data.title;
             });
         });
 
-        $$('.asset-title', this.el).forEach(i => {
-            i.textContent = 'Image ' + asset.sequence;
+        $$('.asset-title', this.el).forEach((index) => {
+            index.textContent = 'Image ' + asset.sequence;
         });
     }
 }

@@ -12,8 +12,8 @@ class ConcordiaAdminSite(admin.AdminSite):
             admin_bulk_import_view,
             admin_site_report_view,
             celery_task_review,
-            redownload_images_view,
             project_level_export,
+            redownload_images_view,
         )
 
         urls = super().get_urls()
