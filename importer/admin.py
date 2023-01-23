@@ -7,6 +7,7 @@ from .models import ImportItem, ImportItemAsset, ImportJob
 from .tasks import download_asset_task
 
 
+@admin.action(description="Retry import")
 def retry_download_task(modeladmin, request, queryset):
     """
     Queue an asset download task for another attempt
@@ -16,9 +17,6 @@ def retry_download_task(modeladmin, request, queryset):
     for pk in pks:
         download_asset_task.delay(pk)
     messages.add_message(request, messages.INFO, "Queued %d tasks" % len(pks))
-
-
-retry_download_task.short_description = "Retry import"
 
 
 class LastStartedFilter(NullableTimestampFilter):
@@ -98,6 +96,7 @@ class TaskStatusModelAdmin(admin.ModelAdmin):
         super().__init__(*args, **kwargs)
 
 
+@admin.register(ImportJob)
 class ImportJobAdmin(TaskStatusModelAdmin):
     readonly_fields = TaskStatusModelAdmin.readonly_fields + (
         "project",
@@ -123,6 +122,7 @@ class ImportJobAdmin(TaskStatusModelAdmin):
     search_fields = ("url", "status")
 
 
+@admin.register(ImportItem)
 class ImportItemAdmin(TaskStatusModelAdmin):
     readonly_fields = TaskStatusModelAdmin.readonly_fields + ("job", "item")
 
@@ -145,6 +145,7 @@ class ImportItemAdmin(TaskStatusModelAdmin):
     search_fields = ("url", "status")
 
 
+@admin.register(ImportItemAsset)
 class ImportItemAssetAdmin(TaskStatusModelAdmin):
     readonly_fields = TaskStatusModelAdmin.readonly_fields + (
         "import_item",
@@ -170,8 +171,3 @@ class ImportItemAssetAdmin(TaskStatusModelAdmin):
     )
     search_fields = ("url", "status")
     actions = (retry_download_task,)
-
-
-admin.site.register(ImportJob, ImportJobAdmin)
-admin.site.register(ImportItem, ImportItemAdmin)
-admin.site.register(ImportItemAsset, ImportItemAssetAdmin)

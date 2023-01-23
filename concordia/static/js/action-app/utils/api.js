@@ -6,7 +6,7 @@ export function fetchJSON(originalURL) {
     qs.set('format', 'json');
     let finalURL = `${url.origin}${url.pathname}?${qs}`;
 
-    return fetchURL(finalURL).then(response => response.json());
+    return fetchURL(finalURL).then((response) => response.json());
 }
 
 function fetchURL(url, retryLimit = 5) {
@@ -25,11 +25,11 @@ function fetchURL(url, retryLimit = 5) {
             console.time(`Fetch ${url} (retry ${retryCount})`);
 
             return fetch(url)
-                .then(response => {
+                .then((response) => {
                     console.timeEnd(`Fetch ${url} (retry ${retryCount})`);
                     resolve(response);
                 })
-                .catch(error => {
+                .catch((error) => {
                     retryCount++;
                     if (retryCount < retryLimit) {
                         console.error(`Retrying ${url}: ${error}`);
@@ -62,13 +62,11 @@ export function getCachedData(container, objectReference, key) {
     */
     let id = objectReference.id.toString();
 
-    if (container.has(id)) {
-        return Promise.resolve(container.get(id));
-    } else {
-        return fetchJSON(objectReference.url).then(data => {
-            let object = key ? data[key] : data;
-            container.set(id, object);
-            return object;
-        });
-    }
+    return container.has(id)
+        ? Promise.resolve(container.get(id))
+        : fetchJSON(objectReference.url).then((data) => {
+              let object = key ? data[key] : data;
+              container.set(id, object);
+              return object;
+          });
 }

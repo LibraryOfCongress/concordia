@@ -24,19 +24,19 @@
 {% block content %}
     <div id="content-main">
 
-            <p><strong>
-                This feature will accept a zip file, process and convert to Loc.gov structure and re-zip it back
-            </strong>
-            </p>
-            <div>
-                <form method="post" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    {{ form.as_p }}
-                    <div class="submit-row">
-                        <button type="submit">Process Bagit</button>
-                    </div>
-                </form>
-            </div>
+        <p><strong>
+            This feature will accept a zip file, process and convert to Loc.gov structure and re-zip it back
+        </strong>
+        </p>
+        <div>
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <div class="submit-row">
+                    <button type="submit">Process Bagit</button>
+                </div>
+            </form>
+        </div>
 
 
         {% if messages %}

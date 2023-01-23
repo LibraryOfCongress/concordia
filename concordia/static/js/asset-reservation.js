@@ -8,9 +8,9 @@ function attemptToReserveAsset(reservationURL, findANewPageURL, actionType) {
         .ajax({
             url: reservationURL,
             type: 'POST',
-            dataType: 'json'
+            dataType: 'json',
         })
-        .done(function() {
+        .done(function () {
             $transcriptionEditor
                 .data('hasReservation', true)
                 .trigger('update-ui-state');
@@ -24,7 +24,7 @@ function attemptToReserveAsset(reservationURL, findANewPageURL, actionType) {
                 actionType
             );
         })
-        .fail(function(jqXHR, textStatus, errorThrown) {
+        .fail(function (jqXHR, textStatus, errorThrown) {
             if (jqXHR.status == 409) {
                 if (actionType == 'transcribe') {
                     $transcriptionEditor
@@ -56,12 +56,12 @@ function attemptToReserveAsset(reservationURL, findANewPageURL, actionType) {
             }
         });
 
-    window.addEventListener('beforeunload', function() {
+    window.addEventListener('beforeunload', function () {
         var payload = {
             release: true,
             csrfmiddlewaretoken: jQuery(
                 'input[name="csrfmiddlewaretoken"]'
-            ).val()
+            ).val(),
         };
 
         // We'll try Beacon since that's reliable but until we can drop support for IE11 we need a fallback:
@@ -69,7 +69,7 @@ function attemptToReserveAsset(reservationURL, findANewPageURL, actionType) {
             navigator.sendBeacon(
                 reservationURL,
                 new Blob([jQuery.param(payload)], {
-                    type: 'application/x-www-form-urlencoded'
+                    type: 'application/x-www-form-urlencoded',
                 })
             );
         } else {

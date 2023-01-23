@@ -7,7 +7,7 @@ import {
     AssetList,
     AssetViewer,
     conditionalUnmount,
-    MetadataPanel
+    MetadataPanel,
 } from './components.js';
 import {fetchJSON, getCachedData} from './utils/api.js';
 import {$, $$, setSelectValue} from './utils/dom.js';
@@ -90,7 +90,9 @@ export class ActionApp {
     }
 
     clearAllErrors() {
-        Object.keys(this.alerts).forEach(category => this.clearError(category));
+        Object.keys(this.alerts).forEach((category) =>
+            this.clearError(category)
+        );
     }
 
     setupPersistentStateManagement() {
@@ -138,7 +140,7 @@ export class ActionApp {
         let assetDataURL = new URL(
             this.urlTemplates.assetData.expand({
                 // This is a special-case for retrieving all assets regardless of status
-                action: 'assets'
+                action: 'assets',
             }),
             document.location.href
         );
@@ -161,11 +163,11 @@ export class ActionApp {
         // Register things which we need to handle in any context, such as
         // opening help or handling focus-shift events
 
-        document.body.addEventListener('keydown', event => {
+        document.body.addEventListener('keydown', (event) => {
             switch (event.key) {
                 case '?':
                 case 'F1':
-                    if (!event.target.tagName.match(/(INPUT|TEXTAREA)/i)) {
+                    if (!/(input|textarea)/i.test(event.target.tagName)) {
                         // Either the F1 or ? keys were pressed outside of a
                         // text field so we'll open the help sidebar:
                         document.getElementById('help-toggle').click();
@@ -183,8 +185,8 @@ export class ActionApp {
     setupModeSelector() {
         this.modeSelection = $('#activity-mode-selection');
 
-        $$('button', this.modeSelection).forEach(element => {
-            element.addEventListener('click', event => {
+        $$('button', this.modeSelection).forEach((element) => {
+            element.addEventListener('click', (event) => {
                 let target = event.target;
                 this.switchMode(target.value);
             });
@@ -214,7 +216,7 @@ export class ActionApp {
         this.appElement.dataset.mode = this.currentMode;
         this.addToState('mode', this.currentMode);
 
-        $$('button', this.modeSelection).forEach(button => {
+        $$('button', this.modeSelection).forEach((button) => {
             button.classList.toggle('active', button.value == newMode);
         });
 
@@ -243,27 +245,27 @@ export class ActionApp {
             return hidden;
         }
 
-        let toggleButton = clickedButton => {
+        let toggleButton = (clickedButton) => {
             let hidden = hideTarget(clickedButton);
 
             if (!hidden) {
                 // If we just made something visible we'll hide any other button's targets
                 // as long as they aren't pinned to apply only when an asset is open:
                 buttons
-                    .filter(button => button != clickedButton)
+                    .filter((button) => button != clickedButton)
                     .filter(
-                        button =>
+                        (button) =>
                             this.openAssetId ||
                             !('toggleableOnlyWhenOpen' in button.dataset)
                     )
-                    .forEach(button => {
+                    .forEach((button) => {
                         hideTarget(button, true);
                     });
             }
         };
 
-        buttons.forEach(button => {
-            button.addEventListener('click', event => {
+        buttons.forEach((button) => {
+            button.addEventListener('click', (event) => {
                 toggleButton(event.currentTarget);
             });
         });
@@ -281,7 +283,7 @@ export class ActionApp {
             this.appElement
         );
 
-        $$('a[href]', this.sharingButtons).forEach(anchor => {
+        $$('a[href]', this.sharingButtons).forEach((anchor) => {
             // We use getAttribute to get the bare value without the normal
             // browser relative URL resolution so we can recognize an unescaped
             // URL value:
@@ -290,7 +292,7 @@ export class ActionApp {
     }
 
     updateSharing(url, title) {
-        $$('a[href]', this.sharingButtons).forEach(anchor => {
+        $$('a[href]', this.sharingButtons).forEach((anchor) => {
             let template = anchor.dataset.urlTemplate;
             if (template.indexOf('SHARE_URL') === 0) {
                 // The bare URL doesn't require URL encoding
@@ -308,7 +310,7 @@ export class ActionApp {
         console.info(`Connecting to ${assetSocketURL}`);
         let assetSocket = (this.assetSocket = new WebSocket(assetSocketURL));
 
-        assetSocket.addEventListener('message', rawMessage => {
+        assetSocket.addEventListener('message', (rawMessage) => {
             console.debug('Asset socket message:', rawMessage);
 
             let data = JSON.parse(rawMessage.data);
@@ -321,7 +323,7 @@ export class ActionApp {
                         sent: data.sent,
                         difficulty: message.difficulty,
                         latest_transcription: message.latest_transcription,
-                        status: message.status
+                        status: message.status,
                     };
 
                     this.mergeAssetUpdate(assetId, assetUpdate);
@@ -336,13 +338,13 @@ export class ActionApp {
                     */
 
                     this.mergeAssetUpdate(assetId, {
-                        reservationToken: message.reservation_token
+                        reservationToken: message.reservation_token,
                     });
 
                     break;
                 case 'asset_reservation_released':
                     this.mergeAssetUpdate(assetId, {
-                        reservationToken: null
+                        reservationToken: null,
                     });
 
                     if (this.openAssetId && this.openAssetId == assetId) {
@@ -376,11 +378,11 @@ export class ActionApp {
             }
         });
 
-        assetSocket.addEventListener('error', event => {
+        assetSocket.addEventListener('error', (event) => {
             console.error('Asset socket error occurred:', event);
         });
 
-        assetSocket.onclose = event => {
+        assetSocket.onclose = (event) => {
             console.warn('Asset socket closed:', event);
             window.setTimeout(this.connectAssetEventStream.bind(this), 1000);
         };
@@ -389,7 +391,7 @@ export class ActionApp {
     refreshData() {
         console.time('Refreshing asset editability');
 
-        this.assets.forEach(asset => {
+        this.assets.forEach((asset) => {
             asset.editable = this.canEditAsset(asset);
         });
 
@@ -408,15 +410,15 @@ export class ActionApp {
         loadMoreButton.addEventListener('click', () =>
             this.fetchNextAssetPage()
         );
-        new IntersectionObserver(entries => {
-            if (entries.filter(i => i.isIntersecting)) {
+        new IntersectionObserver((entries) => {
+            if (entries.filter((index) => index.isIntersecting)) {
                 this.fetchNextAssetPage();
             }
         }).observe(loadMoreButton);
 
         this.assetList = new AssetList({
-            getAssetData: assetId => this.getAssetData(assetId),
-            open: targetElement => this.openViewer(targetElement.id)
+            getAssetData: (assetId) => this.getAssetData(assetId),
+            open: (targetElement) => this.openViewer(targetElement.id),
         });
         mount($('#asset-list-container'), this.assetList, loadMoreButton);
 
@@ -432,11 +434,11 @@ export class ActionApp {
         /* List filtering */
         this.campaignSelect = $('#selected-campaign');
         fetchJSON(this.config.urls.campaignList)
-            .then(data => {
+            .then((data) => {
                 let campaignOptGroup = document.createElement('optgroup');
                 campaignOptGroup.label = 'Campaigns';
-                this.campaignSelect.appendChild(campaignOptGroup);
-                data.objects.forEach(campaign => {
+                this.campaignSelect.append(campaignOptGroup);
+                data.objects.forEach((campaign) => {
                     let o = document.createElement('option');
                     o.value = campaign.id;
                     o.textContent = campaign.title;
@@ -448,7 +450,7 @@ export class ActionApp {
                         }
                     );
 
-                    campaignOptGroup.appendChild(o);
+                    campaignOptGroup.append(o);
                 });
             })
             .then(() => {
@@ -466,13 +468,13 @@ export class ActionApp {
         });
 
         fetchJSON(this.config.urls.topicList)
-            .then(data => {
+            .then((data) => {
                 let topicOptGroup = document.createElement('optgroup');
                 topicOptGroup.label = 'Topics';
                 topicOptGroup.classList.add('topic-optgroup');
-                this.campaignSelect.appendChild(topicOptGroup);
+                this.campaignSelect.append(topicOptGroup);
 
-                data.objects.forEach(topic => {
+                data.objects.forEach((topic) => {
                     let o = document.createElement('option');
                     o.value = topic.id;
                     o.textContent = topic.title;
@@ -484,14 +486,14 @@ export class ActionApp {
                         }
                     );
 
-                    topicOptGroup.appendChild(o);
+                    topicOptGroup.append(o);
                 });
             })
             .then(() => {
                 this.updateAvailableCampaignFilters();
             });
 
-        $('#asset-list-thumbnail-size').addEventListener('input', event => {
+        $('#asset-list-thumbnail-size').addEventListener('input', (event) => {
             this.assetList.el.style.setProperty(
                 '--asset-thumbnail-size',
                 event.target.value + 'px'
@@ -506,15 +508,13 @@ export class ActionApp {
             campaigns which you can actually work on
         */
 
-        $$('option', this.campaignSelect).forEach(optionElement => {
+        $$('option', this.campaignSelect).forEach((optionElement) => {
             let disabled;
-            if (this.campaignSelect == 'review') {
-                disabled = optionElement.dataset.submitted_count == '0';
-            } else {
-                disabled =
-                    optionElement.dataset.not_started_count == '0' &&
-                    optionElement.dataset.in_progress_count == '0';
-            }
+            disabled =
+                this.campaignSelect == 'review'
+                    ? optionElement.dataset.submitted_count == '0'
+                    : optionElement.dataset.not_started_count == '0' &&
+                      optionElement.dataset.in_progress_count == '0';
             optionElement.toggleAttribute('disabled', disabled);
         });
     }
@@ -536,22 +536,22 @@ export class ActionApp {
             sizes: [50, 50],
             minSize: 300,
             gutterSize: 8,
-            elementStyle: function(dimension, size, gutterSize) {
+            elementStyle: function (dimension, size, gutterSize) {
                 return {
-                    'flex-basis': 'calc(' + size + '% - ' + gutterSize + 'px)'
+                    'flex-basis': 'calc(' + size + '% - ' + gutterSize + 'px)',
                 };
             },
-            gutterStyle: function(dimension, gutterSize) {
+            gutterStyle: function (dimension, gutterSize) {
                 return {
-                    'flex-basis': gutterSize + 'px'
+                    'flex-basis': gutterSize + 'px',
                 };
-            }
+            },
         });
     }
 
     fetchAssetData() {
         let url = this.urlTemplates.assetData.expand({
-            action: this.currentMode
+            action: this.currentMode,
         });
 
         return this.fetchAssetPage(url);
@@ -561,17 +561,17 @@ export class ActionApp {
         let startingMode = this.currentMode;
 
         return fetchJSON(url)
-            .catch(error => {
+            .catch((error) => {
                 console.warn(
                     `Failed to retrieve ${url}: ${error} — returning it to the queue`
                 );
                 this.queuedAssetPageURLs.push(url);
                 throw error;
             })
-            .then(data => {
-                data.objects.forEach(i => {
-                    i.sent = data.sent;
-                    this.createAsset(i);
+            .then((data) => {
+                data.objects.forEach((index) => {
+                    index.sent = data.sent;
+                    this.createAsset(index);
                 });
 
                 if (this.currentMode != startingMode) {
@@ -789,32 +789,32 @@ export class ActionApp {
         let keyFromAsset;
         switch (sortMode) {
             case 'hardest':
-                keyFromAsset = asset => -1 * asset.difficulty;
+                keyFromAsset = (asset) => -1 * asset.difficulty;
                 break;
             case 'easiest':
-                keyFromAsset = asset => asset.difficulty;
+                keyFromAsset = (asset) => asset.difficulty;
                 break;
             case 'campaign':
                 // Sort by Campaign using sub-values for stable ordering
-                keyFromAsset = asset => [
+                keyFromAsset = (asset) => [
                     asset.campaign.title,
                     asset.project.title,
                     asset.item.title,
-                    asset.id
+                    asset.id,
                 ];
                 break;
             case 'item-id':
-                keyFromAsset = asset => asset.item.item_id;
+                keyFromAsset = (asset) => asset.item.item_id;
                 break;
             case 'recent':
-                keyFromAsset = asset => [-asset.sent, asset.id];
+                keyFromAsset = (asset) => [-asset.sent, asset.id];
                 break;
             case 'year':
-                keyFromAsset = asset => asset.year;
+                keyFromAsset = (asset) => asset.year;
                 break;
             default:
                 console.warn(`Unknown sort mode ${sortMode}; using asset ID…`);
-                keyFromAsset = asset => asset.id;
+                keyFromAsset = (asset) => asset.id;
         }
 
         return sortBy(assetList, keyFromAsset);
@@ -835,8 +835,8 @@ export class ActionApp {
     }
 
     assetHasTopic(asset, topicId) {
-        for (let idx in asset.topics) {
-            if (asset.topics[idx].id === topicId) {
+        for (let index in asset.topics) {
+            if (asset.topics[index].id === topicId) {
                 return true;
             }
         }
@@ -863,7 +863,7 @@ export class ActionApp {
         let currentTopicId;
         if (currentCampaignSelectValue) {
             let campaignOrTopic = this.getSelectedOptionType();
-            currentCampaignSelectValue = parseInt(
+            currentCampaignSelectValue = Number.parseInt(
                 currentCampaignSelectValue,
                 10
             );
@@ -934,7 +934,7 @@ export class ActionApp {
         this.updateSharing(asset.url, asset.title);
 
         this.assetReservationURL = this.urlTemplates.assetReservation.expand({
-            assetId: encodeURIComponent(asset.id)
+            assetId: encodeURIComponent(asset.id),
         });
 
         this.reserveAsset();
@@ -949,16 +949,16 @@ export class ActionApp {
             this.metadataPanel
         );
 
-        this.getCachedItem(asset.item).then(itemInfo => {
+        this.getCachedItem(asset.item).then((itemInfo) => {
             this.metadataPanel.itemMetadata.update(itemInfo);
             this.updateSharing(asset.url, itemInfo.title);
         });
 
-        this.getCachedProject(asset.project).then(projectInfo => {
+        this.getCachedProject(asset.project).then((projectInfo) => {
             this.metadataPanel.projectMetadata.update(projectInfo);
         });
 
-        this.getCachedCampaign(asset.campaign).then(campaignInfo => {
+        this.getCachedCampaign(asset.campaign).then((campaignInfo) => {
             this.metadataPanel.campaignMetadata.update(campaignInfo);
         });
 
@@ -997,7 +997,7 @@ export class ActionApp {
         this.assetViewer.update({
             editable: {canEdit, reason},
             mode: this.currentMode,
-            asset
+            asset,
         });
     }
 
@@ -1049,7 +1049,7 @@ export class ActionApp {
             .ajax({
                 url: reservationURL,
                 type: 'POST',
-                dataType: 'json'
+                dataType: 'json',
             })
             .done(() => {
                 if (
@@ -1108,13 +1108,13 @@ export class ActionApp {
 
         let payload = {
             release: true,
-            csrfmiddlewaretoken: $('input[name="csrfmiddlewaretoken"]').value
+            csrfmiddlewaretoken: $('input[name="csrfmiddlewaretoken"]').value,
         };
 
         navigator.sendBeacon(
             assetReservationURL,
             new Blob([jQuery.param(payload)], {
-                type: 'application/x-www-form-urlencoded'
+                type: 'application/x-www-form-urlencoded',
             })
         );
     }
@@ -1145,13 +1145,13 @@ export class ActionApp {
             case 'save':
                 this.postAction(
                     this.urlTemplates.saveTranscription.expand({
-                        assetId: this.openAssetId
+                        assetId: this.openAssetId,
                     }),
                     {
                         text: data.text,
-                        supersedes: currentTranscriptionId
+                        supersedes: currentTranscriptionId,
                     }
-                ).done(responseData => {
+                ).done((responseData) => {
                     if (!asset.latest_transcription) {
                         asset.latest_transcription = {};
                     }
@@ -1159,7 +1159,7 @@ export class ActionApp {
                     asset.latest_transcription.text = responseData.text;
                     this.mergeAssetUpdate(responseData.asset.id, {
                         sent: responseData.sent,
-                        status: responseData.asset.status
+                        status: responseData.asset.status,
                     });
                     this.updateViews();
                 });
@@ -1170,12 +1170,12 @@ export class ActionApp {
                 }
                 this.postAction(
                     this.urlTemplates.submitTranscription.expand({
-                        transcriptionId: currentTranscriptionId
+                        transcriptionId: currentTranscriptionId,
                     })
-                ).done(responseData => {
+                ).done((responseData) => {
                     this.mergeAssetUpdate(responseData.asset.id, {
                         sent: responseData.sent,
-                        status: responseData.asset.status
+                        status: responseData.asset.status,
                     });
                     this.updateViews();
                 });
@@ -1183,13 +1183,13 @@ export class ActionApp {
             case 'accept':
                 this.postAction(
                     this.urlTemplates.reviewTranscription.expand({
-                        transcriptionId: currentTranscriptionId
+                        transcriptionId: currentTranscriptionId,
                     }),
                     {action: 'accept'}
-                ).done(responseData => {
+                ).done((responseData) => {
                     this.mergeAssetUpdate(responseData.asset.id, {
                         sent: responseData.sent,
-                        status: responseData.asset.status
+                        status: responseData.asset.status,
                     });
                     this.releaseAsset();
                     this.updateViews();
@@ -1198,13 +1198,13 @@ export class ActionApp {
             case 'reject':
                 this.postAction(
                     this.urlTemplates.reviewTranscription.expand({
-                        transcriptionId: currentTranscriptionId
+                        transcriptionId: currentTranscriptionId,
                     }),
                     {action: 'reject'}
-                ).done(responseData => {
+                ).done((responseData) => {
                     this.mergeAssetUpdate(responseData.asset.id, {
                         sent: responseData.sent,
-                        status: responseData.asset.status
+                        status: responseData.asset.status,
                     });
                 });
                 break;
@@ -1223,7 +1223,7 @@ export class ActionApp {
                 url: url,
                 method: 'POST',
                 dataType: 'json',
-                data: payload
+                data: payload,
             })
             .always(() => {
                 this.actionSubmissionInProgress = false;

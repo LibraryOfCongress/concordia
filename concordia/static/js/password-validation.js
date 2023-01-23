@@ -1,35 +1,35 @@
 /* global jQuery */
 
-(function($) {
+(function ($) {
     var requirements = [
         {
             id: 'pw-length',
             text: 'At least 8 characters long',
-            test: function(i) {
-                return i.length >= 8;
-            }
+            test: function (index) {
+                return index.length >= 8;
+            },
         },
         {
             id: 'pw-uppercase',
             text: '1 or more uppercase characters',
-            test: function(i) {
-                return i.match(/[A-Z]/);
-            }
+            test: function (index) {
+                return index.match(/[A-Z]/);
+            },
         },
         {
             id: 'pw-digits',
             text: '1 or more digits',
-            test: function(i) {
-                return i.match(/[0-9]/);
-            }
+            test: function (index) {
+                return index.match(/\d/);
+            },
         },
         {
             id: 'pw-special',
             text: '1 or more special characters',
-            test: function(i) {
-                return i.match(/[^\s\da-z]/i);
-            }
-        }
+            test: function (index) {
+                return index.match(/[^\d\sa-z]/i);
+            },
+        },
     ];
     var $password1 = $('#id_password1,#id_new_password1').removeAttr('title');
     var $requirementsList = $password1
@@ -38,21 +38,21 @@
         .addClass('list-unstyled')
         .empty();
 
-    requirements.forEach(function(req) {
+    requirements.forEach(function (request) {
         $('<li>')
-            .attr('id', req.id)
-            .text(req.text)
+            .attr('id', request.id)
+            .text(request.text)
             .appendTo($requirementsList);
     });
 
-    $password1.on('input change', function() {
-        var currentVal = this.value;
+    $password1.on('input change', function () {
+        var currentValue = this.value;
         var validity = true;
 
-        requirements.forEach(function(req) {
-            var li = document.getElementById(req.id);
+        requirements.forEach(function (request) {
+            var li = document.getElementById(request.id);
 
-            if (req.test(currentVal)) {
+            if (request.test(currentValue)) {
                 li.className = 'text-success';
             } else {
                 li.className = 'text-warning';

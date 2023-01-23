@@ -97,6 +97,7 @@ class ConcordiaUserAdmin(UserAdmin):
         qs = qs.annotate(Count("transcription"))
         return qs
 
+    @admin.display(ordering="transcription__count")
     def transcription_count(self, obj):
         return obj.transcription__count
 
@@ -123,7 +124,6 @@ class ConcordiaUserAdmin(UserAdmin):
             self, request, queryset, field_names=self.EXPORT_FIELDS
         )
 
-    transcription_count.admin_order_field = "transcription__count"
     actions = (anonymize_action, export_users_as_csv, export_users_as_excel)
 
 
@@ -145,19 +145,16 @@ class CustomListDisplayFieldsMixin:
     used on multiple models
     """
 
+    @admin.display(description="Description")
     def truncated_description(self, obj):
         return truncatechars(obj.description, 200)
 
-    truncated_description.short_description = "Description"
-
+    @admin.display(description="Metadata")
     def truncated_metadata(self, obj):
         if obj.metadata:
             return format_html("<code>{}</code>", truncatechars(obj.metadata, 200))
         else:
             return ""
-
-    truncated_metadata.allow_tags = True
-    truncated_metadata.short_description = "Metadata"
 
 
 @admin.register(Campaign)
@@ -482,15 +479,13 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     def item_id(self, obj):
         return obj.item.item_id
 
+    @admin.display(description="Media URL")
     def truncated_media_url(self, obj):
         return format_html(
             '<a target="_blank" href="{}">{}</a>',
             urljoin(settings.MEDIA_URL, obj.media_url),
             truncatechars(obj.media_url, 100),
         )
-
-    truncated_media_url.allow_tags = True
-    truncated_media_url.short_description = "Media URL"
 
     def get_readonly_fields(self, request, obj=None):
         if obj:
@@ -610,10 +605,9 @@ class TranscriptionAdmin(admin.ModelAdmin):
         else:
             return super().lookup_allowed(key, value)
 
+    @admin.display(description="Text")
     def truncated_text(self, obj):
         return truncatechars(obj.text, 100)
-
-    truncated_text.short_description = "Text"
 
 
 @admin.register(SimpleContentBlock)
