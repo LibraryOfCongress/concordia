@@ -653,3 +653,6 @@ class UserRetiredCampaign(models.Model):
     review_count = models.IntegerField(
         blank=True, null=True, verbose_name="transcription review count"
     )
+
+    def __str__(self):
+        return f"{self.user} - {self.campaign}"
