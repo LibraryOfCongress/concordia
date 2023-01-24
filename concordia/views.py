@@ -606,6 +606,8 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         else:
             ctx["active_tab"] = self.request.GET.get("tab", "contributions")
         ctx["activity"] = activity
+        ctx["start"] = start
+        ctx["end"] = end
         ctx["order_by"] = order_by
 
         qId = self.request.GET.get("campaign_slug", None)
