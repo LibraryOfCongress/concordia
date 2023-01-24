@@ -39,6 +39,7 @@ from ..models import (
     Topic,
     Transcription,
     UserAssetTagCollection,
+    UserRetiredCampaign,
 )
 from ..views import ReportCampaignView
 from .actions import (
@@ -696,3 +697,17 @@ class SiteReportAdmin(admin.ModelAdmin):
                 return (i, key)
         else:
             return (1024, key)
+
+
+@admin.register(UserRetiredCampaign)
+class UserRetiredCampaignAdmin(admin.ModelAdmin):
+    list_display = ("id", "asset_count")
+    raw_id_fields = ["user", "campaign"]
+    read_only_fields = (
+        "user",
+        "campaign",
+        "asset_count",
+        "asset_tag_count",
+        "transcribe_count",
+        "review_count",
+    )

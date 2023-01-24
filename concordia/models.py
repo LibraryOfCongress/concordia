@@ -678,3 +678,19 @@ class SiteReport(models.Model):
         "users_activated",
         "registered_contributors",
     ]
+
+
+class UserRetiredCampaign(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
+    asset_count = models.IntegerField(blank=True, null=True)
+    asset_tag_count = models.IntegerField(blank=True, null=True)
+    transcribe_count = models.IntegerField(
+        blank=True, null=True, verbose_name="transcription save/submit count"
+    )
+    review_count = models.IntegerField(
+        blank=True, null=True, verbose_name="transcription review count"
+    )
+
+    def __str__(self):
+        return f"{self.user} - {self.campaign}"
