@@ -3,9 +3,9 @@ name: 'Build'
 on:
     workflow_dispatch:
     push:
-        branches: [main, release]
+        branches: [main, release, 'feature-*']
     pull_request:
-        branches: [main]
+        branches: [main, 'feature-*']
 
 jobs:
     build:
@@ -15,7 +15,13 @@ jobs:
         steps:
             - name: Install system packages
               run: |
-                  sudo apt-get install -qy libmemcached-dev libz-dev libfreetype6-dev libtiff-dev libjpeg-dev libopenjp2-7-dev libwebp-dev zlib1g-dev libpq-dev
+                  sudo apt-get install -qy libmemcached-dev libz-dev libfreetype6-dev libtiff-dev \
+                    libjpeg-dev libopenjp2-7-dev libwebp-dev zlib1g-dev libpq-dev
+
+            - name: Install node and npm
+              uses: actions/setup-node@v3
+              with:
+                  node-version: '12'
 
             - name: Checkout repository
               uses: actions/checkout@v3
@@ -31,11 +37,19 @@ jobs:
             - name: Display Python version
               run: python -c "import sys; print(sys.version)"
 
-            - name: Install Dependencies
+            - name: Initialize venv install Dependencies
               run: |
+                  python3 -n venv venv-1
+                  source venv-1//bin/activate
                   python3 -m pip install --upgrade pip
                   pip3 install -U packaging
                   pip3 install -U setuptools
                   pip3 install -U pipenv
                   pipenv install --dev --system --deploy
                   python3 setup.py build
+
+            - name: build containers
+              run: |
+                  docker build -t concordia .
+                  docker build -t concordia/importer --file importer/Dockerfile .
+                  docker build -t concordia/celerybeat --file celerybeat/Dockerfile .
