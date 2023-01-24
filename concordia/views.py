@@ -549,10 +549,38 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
                 filter=Q(transcription__user=user) | Q(transcription__reviewed_by=user),
             ),
         )
+        fmt = "%Y-%m-%d"
+        start = self.request.GET.get("start", None)
+        end = self.request.GET.get("end", None)
+        start_date = None
+        if start is not None and len(start) > 0:
+            start_date = datetime.datetime.strptime(start, fmt)
+        end_date = None
+        if end is not None and len(end) > 0:
+            end_date = datetime.datetime.strptime(end, fmt)
+        if start_date is not None and end_date is not None:
+            assets = assets.filter(
+                latest_activity__gte=start_date,
+                latest_activity__year__lte=end_date.year,
+                latest_activity__month__lte=end_date.month,
+                latest_activity__day__lte=end_date.day,
+            )
+        elif start_date is not None or end_date is not None:
+            date = start_date if start_date else end_date
+            assets = assets.filter(
+                latest_activity__year=date.year,
+                latest_activity__month=date.month,
+                latest_activity__day=date.day,
+            )
         # CONCD-189 only show pages from the last 6 months
         SIX_MONTHS_AGO = datetime.datetime.today() - datetime.timedelta(days=6 * 30)
+        order_by = self.request.GET.get("order_by", "date-descending")
         assets = assets.filter(latest_activity__gte=SIX_MONTHS_AGO)
-        self.assets = assets = assets.order_by("-latest_activity", "-id")
+        if order_by == "date-ascending":
+            assets = assets.order_by("latest_activity", "-id")
+        else:
+            assets = assets.order_by("-latest_activity", "-id")
+        self.assets = assets
         if campaign_id is not None:
             assets = assets.filter(item__project__campaign__pk=campaign_id)
         return assets
@@ -566,7 +594,10 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         campaign = self.request.GET.get("campaign", None)
         activity = self.request.GET.get("activity", None)
         status_list = self.request.GET.getlist("status")
-        if any([activity, campaign, page, status_list]):
+        start = self.request.GET.get("start", None)
+        end = self.request.GET.get("end", None)
+        order_by = self.request.GET.get("order_by", None)
+        if any([activity, campaign, page, status_list, start, end, order_by]):
             ctx["active_tab"] = "pages"
             if campaign is not None:
                 ctx["campaign"] = int(campaign)
@@ -575,6 +606,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         else:
             ctx["active_tab"] = self.request.GET.get("tab", "contributions")
         ctx["activity"] = activity
+        ctx["order_by"] = order_by
 
         qId = self.request.GET.get("campaign_slug", None)
 
