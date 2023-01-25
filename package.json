@@ -17,8 +17,8 @@
         "stylelint-value-no-unknown-custom-properties": "^3.0.0"
     },
     "dependencies": {
-        "@fortawesome/fontawesome-free": "^5.15.1",
         "@duetds/date-picker": "^1.4.0",
+        "@fortawesome/fontawesome-free": "^5.15.1",
         "array-sort-by": "^1.2.1",
         "bootstrap": "4.5.3",
         "codemirror": "^5.58.2",

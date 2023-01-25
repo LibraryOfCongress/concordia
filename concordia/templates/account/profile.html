@@ -228,6 +228,9 @@
 {% endblock main_content %}
 
 {% block body_scripts %}
+    <script type="module" src="{% static '@duetds/date-picker/dist/duet/duet.esm.js' %}"></script>
+    <script type="module" src="{% static '@duetds/date-picker/dist/duet/duet-date-picker.entry.js' %}"></script>
+    <script nomodule src="{% static '@duetds/date-picker/dist/duet/duet.js' %}"></script>
     {{ block.super }}
     <script src="{% static 'js/campaign-selection.js' %}"></script>
     <script>
