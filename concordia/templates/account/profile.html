@@ -5,6 +5,10 @@
 {% load bootstrap4 %}
 {% load bittersweet_querystring %}
 
+{% block prefetch %}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@duetds/date-picker@1.4.0/dist/duet/themes/default.css" />
+{% endblock prefetch %}
+
 {% block title %}User Profile{% endblock title %}
 
 {% block breadcrumbs %}
@@ -228,6 +232,8 @@
 {% endblock main_content %}
 
 {% block body_scripts %}
+    <script type="module" src="https://cdn.jsdelivr.net/npm/@duetds/date-picker@1.4.0/dist/duet/duet.esm.js"></script>
+    <script nomodule src="https://cdn.jsdelivr.net/npm/@duetds/date-picker@1.4.0/dist/duet/duet.js"></script>
     {{ block.super }}
     <script src="{% static 'js/campaign-selection.js' %}"></script>
     <script>
