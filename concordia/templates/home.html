@@ -15,7 +15,7 @@
     {% if SHOW_BANNER %}
         <div id="homepage-contribute-container" class="container my-4">
             <div class="px-default ml-md-3 mb-5">
-                <div class="alert alert-success alert-dismissible w-100 text-center" id="{{ banner.slug }}" role="alert">
+                <div class="alert alert-success alert-dismissible w-100 text-center" id="banner-{{ banner.slug }}" role="alert">
                     {% if banner %}
                         <a class="btn btn-success" href="{{ banner.link }}"{% if banner.open_in_new_window_tab %} target="_blank"{% endif %}>
                             {{ banner.text }}
@@ -213,8 +213,10 @@
         ) {
             for(var i in localStorage)
             {
-                if ($('#' + i).hasClass("alert")) {
-                    $('#' + i).attr("hidden", true);
+                if (i.startsWith("banner-")) {
+                    if ($('#' + i).hasClass("alert")) {
+                        $('#' + i).attr("hidden", true);
+                    }
                 }
             }
         }
