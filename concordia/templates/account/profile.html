@@ -142,7 +142,7 @@
                             <div class="row">
                                 {% include "fragments/standard-pagination.html" %}
                             </div>
-                            <table class="table table-striped table-responsive-sm">
+                            <table class="table table-striped table-responsive-sm" id="recent-pages">
                                 <thead class="border-y">
                                     <tr class="text-left">
                                         <th>Date</th>
@@ -152,10 +152,6 @@
                                         <th>Current Status</th>
                                     </tr>
                                 </thead>
-
-                                <tbody id="#recent-pages">
-                                    {% include "fragments/recent-pages.html" %}
-                                </tbody>
                             </table>
 
                             <div class="row">
@@ -172,4 +168,12 @@
 {% block body_scripts %}
     {{ block.super }}
     <script src="{% static 'js/campaign-selection.js' %}"></script>
+    <script src="{% static 'js/recent-pages.js' %}"></script>
+    <script type="text/javascript">
+        {% if active_tab and active_tab == "pages" %}
+            $(document).ready(function() {
+                getPages();
+            });
+        {% endif %}
+    </script>
 {% endblock body_scripts %}

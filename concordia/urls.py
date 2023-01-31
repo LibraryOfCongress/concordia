@@ -181,6 +181,7 @@ urlpatterns = [
     path(
         "account/login/", views.ConcordiaLoginView.as_view(), name="registration_login"
     ),
+    path("account/get_pages/", views.get_pages, name="get_pages"),
     path("account/profile/", views.AccountProfileView.as_view(), name="user-profile"),
     path(
         "account/password_reset/",

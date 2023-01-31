@@ -474,7 +474,7 @@ def AccountLetterView(request):
         return response
 
 
-def get_pages(request):
+def _get_pages(request):
     user = request.user
     transcriptions = Transcription.objects.filter(Q(user=user) | Q(reviewed_by=user))
 
@@ -508,6 +508,17 @@ def get_pages(request):
     return assets.order_by("-latest_activity", "-id")
 
 
+@login_required
+def get_pages(request):
+    assets = _get_pages(request)
+    context = {"object_list": assets}
+    data = dict()
+    data["content"] = loader.render_to_string(
+        "fragments/recent-pages.html", context, request=request
+    )
+    return JsonResponse(data)
+
+
 @method_decorator(never_cache, name="dispatch")
 class AccountProfileView(LoginRequiredMixin, FormView, ListView):
     template_name = "account/profile.html"
@@ -519,14 +530,14 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
     # presented in the template as a standard paginated list of Asset
     # instances with annotations
     allow_empty = True
-    paginate_by = 30
+    PAGE_SIZE = 30  # paginate_by = 30
 
     def post(self, *args, **kwargs):
         self.object_list = self.get_queryset()
         return super().post(*args, **kwargs)
 
     def get_queryset(self):
-        return get_pages(self.request)
+        return _get_pages(self.request)
 
     def get_context_data(self, *args, **kwargs):
         ctx = super().get_context_data(*args, **kwargs)
