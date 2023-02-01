@@ -241,7 +241,11 @@ class ResourceFileAdmin(admin.ModelAdmin):
         # creation, since uploading a new file will leave behind the original
         # as an orphan.
         if obj:
-            return ("name", "resource_url")
+            return (
+                "name",
+                "resource_url",
+                "resource",
+            )
         return ("name", "resource")
 
 
