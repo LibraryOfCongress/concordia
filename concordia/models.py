@@ -1,4 +1,5 @@
 import os.path
+import time
 from logging import getLogger
 
 from django.conf import settings
@@ -15,6 +16,13 @@ logger = getLogger(__name__)
 metadata_default = dict
 
 User._meta.get_field("email").__dict__["_unique"] = True
+
+
+def resource_file_upload_path(instance, filename):
+    if instance.id and instance.path:
+        return instance.path
+    path = "cm-uploads/resources/%Y/{0}".format(filename.lower())
+    return time.strftime(path)
 
 
 class UserProfile(MetricsModelMixin("userprofile"), models.Model):
@@ -226,13 +234,20 @@ class Resource(MetricsModelMixin("resource"), models.Model):
 
 class ResourceFile(models.Model):
     name = models.CharField(blank=False, max_length=255)
-    resource = models.FileField(upload_to="cm-uploads/resources/%Y/")
+    path = models.CharField(blank=True, default="", max_length=255)
+    resource = models.FileField(upload_to=resource_file_upload_path)
 
     class Meta:
         ordering = ["name"]
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.id and not self.path:
+            self.path = self.resource.name
+            self.save()
 
     def delete(self, *args, **kwargs):
         storage = self.resource.storage
