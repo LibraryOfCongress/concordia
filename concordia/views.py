@@ -510,8 +510,16 @@ def _get_pages(request):
 
 @login_required
 def get_pages(request):
-    assets = _get_pages(request)
-    context = {"object_list": assets}
+    asset_list = _get_pages(request)
+    paginator = Paginator(asset_list, 30)  # Show 30 assets per page.
+
+    page_number = int(request.GET.get("page", "1"))
+    context = {
+        "paginator": paginator,
+        "page_obj": paginator.get_page(page_number),
+        "is_paginated": True,
+        "object_list": asset_list,
+    }
     data = dict()
     data["content"] = loader.render_to_string(
         "fragments/recent-pages.html", context, request=request
@@ -530,7 +538,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
     # presented in the template as a standard paginated list of Asset
     # instances with annotations
     allow_empty = True
-    PAGE_SIZE = 30  # paginate_by = 30
+    paginate_by = 30
 
     def post(self, *args, **kwargs):
         self.object_list = self.get_queryset()

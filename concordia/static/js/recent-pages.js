@@ -6,9 +6,10 @@ function getPages() {
         url: '/account/get_pages/',
         dataType: 'json',
         success: function (data) {
-            var tableBody = document.createElement('tbody');
-            tableBody.innerHTML = data.content;
-            document.getElementById('recent-pages').append(tableBody);
+            var recentPages = document.createElement('div');
+            recentPages.setAttribute('class', 'col-md');
+            recentPages.innerHTML = data.content;
+            document.getElementById('recent-pages').append(recentPages);
         },
     });
 }
