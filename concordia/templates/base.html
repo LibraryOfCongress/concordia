@@ -270,21 +270,6 @@ because it's not worth dealing with IE11 compatibility {% endcomment %}
         {% block body_scripts %}{% endblock body_scripts %}
 
         <script type="text/javascript">
-            if (
-                typeof(Storage) !== "undefined"
-            ) {
-                for(var i in localStorage)
-                {
-                    if ($('#' + i).hasClass("alert")) {
-                        $('#' + i).attr("hidden", true);
-                    }
-                }
-            }
-            $("#no-interface-banner").click(function(event) {
-                localStorage.setItem(event.target.parentElement.id, true);
-                $('#' + event.target.parentElement.id).attr("hidden", true);
-            });
-
             if (typeof _satellite == "undefined") {
                 if (typeof Sentry != "undefined") {
                     Sentry.captureMessage("Adobe Analytics did not load");
