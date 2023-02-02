@@ -3,7 +3,7 @@
 function getPages() {
     jQuery.ajax({
         type: 'GET',
-        url: '/account/get_pages/',
+        url: '/account/get_pages/' + window.location.search,
         dataType: 'json',
         success: function (data) {
             var recentPages = document.createElement('div');
