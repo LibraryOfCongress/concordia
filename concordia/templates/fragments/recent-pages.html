@@ -1,0 +1,30 @@
+<h2>Recent Pages Worked On</h2>
+<div>View all the pages you contributed to in the last 6 months.</div>
+<div class="row">
+    {% include "fragments/standard-pagination.html" %}
+</div>
+<table class="table table-striped table-responsive-sm">
+    <thead class="border-y">
+        <tr class="text-left">
+            <th>Date</th>
+            <th>Item</th>
+            <th>Page</th>
+            <th>Your Contribution</th>
+            <th>Current Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for asset in page_obj %}
+            <tr class="{{ asset.item.project.campaign.id }} recent-page">
+                <td class="col-md-3"><abbr title="{{ asset.latest_activity|date:'SHORT_DATE_FORMAT' }}">{{ asset.latest_activity }}</abbr></td>
+                <td><a href="{{ asset.item.get_absolute_url }}">{{ asset.item.title }}</a></td>
+                <td class="text-right"><a href="{{ asset.get_absolute_url }}">{{ asset.sequence }}</a></td>
+                <td>{{ asset.last_interaction_type.title }}</td>
+                <td>{{ asset.get_transcription_status_display }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<div class="row">
+    {% include "fragments/standard-pagination.html" %}
+</div>

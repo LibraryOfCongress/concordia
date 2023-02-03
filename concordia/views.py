@@ -474,6 +474,58 @@ def AccountLetterView(request):
         return response
 
 
+def _get_pages(request):
+    user = request.user
+    transcriptions = Transcription.objects.filter(Q(user=user) | Q(reviewed_by=user))
+
+    qId = request.GET.get("campaign_slug", None)
+
+    assets = Asset.objects.filter(transcription__in=transcriptions)
+    if qId:
+        campaignSlug = qId
+        assets = Asset.objects.filter(item__project__campaign__pk=campaignSlug)
+
+    assets = assets.select_related("item", "item__project", "item__project__campaign")
+
+    assets = assets.annotate(
+        last_transcribed=Max(
+            "transcription__created_on",
+            filter=Q(transcription__user=user),
+        ),
+        last_reviewed=Max(
+            "transcription__updated_on",
+            filter=Q(transcription__reviewed_by=user),
+        ),
+        latest_activity=Greatest(
+            "last_transcribed",
+            "last_reviewed",
+            filter=Q(transcription__user=user) | Q(transcription__reviewed_by=user),
+        ),
+    )
+    # CONCD-189 only show pages from the last 6 months
+    SIX_MONTHS_AGO = datetime.datetime.today() - datetime.timedelta(days=6 * 30)
+    assets = assets.filter(latest_activity__gte=SIX_MONTHS_AGO)
+    return assets.order_by("-latest_activity", "-id")
+
+
+@login_required
+def get_pages(request):
+    asset_list = _get_pages(request)
+    paginator = Paginator(asset_list, 30)  # Show 30 assets per page.
+
+    page_number = int(request.GET.get("page", "1"))
+    context = {
+        "paginator": paginator,
+        "page_obj": paginator.get_page(page_number),
+        "is_paginated": True,
+    }
+    data = dict()
+    data["content"] = loader.render_to_string(
+        "fragments/recent-pages.html", context, request=request
+    )
+    return JsonResponse(data)
+
+
 @method_decorator(never_cache, name="dispatch")
 class AccountProfileView(LoginRequiredMixin, FormView, ListView):
     template_name = "account/profile.html"
@@ -492,46 +544,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         return super().post(*args, **kwargs)
 
     def get_queryset(self):
-        user = self.request.user
-        transcriptions = Transcription.objects.filter(
-            Q(user=user) | Q(reviewed_by=user)
-        )
-
-        qId = self.request.GET.get("campaign_slug", None)
-
-        if qId:
-            campaignSlug = qId
-            assets = Asset.objects.filter(
-                transcription__in=transcriptions,
-                item__project__campaign__pk=campaignSlug,
-            )
-        else:
-            campaignSlug = -1
-            assets = Asset.objects.filter(transcription__in=transcriptions)
-
-        assets = assets.select_related(
-            "item", "item__project", "item__project__campaign"
-        )
-
-        assets = assets.annotate(
-            last_transcribed=Max(
-                "transcription__created_on",
-                filter=Q(transcription__user=user),
-            ),
-            last_reviewed=Max(
-                "transcription__updated_on",
-                filter=Q(transcription__reviewed_by=user),
-            ),
-            latest_activity=Greatest(
-                "last_transcribed",
-                "last_reviewed",
-                filter=Q(transcription__user=user) | Q(transcription__reviewed_by=user),
-            ),
-        )
-        # CONCD-189 only show pages from the last 6 months
-        SIX_MONTHS_AGO = datetime.datetime.today() - datetime.timedelta(days=6 * 30)
-        assets = assets.filter(latest_activity__gte=SIX_MONTHS_AGO)
-        return assets.order_by("-latest_activity", "-id")
+        return _get_pages(self.request)
 
     def get_context_data(self, *args, **kwargs):
         ctx = super().get_context_data(*args, **kwargs)
