@@ -1156,6 +1156,44 @@ table.table thead.border-y th {
     border-top: 1px solid #000;
 }
 
+#current-filters {
+    margin-bottom: 0.75rem;
+    padding: 0.375rem 0;
+}
+
+#current-filters ul {
+    padding-left: 0.5rem;
+}
+
+#current-filters .btn {
+    border-color: $blue;
+    color: $blue;
+}
+
+#current-filters li {
+    background-color: $white;
+}
+
+#current-filters label {
+    padding-left: 5px;
+    padding-top: 1px;
+}
+
+.btn-xs {
+    font-size: 12px;
+    padding: 0 0.12rem;
+}
+
+.btn-xs .btn {
+    font-size: 14px;
+    padding: 0 0.12rem;
+}
+
+#current-filters li .btn {
+    border: none;
+    padding-right: 4px;
+}
+
 .service-letter {
     background-color: $light;
 }

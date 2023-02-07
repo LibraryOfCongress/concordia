@@ -168,6 +168,22 @@
                                     </div>
                                 </div>
                             </form>
+                            <div class="bg-light flex-row" id="current-filters">
+                                <span class="align-middle d-inline font-weight-bold">Search Results: </span>
+                                <ul class="d-inline">
+                                    {% if start or end %}
+                                        <li class="btn btn-xs font-size-sm rounded-pill">
+                                            <label class="m-0 font-weight-normal">
+                                                <input type="hidden" value="date">
+                                                date
+                                            </label>
+                                            <a href="?{% qs_alter request.GET delete:start delete:end %}" class="btn" role="button">
+                                                <span aria-hidden="true" class="fas fa-times"></span>
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                </ul>
+                            </div>
                             <table class="table table-striped table-responsive-sm">
                                 <thead class="border-y">
                                     <tr class="text-left">
