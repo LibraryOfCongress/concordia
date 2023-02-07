@@ -225,8 +225,8 @@ class ResourceAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
 class ResourceFileAdmin(admin.ModelAdmin):
     # Bulk delete bypasses file deletion, so we don't want any bulk actions
     actions = None
-    list_display = ("name", "resource_url")
-    readonly_fields = ("resource_url",)
+    list_display = ("name", "resource_url", "updated_on")
+    readonly_fields = ("resource_url", "updated_on")
 
     def resource_url(self, obj):
         # Boto3 adds a querystring parameters to the URL to allow access
@@ -245,6 +245,7 @@ class ResourceFileAdmin(admin.ModelAdmin):
                 "name",
                 "resource_url",
                 "resource",
+                "updated_on",
             )
         return ("name", "resource")
 
