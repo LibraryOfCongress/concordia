@@ -139,11 +139,11 @@
                 {% endif %}
             </div>
             <div class="tab-pane fade{% if active_tab == 'pages' %} show active{% endif %}" id="pages" role="tabpanel">
-                {% if object_list %}
-                    <div class="row justify-content-start">
-                        <div class="col-md">
-                            <h2>Recent Pages Worked On</h2>
-                            <div>View all pages you worked on in the last 6 months. A page will only be listed once. If you made multiple contributions to a page, your most recent activity will be shown.</div>
+                <div class="row justify-content-start">
+                    <div class="col-md">
+                        <h2>Recent Pages Worked On</h2>
+                        <div>View all pages you worked on in the last 6 months. A page will only be listed once. If you made multiple contributions to a page, your most recent activity will be shown.</div>
+                        {% if object_list %}
                             <div class="row">
                                 {% include "fragments/standard-pagination.html" %}
                             </div>
@@ -223,9 +223,9 @@
                             <div class="row">
                                 {% include "fragments/standard-pagination.html" %}
                             </div>
-                        </div>
+                        {% endif %}
                     </div>
-                {% endif %}
+                </div>
             </div>
         </div>
     </div>
