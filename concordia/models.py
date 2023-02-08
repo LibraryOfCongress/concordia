@@ -656,3 +656,6 @@ class UserRetiredCampaign(models.Model):
 
     def __str__(self):
         return f"{self.user} - {self.campaign}"
+
+    def total_actions(self):
+        return self.transcribe_count + self.review_count
