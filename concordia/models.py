@@ -236,6 +236,7 @@ class ResourceFile(models.Model):
     name = models.CharField(blank=False, max_length=255)
     path = models.CharField(blank=True, default="", max_length=255)
     resource = models.FileField(upload_to=resource_file_upload_path)
+    updated_on = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ["name"]
