@@ -40,7 +40,7 @@ from django.views.decorators.cache import cache_control, never_cache
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.views.decorators.vary import vary_on_headers
-from django.views.generic import FormView, ListView, TemplateView
+from django.views.generic import FormView, ListView, RedirectView, TemplateView
 from django_registration.backends.activation.views import RegistrationView
 from flags.decorators import flag_required
 from fpdf import FPDF, ViewerPreferences
@@ -2276,6 +2276,27 @@ class ReviewListView(AssetListView):
             asset_qs.order_by(order_field)
 
         return asset_qs
+
+
+# These views are to make sure various links to help-center URLs don't break
+# when the URLs are changed to not include help-center and can be removed after
+# all links are updated.
+
+
+class HelpCenterRedirectView(RedirectView):
+    def get_redirect_url(self, *args, **kwargs):
+        path = kwargs["page_slug"]
+        return "/welcome-guide/" + path
+
+
+class HelpCenterSpanishRedirectView(RedirectView):
+    def get_redirect_url(self, *args, **kwargs):
+        print("spanish")
+        path = kwargs["page_slug"]
+        return "/welcome-guide-esp/" + path + "-esp/"
+
+
+# End of help-center views
 
 
 @flag_required("ACTIVITY_UI_ENABLED")
