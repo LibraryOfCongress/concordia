@@ -4,7 +4,7 @@ from logging import getLogger
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.management import call_command
-from django.db.models import Count
+from django.db.models import Count, Q
 from more_itertools.more import chunked
 
 from concordia.models import (
@@ -18,6 +18,7 @@ from concordia.models import (
     Topic,
     Transcription,
     UserAssetTagCollection,
+    UserRetiredCampaign,
 )
 from concordia.signals.signals import reservation_released
 from concordia.utils import get_anonymous_user
@@ -474,3 +475,38 @@ def populate_elasticsearch_indices():
 @celery_app.task
 def delete_elasticsearch_indices():
     call_command("search_index", "-f", action="delete")
+
+
+@celery_app.task
+def populate_user_archive_table():
+    for campaign in Campaign.objects.filter(status=Campaign.Status.COMPLETED):
+        for user_id in campaign.project_set.values_list(
+            "item__asset__transcription__user__id", flat=True
+        ).distinct():
+            user_profile_activity, created = UserRetiredCampaign.objects.get_or_create(
+                campaign=campaign, user_id=user_id
+            )
+            assets = Asset.objects.filter(item__project__campaign=campaign)
+            user_profile_activity.asset_count = (
+                assets.filter(
+                    Q(transcription__user_id=user_id)
+                    | Q(transcription__reviewed_by=user_id)
+                )
+                .distinct()
+                .count()
+            )
+            tag_collections = UserAssetTagCollection.objects.filter(
+                user_id=user_id, asset__in=assets
+            )  # asset__item__project__campaign=campaign)
+            user_profile_activity.asset_tag_count = (
+                Tag.objects.filter(userassettagcollection__in=tag_collections)
+                .distinct()
+                .count()
+            )  # Zero??
+            user_profile_activity.transcribe_count = (
+                assets.filter(transcription__user_id=user_id).distinct().count()
+            )
+            user_profile_activity.review_count = (
+                assets.filter(transcription__reviewed_by=user_id).distinct().count()
+            )
+            user_profile_activity.save()
