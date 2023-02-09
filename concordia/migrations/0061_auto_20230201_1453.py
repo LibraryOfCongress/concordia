@@ -6,7 +6,6 @@ import concordia.models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("concordia", "0060_alter_resourcefile_resource"),
     ]

@@ -48,7 +48,7 @@ black = "*"
 [dev-packages]
 invoke = "*"
 django-extensions = "*"
-black = "==23.1.0"
+black = "*"
 isort = "*"
 django-debug-toolbar = "*"
 djhtml = "*"

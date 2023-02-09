@@ -92,7 +92,6 @@ def delete_old_tombstoned_reservations():
 
 @celery_app.task
 def site_report():
-
     report = {
         "assets_not_started": 0,
         "assets_in_progress": 0,
@@ -390,7 +389,6 @@ def populate_storage_image_values(asset_qs=None):
     # which will never be used again in memory. We will build the S3 relative key for
     # each existing asset and pass them to bulk_update() to be saved in a single query.
     for asset_chunk in chunked(asset_qs.iterator(), 1000):
-
         for asset in asset_chunk:
             asset.storage_image = "/".join(
                 [

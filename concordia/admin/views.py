@@ -96,7 +96,6 @@ def locgov_resource_item_section(resource, locgov_server):
 
 
 def locgov_create_resources(resource_dir):
-
     # cwd = os.getcwd()
     cwd = resource_dir
     item_file = os.path.join(cwd, "item-resource-urls.txt")
@@ -328,7 +327,6 @@ def redownload_images_view(request):
 @permission_required("concordia.add_item")
 @permission_required("concordia.change_item")
 def project_level_export(request):
-
     request.current_app = "admin"
     context = {"title": "Project Level Bagit Exporter"}
     form = AdminProjectBulkImportForm()
@@ -337,7 +335,6 @@ def project_level_export(request):
     id = request.GET.get("id")
 
     if request.method == "POST":
-
         project_list = request.POST.getlist("project_name")
         campaign_slug = request.GET.get("slug")
 
@@ -385,7 +382,6 @@ def project_level_export(request):
         form = AdminProjectBulkImportForm()
         projects = Project.objects.filter(campaign_id=int(id))
         for project in projects:
-
             proj_dict = {}
             proj_dict["title"] = project.title
             proj_dict["id"] = project.pk
@@ -411,7 +407,6 @@ def project_level_export(request):
 @permission_required("concordia.add_item")
 @permission_required("concordia.change_item")
 def celery_task_review(request):
-
     request.current_app = "admin"
     totalcount = 0
     counter = 0
@@ -771,7 +766,6 @@ def admin_bulk_import_view(request):
 @never_cache
 @staff_member_required
 def admin_site_report_view(request):
-
     site_reports = SiteReport.objects.all()
 
     headers, data = flatten_queryset(

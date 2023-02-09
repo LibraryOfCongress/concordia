@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("concordia", "0001_squashed_0040_remove_campaign_is_active")]
 
     operations = [

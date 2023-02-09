@@ -270,7 +270,6 @@ class TopicAdmin(admin.ModelAdmin):
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
-
     form = BleachedDescriptionAdminForm
 
     # todo: add foreignKey link for campaign
@@ -312,7 +311,6 @@ class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     @method_decorator(permission_required("concordia.add_item"))
     @method_decorator(permission_required("concordia.change_item"))
     def item_import_view(self, request, object_id):
-
         project = get_object_or_404(Project, pk=object_id)
 
         if request.method == "POST":
@@ -385,7 +383,6 @@ class ItemAdmin(admin.ModelAdmin):
             return super().lookup_allowed(key, value)
 
     def get_deleted_objects(self, objs, request):
-
         if len(objs) < 30:
             deleted_objects = [str(obj) for obj in objs]
         else:

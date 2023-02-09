@@ -6,7 +6,6 @@ from concordia.models import TranscriptionStatus
 
 
 def update_new_statuses(apps, schema_editor):
-
     Asset = apps.get_model("concordia", "Asset")
 
     Asset.objects.filter(transcription_status="in progress").update(
@@ -18,7 +17,6 @@ def update_new_statuses(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("concordia", "0015_auto_20181115_1436")]
 
     operations = [migrations.RunPython(update_new_statuses)]

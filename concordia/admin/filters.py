@@ -204,7 +204,6 @@ class CampaignProjectListFilter(admin.SimpleListFilter):
     project_ref = ""
 
     def lookups(self, request, model_admin):
-
         list_of_questions = []
         queryset = Project.objects.order_by("campaign_id")
         if self.related_filter_parameter in request.GET:

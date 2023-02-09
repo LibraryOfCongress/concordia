@@ -6,7 +6,6 @@ import concordia.models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("concordia", "0050_auto_20210920_1544"),
     ]

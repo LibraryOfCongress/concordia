@@ -20,7 +20,6 @@ def convert_slugs_to_references(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("importer", "0008_campaigntaskdetails_project")]
 
     operations = [migrations.RunPython(convert_slugs_to_references)]

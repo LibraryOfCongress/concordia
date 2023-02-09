@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("concordia", "0017_change_transcription_supersedes_related_name")]
 
     operations = [
