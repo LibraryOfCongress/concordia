@@ -220,6 +220,11 @@ class ResourceAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     list_display_links = ("campaign", "topic", "sequence", "title")
     list_filter = (ResourceCampaignListFilter, "title")
 
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "campaign":
+            kwargs["queryset"] = Campaign.objects.order_by("title")
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
 
 @admin.register(ResourceFile)
 class ResourceFileAdmin(admin.ModelAdmin):
