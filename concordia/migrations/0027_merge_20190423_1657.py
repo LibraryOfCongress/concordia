@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("concordia", "0025_auto_20190329_1705"),
         ("concordia", "0026_update_published_field_definition"),

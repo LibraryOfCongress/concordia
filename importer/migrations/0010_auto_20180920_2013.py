@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("importer", "0009_convert_project_text_to_keys")]
 
     operations = [

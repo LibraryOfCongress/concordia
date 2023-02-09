@@ -9,7 +9,6 @@ def handle_items_without_projects(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("concordia", "0009_project_description")]
 
     operations = [migrations.RunPython(handle_items_without_projects)]

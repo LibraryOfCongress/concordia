@@ -564,7 +564,6 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
             campaignSlug = -1
 
         for asset in obj_list:
-
             if asset.last_reviewed:
                 asset.last_interaction_type = "reviewed"
             else:

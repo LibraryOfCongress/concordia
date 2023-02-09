@@ -86,7 +86,6 @@ def write_distinct_asset_resource_file(assets, export_base_dir):
     asset_resource_file = os.path.join(export_base_dir, "item-resource-urls.txt")
 
     with open(asset_resource_file, "a") as f:
-
         # write to file a list of distinct resource_url values for the selected assets
         distinct_resource_urls = (
             Asset.objects.filter(pk__in=assets)

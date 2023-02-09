@@ -43,11 +43,12 @@ django-admin-multiple-choice-list-filter = "*"
 django-npm = "*"
 fpdf2 = "==2.5.5"
 pymemcache = "*"
+black = "*"
 
 [dev-packages]
 invoke = "*"
 django-extensions = "*"
-black = "==20.8b1"
+black = "*"
 isort = "*"
 django-debug-toolbar = "*"
 djhtml = "*"

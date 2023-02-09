@@ -81,7 +81,6 @@ unpublish_action.short_description = "Unpublish selected"
 
 
 def reopen_asset_action(modeladmin, request, queryset):
-
     # Can only reopen completed assets
     assets = queryset.filter(transcription_status=TranscriptionStatus.COMPLETED)
 

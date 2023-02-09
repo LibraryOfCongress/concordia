@@ -14,7 +14,6 @@ def create_groups(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     replaces = [
         ("concordia", "0001_initial"),
         ("concordia", "0002_auto_20180511_1722"),

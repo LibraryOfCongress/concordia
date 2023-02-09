@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("concordia", "0018_simplepage"),
         ("concordia", "0018_auto_20181128_1611"),

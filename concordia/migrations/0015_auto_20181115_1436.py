@@ -18,7 +18,6 @@ def split_edit_statuses(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("concordia", "0014_auto_20181115_1411")]
 
     operations = [migrations.RunPython(split_edit_statuses)]
