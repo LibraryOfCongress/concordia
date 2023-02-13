@@ -2285,14 +2285,14 @@ class ReviewListView(AssetListView):
 class HelpCenterRedirectView(RedirectView):
     def get_redirect_url(self, *args, **kwargs):
         path = kwargs["page_slug"]
-        return "/welcome-guide/" + path
+        return "/get-started/" + path
 
 
 class HelpCenterSpanishRedirectView(RedirectView):
     def get_redirect_url(self, *args, **kwargs):
         print("spanish")
         path = kwargs["page_slug"]
-        return "/welcome-guide-esp/" + path + "-esp/"
+        return "/get-started-esp/" + path + "-esp/"
 
 
 # End of help-center views

@@ -95,7 +95,7 @@ urlpatterns = [
     # all links are updated.
     path(
         "help-center/",
-        RedirectView.as_view(pattern_name="welcome-guide"),
+        RedirectView.as_view(pattern_name="get-started"),
         name="help-center",
     ),
     path(
@@ -111,29 +111,27 @@ urlpatterns = [
     ),
     path("help-center/<slug:page_slug>/", views.HelpCenterRedirectView.as_view()),
     # End of help-center patterns
-    path("welcome-guide/", views.simple_page, name="welcome-guide"),
+    path("get-started/", views.simple_page, name="welcome-guide"),
+    path("get-started/how-to-transcribe/", views.simple_page, name="how-to-transcribe"),
+    path("get-started/how-to-review/", views.simple_page, name="how-to-review"),
+    path("get-started/how-to-tag/", views.simple_page, name="how-to-tag"),
     path(
-        "welcome-guide/how-to-transcribe/", views.simple_page, name="how-to-transcribe"
-    ),
-    path("welcome-guide/how-to-review/", views.simple_page, name="how-to-review"),
-    path("welcome-guide/how-to-tag/", views.simple_page, name="how-to-tag"),
-    path(
-        "welcome-guide-esp/",
+        "get-started-esp/",
         views.simple_page,
         name="welcome-guide-spanish",
     ),
     path(
-        "welcome-guide-esp/how-to-transcribe-esp/",
+        "get-started-esp/how-to-transcribe-esp/",
         views.simple_page,
         name="how-to-transcribe-spanish",
     ),
     path(
-        "welcome-guide-esp/how-to-review-esp/",
+        "get-started-esp/how-to-review-esp/",
         views.simple_page,
         name="how-to-review-spanish",
     ),
     path(
-        "welcome-guide-esp/how-to-tag-esp/",
+        "get-started-esp/how-to-tag-esp/",
         views.simple_page,
         name="how-to-tag-spanish",
     ),
