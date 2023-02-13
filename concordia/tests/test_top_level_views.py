@@ -96,7 +96,7 @@ class TopLevelViewTests(
 
     def test_simple_page(self):
         s = SimplePage.objects.create(
-            title="Welcome Guide 123",
+            title="Get Started 123",
             body="not the real body",
             path=reverse("welcome-guide"),
         )
@@ -111,7 +111,7 @@ class TopLevelViewTests(
 
     def test_nested_simple_page(self):
         l1 = SimplePage.objects.create(
-            title="Welcome Guide",
+            title="Get Started",
             body="not the real body",
             path=reverse("welcome-guide"),
         )
