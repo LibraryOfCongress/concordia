@@ -654,6 +654,12 @@ class UserRetiredCampaign(models.Model):
         blank=True, null=True, verbose_name="transcription review count"
     )
 
+    class Meta:
+        unique_together = (
+            "user",
+            "campaign",
+        )
+
     def __str__(self):
         return f"{self.user} - {self.campaign}"
 
