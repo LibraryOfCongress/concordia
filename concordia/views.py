@@ -73,6 +73,7 @@ from concordia.models import (
     Transcription,
     TranscriptionStatus,
     UserAssetTagCollection,
+    UserRetiredCampaign,
 )
 from concordia.signals.signals import reservation_obtained, reservation_released
 from concordia.templatetags.concordia_media_tags import asset_media_url
@@ -478,6 +479,10 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         totalReviews = 0
 
         ctx["contributed_campaigns"] = contributed_campaigns
+        user_retired_campaigns = UserRetiredCampaign.objects.filter(user=user)
+        ctx["contributed_campaign_count"] = (
+            len(contributed_campaigns) + user_retired_campaigns.count()
+        )
 
         for campaign in contributed_campaigns:
             campaign.action_count = campaign.transcribe_count + campaign.review_count
@@ -486,9 +491,13 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
             totalTranscriptions = totalTranscriptions + campaign.transcribe_count
 
         q = Q(transcription__user=user) | Q(transcription__reviewed_by=user)
-        ctx["pages_worked_on"] = Asset.objects.filter(q).distinct().count()
+        ctx["pages_worked_on"] = Asset.objects.filter(q).distinct().count() + sum(
+            [campaign.asset_count for campaign in user_retired_campaigns]
+        )
 
-        ctx["totalCount"] = totalCount
+        ctx["totalCount"] = totalCount + sum(
+            [campaign.total_actions() for campaign in user_retired_campaigns]
+        )
         ctx["totalReviews"] = totalReviews
         ctx["totalTranscriptions"] = totalTranscriptions
         return ctx
