@@ -559,12 +559,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         if end is not None and len(end) > 0:
             end_date = datetime.datetime.strptime(end, fmt)
         if start_date is not None and end_date is not None:
-            assets = assets.filter(
-                latest_activity__gte=start_date,
-                latest_activity__year__lte=end_date.year,
-                latest_activity__month__lte=end_date.month,
-                latest_activity__day__lte=end_date.day,
-            )
+            assets = assets.filter(latest_activity__range=[start, end])
         elif start_date is not None or end_date is not None:
             date = start_date if start_date else end_date
             assets = assets.filter(
