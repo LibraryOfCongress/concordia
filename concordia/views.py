@@ -603,6 +603,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
                 ctx["campaign"] = int(campaign)
             if status_list is not None:
                 ctx["status_list"] = status_list
+            ctx["order_by"] = self.request.GET.get("order_by", "date-descending")
         else:
             ctx["active_tab"] = self.request.GET.get("tab", "contributions")
         ctx["activity"] = activity
