@@ -182,6 +182,17 @@
                                             </a>
                                         </li>
                                     {% endif %}
+                                    {% if activity %}
+                                        <li class="btn btn-xs font-size-sm rounded-pill">
+                                            <label class="m-0 font-weight-normal">
+                                                <input type="hidden" value="activity">
+                                                contribution
+                                            </label>
+                                            <a href="?{% qs_alter request.GET delete:activity %}" class="btn" role="button">
+                                                <span aria-hidden="true" class="fas fa-times"></span>
+                                            </a>
+                                        </li>
+                                    {% endif %}
                                     {% if start or end %}
                                         <li class="btn btn-xs font-size-sm rounded-pill">
                                             <label class="m-0 font-weight-normal">
