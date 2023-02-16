@@ -568,9 +568,28 @@ class Banner(models.Model):
     link = models.CharField(max_length=255)
     open_in_new_window_tab = models.BooleanField(default=True, blank=True)
     active = models.BooleanField(default=False, blank=True)
+    DANGER = "DANGER"
+    INFO = "INFO"
+    SUCCESS = "SUCCESS"
+    WARN = "WARN"
+    ALERT_STATUS_CHOICES = [
+        ("DANGER", "Danger"),
+        ("INFO", "Information"),
+        ("SUCCESS", "Success"),
+        ("WARN", "Warning"),
+    ]
+    alert_status = models.CharField(
+        max_length=7, choices=ALERT_STATUS_CHOICES, default=SUCCESS
+    )
 
     def __str__(self):
         return f"Banner: {self.slug}"
+
+    def alert_class(self):
+        return "alert-" + self.get_alert_status_display().lower()
+
+    def btn_class(self):
+        return "btn-" + self.get_alert_status_display().lower()
 
 
 class CarouselSlide(models.Model):
