@@ -643,8 +643,10 @@ class SiteReport(models.Model):
 
 
 class UserRetiredCampaign(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="User Id")
+    campaign = models.ForeignKey(
+        Campaign, on_delete=models.CASCADE, verbose_name="Campaign Id"
+    )
     asset_count = models.IntegerField(blank=True, null=True)
     asset_tag_count = models.IntegerField(blank=True, null=True)
     transcribe_count = models.IntegerField(
