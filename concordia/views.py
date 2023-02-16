@@ -607,6 +607,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         else:
             ctx["active_tab"] = self.request.GET.get("tab", "contributions")
         ctx["activity"] = activity
+        ctx["statuses"] = status_list
         ctx["end"] = end
         ctx["order_by"] = order_by
         ctx["start"] = start
