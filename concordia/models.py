@@ -657,10 +657,12 @@ class UserRetiredCampaign(models.Model):
     )
 
     class Meta:
-        unique_together = (
-            "user",
-            "campaign",
-        )
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "campaign"], name="user_profile_activity"
+            )
+        ]
+        verbose_name = "user completed campaign count"
 
     def __str__(self):
         return f"{self.user} - {self.campaign}"
