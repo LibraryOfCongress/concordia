@@ -661,7 +661,9 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         totalReviews = 0
 
         ctx["contributed_campaigns"] = contributed_campaigns
-        user_retired_campaigns = UserRetiredCampaign.objects.filter(user=user)
+        user_retired_campaigns = UserRetiredCampaign.objects.filter(
+            user=user, campaign__status=Campaign.Status.RETIRED
+        )
         ctx["contributed_campaign_count"] = (
             len(contributed_campaigns) + user_retired_campaigns.count()
         )
