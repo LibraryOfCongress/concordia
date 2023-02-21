@@ -175,7 +175,7 @@
                                         <li class="btn btn-xs font-size-sm rounded-pill">
                                             <label class="m-0 font-weight-normal">
                                                 <input type="hidden" value="campaign">
-                                                campaign
+                                                campaign: {{ campaign.slug }}
                                             </label>
                                             <a href="?{% qs_alter request.GET delete:campaign %}" class="btn" role="button">
                                                 <span aria-hidden="true" class="fas fa-times"></span>
@@ -186,7 +186,7 @@
                                         <li class="btn btn-xs font-size-sm rounded-pill">
                                             <label class="m-0 font-weight-normal">
                                                 <input type="hidden" value="activity">
-                                                contribution
+                                                contribution: {{ activity }}
                                             </label>
                                             <a href="?{% qs_alter request.GET delete:activity %}" class="btn" role="button">
                                                 <span aria-hidden="true" class="fas fa-times"></span>
@@ -208,7 +208,11 @@
                                         <li class="btn btn-xs font-size-sm rounded-pill">
                                             <label class="m-0 font-weight-normal">
                                                 <input type="hidden" value="date">
-                                                date
+                                                {% if start and end %}
+                                                    date: {{ start }} to {{ end }}
+                                                {% else %}
+                                                    date: {% if start %}{{ start }}{% else %}{{ end }}{% endif %}
+                                                {% endif %}
                                             </label>
                                             <a href="?{% qs_alter request.GET delete:start delete:end %}" class="btn" role="button">
                                                 <span aria-hidden="true" class="fas fa-times"></span>
@@ -228,7 +232,7 @@
                                                     <a class="dropdown-item border-bottom border-primary" href="?{% qs_alter request.GET delete:campaign %}">Show All</a>
                                                 {% endif %}
                                                 {% for recent_campaign in recent_campaigns %}
-                                                    <a class="dropdown-item{% if not forloop.first %} border-top border-primary{% endif %}{% if campaign == recent_campaign.pk %} font-weight-bold{% endif %}" href="?{% qs_alter request.GET campaign=recent_campaign.pk delete:page %}">
+                                                    <a class="dropdown-item{% if not forloop.first %} border-top border-primary{% endif %}{% if campaign.pk == recent_campaign.pk %} font-weight-bold{% endif %}" href="?{% qs_alter request.GET campaign=recent_campaign.pk delete:page %}">
                                                         {{ recent_campaign.title }}
                                                     </a>
                                                 {% endfor %}
