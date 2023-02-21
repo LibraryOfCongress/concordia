@@ -681,8 +681,10 @@ class SiteReport(models.Model):
 
 
 class UserRetiredCampaign(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="User Id")
+    campaign = models.ForeignKey(
+        Campaign, on_delete=models.CASCADE, verbose_name="Campaign Id"
+    )
     asset_count = models.IntegerField(blank=True, null=True)
     asset_tag_count = models.IntegerField(blank=True, null=True)
     transcribe_count = models.IntegerField(
@@ -693,10 +695,12 @@ class UserRetiredCampaign(models.Model):
     )
 
     class Meta:
-        unique_together = (
-            "user",
-            "campaign",
-        )
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "campaign"], name="user_profile_activity"
+            )
+        ]
+        verbose_name = "user completed campaign count"
 
     def __str__(self):
         return f"{self.user} - {self.campaign}"
