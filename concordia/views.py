@@ -326,6 +326,15 @@ def AccountLetterView(request):
         .exclude(action_count=0)
         .order_by("title")
     )
+    retired_campaigns = UserRetiredCampaign.objects.filter(
+        user=user, campaign__status=Campaign.Status.RETIRED
+    )
+    retired_campaigns_review_count = sum(
+        [campaign.review_count for campaign in retired_campaigns]
+    )
+    retired_campaigns_transcribe_count = sum(
+        [campaign.transcribe_count for campaign in retired_campaigns]
+    )
 
     for campaign in contributed_campaigns:
         total_reviews += campaign.review_count
