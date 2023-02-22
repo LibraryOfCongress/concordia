@@ -330,10 +330,21 @@ def AccountLetterView(request):
         .exclude(action_count=0)
         .order_by("title")
     )
+    retired_campaigns = UserRetiredCampaign.objects.filter(
+        user=user, campaign__status=Campaign.Status.RETIRED
+    )
+    retired_campaigns_review_count = sum(
+        [campaign.review_count for campaign in retired_campaigns]
+    )
+    retired_campaigns_transcribe_count = sum(
+        [campaign.transcribe_count for campaign in retired_campaigns]
+    )
 
     for campaign in contributed_campaigns:
         totalReviews = totalReviews + campaign.review_count
         totalTranscriptions = totalTranscriptions + campaign.transcribe_count
+    totalReviews += retired_campaigns_review_count
+    totalTranscriptions += retired_campaigns_transcribe_count
     pdf = FPDF(orientation="P", unit="mm", format="A4")
     pdf.set_margin(10)
     path = os.path.dirname(os.path.abspath(__file__)) + "/static/img/logo.jpg"
