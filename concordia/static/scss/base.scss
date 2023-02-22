@@ -1209,6 +1209,14 @@ table.table thead.border-y th {
     background-color: $gray-200;
 }
 
+.tab-pane th {
+    cursor: pointer;
+}
+
+.tab-pane th.date-header {
+    cursor: default;
+}
+
 .email-address {
     margin-bottom: ($spacer * 1.5) !important;
     max-width: 450px;
