@@ -296,5 +296,10 @@
         function sortDateDescending() {
             location.href = "?{% qs_alter request.GET order_by='date-descending' %}"
         }
+        $(document).ready(function() {
+            if (window.location.hash != "") {
+                $('a[href="' + window.location.hash + '"]').click()
+            }
+        });
     </script>
 {% endblock body_scripts %}
