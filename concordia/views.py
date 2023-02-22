@@ -601,16 +601,18 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         if any([activity, campaign, page, status_list, start, end, order_by]):
             ctx["active_tab"] = "pages"
             if campaign is not None:
-                ctx["campaign"] = int(campaign)
+                ctx["campaign"] = Campaign.objects.get(pk=int(campaign))
             if status_list is not None:
                 ctx["status_list"] = status_list
         else:
             ctx["active_tab"] = self.request.GET.get("tab", "contributions")
         ctx["activity"] = activity
         ctx["statuses"] = status_list
-        ctx["end"] = end
+        if end is not None:
+            ctx["end"] = end
         ctx["order_by"] = order_by
-        ctx["start"] = start
+        if start is not None:
+            ctx["start"] = start
 
         qId = self.request.GET.get("campaign_slug", None)
 

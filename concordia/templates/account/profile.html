@@ -169,15 +169,15 @@
                                 </div>
                             </form>
                             <div class="bg-light flex-row" id="current-filters">
-                                <span class="align-middle d-inline font-weight-bold">Search Results: </span>
+                                <span class="align-middle d-inline font-weight-bold">Filtered by: </span>
                                 <ul class="d-inline">
                                     {% if campaign %}
                                         <li class="btn btn-xs font-size-sm rounded-pill">
                                             <label class="m-0 font-weight-normal">
                                                 <input type="hidden" value="campaign">
-                                                campaign
+                                                campaign: {{ campaign.slug }}
                                             </label>
-                                            <a href="?{% qs_alter request.GET delete:campaign %}" class="btn" role="button">
+                                            <a href="?{% qs_alter request.GET tab='pages' delete:campaign %}" class="btn" role="button">
                                                 <span aria-hidden="true" class="fas fa-times"></span>
                                             </a>
                                         </li>
@@ -186,9 +186,9 @@
                                         <li class="btn btn-xs font-size-sm rounded-pill">
                                             <label class="m-0 font-weight-normal">
                                                 <input type="hidden" value="activity">
-                                                contribution
+                                                contribution: {{ activity }}
                                             </label>
-                                            <a href="?{% qs_alter request.GET delete:activity %}" class="btn" role="button">
+                                            <a href="?{% qs_alter request.GET tab='pages' delete:activity %}" class="btn" role="button">
                                                 <span aria-hidden="true" class="fas fa-times"></span>
                                             </a>
                                         </li>
@@ -199,7 +199,7 @@
                                                 <input type="hidden" value="activity">
                                                 status: {{ status }}
                                             </label>
-                                            <a href="?{% qs_alter request.GET delete_value:"status",status %}" class="btn" role="button">
+                                            <a href="?{% qs_alter request.GET tab='pages' delete_value:"status",status %}" class="btn" role="button">
                                                 <span aria-hidden="true" class="fas fa-times"></span>
                                             </a>
                                         </li>
@@ -208,9 +208,13 @@
                                         <li class="btn btn-xs font-size-sm rounded-pill">
                                             <label class="m-0 font-weight-normal">
                                                 <input type="hidden" value="date">
-                                                date
+                                                {% if start and end %}
+                                                    date: {{ start }} to {{ end }}
+                                                {% else %}
+                                                    date: {% if start %}{{ start }}{% else %}{{ end }}{% endif %}
+                                                {% endif %}
                                             </label>
-                                            <a href="?{% qs_alter request.GET delete:start delete:end %}" class="btn" role="button">
+                                            <a href="?{% qs_alter request.GET tab='pages' delete:start delete:end %}" class="btn" role="button">
                                                 <span aria-hidden="true" class="fas fa-times"></span>
                                             </a>
                                         </li>
@@ -220,15 +224,15 @@
                             <table class="table table-striped table-responsive-sm">
                                 <thead class="border-y">
                                     <tr class="text-left">
-                                        <th>Date</th>
+                                        <th class="date-header">Date</th>
                                         <th>
                                             <div class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Campaign</div>
                                             <div class="dropdown-menu border border-primary">
                                                 {% if campaign %}
-                                                    <a class="dropdown-item border-bottom border-primary" href="?{% qs_alter request.GET delete:campaign %}">Show All</a>
+                                                    <a class="dropdown-item border-bottom border-primary" href="?{% qs_alter request.GET tab='pages' delete:campaign %}">Show All</a>
                                                 {% endif %}
                                                 {% for recent_campaign in recent_campaigns %}
-                                                    <a class="dropdown-item{% if not forloop.first %} border-top border-primary{% endif %}{% if campaign == recent_campaign.pk %} font-weight-bold{% endif %}" href="?{% qs_alter request.GET campaign=recent_campaign.pk delete:page %}">
+                                                    <a class="dropdown-item{% if not forloop.first %} border-top border-primary{% endif %}{% if campaign.pk == recent_campaign.pk %} font-weight-bold{% endif %}" href="?{% qs_alter request.GET campaign=recent_campaign.pk delete:page %}">
                                                         {{ recent_campaign.title }}
                                                     </a>
                                                 {% endfor %}
@@ -239,7 +243,7 @@
                                             <div class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Your Contribution</div>
                                             <div class="dropdown-menu border border-primary">
                                                 {% if activity %}
-                                                    <a class="dropdown-item border-bottom border-primary" href="?{% qs_alter request.GET delete:activity %}">Show All</a>
+                                                    <a class="dropdown-item border-bottom border-primary" href="?{% qs_alter request.GET tab='pages' delete:activity %}">Show All</a>
                                                 {% endif %}
                                                 <a class="dropdown-item border-bottom border-primary{% if activity == 'reviewed' %} font-weight-bold{% endif %}" href="?{% qs_alter request.GET activity='reviewed' delete:page %}">Reviewed</a>
                                                 <a class="dropdown-item{% if activity == 'transcribed' %} font-weight-bold{% endif %}" href="?{% qs_alter request.GET activity='transcribed' delete:page %}">Transcribed</a>
