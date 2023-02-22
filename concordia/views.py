@@ -599,7 +599,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         end = self.request.GET.get("end", None)
         order_by = self.request.GET.get("order_by", None)
         if any([activity, campaign, page, status_list, start, end, order_by]):
-            ctx["active_tab"] = "pages"
+            ctx["active_tab"] = "recent"
             if campaign is not None:
                 ctx["campaign"] = Campaign.objects.get(pk=int(campaign))
             if status_list is not None:
