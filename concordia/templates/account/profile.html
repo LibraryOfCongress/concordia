@@ -168,59 +168,61 @@
                                     </div>
                                 </div>
                             </form>
-                            <div class="bg-light flex-row" id="current-filters">
-                                <span class="align-middle d-inline font-weight-bold">Filtered by: </span>
-                                <ul class="d-inline">
-                                    {% if campaign %}
-                                        <li class="btn btn-xs font-size-sm rounded-pill">
-                                            <label class="m-0 font-weight-normal">
-                                                <input type="hidden" value="campaign">
-                                                campaign: {{ campaign.slug }}
-                                            </label>
-                                            <a href="?{% qs_alter request.GET tab='pages' delete:campaign %}" class="btn" role="button">
-                                                <span aria-hidden="true" class="fas fa-times"></span>
-                                            </a>
-                                        </li>
-                                    {% endif %}
-                                    {% if activity %}
-                                        <li class="btn btn-xs font-size-sm rounded-pill">
-                                            <label class="m-0 font-weight-normal">
-                                                <input type="hidden" value="activity">
-                                                contribution: {{ activity }}
-                                            </label>
-                                            <a href="?{% qs_alter request.GET tab='pages' delete:activity %}" class="btn" role="button">
-                                                <span aria-hidden="true" class="fas fa-times"></span>
-                                            </a>
-                                        </li>
-                                    {% endif %}
-                                    {% for status in statuses %}
-                                        <li class="btn btn-xs font-size-sm rounded-pill">
-                                            <label class="m-0 font-weight-normal">
-                                                <input type="hidden" value="activity">
-                                                status: {{ status }}
-                                            </label>
-                                            <a href="?{% qs_alter request.GET tab='pages' delete_value:"status",status %}" class="btn" role="button">
-                                                <span aria-hidden="true" class="fas fa-times"></span>
-                                            </a>
-                                        </li>
-                                    {% endfor %}
-                                    {% if start or end %}
-                                        <li class="btn btn-xs font-size-sm rounded-pill">
-                                            <label class="m-0 font-weight-normal">
-                                                <input type="hidden" value="date">
-                                                {% if start and end %}
-                                                    date: {{ start }} to {{ end }}
-                                                {% else %}
-                                                    date: {% if start %}{{ start }}{% else %}{{ end }}{% endif %}
-                                                {% endif %}
-                                            </label>
-                                            <a href="?{% qs_alter request.GET tab='pages' delete:start delete:end %}" class="btn" role="button">
-                                                <span aria-hidden="true" class="fas fa-times"></span>
-                                            </a>
-                                        </li>
-                                    {% endif %}
-                                </ul>
-                            </div>
+                            {% if campaign or activity or statuses or start or end %}
+                                <div class="bg-light flex-row" id="current-filters">
+                                    <span class="align-middle d-inline font-weight-bold">Filtered by: </span>
+                                    <ul class="d-inline">
+                                        {% if campaign %}
+                                            <li class="btn btn-xs font-size-sm rounded-pill">
+                                                <label class="m-0 font-weight-normal">
+                                                    <input type="hidden" value="campaign">
+                                                    campaign: {{ campaign.slug }}
+                                                </label>
+                                                <a href="?{% qs_alter request.GET tab='pages' delete:campaign %}" class="btn" role="button">
+                                                    <span aria-hidden="true" class="fas fa-times"></span>
+                                                </a>
+                                            </li>
+                                        {% endif %}
+                                        {% if activity %}
+                                            <li class="btn btn-xs font-size-sm rounded-pill">
+                                                <label class="m-0 font-weight-normal">
+                                                    <input type="hidden" value="activity">
+                                                    contribution: {{ activity }}
+                                                </label>
+                                                <a href="?{% qs_alter request.GET tab='pages' delete:activity %}" class="btn" role="button">
+                                                    <span aria-hidden="true" class="fas fa-times"></span>
+                                                </a>
+                                            </li>
+                                        {% endif %}
+                                        {% for status in statuses %}
+                                            <li class="btn btn-xs font-size-sm rounded-pill">
+                                                <label class="m-0 font-weight-normal">
+                                                    <input type="hidden" value="activity">
+                                                    status: {{ status }}
+                                                </label>
+                                                <a href="?{% qs_alter request.GET tab='pages' delete_value:"status",status %}" class="btn" role="button">
+                                                    <span aria-hidden="true" class="fas fa-times"></span>
+                                                </a>
+                                            </li>
+                                        {% endfor %}
+                                        {% if start or end %}
+                                            <li class="btn btn-xs font-size-sm rounded-pill">
+                                                <label class="m-0 font-weight-normal">
+                                                    <input type="hidden" value="date">
+                                                    {% if start and end %}
+                                                        date: {{ start }} to {{ end }}
+                                                    {% else %}
+                                                        date: {% if start %}{{ start }}{% else %}{{ end }}{% endif %}
+                                                    {% endif %}
+                                                </label>
+                                                <a href="?{% qs_alter request.GET tab='pages' delete:start delete:end %}" class="btn" role="button">
+                                                    <span aria-hidden="true" class="fas fa-times"></span>
+                                                </a>
+                                            </li>
+                                        {% endif %}
+                                    </ul>
+                                </div>
+                            {% endif %}
                             <table class="table table-striped table-responsive-sm">
                                 <thead class="border-y">
                                     <tr class="text-left">
