@@ -573,23 +573,26 @@ class Banner(models.Model):
     SUCCESS = "SUCCESS"
     WARN = "WARN"
     ALERT_STATUS_CHOICES = [
-        ("DANGER", "Danger"),
-        ("INFO", "Information"),
-        ("SUCCESS", "Success"),
-        ("WARN", "Warning"),
+        ("DANGER", "Red"),
+        ("INFO", "Blue"),
+        ("SUCCESS", "Green"),
+        ("WARNING", "Grey"),
     ]
     alert_status = models.CharField(
-        max_length=7, choices=ALERT_STATUS_CHOICES, default=SUCCESS
+        max_length=7,
+        choices=ALERT_STATUS_CHOICES,
+        default=SUCCESS,
+        verbose_name="Color",
     )
 
     def __str__(self):
         return f"Banner: {self.slug}"
 
     def alert_class(self):
-        return "alert-" + self.get_alert_status_display().lower()
+        return "alert-" + self.alert_status.lower()
 
     def btn_class(self):
-        return "btn-" + self.get_alert_status_display().lower()
+        return "btn-" + self.alert_status.lower()
 
 
 class CarouselSlide(models.Model):
