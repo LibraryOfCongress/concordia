@@ -669,3 +669,17 @@ class UserRetiredCampaign(models.Model):
 
     def total_actions(self):
         return self.transcribe_count + self.review_count
+
+
+class CampaignRetirementProgress(models.Model):
+    campaign = models.OneToOneField(Campaign, on_delete=models.CASCADE)
+    project_total = models.IntegerField(default=0)
+    projects_removed = models.IntegerField(default=0)
+    item_total = models.IntegerField(default=0)
+    items_removed = models.IntegerField(default=0)
+    asset_total = models.IntegerField(default=0)
+    assets_removed = models.IntegerField(default=0)
+    complete = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Removal progress for {self.campaign}"
