@@ -27,6 +27,7 @@ from ..models import (
     AssetTranscriptionReservation,
     Banner,
     Campaign,
+    CampaignRetirementProgress,
     CarouselSlide,
     Item,
     Project,
@@ -710,3 +711,28 @@ class UserRetiredCampaignAdmin(admin.ModelAdmin):
         "transcribe_count",
         "review_count",
     )
+
+
+@admin.register(CampaignRetirementProgress)
+class CampaignRetirementProgressAdmin(admin.ModelAdmin):
+    list_display = ("campaign", "complete")
+    readonly_fields = (
+        "campaign",
+        "completion",
+        "projects_removed",
+        "project_total",
+        "items_removed",
+        "item_total",
+        "assets_removed",
+        "asset_total",
+        "complete",
+    )
+
+    def completion(self, obj):
+        if obj.complete:
+            return "100%"
+        total = obj.project_total + obj.item_total + obj.asset_total
+        removed = obj.projects_removed + obj.items_removed + obj.assets_removed
+        return "{}%".format(round(removed / total * 100, 2))
+
+    completion.short_description = "Completion percentage"
