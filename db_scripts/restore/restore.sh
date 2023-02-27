@@ -28,4 +28,9 @@ aws s3 sync s3://crowd-content s3://crowd-${ENV_NAME}-content
 psql -U concordia -h "$POSTGRESQL_HOST" -d postgres -c "select pg_terminate_backend(pid) from pg_stat_activity where datname='concordia';"
 psql -U concordia -h "$POSTGRESQL_HOST" -d postgres -c "drop database concordia;"
 pg_restore --create -U concordia -h "${POSTGRESQL_HOST}" -Fc --dbname=postgres --no-owner --no-acl "${DUMP_FILE}"
-echo $?
+RETURNCODE=$?
+echo $RETURNCODE
+
+if [ $RETURNCODE = 0 ]; then
+      aws ecs update-service --region us-east-1 --force-new-deployment --cluster crowd-dev --service crowd-dev-FargateCluster-WFCY4I0U7JSM-ConcordiaExternalService-1VDVTI071TMIR
+fi
