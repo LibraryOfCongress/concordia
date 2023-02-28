@@ -151,6 +151,9 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
         indexes = [
             models.Index(fields=["published", "unlisted"]),
         ]
+        permissions = [
+            ("retire_campaign", "Can retire campaign"),
+        ]
 
     def __str__(self):
         return self.title

@@ -590,6 +590,7 @@ def retire_campaign(campaign_id):
         campaign.status = Campaign.Status.RETIRED
         campaign.save()
     remove_next_project.delay(campaign.id)
+    return progress
 
 
 @celery_app.task(ignore_result=True)
