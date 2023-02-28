@@ -505,7 +505,28 @@ def _get_pages(request):
     # CONCD-189 only show pages from the last 6 months
     SIX_MONTHS_AGO = datetime.datetime.today() - datetime.timedelta(days=6 * 30)
     assets = assets.filter(latest_activity__gte=SIX_MONTHS_AGO)
-    return assets.order_by("-latest_activity", "-id")
+    assets = assets.order_by("-latest_activity", "-id")
+
+    qId = request.GET.get("campaign_slug", None)
+
+    if qId:
+        campaignSlug = qId
+    else:
+        campaignSlug = -1
+
+    object_list = []
+    for asset in assets:
+        if asset.last_reviewed:
+            asset.last_interaction_type = "reviewed"
+        else:
+            asset.last_interaction_type = "transcribed"
+
+        if int(campaignSlug) == -1:
+            object_list.append((asset))
+        elif asset.item.project.campaign.id == int(campaignSlug):
+            object_list.append((asset))
+
+    return object_list
 
 
 @login_required
@@ -544,36 +565,17 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         return super().post(*args, **kwargs)
 
     def get_queryset(self):
-        return _get_pages(self.request)
+        # CONCD-236 wait to load
+        return Asset.objects.none()
 
     def get_context_data(self, *args, **kwargs):
         ctx = super().get_context_data(*args, **kwargs)
-        obj_list = ctx.pop("object_list")
-        ctx["object_list"] = object_list = []
 
         ctx["active_tab"] = (
             "pages"
             if self.request.GET.get("page", None) is not None
             else self.request.GET.get("tab", "contributions")
         )
-        qId = self.request.GET.get("campaign_slug", None)
-
-        if qId:
-            campaignSlug = qId
-        else:
-            campaignSlug = -1
-
-        for asset in obj_list:
-            if asset.last_reviewed:
-                asset.last_interaction_type = "reviewed"
-            else:
-                asset.last_interaction_type = "transcribed"
-
-            if int(campaignSlug) == -1:
-                object_list.append((asset))
-            else:
-                if asset.item.project.campaign.id == int(campaignSlug):
-                    object_list.append((asset))
 
         user = self.request.user
 
