@@ -148,7 +148,14 @@
         {% if active_tab and active_tab == "recent" %}
             $(document).ready(function() {
                 getPages();
+                if (window.location.hash != "") {
+                    $('a[href="' + window.location.hash + '"]').click()
+                }
             });
+        {% else %}
+            if (window.location.hash != "") {
+                $('a[href="' + window.location.hash + '"]').click()
+            }
         {% endif %}
     </script>
 {% endblock body_scripts %}
