@@ -17,14 +17,14 @@
                 <a class="nav-link {% if active_tab == 'contributions' %}active {% endif %}font-weight-bold" id="contributions-tab" data-toggle="tab" data-target="#contributions" type="button" role="tab">My Contributions</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link {% if active_tab == 'pages' %}active {% endif %}font-weight-bold" id="pages-tab" data-toggle="tab" data-target="#pages" type="button" role="tab" aria-controls="pages">Recent Pages Worked On</a>
+                <a class="nav-link {% if active_tab == 'recent' %}active {% endif %}font-weight-bold" id="recent-tab" data-toggle="tab" data-target="#recent" type="button" role="tab" aria-controls="recent">Recent Pages Worked On</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link {% if active_tab == 'settings' %}active {% endif %}font-weight-bold" id="settings-tab" data-toggle="tab" data-target="#settings" type="button" role="tab">Account Settings</a>
+                <a class="nav-link {% if active_tab == 'account' %}active {% endif %}font-weight-bold" id="account-tab" data-toggle="tab" data-target="#account" type="button" role="tab">Account Settings</a>
             </li>
         </ul>
         <div class="tab-content" id="nav-tabContent">
-            <div class="tab-pane fade{% if active_tab == 'settings' %} show active{% endif %}" id="settings" role="tabpanel">
+            <div class="tab-pane fade{% if active_tab == 'account' %} show active{% endif %}" id="account" role="tabpanel">
                 <div class="row justify-content-start">
                     <div class="col-12 col-md-10">
                         <h2>Account Settings</h2>
@@ -133,7 +133,7 @@
                     </div>
                 {% endif %}
             </div>
-            <div class="tab-pane fade{% if active_tab == 'pages' %} show active{% endif %}" id="pages" role="tabpanel">
+            <div class="tab-pane fade{% if active_tab == 'recent' %} show active{% endif %}" id="recent" role="tabpanel">
                 <div class="row justify-content-start" id="recent-pages"></div>
             </div>
         </div>
@@ -145,7 +145,7 @@
     <script src="{% static 'js/campaign-selection.js' %}"></script>
     <script src="{% static 'js/recent-pages.js' %}"></script>
     <script type="text/javascript">
-        {% if active_tab and active_tab == "pages" %}
+        {% if active_tab and active_tab == "recent" %}
             $(document).ready(function() {
                 getPages();
             });
