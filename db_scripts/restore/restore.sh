@@ -32,5 +32,5 @@ RETURNCODE=$?
 echo $RETURNCODE
 
 if [ $RETURNCODE = 0 ]; then
-      aws ecs update-service --region us-east-1 --force-new-deployment --cluster crowd-dev --service crowd-dev-FargateCluster-WFCY4I0U7JSM-ConcordiaExternalService-1VDVTI071TMIR
+    aws ecs update-service --region us-east-1 --force-new-deployment --cluster crowd-dev --service crowd-dev-FargateCluster-WFCY4I0U7JSM-ConcordiaExternalService-1VDVTI071TMIR
 fi
