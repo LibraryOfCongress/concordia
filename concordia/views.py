@@ -580,7 +580,10 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         user = self.request.user
 
         contributed_campaigns = (
-            Campaign.objects.annotate(
+            Campaign.objects.select_related("project__item__asset__transcription")
+            .select_related("project__item__asset__transcription__user")
+            .distinct()
+            .annotate(
                 action_count=Count(
                     "project__item__asset__transcription",
                     filter=Q(project__item__asset__transcription__user=user)
@@ -597,25 +600,28 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
             )
             .exclude(action_count=0)
             .order_by("title")
+            .values(
+                "id",
+                "slug",
+                "title",
+                "action_count",
+                "transcribe_count",
+                "review_count",
+            )
         )
-        totalCount = 0
-        totalTranscriptions = 0
-        totalReviews = 0
 
         ctx["contributed_campaigns"] = contributed_campaigns
-
-        for campaign in contributed_campaigns:
-            campaign.action_count = campaign.transcribe_count + campaign.review_count
-            totalCount = totalCount + campaign.review_count + campaign.transcribe_count
-            totalReviews = totalReviews + campaign.review_count
-            totalTranscriptions = totalTranscriptions + campaign.transcribe_count
 
         q = Q(transcription__user=user) | Q(transcription__reviewed_by=user)
         ctx["pages_worked_on"] = Asset.objects.filter(q).distinct().count()
 
-        ctx["totalCount"] = totalCount
-        ctx["totalReviews"] = totalReviews
-        ctx["totalTranscriptions"] = totalTranscriptions
+        ctx["totalTranscriptions"] = sum(
+            [campaign["transcribe_count"] for campaign in contributed_campaigns]
+        )
+        ctx["totalReviews"] = sum(
+            [campaign["review_count"] for campaign in contributed_campaigns]
+        )
+        ctx["totalCount"] = ctx["totalReviews"] + ctx["totalTranscriptions"]
         return ctx
 
     def get_initial(self):
