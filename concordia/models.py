@@ -683,6 +683,9 @@ class CampaignRetirementProgress(models.Model):
     asset_total = models.IntegerField(default=0)
     assets_removed = models.IntegerField(default=0)
     complete = models.BooleanField(default=False)
+    started_on = models.DateTimeField(auto_now_add=True)
+    completed_on = models.DateTimeField(null=True)
+    removal_log = models.JSONField(default=list)
 
     def __str__(self):
         return f"Removal progress for {self.campaign}"

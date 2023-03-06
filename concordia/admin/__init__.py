@@ -812,6 +812,36 @@ class CampaignRetirementProgressAdmin(admin.ModelAdmin):
         "assets_removed",
         "asset_total",
         "complete",
+        "started_on",
+        "completed_on",
+        "removal_log",
+    )
+    fieldsets = (
+        (
+            None,
+            {
+                "fields": (
+                    "campaign",
+                    "completion",
+                    "projects_removed",
+                    "project_total",
+                    "items_removed",
+                    "item_total",
+                    "assets_removed",
+                    "asset_total",
+                    "complete",
+                    "started_on",
+                    "completed_on",
+                ),
+            },
+        ),
+        (
+            "Log",
+            {
+                "fields": ("removal_log",),
+                "classes": ("collapse",),
+            },
+        ),
     )
 
     def completion(self, obj):
