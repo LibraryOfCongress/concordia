@@ -1,0 +1,31 @@
+{% load static staticfiles %}
+<html lang="en-US">
+    <head>
+        <style>
+            @page { size: A4; margin: 1cm; }
+        </style>
+        <title>Service Letter</title>
+    </head>
+    <body>
+        <p><a href="http://www.loc.gov"><img src="{{ absolute_uri }}{% static 'img/logo.jpg' %}" alt="Library Logo" /></a></p>
+        <p>
+            Library of Congress<br />
+            101 Independence Avenue SE<br />
+            Washington, DC 20540
+        </p>
+        <p>
+            {% now "m/d/y" %}
+        </p>
+        <p>To whom it may concern,</p>
+        <p>I am writing to confirm this volunteer's participation in the Library of Congress virtual volunteering program <a href="http://crowd.loc.gov"><em>By the People</em> (https://crowd.loc.gov)</a>. The project invites anyone to help the Library by transcribing, tagging, and reviewing transcriptions of digitized historical documents from the Library's collections. Transcriptions make the content of handwritten and other documents keyword searchable on the <a href="http://www.loc.gov">Library's main website (https://loc.gov)</a>, open new avenues of digital research, and improve accessibility, including for people with visual or cognitive disabilities.</p>
+        <p>They registered as a By the People volunteer on 05/04/2022 as jstegmaier@loc.gov. They made 4 edits to transcriptions on the site and reviewed 3 transcriptions by other volunteers. Their user profile provides further details.</p>
+        <p>Best,</p>
+        <p>Lauren Algee</p>
+        <p>
+            crowd@loc.gov<br />
+            Community Manager, By the People<br />
+            Digital Content Management Section<br />
+            Library of Congress
+        </p>
+    </body>
+</html>
