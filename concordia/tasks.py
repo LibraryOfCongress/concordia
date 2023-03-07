@@ -5,7 +5,9 @@ from celery import chord
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.management import call_command
-from django.db.models import Count, Q
+from django.db import transaction
+from django.db.models import Count, F, Q
+from django.utils import timezone
 from more_itertools.more import chunked
 
 from concordia.models import (
@@ -597,10 +599,19 @@ def retire_campaign(campaign_id):
 def project_removal_success(project_id, campaign_id):
     logger.debug(f"Updating progress for campaign {campaign_id}")
     logger.debug(f"Project id {project_id}")
-    progress = CampaignRetirementProgress.objects.get(campaign__id=campaign_id)
-    progress.projects_removed += 1
-    progress.save()
-    logger.debug(f"Progress updated for {campaign_id}")
+    with transaction.atomic():
+        progress = CampaignRetirementProgress.objects.select_for_update().get(
+            campaign__id=campaign_id
+        )
+        progress.projects_removed = F("projects_removed") + 1
+        progress.removal_log.append(
+            {
+                "type": "project",
+                "id": project_id,
+            }
+        )
+        progress.save()
+        logger.debug(f"Progress updated for {campaign_id}")
     remove_next_project.delay(campaign_id)
 
 
@@ -616,9 +627,13 @@ def remove_next_project(campaign_id):
         # campaign is fully retired.
         logger.debug(f"Updating progress for campaign {campaign_id}")
         logger.debug(f"Retirement complete for campaign {campaign_id}")
-        progress = CampaignRetirementProgress.objects.get(campaign__id=campaign_id)
-        progress.complete = True
-        progress.save()
+        with transaction.atomic():
+            progress = CampaignRetirementProgress.objects.select_for_update().get(
+                campaign__id=campaign_id
+            )
+            progress.complete = True
+            progress.completed_on = timezone.now()
+            progress.save()
         logger.debug(f"Progress updated for {campaign_id}")
 
 
@@ -626,9 +641,18 @@ def remove_next_project(campaign_id):
 def item_removal_success(item_id, campaign_id, project_id):
     logger.debug(f"Updating progress for campaign {campaign_id}")
     logger.debug(f"Item id {item_id}")
-    progress = CampaignRetirementProgress.objects.get(campaign__id=campaign_id)
-    progress.items_removed += 1
-    progress.save()
+    with transaction.atomic():
+        progress = CampaignRetirementProgress.objects.select_for_update().get(
+            campaign__id=campaign_id
+        )
+        progress.items_removed = F("items_removed") + 1
+        progress.removal_log.append(
+            {
+                "type": "item",
+                "id": item_id,
+            }
+        )
+        progress.save()
     logger.debug(f"Progress updated for {campaign_id}")
     remove_next_item.delay(project_id)
 
@@ -654,9 +678,19 @@ def remove_next_item(project_id):
 def assets_removal_success(asset_ids, campaign_id, item_id):
     logger.debug(f"Updating progress for campaign {campaign_id}")
     logger.debug(f"Asset ids {asset_ids}")
-    progress = CampaignRetirementProgress.objects.get(campaign__id=campaign_id)
-    progress.assets_removed += len(asset_ids)
-    progress.save()
+    with transaction.atomic():
+        progress = CampaignRetirementProgress.objects.select_for_update().get(
+            campaign__id=campaign_id
+        )
+        progress.assets_removed = F("assets_removed") + len(asset_ids)
+        for asset_id in asset_ids:
+            progress.removal_log.append(
+                {
+                    "type": "asset",
+                    "id": asset_id,
+                }
+            )
+        progress.save()
     logger.debug(f"Progress updated for {campaign_id}")
     remove_next_assets.delay(item_id)
 
