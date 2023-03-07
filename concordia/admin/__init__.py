@@ -801,7 +801,7 @@ class UserRetiredCampaignAdmin(admin.ModelAdmin):
 
 @admin.register(CampaignRetirementProgress)
 class CampaignRetirementProgressAdmin(admin.ModelAdmin):
-    list_display = ("campaign", "complete")
+    list_display = ("campaign", "started_on", "complete", "completed_on")
     readonly_fields = (
         "campaign",
         "completion",
