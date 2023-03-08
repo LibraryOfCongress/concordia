@@ -226,6 +226,7 @@
                             <thead class="border-y">
                                 <tr class="text-left">
                                     <th class="date-header">Date</th>
+                                    <th>Page</th>
                                     <th>
                                         <div class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Campaign</div>
                                         <div class="dropdown-menu border border-primary py-0 rounded-0">
@@ -239,7 +240,6 @@
                                             {% endfor %}
                                         </div>
                                     </th>
-                                    <th>Page</th>
                                     <th>
                                         <div class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Your Contribution</div>
                                         <div class="dropdown-menu border border-primary py-0 rounded-0">
@@ -265,8 +265,8 @@
                                 {% for asset in object_list %}
                                     <tr class="{{ asset.item.project.campaign.id }} recent-page">
                                         <td class="col-md-3"><abbr title="{{ asset.latest_activity|date:'SHORT_DATE_FORMAT' }}">{{ asset.latest_activity }}</abbr></td>
-                                        <td><a href="{{ asset.item.get_absolute_url }}">{{ asset.item.title }}</a></td>
                                         <td class="text-right"><a href="{{ asset.get_absolute_url }}">{{ asset.sequence }}</a></td>
+                                        <td><a href="{{ asset.item.get_absolute_url }}">{{ asset.item.title }}</a></td>
                                         <td>{{ asset.last_interaction_type.title }}</td>
                                         <td>{{ asset.get_transcription_status_display }}</td>
                                     </tr>
