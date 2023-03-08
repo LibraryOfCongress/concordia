@@ -22,6 +22,7 @@ from django.contrib.auth.views import (
     PasswordResetView,
 )
 from django.contrib.messages import get_messages
+from django.contrib.sites.shortcuts import get_current_site
 from django.core.exceptions import ValidationError
 from django.core.mail import EmailMultiAlternatives, send_mail
 from django.core.paginator import Paginator
@@ -43,10 +44,10 @@ from django.views.decorators.vary import vary_on_headers
 from django.views.generic import FormView, ListView, RedirectView, TemplateView
 from django_registration.backends.activation.views import RegistrationView
 from flags.decorators import flag_required
-from fpdf import FPDF, ViewerPreferences
 from ratelimit.decorators import ratelimit
 from ratelimit.mixins import RatelimitMixin
 from ratelimit.utils import is_ratelimited
+from weasyprint import HTML
 
 from concordia.api_views import APIDetailView, APIListView
 from concordia.forms import (
@@ -302,12 +303,8 @@ def AccountLetterView(request):
     # Generates a transcriptions and reviews contribution pdf letter
     # for the user and downloads it
 
-    date_today = datetime.datetime.now()
-    username = request.user.email
-    join_date = request.user.date_joined
-
-    totalTranscriptions = 0
-    totalReviews = 0
+    total_transcriptions = 0
+    total_reviews = 0
     user = request.user
     contributed_campaigns = (
         Campaign.objects.annotate(
@@ -330,148 +327,23 @@ def AccountLetterView(request):
     )
 
     for campaign in contributed_campaigns:
-        totalReviews = totalReviews + campaign.review_count
-        totalTranscriptions = totalTranscriptions + campaign.transcribe_count
-    pdf = FPDF(orientation="P", unit="mm", format="A4")
-    pdf.set_margin(10)
-    path = os.path.dirname(os.path.abspath(__file__)) + "/static/img/logo.jpg"
-    pdf.add_page()
-    pdf.image(
-        path,
-        x=12,
-        y=15,
-        w=60,
-        type="",
-        link="https://www.loc.gov/",
-        alt_text="Library Logo",
+        total_reviews += campaign.review_count
+        total_transcriptions += campaign.transcribe_count
+    context = {
+        "username": request.user.email,
+        "join_date": request.user.date_joined,
+        "total_reviews": total_reviews,
+        "total_transcriptions": total_transcriptions,
+    }
+    base_url = "https://{}".format(get_current_site(request).domain)
+    template = loader.get_template("documents/service_letter.html")
+    text = template.render(context)
+    html = HTML(string=text, base_url=base_url)
+    response = HttpResponse(
+        content=html.write_pdf(variant="pdf/ua-1"), content_type="application/pdf"
     )
-    pdf.set_margin(13)
-    pdf.set_author("By The People")
-    pdf.set_creator("Concordia")
-    pdf.set_subject("BTP Service Letter")
-    pdf.set_keywords("SL Concordia BTP")
-    pdf.set_title(title="Service Letter")
-    pdf.set_lang("en-US")
-    pdf.set_producer("Concordia")
-    pdf.viewer_preferences = ViewerPreferences(display_doc_title=True)
-    pdf.set_font("Arial", size=11)
-    pdf.cell(60, 40, txt="", ln=1, align="L")
-    pdf.cell(30, 5, txt="Library of Congress", ln=1, align="L")
-    pdf.cell(30, 5, txt="101 Independence Avenue SE", ln=1, align="L")
-    pdf.cell(30, 5, txt="Washington, DC 20540", ln=1, align="L")
-    pdf.cell(
-        60,
-        20,
-        txt=datetime.date.strftime(date_today, "%m/%d/%Y"),
-        ln=1,
-        align="L",
-    )
-    pdf.cell(60, 10, txt="To whom it may concern,", ln=1, align="L")
-    pdf.cell(
-        140,
-        5,
-        txt="I am writing to confirm this volunteer's participation in "
-        + "the Library of Congress "
-        + "virtual volunteering ",
-        ln=1,
-        align="L",
-    )
-    pdf.cell(16, 5, txt="program ", align="L")
-    pdf.set_font("Arial", "I", 11)
-    pdf.cell(
-        25,
-        5,
-        txt="By the People",
-        align="L",
-        link="https://crowd.loc.gov",
-    )
-    pdf.set_font("Arial", size=11)
-    pdf.cell(
-        120,
-        5,
-        txt="(https://crowd.loc.gov). The project invites anyone to help the Library ",
-        ln=1,
-        align="L",
-    )
-    pdf.cell(
-        120,
-        5,
-        txt="by transcribing, tagging, and reviewing transcriptions of "
-        + "digitized historical documents from ",
-        ln=1,
-        align="L",
-    )
-    pdf.cell(
-        120,
-        5,
-        txt="the Library's collections. Transcriptions make the "
-        + "content of handwritten and other documents ",
-        ln=1,
-        align="L",
-    )
-    pdf.cell(
-        85,
-        5,
-        txt="keyword searchable on the Library's main website (https://loc.gov), ",
-        align="L",
-        link="https://loc.gov",
-    )
-    pdf.cell(
-        113,
-        5,
-        txt="open new avenues of digital ",
-        ln=1,
-        align="C",
-    )
-    pdf.cell(
-        120,
-        5,
-        txt="research, and improve accessibility, including for people with visual "
-        + "or cognitive disabilities.",
-        ln=1,
-        align="L",
-    )
-    pdf.cell(120, 5, txt="", ln=1, align="L")
-    pdf.multi_cell(
-        0,
-        5,
-        txt="They registered as a "
-        + "__By the People__ "
-        + "volunteer on "
-        + datetime.date.strftime(join_date, "%m/%d/%Y ")
-        + "as "
-        + username
-        + ". They made "
-        + "{:,} ".format(totalTranscriptions)
-        + "edits "
-        + "to transcriptions"
-        + " on the site and reviewed "
-        + "{:,} ".format(totalReviews)
-        + "transcriptions by other volunteers. Their user profile "
-        + "provides further details.",
-        ln=1,
-        align="L",
-        markdown=True,
-    )
-    pdf.cell(100, 12, txt="Best,", ln=1, align="L")
-    pdf.cell(110, 10, txt="Lauren Algee", ln=1, align="L")
-    pdf.cell(120, 5, txt="crowd@loc.gov", ln=1, align="L")
-    pdf.cell(
-        14,
-        5,
-        txt="Community Manager, __By the People__",
-        ln=1,
-        align="L",
-        markdown=True,
-    )
-    pdf.cell(140, 5, txt="Digital Content Management Section", ln=1, align="L")
-    pdf.cell(150, 5, txt="Library of Congress ", ln=1, align="L")
-    pdf.output("letter.pdf", "F")
-    with open("letter.pdf", "rb") as f:
-        response = HttpResponse(content=f.read(), content_type="application/pdf")
-        response["Content-Disposition"] = "attachment; filename=letter.pdf"
-        os.remove("letter.pdf")
-        return response
+    response["Content-Disposition"] = "attachment; filename=letter.pdf"
+    return response
 
 
 def _get_pages(request):

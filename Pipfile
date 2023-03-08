@@ -44,6 +44,7 @@ django-npm = "*"
 fpdf2 = "==2.5.5"
 pymemcache = "*"
 black = "*"
+weasyprint = "*"
 
 [dev-packages]
 invoke = "*"
