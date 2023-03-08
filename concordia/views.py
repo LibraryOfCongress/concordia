@@ -22,7 +22,6 @@ from django.contrib.auth.views import (
     PasswordResetView,
 )
 from django.contrib.messages import get_messages
-from django.contrib.sites.shortcuts import get_current_site
 from django.core.exceptions import ValidationError
 from django.core.mail import EmailMultiAlternatives, send_mail
 from django.core.paginator import Paginator
@@ -329,16 +328,19 @@ def AccountLetterView(request):
     for campaign in contributed_campaigns:
         total_reviews += campaign.review_count
         total_transcriptions += campaign.transcribe_count
+    image_url = "file://{0}/{1}/img/logo.jpg".format(
+        settings.SITE_ROOT_DIR, settings.STATIC_ROOT
+    )
     context = {
         "username": request.user.email,
         "join_date": request.user.date_joined,
         "total_reviews": total_reviews,
         "total_transcriptions": total_transcriptions,
+        "image_url": image_url,
     }
-    base_url = "https://{}".format(get_current_site(request).domain)
     template = loader.get_template("documents/service_letter.html")
     text = template.render(context)
-    html = HTML(string=text, base_url=base_url)
+    html = HTML(string=text)
     response = HttpResponse(
         content=html.write_pdf(variant="pdf/ua-1"), content_type="application/pdf"
     )
