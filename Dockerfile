@@ -17,6 +17,8 @@ RUN apt-get update -qy && apt-get dist-upgrade -qy && apt-get install -o Dpkg::O
     # Postgres client library to build psycopg2
     libpq-dev \
     locales \
+    # Weasyprint requirements
+    libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0 \
     nodejs node-gyp && apt-get -qy -t buster-backports install npm && apt-get -qy autoremove && apt-get -qy autoclean
 
 RUN locale-gen en_US.UTF-8
