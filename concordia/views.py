@@ -40,13 +40,13 @@ from django.views.decorators.cache import cache_control, never_cache
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.views.decorators.vary import vary_on_headers
-from django.views.generic import FormView, ListView, TemplateView
+from django.views.generic import FormView, ListView, RedirectView, TemplateView
 from django_registration.backends.activation.views import RegistrationView
 from flags.decorators import flag_required
-from fpdf import FPDF, ViewerPreferences
 from ratelimit.decorators import ratelimit
 from ratelimit.mixins import RatelimitMixin
 from ratelimit.utils import is_ratelimited
+from weasyprint import HTML
 
 from concordia.api_views import APIDetailView, APIListView
 from concordia.forms import (
@@ -304,12 +304,8 @@ def AccountLetterView(request):
     # Generates a transcriptions and reviews contribution pdf letter
     # for the user and downloads it
 
-    date_today = datetime.datetime.now()
-    username = request.user.email
-    join_date = request.user.date_joined
-
-    totalTranscriptions = 0
-    totalReviews = 0
+    total_transcriptions = 0
+    total_reviews = 0
     user = request.user
     contributed_campaigns = (
         Campaign.objects.annotate(
@@ -341,150 +337,101 @@ def AccountLetterView(request):
     )
 
     for campaign in contributed_campaigns:
-        totalReviews = totalReviews + campaign.review_count
-        totalTranscriptions = totalTranscriptions + campaign.transcribe_count
-    totalReviews += retired_campaigns_review_count
-    totalTranscriptions += retired_campaigns_transcribe_count
-    pdf = FPDF(orientation="P", unit="mm", format="A4")
-    pdf.set_margin(10)
-    path = os.path.dirname(os.path.abspath(__file__)) + "/static/img/logo.jpg"
-    pdf.add_page()
-    pdf.image(
-        path,
-        x=12,
-        y=15,
-        w=60,
-        type="",
-        link="https://www.loc.gov/",
-        alt_text="Library Logo",
+        total_reviews += campaign.review_count
+        total_transcriptions += campaign.transcribe_count
+    total_reviews += retired_campaigns_review_count
+    total_transcriptions += retired_campaigns_transcribe_count
+    image_url = "file://{0}/{1}/img/logo.jpg".format(
+        settings.SITE_ROOT_DIR, settings.STATIC_ROOT
     )
-    pdf.set_margin(13)
-    pdf.set_author("By The People")
-    pdf.set_creator("Concordia")
-    pdf.set_subject("BTP Service Letter")
-    pdf.set_keywords("SL Concordia BTP")
-    pdf.set_title(title="Service Letter")
-    pdf.set_lang("en-US")
-    pdf.set_producer("Concordia")
-    pdf.viewer_preferences = ViewerPreferences(display_doc_title=True)
-    pdf.set_font("Arial", size=11)
-    pdf.cell(60, 40, txt="", ln=1, align="L")
-    pdf.cell(30, 5, txt="Library of Congress", ln=1, align="L")
-    pdf.cell(30, 5, txt="101 Independence Avenue SE", ln=1, align="L")
-    pdf.cell(30, 5, txt="Washington, DC 20540", ln=1, align="L")
-    pdf.cell(
-        60,
-        20,
-        txt=datetime.date.strftime(date_today, "%m/%d/%Y"),
-        ln=1,
-        align="L",
+    context = {
+        "username": request.user.email,
+        "join_date": request.user.date_joined,
+        "total_reviews": total_reviews,
+        "total_transcriptions": total_transcriptions,
+        "image_url": image_url,
+    }
+    template = loader.get_template("documents/service_letter.html")
+    text = template.render(context)
+    html = HTML(string=text)
+    response = HttpResponse(
+        content=html.write_pdf(variant="pdf/ua-1"), content_type="application/pdf"
     )
-    pdf.cell(60, 10, txt="To whom it may concern,", ln=1, align="L")
-    pdf.cell(
-        140,
-        5,
-        txt="I am writing to confirm this volunteer's participation in "
-        + "the Library of Congress "
-        + "virtual volunteering ",
-        ln=1,
-        align="L",
+    response["Content-Disposition"] = "attachment; filename=letter.pdf"
+    return response
+
+
+def _get_pages(request):
+    user = request.user
+    transcriptions = Transcription.objects.filter(Q(user=user) | Q(reviewed_by=user))
+
+    qId = request.GET.get("campaign_slug", None)
+
+    assets = Asset.objects.filter(transcription__in=transcriptions)
+    if qId:
+        campaignSlug = qId
+        assets = Asset.objects.filter(item__project__campaign__pk=campaignSlug)
+
+    assets = assets.select_related("item", "item__project", "item__project__campaign")
+
+    assets = assets.annotate(
+        last_transcribed=Max(
+            "transcription__created_on",
+            filter=Q(transcription__user=user),
+        ),
+        last_reviewed=Max(
+            "transcription__updated_on",
+            filter=Q(transcription__reviewed_by=user),
+        ),
+        latest_activity=Greatest(
+            "last_transcribed",
+            "last_reviewed",
+            filter=Q(transcription__user=user) | Q(transcription__reviewed_by=user),
+        ),
     )
-    pdf.cell(16, 5, txt="program ", align="L")
-    pdf.set_font("Arial", "I", 11)
-    pdf.cell(
-        25,
-        5,
-        txt="By the People",
-        align="L",
-        link="https://crowd.loc.gov",
+    # CONCD-189 only show pages from the last 6 months
+    SIX_MONTHS_AGO = datetime.datetime.today() - datetime.timedelta(days=6 * 30)
+    assets = assets.filter(latest_activity__gte=SIX_MONTHS_AGO)
+    assets = assets.order_by("-latest_activity", "-id")
+
+    qId = request.GET.get("campaign_slug", None)
+
+    if qId:
+        campaignSlug = qId
+    else:
+        campaignSlug = -1
+
+    object_list = []
+    for asset in assets:
+        if asset.last_reviewed:
+            asset.last_interaction_type = "reviewed"
+        else:
+            asset.last_interaction_type = "transcribed"
+
+        if int(campaignSlug) == -1:
+            object_list.append((asset))
+        elif asset.item.project.campaign.id == int(campaignSlug):
+            object_list.append((asset))
+
+    return object_list
+
+
+@login_required
+def get_pages(request):
+    asset_list = _get_pages(request)
+    paginator = Paginator(asset_list, 30)  # Show 30 assets per page.
+
+    page_number = int(request.GET.get("page", "1"))
+    context = {
+        "paginator": paginator,
+        "page_obj": paginator.get_page(page_number),
+        "is_paginated": True,
+    }
+    data = dict()
+    data["content"] = loader.render_to_string(
+        "fragments/recent-pages.html", context, request=request
     )
-    pdf.set_font("Arial", size=11)
-    pdf.cell(
-        120,
-        5,
-        txt="(https://crowd.loc.gov). The project invites anyone to help the Library ",
-        ln=1,
-        align="L",
-    )
-    pdf.cell(
-        120,
-        5,
-        txt="by transcribing, tagging, and reviewing transcriptions of "
-        + "digitized historical documents from ",
-        ln=1,
-        align="L",
-    )
-    pdf.cell(
-        120,
-        5,
-        txt="the Library's collections. Transcriptions make the "
-        + "content of handwritten and other documents ",
-        ln=1,
-        align="L",
-    )
-    pdf.cell(
-        85,
-        5,
-        txt="keyword searchable on the Library's main website (https://loc.gov), ",
-        align="L",
-        link="https://loc.gov",
-    )
-    pdf.cell(
-        113,
-        5,
-        txt="open new avenues of digital ",
-        ln=1,
-        align="C",
-    )
-    pdf.cell(
-        120,
-        5,
-        txt="research, and improve accessibility, including for people with visual "
-        + "or cognitive disabilities.",
-        ln=1,
-        align="L",
-    )
-    pdf.cell(120, 5, txt="", ln=1, align="L")
-    pdf.multi_cell(
-        0,
-        5,
-        txt="They registered as a "
-        + "__By the People__ "
-        + "volunteer on "
-        + datetime.date.strftime(join_date, "%m/%d/%Y ")
-        + "as "
-        + username
-        + ". They made "
-        + "{:,} ".format(totalTranscriptions)
-        + "edits "
-        + "to transcriptions"
-        + " on the site and reviewed "
-        + "{:,} ".format(totalReviews)
-        + "transcriptions by other volunteers. Their user profile "
-        + "provides further details.",
-        ln=1,
-        align="L",
-        markdown=True,
-    )
-    pdf.cell(100, 12, txt="Best,", ln=1, align="L")
-    pdf.cell(110, 10, txt="Lauren Algee", ln=1, align="L")
-    pdf.cell(120, 5, txt="crowd@loc.gov", ln=1, align="L")
-    pdf.cell(
-        14,
-        5,
-        txt="Community Manager, __By the People__",
-        ln=1,
-        align="L",
-        markdown=True,
-    )
-    pdf.cell(140, 5, txt="Digital Content Management Section", ln=1, align="L")
-    pdf.cell(150, 5, txt="Library of Congress ", ln=1, align="L")
-    pdf.output("letter.pdf", "F")
-    with open("letter.pdf", "rb") as f:
-        response = HttpResponse(content=f.read(), content_type="application/pdf")
-        response["Content-Disposition"] = "attachment; filename=letter.pdf"
-        os.remove("letter.pdf")
-        return response
+    return JsonResponse(data)
 
 
 @method_decorator(never_cache, name="dispatch")
@@ -505,144 +452,17 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         return super().post(*args, **kwargs)
 
     def get_queryset(self):
-        campaign_id = self.request.GET.get("campaign", None)
-        user = self.request.user
-        activity = self.request.GET.get("activity", None)
-        if activity == "transcribed":
-            q = Q(user=user)
-        elif activity == "reviewed":
-            q = Q(reviewed_by=user)
-        else:
-            q = Q(user=user) | Q(reviewed_by=user)
-        transcriptions = Transcription.objects.filter(q)
-
-        qId = self.request.GET.get("campaign_slug", None)
-
-        if qId:
-            campaignSlug = qId
-            assets = Asset.objects.filter(
-                transcription__in=transcriptions,
-                item__project__campaign__pk=campaignSlug,
-            )
-        else:
-            campaignSlug = -1
-            assets = Asset.objects.filter(transcription__in=transcriptions)
-        status_list = self.request.GET.getlist("status")
-        if status_list and status_list != []:
-            if "completed" not in status_list:
-                assets = assets.exclude(
-                    transcription_status=TranscriptionStatus.COMPLETED
-                )
-            if "submitted" not in status_list:
-                assets = assets.exclude(
-                    transcription_status=TranscriptionStatus.SUBMITTED
-                )
-            if "in_progress" not in status_list:
-                assets = assets.exclude(
-                    transcription_status=TranscriptionStatus.IN_PROGRESS
-                )
-
-        assets = assets.select_related(
-            "item", "item__project", "item__project__campaign"
-        )
-
-        assets = assets.annotate(
-            last_transcribed=Max(
-                "transcription__created_on",
-                filter=Q(transcription__user=user),
-            ),
-            last_reviewed=Max(
-                "transcription__updated_on",
-                filter=Q(transcription__reviewed_by=user),
-            ),
-            latest_activity=Greatest(
-                "last_transcribed",
-                "last_reviewed",
-                filter=Q(transcription__user=user) | Q(transcription__reviewed_by=user),
-            ),
-        )
-        fmt = "%Y-%m-%d"
-        start = self.request.GET.get("start", None)
-        end = self.request.GET.get("end", None)
-        start_date = None
-        if start is not None and len(start) > 0:
-            start_date = datetime.datetime.strptime(start, fmt)
-        end_date = None
-        if end is not None and len(end) > 0:
-            end_date = datetime.datetime.strptime(end, fmt)
-        if start_date is not None and end_date is not None:
-            assets = assets.filter(latest_activity__range=[start, end])
-        elif start_date is not None or end_date is not None:
-            date = start_date if start_date else end_date
-            assets = assets.filter(
-                latest_activity__year=date.year,
-                latest_activity__month=date.month,
-                latest_activity__day=date.day,
-            )
-        # CONCD-189 only show pages from the last 6 months
-        SIX_MONTHS_AGO = datetime.datetime.today() - datetime.timedelta(days=6 * 30)
-        order_by = self.request.GET.get("order_by", "date-descending")
-        assets = assets.filter(latest_activity__gte=SIX_MONTHS_AGO)
-        if order_by == "date-ascending":
-            assets = assets.order_by("latest_activity", "-id")
-        else:
-            assets = assets.order_by("-latest_activity", "-id")
-        self.assets = assets
-        if campaign_id is not None:
-            assets = assets.filter(item__project__campaign__pk=campaign_id)
-        return assets
+        # CONCD-236 wait to load
+        return Asset.objects.none()
 
     def get_context_data(self, *args, **kwargs):
         ctx = super().get_context_data(*args, **kwargs)
-        obj_list = ctx.pop("object_list")
-        ctx["object_list"] = object_list = []
 
-        page = self.request.GET.get("page", None)
-        campaign = self.request.GET.get("campaign", None)
-        activity = self.request.GET.get("activity", None)
-        status_list = self.request.GET.getlist("status")
-        start = self.request.GET.get("start", None)
-        end = self.request.GET.get("end", None)
-        order_by = self.request.GET.get("order_by", None)
-        if any([activity, campaign, page, status_list, start, end, order_by]):
-            ctx["active_tab"] = "pages"
-            if campaign is not None:
-                ctx["campaign"] = Campaign.objects.get(pk=int(campaign))
-            if status_list is not None:
-                ctx["status_list"] = status_list
-            ctx["order_by"] = self.request.GET.get("order_by", "date-descending")
-        else:
-            ctx["active_tab"] = self.request.GET.get("tab", "contributions")
-        ctx["activity"] = activity
-        ctx["statuses"] = status_list
-        if end is not None:
-            ctx["end"] = end
-        ctx["order_by"] = order_by
-        if start is not None:
-            ctx["start"] = start
-
-        qId = self.request.GET.get("campaign_slug", None)
-
-        if qId:
-            campaignSlug = qId
-        else:
-            campaignSlug = -1
-
-        for asset in obj_list:
-
-            if asset.last_reviewed:
-                asset.last_interaction_type = "reviewed"
-            else:
-                asset.last_interaction_type = "transcribed"
-
-            if int(campaignSlug) == -1:
-                object_list.append((asset))
-            else:
-                if asset.item.project.campaign.id == int(campaignSlug):
-                    object_list.append((asset))
-        recent_campaigns = Campaign.objects.filter(project__item__asset__in=self.assets)
-        recent_campaigns = recent_campaigns.distinct().order_by("title")
-        ctx["recent_campaigns"] = recent_campaigns.values("pk", "title")
+        ctx["active_tab"] = (
+            "pages"
+            if self.request.GET.get("page", None) is not None
+            else self.request.GET.get("tab", "contributions")
+        )
 
         user = self.request.user
 
@@ -2361,6 +2181,27 @@ class ReviewListView(AssetListView):
             asset_qs.order_by(order_field)
 
         return asset_qs
+
+
+# These views are to make sure various links to help-center URLs don't break
+# when the URLs are changed to not include help-center and can be removed after
+# all links are updated.
+
+
+class HelpCenterRedirectView(RedirectView):
+    def get_redirect_url(self, *args, **kwargs):
+        path = kwargs["page_slug"]
+        return "/get-started/" + path
+
+
+class HelpCenterSpanishRedirectView(RedirectView):
+    def get_redirect_url(self, *args, **kwargs):
+        print("spanish")
+        path = kwargs["page_slug"]
+        return "/get-started-esp/" + path + "-esp/"
+
+
+# End of help-center views
 
 
 @flag_required("ACTIVITY_UI_ENABLED")

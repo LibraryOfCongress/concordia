@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.contrib import admin
 from django.http import Http404, HttpResponseForbidden
-from django.urls import include, path, re_path
+from django.urls import include, path
 from django.urls.converters import register_converter
 from django.views.defaults import page_not_found, permission_denied, server_error
 from django.views.generic import RedirectView
@@ -90,27 +90,51 @@ urlpatterns = [
     path("healthz", views.healthz, name="health-check"),
     path("letter", views.AccountLetterView, name="user-letter"),
     path("about/", views.simple_page, name="about"),
-    path("help-center/", views.simple_page, name="help-center"),
-    path("help-center/welcome-guide/", views.simple_page, name="welcome-guide"),
-    path("help-center/how-to-transcribe/", views.simple_page, name="how-to-transcribe"),
-    path("help-center/how-to-review/", views.simple_page, name="how-to-review"),
-    path("help-center/how-to-tag/", views.simple_page, name="how-to-tag"),
+    # These patterns are to make sure various links to help-center URLs don't break
+    # when the URLs are changed to not include help-center and can be removed after
+    # all links are updated.
+    path(
+        "help-center/",
+        RedirectView.as_view(pattern_name="get-started"),
+        name="help-center",
+    ),
+    path(
+        "help-center/welcome-guide/", RedirectView.as_view(pattern_name="welcome-guide")
+    ),
     path(
         "help-center/welcome-guide-esp/",
+        RedirectView.as_view(pattern_name="welcome-guide-spanish"),
+    ),
+    path(
+        "help-center/<slug:page_slug>-esp/",
+        views.HelpCenterSpanishRedirectView.as_view(),
+    ),
+    path("help-center/<slug:page_slug>/", views.HelpCenterRedirectView.as_view()),
+    # End of help-center patterns
+    path("get-started/", views.simple_page, name="welcome-guide"),
+    path("get-started/how-to-transcribe/", views.simple_page, name="how-to-transcribe"),
+    path("get-started/how-to-review/", views.simple_page, name="how-to-review"),
+    path("get-started/how-to-tag/", views.simple_page, name="how-to-tag"),
+    path(
+        "get-started-esp/",
         views.simple_page,
         name="welcome-guide-spanish",
     ),
     path(
-        "help-center/how-to-transcribe-esp/",
+        "get-started-esp/how-to-transcribe-esp/",
         views.simple_page,
         name="how-to-transcribe-spanish",
     ),
     path(
-        "help-center/how-to-review-esp/",
+        "get-started-esp/how-to-review-esp/",
         views.simple_page,
         name="how-to-review-spanish",
     ),
-    path("help-center/how-to-tag-esp/", views.simple_page, name="how-to-tag-spanish"),
+    path(
+        "get-started-esp/how-to-tag-esp/",
+        views.simple_page,
+        name="how-to-tag-spanish",
+    ),
     path("for-educators/", views.simple_page, name="for-educators"),
     path("for-staff/", views.simple_page, name="for-staff"),
     path("resources/", views.simple_page, name="resources"),
@@ -181,6 +205,7 @@ urlpatterns = [
     path(
         "account/login/", views.ConcordiaLoginView.as_view(), name="registration_login"
     ),
+    path("account/get_pages/", views.get_pages, name="get_pages"),
     path("account/profile/", views.AccountProfileView.as_view(), name="user-profile"),
     path(
         "account/password_reset/",
@@ -206,7 +231,7 @@ urlpatterns = [
     path("error/404/", page_not_found, {"exception": Http404()}),
     path("error/429/", views.ratelimit_view),
     path("error/403/", permission_denied, {"exception": HttpResponseForbidden()}),
-    re_path("", include("django_prometheus_metrics.urls")),
+    path("", include("django_prometheus_metrics.urls")),
     path("robots.txt", include("robots.urls")),
 ]
 

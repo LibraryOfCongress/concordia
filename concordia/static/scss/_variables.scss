@@ -9,7 +9,7 @@ $primary: $blue;
 $theme-colors: (
     'accent': $orange,
     'default': $gray-300,
-    'primary': $primary
+    'primary': $primary,
 );
 
 $link-color: theme-color('primary');
@@ -22,7 +22,7 @@ $headings-font-weight: 700;
 
 $sizes: (
     60: 60%,
-    65: 65%
+    65: 65%,
 );
 
 // typography

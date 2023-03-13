@@ -260,7 +260,6 @@ def import_item_count_from_url(import_url):
     Given a loc.gov URL, return count of files from the resources section
     """
     try:
-
         resp = requests.get(import_url, params={"fo": "json"})
         resp.raise_for_status()
         item_data = resp.json()

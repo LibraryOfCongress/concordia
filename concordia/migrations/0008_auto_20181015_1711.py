@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("concordia", "0007_thumbnail_images")]
 
     operations = [

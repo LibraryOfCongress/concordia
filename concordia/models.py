@@ -1,4 +1,5 @@
 import os.path
+import time
 from logging import getLogger
 
 from django.conf import settings
@@ -15,6 +16,13 @@ logger = getLogger(__name__)
 metadata_default = dict
 
 User._meta.get_field("email").__dict__["_unique"] = True
+
+
+def resource_file_upload_path(instance, filename):
+    if instance.id and instance.path:
+        return instance.path
+    path = "cm-uploads/resources/%Y/{0}".format(filename.lower())
+    return time.strftime(path)
 
 
 class UserProfile(MetricsModelMixin("userprofile"), models.Model):
@@ -229,13 +237,21 @@ class Resource(MetricsModelMixin("resource"), models.Model):
 
 class ResourceFile(models.Model):
     name = models.CharField(blank=False, max_length=255)
-    resource = models.FileField(upload_to="cm-uploads/resources/%Y/")
+    path = models.CharField(blank=True, default="", max_length=255)
+    resource = models.FileField(upload_to=resource_file_upload_path)
+    updated_on = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ["name"]
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.id and not self.path:
+            self.path = self.resource.name
+            self.save()
 
     def delete(self, *args, **kwargs):
         storage = self.resource.storage
@@ -555,9 +571,31 @@ class Banner(models.Model):
     link = models.CharField(max_length=255)
     open_in_new_window_tab = models.BooleanField(default=True, blank=True)
     active = models.BooleanField(default=False, blank=True)
+    DANGER = "DANGER"
+    INFO = "INFO"
+    SUCCESS = "SUCCESS"
+    WARN = "WARN"
+    ALERT_STATUS_CHOICES = [
+        ("DANGER", "Red"),
+        ("INFO", "Blue"),
+        ("SUCCESS", "Green"),
+        ("WARNING", "Grey"),
+    ]
+    alert_status = models.CharField(
+        max_length=7,
+        choices=ALERT_STATUS_CHOICES,
+        default=SUCCESS,
+        verbose_name="Color",
+    )
 
     def __str__(self):
         return f"Banner: {self.slug}"
+
+    def alert_class(self):
+        return "alert-" + self.alert_status.lower()
+
+    def btn_class(self):
+        return "btn-" + self.alert_status.lower()
 
 
 class CarouselSlide(models.Model):

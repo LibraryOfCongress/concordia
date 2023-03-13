@@ -1,9 +1,9 @@
 import bleach
 from django import forms
 
-FRAGMENT_ALLOWED_TAGS = bleach.sanitizer.ALLOWED_TAGS + ["br", "kbd", "span"]
+FRAGMENT_ALLOWED_TAGS = {"br", "kbd", "span"} | bleach.sanitizer.ALLOWED_TAGS
 
-BLOCK_ALLOWED_TAGS = FRAGMENT_ALLOWED_TAGS + [
+BLOCK_ALLOWED_TAGS = FRAGMENT_ALLOWED_TAGS | {
     "div",
     "h1",
     "h2",
@@ -14,7 +14,7 @@ BLOCK_ALLOWED_TAGS = FRAGMENT_ALLOWED_TAGS + [
     "hr",
     "p",
     "section",
-]
+}
 
 ALLOWED_ATTRIBUTES = {
     **bleach.sanitizer.ALLOWED_ATTRIBUTES,

@@ -105,6 +105,7 @@ class ConcordiaUserAdmin(UserAdmin):
         qs = qs.annotate(Count("transcription"))
         return qs
 
+    @admin.display(ordering="transcription__count")
     def transcription_count(self, obj):
         return obj.transcription__count
 
@@ -131,7 +132,6 @@ class ConcordiaUserAdmin(UserAdmin):
             self, request, queryset, field_names=self.EXPORT_FIELDS
         )
 
-    transcription_count.admin_order_field = "transcription__count"
     actions = (anonymize_action, export_users_as_csv, export_users_as_excel)
 
 
@@ -153,19 +153,16 @@ class CustomListDisplayFieldsMixin:
     used on multiple models
     """
 
+    @admin.display(description="Description")
     def truncated_description(self, obj):
         return truncatechars(obj.description, 200)
 
-    truncated_description.short_description = "Description"
-
+    @admin.display(description="Metadata")
     def truncated_metadata(self, obj):
         if obj.metadata:
             return format_html("<code>{}</code>", truncatechars(obj.metadata, 200))
         else:
             return ""
-
-    truncated_metadata.allow_tags = True
-    truncated_metadata.short_description = "Metadata"
 
 
 @admin.register(Campaign)
@@ -311,13 +308,18 @@ class ResourceAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     list_display_links = ("campaign", "topic", "sequence", "title")
     list_filter = (ResourceCampaignListFilter, "title")
 
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "campaign":
+            kwargs["queryset"] = Campaign.objects.order_by("title")
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
 
 @admin.register(ResourceFile)
 class ResourceFileAdmin(admin.ModelAdmin):
     # Bulk delete bypasses file deletion, so we don't want any bulk actions
     actions = None
-    list_display = ("name", "resource_url")
-    readonly_fields = ("resource_url",)
+    list_display = ("name", "resource_url", "updated_on")
+    readonly_fields = ("resource_url", "updated_on")
 
     def resource_url(self, obj):
         # Boto3 adds a querystring parameters to the URL to allow access
@@ -332,7 +334,12 @@ class ResourceFileAdmin(admin.ModelAdmin):
         # creation, since uploading a new file will leave behind the original
         # as an orphan.
         if obj:
-            return ("name", "resource_url")
+            return (
+                "name",
+                "resource_url",
+                "resource",
+                "updated_on",
+            )
         return ("name", "resource")
 
 
@@ -356,7 +363,6 @@ class TopicAdmin(admin.ModelAdmin):
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
-
     form = BleachedDescriptionAdminForm
 
     # todo: add foreignKey link for campaign
@@ -398,7 +404,6 @@ class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     @method_decorator(permission_required("concordia.add_item"))
     @method_decorator(permission_required("concordia.change_item"))
     def item_import_view(self, request, object_id):
-
         project = get_object_or_404(Project, pk=object_id)
 
         if request.method == "POST":
@@ -471,7 +476,6 @@ class ItemAdmin(admin.ModelAdmin):
             return super().lookup_allowed(key, value)
 
     def get_deleted_objects(self, objs, request):
-
         if len(objs) < 30:
             deleted_objects = [str(obj) for obj in objs]
         else:
@@ -579,15 +583,13 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     def item_id(self, obj):
         return obj.item.item_id
 
+    @admin.display(description="Media URL")
     def truncated_media_url(self, obj):
         return format_html(
             '<a target="_blank" href="{}">{}</a>',
             urljoin(settings.MEDIA_URL, obj.media_url),
             truncatechars(obj.media_url, 100),
         )
-
-    truncated_media_url.allow_tags = True
-    truncated_media_url.short_description = "Media URL"
 
     def get_readonly_fields(self, request, obj=None):
         if obj:
@@ -707,10 +709,9 @@ class TranscriptionAdmin(admin.ModelAdmin):
         else:
             return super().lookup_allowed(key, value)
 
+    @admin.display(description="Text")
     def truncated_text(self, obj):
         return truncatechars(obj.text, 100)
-
-    truncated_text.short_description = "Text"
 
 
 @admin.register(SimpleContentBlock)

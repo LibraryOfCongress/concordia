@@ -89,7 +89,7 @@ for performance:
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link"
-                                    href="https://historyhub.history.gov/community/crowd-loc">Discuss</a>
+                                    href="https://historyhub.history.gov/crowd-loc/" target="_blank">Discuss</a>
                             </li>
                             <li id="topnav-help-dropdown" class="nav-item dropdown
                                 nav-dropdown">
@@ -213,7 +213,7 @@ because it's not worth dealing with IE11 compatibility {% endcomment %}
                                 <li class="list-inline-item mb-1"><a href="/contact/">Contact
                                     Us</a></li>
                                 <li class="list-inline-item"><a
-                                    href="/help-center/">Help</a></li>
+                                    href="{% url 'welcome-guide' %}">Help</a></li>
                             </ul>
                         </div>
                         <div class="col-12 col-lg-auto align-self-center">
@@ -270,21 +270,6 @@ because it's not worth dealing with IE11 compatibility {% endcomment %}
         {% block body_scripts %}{% endblock body_scripts %}
 
         <script type="text/javascript">
-            if (
-                typeof(Storage) !== "undefined"
-            ) {
-                for(var i in localStorage)
-                {
-                    if ($('#' + i).hasClass("alert")) {
-                        $('#' + i).attr("hidden", true);
-                    }
-                }
-            }
-            $("#no-interface-banner").click(function(event) {
-                localStorage.setItem(event.target.parentElement.id, true);
-                $('#' + event.target.parentElement.id).attr("hidden", true);
-            });
-
             if (typeof _satellite == "undefined") {
                 if (typeof Sentry != "undefined") {
                     Sentry.captureMessage("Adobe Analytics did not load");
