@@ -1,16 +1,20 @@
 import datetime
 from logging import getLogger
 
+from celery import chord
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.management import call_command
-from django.db.models import Count
+from django.db import transaction
+from django.db.models import Count, F, Q
+from django.utils import timezone
 from more_itertools.more import chunked
 
 from concordia.models import (
     Asset,
     AssetTranscriptionReservation,
     Campaign,
+    CampaignRetirementProgress,
     Item,
     Project,
     SiteReport,
@@ -18,6 +22,7 @@ from concordia.models import (
     Topic,
     Transcription,
     UserAssetTagCollection,
+    UserRetiredCampaign,
 )
 from concordia.signals.signals import reservation_released
 from concordia.utils import get_anonymous_user
@@ -293,6 +298,20 @@ def campaign_report(campaign):
 
     distinct_tag_count = len(distinct_tag_list)
 
+    campaign_assets = Asset.objects.filter(
+        item__project__campaign=campaign,
+        item__project__published=True,
+        item__published=True,
+        published=True,
+    )
+    asset_transcriptions = Transcription.objects.filter(
+        asset__in=campaign_assets
+    ).values_list("user_id", "reviewed_by")
+    user_ids = set(
+        [user_id for transcription in asset_transcriptions for user_id in transcription]
+    )
+    registered_contributor_count = len(user_ids)
+
     site_report = SiteReport()
     site_report.campaign = campaign
     site_report.assets_total = assets_total
@@ -310,6 +329,7 @@ def campaign_report(campaign):
     site_report.transcriptions_saved = transcriptions_saved
     site_report.distinct_tags = distinct_tag_count
     site_report.tag_uses = tag_count
+    site_report.registered_contributors = registered_contributor_count
     site_report.save()
 
 
@@ -457,3 +477,252 @@ def populate_elasticsearch_indices():
 @celery_app.task
 def delete_elasticsearch_indices():
     call_command("search_index", "-f", action="delete")
+
+
+@celery_app.task
+def populate_user_archive_table():
+    for campaign in Campaign.objects.filter(status=Campaign.Status.COMPLETED):
+        assets = Asset.objects.filter(item__project__campaign=campaign)
+        tag_collections = UserAssetTagCollection.objects.filter(asset__in=assets)
+        user_campaigns = UserRetiredCampaign.objects.filter(campaign=campaign)
+
+        to_update = user_campaigns.distinct()
+        UserRetiredCampaign.objects.bulk_update(
+            [
+                UserRetiredCampaign(
+                    id=user_profile_activity.id,
+                    user_id=user_profile_activity.user.id,
+                    campaign=campaign,
+                    asset_count=assets.filter(
+                        Q(transcription__user_id=user_profile_activity.user.id)
+                        | Q(transcription__reviewed_by=user_profile_activity.user.id)
+                    )
+                    .distinct()
+                    .count(),
+                    asset_tag_count=Tag.objects.filter(
+                        userassettagcollection__in=tag_collections.filter(
+                            user_id=user_profile_activity.user.id
+                        )
+                    )
+                    .distinct()
+                    .count(),
+                    transcribe_count=assets.filter(
+                        transcription__user_id=user_profile_activity.user.id
+                    )
+                    .distinct()
+                    .count(),
+                    review_count=assets.filter(
+                        transcription__reviewed_by=user_profile_activity.user.id
+                    )
+                    .distinct()
+                    .count(),
+                )
+                for user_profile_activity in to_update
+            ],
+            ["asset_count", "asset_tag_count", "transcribe_count", "review_count"],
+        )
+
+        existing_user_campaigns = user_campaigns.values_list(
+            "user_id", flat=True
+        ).distinct()
+        to_create = (
+            User.objects.filter(transcription__asset__item__project__campaign=campaign)
+            .exclude(id__in=existing_user_campaigns)
+            .distinct()
+            .values_list("id", flat=True)
+        )
+        UserRetiredCampaign.objects.bulk_create(
+            [
+                UserRetiredCampaign(
+                    user_id=user_id,
+                    campaign=campaign,
+                    asset_count=assets.filter(
+                        Q(transcription__user_id=user_id)
+                        | Q(transcription__reviewed_by=user_id)
+                    )
+                    .distinct()
+                    .count(),
+                    asset_tag_count=Tag.objects.filter(
+                        userassettagcollection__in=tag_collections.filter(
+                            user_id=user_id
+                        )
+                    )
+                    .distinct()
+                    .count(),
+                    transcribe_count=assets.filter(transcription__user_id=user_id)
+                    .distinct()
+                    .count(),
+                    review_count=assets.filter(transcription__reviewed_by=user_id)
+                    .distinct()
+                    .count(),
+                )
+                for user_id in to_create
+            ]
+        )
+
+
+@celery_app.task(ignore_result=True)
+def retire_campaign(campaign_id):
+    # Entry point to the retirement process
+    campaign = Campaign.objects.get(id=campaign_id)
+    logger.debug("Retiring %s (%s)" % (campaign, campaign.id))
+    progress, created = CampaignRetirementProgress.objects.get_or_create(
+        campaign=campaign
+    )
+    if created:
+        # We want to set totals on a newly created progress object
+        # but not on one that already exists. This allows us to keep proper
+        # track of the full progress if the process is stopped and resumed
+        projects = campaign.project_set.values_list("id", flat=True)
+        items = Item.objects.filter(project__id__in=projects).values_list(
+            "id", flat=True
+        )
+        assets = Asset.objects.filter(item__id__in=items).values_list("id", flat=True)
+        progress.project_total = len(projects)
+        progress.item_total = len(items)
+        progress.asset_total = len(assets)
+        progress.save()
+    if campaign.status != Campaign.Status.RETIRED:
+        logger.debug("Setting campaign status to retired")
+        # We want to make sure the status is set to Retired before
+        # we start removing information so the front-end is pulling
+        # from archived data rather than live
+        campaign.status = Campaign.Status.RETIRED
+        campaign.save()
+    remove_next_project.delay(campaign.id)
+    return progress
+
+
+@celery_app.task(ignore_result=True)
+def project_removal_success(project_id, campaign_id):
+    logger.debug(f"Updating progress for campaign {campaign_id}")
+    logger.debug(f"Project id {project_id}")
+    with transaction.atomic():
+        progress = CampaignRetirementProgress.objects.select_for_update().get(
+            campaign__id=campaign_id
+        )
+        progress.projects_removed = F("projects_removed") + 1
+        progress.removal_log.append(
+            {
+                "type": "project",
+                "id": project_id,
+            }
+        )
+        progress.save()
+        logger.debug(f"Progress updated for {campaign_id}")
+    remove_next_project.delay(campaign_id)
+
+
+@celery_app.task(ignore_result=True)
+def remove_next_project(campaign_id):
+    campaign = Campaign.objects.get(id=campaign_id)
+    logger.debug("Removing projects for %s (%s)" % (campaign, campaign.id))
+    try:
+        project = campaign.project_set.all()[0]
+        remove_next_item.delay(project.id)
+    except IndexError:
+        # This means all projects are deleted, which means the
+        # campaign is fully retired.
+        logger.debug(f"Updating progress for campaign {campaign_id}")
+        logger.debug(f"Retirement complete for campaign {campaign_id}")
+        with transaction.atomic():
+            progress = CampaignRetirementProgress.objects.select_for_update().get(
+                campaign__id=campaign_id
+            )
+            progress.complete = True
+            progress.completed_on = timezone.now()
+            progress.save()
+        logger.debug(f"Progress updated for {campaign_id}")
+
+
+@celery_app.task(ignore_result=True)
+def item_removal_success(item_id, campaign_id, project_id):
+    logger.debug(f"Updating progress for campaign {campaign_id}")
+    logger.debug(f"Item id {item_id}")
+    with transaction.atomic():
+        progress = CampaignRetirementProgress.objects.select_for_update().get(
+            campaign__id=campaign_id
+        )
+        progress.items_removed = F("items_removed") + 1
+        progress.removal_log.append(
+            {
+                "type": "item",
+                "id": item_id,
+            }
+        )
+        progress.save()
+    logger.debug(f"Progress updated for {campaign_id}")
+    remove_next_item.delay(project_id)
+
+
+@celery_app.task(ignore_result=True)
+def remove_next_item(project_id):
+    project = Project.objects.get(id=project_id)
+    logger.debug("Removing items for %s (%s)" % (project, project.id))
+    try:
+        item = project.item_set.all()[0]
+        remove_next_assets.delay(item.id)
+    except IndexError:
+        # No more items remain for this project, so we can now delete
+        # the project
+        logger.debug(f"All items remoed for {project} ({project.id})")
+        campaign_id = project.campaign.id
+        project_id = project.id
+        project.delete()
+        project_removal_success.delay(project_id, campaign_id)
+
+
+@celery_app.task(ignore_result=True)
+def assets_removal_success(asset_ids, campaign_id, item_id):
+    logger.debug(f"Updating progress for campaign {campaign_id}")
+    logger.debug(f"Asset ids {asset_ids}")
+    with transaction.atomic():
+        progress = CampaignRetirementProgress.objects.select_for_update().get(
+            campaign__id=campaign_id
+        )
+        progress.assets_removed = F("assets_removed") + len(asset_ids)
+        for asset_id in asset_ids:
+            progress.removal_log.append(
+                {
+                    "type": "asset",
+                    "id": asset_id,
+                }
+            )
+        progress.save()
+    logger.debug(f"Progress updated for {campaign_id}")
+    remove_next_assets.delay(item_id)
+
+
+@celery_app.task(ignore_result=True)
+def remove_next_assets(item_id):
+    item = Item.objects.get(id=item_id)
+    campaign_id = item.project.campaign.id
+    logger.debug("Removing assets for %s (%s)" % (item, item.id))
+    assets = item.asset_set.all()
+    if not assets:
+        # No assets remain for this item, so we can safely delete it
+        logger.debug(f"All assets removed for {item} ({item.id})")
+        item_id = item.id
+        project_id = item.project.id
+        item.delete()
+        item_removal_success.delay(item_id, campaign_id, project_id)
+    else:
+        # We delete assets in chunks of 10 in order to not lock up the database
+        # for a long period of time.
+        chord(delete_asset.s(asset.id) for asset in assets[:10])(
+            assets_removal_success.s(campaign_id, item.id)
+        )
+
+
+@celery_app.task
+def delete_asset(asset_id):
+    asset = Asset.objects.get(id=asset_id)
+    asset_id = asset.id
+    logger.debug("Deleting asset %s (%s)" % (asset, asset_id))
+    # We explicitly delete the storage image, though
+    # this should be removed anyway when the asset is deleted
+    asset.storage_image.delete(save=False)
+    asset.delete()
+    logger.debug("Asset %s (%s) deleted" % (asset, asset_id))
+
+    return asset_id

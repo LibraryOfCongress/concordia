@@ -67,11 +67,13 @@ from concordia.models import (
     Item,
     Project,
     SimplePage,
+    SiteReport,
     Tag,
     Topic,
     Transcription,
     TranscriptionStatus,
     UserAssetTagCollection,
+    UserRetiredCampaign,
 )
 from concordia.signals.signals import reservation_obtained, reservation_released
 from concordia.templatetags.concordia_media_tags import asset_media_url
@@ -324,10 +326,23 @@ def AccountLetterView(request):
         .exclude(action_count=0)
         .order_by("title")
     )
+    retired_campaigns = UserRetiredCampaign.objects.filter(
+        user=user, campaign__status=Campaign.Status.RETIRED
+    )
+    retired_campaigns_review_count = sum(
+        [campaign.review_count for campaign in retired_campaigns]
+    )
+    retired_campaigns_transcribe_count = sum(
+        [campaign.transcribe_count for campaign in retired_campaigns]
+    )
 
     for campaign in contributed_campaigns:
         total_reviews += campaign.review_count
         total_transcriptions += campaign.transcribe_count
+
+    total_reviews += retired_campaigns_review_count
+    total_transcriptions += retired_campaigns_transcribe_count
+
     image_url = "file://{0}/{1}/img/logo.jpg".format(
         settings.SITE_ROOT_DIR, settings.STATIC_ROOT
     )
@@ -477,6 +492,12 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         totalReviews = 0
 
         ctx["contributed_campaigns"] = contributed_campaigns
+        user_retired_campaigns = UserRetiredCampaign.objects.filter(
+            user=user, campaign__status=Campaign.Status.RETIRED
+        )
+        ctx["contributed_campaign_count"] = (
+            len(contributed_campaigns) + user_retired_campaigns.count()
+        )
 
         for campaign in contributed_campaigns:
             campaign.action_count = campaign.transcribe_count + campaign.review_count
@@ -485,9 +506,13 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
             totalTranscriptions = totalTranscriptions + campaign.transcribe_count
 
         q = Q(transcription__user=user) | Q(transcription__reviewed_by=user)
-        ctx["pages_worked_on"] = Asset.objects.filter(q).distinct().count()
+        ctx["pages_worked_on"] = Asset.objects.filter(q).distinct().count() + sum(
+            [campaign.asset_count for campaign in user_retired_campaigns]
+        )
 
-        ctx["totalCount"] = totalCount
+        ctx["totalCount"] = totalCount + sum(
+            [campaign.total_actions() for campaign in user_retired_campaigns]
+        )
         ctx["totalReviews"] = totalReviews
         ctx["totalTranscriptions"] = totalTranscriptions
         return ctx
@@ -815,45 +840,52 @@ class CampaignDetailView(APIDetailView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-
-        projects = (
-            ctx["campaign"]
-            .project_set.published()
-            .annotate(
-                **{
-                    f"{key}_count": Count(
-                        "item__asset",
-                        filter=Q(
-                            item__published=True,
-                            item__asset__published=True,
-                            item__asset__transcription_status=key,
-                        ),
-                    )
-                    for key in TranscriptionStatus.CHOICE_MAP
-                }
+        if self.object and self.object.status == Campaign.Status.RETIRED:
+            latest_report = SiteReport.objects.filter(campaign=ctx["campaign"]).latest(
+                "created_on"
             )
-            .order_by("ordering", "title")
-        )
+            ctx["completed_count"] = latest_report.assets_completed
+            ctx["contributor_count"] = latest_report.registered_contributors
+        else:
+            projects = (
+                ctx["campaign"]
+                .project_set.published()
+                .annotate(
+                    **{
+                        f"{key}_count": Count(
+                            "item__asset",
+                            filter=Q(
+                                item__published=True,
+                                item__asset__published=True,
+                                item__asset__transcription_status=key,
+                            ),
+                        )
+                        for key in TranscriptionStatus.CHOICE_MAP
+                    }
+                )
+                .order_by("ordering", "title")
+            )
 
-        ctx["filters"] = filters = {}
-        status = self.request.GET.get("transcription_status")
-        if status in TranscriptionStatus.CHOICE_MAP:
-            projects = projects.exclude(**{f"{status}_count": 0})
-            # We only want to pass specific QS parameters to lower-level search pages:
-            filters["transcription_status"] = status
-        ctx["sublevel_querystring"] = urlencode(filters)
+            ctx["filters"] = filters = {}
+            status = self.request.GET.get("transcription_status")
+            if status in TranscriptionStatus.CHOICE_MAP:
+                projects = projects.exclude(**{f"{status}_count": 0})
+                # We only want to pass specific QS parameters
+                # to lower-level search pages:
+                filters["transcription_status"] = status
+            ctx["sublevel_querystring"] = urlencode(filters)
 
-        annotate_children_with_progress_stats(projects)
-        ctx["projects"] = projects
+            annotate_children_with_progress_stats(projects)
+            ctx["projects"] = projects
 
-        campaign_assets = Asset.objects.filter(
-            item__project__campaign=self.object,
-            item__project__published=True,
-            item__published=True,
-            published=True,
-        )
+            campaign_assets = Asset.objects.filter(
+                item__project__campaign=self.object,
+                item__project__published=True,
+                item__published=True,
+                published=True,
+            )
 
-        calculate_asset_stats(campaign_assets, ctx)
+            calculate_asset_stats(campaign_assets, ctx)
 
         return ctx
 

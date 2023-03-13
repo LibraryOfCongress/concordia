@@ -14,6 +14,6 @@ function getPages() {
     });
 }
 
-jQuery('#pages-tab').on('click', function () {
+jQuery('#recent-tab').on('click', function () {
     getPages();
 });

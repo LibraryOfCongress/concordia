@@ -2,17 +2,22 @@ import logging
 from urllib.parse import urljoin
 
 from django.conf import settings
-from django.contrib import admin
+from django.contrib import admin, messages
+from django.contrib.admin.models import CHANGE, LogEntry
+from django.contrib.admin.options import get_content_type_for_model
 from django.contrib.auth import get_permission_codename
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.decorators import permission_required
 from django.contrib.auth.models import User
 from django.db.models import Count
+from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.template.defaultfilters import truncatechars
-from django.urls import path
+from django.template.response import TemplateResponse
+from django.urls import path, reverse
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html
+from django.views.decorators.csrf import csrf_protect
 from django_admin_multiple_choice_list_filter.list_filters import (
     MultipleChoiceListFilter,
 )
@@ -27,6 +32,7 @@ from ..models import (
     AssetTranscriptionReservation,
     Banner,
     Campaign,
+    CampaignRetirementProgress,
     CarouselSlide,
     Item,
     Project,
@@ -39,7 +45,9 @@ from ..models import (
     Topic,
     Transcription,
     UserAssetTagCollection,
+    UserRetiredCampaign,
 )
+from ..tasks import retire_campaign
 from ..views import ReportCampaignView
 from .actions import (
     anonymize_action,
@@ -209,9 +217,89 @@ class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
                 ReportCampaignView.as_view(),
                 name=f"{app_label}_{model_name}_report",
             ),
+            path(
+                "retire/<path:campaign_slug>",
+                self.admin_site.admin_view(self.retire),
+                name=f"{app_label}_{model_name}_retire",
+            ),
         ]
 
         return custom_urls + urls
+
+    @method_decorator(csrf_protect)
+    @method_decorator(permission_required("concordia.retire_campaign"))
+    @method_decorator(permission_required("concordia.delete_project"))
+    @method_decorator(permission_required("concordia.delete_item"))
+    @method_decorator(permission_required("concordia.delete_asset"))
+    @method_decorator(permission_required("concordia.delete_transcription"))
+    @method_decorator(permission_required("concordia.delete_import_item_asset"))
+    def retire(self, request, campaign_slug):
+        try:
+            campaign = Campaign.objects.filter(slug=campaign_slug)[0]
+        except IndexError:
+            return self._get_obj_does_not_exist_redirect(
+                request, self.opts, campaign_slug
+            )
+
+        projects = campaign.project_set.values_list("id", flat=True)
+        items = Item.objects.filter(project__id__in=projects).values_list(
+            "id", flat=True
+        )
+        assets = Asset.objects.filter(item__id__in=items).values_list("id", flat=True)
+        transcriptions = Transcription.objects.filter(asset__id__in=assets)
+
+        model_count = {
+            "project": len(projects),
+            "item": len(items),
+            "asset": len(assets),
+            "transcription": transcriptions.count(),
+        }
+
+        if request.POST:
+            # This means the user confirmed the retirement
+            obj_display = str(campaign)
+            self.log_retirement(request, campaign, obj_display)
+            progress = retire_campaign(campaign.id)
+            self.message_user(
+                request,
+                'The retirement process for %(name)s "%(obj)s" has begun.'
+                % {
+                    "name": self.opts.verbose_name,
+                    "obj": obj_display,
+                },
+                messages.SUCCESS,
+            )
+            post_url = reverse(
+                "admin:concordia_campaignretirementprogress_change",
+                args=[progress.id],
+                current_app=self.admin_site.name,
+            )
+            return HttpResponseRedirect(post_url)
+
+        context = {
+            **self.admin_site.each_context(request),
+            "title": "Are you sure?",
+            "subtitle": None,
+            "object_name": "Campaign",
+            "object": campaign,
+            "model_count": model_count.items(),
+            "opts": self.opts,
+            "app_label": self.opts.app_label,
+            "preserved_filters": self.get_preserved_filters(request),
+        }
+
+        return TemplateResponse(
+            request, "admin/concordia/campaign/retire.html", context
+        )
+
+    def log_retirement(self, request, obj, object_repr):
+        return LogEntry.objects.log_action(
+            user_id=request.user.pk,
+            content_type_id=get_content_type_for_model(obj).pk,
+            object_id=obj.pk,
+            object_repr=object_repr,
+            action_flag=CHANGE,
+        )
 
 
 @admin.register(Resource)
@@ -696,3 +784,72 @@ class SiteReportAdmin(admin.ModelAdmin):
                 return (i, key)
         else:
             return (1024, key)
+
+
+@admin.register(UserRetiredCampaign)
+class UserRetiredCampaignAdmin(admin.ModelAdmin):
+    list_display = ("id", "asset_count")
+    raw_id_fields = ["user", "campaign"]
+    read_only_fields = (
+        "user",
+        "campaign",
+        "asset_count",
+        "asset_tag_count",
+        "transcribe_count",
+        "review_count",
+    )
+
+
+@admin.register(CampaignRetirementProgress)
+class CampaignRetirementProgressAdmin(admin.ModelAdmin):
+    list_display = ("campaign", "started_on", "complete", "completed_on")
+    readonly_fields = (
+        "campaign",
+        "completion",
+        "projects_removed",
+        "project_total",
+        "items_removed",
+        "item_total",
+        "assets_removed",
+        "asset_total",
+        "complete",
+        "started_on",
+        "completed_on",
+        "removal_log",
+    )
+    fieldsets = (
+        (
+            None,
+            {
+                "fields": (
+                    "campaign",
+                    "completion",
+                    "projects_removed",
+                    "project_total",
+                    "items_removed",
+                    "item_total",
+                    "assets_removed",
+                    "asset_total",
+                    "complete",
+                    "started_on",
+                    "completed_on",
+                ),
+            },
+        ),
+        (
+            "Log",
+            {
+                "fields": ("removal_log",),
+                "classes": ("collapse",),
+            },
+        ),
+    )
+
+    def completion(self, obj):
+        if obj.complete:
+            return "100%"
+        total = obj.project_total + obj.item_total + obj.asset_total
+        removed = obj.projects_removed + obj.items_removed + obj.assets_removed
+        return "{}%".format(round(removed / total * 100, 2))
+
+    completion.short_description = "Completion percentage"

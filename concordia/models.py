@@ -159,6 +159,9 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
         indexes = [
             models.Index(fields=["published", "unlisted"]),
         ]
+        permissions = [
+            ("retire_campaign", "Can retire campaign"),
+        ]
 
     def __str__(self):
         return self.title
@@ -647,6 +650,7 @@ class SiteReport(models.Model):
     campaigns_unpublished = models.IntegerField(blank=True, null=True)
     users_registered = models.IntegerField(blank=True, null=True)
     users_activated = models.IntegerField(blank=True, null=True)
+    registered_contributors = models.IntegerField(blank=True, null=True)
 
     class Meta:
         ordering = ("-created_on",)
@@ -675,4 +679,51 @@ class SiteReport(models.Model):
         "campaigns_unpublished",
         "users_registered",
         "users_activated",
+        "registered_contributors",
     ]
+
+
+class UserRetiredCampaign(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="User Id")
+    campaign = models.ForeignKey(
+        Campaign, on_delete=models.CASCADE, verbose_name="Campaign Id"
+    )
+    asset_count = models.IntegerField(blank=True, null=True)
+    asset_tag_count = models.IntegerField(blank=True, null=True)
+    transcribe_count = models.IntegerField(
+        blank=True, null=True, verbose_name="transcription save/submit count"
+    )
+    review_count = models.IntegerField(
+        blank=True, null=True, verbose_name="transcription review count"
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "campaign"], name="user_profile_activity"
+            )
+        ]
+        verbose_name = "user completed campaign count"
+
+    def __str__(self):
+        return f"{self.user} - {self.campaign}"
+
+    def total_actions(self):
+        return self.transcribe_count + self.review_count
+
+
+class CampaignRetirementProgress(models.Model):
+    campaign = models.OneToOneField(Campaign, on_delete=models.CASCADE)
+    project_total = models.IntegerField(default=0)
+    projects_removed = models.IntegerField(default=0)
+    item_total = models.IntegerField(default=0)
+    items_removed = models.IntegerField(default=0)
+    asset_total = models.IntegerField(default=0)
+    assets_removed = models.IntegerField(default=0)
+    complete = models.BooleanField(default=False)
+    started_on = models.DateTimeField(auto_now_add=True)
+    completed_on = models.DateTimeField(null=True)
+    removal_log = models.JSONField(default=list)
+
+    def __str__(self):
+        return f"Removal progress for {self.campaign}"
