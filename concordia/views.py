@@ -339,6 +339,8 @@ def AccountLetterView(request):
     for campaign in contributed_campaigns:
         total_reviews += campaign.review_count
         total_transcriptions += campaign.transcribe_count
+    total_reviews += retired_campaigns_review_count
+    total_transcriptions += retired_campaigns_transcribe_count
     image_url = "file://{0}/{1}/img/logo.jpg".format(
         settings.SITE_ROOT_DIR, settings.STATIC_ROOT
     )
