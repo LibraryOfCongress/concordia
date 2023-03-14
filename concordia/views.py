@@ -464,11 +464,29 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
     def get_context_data(self, *args, **kwargs):
         ctx = super().get_context_data(*args, **kwargs)
 
-        ctx["active_tab"] = (
-            "pages"
-            if self.request.GET.get("page", None) is not None
-            else self.request.GET.get("tab", "contributions")
-        )
+        page = self.request.GET.get("page", None)
+        campaign = self.request.GET.get("campaign", None)
+        activity = self.request.GET.get("activity", None)
+        status_list = self.request.GET.getlist("status")
+        start = self.request.GET.get("start", None)
+        end = self.request.GET.get("end", None)
+        order_by = self.request.GET.get("order_by", None)
+        if any([activity, campaign, page, status_list, start, end, order_by]):
+            ctx["active_tab"] = "recent"
+            if campaign is not None:
+                ctx["campaign"] = Campaign.objects.get(pk=int(campaign))
+            if status_list is not None:
+                ctx["status_list"] = status_list
+            ctx["order_by"] = self.request.GET.get("order_by", "date-descending")
+        else:
+            ctx["active_tab"] = self.request.GET.get("tab", "contributions")
+        ctx["activity"] = activity
+        ctx["statuses"] = status_list
+        if end is not None:
+            ctx["end"] = end
+        ctx["order_by"] = order_by
+        if start is not None:
+            ctx["start"] = start
 
         user = self.request.user
 
