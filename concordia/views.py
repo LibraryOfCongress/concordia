@@ -459,8 +459,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         return super().post(*args, **kwargs)
 
     def get_queryset(self):
-        # CONCD-236 wait to load
-        return Asset.objects.none()
+        return _get_pages(self.request)
 
     def get_context_data(self, *args, **kwargs):
         ctx = super().get_context_data(*args, **kwargs)
