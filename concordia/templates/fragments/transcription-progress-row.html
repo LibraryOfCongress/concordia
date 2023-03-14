@@ -1,10 +1,68 @@
+{% load humanize %}
 {% load concordia_filtering_tags %}
 
-<div class="row my-2 py-3 flex-column-reverse flex-xl-row justify-content-center align-items-center">
-    <div class="col-12 col-lg-auto text-center">
-        {% transcription_status_filters transcription_status_counts request.GET.transcription_status %}
+<div class="row">
+    <div class="col-12 col-lg pt-1 pb-1">
+        <div class="progress campaign-page-progress">
+            <div
+                title="Completed ({{ completed_count|intcomma }} page{{ completed_count|pluralize }})"
+                class="progress-bar bg-completed"
+                role="progressbar"
+                style="width: {{ completed_percent }}%"
+                aria-valuenow="{{ completed_percent }}"
+                aria-valuemin="0"
+                aria-valuemax="100"
+            ></div>
+            <div
+                title="Needs Review ({{ submitted_count|intcomma }} page{{ submitted_count|pluralize }})"
+                class="progress-bar bg-submitted"
+                role="progressbar"
+                style="width: {{ submitted_percent }}%"
+                aria-valuenow="{{ submitted_percent }}"
+                aria-valuemin="0"
+                aria-valuemax="100"
+            ></div>
+            <div
+                title="In Progress ({{ in_progress_count|intcomma }} page{{ in_progress_count|pluralize }})"
+                class="progress-bar bg-in_progress"
+                role="progressbar"
+                style="width: {{ in_progress_percent }}%"
+                aria-valuenow="{{ in_progress_percent }}"
+                aria-valuemin="0"
+                aria-valuemax="100"
+            ></div>
+            <div
+                title="Not Started ({{ not_started_count|intcomma }} page{{ not_started_count|pluralize }})"
+                class="progress-bar bg-not_started"
+                role="progressbar"
+                style="width: {{ not_started_percent }}%"
+                aria-valuenow="{{ not_started_percent }}"
+                aria-valuemin="0"
+                aria-valuemax="100"
+            ></div>
+        </div>
     </div>
-    <div class="col-12 col-lg">
-        {% include "fragments/transcription-progress-bar.html" %}
+</div>
+<div class="row">
+    <div class="col-12 col-lg pb-1">
+        <ul class="progress-bar-labels list-unstyled m-0 p-1">
+            {% if completed_percent %}
+                <li>{{ completed_percent }}% Completed</li>
+            {% endif %}
+            {% if submitted_percent %}
+                <li>{{ submitted_percent }}% Needs Review</li>
+            {% endif %}
+            {% if in_progress_percent %}
+                <li>{{ in_progress_percent }}% In Progress</li>
+            {% endif %}
+            {% if not_started_percent %}
+                <li>{{ not_started_percent }}% Not Started</li>
+            {% endif %}
+        </ul>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12 col-lg text-center">
+        {% transcription_status_filters transcription_status_counts request.GET.transcription_status "large" True %}
     </div>
 </div>
