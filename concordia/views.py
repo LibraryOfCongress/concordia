@@ -428,7 +428,12 @@ def get_pages(request):
         "paginator": paginator,
         "page_obj": paginator.get_page(page_number),
         "is_paginated": True,
+        "recent_campaigns": Campaign.objects.filter(project__item__asset__in=asset_list)
+        .distinct()
+        .order_by("title")
+        .values("pk", "title"),
     }
+
     data = dict()
     data["content"] = loader.render_to_string(
         "fragments/recent-pages.html", context, request=request
