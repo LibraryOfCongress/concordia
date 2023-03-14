@@ -1,5 +1,6 @@
 import os.path
 import time
+from datetime import date
 from logging import getLogger
 
 from django.conf import settings
@@ -8,6 +9,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models import Count, F, JSONField, Q
+from django.db.models.signals import post_save
 from django.urls import reverse
 from django_prometheus_metrics.models import MetricsModelMixin
 
@@ -513,6 +515,34 @@ class Transcription(MetricsModelMixin("transcription"), models.Model):
             return TranscriptionStatus.CHOICE_MAP[TranscriptionStatus.SUBMITTED]
         else:
             return TranscriptionStatus.CHOICE_MAP[TranscriptionStatus.IN_PROGRESS]
+
+
+def on_transcription_save(sender, instance, **kwargs):
+    if kwargs["created"]:
+        user_profile_activity, created = UserRetiredCampaign.objects.get_or_create(
+            user=instance.user,
+            campaign=instance.asset.item.project.campaign,
+        )
+        if created:
+            user_profile_activity.transcribe_count = 1
+        else:
+            user_profile_activity.transcribe_count = F("transcribe_count") + 1
+        user_profile_activity.save()
+    elif instance.reviewed_by:
+        reviewed = instance.accepted or instance.rejected
+        if reviewed.date() == date.today():
+            user_profile_activity, created = UserRetiredCampaign.objects.get_or_create(
+                user=instance.reviewed_by,
+                campaign=instance.asset.item.project.campaign,
+            )
+            if created:
+                user_profile_activity.review_count = 1
+            else:
+                user_profile_activity.review_count = F("review_count") + 1
+            user_profile_activity.save()
+
+
+post_save.connect(on_transcription_save, sender=Transcription)
 
 
 class AssetTranscriptionReservation(models.Model):
