@@ -45,6 +45,7 @@ from ..models import (
     Topic,
     Transcription,
     UserAssetTagCollection,
+    UserProfileActivity,
     UserRetiredCampaign,
 )
 from ..tasks import retire_campaign
@@ -800,6 +801,23 @@ class UserRetiredCampaignAdmin(admin.ModelAdmin):
     )
 
 
+@admin.register(UserProfileActivity)
+class UserProfileActivityAdmin(admin.ModelAdmin):
+    list_display = ("id", "username", "get_status", "asset_count")
+    raw_id_fields = ["user", "campaign"]
+    read_only_fields = (
+        "user",
+        "campaign",
+        "asset_count",
+        "asset_tag_count",
+        "transcribe_count",
+        "review_count",
+    )
+    search_fields = [
+        "user__username",
+    ]
+
+
 @admin.register(CampaignRetirementProgress)
 class CampaignRetirementProgressAdmin(admin.ModelAdmin):
     list_display = ("campaign", "started_on", "complete", "completed_on")
@@ -845,11 +863,10 @@ class CampaignRetirementProgressAdmin(admin.ModelAdmin):
         ),
     )
 
+    @admin.display(description="Completion percentage")
     def completion(self, obj):
         if obj.complete:
             return "100%"
         total = obj.project_total + obj.item_total + obj.asset_total
         removed = obj.projects_removed + obj.items_removed + obj.assets_removed
         return "{}%".format(round(removed / total * 100, 2))
-
-    completion.short_description = "Completion percentage"

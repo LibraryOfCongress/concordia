@@ -519,7 +519,7 @@ class Transcription(MetricsModelMixin("transcription"), models.Model):
 
 def on_transcription_save(sender, instance, **kwargs):
     if kwargs["created"]:
-        user_profile_activity, created = UserRetiredCampaign.objects.get_or_create(
+        user_profile_activity, created = UserProfileActivity.objects.get_or_create(
             user=instance.user,
             campaign=instance.asset.item.project.campaign,
         )
@@ -531,7 +531,7 @@ def on_transcription_save(sender, instance, **kwargs):
     elif instance.reviewed_by:
         reviewed = instance.accepted or instance.rejected
         if reviewed.date() == date.today():
-            user_profile_activity, created = UserRetiredCampaign.objects.get_or_create(
+            user_profile_activity, created = UserProfileActivity.objects.get_or_create(
                 user=instance.reviewed_by,
                 campaign=instance.asset.item.project.campaign,
             )
@@ -737,6 +737,38 @@ class UserRetiredCampaign(models.Model):
 
     def __str__(self):
         return f"{self.user} - {self.campaign}"
+
+    def total_actions(self):
+        return self.transcribe_count + self.review_count
+
+
+class UserProfileActivity(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="User Id")
+    campaign = models.ForeignKey(
+        Campaign, on_delete=models.CASCADE, verbose_name="Campaign Id"
+    )
+    asset_count = models.IntegerField(blank=True, null=True)
+    asset_tag_count = models.IntegerField(blank=True, null=True)
+    transcribe_count = models.IntegerField(
+        blank=True, null=True, verbose_name="transcription save/submit count"
+    )
+    review_count = models.IntegerField(
+        blank=True, null=True, verbose_name="transcription review count"
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "campaign"], name="user_campaign_count"
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.user} - {self.campaign}"
+
+    def get_status(self):
+        display = [None, "Active", "Completed", "Retired"]
+        return display[self.campaign.status]
 
     def total_actions(self):
         return self.transcribe_count + self.review_count
