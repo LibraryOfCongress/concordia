@@ -21,7 +21,7 @@
             <label class="form-check-label" for="flexRadioDefault1">Sort by Newest</label>
         </div>
         <div class="form-check" style="margin-left: 1.6rem;">
-            <input class="form-check-input" type="radio"name="flexRadioDefault" id="flexRadioDefault2" onclick="sortDateAscending();"{% if order_by == 'date-ascending'%} checked{% endif %}>
+            <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault2" onclick="sortDateAscending();"{% if order_by == 'date-ascending'%} checked{% endif %}>
             <label class="form-check-label" for="flexRadioDefault2">Sort by Oldest</label>
         </div>
     </div>
@@ -36,7 +36,7 @@
                         <input type="hidden" value="campaign">
                         campaign: {{ campaign.slug }}
                     </label>
-                    <a href="?{% qs_alter request.GET tab='pages' delete:campaign %}" class="btn" role="button">
+                    <a href="?{% qs_alter request.GET tab='recent' delete:campaign %}" class="btn" role="button">
                         <span aria-hidden="true" class="fas fa-times"></span>
                     </a>
                 </li>
@@ -47,7 +47,7 @@
                         <input type="hidden" value="activity">
                         contribution: {{ activity }}
                     </label>
-                    <a href="?{% qs_alter request.GET tab='pages' delete:activity %}" class="btn" role="button">
+                    <a href="?{% qs_alter request.GET tab='recent' delete:activity %}" class="btn" role="button">
                         <span aria-hidden="true" class="fas fa-times"></span>
                     </a>
                 </li>
@@ -58,7 +58,7 @@
                         <input type="hidden" value="activity">
                         status: {% if status == 'submitted' %}needs review {% else %}{{ status }}{% endif %}
                     </label>
-                    <a href="?{% qs_alter request.GET tab='pages' delete_value:"status",status %}" class="btn" role="button">
+                    <a href="?{% qs_alter request.GET tab='recent' delete_value:"status",status %}" class="btn" role="button">
                         <span aria-hidden="true" class="fas fa-times"></span>
                     </a>
                 </li>
@@ -73,7 +73,7 @@
                             date: {% if start %}{{ start }}{% else %}{{ end }}{% endif %}
                         {% endif %}
                     </label>
-                    <a href="?{% qs_alter request.GET tab='pages' delete:start delete:end %}" class="btn" role="button">
+                    <a href="?{% qs_alter request.GET tab='recent' delete:start delete:end %}" class="btn" role="button">
                         <span aria-hidden="true" class="fas fa-times"></span>
                     </a>
                 </li>
@@ -90,7 +90,7 @@
                 <div class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Campaign</div>
                 <div class="dropdown-menu border border-primary py-0 rounded-0">
                     {% if campaign %}
-                        <a class="dropdown-item border-bottom border-primary" href="?{% qs_alter request.GET tab='pages' delete:campaign %}">Show All</a>
+                        <a class="dropdown-item border-bottom border-primary" href="?{% qs_alter request.GET tab='recent' delete:campaign %}">Show All</a>
                     {% endif %}
                     {% for recent_campaign in recent_campaigns %}
                         <a class="dropdown-item{% if not forloop.first %} border-top border-primary{% endif %}{% if campaign.pk == recent_campaign.pk %} font-weight-bold{% endif %}" href="?{% qs_alter request.GET campaign=recent_campaign.pk delete:page %}">
@@ -103,20 +103,18 @@
                 <div class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Your Contribution</div>
                 <div class="dropdown-menu border border-primary py-0 rounded-0">
                     {% if activity %}
-                        <a class="dropdown-item border-bottom border-primary" href="?{% qs_alter request.GET tab='pages' delete:activity %}">Show All</a>
+                        <a class="dropdown-item border-bottom border-primary" href="?{% qs_alter request.GET tab='recent' delete:activity %}">Show All</a>
                     {% endif %}
                     <a class="dropdown-item border-bottom border-primary{% if activity == 'reviewed' %} font-weight-bold{% endif %}" href="?{% qs_alter request.GET activity='reviewed' delete:page %}">Reviewed</a>
                     <a class="dropdown-item{% if activity == 'transcribed' %} font-weight-bold{% endif %}" href="?{% qs_alter request.GET activity='transcribed' delete:page %}">Transcribed</a>
                 </div>
             </th>
             <th>
-                <div class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Your Contribution</div>
+                <div class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Current Status</div>
                 <div class="dropdown-menu border border-primary py-0 rounded-0">
-                    {% if activity %}
-                        <a class="dropdown-item border-bottom border-primary" href="?{% qs_alter request.GET tab='pages' delete:activity %}">Show All</a>
-                    {% endif %}
-                    <a class="dropdown-item border-bottom border-primary{% if activity == 'reviewed' %} font-weight-bold{% endif %}" href="?{% qs_alter request.GET activity='reviewed' delete:page %}">Reviewed</a>
-                    <a class="dropdown-item{% if activity == 'transcribed' %} font-weight-bold{% endif %}" href="?{% qs_alter request.GET activity='transcribed' delete:page %}">Transcribed</a>
+                    <a class="dropdown-item border-bottom border-primary{% if 'in_progress' in status_list %} font-weight-bold{% endif %}" href="?{% qs_alter request.GET status='in_progress' delete:page %}">In Progress</a>
+                    <a class="dropdown-item border-bottom border-primary{% if 'submitted' in status_list %} font-weight-bold{% endif %}" href="?{% qs_alter request.GET status='submitted' delete:page %}">Needs Review</a>
+                    <a class="dropdown-item{% if 'completed' in status_list %} font-weight-bold{% endif %}" href="?{% qs_alter request.GET status='completed' delete:page %}">Completed</a>
                 </div>
             </th>
         </tr>

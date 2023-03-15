@@ -365,7 +365,14 @@ def AccountLetterView(request):
 
 def _get_pages(request):
     user = request.user
-    transcriptions = Transcription.objects.filter(Q(user=user) | Q(reviewed_by=user))
+    activity = request.GET.get("activity", None)
+    if activity == "transcribed":
+        q = Q(user=user)
+    elif activity == "reviewed":
+        q = Q(reviewed_by=user)
+    else:
+        q = Q(user=user) | Q(reviewed_by=user)
+    transcriptions = Transcription.objects.filter(q)
 
     qId = request.GET.get("campaign_slug", None)
 
@@ -373,6 +380,16 @@ def _get_pages(request):
     if qId:
         campaignSlug = qId
         assets = Asset.objects.filter(item__project__campaign__pk=campaignSlug)
+    status_list = request.GET.getlist("status")
+    if status_list and status_list != []:
+        if "completed" not in status_list:
+            assets = assets.exclude(transcription_status=TranscriptionStatus.COMPLETED)
+        if "submitted" not in status_list:
+            assets = assets.exclude(transcription_status=TranscriptionStatus.SUBMITTED)
+        if "in_progress" not in status_list:
+            assets = assets.exclude(
+                transcription_status=TranscriptionStatus.IN_PROGRESS
+            )
 
     assets = assets.select_related("item", "item__project", "item__project__campaign")
 
@@ -391,16 +408,41 @@ def _get_pages(request):
             filter=Q(transcription__user=user) | Q(transcription__reviewed_by=user),
         ),
     )
+    start_date = None
+    start = request.GET.get("start", None)
+    if start is not None and len(start) > 0:
+        start_date = datetime.datetime.strptime(start, "%Y-%m-%d")
+    end_date = None
+    end = request.GET.get("end", None)
+    if end is not None and len(end) > 0:
+        end_date = datetime.datetime.strptime(end, "%Y-%m-%d")
+    if start_date is not None and end_date is not None:
+        assets = assets.filter(latest_activity__range=[start, end])
+    elif start_date is not None or end_date is not None:
+        date = start_date if start_date else end_date
+        assets = assets.filter(
+            latest_activity__year=date.year,
+            latest_activity__month=date.month,
+            latest_activity__day=date.day,
+        )
     # CONCD-189 only show pages from the last 6 months
     SIX_MONTHS_AGO = datetime.datetime.today() - datetime.timedelta(days=6 * 30)
     assets = assets.filter(latest_activity__gte=SIX_MONTHS_AGO)
-    assets = assets.order_by("-latest_activity", "-id")
+    order_by = request.GET.get("order_by", "date-descending")
+    if order_by == "date-ascending":
+        assets = assets.order_by("latest_activity", "-id")
+    else:
+        assets = assets.order_by("-latest_activity", "-id")
 
     for asset in assets:
         if asset.last_reviewed:
             asset.last_interaction_type = "reviewed"
         else:
             asset.last_interaction_type = "transcribed"
+
+    campaign_id = request.GET.get("campaign", None)
+    if campaign_id is not None:
+        assets = assets.filter(item__project__campaign__pk=campaign_id)
 
     return assets
 
@@ -420,6 +462,8 @@ def get_pages(request):
         .order_by("title")
         .values("pk", "title"),
     }
+    for param in ("activity", "campaign", "end", "order_by", "start", "statuses"):
+        context[param] = request.GET.get(param, None)
 
     data = dict()
     data["content"] = loader.render_to_string(
