@@ -462,8 +462,11 @@ def get_pages(request):
         .order_by("title")
         .values("pk", "title"),
     }
-    for param in ("activity", "campaign", "end", "order_by", "start", "statuses"):
+    for param in ("activity", "end", "order_by", "start", "statuses"):
         context[param] = request.GET.get(param, None)
+    campaign = request.GET.get("campaign", None)
+    if campaign is not None:
+        context["campaign"] = Campaign.objects.get(pk=int(campaign))
 
     data = dict()
     data["content"] = loader.render_to_string(
@@ -512,8 +515,6 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         order_by = self.request.GET.get("order_by", None)
         if any([activity, campaign, page, status_list, start, end, order_by]):
             ctx["active_tab"] = "recent"
-            if campaign is not None:
-                ctx["campaign"] = Campaign.objects.get(pk=int(campaign))
             if status_list is not None:
                 ctx["status_list"] = status_list
             ctx["order_by"] = self.request.GET.get("order_by", "date-descending")
