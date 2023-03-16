@@ -434,12 +434,6 @@ def _get_pages(request):
     else:
         assets = assets.order_by("-latest_activity", "-id")
 
-    for asset in assets:
-        if asset.last_reviewed:
-            asset.last_interaction_type = "reviewed"
-        else:
-            asset.last_interaction_type = "transcribed"
-
     campaign_id = request.GET.get("campaign", None)
     if campaign_id is not None:
         assets = assets.filter(item__project__campaign__pk=campaign_id)

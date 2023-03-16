@@ -125,7 +125,7 @@
                 <td class="col-md-3"><abbr title="{{ asset.latest_activity|date:'SHORT_DATE_FORMAT' }}">{{ asset.latest_activity }}</abbr></td>
                 <td class="text-right"><a href="{{ asset.get_absolute_url }}">{{ asset.sequence }}</a></td>
                 <td><a href="{{ asset.item.get_absolute_url }}">{{ asset.item.title }}</a></td>
-                <td>{{ asset.last_interaction_type.title }}</td>
+                <td>{% if asset.last_reviewed %}Reviewed{% else %}Transcribed{% endif %}</td>
                 <td>{{ asset.get_transcription_status_display }}</td>
             </tr>
         {% endfor %}
