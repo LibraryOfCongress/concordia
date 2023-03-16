@@ -465,6 +465,7 @@ def get_pages(request):
     for param in ("activity", "end", "order_by", "start", "statuses"):
         context[param] = request.GET.get(param, None)
     campaign = request.GET.get("campaign", None)
+    context["statuses"] = request.GET.getlist("status")
     if campaign is not None:
         context["campaign"] = Campaign.objects.get(pk=int(campaign))
 
@@ -521,7 +522,6 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         else:
             ctx["active_tab"] = self.request.GET.get("tab", "contributions")
         ctx["activity"] = activity
-        ctx["statuses"] = status_list
         if end is not None:
             ctx["end"] = end
         ctx["order_by"] = order_by
