@@ -164,10 +164,10 @@
                                     }
                                     });
                                     function sortDateAscending() {
-                                    location.href = "?{% qs_alter request.GET order_by='date-ascending' %}";
+                                    getPages("?{% qs_alter request.GET order_by='date-ascending' %}");
                                         }
                                         function sortDateDescending() {
-                                        location.href = "?{% qs_alter request.GET order_by='date-descending' %}"
+                                        getPages("?{% qs_alter request.GET order_by='date-descending' %}");
                                             }
                                             </script>
 {% endblock body_scripts %}
