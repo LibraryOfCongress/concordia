@@ -434,12 +434,6 @@ def _get_pages(request):
     else:
         assets = assets.order_by("-latest_activity", "-id")
 
-    for asset in assets:
-        if asset.last_reviewed:
-            asset.last_interaction_type = "reviewed"
-        else:
-            asset.last_interaction_type = "transcribed"
-
     campaign_id = request.GET.get("campaign", None)
     if campaign_id is not None:
         assets = assets.filter(item__project__campaign__pk=campaign_id)
@@ -462,8 +456,12 @@ def get_pages(request):
         .order_by("title")
         .values("pk", "title"),
     }
-    for param in ("activity", "campaign", "end", "order_by", "start", "statuses"):
+    for param in ("activity", "end", "order_by", "start", "statuses"):
         context[param] = request.GET.get(param, None)
+    campaign = request.GET.get("campaign", None)
+    context["statuses"] = request.GET.getlist("status")
+    if campaign is not None:
+        context["campaign"] = Campaign.objects.get(pk=int(campaign))
 
     data = dict()
     data["content"] = loader.render_to_string(
@@ -512,15 +510,12 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         order_by = self.request.GET.get("order_by", None)
         if any([activity, campaign, page, status_list, start, end, order_by]):
             ctx["active_tab"] = "recent"
-            if campaign is not None:
-                ctx["campaign"] = Campaign.objects.get(pk=int(campaign))
             if status_list is not None:
                 ctx["status_list"] = status_list
             ctx["order_by"] = self.request.GET.get("order_by", "date-descending")
         else:
             ctx["active_tab"] = self.request.GET.get("tab", "contributions")
         ctx["activity"] = activity
-        ctx["statuses"] = status_list
         if end is not None:
             ctx["end"] = end
         ctx["order_by"] = order_by
