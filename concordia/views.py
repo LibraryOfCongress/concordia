@@ -366,7 +366,14 @@ def AccountLetterView(request):
 
 def _get_pages(request):
     user = request.user
-    transcriptions = Transcription.objects.filter(Q(user=user) | Q(reviewed_by=user))
+    activity = request.GET.get("activity", None)
+    if activity == "transcribed":
+        q = Q(user=user)
+    elif activity == "reviewed":
+        q = Q(reviewed_by=user)
+    else:
+        q = Q(user=user) | Q(reviewed_by=user)
+    transcriptions = Transcription.objects.filter(q)
 
     qId = request.GET.get("campaign_slug", None)
 
@@ -374,6 +381,16 @@ def _get_pages(request):
     if qId:
         campaignSlug = qId
         assets = Asset.objects.filter(item__project__campaign__pk=campaignSlug)
+    status_list = request.GET.getlist("status")
+    if status_list and status_list != []:
+        if "completed" not in status_list:
+            assets = assets.exclude(transcription_status=TranscriptionStatus.COMPLETED)
+        if "submitted" not in status_list:
+            assets = assets.exclude(transcription_status=TranscriptionStatus.SUBMITTED)
+        if "in_progress" not in status_list:
+            assets = assets.exclude(
+                transcription_status=TranscriptionStatus.IN_PROGRESS
+            )
 
     assets = assets.select_related("item", "item__project", "item__project__campaign")
 
@@ -392,31 +409,37 @@ def _get_pages(request):
             filter=Q(transcription__user=user) | Q(transcription__reviewed_by=user),
         ),
     )
+    start_date = None
+    start = request.GET.get("start", None)
+    if start is not None and len(start) > 0:
+        start_date = datetime.datetime.strptime(start, "%Y-%m-%d")
+    end_date = None
+    end = request.GET.get("end", None)
+    if end is not None and len(end) > 0:
+        end_date = datetime.datetime.strptime(end, "%Y-%m-%d")
+    if start_date is not None and end_date is not None:
+        assets = assets.filter(latest_activity__range=[start, end])
+    elif start_date is not None or end_date is not None:
+        date = start_date if start_date else end_date
+        assets = assets.filter(
+            latest_activity__year=date.year,
+            latest_activity__month=date.month,
+            latest_activity__day=date.day,
+        )
     # CONCD-189 only show pages from the last 6 months
     SIX_MONTHS_AGO = datetime.datetime.today() - datetime.timedelta(days=6 * 30)
     assets = assets.filter(latest_activity__gte=SIX_MONTHS_AGO)
-    assets = assets.order_by("-latest_activity", "-id")
-
-    qId = request.GET.get("campaign_slug", None)
-
-    if qId:
-        campaignSlug = qId
+    order_by = request.GET.get("order_by", "date-descending")
+    if order_by == "date-ascending":
+        assets = assets.order_by("latest_activity", "-id")
     else:
-        campaignSlug = -1
+        assets = assets.order_by("-latest_activity", "-id")
 
-    object_list = []
-    for asset in assets:
-        if asset.last_reviewed:
-            asset.last_interaction_type = "reviewed"
-        else:
-            asset.last_interaction_type = "transcribed"
+    campaign_id = request.GET.get("campaign", None)
+    if campaign_id is not None:
+        assets = assets.filter(item__project__campaign__pk=campaign_id)
 
-        if int(campaignSlug) == -1:
-            object_list.append((asset))
-        elif asset.item.project.campaign.id == int(campaignSlug):
-            object_list.append((asset))
-
-    return object_list
+    return assets
 
 
 @login_required
@@ -429,7 +452,18 @@ def get_pages(request):
         "paginator": paginator,
         "page_obj": paginator.get_page(page_number),
         "is_paginated": True,
+        "recent_campaigns": Campaign.objects.filter(project__item__asset__in=asset_list)
+        .distinct()
+        .order_by("title")
+        .values("pk", "title"),
     }
+    for param in ("activity", "end", "order_by", "start", "statuses"):
+        context[param] = request.GET.get(param, None)
+    campaign = request.GET.get("campaign", None)
+    context["statuses"] = request.GET.getlist("status")
+    if campaign is not None:
+        context["campaign"] = Campaign.objects.get(pk=int(campaign))
+
     data = dict()
     data["content"] = loader.render_to_string(
         "fragments/recent-pages.html", context, request=request
@@ -455,17 +489,39 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         return super().post(*args, **kwargs)
 
     def get_queryset(self):
-        # CONCD-236 wait to load
-        return Asset.objects.none()
+        return _get_pages(self.request)
 
     def get_context_data(self, *args, **kwargs):
         ctx = super().get_context_data(*args, **kwargs)
+        ctx["object_list"] = object_list = []
+        campaignSlug = self.request.GET.get("campaign_slug", -1)
 
-        ctx["active_tab"] = (
-            "pages"
-            if self.request.GET.get("page", None) is not None
-            else self.request.GET.get("tab", "contributions")
-        )
+        for asset in ctx.pop("object_list"):
+            if int(campaignSlug) == -1:
+                object_list.append((asset))
+            elif asset.item.project.campaign.id == int(campaignSlug):
+                object_list.append((asset))
+
+        page = self.request.GET.get("page", None)
+        campaign = self.request.GET.get("campaign", None)
+        activity = self.request.GET.get("activity", None)
+        status_list = self.request.GET.getlist("status")
+        start = self.request.GET.get("start", None)
+        end = self.request.GET.get("end", None)
+        order_by = self.request.GET.get("order_by", None)
+        if any([activity, campaign, page, status_list, start, end, order_by]):
+            ctx["active_tab"] = "recent"
+            if status_list is not None:
+                ctx["status_list"] = status_list
+            ctx["order_by"] = self.request.GET.get("order_by", "date-descending")
+        else:
+            ctx["active_tab"] = self.request.GET.get("tab", "contributions")
+        ctx["activity"] = activity
+        if end is not None:
+            ctx["end"] = end
+        ctx["order_by"] = order_by
+        if start is not None:
+            ctx["start"] = start
 
         user = self.request.user
         user_profile_activity = UserProfileActivity.objects.filter(user=user).order_by(

@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("concordia", "0066_auto_20230217_1302"),
         ("concordia", "0068_campaignretirementprogress_complete"),

@@ -1,25 +1,131 @@
+{% load bittersweet_querystring %}
+
 <h2>Recent Pages Worked On</h2>
 <div>View all the pages you contributed to in the last 6 months.</div>
-<div class="row">
+<div class="row mt-4">
     {% include "fragments/standard-pagination.html" %}
 </div>
+<form class="container form date-filter pb-1 mb-2">
+    <div class="d-flex flex-row">
+        <span class="font-weight-bold mr-1">Date: </span>Select Range
+    </div>
+    <div class="d-flex flex-row pb-1">
+        <duet-date-picker name="start"></duet-date-picker>
+        <div class="p-2">to</div>
+        <duet-date-picker name="end"></duet-date-picker>
+        <button type="submit" class="btn btn-primary rounded-0 p-2">Go</button>
+    </div>
+    <div class="d-flex flex-row pt-1">
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault1" onclick="sortDateDescending();"{% if order_by != 'date-ascending' %} checked{% endif %}>
+            <label class="form-check-label" for="flexRadioDefault1">Sort by Newest</label>
+        </div>
+        <div class="form-check" style="margin-left: 1.6rem;">
+            <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault2" onclick="sortDateAscending();"{% if order_by == 'date-ascending'%} checked{% endif %}>
+            <label class="form-check-label" for="flexRadioDefault2">Sort by Oldest</label>
+        </div>
+    </div>
+</form>
+{% if campaign or activity or statuses or start or end %}
+    <div class="bg-light flex-row" id="current-filters">
+        <span class="align-middle d-inline font-weight-bold">Filtered by: </span>
+        <ul class="d-inline">
+            {% if campaign %}
+                <li class="btn btn-xs font-size-sm rounded-pill">
+                    <label class="m-0 font-weight-normal">
+                        <input type="hidden" value="campaign">
+                        campaign: {{ campaign.slug }}
+                    </label>
+                    <a href="?{% qs_alter request.GET tab='recent' delete:campaign %}" class="btn" role="button">
+                        <span aria-hidden="true" class="fas fa-times"></span>
+                    </a>
+                </li>
+            {% endif %}
+            {% if activity %}
+                <li class="btn btn-xs font-size-sm rounded-pill">
+                    <label class="m-0 font-weight-normal">
+                        <input type="hidden" value="activity">
+                        contribution: {{ activity }}
+                    </label>
+                    <a href="?{% qs_alter request.GET tab='recent' delete:activity %}" class="btn" role="button">
+                        <span aria-hidden="true" class="fas fa-times"></span>
+                    </a>
+                </li>
+            {% endif %}
+            {% for status in statuses %}
+                <li class="btn btn-xs font-size-sm rounded-pill">
+                    <label class="m-0 font-weight-normal">
+                        <input type="hidden" value="activity">
+                        status: {% if status == 'submitted' %}needs review {% else %}{{ status }}{% endif %}
+                    </label>
+                    <a href="?{% qs_alter request.GET tab='recent' delete_value:"status",status %}" class="btn" role="button">
+                        <span aria-hidden="true" class="fas fa-times"></span>
+                    </a>
+                </li>
+            {% endfor %}
+            {% if start or end %}
+                <li class="btn btn-xs font-size-sm rounded-pill">
+                    <label class="m-0 font-weight-normal">
+                        <input type="hidden" value="date">
+                        {% if start and end %}
+                            date: {{ start }} to {{ end }}
+                        {% else %}
+                            date: {% if start %}{{ start }}{% else %}{{ end }}{% endif %}
+                        {% endif %}
+                    </label>
+                    <a href="?{% qs_alter request.GET tab='recent' delete:start delete:end %}" class="btn" role="button">
+                        <span aria-hidden="true" class="fas fa-times"></span>
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+    </div>
+{% endif %}
 <table class="table table-striped table-responsive-sm">
     <thead class="border-y">
         <tr class="text-left">
-            <th>Date</th>
-            <th>Item</th>
+            <th class="date-header">Date</th>
             <th>Page</th>
-            <th>Your Contribution</th>
-            <th>Current Status</th>
+            <th>
+                <div class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Campaign</div>
+                <div class="dropdown-menu border border-primary py-0 rounded-0">
+                    {% if campaign %}
+                        <a class="dropdown-item border-bottom border-primary" href="?{% qs_alter request.GET tab='recent' delete:campaign %}">Show All</a>
+                    {% endif %}
+                    {% for recent_campaign in recent_campaigns %}
+                        <a class="dropdown-item{% if not forloop.first %} border-top border-primary{% endif %}{% if campaign.pk == recent_campaign.pk %} font-weight-bold{% endif %}" href="?{% qs_alter request.GET campaign=recent_campaign.pk delete:page %}">
+                            {{ recent_campaign.title }}
+                        </a>
+                    {% endfor %}
+                </div>
+            </th>
+            <th>
+                <div class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Your Contribution</div>
+                <div class="dropdown-menu border border-primary py-0 rounded-0">
+                    {% if activity %}
+                        <a class="dropdown-item border-bottom border-primary" href="?{% qs_alter request.GET tab='recent' delete:activity %}">Show All</a>
+                    {% endif %}
+                    <a class="dropdown-item border-bottom border-primary{% if activity == 'reviewed' %} font-weight-bold{% endif %}" href="?{% qs_alter request.GET activity='reviewed' delete:page %}">Reviewed</a>
+                    <a class="dropdown-item{% if activity == 'transcribed' %} font-weight-bold{% endif %}" href="?{% qs_alter request.GET activity='transcribed' delete:page %}">Transcribed</a>
+                </div>
+            </th>
+            <th>
+                <div class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Current Status</div>
+                <div class="dropdown-menu border border-primary py-0 rounded-0">
+                    <a class="dropdown-item border-bottom border-primary{% if 'in_progress' in status_list %} font-weight-bold{% endif %}" href="?{% qs_alter request.GET status='in_progress' delete:page %}">In Progress</a>
+                    <a class="dropdown-item border-bottom border-primary{% if 'submitted' in status_list %} font-weight-bold{% endif %}" href="?{% qs_alter request.GET status='submitted' delete:page %}">Needs Review</a>
+                    <a class="dropdown-item{% if 'completed' in status_list %} font-weight-bold{% endif %}" href="?{% qs_alter request.GET status='completed' delete:page %}">Completed</a>
+                </div>
+            </th>
         </tr>
     </thead>
     <tbody>
         {% for asset in page_obj %}
             <tr class="{{ asset.item.project.campaign.id }} recent-page">
                 <td class="col-md-3"><abbr title="{{ asset.latest_activity|date:'SHORT_DATE_FORMAT' }}">{{ asset.latest_activity }}</abbr></td>
-                <td><a href="{{ asset.item.get_absolute_url }}">{{ asset.item.title }}</a></td>
                 <td class="text-right"><a href="{{ asset.get_absolute_url }}">{{ asset.sequence }}</a></td>
-                <td>{{ asset.last_interaction_type.title }}</td>
+                <td><a href="{{ asset.item.get_absolute_url }}">{{ asset.item.title }}</a></td>
+                <td>{% if asset.last_reviewed %}Reviewed{% else %}Transcribed{% endif %}</td>
                 <td>{{ asset.get_transcription_status_display }}</td>
             </tr>
         {% endfor %}
