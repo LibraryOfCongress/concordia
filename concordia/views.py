@@ -73,6 +73,7 @@ from concordia.models import (
     Transcription,
     TranscriptionStatus,
     UserAssetTagCollection,
+    UserProfileActivity,
     UserRetiredCampaign,
 )
 from concordia.signals.signals import reservation_obtained, reservation_released
@@ -467,54 +468,21 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         )
 
         user = self.request.user
-
-        contributed_campaigns = (
-            Campaign.objects.annotate(
-                action_count=Count(
-                    "project__item__asset__transcription",
-                    filter=Q(project__item__asset__transcription__user=user)
-                    | Q(project__item__asset__transcription__reviewed_by=user),
-                ),
-                transcribe_count=Count(
-                    "project__item__asset__transcription",
-                    filter=Q(project__item__asset__transcription__user=user),
-                ),
-                review_count=Count(
-                    "project__item__asset__transcription",
-                    filter=Q(project__item__asset__transcription__reviewed_by=user),
-                ),
-            )
-            .exclude(action_count=0)
-            .order_by("title")
+        user_profile_activity = UserProfileActivity.objects.filter(user=user).order_by(
+            "campaign__title"
         )
-        totalCount = 0
-        totalTranscriptions = 0
-        totalReviews = 0
-
-        ctx["contributed_campaigns"] = contributed_campaigns
-        user_retired_campaigns = UserRetiredCampaign.objects.filter(
-            user=user, campaign__status=Campaign.Status.RETIRED
-        )
-        ctx["contributed_campaign_count"] = (
-            len(contributed_campaigns) + user_retired_campaigns.count()
-        )
-
-        for campaign in contributed_campaigns:
-            campaign.action_count = campaign.transcribe_count + campaign.review_count
-            totalCount = totalCount + campaign.review_count + campaign.transcribe_count
-            totalReviews = totalReviews + campaign.review_count
-            totalTranscriptions = totalTranscriptions + campaign.transcribe_count
+        ctx["user_profile_activity"] = user_profile_activity
 
         q = Q(transcription__user=user) | Q(transcription__reviewed_by=user)
-        ctx["pages_worked_on"] = Asset.objects.filter(q).distinct().count() + sum(
-            [campaign.asset_count for campaign in user_retired_campaigns]
-        )
+        ctx["pages_worked_on"] = Asset.objects.filter(q).distinct().count()
 
-        ctx["totalCount"] = totalCount + sum(
-            [campaign.total_actions() for campaign in user_retired_campaigns]
+        ctx["totalReviews"] = sum(
+            [campaign.review_count for campaign in user_profile_activity]
         )
-        ctx["totalReviews"] = totalReviews
-        ctx["totalTranscriptions"] = totalTranscriptions
+        ctx["totalTranscriptions"] = sum(
+            [campaign.transcribe_count for campaign in user_profile_activity]
+        )
+        ctx["totalCount"] = ctx["totalReviews"] + ctx["totalTranscriptions"]
         return ctx
 
     def get_initial(self):

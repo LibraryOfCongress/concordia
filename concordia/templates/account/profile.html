@@ -20,148 +20,148 @@
         <ul class="nav nav-tabs mb-4" id="nav-tab" role="tablist">
             <li class="nav-item">
                 <a class="nav-link font-weight-bold{% if active_tab == 'contributions' %} active" aria-selected="true{% else %} aria-selected="false{% endif %}" id="contributions-tab" data-toggle="tab" data-target="#contributions" type="button" role="tab">My Contributions</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link font-weight-bold{% if active_tab == 'recent' %} active" aria-selected="true{% else %} aria-selected="false{% endif %}" id="recent-tab" data-toggle="tab" data-target="#recent" type="button" role="tab" aria-controls="recent" href="#recent">Recent Pages Worked On</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link font-weight-bold{% if active_tab == 'recent' %} active" aria-selected="true{% else %} aria-selected="false{% endif %}" id="recent-tab" data-toggle="tab" data-target="#recent" type="button" role="tab" aria-controls="recent" href="#recent">Recent Pages Worked On</a>
             </li>
             <li class="nav-item">
                 <a class="nav-link font-weight-bold{% if active_tab == 'account' %} active" aria-selected="true{% else %} aria-selected="false{% endif %}" id="account-tab" data-toggle="tab" data-target="#account" type="button" role="tab" href="#account">Account Settings</a>
-            </li>
-        </ul>
-        <div class="tab-content" id="nav-tabContent">
-            <div class="tab-pane fade{% if active_tab == 'account' %} show active{% endif %}" id="account" role="tabpanel" aria-labelledby="account-tab">
-                <div class="row justify-content-start">
-                    <div class="col-12 col-md-10">
-                        <h2>Account Settings</h2>
-                        <div class="mb-2">
-                            <span class="font-weight-bold">User Name</span>: {{ user.username }}
-                        </div>
-                        <div class="mt-1 mb-3">
-                            <span class="font-weight-bold">Email address</span>: {{ user.email }}
-                        </div>
-                    </div>
-                    <div class="col-12 col-md-10 py-3 change-options">
-                        <form class="form" action="{% url 'user-profile' %}" method="POST" enctype="multipart/form-data">
-                            {% csrf_token %}
+                    </li>
+                    </ul>
+                    <div class="tab-content" id="nav-tabContent">
+                        <div class="tab-pane fade{% if active_tab == 'account' %} show active{% endif %}" id="account" role="tabpanel" aria-labelledby="account-tab">
+                            <div class="row justify-content-start">
+                                <div class="col-12 col-md-10">
+                                    <h2>Account Settings</h2>
+                                    <div class="mb-2">
+                                        <span class="font-weight-bold">User Name</span>: {{ user.username }}
+                                            </div>
+                                            <div class="mt-1 mb-3">
+                                                <span class="font-weight-bold">Email address</span>: {{ user.email }}
+                                                    </div>
+                                                    </div>
+                                                    <div class="col-12 col-md-10 py-3 change-options">
+                                                        <form class="form" action="{% url 'user-profile' %}" method="POST" enctype="multipart/form-data">
+                                                            {% csrf_token %}
 
-                            <div class="input-group mb-3 email-address">
-                                <input type="email" name="email" placeholder="Change your email address" class="form-control font-italic" title="" required="" id="id_email">
-                                <div class="input-group-append">
-                                    {% bootstrap_button "Save Change" button_type="submit" button_class="btn btn-primary rounded-0" %}
-                                </div>
-                            </div>
-                        </form>
-                        <div class="row justify-content-start">
-                            <div class="btn-row col-md-10">
-                                <a class="btn btn-primary rounded-0" href="{% url 'password_change' %}">Change Password</a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-10">
-                        <hr>
-                    </div>
-                </div>
-            </div>
-            <div class="row tab-pane fade{% if active_tab == 'contributions' %} show active{% endif %}" id="contributions" role="tabpanel">
-                {% if contributed_campaigns %}
-                    <div class="d-flex justify-content-start">
-                        <div class="col-md">
-                            <div class="d-flex">
-                                <h2>My Contributions</h2>
-                            </div>
-                            <div>
-                                <label><b>Account created: </b></label> {{ user.date_joined|date:"SHORT_DATE_FORMAT" }}
-                            </div>
-                            <div class="d-lg-flex" style="margin-right: -0.5rem; margin-left: -0.5rem;">
-                                <div class="contribution-highlight">
-                                    <div class="value">{{ contributed_campaign_count|intcomma }}</div>
-                                    <p class="label">Campaigns</p>
-                                </div>
-                                <div class="contribution-highlight">
-                                    <div class="value">{{ pages_worked_on|intcomma }}</div>
-                                    <p class="label">Pages Worked On</p>
-                                </div>
-                                <div class="contribution-highlight">
-                                    <div class="value">{{ totalCount|intcomma }}</div>
-                                    <p class="label">Actions</p>
-                                </div>
-                            </div>
-                            <div class="d-flex mt-4">
-                                <table id="tblTranscription" class="table table-striped table-sm table-responsive-sm contribution-table">
-                                    <thead class="border-y">
-                                        <tr>
-                                            <th></th>
-                                            <th>Campaign</th>
-                                            <th><abbr title="Total number of times you saved, submitted a transcription" class="text-decoration-none">Saves & Submits</abbr></th>
-                                            <th><abbr title="Total number of times you reviewed a transcription" class="text-decoration-none">Reviews</abbr></th>
-                                            <th><abbr title="Total number of times you saved, submitted, or reviewed a transcription" class="text-decoration-none">Total Actions</abbr></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td class="py-2"></td>
-                                            <td class="campaign all-campaigns py-2" id="-1">
-                                                <b><a href="{% url 'campaign-topic-list' %}">All Campaigns</a></b>
-                                            </td>
-                                            <td class="py-2"><b>{{ totalTranscriptions|intcomma }}</b></td>
-                                            <td class="py-2"><b>{{ totalReviews|intcomma }}</b></td>
-                                            <td class="py-2"><b>{{ totalCount|intcomma }}</b></td>
-                                        </tr>
-                                        {% for campaign in contributed_campaigns %}
-                                            <tr>
-                                                <td></td>
-                                                <td>
-                                                    <a class="campaign py-2" id={{campaign.id}} href="{% url 'transcriptions:campaign-detail' campaign.slug %}">
-                                                        {{ campaign.title }}
-                                                    </a>
-                                                </td>
-                                                <td class="py-2">{{ campaign.transcribe_count|intcomma }}</td>
-                                                <td class="py-2">{{ campaign.review_count|intcomma }}</td>
-                                                <td class="py-2">{{ campaign.action_count|intcomma }}</td>
-                                            </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="d-flex justify-content-start service-letter">
-                                <div class="col-12 col-md-10 py-3">
-                                    <h3>Service Letter</h3>
-                                    <div class="mb-3">Using <i>By the People</i> to fulfill service requirements? Download a letter verifying your volunteer contributions.<br/><a href="/resources">Find more info on service documentation here.</a></div>
-                                    <div class="row justify-content-start">
-                                        <div class="btn-row col-md-10">
-                                            <a class="btn btn-primary rounded-0" href="/letter">Download Letter</a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                {% endif %}
-            </div>
-            <div class="tab-pane fade{% if active_tab == 'recent' %} show active{% endif %}" id="recent" role="tabpanel" aria-labelledby="recent-tab">
-                <div class="row justify-content-start" id="recent-pages"></div>
-            </div>
-        </div>
-    </div>
+                                                            <div class="input-group mb-3 email-address">
+                                                                <input type="email" name="email" placeholder="Change your email address" class="form-control font-italic" title="" required="" id="id_email">
+                                                                    <div class="input-group-append">
+                                                                        {% bootstrap_button "Save Change" button_type="submit" button_class="btn btn-primary rounded-0" %}
+                                                                        </div>
+                                                                        </div>
+                                                                        </form>
+                                                                        <div class="row justify-content-start">
+                                                                            <div class="btn-row col-md-10">
+                                                                                <a class="btn btn-primary rounded-0" href="{% url 'password_change' %}">Change Password</a>
+                                                                                    </div>
+                                                                                    </div>
+                                                                                    </div>
+                                                                                    <div class="col-10">
+                                                                                        <hr>
+                                                                                        </div>
+                                                                                        </div>
+                                                                                        </div>
+                                                                                        <div class="row tab-pane fade{% if active_tab == 'contributions' %} show active{% endif %}" id="contributions" role="tabpanel">
+                                                                                            {% if user_profile_activity %}
+                                                                                                <div class="d-flex justify-content-start">
+                                                                                                    <div class="col-md">
+                                                                                                        <div class="d-flex">
+                                                                                                            <h2>My Contributions</h2>
+                                                                                                            </div>
+                                                                                                            <div>
+                                                                                                            <label><b>Account created: </b></label> {{ user.date_joined|date:"SHORT_DATE_FORMAT" }}
+                                                                                                                </div>
+                                                                                                                <div class="d-lg-flex" style="margin-right: -0.5rem; margin-left: -0.5rem;">
+                                                                                                                    <div class="contribution-highlight">
+                                                                                                                        <div class="value">{{ user_profile_activity.count|intcomma }}</div>
+                                                                                                                            <p class="label">Campaigns</p>
+                                                                                                                                </div>
+                                                                                                                                <div class="contribution-highlight">
+                                                                                                                                    <div class="value">{{ pages_worked_on|intcomma }}</div>
+                                                                                                                                        <p class="label">Pages Worked On</p>
+                                                                                                                                            </div>
+                                                                                                                                            <div class="contribution-highlight">
+                                                                                                                                                <div class="value">{{ totalCount|intcomma }}</div>
+                                                                                                                                                    <p class="label">Actions</p>
+                                                                                                                                                        </div>
+                                                                                                                                                        </div>
+                                                                                                                                                        <div class="d-flex mt-4">
+                                                                                                                                                            <table id="tblTranscription" class="table table-striped table-sm table-responsive-sm contribution-table">
+                                                                                                                                                                <thead class="border-y">
+                                                                                                                                                                    <tr>
+                                                                                                                                                                    <th></th>
+                                                                                                                                                                    <th>Campaign</th>
+                                                                                                                                                                    <th><abbr title="Total number of times you saved, submitted a transcription" class="text-decoration-none">Saves & Submits</abbr></th>
+                                                                                                                                                                        <th><abbr title="Total number of times you reviewed a transcription" class="text-decoration-none">Reviews</abbr></th>
+                                                                                                                                                                            <th><abbr title="Total number of times you saved, submitted, or reviewed a transcription" class="text-decoration-none">Total Actions</abbr></th>
+                                                                                                                                                                                </tr>
+                                                                                                                                                                                </thead>
+                                                                                                                                                                                <tbody>
+                                                                                                                                                                                <tr>
+                                                                                                                                                                                <td class="py-2"></td>
+                                                                                                                                                                                    <td class="campaign all-campaigns py-2" id="-1">
+                                                                                                                                                                                        <b><a href="{% url 'campaign-topic-list' %}">All Campaigns</a></b>
+                                                                                                                                                                                            </td>
+                                                                                                                                                                                            <td class="py-2"><b>{{ totalTranscriptions|intcomma }}</b></td>
+                                                                                                                                                                                                <td class="py-2"><b>{{ totalReviews|intcomma }}</b></td>
+                                                                                                                                                                                                    <td class="py-2"><b>{{ totalCount|intcomma }}</b></td>
+                                                                                                                                                                                                        </tr>
+                                                                                                                                                                                                        {% for user_campaign in user_profile_activity %}
+                                                                                                                                                                                                            <tr>
+                                                                                                                                                                                                            <td></td>
+                                                                                                                                                                                                            <td>
+                                                                                                                                                                                                            <a class="campaign py-2" id={{user_campaign.campaign.id}} href="{% url 'transcriptions:campaign-detail' user_campaign.campaign.slug %}">
+                                                                                                                                                                                                                {{ user_campaign.campaign.title }}
+                                                                                                                                                                                                                </a>
+                                                                                                                                                                                                                </td>
+                                                                                                                                                                                                                <td class="py-2">{{ user_campaign.transcribe_count|intcomma }}</td>
+                                                                                                                                                                                                                    <td class="py-2">{{ user_campaign.review_count|intcomma }}</td>
+                                                                                                                                                                                                                        <td class="py-2">{{ user_campaign.asset_count|intcomma }}</td>
+                                                                                                                                                                                                                            </tr>
+                                                                                                                                                                                                        {% endfor %}
+                                                                                                                                                                                                        </tbody>
+                                                                                                                                                                                                        </table>
+                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                        <div class="d-flex justify-content-start service-letter">
+                                                                                                                                                                                                            <div class="col-12 col-md-10 py-3">
+                                                                                                                                                                                                                <h3>Service Letter</h3>
+                                                                                                                                                                                                                <div class="mb-3">Using <i>By the People</i> to fulfill service requirements? Download a letter verifying your volunteer contributions.<br/><a href="/resources">Find more info on service documentation here.</a></div>
+                                                                                                                                                                                                                    <div class="row justify-content-start">
+                                                                                                                                                                                                                        <div class="btn-row col-md-10">
+                                                                                                                                                                                                                            <a class="btn btn-primary rounded-0" href="/letter">Download Letter</a>
+                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                                </div>
+                                                                                            {% endif %}
+                                                                                            </div>
+                                                                                            <div class="tab-pane fade{% if active_tab == 'recent' %} show active{% endif %}" id="recent" role="tabpanel" aria-labelledby="recent-tab">
+                                                                                                <div class="row justify-content-start" id="recent-pages"></div>
+                                                                                                    </div>
+                                                                                                    </div>
+                                                                                                    </div>
 {% endblock main_content %}
 
 {% block body_scripts %}
     <script type="module" src="https://cdn.jsdelivr.net/npm/@duetds/date-picker@1.4.0/dist/duet/duet.esm.js"></script>
-    <script nomodule src="https://cdn.jsdelivr.net/npm/@duetds/date-picker@1.4.0/dist/duet/duet.js"></script>
-    {{ block.super }}
-    <script src="{% static 'js/campaign-selection.js' %}"></script>
-    <script src="{% static 'js/recent-pages.js' %}"></script>
-    <script type="text/javascript">
-        $(document).ready(function() {
-            {% if active_tab and active_tab == "recent" %}
-                getPages();
-            {% endif %}
-            if (window.location.hash != "") {
-                $('a[href="' + window.location.hash + '"]').click()
-                if (window.location.hash == "#recent") {
-                    getPages();
-                }
-            }
-        });
-    </script>
+        <script nomodule src="https://cdn.jsdelivr.net/npm/@duetds/date-picker@1.4.0/dist/duet/duet.js"></script>
+            {{ block.super }}
+            <script src="{% static 'js/campaign-selection.js' %}"></script>
+                <script src="{% static 'js/recent-pages.js' %}"></script>
+                    <script type="text/javascript">
+                        $(document).ready(function() {
+                        {% if active_tab and active_tab == "recent" %}
+                            getPages();
+                        {% endif %}
+                        if (window.location.hash != "") {
+                            $('a[href="' + window.location.hash + '"]').click()
+                                if (window.location.hash == "#recent") {
+                                    getPages();
+                                    }
+                                    }
+                                    });
+                                    </script>
 {% endblock body_scripts %}
