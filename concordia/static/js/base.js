@@ -189,7 +189,7 @@ $.ajax({
         var $accountMenu = $('#topnav-account-dropdown .dropdown-menu');
         data.links.forEach(function (link) {
             $('<a>')
-                .addClass('dropdown-item border-bottom border-primary')
+                .addClass('dropdown-item')
                 .attr('href', link.url)
                 .text(link.title)
                 .prependTo($accountMenu);
