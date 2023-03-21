@@ -63,7 +63,7 @@
                                                                                         </div>
                                                                                         </div>
                                                                                         <div class="row tab-pane fade{% if active_tab == 'contributions' %} show active{% endif %}" id="contributions" role="tabpanel">
-                                                                                            {% if contributed_campaigns %}
+                                                                                            {% if user_profile_activity %}
                                                                                                 <div class="d-flex justify-content-start">
                                                                                                     <div class="col-md">
                                                                                                         <div class="d-flex">
@@ -74,7 +74,7 @@
                                                                                                                 </div>
                                                                                                                 <div class="d-lg-flex" style="margin-right: -0.5rem; margin-left: -0.5rem;">
                                                                                                                     <div class="contribution-highlight">
-                                                                                                                        <div class="value">{{ contributed_campaign_count|intcomma }}</div>
+                                                                                                                        <div class="value">{{ user_profile_activity.count|intcomma }}</div>
                                                                                                                             <p class="label">Campaigns</p>
                                                                                                                                 </div>
                                                                                                                                 <div class="contribution-highlight">
@@ -107,17 +107,17 @@
                                                                                                                                                                                                 <td class="py-2"><b>{{ totalReviews|intcomma }}</b></td>
                                                                                                                                                                                                     <td class="py-2"><b>{{ totalCount|intcomma }}</b></td>
                                                                                                                                                                                                         </tr>
-                                                                                                                                                                                                        {% for campaign in contributed_campaigns %}
+                                                                                                                                                                                                        {% for user_campaign in user_profile_activity %}
                                                                                                                                                                                                             <tr>
                                                                                                                                                                                                             <td></td>
                                                                                                                                                                                                             <td>
-                                                                                                                                                                                                            <a class="campaign py-2" id={{campaign.id}} href="{% url 'transcriptions:campaign-detail' campaign.slug %}">
-                                                                                                                                                                                                                {{ campaign.title }}
+                                                                                                                                                                                                            <a class="campaign py-2" id={{user_campaign.campaign.id}} href="{% url 'transcriptions:campaign-detail' user_campaign.campaign.slug %}">
+                                                                                                                                                                                                                {{ user_campaign.campaign.title }}
                                                                                                                                                                                                                 </a>
                                                                                                                                                                                                                 </td>
-                                                                                                                                                                                                                <td class="py-2">{{ campaign.transcribe_count|intcomma }}</td>
-                                                                                                                                                                                                                    <td class="py-2">{{ campaign.review_count|intcomma }}</td>
-                                                                                                                                                                                                                        <td class="py-2">{{ campaign.action_count|intcomma }}</td>
+                                                                                                                                                                                                                <td class="py-2">{{ user_campaign.transcribe_count|intcomma }}</td>
+                                                                                                                                                                                                                    <td class="py-2">{{ user_campaign.review_count|intcomma }}</td>
+                                                                                                                                                                                                                        <td class="py-2">{{ user_campaign.asset_count|intcomma }}</td>
                                                                                                                                                                                                                             </tr>
                                                                                                                                                                                                         {% endfor %}
                                                                                                                                                                                                         </tbody>
@@ -163,6 +163,7 @@
                                     }
                                     }
                                     });
+
                                     function sortDateAscending() {
                                     location.href = "?{% qs_alter request.GET order_by='date-ascending' %}";
                                         }
