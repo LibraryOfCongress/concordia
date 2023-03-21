@@ -81,8 +81,14 @@ for performance:
                             <li class="nav-item">
                                 <a class="nav-link {% if PATH_LEVEL_1 == 'about'%}active{% endif %}" href="{% url 'about' %}">About</a>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link {% if PATH_LEVEL_1 == 'campaigns' %}active{% endif %}" href="{% url 'campaign-topic-list' %}">Campaigns</a>
+                            <li class="nav-item dropdown nav-dropdown">
+                                <a id="topnav-campaigns-dropdown-toggle" class="nav-link
+                                    dropdown-toggle {% if PATH_LEVEL_1 == 'campaigns' %}active{% endif %}" href="{% url 'campaign-topic-list' %}" data-toggle="dropdown" aria-haspopup="true"
+                                    aria-expanded="false">Campaigns</a>
+                                <div class="dropdown-menu" aria-labelledby="topnav-campaigns-dropdown-toggle">
+                                    <a class="dropdown-item" href="{% url 'campaign-topic-list' %}">All Campaigns</a>
+                                    <a class="dropdown-item" href="{% url 'transcriptions:completed-campaign-list' %}">Completed Campaigns</a>
+                                </div>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link {% if PATH_LEVEL_1 == 'resources' %}active{% endif %}" href="{% url 'resources' %}">Resources</a>
