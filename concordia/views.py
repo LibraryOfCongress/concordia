@@ -409,15 +409,18 @@ def _get_pages(request):
             filter=Q(transcription__user=user) | Q(transcription__reviewed_by=user),
         ),
     )
+    fmt = "%Y-%m-%d"
     start_date = None
     start = request.GET.get("start", None)
     if start is not None and len(start) > 0:
-        start_date = datetime.datetime.strptime(start, "%Y-%m-%d")
+        start_date = datetime.datetime.strptime(start, fmt)
     end_date = None
     end = request.GET.get("end", None)
     if end is not None and len(end) > 0:
-        end_date = datetime.datetime.strptime(end, "%Y-%m-%d")
+        end_date = datetime.datetime.strptime(end, fmt)
     if start_date is not None and end_date is not None:
+        end_date += datetime.timedelta(days=1)
+        end = end_date.strftime(fmt)
         assets = assets.filter(latest_activity__range=[start, end])
     elif start_date is not None or end_date is not None:
         date = start_date if start_date else end_date
