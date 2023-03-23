@@ -152,23 +152,27 @@
             <script src="{% static 'js/campaign-selection.js' %}"></script>
                 <script src="{% static 'js/recent-pages.js' %}"></script>
                     <script type="text/javascript">
+                        function sortDateAscending() {
+                        var urlParameters = new URLSearchParams(window.location.search);
+                        urlParameters.set('order_by', 'date-ascending');
+                        getPages('?' + urlParameters.toString());
+                        }
+
+                        function sortDateDescending() {
+                        var urlParameters = new URLSearchParams(window.location.search);
+                        urlParameters.set('order_by', 'date-descending');
+                        getPages('?' + urlParameters.toString());
+                        }
                         $(document).ready(function() {
                         {% if active_tab and active_tab == "recent" %}
                             getPages();
                         {% endif %}
                         if (window.location.hash != "") {
-                            $('a[href="' + window.location.hash + '"]').click()
+                            $('a[href="' + window.location.hash + '"]').click();
                                 if (window.location.hash == "#recent") {
                                     getPages();
                                     }
                                     }
                                     });
-
-                                    function sortDateAscending() {
-                                    getPages("?{% qs_alter request.GET order_by='date-ascending' %}");
-                                        }
-                                        function sortDateDescending() {
-                                        getPages("?{% qs_alter request.GET order_by='date-descending' %}");
-                                            }
-                                            </script>
+                                    </script>
 {% endblock body_scripts %}
