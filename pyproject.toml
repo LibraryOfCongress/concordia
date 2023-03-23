@@ -22,6 +22,5 @@ extend-select = [
 max-complexity = 16
 
 [tool.ruff.pylint]
-
 max-branches = 21
 max-statements = 60
