@@ -2,42 +2,49 @@
 
 from django.conf import settings
 from django.db import migrations
-from django.db.models import Count, Q
+from django.db.models import Q
 
 
 def populate_user_activity_table(apps, schema_editor):
     Campaign = apps.get_model("concordia", "Campaign")
     Tag = apps.get_model("concordia", "Tag")
+    Transcription = apps.get_model("concordia", "Transcription")
     User = apps.get_model(*settings.AUTH_USER_MODEL.split("."))
     UserAssetTagCollection = apps.get_model("concordia", "UserAssetTagCollection")
     UserProfileActivity = apps.get_model("concordia", "UserProfileActivity")
-    expression = "project__item__asset__transcription"
-    for user in User.objects.all():
-        q_transcriptions = Q(project__item__asset__transcription__user=user)
-        q_reviews = Q(project__item__asset__transcription__reviewed_by=user)
-        campaigns = Campaign.objects.annotate(
-            action_count=Count(expression, filter=q_transcriptions | q_reviews),
-            transcribe_count=Count(expression, filter=q_transcriptions),
-            review_count=Count(expression, filter=q_reviews),
-        ).exclude(action_count=0)
-        tag_collections = UserAssetTagCollection.objects.filter(user=user)
+    for campaign in Campaign.objects.all():
+        transcriptions = Transcription.objects.filter(
+            asset__item__project__campaign=campaign
+        )
+        reviewer_ids = transcriptions.values_list("reviewed_by", flat=True).distinct()
+        transcriber_ids = transcriptions.values_list("user", flat=True).distinct()
+        user_ids = list(set(list(reviewer_ids) + list(transcriber_ids)))
+        tag_collections = UserAssetTagCollection.objects.filter(
+            asset__item__project__campaign=campaign
+        )
         UserProfileActivity.objects.bulk_create(
             [
                 UserProfileActivity(
                     user=user,
                     campaign=campaign,
-                    asset_count=campaign.action_count,
-                    asset_tag_count=Tag.objects.filter(
-                        userassettagcollection__in=tag_collections.filter(
-                            asset__item__project__campaign=campaign
-                        )
+                    asset_count=transcriptions.filter(
+                        Q(reviewed_by=user) | Q(user=user)
                     )
                     .distinct()
                     .count(),
-                    transcribe_count=campaign.transcribe_count,
-                    review_count=campaign.review_count,
+                    asset_tag_count=Tag.objects.filter(
+                        userassettagcollection__in=tag_collections.filter(user=user)
+                    )
+                    .distinct()
+                    .count(),
+                    transcribe_count=transcriptions.filter(Q(user=user))
+                    .distinct()
+                    .count(),
+                    review_count=transcriptions.filter(Q(reviewed_by=user))
+                    .distinct()
+                    .count(),
                 )
-                for campaign in campaigns
+                for user in User.objects.filter(id__in=user_ids)
             ]
         )
 
