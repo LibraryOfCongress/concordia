@@ -22,6 +22,7 @@ from concordia.models import (
     Topic,
     Transcription,
     UserAssetTagCollection,
+    UserProfileActivity,
     UserRetiredCampaign,
 )
 from concordia.signals.signals import reservation_released
@@ -559,6 +560,49 @@ def populate_user_archive_table():
                 for user_id in to_create
             ]
         )
+
+
+def _populate_activity_table(campaigns):
+    for campaign in campaigns:
+        transcriptions = Transcription.objects.filter(
+            asset__item__project__campaign=campaign
+        )
+        reviewer_ids = transcriptions.values_list("reviewed_by", flat=True).distinct()
+        transcriber_ids = transcriptions.values_list("user", flat=True).distinct()
+        user_ids = list(set(list(reviewer_ids) + list(transcriber_ids)))
+        tag_collections = UserAssetTagCollection.objects.filter(
+            asset__item__project__campaign=campaign
+        )
+        UserProfileActivity.objects.bulk_create(
+            [
+                UserProfileActivity(
+                    user=user,
+                    campaign=campaign,
+                    asset_count=transcriptions.filter(
+                        Q(reviewed_by=user) | Q(user=user)
+                    )
+                    .distinct()
+                    .count(),
+                    asset_tag_count=Tag.objects.filter(
+                        userassettagcollection__in=tag_collections.filter(user=user)
+                    )
+                    .distinct()
+                    .count(),
+                    transcribe_count=transcriptions.filter(Q(user=user))
+                    .distinct()
+                    .count(),
+                    review_count=transcriptions.filter(Q(reviewed_by=user))
+                    .distinct()
+                    .count(),
+                )
+                for user in User.objects.filter(id__in=user_ids)
+            ]
+        )
+
+
+@celery_app.task
+def populate_user_activity_table():
+    _populate_activity_table(Campaign.objects.all())
 
 
 @celery_app.task(ignore_result=True)
