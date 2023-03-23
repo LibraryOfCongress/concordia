@@ -8,3 +8,20 @@ exclude = '''
   )/
 )
 '''
+
+[tool.ruff]
+exclude = [
+    "*/migrations/*",
+]
+extend-select = [
+    "C9",
+    "PLR091",
+]
+
+[tool.ruff.mccabe]
+max-complexity = 16
+
+[tool.ruff.pylint]
+
+max-branches = 21
+max-statements = 60
