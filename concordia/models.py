@@ -762,6 +762,7 @@ class UserProfileActivity(models.Model):
                 fields=["user", "campaign"], name="user_campaign_count"
             )
         ]
+        verbose_name_plural = "User profile activities"
 
     def __str__(self):
         return f"{self.user} - {self.campaign}"
