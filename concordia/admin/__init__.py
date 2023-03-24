@@ -803,7 +803,7 @@ class UserRetiredCampaignAdmin(admin.ModelAdmin):
 
 @admin.register(UserProfileActivity)
 class UserProfileActivityAdmin(admin.ModelAdmin):
-    list_display = ("id", "username", "get_status", "asset_count")
+    list_display = ("id", "user", "get_status", "asset_count")
     raw_id_fields = ["user", "campaign"]
     read_only_fields = (
         "user",
