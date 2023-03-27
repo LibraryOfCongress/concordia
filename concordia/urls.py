@@ -95,7 +95,7 @@ urlpatterns = [
     # all links are updated.
     path(
         "help-center/",
-        RedirectView.as_view(pattern_name="get-started"),
+        RedirectView.as_view(pattern_name="welcome-guide"),
         name="help-center",
     ),
     path(
