@@ -119,20 +119,10 @@ class UnlistedPublicationQuerySet(PublicationQuerySet):
                     Round(100 * F("completed_count") * 1.0 / F("asset_count")),
                     output_field=models.FloatField(),
                 ),
-                submitted_percent=ExpressionWrapper(
+                needs_review_percent=ExpressionWrapper(
                     Round(100 * F("submitted_count") * 1.0 / F("asset_count")),
                     output_field=models.FloatField(),
                 ),
-                in_progress_percent=ExpressionWrapper(
-                    Round(100 * F("in_progress_count") * 1.0 / F("asset_count")),
-                    output_field=models.FloatField(),
-                ),
-            )
-            # We add these percentages together here after rounding (rather can adding
-            # the counts together first) in order to match the calculations used in
-            # the campaign detail view
-            .annotate(
-                needs_review_percent=F("submitted_percent") + F("in_progress_percent")
             )
         )
 
