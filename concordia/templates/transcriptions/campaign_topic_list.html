@@ -44,23 +44,23 @@
                                 <div
                                     class="progress-bar bg-completed"
                                     role="progressbar"
-                                    style="width: {{ campaign.completed_percent }}%"
-                                    aria-valuenow="{{ campaign.completed_percent }}"
+                                    style="width: {{ campaign.completed_percent|floatformat:'0' }}%"
+                                    aria-valuenow="{{ campaign.completed_percent|floatformat:'0' }}"
                                 ></div>
                                 <div
                                     class="progress-bar bg-submitted"
                                     role="progressbar"
-                                    style="width: {{ campaign.submitted_percent }}%"
-                                    aria-valuenow="{{ campaign.submitted_percent }}"
+                                    style="width: {{ campaign.needs_review_percent|floatformat:'0' }}%"
+                                    aria-valuenow="{{ campaign.needs_review_percent|floatformat:'0' }}"
                                 ></div>
                             </div>
                             <div class="progress-bar-label">
                                 {% if campaign.completed_percent %}
-                                    <span>{{ campaign.completed_percent }}% Completed</span>
-                                    {% if campaign.submitted_percent %} | {%endif %}
+                                    <span>{{ campaign.completed_percent|floatformat:'0' }}% Completed</span>
+                                    {% if campaign.needs_review_percent %} | {%endif %}
                                 {% endif %}
-                                {% if campaign.submitted_percent %}
-                                    <span>{{ campaign.submitted_percent }}% Needs Review</span>
+                                {% if campaign.needs_review_percent %}
+                                    <span>{{ campaign.needs_review_percent|floatformat:'0' }}% Needs Review</span>
                                 {% endif %}
                             </div>
                         </div>

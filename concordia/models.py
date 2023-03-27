@@ -8,7 +8,8 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
-from django.db.models import Count, F, JSONField, Q
+from django.db.models import Count, ExpressionWrapper, F, JSONField, Q
+from django.db.models.functions import Round
 from django.db.models.signals import post_save
 from django.urls import reverse
 from django_prometheus_metrics.models import MetricsModelMixin
@@ -112,10 +113,18 @@ class UnlistedPublicationQuerySet(PublicationQuerySet):
                     for k, v in STATUS_COUNT_KEYS.items()
                 }
             )
-            .annotate(needs_review_count=F("in_progress_count") + F("submitted_count"))
+            # PostgreSQL does integer division when given two integers, which results
+            # in the decimal results being dropped. We implicitly cast one field to
+            # be a float through multiplication in order to do floating point division
             .annotate(
-                completed_percent=100 * F("completed_count") / F("asset_count"),
-                submitted_percent=100 * F("needs_review_count") / F("asset_count"),
+                completed_percent=ExpressionWrapper(
+                    Round(100 * F("completed_count") * 1.0 / F("asset_count")),
+                    output_field=models.FloatField(),
+                ),
+                needs_review_percent=ExpressionWrapper(
+                    Round(100 * F("submitted_count") * 1.0 / F("asset_count")),
+                    output_field=models.FloatField(),
+                ),
             )
         )
 
