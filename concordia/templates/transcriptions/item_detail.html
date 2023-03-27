@@ -2,6 +2,7 @@
 
 {% load humanize %}
 {% load staticfiles %}
+{% load concordia_filtering_tags %}
 {% load concordia_media_tags %}
 {% load feature_flags %}
 
@@ -36,6 +37,16 @@
             </div>
         </div>
         {% include "fragments/transcription-progress-row.html" %}
+        <div class="row">
+            <div class="col-12 col-lg mt-4">
+                <h3>Filter pages:</h2>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12 col-lg text-center">
+                {% transcription_status_filters transcription_status_counts request.GET.transcription_status "large" True %}
+            </div>
+        </div>
         <div class="row justify-content-center concordia-object-card-row">
             {% for a in assets %}
                 {% url 'transcriptions:asset-detail' a.item.project.campaign.slug a.item.project.slug a.item.item_id a.slug as asset_detail_url %}

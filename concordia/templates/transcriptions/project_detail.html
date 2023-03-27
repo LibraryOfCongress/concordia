@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% load staticfiles %}
+{% load concordia_filtering_tags %}
 {% load concordia_text_tags %}
 
 {% block title %}{{ project.title }} ({{ campaign.title }}){% endblock title %}
@@ -25,10 +26,24 @@
         <div class="row">
             <div class="col-12">
                 <h1>{{ project.title }}</h1>
-                <div class="hero-text">{{ project.description|safe }}</div>
             </div>
         </div>
         {% include "fragments/transcription-progress-row.html" %}
+        <div class="row">
+            <div class="col-12 mt-4">
+                <div class="hero-text">{{ project.description|safe }}</div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12 col-lg mt-4">
+                <h3>Filter pages:</h2>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12 col-lg text-center">
+                {% transcription_status_filters transcription_status_counts request.GET.transcription_status "large" True %}
+            </div>
+        </div>
         <div class="row justify-content-center concordia-object-card-row">
             {% for item in items %}
                 <div class="col-6 col-md-4 col-lg-3 concordia-object-card-col">
