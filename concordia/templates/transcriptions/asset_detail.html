@@ -221,9 +221,9 @@
                     </ul>
                     <div id="filter-tabs" class="tab-content">
                         <div id="gamma-filter" class="tab-pane pt-1 pl-3 show active" role="tabpanel">
-                            <form id="gamma-form" class="form-inline">
-                                <div class="row ml-0 mr-3 number-input">
-                                    <div class="col p-1">
+                            <form id="gamma-form" class="form-inline" onsubmit="return false;">
+                                <div class="row ml-0 mr-3 number-input wide">
+                                    <div class="col p-2">
                                         <input
                                             type="number"
                                             id="gamma"
@@ -261,7 +261,7 @@
                             </form>
                         </div>
                         <div id="invert-filter" class="tab-pane pt-2" role="tabpanel" style="background-color: white;">
-                            <form id="invert-form">
+                            <form id="invert-form" onsubmit="return false;">
                                 <label class="ml-2 align-middle" for="invert">Off</label>
                                 <div class="custom-control custom-switch custom-control-inline ml-1 mr-2">
                                     <input type="checkbox" id="invert" name="invert" class="custom-control-input" role="switch" />
@@ -271,9 +271,9 @@
                             </form>
                         </div>
                         <div id="threshold-filter" class="tab-pane pt-1 pl-3" role="tabpanel">
-                            <form id="threshold-form" class="form-inline">
-                                <div class="row ml-0 mr-3 number-input">
-                                    <div class="col p-1">
+                            <form id="threshold-form" class="form-inline" onsubmit="return false;">
+                                <div class="row ml-0 mr-3 number-input wide">
+                                    <div class="col p-2">
                                         <input
                                             type="number"
                                             id="threshold"

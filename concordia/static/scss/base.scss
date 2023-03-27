@@ -989,6 +989,10 @@ $card-progress-height: 12px;
         border: none;
         padding: 0;
     }
+
+    &.wide {
+        width: 6rem;
+    }
 }
 
 /*
