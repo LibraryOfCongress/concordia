@@ -1,7 +1,7 @@
 import uuid
 from logging import getLogger
 
-from django.contrib import messages
+from django.contrib import admin, messages
 from django.utils.timezone import now
 
 from ..models import Asset, Transcription, TranscriptionStatus
@@ -9,6 +9,7 @@ from ..models import Asset, Transcription, TranscriptionStatus
 logger = getLogger(__name__)
 
 
+@admin.action(permissions=["change"], description="Anonymize and disable user accounts")
 def anonymize_action(modeladmin, request, queryset):
     count = queryset.count()
     for user_account in queryset:
@@ -21,9 +22,7 @@ def anonymize_action(modeladmin, request, queryset):
     messages.info(request, f"Anonymized and disabled {count} user accounts")
 
 
-anonymize_action.short_description = "Anonymize and disable user accounts"
-
-
+@admin.action(permissions=["change"], description="Publish selected items and assets")
 def publish_item_action(modeladmin, request, queryset):
     """
     Mark all of the selected items and their related assets as published
@@ -37,9 +36,7 @@ def publish_item_action(modeladmin, request, queryset):
     messages.info(request, f"Published {count} items and {asset_count} assets")
 
 
-publish_item_action.short_description = "Publish selected items and assets"
-
-
+@admin.action(permissions=["change"], description="Unpublish selected items and assets")
 def unpublish_item_action(modeladmin, request, queryset):
     """
     Mark all of the selected items and their related assets as unpublished
@@ -53,9 +50,7 @@ def unpublish_item_action(modeladmin, request, queryset):
     messages.info(request, f"Unpublished {count} items and {asset_count} assets")
 
 
-unpublish_item_action.short_description = "Unpublish selected items and assets"
-
-
+@admin.action(permissions=["change"], description="Publish selected")
 def publish_action(modeladmin, request, queryset):
     """
     Mark all of the selected objects as published
@@ -65,9 +60,7 @@ def publish_action(modeladmin, request, queryset):
     messages.info(request, f"Published {count} objects")
 
 
-publish_action.short_description = "Publish selected"
-
-
+@admin.action(permissions=["change"], description="Unpublish selected")
 def unpublish_action(modeladmin, request, queryset):
     """
     Mark all of the selected objects as unpublished
@@ -77,9 +70,7 @@ def unpublish_action(modeladmin, request, queryset):
     messages.info(request, f"Unpublished {count} objects")
 
 
-unpublish_action.short_description = "Unpublish selected"
-
-
+@admin.action(permissions=["reopen"], description="Reopen selected assets")
 def reopen_asset_action(modeladmin, request, queryset):
     # Can only reopen completed assets
     assets = queryset.filter(transcription_status=TranscriptionStatus.COMPLETED)
@@ -110,6 +101,3 @@ def reopen_asset_action(modeladmin, request, queryset):
         new_transcription.save()
 
     messages.info(request, f"Reopened {count} assets")
-
-
-reopen_asset_action.short_description = "Reopen selected assets"

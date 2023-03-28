@@ -402,6 +402,9 @@ class Asset(MetricsModelMixin("asset"), models.Model):
             models.Index(fields=["id", "item", "published", "transcription_status"]),
             models.Index(fields=["published", "transcription_status"]),
         ]
+        permissions = [
+            ("reopen_asset", "Can reopen asset"),
+        ]
 
     def __str__(self):
         return self.title

@@ -183,7 +183,7 @@ def ajax_session_status(request):
                 "url": request.build_absolute_uri(reverse("user-profile")),
             }
         ]
-        if user.is_superuser:
+        if user.is_superuser or user.is_staff:
             links.append(
                 {
                     "title": "Admin Area",

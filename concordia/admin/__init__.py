@@ -610,6 +610,11 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
             request, object_id, extra_context=extra_context, **kwargs
         )
 
+    def has_reopen_permission(self, request):
+        opts = self.opts
+        codename = get_permission_codename("reopen", opts)
+        return request.user.has_perm(f"{opts.app_label}.{codename}")
+
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
