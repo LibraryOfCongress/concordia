@@ -1,6 +1,5 @@
 import os.path
 import time
-from datetime import date
 from logging import getLogger
 
 from django.conf import settings
@@ -538,17 +537,15 @@ def on_transcription_save(sender, instance, **kwargs):
             user_profile_activity.transcribe_count = F("transcribe_count") + 1
         user_profile_activity.save()
     elif instance.reviewed_by:
-        reviewed = instance.accepted or instance.rejected
-        if reviewed.date() == date.today():
-            user_profile_activity, created = UserProfileActivity.objects.get_or_create(
-                user=instance.reviewed_by,
-                campaign=instance.asset.item.project.campaign,
-            )
-            if created:
-                user_profile_activity.review_count = 1
-            else:
-                user_profile_activity.review_count = F("review_count") + 1
-            user_profile_activity.save()
+        user_profile_activity, created = UserProfileActivity.objects.get_or_create(
+            user=instance.reviewed_by,
+            campaign=instance.asset.item.project.campaign,
+        )
+        if created:
+            user_profile_activity.review_count = 1
+        else:
+            user_profile_activity.review_count = F("review_count") + 1
+        user_profile_activity.save()
 
 
 post_save.connect(on_transcription_save, sender=Transcription)
