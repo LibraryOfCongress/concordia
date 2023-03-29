@@ -101,6 +101,8 @@ DATABASES = {
     }
 }
 
+HONEYPOT_FIELD_NAME = "required_phone"
+
 INSTALLED_APPS = [
     "concordia.apps.ConcordiaAdminConfig",  # Replaces 'django.contrib.admin'
     "django.contrib.auth",
@@ -116,6 +118,7 @@ INSTALLED_APPS = [
     "exporter",
     "importer",
     "captcha",
+    "honeypot",
     "django_prometheus_metrics",
     "robots",
     "django_celery_beat",

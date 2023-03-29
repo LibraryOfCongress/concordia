@@ -43,6 +43,7 @@ from django.views.decorators.vary import vary_on_headers
 from django.views.generic import FormView, ListView, RedirectView, TemplateView
 from django_registration.backends.activation.views import RegistrationView
 from flags.decorators import flag_required
+from honeypot.decorators import check_honeypot
 from ratelimit.decorators import ratelimit
 from ratelimit.mixins import RatelimitMixin
 from ratelimit.utils import is_ratelimited
@@ -1430,6 +1431,7 @@ def submit_tags(request, *, asset_pk):
 
 
 @method_decorator(never_cache, name="dispatch")
+@method_decorator(check_honeypot, name="post")
 class ContactUsView(FormView):
     template_name = "contact.html"
     form_class = ContactUsForm

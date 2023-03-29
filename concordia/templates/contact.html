@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% load bootstrap4 %}
+{% load honeypot %}
 
 {% block main_content %}
     <div class="container">
@@ -24,6 +25,8 @@
                             Send Message
                         </button>
                     {% endbuttons %}
+
+                    {% render_honeypot_field "required_phone" %}
                 </form>
             </div>
         </div>
