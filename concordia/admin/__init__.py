@@ -560,7 +560,6 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         AssetProjectListFilter2,
         "media_type",
     )
-
     actions = (
         publish_action,
         reopen_asset_action,
@@ -570,6 +569,7 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     )
     autocomplete_fields = ("item",)
     ordering = ("item__item_id", "sequence")
+    change_list_template = "admin/concordia/asset/change_list.html"
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
