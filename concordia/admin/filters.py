@@ -15,6 +15,7 @@ class NullableTimestampFilter(admin.SimpleListFilter):
     parameter_name = ""
     # Choices displayed
     lookup_labels = ("NULL", "NOT NULL")
+    template = "admin/long_name_filter.html"
 
     def lookups(self, request, model_admin):
         return zip(("null", "not-null"), self.lookup_labels)
@@ -55,6 +56,7 @@ class ProjectCampaignListFilter(admin.SimpleListFilter):
     title = "Campaign"
     # Model field name:
     parameter_name = "campaign__id__exact"
+    template = "admin/long_name_filter.html"
 
     def lookups(self, request, model_admin):
         list_of_questions = []
@@ -79,6 +81,7 @@ class ItemCampaignListFilter(admin.SimpleListFilter):
     title = "Campaign"
     # Model field name:
     parameter_name = "project__campaign__id__exact"
+    template = "admin/long_name_filter.html"
 
     def lookups(self, request, model_admin):
         list_of_questions = []
@@ -103,6 +106,7 @@ class AssetCampaignListFilter(admin.SimpleListFilter):
     title = "Campaign"
     # Model field name:
     parameter_name = "item__project__campaign__id__exact"
+    template = "admin/long_name_filter.html"
 
     def lookups(self, request, model_admin):
         list_of_questions = []
@@ -127,6 +131,7 @@ class SiteCampaignListFilter(admin.SimpleListFilter):
     title = "Sorted Campaign"
     # Model field name:
     parameter_name = "campaign__id__exact"
+    template = "admin/long_name_filter.html"
 
     def lookups(self, request, model_admin):
         list_of_questions = []
@@ -151,6 +156,7 @@ class ResourceCampaignListFilter(admin.SimpleListFilter):
     title = "Campaign Sorted"
     # Model field name:
     parameter_name = "campaign__id__exact"
+    template = "admin/long_name_filter.html"
 
     def lookups(self, request, model_admin):
         list_of_questions = []
@@ -175,6 +181,7 @@ class TranscriptionCampaignListFilter(admin.SimpleListFilter):
     title = "Campaign"
     # Model field name:
     parameter_name = "asset__item__project__campaign__id__exact"
+    template = "admin/long_name_filter.html"
 
     def lookups(self, request, model_admin):
         list_of_questions = []
