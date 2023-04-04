@@ -699,6 +699,7 @@ class SiteReport(models.Model):
     DEFAULT_EXPORT_FIELDNAMES = [
         "created_on",
         "campaign__title",
+        "topic__title",
         "assets_total",
         "assets_published",
         "assets_not_started",
