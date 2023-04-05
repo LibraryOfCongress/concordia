@@ -205,7 +205,7 @@
                     <ul class="d-inline-flex mt-1 btn-group nav nav-tabs" role="tablist">
                         <li class="nav-item" role="presentation">
                             <button id="viewer-gamma" class="btn btn-dark nav-link active" title="Adjust gamma" data-toggle="tab" data-target="#gamma-filter" role="tab">
-                                Gamma
+                                Brightness
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
@@ -215,7 +215,12 @@
                         </li>
                         <li class="nav-item" role="presentation">
                             <button id="viewer-threshold" class="btn btn-dark nav-link" title="Adjust threshold" data-toggle="tab" data-target="#threshold-filter" role="tab">
-                                Threshold
+                                Contrast
+                            </button>
+                        </li>
+                        <li role="presentation">
+                            <button id="viewer-reset" class="btn" title="Reset all filters" onclick="resetImageFilterForms()">
+                                Reset All
                             </button>
                         </li>
                     </ul>
@@ -860,6 +865,13 @@
             input.dispatchEvent(new Event('input', { bubbles: true }));
             input.dispatchEvent(new Event('change', { bubbles: true }));
             return false;
+        }
+
+        function resetImageFilterForms(){
+            availableFilters.forEach(function (filterData) {
+                form = document.getElementById(filterData.formId);
+                form.reset();
+            });
         }
 
         let gammaNumber = document.getElementById("gamma");

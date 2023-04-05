@@ -933,6 +933,13 @@ $card-progress-height: 12px;
     }
 }
 
+#viewer-reset {
+    background-color: $primary;
+    border-color: $primary;
+    color: $white;
+    border-radius: 0;
+}
+
 .filter-slider {
     appearance: none;
     border: solid 1px $dark;
