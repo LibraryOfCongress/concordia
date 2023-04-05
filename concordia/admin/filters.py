@@ -15,7 +15,6 @@ class NullableTimestampFilter(admin.SimpleListFilter):
     parameter_name = ""
     # Choices displayed
     lookup_labels = ("NULL", "NOT NULL")
-    template = "admin/long_name_filter.html"
 
     def lookups(self, request, model_admin):
         return zip(("null", "not-null"), self.lookup_labels)
@@ -122,7 +121,7 @@ class AssetCampaignListFilter(admin.SimpleListFilter):
         return queryset
 
 
-class SiteCampaignListFilter(admin.SimpleListFilter):
+class SiteReportSortedCampaignListFilter(admin.SimpleListFilter):
     """
     Base class for admin campaign filters
     """
@@ -136,6 +135,25 @@ class SiteCampaignListFilter(admin.SimpleListFilter):
     def lookups(self, request, model_admin):
         list_of_questions = []
         queryset = Campaign.objects.order_by("title")
+        for campaign in queryset:
+            list_of_questions.append((str(campaign.id), campaign.title))
+        return list_of_questions
+
+    def queryset(self, request, queryset):
+        fkey_field = self.parameter_name
+        if self.value():
+            return queryset.filter(**{fkey_field: self.value()})
+        return queryset
+
+
+class SiteReportCampaignListFilter(admin.SimpleListFilter):
+    title = "Campaign"
+    parameter_name = "campaign__id__exact"
+    template = "admin/long_name_filter.html"
+
+    def lookups(self, request, model_admin):
+        list_of_questions = []
+        queryset = Campaign.objects.all()
         for campaign in queryset:
             list_of_questions.append((str(campaign.id), campaign.title))
         return list_of_questions
@@ -209,6 +227,7 @@ class CampaignProjectListFilter(admin.SimpleListFilter):
     # Custom attributes
     related_filter_parameter = ""
     project_ref = ""
+    template = "admin/long_name_filter.html"
 
     def lookups(self, request, model_admin):
         list_of_questions = []
@@ -232,15 +251,18 @@ class ItemProjectListFilter2(CampaignProjectListFilter):
     parameter_name = "project__in"
     related_filter_parameter = "project__campaign__id__exact"
     project_ref = "project_id"
+    template = "admin/long_name_filter.html"
 
 
 class AssetProjectListFilter2(CampaignProjectListFilter):
     parameter_name = "item__project__in"
     related_filter_parameter = "item__project__campaign__id__exact"
     project_ref = "item__project_id"
+    template = "admin/long_name_filter.html"
 
 
 class TranscriptionProjectListFilter(CampaignProjectListFilter):
     parameter_name = "asset__item__project__in"
     related_filter_parameter = "asset__item__project__campaign__id__exact"
     project_ref = "asset__item__project_id"
+    template = "admin/long_name_filter.html"

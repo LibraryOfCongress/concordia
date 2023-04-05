@@ -68,7 +68,8 @@ from .filters import (
     ProjectCampaignListFilter,
     RejectedFilter,
     ResourceCampaignListFilter,
-    SiteCampaignListFilter,
+    SiteReportCampaignListFilter,
+    SiteReportSortedCampaignListFilter,
     SubmittedFilter,
     TranscriptionCampaignListFilter,
     TranscriptionProjectListFilter,
@@ -757,8 +758,8 @@ class SiteReportAdmin(admin.ModelAdmin):
     list_display = ("created_on", "campaign", "topic")
 
     list_filter = (
-        SiteCampaignListFilter,
-        "campaign",
+        SiteReportSortedCampaignListFilter,
+        SiteReportCampaignListFilter,
         "topic",
     )
 
