@@ -52,6 +52,7 @@ from ..tasks import retire_campaign
 from ..views import ReportCampaignView
 from .actions import (
     anonymize_action,
+    change_status_to_completed,
     publish_action,
     publish_item_action,
     reopen_asset_action,
@@ -563,6 +564,7 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     actions = (
         publish_action,
         reopen_asset_action,
+        change_status_to_completed,
         unpublish_action,
         export_to_csv_action,
         export_to_excel_action,

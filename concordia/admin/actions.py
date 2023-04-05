@@ -101,3 +101,18 @@ def reopen_asset_action(modeladmin, request, queryset):
         new_transcription.save()
 
     messages.info(request, f"Reopened {count} assets")
+
+
+def change_status_to_completed(modeladmin, request, queryset):
+    assets = queryset.filter(
+        transcription_status=TranscriptionStatus.SUBMITTED
+    ).exclude(transcription__user=request.user)
+    count = assets.count()
+    for asset in assets:
+        latest_transcription = asset.transcription_set.order_by("-pk").first()
+        latest_transcription.accepted = now()
+        latest_transcription.reviewed_by = request.user
+        latest_transcription.full_clean()
+        latest_transcription.save()
+
+    messages.info(request, f"Changed status of {count} assets to complete")
