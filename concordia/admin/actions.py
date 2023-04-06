@@ -103,6 +103,7 @@ def reopen_asset_action(modeladmin, request, queryset):
     messages.info(request, f"Reopened {count} assets")
 
 
+@admin.action(permissions=["reopen"], description="Change status to Completed")
 def change_status_to_completed(modeladmin, request, queryset):
     assets = queryset.filter(
         transcription_status=TranscriptionStatus.SUBMITTED
