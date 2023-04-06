@@ -110,7 +110,7 @@ def change_status_to_completed(modeladmin, request, queryset):
     for asset in assets:
         latest_transcription = asset.transcription_set.order_by("-pk").first()
         latest_transcription.accepted = now()
-        latest_transcription.accepted = None
+        latest_transcription.rejected = None
         latest_transcription.reviewed_by = request.user
         latest_transcription.clean_fields()
         latest_transcription.validate_unique()
