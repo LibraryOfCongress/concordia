@@ -105,23 +105,22 @@ def reopen_asset_action(modeladmin, request, queryset):
 
 @admin.action(permissions=["reopen"], description="Change status to Completed")
 def change_status_to_completed(modeladmin, request, queryset):
-    assets = queryset.filter(
-        transcription_status=TranscriptionStatus.SUBMITTED
-    ).exclude(transcription__user=request.user)
+    assets = queryset.filter(transcription_status=TranscriptionStatus.SUBMITTED)
     count = assets.count()
     for asset in assets:
         latest_transcription = asset.transcription_set.order_by("-pk").first()
         latest_transcription.accepted = now()
+        latest_transcription.rejected = None
         latest_transcription.reviewed_by = request.user
-        latest_transcription.full_clean()
+        latest_transcription.clean_fields()
+        latest_transcription.validate_unique()
         latest_transcription.save()
 
-    messages.info(request, f"Changed status of {count} assets to complete")
+    messages.info(request, f"Changed status of {count} assets to Complete")
 
 
 @admin.action(permissions=["reopen"], description="Change status to Needs Review")
 def change_status_to_needs_review(modeladmin, request, queryset):
-    # Completed -> Needs Review (Submitted)
     assets = queryset.filter(transcription_status=TranscriptionStatus.COMPLETED)
     count = assets.count()
     for asset in assets:
