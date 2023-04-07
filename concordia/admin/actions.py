@@ -117,3 +117,23 @@ def change_status_to_completed(modeladmin, request, queryset):
         latest_transcription.save()
 
     messages.info(request, f"Changed status of {count} assets to Complete")
+
+
+@admin.action(permissions=["reopen"], description="Change status to Needs Review")
+def change_status_to_needs_review(modeladmin, request, queryset):
+    assets = queryset.filter(transcription_status=TranscriptionStatus.COMPLETED)
+    count = assets.count()
+    for asset in assets:
+        latest_transcription = asset.transcription_set.order_by("-pk").first()
+        new_transcription = Transcription(
+            supersedes=latest_transcription,
+            submitted=now(),
+            reviewed_by=request.user,
+            text=latest_transcription.text,
+            asset=asset,
+            user=request.user,
+        )
+    new_transcription.full_clean()
+    new_transcription.save()
+
+    messages.info(request, f"Changed status of {count} assets to Needs Review")
