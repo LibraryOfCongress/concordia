@@ -45,13 +45,6 @@ class AdminRedownloadImagesForm(forms.Form):
     )
 
 
-class AdminProcessBagitForm(forms.Form):
-    zip_file = forms.FileField(
-        required=True,
-        label="zip file containing Bagit Structure",
-    )
-
-
 class BleachedDescriptionAdminForm(forms.ModelForm):
     def clean_description(self):
         return bleach.clean(
