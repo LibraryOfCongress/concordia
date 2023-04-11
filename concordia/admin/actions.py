@@ -105,7 +105,7 @@ def reopen_asset_action(modeladmin, request, queryset):
 
 @admin.action(permissions=["reopen"], description="Change status to Completed")
 def change_status_to_completed(modeladmin, request, queryset):
-    assets = queryset.filter(transcription_status=TranscriptionStatus.SUBMITTED)
+    assets = queryset.exclude(transcription_status=TranscriptionStatus.COMPLETED)
     count = assets.count()
     for asset in assets:
         latest_transcription = asset.transcription_set.order_by("-pk").first()
@@ -143,6 +143,7 @@ def _change_status(request, assets, submit=True):
 
 @admin.action(permissions=["reopen"], description="Change status to Needs Review")
 def change_status_to_needs_review(modeladmin, request, queryset):
+    queryset = queryset.exclude(transcription_status=TranscriptionStatus.SUBMITTED)
     count = _change_status(request, queryset)
 
     messages.info(request, f"Changed status of {count} assets to Needs Review")
@@ -150,6 +151,7 @@ def change_status_to_needs_review(modeladmin, request, queryset):
 
 @admin.action(permissions=["reopen"], description="Change status to In Progress")
 def change_status_to_in_progress(modeladmin, request, queryset):
+    queryset = queryset.exclude(transcription_status=TranscriptionStatus.IN_PROGRESS)
     count = _change_status(request, queryset, submit=False)
 
     messages.info(request, f"Changed status of {count} assets to In Progress")
