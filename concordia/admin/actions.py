@@ -119,8 +119,7 @@ def change_status_to_completed(modeladmin, request, queryset):
     messages.info(request, f"Changed status of {count} assets to Complete")
 
 
-def _change_status(request, queryset, submit=True):
-    assets = queryset.filter(transcription_status=TranscriptionStatus.COMPLETED)
+def _change_status(request, assets, submit=True):
     count = assets.count()
     for asset in assets:
         latest_transcription = asset.transcription_set.order_by("-pk").first()
