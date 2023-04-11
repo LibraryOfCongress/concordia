@@ -819,14 +819,15 @@
     </script>
 
     <script>
+        function reserveAssetForEditing(){
+            attemptToReserveAsset("{% url 'reserve-asset' asset.pk %}", "", "transcribe");
+        }
         {% if transcription_status == "not_started" or transcription_status == "in_progress" %}
             attemptToReserveAsset("{% url 'reserve-asset' asset.pk %}",
                 "",
                 "transcribe");
         {% elif user.is_authenticated %}
-            attemptToReserveAsset("{% url 'reserve-asset' asset.pk %}",
-                "{% url 'transcriptions:redirect-to-next-reviewable-campaign-asset' asset.item.project.campaign.slug %}",
-                "review");
+            reserveAssetForEditing();
         {% endif %}
     </script>
 
