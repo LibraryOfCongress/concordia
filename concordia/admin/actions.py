@@ -109,6 +109,12 @@ def change_status_to_completed(modeladmin, request, queryset):
     count = assets.count()
     for asset in assets:
         latest_transcription = asset.transcription_set.order_by("-pk").first()
+        if latest_transcription is None:
+            kwargs = {
+                "asset": asset,
+                "user": request.user,
+            }
+            latest_transcription = Transcription(**kwargs)
         latest_transcription.accepted = now()
         latest_transcription.rejected = None
         latest_transcription.reviewed_by = request.user
