@@ -130,12 +130,17 @@ def _change_status(request, assets, submit=True):
     for asset in assets:
         latest_transcription = asset.transcription_set.order_by("-pk").first()
         kwargs = {
-            "supersedes": latest_transcription,
             "reviewed_by": request.user,
-            "text": latest_transcription.text,
             "asset": asset,
             "user": request.user,
         }
+        if latest_transcription is not None:
+            kwargs.update(
+                **{
+                    "supersedes": latest_transcription,
+                    "text": latest_transcription.text,
+                }
+            )
         if submit:
             kwargs["submitted"] = now()
         else:
