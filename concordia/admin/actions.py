@@ -70,39 +70,6 @@ def unpublish_action(modeladmin, request, queryset):
     messages.info(request, f"Unpublished {count} objects")
 
 
-@admin.action(permissions=["reopen"], description="Reopen selected assets")
-def reopen_asset_action(modeladmin, request, queryset):
-    # Can only reopen completed assets
-    assets = queryset.filter(transcription_status=TranscriptionStatus.COMPLETED)
-
-    # Count the number of assets that will become reopened
-    count = assets.count()
-
-    """
-    For each asset, create a new transcription that:
-    - supersedes the currently-latest transcription
-    - has rejected set to now
-    - has reviewed_by set to the current user
-    - has the same transcription text as the latest transcription
-    Don't use bulk_create because then the post-save signal will not be sent.
-
-    """
-    for asset in assets:
-        latest_transcription = asset.transcription_set.order_by("-pk").first()
-        new_transcription = Transcription(
-            supersedes=latest_transcription,
-            rejected=now(),
-            reviewed_by=request.user,
-            text=latest_transcription.text,
-            asset=asset,
-            user=request.user,
-        )
-        new_transcription.full_clean()
-        new_transcription.save()
-
-    messages.info(request, f"Reopened {count} assets")
-
-
 @admin.action(permissions=["reopen"], description="Change status to Completed")
 def change_status_to_completed(modeladmin, request, queryset):
     assets = queryset.exclude(transcription_status=TranscriptionStatus.COMPLETED)
@@ -126,7 +93,18 @@ def change_status_to_completed(modeladmin, request, queryset):
 
 
 def _change_status(request, assets, submit=True):
+    # Count the number of assets that will be updated
     count = assets.count()
+    """
+    For each asset:
+    - create a new transcription. if transcriptions already exist:
+      - supersede the currently-latest transcription
+      - use the same transcription text as the latest transcription
+    - set either submitted or rejected to now
+    - set reviewed_by to the current user
+    Don't use bulk_create, because then the post-save signal will not be sent.
+
+    """
     for asset in assets:
         latest_transcription = asset.transcription_set.order_by("-pk").first()
         kwargs = {

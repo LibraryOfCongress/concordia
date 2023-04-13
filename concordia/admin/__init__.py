@@ -57,7 +57,6 @@ from .actions import (
     change_status_to_needs_review,
     publish_action,
     publish_item_action,
-    reopen_asset_action,
     unpublish_action,
     unpublish_item_action,
 )
@@ -566,7 +565,6 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     )
     actions = (
         publish_action,
-        reopen_asset_action,
         change_status_to_completed,
         change_status_to_in_progress,
         change_status_to_needs_review,
