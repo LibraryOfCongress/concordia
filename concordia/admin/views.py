@@ -1,4 +1,5 @@
 import re
+import tempfile
 import time
 
 from bittersweet.models import validated_get_or_create
@@ -166,13 +167,17 @@ def project_level_export(request):
             latest_transcription=Subquery(latest_trans_subquery[:1])
         )
 
+        campaign_slug_dbv = Campaign.objects.get(slug__exact=campaign_slug).slug
+
         export_filename_base = "%s%s" % (
-            campaign_slug,
+            campaign_slug_dbv,
             proj_titles,
         )
 
-        export_base_dir = export_filename_base
-        return do_bagit_export(assets, export_base_dir, export_filename_base)
+        with tempfile.TemporaryDirectory(
+            prefix=export_filename_base
+        ) as export_base_dir:
+            return do_bagit_export(assets, export_base_dir, export_filename_base)
 
     if id is not None:
         context["campaigns"] = []

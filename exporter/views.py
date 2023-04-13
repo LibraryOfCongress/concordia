@@ -15,7 +15,14 @@ from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
 from tabular_export.core import export_to_csv_response, flatten_queryset
 
-from concordia.models import Asset, Item, Transcription, TranscriptionStatus
+from concordia.models import (
+    Asset,
+    Campaign,
+    Item,
+    Project,
+    Transcription,
+    TranscriptionStatus,
+)
 
 logger = getLogger(__name__)
 
@@ -250,7 +257,15 @@ class ExportItemToBagIt(TemplateView):
 
         assets = get_latest_transcription_data(asset_qs)
 
-        export_filename_base = "%s-%s-%s" % (campaign_slug, project_slug, item_id)
+        campaign_slug_dbv = Campaign.objects.get(slug__exact=campaign_slug).slug
+        project_slug_dbv = Project.objects.get(slug__exact=project_slug).slug
+        item_id_dbv = Item.objects.get(item_id__exact=item_id).item_id
+
+        export_filename_base = "%s-%s-%s" % (
+            campaign_slug_dbv,
+            project_slug_dbv,
+            item_id_dbv,
+        )
 
         with tempfile.TemporaryDirectory(
             prefix=export_filename_base
@@ -270,7 +285,10 @@ class ExportProjectToBagIt(TemplateView):
         asset_qs = remove_incomplete_items(item_qs)
         assets = get_latest_transcription_data(asset_qs)
 
-        export_filename_base = "%s-%s" % (campaign_slug, project_slug)
+        campaign_slug_dbv = Campaign.objects.get(slug__exact=campaign_slug).slug
+        project_slug_dbv = Project.objects.get(slug__exact=project_slug).slug
+
+        export_filename_base = "%s-%s" % (campaign_slug_dbv, project_slug_dbv)
 
         with tempfile.TemporaryDirectory(
             prefix=export_filename_base
@@ -287,7 +305,9 @@ class ExportCampaignToBagIt(TemplateView):
         asset_qs = remove_incomplete_items(item_qs)
         assets = get_latest_transcription_data(asset_qs)
 
-        export_filename_base = "%s" % (campaign_slug,)
+        campaign_slug_dbv = Campaign.objects.get(slug__exact=campaign_slug).slug
+
+        export_filename_base = "%s" % (campaign_slug_dbv,)
 
         with tempfile.TemporaryDirectory(
             prefix=export_filename_base
