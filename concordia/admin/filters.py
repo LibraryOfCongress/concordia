@@ -190,6 +190,25 @@ class ResourceCampaignListFilter(admin.SimpleListFilter):
         return queryset
 
 
+class TagCampaignListFilter(admin.SimpleListFilter):
+    title = "Campaign"
+    parameter_name = "userassettagcollection__asset__item__project__campaign__id__exact"
+    template = "admin/long_name_filter.html"
+
+    def lookups(self, request, model_admin):
+        list_of_questions = []
+        queryset = Campaign.objects.order_by("title")
+        for campaign in queryset:
+            list_of_questions.append((str(campaign.id), campaign.title))
+        return list_of_questions
+
+    def queryset(self, request, queryset):
+        fkey_field = self.parameter_name
+        if self.value():
+            return queryset.filter(**{fkey_field: self.value()})
+        return queryset
+
+
 class TranscriptionCampaignListFilter(admin.SimpleListFilter):
     """
     Base class for admin campaign filters
@@ -266,3 +285,45 @@ class TranscriptionProjectListFilter(CampaignProjectListFilter):
     related_filter_parameter = "asset__item__project__campaign__id__exact"
     project_ref = "asset__item__project_id"
     template = "admin/long_name_filter.html"
+
+
+class CampaignStatusListFilter(admin.SimpleListFilter):
+    """Base class for campaign status list filters"""
+
+    title = "Campaign status"
+
+    def lookups(self, request, model_admin):
+        return Campaign.Status.choices
+
+    def queryset(self, request, queryset):
+        if self.value():
+            return queryset.filter(**{self.parameter_name: self.value()})
+        return queryset
+
+
+class AssetCampaignStatusListFilter(CampaignStatusListFilter):
+    parameter_name = "item__project__campaign__status"
+
+
+class ItemCampaignStatusListFilter(CampaignStatusListFilter):
+    parameter_name = "project__campaign__status"
+
+
+class ProjectCampaignStatusListFilter(CampaignStatusListFilter):
+    parameter_name = "campaign__status"
+
+
+class ResourceCampaignStatusListFilter(CampaignStatusListFilter):
+    parameter_name = "campaign__status"
+
+
+class TranscriptionCampaignStatusListFilter(CampaignStatusListFilter):
+    parameter_name = "asset__item__project__campaign__status"
+
+
+class TagCampaignStatusListFilter(CampaignStatusListFilter):
+    parameter_name = "userassettagcollection__asset__item__project__campaign__status"
+
+
+class UserAssetTagCollectionCampaignStatusListFilter(CampaignStatusListFilter):
+    parameter_name = "asset__item__project__campaign__status"
