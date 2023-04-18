@@ -63,17 +63,25 @@ from .actions import (
 from .filters import (
     AcceptedFilter,
     AssetCampaignListFilter,
+    AssetCampaignStatusListFilter,
     AssetProjectListFilter2,
     ItemCampaignListFilter,
+    ItemCampaignStatusListFilter,
     ItemProjectListFilter2,
     ProjectCampaignListFilter,
+    ProjectCampaignStatusListFilter,
     RejectedFilter,
     ResourceCampaignListFilter,
+    ResourceCampaignStatusListFilter,
     SiteReportCampaignListFilter,
     SiteReportSortedCampaignListFilter,
     SubmittedFilter,
+    TagCampaignListFilter,
+    TagCampaignStatusListFilter,
     TranscriptionCampaignListFilter,
+    TranscriptionCampaignStatusListFilter,
     TranscriptionProjectListFilter,
+    UserAssetTagCollectionCampaignStatusListFilter,
 )
 from .forms import (
     AdminItemImportForm,
@@ -310,7 +318,11 @@ class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
 class ResourceAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     list_display = ("campaign", "topic", "sequence", "title", "resource_url")
     list_display_links = ("campaign", "topic", "sequence", "title")
-    list_filter = (ResourceCampaignListFilter, "title")
+    list_filter = (
+        ResourceCampaignStatusListFilter,
+        ResourceCampaignListFilter,
+        "title",
+    )
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "campaign":
@@ -375,7 +387,12 @@ class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     list_display_links = ("id", "title", "slug")
     prepopulated_fields = {"slug": ("title",)}
     search_fields = ["title", "campaign__title"]
-    list_filter = ("published", "topics", ProjectCampaignListFilter)
+    list_filter = (
+        "published",
+        "topics",
+        ProjectCampaignStatusListFilter,
+        ProjectCampaignListFilter,
+    )
 
     actions = (publish_action, unpublish_action)
 
@@ -467,6 +484,7 @@ class ItemAdmin(admin.ModelAdmin):
     list_filter = (
         "published",
         "project__topics",
+        ItemCampaignStatusListFilter,
         ItemCampaignListFilter,
         ItemProjectListFilter2,
     )
@@ -559,6 +577,7 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         "transcription_status",
         "published",
         "item__project__topics",
+        AssetCampaignStatusListFilter,
         AssetCampaignListFilter,
         AssetProjectListFilter2,
         "media_type",
@@ -625,10 +644,16 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
 class TagAdmin(admin.ModelAdmin):
     list_display = ("id", "value")
     list_display_links = ("id", "value")
+    list_filter = (TagCampaignStatusListFilter, TagCampaignListFilter)
 
     search_fields = ["value"]
 
     actions = ("export_tags_as_csv",)
+
+    def lookup_allowed(self, key, value):
+        if key in ["userassettagcollection__asset__item__project__campaign__id__exact"]:
+            return True
+        return super().lookup_allowed(key, value)
 
     def export_tags_as_csv(self, request, queryset):
         tags = queryset.prefetch_related(
@@ -669,6 +694,7 @@ class UserAssetTagCollectionAdmin(admin.ModelAdmin):
     date_hierarchy = "created_on"
     search_fields = ["asset__title", "asset__campaign__title", "asset__project__title"]
     list_filter = (
+        UserAssetTagCollectionCampaignStatusListFilter,
         "asset__item__project__campaign",
         "asset__item__project",
         "user__is_staff",
@@ -693,6 +719,7 @@ class TranscriptionAdmin(admin.ModelAdmin):
         SubmittedFilter,
         AcceptedFilter,
         RejectedFilter,
+        TranscriptionCampaignStatusListFilter,
         TranscriptionCampaignListFilter,
         TranscriptionProjectListFilter,
     )
