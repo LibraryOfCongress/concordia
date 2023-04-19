@@ -28,4 +28,10 @@ aws s3 sync s3://crowd-content s3://crowd-${ENV_NAME}-content
 psql -U concordia -h "$POSTGRESQL_HOST" -d postgres -c "select pg_terminate_backend(pid) from pg_stat_activity where datname='concordia';"
 psql -U concordia -h "$POSTGRESQL_HOST" -d postgres -c "drop database concordia;"
 pg_restore --create -U concordia -h "${POSTGRESQL_HOST}" -Fc --dbname=postgres --no-owner --no-acl "${DUMP_FILE}"
-echo $?
+RETURNCODE=$?
+echo $RETURNCODE
+
+if [ $RETURNCODE = 0 ]; then
+    ECS_SERVICE="$(aws ecs list-services --region us-east-1 --cluster crowd-${ENV_NAME} | python -c 'import json,sys;ParameterInput=json.load(sys.stdin);Parameter=ParameterInput["serviceArns"];print(Parameter[0].split("/")[1])')"
+    aws ecs update-service --region us-east-1 --force-new-deployment --cluster crowd-${ENV_NAME} --service ${ECS_SERVICE}
+fi
