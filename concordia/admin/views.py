@@ -216,15 +216,16 @@ def celery_task_review(request):
     asset_incomplete = 0
     asset_unstarted = 0
     asset_failure = 0
-    context = {"title": "Active Importer Tasks"}
+    context = {
+        "title": "Active Importer Tasks",
+        "campaigns": [],
+        "projects": [],
+    }
     celery = Celery("concordia")
     celery.config_from_object("django.conf:settings", namespace="CELERY")
-    context["campaigns"] = all_campaigns = []
-    context["projects"] = all_projects = []
     id = request.GET.get("id")
 
     if id is not None:
-        context["campaigns"] = []
         form = AdminProjectBulkImportForm()
         projects = Project.objects.filter(campaign_id=int(id))
         for project in projects:
@@ -287,14 +288,14 @@ def celery_task_review(request):
             proj_dict["incomplete"] = asset_incomplete
             proj_dict["unstarted"] = asset_unstarted
             proj_dict["failure"] = asset_failure
-            all_projects.append(proj_dict)
+            context["projects"].append(proj_dict)
         messages.info(request, f"{totalcount} Total Assets Processed")
         context["totalassets"] = totalcount
 
     else:
-        context["projects"] = []
-        for campaigns in Campaign.objects.all():
-            all_campaigns.append(campaigns)
+        context["campaigns"] = Campaign.objects.exclude(
+            status=Campaign.Status.RETIRED
+        ).order_by("-launch_date")
         form = AdminProjectBulkImportForm()
 
     context["form"] = form
