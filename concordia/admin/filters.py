@@ -46,204 +46,76 @@ class RejectedFilter(NullableTimestampFilter):
     lookup_labels = ("Pending", "Rejected")
 
 
-class ProjectCampaignListFilter(admin.SimpleListFilter):
+class CampaignListFilter(admin.SimpleListFilter):
     """
     Base class for admin campaign filters
     """
 
-    # Title displayed on the list filter URL
     title = "Campaign"
-    # Model field name:
-    parameter_name = "campaign__id__exact"
     template = "admin/long_name_filter.html"
 
     def lookups(self, request, model_admin):
-        list_of_questions = []
-        queryset = Campaign.objects.order_by("title")
-        for campaign in queryset:
-            list_of_questions.append((str(campaign.id), campaign.title))
-        return list_of_questions
-
-    def queryset(self, request, queryset):
-        fkey_field = self.parameter_name
-        if self.value():
-            return queryset.filter(**{fkey_field: self.value()})
-        return queryset
-
-
-class ItemCampaignListFilter(admin.SimpleListFilter):
-    """
-    Base class for admin campaign filters
-    """
-
-    # Title displayed on the list filter URL
-    title = "Campaign"
-    # Model field name:
-    parameter_name = "project__campaign__id__exact"
-    template = "admin/long_name_filter.html"
-
-    def lookups(self, request, model_admin):
-        list_of_questions = []
-        queryset = Campaign.objects.order_by("title")
-        for campaign in queryset:
-            list_of_questions.append((str(campaign.id), campaign.title))
-        return list_of_questions
-
-    def queryset(self, request, queryset):
-        fkey_field = self.parameter_name
-        if self.value():
-            return queryset.filter(**{fkey_field: self.value()})
-        return queryset
-
-
-class AssetCampaignListFilter(admin.SimpleListFilter):
-    """
-    Base class for admin campaign filters
-    """
-
-    # Title displayed on the list filter URL
-    title = "Campaign"
-    # Model field name:
-    parameter_name = "item__project__campaign__id__exact"
-    template = "admin/long_name_filter.html"
-
-    def lookups(self, request, model_admin):
-        list_of_questions = []
-        queryset = Campaign.objects.order_by("title")
-        for campaign in queryset:
-            list_of_questions.append((str(campaign.id), campaign.title))
-        return list_of_questions
-
-    def queryset(self, request, queryset):
-        fkey_field = self.parameter_name
-        if self.value():
-            return queryset.filter(**{fkey_field: self.value()})
-        return queryset
-
-
-class SiteReportSortedCampaignListFilter(admin.SimpleListFilter):
-    """
-    Base class for admin campaign filters
-    """
-
-    # Title displayed on the list filter URL
-    title = "Sorted Campaign"
-    # Model field name:
-    parameter_name = "campaign__id__exact"
-    template = "admin/long_name_filter.html"
-
-    def lookups(self, request, model_admin):
-        list_of_questions = []
-        queryset = Campaign.objects.order_by("title")
-        for campaign in queryset:
-            list_of_questions.append((str(campaign.id), campaign.title))
-        return list_of_questions
-
-    def queryset(self, request, queryset):
-        fkey_field = self.parameter_name
-        if self.value():
-            return queryset.filter(**{fkey_field: self.value()})
-        return queryset
-
-
-class SiteReportCampaignListFilter(admin.SimpleListFilter):
-    title = "Campaign"
-    parameter_name = "campaign__id__exact"
-    template = "admin/long_name_filter.html"
-
-    def lookups(self, request, model_admin):
-        list_of_questions = []
         queryset = Campaign.objects.all()
-        for campaign in queryset:
-            list_of_questions.append((str(campaign.id), campaign.title))
-        return list_of_questions
+        if self.status_filter_parameter in request.GET:
+            queryset = queryset.filter(status=request.GET[self.status_filter_parameter])
+        return queryset.values_list("id", "title").order_by("title")
 
     def queryset(self, request, queryset):
-        fkey_field = self.parameter_name
         if self.value():
-            return queryset.filter(**{fkey_field: self.value()})
+            return queryset.filter(**{self.parameter_name: self.value()})
         return queryset
 
 
-class ResourceCampaignListFilter(admin.SimpleListFilter):
-    """
-    Base class for admin campaign filters
-    """
-
-    # Title displayed on the list filter URL
-    title = "Campaign Sorted"
-    # Model field name:
+class ProjectCampaignListFilter(CampaignListFilter):
     parameter_name = "campaign__id__exact"
-    template = "admin/long_name_filter.html"
+    status_filter_parameter = "campaign__status"
+
+
+class ItemCampaignListFilter(CampaignListFilter):
+    parameter_name = "project__campaign__id__exact"
+    status_filter_parameter = "project__campaign__status"
+
+
+class AssetCampaignListFilter(CampaignListFilter):
+    parameter_name = "item__project__campaign__id__exact"
+    status_filter_parameter = "item__project__campaign__status"
+
+
+class SiteReportSortedCampaignListFilter(CampaignListFilter):
+    title = "Sorted Campaign"
+    parameter_name = "campaign__id__exact"
+    status_filter_parameter = "campaign__status"
+
+
+class SiteReportCampaignListFilter(CampaignListFilter):
+    parameter_name = "campaign__id__exact"
+    status_filter_parameter = "campaign__status"
 
     def lookups(self, request, model_admin):
-        list_of_questions = []
-        queryset = Campaign.objects.order_by("title")
-        for campaign in queryset:
-            list_of_questions.append((str(campaign.id), campaign.title))
-        return list_of_questions
-
-    def queryset(self, request, queryset):
-        fkey_field = self.parameter_name
-        if self.value():
-            return queryset.filter(**{fkey_field: self.value()})
-        return queryset
+        return Campaign.objects.values_list("id", "title")
 
 
-class TagCampaignListFilter(admin.SimpleListFilter):
-    title = "Campaign"
+class ResourceCampaignListFilter(CampaignListFilter):
+    title = "Campaign Sorted"
+    parameter_name = "campaign__id__exact"
+    status_filter_parameter = "campaign__status"
+
+
+class TagCampaignListFilter(CampaignListFilter):
     parameter_name = "userassettagcollection__asset__item__project__campaign__id__exact"
-    template = "admin/long_name_filter.html"
-
-    def lookups(self, request, model_admin):
-        list_of_questions = []
-        queryset = Campaign.objects.order_by("title")
-        for campaign in queryset:
-            list_of_questions.append((str(campaign.id), campaign.title))
-        return list_of_questions
-
-    def queryset(self, request, queryset):
-        fkey_field = self.parameter_name
-        if self.value():
-            return queryset.filter(**{fkey_field: self.value()})
-        return queryset
+    status_filter_parameter = (
+        "userassettagcollection__asset__item__project__campaign__status"
+    )
 
 
-class TranscriptionCampaignListFilter(admin.SimpleListFilter):
-    """
-    Base class for admin campaign filters
-    """
-
-    # Title displayed on the list filter URL
-    title = "Campaign"
-    # Model field name:
+class TranscriptionCampaignListFilter(CampaignListFilter):
     parameter_name = "asset__item__project__campaign__id__exact"
-    template = "admin/long_name_filter.html"
-
-    def lookups(self, request, model_admin):
-        list_of_questions = []
-        queryset = Campaign.objects.order_by("title")
-        for campaign in queryset:
-            list_of_questions.append((str(campaign.id), campaign.title))
-        return list_of_questions
-
-    def queryset(self, request, queryset):
-        fkey_field = self.parameter_name
-        if self.value():
-            return queryset.filter(**{fkey_field: self.value()})
-        return queryset
+    status_filter_parameter = "asset__item__project__campaign__status"
 
 
 class CampaignProjectListFilter(admin.SimpleListFilter):
-    """
-    Base class for admin campaign project filters
-    """
-
-    # Title displayed on the list filter URL
     title = "ProjectRedux"
-    # Model field name:
     parameter_name = "project"
-    # Custom attributes
     related_filter_parameter = ""
     project_ref = ""
     template = "admin/long_name_filter.html"
@@ -260,9 +132,8 @@ class CampaignProjectListFilter(admin.SimpleListFilter):
         return sorted(list_of_questions, key=lambda tp: tp[1])
 
     def queryset(self, request, queryset):
-        fkey_field = self.project_ref
         if self.value():
-            return queryset.filter(**{fkey_field: self.value()})
+            return queryset.filter(**{self.project_ref: self.value()})
         return queryset
 
 
@@ -270,21 +141,18 @@ class ItemProjectListFilter2(CampaignProjectListFilter):
     parameter_name = "project__in"
     related_filter_parameter = "project__campaign__id__exact"
     project_ref = "project_id"
-    template = "admin/long_name_filter.html"
 
 
 class AssetProjectListFilter2(CampaignProjectListFilter):
     parameter_name = "item__project__in"
     related_filter_parameter = "item__project__campaign__id__exact"
     project_ref = "item__project_id"
-    template = "admin/long_name_filter.html"
 
 
 class TranscriptionProjectListFilter(CampaignProjectListFilter):
     parameter_name = "asset__item__project__in"
     related_filter_parameter = "asset__item__project__campaign__id__exact"
     project_ref = "asset__item__project_id"
-    template = "admin/long_name_filter.html"
 
 
 class CampaignStatusListFilter(admin.SimpleListFilter):
