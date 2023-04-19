@@ -4,6 +4,7 @@ import os
 import re
 from functools import wraps
 from logging import getLogger
+from operator import itemgetter
 from smtplib import SMTPException
 from time import time
 from urllib.parse import urlencode
@@ -29,6 +30,7 @@ from django.db import connection
 from django.db.models import Case, Count, IntegerField, Max, OuterRef, Q, Subquery, When
 from django.db.models.functions import Greatest
 from django.db.transaction import atomic
+from django.forms import model_to_dict
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template import loader
@@ -540,14 +542,13 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
                     filter=Q(project__item__asset__transcription__reviewed_by=user),
                 ),
             )
-            .exclude(action_count=0)
-            .order_by("title")
+            .exclude(action_count=0, status=Campaign.Status.RETIRED)
+            .values("title", "slug", "action_count", "transcribe_count", "review_count")
         )
         totalCount = 0
         totalTranscriptions = 0
         totalReviews = 0
 
-        ctx["contributed_campaigns"] = contributed_campaigns
         user_retired_campaigns = UserRetiredCampaign.objects.filter(
             user=user, campaign__status=Campaign.Status.RETIRED
         )
@@ -556,10 +557,14 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         )
 
         for campaign in contributed_campaigns:
-            campaign.action_count = campaign.transcribe_count + campaign.review_count
-            totalCount = totalCount + campaign.review_count + campaign.transcribe_count
-            totalReviews = totalReviews + campaign.review_count
-            totalTranscriptions = totalTranscriptions + campaign.transcribe_count
+            campaign["action_count"] = (
+                campaign["transcribe_count"] + campaign["review_count"]
+            )
+            totalCount = (
+                totalCount + campaign["review_count"] + campaign["transcribe_count"]
+            )
+            totalReviews = totalReviews + campaign["review_count"]
+            totalTranscriptions = totalTranscriptions + campaign["transcribe_count"]
 
         q = Q(transcription__user=user) | Q(transcription__reviewed_by=user)
         ctx["pages_worked_on"] = Asset.objects.filter(q).distinct().count() + sum(
@@ -571,6 +576,26 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         )
         ctx["totalReviews"] = totalReviews
         ctx["totalTranscriptions"] = totalTranscriptions
+
+        contributed_campaigns = list(contributed_campaigns)
+
+        for user_retired_campaign in user_retired_campaigns:
+            user_profile_activity = model_to_dict(
+                user_retired_campaign,
+                fields=[
+                    "transcribe_count",
+                    "review_count",
+                ],
+            )
+            user_profile_activity["title"] = user_retired_campaign.campaign.title
+            user_profile_activity["slug"] = user_retired_campaign.campaign.slug
+            user_profile_activity[
+                "action_count"
+            ] = user_retired_campaign.total_actions()
+            # contributed_campaigns.append(user_profile_activity)
+        ctx["contributed_campaigns"] = sorted(
+            contributed_campaigns, key=itemgetter("title")
+        )
         return ctx
 
     def get_initial(self):
