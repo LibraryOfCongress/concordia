@@ -542,7 +542,8 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
                     filter=Q(project__item__asset__transcription__reviewed_by=user),
                 ),
             )
-            .exclude(action_count=0, status=Campaign.Status.RETIRED)
+            .exclude(action_count=0)
+            .exclude(status=Campaign.Status.RETIRED)
             .values("title", "slug", "action_count", "transcribe_count", "review_count")
         )
         totalCount = 0
@@ -552,19 +553,14 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         user_retired_campaigns = UserRetiredCampaign.objects.filter(
             user=user, campaign__status=Campaign.Status.RETIRED
         )
-        ctx["contributed_campaign_count"] = (
-            len(contributed_campaigns) + user_retired_campaigns.count()
-        )
 
         for campaign in contributed_campaigns:
             campaign["action_count"] = (
                 campaign["transcribe_count"] + campaign["review_count"]
             )
-            totalCount = (
-                totalCount + campaign["review_count"] + campaign["transcribe_count"]
-            )
-            totalReviews = totalReviews + campaign["review_count"]
-            totalTranscriptions = totalTranscriptions + campaign["transcribe_count"]
+            totalCount += campaign["action_count"]
+            totalReviews += campaign["review_count"]
+            totalTranscriptions += campaign["transcribe_count"]
 
         q = Q(transcription__user=user) | Q(transcription__reviewed_by=user)
         ctx["pages_worked_on"] = Asset.objects.filter(q).distinct().count() + sum(
@@ -574,8 +570,12 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         ctx["totalCount"] = totalCount + sum(
             [campaign.total_actions() for campaign in user_retired_campaigns]
         )
-        ctx["totalReviews"] = totalReviews
-        ctx["totalTranscriptions"] = totalTranscriptions
+        ctx["totalReviews"] = totalReviews + sum(
+            [campaign.review_count for campaign in user_retired_campaigns]
+        )
+        ctx["totalTranscriptions"] = totalTranscriptions + sum(
+            [campaign.transcribe_count for campaign in user_retired_campaigns]
+        )
 
         contributed_campaigns = list(contributed_campaigns)
 
@@ -592,7 +592,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
             user_profile_activity[
                 "action_count"
             ] = user_retired_campaign.total_actions()
-            # contributed_campaigns.append(user_profile_activity)
+            contributed_campaigns.append(user_profile_activity)
         ctx["contributed_campaigns"] = sorted(
             contributed_campaigns, key=itemgetter("title")
         )
