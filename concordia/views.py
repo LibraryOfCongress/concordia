@@ -546,35 +546,14 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
             .exclude(status=Campaign.Status.RETIRED)
             .values("title", "slug", "action_count", "transcribe_count", "review_count")
         )
-        totalCount = 0
-        totalTranscriptions = 0
-        totalReviews = 0
 
         user_retired_campaigns = UserRetiredCampaign.objects.filter(
             user=user, campaign__status=Campaign.Status.RETIRED
         )
 
-        for campaign in contributed_campaigns:
-            campaign["action_count"] = (
-                campaign["transcribe_count"] + campaign["review_count"]
-            )
-            totalCount += campaign["action_count"]
-            totalReviews += campaign["review_count"]
-            totalTranscriptions += campaign["transcribe_count"]
-
         q = Q(transcription__user=user) | Q(transcription__reviewed_by=user)
         ctx["pages_worked_on"] = Asset.objects.filter(q).distinct().count() + sum(
             [campaign.asset_count for campaign in user_retired_campaigns]
-        )
-
-        ctx["totalCount"] = totalCount + sum(
-            [campaign.total_actions() for campaign in user_retired_campaigns]
-        )
-        ctx["totalReviews"] = totalReviews + sum(
-            [campaign.review_count for campaign in user_retired_campaigns]
-        )
-        ctx["totalTranscriptions"] = totalTranscriptions + sum(
-            [campaign.transcribe_count for campaign in user_retired_campaigns]
         )
 
         contributed_campaigns = list(contributed_campaigns)
@@ -593,6 +572,15 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
                 "action_count"
             ] = user_retired_campaign.total_actions()
             contributed_campaigns.append(user_profile_activity)
+        ctx["totalCount"] = sum(
+            [campaign["action_count"] for campaign in contributed_campaigns]
+        )
+        ctx["totalReviews"] = sum(
+            [campaign["review_count"] for campaign in contributed_campaigns]
+        )
+        ctx["totalTranscriptions"] = sum(
+            [campaign["transcribe_count"] for campaign in contributed_campaigns]
+        )
         ctx["contributed_campaigns"] = sorted(
             contributed_campaigns, key=itemgetter("title")
         )
