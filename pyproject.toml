@@ -8,3 +8,16 @@ exclude = '''
   )/
 )
 '''
+[tool.ruff]
+target-version = "py310"
+select = [
+    "E",
+    "F",
+    "W",
+    "A", # flake8-assertive
+    "B", # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "ERA", # flake8-eradicate
+    "G", # flake8-logging-format
+    "I", # isort
+]
