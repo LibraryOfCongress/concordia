@@ -5,16 +5,12 @@ repos:
       hooks:
           - id: django-upgrade
             args: [--target-version, '3.2']
-    - repo: https://github.com/pre-commit/mirrors-isort
-      rev: v5.10.1
-      hooks:
-          - id: isort
     - repo: https://github.com/rtts/djhtml
       rev: 'v1.5.2'
       hooks:
           - id: djhtml
     - repo: https://github.com/ambv/black
-      rev: 23.1.0
+      rev: 23.3.0
       hooks:
           - id: black
     - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -75,11 +71,12 @@ repos:
       hooks:
           - id: cfn-python-lint
             files: cloudformation/.*\.(json|yml|yaml)$
-    - repo: https://github.com/pycqa/flake8
-      rev: 6.0.0
-      hooks:
-          - id: flake8
     - repo: https://github.com/PyCQA/bandit
       rev: 1.7.4
       hooks:
           - id: bandit
+    - repo: https://github.com/charliermarsh/ruff-pre-commit
+      rev: v0.0.261
+      hooks:
+          - id: ruff
+            args: [--fix, --exit-non-zero-on-fix]
