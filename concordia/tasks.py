@@ -163,7 +163,7 @@ def site_report():
     site_report.users_activated = users_activated
     site_report.save()
 
-    for campaign in Campaign.objects.all():
+    for campaign in Campaign.objects.exclude(status=Campaign.Status.RETIRED):
         campaign_report(campaign)
 
     for topic in Topic.objects.all():
