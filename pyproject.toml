@@ -29,4 +29,4 @@ extend-exclude = [
 
 # Ignore line length in migrations
 [tool.ruff.per-file-ignores]
-"*/migrations/*" = [E501]
+"*/migrations/*" = ["E501"]
