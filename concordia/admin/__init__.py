@@ -784,7 +784,7 @@ class SimplePageAdmin(admin.ModelAdmin):
 
 @admin.register(SiteReport)
 class SiteReportAdmin(admin.ModelAdmin):
-    list_display = ("created_on", "campaign", "topic")
+    list_display = ("created_on", "report_name", "campaign", "topic")
 
     list_filter = (
         SiteReportSortedCampaignListFilter,

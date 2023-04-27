@@ -666,6 +666,7 @@ class CarouselSlide(models.Model):
 
 class SiteReport(models.Model):
     created_on = models.DateTimeField(editable=False, auto_now_add=True)
+    report_name = models.CharField(max_length=80, blank=True, default="")
     campaign = models.ForeignKey(
         Campaign, on_delete=models.SET_NULL, blank=True, null=True
     )
@@ -698,6 +699,7 @@ class SiteReport(models.Model):
     # the ORM will be told to retrieve these fields & lookups:
     DEFAULT_EXPORT_FIELDNAMES = [
         "created_on",
+        "report_name",
         "campaign__title",
         "topic__title",
         "assets_total",

@@ -139,6 +139,7 @@ def site_report():
     distinct_tag_count = Tag.objects.all().count()
 
     site_report = SiteReport()
+    site_report.report_name = "TOTAL"
     site_report.assets_total = assets_total
     site_report.assets_published = assets_published
     site_report.assets_not_started = report["assets_not_started"]
@@ -165,6 +166,8 @@ def site_report():
 
     for topic in Topic.objects.all():
         topic_report(topic)
+
+    retired_total_report()
 
 
 def topic_report(topic):
@@ -332,6 +335,49 @@ def campaign_report(campaign):
     site_report.tag_uses = tag_count
     site_report.registered_contributors = registered_contributor_count
     site_report.save()
+
+
+def retired_total_report():
+    site_reports = (
+        SiteReport.objects.filter(campaign__status=Campaign.Status.RETIRED)
+        .order_by("campaign_id", "-created_on")
+        .distinct("campaign_id")
+    )
+
+    FIELDS = [
+        "assets_total",
+        "assets_published",
+        "assets_not_started",
+        "assets_in_progress",
+        "assets_waiting_review",
+        "assets_completed",
+        "assets_unpublished",
+        "items_published",
+        "items_unpublished",
+        "projects_published",
+        "projects_unpublished",
+        "anonymous_transcriptions",
+        "transcriptions_saved",
+        "distinct_tags",
+        "tag_uses",
+        "registered_contributors",
+    ]
+    total_site_report = SiteReport()
+    total_site_report.report_name = "RETIRED TOTAL"
+    # You can't use aggregate with distinct(*fields), so the sum for each
+    # has to be done in Python
+    for field in FIELDS:
+        setattr(
+            total_site_report,
+            field,
+            sum(
+                [
+                    getattr(site_report, field) if getattr(site_report, field) else 0
+                    for site_report in site_reports
+                ]
+            ),
+        )
+    total_site_report.save()
 
 
 @celery_app.task
