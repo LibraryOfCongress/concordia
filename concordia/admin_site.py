@@ -10,6 +10,7 @@ class ConcordiaAdminSite(admin.AdminSite):
         from concordia.admin.views import (
             admin_bulk_import_review,
             admin_bulk_import_view,
+            admin_retired_site_report_view,
             admin_site_report_view,
             celery_task_review,
             project_level_export,
@@ -23,6 +24,11 @@ class ConcordiaAdminSite(admin.AdminSite):
             path("bulk-review/", admin_bulk_import_review, name="bulk-review"),
             path("celery-review/", celery_task_review, name="celery-review"),
             path("site-report/", admin_site_report_view, name="site-report"),
+            path(
+                "retired-site-report/",
+                admin_retired_site_report_view,
+                name="retired-site-report",
+            ),
             path(
                 "redownload-images/", redownload_images_view, name="redownload-images"
             ),

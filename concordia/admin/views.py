@@ -578,3 +578,35 @@ def admin_site_report_view(request):
     )
 
     return export_to_csv_response("site-report.csv", headers, data)
+
+
+@never_cache
+@staff_member_required
+def admin_retired_site_report_view(request):
+    site_reports = site_reports = (
+        SiteReport.objects.filter(campaign__status=Campaign.Status.RETIRED)
+        .order_by("campaign_id", "-created_on")
+        .distinct("campaign_id")
+    )
+
+    headers, data = flatten_queryset(
+        site_reports,
+        field_names=SiteReport.DEFAULT_EXPORT_FIELDNAMES,
+        extra_verbose_names={"created_on": "Date", "campaign__title": "Campaign"},
+    )
+    data = list(data)
+    row = ["", "RETIRED TOTAL", "", ""]
+    # You can't use aggregate with distinct(*fields), so the sum for each
+    # has to be done in Python
+    for field in SiteReport.DEFAULT_EXPORT_FIELDNAMES[4:]:
+        row.append(
+            sum(
+                [
+                    getattr(site_report, field) if getattr(site_report, field) else 0
+                    for site_report in site_reports
+                ]
+            )
+        )
+    data.append(row)
+
+    return export_to_csv_response("retired-site-report.csv", headers, data)
