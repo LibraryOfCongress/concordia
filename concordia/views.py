@@ -26,7 +26,17 @@ from django.core.exceptions import ValidationError
 from django.core.mail import EmailMultiAlternatives, send_mail
 from django.core.paginator import Paginator
 from django.db import connection
-from django.db.models import Case, Count, IntegerField, Max, OuterRef, Q, Subquery, When
+from django.db.models import (
+    Case,
+    Count,
+    IntegerField,
+    Max,
+    OuterRef,
+    Q,
+    Subquery,
+    Sum,
+    When,
+)
 from django.db.models.functions import Greatest
 from django.db.transaction import atomic
 from django.http import Http404, HttpResponse, JsonResponse
@@ -532,15 +542,12 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         )
         ctx["user_profile_activity"] = user_profile_activity
 
-        q = Q(transcription__user=user) | Q(transcription__reviewed_by=user)
-        ctx["pages_worked_on"] = Asset.objects.filter(q).distinct().count()
-
-        ctx["totalReviews"] = sum(
-            [campaign.review_count for campaign in user_profile_activity]
+        aggregate_sums = user_profile_activity.aggregate(
+            Sum("review_count"), Sum("transcribe_count"), Sum("asset_count")
         )
-        ctx["totalTranscriptions"] = sum(
-            [campaign.transcribe_count for campaign in user_profile_activity]
-        )
+        ctx["totalReviews"] = aggregate_sums["review_count__sum"]
+        ctx["totalTranscriptions"] = aggregate_sums["transcribe_count__sum"]
+        ctx["pages_worked_on"] = aggregate_sums["asset_count__sum"]
         ctx["totalCount"] = ctx["totalReviews"] + ctx["totalTranscriptions"]
         return ctx
 

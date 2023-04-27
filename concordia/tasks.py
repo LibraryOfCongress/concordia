@@ -581,8 +581,9 @@ def _populate_activity_table(campaigns):
                 UserProfileActivity(
                     user=user,
                     campaign=campaign,
-                    asset_count=transcriptions.filter(
-                        Q(reviewed_by=user) | Q(user=user)
+                    asset_count=Asset.objects.filter(item__project__campaign=campaign)
+                    .filter(
+                        Q(transcription__reviewed_by=user) | Q(transcription__user=user)
                     )
                     .distinct()
                     .count(),
