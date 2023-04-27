@@ -548,7 +548,8 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         ctx["totalReviews"] = aggregate_sums["review_count__sum"]
         ctx["totalTranscriptions"] = aggregate_sums["transcribe_count__sum"]
         ctx["pages_worked_on"] = aggregate_sums["asset_count__sum"]
-        ctx["totalCount"] = ctx["totalReviews"] + ctx["totalTranscriptions"]
+        if ctx["totalReviews"] is not None:
+            ctx["totalCount"] = ctx["totalReviews"] + ctx["totalTranscriptions"]
         return ctx
 
     def get_initial(self):
