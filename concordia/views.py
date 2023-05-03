@@ -105,7 +105,9 @@ URL_REGEX = r"http[s]?://"
 
 MESSAGE_LEVEL_NAMES = dict(
     zip(
-        messages.DEFAULT_LEVELS.values(), map(str.lower, messages.DEFAULT_LEVELS.keys())
+        messages.DEFAULT_LEVELS.values(),
+        map(str.lower, messages.DEFAULT_LEVELS.keys()),
+        strict=False,
     )
 )
 
@@ -295,7 +297,7 @@ def ratelimit_view(request, exception=None):
     }
 
     if exception is not None:
-        ctx["exception"]: str(exception)
+        ctx["exception"] = str(exception)
 
     if request.headers.get(
         "x-requested-with"
@@ -456,6 +458,7 @@ def _get_pages(request):
 
 
 @login_required
+@never_cache
 def get_pages(request):
     asset_list = _get_pages(request)
     paginator = Paginator(asset_list, 30)  # Show 30 assets per page.
@@ -477,7 +480,7 @@ def get_pages(request):
     if campaign is not None:
         context["campaign"] = Campaign.objects.get(pk=int(campaign))
 
-    data = dict()
+    data = {}
     data["content"] = loader.render_to_string(
         "fragments/recent-pages.html", context, request=request
     )
@@ -2040,8 +2043,8 @@ class AssetListView(APIListView):
         if pks:
             try:
                 qs = qs.filter(pk__in=pks)
-            except (ValueError, TypeError):
-                raise Http404
+            except (ValueError, TypeError) as e:
+                raise Http404 from e
 
         latest_transcription_qs = (
             Transcription.objects.filter(asset=OuterRef("pk"))
@@ -2065,9 +2068,10 @@ class AssetListView(APIListView):
         assets = ctx["assets"]
         asset_pks = [i.pk for i in assets]
 
+        transcriptions = Transcription.objects.all()
         latest_transcriptions = {
-            asset_id: {"id": id, "submitted_by": user_id, "text": text}
-            for id, asset_id, user_id, text in Transcription.objects.filter(
+            asset_id: {"id": transcription_id, "submitted_by": user_id, "text": text}
+            for transcription_id, asset_id, user_id, text in transcriptions.filter(
                 pk__in=[i.latest_transcription_pk for i in assets]
             ).values_list("id", "asset_id", "user_id", "text")
         }
