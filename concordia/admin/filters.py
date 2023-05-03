@@ -17,7 +17,7 @@ class NullableTimestampFilter(admin.SimpleListFilter):
     lookup_labels = ("NULL", "NOT NULL")
 
     def lookups(self, request, model_admin):
-        return zip(("null", "not-null"), self.lookup_labels)
+        return zip(("null", "not-null"), self.lookup_labels, strict=False)
 
     def queryset(self, request, queryset):
         kwargs = {"%s__isnull" % self.parameter_name: True}
@@ -81,13 +81,58 @@ class AssetCampaignListFilter(CampaignListFilter):
     status_filter_parameter = "item__project__campaign__status"
 
 
-class SiteReportSortedCampaignListFilter(CampaignListFilter):
+class SiteReportCampaignListBaseFilter(CampaignListFilter):
+    lookup_kwarg_isnull = "campaign__isnull"
+    include_empty_choice = True
+
+    def __init__(self, request, params, model, model_admin):
+        self.empty_value_display = model_admin.get_empty_value_display()
+        self.lookup_val_isnull = params.get(self.lookup_kwarg_isnull)
+        super().__init__(request, params, model, model_admin)
+
+    def has_output(self):
+        if self.include_empty_choice:
+            extra = 1
+        else:
+            extra = 0
+        return len(self.lookup_choices) + extra > 1
+
+    def expected_parameters(self):
+        return [self.parameter_name, self.lookup_kwarg_isnull]
+
+    def choices(self, changelist):
+        yield {
+            "selected": self.value() is None and not self.lookup_val_isnull,
+            "query_string": changelist.get_query_string(
+                remove=[self.parameter_name, self.lookup_kwarg_isnull]
+            ),
+            "display": "All",
+        }
+        for lookup, title in self.lookup_choices:
+            yield {
+                "selected": self.value() == str(lookup),
+                "query_string": changelist.get_query_string(
+                    {self.parameter_name: lookup}, self.lookup_kwarg_isnull
+                ),
+                "display": title,
+            }
+        if self.include_empty_choice:
+            yield {
+                "selected": bool(self.lookup_val_isnull),
+                "query_string": changelist.get_query_string(
+                    {self.lookup_kwarg_isnull: "True"}, [self.parameter_name]
+                ),
+                "display": self.empty_value_display,
+            }
+
+
+class SiteReportSortedCampaignListFilter(SiteReportCampaignListBaseFilter):
     title = "Sorted Campaign"
     parameter_name = "campaign__id__exact"
     status_filter_parameter = "campaign__status"
 
 
-class SiteReportCampaignListFilter(CampaignListFilter):
+class SiteReportCampaignListFilter(SiteReportCampaignListBaseFilter):
     parameter_name = "campaign__id__exact"
     status_filter_parameter = "campaign__status"
 
