@@ -787,6 +787,7 @@ class SiteReportAdmin(admin.ModelAdmin):
     list_display = ("created_on", "report_name", "campaign", "topic")
 
     list_filter = (
+        "report_name",
         SiteReportSortedCampaignListFilter,
         SiteReportCampaignListFilter,
         "topic",
