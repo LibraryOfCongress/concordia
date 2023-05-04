@@ -44,7 +44,7 @@ class Migration(migrations.Migration):
                     ("RETIRED_TOTAL", "Retired campaigns"),
                 ],
                 default="",
-                max_length=20,
+                max_length=80,
             ),
         ),
         migrations.RunPython(update_report_names, backwards),
