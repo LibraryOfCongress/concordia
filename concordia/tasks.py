@@ -140,7 +140,7 @@ def site_report():
     distinct_tag_count = Tag.objects.all().count()
 
     site_report = SiteReport()
-    site_report.report_name = "Active and completed campaigns"
+    site_report.report_name = SiteReport.ReportName.TOTAL
     site_report.assets_total = assets_total
     site_report.assets_published = assets_published
     site_report.assets_not_started = report["assets_not_started"]
@@ -364,7 +364,7 @@ def retired_total_report():
         "registered_contributors",
     ]
     total_site_report = SiteReport()
-    total_site_report.report_name = "Retired campaigns"
+    total_site_report.report_name = SiteReport.ReportName.RETIRED_TOTAL
     # You can't use aggregate with distinct(*fields), so the sum for each
     # has to be done in Python
     for field in FIELDS:
