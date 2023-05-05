@@ -530,24 +530,26 @@ class Transcription(MetricsModelMixin("transcription"), models.Model):
 
 def on_transcription_save(sender, instance, **kwargs):
     if kwargs["created"]:
-        user_profile_activity, created = UserProfileActivity.objects.get_or_create(
-            user=instance.user,
-            campaign=instance.asset.item.project.campaign,
-        )
-        if created:
-            user_profile_activity.transcribe_count = 1
-        else:
-            user_profile_activity.transcribe_count = F("transcribe_count") + 1
-        user_profile_activity.save()
+        user = instance.user
+        attr_name = "transcribe_count"
     elif instance.reviewed_by:
+        user = instance.reviewed_by
+        attr_name = "review_count"
+    else:
+        user = None
+        attr_name = None
+
+    if user is not None and attr_name is not None:
         user_profile_activity, created = UserProfileActivity.objects.get_or_create(
-            user=instance.reviewed_by,
+            user=user,
             campaign=instance.asset.item.project.campaign,
         )
         if created:
-            user_profile_activity.review_count = 1
+            setattr(user_profile_activity, attr_name, 1)
         else:
-            user_profile_activity.review_count = F("review_count") + 1
+            setattr(user_profile_activity, attr_name, F(attr_name) + 1)
+        q = Q(transcription__user=user) | Q(transcription__reviewed_by=user)
+        user_profile_activity.asset_count = Asset.objects.filter(q).distinct().count()
         user_profile_activity.save()
 
 
