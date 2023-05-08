@@ -668,8 +668,8 @@ class CarouselSlide(models.Model):
 
 class SiteReport(models.Model):
     class ReportName(models.TextChoices):
-        TOTAL = "TOTAL", "Active and completed campaigns"
-        RETIRED_TOTAL = "RETIRED_TOTAL", "Retired campaigns"
+        TOTAL = "Active and completed campaigns", "Active and completed campaigns"
+        RETIRED_TOTAL = "Retired campaigns", "Retired campaigns"
 
     created_on = models.DateTimeField(editable=False, auto_now_add=True)
     report_name = models.CharField(
