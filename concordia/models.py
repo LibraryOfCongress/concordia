@@ -792,8 +792,9 @@ class UserProfileActivity(models.Model):
         return display[self.campaign.status]
 
     def total_actions(self):
+        transcribe_count = self.transcribe_count or 0
         review_count = self.review_count or 0
-        return self.transcribe_count + review_count
+        return transcribe_count + review_count
 
 
 class CampaignRetirementProgress(models.Model):

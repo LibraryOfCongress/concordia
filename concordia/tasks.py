@@ -659,22 +659,25 @@ def _populate_activity_table(campaigns):
         q = Q(transcription__reviewed_by=anonymous_user) | Q(
             transcription__user=anonymous_user
         )
-        UserProfileActivity.objects.get_or_create(
+        user_profile_activity, _ = UserProfileActivity.objects.get_or_create(
             user=anonymous_user,
             campaign=campaign,
-            asset_count=assets.filter(q).distinct().count(),
-            asset_tag_count=Tag.objects.filter(
+        )
+        user_profile_activity.asset_count = assets.filter(q).distinct().count()
+        user_profile_activity.asset_tag_count = (
+            Tag.objects.filter(
                 userassettagcollection__in=tag_collections.filter(user=anonymous_user)
             )
             .distinct()
-            .count(),
-            transcribe_count=transcriptions.filter(Q(user=anonymous_user))
-            .distinct()
-            .count(),
-            review_count=transcriptions.filter(Q(reviewed_by=anonymous_user))
-            .distinct()
-            .count(),
+            .count()
         )
+        user_profile_activity.transcribe_count = (
+            transcriptions.filter(Q(user=anonymous_user)).distinct().count()
+        )
+        user_profile_activity.review_count = (
+            transcriptions.filter(Q(reviewed_by=anonymous_user)).distinct().count()
+        )
+        user_profile_activity.save()
 
 
 @celery_app.task
