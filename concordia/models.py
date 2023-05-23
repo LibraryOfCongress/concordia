@@ -549,7 +549,12 @@ def on_transcription_save(sender, instance, **kwargs):
         else:
             setattr(user_profile_activity, attr_name, F(attr_name) + 1)
         q = Q(transcription__user=user) | Q(transcription__reviewed_by=user)
-        user_profile_activity.asset_count = Asset.objects.filter(q).distinct().count()
+        user_profile_activity.asset_count = (
+            Asset.objects.filter(q)
+            .filter(item__project__campaign=instance.asset.item.project.campaign)
+            .distinct()
+            .count()
+        )
         user_profile_activity.save()
 
 
