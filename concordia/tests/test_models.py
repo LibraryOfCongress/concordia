@@ -1,3 +1,5 @@
+from django.contrib.auth.models import User
+from django.db.models import Sum
 from django.test import TestCase
 
 from concordia.models import Banner, Campaign, UserProfileActivity
@@ -25,9 +27,32 @@ class BannerTestCase(TestCase):
 
 class UserProfileActivityTestCase(TestCase):
     def setUp(self):
-        self.user_profile_activity = UserProfileActivity(
-            campaign=Campaign(), transcribe_count=135, review_count=204
+        self.user = User()
+        self.user.save()
+        campaign1 = Campaign.objects.create(
+            slug="clara-barton-angel-of-the-battlefield"
         )
+        campaign1.save()
+        kwargs = {
+            "user": self.user,
+            "campaign": campaign1,
+            "transcribe_count": 29,
+            "review_count": 11,
+            "asset_count": 40,
+        }
+        self.user_profile_activity = UserProfileActivity.objects.create(**kwargs)
+        self.user_profile_activity.save()
+        campaign2 = Campaign.objects.create(slug="correspondence-of-theodore-roosevelt")
+        campaign2.save()
+        kwargs = {
+            "user": self.user,
+            "campaign": campaign2,
+            "transcribe_count": 23,
+            "review_count": 11,
+            "asset_count": 34,
+        }
+        user_profile_activity = UserProfileActivity.objects.create(**kwargs)
+        user_profile_activity.save()
 
     def test_get_status(self):
         self.user_profile_activity.campaign.status = Campaign.Status.ACTIVE
@@ -38,4 +63,10 @@ class UserProfileActivityTestCase(TestCase):
         self.assertEqual(self.user_profile_activity.get_status(), "Retired")
 
     def test_total_actions(self):
-        self.assertEqual(self.user_profile_activity.total_actions(), 339)
+        user_profile_activity = UserProfileActivity.objects.filter(user=self.user)
+        aggregate_sums = user_profile_activity.aggregate(
+            Sum("review_count"), Sum("transcribe_count"), Sum("asset_count")
+        )
+        self.assertEqual(aggregate_sums["review_count__sum"], 22)
+        self.assertEqual(aggregate_sums["transcribe_count__sum"], 52)
+        self.assertEqual(aggregate_sums["asset_count__sum"], 74)
