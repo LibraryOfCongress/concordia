@@ -4,7 +4,18 @@ from secrets import token_hex
 
 from django.utils.text import slugify
 
-from concordia.models import Asset, Campaign, Item, MediaType, Project, Topic, User
+from concordia.models import (
+    Asset,
+    Banner,
+    Campaign,
+    Item,
+    MediaType,
+    Project,
+    Topic,
+    Transcription,
+    User,
+    UserProfileActivity,
+)
 
 
 def ensure_slug(original_function):
@@ -18,6 +29,14 @@ def ensure_slug(original_function):
         return original_function(*args, **kwargs)
 
     return inner
+
+
+def create_banner(
+    *,
+    alert_status="SUCCESS",
+):
+    banner = Banner(alert_status=alert_status)
+    return banner
 
 
 @ensure_slug
@@ -158,6 +177,49 @@ def create_asset(
     if do_save:
         asset.save()
     return asset
+
+
+@ensure_slug
+def create_transcription(
+    *,
+    asset=None,
+    user=None,
+    do_save=True,
+):
+    if asset is None:
+        asset = create_asset()
+    transcription = Transcription(
+        asset=asset,
+        user=user,
+    )
+    transcription.full_clean()
+    if do_save:
+        transcription.save()
+    return transcription
+
+
+def create_user_profile_activity(
+    *,
+    user=None,
+    campaign=None,
+    transcribe_count=0,
+    review_count=0,
+    asset_count=0,
+    do_save=True,
+):
+    if campaign is None:
+        campaign = create_campaign()
+    user_profile_activity = UserProfileActivity(
+        user=user,
+        campaign=campaign,
+        transcribe_count=transcribe_count,
+        review_count=review_count,
+        asset_count=asset_count,
+    )
+    user_profile_activity.full_clean()
+    if do_save:
+        user_profile_activity.save()
+    return user_profile_activity
 
 
 class JSONAssertMixin(object):
