@@ -316,10 +316,11 @@ def import_collection(self, import_job):
 @app.task(
     bind=True,
     autoretry_for=(HTTPError,),
-    retry_backoff=True,
+    retry_backoff=60,
     retry_backoff_max=8 * 60 * 60,
     retry_jitter=True,
     retry_kwargs={"max_retries": 12},
+    rate_limit=2,
 )
 def redownload_image_task(self, asset_pk):
     """
@@ -336,10 +337,11 @@ def redownload_image_task(self, asset_pk):
 @app.task(
     bind=True,
     autoretry_for=(HTTPError,),
-    retry_backoff=True,
+    retry_backoff=60,
     retry_backoff_max=8 * 60 * 60,
     retry_jitter=True,
     retry_kwargs={"max_retries": 12},
+    rate_limit=1,
 )
 def create_item_import_task(self, import_job_pk, item_url):
     """
@@ -502,10 +504,11 @@ def get_asset_urls_from_item_resources(resources):
 @app.task(
     bind=True,
     autoretry_for=(HTTPError,),
-    retry_backoff=True,
+    retry_backoff=60,
     retry_backoff_max=8 * 60 * 60,
     retry_jitter=True,
     retry_kwargs={"max_retries": 12},
+    rate_limit=2,
 )
 def download_asset_task(self, import_asset_pk):
     # We'll use the containing objects' slugs to construct the storage path so
