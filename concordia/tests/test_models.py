@@ -13,6 +13,7 @@ from concordia.models import Campaign, Transcription, UserProfileActivity
 
 from .utils import (
     CreateTestUsers,
+    create_asset,
     create_banner,
     create_campaign,
     create_transcription,
@@ -41,8 +42,20 @@ class BannerTestCase(TestCase):
 
 
 class TranscriptionTestCase(CreateTestUsers, TestCase):
+    def setUp(self):
+        self.user = self.create_test_user("tester")
+
+    def test_on_transcription_save(self):
+        asset1 = create_asset()
+        asset2 = create_asset(item=asset1.item, slug="slug")
+        create_transcription(asset=asset1, user=self.user)
+        create_transcription(asset=asset2, user=self.user)
+        user_profile_activity = UserProfileActivity.objects.filter(user=self.user)
+        aggregate_sums = user_profile_activity.aggregate(Sum("asset_count"))
+        self.assertEqual(aggregate_sums["asset_count__sum"], 2)
+
     @patch("concordia.models.on_transcription_save")
-    def test_on_transcription_save(self, mock):
+    def test_post_save_signal(self, mock):
         """
         Assert signal is sent with proper arguments
         """
@@ -50,7 +63,7 @@ class TranscriptionTestCase(CreateTestUsers, TestCase):
         handler = MagicMock()
         post_save.connect(handler, sender=Transcription)
 
-        transcription = create_transcription(user=self.create_test_user("tester"))
+        transcription = create_transcription(user=self.user)
 
         # Assert the signal was called only once with the args
         handler.assert_called_once_with(
