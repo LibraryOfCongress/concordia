@@ -88,236 +88,243 @@
             </nav>
         </div>
         <div id="contribute-container" class="row d-flex flex-nowrap flex-grow-1 d-print-block border">
-            <div id="viewer-column" class="pl-0 d-flex flex-column align-items-stretch bg-dark d-print-block">
-                <div id="viewer-controls" class="m-1 text-center d-print-none">
-                    <div class="d-inline-flex justify-content-between">
-                        <div class="d-flex btn-group m-1">
-                            <button type="button" id="viewer-home" class="btn btn-dark viewer-control-button" title="Fit Image to Viewport">
-                                <span class="fas fa-compress"></span>
-                            </button>
-                        </div>
-
-                        <div class="d-flex btn-group m-1">
-                            <button id="viewer-zoom-in" class="btn btn-dark viewer-control-button" title="Zoom In">
-                                <span class="fas fa-search-plus"></span>
-                            </button>
-                            <button id="viewer-zoom-out" class="btn btn-dark" title="Zoom Out">
-                                <span class="fas fa-search-minus"></span>
-                            </button>
-                        </div>
-
-                        <div class="d-flex btn-group m-1">
-                            <button id="viewer-rotate-left" class="btn btn-dark viewer-control-button" title="Rotate Left">
-                                <span class="fas fa-undo"></span>
-                            </button>
-                            <button id="viewer-rotate-right" class="btn btn-dark viewer-control-button" title="Rotate Right">
-                                <span class="fas fa-redo"></span>
-                            </button>
-                        </div>
-
-                        <div class="d-flex btn-group m-1">
-                            <button id="viewer-flip" class="btn btn-dark viewer-control-button" title="Flip">
-                                <span class="fas fa-exchange-alt"></span>
-                            </button>
-                        </div>
-
-                        <div class="d-flex btn-group m-1">
-                            <button type="button" class="btn btn-dark extra-control-button" title="Image Filters" data-toggle="collapse" data-target="#image-filters">
-                                <span class="fas fa-sliders-h" aria-label="Image Filters"></span>
-                            </button>
-                        </div>
-
-                        <div class="d-flex btn-group m-1">
-                            <button type="button" id="viewer-fullscreen" class="btn btn-dark extra-control-button" title="View Full Screen" data-target="#viewer-column">
-                                <span class="fas fa-expand"></span>
-                            </button>
-                        </div>
-
-                        <div class="d-flex btn-group m-1">
-                            <button type="button" class="btn btn-dark extra-control-button" title="Open Help" data-toggle="modal" data-target="#keyboard-help-modal">
-                                <span class="fas fa-question-circle" aria-label="Open Help"></span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <div id="keyboard-help-modal" class="modal" tabindex="-1" role="dialog">
-                    <div class="modal-dialog modal-dialog-centered" role="document">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Keyboard Shortcuts</h5>
-                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
+            <div id="viewer-column" class="d-flex flex-column d-print-block">
+                <div class="flex-grow-1 pl-0 d-flex flex-column align-items-stretch bg-dark d-print-block">
+                    <div id="viewer-controls" class="m-1 text-center d-print-none">
+                        <div class="d-inline-flex justify-content-between">
+                            <div class="d-flex btn-group m-1">
+                                <button type="button" id="viewer-home" class="btn btn-dark viewer-control-button" title="Fit Image to Viewport">
+                                    <span class="fas fa-compress"></span>
                                 </button>
                             </div>
-                            <div class="modal-body">
-                                <h6>Viewer Shortcuts</h6>
-                                <table class="table table-compact table-responsive">
-                                    <tr>
-                                        <th><kbd>w</kbd>, up arrow</th>
-                                        <td>Scroll the viewport up</td>
-                                    </tr>
-                                    <tr>
-                                        <th><kbd>s</kbd>, down arrow</th>
-                                        <td>Scroll the viewport down</td>
-                                    </tr>
-                                    <tr>
-                                        <th><kbd>a</kbd>, left arrow</th>
-                                        <td>Scroll the viewport left</td>
-                                    </tr>
-                                    <tr>
-                                        <th><kbd>d</kbd>, right arrow </th>
-                                        <td>Scroll the viewport right</td>
-                                    </tr>
-                                    <tr>
-                                        <th><kbd>0</kbd></th>
-                                        <td>Fit the entire image to the viewport</td>
-                                    </tr>
-                                    <tr>
-                                        <th><kbd>-</kbd>, <kbd>_</kbd>, Shift+<kbd>W</kbd>, Shift+Up arrow</th>
-                                        <td>Zoom the viewport out</td>
-                                    </tr>
-                                    <tr>
-                                        <th><kbd>=</kbd>, <kbd>+</kbd>, Shift+<kbd>S</kbd>, Shift+Down arrow</th>
-                                        <td>Scroll the viewport in</td>
-                                    </tr>
-                                    <tr>
-                                        <th><kbd>r</kbd></th>
-                                        <td>Rotate the viewport clockwise</td>
-                                    </tr>
-                                    <tr>
-                                        <th><kbd>R</kbd></th>
-                                        <td>Rotate the viewport counterclockwise</td>
-                                    </tr>
-                                    <tr>
-                                        <th><kbd>f</kbd></th>
-                                        <td>Flip the viewport horizontally</td>
-                                    </tr>
-                                </table>
+
+                            <div class="d-flex btn-group m-1">
+                                <button id="viewer-zoom-in" class="btn btn-dark viewer-control-button" title="Zoom In">
+                                    <span class="fas fa-search-plus"></span>
+                                </button>
+                                <button id="viewer-zoom-out" class="btn btn-dark" title="Zoom Out">
+                                    <span class="fas fa-search-minus"></span>
+                                </button>
                             </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+
+                            <div class="d-flex btn-group m-1">
+                                <button id="viewer-rotate-left" class="btn btn-dark viewer-control-button" title="Rotate Left">
+                                    <span class="fas fa-undo"></span>
+                                </button>
+                                <button id="viewer-rotate-right" class="btn btn-dark viewer-control-button" title="Rotate Right">
+                                    <span class="fas fa-redo"></span>
+                                </button>
+                            </div>
+
+                            <div class="d-flex btn-group m-1">
+                                <button id="viewer-flip" class="btn btn-dark viewer-control-button" title="Flip">
+                                    <span class="fas fa-exchange-alt"></span>
+                                </button>
+                            </div>
+
+                            <div class="d-flex btn-group m-1">
+                                <button type="button" class="btn btn-dark extra-control-button" title="Image Filters" data-toggle="collapse" data-target="#image-filters">
+                                    <span class="fas fa-sliders-h" aria-label="Image Filters"></span>
+                                </button>
+                            </div>
+
+                            <div class="d-flex btn-group m-1">
+                                <button type="button" id="viewer-fullscreen" class="btn btn-dark extra-control-button" title="View Full Screen" data-target="#viewer-column">
+                                    <span class="fas fa-expand"></span>
+                                </button>
+                            </div>
+
+                            <div class="d-flex btn-group m-1">
+                                <button type="button" class="btn btn-dark extra-control-button" title="Open Help" data-toggle="modal" data-target="#keyboard-help-modal">
+                                    <span class="fas fa-question-circle"></span>
+                                </button>
                             </div>
                         </div>
                     </div>
-                </div>
-                <div id="image-filters" class="m-1 text-center d-print-none collapse">
-                    <hr class="m-0" />
-                    <ul class="d-inline-flex mt-1 btn-group nav nav-tabs" role="tablist">
-                        <li class="nav-item" role="presentation">
-                            <button id="viewer-gamma" class="btn btn-dark nav-link active" title="Adjust gamma" data-toggle="tab" data-target="#gamma-filter" role="tab">
-                                Brightness
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button id="viewer-invert" class="btn btn-dark nav-link" title="Invert colors" data-toggle="tab" data-target="#invert-filter" role="tab">
-                                Invert
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button id="viewer-threshold" class="btn btn-dark nav-link" title="Adjust threshold" data-toggle="tab" data-target="#threshold-filter" role="tab">
-                                Contrast
-                            </button>
-                        </li>
-                    </ul>
-                    <div class="btn-group m-1">
-                        <button id="viewer-reset" class="btn" title="Reset all filters" onclick="resetImageFilterForms()">
-                            Reset All
-                        </button>
-                    </div>
-                    <div id="filter-tabs" class="tab-content">
-                        <div id="gamma-filter" class="tab-pane pt-1 pl-3 show active" role="tabpanel">
-                            <form id="gamma-form" class="form-inline" onsubmit="return false;">
-                                <div class="row ml-0 mr-3 number-input">
-                                    <div class="col p-1">
-                                        <input
-                                            type="number"
-                                            id="gamma"
-                                            name="gamma"
-                                            min="0"
-                                            max="5"
-                                            step="0.01"
-                                            value="1.00"
-                                        />
-                                    </div>
-                                    <div class="col p-0">
-                                        <div class="row m-0">
-                                            <button type="button" class="arrow-button" onclick="stepUp('gamma')">
-                                                <span class="fas fa-chevron-up" />
-                                            </button>
-                                        </div>
-                                        <div class="row m-0">
-                                            <button type="button" class="arrow-button" onclick="stepDown('gamma')">
-                                                <span class="fas fa-chevron-down" />
-                                            </button>
-                                        </div>
-                                    </div>
+                    <div id="keyboard-help-modal" class="modal" tabindex="-1" role="dialog">
+                        <div class="modal-dialog modal-dialog-centered" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Keyboard Shortcuts</h5>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
                                 </div>
-                                <input
-                                    type="range"
-                                    id="gamma-range"
-                                    name="gamma-range"
-                                    min="0"
-                                    max="5"
-                                    step="0.01"
-                                    value="1.00"
-                                    class="filter-slider flex-grow-1"
-                                />
-                                <input type="reset" class="btn btn-link underline-link font-weight-bold" value="Reset filter" />
-                            </form>
-                        </div>
-                        <div id="invert-filter" class="tab-pane pt-2" role="tabpanel" style="background-color: white;">
-                            <form id="invert-form" onsubmit="return false;">
-                                <label class="ml-2 align-middle" for="invert">Off</label>
-                                <div class="custom-control custom-switch custom-control-inline ml-1 mr-2">
-                                    <input type="checkbox" id="invert" name="invert" class="custom-control-input" role="switch" />
-                                    <label class="custom-control-label" for="invert" />
+                                <div class="modal-body">
+                                    <h6>Viewer Shortcuts</h6>
+                                    <table class="table table-compact table-responsive">
+                                        <tr>
+                                            <th><kbd>w</kbd>, up arrow</th>
+                                            <td>Scroll the viewport up</td>
+                                        </tr>
+                                        <tr>
+                                            <th><kbd>s</kbd>, down arrow</th>
+                                            <td>Scroll the viewport down</td>
+                                        </tr>
+                                        <tr>
+                                            <th><kbd>a</kbd>, left arrow</th>
+                                            <td>Scroll the viewport left</td>
+                                        </tr>
+                                        <tr>
+                                            <th><kbd>d</kbd>, right arrow </th>
+                                            <td>Scroll the viewport right</td>
+                                        </tr>
+                                        <tr>
+                                            <th><kbd>0</kbd></th>
+                                            <td>Fit the entire image to the viewport</td>
+                                        </tr>
+                                        <tr>
+                                            <th><kbd>-</kbd>, <kbd>_</kbd>, Shift+<kbd>W</kbd>, Shift+Up arrow</th>
+                                            <td>Zoom the viewport out</td>
+                                        </tr>
+                                        <tr>
+                                            <th><kbd>=</kbd>, <kbd>+</kbd>, Shift+<kbd>S</kbd>, Shift+Down arrow</th>
+                                            <td>Scroll the viewport in</td>
+                                        </tr>
+                                        <tr>
+                                            <th><kbd>r</kbd></th>
+                                            <td>Rotate the viewport clockwise</td>
+                                        </tr>
+                                        <tr>
+                                            <th><kbd>R</kbd></th>
+                                            <td>Rotate the viewport counterclockwise</td>
+                                        </tr>
+                                        <tr>
+                                            <th><kbd>f</kbd></th>
+                                            <td>Flip the viewport horizontally</td>
+                                        </tr>
+                                    </table>
                                 </div>
-                                <label class="align-middle" for="invert">On</label>
-                            </form>
-                        </div>
-                        <div id="threshold-filter" class="tab-pane pt-1 pl-3" role="tabpanel">
-                            <form id="threshold-form" class="form-inline" onsubmit="return false;">
-                                <div class="row ml-0 mr-3 number-input">
-                                    <div class="col p-1">
-                                        <input
-                                            type="number"
-                                            id="threshold"
-                                            name="threshold"
-                                            min="0"
-                                            max="255"
-                                            step="1"
-                                            value="0"
-                                        />
-                                    </div>
-                                    <div class="col p-0">
-                                        <div class="row m-0">
-                                            <button type="button" class="arrow-button" onclick="stepUp('threshold')">
-                                                <span class="fas fa-chevron-up" />
-                                            </button>
-                                        </div>
-                                        <div class="row m-0">
-                                            <button type="button" class="arrow-button" onclick="stepDown('threshold')">
-                                                <span class="fas fa-chevron-down" />
-                                            </button>
-                                        </div>
-                                    </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
                                 </div>
-                                <input
-                                    type="range"
-                                    id="threshold-range"
-                                    name="threshold-range"
-                                    min="0"
-                                    max="255"
-                                    step="1"
-                                    value="0"
-                                    class="filter-slider flex-grow-1"
-                                />
-                                <input type="reset" class="btn btn-link underline-link font-weight-bold" value="Reset filter" />
-                            </form>
+                            </div>
                         </div>
                     </div>
+                    <div id="image-filters" class="m-1 text-center d-print-none collapse">
+                        <hr class="m-0" />
+                        <ul class="d-inline-flex mt-1 btn-group nav nav-tabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button id="viewer-gamma" class="btn btn-dark nav-link active" title="Adjust gamma" data-toggle="tab" data-target="#gamma-filter" role="tab">
+                                    Brightness
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button id="viewer-invert" class="btn btn-dark nav-link" title="Invert colors" data-toggle="tab" data-target="#invert-filter" role="tab">
+                                    Invert
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button id="viewer-threshold" class="btn btn-dark nav-link" title="Adjust threshold" data-toggle="tab" data-target="#threshold-filter" role="tab">
+                                    Contrast
+                                </button>
+                            </li>
+                        </ul>
+                        <div class="btn-group m-1">
+                            <button id="viewer-reset" class="btn" title="Reset all filters" onclick="resetImageFilterForms()">
+                                Reset All
+                            </button>
+                        </div>
+                        <div id="filter-tabs" class="tab-content">
+                            <div id="gamma-filter" class="tab-pane pt-1 pl-3 show active" role="tabpanel">
+                                <form id="gamma-form" class="form-inline" onsubmit="return false;">
+                                    <div class="row ml-0 mr-3 number-input">
+                                        <div class="col p-1">
+                                            <input
+                                                type="number"
+                                                id="gamma"
+                                                name="gamma"
+                                                min="0"
+                                                max="5"
+                                                step="0.01"
+                                                value="1.00"
+                                            />
+                                        </div>
+                                        <div class="col p-0">
+                                            <div class="row m-0">
+                                                <button type="button" class="arrow-button" onclick="stepUp('gamma')">
+                                                    <span class="fas fa-chevron-up" />
+                                                </button>
+                                            </div>
+                                            <div class="row m-0">
+                                                <button type="button" class="arrow-button" onclick="stepDown('gamma')">
+                                                    <span class="fas fa-chevron-down" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <input
+                                        type="range"
+                                        id="gamma-range"
+                                        name="gamma-range"
+                                        min="0"
+                                        max="5"
+                                        step="0.01"
+                                        value="1.00"
+                                        class="filter-slider flex-grow-1"
+                                    />
+                                    <input type="reset" class="btn btn-link underline-link font-weight-bold" value="Reset filter" />
+                                </form>
+                            </div>
+                            <div id="invert-filter" class="tab-pane pt-2" role="tabpanel" style="background-color: white;">
+                                <form id="invert-form" onsubmit="return false;">
+                                    <label class="ml-2 align-middle" for="invert">Off</label>
+                                    <div class="custom-control custom-switch custom-control-inline ml-1 mr-2">
+                                        <input type="checkbox" id="invert" name="invert" class="custom-control-input" role="switch" />
+                                        <label class="custom-control-label" for="invert" />
+                                    </div>
+                                    <label class="align-middle" for="invert">On</label>
+                                </form>
+                            </div>
+                            <div id="threshold-filter" class="tab-pane pt-1 pl-3" role="tabpanel">
+                                <form id="threshold-form" class="form-inline" onsubmit="return false;">
+                                    <div class="row ml-0 mr-3 number-input">
+                                        <div class="col p-1">
+                                            <input
+                                                type="number"
+                                                id="threshold"
+                                                name="threshold"
+                                                min="0"
+                                                max="255"
+                                                step="1"
+                                                value="0"
+                                            />
+                                        </div>
+                                        <div class="col p-0">
+                                            <div class="row m-0">
+                                                <button type="button" class="arrow-button" onclick="stepUp('threshold')">
+                                                    <span class="fas fa-chevron-up" />
+                                                </button>
+                                            </div>
+                                            <div class="row m-0">
+                                                <button type="button" class="arrow-button" onclick="stepDown('threshold')">
+                                                    <span class="fas fa-chevron-down" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <input
+                                        type="range"
+                                        id="threshold-range"
+                                        name="threshold-range"
+                                        min="0"
+                                        max="255"
+                                        step="1"
+                                        value="0"
+                                        class="filter-slider flex-grow-1"
+                                    />
+                                    <input type="reset" class="btn btn-link underline-link font-weight-bold" value="Reset filter" />
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="asset-image" class="h-100 bg-dark d-print-none"></div>
                 </div>
-                <div id="asset-image" class="h-100 bg-dark d-print-none"></div>
+                <div class="flex-shrink-1">
+                    <a tabindex="0" class="btn btn-link d-inline py-0" role="button" data-toggle="popover" data-placement="top" data-trigger="focus click hover" title="Open Help" data-html="true" data-toggle="modal" data-target="#ocr-help-modal">
+                        <span class="fas fa-question-circle" aria-label="Open Help"></span>
+                    </a>
+                </div>
             </div>
 
             <div id="editor-column" class="d-flex flex-column flex-nowrap justify-content-between p-3 d-print-block">
