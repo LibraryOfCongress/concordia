@@ -82,16 +82,14 @@ Resources:
                     echo "Running userdata for ${EnvironmentName}"
                     echo "export ENV_NAME=${EnvironmentName}" >> /home/ec2-user/.bash_profile
                     source /home/ec2-user/.bash_profile
-                    yum -y update aws-cfn-bootsrap
+                    yum -y update
                     amazon-linux-extras install -y postgresql12
                     aws s3 cp s3://crowd-deployment/database-dumps/concordia.latest.dmp concordia.dmp
                     echo "${PostgresqlHost}:5432:*:concordia:${PostgresqlPassword}" >> /root/.pgpass
                     chmod 0600 /root/.pgpass
-                    psql -U concordia -h "$POSTGRESQL_HOST" -d postgres -c "select pg_terminate_backend(pid) from pg_stat_activity where datname='concordia';"
-                    psql -U concordia -h "$POSTGRESQL_HOST" -d postgres -c "drop database concordia;"
                     pg_restore --create -Fc -U concordia -h ${PostgresqlHost} --dbname=postgres --no-password --no-owner --no-acl concordia.dmp
-                    # Signal the status from cfn-init
-                    /opt/aws/bin/cfn-signal -e 0 -r \"Instance Creation Complete\", { "Ref" : "WaitHandle" }
+                    # Signal the status from cfn-init #jkue need ssh keys for this to work
+                    # cloudformation/infrastructure/data-load.yaml/opt/aws/bin/cfn-signal -e 0 -r \"Instance Creation Complete\", { "Ref" : "WaitHandle" }
                     shutdown -h now
             Tags:
                 - Key: Name
@@ -102,5 +100,5 @@ Resources:
         Type: AWS::CloudFormation::WaitCondition
         DependsOn: DataLoadHost
         Properties:
-            Handle: !Ref 'WaitHandle'
+            Handle: Ref 'WaitHandle'
             Timeout: '1800'
