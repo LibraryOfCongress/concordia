@@ -549,7 +549,12 @@ def on_transcription_save(sender, instance, **kwargs):
         else:
             setattr(user_profile_activity, attr_name, F(attr_name) + 1)
         q = Q(transcription__user=user) | Q(transcription__reviewed_by=user)
-        user_profile_activity.asset_count = Asset.objects.filter(q).distinct().count()
+        user_profile_activity.asset_count = (
+            Asset.objects.filter(q)
+            .filter(item__project__campaign=instance.asset.item.project.campaign)
+            .distinct()
+            .count()
+        )
         user_profile_activity.save()
 
 
@@ -767,13 +772,13 @@ class UserProfileActivity(models.Model):
     campaign = models.ForeignKey(
         Campaign, on_delete=models.CASCADE, verbose_name="Campaign Id"
     )
-    asset_count = models.IntegerField(blank=True, null=True)
-    asset_tag_count = models.IntegerField(blank=True, null=True)
+    asset_count = models.IntegerField(default=0)
+    asset_tag_count = models.IntegerField(default=0)
     transcribe_count = models.IntegerField(
-        blank=True, null=True, verbose_name="transcription save/submit count"
+        default=0, verbose_name="transcription save/submit count"
     )
     review_count = models.IntegerField(
-        blank=True, null=True, verbose_name="transcription review count"
+        default=0, verbose_name="transcription review count"
     )
 
     class Meta:
@@ -792,7 +797,9 @@ class UserProfileActivity(models.Model):
         return display[self.campaign.status]
 
     def total_actions(self):
-        return self.transcribe_count + self.review_count
+        transcribe_count = self.transcribe_count or 0
+        review_count = self.review_count or 0
+        return transcribe_count + review_count
 
 
 class CampaignRetirementProgress(models.Model):
