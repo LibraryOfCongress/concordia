@@ -24,7 +24,7 @@ Parameters:
 Mappings:
     AWSRegionToAMI:
         us-east-1:
-            AMI: ami-0806bc468ce3a22ec #ami-0cabc39acf991f4f1
+            AMI: ami-0806bc468ce3a22ec
 
     EnvironmentMapping:
         IamInstanceProfileName:
@@ -91,7 +91,7 @@ Resources:
                     psql -U concordia -h "$POSTGRESQL_HOST" -d postgres -c "select pg_terminate_backend(pid) from pg_stat_activity where datname='concordia';"
                     psql -U concordia -h "$POSTGRESQL_HOST" -d postgres -c "drop database concordia;"
                     pg_restore --create -Fc -U concordia -h ${PostgresqlHost} --dbname=postgres --no-password --no-owner --no-acl concordia.dmp
-                    # Signal the status from cfn-init  #jkue need ssh keys for ec2-user for this to work
+                    # Signal the status from cfn-init
                     /opt/aws/bin/cfn-signal -e 0 -r \"Instance Creation Complete\", { "Ref" : "WaitHandle" }
                     shutdown -h now
             Tags:
@@ -105,4 +105,3 @@ Resources:
         Properties:
             Handle: !Ref 'WaitHandle'
             Timeout: '2000'
-            Count: '1'
