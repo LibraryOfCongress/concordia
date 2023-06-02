@@ -84,7 +84,6 @@ from concordia.models import (
     TranscriptionStatus,
     UserAssetTagCollection,
     UserProfileActivity,
-    UserRetiredCampaign,
 )
 from concordia.signals.signals import reservation_obtained, reservation_released
 from concordia.templatetags.concordia_media_tags import asset_media_url
@@ -317,53 +316,18 @@ def AccountLetterView(request):
     # Generates a transcriptions and reviews contribution pdf letter
     # for the user and downloads it
 
-    total_transcriptions = 0
-    total_reviews = 0
-    user = request.user
-    contributed_campaigns = (
-        Campaign.objects.annotate(
-            action_count=Count(
-                "project__item__asset__transcription",
-                filter=Q(project__item__asset__transcription__user=user)
-                | Q(project__item__asset__transcription__reviewed_by=user),
-            ),
-            transcribe_count=Count(
-                "project__item__asset__transcription",
-                filter=Q(project__item__asset__transcription__user=user),
-            ),
-            review_count=Count(
-                "project__item__asset__transcription",
-                filter=Q(project__item__asset__transcription__reviewed_by=user),
-            ),
-        )
-        .exclude(action_count=0)
-        .order_by("title")
-    )
-    retired_campaigns = UserRetiredCampaign.objects.filter(
-        user=user, campaign__status=Campaign.Status.RETIRED
-    )
-    retired_campaigns_review_count = sum(
-        [campaign.review_count for campaign in retired_campaigns]
-    )
-    retired_campaigns_transcribe_count = sum(
-        [campaign.transcribe_count for campaign in retired_campaigns]
-    )
-
-    for campaign in contributed_campaigns:
-        total_reviews += campaign.review_count
-        total_transcriptions += campaign.transcribe_count
-
-    total_reviews += retired_campaigns_review_count
-    total_transcriptions += retired_campaigns_transcribe_count
-
     image_url = "file://{0}/{1}/img/logo.jpg".format(
         settings.SITE_ROOT_DIR, settings.STATIC_ROOT
+    )
+    user_profile_activity = UserProfileActivity.objects.filter(user=request.user)
+    aggregate_sums = user_profile_activity.aggregate(
+        Sum("review_count"), Sum("transcribe_count")
     )
     context = {
         "username": request.user.email,
         "join_date": request.user.date_joined,
-        "total_reviews": total_reviews,
-        "total_transcriptions": total_transcriptions,
+        "total_reviews": aggregate_sums["review_count__sum"],
+        "total_transcriptions": aggregate_sums["transcribe_count__sum"],
         "image_url": image_url,
     }
     template = loader.get_template("documents/service_letter.html")
