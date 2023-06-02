@@ -498,6 +498,16 @@ class Transcription(MetricsModelMixin("transcription"), models.Model):
 
     text = models.TextField(blank=True)
 
+    # ocr tracking
+    ocr_generated = models.BooleanField(
+        default=False,
+        help_text="Flags transcription as generated directly by OCR",
+    )
+    ocr_originated = models.BooleanField(
+        default=False,
+        help_text="Flags transcription as originated from an OCR transcription",
+    )
+
     class Meta:
         indexes = [
             models.Index(fields=["asset", "user"]),
