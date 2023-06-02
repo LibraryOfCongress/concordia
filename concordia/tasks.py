@@ -610,12 +610,21 @@ def populate_user_archive_table():
 
 
 def _populate_activity_table(campaigns):
+    anonymous_user = get_anonymous_user()
     for campaign in campaigns:
         transcriptions = Transcription.objects.filter(
             asset__item__project__campaign=campaign
         )
-        reviewer_ids = transcriptions.values_list("reviewed_by", flat=True).distinct()
-        transcriber_ids = transcriptions.values_list("user", flat=True).distinct()
+        reviewer_ids = (
+            transcriptions.exclude(reviewed_by=anonymous_user)
+            .values_list("reviewed_by", flat=True)
+            .distinct()
+        )
+        transcriber_ids = (
+            transcriptions.exclude(user=anonymous_user)
+            .values_list("user", flat=True)
+            .distinct()
+        )
         user_ids = list(set(list(reviewer_ids) + list(transcriber_ids)))
         tag_collections = UserAssetTagCollection.objects.filter(
             asset__item__project__campaign=campaign
@@ -646,11 +655,51 @@ def _populate_activity_table(campaigns):
                 for user in User.objects.filter(id__in=user_ids)
             ]
         )
+        assets = Asset.objects.filter(item__project__campaign=campaign)
+        q = Q(transcription__reviewed_by=anonymous_user) | Q(
+            transcription__user=anonymous_user
+        )
+        user_profile_activity, _ = UserProfileActivity.objects.get_or_create(
+            user=anonymous_user,
+            campaign=campaign,
+        )
+        user_profile_activity.asset_count = assets.filter(q).distinct().count()
+        user_profile_activity.asset_tag_count = (
+            Tag.objects.filter(
+                userassettagcollection__in=tag_collections.filter(user=anonymous_user)
+            )
+            .distinct()
+            .count()
+        )
+        user_profile_activity.transcribe_count = (
+            transcriptions.filter(Q(user=anonymous_user)).distinct().count()
+        )
+        user_profile_activity.review_count = (
+            transcriptions.filter(Q(reviewed_by=anonymous_user)).distinct().count()
+        )
+        user_profile_activity.save()
 
 
 @celery_app.task
-def populate_user_activity_table():
-    _populate_activity_table(Campaign.objects.all())
+def populate_completed_campaign_counts():
+    # this task creates records in the UserProfileActivity table for campaigns
+    # that are completed or have status == RETIRED (but have not yet actually
+    # been retired). It should be run once, after the table has initially been
+    # created
+    # in my local env, this task took ~10 minutes to complete
+    campaigns = Campaign.objects.exclude(status=Campaign.Status.ACTIVE)
+    _populate_activity_table(campaigns)
+
+
+@celery_app.task
+def populate_active_campaign_counts():
+    active_campaigns = Campaign.objects.filter(status=Campaign.Status.ACTIVE)
+    _populate_activity_table(active_campaigns)
+
+
+@celery_app.task
+def reset_user_activity_table():
+    UserProfileActivity.objects.all().delete()
 
 
 @celery_app.task(ignore_result=True)
