@@ -498,34 +498,44 @@
                 </div>
             </div>
         </div>
-        <div id="help-container" class="row justify-content-center align-items-center mt-3 d-print-none">
-            <p class="ml-1 mr-2 my-0">Need help?</p>
+        <div id="help-container" class="mt-3 d-print-none">
+            {% if transcription_status == "not_started" or transcription_status == "in_progress" %}
+                <div class="row align-items-center">
+                    Is this page typed? <button class="btn btn-primary mx-1">Transcribe with OCR</button>
+                    <a tabindex="0" class="btn btn-link d-inline py-0" role="button" data-toggle="popover" data-placement="top" data-trigger="focus click hover" title="What is OCR?" data-html="true" data-toggle="modal" data-target="#ocr-help-modal">
+                        <span class="fas fa-question-circle" aria-label="Open Help"></span>
+                    </a>
+                </div>
+            {% endif %}
+            <div class="row justify-content-center align-items-center">
+                <p class="ml-1 mr-2 my-0">Need help?</p>
 
-            <button id="instruction-button" class="btn btn-secondary mx-1" type="button" data-toggle="collapse" data-target="#instruction-window" aria-expanded="false" aria-controls="instruction-window">
-                Quick Tips
-            </button>
-
-            <a class="btn btn-secondary mx-1" href="{% url 'contact' %}">
-                Questions?
-            </a>
-
-            <div class="collapse" id="instruction-window">
-                <button type="button" class="close pull-right" aria-label="Close" data-toggle="collapse" data-target="#instruction-window">
-                    <span aria-hidden="true">&times;</span>
+                <button id="instruction-button" class="btn btn-secondary mx-1" type="button" data-toggle="collapse" data-target="#instruction-window" aria-expanded="false" aria-controls="instruction-window">
+                    Quick Tips
                 </button>
-                <div>
-                    {% if SIMPLE_CONTENT_BLOCKS %}
-                        {% simple_content_block "classic_quicktips" %}
-                    {% else %}
-                        <ul>
-                            <li>Transcribe original spelling, punctuation, word order, and any page numbers or catalog marks.</li>
-                            <li>Preserve line breaks except when a word breaks over a line or page. Then transcribe it on the line or page where it starts.</li>
-                            <li>Use brackets [ ] around deleted, illegible or partially legible text, and square brackets and asterisks around text in margins [ * * ].</li>
-                            <li>Transcribe any words or letters you can't identify as [?].</li>
-                            <li>Include insertions where you would read them in the text.</li>
-                        </ul>
-                        Find more detailed instructions in the <a href="{% url 'help-center' %}">Help Center</a>
-                    {% endif %}
+
+                <a class="btn btn-secondary mx-1" href="{% url 'contact' %}">
+                    Questions?
+                </a>
+
+                <div class="collapse" id="instruction-window">
+                    <button type="button" class="close pull-right" aria-label="Close" data-toggle="collapse" data-target="#instruction-window">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <div>
+                        {% if SIMPLE_CONTENT_BLOCKS %}
+                            {% simple_content_block "classic_quicktips" %}
+                        {% else %}
+                            <ul>
+                                <li>Transcribe original spelling, punctuation, word order, and any page numbers or catalog marks.</li>
+                                <li>Preserve line breaks except when a word breaks over a line or page. Then transcribe it on the line or page where it starts.</li>
+                                <li>Use brackets [ ] around deleted, illegible or partially legible text, and square brackets and asterisks around text in margins [ * * ].</li>
+                                <li>Transcribe any words or letters you can't identify as [?].</li>
+                                <li>Include insertions where you would read them in the text.</li>
+                            </ul>
+                            Find more detailed instructions in the <a href="{% url 'help-center' %}">Help Center</a>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
