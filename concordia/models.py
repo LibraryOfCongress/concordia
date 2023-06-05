@@ -537,6 +537,9 @@ class Transcription(MetricsModelMixin("transcription"), models.Model):
         else:
             return TranscriptionStatus.CHOICE_MAP[TranscriptionStatus.IN_PROGRESS]
 
+    def get_ocr_transcript(self):
+        return f"Placeholder OCR text for {self.title}"
+
 
 def on_transcription_save(sender, instance, **kwargs):
     if kwargs["created"]:
