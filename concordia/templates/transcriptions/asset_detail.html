@@ -502,10 +502,7 @@
             {% if transcription_status == "not_started" or transcription_status == "in_progress" %}
                 <div id="ocr-section" class="row align-items-center">
                     Is this page typed?
-                    <form id="ocr-transcription-form" class="ajax-submission" method="post" action="{% url 'generate-ocr-transcription' asset_pk=asset.pk %}">
-                        <input type="hidden" name="supersedes" value="{{ transcription.pk|default:'' }}" />
-                        <button id="ocr-transcription-button" class="btn btn-primary mx-1" disabled>Transcribe with OCR</button>
-                    </form>
+                    <a role="button" data-placement="top" data-trigger="click" title="Transcribe with OCR" data-toggle="modal" data-target="#ocr-transcription-modal" id="ocr-transcription-link" class="btn btn-primary mx-1" disabled>Transcribe with OCR</a>
                     <a tabindex="0" class="btn btn-link d-inline py-0" role="button" data-placement="top" data-trigger="focus click hover" title="What is OCR?"  data-toggle="modal" data-target="#ocr-help-modal">
                         <span class="fas fa-question-circle" aria-label="Open Help"></span>
                     </a>
@@ -677,6 +674,28 @@
                     </div>
                 </div>
             </form>
+        </div>
+        <div id="ocr-transcription-modal" class="modal" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Are you sure?</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Clicking "Transcribe with OCR" will remove all existing transcription text and replace it with automatically generated text. We recommend saving existing text in a separate document if you may want to revisit it.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-dismiss="modal">Cancel</button>
+                        <form id="ocr-transcription-form" class="ajax-submission" method="post" action="{% url 'generate-ocr-transcription' asset_pk=asset.pk %}">
+                            <input type="hidden" name="supersedes" value="{{ transcription.pk|default:'' }}" />
+                            <button id="ocr-transcription-button" class="btn btn-link underline-link font-weight-bold" disabled>Yes, replace the text</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     <div class="print-transcription-image d-none d-print-block"><img class="img-fluid" alt="Scanned image of the current content page" src="{% asset_media_url asset %}"></div>
@@ -874,6 +893,7 @@
 
     <script>
         let transcriptionForm = document.getElementById("transcription-editor");
+        let ocrForm = document.getElementById("ocr-transcription-form");
         let formChanged = false;
         transcriptionForm.addEventListener('change', function(){
             formChanged = true;
@@ -881,6 +901,9 @@
         transcriptionForm.addEventListener('submit', function(){
             formChanged = false;
         });
+        ocrForm.addEventListener('submit', function(){
+            formChanged = false;
+        })
         window.addEventListener('beforeunload', function(event){
             if(formChanged){
                 // Some browsers ignore this value and always display a built-in message instead

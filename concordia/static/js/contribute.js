@@ -176,7 +176,9 @@ function setupPage() {
             }
             $transcriptionEditor.trigger('update-ui-state');
         });
+    var $ocrSection = $('#ocr-section');
     var $ocrForm = $('#ocr-transcription-form');
+    var $ocrModal = $('#ocr-transcription-modal');
 
     let firstEditorUpdate = true;
     let editorPlaceholderText = $transcriptionEditor
@@ -206,10 +208,12 @@ function setupPage() {
             ) {
                 // If the status is completed OR if the user doesn't have the reservation
                 lockControls($transcriptionEditor);
+                lockControls($ocrSection);
                 lockControls($ocrForm);
             } else {
                 // Either in transcribe or review mode OR the user has the reservation
                 if (data.hasReservation) {
+                    unlockControls($ocrSection);
                     unlockControls($ocrForm);
                 }
                 var $textarea = $transcriptionEditor.find('textarea');
@@ -489,6 +493,9 @@ function setupPage() {
         });
 
     $ocrForm
+        .on('submit', function () {
+            $ocrModal.modal('hide');
+        })
         .on('form-submit-success', function (event, extra) {
             $transcriptionEditor.data({
                 transcriptionId: extra.responseData.id,
@@ -505,6 +512,9 @@ function setupPage() {
                 .find('textarea[name="text"]')
                 .val(extra.responseData.text);
             $transcriptionEditor.trigger('update-ui-state');
+            $ocrForm
+                .find('input[name="supersedes"]')
+                .val(extra.responseData.id);
         })
         .on('form-submit-failure', function (event, info) {
             displayMessage(
