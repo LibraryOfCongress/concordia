@@ -438,6 +438,9 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         upload_to=get_storage_path, max_length=255, blank=True, null=True
     )
 
+    def get_ocr_transcript(self):
+        return f"Placeholder OCR text for {self.title}"
+
 
 class Tag(MetricsModelMixin("tag"), models.Model):
     TAG_VALIDATOR = RegexValidator(r"^[- _À-ž'\w]{1,50}$")

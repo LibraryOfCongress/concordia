@@ -1,13 +1,19 @@
 /* global $ displayMessage buildErrorMessage reserveAssetForEditing */
 
 function lockControls($container) {
+    if (!$container) {
+        return;
+    }
     // Locks all of the controls in the provided jQuery element
     $container.find('input, textarea').attr('readonly', 'readonly');
     $container.find('button').attr('disabled', 'disabled');
 }
 
 function unlockControls($container) {
-    // Locks all of the controls in the provided jQuery element
+    if (!$container) {
+        return;
+    }
+    // Unlocks all of the controls in the provided jQuery element
     $container.find('input, textarea').removeAttr('readonly');
     $container.find('button').removeAttr('disabled');
 }
@@ -170,6 +176,7 @@ function setupPage() {
             }
             $transcriptionEditor.trigger('update-ui-state');
         });
+    var $ocrForm = $('#ocr-transcription-form');
 
     let firstEditorUpdate = true;
     let editorPlaceholderText = $transcriptionEditor
@@ -199,8 +206,12 @@ function setupPage() {
             ) {
                 // If the status is completed OR if the user doesn't have the reservation
                 lockControls($transcriptionEditor);
+                lockControls($ocrForm);
             } else {
                 // Either in transcribe or review mode OR the user has the reservation
+                if (data.hasReservation) {
+                    unlockControls($ocrForm);
+                }
                 var $textarea = $transcriptionEditor.find('textarea');
 
                 if (
@@ -475,6 +486,38 @@ function setupPage() {
             );
 
             displayMessage('error', message, 'tags-save-result');
+        });
+
+    $ocrForm
+        .on('form-submit-success', function (event, extra) {
+            $transcriptionEditor.data({
+                transcriptionId: extra.responseData.id,
+                unsavedChanges: false,
+            });
+            $transcriptionEditor
+                .find('input[name="supersedes"]')
+                .val(extra.responseData.id);
+            $transcriptionEditor.data(
+                'submitUrl',
+                extra.responseData.submissionUrl
+            );
+            $transcriptionEditor
+                .find('textarea[name="text"]')
+                .val(extra.responseData.text);
+            $transcriptionEditor.trigger('update-ui-state');
+        })
+        .on('form-submit-failure', function (event, info) {
+            displayMessage(
+                'error',
+                'Unable to save your work: ' +
+                    buildErrorMessage(
+                        info.jqXHR,
+                        info.textStatus,
+                        info.errorThrown
+                    ),
+                'transcription-save-result'
+            );
+            $transcriptionEditor.trigger('update-ui-state');
         });
 }
 

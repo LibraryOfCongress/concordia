@@ -500,8 +500,12 @@
         </div>
         <div id="help-container" class="mt-3 d-print-none">
             {% if transcription_status == "not_started" or transcription_status == "in_progress" %}
-                <div class="row align-items-center">
-                    Is this page typed? <button class="btn btn-primary mx-1">Transcribe with OCR</button>
+                <div id="ocr-section" class="row align-items-center">
+                    Is this page typed?
+                    <form id="ocr-transcription-form" class="ajax-submission" method="post" action="{% url 'generate-ocr-transcription' asset_pk=asset.pk %}">
+                        <input type="hidden" name="supersedes" value="{{ transcription.pk|default:'' }}" />
+                        <button id="ocr-transcription-button" class="btn btn-primary mx-1" disabled>Transcribe with OCR</button>
+                    </form>
                     <a tabindex="0" class="btn btn-link d-inline py-0" role="button" data-placement="top" data-trigger="focus click hover" title="What is OCR?"  data-toggle="modal" data-target="#ocr-help-modal">
                         <span class="fas fa-question-circle" aria-label="Open Help"></span>
                     </a>
