@@ -438,6 +438,9 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         upload_to=get_storage_path, max_length=255, blank=True, null=True
     )
 
+    def get_ocr_transcript(self):
+        return f"Placeholder OCR text for {self.title}"
+
 
 class Tag(MetricsModelMixin("tag"), models.Model):
     TAG_VALIDATOR = RegexValidator(r"^[- _À-ž'\w]{1,50}$")
@@ -536,9 +539,6 @@ class Transcription(MetricsModelMixin("transcription"), models.Model):
             return TranscriptionStatus.CHOICE_MAP[TranscriptionStatus.SUBMITTED]
         else:
             return TranscriptionStatus.CHOICE_MAP[TranscriptionStatus.IN_PROGRESS]
-
-    def get_ocr_transcript(self):
-        return f"Placeholder OCR text for {self.title}"
 
 
 def on_transcription_save(sender, instance, **kwargs):

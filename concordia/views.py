@@ -1209,6 +1209,8 @@ def get_transcription_superseded(asset, supersedes_pk):
             return JsonResponse(
                 {"error": "An open transcription already exists"}, status=409
             )
+        else:
+            superseded = None
     else:
         if asset.transcription_set.filter(supersedes=supersedes_pk).exists():
             return JsonResponse(
@@ -1238,7 +1240,7 @@ def generate_ocr_transcription(request, *, asset_pk):
     superseded = get_transcription_superseded(asset, supersedes_pk)
     if superseded and isinstance(superseded, HttpResponse):
         return superseded
-    transcription_text = generate_ocr_transcription(asset)
+    transcription_text = asset.get_ocr_transcript()
     transcription = Transcription(
         asset=asset,
         user=user,
@@ -1255,6 +1257,7 @@ def generate_ocr_transcription(request, *, asset_pk):
             "id": transcription.pk,
             "sent": time(),
             "submissionUrl": reverse("submit-transcription", args=(transcription.pk,)),
+            "text": transcription.text,
             "asset": {
                 "id": transcription.asset.id,
                 "status": transcription.asset.transcription_status,
