@@ -200,6 +200,28 @@
                         </div>
                     </div>
                 </div>
+                <div id="ocr-help-modal" class="modal" tabindex="-1" role="dialog">
+                    <div class="modal-dialog modal-dialog-centered" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <h5 class="modal-title">What is OCR?</h5>
+                                <p>OCR stands for Optical Character Recognition. OCR is a software tool that can extract typed text from some documents. It works best on consistent and clear modern typeface.</p>
+                                <h6>Do I still need to review pages started with OCR?</h6>
+                                <p>Yes! OCR is imperfect. It may not work well for some or all parts of a typed page, but it can be a great starting point. If you started a page with OCR, you should read the text closely before submitting. If you are reviewing a OCR-ed page, you also still need to review.</p>
+                                <h6>Why does <span class="font-italic">By the People</span> have this feature?</h6>
+                                <p>We want to make sure we are using volunteer time effectively. When the Library of Congress digitizes a large group of printed pages, it will usually OCR them. The materials in By the People campaigns are not good candidates for applying OCR at scale, either because they are a mixed collection (containing handwritten and printed materials or they are printed on paper or in typeface that does not produce accurate OCR results. However, OCR can still be a useful starting point for some or all of our typed pages. Use it if it if you like it or skip it if you don’t!</p>
+                            </div>
+                            <div class="modal-footer justify-content-center">
+                                <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <div id="image-filters" class="m-1 text-center d-print-none collapse">
                     <hr class="m-0" />
                     <ul class="d-inline-flex mt-1 btn-group nav nav-tabs" role="tablist">
@@ -405,7 +427,9 @@
                                 {% endif %}
                             </div>
                             {% if transcription.ocr_originated %}
-                                <div class="text-center font-weight-bold">This transcription was started with OCR <a class="btn-link"><span class="fas fa-question-circle" aria-label="Open Help"></span></a></div>
+                                <div class="text-center font-weight-bold">This transcription was started with OCR <a class="btn-link" data-toggle="modal" data-target="#ocr-help-modal">
+                                    <span class="fas fa-question-circle" aria-label="Open Help"></span>
+                                </a></div>
                             {% endif %}
                         {% endspaceless %}
                     </form>
@@ -478,7 +502,7 @@
             {% if transcription_status == "not_started" or transcription_status == "in_progress" %}
                 <div class="row align-items-center">
                     Is this page typed? <button class="btn btn-primary mx-1">Transcribe with OCR</button>
-                    <a tabindex="0" class="btn btn-link d-inline py-0" role="button" data-toggle="popover" data-placement="top" data-trigger="focus click hover" title="What is OCR?" data-html="true" data-toggle="modal" data-target="#ocr-help-modal">
+                    <a tabindex="0" class="btn btn-link d-inline py-0" role="button" data-placement="top" data-trigger="focus click hover" title="What is OCR?"  data-toggle="modal" data-target="#ocr-help-modal">
                         <span class="fas fa-question-circle" aria-label="Open Help"></span>
                     </a>
                 </div>
