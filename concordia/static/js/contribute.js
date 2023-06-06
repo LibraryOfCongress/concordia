@@ -490,11 +490,6 @@ function setupPage() {
 
     $ocrForm
         .on('form-submit-success', function (event, extra) {
-            displayMessage(
-                'info',
-                'OCR transcription successfully generated. Please make any corrections.',
-                'transcription-save-result'
-            );
             $transcriptionEditor.data({
                 transcriptionId: extra.responseData.id,
                 unsavedChanges: false,
