@@ -1,0 +1,5 @@
+# The W2001 check is used to ignore the featurebranch.yaml DataLoadStackName parameter in the nested
+# stack fargate-featurebranch.yaml used to signal when the DataLoadHost UserData commands are complete.
+# Check if Parameters are Used
+ignore_checks:
+    - W2001
