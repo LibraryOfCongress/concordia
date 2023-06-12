@@ -71,6 +71,10 @@ Parameters:
         Description: Priority of the subdomain listener rule, must be unique in the set of listener rules
         Default: 100
 
+    DataLoadStackName:
+        Type: String
+        Description: Signal that the DataLoadHost UserData has completed
+
 Resources:
     ConcordiaAppLogsGroup:
         Type: AWS::Logs::LogGroup
