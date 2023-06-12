@@ -82,6 +82,8 @@ from .filters import (
     TranscriptionCampaignStatusListFilter,
     TranscriptionProjectListFilter,
     UserAssetTagCollectionCampaignStatusListFilter,
+    UserProfileActivityCampaignListFilter,
+    UserProfileActivityCampaignStatusListFilter,
 )
 from .forms import (
     AdminItemImportForm,
@@ -841,7 +843,11 @@ class UserRetiredCampaignAdmin(admin.ModelAdmin):
 
 @admin.register(UserProfileActivity)
 class UserProfileActivityAdmin(admin.ModelAdmin):
-    list_display = ("id", "user", "get_status", "asset_count")
+    list_display = ("id", "user", "campaign", "get_status", "asset_count")
+    list_filter = (
+        UserProfileActivityCampaignStatusListFilter,
+        UserProfileActivityCampaignListFilter,
+    )
     raw_id_fields = ["user", "campaign"]
     read_only_fields = (
         "user",
