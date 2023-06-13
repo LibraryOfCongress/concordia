@@ -295,6 +295,9 @@ function setupPage() {
                 'submitUrl',
                 extra.responseData.submissionUrl
             );
+            $ocrForm
+                .find('input[name="supersedes"]')
+                .val(extra.responseData.id);
             $transcriptionEditor.trigger('update-ui-state');
         })
         .on('form-submit-failure', function (event, info) {
