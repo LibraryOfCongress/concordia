@@ -539,6 +539,10 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
 
         return super().form_valid(form)
 
+    def get_success_url(self):
+        # automatically open the Account Settings tab
+        return "{}#account".format(super().get_success_url())
+
 
 @method_decorator(default_cache_control, name="dispatch")
 class HomeView(ListView):
