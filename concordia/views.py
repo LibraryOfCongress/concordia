@@ -503,6 +503,8 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         if start is not None:
             ctx["start"] = start
 
+        ctx["valid"] = self.request.session.pop("valid", False)
+
         user = self.request.user
         user_profile_activity = UserProfileActivity.objects.filter(user=user).order_by(
             "campaign__title"
@@ -536,6 +538,8 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         user.email = form.cleaned_data["email"]
         user.full_clean()
         user.save()
+
+        self.request.session["valid"] = True
 
         return super().form_valid(form)
 
