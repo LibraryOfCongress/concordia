@@ -387,6 +387,9 @@
                         </h2>
 
                         {% spaceless %}
+                            <div id="ocr-loading" class="spinner-border" role="status" aria-hidden="true" hidden>
+                                <span class="sr-only">Loading...</span>
+                            </div>
                             <textarea readonly class="form-control w-100 rounded flex-grow-1 d-print-none" name="text" id="transcription-input" placeholder="{% if transcription_status == 'not_started' or transcription_status == 'in_progress' %}Go ahead, start typing. You got this!{% else %}Nothing to transcribe{% endif %}" aria-label="Transcription input">
                                 {{ transcription.text }}
                             </textarea>
@@ -690,7 +693,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-primary" data-dismiss="modal">Cancel</button>
-                        <form id="ocr-transcription-form" class="ajax-submission" method="post" action="{% url 'generate-ocr-transcription' asset_pk=asset.pk %}">
+                        <form id="ocr-transcription-form" class="ajax-submission" method="post" action="{% url 'generate-ocr-transcription' asset_pk=asset.pk %}" data-lock-element="#transcription-editor">
                             <input type="hidden" name="supersedes" value="{{ transcription.pk|default:'' }}" />
                             <button id="ocr-transcription-button" class="btn btn-link underline-link font-weight-bold" disabled>Yes, replace the text</button>
                         </form>

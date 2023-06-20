@@ -46,6 +46,7 @@ pymemcache = "*"
 black = "*"
 weasyprint = "*"
 tesseract = "==0.1.3"
+pytesseract = "*"
 
 [dev-packages]
 invoke = "*"
