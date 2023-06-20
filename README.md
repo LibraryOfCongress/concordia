@@ -1,4 +1,6 @@
-[![Build Status](https://travis-ci.org/LibraryOfCongress/concordia.svg?branch=main)](https://travis-ci.org/LibraryOfCongress/concordia)
+[![Lint](https://github.com/LibraryOfCongress/concordia/actions/workflows/black.yml/badge.svg)](https://github.com/LibraryOfCongress/concordia/actions/workflows/black.yml)
+[![Test](https://github.com/LibraryOfCongress/concordia/actions/workflows/test.yml/badge.svg)](https://github.com/LibraryOfCongress/concordia/actions/workflows/test.yml)
+[![Build](https://github.com/LibraryOfCongress/concordia/actions/workflows/build.yml/badge.svg)](https://github.com/LibraryOfCongress/concordia/actions/workflows/build.yml)
 [![Coverage Status](https://coveralls.io/repos/github/LibraryOfCongress/concordia/badge.svg?branch=main)](https://coveralls.io/github/LibraryOfCongress/concordia?branch=main)
 
 # Welcome to Concordia

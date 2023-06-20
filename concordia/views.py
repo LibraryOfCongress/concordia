@@ -503,6 +503,8 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         if start is not None:
             ctx["start"] = start
 
+        ctx["valid"] = self.request.session.pop("valid", False)
+
         user = self.request.user
         user_profile_activity = UserProfileActivity.objects.filter(user=user).order_by(
             "campaign__title"
@@ -537,7 +539,13 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         user.full_clean()
         user.save()
 
+        self.request.session["valid"] = True
+
         return super().form_valid(form)
+
+    def get_success_url(self):
+        # automatically open the Account Settings tab
+        return "{}#account".format(super().get_success_url())
 
 
 @method_decorator(default_cache_control, name="dispatch")
