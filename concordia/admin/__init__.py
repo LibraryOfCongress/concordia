@@ -321,6 +321,7 @@ class ResourceAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     list_display = ("campaign", "topic", "sequence", "title", "resource_url")
     list_display_links = ("campaign", "topic", "sequence", "title")
     list_filter = (
+        "resource_type",
         ResourceCampaignStatusListFilter,
         ResourceCampaignListFilter,
         "title",
