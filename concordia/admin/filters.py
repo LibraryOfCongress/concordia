@@ -81,6 +81,11 @@ class AssetCampaignListFilter(CampaignListFilter):
     status_filter_parameter = "item__project__campaign__status"
 
 
+class UserProfileActivityCampaignListFilter(CampaignListFilter):
+    parameter_name = "campaign__id__exact"
+    status_filter_parameter = "campaign__status"
+
+
 class SiteReportCampaignListBaseFilter(CampaignListFilter):
     lookup_kwarg_isnull = "campaign__isnull"
     include_empty_choice = True
@@ -240,3 +245,7 @@ class TagCampaignStatusListFilter(CampaignStatusListFilter):
 
 class UserAssetTagCollectionCampaignStatusListFilter(CampaignStatusListFilter):
     parameter_name = "asset__item__project__campaign__status"
+
+
+class UserProfileActivityCampaignStatusListFilter(CampaignStatusListFilter):
+    parameter_name = "campaign__status"

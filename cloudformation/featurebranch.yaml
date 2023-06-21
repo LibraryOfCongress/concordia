@@ -70,3 +70,4 @@ Resources:
                 MemcachedPort: !GetAtt ElastiCache.Outputs.MemcachedPort
                 DatabaseEndpoint: !GetAtt RDS.Outputs.DatabaseHostName
                 Priority: !Ref Priority
+                DataLoadStackName: !GetAtt DataLoadHost.Outputs.StackName

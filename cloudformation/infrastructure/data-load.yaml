@@ -24,7 +24,7 @@ Parameters:
 Mappings:
     AWSRegionToAMI:
         us-east-1:
-            AMI: ami-0cabc39acf991f4f1
+            AMI: ami-0806bc468ce3a22ec
 
     EnvironmentMapping:
         IamInstanceProfileName:
@@ -50,6 +50,9 @@ Mappings:
 Resources:
     DataLoadHost:
         Type: AWS::EC2::Instance
+        CreationPolicy:
+            ResourceSignal:
+                Timeout: PT30M
         Properties:
             ImageId:
                 Fn::FindInMap:
@@ -79,18 +82,25 @@ Resources:
             UserData:
                 Fn::Base64: !Sub |
                     #!/bin/bash -xe
+                    trap '/opt/aws/bin/cfn-signal --exit-code 1 --resource DataLoadHost --region ${AWS::Region} --stack ${AWS::StackName}' ERR
                     echo "Running userdata for ${EnvironmentName}"
                     echo "export ENV_NAME=${EnvironmentName}" >> /home/ec2-user/.bash_profile
                     source /home/ec2-user/.bash_profile
-                    sudo yum -y update
-                    sudo amazon-linux-extras install -y postgresql12
+                    yum -y update
+                    amazon-linux-extras install -y postgresql12
                     aws s3 cp s3://crowd-deployment/database-dumps/concordia.latest.dmp concordia.dmp
                     echo "${PostgresqlHost}:5432:*:concordia:${PostgresqlPassword}" >> /root/.pgpass
                     chmod 0600 /root/.pgpass
-                    psql -U concordia -h "$POSTGRESQL_HOST" -d postgres -c "select pg_terminate_backend(pid) from pg_stat_activity where datname='concordia';"
-                    psql -U concordia -h "$POSTGRESQL_HOST" -d postgres -c "drop database concordia;"
+                    psql -U concordia -h ${PostgresqlHost} -d postgres -c "select pg_terminate_backend(pid) from pg_stat_activity where datname='concordia';"
+                    psql -U concordia -h ${PostgresqlHost} -d postgres -c "drop database concordia;"
                     pg_restore --create -Fc -U concordia -h ${PostgresqlHost} --dbname=postgres --no-password --no-owner --no-acl concordia.dmp
+                    # Signal the status from cfn-init
+                    /opt/aws/bin/cfn-signal --exit-code 0 --resource DataLoadHost --region ${AWS::Region} --stack ${AWS::StackName}
                     shutdown -h now
             Tags:
                 - Key: Name
                   Value: !Sub ${EnvironmentName}-DataLoadHost
+Outputs:
+    StackName:
+        Description: 'Stackname for the DataLoadHost'
+        Value: !Ref AWS::StackName

@@ -49,7 +49,8 @@ class ConcordiaViewTests(
 
         self.assertEqual(response.status_code, 302)
         self.assertUncacheable(response)
-        self.assertEqual(response.url, reverse("user-profile"))
+        index = response.url.find("#")
+        self.assertEqual(response.url[:index], reverse("user-profile"))
 
         # Verify the User was correctly updated
         updated_user = User.objects.get(email=test_email)

@@ -82,6 +82,8 @@ from .filters import (
     TranscriptionCampaignStatusListFilter,
     TranscriptionProjectListFilter,
     UserAssetTagCollectionCampaignStatusListFilter,
+    UserProfileActivityCampaignListFilter,
+    UserProfileActivityCampaignStatusListFilter,
 )
 from .forms import (
     AdminItemImportForm,
@@ -319,6 +321,7 @@ class ResourceAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     list_display = ("campaign", "topic", "sequence", "title", "resource_url")
     list_display_links = ("campaign", "topic", "sequence", "title")
     list_filter = (
+        "resource_type",
         ResourceCampaignStatusListFilter,
         ResourceCampaignListFilter,
         "title",
@@ -841,7 +844,18 @@ class UserRetiredCampaignAdmin(admin.ModelAdmin):
 
 @admin.register(UserProfileActivity)
 class UserProfileActivityAdmin(admin.ModelAdmin):
-    list_display = ("id", "user", "get_status", "asset_count")
+    list_display = (
+        "id",
+        "user",
+        "campaign",
+        "get_status",
+        "transcribe_count",
+        "review_count",
+    )
+    list_filter = (
+        UserProfileActivityCampaignStatusListFilter,
+        UserProfileActivityCampaignListFilter,
+    )
     raw_id_fields = ["user", "campaign"]
     read_only_fields = (
         "user",
