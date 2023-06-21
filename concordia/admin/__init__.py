@@ -843,7 +843,14 @@ class UserRetiredCampaignAdmin(admin.ModelAdmin):
 
 @admin.register(UserProfileActivity)
 class UserProfileActivityAdmin(admin.ModelAdmin):
-    list_display = ("id", "user", "campaign", "get_status", "asset_count")
+    list_display = (
+        "id",
+        "user",
+        "campaign",
+        "get_status",
+        "transcribe_count",
+        "review_count",
+    )
     list_filter = (
         UserProfileActivityCampaignStatusListFilter,
         UserProfileActivityCampaignListFilter,
