@@ -541,11 +541,22 @@ function setupPage() {
                 .val(extra.responseData.id);
         })
         .on('form-submit-failure', function (event, info) {
+            var jqXHR = info.jqXHR;
+            var errorData;
+            if (jqXHR.status == 429) {
+                errorData = {};
+                errorData.responseJSON = {
+                    error: 'OCR transcription is limited to once per minute.',
+                };
+            } else {
+                errorData = jqXHR;
+            }
+            console.log(errorData);
             displayMessage(
                 'error',
                 'Unable to save your work: ' +
                     buildErrorMessage(
-                        info.jqXHR,
+                        errorData,
                         info.textStatus,
                         info.errorThrown
                     ),
