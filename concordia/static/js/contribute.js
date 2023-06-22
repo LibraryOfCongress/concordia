@@ -541,25 +541,20 @@ function setupPage() {
                 .val(extra.responseData.id);
         })
         .on('form-submit-failure', function (event, info) {
-            var jqXHR = info.jqXHR;
-            var errorData;
-            if (jqXHR.status == 429) {
-                errorData = {};
-                errorData.responseJSON = {
-                    error: 'OCR transcription is limited to once per minute.',
-                };
+            let errorMessage;
+            if (info.jqXHR.status == 429) {
+                errorMessage =
+                    'OCR is only available once per minute. Please try again later and review all OCR text closely before submitting.';
             } else {
-                errorData = jqXHR;
+                errorMessage = buildErrorMessage(
+                    info.jqXHR,
+                    info.textStatus,
+                    info.errorThrown
+                );
             }
-            console.log(errorData);
             displayMessage(
                 'error',
-                'Unable to save your work: ' +
-                    buildErrorMessage(
-                        errorData,
-                        info.textStatus,
-                        info.errorThrown
-                    ),
+                'Unable to save your work: ' + errorMessage,
                 'transcription-save-result'
             );
             $ocrLoading.attr('hidden', 'hidden');
