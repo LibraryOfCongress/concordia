@@ -438,6 +438,17 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         upload_to=get_storage_path, max_length=255, blank=True, null=True
     )
 
+    def get_contributor_count(self):
+        transcriptions = Transcription.objects.filter(asset=self)
+        reviewer_ids = (
+            transcriptions.exclude(reviewed_by__isnull=True)
+            .values_list("reviewed_by", flat=True)
+            .distinct()
+        )
+        transcriber_ids = transcriptions.values_list("user", flat=True).distinct()
+        user_ids = list(set(list(reviewer_ids) + list(transcriber_ids)))
+        return len(user_ids)
+
 
 class Tag(MetricsModelMixin("tag"), models.Model):
     TAG_VALIDATOR = RegexValidator(r"^[- _À-ž'\w]{1,50}$")

@@ -353,7 +353,8 @@
                             {% if transcription_status == 'not_started' %}
                                 Transcribe this page.
                             {% elif transcription_status == 'in_progress' %}
-                                Someone started this transcription. Can you finish it?
+                                <div>Registered Contributors: {{ registered_contributors }}</div>
+                                <div>Someone started this transcription. Can you finish it?</div>
                             {% elif transcription_status == 'submitted' %}
                                 Check this transcription thoroughly. Accept if correct!
                             {% elif transcription_status == 'completed' %}
