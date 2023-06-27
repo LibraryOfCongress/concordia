@@ -614,11 +614,6 @@ def populate_active_campaign_counts():
     _populate_activity_table(active_campaigns)
 
 
-@celery_app.task
-def reset_user_activity_table():
-    UserProfileActivity.objects.all().delete()
-
-
 @celery_app.task(ignore_result=True)
 def retire_campaign(campaign_id):
     # Entry point to the retirement process
