@@ -189,6 +189,11 @@ urlpatterns = [
         views.review_transcription,
         name="review-transcription",
     ),
+    path(
+        "assets/<int:asset_pk>/transcriptions/generate-ocr/",
+        views.generate_ocr_transcription,
+        name="generate-ocr-transcription",
+    ),
     path("assets/<int:asset_pk>/tags/submit/", views.submit_tags, name="submit-tags"),
     path("assets/", views.AssetListView.as_view(), name="asset-list"),
     path(

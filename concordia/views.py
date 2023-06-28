@@ -1213,6 +1213,70 @@ def validate_anonymous_captcha(view):
     return inner
 
 
+def get_transcription_superseded(asset, supersedes_pk):
+    if not supersedes_pk:
+        if asset.transcription_set.filter(supersedes=None).exists():
+            return JsonResponse(
+                {"error": "An open transcription already exists"}, status=409
+            )
+        else:
+            superseded = None
+    else:
+        if asset.transcription_set.filter(supersedes=supersedes_pk).exists():
+            return JsonResponse(
+                {"error": "This transcription has been superseded"}, status=409
+            )
+
+        try:
+            superseded = asset.transcription_set.get(pk=supersedes_pk)
+        except Transcription.DoesNotExist:
+            return JsonResponse({"error": "Invalid supersedes value"}, status=400)
+    return superseded
+
+
+@require_POST
+@validate_anonymous_captcha
+@atomic
+@ratelimit(key="header:cf-connecting-ip", rate="1/m", block=settings.RATELIMIT_BLOCK)
+def generate_ocr_transcription(request, *, asset_pk):
+    asset = get_object_or_404(Asset, pk=asset_pk)
+
+    if request.user.is_anonymous:
+        user = get_anonymous_user()
+    else:
+        user = request.user
+
+    supersedes_pk = request.POST.get("supersedes")
+    superseded = get_transcription_superseded(asset, supersedes_pk)
+    if superseded and isinstance(superseded, HttpResponse):
+        return superseded
+    transcription_text = asset.get_ocr_transcript()
+    transcription = Transcription(
+        asset=asset,
+        user=user,
+        supersedes=superseded,
+        text=transcription_text,
+        ocr_generated=True,
+        ocr_originated=True,
+    )
+    transcription.full_clean()
+    transcription.save()
+
+    return JsonResponse(
+        {
+            "id": transcription.pk,
+            "sent": time(),
+            "submissionUrl": reverse("submit-transcription", args=(transcription.pk,)),
+            "text": transcription.text,
+            "asset": {
+                "id": transcription.asset.id,
+                "status": transcription.asset.transcription_status,
+            },
+        },
+        status=201,
+    )
+
+
 @require_POST
 @validate_anonymous_captcha
 @atomic
@@ -1238,25 +1302,21 @@ def save_transcription(request, *, asset_pk):
         )
 
     supersedes_pk = request.POST.get("supersedes")
-    if not supersedes_pk:
-        superseded = None
-        if asset.transcription_set.filter(supersedes=None).exists():
-            return JsonResponse(
-                {"error": "An open transcription already exists"}, status=409
-            )
-    else:
-        if asset.transcription_set.filter(supersedes=supersedes_pk).exists():
-            return JsonResponse(
-                {"error": "This transcription has been superseded"}, status=409
-            )
+    superseded = get_transcription_superseded(asset, supersedes_pk)
+    if superseded and isinstance(superseded, HttpResponse):
+        return superseded
 
-        try:
-            superseded = asset.transcription_set.get(pk=supersedes_pk)
-        except Transcription.DoesNotExist:
-            return JsonResponse({"error": "Invalid supersedes value"}, status=400)
+    if superseded and (superseded.ocr_generated or superseded.ocr_originated):
+        ocr_originated = True
+    else:
+        ocr_originated = False
 
     transcription = Transcription(
-        asset=asset, user=user, supersedes=superseded, text=transcription_text
+        asset=asset,
+        user=user,
+        supersedes=superseded,
+        text=transcription_text,
+        ocr_originated=ocr_originated,
     )
     transcription.full_clean()
     transcription.save()
