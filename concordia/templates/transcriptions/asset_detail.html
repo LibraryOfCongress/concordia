@@ -200,6 +200,29 @@
                         </div>
                     </div>
                 </div>
+                <div id="ocr-help-modal" class="modal" tabindex="-1" role="dialog">
+                    <div class="modal-dialog modal-dialog-centered" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">About Transcribe with OCR</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <h6 class="modal-title">What is OCR?</h6>
+                                <p>OCR stands for Optical Character Recognition. OCR is a software tool that can extract typed text from some documents. It works best on consistent and clear modern typeface.</p>
+                                <h6>Do I still need to review pages started with OCR?</h6>
+                                <p>Yes! OCR is imperfect. It may not work well for some or all parts of a typed page, but it can be a great starting point. If you started a page with OCR, you should read the text closely before submitting. If you are reviewing a OCR-ed page, you also still need to review.</p>
+                                <h6>Why does <span class="font-italic">By the People</span> have this feature?</h6>
+                                <p>We want to make sure we are using volunteer time effectively. When the Library of Congress digitizes a large group of printed pages, it will usually OCR them. The materials in By the People campaigns are not good candidates for applying OCR at scale, either because they are a mixed collection (containing handwritten and printed materials or they are printed on paper or in typeface that does not produce accurate OCR results. However, OCR can still be a useful starting point for some or all of our typed pages. Use it if it if you like it or skip it if you don’t!</p>
+                            </div>
+                            <div class="modal-footer justify-content-center">
+                                <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <div id="image-filters" class="m-1 text-center d-print-none collapse">
                     <hr class="m-0" />
                     <ul class="d-inline-flex mt-1 btn-group nav nav-tabs" role="tablist">
@@ -365,6 +388,11 @@
                         </span>
 
                         {% spaceless %}
+                            <div id="loading-container" class="pb-2">
+                                <div id="ocr-loading" class="spinner-border" role="status" aria-hidden="true" hidden>
+                                    <span class="sr-only">Loading...</span>
+                                </div>
+                            </div>
                             <textarea readonly class="form-control w-100 rounded flex-grow-1 d-print-none" name="text" id="transcription-input" placeholder="{% if transcription_status == 'not_started' or transcription_status == 'in_progress' %}Go ahead, start typing. You got this!{% else %}Nothing to transcribe{% endif %}" aria-label="Transcription input">
                                 {{ transcription.text }}
                             </textarea>
@@ -405,6 +433,11 @@
                                     {% endif %}
                                 {% endif %}
                             </div>
+                            {% if transcription.ocr_originated %}
+                                <div class="mb-3 text-center font-weight-bold">This transcription was started with OCR <a class="btn btn-link d-inline p-0" data-trigger="focus click hover" title="What is OCR?" data-toggle="modal" data-target="#ocr-help-modal">
+                                    <span class="fas fa-question-circle" aria-label="Open Help"></span>
+                                </a></div>
+                            {% endif %}
                         {% endspaceless %}
                     </form>
                 </div>
@@ -472,34 +505,45 @@
                 </div>
             </div>
         </div>
-        <div id="help-container" class="row justify-content-center align-items-center mt-3 d-print-none">
-            <p class="ml-1 mr-2 my-0">Need help?</p>
+        <div id="help-container" class="mt-1 d-print-none">
+            {% if transcription_status == "not_started" or transcription_status == "in_progress" %}
+                <div id="ocr-section" class="row align-items-center pl-3">
+                    <span class="pr-2">Is this page typed?</span>
+                    <a role="button" data-placement="top" data-trigger="click" title="Transcribe with OCR" data-toggle="modal" data-target="#ocr-transcription-modal" id="ocr-transcription-link" class="btn btn-primary mx-1" disabled>Transcribe with OCR</a>
+                    <a tabindex="0" class="btn btn-link d-inline p-0" role="button" data-placement="top" data-trigger="focus click hover" title="What is OCR?"  data-toggle="modal" data-target="#ocr-help-modal">
+                        <span class="fas fa-question-circle" aria-label="Open Help"></span>
+                    </a>
+                </div>
+            {% endif %}
+            <div class="row justify-content-center align-items-center">
+                <p class="ml-1 mr-2 my-0">Need help?</p>
 
-            <button id="instruction-button" class="btn btn-secondary mx-1" type="button" data-toggle="collapse" data-target="#instruction-window" aria-expanded="false" aria-controls="instruction-window">
-                Quick Tips
-            </button>
-
-            <a class="btn btn-secondary mx-1" href="{% url 'contact' %}">
-                Questions?
-            </a>
-
-            <div class="collapse" id="instruction-window">
-                <button type="button" class="close pull-right" aria-label="Close" data-toggle="collapse" data-target="#instruction-window">
-                    <span aria-hidden="true">&times;</span>
+                <button id="instruction-button" class="btn btn-secondary mx-1" type="button" data-toggle="collapse" data-target="#instruction-window" aria-expanded="false" aria-controls="instruction-window">
+                    Quick Tips
                 </button>
-                <div>
-                    {% if SIMPLE_CONTENT_BLOCKS %}
-                        {% simple_content_block "classic_quicktips" %}
-                    {% else %}
-                        <ul>
-                            <li>Transcribe original spelling, punctuation, word order, and any page numbers or catalog marks.</li>
-                            <li>Preserve line breaks except when a word breaks over a line or page. Then transcribe it on the line or page where it starts.</li>
-                            <li>Use brackets [ ] around deleted, illegible or partially legible text, and square brackets and asterisks around text in margins [ * * ].</li>
-                            <li>Transcribe any words or letters you can't identify as [?].</li>
-                            <li>Include insertions where you would read them in the text.</li>
-                        </ul>
-                        Find more detailed instructions in the <a href="{% url 'help-center' %}">Help Center</a>
-                    {% endif %}
+
+                <a class="btn btn-secondary mx-1" href="{% url 'contact' %}">
+                    Questions?
+                </a>
+
+                <div class="collapse" id="instruction-window">
+                    <button type="button" class="close pull-right" aria-label="Close" data-toggle="collapse" data-target="#instruction-window">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <div>
+                        {% if SIMPLE_CONTENT_BLOCKS %}
+                            {% simple_content_block "classic_quicktips" %}
+                        {% else %}
+                            <ul>
+                                <li>Transcribe original spelling, punctuation, word order, and any page numbers or catalog marks.</li>
+                                <li>Preserve line breaks except when a word breaks over a line or page. Then transcribe it on the line or page where it starts.</li>
+                                <li>Use brackets [ ] around deleted, illegible or partially legible text, and square brackets and asterisks around text in margins [ * * ].</li>
+                                <li>Transcribe any words or letters you can't identify as [?].</li>
+                                <li>Include insertions where you would read them in the text.</li>
+                            </ul>
+                            Find more detailed instructions in the <a href="{% url 'help-center' %}">Help Center</a>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
@@ -637,6 +681,28 @@
                     </div>
                 </div>
             </form>
+        </div>
+        <div id="ocr-transcription-modal" class="modal" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Are you sure?</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Clicking "Transcribe with OCR" will remove all existing transcription text and replace it with automatically generated text. We recommend saving existing text in a separate document if you may want to revisit it.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-dismiss="modal">Cancel</button>
+                        <form id="ocr-transcription-form" class="ajax-submission" method="post" action="{% url 'generate-ocr-transcription' asset_pk=asset.pk %}" data-lock-element="#transcription-editor">
+                            <input type="hidden" name="supersedes" value="{{ transcription.pk|default:'' }}" />
+                            <button id="ocr-transcription-button" class="btn btn-link underline-link font-weight-bold" disabled>Yes, replace the text</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     <div class="print-transcription-image d-none d-print-block"><img class="img-fluid" alt="Scanned image of the current content page" src="{% asset_media_url asset %}"></div>
@@ -834,6 +900,7 @@
 
     <script>
         let transcriptionForm = document.getElementById("transcription-editor");
+        let ocrForm = document.getElementById("ocr-transcription-form");
         let formChanged = false;
         transcriptionForm.addEventListener('change', function(){
             formChanged = true;
@@ -841,6 +908,9 @@
         transcriptionForm.addEventListener('submit', function(){
             formChanged = false;
         });
+        ocrForm.addEventListener('submit', function(){
+            formChanged = false;
+        })
         window.addEventListener('beforeunload', function(event){
             if(formChanged){
                 // Some browsers ignore this value and always display a built-in message instead
