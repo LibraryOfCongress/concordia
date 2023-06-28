@@ -321,6 +321,7 @@ class ResourceAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     list_display = ("campaign", "topic", "sequence", "title", "resource_url")
     list_display_links = ("campaign", "topic", "sequence", "title")
     list_filter = (
+        "resource_type",
         ResourceCampaignStatusListFilter,
         ResourceCampaignListFilter,
         "title",
@@ -741,7 +742,20 @@ class TranscriptionAdmin(admin.ModelAdmin):
         "text",
     )
 
-    actions = (export_to_csv_action, export_to_excel_action)
+    EXPORT_FIELDS = (
+        "id",
+        "asset__id",
+        "asset__slug",
+        "user",
+        "created_on",
+        "updated_on",
+        "supersedes",
+        "submitted",
+        "accepted",
+        "rejected",
+        "reviewed_by",
+        "text",
+    )
 
     def lookup_allowed(self, key, value):
         if key in ("asset__item__project__campaign__id__exact"):
@@ -752,6 +766,18 @@ class TranscriptionAdmin(admin.ModelAdmin):
     @admin.display(description="Text")
     def truncated_text(self, obj):
         return truncatechars(obj.text, 100)
+
+    def export_to_csv(self, request, queryset):
+        return export_to_csv_action(
+            self, request, queryset, field_names=self.EXPORT_FIELDS
+        )
+
+    def export_to_excel(self, request, queryset):
+        return export_to_excel_action(
+            self, request, queryset, field_names=self.EXPORT_FIELDS
+        )
+
+    actions = (export_to_csv, export_to_excel)
 
 
 @admin.register(SimpleContentBlock)
@@ -843,7 +869,14 @@ class UserRetiredCampaignAdmin(admin.ModelAdmin):
 
 @admin.register(UserProfileActivity)
 class UserProfileActivityAdmin(admin.ModelAdmin):
-    list_display = ("id", "user", "campaign", "get_status", "asset_count")
+    list_display = (
+        "id",
+        "user",
+        "campaign",
+        "get_status",
+        "transcribe_count",
+        "review_count",
+    )
     list_filter = (
         UserProfileActivityCampaignStatusListFilter,
         UserProfileActivityCampaignListFilter,

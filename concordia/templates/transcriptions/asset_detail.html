@@ -346,22 +346,22 @@
             <div id="editor-column" class="d-flex flex-column flex-nowrap justify-content-between p-3 d-print-block">
                 <div class="flex-grow-1 d-flex flex-column d-print-block">
                     <div class="tx-status-display">
-                        <span class="tx-submitted" {% if transcription_status != 'submitted' %}hidden{% endif %}>
+                        <h2 class="tx-submitted" {% if transcription_status != 'submitted' %}hidden{% endif %}>
                             <span class="fas fa-list"></span>
                             Needs review
-                        </span>
-                        <span class="tx-completed" {% if transcription_status != 'completed' %}hidden{% endif %}>
+                        </h2>
+                        <h2 class="tx-completed" {% if transcription_status != 'completed' %}hidden{% endif %}>
                             <span class="fas fa-check"></span>
                             Completed
-                        </span>
-                        <span class="tx-edit" {% if transcription_status != "not_started" %}hidden{% endif %}>
+                        </h2>
+                        <h2 class="tx-edit" {% if transcription_status != "not_started" %}hidden{% endif %}>
                             <span class="fas fa-edit"></span>
                             Not started
-                        </span>
-                        <span class="tx-edit" {% if transcription_status != "in_progress" %}hidden{% endif %}>
+                        </h2>
+                        <h2 class="tx-edit" {% if transcription_status != "in_progress" %}hidden{% endif %}>
                             <span class="fas fa-edit"></span>
                             In progress
-                        </span>
+                        </h2>
                         <span class="tx-edit-conflict" hidden>
                             <span class="fas fa-exclamation-triangle"></span>
                             Another user is transcribing this page
@@ -372,10 +372,11 @@
                         {% csrf_token %}
                         <input type="hidden" name="supersedes" value="{{ transcription.pk|default:'' }}" />
 
-                        <h2>
+                        <span>
                             {% if transcription_status == 'not_started' %}
                                 Transcribe this page.
                             {% elif transcription_status == 'in_progress' %}
+                                <h2>Registered Contributors: {{ registered_contributors }}</h2>
                                 Someone started this transcription. Can you finish it?
                             {% elif transcription_status == 'submitted' %}
                                 Check this transcription thoroughly. Accept if correct!
@@ -384,7 +385,7 @@
                             {% else %}
                                 Transcription
                             {% endif %}
-                        </h2>
+                        </span>
 
                         {% spaceless %}
                             <div id="loading-container" class="pb-2">

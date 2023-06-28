@@ -82,8 +82,8 @@ class AssetCampaignListFilter(CampaignListFilter):
 
 
 class UserProfileActivityCampaignListFilter(CampaignListFilter):
-    parameter_name = "userprofileactivity__campaign__id__exact"
-    status_filter_parameter = "userprofileactivity_campaign__status"
+    parameter_name = "campaign__id__exact"
+    status_filter_parameter = "campaign__status"
 
 
 class SiteReportCampaignListBaseFilter(CampaignListFilter):
@@ -248,4 +248,4 @@ class UserAssetTagCollectionCampaignStatusListFilter(CampaignStatusListFilter):
 
 
 class UserProfileActivityCampaignStatusListFilter(CampaignStatusListFilter):
-    parameter_name = "userprofileactivity___campaign__status"
+    parameter_name = "campaign__status"
