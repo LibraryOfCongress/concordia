@@ -26,9 +26,3 @@ ELASTICSEARCH_DSL = {
 REGISTRATION_SALT = "django_registration"
 
 RATELIMIT_BLOCK = os.getenv("RATELIMIT_BLOCK", "").lower() not in ("false", "0")
-
-# Exporter attribution text for BagIt exports to LC
-ATTRIBUTION_TEXT = (
-    "Transcribed and reviewed by contributors participating in the "
-    "By The People project at crowd.loc.gov."
-)
