@@ -1165,6 +1165,8 @@ class AssetDetailView(APIDetailView):
 
         ctx["tags"] = sorted(tags)
 
+        ctx["registered_contributors"] = asset.get_contributor_count()
+
         return ctx
 
 
