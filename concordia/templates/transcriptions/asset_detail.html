@@ -696,10 +696,12 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-primary" data-dismiss="modal">Cancel</button>
-                        <form id="ocr-transcription-form" class="ajax-submission" method="post" action="{% url 'generate-ocr-transcription' asset_pk=asset.pk %}" data-lock-element="#transcription-editor">
-                            <input type="hidden" name="supersedes" value="{{ transcription.pk|default:'' }}" />
-                            <button id="ocr-transcription-button" class="btn btn-link underline-link font-weight-bold" disabled>Yes, replace the text</button>
-                        </form>
+                        {% if transcription_status == "not_started" or transcription_status == "in_progress" %}
+                            <form id="ocr-transcription-form" class="ajax-submission" method="post" action="{% url 'generate-ocr-transcription' asset_pk=asset.pk %}" data-lock-element="#transcription-editor">
+                                <input type="hidden" name="supersedes" value="{{ transcription.pk|default:'' }}" />
+                                <button id="ocr-transcription-button" class="btn btn-link underline-link font-weight-bold" disabled>Yes, replace the text</button>
+                            </form>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -908,9 +910,11 @@
         transcriptionForm.addEventListener('submit', function(){
             formChanged = false;
         });
-        ocrForm.addEventListener('submit', function(){
-            formChanged = false;
-        })
+        if(ocrForm){
+            ocrForm.addEventListener('submit', function(){
+                formChanged = false;
+            });
+        }
         window.addEventListener('beforeunload', function(event){
             if(formChanged){
                 // Some browsers ignore this value and always display a built-in message instead
