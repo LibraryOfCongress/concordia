@@ -287,6 +287,9 @@ def campaign_report(campaign):
     transcriptions_saved = Transcription.objects.filter(
         asset__item__project__campaign=campaign
     ).count()
+    review_actions = Transcription.objects.exclude(
+        accepted__isnull=True, rejected__isnull=True
+    ).count()
 
     asset_tag_collections = UserAssetTagCollection.objects.filter(
         asset__item__project__campaign=campaign
@@ -331,6 +334,7 @@ def campaign_report(campaign):
     site_report.projects_unpublished = projects_unpublished
     site_report.anonymous_transcriptions = anonymous_transcriptions
     site_report.transcriptions_saved = transcriptions_saved
+    site_report.review_actions = review_actions
     site_report.distinct_tags = distinct_tag_count
     site_report.tag_uses = tag_count
     site_report.registered_contributors = registered_contributor_count
@@ -358,6 +362,7 @@ def retired_total_report():
         "projects_unpublished",
         "anonymous_transcriptions",
         "transcriptions_saved",
+        "review_actions",
         "distinct_tags",
         "tag_uses",
         "registered_contributors",
