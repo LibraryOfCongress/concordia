@@ -394,6 +394,12 @@ function setupPage() {
                             $('#editor-column').html(
                                 $(data).find('#editor-column').html()
                             );
+                            $('#help-container').html(
+                                $(data).find('#help-container').html()
+                            );
+                            $('#ocr-transcription-modal').html(
+                                $(data).find('#ocr-transcription-modal').html()
+                            );
                             reserveAssetForEditing();
                             setupPage();
                         })
@@ -514,52 +520,54 @@ function setupPage() {
             displayMessage('error', message, 'tags-save-result');
         });
 
-    $ocrForm
-        .on('submit', function () {
-            $ocrModal.modal('hide');
-            $ocrLoading.removeAttr('hidden');
-        })
-        .on('form-submit-success', function (event, extra) {
-            $transcriptionEditor.data({
-                transcriptionId: extra.responseData.id,
-                unsavedChanges: false,
-            });
-            $transcriptionEditor
-                .find('input[name="supersedes"]')
-                .val(extra.responseData.id);
-            $transcriptionEditor.data(
-                'submitUrl',
-                extra.responseData.submissionUrl
-            );
-            $transcriptionEditor
-                .find('textarea[name="text"]')
-                .val(extra.responseData.text);
-            $ocrLoading.attr('hidden', 'hidden');
-            $transcriptionEditor.trigger('update-ui-state');
-            $ocrForm
-                .find('input[name="supersedes"]')
-                .val(extra.responseData.id);
-        })
-        .on('form-submit-failure', function (event, info) {
-            let errorMessage;
-            if (info.jqXHR.status == 429) {
-                errorMessage =
-                    'OCR is only available once per minute. Please try again later and review all OCR text closely before submitting.';
-            } else {
-                errorMessage = buildErrorMessage(
-                    info.jqXHR,
-                    info.textStatus,
-                    info.errorThrown
+    if ($ocrForm) {
+        $ocrForm
+            .on('submit', function () {
+                $ocrModal.modal('hide');
+                $ocrLoading.removeAttr('hidden');
+            })
+            .on('form-submit-success', function (event, extra) {
+                $transcriptionEditor.data({
+                    transcriptionId: extra.responseData.id,
+                    unsavedChanges: false,
+                });
+                $transcriptionEditor
+                    .find('input[name="supersedes"]')
+                    .val(extra.responseData.id);
+                $transcriptionEditor.data(
+                    'submitUrl',
+                    extra.responseData.submissionUrl
                 );
-            }
-            displayMessage(
-                'error',
-                'Unable to save your work: ' + errorMessage,
-                'transcription-save-result'
-            );
-            $ocrLoading.attr('hidden', 'hidden');
-            $transcriptionEditor.trigger('update-ui-state');
-        });
+                $transcriptionEditor
+                    .find('textarea[name="text"]')
+                    .val(extra.responseData.text);
+                $ocrLoading.attr('hidden', 'hidden');
+                $transcriptionEditor.trigger('update-ui-state');
+                $ocrForm
+                    .find('input[name="supersedes"]')
+                    .val(extra.responseData.id);
+            })
+            .on('form-submit-failure', function (event, info) {
+                let errorMessage;
+                if (info.jqXHR.status == 429) {
+                    errorMessage =
+                        'OCR is only available once per minute. Please try again later and review all OCR text closely before submitting.';
+                } else {
+                    errorMessage = buildErrorMessage(
+                        info.jqXHR,
+                        info.textStatus,
+                        info.errorThrown
+                    );
+                }
+                displayMessage(
+                    'error',
+                    'Unable to save your work: ' + errorMessage,
+                    'transcription-save-result'
+                );
+                $ocrLoading.attr('hidden', 'hidden');
+                $transcriptionEditor.trigger('update-ui-state');
+            });
+    }
 }
 
 setupPage();
