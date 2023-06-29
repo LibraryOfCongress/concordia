@@ -131,7 +131,11 @@ def site_report():
     anonymous_transcriptions = Transcription.objects.filter(
         user=get_anonymous_user()
     ).count()
-    transcriptions_saved = Transcription.objects.all().count()
+    transcriptions = Transcription.objects.all()
+    transcriptions_saved = transcriptions.count()
+    review_actions = transcriptions.exclude(
+        accepted__isnull=True, rejected__isnull=True
+    ).count()
 
     stats = UserAssetTagCollection.objects.aggregate(Count("tags"))
     tag_count = stats["tags__count"]
@@ -153,6 +157,7 @@ def site_report():
     site_report.projects_unpublished = projects_unpublished
     site_report.anonymous_transcriptions = anonymous_transcriptions
     site_report.transcriptions_saved = transcriptions_saved
+    site_report.review_actions = review_actions
     site_report.distinct_tags = distinct_tag_count
     site_report.tag_uses = tag_count
     site_report.campaigns_published = campaigns_published
@@ -205,8 +210,10 @@ def topic_report(topic):
     anonymous_transcriptions = Transcription.objects.filter(
         asset__item__project__topics=topic, user=get_anonymous_user()
     ).count()
-    transcriptions_saved = Transcription.objects.filter(
-        asset__item__project__topics=topic
+    transcriptions = Transcription.objects.filter(asset__item__project__topics=topic)
+    transcriptions_saved = transcriptions.count()
+    review_actions = transcriptions.exclude(
+        accepted__isnull=True, rejected__isnull=True
     ).count()
 
     asset_tag_collections = UserAssetTagCollection.objects.filter(
@@ -238,6 +245,7 @@ def topic_report(topic):
     site_report.projects_unpublished = projects_unpublished
     site_report.anonymous_transcriptions = anonymous_transcriptions
     site_report.transcriptions_saved = transcriptions_saved
+    site_report.review_actions = review_actions
     site_report.distinct_tags = distinct_tag_count
     site_report.tag_uses = tag_count
     site_report.save()
@@ -284,10 +292,11 @@ def campaign_report(campaign):
     anonymous_transcriptions = Transcription.objects.filter(
         asset__item__project__campaign=campaign, user=get_anonymous_user()
     ).count()
-    transcriptions_saved = Transcription.objects.filter(
+    transcriptions = Transcription.objects.filter(
         asset__item__project__campaign=campaign
-    ).count()
-    review_actions = Transcription.objects.exclude(
+    )
+    transcriptions_saved = transcriptions.count()
+    review_actions = transcriptions.exclude(
         accepted__isnull=True, rejected__isnull=True
     ).count()
 

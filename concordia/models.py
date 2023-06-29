@@ -755,6 +755,7 @@ class SiteReport(models.Model):
         "projects_unpublished",
         "anonymous_transcriptions",
         "transcriptions_saved",
+        "review_actions",
         "distinct_tags",
         "tag_uses",
         "campaigns_published",
