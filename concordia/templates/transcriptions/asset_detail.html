@@ -375,15 +375,17 @@
                         <span>
                             {% if transcription_status == 'not_started' %}
                                 Transcribe this page.
-                            {% elif transcription_status == 'in_progress' %}
-                                <h2>Registered Contributors: {{ registered_contributors }}</h2>
-                                Someone started this transcription. Can you finish it?
-                            {% elif transcription_status == 'submitted' %}
-                                Check this transcription thoroughly. Accept if correct!
-                            {% elif transcription_status == 'completed' %}
-                                This transcription is finished! You can read and add tags.
                             {% else %}
-                                Transcription
+                                <h2>Registered Contributors: {{ registered_contributors }}</h2>
+                                {% if transcription_status == 'in_progress' %}
+                                    Someone started this transcription. Can you finish it?
+                                {% elif transcription_status == 'submitted' %}
+                                    Check this transcription thoroughly. Accept if correct!
+                                {% elif transcription_status == 'completed' %}
+                                    This transcription is finished! You can read and add tags.
+                                {% else %}
+                                    Transcription
+                                {% endif %}
                             {% endif %}
                         </span>
 
