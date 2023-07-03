@@ -764,35 +764,6 @@ class SiteReport(models.Model):
     ]
 
 
-class UserRetiredCampaign(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="User Id")
-    campaign = models.ForeignKey(
-        Campaign, on_delete=models.CASCADE, verbose_name="Campaign Id"
-    )
-    asset_count = models.IntegerField(blank=True, null=True)
-    asset_tag_count = models.IntegerField(blank=True, null=True)
-    transcribe_count = models.IntegerField(
-        blank=True, null=True, verbose_name="transcription save/submit count"
-    )
-    review_count = models.IntegerField(
-        blank=True, null=True, verbose_name="transcription review count"
-    )
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["user", "campaign"], name="user_profile_activity"
-            )
-        ]
-        verbose_name = "user completed campaign count"
-
-    def __str__(self):
-        return f"{self.user} - {self.campaign}"
-
-    def total_actions(self):
-        return self.transcribe_count + self.review_count
-
-
 class UserProfileActivity(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="User Id")
     campaign = models.ForeignKey(
