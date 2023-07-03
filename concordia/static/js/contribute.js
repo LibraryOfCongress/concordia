@@ -1,14 +1,22 @@
 /* global $ displayMessage buildErrorMessage reserveAssetForEditing */
 
 function lockControls($container) {
+    if (!$container) {
+        return;
+    }
     // Locks all of the controls in the provided jQuery element
     $container.find('input, textarea').attr('readonly', 'readonly');
+    $container.find('input:checkbox').attr('disabled', 'disabled');
     $container.find('button').attr('disabled', 'disabled');
 }
 
 function unlockControls($container) {
-    // Locks all of the controls in the provided jQuery element
+    if (!$container) {
+        return;
+    }
+    // Unlocks all of the controls in the provided jQuery element
     $container.find('input, textarea').removeAttr('readonly');
+    $container.find('input:checkbox').removeAttr('disabled');
     $container.find('button').removeAttr('disabled');
 }
 
@@ -92,6 +100,9 @@ function setupPage() {
         <form> element may have optional data-submit-name and data-submit-value
         attributes for the default values and a click handler will be used to
         update those values based on user interaction.
+
+        The optional data-lock-element attribute can be set to lock additional
+        elements in the same way the form is locked once its submitted.
         */
 
         var $form = $(formElement);
@@ -99,7 +110,12 @@ function setupPage() {
         $form.on('submit', function (event) {
             event.preventDefault();
 
+            var data = $form.data();
+
             lockControls($form);
+            if (data.lockElement) {
+                lockControls($(data.lockElement));
+            }
 
             var formData = $form.serializeArray();
 
@@ -116,6 +132,10 @@ function setupPage() {
                         responseData: data,
                         $form: $form,
                     });
+                    unlockControls($form);
+                    if (data.lockElement) {
+                        unlockControls($(data.lockElement));
+                    }
                 })
                 .fail(function (jqXHR, textStatus, errorThrown) {
                     if (jqXHR.status == 401) {
@@ -135,6 +155,10 @@ function setupPage() {
                             $form: $form,
                             jqXHR: jqXHR,
                         });
+                        unlockControls($form);
+                        if (data.lockElement) {
+                            unlockControls($(data.lockElement));
+                        }
                     }
                 });
 
@@ -170,6 +194,10 @@ function setupPage() {
             }
             $transcriptionEditor.trigger('update-ui-state');
         });
+    var $ocrSection = $('#ocr-section');
+    var $ocrForm = $('#ocr-transcription-form');
+    var $ocrModal = $('#ocr-transcription-modal');
+    var $ocrLoading = $('#ocr-loading');
 
     let firstEditorUpdate = true;
     let editorPlaceholderText = $transcriptionEditor
@@ -199,8 +227,14 @@ function setupPage() {
             ) {
                 // If the status is completed OR if the user doesn't have the reservation
                 lockControls($transcriptionEditor);
+                lockControls($ocrSection);
+                lockControls($ocrForm);
             } else {
                 // Either in transcribe or review mode OR the user has the reservation
+                if (data.hasReservation) {
+                    unlockControls($ocrSection);
+                    unlockControls($ocrForm);
+                }
                 var $textarea = $transcriptionEditor.find('textarea');
 
                 if (
@@ -280,6 +314,9 @@ function setupPage() {
                 'submitUrl',
                 extra.responseData.submissionUrl
             );
+            $ocrForm
+                .find('input[name="supersedes"]')
+                .val(extra.responseData.id);
             $transcriptionEditor.trigger('update-ui-state');
         })
         .on('form-submit-failure', function (event, info) {
@@ -356,6 +393,12 @@ function setupPage() {
                         .done(function (data) {
                             $('#editor-column').html(
                                 $(data).find('#editor-column').html()
+                            );
+                            $('#help-container').html(
+                                $(data).find('#help-container').html()
+                            );
+                            $('#ocr-transcription-modal').html(
+                                $(data).find('#ocr-transcription-modal').html()
                             );
                             reserveAssetForEditing();
                             setupPage();
@@ -476,6 +519,55 @@ function setupPage() {
 
             displayMessage('error', message, 'tags-save-result');
         });
+
+    if ($ocrForm) {
+        $ocrForm
+            .on('submit', function () {
+                $ocrModal.modal('hide');
+                $ocrLoading.removeAttr('hidden');
+            })
+            .on('form-submit-success', function (event, extra) {
+                $transcriptionEditor.data({
+                    transcriptionId: extra.responseData.id,
+                    unsavedChanges: false,
+                });
+                $transcriptionEditor
+                    .find('input[name="supersedes"]')
+                    .val(extra.responseData.id);
+                $transcriptionEditor.data(
+                    'submitUrl',
+                    extra.responseData.submissionUrl
+                );
+                $transcriptionEditor
+                    .find('textarea[name="text"]')
+                    .val(extra.responseData.text);
+                $ocrLoading.attr('hidden', 'hidden');
+                $transcriptionEditor.trigger('update-ui-state');
+                $ocrForm
+                    .find('input[name="supersedes"]')
+                    .val(extra.responseData.id);
+            })
+            .on('form-submit-failure', function (event, info) {
+                let errorMessage;
+                if (info.jqXHR.status == 429) {
+                    errorMessage =
+                        'OCR is only available once per minute. Please try again later and review all OCR text closely before submitting.';
+                } else {
+                    errorMessage = buildErrorMessage(
+                        info.jqXHR,
+                        info.textStatus,
+                        info.errorThrown
+                    );
+                }
+                displayMessage(
+                    'error',
+                    'Unable to save your work: ' + errorMessage,
+                    'transcription-save-result'
+                );
+                $ocrLoading.attr('hidden', 'hidden');
+                $transcriptionEditor.trigger('update-ui-state');
+            });
+    }
 }
 
 setupPage();

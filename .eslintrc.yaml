@@ -14,6 +14,7 @@ rules:
         - SwitchCase: 1
     'unicorn/prefer-query-selector': off # See https://github.com/sindresorhus/eslint-plugin-unicorn/issues/276
     'unicorn/prefer-node-append': off
+    'unicorn/prefer-ternary': off
 env:
     browser: true
     es6: true

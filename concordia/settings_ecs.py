@@ -71,11 +71,5 @@ REGISTRATION_SALT = "django_registration"  # doesn't need to be secret
 
 RATELIMIT_BLOCK = os.getenv("RATELIMIT_BLOCK", "").lower() not in ("false", "0")
 
-# Exporter attribution text for BagIt exports to LC
-ATTRIBUTION_TEXT = (
-    "Transcribed and reviewed by contributors participating in the "
-    "By The People project at crowd.loc.gov."
-)
-
 if os.getenv("USE_PERSISTENT_DATABASE_CONNECTIONS"):
     DATABASES["default"].update({"CONN_MAX_AGE": 15 * 60})

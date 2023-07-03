@@ -4,7 +4,16 @@ from secrets import token_hex
 
 from django.utils.text import slugify
 
-from concordia.models import Asset, Campaign, Item, MediaType, Project, Topic, User
+from concordia.models import (
+    Asset,
+    Campaign,
+    Item,
+    MediaType,
+    Project,
+    Topic,
+    Transcription,
+    User,
+)
 
 
 def ensure_slug(original_function):
@@ -158,6 +167,16 @@ def create_asset(
     if do_save:
         asset.save()
     return asset
+
+
+def create_transcription(*, asset=None, user=None, do_save=True, **kwargs):
+    if asset is None:
+        asset = create_asset()
+    transcription = Transcription(asset=asset, user=user, **kwargs)
+    transcription.full_clean()
+    if do_save:
+        transcription.save()
+    return transcription
 
 
 class JSONAssertMixin(object):

@@ -742,7 +742,20 @@ class TranscriptionAdmin(admin.ModelAdmin):
         "text",
     )
 
-    actions = (export_to_csv_action, export_to_excel_action)
+    EXPORT_FIELDS = (
+        "id",
+        "asset__id",
+        "asset__slug",
+        "user",
+        "created_on",
+        "updated_on",
+        "supersedes",
+        "submitted",
+        "accepted",
+        "rejected",
+        "reviewed_by",
+        "text",
+    )
 
     def lookup_allowed(self, key, value):
         if key in ("asset__item__project__campaign__id__exact"):
@@ -753,6 +766,18 @@ class TranscriptionAdmin(admin.ModelAdmin):
     @admin.display(description="Text")
     def truncated_text(self, obj):
         return truncatechars(obj.text, 100)
+
+    def export_to_csv(self, request, queryset):
+        return export_to_csv_action(
+            self, request, queryset, field_names=self.EXPORT_FIELDS
+        )
+
+    def export_to_excel(self, request, queryset):
+        return export_to_excel_action(
+            self, request, queryset, field_names=self.EXPORT_FIELDS
+        )
+
+    actions = (export_to_csv, export_to_excel)
 
 
 @admin.register(SimpleContentBlock)

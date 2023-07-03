@@ -2,6 +2,7 @@ import os.path
 import time
 from logging import getLogger
 
+import pytesseract
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
@@ -12,6 +13,7 @@ from django.db.models.functions import Round
 from django.db.models.signals import post_save
 from django.urls import reverse
 from django_prometheus_metrics.models import MetricsModelMixin
+from PIL import Image
 
 logger = getLogger(__name__)
 
@@ -438,6 +440,20 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         upload_to=get_storage_path, max_length=255, blank=True, null=True
     )
 
+    def get_ocr_transcript(self):
+        return pytesseract.image_to_string(Image.open(self.storage_image))
+
+    def get_contributor_count(self):
+        transcriptions = Transcription.objects.filter(asset=self)
+        reviewer_ids = (
+            transcriptions.exclude(reviewed_by__isnull=True)
+            .values_list("reviewed_by", flat=True)
+            .distinct()
+        )
+        transcriber_ids = transcriptions.values_list("user", flat=True).distinct()
+        user_ids = list(set(list(reviewer_ids) + list(transcriber_ids)))
+        return len(user_ids)
+
 
 class Tag(MetricsModelMixin("tag"), models.Model):
     TAG_VALIDATOR = RegexValidator(r"^[- _À-ž'\w]{1,50}$")
@@ -497,6 +513,16 @@ class Transcription(MetricsModelMixin("transcription"), models.Model):
     )
 
     text = models.TextField(blank=True)
+
+    # ocr tracking
+    ocr_generated = models.BooleanField(
+        default=False,
+        help_text="Flags transcription as generated directly by OCR",
+    )
+    ocr_originated = models.BooleanField(
+        default=False,
+        help_text="Flags transcription as originated from an OCR transcription",
+    )
 
     class Meta:
         indexes = [

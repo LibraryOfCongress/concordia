@@ -26,7 +26,6 @@ from concordia.models import (
     Transcription,
     UserAssetTagCollection,
     UserProfileActivity,
-    UserRetiredCampaign,
 )
 from concordia.signals.signals import reservation_released
 from concordia.utils import get_anonymous_user
@@ -527,88 +526,6 @@ def delete_elasticsearch_indices():
     call_command("search_index", "-f", action="delete")
 
 
-@celery_app.task
-def populate_user_archive_table():
-    for campaign in Campaign.objects.filter(status=Campaign.Status.COMPLETED):
-        assets = Asset.objects.filter(item__project__campaign=campaign)
-        tag_collections = UserAssetTagCollection.objects.filter(asset__in=assets)
-        user_campaigns = UserRetiredCampaign.objects.filter(campaign=campaign)
-
-        to_update = user_campaigns.distinct()
-        UserRetiredCampaign.objects.bulk_update(
-            [
-                UserRetiredCampaign(
-                    id=user_profile_activity.id,
-                    user_id=user_profile_activity.user.id,
-                    campaign=campaign,
-                    asset_count=assets.filter(
-                        Q(transcription__user_id=user_profile_activity.user.id)
-                        | Q(transcription__reviewed_by=user_profile_activity.user.id)
-                    )
-                    .distinct()
-                    .count(),
-                    asset_tag_count=Tag.objects.filter(
-                        userassettagcollection__in=tag_collections.filter(
-                            user_id=user_profile_activity.user.id
-                        )
-                    )
-                    .distinct()
-                    .count(),
-                    transcribe_count=assets.filter(
-                        transcription__user_id=user_profile_activity.user.id
-                    )
-                    .distinct()
-                    .count(),
-                    review_count=assets.filter(
-                        transcription__reviewed_by=user_profile_activity.user.id
-                    )
-                    .distinct()
-                    .count(),
-                )
-                for user_profile_activity in to_update
-            ],
-            ["asset_count", "asset_tag_count", "transcribe_count", "review_count"],
-        )
-
-        existing_user_campaigns = user_campaigns.values_list(
-            "user_id", flat=True
-        ).distinct()
-        to_create = (
-            User.objects.filter(transcription__asset__item__project__campaign=campaign)
-            .exclude(id__in=existing_user_campaigns)
-            .distinct()
-            .values_list("id", flat=True)
-        )
-        UserRetiredCampaign.objects.bulk_create(
-            [
-                UserRetiredCampaign(
-                    user_id=user_id,
-                    campaign=campaign,
-                    asset_count=assets.filter(
-                        Q(transcription__user_id=user_id)
-                        | Q(transcription__reviewed_by=user_id)
-                    )
-                    .distinct()
-                    .count(),
-                    asset_tag_count=Tag.objects.filter(
-                        userassettagcollection__in=tag_collections.filter(
-                            user_id=user_id
-                        )
-                    )
-                    .distinct()
-                    .count(),
-                    transcribe_count=assets.filter(transcription__user_id=user_id)
-                    .distinct()
-                    .count(),
-                    review_count=assets.filter(transcription__reviewed_by=user_id)
-                    .distinct()
-                    .count(),
-                )
-                for user_id in to_create
-            ]
-        )
-
-
 def _populate_activity_table(campaigns):
     anonymous_user = get_anonymous_user()
     for campaign in campaigns:
@@ -695,11 +612,6 @@ def populate_completed_campaign_counts():
 def populate_active_campaign_counts():
     active_campaigns = Campaign.objects.filter(status=Campaign.Status.ACTIVE)
     _populate_activity_table(active_campaigns)
-
-
-@celery_app.task
-def reset_user_activity_table():
-    UserProfileActivity.objects.all().delete()
 
 
 @celery_app.task(ignore_result=True)
