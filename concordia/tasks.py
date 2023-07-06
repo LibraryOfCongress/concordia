@@ -96,6 +96,24 @@ def delete_old_tombstoned_reservations():
         reservation.delete()
 
 
+def _daily_active_users():
+    ONE_DAY_AGO = timezone.now() - datetime.timedelta(days=1)
+    transcriptions = Transcription.objects.filter(
+        Q(accepted__gte=ONE_DAY_AGO)
+        | Q(created_on__gte=ONE_DAY_AGO)
+        | Q(rejected__gte=ONE_DAY_AGO)
+        | Q(submitted__gte=ONE_DAY_AGO)
+        | Q(updated_on__gte=ONE_DAY_AGO)
+    )
+    transcriber_ids = transcriptions.values_list("user", flat=True).distinct()
+    reviewer_ids = (
+        transcriptions.exclude(reviewed_by__isnull=True)
+        .values_list("reviewed_by", flat=True)
+        .distinct()
+    )
+    return len(set(list(reviewer_ids) + list(transcriber_ids)))
+
+
 @celery_app.task
 def site_report():
     report = {
@@ -159,6 +177,7 @@ def site_report():
     site_report.campaigns_unpublished = campaigns_unpublished
     site_report.users_registered = users_registered
     site_report.users_activated = users_activated
+    site_report.daily_active_users = _daily_active_users()
     site_report.save()
 
     for campaign in Campaign.objects.exclude(status=Campaign.Status.RETIRED):

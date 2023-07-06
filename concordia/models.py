@@ -730,6 +730,7 @@ class SiteReport(models.Model):
     users_registered = models.IntegerField(blank=True, null=True)
     users_activated = models.IntegerField(blank=True, null=True)
     registered_contributors = models.IntegerField(blank=True, null=True)
+    daily_active_users = models.IntegerField(blank=True, null=True)
 
     class Meta:
         ordering = ("-created_on",)
@@ -761,6 +762,7 @@ class SiteReport(models.Model):
         "users_registered",
         "users_activated",
         "registered_contributors",
+        "daily_active_users",
     ]
 
 
