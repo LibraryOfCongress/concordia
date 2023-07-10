@@ -48,8 +48,8 @@ ACCEPTED_P1_URL_PREFIXES = [
 
 
 def requests_retry_session(
-    retries=10,
-    backoff_factor=5,
+    retries=3,
+    backoff_factor=60 * 60,
     status_forcelist=(429, 500, 502, 503, 504),
     session=None,
 ):
@@ -316,10 +316,10 @@ def import_collection(self, import_job):
 @app.task(
     bind=True,
     autoretry_for=(HTTPError,),
-    retry_backoff=60,
+    retry_backoff=60 * 60,
     retry_backoff_max=8 * 60 * 60,
     retry_jitter=True,
-    retry_kwargs={"max_retries": 12},
+    retry_kwargs={"max_retries": 3},
     rate_limit=1,
 )
 def redownload_image_task(self, asset_pk):
@@ -337,10 +337,10 @@ def redownload_image_task(self, asset_pk):
 @app.task(
     bind=True,
     autoretry_for=(HTTPError,),
-    retry_backoff=60,
+    retry_backoff=60 * 60,
     retry_backoff_max=8 * 60 * 60,
     retry_jitter=True,
-    retry_kwargs={"max_retries": 12},
+    retry_kwargs={"max_retries": 3},
     rate_limit=2,
 )
 def create_item_import_task(self, import_job_pk, item_url):
@@ -504,10 +504,10 @@ def get_asset_urls_from_item_resources(resources):
 @app.task(
     bind=True,
     autoretry_for=(HTTPError,),
-    retry_backoff=60,
+    retry_backoff=60 * 60,
     retry_backoff_max=8 * 60 * 60,
     retry_jitter=True,
-    retry_kwargs={"max_retries": 12},
+    retry_kwargs={"max_retries": 3},
     rate_limit=1,
 )
 def download_asset_task(self, import_asset_pk):
