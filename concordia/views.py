@@ -143,7 +143,7 @@ def healthz(request):
 
 
 @default_cache_control
-def simple_page(request, path=None):
+def simple_page(request, path=None, language_code="en"):
     """
     Basic content management using Markdown managed in the SimplePage model
 
@@ -168,7 +168,12 @@ def simple_page(request, path=None):
         )
     breadcrumbs.append((request.path, page.title))
 
-    ctx = {"body": html, "title": page.title, "breadcrumbs": breadcrumbs}
+    ctx = {
+        "body": html,
+        "language_code": language_code,
+        "title": page.title,
+        "breadcrumbs": breadcrumbs,
+    }
 
     resp = render(request, "static-page.html", ctx)
     resp["Created"] = http_date(page.created_on.timestamp())
