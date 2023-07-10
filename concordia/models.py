@@ -723,6 +723,7 @@ class SiteReport(models.Model):
     projects_unpublished = models.IntegerField(blank=True, null=True)
     anonymous_transcriptions = models.IntegerField(blank=True, null=True)
     transcriptions_saved = models.IntegerField(blank=True, null=True)
+    review_actions = models.IntegerField(blank=True, null=True)
     distinct_tags = models.IntegerField(blank=True, null=True)
     tag_uses = models.IntegerField(blank=True, null=True)
     campaigns_published = models.IntegerField(blank=True, null=True)
@@ -754,6 +755,7 @@ class SiteReport(models.Model):
         "projects_unpublished",
         "anonymous_transcriptions",
         "transcriptions_saved",
+        "review_actions",
         "distinct_tags",
         "tag_uses",
         "campaigns_published",

@@ -376,7 +376,7 @@
                             {% if transcription_status == 'not_started' %}
                                 Transcribe this page.
                             {% else %}
-                                <h2>Registered Contributors: {{ registered_contributors }}</h2>
+                                <h2>Registered Contributors: <span class="font-weight-normal">{{ registered_contributors }}</span></h2>
                                 {% if transcription_status == 'in_progress' %}
                                     Someone started this transcription. Can you finish it?
                                 {% elif transcription_status == 'submitted' %}
