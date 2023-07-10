@@ -8,7 +8,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.management import call_command
 from django.db import transaction
-from django.db.models import Count, F, Q
+from django.db.models import Count, F, Q, Sum
 from django.utils import timezone
 from more_itertools.more import chunked
 
@@ -114,6 +114,20 @@ def _daily_active_users():
     return len(set(list(reviewer_ids) + list(transcriber_ids)))
 
 
+def _get_review_actions(campaign=None, topic=None):
+    transcriptions = Transcription.objects.all()
+    if campaign is not None:
+        if campaign.status == Campaign.Status.RETIRED:
+            user_profile_activity = UserProfileActivity.objects.filter(
+                campaign=campaign
+            ).aggregate(Sum("review_count"))
+            return user_profile_activity["review_count__sum"]
+        transcriptions = transcriptions.filter(asset__item__project__campaign=campaign)
+    if topic is not None:
+        transcriptions = transcriptions.filter(asset__item__project__topics=topic)
+    return transcriptions.exclude(accepted__isnull=True, rejected__isnull=True).count()
+
+
 @celery_app.task
 def site_report():
     report = {
@@ -171,6 +185,7 @@ def site_report():
     site_report.projects_unpublished = projects_unpublished
     site_report.anonymous_transcriptions = anonymous_transcriptions
     site_report.transcriptions_saved = transcriptions_saved
+    site_report.review_actions = _get_review_actions()
     site_report.distinct_tags = distinct_tag_count
     site_report.tag_uses = tag_count
     site_report.campaigns_published = campaigns_published
@@ -257,6 +272,7 @@ def topic_report(topic):
     site_report.projects_unpublished = projects_unpublished
     site_report.anonymous_transcriptions = anonymous_transcriptions
     site_report.transcriptions_saved = transcriptions_saved
+    site_report.review_actions = _get_review_actions(topic=topic)
     site_report.distinct_tags = distinct_tag_count
     site_report.tag_uses = tag_count
     site_report.save()
@@ -350,6 +366,7 @@ def campaign_report(campaign):
     site_report.projects_unpublished = projects_unpublished
     site_report.anonymous_transcriptions = anonymous_transcriptions
     site_report.transcriptions_saved = transcriptions_saved
+    site_report.review_actions = _get_review_actions(campaign=campaign)
     site_report.distinct_tags = distinct_tag_count
     site_report.tag_uses = tag_count
     site_report.registered_contributors = registered_contributor_count
@@ -377,6 +394,7 @@ def retired_total_report():
         "projects_unpublished",
         "anonymous_transcriptions",
         "transcriptions_saved",
+        "review_actions",
         "distinct_tags",
         "tag_uses",
         "registered_contributors",

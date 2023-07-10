@@ -723,6 +723,7 @@ class SiteReport(models.Model):
     projects_unpublished = models.IntegerField(blank=True, null=True)
     anonymous_transcriptions = models.IntegerField(blank=True, null=True)
     transcriptions_saved = models.IntegerField(blank=True, null=True)
+    review_actions = models.IntegerField(blank=True, null=True)
     distinct_tags = models.IntegerField(blank=True, null=True)
     tag_uses = models.IntegerField(blank=True, null=True)
     campaigns_published = models.IntegerField(blank=True, null=True)
@@ -755,6 +756,7 @@ class SiteReport(models.Model):
         "projects_unpublished",
         "anonymous_transcriptions",
         "transcriptions_saved",
+        "review_actions",
         "distinct_tags",
         "tag_uses",
         "campaigns_published",
@@ -764,35 +766,6 @@ class SiteReport(models.Model):
         "registered_contributors",
         "daily_active_users",
     ]
-
-
-class UserRetiredCampaign(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="User Id")
-    campaign = models.ForeignKey(
-        Campaign, on_delete=models.CASCADE, verbose_name="Campaign Id"
-    )
-    asset_count = models.IntegerField(blank=True, null=True)
-    asset_tag_count = models.IntegerField(blank=True, null=True)
-    transcribe_count = models.IntegerField(
-        blank=True, null=True, verbose_name="transcription save/submit count"
-    )
-    review_count = models.IntegerField(
-        blank=True, null=True, verbose_name="transcription review count"
-    )
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["user", "campaign"], name="user_profile_activity"
-            )
-        ]
-        verbose_name = "user completed campaign count"
-
-    def __str__(self):
-        return f"{self.user} - {self.campaign}"
-
-    def total_actions(self):
-        return self.transcribe_count + self.review_count
 
 
 class UserProfileActivity(models.Model):
