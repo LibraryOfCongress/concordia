@@ -14,11 +14,11 @@
 {% endblock head_content %}
 
 {% block breadcrumbs %}
-    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'campaign-topic-list' %}">Campaigns</a></li>
+    <li class="breadcrumb-item"><a class="primary-text text-truncate" href="{% url 'campaign-topic-list' %}">Campaigns</a></li>
     <li class="breadcrumb-item">
-        <a class="primary-text" href="{% url 'transcriptions:campaign-detail' campaign.slug %}?{{ sublevel_querystring }}" title="{{ campaign.title }}">{{ campaign.title }}</a>
+        <a class="primary-text text-truncate" href="{% url 'transcriptions:campaign-detail' campaign.slug %}?{{ sublevel_querystring }}" title="{{ campaign.title }}">{{ campaign.title }}</a>
     </li>
-    <li class="breadcrumb-item active" aria-current="page" title="{{ project.title }}">{{ project.title }}</li>
+    <li class="breadcrumb-item active" aria-current="page" title="{{ project.title }}"><span class="text-truncate">{{ project.title }}</span></li>
 {% endblock breadcrumbs %}
 
 {% block main_content %}
