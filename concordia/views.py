@@ -143,7 +143,7 @@ def healthz(request):
 
 
 @default_cache_control
-def simple_page(request, path=None, language_code="en"):
+def simple_page(request, path=None):
     """
     Basic content management using Markdown managed in the SimplePage model
 
@@ -167,6 +167,10 @@ def simple_page(request, path=None, language_code="en"):
             ("/%s/" % "/".join(path_components[0:i]), segment.replace("-", " ").title())
         )
     breadcrumbs.append((request.path, page.title))
+
+    language_code = "en"
+    if request.path.replace("/", "").endswith("-esp"):
+        language_code = "es"
 
     ctx = {
         "body": html,
