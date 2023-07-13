@@ -6,6 +6,7 @@
 
 {% load concordia_media_tags %}
 {% load concordia_sharing_tags %}
+{% load concordia_text_tags %}
 {% load concordia_simple_content_blocks %}
 
 {% block title %}
@@ -22,10 +23,10 @@
 {% endblock head_content %}
 
 {% block breadcrumbs %}
-    <li class="breadcrumb-item"><a class="primary-text text-truncate" href="{% url 'transcriptions:campaign-detail' slug=campaign.slug %}" title="{{ campaign.title }}">{{ campaign.title }}</a></li>
-    <li class="breadcrumb-item"><a class="primary-text text-truncate" href="{% url 'transcriptions:project-detail' campaign_slug=campaign.slug slug=project.slug %}" title="{{ project.title }}">{{ project.title }}</a></li>
-    <li class="breadcrumb-item"><a class="primary-text text-truncate" href="{% url 'transcriptions:item-detail' campaign_slug=campaign.slug project_slug=project.slug item_id=item.item_id %}" title="{{ item.title }}">{{ item.title }}</a></li>
-    <li class="breadcrumb-item active" title="{{ asset.title }}"><span class="text-truncate">{{ asset.title }}</span></li>
+    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:campaign-detail' slug=campaign.slug %}" title="{{ campaign.title }}">{{ campaign.title|truncate_left }}</a></li>
+    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:project-detail' campaign_slug=campaign.slug slug=project.slug %}" title="{{ project.title }}">{{ project.title|truncate_left }}</a></li>
+    <li class="breadcrumb-item"><a class="primary-text" href="{% url 'transcriptions:item-detail' campaign_slug=campaign.slug project_slug=project.slug item_id=item.item_id %}" title="{{ item.title }}">{{ item.title|truncate_left }}</a></li>
+    <li class="breadcrumb-item active" title="{{ asset.title }}">{{ asset.title|truncate_left }}</li>
 {% endblock breadcrumbs %}
 
 {% block extra_body_classes %}d-flex flex-column{% endblock %}
