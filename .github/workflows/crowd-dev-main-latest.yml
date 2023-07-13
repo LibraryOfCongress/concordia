@@ -1,4 +1,4 @@
-name: 'Build'
+name: 'Deploy'
 
 on:
     workflow_dispatch:
@@ -15,8 +15,8 @@ permissions:
     contents: read
 
 jobs:
-    build:
-        name: Build
+    deploy:
+        name: Deploy to Dev
         runs-on: ubuntu-latest
 
         steps:
@@ -40,9 +40,6 @@ jobs:
                   python-version: '3.10'
                   # Optional - x64 or x86 architecture, defaults to x64
                   architecture: 'x64'
-
-            - name: Display Python version
-              run: python -c "import sys; print(sys.version)"
 
             - name: Initialize venv install Dependencies
               id: python-build
