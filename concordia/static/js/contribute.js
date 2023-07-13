@@ -470,12 +470,23 @@ function setupPage() {
                 }).length;
 
             if (!dupeCount) {
-                var $newTag = $tagEditor
-                    .find('#tag-template')
-                    .clone()
-                    .removeAttr('id')
-                    .removeAttr('hidden');
-                $newTag.find('input').removeAttr('disabled').val(value);
+                var $newTag = $(
+                    '\
+                            <li class="btn btn-outline-dark btn-sm"> \
+                                <label class="m-0"> \
+                                    <input type="hidden" name="tags" value="' +
+                        value +
+                        '" /> \
+                                </label> \
+                                <input type="hidden" name="tags" value="' +
+                        value +
+                        '" /> \
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Remove previous tag"> \
+                                    <span aria-hidden="true" class="fas fa-times"></span> \
+                                </button> \
+                            </li> \
+                '
+                );
                 $newTag.find('label').append(document.createTextNode(value));
                 $currentTagList.append($newTag);
             }
