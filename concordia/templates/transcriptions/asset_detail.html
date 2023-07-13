@@ -291,12 +291,12 @@
                         </div>
                         <div id="invert-filter" class="tab-pane pt-2" role="tabpanel" style="background-color: white;">
                             <form id="invert-form" onsubmit="return false;">
-                                <label class="ml-2 align-middle" for="invert">Off</label>
+                                <label class="ml-2 align-middle">Off</label>
                                 <div class="custom-control custom-switch custom-control-inline ml-1 mr-2">
                                     <input type="checkbox" id="invert" name="invert" class="custom-control-input" role="switch" />
-                                    <label class="custom-control-label" for="invert" />
+                                    <label class="custom-control-label" for="invert"><span style="display: none;">Invert</span></label>
                                 </div>
-                                <label class="align-middle" for="invert">On</label>
+                                <label class="align-middle">On</label>
                             </form>
                         </div>
                         <div id="threshold-filter" class="tab-pane pt-1 pl-3" role="tabpanel">
@@ -477,15 +477,6 @@
                         </div>
 
                         <ul id="current-tags" class="d-flex flex-wrap list-unstyled mb-0 d-print-block">
-                            <li id="tag-template" class="btn btn-outline-dark btn-sm" hidden>
-                                <label class="m-0">
-                                    <input type="hidden" name="tags" value="" disabled />
-                                </label>
-                                <input type="hidden" name="tags" value="" disabled />
-                                <button type="button" class="close" data-dismiss="alert" aria-label="Remove previous tag">
-                                    <span aria-hidden="true" class="fas fa-times"></span>
-                                </button>
-                            </li>
                             {% for tag in tags %}
                                 <li class="btn btn-outline-dark btn-sm">
                                     <label class="m-0">
