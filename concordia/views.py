@@ -258,7 +258,7 @@ def registration_rate(self, group, request):
 class ConcordiaRegistrationView(RatelimitMixin, RegistrationView):
     form_class = UserRegistrationForm
     ratelimit_group = "registration"
-    ratelimit_key = "ip"
+    ratelimit_key = "header:cf-connecting-ip"
     ratelimit_rate = registration_rate
     ratelimit_method = "POST"
     ratelimit_block = settings.RATELIMIT_BLOCK
@@ -1646,7 +1646,9 @@ def reserve_rate(g, r):
     return None if r.user.is_authenticated else "100/m"
 
 
-@ratelimit(key="ip", rate=reserve_rate, block=settings.RATELIMIT_BLOCK)
+@ratelimit(
+    key="header:cf-connecting-ip", rate=reserve_rate, block=settings.RATELIMIT_BLOCK
+)
 @require_POST
 @never_cache
 def reserve_asset(request, *, asset_pk):

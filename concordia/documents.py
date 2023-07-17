@@ -60,6 +60,7 @@ class SiteReportDocument(Document):
             "campaigns_unpublished",
             "users_registered",
             "users_activated",
+            "daily_active_users",
         ]
 
 
