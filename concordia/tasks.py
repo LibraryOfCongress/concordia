@@ -96,15 +96,19 @@ def delete_old_tombstoned_reservations():
         reservation.delete()
 
 
-def _daily_active_users():
+def _recent_transcriptions():
     ONE_DAY_AGO = timezone.now() - datetime.timedelta(days=1)
-    transcriptions = Transcription.objects.filter(
+    return Transcription.objects.filter(
         Q(accepted__gte=ONE_DAY_AGO)
         | Q(created_on__gte=ONE_DAY_AGO)
         | Q(rejected__gte=ONE_DAY_AGO)
         | Q(submitted__gte=ONE_DAY_AGO)
         | Q(updated_on__gte=ONE_DAY_AGO)
     )
+
+
+def _daily_active_users():
+    transcriptions = _recent_transcriptions()
     transcriber_ids = transcriptions.values_list("user", flat=True).distinct()
     reviewer_ids = (
         transcriptions.exclude(reviewed_by__isnull=True)
@@ -115,7 +119,7 @@ def _daily_active_users():
 
 
 def _get_review_actions(campaign=None, topic=None):
-    transcriptions = Transcription.objects.all()
+    transcriptions = _recent_transcriptions()
     if campaign is not None:
         if campaign.status == Campaign.Status.RETIRED:
             user_profile_activity = UserProfileActivity.objects.filter(
@@ -185,7 +189,7 @@ def site_report():
     site_report.projects_unpublished = projects_unpublished
     site_report.anonymous_transcriptions = anonymous_transcriptions
     site_report.transcriptions_saved = transcriptions_saved
-    site_report.review_actions = _get_review_actions()
+    site_report.daily_review_actions = _get_review_actions()
     site_report.distinct_tags = distinct_tag_count
     site_report.tag_uses = tag_count
     site_report.campaigns_published = campaigns_published
@@ -272,7 +276,7 @@ def topic_report(topic):
     site_report.projects_unpublished = projects_unpublished
     site_report.anonymous_transcriptions = anonymous_transcriptions
     site_report.transcriptions_saved = transcriptions_saved
-    site_report.review_actions = _get_review_actions(topic=topic)
+    site_report.daily_review_actions = _get_review_actions(topic=topic)
     site_report.distinct_tags = distinct_tag_count
     site_report.tag_uses = tag_count
     site_report.save()
@@ -366,7 +370,7 @@ def campaign_report(campaign):
     site_report.projects_unpublished = projects_unpublished
     site_report.anonymous_transcriptions = anonymous_transcriptions
     site_report.transcriptions_saved = transcriptions_saved
-    site_report.review_actions = _get_review_actions(campaign=campaign)
+    site_report.daily_review_actions = _get_review_actions(campaign=campaign)
     site_report.distinct_tags = distinct_tag_count
     site_report.tag_uses = tag_count
     site_report.registered_contributors = registered_contributor_count
@@ -394,7 +398,7 @@ def retired_total_report():
         "projects_unpublished",
         "anonymous_transcriptions",
         "transcriptions_saved",
-        "review_actions",
+        "daily_review_actions",
         "distinct_tags",
         "tag_uses",
         "registered_contributors",
