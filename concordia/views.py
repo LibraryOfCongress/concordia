@@ -168,7 +168,16 @@ def simple_page(request, path=None):
         )
     breadcrumbs.append((request.path, page.title))
 
-    ctx = {"body": html, "title": page.title, "breadcrumbs": breadcrumbs}
+    language_code = "en"
+    if request.path.replace("/", "").endswith("-esp"):
+        language_code = "es"
+
+    ctx = {
+        "body": html,
+        "language_code": language_code,
+        "title": page.title,
+        "breadcrumbs": breadcrumbs,
+    }
 
     resp = render(request, "static-page.html", ctx)
     resp["Created"] = http_date(page.created_on.timestamp())
