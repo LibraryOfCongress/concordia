@@ -25,7 +25,7 @@ class SiteReportTestCase(CreateTestUsers, TestCase):
 
     def test_campaign_report(self):
         campaign_report(self.campaign)
-        self.assertEqual(SiteReport.objects.first().review_actions, 2)
+        self.assertEqual(SiteReport.objects.first().daily_review_actions, 2)
 
     def test_get_review_actions(self):
         self.assertEqual(_get_review_actions(campaign=self.campaign), 2)
