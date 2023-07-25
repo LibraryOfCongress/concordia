@@ -87,8 +87,8 @@
                 </div>
             </nav>
         </div>
-        <div id="contribute-container" class="row d-flex flex-nowrap flex-grow-1 d-print-block border">
-            <div id="viewer-column" class="pl-0 d-flex flex-column align-items-stretch bg-dark d-print-block">
+        <div id="contribute-container" class="row d-flex flex-grow-1 d-print-block border">
+            <div id="viewer-column" class="pl-0 d-flex align-items-stretch bg-dark d-print-block w-100">
                 <div id="viewer-controls" class="m-1 text-center d-print-none">
                     <div class="d-inline-flex justify-content-between">
                         <div class="d-flex btn-group m-1">
@@ -351,8 +351,8 @@
                 <div id="asset-image" class="h-100 bg-dark d-print-none"></div>
             </div>
 
-            <div id="editor-column" class="d-flex flex-column flex-nowrap justify-content-between p-3 d-print-block">
-                <div class="flex-grow-1 d-flex flex-column d-print-block">
+            <div id="editor-column" class="d-flex justify-content-between p-3 d-print-block w-100">
+                <div class="flex-grow-1 d-flex d-print-block">
                     <div class="tx-status-display">
                         <h2 class="tx-submitted" {% if transcription_status != 'submitted' %}hidden{% endif %}>
                             <span class="fas fa-list"></span>
@@ -874,20 +874,10 @@
     </script>
 
     <script>
-        Split(["#viewer-column", "#editor-column"], {
-            sizes: [50, 50],
+        var pageSplit = Split(["#viewer-column", "#editor-column"], {
             minSize: 300,
             gutterSize: 8,
-            elementStyle: function(dimension, size, gutterSize) {
-                return {
-                    "flex-basis": "calc(" + size + "% - " + gutterSize + "px)"
-                };
-            },
-            gutterStyle: function(dimension, gutterSize) {
-                return {
-                    "flex-basis": gutterSize + "px"
-                };
-            }
+            direction: 'vertical',
         });
     </script>
 
