@@ -261,16 +261,19 @@
                                             step="0.01"
                                             value="1.00"
                                         />
+                                        <label class="visually-hidden" for="gamma">Gamma</label>
                                     </div>
                                     <div class="col p-0">
                                         <div class="row m-0">
                                             <button type="button" class="arrow-button" onclick="stepUp('gamma')">
                                                 <span class="fas fa-chevron-up" />
+                                                <span class="visually-hidden">Increase</span>
                                             </button>
                                         </div>
                                         <div class="row m-0">
                                             <button type="button" class="arrow-button" onclick="stepDown('gamma')">
                                                 <span class="fas fa-chevron-down" />
+                                                <span class="visually-hidden">Decrease</span>
                                             </button>
                                         </div>
                                     </div>
@@ -285,6 +288,7 @@
                                     value="1.00"
                                     class="filter-slider flex-grow-1"
                                 />
+                                <label class="visually-hidden" for="gamma-range">Gamma</label>
                                 <input type="reset" class="btn btn-link underline-link font-weight-bold" value="Reset filter" />
                             </form>
                         </div>
@@ -293,7 +297,7 @@
                                 <label class="ml-2 align-middle">Off</label>
                                 <div class="custom-control custom-switch custom-control-inline ml-1 mr-2">
                                     <input type="checkbox" id="invert" name="invert" class="custom-control-input" role="switch" />
-                                    <label class="custom-control-label" for="invert"><span style="display: none;">Invert</span></label>
+                                    <label class="custom-control-label" for="invert"><span class="visually-hidden">Invert</span></label>
                                 </div>
                                 <label class="align-middle">On</label>
                             </form>
@@ -311,16 +315,19 @@
                                             step="1"
                                             value="0"
                                         />
+                                        <label class="visually-hidden" for="threshold">Threshold</label>
                                     </div>
                                     <div class="col p-0">
                                         <div class="row m-0">
                                             <button type="button" class="arrow-button" onclick="stepUp('threshold')">
                                                 <span class="fas fa-chevron-up" />
+                                                <span class="visually-hidden">Increase</span>
                                             </button>
                                         </div>
                                         <div class="row m-0">
                                             <button type="button" class="arrow-button" onclick="stepDown('threshold')">
                                                 <span class="fas fa-chevron-down" />
+                                                <span class="visually-hidden">Decrease</span>
                                             </button>
                                         </div>
                                     </div>
@@ -335,6 +342,7 @@
                                     value="0"
                                     class="filter-slider flex-grow-1"
                                 />
+                                <label class="visually-hidden" for="threshold-range">Threshold</label>
                                 <input type="reset" class="btn btn-link underline-link font-weight-bold" value="Reset filter" />
                             </form>
                         </div>
