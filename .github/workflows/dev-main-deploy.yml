@@ -66,12 +66,6 @@ jobs:
                   aws-region: ${{ env.AWS_REGION }}
                   role-session-name: github_to_aws_deploy
 
-            # Temporary test - hello from AWS: WhoAmI
-            - name: Sts GetCallerIdentity
-              run: |
-                  aws sts get-caller-identity
-                  echo "version number: " ${{ env.version_number }}
-
             - name: Login to Amazon ECR
               id: login-ecr
               uses: aws-actions/amazon-ecr-login@v1
@@ -87,17 +81,17 @@ jobs:
                   docker push $REGISTRY/concordia:$version_number
                   docker push $REGISTRY/concordia:$IMAGE_TAG
 
-            #     docker build -t concordia/importer --file importer/Dockerfile .
-            #     docker tag concordia/importer:latest $REGISTRY/concordia/importer:${VERSION_NUMBER}
-            #     docker tag concordia/importer:latest $REGISTRY/concordia/importer:${TAG}
-            #     docker push $REGISTRY/concordia/importer:${VERSION_NUMBER}
-            #     docker push $REGISTRY/concordia/importer:${TAG}
+                  docker build -t concordia/importer --file importer/Dockerfile .
+                  docker tag concordia/importer:latest $REGISTRY/concordia/importer:$version_number
+                  docker tag concordia/importer:latest $REGISTRY/concordia/importer:$IMAGE_TAG
+                  docker push $REGISTRY/concordia/importer:$version_number
+                  docker push $REGISTRY/concordia/importer:$IMAGE_TAG
 
-            #     docker build -t concordia/celerybeat --file celerybeat/Dockerfile .
-            #     docker tag concordia/celerybeat:latest $REGISTRY/concordia/celerybeat:${VERSION_NUMBER}
-            #     docker tag concordia/celerybeat:latest $REGISTRY/concordia/celerybeat:${TAG}
-            #     docker push $REGISTRY/concordia/celerybeat:${VERSION_NUMBER}
-            #     docker push $REGISTRY/concordia/celerybeat:${TAG}
+                  docker build -t concordia/celerybeat --file celerybeat/Dockerfile .
+                  docker tag concordia/celerybeat:latest $REGISTRY/concordia/celerybeat:$version_number
+                  docker tag concordia/celerybeat:latest $REGISTRY/concordia/celerybeat:$IMAGE_TAG
+                  docker push $REGISTRY/concordia/celerybeat:$version_number
+                  docker push $REGISTRY/concordia/celerybeat:$IMAGE_TAG
 
             #     TARGET_SERVICE="$(aws ecs list-services --cluster crowd-dev | python -c 'import json,sys;serviceInput=json.load(sys.stdin);serviceArns=serviceInput["serviceArns"];print(serviceArns[0])')"
             #     aws ecs update-service --region ${{ env.AWS_REGION }} --force-new-deployment --cluster crowd-dev --service $TARGET_SERVICE
