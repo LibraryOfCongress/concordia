@@ -71,7 +71,7 @@ jobs:
             - name: Sts GetCallerIdentity
               run: |
                   aws sts get-caller-identity
-                  echo "{{ env.VERSION_NUMBER }}"
+                  echo "{{ env.version_number }}"
 
             # - name: Login to Amazon ECR
             #   id: login-ecr
