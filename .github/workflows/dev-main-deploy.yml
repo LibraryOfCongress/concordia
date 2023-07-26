@@ -72,20 +72,20 @@ jobs:
                   aws sts get-caller-identity
                   echo "version number: " ${{ env.version_number }}
 
-            # - name: Login to Amazon ECR
-            #   id: login-ecr
-            #   uses: aws-actions/amazon-ecr-login@v1
+            - name: Login to Amazon ECR
+              id: login-ecr
+              uses: aws-actions/amazon-ecr-login@v1
 
-            # - name: Build, tag and push docker images ECR
-            #   env:
-            #     REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-            #     IMAGE_TAG: ${{ github.sha }}
-            #   run: |
-            #     docker build -t concordia .
-            #     docker tag concordia:latest $REGISTRY/concordia:${VERSION_NUMBER}
-            #     docker tag concordia:latest $REGISTRY/concordia:${TAG}
-            #     docker push $REGISTRY/concordia:${VERSION_NUMBER}
-            #     docker push $REGISTRY/concordia:${TAG}
+            - name: Build, tag and push docker images ECR
+              env:
+                  REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+                  IMAGE_TAG: ${{ github.sha }}
+              run: |
+                  docker build -t concordia .
+                  docker tag concordia:latest $REGISTRY/concordia:$version_number
+                  docker tag concordia:latest $REGISTRY/concordia:$IMAGE_TAG
+                  docker push $REGISTRY/concordia:$version_number
+                  docker push $REGISTRY/concordia:$IMAGE_TAG
 
             #     docker build -t concordia/importer --file importer/Dockerfile .
             #     docker tag concordia/importer:latest $REGISTRY/concordia/importer:${VERSION_NUMBER}
