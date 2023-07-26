@@ -8,7 +8,7 @@ on:
     #     - cron: "*/15 * * * *"
 
 env:
-    AWS_REGION: 'us-east-1'
+    AWS_REGION: us-east-1
 
 permissions:
     id-token: write
@@ -64,14 +64,13 @@ jobs:
                   aws-access-key-id: ${{ secrets.AWS_ACCCESS_KEY_ID }}
                   aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
                   aws-region: ${{ env.AWS_REGION }}
-                  # role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
                   role-session-name: github_to_aws_deploy
 
             # Temporary test - hello from AWS: WhoAmI
             - name: Sts GetCallerIdentity
               run: |
                   aws sts get-caller-identity
-                  echo "{{ env.version_number }}"
+                  echo "version number: " ${{ env.version_number }}
 
             # - name: Login to Amazon ECR
             #   id: login-ecr
