@@ -206,7 +206,8 @@ class CreateTestUsers(object):
 
         self.client.login(username=self.user.username, password=self.user._password)
 
-    def create_user(self, username, is_active=True, **kwargs):
+    @classmethod
+    def create_user(cls, username, is_active=True, **kwargs):
         if "email" not in kwargs:
             kwargs["email"] = f"{username}@example.com"
 
@@ -220,17 +221,19 @@ class CreateTestUsers(object):
 
         return user
 
-    def create_test_user(self, username, **kwargs):
+    @classmethod
+    def create_test_user(cls, username, **kwargs):
         """
         Creates an activated test User account
         """
-        return self.create_user(username, is_active=True, **kwargs)
+        return cls.create_user(username, is_active=True, **kwargs)
 
-    def create_inactive_user(self, username, **kwargs):
+    @classmethod
+    def create_inactive_user(cls, username, **kwargs):
         """
         Creates an inactive test User account
         """
-        return self.create_user(username, is_active=False, **kwargs)
+        return cls.create_user(username, is_active=False, **kwargs)
 
 
 class CacheControlAssertions(object):
