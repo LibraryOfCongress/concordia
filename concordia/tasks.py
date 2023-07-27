@@ -312,7 +312,7 @@ def campaign_report(campaign):
         Item.objects.published().filter(project__campaign=campaign).count()
     )
     items_unpublished = (
-        Item.objects.published().filter(project__campaign=campaign).count()
+        Item.objects.unpublished().filter(project__campaign=campaign).count()
     )
 
     projects_published = Project.objects.published().filter(campaign=campaign).count()
