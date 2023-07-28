@@ -25,7 +25,7 @@
     <li class="breadcrumb-item"><a class="primary-text text-truncate" href="{% url 'transcriptions:campaign-detail' slug=campaign.slug %}" title="{{ campaign.title }}">{{ campaign.title }}</a></li>
     <li class="breadcrumb-item"><a class="primary-text text-truncate" href="{% url 'transcriptions:project-detail' campaign_slug=campaign.slug slug=project.slug %}" title="{{ project.title }}">{{ project.title }}</a></li>
     <li class="breadcrumb-item"><a class="primary-text text-truncate" href="{% url 'transcriptions:item-detail' campaign_slug=campaign.slug project_slug=project.slug item_id=item.item_id %}" title="{{ item.title }}">{{ item.title }}</a></li>
-    <li class="breadcrumb-item active" title="{{ asset.title }}"><span class="text-truncate">{{ asset.title }}</span></li>
+    <li class="breadcrumb-item active" title="{{ asset.title }}"><span class="text-truncate">{{ asset.title }}</spanclass></li>
 {% endblock breadcrumbs %}
 
 {% block extra_body_classes %}d-flex flex-column{% endblock %}
@@ -215,7 +215,7 @@
                                 <h6>Do I still need to review pages started with OCR?</h6>
                                 <p>Yes! OCR is imperfect. It may not work well for some or all parts of a typed page, but it can be a great starting point. If you started a page with OCR, you should read the text closely before submitting. If you are reviewing a OCR-ed page, you also still need to review.</p>
                                 <h6>Why does <span class="font-italic">By the People</span> have this feature?</h6>
-                                <p>We want to make sure we are using volunteer time effectively. When the Library of Congress digitizes a large group of printed pages, it will usually OCR them. The materials in By the People campaigns are not good candidates for applying OCR at scale, either because they are a mixed collection (containing handwritten and printed materials or they are printed on paper or in typeface that does not produce accurate OCR results. However, OCR can still be a useful starting point for some or all of our typed pages. Use it if it if you like it or skip it if you don’t!</p>
+                                <p>We always want to use volunteer time effectively. When the Library of Congress digitizes a large group of printed pages, it will usually OCR them. The materials in By the People campaigns are not good candidates for applying OCR at scale, either because they are handwritten, a mixed collection (containing handwritten and print materials) or printed but on paper or in a typeface that does not produce accurate OCR results. However, OCR can still be a useful starting point for some typed pages. Use it if it if you like it or skip it if you don’t!</p>
                             </div>
                             <div class="modal-footer justify-content-center">
                                 <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
@@ -261,16 +261,19 @@
                                             step="0.01"
                                             value="1.00"
                                         />
+                                        <label class="visually-hidden" for="gamma">Gamma</label>
                                     </div>
                                     <div class="col p-0">
                                         <div class="row m-0">
                                             <button type="button" class="arrow-button" onclick="stepUp('gamma')">
                                                 <span class="fas fa-chevron-up" />
+                                                <span class="visually-hidden">Increase</span>
                                             </button>
                                         </div>
                                         <div class="row m-0">
                                             <button type="button" class="arrow-button" onclick="stepDown('gamma')">
                                                 <span class="fas fa-chevron-down" />
+                                                <span class="visually-hidden">Decrease</span>
                                             </button>
                                         </div>
                                     </div>
@@ -285,17 +288,18 @@
                                     value="1.00"
                                     class="filter-slider flex-grow-1"
                                 />
+                                <label class="visually-hidden" for="gamma-range">Gamma</label>
                                 <input type="reset" class="btn btn-link underline-link font-weight-bold" value="Reset filter" />
                             </form>
                         </div>
                         <div id="invert-filter" class="tab-pane pt-2" role="tabpanel" style="background-color: white;">
                             <form id="invert-form" onsubmit="return false;">
-                                <label class="ml-2 align-middle" for="invert">Off</label>
+                                <label class="ml-2 align-middle">Off</label>
                                 <div class="custom-control custom-switch custom-control-inline ml-1 mr-2">
                                     <input type="checkbox" id="invert" name="invert" class="custom-control-input" role="switch" />
-                                    <label class="custom-control-label" for="invert" />
+                                    <label class="custom-control-label" for="invert"><span class="visually-hidden">Invert</span></label>
                                 </div>
-                                <label class="align-middle" for="invert">On</label>
+                                <label class="align-middle">On</label>
                             </form>
                         </div>
                         <div id="threshold-filter" class="tab-pane pt-1 pl-3" role="tabpanel">
@@ -311,16 +315,19 @@
                                             step="1"
                                             value="0"
                                         />
+                                        <label class="visually-hidden" for="threshold">Threshold</label>
                                     </div>
                                     <div class="col p-0">
                                         <div class="row m-0">
                                             <button type="button" class="arrow-button" onclick="stepUp('threshold')">
                                                 <span class="fas fa-chevron-up" />
+                                                <span class="visually-hidden">Increase</span>
                                             </button>
                                         </div>
                                         <div class="row m-0">
                                             <button type="button" class="arrow-button" onclick="stepDown('threshold')">
                                                 <span class="fas fa-chevron-down" />
+                                                <span class="visually-hidden">Decrease</span>
                                             </button>
                                         </div>
                                     </div>
@@ -335,6 +342,7 @@
                                     value="0"
                                     class="filter-slider flex-grow-1"
                                 />
+                                <label class="visually-hidden" for="threshold-range">Threshold</label>
                                 <input type="reset" class="btn btn-link underline-link font-weight-bold" value="Reset filter" />
                             </form>
                         </div>
@@ -476,15 +484,6 @@
                         </div>
 
                         <ul id="current-tags" class="d-flex flex-wrap list-unstyled mb-0 d-print-block">
-                            <li id="tag-template" class="btn btn-outline-dark btn-sm" hidden>
-                                <label class="m-0">
-                                    <input type="hidden" name="tags" value="" disabled />
-                                </label>
-                                <input type="hidden" name="tags" value="" disabled />
-                                <button type="button" class="close" data-dismiss="alert" aria-label="Remove previous tag">
-                                    <span aria-hidden="true" class="fas fa-times"></span>
-                                </button>
-                            </li>
                             {% for tag in tags %}
                                 <li class="btn btn-outline-dark btn-sm">
                                     <label class="m-0">

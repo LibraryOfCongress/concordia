@@ -12,7 +12,7 @@ paginator, and page_obj variables defined.
             {% if page_obj.has_previous %}
                 <li class="page-item">
                     <a class="page-link" href="?{% qs_alter request.GET page=page_obj.previous_page_number %}" aria-title="Previous Page">
-                        <span class="fas fa-chevron-left"></span>
+                        <span class="fas fa-chevron-left"><span class="visually-hidden">Previous Page</span></span>
                     </a>
                 </li>
             {% else %}
@@ -83,8 +83,8 @@ paginator, and page_obj variables defined.
 
             {% if page_obj.has_next %}
                 <li class="page-item">
-                    <a class="page-link" href="?{% qs_alter request.GET page=page_obj.next_page_number %}">
-                        <span class="fas fa-chevron-right"></span>
+                    <a class="page-link" href="?{% qs_alter request.GET page=page_obj.next_page_number %}" aria-title="Next Page">
+                        <span class="fas fa-chevron-right"><span class="visually-hidden">Next Page</span></span>
                     </a>
                 </li>
             {% else %}
