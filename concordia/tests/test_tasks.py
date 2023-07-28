@@ -18,6 +18,8 @@ from .utils import (
     create_campaign,
     create_item,
     create_project,
+    create_tag,
+    create_tag_collection,
     create_topic,
     create_transcription,
 )
@@ -46,6 +48,10 @@ class SiteReportTestCase(CreateTestUsers, TestCase):
             reviewed_by=cls.user1,
         )
         cls.topic1 = create_topic(project=cls.project1)
+        cls.tag1 = create_tag()
+        cls.tag_collection1 = create_tag_collection(
+            tag=cls.tag1, asset=cls.asset1, user=cls.user1
+        )
 
         cls.campaign2 = create_campaign(slug="test-campaign-slug-2")
         cls.project2 = create_project(
@@ -55,6 +61,9 @@ class SiteReportTestCase(CreateTestUsers, TestCase):
         cls.asset2 = create_asset(item=cls.item2, slug="test-asset-slug-2")
         cls.topic2 = create_topic(
             project=cls.asset2.item.project, slug="test-topic-slug-2"
+        )
+        cls.tag_collection2 = create_tag_collection(
+            tag=cls.tag1, asset=cls.asset2, user=cls.user1
         )
 
         cls.campaign3 = create_campaign(slug="test-campaign-slug-3")
@@ -142,8 +151,8 @@ class SiteReportTestCase(CreateTestUsers, TestCase):
         self.assertEqual(self.site_report.anonymous_transcriptions, 1)
         self.assertEqual(self.site_report.transcriptions_saved, 2)
         self.assertEqual(self.site_report.daily_review_actions, 2)
-        self.assertEqual(self.site_report.distinct_tags, 0)
-        self.assertEqual(self.site_report.tag_uses, 0)
+        self.assertEqual(self.site_report.distinct_tags, 1)
+        self.assertEqual(self.site_report.tag_uses, 2)
         self.assertEqual(self.site_report.campaigns_published, 4)
         self.assertEqual(self.site_report.campaigns_unpublished, 0)
         self.assertEqual(self.site_report.users_registered, 4)
@@ -184,8 +193,8 @@ class SiteReportTestCase(CreateTestUsers, TestCase):
         self.assertEqual(self.campaign1_report.anonymous_transcriptions, 1)
         self.assertEqual(self.campaign1_report.transcriptions_saved, 2)
         self.assertEqual(self.campaign1_report.daily_review_actions, 2)
-        self.assertEqual(self.campaign1_report.distinct_tags, 0)
-        self.assertEqual(self.campaign1_report.tag_uses, 0)
+        self.assertEqual(self.campaign1_report.distinct_tags, 1)
+        self.assertEqual(self.campaign1_report.tag_uses, 1)
         self.assertEqual(self.campaign1_report.registered_contributors, 2)
 
     def test_topic_report(self):
@@ -203,5 +212,5 @@ class SiteReportTestCase(CreateTestUsers, TestCase):
         self.assertEqual(self.topic1_report.anonymous_transcriptions, 1)
         self.assertEqual(self.topic1_report.transcriptions_saved, 2)
         self.assertEqual(self.topic1_report.daily_review_actions, 2)
-        self.assertEqual(self.topic1_report.distinct_tags, 0)
-        self.assertEqual(self.topic1_report.tag_uses, 0)
+        self.assertEqual(self.topic1_report.distinct_tags, 1)
+        self.assertEqual(self.topic1_report.tag_uses, 1)

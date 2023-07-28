@@ -10,9 +10,11 @@ from concordia.models import (
     Item,
     MediaType,
     Project,
+    Tag,
     Topic,
     Transcription,
     User,
+    UserAssetTagCollection,
 )
 
 
@@ -177,6 +179,30 @@ def create_transcription(*, asset=None, user=None, do_save=True, **kwargs):
     if do_save:
         transcription.save()
     return transcription
+
+
+def create_tag(*, value="tag-value", do_save=True, **kwargs):
+    tag = Tag(value=value, **kwargs)
+    tag.full_clean()
+    if do_save:
+        tag.save()
+    return tag
+
+
+def create_tag_collection(*, tag=None, asset=None, user=None, **kwargs):
+    # This function doesn't use do_save because ManyToMany fields don't
+    # work until the model is saved.
+    if tag is None:
+        tag = create_tag()
+    if asset is None:
+        asset = create_asset()
+    if user is None:
+        user = CreateTestUsers.create_user("tag-user")
+    tag_collection = UserAssetTagCollection(asset=asset, user=user, **kwargs)
+    tag_collection.full_clean()
+    tag_collection.save()
+    tag_collection.tags.add(tag)
+    return tag_collection
 
 
 class JSONAssertMixin(object):
