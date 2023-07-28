@@ -105,7 +105,7 @@ def create_project(
         campaign = create_campaign()
 
     project = Project(
-        campaign=campaign, title=title, slug=slug, published=True, **kwargs
+        campaign=campaign, title=title, slug=slug, published=published, **kwargs
     )
     project.full_clean()
     if do_save:
@@ -131,7 +131,7 @@ def create_item(
         title=title,
         item_id=item_id,
         item_url=item_url,
-        published=True,
+        published=published,
         **kwargs,
     )
     item.full_clean()
