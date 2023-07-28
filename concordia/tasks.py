@@ -351,7 +351,10 @@ def campaign_report(campaign):
         asset__in=campaign_assets
     ).values_list("user_id", "reviewed_by")
     user_ids = {
-        user_id for transcription in asset_transcriptions for user_id in transcription
+        user_id
+        for transcription in asset_transcriptions
+        for user_id in transcription
+        if user_id
     }
     registered_contributor_count = len(user_ids)
 
