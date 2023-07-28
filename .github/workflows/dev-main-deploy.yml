@@ -4,8 +4,6 @@ on:
     workflow_dispatch:
     push:
         branches: [main]
-    # schedule:
-    #     - cron: "*/15 * * * *"
 
 env:
     AWS_REGION: us-east-1
@@ -76,6 +74,7 @@ jobs:
                   IMAGE_TAG: ${{ github.sha }}
                   CLUSTER: ${{ secrets.CLUSTER_DEV }}
               run: |
+                  echo "version number: " ${{ env.version_number }}
                   #   docker build -t concordia .
                   #   docker tag concordia:latest $REGISTRY/concordia:$version_number
                   #   docker tag concordia:latest $REGISTRY/concordia:$IMAGE_TAG
@@ -94,5 +93,5 @@ jobs:
                   #   docker push $REGISTRY/concordia/celerybeat:$version_number
                   #   docker push $REGISTRY/concordia/celerybeat:$IMAGE_TAG
 
-                    TARGET_SERVICE="$(aws ecs list-services --cluster $CLUSTER | python -c 'import json,sys;serviceInput=json.load(sys.stdin);serviceArns=serviceInput["serviceArns"];print(serviceArns[0])')"
-                    aws ecs update-service --region ${{ env.AWS_REGION }} --force-new-deployment --cluster $CLUSTER --service $TARGET_SERVICE
+                  #  TARGET_SERVICE="$(aws ecs list-services --cluster $CLUSTER | python -c 'import json,sys;serviceInput=json.load(sys.stdin);serviceArns=serviceInput["serviceArns"];print(serviceArns[0])')"
+                  #  aws ecs update-service --region ${{ env.AWS_REGION }} --force-new-deployment --cluster $CLUSTER --service $TARGET_SERVICE
