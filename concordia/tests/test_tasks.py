@@ -26,6 +26,8 @@ from .utils import (
 class SiteReportTestCase(CreateTestUsers, TestCase):
     @classmethod
     def setUpTestData(cls):
+        # We use setUpTestData instead of setUp so the database is only set
+        # up once rather than for each individual test in this test case
         cls.user1 = cls.create_user(username="tester1")
         cls.user2 = cls.create_user(username="tester2")
         cls.user3 = cls.create_user(username="tester3")
@@ -49,11 +51,28 @@ class SiteReportTestCase(CreateTestUsers, TestCase):
         cls.project2 = create_project(
             campaign=cls.campaign2, slug="test-project-slug-2"
         )
-        cls.item2 = create_item(project=cls.project2)
+        cls.item2 = create_item(project=cls.project2, item_id="2")
         cls.asset2 = create_asset(item=cls.item2, slug="test-asset-slug-2")
         cls.topic2 = create_topic(
             project=cls.asset2.item.project, slug="test-topic-slug-2"
         )
+
+        cls.campaign3 = create_campaign(slug="test-campaign-slug-3")
+        cls.project3 = create_project(
+            campaign=cls.campaign3, slug="test-project-slug-3"
+        )
+        cls.item3 = create_item(project=cls.project3, item_id="3")
+        cls.asset3 = create_asset(item=cls.item3, slug="test-asset-slug-3")
+        cls.asset4 = create_asset(
+            item=cls.item3, slug="test-asset-slug-4", published=False
+        )
+        cls.item4 = create_item(project=cls.project3, item_id="4", published=False)
+        cls.asset5 = create_asset(
+            item=cls.item4, slug="test-asset-slug-5", published=False
+        )
+
+        cls.project3.topics.add(cls.topic1)
+        cls.project3.topics.add(cls.topic2)
 
         cls.retired_campaign = create_campaign(slug="retired-campaign-slug")
         cls.retired_project = create_project(
@@ -109,23 +128,23 @@ class SiteReportTestCase(CreateTestUsers, TestCase):
         self.assertEqual(_get_review_actions(campaign=self.campaign1), 2)
 
     def test_site_report(self):
-        self.assertEqual(self.site_report.assets_total, 2)
-        self.assertEqual(self.site_report.assets_published, 2)
-        self.assertEqual(self.site_report.assets_not_started, 1)
+        self.assertEqual(self.site_report.assets_total, 5)
+        self.assertEqual(self.site_report.assets_published, 3)
+        self.assertEqual(self.site_report.assets_not_started, 4)
         self.assertEqual(self.site_report.assets_in_progress, 1)
         self.assertEqual(self.site_report.assets_waiting_review, 0)
         self.assertEqual(self.site_report.assets_completed, 0)
-        self.assertEqual(self.site_report.assets_unpublished, 0)
-        self.assertEqual(self.site_report.items_published, 2)
-        self.assertEqual(self.site_report.items_unpublished, 0)
-        self.assertEqual(self.site_report.projects_published, 2)
+        self.assertEqual(self.site_report.assets_unpublished, 2)
+        self.assertEqual(self.site_report.items_published, 3)
+        self.assertEqual(self.site_report.items_unpublished, 1)
+        self.assertEqual(self.site_report.projects_published, 3)
         self.assertEqual(self.site_report.projects_unpublished, 0)
         self.assertEqual(self.site_report.anonymous_transcriptions, 1)
         self.assertEqual(self.site_report.transcriptions_saved, 2)
         self.assertEqual(self.site_report.daily_review_actions, 2)
         self.assertEqual(self.site_report.distinct_tags, 0)
         self.assertEqual(self.site_report.tag_uses, 0)
-        self.assertEqual(self.site_report.campaigns_published, 3)
+        self.assertEqual(self.site_report.campaigns_published, 4)
         self.assertEqual(self.site_report.campaigns_unpublished, 0)
         self.assertEqual(self.site_report.users_registered, 4)
         self.assertEqual(self.site_report.users_activated, 4)
@@ -170,16 +189,16 @@ class SiteReportTestCase(CreateTestUsers, TestCase):
         self.assertEqual(self.campaign1_report.registered_contributors, 2)
 
     def test_topic_report(self):
-        self.assertEqual(self.topic1_report.assets_total, 1)
-        self.assertEqual(self.topic1_report.assets_published, 1)
-        self.assertEqual(self.topic1_report.assets_not_started, 0)
+        self.assertEqual(self.topic1_report.assets_total, 4)
+        self.assertEqual(self.topic1_report.assets_published, 2)
+        self.assertEqual(self.topic1_report.assets_not_started, 3)
         self.assertEqual(self.topic1_report.assets_in_progress, 1)
         self.assertEqual(self.topic1_report.assets_waiting_review, 0)
         self.assertEqual(self.topic1_report.assets_completed, 0)
-        self.assertEqual(self.topic1_report.assets_unpublished, 0)
-        self.assertEqual(self.topic1_report.items_published, 1)
-        self.assertEqual(self.topic1_report.items_unpublished, 0)
-        self.assertEqual(self.topic1_report.projects_published, 1)
+        self.assertEqual(self.topic1_report.assets_unpublished, 2)
+        self.assertEqual(self.topic1_report.items_published, 2)
+        self.assertEqual(self.topic1_report.items_unpublished, 1)
+        self.assertEqual(self.topic1_report.projects_published, 2)
         self.assertEqual(self.topic1_report.projects_unpublished, 0)
         self.assertEqual(self.topic1_report.anonymous_transcriptions, 1)
         self.assertEqual(self.topic1_report.transcriptions_saved, 2)
