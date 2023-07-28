@@ -60,7 +60,6 @@ class SiteReportTestCase(CreateTestUsers, TestCase):
             campaign=cls.retired_campaign, slug="retired-project-slug"
         )
         cls.retired_item = create_item(project=cls.retired_project)
-        print(cls.retired_item.published)
         cls.retired_asset = create_asset(
             item=cls.retired_item, slug="retired-asset-slug"
         )
@@ -171,4 +170,19 @@ class SiteReportTestCase(CreateTestUsers, TestCase):
         self.assertEqual(self.campaign1_report.registered_contributors, 2)
 
     def test_topic_report(self):
+        self.assertEqual(self.topic1_report.assets_total, 1)
+        self.assertEqual(self.topic1_report.assets_published, 1)
+        self.assertEqual(self.topic1_report.assets_not_started, 0)
+        self.assertEqual(self.topic1_report.assets_in_progress, 1)
+        self.assertEqual(self.topic1_report.assets_waiting_review, 0)
+        self.assertEqual(self.topic1_report.assets_completed, 0)
+        self.assertEqual(self.topic1_report.assets_unpublished, 0)
+        self.assertEqual(self.topic1_report.items_published, 1)
+        self.assertEqual(self.topic1_report.items_unpublished, 0)
+        self.assertEqual(self.topic1_report.projects_published, 1)
+        self.assertEqual(self.topic1_report.projects_unpublished, 0)
+        self.assertEqual(self.topic1_report.anonymous_transcriptions, 1)
+        self.assertEqual(self.topic1_report.transcriptions_saved, 2)
         self.assertEqual(self.topic1_report.daily_review_actions, 2)
+        self.assertEqual(self.topic1_report.distinct_tags, 0)
+        self.assertEqual(self.topic1_report.tag_uses, 0)
