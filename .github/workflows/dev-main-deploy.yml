@@ -4,6 +4,10 @@ on:
     workflow_dispatch:
     push:
         branches: [main]
+        paths-ignore:
+            - docs/**
+            - README.md
+            - .github/**
 
 env:
     AWS_REGION: us-east-1
