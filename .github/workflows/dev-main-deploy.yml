@@ -34,9 +34,6 @@ jobs:
 
             - name: Checkout repository
               uses: actions/checkout@v3
-              with:
-                  fetch-depth: 0
-                  clean: false
 
             - name: Get history and tags for SCM versioning to work
               run: |
