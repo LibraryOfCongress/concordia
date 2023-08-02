@@ -1,4 +1,4 @@
-name: 'Deploy'
+name: 'Deploy to dev'
 
 on:
     workflow_dispatch:
@@ -35,13 +35,15 @@ jobs:
             - name: Checkout repository
               uses: actions/checkout@v3
               with:
-                  fetch_depth: 0
+                  fetch-depth: 0
                   clean: false
 
-            - name: fetch again to describe tags
+            - name: Get history and tags for SCM versioning to work
               run: |
+                  git fetch --prune --unshallow
                   git fetch --depth=1 origin +refs/tags/*:refs/tags/*
                   git describe --tags
+                  git describe --tags $(git rev-list --tags --max-count=1)
 
             - name: Set up Python 3.10
               uses: actions/setup-python@v4
