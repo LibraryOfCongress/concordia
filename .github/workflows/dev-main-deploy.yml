@@ -84,7 +84,7 @@ jobs:
                   IMAGE_TAG: ${{ github.sha }}
                   CLUSTER: ${{ secrets.CLUSTER_DEV }}
               run: |
-                  echo "version number: $version_number
+                  echo "version number: $version_number"
 
                   docker build -t concordia .
                   docker tag concordia:latest $REGISTRY/concordia:$version_number
