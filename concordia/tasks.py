@@ -119,7 +119,7 @@ def _daily_active_users():
 
 
 def _get_review_actions(campaign=None, topic=None):
-    transcriptions = _recent_transcriptions()
+    transcriptions = Transcription.objects.recent_review_actions()
     if campaign is not None:
         if campaign.status == Campaign.Status.RETIRED:
             user_profile_activity = UserProfileActivity.objects.filter(
