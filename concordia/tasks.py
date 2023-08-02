@@ -119,7 +119,7 @@ def _daily_active_users():
 
 
 def _get_review_actions(campaign=None, topic=None):
-    transcriptions = _recent_transcriptions()
+    transcriptions = Transcription.objects.recent_review_actions()
     if campaign is not None:
         if campaign.status == Campaign.Status.RETIRED:
             user_profile_activity = UserProfileActivity.objects.filter(
@@ -312,7 +312,7 @@ def campaign_report(campaign):
         Item.objects.published().filter(project__campaign=campaign).count()
     )
     items_unpublished = (
-        Item.objects.published().filter(project__campaign=campaign).count()
+        Item.objects.unpublished().filter(project__campaign=campaign).count()
     )
 
     projects_published = Project.objects.published().filter(campaign=campaign).count()
@@ -351,7 +351,10 @@ def campaign_report(campaign):
         asset__in=campaign_assets
     ).values_list("user_id", "reviewed_by")
     user_ids = {
-        user_id for transcription in asset_transcriptions for user_id in transcription
+        user_id
+        for transcription in asset_transcriptions
+        for user_id in transcription
+        if user_id
     }
     registered_contributor_count = len(user_ids)
 

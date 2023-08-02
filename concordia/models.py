@@ -1,3 +1,4 @@
+import datetime
 import os.path
 import time
 from logging import getLogger
@@ -12,6 +13,7 @@ from django.db.models import Count, ExpressionWrapper, F, JSONField, Q
 from django.db.models.functions import Round
 from django.db.models.signals import post_save
 from django.urls import reverse
+from django.utils import timezone
 from django_prometheus_metrics.models import MetricsModelMixin
 from PIL import Image
 
@@ -478,6 +480,20 @@ class UserAssetTagCollection(
         return "{} - {}".format(self.asset, self.user)
 
 
+class TranscriptionManager(models.Manager):
+    def review_actions(self, start, end=None):
+        q_accepted = Q(accepted__gte=start)
+        q_rejected = Q(rejected__gte=start)
+        if end is not None:
+            q_accepted &= Q(accepted__lte=end)
+            q_rejected &= Q(rejected__lte=end)
+        return self.filter(q_accepted | q_rejected)
+
+    def recent_review_actions(self):
+        ONE_DAY_AGO = timezone.now() - datetime.timedelta(days=1)
+        return self.review_actions(ONE_DAY_AGO)
+
+
 class Transcription(MetricsModelMixin("transcription"), models.Model):
     asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
 
@@ -523,6 +539,8 @@ class Transcription(MetricsModelMixin("transcription"), models.Model):
         default=False,
         help_text="Flags transcription as originated from an OCR transcription",
     )
+
+    objects = TranscriptionManager()
 
     class Meta:
         indexes = [
