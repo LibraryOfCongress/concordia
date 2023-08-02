@@ -81,7 +81,7 @@ jobs:
             - name: Build, tag and push docker images ECR
               env:
                   REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-                  IMAGE_TAG: ${{ github.sha }}
+                  IMAGE_TAG: ${{ secrets.IMAGE_TAG_DEV }}
                   CLUSTER: ${{ secrets.CLUSTER_DEV }}
               run: |
                   echo "version number: $version_number"
@@ -104,5 +104,5 @@ jobs:
                   docker push $REGISTRY/concordia/celerybeat:$version_number
                   docker push $REGISTRY/concordia/celerybeat:$IMAGE_TAG
 
-                  #  TARGET_SERVICE="$(aws ecs list-services --cluster $CLUSTER | python -c 'import json,sys;serviceInput=json.load(sys.stdin);serviceArns=serviceInput["serviceArns"];print(serviceArns[0])')"
-                  #  aws ecs update-service --region ${{ env.AWS_REGION }} --force-new-deployment --cluster $CLUSTER --service $TARGET_SERVICE
+                  TARGET_SERVICE="$(aws ecs list-services --cluster $CLUSTER | python -c 'import json,sys;serviceInput=json.load(sys.stdin);serviceArns=serviceInput["serviceArns"];print(serviceArns[0])')"
+                  aws ecs update-service --region ${{ env.AWS_REGION }} --force-new-deployment --cluster $CLUSTER --service $TARGET_SERVICE
