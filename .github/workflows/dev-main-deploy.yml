@@ -40,7 +40,6 @@ jobs:
                   git fetch --prune --unshallow
                   git fetch --depth=1 origin +refs/tags/*:refs/tags/*
                   git describe --tags
-                  git describe --tags $(git rev-list --tags --max-count=1)
 
             - name: Set up Python 3.10
               uses: actions/setup-python@v4
@@ -85,24 +84,25 @@ jobs:
                   IMAGE_TAG: ${{ github.sha }}
                   CLUSTER: ${{ secrets.CLUSTER_DEV }}
               run: |
-                  echo "version number: " ${{ env.version_number }}
-                  #   docker build -t concordia .
-                  #   docker tag concordia:latest $REGISTRY/concordia:$version_number
-                  #   docker tag concordia:latest $REGISTRY/concordia:$IMAGE_TAG
-                  #   docker push $REGISTRY/concordia:$version_number
-                  #   docker push $REGISTRY/concordia:$IMAGE_TAG
+                  echo "version number: $version_number
 
-                  #   docker build -t concordia/importer --file importer/Dockerfile .
-                  #   docker tag concordia/importer:latest $REGISTRY/concordia/importer:$version_number
-                  #   docker tag concordia/importer:latest $REGISTRY/concordia/importer:$IMAGE_TAG
-                  #   docker push $REGISTRY/concordia/importer:$version_number
-                  #   docker push $REGISTRY/concordia/importer:$IMAGE_TAG
+                  docker build -t concordia .
+                  docker tag concordia:latest $REGISTRY/concordia:$version_number
+                  docker tag concordia:latest $REGISTRY/concordia:$IMAGE_TAG
+                  docker push $REGISTRY/concordia:$version_number
+                  docker push $REGISTRY/concordia:$IMAGE_TAG
 
-                  #   docker build -t concordia/celerybeat --file celerybeat/Dockerfile .
-                  #   docker tag concordia/celerybeat:latest $REGISTRY/concordia/celerybeat:$version_number
-                  #   docker tag concordia/celerybeat:latest $REGISTRY/concordia/celerybeat:$IMAGE_TAG
-                  #   docker push $REGISTRY/concordia/celerybeat:$version_number
-                  #   docker push $REGISTRY/concordia/celerybeat:$IMAGE_TAG
+                  docker build -t concordia/importer --file importer/Dockerfile .
+                  docker tag concordia/importer:latest $REGISTRY/concordia/importer:$version_number
+                  docker tag concordia/importer:latest $REGISTRY/concordia/importer:$IMAGE_TAG
+                  docker push $REGISTRY/concordia/importer:$version_number
+                  docker push $REGISTRY/concordia/importer:$IMAGE_TAG
+
+                  docker build -t concordia/celerybeat --file celerybeat/Dockerfile .
+                  docker tag concordia/celerybeat:latest $REGISTRY/concordia/celerybeat:$version_number
+                  docker tag concordia/celerybeat:latest $REGISTRY/concordia/celerybeat:$IMAGE_TAG
+                  docker push $REGISTRY/concordia/celerybeat:$version_number
+                  docker push $REGISTRY/concordia/celerybeat:$IMAGE_TAG
 
                   #  TARGET_SERVICE="$(aws ecs list-services --cluster $CLUSTER | python -c 'import json,sys;serviceInput=json.load(sys.stdin);serviceArns=serviceInput["serviceArns"];print(serviceArns[0])')"
                   #  aws ecs update-service --region ${{ env.AWS_REGION }} --force-new-deployment --cluster $CLUSTER --service $TARGET_SERVICE
