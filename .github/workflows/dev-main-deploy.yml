@@ -41,6 +41,7 @@ jobs:
             - name: fetch again to describe tags
               run: |
                   git fetch --depth=1 origin +refs/tags/*:refs/tags/*
+                  git describe --tags
 
             - name: Set up Python 3.10
               uses: actions/setup-python@v4
