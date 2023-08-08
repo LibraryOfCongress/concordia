@@ -249,3 +249,28 @@ class UserAssetTagCollectionCampaignStatusListFilter(CampaignStatusListFilter):
 
 class UserProfileActivityCampaignStatusListFilter(CampaignStatusListFilter):
     parameter_name = "campaign__status"
+
+
+class BooleanDefaultNoFilter(admin.SimpleListFilter):
+    def lookups(self, request, model_admin):
+        return ((1, "Yes"), (None, "No"))
+
+    def queryset(self, request, queryset):
+        if self.value():
+            if self.value() == "all":
+                return queryset
+            else:
+                return queryset.filter(**{self.parameter_name: self.value()})
+
+        elif self.value() is None:
+            return queryset.filter(**{self.parameter_name: False})
+
+
+class OcrGeneratedFilter(BooleanDefaultNoFilter):
+    title = "OCR Generated"
+    parameter_name = "ocr_generated"
+
+
+class OcrOriginatedFilter(BooleanDefaultNoFilter):
+    title = "OCR Originated"
+    parameter_name = "ocr_originated"
