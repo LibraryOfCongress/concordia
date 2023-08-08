@@ -8,7 +8,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.management import call_command
 from django.db import transaction
-from django.db.models import Count, F, Q, Sum
+from django.db.models import Count, F, Q
 from django.utils import timezone
 from more_itertools.more import chunked
 
@@ -122,11 +122,11 @@ def _get_review_actions(campaign=None, topic=None):
     transcriptions = Transcription.objects.recent_review_actions()
     if campaign is not None:
         if campaign.status == Campaign.Status.RETIRED:
-            user_profile_activity = UserProfileActivity.objects.filter(
-                campaign=campaign
-            ).aggregate(Sum("review_count"))
-            return user_profile_activity["review_count__sum"]
-        transcriptions = transcriptions.filter(asset__item__project__campaign=campaign)
+            transcriptions = Transcription.objects.none()
+        else:
+            transcriptions = transcriptions.filter(
+                asset__item__project__campaign=campaign
+            )
     if topic is not None:
         transcriptions = transcriptions.filter(asset__item__project__topics=topic)
     return transcriptions.exclude(accepted__isnull=True, rejected__isnull=True).count()
