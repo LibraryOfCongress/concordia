@@ -76,14 +76,16 @@
 
                 {% share_buttons current_asset_url asset.item.title %}
 
-                {% if asset.resource_url %}
-                    <div class="btn-group btn-group-sm p-1" role="navigation" aria-label="Link to the original source for this item">
-                        <a class="btn btn-secondary text-nowrap" target="_blank" title="View the original source for this item in a new tab" href="{{ asset.resource_url }}{% if 'sp=' not in asset.resource_url %}?sp={{ asset.sequence }}{% endif %}">View on www.loc.gov <i class="fa fa-external-link-alt"></i></a>
-                    </div>
-                {% endif %}
+                <div class="btn-group align-self-end">
+                    {% if asset.resource_url %}
+                        <div class="btn-group-sm p-1" role="navigation" aria-label="Link to the original source for this item">
+                            <a class="btn btn-secondary text-nowrap" target="_blank" title="View the original source for this item in a new tab" href="{{ asset.resource_url }}{% if 'sp=' not in asset.resource_url %}?sp={{ asset.sequence }}{% endif %}">View on www.loc.gov <i class="fa fa-external-link-alt"></i></a>
+                        </div>
+                    {% endif %}
 
-                <div class="btn-group btn-group-sm align-self-end p-1" role="navigation" aria-label="Link to the next editable page">
-                    <a class="btn btn-secondary text-nowrap" title="Move to the next page in this item that needs help" href="{{ next_open_asset_url }}">Find a new page &rarr;</a>
+                    <div class="btn-group-sm p-1" role="navigation" aria-label="Link to the next editable page">
+                        <a class="btn btn-secondary text-nowrap" title="Move to the next page in this item that needs help" href="{{ next_open_asset_url }}">Find a new page &rarr;</a>
+                    </div>
                 </div>
             </nav>
         </div>
@@ -519,12 +521,8 @@
             <div class="row justify-content-center align-items-center">
                 <p class="ml-1 mr-2 my-0">Need help?</p>
 
-                <button id="instruction-button" class="btn btn-secondary mx-1" type="button" data-toggle="collapse" data-target="#instruction-window" aria-expanded="false" aria-controls="instruction-window">
-                    Quick Tips
-                </button>
-
                 <a class="btn btn-secondary mx-1" href="{% url 'contact' %}">
-                    Questions?
+                    Contact us
                 </a>
 
                 <div class="collapse" id="instruction-window">
@@ -562,7 +560,7 @@
                     </div>
                     <div class="modal-footer">
                         <a class="btn btn-primary" href="{{ next_open_asset_url }}">
-                            Find a new page
+                            Find new page
                         </a>
                         <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
                     </div>
