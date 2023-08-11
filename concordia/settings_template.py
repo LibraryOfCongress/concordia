@@ -171,23 +171,6 @@ TEMPLATES = [
     }
 ]
 
-MEMCACHED_ADDRESS = os.getenv("MEMCACHED_ADDRESS", "")
-MEMCACHED_PORT = os.getenv("MEMCACHED_PORT", "")
-
-if MEMCACHED_ADDRESS and MEMCACHED_PORT:
-    CACHES = {
-        "default": {
-            "BACKEND": "django.core.cache.backends.memcached.PyMemcacheCache",
-            "LOCATION": "{}:{}".format(MEMCACHED_ADDRESS, MEMCACHED_PORT),
-        }
-    }
-
-    SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
-else:
-    CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
-
-    SESSION_ENGINE = "django.contrib.sessions.backends.db"
-
 HAYSTACK_CONNECTIONS = {
     "default": {
         "ENGINE": "haystack.backends.whoosh_backend.WhooshEngine",
@@ -201,6 +184,21 @@ if REDIS_PORT.isdigit():
     REDIS_PORT = int(REDIS_PORT)
 else:
     REDIS_PORT = 6379
+
+if REDIS_ADDRESS and REDIS_PORT:
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": f"redis://{REDIS_ADDRESS}:{REDIS_PORT}/1",
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            },
+        }
+    }
+else:
+    CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
+
+SESSION_ENGINE = "django.contrib.sessions.backends.db"
 
 CELERY_BROKER_URL = f"redis://{REDIS_ADDRESS}:{REDIS_PORT}/0"
 CELERY_RESULT_BACKEND = f"redis://{REDIS_ADDRESS}:{REDIS_PORT}/0"

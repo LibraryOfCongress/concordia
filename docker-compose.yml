@@ -12,6 +12,8 @@ services:
         hostname: redis
         ports:
             - 63791:6379
+        volumes:
+            - redis_volume:/data
 
     db:
         restart: unless-stopped
@@ -78,6 +80,7 @@ services:
 volumes:
     db_volume:
     images_volume:
+    redis_volume:
 
 networks:
     default:
