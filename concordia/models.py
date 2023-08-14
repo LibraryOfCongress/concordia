@@ -6,6 +6,7 @@ from logging import getLogger
 import pytesseract
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.core import signing
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
@@ -40,19 +41,31 @@ class ConcordiaUser(User):
         proxy = True
 
     @property
-    def email_reconfirmation_key(self):
+    def email_reconfirmation_cache_key(self):
         return settings.EMAIL_RECONFIRMATION_KEY.format(id=self.id)
 
     def set_email_for_reconfirmation(self, email):
         cache.set(
-            self.email_reconfirmation_key, email, settings.EMAIL_RECONFIRMATION_TIMEOUT
+            self.email_reconfirmation_cache_key,
+            email,
+            settings.EMAIL_RECONFIRMATION_TIMEOUT,
         )
 
     def get_email_for_reconfirmation(self):
-        return cache.get(self.email_reconfirmation_key)
+        return cache.get(self.email_reconfirmation_cache_key)
 
     def delete_email_for_reconfirmation(self):
-        cache.delete(self.email_reconfirmation_key)
+        cache.delete(self.email_reconfirmation_cache_key)
+
+    def get_email_reconfirmation_key(self):
+        email = self.get_email_for_reconfirmation()
+        if email:
+            return signing.dumps(obj={"username": self.get_username(), "email": email})
+        else:
+            raise ValueError("No email cached for reconfirmation")
+
+    def validate_reconfirmation_email(self, email):
+        return email == self.get_email_for_reconfirmation()
 
 
 class UserProfile(MetricsModelMixin("userprofile"), models.Model):

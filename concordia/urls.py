@@ -225,6 +225,11 @@ urlpatterns = [
     path("account/", include("django_registration.backends.activation.urls")),
     path("account/", include("django.contrib.auth.urls")),
     path(
+        "account/email_confirmation/<str:confirmation_key>/",
+        views.EmailReconfirmationView.as_view(),
+        name="email-reconfirmation",
+    ),
+    path(
         ".well-known/change-password",  # https://wicg.github.io/change-password-url/
         RedirectView.as_view(pattern_name="password_change"),
     ),
