@@ -503,7 +503,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
             if status_list is not None:
                 ctx["status_list"] = status_list
             ctx["order_by"] = self.request.GET.get("order_by", "date-descending")
-        else:
+        elif "active_tab" not in ctx:
             ctx["active_tab"] = self.request.GET.get("tab", "contributions")
         ctx["activity"] = activity
         if end is not None:
@@ -512,7 +512,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         if start is not None:
             ctx["start"] = start
 
-        ctx["valid"] = self.request.session.pop("valid", False)
+        ctx["valid"] = self.request.session.pop("valid", None)
 
         user = self.request.user
         user_profile_activity = UserProfileActivity.objects.filter(user=user).order_by(
@@ -537,7 +537,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
 
     def get_form_kwargs(self):
         # We'll expose the request object to the form so we can validate that an
-        # email is not in use by a *different* user:
+        # email is not in use:
         kwargs = super().get_form_kwargs()
         kwargs["request"] = self.request
         return kwargs
@@ -551,6 +551,12 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         self.request.session["valid"] = True
 
         return super().form_valid(form)
+
+    def form_invalid(self, form):
+        self.request.session["valid"] = False
+        return self.render_to_response(
+            self.get_context_data(form=form, active_tab="account")
+        )
 
     def get_success_url(self):
         # automatically open the Account Settings tab
