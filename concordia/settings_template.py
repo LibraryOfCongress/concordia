@@ -315,6 +315,10 @@ PASSWORD_RESET_TIMEOUT = 604800
 ACCOUNT_ACTIVATION_DAYS = 7
 REGISTRATION_OPEN = True  # set to false to temporarily disable registrations
 
+REQUIRE_EMAIL_RECONFIRMATION = True
+EMAIL_RECONFIRMATION_KEY = "EMAIL_CONFIRMATION_{id}"
+EMAIL_RECONFIRMATION_TIMEOUT = 604800
+
 MESSAGE_STORAGE = "django.contrib.messages.storage.session.SessionStorage"
 
 MESSAGE_TAGS = {messages.ERROR: "danger"}

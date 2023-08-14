@@ -6,6 +6,7 @@ from logging import getLogger
 import pytesseract
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
@@ -29,6 +30,29 @@ def resource_file_upload_path(instance, filename):
         return instance.path
     path = "cm-uploads/resources/%Y/{0}".format(filename.lower())
     return time.strftime(path)
+
+
+class ConcordiaUser(User):
+    # This class is a simple proxy model to add
+    # additional user functionality to, without changing
+    # the base User model.
+    class Meta:
+        proxy = True
+
+    @property
+    def email_reconfirmation_key(self):
+        return settings.EMAIL_RECONFIRMATION_KEY.format(id=self.id)
+
+    def set_email_for_reconfirmation(self, email):
+        cache.set(
+            self.email_reconfirmation_key, email, settings.EMAIL_RECONFIRMATION_TIMEOUT
+        )
+
+    def get_email_for_reconfirmation(self):
+        return cache.get(self.email_reconfirmation_key)
+
+    def delete_email_for_reconfirmation(self):
+        cache.delete(self.email_reconfirmation_key)
 
 
 class UserProfile(MetricsModelMixin("userprofile"), models.Model):

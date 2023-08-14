@@ -74,6 +74,7 @@ from concordia.models import (
     Banner,
     Campaign,
     CarouselSlide,
+    ConcordiaUser,
     Item,
     Project,
     SimplePage,
@@ -515,6 +516,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         ctx["valid"] = self.request.session.pop("valid", None)
 
         user = self.request.user
+        concordia_user = ConcordiaUser.objects.get(id=user.id)
         user_profile_activity = UserProfileActivity.objects.filter(user=user).order_by(
             "campaign__title"
         )
@@ -528,6 +530,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         ctx["pages_worked_on"] = aggregate_sums["asset_count__sum"]
         if ctx["totalReviews"] is not None:
             ctx["totalCount"] = ctx["totalReviews"] + ctx["totalTranscriptions"]
+        ctx["unconfirmed_email"] = concordia_user.get_email_for_reconfirmation()
         return ctx
 
     def get_initial(self):
@@ -544,9 +547,19 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
 
     def form_valid(self, form):
         user = self.request.user
-        user.email = form.cleaned_data["email"]
-        user.full_clean()
-        user.save()
+        new_email = form.cleaned_data["email"]
+        # This is annoying, but there's no better way to get the proxy model here
+        # without being hacky (changing user.__class__ directly.)
+        # Every method (such as using a user profile) would incur the same
+        # database request.
+        concordia_user = ConcordiaUser.objects.get(id=user.id)
+        if settings.REQUIRE_EMAIL_RECONFIRMATION:
+            concordia_user.set_email_for_reconfirmation(new_email)
+        else:
+            concordia_user.email = new_email
+            concordia_user.full_clean()
+            concordia_user.save()
+            concordia_user.delete_email_for_reconfirmation()
 
         self.request.session["valid"] = True
 

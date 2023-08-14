@@ -39,6 +39,11 @@
                                             <div class="mt-1 mb-3">
                                                 <span class="font-weight-bold">Email address</span>: {{ user.email }}
                                                     </div>
+                                                    {% if unconfirmed_email %}
+                                                        <div class="mt-1 mb-3">
+                                                            <span class="font-weight-bold">Unconfirmed email address</span>: {{ unconfirmed_email }}
+                                                                </div>
+                                                    {% endif %}
                                                     </div>
                                                     <div class="col-12 col-md-10 py-3 change-options">
                                                         <form class="form needs-validation" action="{% url 'user-profile' %}" method="POST" enctype="multipart/form-data" novalidate>
