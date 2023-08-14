@@ -50,40 +50,40 @@
                                 {% endfor %}
                             </select>
                             <div class="input-group-append">
-                                <button type="submit" class="btn btn-secondary">Go</button>
+                                <button type="submit" class="btn btn-primary">Go</button>
                             </div>
                         </div>
                     </form>
 
                     <div class="btn-group btn-group-sm p-1">
-                        <a class="btn btn-secondary {% if not previous_asset_url %}disabled{% endif %}" {% if previous_asset_url %}href="{{ previous_asset_url }}"{% else %}aria-disabled="true"{% endif %}>
+                        <a class="btn btn-primary {% if not previous_asset_url %}disabled{% endif %}" {% if previous_asset_url %}href="{{ previous_asset_url }}"{% else %}aria-disabled="true"{% endif %}>
                             <span class="fas fa-chevron-left"></span>
                             <span class="sr-only">Previous Page</span>
                         </a>
-                        <a class="btn btn-secondary {% if not next_asset_url %}disabled{% endif %}" {% if next_asset_url %}href="{{ next_asset_url }}"{% else %}aria-disabled="true"{% endif %}>
+                        <a class="btn btn-primary {% if not next_asset_url %}disabled{% endif %}" {% if next_asset_url %}href="{{ next_asset_url }}"{% else %}aria-disabled="true"{% endif %}>
                             <span class="fas fa-chevron-right"></span>
                             <span class="sr-only">Next Page</span>
                         </a>
                     </div>
 
                     <div class="btn-group btn-group-sm p-1">
-                        <button hidden id="go-fullscreen" class="btn btn-secondary text-nowrap" data-target="contribute-main-content">
+                        <button hidden id="go-fullscreen" class="btn btn-primary text-nowrap" data-target="contribute-main-content">
                             <span class="fas fa-arrows-alt"></span>
                             Fullscreen
                         </button>
                     </div>
                 </div>
 
-                {% share_buttons current_asset_url asset.item.title %}
+                <div class="btn-group align-self-end">
+                    {% if asset.resource_url %}
+                        <div class="btn-group-sm p-1" role="navigation" aria-label="Link to the original source for this item">
+                            <a class="btn btn-outline-primary text-nowrap" target="_blank" title="View the original source for this item in a new tab" href="{{ asset.resource_url }}{% if 'sp=' not in asset.resource_url %}?sp={{ asset.sequence }}{% endif %}">View on www.loc.gov <i class="fa fa-external-link-alt"></i></a>
+                        </div>
+                    {% endif %}
 
-                {% if asset.resource_url %}
-                    <div class="btn-group btn-group-sm p-1" role="navigation" aria-label="Link to the original source for this item">
-                        <a class="btn btn-secondary text-nowrap" target="_blank" title="View the original source for this item in a new tab" href="{{ asset.resource_url }}{% if 'sp=' not in asset.resource_url %}?sp={{ asset.sequence }}{% endif %}">View on www.loc.gov <i class="fa fa-external-link-alt"></i></a>
+                    <div class="btn-group-sm p-1" role="navigation" aria-label="Link to the next editable page">
+                        <a class="btn btn-outline-primary text-nowrap" title="Move to the next page in this item that needs help" href="{{ next_open_asset_url }}">Find a new page &rarr;</a>
                     </div>
-                {% endif %}
-
-                <div class="btn-group btn-group-sm align-self-end p-1" role="navigation" aria-label="Link to the next editable page">
-                    <a class="btn btn-secondary text-nowrap" title="Move to the next page in this item that needs help" href="{{ next_open_asset_url }}">Find a new page &rarr;</a>
                 </div>
             </nav>
         </div>
@@ -516,34 +516,33 @@
                     </a>
                 </div>
             {% endif %}
-            <div class="row justify-content-center align-items-center">
-                <p class="ml-1 mr-2 my-0">Need help?</p>
+            <div class="row p-3 bg-light justify-content-sm-between">
+                <div class="d-flex align-items-center">Share this item: {% share_buttons current_asset_url asset.item.title %}</div>
+                <div class="btn-group align-items-center align-self-end">
+                    <p class="ml-1 mr-2 my-0">Need help?</p>
 
-                <button id="instruction-button" class="btn btn-secondary mx-1" type="button" data-toggle="collapse" data-target="#instruction-window" aria-expanded="false" aria-controls="instruction-window">
-                    Quick Tips
-                </button>
+                    <a class="btn btn-primary mx-1" href="{% url 'contact' %}">
+                        Contact us
+                    </a>
 
-                <a class="btn btn-secondary mx-1" href="{% url 'contact' %}">
-                    Questions?
-                </a>
-
-                <div class="collapse" id="instruction-window">
-                    <button type="button" class="close pull-right" aria-label="Close" data-toggle="collapse" data-target="#instruction-window">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                    <div>
-                        {% if SIMPLE_CONTENT_BLOCKS %}
-                            {% simple_content_block "classic_quicktips" %}
-                        {% else %}
-                            <ul>
-                                <li>Transcribe original spelling, punctuation, word order, and any page numbers or catalog marks.</li>
-                                <li>Preserve line breaks except when a word breaks over a line or page. Then transcribe it on the line or page where it starts.</li>
-                                <li>Use brackets [ ] around deleted, illegible or partially legible text, and square brackets and asterisks around text in margins [ * * ].</li>
-                                <li>Transcribe any words or letters you can't identify as [?].</li>
-                                <li>Include insertions where you would read them in the text.</li>
-                            </ul>
-                            Find more detailed instructions in the <a href="{% url 'help-center' %}">Help Center</a>
-                        {% endif %}
+                    <div class="collapse" id="instruction-window">
+                        <button type="button" class="close pull-right" aria-label="Close" data-toggle="collapse" data-target="#instruction-window">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                        <div>
+                            {% if SIMPLE_CONTENT_BLOCKS %}
+                                {% simple_content_block "classic_quicktips" %}
+                            {% else %}
+                                <ul>
+                                    <li>Transcribe original spelling, punctuation, word order, and any page numbers or catalog marks.</li>
+                                    <li>Preserve line breaks except when a word breaks over a line or page. Then transcribe it on the line or page where it starts.</li>
+                                    <li>Use brackets [ ] around deleted, illegible or partially legible text, and square brackets and asterisks around text in margins [ * * ].</li>
+                                    <li>Transcribe any words or letters you can't identify as [?].</li>
+                                    <li>Include insertions where you would read them in the text.</li>
+                                </ul>
+                                Find more detailed instructions in the <a href="{% url 'help-center' %}">Help Center</a>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -562,7 +561,7 @@
                     </div>
                     <div class="modal-footer">
                         <a class="btn btn-primary" href="{{ next_open_asset_url }}">
-                            Find a new page
+                            Find new page
                         </a>
                         <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
                     </div>
