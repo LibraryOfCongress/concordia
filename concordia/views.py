@@ -22,6 +22,8 @@ from django.contrib.auth.views import (
     PasswordResetView,
 )
 from django.contrib.messages import get_messages
+from django.contrib.sites.shortcuts import get_current_site
+from django.core import signing
 from django.core.exceptions import ValidationError
 from django.core.mail import EmailMultiAlternatives, send_mail
 from django.core.paginator import Paginator
@@ -39,13 +41,15 @@ from django.db.models import (
 )
 from django.db.models.functions import Greatest
 from django.db.transaction import atomic
-from django.http import Http404, HttpResponse, JsonResponse
+from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template import loader
+from django.template.loader import render_to_string
 from django.urls import reverse, reverse_lazy
 from django.utils.decorators import method_decorator
 from django.utils.http import http_date
 from django.utils.timezone import now
+from django.utils.translation import gettext_lazy as _
 from django.views.decorators.cache import cache_control, never_cache
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
@@ -74,6 +78,7 @@ from concordia.models import (
     Banner,
     Campaign,
     CarouselSlide,
+    ConcordiaUser,
     Item,
     Project,
     SimplePage,
@@ -465,6 +470,8 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
     template_name = "account/profile.html"
     form_class = UserProfileForm
     success_url = reverse_lazy("user-profile")
+    reconfirmation_email_body_template = "emails/email_reconfirmation_body.txt"
+    reconfirmation_email_subject_template = "emails/email_reconfirmation_subject.txt"
 
     # This view will list the assets which the user has contributed to
     # along with their most recent action on each asset. This will be
@@ -503,7 +510,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
             if status_list is not None:
                 ctx["status_list"] = status_list
             ctx["order_by"] = self.request.GET.get("order_by", "date-descending")
-        else:
+        elif "active_tab" not in ctx:
             ctx["active_tab"] = self.request.GET.get("tab", "contributions")
         ctx["activity"] = activity
         if end is not None:
@@ -512,9 +519,10 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         if start is not None:
             ctx["start"] = start
 
-        ctx["valid"] = self.request.session.pop("valid", False)
+        ctx["valid"] = self.request.session.pop("valid", None)
 
         user = self.request.user
+        concordia_user = ConcordiaUser.objects.get(id=user.id)
         user_profile_activity = UserProfileActivity.objects.filter(user=user).order_by(
             "campaign__title"
         )
@@ -528,6 +536,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         ctx["pages_worked_on"] = aggregate_sums["asset_count__sum"]
         if ctx["totalReviews"] is not None:
             ctx["totalCount"] = ctx["totalReviews"] + ctx["totalTranscriptions"]
+        ctx["unconfirmed_email"] = concordia_user.get_email_for_reconfirmation()
         return ctx
 
     def get_initial(self):
@@ -537,24 +546,66 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
 
     def get_form_kwargs(self):
         # We'll expose the request object to the form so we can validate that an
-        # email is not in use by a *different* user:
+        # email is not in use:
         kwargs = super().get_form_kwargs()
         kwargs["request"] = self.request
         return kwargs
 
     def form_valid(self, form):
         user = self.request.user
-        user.email = form.cleaned_data["email"]
-        user.full_clean()
-        user.save()
+        new_email = form.cleaned_data["email"]
+        # This is annoying, but there's no better way to get the proxy model here
+        # without being hacky (changing user.__class__ directly.)
+        # Every method (such as using a user profile) would incur the same
+        # database request.
+        concordia_user = ConcordiaUser.objects.get(id=user.id)
+        if settings.REQUIRE_EMAIL_RECONFIRMATION:
+            concordia_user.set_email_for_reconfirmation(new_email)
+            self.send_reconfirmation_email(concordia_user)
+        else:
+            concordia_user.email = new_email
+            concordia_user.full_clean()
+            concordia_user.save()
+            concordia_user.delete_email_for_reconfirmation()
 
         self.request.session["valid"] = True
 
         return super().form_valid(form)
 
+    def form_invalid(self, form):
+        self.request.session["valid"] = False
+        return self.render_to_response(
+            self.get_context_data(form=form, active_tab="account")
+        )
+
     def get_success_url(self):
         # automatically open the Account Settings tab
         return "{}#account".format(super().get_success_url())
+
+    def get_reconfirmation_email_context(self, confirmation_key):
+        return {
+            "confirmation_key": confirmation_key,
+            "expiration_days": settings.EMAIL_RECONFIRMATION_DAYS,
+            "site": get_current_site(self.request),
+        }
+
+    def send_reconfirmation_email(self, user):
+        confirmation_key = user.get_email_reconfirmation_key()
+        context = self.get_reconfirmation_email_context(confirmation_key)
+        context["user"] = user
+        subject = render_to_string(
+            template_name=self.reconfirmation_email_subject_template,
+            context=context,
+            request=self.request,
+        )
+        # Ensure subject is a single line
+        subject = "".join(subject.splitlines())
+        message = render_to_string(
+            template_name=self.reconfirmation_email_body_template,
+            context=context,
+            request=self.request,
+        )
+        user.email_user(subject, message, settings.DEFAULT_FROM_EMAIL)
 
 
 @method_decorator(default_cache_control, name="dispatch")
@@ -691,14 +742,14 @@ def annotate_children_with_progress_stats(children):
     for obj in children:
         counts = {}
 
-        for k, _ in TranscriptionStatus.CHOICES:
+        for k, __ in TranscriptionStatus.CHOICES:
             counts[k] = getattr(obj, f"{k}_count", 0)
 
         obj.total_count = total = sum(counts.values())
 
         lowest_status = None
 
-        for k, _ in TranscriptionStatus.CHOICES:
+        for k, __ in TranscriptionStatus.CHOICES:
             count = counts[k]
 
             if total > 0:
@@ -2267,6 +2318,73 @@ class ReviewListView(AssetListView):
             asset_qs.order_by(order_field)
 
         return asset_qs
+
+
+class EmailReconfirmationView(TemplateView):
+    success_url = reverse_lazy("user-profile")
+    template_name = "account/email_reconfirmation_failed.html"
+
+    BAD_USERNAME_MESSAGE = _("The account you attempted to confirm is invalid.")
+    BAD_EMAIL_MESSAGE = _("The email you attempted to confirm is invalid.")
+    EXPIRED_MESSAGE = _("Confirmation has expired.")
+    INVALID_KEY_MESSAGE = _("The confirmation key you provided is invalid.")
+
+    def get_success_url(self):
+        return "{}#account".format(self.success_url)
+
+    def get(self, *args, **kwargs):
+        extra_context = {}
+        try:
+            self.confirm(*args, **kwargs)
+        except ValidationError as exc:
+            extra_context["reconfirmation_error"] = {
+                "message": exc.message,
+                "code": exc.code,
+                "params": exc.params,
+            }
+            context_data = self.get_context_data()
+            context_data.update(extra_context)
+            return self.render_to_response(context_data, status=403)
+        else:
+            return HttpResponseRedirect(self.get_success_url())
+
+    def confirm(self, *args, **kwargs):
+        username, email = self.validate_key(kwargs.get("confirmation_key"))
+        user = self.get_user(username)
+        if not user.validate_reconfirmation_email(email):
+            raise ValidationError(self.BAD_EMAIL_MESSAGE, code="bad_email") from None
+        try:
+            user.email = email
+            user.full_clean()
+        except ValidationError:
+            raise ValidationError(self.BAD_EMAIL_MESSAGE, code="bad_email") from None
+        user.save()
+        user.delete_email_for_reconfirmation()
+        return user
+
+    def validate_key(self, confirmation_key):
+        try:
+            context = signing.loads(
+                confirmation_key, max_age=settings.EMAIL_RECONFIRMATION_TIMEOUT
+            )
+            return context["username"], context["email"]
+        except signing.SignatureExpired as exc:
+            raise ValidationError(self.EXPIRED_MESSAGE, code="expired") from exc
+        except signing.BadSignature as exc:
+            raise ValidationError(
+                self.INVALID_KEY_MESSAGE,
+                code="invalid_key",
+                params={"confirmation_key": confirmation_key},
+            ) from exc
+
+    def get_user(self, username):
+        try:
+            user = ConcordiaUser.objects.get(username=username)
+            return user
+        except ConcordiaUser.DoesNotExist as exc:
+            raise ValidationError(
+                self.BAD_USERNAME_MESSAGE, code="bad_username"
+            ) from exc
 
 
 # These views are to make sure various links to help-center URLs don't break
