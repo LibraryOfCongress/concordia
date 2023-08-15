@@ -251,9 +251,20 @@ class UserProfileActivityCampaignStatusListFilter(CampaignStatusListFilter):
     parameter_name = "campaign__status"
 
 
+# https://stackoverflow.com/a/60570830/10320488
 class BooleanDefaultNoFilter(admin.SimpleListFilter):
     def lookups(self, request, model_admin):
-        return ((1, "Yes"), (None, "No"))
+        return (("all", "All"), (1, "Yes"), (None, "No"))
+
+    def choices(self, changelist):
+        for lookup, title in self.lookup_choices:
+            yield {
+                "selected": self.value() == (str(lookup) if lookup else lookup),
+                "query_string": changelist.get_query_string(
+                    {self.parameter_name: lookup}, []
+                ),
+                "display": title,
+            }
 
     def queryset(self, request, queryset):
         if self.value():
