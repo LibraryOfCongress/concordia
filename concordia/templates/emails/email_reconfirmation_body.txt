@@ -1,0 +1,9 @@
+{% load custom_math %}
+To complete your email change, please verify your email address in the next {{ expiration_days }} days by clicking the link below:
+
+https://{{ site }}{% url "email-reconfirmation" confirmation_key %}
+
+Once its verified, your email will be active on your account, and your previous email address will no longer be used.
+
+Happy transcribing,
+-- The By the People team

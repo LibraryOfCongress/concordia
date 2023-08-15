@@ -30,7 +30,7 @@ jobs:
             - name: Install node and npm
               uses: actions/setup-node@v3
               with:
-                  node-version: '12'
+                  node-version: '18'
 
             - name: Checkout repository
               uses: actions/checkout@v3

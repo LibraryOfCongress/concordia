@@ -12,8 +12,6 @@ from django_registration.backends.activation.views import RegistrationView
 from django_registration.forms import RegistrationForm
 from django_registration.signals import user_activated
 
-from concordia.widgets import EmailWidget
-
 User = get_user_model()
 
 
@@ -89,7 +87,7 @@ class UserLoginForm(AuthenticationForm):
 
 
 class UserProfileForm(forms.Form):
-    email = forms.CharField(label="", required=True, widget=EmailWidget)
+    email = forms.EmailField(label="", required=True)
 
     def __init__(self, *, request, **kwargs):
         self.request = request
@@ -97,11 +95,11 @@ class UserProfileForm(forms.Form):
 
     def clean_email(self):
         data = self.cleaned_data["email"]
-        if (
-            User.objects.exclude(pk=self.request.user.pk)
-            .filter(email__iexact=data)
-            .exists()
-        ):
+        # Previously, this code only checked against other users, but it
+        # is also an error if a user tries to change their email to the one
+        # they're already using--we don't want to initiate the email
+        # confirmation process when the user isn't actually checking their email.
+        if User.objects.filter(email__iexact=data).exists():
             raise forms.ValidationError("That email address is not available")
         return data
 

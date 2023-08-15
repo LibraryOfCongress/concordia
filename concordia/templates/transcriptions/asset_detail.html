@@ -508,7 +508,7 @@
         </div>
         <div id="help-container" class="mt-1 d-print-none">
             {% if transcription_status == "not_started" or transcription_status == "in_progress" %}
-                <div id="ocr-section" class="row align-items-center pl-3">
+                <div id="ocr-section" class="row align-items-center pl-3 pb-4">
                     <span class="pr-2">Is this page typed?</span>
                     <a role="button" data-placement="top" data-trigger="click" title="Transcribe with OCR" data-toggle="modal" data-target="#ocr-transcription-modal" id="ocr-transcription-link" class="btn btn-primary mx-1" disabled>Transcribe with OCR</a>
                     <a tabindex="0" class="btn btn-link d-inline p-0" role="button" data-placement="top" data-trigger="focus click hover" title="What is OCR?"  data-toggle="modal" data-target="#ocr-help-modal">
@@ -517,9 +517,13 @@
                 </div>
             {% endif %}
             <div class="row p-3 bg-light justify-content-sm-between">
-                <div class="d-flex align-items-center">Share this item: {% share_buttons current_asset_url asset.item.title %}</div>
+                <div class="d-flex align-items-center pl-1">Share this item: {% share_buttons current_asset_url asset.item.title %}</div>
                 <div class="btn-group align-items-center align-self-end">
                     <p class="ml-1 mr-2 my-0">Need help?</p>
+
+                    <button id="instruction-button" class="btn btn-primary mx-1" type="button" data-toggle="collapse" data-target="#instruction-window" aria-expanded="false" aria-controls="instruction-window">
+                        Quick Tips
+                    </button>
 
                     <a class="btn btn-primary mx-1" href="{% url 'contact' %}">
                         Contact us
