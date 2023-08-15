@@ -508,7 +508,7 @@
         </div>
         <div id="help-container" class="mt-1 d-print-none">
             {% if transcription_status == "not_started" or transcription_status == "in_progress" %}
-                <div id="ocr-section" class="row align-items-center pl-3">
+                <div id="ocr-section" class="row align-items-center pl-3 pb-4">
                     <span class="pr-2">Is this page typed?</span>
                     <a role="button" data-placement="top" data-trigger="click" title="Transcribe with OCR" data-toggle="modal" data-target="#ocr-transcription-modal" id="ocr-transcription-link" class="btn btn-primary mx-1" disabled>Transcribe with OCR</a>
                     <a tabindex="0" class="btn btn-link d-inline p-0" role="button" data-placement="top" data-trigger="focus click hover" title="What is OCR?"  data-toggle="modal" data-target="#ocr-help-modal">
