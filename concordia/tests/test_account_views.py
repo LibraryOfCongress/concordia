@@ -1,10 +1,11 @@
 """
 Tests for user account-related views
 """
+from django.core import mail
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from concordia.models import User
+from concordia.models import ConcordiaUser, User
 
 from .utils import CacheControlAssertions, CreateTestUsers, JSONAssertMixin
 
@@ -39,22 +40,23 @@ class ConcordiaViewTests(
         This unit test tests the post entry for the route account/profile
         :param self:
         """
-        test_email = "tester@example.com"
+        test_email = "tester2@example.com"
 
         self.login_user()
 
-        response = self.client.post(
-            reverse("user-profile"), {"email": test_email, "username": "tester"}
-        )
+        with self.settings(REQUIRE_EMAIL_RECONFIRMATION=False):
+            response = self.client.post(
+                reverse("user-profile"), {"email": test_email, "username": "tester"}
+            )
 
-        self.assertEqual(response.status_code, 302)
-        self.assertUncacheable(response)
-        index = response.url.find("#")
-        self.assertEqual(response.url[:index], reverse("user-profile"))
+            self.assertEqual(response.status_code, 302)
+            self.assertUncacheable(response)
+            index = response.url.find("#")
+            self.assertEqual(response.url[:index], reverse("user-profile"))
 
-        # Verify the User was correctly updated
-        updated_user = User.objects.get(email=test_email)
-        self.assertEqual(updated_user.email, test_email)
+            # Verify the User was correctly updated
+            updated_user = User.objects.get(email=test_email)
+            self.assertEqual(updated_user.email, test_email)
 
     def test_AccountProfileView_post_invalid_form(self):
         """
@@ -101,3 +103,55 @@ class ConcordiaViewTests(
         # This view cannot be cached because the messages would be displayed
         # multiple times:
         self.assertUncacheable(response)
+
+    def test_email_reconfirmation(self):
+        self.login_user()
+
+        with self.settings(REQUIRE_EMAIL_RECONFIRMATION=True):
+            email_data = {"email": "change@example.com"}
+            response = self.client.post(reverse("user-profile"), email_data)
+            self.assertRedirects(response, "{}#account".format(reverse("user-profile")))
+            self.assertTemplateUsed(response, "emails/email_reconfirmation_subject.txt")
+            self.assertTemplateUsed(response, "emails/email_reconfirmation_body.txt")
+            self.assertEqual(len(mail.outbox), 1)
+            mail.outbox = []
+
+            updated_user = User.objects.get(id=self.user.id)
+            self.assertNotEqual(updated_user.email, email_data["email"])
+
+            concordia_user = ConcordiaUser.objects.get(id=self.user.id)
+
+            self.assertEqual(
+                concordia_user.get_email_for_reconfirmation(), email_data["email"]
+            )
+            confirmation_key = concordia_user.get_email_reconfirmation_key()
+            confirmation_response = self.client.get(
+                reverse(
+                    "email-reconfirmation",
+                    kwargs={"confirmation_key": confirmation_key},
+                )
+            )
+            self.assertRedirects(
+                confirmation_response, "{}#account".format(reverse("user-profile"))
+            )
+            updated_user = User.objects.get(id=self.user.id)
+            self.assertEqual(updated_user.email, email_data["email"])
+
+            error_response = self.client.get(
+                reverse(
+                    "email-reconfirmation",
+                    kwargs={"confirmation_key": confirmation_key},
+                )
+            )
+            self.assertEqual(error_response.status_code, 403)
+            self.assertTemplateUsed(
+                error_response, "account/email_reconfirmation_failed.html"
+            )
+
+        with self.settings(REQUIRE_EMAIL_RECONFIRMATION=False):
+            email_data = {"email": "change2@example.com"}
+            response = self.client.post(reverse("user-profile"), email_data)
+            self.assertRedirects(response, "{}#account".format(reverse("user-profile")))
+            self.assertEqual(len(mail.outbox), 0)
+            updated_user = User.objects.get(id=self.user.id)
+            self.assertEqual(updated_user.email, email_data["email"])

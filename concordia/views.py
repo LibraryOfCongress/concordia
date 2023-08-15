@@ -2344,7 +2344,7 @@ class EmailReconfirmationView(TemplateView):
             }
             context_data = self.get_context_data()
             context_data.update(extra_context)
-            return self.render_to_response(context_data)
+            return self.render_to_response(context_data, status=403)
         else:
             return HttpResponseRedirect(self.get_success_url())
 
