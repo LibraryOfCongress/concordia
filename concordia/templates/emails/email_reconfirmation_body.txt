@@ -3,7 +3,7 @@ To complete your email change, please verify your email address in the next {{ e
 
 https://{{ site }}{% url "email-reconfirmation" confirmation_key %}
 
-Once its verified, your email will be active on your account, and your previous email address will no longer be used.
+Once it's verified, your email will be active on your account, and your previous email address will no longer be used.
 
 Happy transcribing,
 -- The By the People team
