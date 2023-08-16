@@ -128,7 +128,17 @@ def _get_review_actions(campaign=None, topic=None):
                 asset__item__project__campaign=campaign
             )
     if topic is not None:
-        transcriptions = transcriptions.filter(asset__item__project__topics=topic)
+        project_ids = (
+            Project.objects.filter(topics__in=(topic,))
+            .exclude(campaign__status=Campaign.Status.RETIRED)
+            .values_list("id", flat=True)
+        )
+        return (
+            Transcription.objects.recent_review_actions()
+            .filter(asset__item__project__id__in=project_ids)
+            .exclude(accepted__isnull=True, rejected__isnull=True)
+            .count()
+        )
     return transcriptions.exclude(accepted__isnull=True, rejected__isnull=True).count()
 
 
