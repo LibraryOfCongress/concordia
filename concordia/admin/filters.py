@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.utils.translation import gettext_lazy as _
 
 from ..models import Campaign, Project
 
@@ -251,26 +252,25 @@ class UserProfileActivityCampaignStatusListFilter(CampaignStatusListFilter):
     parameter_name = "campaign__status"
 
 
-class BooleanDefaultNoFilter(admin.SimpleListFilter):
+class BooleanFilter(admin.SimpleListFilter):
     def lookups(self, request, model_admin):
-        return ((1, "Yes"), (None, "No"))
+        return [
+            (True, _("Yes")),
+            (False, _("No")),
+        ]
 
     def queryset(self, request, queryset):
-        if self.value():
-            if self.value() == "all":
-                return queryset
-            else:
-                return queryset.filter(**{self.parameter_name: self.value()})
-
-        elif self.value() is None:
-            return queryset.filter(**{self.parameter_name: False})
+        if self.value() is None:
+            return queryset
+        else:
+            return queryset.filter(**{self.parameter_name: self.value()})
 
 
-class OcrGeneratedFilter(BooleanDefaultNoFilter):
+class OcrGeneratedFilter(BooleanFilter):
     title = "OCR Generated"
     parameter_name = "ocr_generated"
 
 
-class OcrOriginatedFilter(BooleanDefaultNoFilter):
+class OcrOriginatedFilter(BooleanFilter):
     title = "OCR Originated"
     parameter_name = "ocr_originated"
