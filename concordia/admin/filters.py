@@ -255,8 +255,8 @@ class UserProfileActivityCampaignStatusListFilter(CampaignStatusListFilter):
 class BooleanFilter(admin.SimpleListFilter):
     def lookups(self, request, model_admin):
         return [
-            (True, _("yes")),
-            (False, _("no")),
+            (True, _("Yes")),
+            (False, _("No")),
         ]
 
     def queryset(self, request, queryset):
