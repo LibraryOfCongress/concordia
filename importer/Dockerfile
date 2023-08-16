@@ -1,4 +1,4 @@
-FROM python:3.10-slim-bullseye
+FROM python:3.10-slim-bookworm
 
 ## Add the wait script to the image
 ADD https://github.com/ufoscout/docker-compose-wait/releases/download/2.2.1/wait /wait
@@ -6,10 +6,16 @@ RUN chmod +x /wait
 
 ENV DEBIAN_FRONTEND="noninteractive"
 
-RUN echo "deb http://deb.debian.org/debian buster-backports main" >> /etc/apt/sources.list.d/buster-backports.list
+RUN apt-get update -qy && apt-get install -qy curl
+
+# Ensure that the Library's certificate authority is trusted so the tampering
+# proxy will not break TLS validation. See
+# https://staff.loc.gov/wikis/display/SE/Configuring+HTTPS+clients+for+the+HTTPS+tampering+proxy.
+
+RUN curl -fso /etc/ssl/certs/LOC-ROOT-CA-1.crt http://crl.loc.gov/LOC-ROOT-CA-1.crt && openssl x509 -inform der -in /etc/ssl/certs/LOC-ROOT-CA-1.crt -outform pem -out /etc/ssl/certs/LOC-ROOT-CA-1.pem && c_rehash
 
 RUN apt-get update -qy && apt-get dist-upgrade -qy && apt-get install -o Dpkg::Options::='--force-confnew' -qy \
-    git curl \
+    git \
     libmemcached-dev \
     # Pillow/Imaging: https://pillow.readthedocs.io/en/latest/installation.html#external-libraries
     libz-dev libfreetype6-dev \
@@ -31,7 +37,8 @@ ENV PYTHONPATH /app
 
 ENV DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE:-concordia.settings_docker}
 
-RUN pip3 install pipenv
+RUN pip install --upgrade pip
+RUN pip install --no-cache-dir pipenv
 
 WORKDIR /app
 COPY . /app

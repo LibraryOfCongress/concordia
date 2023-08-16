@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block main_content %}
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8 mx-auto p-3">
+                <h2>Email Reconfirmation</h2>
+                <p class="reconfirmation-error-{{ reconfirmation_error.code }}">
+                    {{ reconfirmation_error.message }}
+                </p>
+            </div>
+        </div>
+    </div>
+{% endblock main_content %}
