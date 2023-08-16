@@ -605,7 +605,18 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
             context=context,
             request=self.request,
         )
-        user.email_user(subject, message, settings.DEFAULT_FROM_EMAIL)
+        try:
+            send_mail(
+                subject,
+                message=message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.get_email_for_reconfirmation()],
+            )
+        except SMTPException:
+            logger.exception(
+                "Unable to send email reconfirmation to %s",
+                user.get_email_for_reconfirmation(),
+            )
 
 
 @method_decorator(default_cache_control, name="dispatch")
