@@ -50,6 +50,7 @@ def create_campaign(
         description=description,
         unlisted=unlisted,
         published=published,
+        status=status,
         **kwargs,
     )
     campaign.full_clean()

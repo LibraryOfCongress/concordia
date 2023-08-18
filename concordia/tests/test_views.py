@@ -2,7 +2,7 @@
 Tests for the core application features
 """
 
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 from captcha.models import CaptchaStore
 from django.conf import settings
@@ -21,6 +21,7 @@ from django.utils.timezone import now
 from concordia.models import (
     Asset,
     AssetTranscriptionReservation,
+    Campaign,
     Transcription,
     TranscriptionStatus,
 )
@@ -30,7 +31,7 @@ from concordia.tasks import (
     tombstone_old_active_asset_reservations,
 )
 from concordia.utils import get_anonymous_user, get_or_create_reservation_token
-from concordia.views import AccountProfileView
+from concordia.views import AccountProfileView, CompletedCampaignListView
 
 from .utils import (
     CreateTestUsers,
@@ -72,6 +73,31 @@ class AccountProfileViewTests(CreateTestUsers, TestCase):
         )
         qs = v.get_queryset()
         self.assertEqual(qs.count(), 0)
+
+
+class CompletedCampaignListViewTests(TestCase):
+    """
+    This class contains the unit tests for the CompletedCampaignListView
+    """
+
+    def setUp(self):
+        today = date.today()
+        self.campaign1 = create_campaign(
+            published=True, status=Campaign.Status.COMPLETED, completed_date=today
+        )
+        yesterday = today - timedelta(days=1)
+        self.campaign2 = create_campaign(
+            published=True,
+            status=Campaign.Status.COMPLETED,
+            slug="test-campaign-2",
+            completed_date=yesterday,
+        )
+
+    def test_queryset(self):
+        view = CompletedCampaignListView()
+        self.assertGreater(
+            view.queryset.first().completed_date, view.queryset.last().completed_date
+        )
 
 
 @override_settings(
@@ -597,7 +623,7 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         self.login_user()
         request_factory = RequestFactory()
         request = request_factory.get("/")
-        request.session = dict()
+        request.session = {}
         reservation_token = get_or_create_reservation_token(request)
 
         session = self.client.session
@@ -662,7 +688,7 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         self.login_user()
         request_factory = RequestFactory()
         request = request_factory.get("/")
-        request.session = dict()
+        request.session = {}
         reservation_token = get_or_create_reservation_token(request)
 
         session = self.client.session
@@ -1140,7 +1166,6 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
 
         self.client.logout()
 
-        # self.login_user("second_user")
         second_user = self.create_test_user("second_user")
         self.client.login(username=second_user.username, password=second_user._password)
         updated_tags = [
