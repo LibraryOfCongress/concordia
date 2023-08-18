@@ -713,7 +713,7 @@ class CompletedCampaignListView(APIListView):
         Campaign.objects.published()
         .listed()
         .filter(status__in=[Campaign.Status.COMPLETED, Campaign.Status.RETIRED])
-        .order_by("ordering", "title")
+        .order_by("-completed_date")
     )
     context_object_name = "campaigns"
 
