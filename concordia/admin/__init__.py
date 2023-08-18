@@ -758,6 +758,8 @@ class TranscriptionAdmin(admin.ModelAdmin):
         "rejected",
         "reviewed_by",
         "text",
+        "ocr_generated",
+        "ocr_originated",
     )
 
     def lookup_allowed(self, key, value):
