@@ -1,0 +1,51 @@
+name: 'Deploy to test'
+
+on:
+    workflow_dispatch:
+
+env:
+    AWS_REGION: us-east-1
+
+permissions:
+    id-token: write
+    contents: read
+
+jobs:
+    deploy:
+        name: Deploy to Test
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: configure aws credentials
+              uses: aws-actions/configure-aws-credentials@v2
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: ${{ env.AWS_REGION }}
+                  role-session-name: github_to_aws_deploy
+
+            - name: Login to Amazon ECR
+              id: login-ecr
+              uses: aws-actions/amazon-ecr-login@v1
+
+            - name: Build, tag and push docker images ECR
+              env:
+                  REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+                  IMAGE_TAG_PULL: ${{ secrets.IMAGE_TAG_DEV }}
+                  IMAGE_TAG: ${{ secrets.IMAGE_TAG_TEST }}
+                  CLUSTER: ${{ secrets.CLUSTER_TEST }}
+              run: |
+                  docker pull $REGISTRY/concordia:$IMAGE_TAG_PULL
+                  docker pull $REGISTRY/concordia/importer:$IMAGE_TAG_PULL
+                  docker pull $REGISTRY/concordia/celerybeat:$IMAGE_TAG_PULL
+
+                  docker tag $REGISTRY/concordia:$IMAGE_TAG_PULL $REGISTRY/concordia:$IMAGE_TAG
+                  docker tag $REGISTRY/concordia/importer:$IMAGE_TAG_PULL $REGISTRY/concordia/importer:$IMAGE_TAG
+                  docker tag $REGISTRY/concordia/celerybeat:$IMAGE_TAG_PULL $REGISTRY/concordia/celerybeat:$IMAGE_TAG
+
+                  docker push $REGISTRY/concordia:$IMAGE_TAG
+                  docker push $REGISTRY/concordia/importer:$IMAGE_TAG
+                  docker push $REGISTRY/concordia/celerybeat:$IMAGE_TAG
+
+                  TARGET_SERVICE="$(aws ecs list-services --cluster $CLUSTER | python -c 'import json,sys;serviceInput=json.load(sys.stdin);serviceArns=serviceInput["serviceArns"];print(serviceArns[0])')"
+                  aws ecs update-service --region ${{ env.AWS_REGION }} --force-new-deployment --cluster $CLUSTER --service $TARGET_SERVICE
