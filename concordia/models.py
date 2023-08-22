@@ -526,9 +526,9 @@ class TranscriptionManager(models.Manager):
             q_rejected &= Q(rejected__lte=end)
         return self.filter(q_accepted | q_rejected)
 
-    def recent_review_actions(self):
-        ONE_DAY_AGO = timezone.now() - datetime.timedelta(days=1)
-        return self.review_actions(ONE_DAY_AGO)
+    def recent_review_actions(self, days=1):
+        START = timezone.now() - datetime.timedelta(days=days)
+        return self.review_actions(START)
 
 
 class Transcription(MetricsModelMixin("transcription"), models.Model):

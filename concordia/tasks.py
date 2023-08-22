@@ -118,30 +118,6 @@ def _daily_active_users():
     return len(set(list(reviewer_ids) + list(transcriber_ids)))
 
 
-def _get_review_actions(campaign=None, topic=None):
-    transcriptions = Transcription.objects.recent_review_actions()
-    if campaign is not None:
-        if campaign.status == Campaign.Status.RETIRED:
-            transcriptions = Transcription.objects.none()
-        else:
-            transcriptions = transcriptions.filter(
-                asset__item__project__campaign=campaign
-            )
-    if topic is not None:
-        project_ids = (
-            Project.objects.filter(topics__in=(topic,))
-            .exclude(campaign__status=Campaign.Status.RETIRED)
-            .values_list("id", flat=True)
-        )
-        return (
-            Transcription.objects.recent_review_actions()
-            .filter(asset__item__project__id__in=project_ids)
-            .exclude(accepted__isnull=True, rejected__isnull=True)
-            .count()
-        )
-    return transcriptions.exclude(accepted__isnull=True, rejected__isnull=True).count()
-
-
 @celery_app.task
 def site_report():
     report = {
@@ -179,6 +155,8 @@ def site_report():
     ).count()
     transcriptions_saved = Transcription.objects.all().count()
 
+    daily_review_actions = Transcription.objects.recent_review_actions().count()
+
     stats = UserAssetTagCollection.objects.aggregate(Count("tags"))
     tag_count = stats["tags__count"]
 
@@ -199,7 +177,7 @@ def site_report():
     site_report.projects_unpublished = projects_unpublished
     site_report.anonymous_transcriptions = anonymous_transcriptions
     site_report.transcriptions_saved = transcriptions_saved
-    site_report.daily_review_actions = _get_review_actions()
+    site_report.daily_review_actions = daily_review_actions
     site_report.distinct_tags = distinct_tag_count
     site_report.tag_uses = tag_count
     site_report.campaigns_published = campaigns_published
@@ -257,6 +235,12 @@ def topic_report(topic):
         asset__item__project__topics=topic
     ).count()
 
+    daily_review_actions = (
+        Transcription.objects.recent_review_actions()
+        .filter(asset__item__project__topics__in=(topic,))
+        .count()
+    )
+
     asset_tag_collections = UserAssetTagCollection.objects.filter(
         asset__item__project__topics=topic
     )
@@ -286,7 +270,7 @@ def topic_report(topic):
     site_report.projects_unpublished = projects_unpublished
     site_report.anonymous_transcriptions = anonymous_transcriptions
     site_report.transcriptions_saved = transcriptions_saved
-    site_report.daily_review_actions = _get_review_actions(topic=topic)
+    site_report.daily_review_actions = daily_review_actions
     site_report.distinct_tags = distinct_tag_count
     site_report.tag_uses = tag_count
     site_report.save()
@@ -337,6 +321,12 @@ def campaign_report(campaign):
         asset__item__project__campaign=campaign
     ).count()
 
+    daily_review_actions = (
+        Transcription.objects.recent_review_actions()
+        .filter(asset__item__project__campaign=campaign)
+        .count()
+    )
+
     asset_tag_collections = UserAssetTagCollection.objects.filter(
         asset__item__project__campaign=campaign
     )
@@ -383,7 +373,7 @@ def campaign_report(campaign):
     site_report.projects_unpublished = projects_unpublished
     site_report.anonymous_transcriptions = anonymous_transcriptions
     site_report.transcriptions_saved = transcriptions_saved
-    site_report.daily_review_actions = _get_review_actions(campaign=campaign)
+    site_report.daily_review_actions = daily_review_actions
     site_report.distinct_tags = distinct_tag_count
     site_report.tag_uses = tag_count
     site_report.registered_contributors = registered_contributor_count
