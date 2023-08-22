@@ -4,8 +4,16 @@ on:
     workflow_dispatch:
     push:
         branches: [release]
+        paths-ignore:
+            - docs/**
+            - README.md
+            - .github/**
     pull_request:
         branches: [main, 'feature-*']
+        paths-ignore:
+            - docs/**
+            - README.md
+            - .github/**
 
 env:
     PIPENV_IGNORE_VIRTUALENVS: 1
