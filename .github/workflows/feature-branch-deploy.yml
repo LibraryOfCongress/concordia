@@ -36,7 +36,7 @@ jobs:
             - name: Checkout repository
               uses: actions/checkout@v3
               with:
-                  ref: feature-???? #jkue-  define in env vs secrets?
+                  ref: ${{ environment.secrets.FEATURE-BRANCH }}
 
             - name: Get history and tags for SCM versioning to work
               run: |
