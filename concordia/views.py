@@ -728,6 +728,8 @@ def calculate_asset_stats(asset_qs, ctx):
     for i, j in trans_qs.iterator():
         user_ids.add(i)
         user_ids.add(j)
+    # Remove null values from the set
+    user_ids.remove(None)
 
     ctx["contributor_count"] = len(user_ids)
 
