@@ -21,7 +21,7 @@ jobs:
         name: Deploy Feature Branch to Test
         runs-on: ubuntu-latest
         environment:
-            - name: feature
+            name: feature
         steps:
             - name: Install system packages
               run: |
