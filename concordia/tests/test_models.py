@@ -1,6 +1,9 @@
-from django.test import TestCase
+from datetime import timedelta
 
-from concordia.models import Campaign, UserProfileActivity
+from django.test import TestCase
+from django.utils import timezone
+
+from concordia.models import Campaign, Transcription, UserProfileActivity
 from concordia.utils import get_anonymous_user
 
 from .utils import CreateTestUsers, create_asset, create_transcription
@@ -19,6 +22,25 @@ class AssetTestCase(CreateTestUsers, TestCase):
 
     def test_get_contributor_count(self):
         self.assertEqual(self.asset.get_contributor_count(), 2)
+
+
+class TranscriptionManagerTestCase(CreateTestUsers, TestCase):
+    def test_recent_review_actions(self):
+        transcription1 = create_transcription(
+            user=self.create_user(username="tester1"),
+            rejected=timezone.now() - timedelta(days=2),
+        )
+        transcription2 = create_transcription(
+            asset=transcription1.asset, user=get_anonymous_user()
+        )
+        transcriptions = Transcription.objects
+        self.assertEqual(transcriptions.recent_review_actions().count(), 0)
+        transcription1.accepted = timezone.now()
+        transcription1.save()
+        self.assertEqual(transcriptions.recent_review_actions().count(), 1)
+        transcription2.rejected = timezone.now()
+        transcription2.save()
+        self.assertEqual(transcriptions.recent_review_actions().count(), 2)
 
 
 class UserProfileActivityTestCase(TestCase):
