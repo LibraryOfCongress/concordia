@@ -6,7 +6,6 @@ from django.utils import timezone
 from concordia.models import Campaign, SiteReport, Transcription
 from concordia.tasks import (
     _daily_active_users,
-    _get_review_actions,
     campaign_report,
     site_report,
 )
@@ -132,9 +131,6 @@ class SiteReportTestCase(CreateTestUsers, TestCase):
 
     def test_daily_active_users(self):
         self.assertEqual(_daily_active_users(), 2)
-
-    def test_get_review_actions(self):
-        self.assertEqual(_get_review_actions(campaign=self.campaign1), 2)
 
     def test_site_report(self):
         self.assertEqual(self.site_report.assets_total, 5)
