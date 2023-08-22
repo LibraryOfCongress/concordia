@@ -21,7 +21,7 @@ jobs:
         name: Deploy Feature Branch to Test
         runs-on: ubuntu-latest
         environment:
-            - name: feature
+            name: feature
         steps:
             - name: Install system packages
               run: |
@@ -36,7 +36,7 @@ jobs:
             - name: Checkout repository
               uses: actions/checkout@v3
               with:
-                  ref: ${{ environment.secrets.FEATURE-BRANCH }}
+                  ref: ${{ vars.FEATURE_BRANCH }}
 
             - name: Get history and tags for SCM versioning to work
               run: |
@@ -84,9 +84,9 @@ jobs:
             - name: Build, tag and push docker images ECR
               env:
                   REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-                  IMAGE_TAG: ${{ environment.secrets.IMAGE_TAG }}
+                  IMAGE_TAG: ${{ vars.IMAGE_TAG }}
                   CLUSTER: ${{ secrets.CLUSTER_TEST }}
-                  TARGET_SERVICE: ${{ environment.secrets.TARGET_SERVICE }}
+                  TARGET_SERVICE: ${{ secrets.TARGET_SERVICE }}
               run: |
                   echo "version number: $version_number"
 
