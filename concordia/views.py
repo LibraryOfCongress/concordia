@@ -2342,8 +2342,16 @@ class EmailReconfirmationView(TemplateView):
 
     BAD_USERNAME_MESSAGE = _("The account you attempted to confirm is invalid.")
     BAD_EMAIL_MESSAGE = _("The email you attempted to confirm is invalid.")
-    EXPIRED_MESSAGE = _("Confirmation has expired.")
-    INVALID_KEY_MESSAGE = _("The confirmation key you provided is invalid.")
+    EXPIRED_MESSAGE = _(
+        "The confirmation key you provided is expired. Email confirmation links "
+        "expire after 7 days. If your key is expired, you will need to re-enter "
+        "your new email address"
+    )
+    INVALID_KEY_MESSAGE = _(
+        "The confirmation key you provided is invalid. Email confirmation links "
+        "expire after 7 days. If your key is expired, you will need to re-enter "
+        "your new email address."
+    )
 
     def get_success_url(self):
         return "{}#account".format(self.success_url)
