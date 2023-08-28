@@ -1284,11 +1284,14 @@ table.table thead.border-y th {
 }
 
 /* Profile page */
-.view-user-profile .nav-tabs {
+.view-user-profile .nav-tabs,
+.view-email-reconfirmation .nav-tabs {
     border-bottom: 1px solid #000;
 }
 .view-user-profile .nav-tabs .nav-link.active,
-.view-user-profile .nav-tabs .nav-item.show .nav-link {
+.view-user-profile .nav-tabs .nav-item.show .nav-link,
+.view-email-reconfirmation .nav-tabs .nav-link.active,
+.view-email-reconfirmation .nav-tabs .nav-item.show .nav-link {
     border-color: #000 #000 #fff;
 }
 

@@ -55,7 +55,7 @@
                                                                         {% bootstrap_button "Save Change" button_type="submit" button_class="btn btn-primary rounded-0" %}
                                                                         </div>
                                                                         {% if valid is True %}
-                                                                            <div class="mt-1 text-success w-100" id="validation-confirmation"><i class="fa fa-check-circle"></i> Email changed successfully</div>
+                                                                            <div class="mt-1 text-success w-100" id="validation-confirmation"><i class="fa fa-check-circle"></i> Email changed successfully; <strong>Check email to confirm address</strong></div>
                                                                         {% else %}
                                                                             <div class="invalid-feedback" {% if valid is not None and valid is False %}style="display: block;" aria-hidden="false"{%endif %}>
                                                                                 <i class="fa fa-exclamation-circle"></i> Error in email change
