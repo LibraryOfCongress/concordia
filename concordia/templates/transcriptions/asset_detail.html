@@ -88,7 +88,7 @@
             </nav>
         </div>
         <div id="contribute-container" class="d-flex flex-grow-1 d-print-block border">
-            <div id="viewer-column" class="pl-0 d-flex align-items-stretch bg-dark d-print-block">
+            <div id="viewer-column" class="pl-0 d-flex align-items-stretch bg-dark d-print-block flex-column">
                 <div id="viewer-controls" class="m-1 text-center d-print-none">
                     <div class="d-inline-flex justify-content-between">
                         <div class="d-flex btn-group m-1">
@@ -360,8 +360,8 @@
                 <div id="asset-image" class="h-100 bg-dark d-print-none w-100"></div>
             </div>
 
-            <div id="editor-column" class="d-flex justify-content-between p-3 d-print-block">
-                <div class="flex-grow-1 d-flex d-print-block">
+            <div id="editor-column" class="d-flex justify-content-between p-3 d-print-block flex-column">
+                <div class="flex-grow-1 d-flex d-print-block flex-column">
                     <div class="tx-status-display">
                         <h2 class="tx-submitted" {% if transcription_status != 'submitted' %}hidden{% endif %}>
                             <span class="fas fa-list"></span>
@@ -883,21 +883,22 @@
     </script>
 
     <script>
-        var splitDirection;
-        var pageSplit;
-        var contributeContainer = document.getElementById("contribute-container");
-        var viewerColumn = document.getElementById("viewer-column");
-        var editorColumn = document.getElementById("editor-column");
+        let splitDirection;
+        let pageSplit;
+        let contributeContainer = document.getElementById("contribute-container");
+        let ocrSection = document.getElementById("ocr-section");
+        let editorColumn = document.getElementById("editor-column");
+        let helpContainer = document.getElementById("help-container");
+        let layoutColumns = ["#viewer-column", "#editor-column"];
+
         function verticalSplit(){
             splitDirection = "v";
             contributeContainer.classList.remove("flex-row");
-            viewerColumn.classList.remove("flex-column");
-            editorColumn.classList.remove("flex-column");
-
             contributeContainer.classList.add("flex-column");
-            viewerColumn.classList.add("flex-row");
-            editorColumn.classList.add("flex-row");
-            return Split(["#viewer-column", "#editor-column"], {
+            if(ocrSection != null){
+                editorColumn.prepend(ocrSection);
+            }
+            return Split(layoutColumns, {
                 sizes: [50, 50],
                 minSize: 100,
                 gutterSize: 8,
@@ -917,13 +918,11 @@
         function horizontalSplit(){
             splitDirection = "h";
             contributeContainer.classList.remove("flex-column");
-            viewerColumn.classList.remove("flex-row");
-            editorColumn.classList.remove("flex-row");
-
             contributeContainer.classList.add("flex-row");
-            viewerColumn.classList.add("flex-column");
-            editorColumn.classList.add("flex-column");
-            return Split(["#viewer-column", "#editor-column"], {
+            if(ocrSection != null){
+                helpContainer.prepend(ocrSection);
+            }
+            return Split(layoutColumns, {
                 sizes: [50, 50],
                 minSize: 300,
                 gutterSize: 8,
@@ -951,7 +950,7 @@
         }
 
         document.getElementById("viewer-layout-horizontal").addEventListener('click', function(){
-            if(splitDirection === "v"){
+            if(splitDirection != "h"){
                 if(pageSplit != null){
                     pageSplit.destroy();
                 }
@@ -960,14 +959,15 @@
         });
 
         document.getElementById("viewer-layout-vertical").addEventListener('click', function(){
-            if(splitDirection === "h"){
+            if(splitDirection != "v"){
                 if(pageSplit != null){
                     pageSplit.destroy();
                 }
                 pageSplit = verticalSplit()
             }
         });
-        pageSplit = verticalSplit();
+
+        pageSplit = horizontalSplit();
     </script>
 
     <script>
