@@ -791,14 +791,15 @@ $card-progress-height: 12px;
     position: relative;
     cursor: ns-resize;
     background-color: $gray-400;
+    width: 100%;
 }
 
 .gutter.gutter-vertical::after {
     display: block;
 
     position: absolute;
-    top: calc(50% - 40px);
-    left: -4px;
+    top: -4px;
+    left: calc(50% - 60px);
 
     content: '';
 

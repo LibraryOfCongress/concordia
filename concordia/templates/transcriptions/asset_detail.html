@@ -87,7 +87,7 @@
                 </div>
             </nav>
         </div>
-        <div id="contribute-container" class="row d-flex flex-grow-1 d-print-block border">
+        <div id="contribute-container" class="d-flex flex-grow-1 d-print-block border">
             <div id="viewer-column" class="pl-0 d-flex align-items-stretch bg-dark d-print-block w-100">
                 <div id="viewer-controls" class="m-1 text-center d-print-none">
                     <div class="d-inline-flex justify-content-between">
@@ -874,11 +874,64 @@
     </script>
 
     <script>
-        var pageSplit = Split(["#viewer-column", "#editor-column"], {
-            minSize: 300,
-            gutterSize: 8,
-            direction: 'vertical',
-        });
+        var splitDirection;
+        var pageSplit;
+        var contributeContainer = document.getElementById("contribute-container");
+        function verticalSplit(){
+            splitDirection = "v";
+            contributeContainer.classList.remove("flex-row");
+            contributeContainer.classList.add("flex-column");
+            return Split(["#viewer-column", "#editor-column"], {
+                sizes: [50, 50],
+                minSize: 100,
+                gutterSize: 8,
+                direction: 'vertical',
+                elementStyle: function(dimension, size, gutterSize) {
+                    return {
+                        //"height": "calc(" + size + "% - " + gutterSize + "px)"
+                        "flex-basis": "calc(" + size + "% - " + gutterSize + "px)"
+                    };
+                },
+                gutterStyle: function(dimension, gutterSize) {
+                    return {
+                        //"height" : gutterSize + "px",
+                        "flex-basis": gutterSize + "px"
+                    };
+                }
+            });
+        }
+        function horizontalSplit(){
+            splitDirection = "h";
+            contributeContainer.classList.remove("flex-column");
+            contributeContainer.classList.add("flex-row");
+            return Split(["#viewer-column", "#editor-column"], {
+                sizes: [50, 50],
+                minSize: 300,
+                gutterSize: 8,
+                elementStyle: function(dimension, size, gutterSize) {
+                    return {
+                        "flex-basis": "calc(" + size + "% - " + gutterSize + "px)"
+                    };
+                },
+                gutterStyle: function(dimension, gutterSize) {
+                    return {
+                        "flex-basis": gutterSize + "px"
+                    };
+                }
+            });
+        }
+        function toggleSplit(){
+            if(pageSplit != null){
+                pageSplit.destroy();
+            }
+            if(splitDirection === "v"){
+                pageSplit = horizontalSplit();
+            }else{
+                pageSplit = verticalSplit();
+            }
+        }
+
+        pageSplit = verticalSplit();
     </script>
 
     <script>
