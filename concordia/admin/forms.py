@@ -37,6 +37,10 @@ class AdminProjectBulkImportForm(forms.Form):
         label="Spreadsheet containing the campaigns, projects, and items to import",
     )
 
+    redownload = forms.BooleanField(
+        required=False, label="Should existing items be redownloaded?"
+    )
+
 
 class AdminRedownloadImagesForm(forms.Form):
     spreadsheet_file = forms.FileField(

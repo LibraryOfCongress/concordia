@@ -12,6 +12,7 @@ from urllib.parse import parse_qsl, urlencode, urljoin, urlparse, urlsplit, urlu
 
 import requests
 from celery import group
+from django import forms
 from django.core.cache import cache
 from django.db.transaction import atomic
 from django.utils.text import slugify
@@ -270,7 +271,9 @@ def import_item_count_from_url(import_url):
         return f"Unhandled exception importing {import_url} {exc}", 0
 
 
-def import_items_into_project_from_url(requesting_user, project, import_url):
+def import_items_into_project_from_url(
+    requesting_user, project, import_url, redownload=False
+):
     """
     Given a loc.gov URL, return the task ID for the import task
     """
@@ -291,26 +294,26 @@ def import_items_into_project_from_url(requesting_user, project, import_url):
     import_job.save()
 
     if url_type == "item":
-        create_item_import_task.delay(import_job.pk, import_url)
+        create_item_import_task.delay(import_job.pk, import_url, redownload)
     else:
         # Both collections and search results return the same format JSON
         # reponse so we can use the same code to process them:
-        import_collection_task.delay(import_job.pk)
+        import_collection_task.delay(import_job.pk, redownload)
 
     return import_job
 
 
 @app.task(bind=True)
-def import_collection_task(self, import_job_pk):
+def import_collection_task(self, import_job_pk, redownload=False):
     import_job = ImportJob.objects.get(pk=import_job_pk)
-    return import_collection(self, import_job)
+    return import_collection(self, import_job, redownload)
 
 
 @update_task_status
-def import_collection(self, import_job):
+def import_collection(self, import_job, redownload=False):
     item_info = get_collection_items(normalize_collection_url(import_job.url))
     for _, item_url in item_info:
-        create_item_import_task.delay(import_job.pk, item_url)
+        create_item_import_task.delay(import_job.pk, item_url, redownload)
 
 
 @app.task(
@@ -343,7 +346,7 @@ def redownload_image_task(self, asset_pk):
     retry_kwargs={"max_retries": 3},
     rate_limit=2,
 )
-def create_item_import_task(self, import_job_pk, item_url):
+def create_item_import_task(self, import_job_pk, item_url, redownload=False):
     """
     Create an ImportItem record using the provided import job and URL by
     requesting the metadata from the URL
@@ -367,14 +370,27 @@ def create_item_import_task(self, import_job_pk, item_url):
         url=item_url, item=item
     )
 
-    if not item_created:
-        logger.warning("Not reprocessing existing item %s", item)
-        import_item.status = "Not reprocessing existing item %s" % item
-        import_item.completed = import_item.last_started = now()
-        import_item.task_id = self.request.id
-        import_item.full_clean()
-        import_item.save()
-        return
+    if not item_created and redownload is False:
+        # Item has already been imported and we're not redownloading
+        # all items
+        asset_urls, item_resource_url = get_asset_urls_from_item_resources(
+            item.metadata.get("resources", [])
+        )
+        if item.asset_set.count() >= len(asset_urls):
+            # The item has all of its assets, so we can skip it
+            logger.warning("Not reprocessing existing item with all asssets: %s", item)
+            import_item.status = (
+                "Not reprocessing existing item with all assets: %s" % item
+            )
+            import_item.completed = import_item.last_started = now()
+            import_item.task_id = self.request.id
+            import_item.full_clean()
+            import_item.save()
+            return
+        else:
+            # The item is missing one or more of its assets, so we will reprocess it
+            # to import the missing asssets
+            logger.warning("Reprocessing existing item %s that is missing assets", item)
 
     import_item.item.metadata.update(item_data)
 
@@ -423,8 +439,12 @@ def import_item(self, import_item):
             resource_url=item_resource_url,
             storage_image="/".join([relative_asset_file_path, f"{idx}.jpg"]),
         )
-        item_asset.full_clean()
-        item_assets.append(item_asset)
+        try:
+            item_asset.full_clean()
+            item_assets.append(item_asset)
+        except forms.ValidationError:
+            # Asset already exists
+            pass
 
     Asset.objects.bulk_create(item_assets)
 
