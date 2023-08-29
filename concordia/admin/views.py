@@ -132,7 +132,7 @@ def project_level_export(request):
     form = AdminProjectBulkImportForm()
     context["campaigns"] = all_campaigns = []
     context["projects"] = all_projects = []
-    id = request.GET.get("id")
+    idx = request.GET.get("id")
 
     if request.method == "POST":
         project_list = request.POST.getlist("project_name")
@@ -179,15 +179,15 @@ def project_level_export(request):
         ) as export_base_dir:
             return do_bagit_export(assets, export_base_dir, export_filename_base)
 
-    if id is not None:
+    if idx is not None:
         context["campaigns"] = []
         form = AdminProjectBulkImportForm()
-        projects = Project.objects.filter(campaign_id=int(id))
+        projects = Project.objects.filter(campaign_id=int(idx))
         for project in projects:
             proj_dict = {}
             proj_dict["title"] = project.title
             proj_dict["id"] = project.pk
-            proj_dict["campaign_id"] = id
+            proj_dict["campaign_id"] = idx
             all_projects.append(proj_dict)
 
     else:
@@ -223,11 +223,11 @@ def celery_task_review(request):
     }
     celery = Celery("concordia")
     celery.config_from_object("django.conf:settings", namespace="CELERY")
-    id = request.GET.get("id")
+    idx = request.GET.get("id")
 
-    if id is not None:
+    if idx is not None:
         form = AdminProjectBulkImportForm()
-        projects = Project.objects.filter(campaign_id=int(id))
+        projects = Project.objects.filter(campaign_id=int(idx))
         for project in projects:
             asset_successful = 0
             asset_failure = 0
@@ -236,7 +236,7 @@ def celery_task_review(request):
             proj_dict = {}
             proj_dict["title"] = project.title
             proj_dict["id"] = project.pk
-            proj_dict["campaign_id"] = id
+            proj_dict["campaign_id"] = idx
             messages.info(request, f"{project.title}")
             importjobs = ImportJob.objects.filter(project_id=project.pk).order_by(
                 "-created"
@@ -398,7 +398,7 @@ def admin_bulk_import_review(request):
                             )
 
                 all_urls.append(urls)
-                for i, val in enumerate(all_urls):
+                for _i, val in enumerate(all_urls):
                     return_result = fetch_all_urls(val)
                     for res in return_result[0]:
                         messages.info(request, f"{res}")
@@ -437,6 +437,7 @@ def admin_bulk_import_view(request):
 
         if form.is_valid():
             context["import_jobs"] = import_jobs = []
+            redownload = form.cleaned_data.get("redownload", False)
 
             rows = slurp_excel(request.FILES["spreadsheet_file"])
             required_fields = [
@@ -545,7 +546,7 @@ def admin_bulk_import_view(request):
                     try:
                         import_jobs.append(
                             import_items_into_project_from_url(
-                                request.user, project, url
+                                request.user, project, url, redownload
                             )
                         )
 
