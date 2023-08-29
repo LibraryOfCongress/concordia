@@ -84,7 +84,7 @@ jobs:
             - name: Build, tag and push docker images ECR
               env:
                   REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-                  IMAGE_TAG: ${{ vars.IMAGE_TAG }}
+                  IMAGE_TAG: ${{ secrets.IMAGE_TAG }}
                   CLUSTER: ${{ secrets.CLUSTER_TEST }}
                   TARGET_SERVICE: ${{ secrets.TARGET_SERVICE }}
               run: |
