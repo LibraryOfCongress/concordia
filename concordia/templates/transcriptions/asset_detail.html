@@ -981,7 +981,14 @@
                 if(pageSplit != null){
                     pageSplit.destroy();
                 }
-                pageSplit = horizontalSplit()
+                pageSplit = horizontalSplit();
+                setTimeout(function(){
+                    // Some quirk in the viewer makes this
+                    // sometimes not working depending on
+                    // the rotation, unless it's delayed.
+                    // Less than 10ms didn't reliable work.
+                    seadragonViewer.viewport.zoomTo(1);
+                }, 10);
             }
         });
 
@@ -990,7 +997,10 @@
                 if(pageSplit != null){
                     pageSplit.destroy();
                 }
-                pageSplit = verticalSplit()
+                pageSplit = verticalSplit();
+                setTimeout(function(){
+                    seadragonViewer.viewport.zoomTo(1);
+                }, 10);
             }
         });
 
