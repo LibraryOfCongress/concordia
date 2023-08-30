@@ -883,7 +883,6 @@
     </script>
 
     <script>
-        let splitDirection;
         let pageSplit;
         let contributeContainer = document.getElementById("contribute-container");
         let ocrSection = document.getElementById("ocr-section");
@@ -891,15 +890,40 @@
         let helpContainer = document.getElementById("help-container");
         let layoutColumns = ["#viewer-column", "#editor-column"];
 
+        let sizes = localStorage.getItem('transcription-split-sizes');
+
+        if (sizes) {
+            sizes = JSON.parse(sizes);
+        } else {
+            sizes = [50, 50]; // default sizes
+        }
+
+        let splitDirection = localStorage.getItem("transcription-split-direction");
+
+        if (splitDirection){
+            splitDirection = JSON.parse(splitDirection);
+        } else {
+            splitDirection = "h";
+        }
+
+        function saveSizes(sizes){
+            localStorage.setItem('transcription-split-sizes', JSON.stringify(sizes));
+        }
+
+        function saveDirection(direction){
+            localStorage.setItem('transcription-split-direction', JSON.stringify(direction))
+        }
+
         function verticalSplit(){
             splitDirection = "v";
+            saveDirection(splitDirection);
             contributeContainer.classList.remove("flex-row");
             contributeContainer.classList.add("flex-column");
             if(ocrSection != null){
                 editorColumn.prepend(ocrSection);
             }
             return Split(layoutColumns, {
-                sizes: [50, 50],
+                sizes: sizes,
                 minSize: 100,
                 gutterSize: 8,
                 direction: 'vertical',
@@ -912,18 +936,20 @@
                     return {
                         "flex-basis": gutterSize + "px"
                     };
-                }
+                },
+                onDragEnd: saveSizes,
             });
         }
         function horizontalSplit(){
             splitDirection = "h";
+            saveDirection(splitDirection);
             contributeContainer.classList.remove("flex-column");
             contributeContainer.classList.add("flex-row");
             if(ocrSection != null){
                 helpContainer.prepend(ocrSection);
             }
             return Split(layoutColumns, {
-                sizes: [50, 50],
+                sizes: sizes,
                 minSize: 300,
                 gutterSize: 8,
                 elementStyle: function(dimension, size, gutterSize) {
@@ -935,7 +961,8 @@
                     return {
                         "flex-basis": gutterSize + "px"
                     };
-                }
+                },
+                onDragEnd: saveSizes,
             });
         }
         function toggleSplit(){
@@ -967,7 +994,11 @@
             }
         });
 
-        pageSplit = horizontalSplit();
+        if (splitDirection == "v") {
+            pageSplit = verticalSplit();
+        } else {
+            pageSplit = horizontalSplit();
+        }
     </script>
 
     <script>
