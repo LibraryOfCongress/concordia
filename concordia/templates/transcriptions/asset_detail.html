@@ -87,10 +87,19 @@
                 </div>
             </nav>
         </div>
-        <div id="contribute-container" class="row d-flex flex-nowrap flex-grow-1 d-print-block border">
-            <div id="viewer-column" class="pl-0 d-flex flex-column align-items-stretch bg-dark d-print-block">
+        <div id="contribute-container" class="d-flex flex-grow-1 d-print-block border">
+            <div id="viewer-column" class="pl-0 d-flex align-items-stretch bg-dark d-print-block flex-column">
                 <div id="viewer-controls" class="m-1 text-center d-print-none">
                     <div class="d-inline-flex justify-content-between">
+                        <div class="d-flex btn-group m-1">
+                            <button id="viewer-layout-vertical" class="btn btn-dark viewer-control-button" title="Vertical Layout">
+                                <span class="fas fa-grip-lines"></span>
+                            </button>
+                            <button id="viewer-layout-horizontal" class="btn btn-dark" title="Horizontal Layout">
+                                <span class="fas fa-grip-lines-vertical"></span>
+                            </button>
+                        </div>
+
                         <div class="d-flex btn-group m-1">
                             <button type="button" id="viewer-home" class="btn btn-dark viewer-control-button" title="Fit Image to Viewport">
                                 <span class="fas fa-compress"></span>
@@ -348,11 +357,11 @@
                         </div>
                     </div>
                 </div>
-                <div id="asset-image" class="h-100 bg-dark d-print-none"></div>
+                <div id="asset-image" class="h-100 bg-dark d-print-none w-100"></div>
             </div>
 
-            <div id="editor-column" class="d-flex flex-column flex-nowrap justify-content-between p-3 d-print-block">
-                <div class="flex-grow-1 d-flex flex-column d-print-block">
+            <div id="editor-column" class="d-flex justify-content-between p-3 d-print-block flex-column">
+                <div class="flex-grow-1 d-flex d-print-block flex-column">
                     <div class="tx-status-display">
                         <h2 class="tx-submitted" {% if transcription_status != 'submitted' %}hidden{% endif %}>
                             <span class="fas fa-list"></span>
@@ -874,21 +883,122 @@
     </script>
 
     <script>
-        Split(["#viewer-column", "#editor-column"], {
-            sizes: [50, 50],
-            minSize: 300,
-            gutterSize: 8,
-            elementStyle: function(dimension, size, gutterSize) {
-                return {
-                    "flex-basis": "calc(" + size + "% - " + gutterSize + "px)"
-                };
-            },
-            gutterStyle: function(dimension, gutterSize) {
-                return {
-                    "flex-basis": gutterSize + "px"
-                };
+        let pageSplit;
+        let contributeContainer = document.getElementById("contribute-container");
+        let ocrSection = document.getElementById("ocr-section");
+        let editorColumn = document.getElementById("editor-column");
+        let helpContainer = document.getElementById("help-container");
+        let layoutColumns = ["#viewer-column", "#editor-column"];
+
+        let sizes = localStorage.getItem('transcription-split-sizes');
+
+        if (sizes) {
+            sizes = JSON.parse(sizes);
+        } else {
+            sizes = [50, 50]; // default sizes
+        }
+
+        let splitDirection = localStorage.getItem("transcription-split-direction");
+
+        if (splitDirection){
+            splitDirection = JSON.parse(splitDirection);
+        } else {
+            splitDirection = "h";
+        }
+
+        function saveSizes(sizes){
+            localStorage.setItem('transcription-split-sizes', JSON.stringify(sizes));
+        }
+
+        function saveDirection(direction){
+            localStorage.setItem('transcription-split-direction', JSON.stringify(direction))
+        }
+
+        function verticalSplit(){
+            splitDirection = "v";
+            saveDirection(splitDirection);
+            contributeContainer.classList.remove("flex-row");
+            contributeContainer.classList.add("flex-column");
+            if(ocrSection != null){
+                editorColumn.prepend(ocrSection);
+            }
+            return Split(layoutColumns, {
+                sizes: sizes,
+                minSize: 100,
+                gutterSize: 8,
+                direction: 'vertical',
+                elementStyle: function(dimension, size, gutterSize) {
+                    return {
+                        "flex-basis": "calc(" + size + "% - " + gutterSize + "px)"
+                    };
+                },
+                gutterStyle: function(dimension, gutterSize) {
+                    return {
+                        "flex-basis": gutterSize + "px"
+                    };
+                },
+                onDragEnd: saveSizes,
+            });
+        }
+        function horizontalSplit(){
+            splitDirection = "h";
+            saveDirection(splitDirection);
+            contributeContainer.classList.remove("flex-column");
+            contributeContainer.classList.add("flex-row");
+            if(ocrSection != null){
+                helpContainer.prepend(ocrSection);
+            }
+            return Split(layoutColumns, {
+                sizes: sizes,
+                minSize: 300,
+                gutterSize: 8,
+                elementStyle: function(dimension, size, gutterSize) {
+                    return {
+                        "flex-basis": "calc(" + size + "% - " + gutterSize + "px)"
+                    };
+                },
+                gutterStyle: function(dimension, gutterSize) {
+                    return {
+                        "flex-basis": gutterSize + "px"
+                    };
+                },
+                onDragEnd: saveSizes,
+            });
+        }
+        function toggleSplit(){
+            if(pageSplit != null){
+                pageSplit.destroy();
+            }
+            if(splitDirection === "v"){
+                pageSplit = horizontalSplit();
+            }else{
+                pageSplit = verticalSplit();
+            }
+        }
+
+        document.getElementById("viewer-layout-horizontal").addEventListener('click', function(){
+            if(splitDirection != "h"){
+                if(pageSplit != null){
+                    pageSplit.destroy();
+                }
+                pageSplit = horizontalSplit()
             }
         });
+
+        document.getElementById("viewer-layout-vertical").addEventListener('click', function(){
+            if(splitDirection != "v"){
+                if(pageSplit != null){
+                    pageSplit.destroy();
+                }
+                pageSplit = verticalSplit()
+            }
+        });
+
+        if (splitDirection == "v") {
+            pageSplit = verticalSplit();
+        } else {
+            pageSplit = horizontalSplit();
+        }
     </script>
 
     <script>

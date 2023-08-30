@@ -751,6 +751,10 @@ $card-progress-height: 12px;
     .gutter.gutter-horizontal {
         display: none !important;
     }
+
+    .gutter.gutter-vertical {
+        display: none !important;
+    }
 }
 
 #viewer-controls .btn-dark {
@@ -780,6 +784,29 @@ $card-progress-height: 12px;
     width: 16px;
 
     background: url(../img/handle.svg) no-repeat;
+}
+
+.gutter.gutter-vertical {
+    display: block;
+    position: relative;
+    cursor: ns-resize;
+    background-color: $gray-400;
+    width: 100%;
+}
+
+.gutter.gutter-vertical::after {
+    display: block;
+
+    position: absolute;
+    top: -4px;
+    left: calc(50% - 60px);
+
+    content: '';
+
+    height: 16px;
+    width: 60px;
+
+    background: url(../img/handle-vertical.svg) no-repeat;
 }
 
 #transcription-editor textarea {
@@ -1262,6 +1289,9 @@ table.table thead.border-y th {
         page-break-before: always;
     }
     #contribute-container .gutter-horizontal {
+        display: none;
+    }
+    #contribute-container .gutter-vertical {
         display: none;
     }
     #contribute-container #editor-column .tx-status-display {
