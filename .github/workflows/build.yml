@@ -26,14 +26,14 @@ jobs:
                   sudo apt-get install -qy libmemcached-dev libz-dev libfreetype6-dev libtiff-dev \
                     libjpeg-dev libopenjp2-7-dev libwebp-dev zlib1g-dev libpq-dev
 
+            - name: Checkout repository
+              uses: actions/checkout@v3
+
             - name: Install node and npm
               uses: actions/setup-node@v3
               with:
                   node-version: '18'
                   cache: 'npm'
-
-            - name: Checkout repository
-              uses: actions/checkout@v3
 
             - name: Set up Python 3.10
               uses: actions/setup-python@v4
