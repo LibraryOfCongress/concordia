@@ -33,7 +33,11 @@ jobs:
               uses: actions/setup-node@v3
               with:
                   node-version: '18'
+                  check-latest: true
                   cache: 'npm'
+
+            - name: Install npm from cache
+              run: npm ci
 
             - name: Set up Python 3.10
               uses: actions/setup-python@v4
