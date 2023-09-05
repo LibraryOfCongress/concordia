@@ -873,3 +873,22 @@ class CampaignRetirementProgress(models.Model):
 
     def __str__(self):
         return f"Removal progress for {self.campaign}"
+
+
+class Card(models.Model):
+    image = models.ImageField(upload_to="card_images", blank=True, null=True)
+    title = models.CharField(max_length=80)
+    body_text = models.TextField(blank=True)
+
+    class Meta:
+        abstract = True
+
+
+class CardFamily(models.Model):
+    slug = models.SlugField(max_length=80, unique=True, allow_unicode=True)
+    user = models.ForeignKey(Card, on_delete=models.CASCADE)
+    order = models.IntegerField(default=0)
+    default = models.BooleanField(default=False)
+
+    class Meta:
+        abstract = True
