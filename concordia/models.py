@@ -886,9 +886,17 @@ class Card(models.Model):
 
 class CardFamily(models.Model):
     slug = models.SlugField(max_length=80, unique=True, allow_unicode=True)
-    user = models.ForeignKey(Card, on_delete=models.CASCADE)
-    order = models.IntegerField(default=0)
     default = models.BooleanField(default=False)
+    cards = models.ManyToManyField(Card, through="TutorialCard")
+
+    class Meta:
+        abstract = True
+
+
+class TutorialCard(models.Model):
+    card = models.ForeignKey(Card, on_delete=models.CASCADE)
+    tutorial = models.ForeignKey(CardFamily, on_delete=models.CASCADE)
+    order = models.IntegerField(default=0)
 
     class Meta:
         abstract = True
