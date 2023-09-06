@@ -63,12 +63,3 @@ class BleachedDescriptionAdminForm(forms.ModelForm):
             tags=FRAGMENT_ALLOWED_TAGS,
             attributes=ALLOWED_ATTRIBUTES,
         )
-
-
-class SimpleContentBlockAdminForm(forms.ModelForm):
-    def clean_body(self):
-        return bleach.clean(
-            self.cleaned_data["body"],
-            tags=BLOCK_ALLOWED_TAGS,
-            attributes=ALLOWED_ATTRIBUTES,
-        )
