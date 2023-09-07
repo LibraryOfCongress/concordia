@@ -532,23 +532,6 @@
                     </a>
 
                     <div class="collapse" id="instruction-window">
-                        <button type="button" class="close pull-right" aria-label="Close" data-toggle="collapse" data-target="#instruction-window">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                        <div>
-                            {% if SIMPLE_CONTENT_BLOCKS %}
-                                {% simple_content_block "classic_quicktips" %}
-                            {% else %}
-                                <ul>
-                                    <li>Transcribe original spelling, punctuation, word order, and any page numbers or catalog marks.</li>
-                                    <li>Preserve line breaks except when a word breaks over a line or page. Then transcribe it on the line or page where it starts.</li>
-                                    <li>Use brackets [ ] around deleted, illegible or partially legible text, and square brackets and asterisks around text in margins [ * * ].</li>
-                                    <li>Transcribe any words or letters you can't identify as [?].</li>
-                                    <li>Include insertions where you would read them in the text.</li>
-                                </ul>
-                                Find more detailed instructions in the <a href="{% url 'help-center' %}">Help Center</a>
-                            {% endif %}
-                        </div>
                     </div>
                 </div>
             </div>
