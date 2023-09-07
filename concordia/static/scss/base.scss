@@ -862,32 +862,6 @@ $card-progress-height: 12px;
 
 /* End of help center stuff */
 
-#instruction-window {
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    left: 0;
-
-    z-index: 10;
-
-    background-color: rgba(250, 250, 250, 0.8);
-    border-top: 1pt solid $dark;
-    transition: height 1s linear 0s;
-}
-
-#instruction-window.collapse {
-    display: none;
-}
-
-#instruction-window.collapse.show {
-    display: block;
-}
-
-#instruction-window p {
-    max-width: 40em;
-    margin: auto;
-}
-
 /*
  * Image filter controls
 */
