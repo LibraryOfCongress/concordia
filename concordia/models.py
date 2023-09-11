@@ -901,3 +901,6 @@ class TutorialCard(models.Model):
     card = models.ForeignKey(Card, on_delete=models.CASCADE)
     tutorial = models.ForeignKey(CardFamily, on_delete=models.CASCADE)
     order = models.IntegerField(default=0)
+
+    class Meta:
+        verbose_name_plural = "cards"
