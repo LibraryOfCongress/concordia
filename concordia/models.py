@@ -180,6 +180,12 @@ class Card(models.Model):
     title = models.CharField(max_length=80)
     body_text = models.TextField(blank=True)
 
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        ordering = ("title",)
+
 
 class CardFamily(models.Model):
     slug = models.SlugField(max_length=80, unique=True, allow_unicode=True)
