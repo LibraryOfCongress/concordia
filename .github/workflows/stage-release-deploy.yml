@@ -20,6 +20,8 @@ jobs:
     deploy:
         name: Deploy Release to Stage
         runs-on: ubuntu-latest
+        environment:
+            name: stage
 
         steps:
             - name: Install system packages
@@ -79,12 +81,15 @@ jobs:
             - name: Login to Amazon ECR
               id: login-ecr
               uses: aws-actions/amazon-ecr-login@v1
+              with:
+                  mask-password: 'true'
 
             - name: Build, tag and push docker images ECR
               env:
                   REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-                  IMAGE_TAG: ${{ secrets.IMAGE_TAG_STAGE }}
-                  CLUSTER: ${{ secrets.CLUSTER_STAGE }}
+                  IMAGE_TAG: ${{ secrets.IMAGE_TAG }}
+                  CLUSTER: ${{ secrets.CLUSTER }}
+                  TARGET_SERVICE: ${{ secrets.TARGET_SERVICE }}
               run: |
                   echo "version number: $version_number"
 
@@ -106,5 +111,4 @@ jobs:
                   docker push $REGISTRY/concordia/celerybeat:$version_number
                   docker push $REGISTRY/concordia/celerybeat:$IMAGE_TAG
 
-                  TARGET_SERVICE="$(aws ecs list-services --cluster $CLUSTER | python -c 'import json,sys;serviceInput=json.load(sys.stdin);serviceArns=serviceInput["serviceArns"];print(serviceArns[0])')"
                   aws ecs update-service --region ${{ env.AWS_REGION }} --force-new-deployment --cluster $CLUSTER --service $TARGET_SERVICE
