@@ -190,6 +190,30 @@ class UnlistedPublicationQuerySet(PublicationQuerySet):
         return self.filter(next_review_campaign=True)
 
 
+class Card(models.Model):
+    image = models.ImageField(upload_to="card_images", blank=True, null=True)
+    title = models.CharField(max_length=80)
+    body_text = models.TextField(blank=True)
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        ordering = ("title",)
+
+
+class CardFamily(models.Model):
+    slug = models.SlugField(max_length=80, unique=True, allow_unicode=True)
+    default = models.BooleanField(default=False)
+    cards = models.ManyToManyField(Card, through="TutorialCard")
+
+    class Meta:
+        verbose_name_plural = "card families"
+
+    def __str__(self):
+        return self.slug
+
+
 class Campaign(MetricsModelMixin("campaign"), models.Model):
     class Status(models.IntegerChoices):
         ACTIVE = 1
@@ -224,6 +248,10 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
     short_description = models.TextField(blank=True)
 
     metadata = JSONField(default=metadata_default, blank=True, null=True)
+
+    card_family = models.ForeignKey(
+        CardFamily, on_delete=models.CASCADE, blank=True, null=True
+    )
 
     class Meta:
         indexes = [
@@ -909,28 +937,10 @@ class CampaignRetirementProgress(models.Model):
         return f"Removal progress for {self.campaign}"
 
 
-class Card(models.Model):
-    image = models.ImageField(upload_to="card_images", blank=True, null=True)
-    title = models.CharField(max_length=80)
-    body_text = models.TextField(blank=True)
-
-    class Meta:
-        abstract = True
-
-
-class CardFamily(models.Model):
-    slug = models.SlugField(max_length=80, unique=True, allow_unicode=True)
-    default = models.BooleanField(default=False)
-    cards = models.ManyToManyField(Card, through="TutorialCard")
-
-    class Meta:
-        abstract = True
-
-
 class TutorialCard(models.Model):
     card = models.ForeignKey(Card, on_delete=models.CASCADE)
     tutorial = models.ForeignKey(CardFamily, on_delete=models.CASCADE)
     order = models.IntegerField(default=0)
 
     class Meta:
-        abstract = True
+        verbose_name_plural = "cards"
