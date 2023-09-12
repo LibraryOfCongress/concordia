@@ -33,6 +33,8 @@ from ..models import (
     Banner,
     Campaign,
     CampaignRetirementProgress,
+    Card,
+    CardFamily,
     CarouselSlide,
     Item,
     Project,
@@ -44,6 +46,7 @@ from ..models import (
     Tag,
     Topic,
     Transcription,
+    TutorialCard,
     UserAssetTagCollection,
     UserProfileActivity,
 )
@@ -205,6 +208,7 @@ class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     )
     list_display_links = ("title",)
     prepopulated_fields = {"slug": ("title",)}
+    raw_id_fields = ("card_family",)
     search_fields = ["title", "description"]
     list_filter = ("published", "display_on_homepage", "unlisted", "status")
 
@@ -938,3 +942,19 @@ class CampaignRetirementProgressAdmin(admin.ModelAdmin):
         total = obj.project_total + obj.item_total + obj.asset_total
         removed = obj.projects_removed + obj.items_removed + obj.assets_removed
         return "{}%".format(round(removed / total * 100, 2))
+
+
+@admin.register(Card)
+class CardAdmin(admin.ModelAdmin):
+    pass
+
+
+class TutorialInline(admin.TabularInline):
+    model = TutorialCard
+    extra = 1
+    raw_id_fields = ("card",)
+
+
+@admin.register(CardFamily)
+class CardFamilyAdmin(admin.ModelAdmin):
+    inlines = (TutorialInline,)
