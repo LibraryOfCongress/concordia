@@ -369,7 +369,6 @@ DEFAULT_PAGE_TTL = 5 * 60
 # Feature flags
 FLAGS = {
     "ADVERTISE_ACTIVITY_UI": [],
-    "SIMPLE_CONTENT_BLOCKS": [],
     "CAROUSEL_CMS": [],
     "SEND_WELCOME_EMAIL": [],
     "SHOW_BANNER": [],

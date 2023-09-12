@@ -6,7 +6,6 @@
 
 {% load concordia_media_tags %}
 {% load concordia_sharing_tags %}
-{% load concordia_simple_content_blocks %}
 
 {% block title %}
     {{ asset.title }} ({{ asset.item.project.campaign.title }}: {{ asset.item.project.title }})
@@ -33,7 +32,6 @@
 
 {% block main_content %}
     {% flag_enabled 'ADVERTISE_ACTIVITY_UI' as ADVERTISE_ACTIVITY_UI %}
-    {% flag_enabled 'SIMPLE_CONTENT_BLOCKS' as SIMPLE_CONTENT_BLOCKS %}
 
     <div id="contribute-main-content" class="container-fluid flex-grow-1 d-flex flex-column d-print-block">
         <div id="navigation-container" class="row p-1 px-3 d-print-none bg-light">
@@ -531,8 +529,6 @@
                         Contact us
                     </a>
 
-                    <div class="collapse" id="instruction-window">
-                    </div>
                 </div>
             </div>
         </div>
