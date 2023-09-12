@@ -40,7 +40,6 @@ from ..models import (
     Project,
     Resource,
     ResourceFile,
-    SimpleContentBlock,
     SimplePage,
     SiteReport,
     Tag,
@@ -92,7 +91,6 @@ from .filters import (
 from .forms import (
     AdminItemImportForm,
     BleachedDescriptionAdminForm,
-    SimpleContentBlockAdminForm,
 )
 
 
@@ -787,19 +785,6 @@ class TranscriptionAdmin(admin.ModelAdmin):
         )
 
     actions = (export_to_csv, export_to_excel)
-
-
-@admin.register(SimpleContentBlock)
-class SimpleContentBlockAdmin(admin.ModelAdmin):
-    form = SimpleContentBlockAdminForm
-
-    list_display = ("slug", "created_on", "updated_on")
-    readonly_fields = ("created_on", "updated_on")
-
-    fieldsets = (
-        (None, {"fields": ("created_on", "updated_on", "slug")}),
-        ("Body", {"classes": ("markdown-preview",), "fields": ("body",)}),
-    )
 
 
 @admin.register(CarouselSlide)
