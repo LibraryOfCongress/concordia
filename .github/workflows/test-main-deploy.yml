@@ -31,7 +31,6 @@ jobs:
               uses: aws-actions/amazon-ecr-login@v1
               with:
                   mask-password: 'true'
-                  registry-type: public
 
             - name: Pull, tag and push docker images ECR
               env:
