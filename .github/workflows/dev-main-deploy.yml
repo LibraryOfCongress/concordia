@@ -88,6 +88,7 @@ jobs:
                   REGISTRY: ${{ steps.login-ecr.outputs.registry }}
                   IMAGE_TAG: ${{ secrets.IMAGE_TAG }}
                   CLUSTER: ${{ secrets.CLUSTER }}
+                  TARGET_SERVICE: ${{ secrets.TARGET_SERVICE }}
               run: |
                   echo "version number: $version_number"
 
