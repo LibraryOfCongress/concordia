@@ -143,8 +143,8 @@
                         </div>
 
                         <div class="d-flex btn-group m-1">
-                            <button type="button" class="btn btn-dark extra-control-button" title="Open Help" data-toggle="modal" data-target="#keyboard-help-modal">
-                                <span class="fas fa-question-circle" aria-label="Open Help"></span>
+                            <button type="button" class="btn btn-dark extra-control-button" title="Viewer keyboard shortcuts" data-toggle="modal" data-target="#keyboard-help-modal">
+                                <span class="fas fa-question-circle" aria-label="Viewer keyboard shortcuts"></span>
                             </button>
                         </div>
                     </div>
@@ -425,10 +425,10 @@
                                     <div class="form-check w-100 text-center mt-0 mb-3">
                                         <input id="nothing-to-transcribe" type="checkbox" class="form-check-input" />
                                         <label class="form-check-label" for="nothing-to-transcribe">
-                                            Nothing to transcribe
+                                            Nothing to transcribe?
                                         </label>
 
-                                        <a tabindex="0" class="btn btn-link d-inline py-0" role="button" data-toggle="popover" data-placement="top" data-trigger="focus click hover" title="Help" data-html="true" data-content="If it looks like there’s nothing to transcribe, use this button and then Submit. Not sure? Check these tips: {% filter force_escape %}<a href="{% url 'how-to-transcribe' %}">how to transcribe</a>{% endfilter %}">
+                                        <a tabindex="0" class="btn btn-link d-inline py-0" role="button" data-toggle="popover" data-placement="top" data-trigger="focus click hover" title="Help" data-html="true" data-content="If there is no text to transcribe, check this box and click &quot;Submit&quot;. Learn more about what to transcribe and what to skip in {% filter force_escape %}<a href="{% url 'how-to-transcribe' %}">&quot;How To.&quot;</a>{% endfilter %}">
                                             <span class="fas fa-question-circle" aria-label="Open Help"></span>
                                         </a>
                                     </div>
@@ -517,8 +517,8 @@
                 <div id="ocr-section" class="row align-items-center pl-3 pb-4">
                     <span class="pr-2">Is this page typed?</span>
                     <a role="button" data-placement="top" data-trigger="click" title="Transcribe with OCR" data-toggle="modal" data-target="#ocr-transcription-modal" id="ocr-transcription-link" class="btn btn-primary mx-1" disabled>Transcribe with OCR</a>
-                    <a tabindex="0" class="btn btn-link d-inline p-0" role="button" data-placement="top" data-trigger="focus click hover" title="What is OCR?"  data-toggle="modal" data-target="#ocr-help-modal">
-                        <span class="fas fa-question-circle" aria-label="Open Help"></span>
+                    <a tabindex="0" class="btn btn-link d-inline p-0" role="button" data-placement="top" data-trigger="focus click hover" title="When to use OCR"  data-toggle="modal" data-target="#ocr-help-modal">
+                        <span class="fas fa-question-circle" aria-label="When to use OCR"></span>
                     </a>
                 </div>
             {% endif %}
