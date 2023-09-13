@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
     dependencies = [
         ("auth", "0012_alter_user_first_name_max_length"),
-        ("concordia", "0084_rename_review_actions_sitereport_daily_review_actions"),
+        ("concordia", "0085_auto_20230906_1027"),
     ]
 
     operations = [

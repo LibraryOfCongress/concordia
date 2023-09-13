@@ -199,6 +199,19 @@ class CardFamily(models.Model):
         return self.slug
 
 
+def on_cardfamily_save(sender, instance, **kwargs):
+    # Only one tutorial/ list of cards should be marked as "default".
+    # If the flag is set on a tutorial, it needs to be cleared from
+    # any other existing tutorials.
+    if instance.default:
+        CardFamily.objects.filter(default=True).exclude(pk=instance.pk).update(
+            default=False
+        )
+
+
+post_save.connect(on_cardfamily_save, sender=CardFamily)
+
+
 class Campaign(MetricsModelMixin("campaign"), models.Model):
     class Status(models.IntegerChoices):
         ACTIVE = 1
