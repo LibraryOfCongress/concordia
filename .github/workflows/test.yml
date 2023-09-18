@@ -59,7 +59,7 @@ jobs:
         steps:
             - name: Install system packages
               run: |
-                  sudo apt-get install -qy libmemcached-dev libz-dev libfreetype6-dev libtiff-dev libjpeg-dev libopenjp2-7-dev libwebp-dev zlib1g-dev libpq-dev
+                  sudo apt-get update -qy && apt-get dist-upgrade -qy && apt-get install -qy libmemcached-dev libz-dev libfreetype6-dev libtiff-dev libjpeg-dev libopenjp2-7-dev libwebp-dev zlib1g-dev libpq-dev
 
             - name: Install node and npm
               uses: actions/setup-node@v3
