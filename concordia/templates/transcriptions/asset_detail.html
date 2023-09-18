@@ -884,6 +884,7 @@
         let contributeContainer = document.getElementById("contribute-container");
         let ocrSection = document.getElementById("ocr-section");
         let editorColumn = document.getElementById("editor-column");
+        let viewerColumn = document.getElementById("viewer-column");
         let helpContainer = document.getElementById("help-container");
         let layoutColumns = ["#viewer-column", "#editor-column"];
 
@@ -925,6 +926,7 @@
             saveDirection(splitDirection);
             contributeContainer.classList.remove("flex-row");
             contributeContainer.classList.add("flex-column");
+            viewerColumn.classList.remove("h-100");
             if(ocrSection != null){
                 editorColumn.prepend(ocrSection);
             }
@@ -952,6 +954,7 @@
             saveDirection(splitDirection);
             contributeContainer.classList.remove("flex-column");
             contributeContainer.classList.add("flex-row");
+            viewerColumn.classList.add("h-100");
             if(ocrSection != null){
                 helpContainer.prepend(ocrSection);
             }
