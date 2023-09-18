@@ -911,6 +911,15 @@
             localStorage.setItem('transcription-split-direction', JSON.stringify(direction))
         }
 
+        function setVerticalLayoutHeight(){
+            if(window.screen.height > 768){
+                layoutColumns.forEach(function (columnId) {
+                    let column = document.getElementById(columnId.slice(1));
+                    column.style.height = "489px";
+                });
+            }
+        }
+
         function verticalSplit(){
             splitDirection = "v";
             saveDirection(splitDirection);
@@ -919,6 +928,7 @@
             if(ocrSection != null){
                 editorColumn.prepend(ocrSection);
             }
+
             return Split(layoutColumns, {
                 sizes: sizes,
                 minSize: 100,
@@ -947,7 +957,7 @@
             }
             return Split(layoutColumns, {
                 sizes: sizes,
-                minSize: 300,
+                minSize: 100,
                 gutterSize: 8,
                 elementStyle: function(dimension, size, gutterSize) {
                     return {
@@ -962,16 +972,6 @@
                 onDragEnd: saveSizes,
             });
         }
-        function toggleSplit(){
-            if(pageSplit != null){
-                pageSplit.destroy();
-            }
-            if(splitDirection === "v"){
-                pageSplit = horizontalSplit();
-            }else{
-                pageSplit = verticalSplit();
-            }
-        }
 
         document.getElementById("viewer-layout-horizontal").addEventListener('click', function(){
             if(splitDirection != "h"){
@@ -981,7 +981,7 @@
                 pageSplit = horizontalSplit();
                 setTimeout(function(){
                     // Some quirk in the viewer makes this
-                    // sometimes not working depending on
+                    // sometimes not work depending on
                     // the rotation, unless it's delayed.
                     // Less than 10ms didn't reliable work.
                     seadragonViewer.viewport.zoomTo(1);
@@ -998,11 +998,13 @@
                 setTimeout(function(){
                     seadragonViewer.viewport.zoomTo(1);
                 }, 10);
+                setTimeout(setVerticalLayoutHeight, 10);
             }
         });
 
         if (splitDirection == "v") {
             pageSplit = verticalSplit();
+            setTimeout(setVerticalLayoutHeight, 10);
         } else {
             pageSplit = horizontalSplit();
         }
