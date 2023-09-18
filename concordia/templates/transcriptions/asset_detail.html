@@ -85,10 +85,19 @@
                 </div>
             </nav>
         </div>
-        <div id="contribute-container" class="row d-flex flex-nowrap flex-grow-1 d-print-block border">
-            <div id="viewer-column" class="pl-0 d-flex flex-column align-items-stretch bg-dark d-print-block">
+        <div id="contribute-container" class="d-flex flex-grow-1 d-print-block border">
+            <div id="viewer-column" class="pl-0 d-flex align-items-stretch bg-dark d-print-block flex-column">
                 <div id="viewer-controls" class="m-1 text-center d-print-none">
                     <div class="d-inline-flex justify-content-between">
+                        <div class="d-flex btn-group m-1">
+                            <button id="viewer-layout-vertical" class="btn btn-dark viewer-control-button" title="Vertical Layout">
+                                <span class="fas fa-grip-lines"></span>
+                            </button>
+                            <button id="viewer-layout-horizontal" class="btn btn-dark" title="Horizontal Layout">
+                                <span class="fas fa-grip-lines-vertical"></span>
+                            </button>
+                        </div>
+
                         <div class="d-flex btn-group m-1">
                             <button type="button" id="viewer-home" class="btn btn-dark viewer-control-button" title="Fit Image to Viewport">
                                 <span class="fas fa-compress"></span>
@@ -132,8 +141,8 @@
                         </div>
 
                         <div class="d-flex btn-group m-1">
-                            <button type="button" class="btn btn-dark extra-control-button" title="Open Help" data-toggle="modal" data-target="#keyboard-help-modal">
-                                <span class="fas fa-question-circle" aria-label="Open Help"></span>
+                            <button type="button" class="btn btn-dark extra-control-button" title="Viewer keyboard shortcuts" data-toggle="modal" data-target="#keyboard-help-modal">
+                                <span class="fas fa-question-circle" aria-label="Viewer keyboard shortcuts"></span>
                             </button>
                         </div>
                     </div>
@@ -209,11 +218,13 @@
                             </div>
                             <div class="modal-body">
                                 <h6 class="modal-title">What is OCR?</h6>
-                                <p>OCR stands for Optical Character Recognition. OCR is a software tool that can extract typed text from some documents. It works best on consistent and clear modern typeface.</p>
+                                <p>OCR stands for Optical Character Recognition. OCR is a software tool that can extract print text from some documents.</p>
+                                <h6>When will OCR work well?</h6>
+                                <p>OCR does not work on handwriting. It only works for printed or typed text, meaning text created by a typewriter, printing press, or other mechanical means. OCR will do best on consistent and clear images of modern typefaces.</p>
                                 <h6>Do I still need to review pages started with OCR?</h6>
-                                <p>Yes! OCR is imperfect. It may not work well for some or all parts of a typed page, but it can be a great starting point. If you started a page with OCR, you should read the text closely before submitting. If you are reviewing a OCR-ed page, you also still need to review.</p>
+                                <p>Yes! OCR is imperfect. It may not work well for some or all parts of a typed page, but it can be a great starting point. If you start a page with OCR, you should read the text closely before submitting. If you are reviewing a OCR-ed page, you also still need to review.</p>
                                 <h6>Why does <span class="font-italic">By the People</span> have this feature?</h6>
-                                <p>We always want to use volunteer time effectively. When the Library of Congress digitizes a large group of printed pages, it will usually OCR them. The materials in By the People campaigns are not good candidates for applying OCR at scale, either because they are handwritten, a mixed collection (containing handwritten and print materials) or printed but on paper or in a typeface that does not produce accurate OCR results. However, OCR can still be a useful starting point for some typed pages. Use it if it if you like it or skip it if you don’t!</p>
+                                <p>We always want to use volunteer time effectively. When the Library of Congress digitizes a large group of printed pages, it will usually OCR them. The materials in By the People campaigns are not good candidates for applying OCR at scale, either because they are handwritten, a mixed collection of handwritten and print materials, or printed on paper or in a typeface that does not produce accurate OCR results. However, OCR can still be a useful starting point for some typed pages. Use it if it if you like it or skip it if you don’t!</p>
                             </div>
                             <div class="modal-footer justify-content-center">
                                 <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
@@ -346,11 +357,11 @@
                         </div>
                     </div>
                 </div>
-                <div id="asset-image" class="h-100 bg-dark d-print-none"></div>
+                <div id="asset-image" class="h-100 bg-dark d-print-none w-100"></div>
             </div>
 
-            <div id="editor-column" class="d-flex flex-column flex-nowrap justify-content-between p-3 d-print-block">
-                <div class="flex-grow-1 d-flex flex-column d-print-block">
+            <div id="editor-column" class="d-flex justify-content-between p-3 d-print-block flex-column">
+                <div class="flex-grow-1 d-flex d-print-block flex-column">
                     <div class="tx-status-display">
                         <h2 class="tx-submitted" {% if transcription_status != 'submitted' %}hidden{% endif %}>
                             <span class="fas fa-list"></span>
@@ -415,7 +426,7 @@
                                             Nothing to transcribe
                                         </label>
 
-                                        <a tabindex="0" class="btn btn-link d-inline py-0" role="button" data-toggle="popover" data-placement="top" data-trigger="focus click hover" title="Help" data-html="true" data-content="If it looks like there’s nothing to transcribe, use this button and then Submit. Not sure? Check these tips: {% filter force_escape %}<a href="{% url 'how-to-transcribe' %}">how to transcribe</a>{% endfilter %}">
+                                        <a tabindex="0" class="btn btn-link d-inline py-0" role="button" data-toggle="popover" data-placement="top" data-trigger="focus click hover" title="Nothing to transcribe?" data-html="true" data-content="If there is no text to transcribe, check this box and click &quot;Submit&quot;. Learn more about what to transcribe and what to skip in &quot;How To.&quot;">
                                             <span class="fas fa-question-circle" aria-label="Open Help"></span>
                                         </a>
                                     </div>
@@ -441,11 +452,6 @@
                                     {% endif %}
                                 {% endif %}
                             </div>
-                            {% if transcription.ocr_originated %}
-                                <div class="mb-3 text-center font-weight-bold">This transcription was started with OCR <a class="btn btn-link d-inline p-0" data-trigger="focus click hover" title="What is OCR?" data-toggle="modal" data-target="#ocr-help-modal">
-                                    <span class="fas fa-question-circle" aria-label="Open Help"></span>
-                                </a></div>
-                            {% endif %}
                         {% endspaceless %}
                     </form>
                 </div>
@@ -509,8 +515,8 @@
                 <div id="ocr-section" class="row align-items-center pl-3 pb-4">
                     <span class="pr-2">Is this page typed?</span>
                     <a role="button" data-placement="top" data-trigger="click" title="Transcribe with OCR" data-toggle="modal" data-target="#ocr-transcription-modal" id="ocr-transcription-link" class="btn btn-primary mx-1" disabled>Transcribe with OCR</a>
-                    <a tabindex="0" class="btn btn-link d-inline p-0" role="button" data-placement="top" data-trigger="focus click hover" title="What is OCR?"  data-toggle="modal" data-target="#ocr-help-modal">
-                        <span class="fas fa-question-circle" aria-label="Open Help"></span>
+                    <a tabindex="0" class="btn btn-link d-inline p-0" role="button" data-placement="top" data-trigger="focus click hover" title="When to use OCR"  data-toggle="modal" data-target="#ocr-help-modal">
+                        <span class="fas fa-question-circle" aria-label="When to use OCR"></span>
                     </a>
                 </div>
             {% endif %}
@@ -849,21 +855,134 @@
     </script>
 
     <script>
-        Split(["#viewer-column", "#editor-column"], {
-            sizes: [50, 50],
-            minSize: 300,
-            gutterSize: 8,
-            elementStyle: function(dimension, size, gutterSize) {
-                return {
-                    "flex-basis": "calc(" + size + "% - " + gutterSize + "px)"
-                };
-            },
-            gutterStyle: function(dimension, gutterSize) {
-                return {
-                    "flex-basis": gutterSize + "px"
-                };
+        let pageSplit;
+        let contributeContainer = document.getElementById("contribute-container");
+        let ocrSection = document.getElementById("ocr-section");
+        let editorColumn = document.getElementById("editor-column");
+        let helpContainer = document.getElementById("help-container");
+        let layoutColumns = ["#viewer-column", "#editor-column"];
+
+        let sizes = localStorage.getItem('transcription-split-sizes');
+
+        if (sizes) {
+            sizes = JSON.parse(sizes);
+        } else {
+            sizes = [50, 50]; // default sizes
+        }
+
+        let splitDirection = localStorage.getItem("transcription-split-direction");
+
+        if (splitDirection){
+            splitDirection = JSON.parse(splitDirection);
+        } else {
+            splitDirection = "h";
+        }
+
+        function saveSizes(sizes){
+            localStorage.setItem('transcription-split-sizes', JSON.stringify(sizes));
+        }
+
+        function saveDirection(direction){
+            localStorage.setItem('transcription-split-direction', JSON.stringify(direction))
+        }
+
+        function setVerticalLayoutHeight(){
+            if(window.screen.height > 768){
+                layoutColumns.forEach(function (columnId) {
+                    let column = document.getElementById(columnId.slice(1));
+                    column.style.height = "489px";
+                });
+            }
+        }
+
+        function verticalSplit(){
+            splitDirection = "v";
+            saveDirection(splitDirection);
+            contributeContainer.classList.remove("flex-row");
+            contributeContainer.classList.add("flex-column");
+            if(ocrSection != null){
+                editorColumn.prepend(ocrSection);
+            }
+
+            return Split(layoutColumns, {
+                sizes: sizes,
+                minSize: 100,
+                gutterSize: 8,
+                direction: 'vertical',
+                elementStyle: function(dimension, size, gutterSize) {
+                    return {
+                        "flex-basis": "calc(" + size + "% - " + gutterSize + "px)"
+                    };
+                },
+                gutterStyle: function(dimension, gutterSize) {
+                    return {
+                        "flex-basis": gutterSize + "px"
+                    };
+                },
+                onDragEnd: saveSizes,
+            });
+        }
+        function horizontalSplit(){
+            splitDirection = "h";
+            saveDirection(splitDirection);
+            contributeContainer.classList.remove("flex-column");
+            contributeContainer.classList.add("flex-row");
+            if(ocrSection != null){
+                helpContainer.prepend(ocrSection);
+            }
+            return Split(layoutColumns, {
+                sizes: sizes,
+                minSize: 100,
+                gutterSize: 8,
+                elementStyle: function(dimension, size, gutterSize) {
+                    return {
+                        "flex-basis": "calc(" + size + "% - " + gutterSize + "px)"
+                    };
+                },
+                gutterStyle: function(dimension, gutterSize) {
+                    return {
+                        "flex-basis": gutterSize + "px"
+                    };
+                },
+                onDragEnd: saveSizes,
+            });
+        }
+
+        document.getElementById("viewer-layout-horizontal").addEventListener('click', function(){
+            if(splitDirection != "h"){
+                if(pageSplit != null){
+                    pageSplit.destroy();
+                }
+                pageSplit = horizontalSplit();
+                setTimeout(function(){
+                    // Some quirk in the viewer makes this
+                    // sometimes not work depending on
+                    // the rotation, unless it's delayed.
+                    // Less than 10ms didn't reliable work.
+                    seadragonViewer.viewport.zoomTo(1);
+                }, 10);
             }
         });
+
+        document.getElementById("viewer-layout-vertical").addEventListener('click', function(){
+            if(splitDirection != "v"){
+                if(pageSplit != null){
+                    pageSplit.destroy();
+                }
+                pageSplit = verticalSplit();
+                setTimeout(function(){
+                    seadragonViewer.viewport.zoomTo(1);
+                }, 10);
+                setTimeout(setVerticalLayoutHeight, 10);
+            }
+        });
+
+        if (splitDirection == "v") {
+            pageSplit = verticalSplit();
+            setTimeout(setVerticalLayoutHeight, 10);
+        } else {
+            pageSplit = horizontalSplit();
+        }
     </script>
 
     <script>

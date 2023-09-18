@@ -424,6 +424,34 @@ def retired_total_report():
     total_site_report.save()
 
 
+def _backfill_data(start, end=None):
+    if end is None:
+        end = timezone.now().date()
+    days = (end - start).days
+    ONE_DAY = datetime.timedelta(days=1)
+    for n in range(days + 1):
+        day = start + datetime.timedelta(days=n)
+        transcriptions = Transcription.objects.review_actions(day - ONE_DAY, day)
+        site_reports = SiteReport.objects.filter(created_on=day)
+        for site_report in site_reports:
+            if site_report.topic is not None:
+                site_report.daily_review_actions = transcriptions.filter(
+                    asset__item__project__topics__in=(site_report.topic,)
+                ).count()
+            elif site_report.campaign is None:
+                site_report.daily_review_actions = transcriptions.filter(
+                    asset__item__project__campaign=site_report.campaign
+                ).count()
+            else:
+                site_report.daily_review_actions = transcriptions.count()
+            site_report.save()
+
+
+@celery_app.task
+def backfill_daily_data(year=2018, month=10, day=24):
+    _backfill_data(datetime.date(year=year, month=month, day=day))
+
+
 @celery_app.task
 def calculate_difficulty_values(asset_qs=None):
     """

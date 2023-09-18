@@ -1000,6 +1000,15 @@ class ProjectDetailView(APIListView):
     context_object_name = "items"
     paginate_by = 10
 
+    def dispatch(self, request, *args, **kwargs):
+        try:
+            return super().dispatch(request, *args, **kwargs)
+        except Http404:
+            campaign = get_object_or_404(
+                Campaign.objects.published(), slug=self.kwargs["campaign_slug"]
+            )
+            return redirect(campaign)
+
     def get_queryset(self):
         self.project = get_object_or_404(
             Project.objects.published().select_related("campaign"),
@@ -1066,6 +1075,15 @@ class ItemDetailView(APIListView):
 
     http_method_names = ["get", "options", "head"]
 
+    def dispatch(self, request, *args, **kwargs):
+        try:
+            return super().dispatch(request, *args, **kwargs)
+        except Http404:
+            campaign = get_object_or_404(
+                Campaign.objects.published(), slug=self.kwargs["campaign_slug"]
+            )
+            return redirect(campaign)
+
     def get_queryset(self):
         self.item = get_object_or_404(
             Item.objects.published().select_related("project__campaign"),
@@ -1129,6 +1147,15 @@ class AssetDetailView(APIDetailView):
     """
 
     template_name = "transcriptions/asset_detail.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        try:
+            return super().dispatch(request, *args, **kwargs)
+        except Http404:
+            campaign = get_object_or_404(
+                Campaign.objects.published(), slug=self.kwargs["campaign_slug"]
+            )
+            return redirect(campaign)
 
     def get_queryset(self):
         asset_qs = Asset.objects.published().filter(
