@@ -55,19 +55,6 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
-            name="ConcordiaUser",
-            fields=[],
-            options={
-                "proxy": True,
-                "indexes": [],
-                "constraints": [],
-            },
-            bases=("auth.user",),
-            managers=[
-                ("objects", django.contrib.auth.models.UserManager()),
-            ],
-        ),
-        migrations.CreateModel(
             name="TutorialCard",
             fields=[
                 (
