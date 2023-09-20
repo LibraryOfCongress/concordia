@@ -1191,9 +1191,12 @@ input.duet-date__input {
     border-radius: 0;
 }
 
-table.table thead.border-y th {
-    border-bottom: 1px solid #000;
-    border-top: 1px solid #000;
+table.table thead.border-y {
+    th,
+    td {
+        border-bottom: 1px solid #000;
+        border-top: 1px solid #000;
+    }
 }
 
 #current-filters {
