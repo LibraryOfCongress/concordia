@@ -887,13 +887,23 @@
         let viewerColumn = document.getElementById("viewer-column");
         let helpContainer = document.getElementById("help-container");
         let layoutColumns = ["#viewer-column", "#editor-column"];
+        let verticalKey = 'transcription-split-sizes-vertical';
+        let horizontalKey = 'transcription-split-sizes-horizontal';
 
-        let sizes = localStorage.getItem('transcription-split-sizes');
+        let sizesVertical = localStorage.getItem(verticalKey);
 
-        if (sizes) {
-            sizes = JSON.parse(sizes);
+        if (sizesVertical) {
+            sizesVertical = JSON.parse(sizesVertical);
         } else {
-            sizes = [50, 50]; // default sizes
+            sizesVertical = [50, 50];
+        }
+
+        let sizesHorizontal = localStorage.getItem(horizontalKey);
+
+        if (sizesHorizontal) {
+            sizesHorizontal = JSON.parse(sizesHorizontal);
+        } else {
+            sizesHorizontal = [50, 50];
         }
 
         let splitDirection = localStorage.getItem("transcription-split-direction");
@@ -905,7 +915,15 @@
         }
 
         function saveSizes(sizes){
-            localStorage.setItem('transcription-split-sizes', JSON.stringify(sizes));
+            let sizeKey;
+            if(splitDirection == "h"){
+                sizeKey = horizontalKey;
+                sizesHorizontal = sizes;
+            } else {
+                sizeKey = verticalKey;
+                sizesVertical = sizes;
+            }
+            localStorage.setItem(sizeKey, JSON.stringify(sizes));
         }
 
         function saveDirection(direction){
@@ -923,7 +941,7 @@
             }
 
             return Split(layoutColumns, {
-                sizes: sizes,
+                sizes: sizesVertical,
                 minSize: 100,
                 gutterSize: 8,
                 direction: 'vertical',
@@ -950,7 +968,7 @@
                 helpContainer.prepend(ocrSection);
             }
             return Split(layoutColumns, {
-                sizes: sizes,
+                sizes: sizesHorizontal,
                 minSize: 100,
                 gutterSize: 8,
                 elementStyle: function(dimension, size, gutterSize) {
@@ -997,7 +1015,6 @@
 
         if (splitDirection == "v") {
             pageSplit = verticalSplit();
-            setTimeout(setVerticalLayoutHeight, 10);
         } else {
             pageSplit = horizontalSplit();
         }
