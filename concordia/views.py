@@ -77,6 +77,7 @@ from concordia.models import (
     AssetTranscriptionReservation,
     Banner,
     Campaign,
+    CardFamily,
     CarouselSlide,
     ConcordiaUser,
     Item,
@@ -1269,6 +1270,11 @@ class AssetDetailView(APIDetailView):
         ctx["tags"] = sorted(tags)
 
         ctx["registered_contributors"] = asset.get_contributor_count()
+
+        if project.campaign.card_family:
+            ctx["cards"] = project.campaign.card_family.cards.all()
+        else:
+            ctx["cards"] = CardFamily.objects.filter(default=True).first().cards.all()
 
         return ctx
 
