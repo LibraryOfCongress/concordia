@@ -693,21 +693,29 @@
         </div>
     </div>
     <div class="print-transcription-image d-none d-print-block"><img class="img-fluid" alt="Scanned image of the current content page" src="{% asset_media_url asset %}"></div>
-    <div class="modal">
-        {% if cards %}
-            {% for card in cards %}
-                <img src="{{ card.image }}">
-                <h2>{{ card.title }}</h2>
-                {{ card.body_text }}
-            {% endfor %}
-            <a>< Back</a>
-            <ol>
-                {% for card in cards %}
-                    <li></li>
-                {% endfor %}
-            </ol>
-            <a>Next ></a>
-        {% endif %}
+    <div id="tutorial-popup" class="modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                {% if cards %}
+                    {% for card in cards %}
+                        <div class="modal-header">
+                            <img src="{{ card.image }}">
+                            <h2>{{ card.title }}</h2>
+                        </div>
+                        <div class="modal-body">{{ card.body_text }}</div>
+                    {% endfor %}
+                    <div class="modal-footer justify-content-center">
+                        <a>< Back</a>
+                        <ol>
+                            {% for card in cards %}
+                                <li></li>
+                            {% endfor %}
+                        </ol>
+                        <a>Next ></a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
     </div>
 {% endblock main_content %}
 
