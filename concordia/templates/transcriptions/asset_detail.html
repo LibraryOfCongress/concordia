@@ -702,14 +702,16 @@
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
                 {% if cards %}
-                    {% for card in cards %}
-                        <div class="modal-header">
-                            <img src="{{ card.image }}">
-                            <h2>{{ card.title }}</h2>
-                        </div>
-                        <div class="modal-body">{{ card.body_text }}</div>
-                    {% endfor %}
-                    <div class="modal-footer justify-content-center">
+                    <div class="carousel-inner">
+                        {% for card in cards %}
+                            <div class="modal-header">
+                                <img src="{{ card.image }}">
+                                <h2>{{ card.title }}</h2>
+                            </div>
+                            <div class="modal-body">{{ card.body_text }}</div>
+                        {% endfor %}
+                    </div>
+                    <div class="carousel-indicators d-none d-lg-flex modal-footer justify-content-center">
                         <a>< Back</a>
                         <ol>
                             {% for card in cards %}
