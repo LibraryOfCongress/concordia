@@ -360,6 +360,17 @@
                     </div>
                 </div>
                 <div id="asset-image" class="h-100 bg-dark d-print-none w-100"></div>
+                {% if transcription_status == "not_started" or transcription_status == "in_progress" %}
+                    <div id="ocr-section" class="row pl-3 pb-4 bg-white print-none">
+                        <div class="d-flex flex-row align-items-center align-content-end ml-auto mr-3 mt-1">
+                            <span>What is OCR</span>
+                            <a tabindex="0" class="btn btn-link d-inline p-0" role="button" data-placement="top" data-trigger="focus click hover" title="When to use OCR"  data-toggle="modal" data-target="#ocr-help-modal">
+                                <span class="fas fa-question-circle" aria-label="When to use OCR"></span>
+                            </a>
+                            <a role="button" data-placement="top" data-trigger="click" title="Transcribe with OCR" data-toggle="modal" data-target="#ocr-transcription-modal" id="ocr-transcription-link" class="btn btn-primary mx-1" disabled>Transcribe with OCR</a>
+                        </div>
+                    </div>
+                {% endif %}
             </div>
 
             <div id="editor-column" class="d-flex justify-content-between p-3 d-print-block flex-column">
@@ -513,15 +524,6 @@
             </div>
         </div>
         <div id="help-container" class="mt-1 d-print-none">
-            {% if transcription_status == "not_started" or transcription_status == "in_progress" %}
-                <div id="ocr-section" class="row align-items-center pl-3 pb-4">
-                    <span class="pr-2">Is this page typed?</span>
-                    <a role="button" data-placement="top" data-trigger="click" title="Transcribe with OCR" data-toggle="modal" data-target="#ocr-transcription-modal" id="ocr-transcription-link" class="btn btn-primary mx-1" disabled>Transcribe with OCR</a>
-                    <a tabindex="0" class="btn btn-link d-inline p-0" role="button" data-placement="top" data-trigger="focus click hover" title="When to use OCR"  data-toggle="modal" data-target="#ocr-help-modal">
-                        <span class="fas fa-question-circle" aria-label="When to use OCR"></span>
-                    </a>
-                </div>
-            {% endif %}
             <div class="row p-3 bg-light justify-content-sm-between">
                 <div class="d-flex align-items-center pl-1">Share this item: {% share_buttons current_asset_url asset.item.title %}</div>
                 <div class="btn-group align-items-center align-self-end">
@@ -885,7 +887,6 @@
         let ocrSection = document.getElementById("ocr-section");
         let editorColumn = document.getElementById("editor-column");
         let viewerColumn = document.getElementById("viewer-column");
-        let helpContainer = document.getElementById("help-container");
         let layoutColumns = ["#viewer-column", "#editor-column"];
         let verticalKey = 'transcription-split-sizes-vertical';
         let horizontalKey = 'transcription-split-sizes-horizontal';
@@ -965,7 +966,7 @@
             contributeContainer.classList.add("flex-row");
             viewerColumn.classList.add("h-100");
             if(ocrSection != null){
-                helpContainer.prepend(ocrSection);
+                viewerColumn.append(ocrSection);
             }
             return Split(layoutColumns, {
                 sizes: sizesHorizontal,
