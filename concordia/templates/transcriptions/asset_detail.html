@@ -389,22 +389,28 @@
                         {% csrf_token %}
                         <input type="hidden" name="supersedes" value="{{ transcription.pk|default:'' }}" />
 
-                        <span>
-                            {% if transcription_status == 'not_started' %}
-                                Transcribe this page.
-                            {% else %}
-                                <h2>Registered Contributors: <span class="font-weight-normal">{{ registered_contributors }}</span></h2>
-                                {% if transcription_status == 'in_progress' %}
-                                    Someone started this transcription. Can you finish it?
-                                {% elif transcription_status == 'submitted' %}
-                                    Check this transcription thoroughly. Accept if correct!
-                                {% elif transcription_status == 'completed' %}
-                                    This transcription is finished! You can read and add tags.
+
+                        <div class="row justify-content-sm-between px-3">
+                            <span>
+                                {% if transcription_status == 'not_started' %}
+                                    Transcribe this page.
                                 {% else %}
-                                    Transcription
+                                    <h2>Registered Contributors: <span class="font-weight-normal">{{ registered_contributors }}</span></h2>
+                                    {% if transcription_status == 'in_progress' %}
+                                        Someone started this transcription. Can you finish it?
+                                    {% elif transcription_status == 'submitted' %}
+                                        Check this transcription thoroughly. Accept if correct!
+                                    {% elif transcription_status == 'completed' %}
+                                        This transcription is finished! You can read and add tags.
+                                    {% else %}
+                                        Transcription
+                                    {% endif %}
                                 {% endif %}
-                            {% endif %}
-                        </span>
+                            </span>
+                            <a class="align-self-end" data-toggle="modal" data-target="#tutorial-popup">
+                                Quick Tips
+                            </a>
+                        </div>
 
                         {% spaceless %}
                             <div id="loading-container" class="pb-2">
