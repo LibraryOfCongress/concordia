@@ -399,23 +399,28 @@
                         {% csrf_token %}
                         <input type="hidden" name="supersedes" value="{{ transcription.pk|default:'' }}" />
 
-                        <span id="transcription-status-message">
-                            <h2 id="message-contributors" {% if transcription_status == 'not_started' %}hidden{% endif %}>
-                                Registered Contributors: <span id="message-contributors-num" class="font-weight-normal">{{ registered_contributors }}</span>
-                            </h2>
-                            <span id="message-notstarted" {% if transcription_status != 'not_started' %}hidden{% endif %}>
-                                Transcribe this page.
+                        <div class="row justify-content-sm-between px-3">
+                            <span id="transcription-status-message">
+                                <h2 id="message-contributors" {% if transcription_status == 'not_started' %}hidden{% endif %}>
+                                    Registered Contributors: <span id="message-contributors-num" class="font-weight-normal">{{ registered_contributors }}</span>
+                                </h2>
+                                <span id="message-notstarted" {% if transcription_status != 'not_started' %}hidden{% endif %}>
+                                    Transcribe this page.
+                                </span>
+                                <span id="message-inprogress" {% if transcription_status != 'in_progress' %}hidden{% endif %}>
+                                    Someone started this transcription. Can you finish it?
+                                </span>
+                                <span id="message-submitted" {% if transcription_status != 'submitted' %}hidden{% endif %}>
+                                    Check this transcription thoroughly. Accept if correct!
+                                </span>
+                                <span id="message-completed" {% if transcription_status != 'completed' %}hidden{% endif %}>
+                                    This transcription is finished! You can read and add tags.
+                                </span>
                             </span>
-                            <span id="message-inprogress" {% if transcription_status != 'in_progress' %}hidden{% endif %}>
-                                Someone started this transcription. Can you finish it?
-                            </span>
-                            <span id="message-submitted" {% if transcription_status != 'submitted' %}hidden{% endif %}>
-                                Check this transcription thoroughly. Accept if correct!
-                            </span>
-                            <span id="message-completed" {% if transcription_status != 'completed' %}hidden{% endif %}>
-                                This transcription is finished! You can read and add tags.
-                            </span>
-                        </span>
+                            <a class="align-self-end" data-toggle="modal" data-target="#tutorial-popup">
+                                Quick Tips
+                            </a>
+                        </div>
 
                         {% spaceless %}
                             <div id="loading-container" class="pb-2">
