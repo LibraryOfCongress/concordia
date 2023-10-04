@@ -1,3 +1,3 @@
 #!/bin/bash
 
-locust  --no-web -c 1000 -r 100 --run-time 1h30m --host https://crowd-dev.loc.gov
+locust  --headless -u 100 -r 10 --run-time 1m30s --host https://crowd-dev.loc.gov
