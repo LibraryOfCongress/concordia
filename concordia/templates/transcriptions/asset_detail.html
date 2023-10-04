@@ -704,24 +704,24 @@
                 <div class="modal-content">
                     <div class="modal-header"></div>
                     <div class="modal-body">
-                        <div id="card-carousel">
+                        <div id="card-carousel" class="carousel slide container">
                             <div class="carousel-inner">
                                 {% for card in cards %}
-                                    <div class="carousel-item">
+                                    <div class="carousel-item {% if forloop.first %} active {% endif %}">
                                         <img src="{{ card.image }}">
                                         <h2>{{ card.title }}</h2>
                                         {{ card.body_text }}
                                     </div>
                                 {% endfor %}
                             </div>
-                            <ol class="carousel-indicators d-none d-lg-flex modal-footer justify-content-center">
-                                <a>< Back</a>
+                            <ol class="carousel-indicators d-none d-lg-flex">
+                                <a class="carousel-control-prev" href="#card-carousel" role="button" data-slide="prev">< Back</a>
                                 <ol>
                                     {% for card in cards %}
-                                        <li></li>
+                                        <li data-target="#card-carousel" data-slide-to="{{ forloop.counter0 }}" {% if forloop.first %}class="active" {% endif %}></li>
                                     {% endfor %}
                                 </ol>
-                                <a>Next ></a>
+                                <a class="carousel-control-next" href="#card-carousel" data-slide="next">Next ></a>
                             </ol>
                         </div>
                     </div>
