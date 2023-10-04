@@ -1292,9 +1292,9 @@ class AssetDetailView(APIDetailView):
         if project.campaign.card_family:
             ctx["cards"] = project.campaign.card_family.cards.all()
         else:
-            card_family = ctx["cards"] = CardFamily.objects.filter(default=True).first()
+            card_family = CardFamily.objects.filter(default=True).first()
             if card_family is not None:
-                card_family = card_family.cards.all()
+                ctx["cards"] = card_family.cards.all()
 
         return ctx
 
