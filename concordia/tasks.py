@@ -922,6 +922,5 @@ def fix_storage_images(campaign_slug=None, asset_start_id=None):
                     )
                     raise
                 logger.info("Storage image downloaded for  %s (%s)", asset, asset.id)
-                break
         logger.debug("Storage image checked for %s (%s)", asset, asset.id)
         logger.debug("%s / %s (%s%%)", count, full_count, str(count / full_count * 100))

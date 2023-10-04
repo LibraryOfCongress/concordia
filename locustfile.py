@@ -1,5 +1,5 @@
 from locust import TaskSet, between
-from locust.contrib.fasthttp import FastHttpLocust
+from locust.contrib.fasthttp import FastHttpUser
 
 
 def campaigns_topics(user):
@@ -39,6 +39,6 @@ class UserBehavior(TaskSet):
     }
 
 
-class WebsiteUser(FastHttpLocust):
-    task_set = UserBehavior
+class WebsiteUser(FastHttpUser):
+    tasks = [UserBehavior]
     wait_time = between(5.0, 9.0)
