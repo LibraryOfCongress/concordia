@@ -363,9 +363,8 @@
                 {% if transcription_status == "not_started" or transcription_status == "in_progress" %}
                     <div id="ocr-section" class="row pl-3 pb-4 bg-white print-none">
                         <div class="d-flex flex-row align-items-center align-content-end ml-auto mr-3 mt-1">
-                            <span>What is OCR</span>
                             <a tabindex="0" class="btn btn-link d-inline p-0" role="button" data-placement="top" data-trigger="focus click hover" title="When to use OCR"  data-toggle="modal" data-target="#ocr-help-modal">
-                                <span class="fas fa-question-circle" aria-label="When to use OCR"></span>
+                                <span>What is OCR</span> <span class="fas fa-question-circle" aria-label="When to use OCR"></span>
                             </a>
                             <a role="button" data-placement="top" data-trigger="click" title="Transcribe with OCR" data-toggle="modal" data-target="#ocr-transcription-modal" id="ocr-transcription-link" class="btn btn-primary mx-1" disabled>Transcribe with OCR</a>
                         </div>
