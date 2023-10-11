@@ -1013,6 +1013,18 @@ $card-progress-height: 12px;
 }
 
 /*
+ * Tutorial popup and cards navigation
+ */
+#previous-card {
+    position: absolute;
+    left: 0;
+}
+#next-card {
+    position: absolute;
+    right: 0;
+}
+
+/*
  * Campaign Resources Panel
  */
 

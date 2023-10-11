@@ -704,25 +704,25 @@
                 <div class="modal-content">
                     <div class="modal-header"></div>
                     <div class="modal-body">
-                        <div id="card-carousel" class="carousel slide container">
+                        <div id="card-carousel" class="carousel slide container" data-interval="false">
                             <div class="carousel-inner">
                                 {% for card in cards %}
                                     <div class="carousel-item {% if forloop.first %} active {% endif %}">
-                                        <img src="{{ card.image }}">
-                                        <h2>{{ card.title }}</h2>
-                                        {{ card.body_text }}
+                                        <div class="carousel-overlay position-static d-flex flex-column justify-content-around align-items-center">
+                                            <img src="{{ card.image }}">
+                                            <h2>{{ card.title }}</h2>
+                                            <p>{{ card.body_text|safe }}</p>
+                                        </div>
                                     </div>
                                 {% endfor %}
                             </div>
+                            <a id="previous-card" href="#card-carousel" role="button" data-slide="prev"><&nbsp;Back</a>
                             <ol class="carousel-indicators d-none d-lg-flex">
-                                <a class="carousel-control-prev" href="#card-carousel" role="button" data-slide="prev">< Back</a>
-                                <ol>
-                                    {% for card in cards %}
-                                        <li data-target="#card-carousel" data-slide-to="{{ forloop.counter0 }}" {% if forloop.first %}class="active" {% endif %}></li>
-                                    {% endfor %}
-                                </ol>
-                                <a class="carousel-control-next" href="#card-carousel" data-slide="next">Next ></a>
+                                {% for card in cards %}
+                                    <li data-target="#card-carousel" data-slide-to="{{ forloop.counter0 }}" {% if forloop.first %}class="active" {% endif %}></li>
+                                {% endfor %}
                             </ol>
+                            <a id="next-card" href="#card-carousel" data-slide="next">Next&nbsp;></a>
                         </div>
                     </div>
                 </div>
