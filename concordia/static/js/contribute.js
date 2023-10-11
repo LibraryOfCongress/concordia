@@ -448,6 +448,7 @@ function setupPage() {
         });
 
     var $tagEditor = $('#tag-editor'),
+        $tagForm = $('#tag-form'),
         $currentTagList = $tagEditor.find('#current-tags'),
         $newTagInput = $('#new-tag-input');
 
@@ -491,6 +492,7 @@ function setupPage() {
                 $currentTagList.append($newTag);
             }
             $newTagInput.val('');
+            $tagForm.submit();
         }
     }
 
@@ -507,10 +509,12 @@ function setupPage() {
 
     $currentTagList.on('click', '.close', function () {
         $(this).parents('li').remove();
+        $tagForm.submit();
     });
 
     $tagEditor
-        .on('form-submit-success', function () {
+        .on('form-submit-success', function (event, info) {
+            $('#tag-count').html(info.responseData['all_tags'].length);
             unlockControls($tagEditor);
             displayMessage(
                 'info',

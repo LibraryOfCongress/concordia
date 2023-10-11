@@ -471,14 +471,14 @@
                     <h2 id="tag-label" class="border-top pt-3 pb-2"><a
                         data-toggle="collapse" href="#tag-form" role="button" aria-expanded="false"
                         aria-controls="tag-form"><i class="fas fa-plus-square"></i> <span
-                            class="text-dark">Tags ({{ tags|length }})</span></a></h2>
+                            id="tag-count-text" class="text-dark">Tags (<span id="tag-count">{{ tags|length }}</span>)</span></a></h2>
                     <form id="tag-form" class="ajax-submission collapse" method="post" action="{% url 'submit-tags' asset_pk=asset.pk %}">
                         {% csrf_token %}
                         <div class="d-print-none">
                             {% if user.is_authenticated %}
                                 <div class="form-row">
                                     <div class="col input-group">
-                                        <input type="text" id="new-tag-input" class="form-control" placeholder="Add a new tag…" aria-label="Add a new tag" pattern="[- _À-ž'\w]{1,50}">
+                                        <input type="text" id="new-tag-input" class="form-control" placeholder="Add a new tag…" aria-label="Add a new tag" pattern="[\- _À-ž'\w]{1,50}">
                                         <div class="input-group-append">
                                             <button id="new-tag-button" class="btn btn-outline-primary" type="button" title="Add tags to the page">Add</button>
                                         </div>
@@ -512,12 +512,6 @@
                                 </li>
                             {% endfor %}
                         </ul>
-
-                        <div class="form-row mt-2 authenticated-only d-print-none" hidden>
-                            <button id="save-tags-button" type="submit" class="btn btn-primary mx-auto" title="Save tags that you’ve added to the page">
-                                Save Tags
-                            </button>
-                        </div>
                     </form>
                 </div>
             </div>
