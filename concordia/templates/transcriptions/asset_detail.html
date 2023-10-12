@@ -705,7 +705,7 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h3>Quick Tips</h3>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <button type="button" class="close text-primary" data-dismiss="modal" aria-label="Close">
                             <span aria-hidden="true">x</span>
                         </button>
                     </div>
@@ -722,13 +722,17 @@
                                     </div>
                                 {% endfor %}
                             </div>
-                            <a id="previous-card" href="#card-carousel" role="button" data-slide="prev"><&nbsp;Back</a>
+                            <a id="previous-card" href="#card-carousel" role="button" data-slide="prev">
+                                <strong><u><&nbsp;Back</u></strong>
+                            </a>
                             <ol class="carousel-indicators d-none d-lg-flex">
                                 {% for card in cards %}
                                     <li data-target="#card-carousel" data-slide-to="{{ forloop.counter0 }}" {% if forloop.first %}class="active" {% endif %}></li>
                                 {% endfor %}
                             </ol>
-                            <a id="next-card" href="#card-carousel" data-slide="next">Next&nbsp;></a>
+                            <a id="next-card" href="#card-carousel" data-slide="next">
+                                <strong><u>Next&nbsp;></u></strong>
+                            </a>
                         </div>
                     </div>
                 </div>
