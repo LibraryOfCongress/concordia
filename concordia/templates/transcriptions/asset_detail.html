@@ -703,13 +703,18 @@
         <div id="tutorial-popup" class="modal" tabindex="-1" role="dialog">
             <div class="modal-dialog modal-dialog-centered" role="document">
                 <div class="modal-content">
-                    <div class="modal-header"></div>
+                    <div class="modal-header">
+                        <h3>Quick Tips</h3>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">x</span>
+                        </button>
+                    </div>
                     <div class="modal-body">
                         <div id="card-carousel" class="carousel slide container" data-interval="false">
                             <div class="carousel-inner">
                                 {% for card in cards %}
                                     <div class="carousel-item {% if forloop.first %} active {% endif %}">
-                                        <div class="carousel-overlay position-static d-flex flex-column justify-content-around align-items-center">
+                                        <div class="carousel-overlay position-static d-flex flex-column justify-content-around">
                                             <img src="{{ card.image }}">
                                             <h2>{{ card.title }}</h2>
                                             <p>{{ card.body_text|safe }}</p>
