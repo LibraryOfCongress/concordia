@@ -1015,11 +1015,16 @@ $card-progress-height: 12px;
 /*
  * Tutorial popup and cards navigation
  */
+#card-carousel .carousel-indicators > li.active {
+    background-color: #007bff;
+}
+
 #previous-card {
     position: absolute;
     bottom: 10px;
     left: 0;
 }
+
 #next-card {
     position: absolute;
     bottom: 10px;
