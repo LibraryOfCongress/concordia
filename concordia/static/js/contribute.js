@@ -451,10 +451,18 @@ function setupPage() {
         $tagForm = $('#tag-form'),
         $currentTagList = $tagEditor.find('#current-tags'),
         $newTagInput = $('#new-tag-input');
+    const characterError =
+        'Tags must be between 1-50 characters and may contain only letters, numbers, dashes, underscores, apostrophes, and spaces';
+    const duplicateError =
+        'That tag has already been added. Each tag can only be added once.';
 
     function addNewTag() {
+        $newTagInput.get(0).setCustomValidity(''); // Resets custom validation
+        const $form = $newTagInput.closest('form');
+        $form.removeClass('was-validated');
         if (!$newTagInput.get(0).checkValidity()) {
-            $newTagInput.closest('form').addClass('was-validated');
+            $form.find('.invalid-feedback').html(characterError);
+            $form.addClass('was-validated');
             return;
         }
 
@@ -490,9 +498,14 @@ function setupPage() {
                 );
                 $newTag.find('label').append(document.createTextNode(value));
                 $currentTagList.append($newTag);
+                $newTagInput.val('');
+                $tagForm.submit();
+            } else {
+                $newTagInput.get(0).setCustomValidity(duplicateError);
+                $form.find('.invalid-feedback').html(duplicateError);
+                $newTagInput.closest('form').addClass('was-validated');
+                return;
             }
-            $newTagInput.val('');
-            $tagForm.submit();
         }
     }
 
