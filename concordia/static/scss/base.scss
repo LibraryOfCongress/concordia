@@ -1017,10 +1017,12 @@ $card-progress-height: 12px;
  */
 #previous-card {
     position: absolute;
+    bottom: 10px;
     left: 0;
 }
 #next-card {
     position: absolute;
+    bottom: 10px;
     right: 0;
 }
 
