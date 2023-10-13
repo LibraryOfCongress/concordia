@@ -7,6 +7,37 @@
             a { text-decoration: none; color: black; }
             p { font-family: Arial; font-size: 11pt; line-height: 1.4;}
             img { width: 35%; height: auto; }
+            table {
+                width: 100%;
+                margin-bottom: 1rem;
+                color: #242424;
+                border-collapse: collapse;
+                font-family: Artial;
+                font-size: 11pt;
+                line-height: 1.4;
+            }
+            table thead th {
+                vertical-align: bottom;
+                border-bottom: 2px solid #efefef;
+            }
+            table th, table td {
+                padding: 0.75rem;
+                vertical-align: top;
+                border-top: 1px solid #efefef;
+            }
+            table thead th, table thead td {
+                border-bottom: 1px solid #000;
+                border-top: 1px solid #000;
+            }
+            table tbody tr:nth-of-type(odd) {
+                background-color: rgba(0, 0, 0, 0.05);
+            }
+            .text-right {
+                text-align: right !important;
+            }
+            .text-left {
+                text-align: left !important;
+            }
         </style>
         <title>Service Letter</title>
         <meta name=author content="By the People" />
@@ -39,5 +70,28 @@
             Digital Content Management Section<br />
             Library of Congress
         </p>
+        <div style="page-break-after: always;"></div>
+        <table>
+            <thead>
+                <tr class="text-left">
+                    <th>Date</th>
+                    <th>Page</th>
+                    <th>Campaign</th>
+                    <th>Your Contribution</th>
+                    <th>Current Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for asset in asset_list %}
+                    <tr>
+                        <td class="col-md-3">{{ asset.latest_activity }}</td>
+                        <td class="text-right"><a href="{{ asset.get_absolute_url }}">{{ asset.sequence }}</a></td>
+                        <td>{{ asset.item.title }}</td>
+                        <td>{% if asset.last_reviewed %}Reviewed{% else %}Transcribed{% endif %}</td>
+                        <td>{{ asset.get_transcription_status_display }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </body>
 </html>

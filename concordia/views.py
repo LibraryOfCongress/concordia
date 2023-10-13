@@ -337,12 +337,14 @@ def AccountLetterView(request):
     aggregate_sums = user_profile_activity.aggregate(
         Sum("review_count"), Sum("transcribe_count")
     )
+    asset_list = _get_pages(request)
     context = {
         "username": request.user.email,
         "join_date": request.user.date_joined,
         "total_reviews": aggregate_sums["review_count__sum"],
         "total_transcriptions": aggregate_sums["transcribe_count__sum"],
         "image_url": image_url,
+        "asset_list": asset_list,
     }
     template = loader.get_template("documents/service_letter.html")
     text = template.render(context)
