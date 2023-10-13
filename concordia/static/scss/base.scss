@@ -1030,6 +1030,36 @@ $card-progress-height: 12px;
 }
 
 /*
+ * Tutorial popup and cards navigation
+ */
+#card-carousel .carousel-item img {
+    background-color: #fff;
+    border-top: 1px solid #efefef;
+    padding-bottom: 1rem;
+}
+
+#card-carousel ul {
+    padding-left: 1.5rem;
+}
+
+#card-carousel .carousel-indicators > li.active {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+#previous-card {
+    position: absolute;
+    bottom: 10px;
+    left: 0;
+}
+
+#next-card {
+    position: absolute;
+    bottom: 10px;
+    right: 0;
+}
+
+/*
  * Campaign Resources Panel
  */
 

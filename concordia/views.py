@@ -77,6 +77,7 @@ from concordia.models import (
     AssetTranscriptionReservation,
     Banner,
     Campaign,
+    CardFamily,
     CarouselSlide,
     ConcordiaUser,
     Item,
@@ -87,6 +88,7 @@ from concordia.models import (
     Topic,
     Transcription,
     TranscriptionStatus,
+    TutorialCard,
     UserAssetTagCollection,
     UserProfileActivity,
 )
@@ -1269,6 +1271,15 @@ class AssetDetailView(APIDetailView):
         ctx["tags"] = sorted(tags)
 
         ctx["registered_contributors"] = asset.get_contributor_count()
+
+        if project.campaign.card_family:
+            card_family = project.campaign.card_family
+        else:
+            card_family = CardFamily.objects.filter(default=True).first()
+        if card_family is not None:
+            unordered_cards = TutorialCard.objects.filter(tutorial=card_family)
+            ordered_cards = unordered_cards.order_by("order")
+            ctx["cards"] = [tutorial_card.card for tutorial_card in ordered_cards]
 
         return ctx
 

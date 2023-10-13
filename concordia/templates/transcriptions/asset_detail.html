@@ -699,6 +699,52 @@
         </div>
     </div>
     <div class="print-transcription-image d-none d-print-block"><img class="img-fluid" alt="Scanned image of the current content page" src="{% asset_media_url asset %}"></div>
+    {% if cards %}
+        <div id="tutorial-popup" class="modal" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header border-bottom-0">
+                        <h4>Quick Tips</h4>
+                        <button type="button" class="close text-primary" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">x</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="card-carousel" class="carousel slide" data-interval="false">
+                            <div class="carousel-inner">
+                                {% for card in cards %}
+                                    <div class="carousel-item pb-4 {% if forloop.first %} active {% endif %}">
+                                        {% if not forloop.first %}
+                                            <a id="previous-card" href="#card-carousel" role="button" data-slide="prev">
+                                                <strong><u><&nbsp;Back</u></strong>
+                                            </a>
+                                        {% endif %}
+                                        <div class="position-static d-flex flex-column justify-content-around">
+                                            {% if card.image %}
+                                                <img src="{{ card.image.url }}">
+                                            {% endif %}
+                                            <h3>{{ card.title }}</h3>
+                                            <p>{{ card.body_text|safe }}</p>
+                                        </div>
+                                        {% if not forloop.last %}
+                                            <a id="next-card" href="#card-carousel" data-slide="next">
+                                                <strong><u>Next&nbsp;></u></strong>
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            <ol class="carousel-indicators d-none d-lg-flex">
+                                {% for card in cards %}
+                                    <li data-target="#card-carousel" data-slide-to="{{ forloop.counter0 }}" {% if forloop.first %}class="active" {% endif %}></li>
+                                {% endfor %}
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
 {% endblock main_content %}
 
 {% block body_scripts %}
