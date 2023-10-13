@@ -702,7 +702,7 @@
         <div id="tutorial-popup" class="modal" tabindex="-1" role="dialog">
             <div class="modal-dialog modal-dialog-centered" role="document">
                 <div class="modal-content">
-                    <div class="modal-header">
+                    <div class="modal-header border-bottom-0">
                         <h4>Quick Tips</h4>
                         <button type="button" class="close text-primary" data-dismiss="modal" aria-label="Close">
                             <span aria-hidden="true">x</span>
@@ -712,7 +712,7 @@
                         <div id="card-carousel" class="carousel slide" data-interval="false">
                             <div class="carousel-inner">
                                 {% for card in cards %}
-                                    <div class="carousel-item {% if forloop.first %} active {% endif %}">
+                                    <div class="carousel-item pb-4 {% if forloop.first %} active {% endif %}">
                                         {% if not forloop.first %}
                                             <a id="previous-card" href="#card-carousel" role="button" data-slide="prev">
                                                 <strong><u><&nbsp;Back</u></strong>

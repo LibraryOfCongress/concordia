@@ -1017,6 +1017,7 @@ $card-progress-height: 12px;
  */
 #card-carousel .carousel-item img {
     background-color: #fff;
+    border-top: 1px solid #efefef;
     padding-bottom: 1rem;
 }
 
@@ -1026,6 +1027,7 @@ $card-progress-height: 12px;
 
 #card-carousel .carousel-indicators > li.active {
     background-color: #007bff;
+    border-color: #007bff;
 }
 
 #previous-card {
