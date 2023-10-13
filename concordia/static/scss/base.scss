@@ -1015,6 +1015,15 @@ $card-progress-height: 12px;
 /*
  * Tutorial popup and cards navigation
  */
+#card-carousel .carousel-item img {
+    background-color: #fff;
+    padding-bottom: 1rem;
+}
+
+#card-carousel ul {
+    padding-left: 1.5rem;
+}
+
 #card-carousel .carousel-indicators > li.active {
     background-color: #007bff;
 }
