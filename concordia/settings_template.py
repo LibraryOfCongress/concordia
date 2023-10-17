@@ -390,6 +390,7 @@ CHANNEL_LAYERS = {
     }
 }
 
+SECURE_REFERRER_POLICY = "origin"
 TINYMCE_COMPRESSOR = False
 TINYMCE_DEFAULT_CONFIG = {
     "skin": "oxide-dark",
