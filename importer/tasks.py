@@ -12,7 +12,6 @@ from urllib.parse import parse_qsl, urlencode, urljoin, urlparse, urlsplit, urlu
 
 import requests
 from celery import group
-from django import forms
 from django.core.cache import cache
 from django.db.transaction import atomic
 from django.utils.text import slugify
@@ -439,12 +438,10 @@ def import_item(self, import_item):
             resource_url=item_resource_url,
             storage_image="/".join([relative_asset_file_path, f"{idx}.jpg"]),
         )
-        try:
-            item_asset.full_clean()
-            item_assets.append(item_asset)
-        except forms.ValidationError:
-            # Asset already exists
-            pass
+        # Previously, any asset that raised a validation error was just ignored.
+        # We don't want that--we want to see if an asset fails validation
+        item_asset.full_clean()
+        item_assets.append(item_asset)
 
     Asset.objects.bulk_create(item_assets)
 

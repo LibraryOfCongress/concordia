@@ -399,6 +399,17 @@ class AssetQuerySet(PublicationQuerySet):
 
 
 class Asset(MetricsModelMixin("asset"), models.Model):
+    def get_storage_path(self, filename):
+        s3_relative_path = "/".join(
+            [
+                self.item.project.campaign.slug,
+                self.item.project.slug,
+                self.item.item_id,
+            ]
+        )
+        filename = self.media_url
+        return os.path.join(s3_relative_path, filename)
+
     objects = AssetQuerySet.as_manager()
 
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
@@ -437,6 +448,8 @@ class Asset(MetricsModelMixin("asset"), models.Model):
 
     difficulty = models.PositiveIntegerField(default=0, blank=True, null=True)
 
+    storage_image = models.ImageField(upload_to=get_storage_path, max_length=255)
+
     class Meta:
         unique_together = (("slug", "item"),)
         indexes = [
@@ -449,6 +462,13 @@ class Asset(MetricsModelMixin("asset"), models.Model):
 
     def __str__(self):
         return self.title
+
+    def save(self, *args, **kwargs):
+        # This ensures all 'required' fields really are required
+        # even when creating objects programmatically. Particularly,
+        # we want to make sure we don't end up with an empty storage_image
+        self.full_clean()
+        super().save(*args, **kwargs)
 
     def get_absolute_url(self):
         return reverse(
@@ -463,21 +483,6 @@ class Asset(MetricsModelMixin("asset"), models.Model):
 
     def latest_transcription(self):
         return self.transcription_set.order_by("-pk").first()
-
-    def get_storage_path(self, filename):
-        s3_relative_path = "/".join(
-            [
-                self.item.project.campaign.slug,
-                self.item.project.slug,
-                self.item.item_id,
-            ]
-        )
-        filename = self.media_url
-        return os.path.join(s3_relative_path, filename)
-
-    storage_image = models.ImageField(
-        upload_to=get_storage_path, max_length=255, blank=True, null=True
-    )
 
     def get_ocr_transcript(self):
         return pytesseract.image_to_string(Image.open(self.storage_image))
