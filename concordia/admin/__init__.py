@@ -91,6 +91,7 @@ from .filters import (
 from .forms import (
     AdminItemImportForm,
     CampaignAdminForm,
+    CardAdminForm,
     ProjectAdminForm,
     SanitizedDescriptionAdminForm,
 )
@@ -992,7 +993,7 @@ class CampaignRetirementProgressAdmin(admin.ModelAdmin):
 
 @admin.register(Card)
 class CardAdmin(admin.ModelAdmin):
-    pass
+    form = CardAdminForm
 
 
 class TutorialInline(admin.TabularInline):
