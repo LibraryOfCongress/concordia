@@ -152,6 +152,7 @@ def create_asset(
     media_type=MediaType.IMAGE,
     media_url="1.jpg",
     published=True,
+    storage_image="unittest1.jpg",
     do_save=True,
     **kwargs,
 ):
@@ -164,6 +165,7 @@ def create_asset(
         media_type=media_type,
         published=published,
         media_url=media_url,
+        storage_image=storage_image,
         **kwargs,
     )
     asset.full_clean()
