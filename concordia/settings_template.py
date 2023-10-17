@@ -392,9 +392,9 @@ CHANNEL_LAYERS = {
 
 TINYMCE_COMPRESSOR = False
 TINYMCE_DEFAULT_CONFIG = {
-    "selector": "textarea#id_body_text",
-    "referrer_policy": "origin",
     "skin": "oxide-dark",
     "content_css": "dark",
+    "plugins": "link lists",
+    "toolbar1": "bold italic | bullist | link",
 }
 TINYMCE_JS_URL = "https://cdn.tiny.cloud/1/rf486i5f1ww9m8191oolczn7f0ry61mzdtfwbu7maiiiv2kv/tinymce/6/tinymce.min.js"
