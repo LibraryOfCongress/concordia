@@ -32,8 +32,8 @@ export class Alert {
                     'data-dismiss': 'alert',
                     'aria-label': 'Close',
                 },
-                html('span.fas.fa-times-circle', {'aria-hidden': 'true'})
-            )
+                html('span.fas.fa-times-circle', {'aria-hidden': 'true'}),
+            ),
         );
     }
 
@@ -67,7 +67,7 @@ export class MetadataPanel {
     constructor(asset) {
         this.campaignMetadata = new CampaignMetadataDetails(
             'Campaign',
-            asset.campaign
+            asset.campaign,
         );
         this.projectMetadata = new MetadataDetails('Project', asset.project);
         this.itemMetadata = new ItemMetadataDetails('Item', asset.item);
@@ -76,7 +76,7 @@ export class MetadataPanel {
             '#asset-metadata-panel',
             this.campaignMetadata,
             this.projectMetadata,
-            this.itemMetadata
+            this.itemMetadata,
         );
     }
 }
@@ -94,10 +94,10 @@ class MetadataDetails {
                     'a',
                     {target: '_blank', hidden: true},
                     (this.thumbnailIcon = html(
-                        'img.img-thumbnail.img-fluid.w-25.float-right'
-                    ))
+                        'img.img-thumbnail.img-fluid.w-25.float-right',
+                    )),
                 )),
-                (this.descriptionContainer = html('div'))
+                (this.descriptionContainer = html('div')),
             ),
         ];
         this.el = html('details', {open: true}, this.children);
@@ -146,7 +146,7 @@ class RelatedLink {
         this.el = html(
             'li.link',
             (this.title = html('h5.title')),
-            (this.link = html('a', {target: '_blank'}))
+            (this.link = html('a', {target: '_blank'})),
         );
     }
     update(relatedLink) {
@@ -162,7 +162,7 @@ class RelatedLinks {
             '.related-links',
             {hidden: true},
             html('h4.title', text('Related Links')),
-            (this.linkList = list('ul.list-unstyled', RelatedLink))
+            (this.linkList = list('ul.list-unstyled', RelatedLink)),
         );
     }
     update(links) {
@@ -195,7 +195,7 @@ class RawMetadataDisplay {
         this.el = html(
             'details',
             html('summary', text('Raw Metadata')),
-            html('pre.raw-metadata')
+            html('pre.raw-metadata'),
         );
     }
     update(data) {
@@ -223,7 +223,7 @@ class FeaturedMetadata extends List {
             // the keys to display titles:
             .sort(
                 (a, b) =>
-                    FEATURED_KEYS.indexOf(a[0]) - FEATURED_KEYS.indexOf(b[0])
+                    FEATURED_KEYS.indexOf(a[0]) - FEATURED_KEYS.indexOf(b[0]),
             )
             .map(([key, value]) => {
                 let values = [];
@@ -299,7 +299,7 @@ class AssetListItem {
             // FIXME: [2020-10-31] this is an ugly, ugly kludge and should be replaced with something like https://www.npmjs.com/package/iiif-image
             thumbnailUrl = thumbnailUrl.replace(
                 /(\/iiif\/.+\/full)\/pct:100\/(0\/default.jpg)$/,
-                '$1/!512,512/$2'
+                '$1/!512,512/$2',
             );
         }
 
@@ -445,7 +445,7 @@ class ConditionalToolbar {
         this.message = html('div.text-center');
 
         this.el = html(
-            '.concordia-app-transcription-toolbar.py-3.text-center.d-print-none'
+            '.concordia-app-transcription-toolbar.py-3.text-center.d-print-none',
         );
     }
 
@@ -480,7 +480,7 @@ class ReviewerView {
                         class: 'btn btn-primary',
                         title: 'Correct errors you see in the text',
                     },
-                    text('Edit')
+                    text('Edit'),
                 )),
                 (this.acceptButton = html(
                     'button',
@@ -490,9 +490,9 @@ class ReviewerView {
                         class: 'btn btn-primary',
                         title: 'Confirm that the text is accurately transcribed',
                     },
-                    text('Accept')
+                    text('Accept'),
                 )),
-            ]))
+            ])),
         );
 
         this.rejectButton.addEventListener('click', (event) => {
@@ -513,7 +513,7 @@ class ReviewerView {
 
         this.el.classList.toggle(
             'nothing-to-transcribe',
-            !asset.latest_transcription.text
+            !asset.latest_transcription.text,
         );
 
         if (asset.latest_transcription.text) {
@@ -550,7 +550,7 @@ class TranscriberView {
                         class: 'form-check-label',
                         for: 'nothing-to-transcribe',
                     },
-                    text('Nothing to transcribe')
+                    text('Nothing to transcribe'),
                 ),
                 html(
                     'a',
@@ -569,8 +569,8 @@ class TranscriberView {
                     html('span', {
                         class: 'fas fa-question-circle',
                         'aria-label': 'Open Help',
-                    })
-                )
+                    }),
+                ),
             ),
             (this.saveButton = html(
                 'button',
@@ -589,7 +589,7 @@ class TranscriberView {
                         return false;
                     },
                 },
-                text('Save')
+                text('Save'),
             )),
             (this.submitButton = html(
                 'button',
@@ -605,7 +605,7 @@ class TranscriberView {
                         return false;
                     },
                 },
-                text('Submit for Review')
+                text('Submit for Review'),
             )),
         ]);
 
@@ -632,8 +632,8 @@ class TranscriberView {
                         this.updateAvailableToolbarActions();
                     },
                 })),
-                this.toolbar
-            )
+                this.toolbar,
+            ),
         );
     }
 
@@ -657,7 +657,7 @@ class TranscriberView {
             if (noUpstream || upstreamUnchanged || assetStatusUnchanged) {
                 // eslint-disable-next-line no-console
                 console.debug(
-                    `Asset ${asset.id} unmodified; not resetting transcription view`
+                    `Asset ${asset.id} unmodified; not resetting transcription view`,
                 );
                 return;
             }
@@ -728,7 +728,7 @@ class TranscriberView {
         if (nothingToTranscribe && this.textarea.value) {
             if (
                 !confirm(
-                    'You currently have entered text which will not be saved because “Nothing to transcribe” is checked. Do you want to discard that text?'
+                    'You currently have entered text which will not be saved because “Nothing to transcribe” is checked. Do you want to discard that text?',
                 )
             ) {
                 nothingToTranscribe = false;
@@ -808,7 +808,7 @@ export class AssetViewer {
 
         this.reviewerView = new ReviewerView(this.submitAction.bind(this));
         this.transcriberView = new TranscriberView(
-            this.submitAction.bind(this)
+            this.submitAction.bind(this),
         );
 
         // FIXME: [2020-10-31] finish pulling in the rest of this structure so it will all be created normally

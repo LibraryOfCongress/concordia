@@ -22,11 +22,13 @@ def get_secret(secret_name):
         get_secret_value_response = client.get_secret_value(SecretId=secret_name)
     except ClientError as e:
         if e.response["Error"]["Code"] == "ResourceNotFoundException":
-            raise Exception("The requested secret " + secret_name + " was not found")
+            raise Exception(
+                "The requested secret " + secret_name + " was not found"
+            ) from e
         elif e.response["Error"]["Code"] == "InvalidRequestException":
-            raise Exception("The request was invalid due to:", e)
+            raise Exception("The request was invalid due to:", e) from e
         elif e.response["Error"]["Code"] == "InvalidParameterException":
-            raise Exception("The request had invalid params:", e)
+            raise Exception("The request had invalid params:", e) from e
     else:
         # Decrypted secret using the associated KMS CMK Depending on whether the
         # secret was a string or binary, one of these fields will be populated

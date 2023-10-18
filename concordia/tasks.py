@@ -904,7 +904,7 @@ def fix_storage_images(campaign_slug=None, asset_start_id=None):
                 )
                 try:
                     with NamedTemporaryFile(mode="x+b") as temp_file:
-                        resp = requests.get(download_url, stream=True)
+                        resp = requests.get(download_url, stream=True, timeout=30)
                         resp.raise_for_status()
 
                         for chunk in resp.iter_content(chunk_size=256 * 1024):

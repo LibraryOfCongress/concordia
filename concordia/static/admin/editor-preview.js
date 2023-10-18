@@ -26,17 +26,17 @@
                 var frameDocument = this.contentDocument;
                 frameDocument.open();
                 frameDocument.write(
-                    '<html><body><main>Loading…</main></body></html>'
+                    '<html><body><main>Loading…</main></body></html>',
                 );
                 frameDocument.close();
 
                 var previewTemplate = document.querySelector(
-                    'template#preview-head'
+                    'template#preview-head',
                 ).content;
 
                 previewTemplate.childNodes.forEach((node) => {
-                    frameDocument.head.appendChild(
-                        frameDocument.importNode(node, true)
+                    frameDocument.head.append(
+                        frameDocument.importNode(node, true),
                     );
                 });
 
@@ -90,7 +90,7 @@
                 $formRow.find('.errornote').remove();
 
                 editorLineWidgets.forEach((widget) =>
-                    editor.removeLineWidget(widget)
+                    editor.removeLineWidget(widget),
                 );
 
                 try {
@@ -110,21 +110,19 @@
                     lineWarning.style.whiteSpace = 'nowrap';
                     lineWarning.style.overflow = 'hidden';
 
-                    var icon = lineWarning.appendChild(
-                        document.createElement('span')
+                    var icon = lineWarning.append(
+                        document.createElement('span'),
                     );
                     icon.style.marginRight = '1rem';
                     icon.innerHTML = '⚠️';
-                    lineWarning.appendChild(
-                        document.createTextNode(error.message)
-                    );
+                    lineWarning.append(document.createTextNode(error.message));
 
                     editorLineWidgets.push(
                         editor.addLineWidget(
                             error.loc.start.line - 1,
                             lineWarning,
-                            {coverGutter: false, noHScroll: true}
-                        )
+                            {coverGutter: false, noHScroll: true},
+                        ),
                     );
                 }
             });
