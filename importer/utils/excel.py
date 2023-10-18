@@ -20,7 +20,7 @@ def slurp_excel(filename):
             for cell in row:
                 values.append(clean_cell_value(cell))
 
-            cells.append(dict(zip(headers, values)))
+            cells.append(dict(zip(headers, values, strict=True)))
 
     return cells
 

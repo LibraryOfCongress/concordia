@@ -260,7 +260,7 @@ def import_item_count_from_url(import_url):
     Given a loc.gov URL, return count of files from the resources section
     """
     try:
-        resp = requests.get(import_url, params={"fo": "json"})
+        resp = requests.get(import_url, params={"fo": "json"}, timeout=30)
         resp.raise_for_status()
         item_data = resp.json()
         output = len(item_data["resources"][0]["files"])
@@ -356,7 +356,7 @@ def create_item_import_task(self, import_job_pk, item_url, redownload=False):
     import_job = ImportJob.objects.get(pk=import_job_pk)
 
     # Load the Item record with metadata from the remote URL:
-    resp = requests.get(item_url, params={"fo": "json"})
+    resp = requests.get(item_url, params={"fo": "json"}, timeout=30)
     resp.raise_for_status()
     item_data = resp.json()
 
@@ -571,7 +571,7 @@ def download_asset(self, import_asset, redownload_asset):
         # and after that completes successfully will upload it
         # to the defined ASSET_STORAGE.
         with NamedTemporaryFile(mode="x+b") as temp_file:
-            resp = requests.get(download_url, stream=True)
+            resp = requests.get(download_url, stream=True, timeout=30)
             resp.raise_for_status()
 
             for chunk in resp.iter_content(chunk_size=256 * 1024):

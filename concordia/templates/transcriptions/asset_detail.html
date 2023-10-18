@@ -743,7 +743,7 @@
         var seadragonViewer = OpenSeadragon({
             id: "asset-image",
             prefixUrl:
-            "{% static 'openseadragon/build/openseadragon/images/' %}",
+                "{% static 'openseadragon/build/openseadragon/images/' %}",
             tileSources: {
                 type: "image",
                 url: "{% asset_media_url asset %}?canvas"

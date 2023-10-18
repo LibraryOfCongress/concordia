@@ -80,7 +80,7 @@ function displayMessage(level, message, uniqueId) {
     return displayHtmlMessage(
         level,
         document.createTextNode(message),
-        uniqueId
+        uniqueId,
     );
 }
 
@@ -129,7 +129,7 @@ $(function () {
                 'closed.bs.alert',
                 function () {
                     Cookies.set(warningCookie, Date.now());
-                }
+                },
             );
         }
 
@@ -146,7 +146,7 @@ $(function () {
                     preserveStatic: true,
                     include: 'link[rel="stylesheet"][href^="/static/"]',
                 });
-            }
+            },
         );
     }
 
@@ -204,7 +204,7 @@ $.ajax({url: '/account/ajax-messages/', method: 'GET', dataType: 'json'}).done(
                 displayMessage(message.level, message.message);
             });
         }
-    }
+    },
 );
 
 // eslint-disable-next-line no-unused-vars
@@ -240,7 +240,7 @@ function trackShareInteraction($element, interactionType) {
             $element,
             'Share Tool',
             'click',
-            interactionType
+            interactionType,
         );
     }
 }

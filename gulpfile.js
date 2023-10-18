@@ -21,9 +21,9 @@ function styles() {
             rename(function (path) {
                 path.dirname = path.dirname.replace(
                     /^[^/]+\/static\/scss/,
-                    'css'
+                    'css',
                 );
-            })
+            }),
         )
         .pipe(sourcemaps.write('sourcemaps/'))
         .pipe(gulp.dest('static/'));
@@ -35,7 +35,7 @@ function scripts() {
         .pipe(
             rename(function (path) {
                 path.dirname = path.dirname.replace(/^[^/]+\/static\//, '');
-            })
+            }),
         )
         .pipe(gulp.dest('static/'));
 }
@@ -58,7 +58,7 @@ function clean() {
             if (stdout) {
                 process.stdout.write(stdout);
             }
-        }
+        },
     );
 }
 
