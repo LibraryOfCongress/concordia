@@ -1,8 +1,10 @@
 import datetime
 import os.path
 from logging import getLogger
+from tempfile import NamedTemporaryFile
 
 import boto3
+import requests
 from celery import chord
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -28,6 +30,7 @@ from concordia.models import (
     UserProfileActivity,
 )
 from concordia.signals.signals import reservation_released
+from concordia.storage import ASSET_STORAGE
 from concordia.utils import get_anonymous_user
 
 from .celery import app as celery_app
@@ -870,3 +873,54 @@ def populate_resource_files():
             filename, extension = os.path.splitext(os.path.basename(path))
             name = "%s-%s" % (filename, extension[1:])
             ResourceFile.objects.create(resource=path, name=name)
+
+
+@celery_app.task(ignore_result=True)
+def fix_storage_images(campaign_slug=None, asset_start_id=None):
+    if campaign_slug:
+        campaign = Campaign.objects.get(slug=campaign_slug)
+        asset_queryset = Asset.objects.filter(item__project__campaign=campaign)
+    else:
+        asset_queryset = Asset.objects.all()
+
+    if asset_start_id:
+        asset_queryset = asset_queryset.filter(id__gte=asset_start_id)
+
+    count = 0
+    full_count = asset_queryset.count()
+    logger.debug("Checking storage image on %s assets", full_count)
+    for asset in asset_queryset.order_by("id"):
+        count += 1
+        if asset.storage_image:
+            if not asset.storage_image.storage.exists(asset.storage_image.name):
+                logger.info("Storage image does not exist for %s (%s)", asset, asset.id)
+                item = asset.item
+                download_url = asset.download_url
+                asset_filename = os.path.join(
+                    item.project.campaign.slug,
+                    item.project.slug,
+                    item.item_id,
+                    "%d.jpg" % asset.sequence,
+                )
+                try:
+                    with NamedTemporaryFile(mode="x+b") as temp_file:
+                        resp = requests.get(download_url, stream=True)
+                        resp.raise_for_status()
+
+                        for chunk in resp.iter_content(chunk_size=256 * 1024):
+                            temp_file.write(chunk)
+
+                        # Rewind the tempfile back to the first byte so we can
+                        temp_file.flush()
+                        temp_file.seek(0)
+
+                        ASSET_STORAGE.save(asset_filename, temp_file)
+
+                except Exception:
+                    logger.exception(
+                        "Unable to download %s to %s", download_url, asset_filename
+                    )
+                    raise
+                logger.info("Storage image downloaded for  %s (%s)", asset, asset.id)
+        logger.debug("Storage image checked for %s (%s)", asset, asset.id)
+        logger.debug("%s / %s (%s%%)", count, full_count, str(count / full_count * 100))
