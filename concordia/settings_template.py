@@ -122,6 +122,7 @@ INSTALLED_APPS = [
     "flags",
     "channels",
     "django_admin_multiple_choice_list_filter",
+    "tinymce",
 ]
 
 MIDDLEWARE = [
@@ -388,3 +389,13 @@ CHANNEL_LAYERS = {
         },
     }
 }
+
+SECURE_REFERRER_POLICY = "origin"
+TINYMCE_COMPRESSOR = False
+TINYMCE_DEFAULT_CONFIG = {
+    "skin": "oxide-dark",
+    "content_css": "dark",
+    "plugins": "link lists",
+    "toolbar1": "bold italic | bullist | link",
+}
+TINYMCE_JS_URL = "https://cdn.tiny.cloud/1/rf486i5f1ww9m8191oolczn7f0ry61mzdtfwbu7maiiiv2kv/tinymce/6/tinymce.min.js"

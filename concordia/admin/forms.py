@@ -1,5 +1,8 @@
 import bleach
 from django import forms
+from tinymce.widgets import TinyMCE
+
+from ..models import Card
 
 FRAGMENT_ALLOWED_TAGS = {"br", "kbd", "span"} | bleach.sanitizer.ALLOWED_TAGS
 
@@ -63,3 +66,12 @@ class BleachedDescriptionAdminForm(forms.ModelForm):
             tags=FRAGMENT_ALLOWED_TAGS,
             attributes=ALLOWED_ATTRIBUTES,
         )
+
+
+class CardAdminForm(forms.ModelForm):
+    class Meta:
+        model = Card
+        widgets = {
+            "body_text": TinyMCE(),
+        }
+        fields = "__all__"

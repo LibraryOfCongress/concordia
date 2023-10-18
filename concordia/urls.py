@@ -241,6 +241,7 @@ urlpatterns = [
     path("error/404/", page_not_found, {"exception": Http404()}),
     path("error/429/", views.ratelimit_view),
     path("error/403/", permission_denied, {"exception": HttpResponseForbidden()}),
+    path("tinymce/", include("tinymce.urls")),
     path("", include("django_prometheus_metrics.urls")),
     path("robots.txt", include("robots.urls")),
 ]
