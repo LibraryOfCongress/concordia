@@ -1387,6 +1387,7 @@ def generate_ocr_transcription(request, *, asset_pk):
 @atomic
 def save_transcription(request, *, asset_pk):
     asset = get_object_or_404(Asset, pk=asset_pk)
+    logger.info("Saving transcription for %s (%s)", asset, asset.id)
 
     if request.user.is_anonymous:
         user = get_anonymous_user()
@@ -1409,6 +1410,7 @@ def save_transcription(request, *, asset_pk):
     supersedes_pk = request.POST.get("supersedes")
     superseded = get_transcription_superseded(asset, supersedes_pk)
     if superseded and isinstance(superseded, HttpResponse):
+        logger.info("Transcription superseded")
         return superseded
 
     if superseded and (superseded.ocr_generated or superseded.ocr_originated):
@@ -1425,6 +1427,7 @@ def save_transcription(request, *, asset_pk):
     )
     transcription.full_clean()
     transcription.save()
+    logger.info("Transction %s saved", transcription.id)
 
     return JsonResponse(
         {
@@ -1444,6 +1447,11 @@ def save_transcription(request, *, asset_pk):
 @validate_anonymous_captcha
 def submit_transcription(request, *, pk):
     transcription = get_object_or_404(Transcription, pk=pk)
+    asset = transcription.asset
+
+    logger.info(
+        "Transcription %s submitted for %s (%s)", transcription.id, asset, asset.id
+    )
 
     is_superseded = transcription.asset.transcription_set.filter(supersedes=pk).exists()
     is_already_submitted = transcription.submitted and not transcription.rejected
@@ -1470,6 +1478,8 @@ def submit_transcription(request, *, pk):
     transcription.full_clean()
     transcription.save()
 
+    logger.info("Transcription %s successfully submitted", transcription.id)
+
     return JsonResponse(
         {
             "id": transcription.pk,
@@ -1493,6 +1503,15 @@ def review_transcription(request, *, pk):
         return JsonResponse({"error": "Invalid action"}, status=400)
 
     transcription = get_object_or_404(Transcription, pk=pk)
+    asset = transcription.asset
+
+    logger.info(
+        "Transcription %s reviewed (%s) for %s (%s)",
+        transcription.id,
+        action,
+        asset,
+        asset.id,
+    )
 
     if transcription.accepted or transcription.rejected:
         return JsonResponse(
@@ -1514,6 +1533,8 @@ def review_transcription(request, *, pk):
 
     transcription.full_clean()
     transcription.save()
+
+    logger.info("Transcription %s successfully reviewed (%s)", transcription.id, action)
 
     return JsonResponse(
         {
