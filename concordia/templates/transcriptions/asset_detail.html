@@ -766,7 +766,7 @@
             }
             const campaign = localStorage.getItem("{{ campaign.slug }}");
             if (campaign) {} else {
-                $('#tutorial-popup').show();
+                $('#tutorial-popup').modal('show');
                 localStorage.setItem("{{ campaign.slug }}", "true");
             }
         }
