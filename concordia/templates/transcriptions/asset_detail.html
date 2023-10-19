@@ -765,12 +765,6 @@
                     }
                 }
             }
-            const keyName = "campaign-{{ campaign.slug }}";
-            const campaign = localStorage.getItem(keyName);
-            if (!campaign) {
-                $('#tutorial-popup').modal('show');
-                localStorage.setItem(keyName, "true");
-            }
         }
         $("#no-interface-banner").click(function(event) {
             localStorage.setItem(event.target.parentElement.id, true);
