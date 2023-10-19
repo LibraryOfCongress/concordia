@@ -284,16 +284,32 @@ because it's not worth dealing with IE11 compatibility {% endcomment %}
                 _satellite.pageBottom();
             }
         </script>
-        {% if not user.is_authenticated %}
-            <script>
-                if (typeof(Storage) !== "undefined") {
-                    for(var i in localStorage) {
-                        if (i.startsWith("campaign-")) {
-                            localStorage.removeItem(i);
-                        }
+
+        <script>
+            function clearCache() {
+                for(var i in localStorage) {
+                    if (i.startsWith("campaign-")) {
+                        localStorage.removeItem(i);
                     }
                 }
-            </script>
-        {% endif %}
+            }
+            if (typeof(Storage) !== "undefined") {
+                {% if campaign %}
+                    const keyName = "campaign-{{ campaign.slug }}";
+                    if (keyName) {
+                        const campaign = localStorage.getItem(keyName);
+                        if (!campaign) {
+                            $('#tutorial-popup').modal('show');
+                            {% if not user.is_authenticated %}
+                                clearCache();
+                            {% endif %}
+                            localStorage.setItem(keyName, "true");
+                        }
+                    }
+                {% elif not user.is_authenticated %}
+                    clearCache();
+                {% endif %}
+            }
+        </script>
     </body>
 </html>
