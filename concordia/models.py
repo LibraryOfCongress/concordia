@@ -232,20 +232,20 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
     title = models.CharField(max_length=80)
     slug = models.SlugField(max_length=80, unique=True, allow_unicode=True)
 
+    card_family = models.ForeignKey(
+        CardFamily, on_delete=models.CASCADE, blank=True, null=True
+    )
+    thumbnail_image = models.ImageField(
+        upload_to="campaign-thumbnails", blank=True, null=True
+    )
+
     launch_date = models.DateField(null=True, blank=True)
     completed_date = models.DateField(null=True, blank=True)
 
     description = models.TextField(blank=True)
-    thumbnail_image = models.ImageField(
-        upload_to="campaign-thumbnails", blank=True, null=True
-    )
     short_description = models.TextField(blank=True)
 
     metadata = JSONField(default=metadata_default, blank=True, null=True)
-
-    card_family = models.ForeignKey(
-        CardFamily, on_delete=models.CASCADE, blank=True, null=True
-    )
 
     class Meta:
         indexes = [
