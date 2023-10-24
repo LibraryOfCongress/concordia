@@ -36,6 +36,16 @@
                         <div class="mb-2">
                             <span class="font-weight-bold">User Name</span>: {{ user.username }}
                         </div>
+                        {% if user.first_name %}
+                            <div class="mb-2">
+                                <span class="font-weight-bold">First Name</span>: {{ user.first_name }}
+                            </div>
+                        {% endif %}
+                        {% if user.last_name %}
+                            <div class="mb-2">
+                                <span class="font-weight-bold">Last Name</span>: {{ user.last_name }}
+                            </div>
+                        {% endif %}
                     </div>
                     <div class="col-12 col-md-10 py-3 change-options">
                         <form class="form" action="{% url 'user-profile' %}" method="POST" enctype="multipart/form-data">
