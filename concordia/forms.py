@@ -86,6 +86,11 @@ class UserLoginForm(AuthenticationForm):
             raise forms.ValidationError(inactive_message, code="inactive")
 
 
+class UserNameForm(forms.Form):
+    first_name = forms.CharField(label="", required=False)
+    last_name = forms.CharField(label="", required=False)
+
+
 class UserProfileForm(forms.Form):
     email = forms.EmailField(label="", required=True)
 
