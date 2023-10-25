@@ -340,7 +340,7 @@ def AccountLetterView(request):
     )
     asset_list = _get_pages(request)
     context = {
-        "username": request.user.email,
+        "user": request.user,
         "join_date": request.user.date_joined,
         "total_reviews": aggregate_sums["review_count__sum"],
         "total_transcriptions": aggregate_sums["transcribe_count__sum"],
