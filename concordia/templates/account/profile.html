@@ -36,6 +36,36 @@
                         <div class="mb-2">
                             <span class="font-weight-bold">User Name</span>: {{ user.username }}
                         </div>
+                        {% if user.first_name %}
+                            <div class="mb-2">
+                                <span class="font-weight-bold">First Name</span>: {{ user.first_name }}
+                            </div>
+                        {% endif %}
+                        {% if user.last_name %}
+                            <div class="mb-2">
+                                <span class="font-weight-bold">Last Name</span>: {{ user.last_name }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-12 col-md-10 py-3 change-options">
+                        <form class="form" action="{% url 'user-profile' %}" method="POST" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <div class="mb-3 user-fields">
+                                <label>
+                                    <span class="visually-hidden">First Name</span>
+                                </label>
+                                <input name="first_name" placeholder="Enter your first name" class="form-control font-italic">
+                                <label>
+                                    <span class="visually-hidden">Last Name</span>
+                                </label>
+                                <input name="last_name" placeholder="Enter your last name" class="form-control font-italic">
+                                <div class="input-group-append">
+                                    {% bootstrap_button "Save Changes" button_type="submit" button_class="btn btn-primary rounded-0" name="submit_name" %}
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="col-12 col-md-10">
                         <div class="mt-1 mb-3">
                             <span class="font-weight-bold">Email address</span>: {{ user.email }}
                         </div>
@@ -49,11 +79,11 @@
                         <form class="form needs-validation" action="{% url 'user-profile' %}" method="POST" enctype="multipart/form-data" novalidate>
                             {% csrf_token %}
 
-                            <div class="input-group mb-3 email-address">
+                            <div class="input-group mb-3 user-fields">
                                 <label for="id_email"><span class="visually-hidden">Email</span></label>
                                 <input type="email" name="email" placeholder="Change your email address" class="form-control font-italic" title="" required="" id="id_email" required>
                                 <div class="input-group-append">
-                                    {% bootstrap_button "Save Change" button_type="submit" button_class="btn btn-primary rounded-0" %}
+                                    {% bootstrap_button "Save Change" button_type="submit" button_class="btn btn-primary rounded-0" name="submit_email" %}
                                 </div>
                                 {% if valid is True %}
                                     <div class="mt-1 text-success w-100" id="validation-confirmation"><i class="fa fa-check-circle"></i> Email changed successfully; <strong>Check email to confirm address</strong></div>

@@ -68,6 +68,7 @@ from concordia.forms import (
     AllowInactivePasswordResetForm,
     ContactUsForm,
     UserLoginForm,
+    UserNameForm,
     UserProfileForm,
     UserRegistrationForm,
 )
@@ -339,7 +340,7 @@ def AccountLetterView(request):
     )
     asset_list = _get_pages(request)
     context = {
-        "username": request.user.email,
+        "user": request.user,
         "join_date": request.user.date_joined,
         "total_reviews": aggregate_sums["review_count__sum"],
         "total_transcriptions": aggregate_sums["transcribe_count__sum"],
@@ -482,9 +483,18 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
     allow_empty = True
     paginate_by = 30
 
-    def post(self, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         self.object_list = self.get_queryset()
-        return super().post(*args, **kwargs)
+        if "submit_name" in request.POST:
+            form = UserNameForm(request.POST)
+            if form.is_valid():
+                user = ConcordiaUser.objects.get(id=request.user.id)
+                user.first_name = form.cleaned_data["first_name"]
+                user.last_name = form.cleaned_data["last_name"]
+                user.save()
+            return redirect("user-profile")
+        else:
+            return super().post(request, *args, **kwargs)
 
     def get_queryset(self):
         return _get_pages(self.request)
@@ -539,6 +549,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         if ctx["totalReviews"] is not None:
             ctx["totalCount"] = ctx["totalReviews"] + ctx["totalTranscriptions"]
         ctx["unconfirmed_email"] = concordia_user.get_email_for_reconfirmation()
+        ctx["name_form"] = UserNameForm()
         return ctx
 
     def get_initial(self):
