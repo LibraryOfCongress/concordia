@@ -51,7 +51,7 @@
                         <form class="form" action="{% url 'user-profile' %}" method="POST" enctype="multipart/form-data">
                             {% csrf_token %}
                             <div class="mb-3 user-fields">
-                                <label>
+                                <label class="d-flex">
                                     <span class="visually-hidden">First Name</span>
                                 </label>
                                 <input name="first_name" placeholder="Enter your first name" class="form-control font-italic">
