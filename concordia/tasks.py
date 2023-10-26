@@ -463,7 +463,7 @@ def _backfill_data(start, end=None):
 
 
 @celery_app.task
-def backfill_daily_data(year=2023, month=7, day=24):
+def backfill_daily_data(year=2018, month=10, day=24):
     _backfill_data(
         timezone.make_aware(datetime.datetime(year=year, month=month, day=day)),
         timezone.make_aware(datetime.datetime(year=2023, month=9, day=17)),
