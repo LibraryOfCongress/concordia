@@ -427,32 +427,47 @@ def retired_total_report():
     total_site_report.save()
 
 
+ONE_DAY = datetime.timedelta(days=1)
+
+
+def _backfill_by_date(day):
+    transcriptions = Transcription.objects.review_actions(day - ONE_DAY, day)
+    q = Q(
+        created_on__range=(
+            datetime.datetime.combine(day, datetime.time.min),
+            datetime.datetime.combine(day, datetime.time.max),
+        )
+    )
+    site_reports = SiteReport.objects.filter(q)
+    for site_report in site_reports:
+        if site_report.topic is not None:
+            site_report.daily_review_actions = transcriptions.filter(
+                asset__item__project__topics__in=(site_report.topic,)
+            ).count()
+        elif site_report.campaign is not None:
+            site_report.daily_review_actions = transcriptions.filter(
+                asset__item__project__campaign=site_report.campaign
+            ).count()
+        else:
+            site_report.daily_review_actions = transcriptions.count()
+        site_report.save()
+
+
 def _backfill_data(start, end=None):
     if end is None:
         end = timezone.now().date()
     days = (end - start).days
-    ONE_DAY = datetime.timedelta(days=1)
     for n in range(days + 1):
         day = start + datetime.timedelta(days=n)
-        transcriptions = Transcription.objects.review_actions(day - ONE_DAY, day)
-        site_reports = SiteReport.objects.filter(created_on=day)
-        for site_report in site_reports:
-            if site_report.topic is not None:
-                site_report.daily_review_actions = transcriptions.filter(
-                    asset__item__project__topics__in=(site_report.topic,)
-                ).count()
-            elif site_report.campaign is None:
-                site_report.daily_review_actions = transcriptions.filter(
-                    asset__item__project__campaign=site_report.campaign
-                ).count()
-            else:
-                site_report.daily_review_actions = transcriptions.count()
-            site_report.save()
+        _backfill_by_date(day)
 
 
 @celery_app.task
 def backfill_daily_data(year=2018, month=10, day=24):
-    _backfill_data(datetime.date(year=year, month=month, day=day))
+    _backfill_data(
+        timezone.make_aware(datetime.datetime(year=year, month=month, day=day)),
+        timezone.make_aware(datetime.datetime(year=2023, month=9, day=17)),
+    )
 
 
 @celery_app.task
