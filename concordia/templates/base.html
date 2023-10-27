@@ -299,11 +299,13 @@ because it's not worth dealing with IE11 compatibility {% endcomment %}
                     if (keyName) {
                         const campaign = localStorage.getItem(keyName);
                         if (!campaign) {
-                            $('#tutorial-popup').modal('show');
+                            {% if asset %}
+                                $('#tutorial-popup').modal('show');
+                                localStorage.setItem(keyName, "true");
+                            {% endif %}
                             {% if not user.is_authenticated %}
                                 clearCache();
                             {% endif %}
-                            localStorage.setItem(keyName, "true");
                         }
                     }
                 {% elif not user.is_authenticated %}
