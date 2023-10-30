@@ -144,7 +144,6 @@ urlpatterns = [
     ),
     path("questions/", views.simple_page, name="questions"),
     path("contact/", views.ContactUsView.as_view(), name="contact"),
-    path("act/", views.action_app, name="action-app"),
     path(
         "campaigns-topics/",
         views.CampaignTopicListView.as_view(),
