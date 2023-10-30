@@ -91,13 +91,13 @@ export class ActionApp {
 
     clearAllErrors() {
         Object.keys(this.alerts).forEach((category) =>
-            this.clearError(category)
+            this.clearError(category),
         );
     }
 
     setupPersistentStateManagement() {
         this.persistentState = new URLSearchParams(
-            window.location.hash.replace(/^#/, '')
+            window.location.hash.replace(/^#/, ''),
         );
     }
 
@@ -142,7 +142,7 @@ export class ActionApp {
                 // This is a special-case for retrieving all assets regardless of status
                 action: 'assets',
             }),
-            document.location.href
+            document.location.href,
         );
 
         assetDataURL.searchParams.set('pk', assetId);
@@ -196,7 +196,7 @@ export class ActionApp {
         if (mode != 'transcribe' && mode != 'review') {
             if (window.Sentry) {
                 Sentry.captureMessage(
-                    `Setup requested for unknown ${mode} mode`
+                    `Setup requested for unknown ${mode} mode`,
                 );
             }
             mode = 'review';
@@ -209,7 +209,7 @@ export class ActionApp {
         let modeChanged = this.currentMode && this.currentMode != newMode;
 
         console.info(
-            `switching to mode ${newMode} (previously ${this.currentMode})`
+            `switching to mode ${newMode} (previously ${this.currentMode})`,
         );
 
         this.currentMode = newMode;
@@ -256,7 +256,7 @@ export class ActionApp {
                     .filter(
                         (button) =>
                             this.openAssetId ||
-                            !('toggleableOnlyWhenOpen' in button.dataset)
+                            !('toggleableOnlyWhenOpen' in button.dataset),
                     )
                     .forEach((button) => {
                         hideTarget(button, true);
@@ -280,7 +280,7 @@ export class ActionApp {
         */
         this.sharingButtons = $(
             '.concordia-share-button-group',
-            this.appElement
+            this.appElement,
         );
 
         $$('a[href]', this.sharingButtons).forEach((anchor) => {
@@ -354,7 +354,7 @@ export class ActionApp {
                     break;
                 default:
                     console.warn(
-                        `Unknown message type ${message.type}: ${message}`
+                        `Unknown message type ${message.type}: ${message}`,
                     );
             }
 
@@ -366,7 +366,7 @@ export class ActionApp {
 
             if (typeof this.assetList.lookup == 'undefined') {
                 console.warn(
-                    `Expected this.assetList to be an initialized List but found ${this.assetList}`
+                    `Expected this.assetList to be an initialized List but found ${this.assetList}`,
                 );
             } else {
                 let assetListItem = this.assetList.lookup[assetId];
@@ -408,7 +408,7 @@ export class ActionApp {
 
         let loadMoreButton = $('#load-more-assets');
         loadMoreButton.addEventListener('click', () =>
-            this.fetchNextAssetPage()
+            this.fetchNextAssetPage(),
         );
         new IntersectionObserver((entries) => {
             if (entries.filter((index) => index.isIntersecting)) {
@@ -447,7 +447,7 @@ export class ActionApp {
                     Object.entries(campaign.asset_stats).forEach(
                         ([key, value]) => {
                             o.dataset[key] = value;
-                        }
+                        },
                     );
 
                     campaignOptGroup.append(o);
@@ -456,7 +456,7 @@ export class ActionApp {
             .then(() => {
                 setSelectValue(
                     this.campaignSelect,
-                    this.persistentState.get('campaign')
+                    this.persistentState.get('campaign'),
                 );
                 this.updateAvailableCampaignFilters();
             });
@@ -483,7 +483,7 @@ export class ActionApp {
                     Object.entries(topic.asset_stats).forEach(
                         ([key, value]) => {
                             o.dataset[key] = value;
-                        }
+                        },
                     );
 
                     topicOptGroup.append(o);
@@ -496,7 +496,7 @@ export class ActionApp {
         $('#asset-list-thumbnail-size').addEventListener('input', (event) => {
             this.assetList.el.style.setProperty(
                 '--asset-thumbnail-size',
-                event.target.value + 'px'
+                event.target.value + 'px',
             );
             this.attemptAssetLazyLoad();
         });
@@ -563,7 +563,7 @@ export class ActionApp {
         return fetchJSON(url)
             .catch((error) => {
                 console.warn(
-                    `Failed to retrieve ${url}: ${error} — returning it to the queue`
+                    `Failed to retrieve ${url}: ${error} — returning it to the queue`,
                 );
                 this.queuedAssetPageURLs.push(url);
                 throw error;
@@ -576,7 +576,7 @@ export class ActionApp {
 
                 if (this.currentMode != startingMode) {
                     console.warn(
-                        `Mode changed from ${startingMode} to ${this.currentMode} while request for ${url} was being processed; halting chained fetches`
+                        `Mode changed from ${startingMode} to ${this.currentMode} while request for ${url} was being processed; halting chained fetches`,
                     );
                 } else {
                     if (data.pagination.next) {
@@ -586,7 +586,7 @@ export class ActionApp {
                     if (this.assets.size < 300) {
                         // We like to have a fair number of items to start with
                         window.requestIdleCallback(
-                            this.fetchNextAssetPage.bind(this)
+                            this.fetchNextAssetPage.bind(this),
                         );
                     }
                 }
@@ -641,7 +641,7 @@ export class ActionApp {
             console.warn(
                 'Updated data is older than our existing record:',
                 newData,
-                oldData
+                oldData,
             );
             freshestCopy = oldData;
         } else {
@@ -744,7 +744,7 @@ export class ActionApp {
             'Asset ID %s: editable=%s, reason="%s"',
             assetID,
             canEdit,
-            reason
+            reason,
         );
 
         return {canEdit, reason};
@@ -865,7 +865,7 @@ export class ActionApp {
             let campaignOrTopic = this.getSelectedOptionType();
             currentCampaignSelectValue = Number.parseInt(
                 currentCampaignSelectValue,
-                10
+                10,
             );
 
             // The values specified in API responses are integers, not DOM strings:
@@ -940,13 +940,13 @@ export class ActionApp {
         this.reserveAsset();
         this.reservationTimer = window.setInterval(
             this.reserveAsset.bind(this),
-            30000
+            30000,
         );
 
         this.metadataPanel = new MetadataPanel(asset);
         mount(
             $('#asset-info-modal .modal-body', this.appElement),
-            this.metadataPanel
+            this.metadataPanel,
         );
 
         this.getCachedItem(asset.item).then((itemInfo) => {
@@ -967,7 +967,7 @@ export class ActionApp {
             this.appElement.dataset.openAssetId = this.openAssetId;
 
             this.assetList.setActiveAsset(
-                document.getElementById(this.openAssetId)
+                document.getElementById(this.openAssetId),
             );
 
             this.updateViewer();
@@ -1057,7 +1057,7 @@ export class ActionApp {
                     reservationURL != this.assetReservationURL
                 ) {
                     console.warn(
-                        `User navigated before reservation for asset #${asset.id} was obtained: open asset ID = ${this.openAssetId}`
+                        `User navigated before reservation for asset #${asset.id} was obtained: open asset ID = ${this.openAssetId}`,
                     );
 
                     this.releaseReservationURL(reservationURL);
@@ -1073,7 +1073,7 @@ export class ActionApp {
                     console.error(
                         'Unable to reserve asset: %s %s',
                         textStatus,
-                        errorThrown
+                        errorThrown,
                     );
 
                     this.reportError(
@@ -1081,7 +1081,7 @@ export class ActionApp {
                         `Unable to reserve asset`,
                         errorThrown
                             ? `${textStatus}: ${errorThrown}`
-                            : textStatus
+                            : textStatus,
                     );
                 }
 
@@ -1115,7 +1115,7 @@ export class ActionApp {
             assetReservationURL,
             new Blob([jQuery.param(payload)], {
                 type: 'application/x-www-form-urlencoded',
-            })
+            }),
         );
     }
 
@@ -1127,7 +1127,7 @@ export class ActionApp {
     handleAction(action, data) {
         if (!this.openAssetId) {
             console.error(
-                `Unexpected action with no open asset: ${action} with data ${data}`
+                `Unexpected action with no open asset: ${action} with data ${data}`,
             );
             return;
         } else {
@@ -1150,7 +1150,7 @@ export class ActionApp {
                     {
                         text: data.text,
                         supersedes: currentTranscriptionId,
-                    }
+                    },
                 ).done((responseData) => {
                     if (!asset.latest_transcription) {
                         asset.latest_transcription = {};
@@ -1171,7 +1171,7 @@ export class ActionApp {
                 this.postAction(
                     this.urlTemplates.submitTranscription.expand({
                         transcriptionId: currentTranscriptionId,
-                    })
+                    }),
                 ).done((responseData) => {
                     this.mergeAssetUpdate(responseData.asset.id, {
                         sent: responseData.sent,
@@ -1185,7 +1185,7 @@ export class ActionApp {
                     this.urlTemplates.reviewTranscription.expand({
                         transcriptionId: currentTranscriptionId,
                     }),
-                    {action: 'accept'}
+                    {action: 'accept'},
                 ).done((responseData) => {
                     this.mergeAssetUpdate(responseData.asset.id, {
                         sent: responseData.sent,
@@ -1200,7 +1200,7 @@ export class ActionApp {
                     this.urlTemplates.reviewTranscription.expand({
                         transcriptionId: currentTranscriptionId,
                     }),
-                    {action: 'reject'}
+                    {action: 'reject'},
                 ).done((responseData) => {
                     this.mergeAssetUpdate(responseData.asset.id, {
                         sent: responseData.sent,
@@ -1235,7 +1235,7 @@ export class ActionApp {
             .fail((jqXHR, textStatus) => {
                 if (jqXHR.status == 401) {
                     alert(
-                        '// FIXME: the CAPTCHA system is not implemented yet. Please hit the main site before returning to this page'
+                        '// FIXME: the CAPTCHA system is not implemented yet. Please hit the main site before returning to this page',
                     );
                 }
 
@@ -1251,13 +1251,13 @@ export class ActionApp {
                     'POSTed action to %s failed: %s %s',
                     url,
                     textStatus,
-                    details
+                    details,
                 );
 
                 this.reportError(
                     'user-action',
                     'Unable to save your work',
-                    details
+                    details,
                 );
             });
     }

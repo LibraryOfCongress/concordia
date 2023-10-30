@@ -358,6 +358,16 @@
                     </div>
                 </div>
                 <div id="asset-image" class="h-100 bg-dark d-print-none w-100"></div>
+                {% if transcription_status == "not_started" or transcription_status == "in_progress" %}
+                    <div id="ocr-section" class="row pl-3 pb-4 bg-white print-none">
+                        <div class="d-flex flex-row align-items-center align-content-end ml-auto mr-3 mt-1">
+                            <a tabindex="0" class="btn btn-link d-inline p-0" role="button" data-placement="top" data-trigger="focus click hover" title="When to use OCR"  data-toggle="modal" data-target="#ocr-help-modal">
+                                <span class="underline-link font-weight-bold">What is OCR</span> <span class="fas fa-question-circle" aria-label="When to use OCR"></span>
+                            </a>
+                            <a role="button" data-placement="top" data-trigger="click" title="Transcribe with OCR" data-toggle="modal" data-target="#ocr-transcription-modal" id="ocr-transcription-link" class="btn btn-primary mx-1" disabled>Transcribe with OCR</a>
+                        </div>
+                    </div>
+                {% endif %}
             </div>
 
             <div id="editor-column" class="d-flex justify-content-between p-3 d-print-block flex-column">
@@ -465,14 +475,14 @@
                     <h2 id="tag-label" class="border-top pt-3 pb-2"><a
                         data-toggle="collapse" href="#tag-form" role="button" aria-expanded="false"
                         aria-controls="tag-form"><i class="fas fa-plus-square"></i> <span
-                            class="text-dark">Tags ({{ tags|length }})</span></a></h2>
+                            id="tag-count-text" class="text-dark">Tags (<span id="tag-count">{{ tags|length }}</span>)</span></a></h2>
                     <form id="tag-form" class="ajax-submission collapse" method="post" action="{% url 'submit-tags' asset_pk=asset.pk %}">
                         {% csrf_token %}
                         <div class="d-print-none">
                             {% if user.is_authenticated %}
                                 <div class="form-row">
                                     <div class="col input-group">
-                                        <input type="text" id="new-tag-input" class="form-control" placeholder="Add a new tag…" aria-label="Add a new tag" pattern="[- _À-ž'\w]{1,50}">
+                                        <input type="text" id="new-tag-input" class="form-control" placeholder="Add a new tag…" aria-label="Add a new tag" pattern="[\- _À-ž'\w]{1,50}">
                                         <div class="input-group-append">
                                             <button id="new-tag-button" class="btn btn-outline-primary" type="button" title="Add tags to the page">Add</button>
                                         </div>
@@ -506,26 +516,11 @@
                                 </li>
                             {% endfor %}
                         </ul>
-
-                        <div class="form-row mt-2 authenticated-only d-print-none" hidden>
-                            <button id="save-tags-button" type="submit" class="btn btn-primary mx-auto" title="Save tags that you’ve added to the page">
-                                Save Tags
-                            </button>
-                        </div>
                     </form>
                 </div>
             </div>
         </div>
         <div id="help-container" class="mt-1 d-print-none">
-            {% if transcription_status == "not_started" or transcription_status == "in_progress" %}
-                <div id="ocr-section" class="row align-items-center pl-3 pb-4">
-                    <span class="pr-2">Is this page typed?</span>
-                    <a role="button" data-placement="top" data-trigger="click" title="Transcribe with OCR" data-toggle="modal" data-target="#ocr-transcription-modal" id="ocr-transcription-link" class="btn btn-primary mx-1" disabled>Transcribe with OCR</a>
-                    <a tabindex="0" class="btn btn-link d-inline p-0" role="button" data-placement="top" data-trigger="focus click hover" title="When to use OCR"  data-toggle="modal" data-target="#ocr-help-modal">
-                        <span class="fas fa-question-circle" aria-label="When to use OCR"></span>
-                    </a>
-                </div>
-            {% endif %}
             <div class="row p-3 bg-light justify-content-sm-between">
                 <div class="d-flex align-items-center pl-1">Share this item: {% share_buttons current_asset_url asset.item.title %}</div>
                 <div class="btn-group align-items-center align-self-end">
@@ -776,7 +771,7 @@
         var seadragonViewer = OpenSeadragon({
             id: "asset-image",
             prefixUrl:
-            "{% static 'openseadragon/build/openseadragon/images/' %}",
+                "{% static 'openseadragon/build/openseadragon/images/' %}",
             tileSources: {
                 type: "image",
                 url: "{% asset_media_url asset %}?canvas"
@@ -912,7 +907,7 @@
         let contributeContainer = document.getElementById("contribute-container");
         let ocrSection = document.getElementById("ocr-section");
         let editorColumn = document.getElementById("editor-column");
-        let helpContainer = document.getElementById("help-container");
+        let viewerColumn = document.getElementById("viewer-column");
         let layoutColumns = ["#viewer-column", "#editor-column"];
         let verticalKey = 'transcription-split-sizes-vertical';
         let horizontalKey = 'transcription-split-sizes-horizontal';
@@ -971,6 +966,7 @@
             saveDirection(splitDirection);
             contributeContainer.classList.remove("flex-row");
             contributeContainer.classList.add("flex-column");
+            viewerColumn.classList.remove("h-100");
             if(ocrSection != null){
                 editorColumn.prepend(ocrSection);
             }
@@ -998,8 +994,9 @@
             saveDirection(splitDirection);
             contributeContainer.classList.remove("flex-column");
             contributeContainer.classList.add("flex-row");
+            viewerColumn.classList.remove("h-100");
             if(ocrSection != null){
-                helpContainer.prepend(ocrSection);
+                editorColumn.prepend(ocrSection);
             }
             return Split(layoutColumns, {
                 sizes: sizesHorizontal,
@@ -1044,7 +1041,6 @@
                 setTimeout(function(){
                     seadragonViewer.viewport.zoomTo(1);
                 }, 10);
-                setTimeout(setVerticalLayoutHeight, 10);
             }
         });
 

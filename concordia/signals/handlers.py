@@ -87,6 +87,7 @@ def add_user_to_newsletter(sender, user, request, **kwargs):
 
 @receiver(post_save, sender=Transcription)
 def update_asset_status(sender, *, instance, **kwargs):
+    logger.info("update_asset_status for %s", instance.id)
     new_status = TranscriptionStatus.IN_PROGRESS
 
     if instance.rejected:
@@ -96,11 +97,22 @@ def update_asset_status(sender, *, instance, **kwargs):
     elif instance.submitted:
         new_status = TranscriptionStatus.SUBMITTED
 
-    instance.asset.transcription_status = new_status
-    instance.asset.full_clean()
-    instance.asset.save()
+    asset = instance.asset
+    logger.info(
+        "Updating asset status for %s (%s) from %s to %s",
+        asset,
+        asset.id,
+        asset.transcription_status,
+        new_status,
+    )
 
-    calculate_difficulty_values(Asset.objects.filter(pk=instance.asset.pk))
+    asset.transcription_status = new_status
+    asset.full_clean()
+    asset.save()
+
+    logger.info("Status for %s (%s) updated", asset, asset.id)
+
+    calculate_difficulty_values(Asset.objects.filter(pk=asset.pk))
 
 
 @receiver(post_save, sender=Asset)

@@ -66,7 +66,7 @@
         } else {
             this.setAttribute('aria-invalid', 'true');
             this.setCustomValidity(
-                'Your password does not meet the requirements'
+                'Your password does not meet the requirements',
             );
         }
     });

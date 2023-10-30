@@ -12,8 +12,12 @@ from botocore.exceptions import ClientError
 
 EC2_CLIENT = boto3.client("ec2")
 
-CLOUDFLARE_IPV4 = requests.get("https://www.cloudflare.com/ips-v4").text.splitlines()
-CLOUDFLARE_IPV6 = requests.get("https://www.cloudflare.com/ips-v6").text.splitlines()
+CLOUDFLARE_IPV4 = requests.get(
+    "https://www.cloudflare.com/ips-v4", timeout=30
+).text.splitlines()
+CLOUDFLARE_IPV6 = requests.get(
+    "https://www.cloudflare.com/ips-v6", timeout=30
+).text.splitlines()
 
 
 def add_ingess_rules_for_group(sg_id, existing_permissions):
