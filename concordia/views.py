@@ -56,7 +56,6 @@ from django.views.decorators.http import require_POST
 from django.views.decorators.vary import vary_on_headers
 from django.views.generic import FormView, ListView, RedirectView, TemplateView
 from django_registration.backends.activation.views import RegistrationView
-from flags.decorators import flag_required
 from ratelimit.decorators import ratelimit
 from ratelimit.mixins import RatelimitMixin
 from ratelimit.utils import is_ratelimited
@@ -2491,33 +2490,3 @@ class HelpCenterSpanishRedirectView(RedirectView):
 
 
 # End of help-center views
-
-
-@flag_required("ACTIVITY_UI_ENABLED")
-@login_required
-@never_cache
-def action_app(request):
-    return render(
-        request,
-        "action-app.html",
-        {
-            "app_parameters": {
-                "currentUser": request.user.pk,
-                "reservationToken": get_or_create_reservation_token(request),
-                "urls": {
-                    "assetUpdateSocket": request.build_absolute_uri(
-                        "/ws/asset/asset_updates/"
-                    ).replace("http", "ws"),
-                    "campaignList": reverse("transcriptions:campaign-list"),
-                    "topicList": reverse("topic-list"),
-                },
-                "urlTemplates": {
-                    "assetData": "/{action}/?per_page=500",
-                    "assetReservation": "/reserve-asset/{assetId}/",
-                    "saveTranscription": "/assets/{assetId}/transcriptions/save/",
-                    "submitTranscription": "/transcriptions/{transcriptionId}/submit/",
-                    "reviewTranscription": "/transcriptions/{transcriptionId}/review/",
-                },
-            }
-        },
-    )
