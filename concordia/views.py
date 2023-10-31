@@ -1703,7 +1703,7 @@ class ReportCampaignView(TemplateView):
         try:
             page = int(self.request.GET.get("page", "1"))
         except ValueError:
-            return redirect(self.request.path)
+            page = 1
 
         campaign_assets = Asset.objects.published().filter(
             item__project__campaign=campaign
@@ -1735,9 +1735,9 @@ class ReportCampaignView(TemplateView):
         )
 
         paginator = Paginator(projects_qs, ASSETS_PER_PAGE)
-        projects_page = paginator.get_page(page)
         if page > paginator.num_pages:
-            return redirect(self.request.path)
+            page = 1
+        projects_page = paginator.get_page(page)
 
         self.add_transcription_status_summary_to_projects(projects_page)
 
