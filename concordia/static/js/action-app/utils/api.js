@@ -35,11 +35,11 @@ function fetchURL(url, retryLimit = 5) {
                         console.error(`Retrying ${url}: ${error}`);
                         setTimeout(
                             fetchWrapper.bind(this),
-                            250 * 2 ** retryCount
+                            250 * 2 ** retryCount,
                         );
                     } else {
                         console.error(
-                            `Failed to fetch ${url} after ${retryCount} retries: ${error}`
+                            `Failed to fetch ${url} after ${retryCount} retries: ${error}`,
                         );
                         reject(error);
                     }

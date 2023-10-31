@@ -1,5 +1,5 @@
 from locust import TaskSet, between
-from locust.contrib.fasthttp import FastHttpLocust
+from locust.contrib.fasthttp import FastHttpUser
 
 
 def campaigns_topics(user):
@@ -22,9 +22,9 @@ def herencia(user):
     user.client.get("/campaigns/herencia-centuries-of-spanish-legal-documents/")
 
 
-def suffrage_next_asset(user):
+def next_asset(user):
     user.client.get(
-        "/topics/suffrage-women-fight-for-the-vote/next-transcribable-asset/"
+        "http://concordia.mshome.net:8000/campaigns/joseph-holt/next-transcribable-asset"
     )
 
 
@@ -35,10 +35,10 @@ class UserBehavior(TaskSet):
         resources: 1,
         campaigns_topics: 3,
         herencia: 4,
-        suffrage_next_asset: 4,
+        next_asset: 4,
     }
 
 
-class WebsiteUser(FastHttpLocust):
-    task_set = UserBehavior
+class WebsiteUser(FastHttpUser):
+    tasks = [UserBehavior]
     wait_time = between(5.0, 9.0)

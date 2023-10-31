@@ -68,6 +68,7 @@ from concordia.forms import (
     AllowInactivePasswordResetForm,
     ContactUsForm,
     UserLoginForm,
+    UserNameForm,
     UserProfileForm,
     UserRegistrationForm,
 )
@@ -339,12 +340,14 @@ def AccountLetterView(request):
     aggregate_sums = user_profile_activity.aggregate(
         Sum("review_count"), Sum("transcribe_count")
     )
+    asset_list = _get_pages(request)
     context = {
-        "username": request.user.email,
+        "user": request.user,
         "join_date": request.user.date_joined,
         "total_reviews": aggregate_sums["review_count__sum"],
         "total_transcriptions": aggregate_sums["transcribe_count__sum"],
         "image_url": image_url,
+        "asset_list": asset_list,
     }
     template = loader.get_template("documents/service_letter.html")
     text = template.render(context)
@@ -482,9 +485,18 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
     allow_empty = True
     paginate_by = 30
 
-    def post(self, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         self.object_list = self.get_queryset()
-        return super().post(*args, **kwargs)
+        if "submit_name" in request.POST:
+            form = UserNameForm(request.POST)
+            if form.is_valid():
+                user = ConcordiaUser.objects.get(id=request.user.id)
+                user.first_name = form.cleaned_data["first_name"]
+                user.last_name = form.cleaned_data["last_name"]
+                user.save()
+            return redirect("user-profile")
+        else:
+            return super().post(request, *args, **kwargs)
 
     def get_queryset(self):
         return _get_pages(self.request)
@@ -539,6 +551,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         if ctx["totalReviews"] is not None:
             ctx["totalCount"] = ctx["totalReviews"] + ctx["totalTranscriptions"]
         ctx["unconfirmed_email"] = concordia_user.get_email_for_reconfirmation()
+        ctx["name_form"] = UserNameForm()
         return ctx
 
     def get_initial(self):
@@ -1396,6 +1409,7 @@ def generate_ocr_transcription(request, *, asset_pk):
 @atomic
 def save_transcription(request, *, asset_pk):
     asset = get_object_or_404(Asset, pk=asset_pk)
+    logger.info("Saving transcription for %s (%s)", asset, asset.id)
 
     if request.user.is_anonymous:
         user = get_anonymous_user()
@@ -1418,6 +1432,7 @@ def save_transcription(request, *, asset_pk):
     supersedes_pk = request.POST.get("supersedes")
     superseded = get_transcription_superseded(asset, supersedes_pk)
     if superseded and isinstance(superseded, HttpResponse):
+        logger.info("Transcription superseded")
         return superseded
 
     if superseded and (superseded.ocr_generated or superseded.ocr_originated):
@@ -1434,6 +1449,7 @@ def save_transcription(request, *, asset_pk):
     )
     transcription.full_clean()
     transcription.save()
+    logger.info("Transction %s saved", transcription.id)
 
     return JsonResponse(
         {
@@ -1453,6 +1469,11 @@ def save_transcription(request, *, asset_pk):
 @validate_anonymous_captcha
 def submit_transcription(request, *, pk):
     transcription = get_object_or_404(Transcription, pk=pk)
+    asset = transcription.asset
+
+    logger.info(
+        "Transcription %s submitted for %s (%s)", transcription.id, asset, asset.id
+    )
 
     is_superseded = transcription.asset.transcription_set.filter(supersedes=pk).exists()
     is_already_submitted = transcription.submitted and not transcription.rejected
@@ -1479,6 +1500,8 @@ def submit_transcription(request, *, pk):
     transcription.full_clean()
     transcription.save()
 
+    logger.info("Transcription %s successfully submitted", transcription.id)
+
     return JsonResponse(
         {
             "id": transcription.pk,
@@ -1502,6 +1525,15 @@ def review_transcription(request, *, pk):
         return JsonResponse({"error": "Invalid action"}, status=400)
 
     transcription = get_object_or_404(Transcription, pk=pk)
+    asset = transcription.asset
+
+    logger.info(
+        "Transcription %s reviewed (%s) for %s (%s)",
+        transcription.id,
+        action,
+        asset,
+        asset.id,
+    )
 
     if transcription.accepted or transcription.rejected:
         return JsonResponse(
@@ -1523,6 +1555,8 @@ def review_transcription(request, *, pk):
 
     transcription.full_clean()
     transcription.save()
+
+    logger.info("Transcription %s successfully reviewed (%s)", transcription.id, action)
 
     return JsonResponse(
         {

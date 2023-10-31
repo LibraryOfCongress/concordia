@@ -181,7 +181,7 @@ function setupPage() {
                 if ($textarea.val()) {
                     if (
                         confirm(
-                            'You currently have entered text which will not be saved because “Nothing to transcribe” is checked. Do you want to discard that text?'
+                            'You currently have entered text which will not be saved because “Nothing to transcribe” is checked. Do you want to discard that text?',
                         )
                     ) {
                         $textarea.val('');
@@ -245,7 +245,7 @@ function setupPage() {
                     if ($nothingToTranscribeCheckbox.prop('checked')) {
                         $textarea.attr(
                             'placeholder',
-                            editorNothingToTranscribePlaceholderText
+                            editorNothingToTranscribePlaceholderText,
                         );
                     }
                 } else {
@@ -265,7 +265,7 @@ function setupPage() {
                         $textarea.attr('readonly', 'readonly');
                         $textarea.attr(
                             'placeholder',
-                            editorNothingToTranscribePlaceholderText
+                            editorNothingToTranscribePlaceholderText,
                         );
                     }
                 } else {
@@ -301,7 +301,7 @@ function setupPage() {
             displayMessage(
                 'info',
                 "Successfully saved your work. Submit it for review when you're done",
-                'transcription-save-result'
+                'transcription-save-result',
             );
             $transcriptionEditor.data({
                 transcriptionId: extra.responseData.id,
@@ -312,7 +312,7 @@ function setupPage() {
                 .val(extra.responseData.id);
             $transcriptionEditor.data(
                 'submitUrl',
-                extra.responseData.submissionUrl
+                extra.responseData.submissionUrl,
             );
             $ocrForm
                 .find('input[name="supersedes"]')
@@ -326,9 +326,9 @@ function setupPage() {
                     buildErrorMessage(
                         info.jqXHR,
                         info.textStatus,
-                        info.errorThrown
+                        info.errorThrown,
                     ),
-                'transcription-save-result'
+                'transcription-save-result',
             );
             $transcriptionEditor.trigger('update-ui-state');
         });
@@ -358,7 +358,7 @@ function setupPage() {
                     'error',
                     'Unable to save your work: ' +
                         buildErrorMessage(jqXHR, textStatus, errorThrown),
-                    'transcription-submit-result'
+                    'transcription-submit-result',
                 );
             });
     });
@@ -392,13 +392,13 @@ function setupPage() {
                     })
                         .done(function (data) {
                             $('#editor-column').html(
-                                $(data).find('#editor-column').html()
+                                $(data).find('#editor-column').html(),
                             );
                             $('#help-container').html(
-                                $(data).find('#help-container').html()
+                                $(data).find('#help-container').html(),
                             );
                             $('#ocr-transcription-modal').html(
-                                $(data).find('#ocr-transcription-modal').html()
+                                $(data).find('#ocr-transcription-modal').html(),
                             );
                             reserveAssetForEditing();
                             setupPage();
@@ -410,9 +410,9 @@ function setupPage() {
                                     buildErrorMessage(
                                         jqXHR,
                                         textStatus,
-                                        errorThrown
+                                        errorThrown,
                                     ),
-                                'transcription-review-result'
+                                'transcription-review-result',
                             );
                         });
                 } else {
@@ -428,7 +428,7 @@ function setupPage() {
                     'error',
                     'Unable to save your review: ' +
                         buildErrorMessage(jqXHR, textStatus, errorThrown),
-                    'transcription-review-result'
+                    'transcription-review-result',
                 );
             });
     }
@@ -448,12 +448,21 @@ function setupPage() {
         });
 
     var $tagEditor = $('#tag-editor'),
+        $tagForm = $('#tag-form'),
         $currentTagList = $tagEditor.find('#current-tags'),
         $newTagInput = $('#new-tag-input');
+    const characterError =
+        'Tags must be between 1-50 characters and may contain only letters, numbers, dashes, underscores, apostrophes, and spaces';
+    const duplicateError =
+        'That tag has already been added. Each tag can only be added once.';
 
     function addNewTag() {
+        $newTagInput.get(0).setCustomValidity(''); // Resets custom validation
+        const $form = $newTagInput.closest('form');
+        $form.removeClass('was-validated');
         if (!$newTagInput.get(0).checkValidity()) {
-            $newTagInput.closest('form').addClass('was-validated');
+            $form.find('.invalid-feedback').html(characterError);
+            $form.addClass('was-validated');
             return;
         }
 
@@ -485,12 +494,18 @@ function setupPage() {
                                     <span aria-hidden="true" class="fas fa-times"></span> \
                                 </button> \
                             </li> \
-                '
+                ',
                 );
                 $newTag.find('label').append(document.createTextNode(value));
                 $currentTagList.append($newTag);
+                $newTagInput.val('');
+                $tagForm.submit();
+            } else {
+                $newTagInput.get(0).setCustomValidity(duplicateError);
+                $form.find('.invalid-feedback').html(duplicateError);
+                $newTagInput.closest('form').addClass('was-validated');
+                return;
             }
-            $newTagInput.val('');
         }
     }
 
@@ -507,15 +522,17 @@ function setupPage() {
 
     $currentTagList.on('click', '.close', function () {
         $(this).parents('li').remove();
+        $tagForm.submit();
     });
 
     $tagEditor
-        .on('form-submit-success', function () {
+        .on('form-submit-success', function (event, info) {
+            $('#tag-count').html(info.responseData['all_tags'].length);
             unlockControls($tagEditor);
             displayMessage(
                 'info',
                 'Your tags have been saved',
-                'tags-save-result'
+                'tags-save-result',
             );
         })
         .on('form-submit-failure', function (event, info) {
@@ -525,7 +542,7 @@ function setupPage() {
             message += buildErrorMessage(
                 info.jqXHR,
                 info.textStatus,
-                info.errorThrown
+                info.errorThrown,
             );
 
             displayMessage('error', message, 'tags-save-result');
@@ -547,7 +564,7 @@ function setupPage() {
                     .val(extra.responseData.id);
                 $transcriptionEditor.data(
                     'submitUrl',
-                    extra.responseData.submissionUrl
+                    extra.responseData.submissionUrl,
                 );
                 $transcriptionEditor
                     .find('textarea[name="text"]')
@@ -567,13 +584,13 @@ function setupPage() {
                     errorMessage = buildErrorMessage(
                         info.jqXHR,
                         info.textStatus,
-                        info.errorThrown
+                        info.errorThrown,
                     );
                 }
                 displayMessage(
                     'error',
                     'Unable to save your work: ' + errorMessage,
-                    'transcription-save-result'
+                    'transcription-save-result',
                 );
                 $ocrLoading.attr('hidden', 'hidden');
                 $transcriptionEditor.trigger('update-ui-state');
