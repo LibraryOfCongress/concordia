@@ -39,7 +39,7 @@
         <div id="navigation-container" class="row p-1 px-3 d-print-none bg-light">
             <nav id="asset-navigation" class="d-flex flex-wrap flex-grow-1 justify-content-sm-between align-items-center d-print-block" role="navigation">
                 <div class="d-flex align-items-center">
-                    <form class="p-1" onsubmit="document.location.href = document.getElementById('asset-selection').value; return false">
+                    <form class="p-1" onsubmit="document.location.href = encodeURI(document.getElementById('asset-selection').value); return false">
                         <div class="input-group input-group-sm flex-nowrap">
                             <div class="input-group-prepend">
                                 <label class="input-group-text p-0 pr-1 border-0" for="asset-selection">Page</label>
