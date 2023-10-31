@@ -77,7 +77,7 @@
                 <div class="btn-group align-self-end">
                     {% if asset.resource_url %}
                         <div class="btn-group-sm p-1" role="navigation" aria-label="Link to the original source for this item">
-                            <a class="btn btn-outline-primary text-nowrap" target="_blank" title="View the original source for this item in a new tab" href="{{ asset.resource_url }}{% if 'sp=' not in asset.resource_url %}?sp={{ asset.sequence }}{% endif %}">View on www.loc.gov <i class="fa fa-external-link-alt"></i></a>
+                            <a class="btn btn-outline-primary text-nowrap" target="_blank" rel=noopener title="View the original source for this item in a new tab" href="{{ asset.resource_url }}{% if 'sp=' not in asset.resource_url %}?sp={{ asset.sequence }}{% endif %}">View on www.loc.gov <i class="fa fa-external-link-alt"></i></a>
                         </div>
                     {% endif %}
 
