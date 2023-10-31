@@ -43,14 +43,14 @@
                             {{ forloop.counter }}
                         </td>
                         <td>
-                            <a target="_blank" href="{% url 'admin:concordia_asset_change' object_id=asset.pk %}">{{ asset }}</a>
+                            <a target="_blank" rel=noopener href="{% url 'admin:concordia_asset_change' object_id=asset.pk %}">{{ asset }}</a>
                         </td>
                         <td>{{ asset.download_url }}</td>
                         <td><a href="{{ asset.get_absolute_url }}">{{ asset.get_absolute_url }}</a></td>
                         <td>{{ asset.published }}</td>
                         <td>{{ asset.transcription_status }}</td>
                         <td>{% if asset.correct_asset_pk %}
-                            <a target="_blank" href="{% url 'admin:concordia_asset_change' object_id=asset.correct_asset_pk %}">{{ asset.correct_asset_slug }}</a>
+                            <a target="_blank" rel=noopener href="{% url 'admin:concordia_asset_change' object_id=asset.correct_asset_pk %}">{{ asset.correct_asset_slug }}</a>
                         {% endif %}
                         </td>
                         <td><pre>{{ asset.latest_transcription.text }}</pre></td>

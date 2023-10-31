@@ -7,17 +7,17 @@
     <div id="content-main">
         {% if import_job %}
             <p>
-                Task ID <a target="_blank" href="{% url 'admin:importer_importjob_change' object_id=import_job.pk %}">{{ import_job }}</a>
-                created to import <a target="_blank" href="{{ form.cleaned_data.import_url }}">{{ form.cleaned_data.import_url }}</a>
+                Task ID <a target="_blank" rel=noopener href="{% url 'admin:importer_importjob_change' object_id=import_job.pk %}">{{ import_job }}</a>
+                created to import <a target="_blank" rel=noopener href="{{ form.cleaned_data.import_url }}">{{ form.cleaned_data.import_url }}</a>
             </p>
             <ul>
                 <li>
-                    <a target="_blank" href="{% url 'admin:concordia_item_changelist' %}?project__pk={{ object_id }}">
+                    <a target="_blank" rel=noopener href="{% url 'admin:concordia_item_changelist' %}?project__pk={{ object_id }}">
                         View Project Items
                     </a>
                 </li>
                 <li>
-                    <a target="_blank" href="{% url 'admin:concordia_asset_changelist' %}?project__pk={{ object_id }}">
+                    <a target="_blank" rel=noopener href="{% url 'admin:concordia_asset_changelist' %}?project__pk={{ object_id }}">
                         View Project Assets
                     </a>
                 </li>

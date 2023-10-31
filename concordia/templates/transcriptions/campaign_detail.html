@@ -107,9 +107,9 @@
                             <ul class="list-unstyled m-0">
                                 {% for resource in campaign.resource_set.related_links %}
                                     {% if 'loc.gov' in resource.resource_url   %}
-                                        <li class="mb-3"><a href="{{ resource.resource_url }}" target="_blank">{{ resource.title }}</a></li>
+                                        <li class="mb-3"><a href="{{ resource.resource_url }}" target="_blank" rel=noopener>{{ resource.title }}</a></li>
                                     {%else%}
-                                        <li class="mb-3"><a href="{{ resource.resource_url }}" target="_blank">{{ resource.title }} <i class="fa fa-external-link-alt"></i></a></li>
+                                        <li class="mb-3"><a href="{{ resource.resource_url }}" target="_blank" rel=noopener>{{ resource.title }} <i class="fa fa-external-link-alt"></i></a></li>
                                     {% endif %}
                                 {% endfor %}
                             </ul>
