@@ -149,13 +149,6 @@ $(function () {
             },
         );
     }
-
-    if (location.hash && $('#faqAccordion').length > 0) {
-        $(location.hash).on('shown.bs.collapse', function () {
-            window.location = location.hash;
-        });
-        $(location.hash).collapse('show');
-    }
 });
 
 if (screenfull.isEnabled) {
