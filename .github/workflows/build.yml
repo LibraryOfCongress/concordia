@@ -8,12 +8,23 @@ on:
             - docs/**
             - README.md
             - .github/**
+            - cloudformation/**
+            - db_scripts/**
+            - jenkins/**
+            - kibana-proxy/**
+            - postgresql/**
+
     pull_request:
         branches: [main, 'feature-*']
         paths-ignore:
             - docs/**
             - README.md
             - .github/**
+            - cloudformation/**
+            - db_scripts/**
+            - jenkins/**
+            - kibana-proxy/**
+            - postgresql/**
 
 jobs:
     build:

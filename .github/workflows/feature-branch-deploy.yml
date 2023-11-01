@@ -8,6 +8,11 @@ on:
             - docs/**
             - README.md
             - .github/**
+            - cloudformation/**
+            - db_scripts/**
+            - jenkins/**
+            - kibana-proxy/**
+            - postgresql/**
 
 env:
     AWS_REGION: us-east-1
