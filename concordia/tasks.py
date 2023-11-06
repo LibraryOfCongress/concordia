@@ -453,20 +453,16 @@ def _backfill_by_date(day):
         site_report.save()
 
 
-def _backfill_data(start, end=None):
-    if end is None:
-        end = timezone.now().date()
-    days = (end - start).days
-    for n in range(days + 1):
-        day = start + datetime.timedelta(days=n)
+def _backfill_data(start, days=0):
+    for n in range(days - 1):
+        day = start - datetime.timedelta(days=n)
         _backfill_by_date(day)
 
 
 @celery_app.task
-def backfill_daily_data(year=2018, month=10, day=24):
+def backfill_daily_data():
     _backfill_data(
-        timezone.make_aware(datetime.datetime(year=year, month=month, day=day)),
-        timezone.make_aware(datetime.datetime(year=2023, month=9, day=17)),
+        timezone.make_aware(datetime.datetime(year=2023, month=9, day=17)), 10
     )
 
 
