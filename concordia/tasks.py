@@ -431,7 +431,7 @@ ONE_DAY = datetime.timedelta(days=1)
 
 
 def _backfill_by_date(day):
-    transcriptions = Transcription.objects.review_actions(day - ONE_DAY, day)
+    assets = Asset.objects.none()
     q = Q(
         created_on__range=(
             datetime.datetime.combine(day, datetime.time.min),
@@ -440,16 +440,23 @@ def _backfill_by_date(day):
     )
     site_reports = SiteReport.objects.filter(q)
     for site_report in site_reports:
+        assets = assets.annotate(
+            topic_count=Count(
+                "transcription",
+                filter=Q(item__project__topics__in=(site_report.topic,)),
+            ),
+            campaign_count=Count(
+                "transcription",
+                filter=Q(item__project__topics__in=site_report.campaign),
+            ),
+            total_count=Count("transcription"),
+        )
         if site_report.topic is not None:
-            site_report.daily_review_actions = transcriptions.filter(
-                asset__item__project__topics__in=(site_report.topic,)
-            ).count()
+            site_report.daily_review_actions = assets["topic_count"]
         elif site_report.campaign is not None:
-            site_report.daily_review_actions = transcriptions.filter(
-                asset__item__project__campaign=site_report.campaign
-            ).count()
+            site_report.daily_review_actions = assets["campaign_count"]
         else:
-            site_report.daily_review_actions = transcriptions.count()
+            site_report.daily_review_actions = assets["total_count"]
         site_report.save()
 
 
