@@ -38,31 +38,6 @@
                         </div>
                     </div>
                     <div class="col-12 col-md-10 py-3 change-options">
-                        <div class="mb-2">
-                            <span class="font-weight-bold">First Name</span>: {{ user.first_name }}
-                        </div>
-                        <div class="mb-2">
-                            <span class="font-weight-bold">Last Name</span>: {{ user.last_name }}
-                        </div>
-                        <div class="mb-2">Optional: If you want a name to appear on your service letter, enter first and last name and click "Save" To remove name data click "Save" without entering any text.</div>
-                        <form class="form" action="{% url 'user-profile' %}" method="POST" enctype="multipart/form-data">
-                            {% csrf_token %}
-                            <div class="mb-3 user-fields">
-                                <label class="d-flex">
-                                    <span class="visually-hidden">First Name</span>
-                                </label>
-                                <input name="first_name" placeholder="Enter your first name" class="form-control font-italic">
-                                <label>
-                                    <span class="visually-hidden">Last Name</span>
-                                </label>
-                                <input name="last_name" placeholder="Enter your last name" class="form-control font-italic">
-                            </div>
-                            <div class="input-group-append">
-                                {% bootstrap_button "Save Changes" button_type="submit" button_class="btn btn-primary rounded-0" name="submit_name" %}
-                            </div>
-                        </form>
-                    </div>
-                    <div class="col-12 col-md-10 py-3 mt-5 change-options">
                         <div class="mt-1 mb-3">
                             <span class="font-weight-bold">Email address</span>: {{ user.email }}
                         </div>
@@ -90,15 +65,37 @@
                             </div>
                         </form>
                     </div>
-                    <div class="col-12 col-md-10 py-3 mt-5 change-options">
+                    <div class="col-12 col-md-10 py-3 mt-4 change-options">
                         <div class="row justify-content-start">
                             <div class="btn-row col-md-10">
                                 <a class="btn btn-primary rounded-0" href="{% url 'password_change' %}">Change Password</a>
                             </div>
                         </div>
                     </div>
-                    <div class="col-10">
-                        <hr>
+                    <div class="col-12 col-md-10 py-3 mt-4 change-options">
+                        <div class="mb-2">
+                            <span class="font-weight-bold">First Name</span>: {{ user.first_name }}
+                        </div>
+                        <div class="mb-2">
+                            <span class="font-weight-bold">Last Name</span>: {{ user.last_name }}
+                        </div>
+                        <div class="mb-2">Optional: If you want a name to appear on your service letter, enter first and last name and click "Save". To remove name data click "Save" without entering any text.</div>
+                        <form class="form" action="{% url 'user-profile' %}" method="POST" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <div class="mb-3 user-fields">
+                                <label class="d-flex">
+                                    <span class="visually-hidden">First Name</span>
+                                </label>
+                                <input name="first_name" placeholder="Enter your first name" class="form-control font-italic">
+                                <label>
+                                    <span class="visually-hidden">Last Name</span>
+                                </label>
+                                <input name="last_name" placeholder="Enter your last name" class="form-control font-italic">
+                            </div>
+                            <div class="input-group-append">
+                                {% bootstrap_button "Save Changes" button_type="submit" button_class="btn btn-primary rounded-0" name="submit_name" %}
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
