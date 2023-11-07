@@ -10,7 +10,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.management import call_command
 from django.db import transaction
-from django.db.models import Count, F, Q
+from django.db.models import Count, F, OuterRef, Q, Subquery
 from django.utils import timezone
 from more_itertools.more import chunked
 
@@ -431,33 +431,26 @@ ONE_DAY = datetime.timedelta(days=1)
 
 
 def _backfill_by_date(day):
-    assets = Asset.objects.none()
-    q = Q(
-        created_on__range=(
-            datetime.datetime.combine(day, datetime.time.min),
-            datetime.datetime.combine(day, datetime.time.max),
+    start = day - ONE_DAY
+    q_accepted = Q(transcription__accepted__gte=start, transcription__accepted__lte=day)
+    q_rejected = Q(transcription__rejected__gte=start, transcription__rejected__lte=day)
+    assets = Asset.objects.filter(q_accepted | q_rejected)
+    site_reports = SiteReport.objects.filter(created_on__gte=start, created_on__lte=day)
+    topic_assets = assets.filter(item__project__topics=OuterRef("topic__pk"))
+    subquery = Subquery(
+        topic_assets.annotate(cnt=Count("transcription")).values("cnt")[:1]
+    )
+    site_reports.filter(topic__isnull=False).update(daily_review_actions=subquery)
+    campaign_assets = assets.filter(item__project__campaign=OuterRef("campaign__pk"))
+    subquery = Subquery(
+        campaign_assets.annotate(cnt=Count("transcription")).values("cnt")[:1]
+    )
+    site_reports.filter(campaign__isnull=False).update(daily_review_actions=subquery)
+    site_reports.filter(topic__isnull=True, campaign__isnull=True).update(
+        daily_review_actions=Subquery(
+            assets.annotate(cnt=Count("transcription")).values("cnt")[:1]
         )
     )
-    site_reports = SiteReport.objects.filter(q)
-    for site_report in site_reports:
-        assets = assets.annotate(
-            topic_count=Count(
-                "transcription",
-                filter=Q(item__project__topics__in=(site_report.topic,)),
-            ),
-            campaign_count=Count(
-                "transcription",
-                filter=Q(item__project__topics__in=site_report.campaign),
-            ),
-            total_count=Count("transcription"),
-        )
-        if site_report.topic is not None:
-            site_report.daily_review_actions = assets["topic_count"]
-        elif site_report.campaign is not None:
-            site_report.daily_review_actions = assets["campaign_count"]
-        else:
-            site_report.daily_review_actions = assets["total_count"]
-        site_report.save()
 
 
 def _backfill_data(start, days=0):
