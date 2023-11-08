@@ -10,7 +10,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.management import call_command
 from django.db import transaction
-from django.db.models import Count, F, Q
+from django.db.models import Count, F, OuterRef, Q, Subquery
 from django.utils import timezone
 from more_itertools.more import chunked
 
@@ -431,42 +431,38 @@ ONE_DAY = datetime.timedelta(days=1)
 
 
 def _backfill_by_date(day):
-    transcriptions = Transcription.objects.review_actions(day - ONE_DAY, day)
-    q = Q(
-        created_on__range=(
-            datetime.datetime.combine(day, datetime.time.min),
-            datetime.datetime.combine(day, datetime.time.max),
+    start = day - ONE_DAY
+    q_accepted = Q(transcription__accepted__gte=start, transcription__accepted__lte=day)
+    q_rejected = Q(transcription__rejected__gte=start, transcription__rejected__lte=day)
+    assets = Asset.objects.filter(q_accepted | q_rejected)
+    site_reports = SiteReport.objects.filter(created_on__gte=start, created_on__lte=day)
+    topic_assets = assets.filter(item__project__topics=OuterRef("topic__pk"))
+    subquery = Subquery(
+        topic_assets.annotate(cnt=Count("transcription")).values("cnt")[:1]
+    )
+    site_reports.filter(topic__isnull=False).update(daily_review_actions=subquery)
+    campaign_assets = assets.filter(item__project__campaign=OuterRef("campaign__pk"))
+    subquery = Subquery(
+        campaign_assets.annotate(cnt=Count("transcription")).values("cnt")[:1]
+    )
+    site_reports.filter(campaign__isnull=False).update(daily_review_actions=subquery)
+    site_reports.filter(topic__isnull=True, campaign__isnull=True).update(
+        daily_review_actions=Subquery(
+            assets.annotate(cnt=Count("transcription")).values("cnt")[:1]
         )
     )
-    site_reports = SiteReport.objects.filter(q)
-    for site_report in site_reports:
-        if site_report.topic is not None:
-            site_report.daily_review_actions = transcriptions.filter(
-                asset__item__project__topics__in=(site_report.topic,)
-            ).count()
-        elif site_report.campaign is not None:
-            site_report.daily_review_actions = transcriptions.filter(
-                asset__item__project__campaign=site_report.campaign
-            ).count()
-        else:
-            site_report.daily_review_actions = transcriptions.count()
-        site_report.save()
 
 
-def _backfill_data(start, end=None):
-    if end is None:
-        end = timezone.now().date()
-    days = (end - start).days
-    for n in range(days + 1):
-        day = start + datetime.timedelta(days=n)
+def _backfill_data(start, days=0):
+    for n in range(days - 1):
+        day = start - datetime.timedelta(days=n)
         _backfill_by_date(day)
 
 
 @celery_app.task
-def backfill_daily_data(year=2018, month=10, day=24):
+def backfill_daily_data():
     _backfill_data(
-        timezone.make_aware(datetime.datetime(year=year, month=month, day=day)),
-        timezone.make_aware(datetime.datetime(year=2023, month=9, day=17)),
+        timezone.make_aware(datetime.datetime(year=2023, month=9, day=17)), 10
     )
 
 
