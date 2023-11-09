@@ -69,14 +69,6 @@ Parameters:
         Type: String
         Description: Redis endpoint port
 
-    MemcachedAddress:
-        Type: String
-        Description: memcached endpoint address
-
-    MemcachedPort:
-        Type: String
-        Description: memcached endpoint port
-
     CanonicalHostName:
         Type: String
         Description: canonical host name of the application, e.g. crowd-test.loc.gov
@@ -303,10 +295,6 @@ Resources:
                         Value: !Ref RedisAddress
                       - Name: REDIS_PORT
                         Value: !Ref RedisPort
-                      - Name: MEMCACHED_ADDRESS
-                        Value: !Ref MemcachedAddress
-                      - Name: MEMCACHED_PORT
-                        Value: !Ref MemcachedPort
                       - Name: POSTGRESQL_HOST
                         Value: !Ref DatabaseEndpoint
                       - Name: HOST_NAME
@@ -350,10 +338,6 @@ Resources:
                         Value: !Ref RedisAddress
                       - Name: REDIS_PORT
                         Value: !Ref RedisPort
-                      - Name: MEMCACHED_ADDRESS
-                        Value: !Ref MemcachedAddress
-                      - Name: MEMCACHED_PORT
-                        Value: !Ref MemcachedPort
                       - Name: POSTGRESQL_HOST
                         Value: !Ref DatabaseEndpoint
                       - Name: HOST_NAME
@@ -395,10 +379,6 @@ Resources:
                         Value: !Ref RedisAddress
                       - Name: REDIS_PORT
                         Value: !Ref RedisPort
-                      - Name: MEMCACHED_ADDRESS
-                        Value: !Ref MemcachedAddress
-                      - Name: MEMCACHED_PORT
-                        Value: !Ref MemcachedPort
                       - Name: POSTGRESQL_HOST
                         Value: !Ref DatabaseEndpoint
                       - Name: HOST_NAME
