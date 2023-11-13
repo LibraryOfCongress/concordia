@@ -15,17 +15,6 @@ Parameters:
         Default: cache.m5.large
 
 Resources:
-    MemcachedService:
-        Type: AWS::ElastiCache::CacheCluster
-        Properties:
-            VpcSecurityGroupIds:
-                - !Ref 'SecurityGroup'
-            CacheSubnetGroupName: 'crowd-cache-1frtjeewr57u7'
-            CacheNodeType: !Ref 'CacheNodeType'
-            ClusterName: !Sub '${EnvironmentName}-cache'
-            Engine: memcached
-            AutoMinorVersionUpgrade: true
-            NumCacheNodes: 1
     RedisService:
         Type: AWS::ElastiCache::CacheCluster
         Properties:
@@ -47,11 +36,3 @@ Outputs:
     RedisPort:
         Description: Redis endpoint port
         Value: !GetAtt 'RedisService.RedisEndpoint.Port'
-
-    MemcachedAddress:
-        Description: memcached endpoint address
-        Value: !GetAtt 'MemcachedService.ConfigurationEndpoint.Address'
-
-    MemcachedPort:
-        Description: memcached endpoint port
-        Value: !GetAtt 'MemcachedService.ConfigurationEndpoint.Port'
