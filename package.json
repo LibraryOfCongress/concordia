@@ -1,6 +1,6 @@
 {
     "devDependencies": {
-        "chromedriver": "^76.0.0",
+        "chromedriver": "^119.0.1",
         "axe-cli": "^3.1.1",
         "child_process": "^1.0.2",
         "eslint": "^7.17.0",
