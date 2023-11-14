@@ -28,7 +28,7 @@
             <ul>
                 {% for import_job in import_jobs %}
                     <li>
-                        <a target="_blank" href="{% url 'admin:importer_importjob_change' object_id=import_job.pk %}">{{ import_job }}</a>
+                        <a target="_blank" rel=noopener href="{% url 'admin:importer_importjob_change' object_id=import_job.pk %}">{{ import_job }}</a>
                     </li>
                 {% endfor %}
             </ul>

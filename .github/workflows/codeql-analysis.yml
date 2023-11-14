@@ -46,7 +46,7 @@ jobs:
                   libjpeg-dev libopenjp2-7-dev libwebp-dev zlib1g-dev libpq-dev
 
             - name: Checkout repository
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
 
             - name: Setup python
               uses: actions/setup-python@v4
