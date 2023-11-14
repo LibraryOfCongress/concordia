@@ -8,6 +8,7 @@ class ConcordiaAdminSite(admin.AdminSite):
 
     def get_urls(self):
         from concordia.admin.views import (
+            UpdateRelatedFieldView,
             admin_bulk_import_review,
             admin_bulk_import_view,
             admin_retired_site_report_view,
@@ -36,6 +37,11 @@ class ConcordiaAdminSite(admin.AdminSite):
                 "project-level-export/",
                 project_level_export,
                 name="project-level-export",
+            ),
+            path(
+                "update_related_field/",
+                UpdateRelatedFieldView.as_view(),
+                name="update_related_field",
             ),
         ]
 

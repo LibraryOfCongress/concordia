@@ -4,13 +4,16 @@ import time
 
 from bittersweet.models import validated_get_or_create
 from celery import Celery
+from django.apps import apps
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import permission_required
 from django.core.exceptions import ValidationError
 from django.db.models import OuterRef, Subquery
+from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils.text import slugify
+from django.views import View
 from django.views.decorators.cache import never_cache
 from tabular_export.core import export_to_csv_response, flatten_queryset
 
@@ -611,3 +614,16 @@ def admin_retired_site_report_view(request):
     data.append(row)
 
     return export_to_csv_response("retired-site-report.csv", headers, data)
+
+
+class UpdateRelatedFieldView(View):
+    def get(self, request, *args, **kwargs):
+        model_name = request.GET.get("model_name")
+        object_id = request.GET.get("object_id")
+        field_name = request.GET.get("field_name")
+
+        model = apps.get_model(app_label="concordia", model_name=model_name)
+        instance = model.objects.get(pk=object_id)
+        value = ", ".join(str(obj) for obj in getattr(instance, field_name).all())
+
+        return JsonResponse({"value": value})
