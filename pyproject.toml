@@ -30,3 +30,6 @@ extend-exclude = [
 # Ignore line length in migrations
 [tool.ruff.per-file-ignores]
 "*/migrations/*" = ["E501"]
+
+# v8.0.4 broke original setup config to produce git version - required configuration
+[tool.setuptools_scm]
