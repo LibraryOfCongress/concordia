@@ -55,10 +55,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.views.decorators.vary import vary_on_headers
 from django.views.generic import FormView, ListView, RedirectView, TemplateView
+from django_ratelimit.decorators import ratelimit
 from django_registration.backends.activation.views import RegistrationView
-from ratelimit.decorators import ratelimit
-from ratelimit.mixins import RatelimitMixin
-from ratelimit.utils import is_ratelimited
 from weasyprint import HTML
 
 from concordia.api_views import APIDetailView, APIListView
@@ -253,7 +251,7 @@ class ConcordiaPasswordResetRequestView(PasswordResetView):
     form_class = AllowInactivePasswordResetForm
 
 
-def registration_rate(self, group, request):
+def registration_rate(group, request):
     registration_form = UserRegistrationForm(request.POST)
     if registration_form.is_valid():
         return None
@@ -262,34 +260,36 @@ def registration_rate(self, group, request):
 
 
 @method_decorator(never_cache, name="dispatch")
-class ConcordiaRegistrationView(RatelimitMixin, RegistrationView):
+@method_decorator(
+    ratelimit(
+        group="registration",
+        key="header:cf-connecting-ip",
+        rate=registration_rate,
+        method="POST",
+        block=settings.RATELIMIT_BLOCK,
+    ),
+    name="post",
+)
+class ConcordiaRegistrationView(RegistrationView):
     form_class = UserRegistrationForm
-    ratelimit_group = "registration"
-    ratelimit_key = "header:cf-connecting-ip"
-    ratelimit_rate = registration_rate
-    ratelimit_method = "POST"
-    ratelimit_block = settings.RATELIMIT_BLOCK
 
 
 @method_decorator(never_cache, name="dispatch")
-class ConcordiaLoginView(RatelimitMixin, LoginView):
-    ratelimit_group = "login"
-    ratelimit_key = "post:username"
-    ratelimit_rate = "3/15m"
-    ratelimit_method = "POST"
-    ratelimit_block = False
+@method_decorator(
+    ratelimit(
+        group="login", key="post:username", rate="3/15m", method="POST", block=False
+    ),
+    name="post",
+)
+class ConcordiaLoginView(LoginView):
     form_class = UserLoginForm
 
     def post(self, request, *args, **kwargs):
         form = self.get_form()
 
-        blocked = is_ratelimited(
-            request,
-            group=self.ratelimit_group,
-            key=self.ratelimit_key,
-            method=self.ratelimit_method,
-            rate=self.ratelimit_rate,
-        )
+        # This is set by the ratelimit decorator
+        # True if the request exceeds the rate limit
+        blocked = request.limited
         recent_captcha = (
             time() - request.session.get("captcha_validation_time", 0)
         ) < 86400
