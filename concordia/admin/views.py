@@ -10,7 +10,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import permission_required
 from django.core.exceptions import ValidationError
 from django.db.models import OuterRef, Subquery
-from django.http import JsonResponse
+from django.http import HTTPStatus, JsonResponse
 from django.shortcuts import render
 from django.utils.text import slugify
 from django.views import View
@@ -623,7 +623,9 @@ class SerializedObjectView(View):
         field_name = request.GET.get("field_name")
 
         model = apps.get_model(app_label="concordia", model_name=model_name)
-        instance = model.objects.get(pk=object_id)
-        value = getattr(instance, field_name)
-
-        return JsonResponse({field_name: value})
+        try:
+            instance = model.objects.get(pk=object_id)
+            value = getattr(instance, field_name)
+            return JsonResponse({field_name: value})
+        except model.DoesNotExist:
+            return JsonResponse({"status": "false"}, status=HTTPStatus.NOT_FOUND)
