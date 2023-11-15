@@ -22,7 +22,7 @@
             });
         }
 
-        $('.related-widget-wrapper-link').on('click', function () {
+        $('input.vForeignKeyRawIdAdminField').on('click', function () {
             var relatedField = $(this).siblings('.related-widget-wrapper');
 
             if (relatedField.length > 0) {
