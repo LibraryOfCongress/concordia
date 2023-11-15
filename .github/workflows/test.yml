@@ -8,12 +8,23 @@ on:
             - docs/**
             - README.md
             - .github/**
+            - cloudformation/**
+            - db_scripts/**
+            - jenkins/**
+            - kibana-proxy/**
+            - postgresql/**
+
     pull_request:
         branches: [main, 'feature-*']
         paths-ignore:
             - docs/**
             - README.md
             - .github/**
+            - cloudformation/**
+            - db_scripts/**
+            - jenkins/**
+            - kibana-proxy/**
+            - postgresql/**
 
 env:
     PIPENV_IGNORE_VIRTUALENVS: 1
@@ -69,7 +80,7 @@ jobs:
                   node-version: '18'
 
             - name: Checkout repository
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
 
             - name: Set up Python 3.10
               uses: actions/setup-python@v4
