@@ -616,7 +616,7 @@ def admin_retired_site_report_view(request):
     return export_to_csv_response("retired-site-report.csv", headers, data)
 
 
-class UpdateRelatedFieldView(View):
+class SerializedObjectView(View):
     def get(self, request, *args, **kwargs):
         model_name = request.GET.get("model_name")
         object_id = request.GET.get("object_id")
@@ -624,6 +624,6 @@ class UpdateRelatedFieldView(View):
 
         model = apps.get_model(app_label="concordia", model_name=model_name)
         instance = model.objects.get(pk=object_id)
-        value = ", ".join(str(obj) for obj in getattr(instance, field_name).all())
+        value = getattr(instance, field_name)
 
-        return JsonResponse({"value": value})
+        return JsonResponse({field_name: value})

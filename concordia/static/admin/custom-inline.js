@@ -2,32 +2,32 @@
 
 (function ($) {
     $(document).ready(function () {
-        function updateRelatedField(element) {
-            var modelName = element.data('modelName');
-            var objectId = element.data('objectId');
-            var fieldName = element.data('fieldName');
-            var url = '/admin/update_related_field/';
-
+        function displayCardTitle(element) {
             $.ajax({
-                url: url,
+                url: '/admin/serialized_object/',
                 data: {
-                    model_name: modelName,
-                    object_id: objectId,
-                    field_name: fieldName,
+                    model_name: 'Card',
+                    object_id: element.val(),
+                    field_name: 'title',
                 },
                 dataType: 'json',
                 success: function (data) {
-                    element.val(data.value);
+                    var title = $('<strong>' + data.title + '</strong>');
+                    var strong = element.siblings('strong');
+                    if (strong.length > 0) {
+                        strong.text(data.title);
+                    } else {
+                        element.siblings(':last').after(title);
+                    }
                 },
             });
         }
 
-        $('input.vForeignKeyRawIdAdminField').on('click', function () {
-            var relatedField = $(this).siblings('.related-widget-wrapper');
-
-            if (relatedField.length > 0) {
-                updateRelatedField(relatedField.find('input'));
-            }
-        });
+        $('input.vForeignKeyRawIdAdminField').on(
+            'propertychange input',
+            function () {
+                displayCardTitle($(this));
+            },
+        );
     });
 })(jQuery);

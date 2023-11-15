@@ -8,7 +8,7 @@ class ConcordiaAdminSite(admin.AdminSite):
 
     def get_urls(self):
         from concordia.admin.views import (
-            UpdateRelatedFieldView,
+            SerializedObjectView,
             admin_bulk_import_review,
             admin_bulk_import_view,
             admin_retired_site_report_view,
@@ -39,9 +39,9 @@ class ConcordiaAdminSite(admin.AdminSite):
                 name="project-level-export",
             ),
             path(
-                "update_related_field/",
-                UpdateRelatedFieldView.as_view(),
-                name="update_related_field",
+                "serialized_object/",
+                SerializedObjectView.as_view(),
+                name="serialized_object",
             ),
         ]
 
