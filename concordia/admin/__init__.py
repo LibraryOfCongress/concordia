@@ -1005,3 +1005,6 @@ class TutorialInline(admin.TabularInline):
 @admin.register(CardFamily)
 class CardFamilyAdmin(admin.ModelAdmin):
     inlines = (TutorialInline,)
+
+    class Media:
+        js = ("admin/custom-inline.js",)
