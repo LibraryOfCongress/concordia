@@ -1,6 +1,7 @@
 import re
 import tempfile
 import time
+from http import HTTPStatus
 
 from bittersweet.models import validated_get_or_create
 from celery import Celery
@@ -10,7 +11,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import permission_required
 from django.core.exceptions import ValidationError
 from django.db.models import OuterRef, Subquery
-from django.http import HTTPStatus, JsonResponse
+from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils.text import slugify
 from django.views import View

@@ -7,6 +7,7 @@ from django.utils.text import slugify
 from concordia.models import (
     Asset,
     Campaign,
+    Card,
     Item,
     MediaType,
     Project,
@@ -206,6 +207,13 @@ def create_tag_collection(*, tag=None, asset=None, user=None, **kwargs):
     tag_collection.save()
     tag_collection.tags.add(tag)
     return tag_collection
+
+
+def create_card(*, title="Test Card", do_save=True, **kwargs):
+    card = Card(title=title, **kwargs)
+    if do_save:
+        card.save()
+    return card
 
 
 class JSONAssertMixin(object):
