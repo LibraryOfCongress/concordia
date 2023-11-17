@@ -50,6 +50,9 @@ tesseract = "==0.1.3"
 pytesseract = "*"
 django-redis = "*"
 locust = "*"
+twisted = {extras = ["http2", "tls"], version = "*"}
+hiredis = "*"
+pyasn1 = "*"
 
 [dev-packages]
 invoke = "*"
