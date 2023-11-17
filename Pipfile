@@ -34,7 +34,7 @@ django-passwords = "*"
 kombu = "<6.0,>=5.0.0"
 django-flags = "*"
 sentry-sdk = "*"
-channels = ">=4"
+channels = {extras = ["daphne"], version = "*"}
 channels-redis = ">=4"
 more-itertools = "*"
 psycopg2 = ">=2.9"
