@@ -26,11 +26,30 @@ jobs:
                   aws-region: ${{ env.AWS_REGION }}
                   role-session-name: github_to_aws_deploy
 
-            - name:
+            - name: Login to Amazon ECR
+              id: login-ecr
+              uses: aws-actions/amazon-ecr-login@v2
+
+            - name: Pull, tag and push docker images ECR
               env:
+                  REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+                  IMAGE_TAG_PULL: ${{ secrets.IMAGE_TAG_PULL }}
+                  IMAGE_TAG: ${{ secrets.IMAGE_TAG }}
                   CLUSTER: ${{ secrets.CLUSTER }}
                   TARGET_SERVICE_A: ${{ secrets.TARGET_SERVICE_A }}
                   TARGET_SERVICE: ${{ secrets.TARGET_SERVICE }}
               run: |
+                  docker pull $REGISTRY/concordia:$IMAGE_TAG_PULL
+                  docker pull $REGISTRY/concordia/importer:$IMAGE_TAG_PULL
+                  docker pull $REGISTRY/concordia/celerybeat:$IMAGE_TAG_PULL
+
+                  docker tag $REGISTRY/concordia:$IMAGE_TAG_PULL $REGISTRY/concordia:$IMAGE_TAG
+                  docker tag $REGISTRY/concordia/importer:$IMAGE_TAG_PULL $REGISTRY/concordia/importer:$IMAGE_TAG
+                  docker tag $REGISTRY/concordia/celerybeat:$IMAGE_TAG_PULL $REGISTRY/concordia/celerybeat:$IMAGE_TAG
+
+                  docker push $REGISTRY/concordia:$IMAGE_TAG
+                  docker push $REGISTRY/concordia/importer:$IMAGE_TAG
+                  docker push $REGISTRY/concordia/celerybeat:$IMAGE_TAG
+
                   aws ecs update-service --region ${{ env.AWS_REGION }} --force-new-deployment --cluster $CLUSTER --service $TARGET_SERVICE_A
                   aws ecs update-service --region ${{ env.AWS_REGION }} --force-new-deployment --cluster $CLUSTER --service $TARGET_SERVICE
