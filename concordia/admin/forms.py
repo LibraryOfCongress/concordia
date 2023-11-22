@@ -1,5 +1,8 @@
 import bleach
 from django import forms
+from tinymce.widgets import TinyMCE
+
+from ..models import Campaign, Project
 
 FRAGMENT_ALLOWED_TAGS = {"br", "kbd", "span"} | bleach.sanitizer.ALLOWED_TAGS
 
@@ -63,6 +66,25 @@ class BleachedDescriptionAdminForm(forms.ModelForm):
             tags=FRAGMENT_ALLOWED_TAGS,
             attributes=ALLOWED_ATTRIBUTES,
         )
+
+
+class CampaignAdminForm(BleachedDescriptionAdminForm):
+    class Meta:
+        model = Campaign
+        widgets = {
+            "short_description": TinyMCE(),
+            "description": TinyMCE(),
+        }
+        fields = "__all__"
+
+
+class ProjectAdminForm(BleachedDescriptionAdminForm):
+    class Meta:
+        model = Project
+        widgets = {
+            "description": TinyMCE(),
+        }
+        fields = "__all__"
 
 
 class SimpleContentBlockAdminForm(forms.ModelForm):

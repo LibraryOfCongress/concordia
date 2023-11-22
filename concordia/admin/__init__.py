@@ -89,6 +89,8 @@ from .filters import (
 from .forms import (
     AdminItemImportForm,
     BleachedDescriptionAdminForm,
+    CampaignAdminForm,
+    ProjectAdminForm,
     SimpleContentBlockAdminForm,
 )
 
@@ -182,7 +184,7 @@ class CustomListDisplayFieldsMixin:
 
 @admin.register(Campaign)
 class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
-    form = BleachedDescriptionAdminForm
+    form = CampaignAdminForm
 
     list_display = (
         "title",
@@ -383,7 +385,7 @@ class TopicAdmin(admin.ModelAdmin):
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
-    form = BleachedDescriptionAdminForm
+    form = ProjectAdminForm
 
     # todo: add foreignKey link for campaign
     list_display = ("id", "title", "slug", "campaign", "published", "ordering")
