@@ -397,5 +397,7 @@ TINYMCE_DEFAULT_CONFIG = {
     "plugins": "link lists searchreplace wordcount",
     "browser_spellcheck": "true",
     "toolbar1": "bold italic | numlist bullist | link | searchreplace wordcount",
+    "selector": "textarea.tinymce",
+    "referrer_policy": "origin",
 }
 TINYMCE_JS_URL = "https://cdn.tiny.cloud/1/rf486i5f1ww9m8191oolczn7f0ry61mzdtfwbu7maiiiv2kv/tinymce/6/tinymce.min.js"
