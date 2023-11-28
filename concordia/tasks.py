@@ -40,7 +40,7 @@ logger = getLogger(__name__)
 
 @celery_app.task
 def expire_inactive_asset_reservations():
-    timestamp = datetime.datetime.now()
+    timestamp = timezone.now()
 
     # Clear old reservations, with a grace period:
     cutoff = timestamp - (
@@ -64,7 +64,7 @@ def expire_inactive_asset_reservations():
 
 @celery_app.task
 def tombstone_old_active_asset_reservations():
-    timestamp = datetime.datetime.now()
+    timestamp = timezone.now()
 
     cutoff = timestamp - (
         datetime.timedelta(hours=settings.TRANSCRIPTION_RESERVATION_TOMBSTONE_HOURS)
@@ -81,7 +81,7 @@ def tombstone_old_active_asset_reservations():
 
 @celery_app.task
 def delete_old_tombstoned_reservations():
-    timestamp = datetime.datetime.now()
+    timestamp = timezone.now()
 
     cutoff = timestamp - (
         datetime.timedelta(

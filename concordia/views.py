@@ -422,7 +422,10 @@ def _get_pages(request):
             latest_activity__day=date.day,
         )
     # CONCD-189 only show pages from the last 6 months
-    SIX_MONTHS_AGO = datetime.datetime.today() - datetime.timedelta(days=6 * 30)
+    # This should be an aware datetime, not a date. A date is cast
+    # to a naive datetime when it's compared to a datetime
+    # field, as is being done here
+    SIX_MONTHS_AGO = now() - datetime.timedelta(days=6 * 30)
     assets = assets.filter(latest_activity__gte=SIX_MONTHS_AGO)
     order_by = request.GET.get("order_by", "date-descending")
     if order_by == "date-ascending":

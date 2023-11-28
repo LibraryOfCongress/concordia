@@ -1,9 +1,9 @@
 import io
 import zipfile
-from datetime import datetime
 
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from concordia.models import MediaType, Transcription, User
 from concordia.tests.utils import (
@@ -60,8 +60,8 @@ class ViewTest_Exporter(TestCase):
             asset=asset,
             user=user,
             text="Sample",
-            submitted=datetime.now(),
-            accepted=datetime.now(),
+            submitted=timezone.now(),
+            accepted=timezone.now(),
         )
         transcription1.full_clean()
         transcription1.save()
