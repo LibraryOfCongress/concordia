@@ -525,8 +525,18 @@ class Asset(MetricsModelMixin("asset"), models.Model):
     def latest_transcription(self):
         return self.transcription_set.order_by("-pk").first()
 
-    def get_ocr_transcript(self):
-        return pytesseract.image_to_string(Image.open(self.storage_image))
+    def get_ocr_transcript(self, language=None):
+        if language and language not in settings.PYTESSERACT_ALLOWED_LANGUAGES:
+            logger.warning(
+                "OCR language '%s' not in settings.PYTESSERACT_ALLOWED_LANGUAGES. "
+                "Allowed languages: %s",
+                language,
+                settings.PYTESSERACT_ALLOWED_LANGUAGES,
+            )
+            language = None
+        return pytesseract.image_to_string(
+            Image.open(self.storage_image), lang=language
+        )
 
     def get_contributor_count(self):
         transcriptions = Transcription.objects.filter(asset=self)
