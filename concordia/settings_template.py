@@ -399,3 +399,5 @@ TINYMCE_DEFAULT_CONFIG = {
     "content_css": "dark",
 }
 TINYMCE_JS_URL = "https://cdn.tiny.cloud/1/rf486i5f1ww9m8191oolczn7f0ry61mzdtfwbu7maiiiv2kv/tinymce/6/tinymce.min.js"
+
+PYTESSERACT_ALLOWED_LANGUAGES = ["eng"]

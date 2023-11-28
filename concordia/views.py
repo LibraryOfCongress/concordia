@@ -1365,10 +1365,11 @@ def generate_ocr_transcription(request, *, asset_pk):
         user = request.user
 
     supersedes_pk = request.POST.get("supersedes")
+    language = request.POST.get("language")
     superseded = get_transcription_superseded(asset, supersedes_pk)
     if superseded and isinstance(superseded, HttpResponse):
         return superseded
-    transcription_text = asset.get_ocr_transcript()
+    transcription_text = asset.get_ocr_transcript(language)
     transcription = Transcription(
         asset=asset,
         user=user,
