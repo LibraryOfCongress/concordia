@@ -1770,7 +1770,6 @@
                 "sha256:0dab495cd5753069d3bc650a0dde8a8f9edde16fc5691b689a566eda58100d0f",
                 "sha256:ed4802971884ae19d640775ba3b03aa2e7bd5e8fb8dfaed2decce4d0fc48391f"
             ],
-            "markers": "python_version >= '3.7'",
             "version": "==5.0.1"
         },
         "requests": {
