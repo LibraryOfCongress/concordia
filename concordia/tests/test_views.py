@@ -2,7 +2,7 @@
 Tests for the core application features
 """
 
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 
 from captcha.models import CaptchaStore
 from django.conf import settings
@@ -577,7 +577,7 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         stale_reservation.full_clean()
         stale_reservation.save()
         # Backdate the object as if it happened 15 minutes ago:
-        old_timestamp = datetime.now() - timedelta(minutes=15)
+        old_timestamp = now() - timedelta(minutes=15)
         AssetTranscriptionReservation.objects.update(
             created_on=old_timestamp, updated_on=old_timestamp
         )
@@ -625,10 +625,10 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         tombstone_reservation.save()
         # Backdate the object as if it was created hours ago,
         # even if it was recently updated
-        old_timestamp = datetime.now() - timedelta(
+        old_timestamp = now() - timedelta(
             hours=settings.TRANSCRIPTION_RESERVATION_TOMBSTONE_HOURS + 1
         )
-        current_timestamp = datetime.now()
+        current_timestamp = now()
         AssetTranscriptionReservation.objects.update(
             created_on=old_timestamp, updated_on=current_timestamp
         )
@@ -690,12 +690,12 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         tombstone_reservation.save()
         # Backdate the object as if it was created hours ago
         # and tombstoned hours ago
-        old_timestamp = datetime.now() - timedelta(
+        old_timestamp = now() - timedelta(
             hours=settings.TRANSCRIPTION_RESERVATION_TOMBSTONE_HOURS
             + settings.TRANSCRIPTION_RESERVATION_TOMBSTONE_LENGTH_HOURS
             + 1
         )
-        not_as_old_timestamp = datetime.now() - timedelta(
+        not_as_old_timestamp = now() - timedelta(
             hours=settings.TRANSCRIPTION_RESERVATION_TOMBSTONE_LENGTH_HOURS + 1
         )
         AssetTranscriptionReservation.objects.update(
