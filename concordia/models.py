@@ -941,3 +941,17 @@ class TutorialCard(models.Model):
 
     class Meta:
         verbose_name_plural = "cards"
+
+
+class Guide(models.Model):
+    title = models.CharField(max_length=80)
+    body = models.TextField(blank=True)
+    order = models.IntegerField(default=1)
+    link_text = models.CharField(max_length=80)
+    link_url = models.CharField(max_length=255, blank=True, null=True)
+
+    class Meta:
+        abstract = True
+
+    def __str__(self):
+        return self.title
