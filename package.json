@@ -18,6 +18,7 @@
         "stylelint-value-no-unknown-custom-properties": "^4.0.0"
     },
     "dependencies": {
+        "@ckeditor/ckeditor5-build-classic": "^40.1.0",
         "@fortawesome/fontawesome-free": "^5.15.1",
         "@duetds/date-picker": "^1.4.0",
         "array-sort-by": "^1.2.1",

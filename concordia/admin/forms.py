@@ -1,8 +1,9 @@
 import bleach
+from ckeditor.widgets import CKEditorWidget
 from django import forms
 from tinymce.widgets import TinyMCE
 
-from ..models import Campaign, Project
+from ..models import Campaign, Project, SimplePage
 
 FRAGMENT_ALLOWED_TAGS = {"br", "kbd", "span"} | bleach.sanitizer.ALLOWED_TAGS
 
@@ -94,3 +95,11 @@ class SimpleContentBlockAdminForm(forms.ModelForm):
             tags=BLOCK_ALLOWED_TAGS,
             attributes=ALLOWED_ATTRIBUTES,
         )
+
+
+class SimplePageAdminForm(forms.ModelForm):
+    body = forms.CharField(widget=CKEditorWidget())
+
+    class Meta:
+        model = SimplePage
+        fields = "__all__"

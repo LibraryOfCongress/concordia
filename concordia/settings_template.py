@@ -78,6 +78,7 @@ NPM_FILE_PATTERNS = {
         "svgs/*",
         "webfonts/*",
     ],
+    "ckeditor": ["ckeditor/*"],
 }
 
 TEMPLATE_DEBUG = False
@@ -122,6 +123,7 @@ INSTALLED_APPS = [
     "flags",
     "channels",
     "django_admin_multiple_choice_list_filter",
+    "ckeditor",
     "tinymce",
 ]
 
@@ -387,6 +389,30 @@ CHANNEL_LAYERS = {
             "capacity": 1500,
             "expiry": 10,
         },
+    }
+}
+
+CKEDITOR_BASEPATH = STATIC_URL + "ckeditor/ckeditor/"
+CKEDITOR_CONFIGS = {
+    "default": {
+        "toolbar": "Custom",
+        "toolbar_Custom": [
+            ["Bold", "Italic"],
+            [
+                "NumberedList",
+                "BulletedList",
+                "-",
+                "Outdent",
+                "Indent",
+                "-",
+                "JustifyLeft",
+                "JustifyCenter",
+                "JustifyRight",
+                "JustifyBlock",
+            ],
+            ["Link", "Unlink"],
+            ["RemoveFormat", "Source"],
+        ],
     }
 }
 
