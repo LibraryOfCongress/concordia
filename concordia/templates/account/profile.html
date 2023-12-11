@@ -77,19 +77,13 @@
                         <form class="form" action="{% url 'user-profile' %}" method="POST" enctype="multipart/form-data">
                             {% csrf_token %}
                             <div class="mb-3 user-fields">
-                                <label class="d-flex">
-                                    <span class="visually-hidden">First Name</span>
-                                </label>
-                                <div class="mb-2">
+                                <label class="d-flex mb-2">
                                     <span class="font-weight-bold">First Name</span>: {{ user.first_name }}
-                                </div>
-                                <input name="first_name" placeholder="Enter your first name" class="form-control font-italic">
-                                <label>
-                                    <span class="visually-hidden">Last Name</span>
                                 </label>
-                                <div class="mb-2">
+                                <input name="first_name" placeholder="Enter your first name" class="form-control font-italic">
+                                <label class="mt-2">
                                     <span class="font-weight-bold">Last Name</span>: {{ user.last_name }}
-                                </div>
+                                </label>
                                 <input name="last_name" placeholder="Enter your last name" class="form-control font-italic">
                             </div>
                             <div class="input-group-append">
