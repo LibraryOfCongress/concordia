@@ -122,6 +122,7 @@ INSTALLED_APPS = [
     "flags",
     "channels",
     "django_admin_multiple_choice_list_filter",
+    "django_quill",
     "tinymce",
 ]
 
@@ -387,6 +388,19 @@ CHANNEL_LAYERS = {
             "capacity": 1500,
             "expiry": 10,
         },
+    }
+}
+
+QUILL_CONFIGS = {
+    "default": {
+        "modules": {
+            "syntax": True,
+            "toolbar": [
+                [
+                    "code-block",
+                ],
+            ],
+        }
     }
 }
 
