@@ -1,8 +1,9 @@
 import bleach
 from django import forms
+from froala_editor.widgets import FroalaEditor
 from tinymce.widgets import TinyMCE
 
-from ..models import Campaign, Project
+from ..models import Campaign, Project, SimplePage
 
 FRAGMENT_ALLOWED_TAGS = {"br", "kbd", "span"} | bleach.sanitizer.ALLOWED_TAGS
 
@@ -94,3 +95,12 @@ class SimpleContentBlockAdminForm(forms.ModelForm):
             tags=BLOCK_ALLOWED_TAGS,
             attributes=ALLOWED_ATTRIBUTES,
         )
+
+
+class SimplePageAdminForm(forms.ModelForm):
+    class Meta:
+        model = SimplePage
+        widgets = {
+            "body": FroalaEditor(),
+        }
+        fields = "__all__"
