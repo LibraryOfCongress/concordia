@@ -122,6 +122,7 @@ INSTALLED_APPS = [
     "flags",
     "channels",
     "django_admin_multiple_choice_list_filter",
+    "django_ace",
     "tinymce",
 ]
 

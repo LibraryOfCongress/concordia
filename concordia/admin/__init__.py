@@ -92,6 +92,7 @@ from .forms import (
     CampaignAdminForm,
     ProjectAdminForm,
     SimpleContentBlockAdminForm,
+    SimplePageAdminForm,
 )
 
 
@@ -808,6 +809,8 @@ class CarouselSlideAdmin(admin.ModelAdmin):
 
 @admin.register(SimplePage)
 class SimplePageAdmin(admin.ModelAdmin):
+    form = SimplePageAdminForm
+
     list_display = ("path", "title", "created_on", "updated_on")
     readonly_fields = ("created_on", "updated_on")
 
