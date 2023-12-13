@@ -18,4 +18,4 @@ class ConcordiaAdminConfig(AdminConfig):
 
 
 class ConcordiaStaticFilesConfig(StaticFilesConfig):
-    ignore_patterns = ["scss", "js/src"]
+    ignore_patterns = ["scss", "js/src/*"]
