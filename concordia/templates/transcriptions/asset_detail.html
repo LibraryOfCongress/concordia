@@ -374,24 +374,24 @@
 
             <div id="editor-column" class="d-flex justify-content-between p-3 d-print-block flex-column">
                 <div class="flex-grow-1 d-flex d-print-block flex-column">
-                    <div class="tx-status-display">
-                        <h2 class="tx-submitted" {% if transcription_status != 'submitted' %}hidden{% endif %}>
+                    <div id="transcription-status-display">
+                        <h2 id="display-submitted" {% if transcription_status != 'submitted' %}hidden{% endif %}>
                             <span class="fas fa-list"></span>
                             Needs review
                         </h2>
-                        <h2 class="tx-completed" {% if transcription_status != 'completed' %}hidden{% endif %}>
+                        <h2 id="display-completed" {% if transcription_status != 'completed' %}hidden{% endif %}>
                             <span class="fas fa-check"></span>
                             Completed
                         </h2>
-                        <h2 class="tx-edit" {% if transcription_status != "not_started" %}hidden{% endif %}>
+                        <h2 id="display-notstarted" {% if transcription_status != "not_started" %}hidden{% endif %}>
                             <span class="fas fa-edit"></span>
                             Not started
                         </h2>
-                        <h2 class="tx-edit" {% if transcription_status != "in_progress" %}hidden{% endif %}>
+                        <h2 id="display-inprogress" {% if transcription_status != "in_progress" %}hidden{% endif %}>
                             <span class="fas fa-edit"></span>
                             In progress
                         </h2>
-                        <span class="tx-edit-conflict" hidden>
+                        <span id="display-conflict" hidden>
                             <span class="fas fa-exclamation-triangle"></span>
                             Another user is transcribing this page
                         </span>
@@ -401,21 +401,22 @@
                         {% csrf_token %}
                         <input type="hidden" name="supersedes" value="{{ transcription.pk|default:'' }}" />
 
-                        <span>
-                            {% if transcription_status == 'not_started' %}
+                        <span id="transcription-status-message">
+                            <h2 id="message-contributors" {% if transcription_status == 'not_started' %}hidden{% endif %}>
+                                Registered Contributors: <span id="message-contributors-num" class="font-weight-normal">{{ registered_contributors }}</span>
+                            </h2>
+                            <span id="message-notstarted" {% if transcription_status != 'not_started' %}hidden{% endif %}>
                                 Transcribe this page.
-                            {% else %}
-                                <h2>Registered Contributors: <span class="font-weight-normal">{{ registered_contributors }}</span></h2>
-                                {% if transcription_status == 'in_progress' %}
-                                    Someone started this transcription. Can you finish it?
-                                {% elif transcription_status == 'submitted' %}
-                                    Check this transcription thoroughly. Accept if correct!
-                                {% elif transcription_status == 'completed' %}
-                                    This transcription is finished! You can read and add tags.
-                                {% else %}
-                                    Transcription
-                                {% endif %}
-                            {% endif %}
+                            </span>
+                            <span id="message-inprogress" {% if transcription_status != 'in_progress' %}hidden{% endif %}>
+                                Someone started this transcription. Can you finish it?
+                            </span>
+                            <span id="message-submitted" {% if transcription_status != 'submitted' %}hidden{% endif %}>
+                                Check this transcription thoroughly. Accept if correct!
+                            </span>
+                            <span id="message-completed" {% if transcription_status != 'completed' %}hidden{% endif %}>
+                                This transcription is finished! You can read and add tags.
+                            </span>
                         </span>
 
                         {% spaceless %}
