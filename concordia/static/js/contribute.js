@@ -289,10 +289,10 @@ function setupPage() {
                     data.transcriptionStatus == 'not_started')
             ) {
                 // If we're in transcribe mode and we don't have the reservation
-                $('.tx-status-display')
+                $('.transcription-status-display')
                     .children()
                     .attr('hidden', 'hidden')
-                    .filter('.tx-edit-conflict')
+                    .filter('#display-conflict')
                     .removeAttr('hidden');
             }
             firstEditorUpdate = false;
@@ -317,6 +317,21 @@ function setupPage() {
             $ocrForm
                 .find('input[name="supersedes"]')
                 .val(extra.responseData.id);
+            $('#transcription-status-display')
+                .children()
+                .attr('hidden', 'hidden')
+                .filter('#display-inprogress')
+                .removeAttr('hidden');
+            let messageChildren = $('#transcription-status-message').children();
+            messageChildren
+                .attr('hidden', 'hidden')
+                .filter('#message-inprogress')
+                .removeAttr('hidden');
+            messageChildren
+                .filter('#message-contributors')
+                .removeAttr('hidden')
+                .find('#message-contributors-num')
+                .html(extra.responseData.asset.contributors);
             $transcriptionEditor.trigger('update-ui-state');
         })
         .on('form-submit-failure', function (event, info) {
@@ -341,12 +356,24 @@ function setupPage() {
             method: 'POST',
             dataType: 'json',
         })
-            .done(function () {
-                $('.tx-status-display')
+            .done(function (data) {
+                $('#transcription-status-display')
                     .children()
                     .attr('hidden', 'hidden')
-                    .filter('.tx-submitted')
+                    .filter('#display-submitted')
                     .removeAttr('hidden');
+                let messageChildren = $(
+                    '#transcription-status-message',
+                ).children();
+                messageChildren
+                    .attr('hidden', 'hidden')
+                    .filter('#message-submitted')
+                    .removeAttr('hidden');
+                messageChildren
+                    .filter('#message-contributors')
+                    .removeAttr('hidden')
+                    .find('#message-contributors-num')
+                    .html(data.asset.contributors);
                 $('#successful-submission-modal')
                     .modal()
                     .on('hidden.bs.modal', function () {
@@ -570,6 +597,23 @@ function setupPage() {
                     .find('textarea[name="text"]')
                     .val(extra.responseData.text);
                 $ocrLoading.attr('hidden', 'hidden');
+                $('#transcription-status-display')
+                    .children()
+                    .attr('hidden', 'hidden')
+                    .filter('#display-inprogress')
+                    .removeAttr('hidden');
+                let messageChildren = $(
+                    '#transcription-status-message',
+                ).children();
+                messageChildren
+                    .attr('hidden', 'hidden')
+                    .filter('#message-inprogress')
+                    .removeAttr('hidden');
+                messageChildren
+                    .filter('#message-contributors')
+                    .removeAttr('hidden')
+                    .find('#message-contributors-num')
+                    .html(extra.responseData.asset.contributors);
                 $transcriptionEditor.trigger('update-ui-state');
                 $ocrForm
                     .find('input[name="supersedes"]')
