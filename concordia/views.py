@@ -1401,6 +1401,7 @@ def generate_ocr_transcription(request, *, asset_pk):
             "asset": {
                 "id": transcription.asset.id,
                 "status": transcription.asset.transcription_status,
+                "contributors": transcription.asset.get_contributor_count(),
             },
         },
         status=201,
@@ -1462,6 +1463,7 @@ def save_transcription(request, *, asset_pk):
             "asset": {
                 "id": transcription.asset.id,
                 "status": transcription.asset.transcription_status,
+                "contributors": transcription.asset.get_contributor_count(),
             },
         },
         status=201,
@@ -1512,6 +1514,7 @@ def submit_transcription(request, *, pk):
             "asset": {
                 "id": transcription.asset.id,
                 "status": transcription.asset.transcription_status,
+                "contributors": transcription.asset.get_contributor_count(),
             },
         },
         status=200,
@@ -1568,6 +1571,7 @@ def review_transcription(request, *, pk):
             "asset": {
                 "id": transcription.asset.id,
                 "status": transcription.asset.transcription_status,
+                "contributors": transcription.asset.get_contributor_count(),
             },
         },
         status=200,
