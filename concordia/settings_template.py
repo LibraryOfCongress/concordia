@@ -138,7 +138,6 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django_ratelimit.middleware.RatelimitMiddleware",
-    "flags.middleware.FlagConditionsMiddleware",
 ]
 
 RATELIMIT_VIEW = "concordia.views.ratelimit_view"
