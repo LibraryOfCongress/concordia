@@ -58,7 +58,6 @@ STATICFILES_DIRS = [
 NPM_FILE_PATTERNS = {
     "redom": ["dist/*"],
     "split.js": ["dist/*"],
-    "array-sort-by": ["dist/*"],
     "urijs": ["src/*"],
     "openseadragon": ["build/*"],
     "openseadragon-filtering": ["openseadragon-filtering.js"],
