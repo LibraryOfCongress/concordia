@@ -962,8 +962,5 @@ class Guide(models.Model):
     link_text = models.CharField(max_length=80)
     link_url = models.CharField(max_length=255, blank=True, null=True)
 
-    class Meta:
-        abstract = True
-
     def __str__(self):
         return self.title
