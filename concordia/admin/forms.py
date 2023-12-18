@@ -2,7 +2,7 @@ import bleach
 from django import forms
 from tinymce.widgets import TinyMCE
 
-from ..models import Campaign, Card, Project
+from ..models import Campaign, Card, Guide, Project
 
 FRAGMENT_ALLOWED_TAGS = {"br", "kbd", "span"} | bleach.sanitizer.ALLOWED_TAGS
 
@@ -103,3 +103,12 @@ class SimpleContentBlockAdminForm(forms.ModelForm):
             tags=BLOCK_ALLOWED_TAGS,
             attributes=ALLOWED_ATTRIBUTES,
         )
+
+
+class GuideAdminForm(forms.ModelForm):
+    class Meta:
+        model = Guide
+        widgets = {
+            "body": TinyMCE(),
+        }
+        fields = "__all__"
