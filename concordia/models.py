@@ -174,6 +174,33 @@ class UnlistedPublicationQuerySet(PublicationQuerySet):
     def unlisted(self):
         return self.filter(unlisted=True)
 
+    def get_next_transcription_campaign(self):
+        try:
+            return self.get(next_transcription_campaign=True)
+        except Campaign.DoesNotExist:
+            # If no campaign is configured, we use the latest to launch
+            return self.published().listed().latest("launch_date")
+        except Campaign.MultipleObjectsReturned:
+            return (
+                self.published()
+                .listed()
+                .filter(next_transcription_campaign=True)
+                .latest("launch_date")
+            )
+
+    def get_next_review_campaign(self):
+        try:
+            return self.get(next_review_campaign=True)
+        except Campaign.DoesNotExist:
+            return self.published().listed().latest("launch_date")
+        except Campaign.MultipleObjectsReturned:
+            return (
+                self.published()
+                .listed()
+                .filter(next_review_campaign=True)
+                .latest("launch_date")
+            )
+
 
 class Campaign(MetricsModelMixin("campaign"), models.Model):
     class Status(models.IntegerChoices):
@@ -186,6 +213,10 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
     published = models.BooleanField(default=False, blank=True, db_index=True)
     unlisted = models.BooleanField(default=False, blank=True, db_index=True)
     status = models.IntegerField(choices=Status.choices, default=Status.ACTIVE)
+    next_transcription_campaign = models.BooleanField(
+        default=False, blank=True, db_index=True
+    )
+    next_review_campaign = models.BooleanField(default=False, blank=True, db_index=True)
 
     ordering = models.IntegerField(
         default=0, help_text="Sort order override: lower values will be listed first"

@@ -14,7 +14,7 @@ from django.template import loader
 from django_registration.signals import user_activated, user_registered
 from flags.state import flag_enabled
 
-from ..models import Asset, Transcription, TranscriptionStatus
+from ..models import Asset, Campaign, Transcription, TranscriptionStatus
 from ..tasks import calculate_difficulty_values
 from .signals import reservation_obtained, reservation_released
 
@@ -176,3 +176,18 @@ def send_asset_reservation_message(
 @receiver(post_delete, sender=Asset)
 def remove_file_from_s3(sender, instance, using, **kwargs):
     instance.storage_image.delete(save=False)
+
+
+@receiver(post_save, sender=Campaign)
+def resolve_next_flags(sender, *, instance, **kwargs):
+    # We want to make sure only one campaign is ever set
+    # to be the campaign used for the "jump to a transcription"
+    # and "jump to a review" links
+    if instance.next_transcription_campaign:
+        sender.objects.filter(next_transcription_campaign=True).exclude(
+            pk=instance.pk
+        ).update(next_transcription_campaign=False)
+    if instance.next_review_campaign:
+        sender.objects.filter(next_review_campaign=True).exclude(pk=instance.pk).update(
+            next_review_campaign=False
+        )

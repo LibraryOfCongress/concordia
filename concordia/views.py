@@ -2010,12 +2010,10 @@ def filter_and_order_reviewable_assets(
 @never_cache
 @atomic
 def redirect_to_next_reviewable_asset(request):
-    campaign = Campaign.objects.published().listed().order_by("ordering")[0]
+    campaign = Campaign.objects.get_next_review_campaign()
     project_slug = request.GET.get("project", "")
     item_id = request.GET.get("item", "")
     asset_id = request.GET.get("asset", 0)
-
-    # FIXME: ensure the project belongs to the campaign
 
     if not request.user.is_authenticated:
         user = get_anonymous_user()
@@ -2039,11 +2037,10 @@ def redirect_to_next_reviewable_asset(request):
     )
 
 
-def find_transcribable_assets(campaign_counter, project_slug, item_id, asset_id):
-    campaigns = Campaign.objects.published().listed().order_by("ordering")
+def find_transcribable_assets(campaign, project_slug, item_id, asset_id):
     potential_assets = Asset.objects.select_for_update(skip_locked=True, of=("self",))
     potential_assets = potential_assets.filter(
-        item__project__campaign=campaigns[campaign_counter],
+        item__project__campaign=campaign,
         item__project__published=True,
         item__published=True,
         published=True,
@@ -2060,27 +2057,26 @@ def find_transcribable_assets(campaign_counter, project_slug, item_id, asset_id)
 @never_cache
 @atomic
 def redirect_to_next_transcribable_asset(request):
-    # Campaign is not specified, but project / item / asset may be
+    campaign = Campaign.objects.get_next_transcription_campaign()
+    project_slug = request.GET.get("project", "")
+    item_id = request.GET.get("item", "")
+    asset_id = request.GET.get("asset", 0)
+
     if not request.user.is_authenticated:
         user = get_anonymous_user()
     else:
         user = request.user
 
-    project_slug = request.GET.get("project", "")
-    item_id = request.GET.get("item", "")
-    asset_id = request.GET.get("asset", 0)
-
-    # FIXME: if the project is specified, select the campaign
-    # to which it belongs
-
-    potential_assets = None
-    campaign_counter = 0
-
-    while not potential_assets:
-        potential_assets = find_transcribable_assets(
-            campaign_counter, project_slug, item_id, asset_id
-        )
-        campaign_counter = campaign_counter + 1
+    potential_assets = Asset.objects.select_for_update(skip_locked=True, of=("self",))
+    potential_assets = potential_assets.filter(
+        item__project__campaign=campaign,
+        item__project__published=True,
+        item__published=True,
+        published=True,
+    )
+    potential_assets = filter_and_order_transcribable_assets(
+        potential_assets, project_slug, item_id, asset_id
+    )
 
     return redirect_to_next_asset(
         potential_assets, "transcribe", request, project_slug, user
