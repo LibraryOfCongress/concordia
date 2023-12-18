@@ -1,6 +1,5 @@
 {
     "devDependencies": {
-        "axe-cli": "^3.1.1",
         "child_process": "^1.0.2",
         "chromedriver": "^119.0.1",
         "eslint": "^8.46.0",
@@ -17,6 +16,7 @@
         "stylelint-value-no-unknown-custom-properties": "^5.0.0"
     },
     "dependencies": {
+        "@axe-core/cli": "^4.8.2",
         "@duetds/date-picker": "^1.4.0",
         "@fortawesome/fontawesome-free": "^5.15.1",
         "array-sort-by": "^1.2.1",
