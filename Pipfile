@@ -53,6 +53,7 @@ locust = "*"
 twisted = {extras = ["http2", "tls"], version = "*"}
 hiredis = "*"
 pyasn1 = "*"
+pyleniumio = "*"
 
 [dev-packages]
 invoke = "*"
