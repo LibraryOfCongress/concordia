@@ -1,5 +1,6 @@
 {
     "devDependencies": {
+        "@puppeteer/browsers": "^1.9.0",
         "child_process": "^1.0.2",
         "chromedriver": "^119.0.1",
         "eslint": "^8.46.0",

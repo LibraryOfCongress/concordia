@@ -106,8 +106,14 @@ jobs:
                   touch ./logs/concordia-celery.log
                   npm install
                   npx gulp build
+                  chromepath=$(npx @puppeteer/browsers install chrome@stable)
+                  chromepath=${chromepath#* }
+                  chromepath=${chromepath%/chrome}
+                  OLDPATH=$PATH
+                  PATH=$PATH:$chromepath
                   pipenv run ./manage.py collectstatic --no-input
                   pipenv run coverage run ./manage.py test
+                  PATH=$OLDPATH
               env:
                   PGPASSWORD: postgres
                   # The hostname used to communicate with the PostgreSQL service container
