@@ -109,7 +109,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.sites",
-    "django.contrib.staticfiles",
+    # Replaces "django.contrib.staticfiles",
+    "concordia.apps.ConcordiaStaticFilesConfig",
     "bootstrap4",
     "bittersweet",
     "concordia.apps.ConcordiaAppConfig",
@@ -137,7 +138,6 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django_ratelimit.middleware.RatelimitMiddleware",
-    "flags.middleware.FlagConditionsMiddleware",
 ]
 
 RATELIMIT_VIEW = "concordia.views.ratelimit_view"
@@ -396,10 +396,10 @@ TINYMCE_DEFAULT_CONFIG = {
     "content_css": "dark",
     "plugins": "link lists searchreplace wordcount",
     "browser_spellcheck": "true",
-    "toolbar1": "bold italic | numlist bullist | link | searchreplace wordcount",
+    "toolbar1": "bold italic | numlist bullist | link | hr | searchreplace wordcount",
     "selector": "textarea.tinymce",
     "referrer_policy": "origin",
 }
-TINYMCE_JS_URL = "https://cdn.tiny.cloud/1/rf486i5f1ww9m8191oolczn7f0ry61mzdtfwbu7maiiiv2kv/tinymce/6/tinymce.min.js"
-
 PYTESSERACT_ALLOWED_LANGUAGES = ["eng"]
+
+TINYMCE_JS_URL = "https://cdn.tiny.cloud/1/rf486i5f1ww9m8191oolczn7f0ry61mzdtfwbu7maiiiv2kv/tinymce/6/tinymce.min.js"

@@ -211,7 +211,14 @@ class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     prepopulated_fields = {"slug": ("title",)}
     raw_id_fields = ("card_family",)
     search_fields = ["title", "description"]
-    list_filter = ("published", "display_on_homepage", "unlisted", "status")
+    list_filter = (
+        "published",
+        "display_on_homepage",
+        "unlisted",
+        "status",
+        "next_transcription_campaign",
+        "next_review_campaign",
+    )
 
     actions = (publish_action, unpublish_action)
 

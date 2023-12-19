@@ -372,24 +372,24 @@
 
             <div id="editor-column" class="d-flex justify-content-between p-3 d-print-block flex-column">
                 <div class="flex-grow-1 d-flex d-print-block flex-column">
-                    <div class="tx-status-display">
-                        <h2 class="tx-submitted" {% if transcription_status != 'submitted' %}hidden{% endif %}>
+                    <div id="transcription-status-display">
+                        <h2 id="display-submitted" {% if transcription_status != 'submitted' %}hidden{% endif %}>
                             <span class="fas fa-list"></span>
                             Needs review
                         </h2>
-                        <h2 class="tx-completed" {% if transcription_status != 'completed' %}hidden{% endif %}>
+                        <h2 id="display-completed" {% if transcription_status != 'completed' %}hidden{% endif %}>
                             <span class="fas fa-check"></span>
                             Completed
                         </h2>
-                        <h2 class="tx-edit" {% if transcription_status != "not_started" %}hidden{% endif %}>
+                        <h2 id="display-notstarted" {% if transcription_status != "not_started" %}hidden{% endif %}>
                             <span class="fas fa-edit"></span>
                             Not started
                         </h2>
-                        <h2 class="tx-edit" {% if transcription_status != "in_progress" %}hidden{% endif %}>
+                        <h2 id="display-inprogress" {% if transcription_status != "in_progress" %}hidden{% endif %}>
                             <span class="fas fa-edit"></span>
                             In progress
                         </h2>
-                        <span class="tx-edit-conflict" hidden>
+                        <span id="display-conflict" hidden>
                             <span class="fas fa-exclamation-triangle"></span>
                             Another user is transcribing this page
                         </span>
@@ -399,28 +399,23 @@
                         {% csrf_token %}
                         <input type="hidden" name="supersedes" value="{{ transcription.pk|default:'' }}" />
 
-
-                        <div class="row justify-content-sm-between px-3">
-                            <span>
-                                {% if transcription_status == 'not_started' %}
-                                    Transcribe this page.
-                                {% else %}
-                                    <h2>Registered Contributors: <span class="font-weight-normal">{{ registered_contributors }}</span></h2>
-                                    {% if transcription_status == 'in_progress' %}
-                                        Someone started this transcription. Can you finish it?
-                                    {% elif transcription_status == 'submitted' %}
-                                        Check this transcription thoroughly. Accept if correct!
-                                    {% elif transcription_status == 'completed' %}
-                                        This transcription is finished! You can read and add tags.
-                                    {% else %}
-                                        Transcription
-                                    {% endif %}
-                                {% endif %}
+                        <span id="transcription-status-message">
+                            <h2 id="message-contributors" {% if transcription_status == 'not_started' %}hidden{% endif %}>
+                                Registered Contributors: <span id="message-contributors-num" class="font-weight-normal">{{ registered_contributors }}</span>
+                            </h2>
+                            <span id="message-notstarted" {% if transcription_status != 'not_started' %}hidden{% endif %}>
+                                Transcribe this page.
                             </span>
-                            <a class="align-self-end font-weight-bold" data-toggle="modal" data-target="#tutorial-popup" role="button">
-                                <u>Quick Tips</u>
-                            </a>
-                        </div>
+                            <span id="message-inprogress" {% if transcription_status != 'in_progress' %}hidden{% endif %}>
+                                Someone started this transcription. Can you finish it?
+                            </span>
+                            <span id="message-submitted" {% if transcription_status != 'submitted' %}hidden{% endif %}>
+                                Check this transcription thoroughly. Accept if correct!
+                            </span>
+                            <span id="message-completed" {% if transcription_status != 'completed' %}hidden{% endif %}>
+                                This transcription is finished! You can read and add tags.
+                            </span>
+                        </span>
 
                         {% spaceless %}
                             <div id="loading-container" class="pb-2">
@@ -525,12 +520,30 @@
                 <div class="d-flex align-items-center pl-1">Share this item: {% share_buttons current_asset_url asset.item.title %}</div>
                 <div class="btn-group align-items-center align-self-end">
                     <p class="ml-1 mr-2 my-0">Need help?</p>
+
                     <button id="instruction-button" class="btn btn-primary mx-1" type="button" data-toggle="collapse" data-target="#instruction-window" aria-expanded="false" aria-controls="instruction-window">
                         Quick Tips
                     </button>
+
                     <a class="btn btn-primary mx-1" href="https://ask.loc.gov/crowd" target="_blank" rel=noopener>
                         Contact us
                     </a>
+
+                    <div class="collapse" id="instruction-window">
+                        <button type="button" class="close pull-right" aria-label="Close" data-toggle="collapse" data-target="#instruction-window">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                        <div>
+                            <ul>
+                                <li>Transcribe original spelling, punctuation, word order, and any page numbers or catalog marks.</li>
+                                <li>Preserve line breaks except when a word breaks over a line or page. Then transcribe it on the line or page where it starts.</li>
+                                <li>Use brackets [ ] around deleted, illegible or partially legible text, and square brackets and asterisks around text in margins [ * * ].</li>
+                                <li>Transcribe any words or letters you can't identify as [?].</li>
+                                <li>Include insertions where you would read them in the text.</li>
+                            </ul>
+                            Find more detailed instructions in the <a href="{% url 'help-center' %}">Help Center</a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -695,52 +708,6 @@
         </div>
     </div>
     <div class="print-transcription-image d-none d-print-block"><img class="img-fluid" alt="Scanned image of the current content page" src="{% asset_media_url asset %}"></div>
-    {% if cards %}
-        <div id="tutorial-popup" class="modal" tabindex="-1" role="dialog">
-            <div class="modal-dialog modal-dialog-centered" role="document">
-                <div class="modal-content">
-                    <div class="modal-header border-bottom-0">
-                        <h4>Quick Tips</h4>
-                        <button type="button" class="close text-primary" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">x</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <div id="card-carousel" class="carousel slide" data-interval="false">
-                            <div class="carousel-inner">
-                                {% for card in cards %}
-                                    <div class="carousel-item pb-4 {% if forloop.first %} active {% endif %}">
-                                        {% if not forloop.first %}
-                                            <a id="previous-card" href="#card-carousel" role="button" data-slide="prev">
-                                                <strong><u><&nbsp;Back</u></strong>
-                                            </a>
-                                        {% endif %}
-                                        <div class="position-static d-flex flex-column justify-content-around">
-                                            {% if card.image %}
-                                                <img src="{{ card.image.url }}">
-                                            {% endif %}
-                                            <h3>{{ card.title }}</h3>
-                                            <p>{{ card.body_text|safe }}</p>
-                                        </div>
-                                        {% if not forloop.last %}
-                                            <a id="next-card" href="#card-carousel" data-slide="next">
-                                                <strong><u>Next&nbsp;></u></strong>
-                                            </a>
-                                        {% endif %}
-                                    </div>
-                                {% endfor %}
-                            </div>
-                            <ol class="carousel-indicators d-none d-lg-flex">
-                                {% for card in cards %}
-                                    <li data-target="#card-carousel" data-slide-to="{{ forloop.counter0 }}" {% if forloop.first %}class="active" {% endif %}></li>
-                                {% endfor %}
-                            </ol>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    {% endif %}
 {% endblock main_content %}
 
 {% block body_scripts %}
@@ -750,15 +717,14 @@
     <script src="{% static 'js/contribute.js' %}"></script>
     <script src="{% static 'js/asset-reservation.js' %}"></script>
     <script>
-        if (typeof(Storage) !== "undefined") {
-            if (!(window.screen.width < 1024 || window.screen.height < 768)) {
-                for(var i in localStorage)
-                {
-                    if (i.startsWith("banner-")) {
-                        if ($('#' + i).hasClass("alert")) {
-                            $('#' + i).attr("hidden", true);
-                        }
-                    }
+        if (
+            typeof(Storage) !== "undefined" &&
+            !(window.screen.width < 1024 || window.screen.height < 768)
+        ) {
+            for(var i in localStorage)
+            {
+                if ($('#' + i).hasClass("alert")) {
+                    $('#' + i).attr("hidden", true);
                 }
             }
         }
