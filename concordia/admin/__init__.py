@@ -36,6 +36,7 @@ from ..models import (
     Card,
     CardFamily,
     CarouselSlide,
+    Guide,
     Item,
     Project,
     Resource,
@@ -92,6 +93,7 @@ from .forms import (
     AdminItemImportForm,
     CampaignAdminForm,
     CardAdminForm,
+    GuideAdminForm,
     ProjectAdminForm,
     SanitizedDescriptionAdminForm,
 )
@@ -1008,3 +1010,8 @@ class CardFamilyAdmin(admin.ModelAdmin):
 
     class Media:
         js = ("admin/custom-inline.js",)
+
+
+@admin.register(Guide)
+class GuideAdmin(admin.ModelAdmin):
+    form = GuideAdminForm

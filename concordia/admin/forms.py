@@ -2,7 +2,7 @@ import nh3
 from django import forms
 from tinymce.widgets import TinyMCE
 
-from ..models import Campaign, Card, Project
+from ..models import Campaign, Card, Guide, Project
 
 FRAGMENT_ALLOWED_TAGS = {
     "a",
@@ -105,6 +105,7 @@ class ProjectAdminForm(SanitizedDescriptionAdminForm):
         widgets = {
             "description": TinyMCE(),
         }
+        fields = "__all__"
 
 
 class SimpleContentBlockAdminForm(forms.ModelForm):
@@ -121,5 +122,14 @@ class CardAdminForm(forms.ModelForm):
         model = Card
         widgets = {
             "body_text": TinyMCE(),
+        }
+        fields = "__all__"
+
+
+class GuideAdminForm(forms.ModelForm):
+    class Meta:
+        model = Guide
+        widgets = {
+            "body": TinyMCE(),
         }
         fields = "__all__"
