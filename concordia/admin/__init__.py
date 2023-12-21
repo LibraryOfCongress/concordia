@@ -725,6 +725,7 @@ class TranscriptionAdmin(admin.ModelAdmin):
         "updated_on",
         "accepted",
         "rejected",
+        "reviewed_by",
     )
     list_display_links = ("id", "asset")
 
