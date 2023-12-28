@@ -8,6 +8,9 @@
             <a class="view-related-objects" href="{% url 'admin:concordia_transcription_changelist' %}?user__id__exact={{ original.pk }}">
                 Transcriptions
             </a>
+            <a class="view-related-objects" href="{% url 'admin:concordia_transcription_changelist' %}?reviewed_by__id__exact={{ original.pk }}">
+                Reviews
+            </a>
         </li>
     {% endif %}
     {{ block.super }}
