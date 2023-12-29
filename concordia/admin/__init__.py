@@ -88,9 +88,9 @@ from .filters import (
 )
 from .forms import (
     AdminItemImportForm,
-    BleachedDescriptionAdminForm,
     CampaignAdminForm,
     ProjectAdminForm,
+    SanitizedDescriptionAdminForm,
     SimpleContentBlockAdminForm,
 )
 
@@ -374,7 +374,7 @@ class ResourceFileAdmin(admin.ModelAdmin):
 
 @admin.register(Topic)
 class TopicAdmin(admin.ModelAdmin):
-    form = BleachedDescriptionAdminForm
+    form = SanitizedDescriptionAdminForm
 
     list_display = (
         "id",

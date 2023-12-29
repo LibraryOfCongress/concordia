@@ -69,7 +69,7 @@ class AdminRedownloadImagesForm(forms.Form):
     )
 
 
-class BleachedDescriptionAdminForm(forms.ModelForm):
+class SanitizedDescriptionAdminForm(forms.ModelForm):
     def clean_description(self):
         return nh3.clean(
             self.cleaned_data["description"],
@@ -85,7 +85,7 @@ class BleachedDescriptionAdminForm(forms.ModelForm):
         )
 
 
-class CampaignAdminForm(BleachedDescriptionAdminForm):
+class CampaignAdminForm(SanitizedDescriptionAdminForm):
     class Meta:
         model = Campaign
         widgets = {
@@ -95,7 +95,7 @@ class CampaignAdminForm(BleachedDescriptionAdminForm):
         fields = "__all__"
 
 
-class ProjectAdminForm(BleachedDescriptionAdminForm):
+class ProjectAdminForm(SanitizedDescriptionAdminForm):
     class Meta:
         model = Project
         widgets = {
