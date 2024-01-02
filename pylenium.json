@@ -12,5 +12,15 @@
         "seleniumwire_enabled": false,
         "seleniumwire_options": {},
         "local_path": ""
-    }
+    },
+    "logging": {
+        "screenshots_on": true
+    },
+    "viewport": {
+        "maximize": true,
+        "width": 1440,
+        "height": 900,
+        "orientation": "portrait"
+    },
+    "customer": {}
 }
