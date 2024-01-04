@@ -206,6 +206,11 @@ class Card(models.Model):
     image = models.ImageField(upload_to="card_images", blank=True, null=True)
     title = models.CharField(max_length=80)
     body_text = models.TextField(blank=True)
+    created_on = models.DateTimeField(editable=False, auto_now_add=True)
+    campaign = models.ForeignKey(
+        "Campaign", on_delete=models.SET_NULL, blank=True, null=True
+    )
+    display_heading = models.CharField(max_length=80, blank=True, null=True)
 
     def __str__(self):
         return self.title
