@@ -944,6 +944,7 @@ class CampaignRetirementProgressAdmin(admin.ModelAdmin):
 @admin.register(Card)
 class CardAdmin(admin.ModelAdmin):
     form = CardAdminForm
+    list_display = ["title", "created_on"]
 
 
 class TutorialInline(admin.TabularInline):
