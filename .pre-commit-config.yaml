@@ -54,13 +54,13 @@ repos:
           - id: prettier
             files: \.(css|less|scss|ts|tsx|graphql|gql|json|js|jsx|md|yaml|yml)$
     - repo: https://github.com/pre-commit/mirrors-eslint
-      rev: v8.51.0
+      rev: v8.56.0
       hooks:
           - id: eslint
             additional_dependencies:
                 - eslint-plugin-prettier@^4.2.1
-                - eslint-plugin-unicorn@^26.0.0
-                - eslint@^7.17.0
+                - eslint-plugin-unicorn@^50.0.1
+                - eslint@^8.56.0
                 - prettier@^2.7.1
     - repo: https://github.com/awebdeveloper/pre-commit-stylelint
       rev: 0.0.2
