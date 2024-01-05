@@ -67,6 +67,18 @@ class CampaignListFilter(admin.SimpleListFilter):
         return queryset
 
 
+class CardCampaignListFilter(admin.SimpleListFilter):
+    """
+    Allow CMs to filter cards by campaign
+    """
+
+    def lookups(self, request, model_admin):
+        return [(campaign.pk, campaign.title) for campaign in Campaign.objects.all()]
+
+    def queryset(self, request, queryset):
+        return queryset
+
+
 class ProjectCampaignListFilter(CampaignListFilter):
     parameter_name = "campaign__id__exact"
     status_filter_parameter = "campaign__status"
