@@ -67,6 +67,7 @@ from .filters import (
     AssetCampaignListFilter,
     AssetCampaignStatusListFilter,
     AssetProjectListFilter2,
+    CardCampaignListFilter,
     ItemCampaignListFilter,
     ItemCampaignStatusListFilter,
     ItemProjectListFilter2,
@@ -945,6 +946,7 @@ class CampaignRetirementProgressAdmin(admin.ModelAdmin):
 class CardAdmin(admin.ModelAdmin):
     form = CardAdminForm
     list_display = ["title", "created_on"]
+    list_filter = (CardCampaignListFilter,)
 
 
 class TutorialInline(admin.TabularInline):

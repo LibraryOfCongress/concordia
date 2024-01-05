@@ -72,10 +72,23 @@ class CardCampaignListFilter(admin.SimpleListFilter):
     Allow CMs to filter cards by campaign
     """
 
+    title = _("campaign")
+    parameter_name = "campaign"
+
     def lookups(self, request, model_admin):
-        return [(campaign.pk, campaign.title) for campaign in Campaign.objects.all()]
+        return Campaign.objects.exclude(card_family__isnull=True).values_list(
+            "pk", "title"
+        )
 
     def queryset(self, request, queryset):
+        campaign_id = self.value()
+        if campaign_id:
+            card_family = Campaign.objects.get(pk=campaign_id).card_family
+            if card_family is None:
+                pks = []
+            else:
+                pks = card_family.cards.values_list("pk", flat=True)
+            queryset = queryset.filter(id__in=pks)
         return queryset
 
 
