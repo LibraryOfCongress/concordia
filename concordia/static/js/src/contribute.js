@@ -410,7 +410,7 @@ function setupPage() {
                 action: status,
             },
         })
-            .done(function () {
+            .done(function (data) {
                 if (status == 'reject') {
                     $.ajax({
                         url: window.location,
@@ -443,6 +443,24 @@ function setupPage() {
                             );
                         });
                 } else {
+                    $('#transcription-status-display')
+                        .children()
+                        .attr('hidden', 'hidden')
+                        .filter('#display-completed')
+                        .removeAttr('hidden');
+                    let messageChildren = $(
+                        '#transcription-status-message',
+                    ).children();
+                    console.log(messageChildren);
+                    messageChildren
+                        .attr('hidden', 'hidden')
+                        .filter('#message-completed')
+                        .removeAttr('hidden');
+                    messageChildren
+                        .filter('#message-contributors')
+                        .removeAttr('hidden')
+                        .find('#message-contributors-num')
+                        .html(data.asset.contributors);
                     $('#review-accepted-modal')
                         .modal()
                         .on('hidden.bs.modal', function () {
@@ -505,7 +523,7 @@ function setupPage() {
                     );
                 }).length;
 
-            if (!dupeCount) {
+            if (dupeCount == 0) {
                 var $newTag = $(
                     '\
                             <li class="btn btn-outline-dark btn-sm"> \
