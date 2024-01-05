@@ -4,7 +4,9 @@
         "remote_url": "",
         "wait_time": 10,
         "page_load_wait_time": 0,
-        "options": [],
+        "options": [
+            "headless"
+        ],
         "capabilities": {},
         "experimental_options": null,
         "extension_paths": [],
