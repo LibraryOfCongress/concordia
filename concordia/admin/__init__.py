@@ -91,11 +91,11 @@ from .filters import (
 )
 from .forms import (
     AdminItemImportForm,
-    BleachedDescriptionAdminForm,
     CampaignAdminForm,
     CardAdminForm,
     GuideAdminForm,
     ProjectAdminForm,
+    SanitizedDescriptionAdminForm,
 )
 
 
@@ -379,7 +379,7 @@ class ResourceFileAdmin(admin.ModelAdmin):
 
 @admin.register(Topic)
 class TopicAdmin(admin.ModelAdmin):
-    form = BleachedDescriptionAdminForm
+    form = SanitizedDescriptionAdminForm
 
     list_display = (
         "id",
@@ -730,6 +730,7 @@ class TranscriptionAdmin(admin.ModelAdmin):
         "updated_on",
         "accepted",
         "rejected",
+        "reviewed_by",
     )
     list_display_links = ("id", "asset")
 
