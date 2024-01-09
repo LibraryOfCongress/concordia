@@ -58,7 +58,6 @@ STATICFILES_DIRS = [
 NPM_FILE_PATTERNS = {
     "redom": ["dist/*"],
     "split.js": ["dist/*"],
-    "array-sort-by": ["dist/*"],
     "urijs": ["src/*"],
     "openseadragon": ["build/*"],
     "openseadragon-filtering": ["openseadragon-filtering.js"],
@@ -400,6 +399,9 @@ TINYMCE_DEFAULT_CONFIG = {
     "selector": "textarea.tinymce",
     "referrer_policy": "origin",
 }
+TINYMCE_JS_URL = "https://cdn.tiny.cloud/1/rf486i5f1ww9m8191oolczn7f0ry61mzdtfwbu7maiiiv2kv/tinymce/6/tinymce.min.js"
+
 PYTESSERACT_ALLOWED_LANGUAGES = ["eng"]
 
-TINYMCE_JS_URL = "https://cdn.tiny.cloud/1/rf486i5f1ww9m8191oolczn7f0ry61mzdtfwbu7maiiiv2kv/tinymce/6/tinymce.min.js"
+
+PYLENIUM_CONFIG = os.path.join(SITE_ROOT_DIR, "pylenium.json")

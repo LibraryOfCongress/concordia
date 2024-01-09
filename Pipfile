@@ -39,7 +39,7 @@ channels = {extras = ["daphne"], version = "*"}
 channels-redis = ">=4"
 more-itertools = "*"
 psycopg2 = ">=2.9"
-bleach = "*"
+nh3 = "*"
 django-admin-multiple-choice-list-filter = "*"
 django-npm = "*"
 fpdf2 = "==2.5.5"
@@ -53,6 +53,7 @@ locust = "*"
 twisted = {extras = ["http2", "tls"], version = "*"}
 hiredis = "*"
 pyasn1 = "*"
+pyleniumio = "*"
 
 [dev-packages]
 invoke = "*"
