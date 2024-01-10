@@ -243,6 +243,10 @@ urlpatterns = [
     path("tinymce/", include("tinymce.urls")),
     path("", include("django_prometheus_metrics.urls")),
     path("robots.txt", include("robots.urls")),
+    path(
+        "maintenance-mode/off/", views.maintenance_mode_off, name="maintenance_mode_off"
+    ),
+    path("maintenance-mode/on/", views.maintenance_mode_on, name="maintenance_mode_on"),
 ]
 
 if settings.DEBUG:

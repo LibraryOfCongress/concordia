@@ -57,6 +57,7 @@ from django.views.decorators.vary import vary_on_headers
 from django.views.generic import FormView, ListView, RedirectView, TemplateView
 from django_ratelimit.decorators import ratelimit
 from django_registration.backends.activation.views import RegistrationView
+from maintenance_mode.core import set_maintenance_mode
 from weasyprint import HTML
 
 from concordia.api_views import APIDetailView, APIListView
@@ -2494,3 +2495,34 @@ class HelpCenterSpanishRedirectView(RedirectView):
 
 
 # End of help-center views
+
+# Maintenance mode views
+
+
+def maintenance_mode_off(request):
+    """
+    Deactivate maintenance-mode and redirect to site root.
+    Only superusers are allowed to use this view.
+    """
+    if request.user.is_superuser:
+        set_maintenance_mode(False)
+
+    # Added cache busting to make sure maintenance mode banner is
+    # always displayed/removed
+    return HttpResponseRedirect("/?t={}".format(int(time())))
+
+
+def maintenance_mode_on(request):
+    """
+    Activate maintenance-mode and redirect to site root.
+    Only superusers are allowed to use this view.
+    """
+    if request.user.is_superuser:
+        set_maintenance_mode(True)
+
+    # Added cache busting to make sure maintenance mode banner is
+    # always displayed/removed
+    return HttpResponseRedirect("/?t={}".format(int(time())))
+
+
+# End of maintenance mode views

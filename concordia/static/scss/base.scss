@@ -1315,3 +1315,15 @@ table.table thead.border-y {
     white-space: nowrap !important;
     border: 0 !important;
 }
+
+/* Error pages */
+figure.error-figure {
+    img {
+        max-width: 75%;
+    }
+
+    figcaption {
+        padding-top: 5px;
+        font-size: 12px;
+    }
+}

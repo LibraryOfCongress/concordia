@@ -54,6 +54,7 @@ twisted = {extras = ["http2", "tls"], version = "*"}
 hiredis = "*"
 pyasn1 = "*"
 pyleniumio = "*"
+django-maintenance-mode = "*"
 
 [dev-packages]
 invoke = "*"
