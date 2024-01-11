@@ -112,6 +112,7 @@ INSTALLED_APPS = [
     "concordia.apps.ConcordiaStaticFilesConfig",
     "bootstrap4",
     "bittersweet",
+    "maintenance_mode",
     "concordia.apps.ConcordiaAppConfig",
     "exporter",
     "importer",
@@ -137,6 +138,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django_ratelimit.middleware.RatelimitMiddleware",
+    "maintenance_mode.middleware.MaintenanceModeMiddleware",
 ]
 
 RATELIMIT_VIEW = "concordia.views.ratelimit_view"
@@ -156,6 +158,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "django.template.context_processors.media",
+                "maintenance_mode.context_processors.maintenance_mode",
                 # Concordia
                 "concordia.context_processors.system_configuration",
                 "concordia.context_processors.site_navigation",
@@ -336,10 +339,6 @@ sentry_sdk.init(
     integrations=[DjangoIntegration()],
 )
 
-# When the MAINTENANCE_MODE setting is true, this template will be used to
-# generate a 503 response:
-MAINTENANCE_MODE_TEMPLATE = "maintenance-mode.html"
-
 # Names of special django.auth Groups
 COMMUNITY_MANAGER_GROUP_NAME = "Community Managers"
 NEWSLETTER_GROUP_NAME = "Newsletter"
@@ -405,3 +404,8 @@ PYTESSERACT_ALLOWED_LANGUAGES = ["eng"]
 
 
 PYLENIUM_CONFIG = os.path.join(SITE_ROOT_DIR, "pylenium.json")
+
+MAINTENANCE_MODE_STATE_BACKEND = "maintenance_mode.backends.CacheBackend"
+MAINTENANCE_MODE_IGNORE_ADMIN_SITE = True
+MAINTENANCE_MODE_IGNORE_STAFF = True
+MAINTENANCE_MODE_IGNORE_SUPERUSER = True

@@ -1,0 +1,36 @@
+{% extends "error.html" %}
+
+{% load staticfiles %}
+
+{% block full_title %}503 Error{% endblock full_title %}
+
+{% block error_message %}
+    <h1>We're experiencing technical difficulties.</h1>
+    <p>
+        But we're working on it and we should be back soon. Please try again later.
+    </p>
+    <figure class="error-figure">
+        <img src="{% static 'img/503.jpg' %}" />
+        <figcaption>
+            <strong>Operating a hand drill at Vultee-Nashville, woman is working on a "Vengeance" dive bomber, Tennessee, February 1943.</strong><br />
+            Palmer, Alfred T., photographer. <a target="_blank" href="http://hdl.loc.gov/loc.pnp/fsac.1a35371" rel=noopener>http://hdl.loc.gov/loc.pnp/fsac.1a35371</a></figcaption>
+    </figure>
+
+    <nav>
+        <ul class="nav justify-content-center">
+            {% if request and request.META.HTTP_REFERER %}
+                <li class="nav-item">
+                    <a
+                        class="nav-link"
+                        href="{{ request.META.HTTP_REFERER }}"
+                    >
+                        &laquo; Go Back
+                    </a>
+                </li>
+            {% endif %}
+            <li class="nav-item">
+                <a class="nav-link" href="/">Go Home &raquo;</a>
+            </li>
+        </ul>
+    </nav>
+{% endblock error_message %}
