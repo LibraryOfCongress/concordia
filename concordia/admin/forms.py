@@ -36,12 +36,12 @@ BLOCK_ALLOWED_TAGS = FRAGMENT_ALLOWED_TAGS | {
 }
 
 ALLOWED_ATTRIBUTES = {
-    "a": ["class", "id", "href", "title"],
-    "abbr": ["title"],
-    "acronym": ["title"],
-    "div": ["class", "id"],
-    "span": ["class", "id"],
-    "p": ["class", "id"],
+    "a": {"class", "id", "href", "title"},
+    "abbr": {"title"},
+    "acronym": {"title"},
+    "div": {"class", "id"},
+    "span": {"class", "id"},
+    "p": {"class", "id"},
 }
 
 
@@ -70,6 +70,10 @@ class AdminRedownloadImagesForm(forms.Form):
 
 
 class SanitizedDescriptionAdminForm(forms.ModelForm):
+    class Meta:
+        model = Campaign
+        fields = "__all__"
+
     def clean_description(self):
         return nh3.clean(
             self.cleaned_data["description"],
@@ -95,7 +99,7 @@ class CardAdminForm(forms.ModelForm):
 
 
 class CampaignAdminForm(SanitizedDescriptionAdminForm):
-    class Meta:
+    class Meta(SanitizedDescriptionAdminForm.Meta):
         model = Campaign
         widgets = {
             "short_description": TinyMCE(),
@@ -105,12 +109,11 @@ class CampaignAdminForm(SanitizedDescriptionAdminForm):
 
 
 class ProjectAdminForm(SanitizedDescriptionAdminForm):
-    class Meta:
+    class Meta(SanitizedDescriptionAdminForm.Meta):
         model = Project
         widgets = {
             "description": TinyMCE(),
         }
-        fields = "__all__"
 
 
 class SimpleContentBlockAdminForm(forms.ModelForm):
