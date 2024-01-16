@@ -421,9 +421,9 @@
                                 <a class="font-weight-bold" data-toggle="modal" data-target="#tutorial-popup" role="button">
                                     <u>Quick Tips</u>
                                 </a>
-                                <button class="btn btn-primary mx-1" type="button" data-bs-toggle="offcanvas" data-bs-target="#guide" aria-controls="#guide">How to Guide</button>
-                                <div class="offcanvas offcanvas-start" tabindex="-1" id="guide">
-                                    <div class="offcanvas-body">
+                                <button class="btn btn-primary mx-1" type="button" onclick="openOffcanvas()">How to Guide</button>
+                                <div class="sidebar" id="guide">
+                                    <div>
                                         {% for guide in guides %}
                                             <a class="font-weight-bold">{{ guide.title }}</a>
                                         {% endfor %}
@@ -1155,5 +1155,13 @@
         thresholdRange.addEventListener('input', function(){
             thresholdNumber.value = thresholdRange.value;
         });
+    </script>
+    <script>
+        function openOffcanvas() {
+            document.getElementById("guide").style.width = "250px;"
+        }
+        function closeOffcanvas() {
+            document.getElementById("guide").style.width = "0%";
+        }
     </script>
 {% endblock body_scripts %}
