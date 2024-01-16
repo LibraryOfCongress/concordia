@@ -89,7 +89,7 @@ class SanitizedDescriptionAdminForm(forms.ModelForm):
         )
 
 
-class CampaignAdminForm(forms.ModelForm):
+class CampaignAdminForm(SanitizedDescriptionAdminForm):
     class Meta(SanitizedDescriptionAdminForm.Meta):
         model = Campaign
         widgets = {
@@ -105,7 +105,6 @@ class ProjectAdminForm(SanitizedDescriptionAdminForm):
         widgets = {
             "description": TinyMCE(),
         }
-        fields = "__all__"
 
 
 class SimpleContentBlockAdminForm(forms.ModelForm):
