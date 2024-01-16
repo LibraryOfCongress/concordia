@@ -423,11 +423,20 @@
                                 </a>
                                 <button class="btn btn-primary mx-1" type="button" onclick="openOffcanvas()">How to Guide</button>
                                 <div class="sidebar" id="guide">
-                                    <div>
+                                    <ul class="nav flex-column">
+                                        <li class="nav-item">
+                                            <a>How to Guide</a>
+                                            <span class="fas fa-times"></span>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a>About this Campaign</a>
+                                        </li>
                                         {% for guide in guides %}
-                                            <a class="font-weight-bold">{{ guide.title }}</a>
+                                            <li class="nav-item">
+                                                <a class="nav-link active">{{ guide.title }}</a>
+                                            </li>
                                         {% endfor %}
-                                    </div>
+                                    </ul>
                                 </div>
                             </div>
                         </div>
@@ -1158,7 +1167,8 @@
     </script>
     <script>
         function openOffcanvas() {
-            document.getElementById("guide").style.width = "250px;"
+            var guide = document.getElementById("guide");
+            guide.style.width = "450px";
         }
         function closeOffcanvas() {
             document.getElementById("guide").style.width = "0%";
