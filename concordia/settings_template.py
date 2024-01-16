@@ -138,7 +138,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django_ratelimit.middleware.RatelimitMiddleware",
-    "maintenance_mode.middleware.MaintenanceModeMiddleware",
+    "concordia.middleware.MaintenanceModeMiddleware",
 ]
 
 RATELIMIT_VIEW = "concordia.views.ratelimit_view"
@@ -406,8 +406,6 @@ PYLENIUM_CONFIG = os.path.join(SITE_ROOT_DIR, "pylenium.json")
 
 MAINTENANCE_MODE_STATE_BACKEND = "maintenance_mode.backends.CacheBackend"
 MAINTENANCE_MODE_IGNORE_ADMIN_SITE = True
-MAINTENANCE_MODE_IGNORE_STAFF = True
-MAINTENANCE_MODE_IGNORE_SUPERUSER = True
 MAINTENANCE_MODE_IGNORE_URLS = (
     "/healthz*",
     "/metrics*",
