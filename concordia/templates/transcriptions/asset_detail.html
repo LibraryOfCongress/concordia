@@ -417,9 +417,19 @@
                                     This transcription is finished! You can read and add tags.
                                 </span>
                             </span>
-                            <a class="align-self-end font-weight-bold" data-toggle="modal" data-target="#tutorial-popup" role="button">
-                                <u>Quick Tips</u>
-                            </a>
+                            <div class="align-items-center align-self-end btn-group">
+                                <a class="font-weight-bold" data-toggle="modal" data-target="#tutorial-popup" role="button">
+                                    <u>Quick Tips</u>
+                                </a>
+                                <button class="btn btn-primary mx-1" type="button" data-bs-toggle="offcanvas" data-bs-target="#guide" aria-controls="#guide">How to Guide</button>
+                                <div class="offcanvas offcanvas-start" tabindex="-1" id="guide">
+                                    <div class="offcanvas-body">
+                                        {% for guide in guides %}
+                                            <a class="font-weight-bold">{{ guide.title }}</a>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         {% spaceless %}
