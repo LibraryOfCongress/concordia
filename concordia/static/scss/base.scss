@@ -1050,11 +1050,22 @@ $card-progress-height: 12px;
     overflow-x: hidden; /* Disable horizontal scroll */
     padding-top: 60px; /* Place content 60px from the top */
     transition: 0.5s; /* 0.5 second transition effect to slide in the sidebar */
-    border-left-width: 1px;
+    background-color: $white;
+    border-left: thick solid $blue;
 }
 
-.sidebar a {
+.sidebar li {
+    border-bottom: thin solid $gray-400;
+}
+
+.sidebar li a {
+    font-size: $font-size-base * 1.25;
     font-weight: 700;
+    text-decoration: underline;
+}
+
+.sidebar .close {
+    font-size: $font-size-base * 0.875;
 }
 
 /*
