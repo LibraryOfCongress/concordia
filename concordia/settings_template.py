@@ -162,6 +162,7 @@ TEMPLATES = [
                 # Concordia
                 "concordia.context_processors.system_configuration",
                 "concordia.context_processors.site_navigation",
+                "concordia.context_processors.maintenance_mode_frontend_available",
             ],
             "libraries": {
                 "staticfiles": "django.templatetags.static",
@@ -406,7 +407,4 @@ PYLENIUM_CONFIG = os.path.join(SITE_ROOT_DIR, "pylenium.json")
 
 MAINTENANCE_MODE_STATE_BACKEND = "maintenance_mode.backends.CacheBackend"
 MAINTENANCE_MODE_IGNORE_ADMIN_SITE = True
-MAINTENANCE_MODE_IGNORE_URLS = (
-    "/healthz*",
-    "/metrics*",
-)
+MAINTENANCE_MODE_IGNORE_URLS = ("/healthz*", "/metrics*", "/maintenance-mode*")

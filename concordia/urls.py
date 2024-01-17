@@ -247,6 +247,16 @@ urlpatterns = [
         "maintenance-mode/off/", views.maintenance_mode_off, name="maintenance_mode_off"
     ),
     path("maintenance-mode/on/", views.maintenance_mode_on, name="maintenance_mode_on"),
+    path(
+        "maintenance-mode/frontend/available",
+        views.maintenance_mode_frontend_available,
+        name="maintenance_mode_frontend_available",
+    ),
+    path(
+        "maintenance-mode/frontend/unavailable",
+        views.maintenance_mode_frontend_unavailable,
+        name="maintenance_mode_frontend_unavailable",
+    ),
 ]
 
 if settings.DEBUG:

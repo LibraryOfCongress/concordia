@@ -17,14 +17,8 @@ def _need_maintenence_frontend(request):
 
 def need_maintenance_response(request):
     value = base_need_maintenance_response(request)
-    print("base")
-    print(value)
     if value is True:
         value = _need_maintenence_frontend(request)
-        print("frontend")
-        print(value)
-        if isinstance(value, bool):
-            return value
-    elif value is False:
+    if isinstance(value, bool):
         return value
     return True
