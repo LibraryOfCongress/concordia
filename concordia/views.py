@@ -24,6 +24,7 @@ from django.contrib.auth.views import (
 from django.contrib.messages import get_messages
 from django.contrib.sites.shortcuts import get_current_site
 from django.core import signing
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.mail import EmailMultiAlternatives, send_mail
 from django.core.paginator import Paginator
@@ -2533,6 +2534,30 @@ def maintenance_mode_on(request):
 
     # Added cache busting to make sure maintenance mode banner is
     # always displayed/removed
+    return HttpResponseRedirect("/?t={}".format(int(time())))
+
+
+def maintenance_mode_frontend_available(request):
+    """
+    Allow staff and superusers to use the front-end
+    while maintenance mode is active
+    Only superusers are allowed to use this view.
+    """
+    if request.user.is_superuser:
+        cache.set("maintenance_mode_frontend_available", True, None)
+
+    return HttpResponseRedirect("/?t={}".format(int(time())))
+
+
+def maintenance_mode_frontend_unavailable(request):
+    """
+    Disallow all use of the front-end while maintenance
+    mode is active
+    Only superusers are allowed to use this view.
+    """
+    if request.user.is_superuser:
+        cache.set("maintenance_mode_frontend_available", False, None)
+
     return HttpResponseRedirect("/?t={}".format(int(time())))
 
 

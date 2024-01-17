@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.cache import cache
 
 
 def system_configuration(request):
@@ -26,3 +27,8 @@ def site_navigation(request):
         data["PATH_LEVEL_%d" % i] = component
 
     return data
+
+
+def maintenance_mode_frontend_available(request):
+    value = cache.get("maintenance_mode_frontend_available", False)
+    return {"maintenance_mode_frontend_available": value}

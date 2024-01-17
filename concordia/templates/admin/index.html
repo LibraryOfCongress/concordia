@@ -19,6 +19,11 @@
                     {% else %}
                         <li><a href="{% url 'maintenance_mode_on' %}">Enable Maintenance Mode</a></li>
                     {% endif %}
+                    {% if maintenance_mode_frontend_available %}
+                        <li><a href="{% url 'maintenance_mode_frontend_unavailable' %}">Disable Front-end During Maintenance Mode</a></li>
+                    {% else %}
+                        <li><a href="{% url 'maintenance_mode_frontend_available' %}">Enable Front-end During Maintenance Mode</a></li>
+                    {% endif %}
                 {% endif %}
             </ul>
         </div>
