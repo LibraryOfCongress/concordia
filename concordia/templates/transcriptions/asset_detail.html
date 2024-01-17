@@ -422,34 +422,48 @@
                                     <u>Quick Tips</u>
                                 </a>
                                 <button class="btn btn-primary mx-1" type="button" onclick="openOffcanvas()">How to Guide</button>
-                                <div class="sidebar tab-content" id="guide">
-                                    <div class="tab-pane fade show active" id="guide-nav">
-                                        <ul class="nav flex-column">
-                                            <li class="nav-item bg-primary text-white py-1">
-                                                <a>How to Guide</a>
-                                                <button type="button" class="close text-white" onclick="closeOffcanvas()">
-                                                    <span class="fas fa-times"></span>
-                                                </button>
-                                            </li>
-                                            <li class="nav-item">
-                                                <a class="nav-link active">About this Campaign</a>
-                                            </li>
-                                            {% for guide in guides %}
-                                                <li class="nav-item">
-                                                    <a class="nav-link active guide-pill" href="#pane-{{ forloop.counter }}" onclick="showPane('pane-{{ forloop.counter }}')">
-                                                        {{ guide.title }}
-                                                    </a>
+                                <div class="sidebar" id="guide-carousel" class="carousel carousel-fade" data-interval="false">
+                                    <div class="carousel-inner">
+                                        <div class="carousel-item active" id="guide-nav">
+                                            <ul class="nav flex-column">
+                                                <li class="nav-item bg-primary text-white py-1">
+                                                    <a>How to Guide</a>
+                                                    <button type="button" class="close text-white" onclick="closeOffcanvas()">
+                                                        <span class="fas fa-times"></span>
+                                                    </button>
                                                 </li>
-                                            {% endfor %}
-                                        </ul>
-                                    </div>
-                                    {% for guide in guides %}
-                                        <div class="tab-pane fade" id="pane-{{ forloop.counter }}">
-                                            <h6><button onclick="hidePane('pane-{{ forloop.counter }}')"><i class="fa-solid fa-bars"></i></button> < How to Guide ></h6>
-                                            <h6>{{ guide.title }}</h6>
-                                            {{ guide.body|safe }}
+                                                <li class="nav-item">
+                                                    <a class="nav-link active">About this Campaign</a>
+                                                </li>
+                                                {% for guide in guides %}
+                                                    <li class="nav-item">
+                                                        <a class="nav-link active guide-pill" href="#pane-{{ forloop.counter }}" onclick="showPane('pane-{{ forloop.counter }}')">
+                                                            {{ guide.title }}
+                                                        </a>
+                                                    </li>
+                                                {% endfor %}
+                                            </ul>
                                         </div>
-                                    {% endfor %}
+                                        <div class="carousel-item">
+                                            About this Campaign
+                                        </div>
+                                        {% for guide in guides %}
+                                            <div class="carousel-item" id="pane-{{ forloop.counter }}">
+                                                <h6>
+                                                    <button onclick="hidePane('pane-{{ forloop.counter }}')">
+                                                        <i class="fa-solid fa-bars"></i>
+                                                    </button>
+                                                    <a id="previous-guide" href="#guide-carousel" data-slide="prev"><</a>
+                                                    How to Guide
+                                                    {% if not forloop.last %}
+                                                        <a id="next-guide" href="#guide-carousel" data-slide="next">></a>
+                                                    {% endif %}
+                                                </h6>
+                                                <h6>{{ guide.title }}</h6>
+                                                {{ guide.body|safe }}
+                                            </div>
+                                        {% endfor %}
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1180,7 +1194,7 @@
     </script>
     <script>
         function openOffcanvas() {
-            var guide = document.getElementById("guide");
+            var guide = document.getElementById("guide-carousel");
             guide.style.width = "450px";
         }
         function closeOffcanvas() {
