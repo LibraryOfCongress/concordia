@@ -42,12 +42,10 @@ jobs:
 
             - name: Checkout repository
               uses: actions/checkout@v4
-
-            - name: Get history and tags for SCM versioning to work
-              run: |
-                  git fetch --prune --unshallow
-                  git fetch --depth=1 origin +refs/tags/*:refs/tags/*
-                  git describe --tags
+              with:
+                  ref: release
+                  fetch-depth: 0
+                  fetch-tags: 'true'
 
             - name: Set up Python 3.10
               uses: actions/setup-python@v4
@@ -93,8 +91,6 @@ jobs:
                   CLUSTER: ${{ secrets.CLUSTER }}
                   TARGET_SERVICE: ${{ secrets.TARGET_SERVICE }}
               run: |
-                  echo "version number: $version_number"
-
                   docker build -t concordia .
                   docker tag concordia:latest $REGISTRY/concordia:$version_number
                   docker tag concordia:latest $REGISTRY/concordia:$IMAGE_TAG
