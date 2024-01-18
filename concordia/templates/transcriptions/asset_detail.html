@@ -422,7 +422,7 @@
                                     <u>Quick Tips</u>
                                 </a>
                                 <button class="btn btn-primary mx-1" type="button" onclick="openOffcanvas()">How to Guide</button>
-                                <div class="sidebar" id="guide-carousel" class="carousel carousel-fade" data-interval="false">
+                                <div class="carousel carousel-fade sidebar slide" id="guide-carousel" data-interval="false">
                                     <div class="carousel-inner">
                                         <div class="carousel-item active" id="guide-nav">
                                             <ul class="nav flex-column">
@@ -437,7 +437,7 @@
                                                 </li>
                                                 {% for guide in guides %}
                                                     <li class="nav-item">
-                                                        <a class="nav-link active guide-pill" href="#pane-{{ forloop.counter }}" onclick="showPane('pane-{{ forloop.counter }}')">
+                                                        <a data-target="#guide-carousel" data-slide-to="{{ forloop.counter|add:2 }}" class="nav-link" href="#pane-{{ forloop.counter }}">
                                                             {{ guide.title }}
                                                         </a>
                                                     </li>
@@ -448,18 +448,20 @@
                                             About this Campaign
                                         </div>
                                         {% for guide in guides %}
-                                            <div class="carousel-item" id="pane-{{ forloop.counter }}">
-                                                <h6>
-                                                    <button onclick="hidePane('pane-{{ forloop.counter }}')">
-                                                        <i class="fa-solid fa-bars"></i>
-                                                    </button>
-                                                    <a id="previous-guide" href="#guide-carousel" data-slide="prev"><</a>
-                                                    How to Guide
+                                            <div class="carousel-item container" id="pane-{{ forloop.counter }}">
+                                                <div class="bg-primary px-2 py-3 row text-white">
+                                                    <a data-target="#guide-carousel" data-slide-to="0">
+                                                        <i class="fas fa-solid fa-bars"></i>
+                                                    </a>
+                                                    <h3 class="px-2">How to Guide</h3>
+                                                </div>
+                                                <div class="border-bottom justify-content-center mb-3 py-3 row">
+                                                    <a class="font-weight-bold mr-3" id="previous-guide" href="#guide-carousel" data-slide="prev"><</a>
+                                                    <h3>{{ guide.title }}</h3>
                                                     {% if not forloop.last %}
-                                                        <a id="next-guide" href="#guide-carousel" data-slide="next">></a>
+                                                        <a class="font-weight-bold ml-3" id="next-guide" href="#guide-carousel" data-slide="next">></a>
                                                     {% endif %}
-                                                </h6>
-                                                <h6>{{ guide.title }}</h6>
+                                                </div>
                                                 {{ guide.body|safe }}
                                             </div>
                                         {% endfor %}
@@ -1198,7 +1200,7 @@
             guide.style.width = "450px";
         }
         function closeOffcanvas() {
-            document.getElementById("guide").style.width = "0%";
+            document.getElementById("guide-carousel").style.width = "0%";
         }
 
         function showPane(elementId) {
