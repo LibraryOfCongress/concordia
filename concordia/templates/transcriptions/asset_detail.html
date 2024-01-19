@@ -421,7 +421,7 @@
                                 <a class="font-weight-bold" data-toggle="modal" data-target="#tutorial-popup" role="button">
                                     <u>Quick Tips</u>
                                 </a>
-                                <div class="carousel carousel-fade sidebar slide" id="guide-carousel" data-interval="false">
+                                <div class="carousel carousel-fade sidebar" id="guide-carousel" data-interval="false">
                                     <div class="carousel-inner">
                                         <div class="carousel-item active" id="guide-nav">
                                             <ul class="nav flex-column">
@@ -432,7 +432,7 @@
                                                     </button>
                                                 </li>
                                                 <li class="nav-item">
-                                                    <a class="nav-link active" data-target="#guide-carousel" data-slide-to="1">About this Campaign</a>
+                                                    <a class="nav-link" data-target="#guide-carousel" data-slide-to="1" href="#">About this Campaign</a>
                                                 </li>
                                                 {% for guide in guides %}
                                                     <li class="nav-item">
@@ -443,7 +443,7 @@
                                                 {% endfor %}
                                             </ul>
                                         </div>
-                                        <div class="carousel-item">
+                                        <div class="carousel-item container">
                                             <div class="bg-primary px-2 py-3 row text-white">
                                                 <a data-target="#guide-carousel" data-slide-to="0">
                                                     <i class="fas fa-solid fa-bars"></i>
