@@ -462,7 +462,16 @@
                                                 <h4>About this project</h4>
                                                 {{ asset.item.project.description|safe }}
                                             {% endif %}
-                                            <h4>Helpful Links</h4>
+                                            {% if asset.item.project.campaign.resource_set.related_links %}
+                                                <h4>Helpful Links</h4>
+                                                {% for resource in campaign.resource_set.related_links %}
+                                                    <li class="mb-3">
+                                                        <a href="{{ resource.resource_url }}" target="_blank" rel=noopener>
+                                                            {{ resource.title }}{% if 'loc.gov' in resource.resource_url   %} <i class="fa fa-external-link-alt"></i></a></li>{% endif %}
+                                                        </a>
+                                                    </li>
+                                                {% endfor %}
+                                            {% endif %}
                                         </div>
                                         {% for guide in guides %}
                                             <div class="carousel-item container" id="pane-{{ forloop.counter }}">
