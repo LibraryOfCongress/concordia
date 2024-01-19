@@ -432,7 +432,7 @@
                                                     </button>
                                                 </li>
                                                 <li class="nav-item">
-                                                    <a class="nav-link active">About this Campaign</a>
+                                                    <a class="nav-link active" data-target="#guide-carousel" data-slide-to="1">About this Campaign</a>
                                                 </li>
                                                 {% for guide in guides %}
                                                     <li class="nav-item">
@@ -444,7 +444,25 @@
                                             </ul>
                                         </div>
                                         <div class="carousel-item">
-                                            About this Campaign
+                                            <div class="bg-primary px-2 py-3 row text-white">
+                                                <a data-target="#guide-carousel" data-slide-to="0">
+                                                    <i class="fas fa-solid fa-bars"></i>
+                                                </a>
+                                                <h3 class="px-2">How to Guide</h3>
+                                            </div>
+                                            <div class="border-bottom justify-content-center mb-3 py-3 row">
+                                                <h3>About this Campaign</h3>
+                                                <a class="font-weight-bold ml-3" id="next-guide" href="#guide-carousel" data-slide="next">></a>
+                                            </div>
+                                            {% if asset.item.project.campaign.long_description %}
+                                                <h4>About this campaign</h4>
+                                                {{ asset.item.project.campaign.long_description|safe }}
+                                            {% endif %}
+                                            {% if asset.item.project.description %}
+                                                <h4>About this project</h4>
+                                                {{ asset.item.project.description|safe }}
+                                            {% endif %}
+                                            <h4>Helpful Links</h4>
                                         </div>
                                         {% for guide in guides %}
                                             <div class="carousel-item container" id="pane-{{ forloop.counter }}">
@@ -1200,9 +1218,12 @@
         function openOffcanvas() {
             var guide = document.getElementById("guide-carousel");
             guide.style.width = "450px";
+            document.getElementById("open-guide").style.display = "none";
+
         }
         function closeOffcanvas() {
             document.getElementById("guide-carousel").style.width = "0%";
+            document.getElementById("open-guide").style.display = "block";
         }
 
         function showPane(elementId) {
