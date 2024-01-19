@@ -421,12 +421,11 @@
                                 <a class="font-weight-bold" data-toggle="modal" data-target="#tutorial-popup" role="button">
                                     <u>Quick Tips</u>
                                 </a>
-                                <button class="btn btn-primary mx-1" type="button" onclick="openOffcanvas()">How to Guide</button>
                                 <div class="carousel carousel-fade sidebar slide" id="guide-carousel" data-interval="false">
                                     <div class="carousel-inner">
                                         <div class="carousel-item active" id="guide-nav">
                                             <ul class="nav flex-column">
-                                                <li class="nav-item bg-primary text-white py-1">
+                                                <li class="nav-item bg-primary text-white px-3 py-1">
                                                     <a>How to Guide</a>
                                                     <button type="button" class="close text-white" onclick="closeOffcanvas()">
                                                         <span class="fas fa-times"></span>
@@ -476,9 +475,12 @@
                                     <span class="sr-only">Loading...</span>
                                 </div>
                             </div>
-                            <textarea readonly class="form-control w-100 rounded flex-grow-1 d-print-none" name="text" id="transcription-input" placeholder="{% if transcription_status == 'not_started' or transcription_status == 'in_progress' %}Go ahead, start typing. You got this!{% else %}Nothing to transcribe{% endif %}" aria-label="Transcription input">
-                                {{ transcription.text }}
-                            </textarea>
+                            <div class="flex-grow-1 row">
+                                <textarea readonly class="form-control rounded d-print-none" name="text" id="transcription-input" placeholder="{% if transcription_status == 'not_started' or transcription_status == 'in_progress' %}Go ahead, start typing. You got this!{% else %}Nothing to transcribe{% endif %}" aria-label="Transcription input">
+                                    {{ transcription.text }}
+                                </textarea>
+                                <button id="open-guide" class="btn btn-primary" type="button" onclick="openOffcanvas()">How to Guide</button>
+                            </div>
 
                             <div class="print-transcription-text" aria-hidden="true" style="display: none;">{{ transcription.text }}</div>
 

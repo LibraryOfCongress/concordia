@@ -1039,6 +1039,18 @@ $card-progress-height: 12px;
 }
 
 /* How to Guide */
+#open-guide {
+    transform: rotate(-90deg) translateY(-50%);
+    position: absolute;
+    border-radius: 0;
+    right: 0; /* -52px; */
+    filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=3);
+    font-size: 0.75rem;
+    margin-right: -55px;
+    margin-top: 39px;
+    width: 110px;
+}
+
 .sidebar {
     height: 580px; /* 100% Full-height */
     width: 0; /* 0 width - change this with JavaScript */
