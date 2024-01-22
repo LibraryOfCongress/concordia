@@ -13,10 +13,9 @@
         "gulp-sass": "^5.1.0",
         "gulp-sourcemaps": "^3.0.0",
         "prettier": "^2.7.1",
-        "stylelint": "^13.8.0",
-        "stylelint-config-prettier": "^8.0.2",
-        "stylelint-config-recommended": "^3.0.0",
-        "stylelint-value-no-unknown-custom-properties": "^4.0.0"
+        "stylelint": "^16.2.0",
+        "stylelint-config-recommended": "^14.0.0",
+        "stylelint-value-no-unknown-custom-properties": "^6.0.1"
     },
     "dependencies": {
         "@duetds/date-picker": "^1.4.0",
