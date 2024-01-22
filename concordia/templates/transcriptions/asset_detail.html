@@ -1227,11 +1227,13 @@
         function openOffcanvas() {
             var guide = document.getElementById("guide-carousel");
             guide.style.width = "450px";
+            document.getElementById("guide-carousel").style.border = "thick solid #0076ad";
             document.getElementById("open-guide").style.display = "none";
 
         }
         function closeOffcanvas() {
             document.getElementById("guide-carousel").style.width = "0%";
+            document.getElementById("guide-carousel").style.border = "none";
             document.getElementById("open-guide").style.display = "block";
         }
 
