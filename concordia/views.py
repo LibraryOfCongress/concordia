@@ -81,6 +81,7 @@ from concordia.models import (
     CardFamily,
     CarouselSlide,
     ConcordiaUser,
+    Guide,
     Item,
     Project,
     SimplePage,
@@ -1298,6 +1299,8 @@ class AssetDetailView(APIDetailView):
             unordered_cards = TutorialCard.objects.filter(tutorial=card_family)
             ordered_cards = unordered_cards.order_by("order")
             ctx["cards"] = [tutorial_card.card for tutorial_card in ordered_cards]
+
+        ctx["guides"] = Guide.objects.order_by("order")
 
         return ctx
 
