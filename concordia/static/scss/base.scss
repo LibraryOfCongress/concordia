@@ -1043,8 +1043,7 @@ $card-progress-height: 12px;
     transform: rotate(-90deg) translateY(-50%);
     position: absolute;
     border-radius: 0;
-    right: 0; /* -52px; */
-    filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=3);
+    right: 0;
     font-size: 0.75rem;
     margin-right: -55px;
     margin-top: 39px;
@@ -1058,7 +1057,6 @@ $card-progress-height: 12px;
     z-index: 1; /* Stay on top */
     top: 304px;
     right: 0;
-    /* background-color: #111; /* Black*/
     overflow-x: hidden; /* Disable horizontal scroll */
     transition: 0.5s; /* 0.5 second transition effect to slide in the sidebar */
     background-color: $white;
