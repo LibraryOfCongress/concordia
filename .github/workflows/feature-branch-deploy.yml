@@ -87,7 +87,7 @@ jobs:
               env:
                   REGISTRY: ${{ steps.login-ecr.outputs.registry }}
                   IMAGE_TAG: ${{ secrets.IMAGE_TAG }}
-                  CLUSTER: ${{ secrets.CLUSTER_TEST }}
+                  CLUSTER: ${{ secrets.CLUSTER }}
                   TARGET_SERVICE: ${{ secrets.TARGET_SERVICE }}
               run: |
                   docker build -t concordia .
