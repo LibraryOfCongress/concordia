@@ -417,9 +417,83 @@
                                     This transcription is finished! You can read and add tags.
                                 </span>
                             </span>
-                            <a class="align-self-end font-weight-bold" data-toggle="modal" data-target="#tutorial-popup" role="button">
-                                <u>Quick Tips</u>
-                            </a>
+                            <div class="align-items-center align-self-end btn-group">
+                                <a class="font-weight-bold" data-toggle="modal" data-target="#tutorial-popup" role="button">
+                                    <u>Quick Tips</u>
+                                </a>
+                                <div class="carousel carousel-fade sidebar" id="guide-carousel" data-interval="false">
+                                    <div class="carousel-inner">
+                                        <div class="carousel-item active" id="guide-nav">
+                                            <ul class="nav flex-column">
+                                                <li class="nav-item bg-primary text-white px-3 py-1">
+                                                    <a>How to Guide</a>
+                                                    <button type="button" class="close text-white" onclick="closeOffcanvas()">
+                                                        <span class="fas fa-times"></span>
+                                                    </button>
+                                                </li>
+                                                <li class="nav-item">
+                                                    <a class="nav-link" data-target="#guide-carousel" data-slide-to="1" href="#">About this Campaign</a>
+                                                </li>
+                                                {% for guide in guides %}
+                                                    <li class="nav-item">
+                                                        <a data-target="#guide-carousel" data-slide-to="{{ forloop.counter|add:2 }}" class="nav-link" href="#pane-{{ forloop.counter }}">
+                                                            {{ guide.title }}
+                                                        </a>
+                                                    </li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                        <div class="carousel-item container">
+                                            <div class="bg-primary px-2 py-3 row text-white">
+                                                <a data-target="#guide-carousel" data-slide-to="0">
+                                                    <i class="fas fa-solid fa-bars"></i>
+                                                </a>
+                                                <h3 class="px-2">How to Guide</h3>
+                                            </div>
+                                            <div class="border-bottom justify-content-center mb-3 py-3 row">
+                                                <h3>About this Campaign</h3>
+                                                <a class="font-weight-bold ml-3" id="next-guide" href="#guide-carousel" data-slide="next">></a>
+                                            </div>
+                                            {% if asset.item.project.campaign.long_description %}
+                                                <h4>About this campaign</h4>
+                                                {{ asset.item.project.campaign.long_description|safe }}
+                                            {% endif %}
+                                            {% if asset.item.project.description %}
+                                                <h4>About this project</h4>
+                                                {{ asset.item.project.description|safe }}
+                                            {% endif %}
+                                            {% if asset.item.project.campaign.resource_set.related_links %}
+                                                <h4>Helpful Links</h4>
+                                                {% for resource in campaign.resource_set.related_links %}
+                                                    <li class="mb-3">
+                                                        <a href="{{ resource.resource_url }}" target="_blank" rel=noopener>
+                                                            {{ resource.title }}{% if 'loc.gov' in resource.resource_url   %} <i class="fa fa-external-link-alt"></i></a></li>{% endif %}
+                                                        </a>
+                                                    </li>
+                                                {% endfor %}
+                                            {% endif %}
+                                        </div>
+                                        {% for guide in guides %}
+                                            <div class="carousel-item container" id="pane-{{ forloop.counter }}">
+                                                <div class="bg-primary px-2 py-3 row text-white">
+                                                    <a data-target="#guide-carousel" data-slide-to="0">
+                                                        <i class="fas fa-solid fa-bars"></i>
+                                                    </a>
+                                                    <h3 class="px-2">How to Guide</h3>
+                                                </div>
+                                                <div class="border-bottom justify-content-center mb-3 py-3 row">
+                                                    <a class="font-weight-bold mr-3" id="previous-guide" href="#guide-carousel" data-slide="prev"><</a>
+                                                    <h3>{{ guide.title }}</h3>
+                                                    {% if not forloop.last %}
+                                                        <a class="font-weight-bold ml-3" id="next-guide" href="#guide-carousel" data-slide="next">></a>
+                                                    {% endif %}
+                                                </div>
+                                                {{ guide.body|safe }}
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         {% spaceless %}
@@ -428,9 +502,12 @@
                                     <span class="sr-only">Loading...</span>
                                 </div>
                             </div>
-                            <textarea readonly class="form-control w-100 rounded flex-grow-1 d-print-none" name="text" id="transcription-input" placeholder="{% if transcription_status == 'not_started' or transcription_status == 'in_progress' %}Go ahead, start typing. You got this!{% else %}Nothing to transcribe{% endif %}" aria-label="Transcription input">
-                                {{ transcription.text }}
-                            </textarea>
+                            <div class="flex-grow-1 row">
+                                <textarea readonly class="form-control rounded d-print-none" name="text" id="transcription-input" placeholder="{% if transcription_status == 'not_started' or transcription_status == 'in_progress' %}Go ahead, start typing. You got this!{% else %}Nothing to transcribe{% endif %}" aria-label="Transcription input">
+                                    {{ transcription.text }}
+                                </textarea>
+                                <button id="open-guide" class="btn btn-primary" type="button" onclick="openOffcanvas()">How to Guide</button>
+                            </div>
 
                             <div class="print-transcription-text" aria-hidden="true" style="display: none;">{{ transcription.text }}</div>
 
@@ -1145,5 +1222,28 @@
         thresholdRange.addEventListener('input', function(){
             thresholdNumber.value = thresholdRange.value;
         });
+    </script>
+    <script>
+        function openOffcanvas() {
+            var guide = document.getElementById("guide-carousel");
+            guide.style.width = "450px";
+            document.getElementById("guide-carousel").style.border = "thick solid #0076ad";
+            document.getElementById("open-guide").style.display = "none";
+
+        }
+        function closeOffcanvas() {
+            document.getElementById("guide-carousel").style.width = "0%";
+            document.getElementById("guide-carousel").style.border = "none";
+            document.getElementById("open-guide").style.display = "block";
+        }
+
+        function showPane(elementId) {
+            document.getElementById(elementId).classList.add('show', 'active');
+            document.getElementById('guide-nav').classList.remove('show', 'active');
+        }
+        function hidePane(elementId) {
+            document.getElementById(elementId).classList.remove('show', 'active');
+            document.getElementById('guide-nav').classList.add('show', 'active');
+        }
     </script>
 {% endblock body_scripts %}
