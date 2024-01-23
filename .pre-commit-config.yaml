@@ -67,10 +67,10 @@ repos:
       hooks:
           - id: stylelint
             additional_dependencies:
-                - 'stylelint@^13.8.0'
-                - 'stylelint-config-prettier@^8.0.2'
-                - 'stylelint-config-recommended@^3.0.0'
-                - 'stylelint-value-no-unknown-custom-properties@^4.0.0'
+                - 'stylelint@^16.2.0'
+                - 'stylelint-config-recommended@^14.0.0'
+                - 'stylelint-value-no-unknown-custom-properties@^6.0.1'
+                - 'stylelint-config-standard-scss@^13.0.0'
     - repo: https://github.com/aws-cloudformation/cfn-python-lint
       rev: v0.82.2
       hooks:
