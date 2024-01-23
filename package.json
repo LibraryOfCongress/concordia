@@ -31,7 +31,7 @@
         "popper.js": "^1.16.1",
         "redom": "^3.27.1",
         "remarkable": "^2.0.1",
-        "sass": "^1.56.2",
+        "sass": "^1.70.0",
         "screenfull": "^5.1.0",
         "split.js": "^1.6.2",
         "urijs": "^1.19.11"
