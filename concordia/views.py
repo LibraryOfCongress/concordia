@@ -1192,8 +1192,10 @@ class AssetDetailView(APIDetailView):
         titles = [guide["title"].lower() for guide in guides]
         for title in ("how to transcribe", "how to review", "how to tag"):
             if title not in titles:
-                page = SimplePage.objects.get(title__iexact=title)
-                guides.append({"title": page.title, "body": page.body})
+                pages = SimplePage.objects.filter(title__iexact=title)
+                if pages.count() > 0:
+                    page = pages.first()
+                    guides.append({"title": page.title, "body": page.body})
         return guides
 
     def get_context_data(self, **kwargs):
