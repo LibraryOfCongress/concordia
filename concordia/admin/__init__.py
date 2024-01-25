@@ -973,3 +973,4 @@ class CardFamilyAdmin(admin.ModelAdmin):
 @admin.register(Guide)
 class GuideAdmin(admin.ModelAdmin):
     form = GuideAdminForm
+    list_display = ("title", "order")
