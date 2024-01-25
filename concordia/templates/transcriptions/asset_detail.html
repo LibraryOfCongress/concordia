@@ -457,9 +457,9 @@
                                                 <h3>About this Campaign</h3>
                                                 <a class="font-weight-bold ml-3" id="next-guide" href="#guide-carousel" data-slide="next">></a>
                                             </div>
-                                            {% if asset.item.project.campaign.long_description %}
+                                            {% if asset.item.project.campaign.description %}
                                                 <h4>About this campaign</h4>
-                                                {{ asset.item.project.campaign.long_description|safe }}
+                                                {{ asset.item.project.campaign.description|safe }}
                                             {% endif %}
                                             {% if asset.item.project.description %}
                                                 <h4>About this project</h4>
