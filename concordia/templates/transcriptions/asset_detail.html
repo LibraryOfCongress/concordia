@@ -466,7 +466,7 @@
                                                 {{ asset.item.project.description|safe }}
                                             {% endif %}
                                             {% if asset.item.project.campaign.resource_set.related_links %}
-                                                <h4>Helpful Links</h4>
+                                                <h4 class="pt-4">Helpful Links</h4>
                                                 {% for resource in campaign.resource_set.related_links %}
                                                     <li class="mb-3">
                                                         <a href="{{ resource.resource_url }}" target="_blank" rel=noopener>
