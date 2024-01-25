@@ -1233,8 +1233,13 @@
         function openOffcanvas() {
             var guide = document.getElementById("guide-carousel");
             guide.style.width = "450px";
-            document.getElementById("guide-carousel").style.border = "thick solid #0076ad";
+            guide.style.border = "thick solid #0076ad";
             document.getElementById("open-guide").style.display = "none";
+            document.addEventListener('keydown', function(e) {
+                if (e.key == "Escape") {
+                    closeOffcanvas();
+                }
+            });
 
         }
         function closeOffcanvas() {
