@@ -120,7 +120,13 @@ class ItemProjectListFilter(ProjectListFilter):
 
 
 class ConcordiaUserAdmin(UserAdmin):
-    list_display = UserAdmin.list_display + ("date_joined", "transcription_count")
+    list_display = (
+        "username",
+        "email",
+        "is_staff",
+        "date_joined",
+        "transcription_count",
+    )
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
