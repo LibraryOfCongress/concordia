@@ -181,6 +181,7 @@ def simple_page(request, path=None):
         language_code = "es"
 
     ctx = {
+        "nav": md.convert(page.navigation),
         "body": html,
         "language_code": language_code,
         "title": page.title,
