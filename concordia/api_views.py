@@ -13,6 +13,7 @@ behaviour for the non-JSON endpoint:
 The base APIViewMixin implements a base implementation of serialize_object which
 uses the generic django.forms.models.model_to_dict and can be overridden as needed.
 """
+
 from time import time
 
 from django.core.serializers.json import DjangoJSONEncoder
