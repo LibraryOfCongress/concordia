@@ -430,12 +430,21 @@ def retired_total_report():
 ONE_DAY = datetime.timedelta(days=1)
 
 
-def _backfill_by_date(day):
-    start = day - ONE_DAY
-    q_accepted = Q(transcription__accepted__gte=start, transcription__accepted__lte=day)
-    q_rejected = Q(transcription__rejected__gte=start, transcription__rejected__lte=day)
+@celery_app.task
+def backfill_by_date(date, days):
+    logger.debug("Backfilling daily data for %s ", date)
+    start = date - ONE_DAY
+
+    q_accepted = Q(
+        transcription__accepted__gte=start, transcription__accepted__lte=date
+    )
+    q_rejected = Q(
+        transcription__rejected__gte=start, transcription__rejected__lte=date
+    )
     assets = Asset.objects.filter(q_accepted | q_rejected)
-    site_reports = SiteReport.objects.filter(created_on__gte=start, created_on__lte=day)
+    site_reports = SiteReport.objects.filter(
+        created_on__gte=start, created_on__lte=date
+    )
     topic_assets = assets.filter(item__project__topics=OuterRef("topic__pk"))
     subquery = Subquery(
         topic_assets.annotate(cnt=Count("transcription")).values("cnt")[:1]
@@ -452,18 +461,15 @@ def _backfill_by_date(day):
         )
     )
 
-
-def _backfill_data(start, days=0):
-    for n in range(days - 1):
-        day = start - datetime.timedelta(days=n)
-        _backfill_by_date(day)
+    if days >= 0:
+        backfill_by_date.delay(start, days - 1)
 
 
 @celery_app.task
-def backfill_daily_data():
-    _backfill_data(
-        timezone.make_aware(datetime.datetime(year=2023, month=9, day=17)), 10
-    )
+def backfill_daily_data(start, days):
+    date = timezone.make_aware(datetime.datetime(**start))
+    logger.debug("Backfilling daily data for the %s days before %s", days, date)
+    backfill_by_date.delay(date - ONE_DAY, days - 1)
 
 
 @celery_app.task
