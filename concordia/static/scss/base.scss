@@ -271,6 +271,10 @@ ul.nav-secondary {
     flex: initial !important;
 }
 
+#transcription-input {
+    width: 99% !important;
+}
+
 /*
  * vertical and horizontal dividers
  */
@@ -1075,10 +1079,15 @@ $card-progress-height: 12px;
     position: absolute;
     border-radius: 0;
     right: 0;
+    top: 129px;
     font-size: 0.75rem;
     margin-right: -55px;
     margin-top: 39px;
     width: 110px;
+}
+
+#close-guide {
+    margin: -1rem 1rem -1rem auto;
 }
 
 .sidebar {
