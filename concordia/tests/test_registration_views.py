@@ -1,6 +1,7 @@
 """
 Tests for user registration-related views
 """
+
 from logging import getLogger
 
 from django.contrib.auth import get_user_model
