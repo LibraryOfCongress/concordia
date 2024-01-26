@@ -432,7 +432,7 @@ ONE_DAY = datetime.timedelta(days=1)
 
 @celery_app.task
 def backfill_by_date(date, days):
-    logger.debug("Backfilling daily data for %s ", date)
+    logger.info("Backfilling daily data for %s ", date)
     start = date - ONE_DAY
 
     q_accepted = Q(
@@ -463,12 +463,14 @@ def backfill_by_date(date, days):
 
     if days >= 0:
         backfill_by_date.delay(start, days - 1)
+    else:
+        logger.info("Backfilling daily data finished")
 
 
 @celery_app.task
 def backfill_daily_data(start, days):
     date = timezone.make_aware(datetime.datetime(**start))
-    logger.debug("Backfilling daily data for the %s days before %s", days, date)
+    logger.info("Backfilling daily data for the %s days before %s", days, date)
     backfill_by_date.delay(date - ONE_DAY, days - 1)
 
 
