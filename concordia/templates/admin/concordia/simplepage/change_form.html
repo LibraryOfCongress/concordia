@@ -10,6 +10,7 @@
     {{ block.super }}
 
     <script>
+        setupCodeMirror(document.getElementById('id_navigation'), 'markdown');
         setupCodeMirror(document.getElementById('id_body'), 'markdown');
     </script>
 {% endblock content %}
