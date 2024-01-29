@@ -19,7 +19,14 @@
                 <h1 class="my-3">{{ title }}</h1>
 
                 <div>
-                    {{ body|safe }}
+                    {% if nav %}
+                        <div class="row">
+                            {{ nav|safe }}
+                            {{ body|safe }}
+                        </div>
+                    {% else %}
+                        {{ body|safe }}
+                    {% endif %}
                 </div>
             </div>
         </div>

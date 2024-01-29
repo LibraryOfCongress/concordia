@@ -181,12 +181,13 @@ def simple_page(request, path=None):
         language_code = "es"
 
     ctx = {
-        "nav": md.convert(page.navigation),
         "body": html,
         "language_code": language_code,
         "title": page.title,
         "breadcrumbs": breadcrumbs,
     }
+    if page.navigation is not None:
+        ctx["nav"] = md.convert(page.navigation)
 
     resp = render(request, "static-page.html", ctx)
     resp["Created"] = http_date(page.created_on.timestamp())
