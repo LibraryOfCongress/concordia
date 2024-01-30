@@ -174,32 +174,20 @@ class UnlistedPublicationQuerySet(PublicationQuerySet):
     def unlisted(self):
         return self.filter(unlisted=True)
 
-    def get_next_transcription_campaign(self):
-        try:
-            return self.get(next_transcription_campaign=True)
-        except Campaign.DoesNotExist:
-            # If no campaign is configured, we use the latest to launch
-            return self.published().listed().latest("launch_date")
-        except Campaign.MultipleObjectsReturned:
-            return (
-                self.published()
-                .listed()
-                .filter(next_transcription_campaign=True)
-                .latest("launch_date")
-            )
+    def active(self):
+        return self.filter(status=Campaign.Status.ACTIVE)
 
-    def get_next_review_campaign(self):
-        try:
-            return self.get(next_review_campaign=True)
-        except Campaign.DoesNotExist:
-            return self.published().listed().latest("launch_date")
-        except Campaign.MultipleObjectsReturned:
-            return (
-                self.published()
-                .listed()
-                .filter(next_review_campaign=True)
-                .latest("launch_date")
-            )
+    def completed(self):
+        return self.filter(status=Campaign.Status.COMPLETED)
+
+    def retired(self):
+        return self.filter(status=Campaign.Status.RETIRED)
+
+    def get_next_transcription_campaigns(self):
+        return self.filter(next_transcription_campaign=True)
+
+    def get_next_review_campaigns(self):
+        return self.filter(next_review_campaign=True)
 
 
 class Campaign(MetricsModelMixin("campaign"), models.Model):
