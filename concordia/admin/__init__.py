@@ -833,7 +833,43 @@ class SimplePageAdmin(admin.ModelAdmin):
 
 @admin.register(SiteReport)
 class SiteReportAdmin(admin.ModelAdmin):
-    list_display = ("created_on", "report_name", "campaign", "topic")
+    list_display = ("created_on", "report_type")
+    readonly_fields = ("created_on", "report_type")
+    fieldsets = (
+        ("Summary", {"fields": ("created_on", "report_type")}),
+        (
+            "Data",
+            {
+                "fields": (
+                    "report_name",
+                    "campaign",
+                    "topic",
+                    "assets_total",
+                    "assets_published",
+                    "assets_not_started",
+                    "assets_in_progress",
+                    "assets_waiting_review",
+                    "assets_completed",
+                    "assets_unpublished",
+                    "items_published",
+                    "items_unpublished",
+                    "projects_published",
+                    "projects_unpublished",
+                    "anonymous_transcriptions",
+                    "transcriptions_saved",
+                    "daily_review_actions",
+                    "distinct_tags",
+                    "tag_uses",
+                    "campaigns_published",
+                    "campaigns_unpublished",
+                    "users_registered",
+                    "users_activated",
+                    "registered_contributors",
+                    "daily_active_users",
+                )
+            },
+        ),
+    )
 
     list_filter = (
         "report_name",
@@ -841,6 +877,15 @@ class SiteReportAdmin(admin.ModelAdmin):
         SiteReportCampaignListFilter,
         "topic",
     )
+
+    @admin.display(description="Report type")
+    def report_type(self, obj):
+        if obj.report_name:
+            return f"Report name: {obj.report_name}"
+        elif obj.campaign:
+            return f"Campaign: {obj.campaign}"
+        elif obj.topic:
+            return f"Topic: {obj.topic}"
 
     def export_to_csv(self, request, queryset):
         return export_to_csv_action(
