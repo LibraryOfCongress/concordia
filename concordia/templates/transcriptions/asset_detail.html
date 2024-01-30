@@ -815,7 +815,7 @@
                                         {% endif %}
                                         <div class="position-static d-flex flex-column justify-content-around">
                                             {% if card.image %}
-                                                <img src="{{ card.image.url }}">
+                                                <img src="{{ card.image.url }}"{% if card.image_alt_text %} alt="{{ card.image_alt_text }}"{% endif %}>
                                             {% endif %}
                                             {% if card.display_heading %}
                                                 <h3>{{ card.display_heading }}</h3>
