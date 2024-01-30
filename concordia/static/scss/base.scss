@@ -1064,6 +1064,13 @@ $card-progress-height: 12px;
     padding-left: 1.5rem;
 }
 
+#card-carousel .carousel-indicators {
+    left: 50%;
+    width: 60%;
+    margin-left: -30%;
+    text-align: center;
+}
+
 #card-carousel .carousel-indicators > li.active {
     background-color: #007bff;
     border-color: #007bff;
