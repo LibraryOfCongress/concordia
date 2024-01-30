@@ -817,7 +817,7 @@
                                             {% if card.image %}
                                                 <img src="{{ card.image.url }}">
                                             {% endif %}
-                                            <h3>{{ card.display_heading }}</h3>
+                                            <h5>{{ card.display_heading }}</h5>
                                             <p>{{ card.body_text|safe }}</p>
                                         </div>
                                         {% if not forloop.last %}
