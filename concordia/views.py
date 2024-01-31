@@ -1312,7 +1312,9 @@ class AssetDetailView(APIDetailView):
             ordered_cards = unordered_cards.order_by("order")
             ctx["cards"] = [tutorial_card.card for tutorial_card in ordered_cards]
 
-        ctx["guides"] = self.get_guides()
+        guides = self.get_guides()
+        if len(guides) > 0:
+            ctx["guides"] = guides
 
         return ctx
 

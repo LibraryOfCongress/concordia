@@ -522,8 +522,10 @@
                     </form>
                 </div>
             </div>
-            <button id="open-guide" class="btn btn-primary" type="button" onclick="openOffcanvas()">How-To Guide</button>
-            {% include "fragments/_how-to-guide.html" %}
+            {% if guides %}
+                <button id="open-guide" class="btn btn-primary" type="button" onclick="openOffcanvas()">How-To Guide</button>
+                {% include "fragments/_how-to-guide.html" %}
+            {% endif %}
         </div>
         <div id="help-container" class="mt-1 d-print-none">
             <div class="row p-3 bg-light justify-content-sm-between">
