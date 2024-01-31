@@ -1019,6 +1019,14 @@ $card-progress-height: 12px;
 /*
  * Tutorial popup and cards navigation
  */
+#card-carousel {
+    height: 30.35rem;
+}
+
+#card-carousel .carousel-item {
+    height: 30.25rem;
+}
+
 #card-carousel .carousel-item img {
     background-color: #fff;
     border-top: 1px solid #efefef;
@@ -1027,6 +1035,13 @@ $card-progress-height: 12px;
 
 #card-carousel ul {
     padding-left: 1.5rem;
+}
+
+#card-carousel .carousel-indicators {
+    left: 50%;
+    width: 60%;
+    margin-left: -30%;
+    text-align: center;
 }
 
 #card-carousel .carousel-indicators > li.active {

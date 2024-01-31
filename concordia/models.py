@@ -191,6 +191,7 @@ class UnlistedPublicationQuerySet(PublicationQuerySet):
 
 
 class Card(models.Model):
+    image_alt_text = models.TextField(blank=True)
     image = models.ImageField(upload_to="card_images", blank=True, null=True)
     title = models.CharField(max_length=80)
     body_text = models.TextField(blank=True)
