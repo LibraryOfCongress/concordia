@@ -815,9 +815,11 @@
                                         {% endif %}
                                         <div class="position-static d-flex flex-column justify-content-around">
                                             {% if card.image %}
-                                                <img src="{{ card.image.url }}">
+                                                <img src="{{ card.image.url }}"{% if card.image_alt_text %} alt="{{ card.image_alt_text }}"{% endif %}>
                                             {% endif %}
-                                            <h5>{{ card.display_heading }}</h5>
+                                            {% if card.display_heading %}
+                                                <h5>{{ card.display_heading }}</h5>
+                                            {% endif %}
                                             <p>{{ card.body_text|safe }}</p>
                                         </div>
                                         {% if not forloop.last %}
