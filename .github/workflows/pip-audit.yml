@@ -17,7 +17,7 @@ jobs:
 
             - name: 'Generate requirements.txt'
               run: |
-                  pipx run pipfile-requirements Pipfile.lock > requirements.txt
+                  pipx run pipfile-requirements concordia/Pipfile.lock > requirements.txt
 
             - uses: pypa/gh-action-pip-audit@v1.0.8
               with:
