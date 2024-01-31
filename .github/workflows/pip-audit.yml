@@ -9,6 +9,7 @@ on:
 
 jobs:
     pip-audit:
+        runs-on: ubuntu-latest
         steps:
             - uses: actions/setup-python@v4
               with:
