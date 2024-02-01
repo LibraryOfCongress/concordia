@@ -1159,7 +1159,9 @@
         function openOffcanvas() {
             var guide = document.getElementById("guide-carousel");
             guide.style.width = "450px";
-            guide.style.border = "thick solid #0076ad";
+            guide.style.borderWidth = "0 thick thick";
+            guide.style.borderStyle = "solid";
+            guide.style.borderColor = "#0076ad";
             document.getElementById("open-guide").style.display = "none";
             document.addEventListener('keydown', function(e) {
                 if (e.key == "Escape") {

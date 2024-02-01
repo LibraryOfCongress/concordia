@@ -1123,8 +1123,15 @@ $card-progress-height: 12px;
 
 .sidebar .nav-item a {
     font-size: $font-size-base * 1.25;
-    font-weight: 700;
     text-decoration: underline;
+}
+
+#title-bar {
+    font-weight: 700;
+}
+
+.toc-title {
+    font-weight: 600;
 }
 
 .sidebar .close {
