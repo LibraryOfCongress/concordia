@@ -1,6 +1,7 @@
 import datetime
 import json
 import os
+import random
 import re
 from functools import wraps
 from logging import getLogger
@@ -2012,7 +2013,18 @@ def filter_and_order_reviewable_assets(
 @never_cache
 @atomic
 def redirect_to_next_reviewable_asset(request):
-    campaign = Campaign.objects.get_next_review_campaign()
+    campaign_ids = list(
+        Campaign.objects.active()
+        .listed()
+        .published()
+        .get_next_review_campaigns()
+        .values_list("id", flat=True)
+    )
+    try:
+        campaign_id = random.choice(campaign_ids)  # nosec
+        campaign = Campaign.objects.get(id=campaign_id)
+    except IndexError:
+        campaign = Campaign.objects.active().listed().published().latest("launch_date")
     project_slug = request.GET.get("project", "")
     item_id = request.GET.get("item", "")
     asset_id = request.GET.get("asset", 0)
@@ -2059,7 +2071,18 @@ def find_transcribable_assets(campaign, project_slug, item_id, asset_id):
 @never_cache
 @atomic
 def redirect_to_next_transcribable_asset(request):
-    campaign = Campaign.objects.get_next_transcription_campaign()
+    campaign_ids = list(
+        Campaign.objects.active()
+        .listed()
+        .published()
+        .get_next_transcription_campaigns()
+        .values_list("id", flat=True)
+    )
+    try:
+        campaign_id = random.choice(campaign_ids)  # nosec
+        campaign = Campaign.objects.get(id=campaign_id)
+    except IndexError:
+        campaign = Campaign.objects.active().listed().published().latest("launch_date")
     project_slug = request.GET.get("project", "")
     item_id = request.GET.get("item", "")
     asset_id = request.GET.get("asset", 0)
