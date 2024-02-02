@@ -952,6 +952,7 @@ class CampaignRetirementProgressAdmin(admin.ModelAdmin):
 @admin.register(Card)
 class CardAdmin(admin.ModelAdmin):
     form = CardAdminForm
+    fields = ("title", "display_heading", "body_text", "image", "image_alt_text")
     list_display = ["title", "created_on"]
     list_filter = (CardCampaignListFilter,)
 
