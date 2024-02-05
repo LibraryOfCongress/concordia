@@ -25,7 +25,7 @@
                                 <div class="nav flex-column help-center">
                                     <h4>Instructions</h4>
                                     <a class="nav-link" href="/help-center/welcome-guide/">Get started</a>
-                                    <a class="nav-link" href="/help-center/how-to-transcribe/">How to transcribe</a>
+                                    <a class="nav-link{% if title == 'How to transcribe' %} active{% endif %}" href="/help-center/how-to-transcribe/">How to transcribe</a>
                                     <a class="nav-link{% if title == 'How to Review' %} active{% endif %}" href="/help-center/how-to-review/">How to review</a>
                                     <a class="nav-link{% if title == 'How to Tag' %} active{% endif %}" href="/help-center/how-to-tag">How to tag</a>
                                     <span lang="es">
@@ -34,6 +34,80 @@
                                 </div>
                             </div>
                             <div class="p-3 col-9">
+                                {% if title == "How to transcribe" %}
+                                    <nav class="border p-3 mb-4">
+                                        <h2 class="h6">Jump to a section:</h2>
+                                        <ul class="m-0">
+                                            <li>
+                                                <a href="#text-order">Text order</a>
+                                            </li>
+                                            <li>
+                                                <a href="#spelling-and-punctuation">Spelling and punctuation</a>
+                                            </li>
+                                            <li><a href="#notes">Notes</a></li>
+                                            <li>
+                                                <a href="#blank-pages">Blank pages</a>
+                                            </li>
+                                            <li>
+                                                <a href="#line-breaks">Line breaks</a>
+                                            </li>
+                                            <li>
+                                                <a href="#abbreviations">Abbreviations</a>
+                                            </li>
+                                            <li>
+                                                <a href="#formatting">Formatting</a>
+                                            </li>
+                                            <li>
+                                                <a href="#insertions">Insertions</a>
+                                            </li>
+                                            <li>
+                                                <a href="#illegible-or-unclear">Illegible or unclear text</a>
+                                            </li>
+                                            <li>
+                                                <a href="#deletions">Deletions</a>
+                                            </li>
+                                            <li>
+                                                <a href="#marginalia">Marginalia</a>
+                                            </li>
+                                            <li>
+                                                <a href="#printed-or-typed">Printed, typed, or newspaper text</a>
+                                            </li>
+                                            <li>
+                                                <a href="#nothing-to-transcribe">When not to transcribe printed text</a>
+                                            </li>
+                                            <li>
+                                                <a href="#shorthand">Shorthand</a>
+                                            </li>
+                                            <li>
+                                                <a href="#images">Images</a>
+                                            </li>
+                                            <li>
+                                                <a href="#non-english">Non-English languages, characters, and translation</a>
+                                            </li>
+                                            <li>
+                                                <a href="#other-special-characters">Other special characters</a>
+                                            </li>
+                                            <li>
+                                                <a href="#tables">Tables</a>
+                                            </li>
+                                            <li>
+                                                <a href="#long-s-or-funny-f">Long s or "funny" f</a>
+                                            </li>
+                                            <li>
+                                                <a href="#cross-writing">Cross-writing</a>
+                                            </li>
+                                            <li>
+                                                <a href="#bleed-through">Bleed-through</a>
+                                            </li>
+                                            <li>
+                                                <a href="#research">Research</a>
+                                            </li>
+                                            <li>
+                                                <a href="#saving-work">Saving work in progress</a>
+                                            </li>
+                                        </ul>
+                                    </nav>
+                                {% endif %}
                                 {{ body|safe }}
                             </div>
                         </div>

@@ -190,9 +190,11 @@ def simple_page(request, path=None):
         html = guides.first().body
         ctx["add_navigation"] = True
     elif page.title == "How to transcribe":
-        guides = Guide.objects.filter(title__startswith="Transcription: ")
-        for body in guides.order_by("order").values_list("body", flat=True):
-            html += body
+        guides = Guide.objects.filter(title__startswith="Transcription: ").order_by(
+            "order"
+        )
+        html = "".join(guides.values_list("body", flat=True))
+        ctx["add_navigation"] = True
     else:
         html = page.body
     ctx["body"] = md.convert(html)
