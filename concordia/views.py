@@ -167,7 +167,6 @@ def simple_page(request, path=None):
     page = get_object_or_404(SimplePage, path=path)
 
     md = markdown.Markdown(extensions=["meta"])
-    html = md.convert(page.body)
 
     breadcrumbs = []
     path_components = request.path.strip("/").split("/")
@@ -182,13 +181,18 @@ def simple_page(request, path=None):
         language_code = "es"
 
     ctx = {
-        "body": html,
         "language_code": language_code,
         "title": page.title,
         "breadcrumbs": breadcrumbs,
     }
-    if page.navigation is not None:
-        ctx["nav"] = md.convert(page.navigation)
+
+    guides = Guide.objects.filter(title__iexact=page.title)
+    if guides.count() > 0:
+        html = guides.first().body
+        ctx["add_navigation"] = True
+    else:
+        html = page.body
+    ctx["body"] = md.convert(html)
 
     resp = render(request, "static-page.html", ctx)
     resp["Created"] = http_date(page.created_on.timestamp())
