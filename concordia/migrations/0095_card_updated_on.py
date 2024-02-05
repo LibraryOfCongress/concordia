@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("concordia", "0093_card_image_alt_text"),
+        ("concordia", "0094_remove_simplepage_navigation"),
     ]
 
     operations = [

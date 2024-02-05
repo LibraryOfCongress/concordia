@@ -13,7 +13,7 @@ def initialize_updated_on(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("concordia", "0094_card_updated_on"),
+        ("concordia", "0095_card_updated_on"),
     ]
 
     operations = [
