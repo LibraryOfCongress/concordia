@@ -954,7 +954,7 @@ class CardAdmin(admin.ModelAdmin):
     form = CardAdminForm
     fields = ("title", "display_heading", "body_text", "image", "image_alt_text")
     list_display = ["title", "created_on", "updated_on"]
-    list_filter = (CardCampaignListFilter,)
+    list_filter = (CardCampaignListFilter, "updated_on")
 
 
 class TutorialInline(admin.TabularInline):
