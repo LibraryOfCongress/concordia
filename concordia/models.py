@@ -196,6 +196,7 @@ class Card(models.Model):
     title = models.CharField(max_length=80)
     body_text = models.TextField(blank=True)
     created_on = models.DateTimeField(editable=False, auto_now_add=True)
+    updated_on = models.DateTimeField(editable=False, auto_now=True, null=True)
     display_heading = models.CharField(max_length=80, blank=True, null=True)
 
     def __str__(self):
