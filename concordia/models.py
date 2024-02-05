@@ -757,7 +757,6 @@ class SimplePage(models.Model):
 
     title = models.CharField(max_length=200)
 
-    navigation = models.TextField(null=True)
     body = models.TextField()
 
     def __str__(self):
