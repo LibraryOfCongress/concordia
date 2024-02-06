@@ -1201,17 +1201,6 @@ class AssetDetailView(APIDetailView):
 
         return asset_qs
 
-    def get_guides(self):
-        guides = list(Guide.objects.order_by("order").values("title", "body"))
-        titles = [guide["title"].lower() for guide in guides]
-        for title in ("how to transcribe", "how to review", "how to tag"):
-            if title not in titles:
-                pages = SimplePage.objects.filter(title__iexact=title)
-                if pages.count() > 0:
-                    page = pages.first()
-                    guides.append({"title": page.title, "body": page.body})
-        return guides
-
     def get_context_data(self, **kwargs):
         """
         Handle the GET request
@@ -1323,8 +1312,8 @@ class AssetDetailView(APIDetailView):
             ordered_cards = unordered_cards.order_by("order")
             ctx["cards"] = [tutorial_card.card for tutorial_card in ordered_cards]
 
-        guides = self.get_guides()
-        if len(guides) > 0:
+        guides = Guide.objects.order_by("order").values("title", "body")
+        if guides.count() > 0:
             ctx["guides"] = guides
 
         return ctx
