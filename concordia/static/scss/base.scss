@@ -1046,6 +1046,14 @@ $card-progress-height: 12px;
 /*
  * Tutorial popup and cards navigation
  */
+#tutorial-popup .modal-header {
+    padding-bottom: 0.25rem;
+}
+
+#tutorial-popup .modal-body {
+    padding-top: 0.25rem;
+}
+
 #card-carousel {
     height: 30.35rem;
 }
@@ -1058,6 +1066,14 @@ $card-progress-height: 12px;
     background-color: #fff;
     border-top: 1px solid #efefef;
     padding-bottom: 1rem;
+}
+
+#card-carousel .carousel-item h5 {
+    margin-bottom: 0;
+}
+
+#card-carousel .carousel-item p {
+    margin-bottom: 0.75rem;
 }
 
 #card-carousel ul {
