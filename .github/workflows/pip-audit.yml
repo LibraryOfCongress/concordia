@@ -3,7 +3,7 @@ name: pip-audit
 on:
     workflow_dispatch:
     push:
-        branches: [main, release]
+        branches: [release]
     pull_request:
         branches: [main]
 
