@@ -1054,6 +1054,12 @@ $card-progress-height: 12px;
     padding-top: 0.25rem;
 }
 
+#tutorial-popup .close {
+    position: absolute;
+    right: 1rem;
+    top: 0.75rem;
+}
+
 #card-carousel {
     height: 30.35rem;
 }
