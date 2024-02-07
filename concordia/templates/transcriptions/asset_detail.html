@@ -1185,4 +1185,14 @@
             document.getElementById('guide-nav').classList.add('show', 'active');
         }
     </script>
+    <script>
+        $("#tutorial-popup").on("shown.bs.modal", function() {
+            var $carouselItems = $("#card-carousel .carousel-item");
+            var heights = $carouselItems.map(function() {
+                return $(this).height();
+            });
+            var maxHeight = Math.max.apply(this, heights);
+            $carouselItems.height(maxHeight);
+        });
+    </script>
 {% endblock body_scripts %}
