@@ -18,9 +18,6 @@ from django.urls import path, reverse
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html
 from django.views.decorators.csrf import csrf_protect
-from django_admin_multiple_choice_list_filter.list_filters import (
-    MultipleChoiceListFilter,
-)
 from tabular_export.admin import export_to_csv_action, export_to_excel_action
 from tabular_export.core import export_to_csv_response, flatten_queryset
 
@@ -63,10 +60,10 @@ from .filters import (
     AcceptedFilter,
     AssetCampaignListFilter,
     AssetCampaignStatusListFilter,
-    AssetProjectListFilter2,
+    AssetProjectListFilter,
     ItemCampaignListFilter,
     ItemCampaignStatusListFilter,
-    ItemProjectListFilter2,
+    ItemProjectListFilter,
     OcrGeneratedFilter,
     OcrOriginatedFilter,
     ProjectCampaignListFilter,
@@ -94,24 +91,7 @@ from .forms import (
     SimpleContentBlockAdminForm,
 )
 
-
-class ProjectListFilter(MultipleChoiceListFilter):
-    title = "Project"
-
-    def lookups(self, request, model_admin):
-        choices = Project.objects.values_list("pk", "title")
-        return tuple(choices)
-
-
 logger = logging.getLogger(__name__)
-
-
-class AssetProjectListFilter(ProjectListFilter):
-    parameter_name = "item__project__in"
-
-
-class ItemProjectListFilter(ProjectListFilter):
-    parameter_name = "project__in"
 
 
 class ConcordiaUserAdmin(UserAdmin):
@@ -505,7 +485,7 @@ class ItemAdmin(admin.ModelAdmin):
         "project__topics",
         ItemCampaignStatusListFilter,
         ItemCampaignListFilter,
-        ItemProjectListFilter2,
+        ItemProjectListFilter,
     )
 
     actions = (publish_item_action, unpublish_item_action)
@@ -598,7 +578,7 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         "item__project__topics",
         AssetCampaignStatusListFilter,
         AssetCampaignListFilter,
-        AssetProjectListFilter2,
+        AssetProjectListFilter,
         "media_type",
     )
     actions = (
