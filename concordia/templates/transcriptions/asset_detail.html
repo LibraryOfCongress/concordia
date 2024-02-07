@@ -1184,5 +1184,16 @@
             document.getElementById(elementId).classList.remove('show', 'active');
             document.getElementById('guide-nav').classList.add('show', 'active');
         }
+        $("#guide-carousel").carousel({
+            interval: false,
+            wrap: false
+        }).on('slide.bs.carousel', function (e) {
+            if (e.to == 0) {
+                $("#guide-bars").addClass("d-none");
+            }
+            else {
+                $("#guide-bars").removeClass("d-none");
+            }
+        });
     </script>
 {% endblock body_scripts %}
