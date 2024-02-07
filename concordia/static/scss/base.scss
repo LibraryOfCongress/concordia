@@ -1019,18 +1019,32 @@ $card-progress-height: 12px;
 /*
  * Tutorial popup and cards navigation
  */
-#card-carousel {
-    height: 30.35rem;
+#tutorial-popup .modal-header {
+    padding-bottom: 0.25rem;
 }
 
-#card-carousel .carousel-item {
-    height: 30.25rem;
+#tutorial-popup .modal-body {
+    padding-top: 0.25rem;
+}
+
+#tutorial-popup .close {
+    position: absolute;
+    right: 1rem;
+    top: 0.75rem;
 }
 
 #card-carousel .carousel-item img {
     background-color: #fff;
     border-top: 1px solid #efefef;
     padding-bottom: 1rem;
+}
+
+#card-carousel .carousel-item h5 {
+    margin-bottom: 0;
+}
+
+#card-carousel .carousel-item p {
+    margin-bottom: 0.75rem;
 }
 
 #card-carousel ul {
