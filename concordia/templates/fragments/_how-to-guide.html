@@ -1,14 +1,17 @@
-<div class="sidebar">
-    <div class="carousel carousel-fade" id="guide-carousel" data-interval="false">
+<div id="guide-sidebar" class="sidebar">
+    <div id="title-bar" class="bg-primary px-2 py-1 row text-white">
+        <a data-target="#guide-carousel" data-slide-to="0" class="text-white" href="">
+            <i class="fas fa-solid fa-bars pl-3 py-2"></i>
+        </a>
+        <h3 class="px-2 my-1">How-To Guide</h3>
+        <button id="close-guide" type="button" class="close text-white" onclick="closeOffcanvas()">
+            <span class="fas fa-times"></span>
+        </button>
+    </div>
+    <div id="guide-carousel" class="carousel carousel-fade" data-interval="false">
         <div class="carousel-inner">
             <div class="carousel-item active" id="guide-nav">
                 <ul class="nav flex-column">
-                    <li id="title-bar" class="nav-item bg-primary text-white px-3 py-1">
-                        <a>How-To Guide</a>
-                        <button type="button" class="close text-white py-2" onclick="closeOffcanvas()">
-                            <span class="fas fa-times"></span>
-                        </button>
-                    </li>
                     <li class="nav-item toc-title">
                         <a class="nav-link" data-target="#guide-carousel" data-slide-to="1" href="#">About this Campaign</a>
                     </li>
@@ -22,15 +25,6 @@
                 </ul>
             </div>
             <div class="carousel-item container">
-                <div class="bg-primary px-2 py-1 row text-white">
-                    <a data-target="#guide-carousel" data-slide-to="0" class="text-white" href="">
-                        <i class="fas fa-solid fa-bars py-2"></i>
-                    </a>
-                    <h3 class="px-2 my-1">How-To Guide</h3>
-                    <button id="close-guide" type="button" class="close text-white" onclick="closeOffcanvas()">
-                        <span class="fas fa-times"></span>
-                    </button>
-                </div>
                 <div class="border-bottom justify-content-center mb-3 py-1 row">
                     <h3>About this Campaign</h3>
                     <a class="font-weight-bold ml-3" id="next-guide" href="#guide-carousel" data-slide="next">></a>
@@ -55,20 +49,10 @@
                                 </li>
                             {% endfor %}
                         </ul>
-                    </p>
                 {% endif %}
             </div>
             {% for guide in guides %}
                 <div class="carousel-item container" id="pane-{{ forloop.counter }}">
-                    <div class="bg-primary px-2 py-1 row text-white">
-                        <a data-target="#guide-carousel" data-slide-to="0">
-                            <i class="fas fa-solid fa-bars py-2"></i>
-                        </a>
-                        <h3 class="px-2 my-1">How-To Guide</h3>
-                        <button id="close-guide" type="button" class="close text-white" onclick="closeOffcanvas()">
-                            <span class="fas fa-times"></span>
-                        </button>
-                    </div>
                     <div class="border-bottom justify-content-center mb-3 py-1 row">
                         <a class="font-weight-bold mr-3" id="previous-guide" href="#guide-carousel" data-slide="prev"><</a>
                         <h3>{{ guide.title }}</h3>
