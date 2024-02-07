@@ -1117,7 +1117,7 @@ $card-progress-height: 12px;
 
 #close-guide {
     height: 30.5px;
-    margin: 0 0.5rem -1rem auto;
+    margin: 0 1rem -1rem auto;
 }
 
 .sidebar {
@@ -1147,6 +1147,10 @@ $card-progress-height: 12px;
 
 .toc-title {
     font-weight: 600;
+}
+
+#guide-bars {
+    color: #fff;
 }
 
 .sidebar .close {
