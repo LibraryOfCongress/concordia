@@ -63,3 +63,15 @@ class ConcordiaUserAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
             b"",
         ]
         self.assertEqual(content, test_data)
+
+    def test_excel_export(self):
+        user_admin = self.get_user_admin()
+        # There's not a reasonable way to test `date_joined` so we'll remove it
+        user_admin.EXPORT_FIELDS = [
+            field for field in user_admin.EXPORT_FIELDS if field != "date_joined"
+        ]
+        response = user_admin.export_users_as_excel(
+            request, user_admin.get_queryset(request)
+        )
+        # TODO: Test contents of file (requires a library to read xlsx files)
+        self.assertNotEqual(len(response.content), 0)
