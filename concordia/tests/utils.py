@@ -274,3 +274,9 @@ class CacheControlAssertions(object):
     def assertCachePrivate(self, response):
         self.assertIn("Cache-Control", response)
         self.assertIn("private", response["Cache-Control"])
+
+
+class StreamingTestMixin(object):
+    def get_streaming_content(self, response):
+        self.assertTrue(response.streaming)
+        return b"".join(response.streaming_content)
