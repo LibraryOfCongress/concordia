@@ -60,7 +60,9 @@
                             <a class="font-weight-bold ml-3" id="next-guide" href="#guide-carousel" data-slide="next">></a>
                         {% endif %}
                     </div>
-                    {{ guide.body|safe }}
+                    <div class="guide-body">
+                        {{ guide.body|safe }}
+                    </div>
                 </div>
             {% endfor %}
         </div>

@@ -1105,6 +1105,10 @@ $card-progress-height: 12px;
     background-color: $white;
 }
 
+.sidebar h3 {
+    padding-top: 0.5rem;
+}
+
 .sidebar li {
     border-bottom: thin solid $gray-400;
 }
@@ -1112,6 +1116,11 @@ $card-progress-height: 12px;
 .sidebar .nav-item a {
     font-size: $font-size-base * 1.25;
     text-decoration: underline;
+}
+
+.guide-body h3 {
+    font-size: 1rem;
+    font-weight: bold;
 }
 
 #title-bar {
