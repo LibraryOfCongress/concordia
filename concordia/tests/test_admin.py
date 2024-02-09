@@ -82,7 +82,7 @@ class ConcordiaUserAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
         test_data = [
             b"username,email address,first name,last name,active,staff status,"
             + b"superuser status,last login,transcription__count",
-            b"useradmintester,useradmintester@example.com,,,True,False,False,,0",
+            b"useradmintester,useradmintester@example.com,,,True,False,True,,0",
             b"",
         ]
         self.assertEqual(content, test_data)
