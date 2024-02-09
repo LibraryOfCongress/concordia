@@ -1,8 +1,11 @@
 from django.contrib.admin.sites import AdminSite
 from django.contrib.auth.models import User
 from django.test import TestCase
+from django.utils.safestring import SafeString
+from faker import Faker
 
-from concordia.admin import ConcordiaUserAdmin
+from concordia.admin import CampaignAdmin, ConcordiaUserAdmin
+from concordia.models import Campaign
 from concordia.tests.utils import (
     CreateTestUsers,
     StreamingTestMixin,
@@ -47,7 +50,8 @@ class ConcordiaUserAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
 
     def test_csv_export(self):
         user_admin = self.get_user_admin()
-        # There's not a reasonable way to test `date_joined` so we'll remove it
+        # There's not a reasonable way to test `date_joined` so
+        # we'll remove it to simplify the test
         user_admin.EXPORT_FIELDS = [
             field for field in user_admin.EXPORT_FIELDS if field != "date_joined"
         ]
@@ -66,12 +70,37 @@ class ConcordiaUserAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
 
     def test_excel_export(self):
         user_admin = self.get_user_admin()
-        # There's not a reasonable way to test `date_joined` so we'll remove it
-        user_admin.EXPORT_FIELDS = [
-            field for field in user_admin.EXPORT_FIELDS if field != "date_joined"
-        ]
         response = user_admin.export_users_as_excel(
             request, user_admin.get_queryset(request)
         )
         # TODO: Test contents of file (requires a library to read xlsx files)
         self.assertNotEqual(len(response.content), 0)
+
+
+class CampaignAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
+    def setUp(self):
+        self.site = AdminSite()
+        self.user = self.create_user("useradmintester")
+        self.asset = create_asset()
+        self.campaign = self.asset.item.project.campaign
+        self.fake = Faker()
+
+    def get_campaign_admin(self):
+        return CampaignAdmin(model=Campaign, admin_site=self.site)
+
+    def test_truncated_description(self):
+        campaign_admin = self.get_campaign_admin()
+        self.campaign.description = ""
+        self.assertEqual(campaign_admin.truncated_description(self.campaign), "")
+        self.campaign.description = self.fake.text()
+        truncated_description = campaign_admin.truncated_metadata(self.campaign)
+        self.assertIn(truncated_description, self.campaign.description)
+
+    def test_truncated_metadata(self):
+        campaign_admin = self.get_campaign_admin()
+        self.campaign.metadata = {}
+        self.assertEqual(campaign_admin.truncated_metadata(self.campaign), "")
+        self.campaign.metadata[self.fake.unique.word()] = self.fake.text()
+        truncated_metadata = campaign_admin.truncated_metadata(self.campaign)
+        self.assertIs(type(truncated_metadata), SafeString)
+        self.assertRegex(truncated_metadata, r"<code>.*</code>")
