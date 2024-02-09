@@ -187,13 +187,13 @@ def simple_page(request, path=None):
 
     guides = Guide.objects.filter(title__iexact=page.title)
     if guides.count() > 0:
-        html = guides.first().body
-        ctx["add_navigation"] = True
+        guides = guides[:1]
     elif page.title == "How to transcribe":
         guides = Guide.objects.filter(title__startswith="Transcription: ").order_by(
             "order"
         )
-        html = "".join(guides.values_list("body", flat=True))
+    if guides.count() > 0:
+        html = "".join([page.body] + list(guides.values_list("body", flat=True)))
         ctx["add_navigation"] = True
     else:
         html = page.body
