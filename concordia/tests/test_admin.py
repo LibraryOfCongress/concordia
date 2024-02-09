@@ -1,5 +1,8 @@
+from collections import defaultdict
+
 from django.contrib.admin.sites import AdminSite
 from django.contrib.auth.models import User
+from django.core.exceptions import PermissionDenied
 from django.test import TestCase
 from django.utils.safestring import SafeString
 from faker import Faker
@@ -15,48 +18,64 @@ from concordia.tests.utils import (
 
 
 class MockRequest:
-    pass
+    csrf_processing_done = True
+    COOKIES = defaultdict(lambda: "")
+    META = {}
 
 
-class MockSuperUser:
+class MockUser:
+    is_authenticated = True
+
+
+class MockSuperUser(MockUser):
     def has_perm(self, perm, obj=None):
         return True
+
+    def has_perms(self, perm_list, obj=None):
+        return True
+
+
+class MockUnauthorizedUser(MockUser):
+    def has_perm(self, perm, obj=None):
+        return False
+
+    def has_perms(self, perm_list, obj=None):
+        return False
 
 
 request = MockRequest()
 request.user = MockSuperUser()
 
+unauthorized_request = MockRequest()
+unauthorized_request.user = MockUnauthorizedUser()
+
 
 class ConcordiaUserAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
     def setUp(self):
         self.site = AdminSite()
-        self.user = self.create_user("useradmintester")
+        self.user = self.create_super_user("useradmintester")
         self.asset = create_asset()
-
-    def get_user_admin(self):
-        return ConcordiaUserAdmin(model=User, admin_site=self.site)
+        self.user_admin = ConcordiaUserAdmin(model=User, admin_site=self.site)
 
     def test_transcription_count(self):
-        user_admin = self.get_user_admin()
-        users = user_admin.get_queryset(request)
+        users = self.user_admin.get_queryset(request)
         user = users.get(username=self.user.username)
-        transcription_count = user_admin.transcription_count(user)
+        transcription_count = self.user_admin.transcription_count(user)
         self.assertEqual(transcription_count, 0)
 
         create_transcription(asset=self.asset, user=user)
         user = users.get(username=self.user.username)
-        transcription_count = user_admin.transcription_count(user)
+        transcription_count = self.user_admin.transcription_count(user)
         self.assertEqual(transcription_count, 1)
 
     def test_csv_export(self):
-        user_admin = self.get_user_admin()
         # There's not a reasonable way to test `date_joined` so
         # we'll remove it to simplify the test
-        user_admin.EXPORT_FIELDS = [
-            field for field in user_admin.EXPORT_FIELDS if field != "date_joined"
+        self.user_admin.EXPORT_FIELDS = [
+            field for field in self.user_admin.EXPORT_FIELDS if field != "date_joined"
         ]
-        response = user_admin.export_users_as_csv(
-            request, user_admin.get_queryset(request)
+        response = self.user_admin.export_users_as_csv(
+            request, self.user_admin.get_queryset(request)
         )
         content = self.get_streaming_content(response).split(b"\r\n")
         self.assertEqual(len(content), 3)  # Includes empty line at the end of the file
@@ -69,9 +88,8 @@ class ConcordiaUserAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
         self.assertEqual(content, test_data)
 
     def test_excel_export(self):
-        user_admin = self.get_user_admin()
-        response = user_admin.export_users_as_excel(
-            request, user_admin.get_queryset(request)
+        response = self.user_admin.export_users_as_excel(
+            request, self.user_admin.get_queryset(request)
         )
         # TODO: Test contents of file (requires a library to read xlsx files)
         self.assertNotEqual(len(response.content), 0)
@@ -83,24 +101,25 @@ class CampaignAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
         self.user = self.create_user("useradmintester")
         self.asset = create_asset()
         self.campaign = self.asset.item.project.campaign
+        self.campaign_admin = CampaignAdmin(model=Campaign, admin_site=self.site)
         self.fake = Faker()
 
-    def get_campaign_admin(self):
-        return CampaignAdmin(model=Campaign, admin_site=self.site)
-
     def test_truncated_description(self):
-        campaign_admin = self.get_campaign_admin()
         self.campaign.description = ""
-        self.assertEqual(campaign_admin.truncated_description(self.campaign), "")
+        self.assertEqual(self.campaign_admin.truncated_description(self.campaign), "")
         self.campaign.description = self.fake.text()
-        truncated_description = campaign_admin.truncated_metadata(self.campaign)
+        truncated_description = self.campaign_admin.truncated_metadata(self.campaign)
         self.assertIn(truncated_description, self.campaign.description)
 
     def test_truncated_metadata(self):
-        campaign_admin = self.get_campaign_admin()
         self.campaign.metadata = {}
-        self.assertEqual(campaign_admin.truncated_metadata(self.campaign), "")
+        self.assertEqual(self.campaign_admin.truncated_metadata(self.campaign), "")
         self.campaign.metadata[self.fake.unique.word()] = self.fake.text()
-        truncated_metadata = campaign_admin.truncated_metadata(self.campaign)
+        truncated_metadata = self.campaign_admin.truncated_metadata(self.campaign)
         self.assertIs(type(truncated_metadata), SafeString)
         self.assertRegex(truncated_metadata, r"<code>.*</code>")
+
+    def test_retire(self):
+        with self.assertRaises(PermissionDenied):
+            self.campaign_admin.retire(unauthorized_request, self.campaign.slug)
+        # TODO: Implement test of authorized user

@@ -264,6 +264,13 @@ class CreateTestUsers(object):
         """
         return cls.create_user(username, is_active=False, **kwargs)
 
+    @classmethod
+    def create_super_user(cls, username, **kwargs):
+        """
+        Creates a super user User account
+        """
+        return cls.create_user(username, is_superuser=True, **kwargs)
+
 
 class CacheControlAssertions(object):
     def assertUncacheable(self, response):

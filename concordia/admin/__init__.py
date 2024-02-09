@@ -237,12 +237,24 @@ class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         return custom_urls + urls
 
     @method_decorator(csrf_protect)
-    @method_decorator(permission_required("concordia.retire_campaign"))
-    @method_decorator(permission_required("concordia.delete_project"))
-    @method_decorator(permission_required("concordia.delete_item"))
-    @method_decorator(permission_required("concordia.delete_asset"))
-    @method_decorator(permission_required("concordia.delete_transcription"))
-    @method_decorator(permission_required("concordia.delete_import_item_asset"))
+    @method_decorator(
+        permission_required("concordia.retire_campaign", raise_exception=True)
+    )
+    @method_decorator(
+        permission_required("concordia.delete_project", raise_exception=True)
+    )
+    @method_decorator(
+        permission_required("concordia.delete_item", raise_exception=True)
+    )
+    @method_decorator(
+        permission_required("concordia.delete_asset", raise_exception=True)
+    )
+    @method_decorator(
+        permission_required("concordia.delete_transcription", raise_exception=True)
+    )
+    @method_decorator(
+        permission_required("concordia.delete_import_item_asset", raise_exception=True)
+    )
     def retire(self, request, campaign_slug):
         try:
             campaign = Campaign.objects.filter(slug=campaign_slug)[0]
