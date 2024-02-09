@@ -17,5 +17,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(initialize_updated_on),
+        migrations.RunPython(
+            initialize_updated_on, reverse_code=migrations.RunPython.noop
+        ),
     ]
