@@ -1132,6 +1132,10 @@ $card-progress-height: 12px;
     background-color: $white;
 }
 
+.sidebar h3 {
+    padding-top: 0.5rem;
+}
+
 .sidebar li {
     border-bottom: thin solid $gray-400;
 }
