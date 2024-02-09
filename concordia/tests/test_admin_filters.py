@@ -1,10 +1,19 @@
 from django.test import RequestFactory, TestCase
 from django.utils import timezone
 
-from concordia.admin import ProjectAdmin, TranscriptionAdmin
-from concordia.admin.filters import ProjectCampaignListFilter, SubmittedFilter
-from concordia.models import Campaign, Project, Transcription
-from concordia.tests.utils import CreateTestUsers, create_project, create_transcription
+from concordia.admin import ItemAdmin, ProjectAdmin, TranscriptionAdmin
+from concordia.admin.filters import (
+    ItemProjectListFilter2,
+    ProjectCampaignListFilter,
+    SubmittedFilter,
+)
+from concordia.models import Campaign, Item, Project, Transcription
+from concordia.tests.utils import (
+    CreateTestUsers,
+    create_item,
+    create_project,
+    create_transcription,
+)
 
 
 class NullableTimestampFilterTest(CreateTestUsers, TestCase):
@@ -32,15 +41,15 @@ class NullableTimestampFilterTest(CreateTestUsers, TestCase):
         self.assertEqual(transcriptions.count(), 1)
 
 
-class CampaignListFilterTest(CreateTestUsers, TestCase):
+class CampaignListFilterTests(CreateTestUsers, TestCase):
     def setUp(self):
-        self.project = create_project()
+        self.campaign = create_project().campaign
 
-    def test_lookups(self):
+    def test_project_filter(self):
         request = RequestFactory().get("/admin/concordia/project/?campaign__status=1")
         f = ProjectCampaignListFilter(
             request,
-            {"campaign__id__exact": self.project.campaign.id},
+            {"campaign__id__exact": self.campaign.id},
             Project,
             ProjectAdmin,
         )
@@ -52,3 +61,18 @@ class CampaignListFilterTest(CreateTestUsers, TestCase):
         )
         projects = f.queryset(None, Project.objects.all())
         self.assertEqual(projects.count(), 1)
+
+
+class ItemFilterTests(CreateTestUsers, TestCase):
+    def setUp(self):
+        self.project = create_item().project
+
+    def test_project_filter(self):
+        request = RequestFactory().get(
+            "/admin/concordia/item/?project__in=%s" % self.project.pk
+        )
+        f = ItemProjectListFilter2(
+            request, {"project__in": (self.project.id,)}, Item, ItemAdmin
+        )
+        items = f.queryset(None, Item.objects.all())
+        self.assertEqual(items.count(), 1)
