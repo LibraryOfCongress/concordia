@@ -188,13 +188,13 @@ class CampaignProjectListFilter(admin.SimpleListFilter):
         return queryset
 
 
-class ItemProjectListFilter2(CampaignProjectListFilter):
+class ItemProjectListFilter(CampaignProjectListFilter):
     parameter_name = "project__in"
     related_filter_parameter = "project__campaign__id__exact"
     project_ref = "project_id"
 
 
-class AssetProjectListFilter2(CampaignProjectListFilter):
+class AssetProjectListFilter(CampaignProjectListFilter):
     parameter_name = "item__project__in"
     related_filter_parameter = "item__project__campaign__id__exact"
     project_ref = "item__project_id"

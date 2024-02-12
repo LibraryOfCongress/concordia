@@ -54,6 +54,7 @@ hiredis = "*"
 pyasn1 = "*"
 pyleniumio = "*"
 django-maintenance-mode = "*"
+faker = "*"
 
 [dev-packages]
 invoke = "*"
