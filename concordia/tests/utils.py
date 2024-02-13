@@ -272,6 +272,13 @@ class CreateTestUsers(object):
         """
         return cls.create_user(username, is_active=False, **kwargs)
 
+    @classmethod
+    def create_super_user(cls, username, **kwargs):
+        """
+        Creates a super user User account
+        """
+        return cls.create_user(username, is_superuser=True, **kwargs)
+
 
 class CacheControlAssertions(object):
     def assertUncacheable(self, response):
@@ -282,3 +289,9 @@ class CacheControlAssertions(object):
     def assertCachePrivate(self, response):
         self.assertIn("Cache-Control", response)
         self.assertIn("private", response["Cache-Control"])
+
+
+class StreamingTestMixin(object):
+    def get_streaming_content(self, response):
+        self.assertTrue(response.streaming)
+        return b"".join(response.streaming_content)

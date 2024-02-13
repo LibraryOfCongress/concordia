@@ -1,8 +1,8 @@
 # Concordia Tests
 
-This directory contains tests for the concordia app. It has a
-combination of Django TestCases (which will create a test database
-before running each test), and pyunit tests.
+This directory contains tests for the concordia app. It
+uses Django TestCases, which will create a test database
+before running each test.
 
 ## Pre-requisites
 
