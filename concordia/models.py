@@ -190,6 +190,47 @@ class UnlistedPublicationQuerySet(PublicationQuerySet):
         return self.filter(next_review_campaign=True)
 
 
+class Card(models.Model):
+    image_alt_text = models.TextField(blank=True)
+    image = models.ImageField(upload_to="card_images", blank=True, null=True)
+    title = models.CharField(max_length=80)
+    body_text = models.TextField(blank=True)
+    created_on = models.DateTimeField(editable=False, auto_now_add=True)
+    updated_on = models.DateTimeField(editable=False, auto_now=True, null=True)
+    display_heading = models.CharField(max_length=80, blank=True, null=True)
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        ordering = ("title",)
+
+
+class CardFamily(models.Model):
+    slug = models.SlugField(max_length=80, unique=True, allow_unicode=True)
+    default = models.BooleanField(default=False)
+    cards = models.ManyToManyField(Card, through="TutorialCard")
+
+    class Meta:
+        verbose_name_plural = "card families"
+
+    def __str__(self):
+        return self.slug
+
+
+def on_cardfamily_save(sender, instance, **kwargs):
+    # Only one tutorial/ list of cards should be marked as "default".
+    # If the flag is set on a tutorial, it needs to be cleared from
+    # any other existing tutorials.
+    if instance.default:
+        CardFamily.objects.filter(default=True).exclude(pk=instance.pk).update(
+            default=False
+        )
+
+
+post_save.connect(on_cardfamily_save, sender=CardFamily)
+
+
 class Campaign(MetricsModelMixin("campaign"), models.Model):
     class Status(models.IntegerChoices):
         ACTIVE = 1
@@ -214,13 +255,17 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
     title = models.CharField(max_length=80)
     slug = models.SlugField(max_length=80, unique=True, allow_unicode=True)
 
+    card_family = models.ForeignKey(
+        CardFamily, on_delete=models.CASCADE, blank=True, null=True
+    )
+    thumbnail_image = models.ImageField(
+        upload_to="campaign-thumbnails", blank=True, null=True
+    )
+
     launch_date = models.DateField(null=True, blank=True)
     completed_date = models.DateField(null=True, blank=True)
 
     description = models.TextField(blank=True)
-    thumbnail_image = models.ImageField(
-        upload_to="campaign-thumbnails", blank=True, null=True
-    )
     short_description = models.TextField(blank=True)
 
     metadata = JSONField(default=metadata_default, blank=True, null=True)
@@ -689,22 +734,6 @@ class AssetTranscriptionReservation(models.Model):
     tombstoned = models.BooleanField(default=False, blank=True, null=True)
 
 
-class SimpleContentBlock(models.Model):
-    created_on = models.DateTimeField(editable=False, auto_now_add=True)
-    updated_on = models.DateTimeField(editable=False, auto_now=True)
-
-    slug = models.SlugField(
-        unique=True,
-        max_length=255,
-        help_text="Label that templates use to retrieve this block",
-    )
-
-    body = models.TextField()
-
-    def __str__(self):
-        return f"SimpleContentBlock: {self.slug}"
-
-
 class SimplePage(models.Model):
     created_on = models.DateTimeField(editable=False, auto_now_add=True)
     updated_on = models.DateTimeField(editable=False, auto_now=True)
@@ -909,28 +938,21 @@ class CampaignRetirementProgress(models.Model):
         return f"Removal progress for {self.campaign}"
 
 
-class Card(models.Model):
-    image = models.ImageField(upload_to="card_images", blank=True, null=True)
-    title = models.CharField(max_length=80)
-    body_text = models.TextField(blank=True)
-
-    class Meta:
-        abstract = True
-
-
-class CardFamily(models.Model):
-    slug = models.SlugField(max_length=80, unique=True, allow_unicode=True)
-    default = models.BooleanField(default=False)
-    cards = models.ManyToManyField(Card, through="TutorialCard")
-
-    class Meta:
-        abstract = True
-
-
 class TutorialCard(models.Model):
     card = models.ForeignKey(Card, on_delete=models.CASCADE)
     tutorial = models.ForeignKey(CardFamily, on_delete=models.CASCADE)
     order = models.IntegerField(default=0)
 
     class Meta:
-        abstract = True
+        verbose_name_plural = "cards"
+
+
+class Guide(models.Model):
+    title = models.CharField(max_length=80)
+    body = models.TextField(blank=True)
+    order = models.IntegerField(default=1)
+    link_text = models.CharField(max_length=80, blank=True, null=True)
+    link_url = models.CharField(max_length=255, blank=True, null=True)
+
+    def __str__(self):
+        return self.title

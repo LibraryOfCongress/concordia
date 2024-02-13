@@ -78,8 +78,10 @@ from concordia.models import (
     AssetTranscriptionReservation,
     Banner,
     Campaign,
+    CardFamily,
     CarouselSlide,
     ConcordiaUser,
+    Guide,
     Item,
     Project,
     SimplePage,
@@ -88,6 +90,7 @@ from concordia.models import (
     Topic,
     Transcription,
     TranscriptionStatus,
+    TutorialCard,
     UserAssetTagCollection,
     UserProfileActivity,
 )
@@ -164,7 +167,6 @@ def simple_page(request, path=None):
     page = get_object_or_404(SimplePage, path=path)
 
     md = markdown.Markdown(extensions=["meta"])
-    html = md.convert(page.body)
 
     breadcrumbs = []
     path_components = request.path.strip("/").split("/")
@@ -179,11 +181,24 @@ def simple_page(request, path=None):
         language_code = "es"
 
     ctx = {
-        "body": html,
         "language_code": language_code,
         "title": page.title,
         "breadcrumbs": breadcrumbs,
     }
+
+    guides = Guide.objects.filter(title__iexact=page.title)
+    if guides.count() > 0:
+        guides = guides[:1]
+    elif page.title == "How to transcribe":
+        guides = Guide.objects.filter(title__startswith="Transcription: ").order_by(
+            "order"
+        )
+    if guides.count() > 0:
+        html = "".join([page.body] + list(guides.values_list("body", flat=True)))
+        ctx["add_navigation"] = True
+    else:
+        html = page.body
+    ctx["body"] = md.convert(html)
 
     resp = render(request, "static-page.html", ctx)
     resp["Created"] = http_date(page.created_on.timestamp())
@@ -1287,6 +1302,19 @@ class AssetDetailView(APIDetailView):
         ctx["tags"] = sorted(tags)
 
         ctx["registered_contributors"] = asset.get_contributor_count()
+
+        if project.campaign.card_family:
+            card_family = project.campaign.card_family
+        else:
+            card_family = CardFamily.objects.filter(default=True).first()
+        if card_family is not None:
+            unordered_cards = TutorialCard.objects.filter(tutorial=card_family)
+            ordered_cards = unordered_cards.order_by("order")
+            ctx["cards"] = [tutorial_card.card for tutorial_card in ordered_cards]
+
+        guides = Guide.objects.order_by("order").values("title", "body")
+        if guides.count() > 0:
+            ctx["guides"] = guides
 
         return ctx
 

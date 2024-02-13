@@ -30,17 +30,20 @@ from ..models import (
     Banner,
     Campaign,
     CampaignRetirementProgress,
+    Card,
+    CardFamily,
     CarouselSlide,
+    Guide,
     Item,
     Project,
     Resource,
     ResourceFile,
-    SimpleContentBlock,
     SimplePage,
     SiteReport,
     Tag,
     Topic,
     Transcription,
+    TutorialCard,
     UserAssetTagCollection,
     UserProfileActivity,
 )
@@ -61,6 +64,7 @@ from .filters import (
     AssetCampaignListFilter,
     AssetCampaignStatusListFilter,
     AssetProjectListFilter,
+    CardCampaignListFilter,
     ItemCampaignListFilter,
     ItemCampaignStatusListFilter,
     ItemProjectListFilter,
@@ -86,9 +90,10 @@ from .filters import (
 from .forms import (
     AdminItemImportForm,
     CampaignAdminForm,
+    CardAdminForm,
+    GuideAdminForm,
     ProjectAdminForm,
     SanitizedDescriptionAdminForm,
-    SimpleContentBlockAdminForm,
 )
 
 logger = logging.getLogger(__name__)
@@ -193,6 +198,7 @@ class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
     )
     list_display_links = ("title",)
     prepopulated_fields = {"slug": ("title",)}
+    raw_id_fields = ("card_family",)
     search_fields = ["title", "description"]
     list_filter = (
         "published",
@@ -793,19 +799,6 @@ class TranscriptionAdmin(admin.ModelAdmin):
     actions = (export_to_csv, export_to_excel)
 
 
-@admin.register(SimpleContentBlock)
-class SimpleContentBlockAdmin(admin.ModelAdmin):
-    form = SimpleContentBlockAdminForm
-
-    list_display = ("slug", "created_on", "updated_on")
-    readonly_fields = ("created_on", "updated_on")
-
-    fieldsets = (
-        (None, {"fields": ("created_on", "updated_on", "slug")}),
-        ("Body", {"classes": ("markdown-preview",), "fields": ("body",)}),
-    )
-
-
 @admin.register(CarouselSlide)
 class CarouselSlideAdmin(admin.ModelAdmin):
     list_display = ("headline", "published", "ordering")
@@ -991,3 +984,30 @@ class CampaignRetirementProgressAdmin(admin.ModelAdmin):
         total = obj.project_total + obj.item_total + obj.asset_total
         removed = obj.projects_removed + obj.items_removed + obj.assets_removed
         return "{}%".format(round(removed / total * 100, 2))
+
+
+@admin.register(Card)
+class CardAdmin(admin.ModelAdmin):
+    form = CardAdminForm
+    fields = ("title", "display_heading", "body_text", "image", "image_alt_text")
+    list_display = ["title", "created_on", "updated_on"]
+    list_filter = (CardCampaignListFilter, "updated_on")
+
+
+class TutorialInline(admin.TabularInline):
+    model = TutorialCard
+    extra = 1
+    raw_id_fields = ("card",)
+
+
+@admin.register(CardFamily)
+class CardFamilyAdmin(admin.ModelAdmin):
+    inlines = (TutorialInline,)
+
+    class Media:
+        js = ("admin/custom-inline.js",)
+
+
+@admin.register(Guide)
+class GuideAdmin(admin.ModelAdmin):
+    form = GuideAdminForm

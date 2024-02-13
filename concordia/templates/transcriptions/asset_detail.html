@@ -6,7 +6,6 @@
 
 {% load concordia_media_tags %}
 {% load concordia_sharing_tags %}
-{% load concordia_simple_content_blocks %}
 
 {% block title %}
     {{ asset.title }} ({{ asset.item.project.campaign.title }}: {{ asset.item.project.title }})
@@ -33,7 +32,6 @@
 
 {% block main_content %}
     {% flag_enabled 'ADVERTISE_ACTIVITY_UI' as ADVERTISE_ACTIVITY_UI %}
-    {% flag_enabled 'SIMPLE_CONTENT_BLOCKS' as SIMPLE_CONTENT_BLOCKS %}
 
     <div id="contribute-main-content" class="container-fluid flex-grow-1 d-flex flex-column d-print-block">
         <div id="navigation-container" class="row p-1 px-3 d-print-none bg-light">
@@ -401,23 +399,30 @@
                         {% csrf_token %}
                         <input type="hidden" name="supersedes" value="{{ transcription.pk|default:'' }}" />
 
-                        <span id="transcription-status-message">
-                            <h2 id="message-contributors" {% if transcription_status == 'not_started' %}hidden{% endif %}>
-                                Registered Contributors: <span id="message-contributors-num" class="font-weight-normal">{{ registered_contributors }}</span>
-                            </h2>
-                            <span id="message-notstarted" {% if transcription_status != 'not_started' %}hidden{% endif %}>
-                                Transcribe this page.
+                        <div class="row justify-content-sm-between px-3">
+                            <span id="transcription-status-message">
+                                <h2 id="message-contributors" {% if transcription_status == 'not_started' %}hidden{% endif %}>
+                                    Registered Contributors: <span id="message-contributors-num" class="font-weight-normal">{{ registered_contributors }}</span>
+                                </h2>
+                                <span id="message-notstarted" {% if transcription_status != 'not_started' %}hidden{% endif %}>
+                                    Transcribe this page.
+                                </span>
+                                <span id="message-inprogress" {% if transcription_status != 'in_progress' %}hidden{% endif %}>
+                                    Someone started this transcription. Can you finish it?
+                                </span>
+                                <span id="message-submitted" {% if transcription_status != 'submitted' %}hidden{% endif %}>
+                                    Check this transcription thoroughly. Accept if correct!
+                                </span>
+                                <span id="message-completed" {% if transcription_status != 'completed' %}hidden{% endif %}>
+                                    This transcription is finished! You can read and add tags.
+                                </span>
                             </span>
-                            <span id="message-inprogress" {% if transcription_status != 'in_progress' %}hidden{% endif %}>
-                                Someone started this transcription. Can you finish it?
-                            </span>
-                            <span id="message-submitted" {% if transcription_status != 'submitted' %}hidden{% endif %}>
-                                Check this transcription thoroughly. Accept if correct!
-                            </span>
-                            <span id="message-completed" {% if transcription_status != 'completed' %}hidden{% endif %}>
-                                This transcription is finished! You can read and add tags.
-                            </span>
-                        </span>
+                            <div class="align-items-center align-self-end btn-group">
+                                <a class="font-weight-bold" data-toggle="modal" data-target="#tutorial-popup" role="button">
+                                    <u>Quick Tips</u>
+                                </a>
+                            </div>
+                        </div>
 
                         {% spaceless %}
                             <div id="loading-container" class="pb-2">
@@ -425,7 +430,7 @@
                                     <span class="sr-only">Loading...</span>
                                 </div>
                             </div>
-                            <textarea readonly class="form-control w-100 rounded flex-grow-1 d-print-none" name="text" id="transcription-input" placeholder="{% if transcription_status == 'not_started' or transcription_status == 'in_progress' %}Go ahead, start typing. You got this!{% else %}Nothing to transcribe{% endif %}" aria-label="Transcription input">
+                            <textarea readonly class="form-control rounded flex-grow-1 d-print-none" name="text" id="transcription-input" placeholder="{% if transcription_status == 'not_started' or transcription_status == 'in_progress' %}Go ahead, start typing. You got this!{% else %}Nothing to transcribe{% endif %}" aria-label="Transcription input">
                                 {{ transcription.text }}
                             </textarea>
 
@@ -467,6 +472,7 @@
                             </div>
                         {% endspaceless %}
                     </form>
+
                 </div>
                 <div id="tag-editor" class="flex-shrink-1">
                     <h2 id="tag-label" class="border-top pt-3 pb-2"><a
@@ -516,6 +522,10 @@
                     </form>
                 </div>
             </div>
+            {% if guides %}
+                <button id="open-guide" class="btn btn-primary" type="button" onclick="openOffcanvas()">How-To Guide</button>
+                {% include "fragments/_how-to-guide.html" %}
+            {% endif %}
         </div>
         <div id="help-container" class="mt-1 d-print-none">
             <div class="row p-3 bg-light justify-content-sm-between">
@@ -531,25 +541,6 @@
                         Contact us
                     </a>
 
-                    <div class="collapse" id="instruction-window">
-                        <button type="button" class="close pull-right" aria-label="Close" data-toggle="collapse" data-target="#instruction-window">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                        <div>
-                            {% if SIMPLE_CONTENT_BLOCKS %}
-                                {% simple_content_block "classic_quicktips" %}
-                            {% else %}
-                                <ul>
-                                    <li>Transcribe original spelling, punctuation, word order, and any page numbers or catalog marks.</li>
-                                    <li>Preserve line breaks except when a word breaks over a line or page. Then transcribe it on the line or page where it starts.</li>
-                                    <li>Use brackets [ ] around deleted, illegible or partially legible text, and square brackets and asterisks around text in margins [ * * ].</li>
-                                    <li>Transcribe any words or letters you can't identify as [?].</li>
-                                    <li>Include insertions where you would read them in the text.</li>
-                                </ul>
-                                Find more detailed instructions in the <a href="{% url 'help-center' %}">Help Center</a>
-                            {% endif %}
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -714,6 +705,54 @@
         </div>
     </div>
     <div class="print-transcription-image d-none d-print-block"><img class="img-fluid" alt="Scanned image of the current content page" src="{% asset_media_url asset %}"></div>
+    {% if cards %}
+        <div id="tutorial-popup" class="modal" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header border-bottom-0">
+                        <h4>Quick Tips</h4>
+                        <button type="button" class="close text-primary" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">x</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="card-carousel" class="carousel slide" data-interval="false">
+                            <div class="carousel-inner">
+                                {% for card in cards %}
+                                    <div class="carousel-item pb-4 {% if forloop.first %} active {% endif %}">
+                                        {% if not forloop.first %}
+                                            <a id="previous-card" href="#card-carousel" role="button" data-slide="prev">
+                                                <strong><u><&nbsp;Back</u></strong>
+                                            </a>
+                                        {% endif %}
+                                        <div class="position-static d-flex flex-column justify-content-around">
+                                            {% if card.image %}
+                                                <img src="{{ card.image.url }}"{% if card.image_alt_text %} alt="{{ card.image_alt_text }}"{% endif %}>
+                                            {% endif %}
+                                            {% if card.display_heading %}
+                                                <h5>{{ card.display_heading }}</h5>
+                                            {% endif %}
+                                            <p>{{ card.body_text|safe }}</p>
+                                        </div>
+                                        {% if not forloop.last %}
+                                            <a id="next-card" href="#card-carousel" data-slide="next">
+                                                <strong><u>Next&nbsp;></u></strong>
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            <ol class="carousel-indicators d-none d-lg-flex">
+                                {% for card in cards %}
+                                    <li data-target="#card-carousel" data-slide-to="{{ forloop.counter0 }}" {% if forloop.first %}class="active" {% endif %}></li>
+                                {% endfor %}
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
 {% endblock main_content %}
 
 {% block body_scripts %}
@@ -723,14 +762,15 @@
     <script src="{% static 'js/contribute.js' %}"></script>
     <script src="{% static 'js/asset-reservation.js' %}"></script>
     <script>
-        if (
-            typeof(Storage) !== "undefined" &&
-            !(window.screen.width < 1024 || window.screen.height < 768)
-        ) {
-            for(var i in localStorage)
-            {
-                if ($('#' + i).hasClass("alert")) {
-                    $('#' + i).attr("hidden", true);
+        if (typeof(Storage) !== "undefined") {
+            if (!(window.screen.width < 1024 || window.screen.height < 768)) {
+                for(var i in localStorage)
+                {
+                    if (i.startsWith("banner-")) {
+                        if ($('#' + i).hasClass("alert")) {
+                            $('#' + i).attr("hidden", true);
+                        }
+                    }
                 }
             }
         }
@@ -1098,6 +1138,57 @@
 
         thresholdRange.addEventListener('input', function(){
             thresholdNumber.value = thresholdRange.value;
+        });
+    </script>
+    <script>
+        function openOffcanvas() {
+            var guide = document.getElementById("guide-sidebar");
+            guide.style.width = "450px";
+            guide.style.borderWidth = "0 0 thick thick";
+            guide.style.borderStyle = "solid";
+            guide.style.borderColor = "#0076ad";
+            document.getElementById("open-guide").style.display = "none";
+            document.addEventListener('keydown', function(e) {
+                if (e.key == "Escape") {
+                    closeOffcanvas();
+                }
+            });
+
+        }
+        function closeOffcanvas() {
+            document.getElementById("guide-sidebar").style.width = "0%";
+            document.getElementById("guide-sidebar").style.border = "none";
+            document.getElementById("open-guide").style.display = "block";
+        }
+
+        function showPane(elementId) {
+            document.getElementById(elementId).classList.add('show', 'active');
+            document.getElementById('guide-nav').classList.remove('show', 'active');
+        }
+        function hidePane(elementId) {
+            document.getElementById(elementId).classList.remove('show', 'active');
+            document.getElementById('guide-nav').classList.add('show', 'active');
+        }
+        $("#guide-carousel").carousel({
+            interval: false,
+            wrap: false
+        }).on('slide.bs.carousel', function (e) {
+            if (e.to == 0) {
+                $("#guide-bars").addClass("d-none");
+            }
+            else {
+                $("#guide-bars").removeClass("d-none");
+            }
+        });
+    </script>
+    <script>
+        $("#tutorial-popup").on("shown.bs.modal", function() {
+            var $carouselItems = $("#card-carousel .carousel-item");
+            var heights = $carouselItems.map(function() {
+                return $(this).height();
+            });
+            var maxHeight = Math.max.apply(this, heights);
+            $carouselItems.height(maxHeight);
         });
     </script>
 {% endblock body_scripts %}
