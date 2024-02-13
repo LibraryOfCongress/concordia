@@ -990,7 +990,7 @@ class CampaignRetirementProgressAdmin(admin.ModelAdmin):
 class CardAdmin(admin.ModelAdmin):
     form = CardAdminForm
     fields = ("title", "display_heading", "body_text", "image", "image_alt_text")
-    list_display = ["title", "created_on", "updated_on"]
+    list_display = ["title", "display_heading", "created_on", "updated_on"]
     list_filter = (CardCampaignListFilter, "updated_on")
 
 
