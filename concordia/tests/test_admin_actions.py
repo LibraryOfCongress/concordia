@@ -4,19 +4,24 @@ from django.test import TestCase
 
 from concordia.admin.actions import (
     anonymize_action,
+    change_status_to_completed,
+    change_status_to_in_progress,
+    change_status_to_needs_review,
     publish_action,
     publish_item_action,
     unpublish_action,
     unpublish_item_action,
 )
-from concordia.models import Asset, Campaign, Item, Project
+from concordia.models import Asset, Campaign, Item, Project, TranscriptionStatus
 from concordia.tests.utils import (
     CreateTestUsers,
     create_asset,
     create_campaign,
     create_item,
     create_project,
+    create_transcription,
 )
+from concordia.utils import get_anonymous_user
 
 
 class MockModelAdmin:
@@ -119,6 +124,73 @@ class ItemAdminActionTest(TestCase):
         self.assertFalse(item3.published)
         self.assertFalse(asset3.published)
         self.assertFalse(asset4.published)
+
+
+class AssetAdminActionTest(TestCase, CreateTestUsers):
+    def setUp(self):
+        self.user = self.create_user("testuser")
+        self.reviewed_asset = create_asset()
+        self.unreviewed_asset = create_asset(
+            item=self.reviewed_asset.item, slug="test-asset-slug-2"
+        )
+        self.anon_user = get_anonymous_user()
+        self.request = HttpRequest()
+        self.request.user = self.user
+        create_transcription(asset=self.reviewed_asset, user=self.anon_user)
+        create_transcription(asset=self.unreviewed_asset, user=self.anon_user)
+        create_transcription(
+            asset=self.reviewed_asset,
+            user=self.anon_user,
+            reviewed_by=self.user,
+        )
+
+    def test_change_status_to_completed(self):
+        queryset = Asset.objects.filter(
+            pk__in=[self.reviewed_asset.pk, self.unreviewed_asset.pk]
+        )
+        change_status_to_completed(modeladmin, self.request, queryset)
+
+        reviewed_asset = Asset.objects.get(pk=self.reviewed_asset.pk)
+        unreviewed_asset = Asset.objects.get(pk=self.unreviewed_asset.pk)
+
+        self.assertEqual(
+            reviewed_asset.transcription_status, TranscriptionStatus.COMPLETED
+        )
+        self.assertEqual(
+            unreviewed_asset.transcription_status, TranscriptionStatus.COMPLETED
+        )
+
+    def test_change_status_to_needs_review(self):
+        queryset = Asset.objects.filter(
+            pk__in=[self.reviewed_asset.pk, self.unreviewed_asset.pk]
+        )
+        change_status_to_needs_review(modeladmin, self.request, queryset)
+
+        reviewed_asset = Asset.objects.get(pk=self.reviewed_asset.pk)
+        unreviewed_asset = Asset.objects.get(pk=self.unreviewed_asset.pk)
+
+        self.assertEqual(
+            reviewed_asset.transcription_status, TranscriptionStatus.SUBMITTED
+        )
+        self.assertEqual(
+            unreviewed_asset.transcription_status, TranscriptionStatus.SUBMITTED
+        )
+
+    def test_change_status_to_in_progress(self):
+        queryset = Asset.objects.filter(
+            pk__in=[self.reviewed_asset.pk, self.unreviewed_asset.pk]
+        )
+        change_status_to_in_progress(modeladmin, self.request, queryset)
+
+        reviewed_asset = Asset.objects.get(pk=self.reviewed_asset.pk)
+        unreviewed_asset = Asset.objects.get(pk=self.unreviewed_asset.pk)
+
+        self.assertEqual(
+            reviewed_asset.transcription_status, TranscriptionStatus.IN_PROGRESS
+        )
+        self.assertEqual(
+            unreviewed_asset.transcription_status, TranscriptionStatus.IN_PROGRESS
+        )
 
 
 class AdminActionTest(TestCase):
