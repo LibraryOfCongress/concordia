@@ -131,8 +131,16 @@ class AssetAdminActionTest(TestCase, CreateTestUsers):
         self.user = self.create_user("testuser")
         self.reviewed_asset = create_asset()
         self.unreviewed_asset = create_asset(
-            item=self.reviewed_asset.item, slug="test-asset-slug-2"
+            item=self.reviewed_asset.item, slug="unreviewed-asset"
         )
+        self.untranscribed_asset = create_asset(
+            item=self.reviewed_asset.item, slug="untranscribed-asset"
+        )
+        self.asset_pks = [
+            self.reviewed_asset.pk,
+            self.unreviewed_asset.pk,
+            self.untranscribed_asset.pk,
+        ]
         self.anon_user = get_anonymous_user()
         self.request = HttpRequest()
         self.request.user = self.user
@@ -145,13 +153,12 @@ class AssetAdminActionTest(TestCase, CreateTestUsers):
         )
 
     def test_change_status_to_completed(self):
-        queryset = Asset.objects.filter(
-            pk__in=[self.reviewed_asset.pk, self.unreviewed_asset.pk]
-        )
+        queryset = Asset.objects.filter(pk__in=self.asset_pks)
         change_status_to_completed(modeladmin, self.request, queryset)
 
         reviewed_asset = Asset.objects.get(pk=self.reviewed_asset.pk)
         unreviewed_asset = Asset.objects.get(pk=self.unreviewed_asset.pk)
+        untranscribed_asset = Asset.objects.get(pk=self.untranscribed_asset.pk)
 
         self.assertEqual(
             reviewed_asset.transcription_status, TranscriptionStatus.COMPLETED
@@ -159,15 +166,17 @@ class AssetAdminActionTest(TestCase, CreateTestUsers):
         self.assertEqual(
             unreviewed_asset.transcription_status, TranscriptionStatus.COMPLETED
         )
+        self.assertEqual(
+            untranscribed_asset.transcription_status, TranscriptionStatus.COMPLETED
+        )
 
     def test_change_status_to_needs_review(self):
-        queryset = Asset.objects.filter(
-            pk__in=[self.reviewed_asset.pk, self.unreviewed_asset.pk]
-        )
+        queryset = Asset.objects.filter(pk__in=self.asset_pks)
         change_status_to_needs_review(modeladmin, self.request, queryset)
 
         reviewed_asset = Asset.objects.get(pk=self.reviewed_asset.pk)
         unreviewed_asset = Asset.objects.get(pk=self.unreviewed_asset.pk)
+        untranscribed_asset = Asset.objects.get(pk=self.untranscribed_asset.pk)
 
         self.assertEqual(
             reviewed_asset.transcription_status, TranscriptionStatus.SUBMITTED
@@ -175,21 +184,26 @@ class AssetAdminActionTest(TestCase, CreateTestUsers):
         self.assertEqual(
             unreviewed_asset.transcription_status, TranscriptionStatus.SUBMITTED
         )
+        self.assertEqual(
+            untranscribed_asset.transcription_status, TranscriptionStatus.SUBMITTED
+        )
 
     def test_change_status_to_in_progress(self):
-        queryset = Asset.objects.filter(
-            pk__in=[self.reviewed_asset.pk, self.unreviewed_asset.pk]
-        )
+        queryset = Asset.objects.filter(pk__in=self.asset_pks)
         change_status_to_in_progress(modeladmin, self.request, queryset)
 
         reviewed_asset = Asset.objects.get(pk=self.reviewed_asset.pk)
         unreviewed_asset = Asset.objects.get(pk=self.unreviewed_asset.pk)
+        untranscribed_asset = Asset.objects.get(pk=self.untranscribed_asset.pk)
 
         self.assertEqual(
             reviewed_asset.transcription_status, TranscriptionStatus.IN_PROGRESS
         )
         self.assertEqual(
             unreviewed_asset.transcription_status, TranscriptionStatus.IN_PROGRESS
+        )
+        self.assertEqual(
+            untranscribed_asset.transcription_status, TranscriptionStatus.IN_PROGRESS
         )
 
 
