@@ -204,20 +204,25 @@
 
 {% block body_scripts %}
     <script type="text/javascript">
-        if (
-            typeof(Storage) !== "undefined"
-        ) {
-            for(var i in localStorage)
-            {
-                if (i.startsWith("banner-")) {
-                    if ($('#' + i).hasClass("alert")) {
-                        $('#' + i).attr("hidden", true);
-                    }
+        var storage = window.localStorage;
+        var storageAvailable;
+        try {
+            const x = "__storage_test__";
+            storage.setItem(x, x);
+            storage.removeItem(x);
+            storageAvailable = true;
+        } catch (e) {
+            storageAvailable = false;
+        }
+        if (storageAvailable) {
+            for(var i in storage) {
+                if (i.startsWith("banner-") && $('#' + i).hasClass("alert")) {
+                    $('#' + i).attr("hidden", true);
                 }
             }
         }
         $("#no-interface-banner").click(function(event) {
-            localStorage.setItem(event.target.parentElement.id, true);
+            storage.setItem(event.target.parentElement.id, true);
             $('#' + event.target.parentElement.id).attr("hidden", true);
         });
     </script>
