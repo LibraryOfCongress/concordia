@@ -2,7 +2,11 @@ from django.contrib.auth.models import User
 from django.http import HttpRequest
 from django.test import TestCase
 
-from concordia.admin.actions import anonymize_action, publish_item_action
+from concordia.admin.actions import (
+    anonymize_action,
+    publish_item_action,
+    unpublish_item_action,
+)
 from concordia.models import Asset, Item
 from concordia.tests.utils import CreateTestUsers, create_asset, create_item
 
@@ -50,25 +54,26 @@ class UserAdminActionTest(TestCase, CreateTestUsers):
 
 
 class ItemAdminActionTest(TestCase):
-    def setUp(self):
-        self.asset1 = create_asset(published=False)
+    def _setUp(self, published=True):
+        self.asset1 = create_asset(published=published)
         self.item1 = self.asset1.item
         self.project = self.item1.project
 
-        self.item2 = create_item(project=self.project, item_id="2", published=False)
+        self.item2 = create_item(project=self.project, item_id="2", published=published)
         self.asset2 = create_asset(
-            item=self.item2, slug="test-asset-slug-2", published=False
+            item=self.item2, slug="test-asset-slug-2", published=published
         )
 
-        self.item3 = create_item(project=self.project, item_id="3", published=False)
+        self.item3 = create_item(project=self.project, item_id="3", published=published)
         self.asset3 = create_asset(
-            item=self.item3, slug="test-asset-slug-3", published=False
+            item=self.item3, slug="test-asset-slug-3", published=published
         )
         self.asset4 = create_asset(
-            item=self.item3, slug="test-asset-slug-4", published=False
+            item=self.item3, slug="test-asset-slug-4", published=published
         )
 
     def test_publish_item_action(self):
+        self._setUp(False)
         queryset = Item.objects.filter(pk__in=[self.item1.pk, self.item3.pk])
         publish_item_action(modeladmin, request, queryset)
         item1 = Item.objects.get(pk=self.item1.pk)
@@ -86,3 +91,23 @@ class ItemAdminActionTest(TestCase):
         self.assertTrue(item3.published)
         self.assertTrue(asset3.published)
         self.assertTrue(asset4.published)
+
+    def test_unpublish_item_action(self):
+        self._setUp(True)
+        queryset = Item.objects.filter(pk__in=[self.item1.pk, self.item3.pk])
+        unpublish_item_action(modeladmin, request, queryset)
+        item1 = Item.objects.get(pk=self.item1.pk)
+        asset1 = Asset.objects.get(pk=self.asset1.pk)
+        item2 = Item.objects.get(pk=self.item2.pk)
+        asset2 = Asset.objects.get(pk=self.asset2.pk)
+        item3 = Item.objects.get(pk=self.item3.pk)
+        asset3 = Asset.objects.get(pk=self.asset3.pk)
+        asset4 = Asset.objects.get(pk=self.asset4.pk)
+
+        self.assertFalse(item1.published)
+        self.assertFalse(asset1.published)
+        self.assertTrue(item2.published)
+        self.assertTrue(asset2.published)
+        self.assertFalse(item3.published)
+        self.assertFalse(asset3.published)
+        self.assertFalse(asset4.published)
