@@ -273,11 +273,20 @@ class CreateTestUsers(object):
         return cls.create_user(username, is_active=False, **kwargs)
 
     @classmethod
+    def create_staff_user(cls, username, **kwargs):
+        """
+        Creates a staff test User account
+        """
+        return cls.create_user(username, is_staff=True, is_active=True, **kwargs)
+
+    @classmethod
     def create_super_user(cls, username, **kwargs):
         """
         Creates a super user User account
         """
-        return cls.create_user(username, is_superuser=True, **kwargs)
+        return cls.create_user(
+            username, is_staff=True, is_superuser=True, is_active=True, **kwargs
+        )
 
 
 class CacheControlAssertions(object):

@@ -1,7 +1,7 @@
 from django.contrib.admin.sites import AdminSite
 from django.contrib.auth.models import User
-from django.core.exceptions import PermissionDenied
 from django.test import RequestFactory, TestCase
+from django.urls import reverse
 from django.utils.safestring import SafeString
 from faker import Faker
 
@@ -72,7 +72,8 @@ class ConcordiaUserAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
 class CampaignAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
     def setUp(self):
         self.site = AdminSite()
-        self.user = self.create_user("useradmintester")
+        self.user = self.create_user("testuser")
+        self.staff_user = self.create_staff_user("teststaffuser")
         self.super_user = self.create_super_user("testsuperuser")
         self.asset = create_asset()
         self.campaign = self.asset.item.project.campaign
@@ -96,8 +97,32 @@ class CampaignAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
         self.assertRegex(truncated_metadata, r"<code>.*</code>")
 
     def test_retire(self):
-        with self.assertRaises(PermissionDenied):
-            request = self.request_factory.get("/")
-            request.user = self.user
-            self.campaign_admin.retire(request, self.campaign.slug)
-        # TODO: Implement test of authorized user
+        self.client.force_login(self.staff_user)
+        response = self.client.get(
+            reverse(
+                "admin:concordia_campaign_retire",
+                args=[
+                    self.campaign.slug,
+                ],
+            )
+        )
+        self.assertEqual(response.status_code, 403)
+
+        self.client.logout()
+        self.client.force_login(self.super_user)
+        response = self.client.get(
+            reverse("admin:concordia_campaign_retire", args=[self.campaign.slug])
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, template_name="admin/concordia/campaign/retire.html"
+        )
+        self.assertContains(response, "Are you sure?")
+
+        response = self.client.post(
+            reverse("admin:concordia_campaign_retire", args=[self.campaign.slug]),
+            {"post": "yes"},
+        )
+        self.assertEqual(response.status_code, 302)
+        campaign = Campaign.objects.get(pk=self.campaign.pk)
+        self.assertEqual(campaign.status, Campaign.Status.RETIRED)
