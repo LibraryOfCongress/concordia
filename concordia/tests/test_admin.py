@@ -152,6 +152,7 @@ class ResourceFileAdminTest(TestCase, CreateTestUsers):
         self.resource_file_admin = ResourceFileAdmin(
             model=ResourceFile, admin_site=self.site
         )
+        self.request_factory = RequestFactory()
 
     def test_resource_url(self):
         class MockResource:
@@ -162,3 +163,13 @@ class ResourceFileAdminTest(TestCase, CreateTestUsers):
 
         result = self.resource_file_admin.resource_url(MockResourceFile())
         self.assertEquals(result, "http://example.com")
+
+    def test_get_fields(self):
+        request = self.request_factory.get("/")
+        result = self.resource_file_admin.get_fields(request)
+        self.assertNotIn("path", result)
+        self.assertNotIn("resource_url", result)
+
+        result = self.resource_file_admin.get_fields(request, object())
+        self.assertNotIn("path", result)
+        self.assertIn("resource_url", result)
