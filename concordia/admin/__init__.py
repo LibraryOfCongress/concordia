@@ -363,9 +363,6 @@ class ResourceFileAdmin(admin.ModelAdmin):
         return obj.resource.url.split("?")[0]
 
     def get_fields(self, request, obj=None):
-        # We want don't want to display the resource field except during
-        # creation, since uploading a new file will leave behind the original
-        # as an orphan.
         if obj:
             return (
                 "name",
