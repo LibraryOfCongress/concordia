@@ -6,6 +6,7 @@ from concordia.admin.filters import (
     ItemProjectListFilter,
     OcrGeneratedFilter,
     ProjectCampaignListFilter,
+    ProjectCampaignStatusListFilter,
     SubmittedFilter,
 )
 from concordia.models import Campaign, Item, Project, Transcription
@@ -89,8 +90,19 @@ class ItemFilterTests(CreateTestUsers, TestCase):
 
 
 class ProjectFilterTests(TestCase):
+    def setUp(self):
+        self.project = create_item().project
+
     def test_project_campaign_status_list_filter(self):
-        pass
+        f = ProjectCampaignStatusListFilter(None, {}, Project, ProjectAdmin)
+        projects = f.queryset(None, Project.objects.all())
+        self.assertEqual(projects.count(), 1)
+
+        f = ProjectCampaignStatusListFilter(
+            None, {"campaign__status": Campaign.Status.ACTIVE}, Project, ProjectAdmin
+        )
+        projects = f.queryset(None, Project.objects.all())
+        self.assertEqual(projects.count(), 1)
 
 
 class TranscriptionFilterTests(CreateTestUsers, TestCase):
@@ -98,7 +110,7 @@ class TranscriptionFilterTests(CreateTestUsers, TestCase):
         user = self.create_user(username="tester")
         create_transcription(user=user)
 
-    def test_queryset(self):
+    def test_ocr_filter(self):
         f = OcrGeneratedFilter("No", {}, Transcription, TranscriptionAdmin)
         transcriptions = f.queryset(None, Transcription.objects.all())
         self.assertEqual(transcriptions.count(), 1)
