@@ -1,9 +1,7 @@
-from collections import defaultdict
-
 from django.contrib.admin.sites import AdminSite
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
-from django.test import TestCase
+from django.test import RequestFactory, TestCase
 from django.utils.safestring import SafeString
 from faker import Faker
 
@@ -17,47 +15,18 @@ from concordia.tests.utils import (
 )
 
 
-class MockRequest:
-    csrf_processing_done = True
-    COOKIES = defaultdict(lambda: "")
-    META = {}
-
-
-class MockUser:
-    is_authenticated = True
-
-
-class MockSuperUser(MockUser):
-    def has_perm(self, perm, obj=None):
-        return True
-
-    def has_perms(self, perm_list, obj=None):
-        return True
-
-
-class MockUnauthorizedUser(MockUser):
-    def has_perm(self, perm, obj=None):
-        return False
-
-    def has_perms(self, perm_list, obj=None):
-        return False
-
-
-request = MockRequest()
-request.user = MockSuperUser()
-
-unauthorized_request = MockRequest()
-unauthorized_request.user = MockUnauthorizedUser()
-
-
 class ConcordiaUserAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
     def setUp(self):
         self.site = AdminSite()
-        self.user = self.create_super_user("useradmintester")
+        self.user = self.create_user("useradmintester")
+        self.super_user = self.create_super_user("testsuperuser")
         self.asset = create_asset()
         self.user_admin = ConcordiaUserAdmin(model=User, admin_site=self.site)
+        self.request_factory = RequestFactory()
 
     def test_transcription_count(self):
+        request = self.request_factory.get("/")
+        request.user = self.super_user
         users = self.user_admin.get_queryset(request)
         user = users.get(username=self.user.username)
         transcription_count = self.user_admin.transcription_count(user)
@@ -69,6 +38,8 @@ class ConcordiaUserAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
         self.assertEqual(transcription_count, 1)
 
     def test_csv_export(self):
+        request = self.request_factory.get("/")
+        request.user = self.super_user
         # There's not a reasonable way to test `date_joined` so
         # we'll remove it to simplify the test
         self.user_admin.EXPORT_FIELDS = [
@@ -78,16 +49,19 @@ class ConcordiaUserAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
             request, self.user_admin.get_queryset(request)
         )
         content = self.get_streaming_content(response).split(b"\r\n")
-        self.assertEqual(len(content), 3)  # Includes empty line at the end of the file
+        self.assertEqual(len(content), 4)  # Includes empty line at the end of the file
         test_data = [
             b"username,email address,first name,last name,active,staff status,"
             + b"superuser status,last login,transcription__count",
-            b"useradmintester,useradmintester@example.com,,,True,False,True,,0",
+            b"testsuperuser,testsuperuser@example.com,,,True,False,True,,0",
+            b"useradmintester,useradmintester@example.com,,,True,False,False,,0",
             b"",
         ]
         self.assertEqual(content, test_data)
 
     def test_excel_export(self):
+        request = self.request_factory.get("/")
+        request.user = self.super_user
         response = self.user_admin.export_users_as_excel(
             request, self.user_admin.get_queryset(request)
         )
@@ -99,10 +73,12 @@ class CampaignAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
     def setUp(self):
         self.site = AdminSite()
         self.user = self.create_user("useradmintester")
+        self.super_user = self.create_super_user("testsuperuser")
         self.asset = create_asset()
         self.campaign = self.asset.item.project.campaign
         self.campaign_admin = CampaignAdmin(model=Campaign, admin_site=self.site)
         self.fake = Faker()
+        self.request_factory = RequestFactory()
 
     def test_truncated_description(self):
         self.campaign.description = ""
@@ -121,5 +97,7 @@ class CampaignAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
 
     def test_retire(self):
         with self.assertRaises(PermissionDenied):
-            self.campaign_admin.retire(unauthorized_request, self.campaign.slug)
+            request = self.request_factory.get("/")
+            request.user = self.user
+            self.campaign_admin.retire(request, self.campaign.slug)
         # TODO: Implement test of authorized user
