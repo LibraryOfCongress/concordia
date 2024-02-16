@@ -10,10 +10,11 @@ from faker import Faker
 from concordia.admin import (
     CampaignAdmin,
     ConcordiaUserAdmin,
+    ItemAdmin,
     ProjectAdmin,
     ResourceFileAdmin,
 )
-from concordia.models import Campaign, Project, ResourceFile
+from concordia.models import Campaign, Item, Project, ResourceFile
 from concordia.tests.utils import (
     CreateTestUsers,
     StreamingTestMixin,
@@ -233,3 +234,51 @@ class ProjectAdminTest(TestCase, CreateTestUsers):
                 {"import_url": "https://www.loc.gov/collections/example/"},
             )
             self.assertTrue(task_mock.called)
+
+
+class ItemAdminTest(TestCase, CreateTestUsers):
+    def setUp(self):
+        self.site = AdminSite()
+        self.super_user = self.create_super_user()
+        self.staff_user = self.create_staff_user()
+        self.user = self.create_test_user()
+        self.admin = ItemAdmin(model=Item, admin_site=self.site)
+        self.asset = create_asset()
+        self.item = self.asset.item
+        create_transcription(asset=self.asset, user=self.user)
+        self.request_factory = RequestFactory()
+
+    def test_lookup_allowed(self):
+        self.assertTrue(self.admin.lookup_allowed("project__ampaign__id__exact", 0))
+        self.assertTrue(self.admin.lookup_allowed("project__campaign", 0))
+        self.assertFalse(self.admin.lookup_allowed("project__campaign__slug__exact", 0))
+
+    def test_get_deleted_objects(self):
+        mock_objs = range(0, 50)
+        request = self.request_factory.get("/")
+
+        request.user = self.staff_user
+        deleted_objects, model_count, perms_needed, protected = (
+            self.admin.get_deleted_objects(mock_objs, request)
+        )
+        self.assertEquals(len(deleted_objects), 4)
+        self.assertEquals(model_count, {"items": 50, "assets": 1, "transcriptions": 1})
+        self.assertNotEquals(perms_needed, set())
+        self.assertEquals(protected, [])
+
+        request.user = self.super_user
+        deleted_objects, model_count, perms_needed, protected = (
+            self.admin.get_deleted_objects(mock_objs, request)
+        )
+        self.assertEquals(len(deleted_objects), 4)
+        self.assertEquals(model_count, {"items": 50, "assets": 1, "transcriptions": 1})
+        self.assertEquals(perms_needed, set())
+        self.assertEquals(protected, [])
+
+        deleted_objects, model_count, perms_needed, protected = (
+            self.admin.get_deleted_objects([self.item], request)
+        )
+        self.assertEquals(len(deleted_objects), 1)
+        self.assertEquals(model_count, {"items": 1, "assets": 1, "transcriptions": 1})
+        self.assertEquals(perms_needed, set())
+        self.assertEquals(protected, [])
