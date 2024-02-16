@@ -5,8 +5,8 @@ from django.urls import reverse
 from django.utils.safestring import SafeString
 from faker import Faker
 
-from concordia.admin import CampaignAdmin, ConcordiaUserAdmin, ResourceAdmin
-from concordia.models import Campaign, Resource
+from concordia.admin import CampaignAdmin, ConcordiaUserAdmin, ResourceFileAdmin
+from concordia.models import Campaign, ResourceFile
 from concordia.tests.utils import (
     CreateTestUsers,
     StreamingTestMixin,
@@ -137,11 +137,28 @@ class CampaignAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
 
 class ResourceAdminTest(TestCase, CreateTestUsers):
     def setUp(self):
-        self.site = AdminSite()
         self.super_user = self.create_super_user("testsuperuser")
-        self.resource_admin = ResourceAdmin(model=Resource, admin_site=self.site)
 
     def test_resource_admin(self):
         self.client.force_login(self.super_user)
         response = self.client.get(reverse("admin:concordia_resource_add"))
         self.assertEqual(response.status_code, 200)
+
+
+class ResourceFileAdminTest(TestCase, CreateTestUsers):
+    def setUp(self):
+        self.site = AdminSite()
+        self.super_user = self.create_super_user("testsuperuser")
+        self.resource_file_admin = ResourceFileAdmin(
+            model=ResourceFile, admin_site=self.site
+        )
+
+    def test_resource_url(self):
+        class MockResource:
+            url = "http://example.com?arg=true"
+
+        class MockResourceFile:
+            resource = MockResource()
+
+        result = self.resource_file_admin.resource_url(MockResourceFile())
+        self.assertEquals(result, "http://example.com")
