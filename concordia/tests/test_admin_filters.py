@@ -3,7 +3,8 @@ from django.utils import timezone
 
 from concordia.admin import ItemAdmin, ProjectAdmin, TranscriptionAdmin
 from concordia.admin.filters import (
-    ItemProjectListFilter2,
+    ItemProjectListFilter,
+    OcrGeneratedFilter,
     ProjectCampaignListFilter,
     SubmittedFilter,
 )
@@ -71,8 +72,39 @@ class ItemFilterTests(CreateTestUsers, TestCase):
         request = RequestFactory().get(
             "/admin/concordia/item/?project__in=%s" % self.project.pk
         )
-        f = ItemProjectListFilter2(
+        f = ItemProjectListFilter(
             request, {"project__in": (self.project.id,)}, Item, ItemAdmin
         )
         items = f.queryset(None, Item.objects.all())
         self.assertEqual(items.count(), 1)
+
+        f = ItemProjectListFilter(
+            request,
+            {"related_filter_parameter": self.project.campaign.pk},
+            Item,
+            ItemAdmin,
+        )
+        items = f.queryset(None, Item.objects.all())
+        self.assertEqual(items.count(), 1)
+
+
+class ProjectFilterTests(TestCase):
+    def test_project_campaign_status_list_filter(self):
+        pass
+
+
+class TranscriptionFilterTests(CreateTestUsers, TestCase):
+    def setUp(self):
+        user = self.create_user(username="tester")
+        create_transcription(user=user)
+
+    def test_queryset(self):
+        f = OcrGeneratedFilter("No", {}, Transcription, TranscriptionAdmin)
+        transcriptions = f.queryset(None, Transcription.objects.all())
+        self.assertEqual(transcriptions.count(), 1)
+
+        f = OcrGeneratedFilter(
+            "No", {"ocr_generated": False}, Transcription, TranscriptionAdmin
+        )
+        transcriptions = f.queryset(None, Transcription.objects.all())
+        self.assertEqual(transcriptions.count(), 1)
