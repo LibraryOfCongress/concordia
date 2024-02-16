@@ -5,8 +5,8 @@ from django.urls import reverse
 from django.utils.safestring import SafeString
 from faker import Faker
 
-from concordia.admin import CampaignAdmin, ConcordiaUserAdmin
-from concordia.models import Campaign
+from concordia.admin import CampaignAdmin, ConcordiaUserAdmin, ResourceAdmin
+from concordia.models import Campaign, Resource
 from concordia.tests.utils import (
     CreateTestUsers,
     StreamingTestMixin,
@@ -53,7 +53,7 @@ class ConcordiaUserAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
         test_data = [
             b"username,email address,first name,last name,active,staff status,"
             + b"superuser status,last login,transcription__count",
-            b"testsuperuser,testsuperuser@example.com,,,True,False,True,,0",
+            b"testsuperuser,testsuperuser@example.com,,,True,True,True,,0",
             b"useradmintester,useradmintester@example.com,,,True,False,False,,0",
             b"",
         ]
@@ -111,6 +111,13 @@ class CampaignAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
         self.client.logout()
         self.client.force_login(self.super_user)
         response = self.client.get(
+            reverse(
+                "admin:concordia_campaign_retire", args=[self.campaign.slug + "bad"]
+            )
+        )
+        self.assertEqual(response.status_code, 302)
+
+        response = self.client.get(
             reverse("admin:concordia_campaign_retire", args=[self.campaign.slug])
         )
         self.assertEqual(response.status_code, 200)
@@ -126,3 +133,15 @@ class CampaignAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
         self.assertEqual(response.status_code, 302)
         campaign = Campaign.objects.get(pk=self.campaign.pk)
         self.assertEqual(campaign.status, Campaign.Status.RETIRED)
+
+
+class ResourceAdminTest(TestCase, CreateTestUsers):
+    def setUp(self):
+        self.site = AdminSite()
+        self.super_user = self.create_super_user("testsuperuser")
+        self.resource_admin = ResourceAdmin(model=Resource, admin_site=self.site)
+
+    def test_resource_admin(self):
+        self.client.force_login(self.super_user)
+        response = self.client.get(reverse("admin:concordia_resource_add"))
+        self.assertEqual(response.status_code, 200)
