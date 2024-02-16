@@ -259,28 +259,28 @@ class CreateTestUsers(object):
         return user
 
     @classmethod
-    def create_test_user(cls, username, **kwargs):
+    def create_test_user(cls, username="testuser", **kwargs):
         """
         Creates an activated test User account
         """
         return cls.create_user(username, is_active=True, **kwargs)
 
     @classmethod
-    def create_inactive_user(cls, username, **kwargs):
+    def create_inactive_user(cls, username="testinactiveuser", **kwargs):
         """
         Creates an inactive test User account
         """
         return cls.create_user(username, is_active=False, **kwargs)
 
     @classmethod
-    def create_staff_user(cls, username, **kwargs):
+    def create_staff_user(cls, username="teststaffuser", **kwargs):
         """
         Creates a staff test User account
         """
         return cls.create_user(username, is_staff=True, is_active=True, **kwargs)
 
     @classmethod
-    def create_super_user(cls, username, **kwargs):
+    def create_super_user(cls, username="testsuperuser", **kwargs):
         """
         Creates a super user User account
         """

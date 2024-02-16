@@ -432,12 +432,22 @@ class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
 
         return custom_urls + urls
 
-    @method_decorator(permission_required("concordia.add_campaign"))
-    @method_decorator(permission_required("concordia.change_campaign"))
-    @method_decorator(permission_required("concordia.add_project"))
-    @method_decorator(permission_required("concordia.change_project"))
-    @method_decorator(permission_required("concordia.add_item"))
-    @method_decorator(permission_required("concordia.change_item"))
+    @method_decorator(
+        permission_required("concordia.add_campaign", raise_exception=True)
+    )
+    @method_decorator(
+        permission_required("concordia.change_campaign", raise_exception=True)
+    )
+    @method_decorator(
+        permission_required("concordia.add_project", raise_exception=True)
+    )
+    @method_decorator(
+        permission_required("concordia.change_project", raise_exception=True)
+    )
+    @method_decorator(permission_required("concordia.add_item", raise_exception=True))
+    @method_decorator(
+        permission_required("concordia.change_item", raise_exception=True)
+    )
     def item_import_view(self, request, object_id):
         project = get_object_or_404(Project, pk=object_id)
 
