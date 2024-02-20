@@ -73,7 +73,7 @@ def create_topic(
     **kwargs,
 ):
     if project is None:
-        project = create_project()
+        project = create_project(published=published)
 
     topic = Topic(
         title=title,
@@ -106,7 +106,7 @@ def create_project(
     **kwargs,
 ):
     if campaign is None:
-        campaign = create_campaign()
+        campaign = create_campaign(published=published)
 
     project = Project(
         campaign=campaign, title=title, slug=slug, published=published, **kwargs
@@ -128,7 +128,7 @@ def create_item(
     **kwargs,
 ):
     if project is None:
-        project = create_project()
+        project = create_project(published=published)
 
     item = Item(
         project=project,
@@ -158,7 +158,7 @@ def create_asset(
     **kwargs,
 ):
     if item is None:
-        item = create_item()
+        item = create_item(published=published)
     asset = Asset(
         item=item,
         title=title,
@@ -259,25 +259,34 @@ class CreateTestUsers(object):
         return user
 
     @classmethod
-    def create_test_user(cls, username, **kwargs):
+    def create_test_user(cls, username="testuser", **kwargs):
         """
         Creates an activated test User account
         """
         return cls.create_user(username, is_active=True, **kwargs)
 
     @classmethod
-    def create_inactive_user(cls, username, **kwargs):
+    def create_inactive_user(cls, username="testinactiveuser", **kwargs):
         """
         Creates an inactive test User account
         """
         return cls.create_user(username, is_active=False, **kwargs)
 
     @classmethod
-    def create_super_user(cls, username, **kwargs):
+    def create_staff_user(cls, username="teststaffuser", **kwargs):
+        """
+        Creates a staff test User account
+        """
+        return cls.create_user(username, is_staff=True, is_active=True, **kwargs)
+
+    @classmethod
+    def create_super_user(cls, username="testsuperuser", **kwargs):
         """
         Creates a super user User account
         """
-        return cls.create_user(username, is_superuser=True, **kwargs)
+        return cls.create_user(
+            username, is_staff=True, is_superuser=True, is_active=True, **kwargs
+        )
 
 
 class CacheControlAssertions(object):

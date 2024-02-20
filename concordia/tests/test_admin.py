@@ -1,63 +1,41 @@
-from collections import defaultdict
+from unittest import mock
 
 from django.contrib.admin.sites import AdminSite
 from django.contrib.auth.models import User
-from django.core.exceptions import PermissionDenied
-from django.test import TestCase
+from django.test import RequestFactory, TestCase
+from django.urls import reverse
 from django.utils.safestring import SafeString
 from faker import Faker
 
-from concordia.admin import CampaignAdmin, ConcordiaUserAdmin
-from concordia.models import Campaign
+from concordia.admin import (
+    CampaignAdmin,
+    ConcordiaUserAdmin,
+    ItemAdmin,
+    ProjectAdmin,
+    ResourceFileAdmin,
+)
+from concordia.models import Campaign, Item, Project, ResourceFile
 from concordia.tests.utils import (
     CreateTestUsers,
     StreamingTestMixin,
     create_asset,
+    create_project,
     create_transcription,
 )
-
-
-class MockRequest:
-    csrf_processing_done = True
-    COOKIES = defaultdict(lambda: "")
-    META = {}
-
-
-class MockUser:
-    is_authenticated = True
-
-
-class MockSuperUser(MockUser):
-    def has_perm(self, perm, obj=None):
-        return True
-
-    def has_perms(self, perm_list, obj=None):
-        return True
-
-
-class MockUnauthorizedUser(MockUser):
-    def has_perm(self, perm, obj=None):
-        return False
-
-    def has_perms(self, perm_list, obj=None):
-        return False
-
-
-request = MockRequest()
-request.user = MockSuperUser()
-
-unauthorized_request = MockRequest()
-unauthorized_request.user = MockUnauthorizedUser()
 
 
 class ConcordiaUserAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
     def setUp(self):
         self.site = AdminSite()
-        self.user = self.create_super_user("useradmintester")
+        self.user = self.create_test_user()
+        self.super_user = self.create_super_user()
         self.asset = create_asset()
         self.user_admin = ConcordiaUserAdmin(model=User, admin_site=self.site)
+        self.request_factory = RequestFactory()
 
     def test_transcription_count(self):
+        request = self.request_factory.get("/")
+        request.user = self.super_user
         users = self.user_admin.get_queryset(request)
         user = users.get(username=self.user.username)
         transcription_count = self.user_admin.transcription_count(user)
@@ -69,6 +47,8 @@ class ConcordiaUserAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
         self.assertEqual(transcription_count, 1)
 
     def test_csv_export(self):
+        request = self.request_factory.get("/")
+        request.user = self.super_user
         # There's not a reasonable way to test `date_joined` so
         # we'll remove it to simplify the test
         self.user_admin.EXPORT_FIELDS = [
@@ -78,16 +58,19 @@ class ConcordiaUserAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
             request, self.user_admin.get_queryset(request)
         )
         content = self.get_streaming_content(response).split(b"\r\n")
-        self.assertEqual(len(content), 3)  # Includes empty line at the end of the file
+        self.assertEqual(len(content), 4)  # Includes empty line at the end of the file
         test_data = [
             b"username,email address,first name,last name,active,staff status,"
             + b"superuser status,last login,transcription__count",
-            b"useradmintester,useradmintester@example.com,,,True,False,True,,0",
+            b"testsuperuser,testsuperuser@example.com,,,True,True,True,,0",
+            b"testuser,testuser@example.com,,,True,False,False,,0",
             b"",
         ]
         self.assertEqual(content, test_data)
 
     def test_excel_export(self):
+        request = self.request_factory.get("/")
+        request.user = self.super_user
         response = self.user_admin.export_users_as_excel(
             request, self.user_admin.get_queryset(request)
         )
@@ -98,11 +81,14 @@ class ConcordiaUserAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
 class CampaignAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
     def setUp(self):
         self.site = AdminSite()
-        self.user = self.create_user("useradmintester")
+        self.user = self.create_test_user()
+        self.staff_user = self.create_staff_user()
+        self.super_user = self.create_super_user()
         self.asset = create_asset()
         self.campaign = self.asset.item.project.campaign
         self.campaign_admin = CampaignAdmin(model=Campaign, admin_site=self.site)
         self.fake = Faker()
+        self.request_factory = RequestFactory()
 
     def test_truncated_description(self):
         self.campaign.description = ""
@@ -120,6 +106,179 @@ class CampaignAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
         self.assertRegex(truncated_metadata, r"<code>.*</code>")
 
     def test_retire(self):
-        with self.assertRaises(PermissionDenied):
-            self.campaign_admin.retire(unauthorized_request, self.campaign.slug)
-        # TODO: Implement test of authorized user
+        self.client.force_login(self.staff_user)
+        response = self.client.get(
+            reverse(
+                "admin:concordia_campaign_retire",
+                args=[
+                    self.campaign.slug,
+                ],
+            )
+        )
+        self.assertEqual(response.status_code, 403)
+
+        self.client.logout()
+        self.client.force_login(self.super_user)
+        response = self.client.get(
+            reverse(
+                "admin:concordia_campaign_retire", args=[self.campaign.slug + "bad"]
+            )
+        )
+        self.assertEqual(response.status_code, 302)
+
+        response = self.client.get(
+            reverse("admin:concordia_campaign_retire", args=[self.campaign.slug])
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, template_name="admin/concordia/campaign/retire.html"
+        )
+        self.assertContains(response, "Are you sure?")
+
+        response = self.client.post(
+            reverse("admin:concordia_campaign_retire", args=[self.campaign.slug]),
+            {"post": "yes"},
+        )
+        self.assertEqual(response.status_code, 302)
+        campaign = Campaign.objects.get(pk=self.campaign.pk)
+        self.assertEqual(campaign.status, Campaign.Status.RETIRED)
+
+
+class ResourceAdminTest(TestCase, CreateTestUsers):
+    def setUp(self):
+        self.super_user = self.create_super_user()
+
+    def test_resource_admin(self):
+        self.client.force_login(self.super_user)
+        response = self.client.get(reverse("admin:concordia_resource_add"))
+        self.assertEqual(response.status_code, 200)
+
+
+class ResourceFileAdminTest(TestCase, CreateTestUsers):
+    def setUp(self):
+        self.site = AdminSite()
+        self.staff_user = self.create_staff_user()
+        self.super_user = self.create_super_user()
+        self.resource_file_admin = ResourceFileAdmin(
+            model=ResourceFile, admin_site=self.site
+        )
+        self.request_factory = RequestFactory()
+
+    def test_resource_url(self):
+        class MockResource:
+            url = "http://example.com?arg=true"
+
+        class MockResourceFile:
+            resource = MockResource()
+
+        result = self.resource_file_admin.resource_url(MockResourceFile())
+        self.assertEquals(result, "http://example.com")
+
+    def test_get_fields(self):
+        request = self.request_factory.get("/")
+        result = self.resource_file_admin.get_fields(request)
+        self.assertNotIn("path", result)
+        self.assertNotIn("resource_url", result)
+
+        result = self.resource_file_admin.get_fields(request, object())
+        self.assertNotIn("path", result)
+        self.assertIn("resource_url", result)
+
+
+class ProjectAdminTest(TestCase, CreateTestUsers):
+    def setUp(self):
+        self.site = AdminSite()
+        self.super_user = self.create_super_user()
+        self.staff_user = self.create_staff_user()
+        self.project_admin = ProjectAdmin(model=Project, admin_site=self.site)
+        self.project = create_project()
+        self.url_lookup = "admin:concordia_project_item-import"
+
+    def test_lookup_allowed(self):
+        self.assertTrue(self.project_admin.lookup_allowed("campaign__id__exact", 0))
+        self.assertTrue(self.project_admin.lookup_allowed("campaign", 0))
+        self.assertFalse(self.project_admin.lookup_allowed("campaign__slug__exact", 0))
+
+    def test_item_import_view(self):
+        self.client.force_login(self.staff_user)
+        response = self.client.get(reverse(self.url_lookup, args=[self.project.id]))
+        self.assertEquals(response.status_code, 403)
+        self.client.logout()
+
+        self.client.force_login(self.super_user)
+        response = self.client.get(reverse(self.url_lookup, args=[self.project.id + 1]))
+        self.assertEquals(response.status_code, 404)
+
+        response = self.client.get(reverse(self.url_lookup, args=[self.project.id]))
+        self.assertEquals(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, template_name="admin/concordia/project/item_import.html"
+        )
+
+        with self.assertRaises(ValueError):
+            self.client.post(
+                reverse(self.url_lookup, args=[self.project.id]),
+                {"import_url": "https://example.com"},
+            )
+
+        with mock.patch("importer.tasks.create_item_import_task.delay") as task_mock:
+            response = self.client.post(
+                reverse(self.url_lookup, args=[self.project.id]),
+                {"import_url": "https://www.loc.gov/item/example"},
+            )
+            self.assertTrue(task_mock.called)
+
+        with mock.patch("importer.tasks.import_collection_task.delay") as task_mock:
+            response = self.client.post(
+                reverse(self.url_lookup, args=[self.project.id]),
+                {"import_url": "https://www.loc.gov/collections/example/"},
+            )
+            self.assertTrue(task_mock.called)
+
+
+class ItemAdminTest(TestCase, CreateTestUsers):
+    def setUp(self):
+        self.site = AdminSite()
+        self.super_user = self.create_super_user()
+        self.staff_user = self.create_staff_user()
+        self.user = self.create_test_user()
+        self.admin = ItemAdmin(model=Item, admin_site=self.site)
+        self.asset = create_asset()
+        self.item = self.asset.item
+        create_transcription(asset=self.asset, user=self.user)
+        self.request_factory = RequestFactory()
+
+    def test_lookup_allowed(self):
+        self.assertTrue(self.admin.lookup_allowed("project__ampaign__id__exact", 0))
+        self.assertTrue(self.admin.lookup_allowed("project__campaign", 0))
+        self.assertFalse(self.admin.lookup_allowed("project__campaign__slug__exact", 0))
+
+    def test_get_deleted_objects(self):
+        mock_objs = range(0, 50)
+        request = self.request_factory.get("/")
+
+        request.user = self.staff_user
+        deleted_objects, model_count, perms_needed, protected = (
+            self.admin.get_deleted_objects(mock_objs, request)
+        )
+        self.assertEquals(len(deleted_objects), 4)
+        self.assertEquals(model_count, {"items": 50, "assets": 1, "transcriptions": 1})
+        self.assertNotEquals(perms_needed, set())
+        self.assertEquals(protected, [])
+
+        request.user = self.super_user
+        deleted_objects, model_count, perms_needed, protected = (
+            self.admin.get_deleted_objects(mock_objs, request)
+        )
+        self.assertEquals(len(deleted_objects), 4)
+        self.assertEquals(model_count, {"items": 50, "assets": 1, "transcriptions": 1})
+        self.assertEquals(perms_needed, set())
+        self.assertEquals(protected, [])
+
+        deleted_objects, model_count, perms_needed, protected = (
+            self.admin.get_deleted_objects([self.item], request)
+        )
+        self.assertEquals(len(deleted_objects), 1)
+        self.assertEquals(model_count, {"items": 1, "assets": 1, "transcriptions": 1})
+        self.assertEquals(perms_needed, set())
+        self.assertEquals(protected, [])
