@@ -215,6 +215,15 @@ class ProjectAdminTest(TestCase, CreateTestUsers):
             response, template_name="admin/concordia/project/item_import.html"
         )
 
+        self.client.post(
+            reverse(self.url_lookup, args=[self.project.id]),
+            {"bad_param": "https://example.com"},
+        )
+        self.assertEquals(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, template_name="admin/concordia/project/item_import.html"
+        )
+
         with self.assertRaises(ValueError):
             self.client.post(
                 reverse(self.url_lookup, args=[self.project.id]),
