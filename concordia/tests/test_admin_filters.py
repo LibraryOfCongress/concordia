@@ -12,8 +12,10 @@ from concordia.admin.filters import (
 from concordia.models import Campaign, Item, Project, Transcription
 from concordia.tests.utils import (
     CreateTestUsers,
+    create_campaign,
     create_item,
     create_project,
+    create_site_report,
     create_transcription,
 )
 
@@ -48,7 +50,9 @@ class CampaignListFilterTests(CreateTestUsers, TestCase):
         self.campaign = create_project().campaign
 
     def test_project_filter(self):
-        request = RequestFactory().get("/admin/concordia/project/?campaign__status=1")
+        request = RequestFactory().get(
+            "/admin/concordia/project/?campaign__id__exact=%s" % self.campaign.id
+        )
         f = ProjectCampaignListFilter(
             request,
             {"campaign__id__exact": self.campaign.id},
@@ -58,6 +62,7 @@ class CampaignListFilterTests(CreateTestUsers, TestCase):
         projects = f.queryset(None, Project.objects.all())
         self.assertEqual(projects.count(), 1)
 
+        request = RequestFactory().get("/admin/concordia/project/?campaign__status=1")
         f = ProjectCampaignListFilter(
             request, {"campaign__status": Campaign.Status.ACTIVE}, Project, ProjectAdmin
         )
@@ -79,9 +84,13 @@ class ItemFilterTests(CreateTestUsers, TestCase):
         items = f.queryset(None, Item.objects.all())
         self.assertEqual(items.count(), 1)
 
+        request = RequestFactory().get(
+            "/admin/concordia/item/?project__campaign__id__exact=%s"
+            % self.project.campaign.pk
+        )
         f = ItemProjectListFilter(
             request,
-            {"related_filter_parameter": self.project.campaign.pk},
+            {"project__campaign__id__exact": self.project.campaign.pk},
             Item,
             ItemAdmin,
         )
@@ -103,6 +112,15 @@ class ProjectFilterTests(TestCase):
         )
         projects = f.queryset(None, Project.objects.all())
         self.assertEqual(projects.count(), 1)
+
+
+class SiteReportCampaignListFilterTests(TestCase):
+    def setUp(self):
+        create_campaign()
+        create_site_report()
+
+    def test_lookups(self):
+        pass
 
 
 class TranscriptionFilterTests(CreateTestUsers, TestCase):
