@@ -27,7 +27,7 @@ from concordia.tests.utils import (
 class ConcordiaUserAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
     def setUp(self):
         self.site = AdminSite()
-        self.user = self.create_user()
+        self.user = self.create_test_user()
         self.super_user = self.create_super_user()
         self.asset = create_asset()
         self.user_admin = ConcordiaUserAdmin(model=User, admin_site=self.site)
@@ -63,7 +63,7 @@ class ConcordiaUserAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
             b"username,email address,first name,last name,active,staff status,"
             + b"superuser status,last login,transcription__count",
             b"testsuperuser,testsuperuser@example.com,,,True,True,True,,0",
-            b"useradmintester,useradmintester@example.com,,,True,False,False,,0",
+            b"testuser,testuser@example.com,,,True,False,False,,0",
             b"",
         ]
         self.assertEqual(content, test_data)
@@ -81,7 +81,7 @@ class ConcordiaUserAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
 class CampaignAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
     def setUp(self):
         self.site = AdminSite()
-        self.user = self.create_user()
+        self.user = self.create_test_user()
         self.staff_user = self.create_staff_user()
         self.super_user = self.create_super_user()
         self.asset = create_asset()
