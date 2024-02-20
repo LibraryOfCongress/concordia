@@ -460,6 +460,8 @@ class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
                 import_job = import_items_into_project_from_url(
                     request.user, project, import_url
                 )
+            else:
+                import_job = None
         else:
             form = AdminItemImportForm()
             import_job = None
