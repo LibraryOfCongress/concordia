@@ -291,3 +291,13 @@ class ItemAdminTest(TestCase, CreateTestUsers):
         self.assertEquals(model_count, {"items": 1, "assets": 1, "transcriptions": 1})
         self.assertEquals(perms_needed, set())
         self.assertEquals(protected, [])
+
+    def test_get_queryset(self):
+        request = self.request_factory.get("/")
+        qs = self.admin.get_queryset(request)
+        self.assertEquals(qs.count(), 1)
+
+    def test_campaign_title(self):
+        self.assertEquals(
+            self.item.project.campaign.title, self.admin.campaign_title(self.item)
+        )
