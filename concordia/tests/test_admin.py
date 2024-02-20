@@ -4,6 +4,7 @@ from django.contrib.admin.sites import AdminSite
 from django.contrib.auth.models import User
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.safestring import SafeString
 from faker import Faker
 
@@ -14,13 +15,15 @@ from concordia.admin import (
     ItemAdmin,
     ProjectAdmin,
     ResourceFileAdmin,
+    TagAdmin,
 )
-from concordia.models import Asset, Campaign, Item, Project, ResourceFile
+from concordia.models import Asset, Campaign, Item, Project, ResourceFile, Tag
 from concordia.tests.utils import (
     CreateTestUsers,
     StreamingTestMixin,
     create_asset,
     create_project,
+    create_tag_collection,
     create_transcription,
 )
 
@@ -366,3 +369,45 @@ class AssetAdminTest(TestCase, CreateTestUsers):
 
         request.user = self.staff_user
         self.admin.has_reopen_permission(request)
+
+
+class TagAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
+    def setUp(self):
+        self.site = AdminSite()
+        self.super_user = self.create_super_user()
+        self.staff_user = self.create_staff_user()
+        self.user = self.create_test_user()
+        self.admin = TagAdmin(model=Tag, admin_site=self.site)
+        self.request_factory = RequestFactory()
+
+    def test_lookup_allowed(self):
+        self.assertTrue(
+            self.admin.lookup_allowed(
+                "userassettagcollection__asset__item__project__campaign__id__exact", 0
+            )
+        )
+        self.assertTrue(self.admin.lookup_allowed("id", 0))
+        self.assertFalse(self.admin.lookup_allowed("userassettagcollection__asset", 0))
+
+    def test_export_tags_as_csv(self):
+        request = self.request_factory.get("/")
+        request.user = self.super_user
+        mocked_datetime = timezone.now()
+        with mock.patch("django.utils.timezone.now") as now_mocked:
+            now_mocked.return_value = mocked_datetime
+            self.collection = create_tag_collection(user=self.user)
+
+        response = self.admin.export_tags_as_csv(
+            request, self.admin.get_queryset(request)
+        )
+        content = self.get_streaming_content(response).split(b"\r\n")
+        self.assertEqual(len(content), 3)  # Includes empty line at the end of the file
+        test_data = [
+            b"tag value,user asset tag collection date created,"
+            + b"user asset tag collection user_id,asset id,asset title,"
+            + b"asset download url,asset resource url,campaign slug",
+            b"tag-value,%s,3,1,Test Asset,,,test-campaign"
+            % str.encode(mocked_datetime.isoformat()),
+            b"",
+        ]
+        self.assertEqual(content, test_data)
