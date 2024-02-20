@@ -11,6 +11,7 @@ from concordia.models import (
     Item,
     MediaType,
     Project,
+    SiteReport,
     Tag,
     Topic,
     Transcription,
@@ -58,6 +59,13 @@ def create_campaign(
     if do_save:
         campaign.save()
     return campaign
+
+
+def create_site_report(do_save=True):
+    site_report = SiteReport()
+    if do_save:
+        site_report.save()
+    return site_report
 
 
 @ensure_slug
