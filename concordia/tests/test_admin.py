@@ -16,8 +16,17 @@ from concordia.admin import (
     ProjectAdmin,
     ResourceFileAdmin,
     TagAdmin,
+    TranscriptionAdmin,
 )
-from concordia.models import Asset, Campaign, Item, Project, ResourceFile, Tag
+from concordia.models import (
+    Asset,
+    Campaign,
+    Item,
+    Project,
+    ResourceFile,
+    Tag,
+    Transcription,
+)
 from concordia.tests.utils import (
     CreateTestUsers,
     StreamingTestMixin,
@@ -53,8 +62,7 @@ class ConcordiaUserAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
     def test_csv_export(self):
         request = self.request_factory.get("/")
         request.user = self.super_user
-        # There's not a reasonable way to test `date_joined` so
-        # we'll remove it to simplify the test
+        # TODO: Fix this to mock date_joined rather than removing it
         self.user_admin.EXPORT_FIELDS = [
             field for field in self.user_admin.EXPORT_FIELDS if field != "date_joined"
         ]
@@ -375,8 +383,6 @@ class TagAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
     def setUp(self):
         self.site = AdminSite()
         self.super_user = self.create_super_user()
-        self.staff_user = self.create_staff_user()
-        self.user = self.create_test_user()
         self.admin = TagAdmin(model=Tag, admin_site=self.site)
         self.request_factory = RequestFactory()
 
@@ -411,3 +417,65 @@ class TagAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
             b"",
         ]
         self.assertEqual(content, test_data)
+
+
+class TranscriptionAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
+    def setUp(self):
+        self.site = AdminSite()
+        self.super_user = self.create_super_user()
+        self.user = self.create_test_user()
+        self.asset = create_asset()
+        self.mocked_datetime = timezone.now()
+        self.mocked_datetime_formatted = self.mocked_datetime.isoformat()
+        with mock.patch("django.utils.timezone.now") as now_mocked:
+            now_mocked.return_value = self.mocked_datetime
+            self.transcription = create_transcription(asset=self.asset, user=self.user)
+        self.admin = TranscriptionAdmin(model=Transcription, admin_site=self.site)
+        self.request_factory = RequestFactory()
+        self.fake = Faker()
+
+    def test_lookup_allowed(self):
+        self.assertTrue(
+            self.admin.lookup_allowed("asset__item__project__campaign__id__exact", 0)
+        )
+        self.assertTrue(self.admin.lookup_allowed("id", 0))
+        self.assertFalse(
+            self.admin.lookup_allowed("asset__item__project__id__exact", 0)
+        )
+
+    def test_truncated_text(self):
+        self.transcription.text = self.fake.text(50)
+        result = self.admin.truncated_text(self.transcription)
+        self.assertEquals(result, self.transcription.text)
+
+        self.transcription.text = self.fake.text(500)
+        result = self.admin.truncated_text(self.transcription)
+        self.assertNotEquals(result, self.transcription.text)
+        self.assertIn(result[:-1], self.transcription.text)
+
+    def test_export_to_csv(self):
+        request = self.request_factory.get("/")
+        request.user = self.super_user
+
+        response = self.admin.export_to_csv(request, self.admin.get_queryset(request))
+        content = self.get_streaming_content(response).split(b"\r\n")
+        self.assertEqual(len(content), 3)  # Includes empty line at the end of the file
+        test_data = [
+            b"ID,asset__id,asset__slug,user,created on,updated on,supersedes,"
+            + b"submitted,accepted,rejected,reviewed by,text,ocr generated,"
+            + b"ocr originated",
+            b"1,1,test-asset,2,%s,%s,,,,,,,False,False"
+            % (
+                str.encode(self.mocked_datetime_formatted),
+                str.encode(self.mocked_datetime_formatted),
+            ),
+            b"",
+        ]
+        self.assertEqual(content, test_data)
+
+    def test_export_to_excel(self):
+        request = self.request_factory.get("/")
+        request.user = self.super_user
+        response = self.admin.export_to_excel(request, self.admin.get_queryset(request))
+        # TODO: Test contents of file (requires a library to read xlsx files)
+        self.assertNotEqual(len(response.content), 0)
