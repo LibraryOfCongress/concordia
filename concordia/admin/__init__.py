@@ -518,7 +518,7 @@ class ItemAdmin(admin.ModelAdmin):
     actions = (publish_item_action, unpublish_item_action)
 
     def lookup_allowed(self, key, value):
-        if key in ("project__campaign__id__exact"):
+        if key in ("project__campaign__id__exact",):
             return True
         else:
             return super().lookup_allowed(key, value)
@@ -648,14 +648,13 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         return self.readonly_fields
 
     def change_view(self, request, object_id, extra_context=None, **kwargs):
-        if object_id:
-            if extra_context is None:
-                extra_context = {}
-            extra_context["transcriptions"] = (
-                Transcription.objects.filter(asset__pk=object_id)
-                .select_related("user", "reviewed_by")
-                .order_by("-pk")
-            )
+        if extra_context is None:
+            extra_context = {}
+        extra_context["transcriptions"] = (
+            Transcription.objects.filter(asset__pk=object_id)
+            .select_related("user", "reviewed_by")
+            .order_by("-pk")
+        )
         return super().change_view(
             request, object_id, extra_context=extra_context, **kwargs
         )

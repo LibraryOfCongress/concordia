@@ -8,13 +8,14 @@ from django.utils.safestring import SafeString
 from faker import Faker
 
 from concordia.admin import (
+    AssetAdmin,
     CampaignAdmin,
     ConcordiaUserAdmin,
     ItemAdmin,
     ProjectAdmin,
     ResourceFileAdmin,
 )
-from concordia.models import Campaign, Item, Project, ResourceFile
+from concordia.models import Asset, Campaign, Item, Project, ResourceFile
 from concordia.tests.utils import (
     CreateTestUsers,
     StreamingTestMixin,
@@ -258,8 +259,8 @@ class ItemAdminTest(TestCase, CreateTestUsers):
         self.request_factory = RequestFactory()
 
     def test_lookup_allowed(self):
-        self.assertTrue(self.admin.lookup_allowed("project__ampaign__id__exact", 0))
-        self.assertTrue(self.admin.lookup_allowed("project__campaign", 0))
+        self.assertTrue(self.admin.lookup_allowed("project__campaign__id__exact", 0))
+        self.assertFalse(self.admin.lookup_allowed("project__campaign", 0))
         self.assertFalse(self.admin.lookup_allowed("project__campaign__slug__exact", 0))
 
     def test_get_deleted_objects(self):
@@ -301,3 +302,67 @@ class ItemAdminTest(TestCase, CreateTestUsers):
         self.assertEquals(
             self.item.project.campaign.title, self.admin.campaign_title(self.item)
         )
+
+
+class AssetAdminTest(TestCase, CreateTestUsers):
+    def setUp(self):
+        self.site = AdminSite()
+        self.super_user = self.create_super_user()
+        self.staff_user = self.create_staff_user()
+        self.user = self.create_test_user()
+        self.admin = AssetAdmin(model=Asset, admin_site=self.site)
+        self.asset = create_asset()
+        create_transcription(asset=self.asset, user=self.user)
+        self.request_factory = RequestFactory()
+
+    def test_get_queryset(self):
+        request = self.request_factory.get("/")
+        qs = self.admin.get_queryset(request)
+        self.assertEquals(qs.count(), 1)
+
+    def test_lookup_allowed(self):
+        self.assertTrue(self.admin.lookup_allowed("item__project__id__exact", 0))
+        self.assertTrue(
+            self.admin.lookup_allowed("item__project__campaign__id__exact", 0)
+        )
+        self.assertFalse(self.admin.lookup_allowed("item__project", 0))
+
+    def test_item_id(self):
+        self.assertEquals(self.asset.item.item_id, self.admin.item_id(self.asset))
+
+    def test_truncated_media_url(self):
+        truncated_url = self.admin.truncated_media_url(self.asset)
+        self.assertEquals(truncated_url.count(self.asset.media_url), 2)
+
+        self.asset.media_url = "".join([str(i) for i in range(200)])
+        truncated_url = self.admin.truncated_media_url(self.asset)
+        self.assertEquals(truncated_url.count(self.asset.media_url), 1)
+        self.assertEquals(truncated_url.count(self.asset.media_url[:99]), 2)
+
+    def test_get_readonly_fields(self):
+        request = self.request_factory.get("/")
+        self.assertNotIn("item", self.admin.get_readonly_fields(request))
+        self.assertIn("item", self.admin.get_readonly_fields(request, self.asset))
+
+    def test_change_view(self):
+        self.client.force_login(self.super_user)
+        response = self.client.get(
+            reverse("admin:concordia_asset_change", args=[self.asset.id])
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, template_name="admin/concordia/asset/change_form.html"
+        )
+
+        request = self.request_factory.get("/")
+        request.user = self.super_user
+        response = self.admin.change_view(request, str(self.asset.id))
+        self.assertEqual(response.status_code, 200)
+
+    def test_has_reopen_permission(self):
+        request = self.request_factory.get("/")
+        request.user = self.super_user
+        self.admin.has_reopen_permission(request)
+
+        request.user = self.staff_user
+        self.admin.has_reopen_permission(request)
