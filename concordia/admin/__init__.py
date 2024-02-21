@@ -460,6 +460,8 @@ class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
                 import_job = import_items_into_project_from_url(
                     request.user, project, import_url
                 )
+            else:
+                import_job = None
         else:
             form = AdminItemImportForm()
             import_job = None
@@ -516,7 +518,7 @@ class ItemAdmin(admin.ModelAdmin):
     actions = (publish_item_action, unpublish_item_action)
 
     def lookup_allowed(self, key, value):
-        if key in ("project__campaign__id__exact"):
+        if key in ("project__campaign__id__exact",):
             return True
         else:
             return super().lookup_allowed(key, value)
@@ -646,14 +648,12 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         return self.readonly_fields
 
     def change_view(self, request, object_id, extra_context=None, **kwargs):
-        if object_id:
-            if extra_context is None:
-                extra_context = {}
-            extra_context["transcriptions"] = (
-                Transcription.objects.filter(asset__pk=object_id)
-                .select_related("user", "reviewed_by")
-                .order_by("-pk")
-            )
+        extra_context = extra_context or {}
+        extra_context["transcriptions"] = (
+            Transcription.objects.filter(asset__pk=object_id)
+            .select_related("user", "reviewed_by")
+            .order_by("-pk")
+        )
         return super().change_view(
             request, object_id, extra_context=extra_context, **kwargs
         )
@@ -784,7 +784,7 @@ class TranscriptionAdmin(admin.ModelAdmin):
     )
 
     def lookup_allowed(self, key, value):
-        if key in ("asset__item__project__campaign__id__exact"):
+        if key in ("asset__item__project__campaign__id__exact",):
             return True
         else:
             return super().lookup_allowed(key, value)
@@ -878,6 +878,8 @@ class SiteReportAdmin(admin.ModelAdmin):
             return f"Campaign: {obj.campaign}"
         elif obj.topic:
             return f"Topic: {obj.topic}"
+        else:
+            return f"SiteReport: <{obj.id}>"
 
     def export_to_csv(self, request, queryset):
         return export_to_csv_action(
@@ -890,25 +892,6 @@ class SiteReportAdmin(admin.ModelAdmin):
         )
 
     actions = (export_to_csv, export_to_excel)
-
-    FIELDNAME_SORT_KEYS = [
-        "created",
-        "user",
-        "campaign",
-        "topic",
-        "project",
-        "item",
-        "asset",
-        "transcription",
-        "tag",
-    ]
-
-    def fieldname_sort_key(self, key):
-        for i, prefix in enumerate(self.FIELDNAME_SORT_KEYS):
-            if prefix in key:
-                return (i, key)
-        else:
-            return (1024, key)
 
 
 @admin.register(UserProfileActivity)

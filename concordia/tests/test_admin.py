@@ -4,22 +4,41 @@ from django.contrib.admin.sites import AdminSite
 from django.contrib.auth.models import User
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.safestring import SafeString
 from faker import Faker
 
 from concordia.admin import (
+    AssetAdmin,
     CampaignAdmin,
+    CampaignRetirementProgressAdmin,
     ConcordiaUserAdmin,
     ItemAdmin,
     ProjectAdmin,
     ResourceFileAdmin,
+    SiteReportAdmin,
+    TagAdmin,
+    TranscriptionAdmin,
 )
-from concordia.models import Campaign, Item, Project, ResourceFile
+from concordia.models import (
+    Asset,
+    Campaign,
+    CampaignRetirementProgress,
+    Item,
+    Project,
+    ResourceFile,
+    SiteReport,
+    Tag,
+    Transcription,
+)
 from concordia.tests.utils import (
     CreateTestUsers,
     StreamingTestMixin,
     create_asset,
     create_project,
+    create_site_report,
+    create_tag_collection,
+    create_topic,
     create_transcription,
 )
 
@@ -49,8 +68,7 @@ class ConcordiaUserAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
     def test_csv_export(self):
         request = self.request_factory.get("/")
         request.user = self.super_user
-        # There's not a reasonable way to test `date_joined` so
-        # we'll remove it to simplify the test
+        # TODO: Fix this to mock date_joined rather than removing it
         self.user_admin.EXPORT_FIELDS = [
             field for field in self.user_admin.EXPORT_FIELDS if field != "date_joined"
         ]
@@ -215,6 +233,15 @@ class ProjectAdminTest(TestCase, CreateTestUsers):
             response, template_name="admin/concordia/project/item_import.html"
         )
 
+        self.client.post(
+            reverse(self.url_lookup, args=[self.project.id]),
+            {"bad_param": "https://example.com"},
+        )
+        self.assertEquals(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, template_name="admin/concordia/project/item_import.html"
+        )
+
         with self.assertRaises(ValueError):
             self.client.post(
                 reverse(self.url_lookup, args=[self.project.id]),
@@ -249,8 +276,8 @@ class ItemAdminTest(TestCase, CreateTestUsers):
         self.request_factory = RequestFactory()
 
     def test_lookup_allowed(self):
-        self.assertTrue(self.admin.lookup_allowed("project__ampaign__id__exact", 0))
-        self.assertTrue(self.admin.lookup_allowed("project__campaign", 0))
+        self.assertTrue(self.admin.lookup_allowed("project__campaign__id__exact", 0))
+        self.assertFalse(self.admin.lookup_allowed("project__campaign", 0))
         self.assertFalse(self.admin.lookup_allowed("project__campaign__slug__exact", 0))
 
     def test_get_deleted_objects(self):
@@ -282,3 +309,285 @@ class ItemAdminTest(TestCase, CreateTestUsers):
         self.assertEquals(model_count, {"items": 1, "assets": 1, "transcriptions": 1})
         self.assertEquals(perms_needed, set())
         self.assertEquals(protected, [])
+
+    def test_get_queryset(self):
+        request = self.request_factory.get("/")
+        qs = self.admin.get_queryset(request)
+        self.assertEquals(qs.count(), 1)
+
+    def test_campaign_title(self):
+        self.assertEquals(
+            self.item.project.campaign.title, self.admin.campaign_title(self.item)
+        )
+
+
+class AssetAdminTest(TestCase, CreateTestUsers):
+    def setUp(self):
+        self.site = AdminSite()
+        self.super_user = self.create_super_user()
+        self.staff_user = self.create_staff_user()
+        self.user = self.create_test_user()
+        self.admin = AssetAdmin(model=Asset, admin_site=self.site)
+        self.asset = create_asset()
+        create_transcription(asset=self.asset, user=self.user)
+        self.request_factory = RequestFactory()
+
+    def test_get_queryset(self):
+        request = self.request_factory.get("/")
+        qs = self.admin.get_queryset(request)
+        self.assertEquals(qs.count(), 1)
+
+    def test_lookup_allowed(self):
+        self.assertTrue(self.admin.lookup_allowed("item__project__id__exact", 0))
+        self.assertTrue(
+            self.admin.lookup_allowed("item__project__campaign__id__exact", 0)
+        )
+        self.assertFalse(self.admin.lookup_allowed("item__project", 0))
+
+    def test_item_id(self):
+        self.assertEquals(self.asset.item.item_id, self.admin.item_id(self.asset))
+
+    def test_truncated_media_url(self):
+        truncated_url = self.admin.truncated_media_url(self.asset)
+        self.assertEquals(truncated_url.count(self.asset.media_url), 2)
+
+        self.asset.media_url = "".join([str(i) for i in range(200)])
+        truncated_url = self.admin.truncated_media_url(self.asset)
+        self.assertEquals(truncated_url.count(self.asset.media_url), 1)
+        self.assertEquals(truncated_url.count(self.asset.media_url[:99]), 2)
+
+    def test_get_readonly_fields(self):
+        request = self.request_factory.get("/")
+        self.assertNotIn("item", self.admin.get_readonly_fields(request))
+        self.assertIn("item", self.admin.get_readonly_fields(request, self.asset))
+
+    def test_change_view(self):
+        self.client.force_login(self.super_user)
+        response = self.client.get(
+            reverse("admin:concordia_asset_change", args=[self.asset.id])
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(
+            response, template_name="admin/concordia/asset/change_form.html"
+        )
+
+    def test_has_reopen_permission(self):
+        request = self.request_factory.get("/")
+        request.user = self.super_user
+        self.admin.has_reopen_permission(request)
+
+        request.user = self.staff_user
+        self.admin.has_reopen_permission(request)
+
+
+class TagAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
+    def setUp(self):
+        self.site = AdminSite()
+        self.super_user = self.create_super_user()
+        self.user = self.create_test_user()
+        self.admin = TagAdmin(model=Tag, admin_site=self.site)
+        self.request_factory = RequestFactory()
+
+    def test_lookup_allowed(self):
+        self.assertTrue(
+            self.admin.lookup_allowed(
+                "userassettagcollection__asset__item__project__campaign__id__exact", 0
+            )
+        )
+        self.assertTrue(self.admin.lookup_allowed("id", 0))
+        self.assertFalse(self.admin.lookup_allowed("userassettagcollection__asset", 0))
+
+    def test_export_tags_as_csv(self):
+        request = self.request_factory.get("/")
+        request.user = self.super_user
+        mocked_datetime = timezone.now()
+        with mock.patch("django.utils.timezone.now") as now_mocked:
+            now_mocked.return_value = mocked_datetime
+            self.collection = create_tag_collection(user=self.user)
+
+        response = self.admin.export_tags_as_csv(
+            request, self.admin.get_queryset(request)
+        )
+        content = self.get_streaming_content(response).split(b"\r\n")
+        self.assertEqual(len(content), 3)  # Includes empty line at the end of the file
+        test_data = [
+            b"tag value,user asset tag collection date created,"
+            + b"user asset tag collection user_id,asset id,asset title,"
+            + b"asset download url,asset resource url,campaign slug",
+            b"tag-value,%s,%i,%i,Test Asset,,,test-campaign"
+            % (
+                str.encode(mocked_datetime.isoformat()),
+                self.user.id,
+                self.collection.asset.id,
+            ),
+            b"",
+        ]
+        self.assertEqual(content, test_data)
+
+
+class TranscriptionAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
+    def setUp(self):
+        self.site = AdminSite()
+        self.super_user = self.create_super_user()
+        self.user = self.create_test_user()
+        self.asset = create_asset()
+        self.mocked_datetime = timezone.now()
+        self.mocked_datetime_formatted = self.mocked_datetime.isoformat()
+        with mock.patch("django.utils.timezone.now") as now_mocked:
+            now_mocked.return_value = self.mocked_datetime
+            self.transcription = create_transcription(asset=self.asset, user=self.user)
+        self.admin = TranscriptionAdmin(model=Transcription, admin_site=self.site)
+        self.request_factory = RequestFactory()
+        self.fake = Faker()
+
+    def test_lookup_allowed(self):
+        self.assertTrue(
+            self.admin.lookup_allowed("asset__item__project__campaign__id__exact", 0)
+        )
+        self.assertTrue(self.admin.lookup_allowed("id", 0))
+        self.assertFalse(
+            self.admin.lookup_allowed("asset__item__project__id__exact", 0)
+        )
+
+    def test_truncated_text(self):
+        self.transcription.text = self.fake.text(50)
+        result = self.admin.truncated_text(self.transcription)
+        self.assertEquals(result, self.transcription.text)
+
+        self.transcription.text = self.fake.text(500)
+        result = self.admin.truncated_text(self.transcription)
+        self.assertNotEquals(result, self.transcription.text)
+        self.assertIn(result[:-1], self.transcription.text)
+
+    def test_export_to_csv(self):
+        request = self.request_factory.get("/")
+        request.user = self.super_user
+
+        response = self.admin.export_to_csv(request, self.admin.get_queryset(request))
+        content = self.get_streaming_content(response).split(b"\r\n")
+        self.assertEqual(len(content), 3)  # Includes empty line at the end of the file
+        test_data = [
+            b"ID,asset__id,asset__slug,user,created on,updated on,supersedes,"
+            + b"submitted,accepted,rejected,reviewed by,text,ocr generated,"
+            + b"ocr originated",
+            b"%i,%i,%s,%i,%s,%s,,,,,,,False,False"
+            % (
+                self.transcription.id,
+                self.transcription.asset.id,
+                str.encode(self.transcription.asset.slug),
+                self.user.id,
+                str.encode(self.mocked_datetime_formatted),
+                str.encode(self.mocked_datetime_formatted),
+            ),
+            b"",
+        ]
+        self.assertEqual(content, test_data)
+
+    def test_export_to_excel(self):
+        request = self.request_factory.get("/")
+        request.user = self.super_user
+        response = self.admin.export_to_excel(request, self.admin.get_queryset(request))
+        # TODO: Test contents of file (requires a library to read xlsx files)
+        self.assertNotEqual(len(response.content), 0)
+
+
+class SiteReportAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
+    def setUp(self):
+        self.site = AdminSite()
+        self.super_user = self.create_super_user()
+        self.mocked_datetime = timezone.now()
+        self.mocked_datetime_formatted = self.mocked_datetime.isoformat()
+        with mock.patch("django.utils.timezone.now") as now_mocked:
+            now_mocked.return_value = self.mocked_datetime
+            self.site_report = create_site_report()
+        self.topic = create_topic()
+        self.campaign = self.topic.project_set.all()[0].campaign
+        self.admin = SiteReportAdmin(model=SiteReport, admin_site=self.site)
+        self.request_factory = RequestFactory()
+        self.fake = Faker()
+
+    def test_report_type(self):
+        self.site_report.report_name = "Test name"
+        self.site_report.campaign = self.campaign
+        self.site_report.topic = self.topic
+
+        response = self.admin.report_type(self.site_report)
+        self.assertIn("Report name", response)
+
+        self.site_report.report_name = ""
+        response = self.admin.report_type(self.site_report)
+        self.assertIn("Campaign", response)
+
+        self.site_report.campaign = None
+        response = self.admin.report_type(self.site_report)
+        self.assertIn("Topic", response)
+
+        self.site_report.topic = None
+        response = self.admin.report_type(self.site_report)
+        self.assertIn("SiteReport", response)
+
+    def test_export_to_csv(self):
+        request = self.request_factory.get("/")
+        request.user = self.super_user
+
+        response = self.admin.export_to_csv(request, self.admin.get_queryset(request))
+        content = self.get_streaming_content(response).split(b"\r\n")
+        self.assertEqual(len(content), 3)  # Includes empty line at the end of the file
+        test_data = [
+            b"created on,report name,campaign__title,topic__title,assets total,"
+            + b"assets published,assets not started,assets in progress,"
+            + b"assets waiting review,assets completed,assets unpublished,"
+            + b"items published,items unpublished,projects published,"
+            + b"projects unpublished,anonymous transcriptions,transcriptions saved,"
+            + b"daily review actions,distinct tags,tag uses,campaigns published,"
+            + b"campaigns unpublished,users registered,users activated,"
+            + b"registered contributors,daily active users",
+            b"%s,,,,,,,,,,,,,,,,,,,,,,,,," % str.encode(self.mocked_datetime_formatted),
+            b"",
+        ]
+        self.assertEqual(content, test_data)
+
+    def test_export_to_excel(self):
+        request = self.request_factory.get("/")
+        request.user = self.super_user
+        response = self.admin.export_to_excel(request, self.admin.get_queryset(request))
+        # TODO: Test contents of file (requires a library to read xlsx files)
+        self.assertNotEqual(len(response.content), 0)
+
+
+class CampaignRetirementProgressAdminTest(TestCase):
+    def setUp(self):
+        class MockCompletion:
+            complete = False
+
+            project_total = 0
+            item_total = 0
+            asset_total = 0
+
+            projects_removed = 0
+            items_removed = 0
+            assets_removed = 0
+
+        self.completion_obj = MockCompletion()
+
+        self.site = AdminSite()
+        self.admin = CampaignRetirementProgressAdmin(
+            model=CampaignRetirementProgress, admin_site=self.site
+        )
+
+    def test_completion(self):
+        self.completion_obj.complete = True
+        self.assertEqual(self.admin.completion(self.completion_obj), "100%")
+        self.completion_obj.complete = False
+
+        self.completion_obj.project_total = 10
+        self.completion_obj.item_total = 100
+        self.completion_obj.asset_total = 1000
+        self.assertEqual(self.admin.completion(self.completion_obj), "0.0%")
+
+        self.completion_obj.projects_removed = 1
+        self.assertEqual(self.admin.completion(self.completion_obj), "0.09%")
+
+        self.completion_obj.items_removed = 10
+        self.completion_obj.assets_removed = 100
+        self.assertEqual(self.admin.completion(self.completion_obj), "10.0%")
