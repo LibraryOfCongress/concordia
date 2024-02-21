@@ -11,6 +11,7 @@ from faker import Faker
 from concordia.admin import (
     AssetAdmin,
     CampaignAdmin,
+    CampaignRetirementProgressAdmin,
     ConcordiaUserAdmin,
     ItemAdmin,
     ProjectAdmin,
@@ -22,6 +23,7 @@ from concordia.admin import (
 from concordia.models import (
     Asset,
     Campaign,
+    CampaignRetirementProgress,
     Item,
     Project,
     ResourceFile,
@@ -369,11 +371,6 @@ class AssetAdminTest(TestCase, CreateTestUsers):
             response, template_name="admin/concordia/asset/change_form.html"
         )
 
-        request = self.request_factory.get("/")
-        request.user = self.super_user
-        response = self.admin.change_view(request, str(self.asset.id))
-        self.assertEqual(response.status_code, 200)
-
     def test_has_reopen_permission(self):
         request = self.request_factory.get("/")
         request.user = self.super_user
@@ -417,8 +414,12 @@ class TagAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
             b"tag value,user asset tag collection date created,"
             + b"user asset tag collection user_id,asset id,asset title,"
             + b"asset download url,asset resource url,campaign slug",
-            b"tag-value,%s,%i,1,Test Asset,,,test-campaign"
-            % (str.encode(mocked_datetime.isoformat()), self.user.id),
+            b"tag-value,%s,%i,%i,Test Asset,,,test-campaign"
+            % (
+                str.encode(mocked_datetime.isoformat()),
+                self.user.id,
+                self.collection.asset.id,
+            ),
             b"",
         ]
         self.assertEqual(content, test_data)
@@ -469,8 +470,11 @@ class TranscriptionAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
             b"ID,asset__id,asset__slug,user,created on,updated on,supersedes,"
             + b"submitted,accepted,rejected,reviewed by,text,ocr generated,"
             + b"ocr originated",
-            b"1,1,test-asset,%i,%s,%s,,,,,,,False,False"
+            b"%i,%i,%s,%i,%s,%s,,,,,,,False,False"
             % (
+                self.transcription.id,
+                self.transcription.asset.id,
+                str.encode(self.transcription.asset.slug),
                 self.user.id,
                 str.encode(self.mocked_datetime_formatted),
                 str.encode(self.mocked_datetime_formatted),
@@ -549,3 +553,41 @@ class SiteReportAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
         response = self.admin.export_to_excel(request, self.admin.get_queryset(request))
         # TODO: Test contents of file (requires a library to read xlsx files)
         self.assertNotEqual(len(response.content), 0)
+
+
+class CampaignRetirementProgressAdminTest(TestCase):
+    def setUp(self):
+        class MockCompletion:
+            complete = False
+
+            project_total = 0
+            item_total = 0
+            asset_total = 0
+
+            projects_removed = 0
+            items_removed = 0
+            assets_removed = 0
+
+        self.completion_obj = MockCompletion()
+
+        self.site = AdminSite()
+        self.admin = CampaignRetirementProgressAdmin(
+            model=CampaignRetirementProgress, admin_site=self.site
+        )
+
+    def test_completion(self):
+        self.completion_obj.complete = True
+        self.assertEqual(self.admin.completion(self.completion_obj), "100%")
+        self.completion_obj.complete = False
+
+        self.completion_obj.project_total = 10
+        self.completion_obj.item_total = 100
+        self.completion_obj.asset_total = 1000
+        self.assertEqual(self.admin.completion(self.completion_obj), "0.0%")
+
+        self.completion_obj.projects_removed = 1
+        self.assertEqual(self.admin.completion(self.completion_obj), "0.09%")
+
+        self.completion_obj.items_removed = 10
+        self.completion_obj.assets_removed = 100
+        self.assertEqual(self.admin.completion(self.completion_obj), "10.0%")

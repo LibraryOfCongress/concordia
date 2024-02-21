@@ -648,8 +648,7 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         return self.readonly_fields
 
     def change_view(self, request, object_id, extra_context=None, **kwargs):
-        if extra_context is None:
-            extra_context = {}
+        extra_context = extra_context or {}
         extra_context["transcriptions"] = (
             Transcription.objects.filter(asset__pk=object_id)
             .select_related("user", "reviewed_by")
