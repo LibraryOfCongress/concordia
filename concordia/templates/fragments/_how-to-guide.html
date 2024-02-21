@@ -3,7 +3,7 @@
         <a id="guide-bars" data-target="#guide-carousel" data-slide-to="0" class="d-none" href="">
             <i class="fas fa-solid fa-bars pl-3 py-2"></i>
         </a>
-        <h3 class="px-2 my-1">How-To Guide</h3>
+        <h3 class="px-2 my-1 py-1">How-To Guide</h3>
         <button id="close-guide" type="button" class="close text-white" onclick="closeOffcanvas()">
             <span class="fas fa-times"></span>
         </button>
@@ -27,7 +27,7 @@
             <div class="carousel-item container">
                 <div class="border-bottom justify-content-center mb-3 py-1 row">
                     <h3>About this Campaign</h3>
-                    <a class="font-weight-bold ml-3" id="next-guide" href="#guide-carousel" data-slide="next">></a>
+                    <a class="font-weight-bold ml-3 pt-2" id="next-guide" href="#guide-carousel" data-slide="next">></a>
                 </div>
                 {% if campaign.description %}
                     <h4>About this campaign</h4>
@@ -54,10 +54,10 @@
             {% for guide in guides %}
                 <div class="carousel-item container" id="pane-{{ forloop.counter }}">
                     <div class="border-bottom justify-content-center mb-3 py-1 row">
-                        <a class="font-weight-bold mr-3" id="previous-guide" href="#guide-carousel" data-slide="prev"><</a>
+                        <a class="font-weight-bold mr-3 pt-2" id="previous-guide" href="#guide-carousel" data-slide="prev"><</a>
                         <h3>{{ guide.title }}</h3>
                         {% if not forloop.last %}
-                            <a class="font-weight-bold ml-3" id="next-guide" href="#guide-carousel" data-slide="next">></a>
+                            <a class="font-weight-bold ml-3 pt-2" id="next-guide" href="#guide-carousel" data-slide="next">></a>
                         {% endif %}
                     </div>
                     <div class="guide-body">
