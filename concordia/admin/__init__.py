@@ -785,7 +785,7 @@ class TranscriptionAdmin(admin.ModelAdmin):
     )
 
     def lookup_allowed(self, key, value):
-        if key in ("asset__item__project__campaign__id__exact"):
+        if key in ("asset__item__project__campaign__id__exact",):
             return True
         else:
             return super().lookup_allowed(key, value)
@@ -879,6 +879,8 @@ class SiteReportAdmin(admin.ModelAdmin):
             return f"Campaign: {obj.campaign}"
         elif obj.topic:
             return f"Topic: {obj.topic}"
+        else:
+            return f"SiteReport: <{obj.id}>"
 
     def export_to_csv(self, request, queryset):
         return export_to_csv_action(
@@ -891,25 +893,6 @@ class SiteReportAdmin(admin.ModelAdmin):
         )
 
     actions = (export_to_csv, export_to_excel)
-
-    FIELDNAME_SORT_KEYS = [
-        "created",
-        "user",
-        "campaign",
-        "topic",
-        "project",
-        "item",
-        "asset",
-        "transcription",
-        "tag",
-    ]
-
-    def fieldname_sort_key(self, key):
-        for i, prefix in enumerate(self.FIELDNAME_SORT_KEYS):
-            if prefix in key:
-                return (i, key)
-        else:
-            return (1024, key)
 
 
 @admin.register(UserProfileActivity)

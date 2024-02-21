@@ -15,6 +15,7 @@ from concordia.admin import (
     ItemAdmin,
     ProjectAdmin,
     ResourceFileAdmin,
+    SiteReportAdmin,
     TagAdmin,
     TranscriptionAdmin,
 )
@@ -24,6 +25,7 @@ from concordia.models import (
     Item,
     Project,
     ResourceFile,
+    SiteReport,
     Tag,
     Transcription,
 )
@@ -32,7 +34,9 @@ from concordia.tests.utils import (
     StreamingTestMixin,
     create_asset,
     create_project,
+    create_site_report,
     create_tag_collection,
+    create_topic,
     create_transcription,
 )
 
@@ -383,6 +387,7 @@ class TagAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
     def setUp(self):
         self.site = AdminSite()
         self.super_user = self.create_super_user()
+        self.user = self.create_test_user()
         self.admin = TagAdmin(model=Tag, admin_site=self.site)
         self.request_factory = RequestFactory()
 
@@ -412,8 +417,8 @@ class TagAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
             b"tag value,user asset tag collection date created,"
             + b"user asset tag collection user_id,asset id,asset title,"
             + b"asset download url,asset resource url,campaign slug",
-            b"tag-value,%s,3,1,Test Asset,,,test-campaign"
-            % str.encode(mocked_datetime.isoformat()),
+            b"tag-value,%s,%i,1,Test Asset,,,test-campaign"
+            % (str.encode(mocked_datetime.isoformat()), self.user.id),
             b"",
         ]
         self.assertEqual(content, test_data)
@@ -464,11 +469,76 @@ class TranscriptionAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
             b"ID,asset__id,asset__slug,user,created on,updated on,supersedes,"
             + b"submitted,accepted,rejected,reviewed by,text,ocr generated,"
             + b"ocr originated",
-            b"1,1,test-asset,2,%s,%s,,,,,,,False,False"
+            b"1,1,test-asset,%i,%s,%s,,,,,,,False,False"
             % (
+                self.user.id,
                 str.encode(self.mocked_datetime_formatted),
                 str.encode(self.mocked_datetime_formatted),
             ),
+            b"",
+        ]
+        self.assertEqual(content, test_data)
+
+    def test_export_to_excel(self):
+        request = self.request_factory.get("/")
+        request.user = self.super_user
+        response = self.admin.export_to_excel(request, self.admin.get_queryset(request))
+        # TODO: Test contents of file (requires a library to read xlsx files)
+        self.assertNotEqual(len(response.content), 0)
+
+
+class SiteReportAdminTest(TestCase, CreateTestUsers, StreamingTestMixin):
+    def setUp(self):
+        self.site = AdminSite()
+        self.super_user = self.create_super_user()
+        self.mocked_datetime = timezone.now()
+        self.mocked_datetime_formatted = self.mocked_datetime.isoformat()
+        with mock.patch("django.utils.timezone.now") as now_mocked:
+            now_mocked.return_value = self.mocked_datetime
+            self.site_report = create_site_report()
+        self.topic = create_topic()
+        self.campaign = self.topic.project_set.all()[0].campaign
+        self.admin = SiteReportAdmin(model=SiteReport, admin_site=self.site)
+        self.request_factory = RequestFactory()
+        self.fake = Faker()
+
+    def test_report_type(self):
+        self.site_report.report_name = "Test name"
+        self.site_report.campaign = self.campaign
+        self.site_report.topic = self.topic
+
+        response = self.admin.report_type(self.site_report)
+        self.assertIn("Report name", response)
+
+        self.site_report.report_name = ""
+        response = self.admin.report_type(self.site_report)
+        self.assertIn("Campaign", response)
+
+        self.site_report.campaign = None
+        response = self.admin.report_type(self.site_report)
+        self.assertIn("Topic", response)
+
+        self.site_report.topic = None
+        response = self.admin.report_type(self.site_report)
+        self.assertIn("SiteReport", response)
+
+    def test_export_to_csv(self):
+        request = self.request_factory.get("/")
+        request.user = self.super_user
+
+        response = self.admin.export_to_csv(request, self.admin.get_queryset(request))
+        content = self.get_streaming_content(response).split(b"\r\n")
+        self.assertEqual(len(content), 3)  # Includes empty line at the end of the file
+        test_data = [
+            b"created on,report name,campaign__title,topic__title,assets total,"
+            + b"assets published,assets not started,assets in progress,"
+            + b"assets waiting review,assets completed,assets unpublished,"
+            + b"items published,items unpublished,projects published,"
+            + b"projects unpublished,anonymous transcriptions,transcriptions saved,"
+            + b"daily review actions,distinct tags,tag uses,campaigns published,"
+            + b"campaigns unpublished,users registered,users activated,"
+            + b"registered contributors,daily active users",
+            b"%s,,,,,,,,,,,,,,,,,,,,,,,,," % str.encode(self.mocked_datetime_formatted),
             b"",
         ]
         self.assertEqual(content, test_data)
