@@ -2,7 +2,7 @@
 Tests for the core application features
 """
 
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 
 from captcha.models import CaptchaStore
 from django.conf import settings
@@ -443,18 +443,6 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         self.assertEqual(ctx["title"], item.project.campaign.title)
         self.assertEqual(ctx["total_asset_count"], 10)
 
-    @override_settings(FLAGS={"ACTIVITY_UI_ENABLED": [("boolean", True)]})
-    def test_activity_ui_anonymous(self):
-        response = self.client.get(reverse("action-app"))
-        self.assertRedirects(response, "/account/login/?next=/act/")
-
-    @override_settings(FLAGS={"ACTIVITY_UI_ENABLED": [("boolean", True)]})
-    def test_activity_ui_logged_in(self):
-        self.login_user()
-        response = self.client.get(reverse("action-app"))
-        self.assertTemplateUsed(response, "action-app.html")
-        self.assertContains(response, "new ActionApp")
-
 
 @override_settings(
     RATELIMIT_ENABLE=False, SESSION_ENGINE="django.contrib.sessions.backends.cache"
@@ -589,7 +577,7 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         stale_reservation.full_clean()
         stale_reservation.save()
         # Backdate the object as if it happened 15 minutes ago:
-        old_timestamp = datetime.now() - timedelta(minutes=15)
+        old_timestamp = now() - timedelta(minutes=15)
         AssetTranscriptionReservation.objects.update(
             created_on=old_timestamp, updated_on=old_timestamp
         )
@@ -637,10 +625,10 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         tombstone_reservation.save()
         # Backdate the object as if it was created hours ago,
         # even if it was recently updated
-        old_timestamp = datetime.now() - timedelta(
+        old_timestamp = now() - timedelta(
             hours=settings.TRANSCRIPTION_RESERVATION_TOMBSTONE_HOURS + 1
         )
-        current_timestamp = datetime.now()
+        current_timestamp = now()
         AssetTranscriptionReservation.objects.update(
             created_on=old_timestamp, updated_on=current_timestamp
         )
@@ -702,12 +690,12 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         tombstone_reservation.save()
         # Backdate the object as if it was created hours ago
         # and tombstoned hours ago
-        old_timestamp = datetime.now() - timedelta(
+        old_timestamp = now() - timedelta(
             hours=settings.TRANSCRIPTION_RESERVATION_TOMBSTONE_HOURS
             + settings.TRANSCRIPTION_RESERVATION_TOMBSTONE_LENGTH_HOURS
             + 1
         )
-        not_as_old_timestamp = datetime.now() - timedelta(
+        not_as_old_timestamp = now() - timedelta(
             hours=settings.TRANSCRIPTION_RESERVATION_TOMBSTONE_LENGTH_HOURS + 1
         )
         AssetTranscriptionReservation.objects.update(

@@ -3,10 +3,52 @@
 <html lang="en-US">
     <head>
         <style>
-            @page { size: A4; margin: 1.1cm; }
+            @page {
+                size: A4;
+                margin: 1.1cm;
+                @bottom-right {
+                    content: "Page " counter(page) " of " counter(pages);
+                    font-family: Arial;
+                    font-size: 11pt;
+                    line-height: 1.4;
+                }
+            }
             a { text-decoration: none; color: black; }
             p { font-family: Arial; font-size: 11pt; line-height: 1.4;}
             img { width: 35%; height: auto; }
+            h1 { font-size: 1.75rem; }
+            h2 { font-size: 1.2rem;}
+            tr { page-break-inside: avoid; page-break-after: auto; }
+            thead { display: table-header-group; }
+            tfoot { display: table-footer-group; }
+            .text-right { text-align: right !important; }
+            .text-left {text-align: left !important; }
+            table {
+                width: 100%;
+                margin-bottom: 1rem;
+                color: #242424;
+                border-collapse: collapse;
+                font-family: Artial;
+                font-size: 11pt;
+                line-height: 1.4;
+                page-break-inside: auto;
+            }
+            table thead th {
+                vertical-align: bottom;
+                border-bottom: 2px solid #efefef;
+            }
+            table th, table td {
+                padding: 0.75rem;
+                vertical-align: top;
+                border-top: 1px solid #efefef;
+            }
+            table thead th, table thead td {
+                border-bottom: 1px solid #000;
+                border-top: 1px solid #000;
+            }
+            table tbody tr:nth-of-type(odd) {
+                background-color: rgba(0, 0, 0, 0.05);
+            }
         </style>
         <title>Service Letter</title>
         <meta name=author content="By the People" />
@@ -29,15 +71,43 @@
             {% now "m/d/Y" %}<br /><br />
         </p>
         <p>To whom it may concern,</p>
-        <p>I am writing to confirm this volunteer's participation in the Library of Congress virtual volunteering program <a href="https://crowd.loc.gov"><em>By the People</em> (https://crowd.loc.gov)</a>. The project invites anyone to help the Library by transcribing, tagging, and reviewing transcriptions of digitized historical documents from the Library's collections. Transcriptions make the content of handwritten and other documents keyword searchable on the <a href="https://www.loc.gov">Library's main website (https://loc.gov)</a>, open new avenues of digital research, and improve accessibility, including for people with visual or cognitive disabilities.</p>
-        <p>They registered as a <em>By the People</em> volunteer on {{ join_date|date:"m/d/Y" }} as {{ username }}. They made {{ total_transcriptions|intcomma }} edits to transcriptions on the site and reviewed {{ total_reviews|intcomma }} transcriptions by other volunteers. Their user profile provides further details.</p>
+        <p>I am writing to confirm {% if user.first_name %}{{ user.first_name }}{% if user.last_name %} {{ user.last_name }}{% endif %}{% else %}this volunteer{% endif %}'s participation in the Library of Congress virtual volunteering program <a href="https://crowd.loc.gov"><em>By the People</em> (https://crowd.loc.gov)</a>. The project invites anyone to help the Library by transcribing, tagging, and reviewing transcriptions of digitized historical documents from the Library's collections. Transcriptions make the content of handwritten and other documents keyword searchable on the <a href="https://www.loc.gov">Library's main website (https://loc.gov)</a>, open new avenues of digital research, and improve accessibility, including for people with visual or cognitive disabilities.</p>
+        <p>They registered as a <em>By the People</em> volunteer on {{ join_date|date:"m/d/Y" }} as {{ user.username }}. They made {{ total_transcriptions|intcomma }} edits to transcriptions on the site and reviewed {{ total_reviews|intcomma }} transcriptions by other volunteers. You can find further details on their virtual volunteer activity in the following pages.</p>
+        <p>The <em>By the People</em> site does not track the time that volunteers spend transcribing but volunteers may track their own hours. The following activity pages have time stamps that may also be useful.</p>
         <p>Best,<br /><br /></p>
         <p>Lauren Algee</p>
         <p>
-            crowd@loc.gov<br />
+            crowd@ask.loc.gov<br />
             Community Manager, <em>By the People</em><br />
             Digital Content Management Section<br />
             Library of Congress
         </p>
+        <div style="page-break-after: always;"></div>
+        <h1>Recent Pages Worked On</h1>
+        <h2>All the pages contributed to in the last 6 months</h2>
+        <table>
+            <thead>
+                <tr class="text-left">
+                    <th>Row</th>
+                    <th>Date</th>
+                    <th>Page</th>
+                    <th>Campaign Items</th>
+                    <th>Your Contribution</th>
+                    <th>Current Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for asset in asset_list %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td class="col-md-3">{{ asset.latest_activity }}</td>
+                        <td class="text-right"><a href="{{ asset.get_absolute_url }}">{{ asset.sequence }}</a></td>
+                        <td>{{ asset.item.title }}</td>
+                        <td>{% if asset.last_reviewed %}Reviewed{% else %}Transcribed{% endif %}</td>
+                        <td>{{ asset.get_transcription_status_display }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </body>
 </html>

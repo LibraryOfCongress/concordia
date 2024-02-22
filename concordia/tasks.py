@@ -1,8 +1,10 @@
 import datetime
 import os.path
 from logging import getLogger
+from tempfile import NamedTemporaryFile
 
 import boto3
+import requests
 from celery import chord
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -28,16 +30,19 @@ from concordia.models import (
     UserProfileActivity,
 )
 from concordia.signals.signals import reservation_released
+from concordia.storage import ASSET_STORAGE
 from concordia.utils import get_anonymous_user
 
 from .celery import app as celery_app
 
 logger = getLogger(__name__)
 
+ONE_DAY = datetime.timedelta(days=1)
+
 
 @celery_app.task
 def expire_inactive_asset_reservations():
-    timestamp = datetime.datetime.now()
+    timestamp = timezone.now()
 
     # Clear old reservations, with a grace period:
     cutoff = timestamp - (
@@ -61,7 +66,7 @@ def expire_inactive_asset_reservations():
 
 @celery_app.task
 def tombstone_old_active_asset_reservations():
-    timestamp = datetime.datetime.now()
+    timestamp = timezone.now()
 
     cutoff = timestamp - (
         datetime.timedelta(hours=settings.TRANSCRIPTION_RESERVATION_TOMBSTONE_HOURS)
@@ -78,7 +83,7 @@ def tombstone_old_active_asset_reservations():
 
 @celery_app.task
 def delete_old_tombstoned_reservations():
-    timestamp = datetime.datetime.now()
+    timestamp = timezone.now()
 
     cutoff = timestamp - (
         datetime.timedelta(
@@ -422,6 +427,147 @@ def retired_total_report():
             ),
         )
     total_site_report.save()
+
+
+def site_reports_for_date(date):
+    start = date - ONE_DAY
+    return SiteReport.objects.filter(created_on__gte=start, created_on__lte=date)
+
+
+def assets_for_date(date):
+    start = date - ONE_DAY
+    q_accepted = Q(
+        transcription__accepted__gte=start, transcription__accepted__lte=date
+    )
+    q_rejected = Q(
+        transcription__rejected__gte=start, transcription__rejected__lte=date
+    )
+    return Asset.objects.filter(q_accepted | q_rejected)
+
+
+@celery_app.task(ignore_result=True)
+def backfill_total(date, days):
+    logger.info(
+        "STARTING: Backfilling daily data for %s on %s",
+        SiteReport.ReportName.TOTAL,
+        date,
+    )
+    site_report = site_reports_for_date(date).filter(
+        report_name=SiteReport.ReportName.TOTAL
+    )[0]
+    logger.info(
+        "STARTING: Backfilling daily data for report %s (%s)", site_report.id, date
+    )
+    daily_review_actions = assets_for_date(date).count()
+    logger.debug(
+        "%s daily review actions for report %s (%s)",
+        daily_review_actions,
+        site_report.id,
+        date,
+    )
+    site_report.daily_review_actions = daily_review_actions
+    site_report.save()
+    logger.info(
+        "FINISHED: Backfilling daily data for %s on %s",
+        SiteReport.ReportName.TOTAL,
+        date,
+    )
+    logger.info("FINISHED: Backfilling daily data for all reports on %s", date)
+
+    if days > 0:
+        return backfill_topics.delay(date - ONE_DAY, days - 1)
+    else:
+        logger.info("Backfilling daily data complete")
+
+
+@celery_app.task(ignore_result=True)
+def backfill_next_campaign_report(date, days, site_report_ids):
+    try:
+        site_report_id = site_report_ids.pop()
+    except IndexError:
+        logger.info("FINISHED: Backfilling daily data for campaigns on %s", date)
+        backfill_total.delay(date, days)
+        return
+    site_report = SiteReport.objects.get(id=site_report_id)
+    logger.info(
+        "STARTING: Backfilling daily data for report %s (%s)", site_report.id, date
+    )
+    daily_review_actions = (
+        assets_for_date(date)
+        .filter(item__project__campaign=site_report.campaign)
+        .count()
+    )
+    logger.debug(
+        "%s daily review actions for report %s (%s)",
+        daily_review_actions,
+        site_report.id,
+        date,
+    )
+    site_report.daily_review_actions = daily_review_actions
+    site_report.save()
+    logger.info(
+        "FINISHED: Backfilling daily data for report %s (%s)", site_report.id, date
+    )
+    return backfill_next_campaign_report.delay(date, days, site_report_ids)
+
+
+@celery_app.task(ignore_result=True)
+def backfill_campaigns(date, days):
+    site_report_ids = list(
+        site_reports_for_date(date)
+        .filter(campaign__isnull=False)
+        .values_list("id", flat=True)
+    )
+    logger.info("STARTING: Backfilling daily data for campaigns on %s", date)
+    return backfill_next_campaign_report.delay(date, days, site_report_ids)
+
+
+@celery_app.task(ignore_result=True)
+def backfill_next_topic_report(date, days, site_report_ids):
+    try:
+        site_report_id = site_report_ids.pop()
+    except IndexError:
+        logger.info("FINISHED: Backfilling daily data for topics on %s", date)
+        backfill_campaigns.delay(date, days)
+        return
+    site_report = SiteReport.objects.get(id=site_report_id)
+    logger.info(
+        "STARTING: Backfilling daily data for report %s (%s)", site_report.id, date
+    )
+    daily_review_actions = (
+        assets_for_date(date).filter(item__project__topics=site_report.topic).count()
+    )
+    logger.debug(
+        "%s daily review actions for report %s (%s)",
+        daily_review_actions,
+        site_report.id,
+        date,
+    )
+    site_report.daily_review_actions = daily_review_actions
+    site_report.save()
+    logger.info(
+        "FINISHED: Backfilling daily data for report %s (%s)", site_report.id, date
+    )
+    return backfill_next_topic_report.delay(date, days, site_report_ids)
+
+
+@celery_app.task(ignore_result=True)
+def backfill_topics(date, days):
+    site_report_ids = list(
+        site_reports_for_date(date)
+        .filter(topic__isnull=False)
+        .values_list("id", flat=True)
+    )
+    logger.info("STARTING: Backfilling daily data for topics on %s", date)
+    return backfill_next_topic_report.delay(date, days, site_report_ids)
+
+
+@celery_app.task(ignore_result=True)
+def backfill_daily_data(start, days):
+    date = timezone.make_aware(datetime.datetime(**start))
+    logger.info("Backfilling daily data for the %s days before %s", days, date)
+    logger.info("STARTED: Backfilling daily data for all reports on %s", date)
+    return backfill_topics.delay(date, days - 1)
 
 
 @celery_app.task
@@ -842,3 +988,60 @@ def populate_resource_files():
             filename, extension = os.path.splitext(os.path.basename(path))
             name = "%s-%s" % (filename, extension[1:])
             ResourceFile.objects.create(resource=path, name=name)
+
+
+@celery_app.task(ignore_result=True)
+def fix_storage_images(campaign_slug=None, asset_start_id=None):
+    if campaign_slug:
+        campaign = Campaign.objects.get(slug=campaign_slug)
+        asset_queryset = Asset.objects.filter(item__project__campaign=campaign)
+    else:
+        asset_queryset = Asset.objects.all()
+
+    if asset_start_id:
+        asset_queryset = asset_queryset.filter(id__gte=asset_start_id)
+
+    count = 0
+    full_count = asset_queryset.count()
+    logger.debug("Checking storage image on %s assets", full_count)
+    for asset in asset_queryset.order_by("id"):
+        count += 1
+        if asset.storage_image:
+            if not asset.storage_image.storage.exists(asset.storage_image.name):
+                logger.info("Storage image does not exist for %s (%s)", asset, asset.id)
+                item = asset.item
+                download_url = asset.download_url
+                asset_filename = os.path.join(
+                    item.project.campaign.slug,
+                    item.project.slug,
+                    item.item_id,
+                    "%d.jpg" % asset.sequence,
+                )
+                try:
+                    with NamedTemporaryFile(mode="x+b") as temp_file:
+                        resp = requests.get(download_url, stream=True, timeout=30)
+                        resp.raise_for_status()
+
+                        for chunk in resp.iter_content(chunk_size=256 * 1024):
+                            temp_file.write(chunk)
+
+                        # Rewind the tempfile back to the first byte so we can
+                        temp_file.flush()
+                        temp_file.seek(0)
+
+                        ASSET_STORAGE.save(asset_filename, temp_file)
+
+                except Exception:
+                    logger.exception(
+                        "Unable to download %s to %s", download_url, asset_filename
+                    )
+                    raise
+                logger.info("Storage image downloaded for  %s (%s)", asset, asset.id)
+        logger.debug("Storage image checked for %s (%s)", asset, asset.id)
+        logger.debug("%s / %s (%s%%)", count, full_count, str(count / full_count * 100))
+
+
+@celery_app.task(ignore_result=True)
+def clear_sessions():
+    # This clears expired Django sessions in the database
+    call_command("clearsessions")

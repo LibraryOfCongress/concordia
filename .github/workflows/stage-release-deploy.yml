@@ -8,6 +8,11 @@ on:
             - docs/**
             - README.md
             - .github/**
+            - cloudformation/**
+            - db_scripts/**
+            - jenkins/**
+            - kibana-proxy/**
+            - postgresql/**
 
 env:
     AWS_REGION: us-east-1
@@ -20,31 +25,30 @@ jobs:
     deploy:
         name: Deploy Release to Stage
         runs-on: ubuntu-latest
+        environment:
+            name: stage
 
         steps:
             - name: Install system packages
               run: |
-                  sudo apt-get install -qy libmemcached-dev libz-dev libfreetype6-dev libtiff-dev \
-                    libjpeg-dev libopenjp2-7-dev libwebp-dev zlib1g-dev libpq-dev
+                  sudo apt-get update -qy && sudo apt-get dist-upgrade -qy && sudo apt-get install -qy \
+                  libmemcached-dev libz-dev libfreetype6-dev libtiff-dev \
+                  libjpeg-dev libopenjp2-7-dev libwebp-dev zlib1g-dev libpq-dev
 
             - name: Install node and npm
-              uses: actions/setup-node@v3
+              uses: actions/setup-node@v4
               with:
                   node-version: '18'
 
             - name: Checkout repository
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
               with:
                   ref: release
-
-            - name: Get history and tags for SCM versioning to work
-              run: |
-                  git fetch --prune --unshallow
-                  git fetch --depth=1 origin +refs/tags/*:refs/tags/*
-                  git describe --tags
+                  fetch-depth: 0
+                  fetch-tags: 'true'
 
             - name: Set up Python 3.10
-              uses: actions/setup-python@v4
+              uses: actions/setup-python@v5
               with:
                   # Semantic version range syntax or exact version of a Python version
                   python-version: '3.10'
@@ -63,13 +67,13 @@ jobs:
 
                   pipenv install --dev --system --deploy
 
-                  FULL_VERSION_NUMBER="$(python3 setup.py --version)"
+                  FULL_VERSION_NUMBER="$(pipenv run python -m setuptools_scm)"
                   echo "version_number=$(echo "${FULL_VERSION_NUMBER}" | cut -d '+' -f 1)" >> $GITHUB_ENV
 
                   python3 setup.py build
 
             - name: configure aws credentials
-              uses: aws-actions/configure-aws-credentials@v2
+              uses: aws-actions/configure-aws-credentials@v4
               with:
                   aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
                   aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -78,16 +82,15 @@ jobs:
 
             - name: Login to Amazon ECR
               id: login-ecr
-              uses: aws-actions/amazon-ecr-login@v1
+              uses: aws-actions/amazon-ecr-login@v2
 
             - name: Build, tag and push docker images ECR
               env:
                   REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-                  IMAGE_TAG: ${{ secrets.IMAGE_TAG_STAGE }}
-                  CLUSTER: ${{ secrets.CLUSTER_STAGE }}
+                  IMAGE_TAG: ${{ secrets.IMAGE_TAG }}
+                  CLUSTER: ${{ secrets.CLUSTER }}
+                  TARGET_SERVICE: ${{ secrets.TARGET_SERVICE }}
               run: |
-                  echo "version number: $version_number"
-
                   docker build -t concordia .
                   docker tag concordia:latest $REGISTRY/concordia:$version_number
                   docker tag concordia:latest $REGISTRY/concordia:$IMAGE_TAG
@@ -106,5 +109,4 @@ jobs:
                   docker push $REGISTRY/concordia/celerybeat:$version_number
                   docker push $REGISTRY/concordia/celerybeat:$IMAGE_TAG
 
-                  TARGET_SERVICE="$(aws ecs list-services --cluster $CLUSTER | python -c 'import json,sys;serviceInput=json.load(sys.stdin);serviceArns=serviceInput["serviceArns"];print(serviceArns[0])')"
                   aws ecs update-service --region ${{ env.AWS_REGION }} --force-new-deployment --cluster $CLUSTER --service $TARGET_SERVICE

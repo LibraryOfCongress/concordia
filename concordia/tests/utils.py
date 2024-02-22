@@ -7,9 +7,11 @@ from django.utils.text import slugify
 from concordia.models import (
     Asset,
     Campaign,
+    Card,
     Item,
     MediaType,
     Project,
+    SiteReport,
     Tag,
     Topic,
     Transcription,
@@ -59,6 +61,13 @@ def create_campaign(
     return campaign
 
 
+def create_site_report(do_save=True):
+    site_report = SiteReport()
+    if do_save:
+        site_report.save()
+    return site_report
+
+
 @ensure_slug
 def create_topic(
     *,
@@ -72,7 +81,7 @@ def create_topic(
     **kwargs,
 ):
     if project is None:
-        project = create_project()
+        project = create_project(published=published)
 
     topic = Topic(
         title=title,
@@ -105,7 +114,7 @@ def create_project(
     **kwargs,
 ):
     if campaign is None:
-        campaign = create_campaign()
+        campaign = create_campaign(published=published)
 
     project = Project(
         campaign=campaign, title=title, slug=slug, published=published, **kwargs
@@ -127,7 +136,7 @@ def create_item(
     **kwargs,
 ):
     if project is None:
-        project = create_project()
+        project = create_project(published=published)
 
     item = Item(
         project=project,
@@ -152,11 +161,12 @@ def create_asset(
     media_type=MediaType.IMAGE,
     media_url="1.jpg",
     published=True,
+    storage_image="unittest1.jpg",
     do_save=True,
     **kwargs,
 ):
     if item is None:
-        item = create_item()
+        item = create_item(published=published)
     asset = Asset(
         item=item,
         title=title,
@@ -164,6 +174,7 @@ def create_asset(
         media_type=media_type,
         published=published,
         media_url=media_url,
+        storage_image=storage_image,
         **kwargs,
     )
     asset.full_clean()
@@ -204,6 +215,13 @@ def create_tag_collection(*, tag=None, asset=None, user=None, **kwargs):
     tag_collection.save()
     tag_collection.tags.add(tag)
     return tag_collection
+
+
+def create_card(*, title="Test Card", do_save=True, **kwargs):
+    card = Card(title=title, **kwargs)
+    if do_save:
+        card.save()
+    return card
 
 
 class JSONAssertMixin(object):
@@ -249,18 +267,34 @@ class CreateTestUsers(object):
         return user
 
     @classmethod
-    def create_test_user(cls, username, **kwargs):
+    def create_test_user(cls, username="testuser", **kwargs):
         """
         Creates an activated test User account
         """
         return cls.create_user(username, is_active=True, **kwargs)
 
     @classmethod
-    def create_inactive_user(cls, username, **kwargs):
+    def create_inactive_user(cls, username="testinactiveuser", **kwargs):
         """
         Creates an inactive test User account
         """
         return cls.create_user(username, is_active=False, **kwargs)
+
+    @classmethod
+    def create_staff_user(cls, username="teststaffuser", **kwargs):
+        """
+        Creates a staff test User account
+        """
+        return cls.create_user(username, is_staff=True, is_active=True, **kwargs)
+
+    @classmethod
+    def create_super_user(cls, username="testsuperuser", **kwargs):
+        """
+        Creates a super user User account
+        """
+        return cls.create_user(
+            username, is_staff=True, is_superuser=True, is_active=True, **kwargs
+        )
 
 
 class CacheControlAssertions(object):
@@ -272,3 +306,9 @@ class CacheControlAssertions(object):
     def assertCachePrivate(self, response):
         self.assertIn("Cache-Control", response)
         self.assertIn("private", response["Cache-Control"])
+
+
+class StreamingTestMixin(object):
+    def get_streaming_content(self, response):
+        self.assertTrue(response.streaming)
+        return b"".join(response.streaming_content)

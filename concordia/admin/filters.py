@@ -67,6 +67,31 @@ class CampaignListFilter(admin.SimpleListFilter):
         return queryset
 
 
+class CardCampaignListFilter(admin.SimpleListFilter):
+    """
+    Allow CMs to filter cards by campaign
+    """
+
+    title = _("campaign")
+    parameter_name = "campaign"
+
+    def lookups(self, request, model_admin):
+        return Campaign.objects.exclude(card_family__isnull=True).values_list(
+            "pk", "title"
+        )
+
+    def queryset(self, request, queryset):
+        campaign_id = self.value()
+        if campaign_id:
+            card_family = Campaign.objects.get(pk=campaign_id).card_family
+            if card_family is None:
+                pks = []
+            else:
+                pks = card_family.cards.values_list("pk", flat=True)
+            queryset = queryset.filter(id__in=pks)
+        return queryset
+
+
 class ProjectCampaignListFilter(CampaignListFilter):
     parameter_name = "campaign__id__exact"
     status_filter_parameter = "campaign__status"
@@ -188,13 +213,13 @@ class CampaignProjectListFilter(admin.SimpleListFilter):
         return queryset
 
 
-class ItemProjectListFilter2(CampaignProjectListFilter):
+class ItemProjectListFilter(CampaignProjectListFilter):
     parameter_name = "project__in"
     related_filter_parameter = "project__campaign__id__exact"
     project_ref = "project_id"
 
 
-class AssetProjectListFilter2(CampaignProjectListFilter):
+class AssetProjectListFilter(CampaignProjectListFilter):
     parameter_name = "item__project__in"
     related_filter_parameter = "item__project__campaign__id__exact"
     project_ref = "item__project_id"

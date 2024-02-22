@@ -1,6 +1,7 @@
 import datetime
 import json
 import os
+import random
 import re
 from functools import wraps
 from logging import getLogger
@@ -24,6 +25,7 @@ from django.contrib.auth.views import (
 from django.contrib.messages import get_messages
 from django.contrib.sites.shortcuts import get_current_site
 from django.core import signing
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.mail import EmailMultiAlternatives, send_mail
 from django.core.paginator import Paginator
@@ -55,11 +57,9 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.views.decorators.vary import vary_on_headers
 from django.views.generic import FormView, ListView, RedirectView, TemplateView
+from django_ratelimit.decorators import ratelimit
 from django_registration.backends.activation.views import RegistrationView
-from flags.decorators import flag_required
-from ratelimit.decorators import ratelimit
-from ratelimit.mixins import RatelimitMixin
-from ratelimit.utils import is_ratelimited
+from maintenance_mode.core import set_maintenance_mode
 from weasyprint import HTML
 
 from concordia.api_views import APIDetailView, APIListView
@@ -68,6 +68,7 @@ from concordia.forms import (
     AllowInactivePasswordResetForm,
     ContactUsForm,
     UserLoginForm,
+    UserNameForm,
     UserProfileForm,
     UserRegistrationForm,
 )
@@ -77,8 +78,10 @@ from concordia.models import (
     AssetTranscriptionReservation,
     Banner,
     Campaign,
+    CardFamily,
     CarouselSlide,
     ConcordiaUser,
+    Guide,
     Item,
     Project,
     SimplePage,
@@ -87,6 +90,7 @@ from concordia.models import (
     Topic,
     Transcription,
     TranscriptionStatus,
+    TutorialCard,
     UserAssetTagCollection,
     UserProfileActivity,
 )
@@ -163,7 +167,6 @@ def simple_page(request, path=None):
     page = get_object_or_404(SimplePage, path=path)
 
     md = markdown.Markdown(extensions=["meta"])
-    html = md.convert(page.body)
 
     breadcrumbs = []
     path_components = request.path.strip("/").split("/")
@@ -178,11 +181,24 @@ def simple_page(request, path=None):
         language_code = "es"
 
     ctx = {
-        "body": html,
         "language_code": language_code,
         "title": page.title,
         "breadcrumbs": breadcrumbs,
     }
+
+    guides = Guide.objects.filter(title__iexact=page.title)
+    if guides.count() > 0:
+        guides = guides[:1]
+    elif page.title == "How to transcribe":
+        guides = Guide.objects.filter(title__startswith="Transcription: ").order_by(
+            "order"
+        )
+    if guides.count() > 0:
+        html = "".join([page.body] + list(guides.values_list("body", flat=True)))
+        ctx["add_navigation"] = True
+    else:
+        html = page.body
+    ctx["body"] = md.convert(html)
 
     resp = render(request, "static-page.html", ctx)
     resp["Created"] = http_date(page.created_on.timestamp())
@@ -251,7 +267,7 @@ class ConcordiaPasswordResetRequestView(PasswordResetView):
     form_class = AllowInactivePasswordResetForm
 
 
-def registration_rate(self, group, request):
+def registration_rate(group, request):
     registration_form = UserRegistrationForm(request.POST)
     if registration_form.is_valid():
         return None
@@ -260,34 +276,36 @@ def registration_rate(self, group, request):
 
 
 @method_decorator(never_cache, name="dispatch")
-class ConcordiaRegistrationView(RatelimitMixin, RegistrationView):
+@method_decorator(
+    ratelimit(
+        group="registration",
+        key="header:cf-connecting-ip",
+        rate=registration_rate,
+        method="POST",
+        block=settings.RATELIMIT_BLOCK,
+    ),
+    name="post",
+)
+class ConcordiaRegistrationView(RegistrationView):
     form_class = UserRegistrationForm
-    ratelimit_group = "registration"
-    ratelimit_key = "header:cf-connecting-ip"
-    ratelimit_rate = registration_rate
-    ratelimit_method = "POST"
-    ratelimit_block = settings.RATELIMIT_BLOCK
 
 
 @method_decorator(never_cache, name="dispatch")
-class ConcordiaLoginView(RatelimitMixin, LoginView):
-    ratelimit_group = "login"
-    ratelimit_key = "post:username"
-    ratelimit_rate = "3/15m"
-    ratelimit_method = "POST"
-    ratelimit_block = False
+@method_decorator(
+    ratelimit(
+        group="login", key="post:username", rate="3/15m", method="POST", block=False
+    ),
+    name="post",
+)
+class ConcordiaLoginView(LoginView):
     form_class = UserLoginForm
 
     def post(self, request, *args, **kwargs):
         form = self.get_form()
 
-        blocked = is_ratelimited(
-            request,
-            group=self.ratelimit_group,
-            key=self.ratelimit_key,
-            method=self.ratelimit_method,
-            rate=self.ratelimit_rate,
-        )
+        # This is set by the ratelimit decorator
+        # True if the request exceeds the rate limit
+        blocked = request.limited
         recent_captcha = (
             time() - request.session.get("captcha_validation_time", 0)
         ) < 86400
@@ -337,12 +355,14 @@ def AccountLetterView(request):
     aggregate_sums = user_profile_activity.aggregate(
         Sum("review_count"), Sum("transcribe_count")
     )
+    asset_list = _get_pages(request)
     context = {
-        "username": request.user.email,
+        "user": request.user,
         "join_date": request.user.date_joined,
         "total_reviews": aggregate_sums["review_count__sum"],
         "total_transcriptions": aggregate_sums["transcribe_count__sum"],
         "image_url": image_url,
+        "asset_list": asset_list,
     }
     template = loader.get_template("documents/service_letter.html")
     text = template.render(context)
@@ -420,7 +440,10 @@ def _get_pages(request):
             latest_activity__day=date.day,
         )
     # CONCD-189 only show pages from the last 6 months
-    SIX_MONTHS_AGO = datetime.datetime.today() - datetime.timedelta(days=6 * 30)
+    # This should be an aware datetime, not a date. A date is cast
+    # to a naive datetime when it's compared to a datetime
+    # field, as is being done here
+    SIX_MONTHS_AGO = now() - datetime.timedelta(days=6 * 30)
     assets = assets.filter(latest_activity__gte=SIX_MONTHS_AGO)
     order_by = request.GET.get("order_by", "date-descending")
     if order_by == "date-ascending":
@@ -480,9 +503,18 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
     allow_empty = True
     paginate_by = 30
 
-    def post(self, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         self.object_list = self.get_queryset()
-        return super().post(*args, **kwargs)
+        if "submit_name" in request.POST:
+            form = UserNameForm(request.POST)
+            if form.is_valid():
+                user = ConcordiaUser.objects.get(id=request.user.id)
+                user.first_name = form.cleaned_data["first_name"]
+                user.last_name = form.cleaned_data["last_name"]
+                user.save()
+            return redirect("user-profile")
+        else:
+            return super().post(request, *args, **kwargs)
 
     def get_queryset(self):
         return _get_pages(self.request)
@@ -537,6 +569,7 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
         if ctx["totalReviews"] is not None:
             ctx["totalCount"] = ctx["totalReviews"] + ctx["totalTranscriptions"]
         ctx["unconfirmed_email"] = concordia_user.get_email_for_reconfirmation()
+        ctx["name_form"] = UserNameForm()
         return ctx
 
     def get_initial(self):
@@ -1000,6 +1033,15 @@ class ProjectDetailView(APIListView):
     context_object_name = "items"
     paginate_by = 10
 
+    def dispatch(self, request, *args, **kwargs):
+        try:
+            return super().dispatch(request, *args, **kwargs)
+        except Http404:
+            campaign = get_object_or_404(
+                Campaign.objects.published(), slug=self.kwargs["campaign_slug"]
+            )
+            return redirect(campaign)
+
     def get_queryset(self):
         self.project = get_object_or_404(
             Project.objects.published().select_related("campaign"),
@@ -1066,6 +1108,15 @@ class ItemDetailView(APIListView):
 
     http_method_names = ["get", "options", "head"]
 
+    def dispatch(self, request, *args, **kwargs):
+        try:
+            return super().dispatch(request, *args, **kwargs)
+        except Http404:
+            campaign = get_object_or_404(
+                Campaign.objects.published(), slug=self.kwargs["campaign_slug"]
+            )
+            return redirect(campaign)
+
     def get_queryset(self):
         self.item = get_object_or_404(
             Item.objects.published().select_related("project__campaign"),
@@ -1129,6 +1180,15 @@ class AssetDetailView(APIDetailView):
     """
 
     template_name = "transcriptions/asset_detail.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        try:
+            return super().dispatch(request, *args, **kwargs)
+        except Http404:
+            campaign = get_object_or_404(
+                Campaign.objects.published(), slug=self.kwargs["campaign_slug"]
+            )
+            return redirect(campaign)
 
     def get_queryset(self):
         asset_qs = Asset.objects.published().filter(
@@ -1243,6 +1303,19 @@ class AssetDetailView(APIDetailView):
 
         ctx["registered_contributors"] = asset.get_contributor_count()
 
+        if project.campaign.card_family:
+            card_family = project.campaign.card_family
+        else:
+            card_family = CardFamily.objects.filter(default=True).first()
+        if card_family is not None:
+            unordered_cards = TutorialCard.objects.filter(tutorial=card_family)
+            ordered_cards = unordered_cards.order_by("order")
+            ctx["cards"] = [tutorial_card.card for tutorial_card in ordered_cards]
+
+        guides = Guide.objects.order_by("order").values("title", "body")
+        if guides.count() > 0:
+            ctx["guides"] = guides
+
         return ctx
 
 
@@ -1323,10 +1396,11 @@ def generate_ocr_transcription(request, *, asset_pk):
         user = request.user
 
     supersedes_pk = request.POST.get("supersedes")
+    language = request.POST.get("language")
     superseded = get_transcription_superseded(asset, supersedes_pk)
     if superseded and isinstance(superseded, HttpResponse):
         return superseded
-    transcription_text = asset.get_ocr_transcript()
+    transcription_text = asset.get_ocr_transcript(language)
     transcription = Transcription(
         asset=asset,
         user=user,
@@ -1347,6 +1421,7 @@ def generate_ocr_transcription(request, *, asset_pk):
             "asset": {
                 "id": transcription.asset.id,
                 "status": transcription.asset.transcription_status,
+                "contributors": transcription.asset.get_contributor_count(),
             },
         },
         status=201,
@@ -1358,6 +1433,7 @@ def generate_ocr_transcription(request, *, asset_pk):
 @atomic
 def save_transcription(request, *, asset_pk):
     asset = get_object_or_404(Asset, pk=asset_pk)
+    logger.info("Saving transcription for %s (%s)", asset, asset.id)
 
     if request.user.is_anonymous:
         user = get_anonymous_user()
@@ -1380,6 +1456,7 @@ def save_transcription(request, *, asset_pk):
     supersedes_pk = request.POST.get("supersedes")
     superseded = get_transcription_superseded(asset, supersedes_pk)
     if superseded and isinstance(superseded, HttpResponse):
+        logger.info("Transcription superseded")
         return superseded
 
     if superseded and (superseded.ocr_generated or superseded.ocr_originated):
@@ -1396,6 +1473,7 @@ def save_transcription(request, *, asset_pk):
     )
     transcription.full_clean()
     transcription.save()
+    logger.info("Transction %s saved", transcription.id)
 
     return JsonResponse(
         {
@@ -1405,6 +1483,7 @@ def save_transcription(request, *, asset_pk):
             "asset": {
                 "id": transcription.asset.id,
                 "status": transcription.asset.transcription_status,
+                "contributors": transcription.asset.get_contributor_count(),
             },
         },
         status=201,
@@ -1415,6 +1494,11 @@ def save_transcription(request, *, asset_pk):
 @validate_anonymous_captcha
 def submit_transcription(request, *, pk):
     transcription = get_object_or_404(Transcription, pk=pk)
+    asset = transcription.asset
+
+    logger.info(
+        "Transcription %s submitted for %s (%s)", transcription.id, asset, asset.id
+    )
 
     is_superseded = transcription.asset.transcription_set.filter(supersedes=pk).exists()
     is_already_submitted = transcription.submitted and not transcription.rejected
@@ -1441,6 +1525,8 @@ def submit_transcription(request, *, pk):
     transcription.full_clean()
     transcription.save()
 
+    logger.info("Transcription %s successfully submitted", transcription.id)
+
     return JsonResponse(
         {
             "id": transcription.pk,
@@ -1448,6 +1534,7 @@ def submit_transcription(request, *, pk):
             "asset": {
                 "id": transcription.asset.id,
                 "status": transcription.asset.transcription_status,
+                "contributors": transcription.asset.get_contributor_count(),
             },
         },
         status=200,
@@ -1464,6 +1551,15 @@ def review_transcription(request, *, pk):
         return JsonResponse({"error": "Invalid action"}, status=400)
 
     transcription = get_object_or_404(Transcription, pk=pk)
+    asset = transcription.asset
+
+    logger.info(
+        "Transcription %s reviewed (%s) for %s (%s)",
+        transcription.id,
+        action,
+        asset,
+        asset.id,
+    )
 
     if transcription.accepted or transcription.rejected:
         return JsonResponse(
@@ -1486,6 +1582,8 @@ def review_transcription(request, *, pk):
     transcription.full_clean()
     transcription.save()
 
+    logger.info("Transcription %s successfully reviewed (%s)", transcription.id, action)
+
     return JsonResponse(
         {
             "id": transcription.pk,
@@ -1493,6 +1591,7 @@ def review_transcription(request, *, pk):
             "asset": {
                 "id": transcription.asset.id,
                 "status": transcription.asset.transcription_status,
+                "contributors": transcription.asset.get_contributor_count(),
             },
         },
         status=200,
@@ -1643,7 +1742,7 @@ class ReportCampaignView(TemplateView):
         try:
             page = int(self.request.GET.get("page", "1"))
         except ValueError:
-            return redirect(self.request.path)
+            page = 1
 
         campaign_assets = Asset.objects.published().filter(
             item__project__campaign=campaign
@@ -1675,9 +1774,9 @@ class ReportCampaignView(TemplateView):
         )
 
         paginator = Paginator(projects_qs, ASSETS_PER_PAGE)
-        projects_page = paginator.get_page(page)
         if page > paginator.num_pages:
-            return redirect(self.request.path)
+            page = 1
+        projects_page = paginator.get_page(page)
 
         self.add_transcription_status_summary_to_projects(projects_page)
 
@@ -1942,12 +2041,21 @@ def filter_and_order_reviewable_assets(
 @never_cache
 @atomic
 def redirect_to_next_reviewable_asset(request):
-    campaign = Campaign.objects.published().listed().order_by("ordering")[0]
+    campaign_ids = list(
+        Campaign.objects.active()
+        .listed()
+        .published()
+        .get_next_review_campaigns()
+        .values_list("id", flat=True)
+    )
+    try:
+        campaign_id = random.choice(campaign_ids)  # nosec
+        campaign = Campaign.objects.get(id=campaign_id)
+    except IndexError:
+        campaign = Campaign.objects.active().listed().published().latest("launch_date")
     project_slug = request.GET.get("project", "")
     item_id = request.GET.get("item", "")
     asset_id = request.GET.get("asset", 0)
-
-    # FIXME: ensure the project belongs to the campaign
 
     if not request.user.is_authenticated:
         user = get_anonymous_user()
@@ -1971,11 +2079,10 @@ def redirect_to_next_reviewable_asset(request):
     )
 
 
-def find_transcribable_assets(campaign_counter, project_slug, item_id, asset_id):
-    campaigns = Campaign.objects.published().listed().order_by("ordering")
+def find_transcribable_assets(campaign, project_slug, item_id, asset_id):
     potential_assets = Asset.objects.select_for_update(skip_locked=True, of=("self",))
     potential_assets = potential_assets.filter(
-        item__project__campaign=campaigns[campaign_counter],
+        item__project__campaign=campaign,
         item__project__published=True,
         item__published=True,
         published=True,
@@ -1992,27 +2099,37 @@ def find_transcribable_assets(campaign_counter, project_slug, item_id, asset_id)
 @never_cache
 @atomic
 def redirect_to_next_transcribable_asset(request):
-    # Campaign is not specified, but project / item / asset may be
+    campaign_ids = list(
+        Campaign.objects.active()
+        .listed()
+        .published()
+        .get_next_transcription_campaigns()
+        .values_list("id", flat=True)
+    )
+    try:
+        campaign_id = random.choice(campaign_ids)  # nosec
+        campaign = Campaign.objects.get(id=campaign_id)
+    except IndexError:
+        campaign = Campaign.objects.active().listed().published().latest("launch_date")
+    project_slug = request.GET.get("project", "")
+    item_id = request.GET.get("item", "")
+    asset_id = request.GET.get("asset", 0)
+
     if not request.user.is_authenticated:
         user = get_anonymous_user()
     else:
         user = request.user
 
-    project_slug = request.GET.get("project", "")
-    item_id = request.GET.get("item", "")
-    asset_id = request.GET.get("asset", 0)
-
-    # FIXME: if the project is specified, select the campaign
-    # to which it belongs
-
-    potential_assets = None
-    campaign_counter = 0
-
-    while not potential_assets:
-        potential_assets = find_transcribable_assets(
-            campaign_counter, project_slug, item_id, asset_id
-        )
-        campaign_counter = campaign_counter + 1
+    potential_assets = Asset.objects.select_for_update(skip_locked=True, of=("self",))
+    potential_assets = potential_assets.filter(
+        item__project__campaign=campaign,
+        item__project__published=True,
+        item__published=True,
+        published=True,
+    )
+    potential_assets = filter_and_order_transcribable_assets(
+        potential_assets, project_slug, item_id, asset_id
+    )
 
     return redirect_to_next_asset(
         potential_assets, "transcribe", request, project_slug, user
@@ -2431,32 +2548,57 @@ class HelpCenterSpanishRedirectView(RedirectView):
 
 # End of help-center views
 
+# Maintenance mode views
 
-@flag_required("ACTIVITY_UI_ENABLED")
-@login_required
-@never_cache
-def action_app(request):
-    return render(
-        request,
-        "action-app.html",
-        {
-            "app_parameters": {
-                "currentUser": request.user.pk,
-                "reservationToken": get_or_create_reservation_token(request),
-                "urls": {
-                    "assetUpdateSocket": request.build_absolute_uri(
-                        "/ws/asset/asset_updates/"
-                    ).replace("http", "ws"),
-                    "campaignList": reverse("transcriptions:campaign-list"),
-                    "topicList": reverse("topic-list"),
-                },
-                "urlTemplates": {
-                    "assetData": "/{action}/?per_page=500",
-                    "assetReservation": "/reserve-asset/{assetId}/",
-                    "saveTranscription": "/assets/{assetId}/transcriptions/save/",
-                    "submitTranscription": "/transcriptions/{transcriptionId}/submit/",
-                    "reviewTranscription": "/transcriptions/{transcriptionId}/review/",
-                },
-            }
-        },
-    )
+
+def maintenance_mode_off(request):
+    """
+    Deactivate maintenance-mode and redirect to site root.
+    Only superusers are allowed to use this view.
+    """
+    if request.user.is_superuser:
+        set_maintenance_mode(False)
+
+    # Added cache busting to make sure maintenance mode banner is
+    # always displayed/removed
+    return HttpResponseRedirect("/?t={}".format(int(time())))
+
+
+def maintenance_mode_on(request):
+    """
+    Activate maintenance-mode and redirect to site root.
+    Only superusers are allowed to use this view.
+    """
+    if request.user.is_superuser:
+        set_maintenance_mode(True)
+
+    # Added cache busting to make sure maintenance mode banner is
+    # always displayed/removed
+    return HttpResponseRedirect("/?t={}".format(int(time())))
+
+
+def maintenance_mode_frontend_available(request):
+    """
+    Allow staff and superusers to use the front-end
+    while maintenance mode is active
+    Only superusers are allowed to use this view.
+    """
+    if request.user.is_superuser:
+        cache.set("maintenance_mode_frontend_available", True, None)
+
+    return HttpResponseRedirect("/?t={}".format(int(time())))
+
+
+def maintenance_mode_frontend_unavailable(request):
+    """
+    Disallow all use of the front-end while maintenance
+    mode is active
+    Only superusers are allowed to use this view.
+    """
+    if request.user.is_superuser:
+        cache.set("maintenance_mode_frontend_available", False, None)
+
+    return HttpResponseRedirect("/?t={}".format(int(time())))
+
+
+# End of maintenance mode views

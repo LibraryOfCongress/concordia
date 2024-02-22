@@ -9,6 +9,11 @@
                 Transcriptions
             </a>
         </li>
+        <li>
+            <a class="view-related-objects" href="{% url 'admin:concordia_transcription_changelist' %}?reviewed_by__id__exact={{ original.pk }}">
+                Reviews
+            </a>
+        </li>
     {% endif %}
     {{ block.super }}
 {% endblock object-tools-items %}

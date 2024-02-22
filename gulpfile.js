@@ -9,7 +9,7 @@ let sourcemaps = require('gulp-sourcemaps');
 
 let paths = {
     styles: ['*/static/scss/**/*.scss'],
-    scripts: ['*/static/js/**/*.js'],
+    scripts: ['*/static/js/src/**/*.js'],
 };
 
 function styles() {
@@ -21,9 +21,9 @@ function styles() {
             rename(function (path) {
                 path.dirname = path.dirname.replace(
                     /^[^/]+\/static\/scss/,
-                    'css'
+                    'css',
                 );
-            })
+            }),
         )
         .pipe(sourcemaps.write('sourcemaps/'))
         .pipe(gulp.dest('static/'));
@@ -34,8 +34,11 @@ function scripts() {
         .src(paths.scripts)
         .pipe(
             rename(function (path) {
-                path.dirname = path.dirname.replace(/^[^/]+\/static\//, '');
-            })
+                path.dirname = path.dirname.replace(
+                    /^[^/]+\/static\/js\/src/,
+                    'js',
+                );
+            }),
         )
         .pipe(gulp.dest('static/'));
 }
@@ -58,7 +61,7 @@ function clean() {
             if (stdout) {
                 process.stdout.write(stdout);
             }
-        }
+        },
     );
 }
 

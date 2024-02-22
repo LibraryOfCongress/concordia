@@ -8,12 +8,23 @@ on:
             - docs/**
             - README.md
             - .github/**
+            - cloudformation/**
+            - db_scripts/**
+            - jenkins/**
+            - kibana-proxy/**
+            - postgresql/**
+
     pull_request:
         branches: [main, 'feature-*']
         paths-ignore:
             - docs/**
             - README.md
             - .github/**
+            - cloudformation/**
+            - db_scripts/**
+            - jenkins/**
+            - kibana-proxy/**
+            - postgresql/**
 
 jobs:
     build:
@@ -23,24 +34,20 @@ jobs:
         steps:
             - name: Install system packages
               run: |
-                  sudo apt-get install -qy libmemcached-dev libz-dev libfreetype6-dev libtiff-dev \
-                    libjpeg-dev libopenjp2-7-dev libwebp-dev zlib1g-dev libpq-dev
+                  sudo apt-get update -qy && sudo apt-get dist-upgrade -qy && sudo apt-get install -qy \
+                  libmemcached-dev libz-dev libfreetype6-dev libtiff-dev \
+                  libjpeg-dev libopenjp2-7-dev libwebp-dev zlib1g-dev libpq-dev
 
             - name: Checkout repository
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
 
             - name: Install node and npm
-              uses: actions/setup-node@v3
+              uses: actions/setup-node@v4
               with:
                   node-version: '18'
-                  check-latest: true
-                  cache: 'npm'
-
-            - name: Install npm from cache
-              run: npm ci
 
             - name: Set up Python 3.10
-              uses: actions/setup-python@v4
+              uses: actions/setup-python@v5
               with:
                   # Semantic version range syntax or exact version of a Python version
                   python-version: '3.10'

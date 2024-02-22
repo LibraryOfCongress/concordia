@@ -21,8 +21,8 @@ class Command(BaseCommand):
             reader = csv.reader(csv_file, delimiter=",")
             header = reader.__next__()
             for row in reader:
-                site_report_data = {key: value for key, value in zip(header, row)}
-                site_report = dict()
+                site_report_data = dict(zip(header, row, strict=True))
+                site_report = {}
 
                 for key in site_report_data:
                     if site_report_data[key] != "":

@@ -5,7 +5,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1,
-            shrink-to-fit=no">
+                                       shrink-to-fit=no">
         <title>
             {% block full_title %}By the People
                 {% block title %}
@@ -16,20 +16,20 @@
             {% endblock full_title %}
         </title>
         <meta name="description" content="Crowdsourcing project By the People invites
-            anyone to become a Library of Congress virtual volunteer. Explore, transcribe, review,
-            and tag digital collections to improve search and readability and open new avenues of
-            research.">
+                                          anyone to become a Library of Congress virtual volunteer. Explore, transcribe, review,
+                                          and tag digital collections to improve search and readability and open new avenues of
+                                          research.">
         <link rel="shortcut icon" href="{% static 'favicon.ico' %}">
         {% include "fragments/common-stylesheets.html" %}
         {% block prefetch %}
             <link href="https://fonts.gstatic.com" rel="preconnect dns-prefetch"
-                crossorigin>
+                  crossorigin>
             {% if CONCORDIA_ENVIRONMENT == "production" %}
                 <link href="https://crowd-media.loc.gov" rel="preconnect dns-prefetch"
-                    crossorigin>
+                      crossorigin>
             {% endif %}
             <link href="https://thelibraryofcongress.tt.omtrdc.net" rel="preconnect
-                dns-prefetch" crossorigin>
+                                                                         dns-prefetch" crossorigin>
             <link href="https://smon.loc.gov" rel="preconnect dns-prefetch" crossorigin>
         {% endblock prefetch %}
         {% block head_content %}{% endblock head_content %}
@@ -46,21 +46,21 @@ for performance:
         {% endif %}
     </head>
     <body id="body"
-        class="{% block body_classes %}view-{{ VIEW_NAME_FOR_CSS }}
-            section-{{ PATH_LEVEL_1|default:'homepage' }}
-            environment-{{ CONCORDIA_ENVIRONMENT }}
-            {% block extra_body_classes %}{% endblock %}
-            d-print-block
-        {% endblock body_classes %}">
+          class="{% block body_classes %}view-{{ VIEW_NAME_FOR_CSS }}
+                     section-{{ PATH_LEVEL_1|default:'homepage' }}
+                     environment-{{ CONCORDIA_ENVIRONMENT }}
+                     {% block extra_body_classes %}{% endblock %}
+                     d-print-block
+                 {% endblock body_classes %}">
         {% block site-header %}
             <header class="border-bottom" role="banner" aria-label="site navigation">
                 <nav class="container navbar navbar-light navbar-expand-lg
-                    align-items-lg-end py-3 d-print-block">
+                            align-items-lg-end py-3 d-print-block">
                     <div class="navbar-brand d-flex align-items-center">
                         <a class="logo-loc" href="https://www.loc.gov" title="Library of
-                            Congress">
+                                                                              Congress">
                             <img class="img-fluid" src="{% static 'img/LoC-logo.svg' %}"
-                                width="170" height="97" alt="Library of Congress logo">
+                                 width="170" height="97" alt="Library of Congress logo">
                         </a>
                         <h1 class="logo-by-the-people m-0 -d-flex -align-items-center">
                             <a class="d-flex" href="/" title="By the People">
@@ -70,21 +70,21 @@ for performance:
                         </h1>
                     </div>
                     <button class="navbar-toggler navbar-light border-0 d-print-none"
-                        type="button" data-toggle="collapse" data-target="#nav-menu" aria-controls="nav-menu"
-                        aria-expanded="false" aria-label="Toggle navigation">
+                            type="button" data-toggle="collapse" data-target="#nav-menu" aria-controls="nav-menu"
+                            aria-expanded="false" aria-label="Toggle navigation">
                         <i class="fas fa-bars"></i>
                         <span class="sr-only">Menu</span>
                     </button>
                     <div class="collapse navbar-collapse text-center d-print-none"
-                        id="nav-menu">
+                         id="nav-menu">
                         <ul class="navbar-nav ml-auto d-print-none small">
                             <li class="nav-item">
                                 <a class="nav-link {% if PATH_LEVEL_1 == 'about'%}active{% endif %}" href="{% url 'about' %}">About</a>
                             </li>
                             <li class="nav-item dropdown nav-dropdown">
                                 <a id="topnav-campaigns-dropdown-toggle" class="nav-link
-                                    {% if PATH_LEVEL_1 == 'campaigns' %}active{% endif %}" href="{% url 'campaign-topic-list' %}" data-toggle="dropdown" aria-haspopup="true"
-                                    aria-expanded="false">Campaigns <span class="fa fa-chevron-down text-primary"></span></a>
+                                                                                {% if PATH_LEVEL_1 == 'campaigns' %}active{% endif %}" href="{% url 'campaign-topic-list' %}" data-toggle="dropdown" aria-haspopup="true"
+                                   aria-expanded="false">Campaigns <span class="fa fa-chevron-down text-primary"></span></a>
                                 <div class="dropdown-menu" aria-labelledby="topnav-campaigns-dropdown-toggle">
                                     <a class="dropdown-item" href="{% url 'campaign-topic-list' %}">All Campaigns</a>
                                     <a class="dropdown-item" href="{% url 'transcriptions:completed-campaign-list' %}">Completed Campaigns</a>
@@ -95,33 +95,33 @@ for performance:
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link"
-                                    href="https://historyhub.history.gov/crowd-loc/" target="_blank">Discuss</a>
+                                   href="https://historyhub.history.gov/crowd-loc/" target="_blank">Discuss</a>
                             </li>
                             <li id="topnav-help-dropdown" class="nav-item dropdown
-                                nav-dropdown">
+                                                                 nav-dropdown">
                                 <a id="topnav-help-dropdown-toggle" class="nav-link
-                                    {% if PATH_LEVEL_1 == 'help-center'%}active{% endif %}" href="{% url 'help-center' %}" rel="nofollow" data-toggle="dropdown" aria-haspopup="true"
-                                    aria-expanded="false">How-To <span class="fa fa-chevron-down text-primary"></span></a>
+                                                                           {% if PATH_LEVEL_1 == 'help-center'%}active{% endif %}" href="{% url 'help-center' %}" rel="nofollow" data-toggle="dropdown" aria-haspopup="true"
+                                   aria-expanded="false">How-To <span class="fa fa-chevron-down text-primary"></span></a>
                                 <div class="dropdown-menu"
-                                    aria-labelledby="topnav-help-dropdown-toggle">
+                                     aria-labelledby="topnav-help-dropdown-toggle">
                                     <a class="dropdown-item" href="{% url 'welcome-guide' %}"
-                                        rel="nofollow">Get Started</a>
+                                       rel="nofollow">Get Started</a>
                                     <a class="dropdown-item" href="{% url 'how-to-transcribe' %}" rel="nofollow">Transcribe</a>
                                     <a class="dropdown-item" href="{% url 'how-to-review' %}"
-                                        rel="nofollow">Review</a>
+                                       rel="nofollow">Review</a>
                                     <a class="dropdown-item" href="{% url 'how-to-tag' %}"
-                                        rel="nofollow">Tag</a>
+                                       rel="nofollow">Tag</a>
                                 </div>
                             </li>
                             <li id="topnav-account-dropdown" class="nav-item dropdown
-                                nav-dropdown authenticated-only" hidden>
+                                                                    nav-dropdown authenticated-only" hidden>
                                 <a id="topnav-account-dropdown-toggle" class="nav-link
-                                    {% if PATH_LEVEL_1 == 'account'%}active{% endif %}" href="{% url 'user-profile' %}" rel="nofollow" data-toggle="dropdown" aria-haspopup="true"
-                                    aria-expanded="false">Account <span class="fa fa-chevron-down text-primary"></a>
+                                                                              {% if PATH_LEVEL_1 == 'account'%}active{% endif %}" href="{% url 'user-profile' %}" rel="nofollow" data-toggle="dropdown" aria-haspopup="true"
+                                   aria-expanded="false">Account <span class="fa fa-chevron-down text-primary"></a>
                                     <div class="dropdown-menu"
-                                        aria-labelledby="topnav-account-dropdown-toggle">
+                                         aria-labelledby="topnav-account-dropdown-toggle">
                                         <a class="dropdown-item" href="{% url 'logout' %}"
-                                            rel="nofollow">Logout</a>
+                                           rel="nofollow">Logout</a>
                                     </div>
                                 </li>
                                 <li class="nav-item anonymous-only">
@@ -134,14 +134,14 @@ for performance:
                         </div>
 
                         <ul class="nav-secondary anonymous-only list-unstyled d-none d-lg-flex
-                            d-print-none small">
+                                   d-print-none small">
                             <li class="nav-item">
                                 <a class="nav-link nav-secondary nav-link-login text-dark"
-                                    href="{% url 'login' %}?next={{ request.path|urlencode }}" rel="nofollow">Login</a>
+                                   href="{% url 'login' %}?next={{ request.path|urlencode }}" rel="nofollow">Login</a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link nav-secondary nav-link-register text-dark"
-                                    href="{% url 'registration_register' %}" rel="nofollow">Register</a>
+                                   href="{% url 'registration_register' %}" rel="nofollow">Register</a>
                             </li>
                         </ul>
                     </nav>
@@ -167,7 +167,7 @@ for performance:
 because it's not worth dealing with IE11 compatibility {% endcomment %}
                             <div class="alert alert-dismissible mx-3 my-2" role="alert">
                                 <button type="button" class="close" data-dismiss="alert"
-                                    aria-label="Close">
+                                        aria-label="Close">
                                     <!--span aria-hidden="true">&times;</span-->
                                     <span aria-hidden="true" class="fas fa-times"></span>
                                 </button>
@@ -175,6 +175,12 @@ because it's not worth dealing with IE11 compatibility {% endcomment %}
                         </div>
                     </div>
                 {% endblock messages-container %}
+
+                {% if maintenance_mode %}
+                    <div class="alert mx-3 my-2 text-center" role="alert" style="background-color: red;">
+                        <h2>Maintenance mode is active!</h2>
+                    </div>
+                {% endif %}
 
                 {% block main_content %}{% endblock main_content %}
             </main>
@@ -187,16 +193,16 @@ because it's not worth dealing with IE11 compatibility {% endcomment %}
                             <h2 class="h3 font-weight-normal text-center text-lg-left">Follow
                                 Us</h2>
                             <ul class="list-unstyled list-inline mb-0 text-center
-                                text-lg-left">
+                                       text-lg-left">
                                 <li class="list-inline-item link-github">
                                     <a href="https://github.com/LibraryOfCongress/concordia"
-                                        title="GitHub">
+                                       title="GitHub">
                                         <span class="bitmap-icon github-icon"></span>
                                     </a>
                                 </li>
                                 <li class="list-inline-item link-twitter">
                                     <a href="https://www.twitter.com/Crowd_LOC"
-                                        title="Twitter">
+                                       title="Twitter">
                                         <span class="bitmap-icon twitter-icon"></span>
                                     </a>
                                 </li>
@@ -211,12 +217,12 @@ because it's not worth dealing with IE11 compatibility {% endcomment %}
                         </div>
                         <div class="footer-links col-12 col-lg">
                             <ul class="list-unstyled list-inline small font-weight-bold mb-0
-                                text-center text-lg-left">
+                                       text-center text-lg-left">
                                 <li class="list-inline-item mb-1"><a
                                     href="/for-educators/">For Educators</a></li>
                                 <li class="list-inline-item mb-1"><a
                                     href="https://historyhub.history.gov/community/crowd-loc">Discuss</a></li>
-                                <li class="list-inline-item mb-1"><a href="/contact/">Contact
+                                <li class="list-inline-item mb-1"><a href="https://ask.loc.gov/crowd" target="_blank" rel=noopener>Contact
                                     Us</a></li>
                                 <li class="list-inline-item"><a
                                     href="{% url 'welcome-guide' %}">Help</a></li>
@@ -224,7 +230,7 @@ because it's not worth dealing with IE11 compatibility {% endcomment %}
                         </div>
                         <div class="col-12 col-lg-auto align-self-center">
                             <ul class="list-unstyled list-inline small text-center
-                                text-lg-left">
+                                       text-lg-left">
                                 <li class="list-inline-item"><a
                                     href="https://www.loc.gov/accessibility/">Accessibility</a></li>
                                 <li class="list-inline-item"><a
@@ -237,7 +243,7 @@ because it's not worth dealing with IE11 compatibility {% endcomment %}
                                     Disclaimer</a></li>
                             </ul>
                             <ul class="list-unstyled list-inline mb-0 text-center
-                                text-lg-left">
+                                       text-lg-left">
                                 <li class="list-inline-item intersites-link-congress"><a
                                     href="https://www.congress.gov/"><span class="sr-only">Congress.gov</span></a></li>
                                 <li class="list-inline-item intersites-link-copyright"><a
@@ -251,8 +257,8 @@ because it's not worth dealing with IE11 compatibility {% endcomment %}
 
         {% if SENTRY_FRONTEND_DSN %}
             <script src="https://browser.sentry-cdn.com/5.0.8/bundle.min.js"
-                integrity="sha384-PKOJCSVL6suo2Qz9Hs4hkrZqX7S6iLwadxXxBEa0h0ycsuoDNZCiAcHlPGHYxU6l"
-                crossorigin="anonymous"></script>
+                    integrity="sha384-PKOJCSVL6suo2Qz9Hs4hkrZqX7S6iLwadxXxBEa0h0ycsuoDNZCiAcHlPGHYxU6l"
+                    crossorigin="anonymous"></script>
             <script>
                 if (navigator.userAgent.indexOf("CloudFlare-AlwaysOnline") < 0) {
                     Sentry.init({
@@ -282,6 +288,35 @@ because it's not worth dealing with IE11 compatibility {% endcomment %}
                 }
             } else {
                 _satellite.pageBottom();
+            }
+        </script>
+
+        <script>
+            function clearCache() {
+                for(var i in localStorage) {
+                    if (i.startsWith("campaign-")) {
+                        localStorage.removeItem(i);
+                    }
+                }
+            }
+            if (typeof(Storage) !== "undefined") {
+                {% if campaign %}
+                    const keyName = "campaign-{{ campaign.slug }}";
+                    if (keyName) {
+                        const campaign = localStorage.getItem(keyName);
+                        if (!campaign) {
+                            {% if not user.is_authenticated %}
+                                clearCache();
+                            {% endif %}
+                            {% if asset %}
+                                $('#tutorial-popup').modal('show');
+                                localStorage.setItem(keyName, "true");
+                            {% endif %}
+                        }
+                    }
+                {% elif not user.is_authenticated %}
+                    clearCache();
+                {% endif %}
             }
         </script>
     </body>

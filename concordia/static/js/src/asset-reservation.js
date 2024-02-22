@@ -21,7 +21,7 @@ function attemptToReserveAsset(reservationURL, findANewPageURL, actionType) {
                 60000,
                 reservationURL,
                 findANewPageURL,
-                actionType
+                actionType,
             );
         })
         .fail(function (jqXHR, textStatus, errorThrown) {
@@ -38,7 +38,7 @@ function attemptToReserveAsset(reservationURL, findANewPageURL, actionType) {
                             ' <a href="' +
                             findANewPageURL +
                             '">Find a new page to review</a>',
-                        'transcription-reservation'
+                        'transcription-reservation',
                     );
                 }
             } else if (jqXHR.status == 408) {
@@ -51,7 +51,7 @@ function attemptToReserveAsset(reservationURL, findANewPageURL, actionType) {
                     'error',
                     'Unable to reserve this page: ' +
                         buildErrorMessage(jqXHR, textStatus, errorThrown),
-                    'transcription-reservation'
+                    'transcription-reservation',
                 );
             }
         });
@@ -60,7 +60,7 @@ function attemptToReserveAsset(reservationURL, findANewPageURL, actionType) {
         var payload = {
             release: true,
             csrfmiddlewaretoken: jQuery(
-                'input[name="csrfmiddlewaretoken"]'
+                'input[name="csrfmiddlewaretoken"]',
             ).val(),
         };
 
@@ -70,7 +70,7 @@ function attemptToReserveAsset(reservationURL, findANewPageURL, actionType) {
                 reservationURL,
                 new Blob([jQuery.param(payload)], {
                     type: 'application/x-www-form-urlencoded',
-                })
+                }),
             );
         } else {
             jQuery.ajax({url: reservationURL, type: 'POST', data: payload});

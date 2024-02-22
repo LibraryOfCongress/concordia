@@ -10,9 +10,11 @@
         <span class="font-weight-bold mr-1">Date: </span>Select Range
     </div>
     <div class="d-flex flex-row pb-1">
-        <duet-date-picker name="start"></duet-date-picker>
+        <label for="id_start"><span class="visually-hidden">Start</span></label>
+        <duet-date-picker name="start" identifier="id_start"></duet-date-picker>
         <div class="p-2">to</div>
-        <duet-date-picker name="end"></duet-date-picker>
+        <label for="id_end"><span class="visually-hidden">End</span></label>
+        <duet-date-picker name="end" identifier="id_end"></duet-date-picker>
         <button type="submit" class="btn btn-primary rounded-0 p-2">Go</button>
     </div>
     <div class="d-flex flex-row pt-1">
@@ -87,7 +89,7 @@
             <th class="date-header">Date</th>
             <th>Page</th>
             <th>
-                <div data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Campaign <span class="fa fa-chevron-down"></span></div>
+                <div data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Campaign/Item <span class="fa fa-chevron-down"></span></div>
                 <div class="dropdown-menu border border-primary py-0 rounded-0">
                     {% if campaign %}
                         <a class="dropdown-item border-bottom border-primary" href="?{% qs_alter request.GET tab='recent' delete:campaign %}">Show All</a>

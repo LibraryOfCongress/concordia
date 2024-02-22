@@ -19,7 +19,27 @@
                 <h1 class="my-3">{{ title }}</h1>
 
                 <div>
-                    {{ body|safe }}
+                    {% if add_navigation %}
+                        <div class="row">
+                            <div class="col-3">
+                                <div class="nav flex-column help-center">
+                                    <h4>Instructions</h4>
+                                    <a class="nav-link" href="{% url 'welcome-guide' %}">Get started</a>
+                                    <a class="nav-link{% if title == 'How to transcribe' %} active{% endif %}" href="{% url 'how-to-transcribe' %}">How to transcribe</a>
+                                    <a class="nav-link{% if title == 'How to Review' %} active{% endif %}" href="{% url 'how-to-review' %}">How to review</a>
+                                    <a class="nav-link{% if title == 'How to Tag' %} active{% endif %}" href="{% url 'how-to-tag' %}">How to tag</a>
+                                    <span lang="es">
+                                        <a class="nav-link" href="/help-center/how-to-transcribe-esp/">Instrucciones en español</a>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="p-3 col-9">
+                                {{ body|safe }}
+                            </div>
+                        </div>
+                    {% else %}
+                        {{ body|safe }}
+                    {% endif %}
                 </div>
             </div>
         </div>

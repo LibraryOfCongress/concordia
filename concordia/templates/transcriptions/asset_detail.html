@@ -6,7 +6,6 @@
 
 {% load concordia_media_tags %}
 {% load concordia_sharing_tags %}
-{% load concordia_simple_content_blocks %}
 
 {% block title %}
     {{ asset.title }} ({{ asset.item.project.campaign.title }}: {{ asset.item.project.title }})
@@ -33,13 +32,12 @@
 
 {% block main_content %}
     {% flag_enabled 'ADVERTISE_ACTIVITY_UI' as ADVERTISE_ACTIVITY_UI %}
-    {% flag_enabled 'SIMPLE_CONTENT_BLOCKS' as SIMPLE_CONTENT_BLOCKS %}
 
     <div id="contribute-main-content" class="container-fluid flex-grow-1 d-flex flex-column d-print-block">
         <div id="navigation-container" class="row p-1 px-3 d-print-none bg-light">
             <nav id="asset-navigation" class="d-flex flex-wrap flex-grow-1 justify-content-sm-between align-items-center d-print-block" role="navigation">
                 <div class="d-flex align-items-center">
-                    <form class="p-1" onsubmit="document.location.href = document.getElementById('asset-selection').value; return false">
+                    <form class="p-1" onsubmit="document.location.href = encodeURI(document.getElementById('asset-selection').value); return false">
                         <div class="input-group input-group-sm flex-nowrap">
                             <div class="input-group-prepend">
                                 <label class="input-group-text p-0 pr-1 border-0" for="asset-selection">Page</label>
@@ -77,7 +75,7 @@
                 <div class="btn-group align-self-end">
                     {% if asset.resource_url %}
                         <div class="btn-group-sm p-1" role="navigation" aria-label="Link to the original source for this item">
-                            <a class="btn btn-outline-primary text-nowrap" target="_blank" title="View the original source for this item in a new tab" href="{{ asset.resource_url }}{% if 'sp=' not in asset.resource_url %}?sp={{ asset.sequence }}{% endif %}">View on www.loc.gov <i class="fa fa-external-link-alt"></i></a>
+                            <a class="btn btn-outline-primary text-nowrap" target="_blank" rel=noopener title="View the original source for this item in a new tab" href="{{ asset.resource_url }}{% if 'sp=' not in asset.resource_url %}?sp={{ asset.sequence }}{% endif %}">View on www.loc.gov <i class="fa fa-external-link-alt"></i></a>
                         </div>
                     {% endif %}
 
@@ -143,8 +141,8 @@
                         </div>
 
                         <div class="d-flex btn-group m-1">
-                            <button type="button" class="btn btn-dark extra-control-button" title="Open Help" data-toggle="modal" data-target="#keyboard-help-modal">
-                                <span class="fas fa-question-circle" aria-label="Open Help"></span>
+                            <button type="button" class="btn btn-dark extra-control-button" title="Viewer keyboard shortcuts" data-toggle="modal" data-target="#keyboard-help-modal">
+                                <span class="fas fa-question-circle" aria-label="Viewer keyboard shortcuts"></span>
                             </button>
                         </div>
                     </div>
@@ -220,11 +218,13 @@
                             </div>
                             <div class="modal-body">
                                 <h6 class="modal-title">What is OCR?</h6>
-                                <p>OCR stands for Optical Character Recognition. OCR is a software tool that can extract typed text from some documents. It works best on consistent and clear modern typeface.</p>
+                                <p>OCR stands for Optical Character Recognition. OCR is a software tool that can extract print text from some documents.</p>
+                                <h6>When will OCR work well?</h6>
+                                <p>OCR does not work on handwriting. It only works for printed or typed text, meaning text created by a typewriter, printing press, or other mechanical means. OCR will do best on consistent and clear images of modern typefaces.</p>
                                 <h6>Do I still need to review pages started with OCR?</h6>
-                                <p>Yes! OCR is imperfect. It may not work well for some or all parts of a typed page, but it can be a great starting point. If you started a page with OCR, you should read the text closely before submitting. If you are reviewing a OCR-ed page, you also still need to review.</p>
+                                <p>Yes! OCR is imperfect. It may not work well for some or all parts of a typed page, but it can be a great starting point. If you start a page with OCR, you should read the text closely before submitting. If you are reviewing a OCR-ed page, you also still need to review.</p>
                                 <h6>Why does <span class="font-italic">By the People</span> have this feature?</h6>
-                                <p>We always want to use volunteer time effectively. When the Library of Congress digitizes a large group of printed pages, it will usually OCR them. The materials in By the People campaigns are not good candidates for applying OCR at scale, either because they are handwritten, a mixed collection (containing handwritten and print materials) or printed but on paper or in a typeface that does not produce accurate OCR results. However, OCR can still be a useful starting point for some typed pages. Use it if it if you like it or skip it if you don’t!</p>
+                                <p>We always want to use volunteer time effectively. When the Library of Congress digitizes a large group of printed pages, it will usually OCR them. The materials in By the People campaigns are not good candidates for applying OCR at scale, either because they are handwritten, a mixed collection of handwritten and print materials, or printed on paper or in a typeface that does not produce accurate OCR results. However, OCR can still be a useful starting point for some typed pages. Use it if it if you like it or skip it if you don’t!</p>
                             </div>
                             <div class="modal-footer justify-content-center">
                                 <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
@@ -358,28 +358,38 @@
                     </div>
                 </div>
                 <div id="asset-image" class="h-100 bg-dark d-print-none w-100"></div>
+                {% if transcription_status == "not_started" or transcription_status == "in_progress" %}
+                    <div id="ocr-section" class="row pl-3 pb-4 bg-white print-none">
+                        <div class="d-flex flex-row align-items-center align-content-end ml-auto mr-3 mt-1">
+                            <a tabindex="0" class="btn btn-link d-inline p-0" role="button" data-placement="top" data-trigger="focus click hover" title="When to use OCR"  data-toggle="modal" data-target="#ocr-help-modal">
+                                <span class="underline-link font-weight-bold">What is OCR</span> <span class="fas fa-question-circle" aria-label="When to use OCR"></span>
+                            </a>
+                            <a role="button" data-placement="top" data-trigger="click" title="Transcribe with OCR" data-toggle="modal" data-target="#ocr-transcription-modal" id="ocr-transcription-link" class="btn btn-primary mx-1" disabled>Transcribe with OCR</a>
+                        </div>
+                    </div>
+                {% endif %}
             </div>
 
             <div id="editor-column" class="d-flex justify-content-between p-3 d-print-block flex-column">
                 <div class="flex-grow-1 d-flex d-print-block flex-column">
-                    <div class="tx-status-display">
-                        <h2 class="tx-submitted" {% if transcription_status != 'submitted' %}hidden{% endif %}>
+                    <div id="transcription-status-display">
+                        <h2 id="display-submitted" {% if transcription_status != 'submitted' %}hidden{% endif %}>
                             <span class="fas fa-list"></span>
                             Needs review
                         </h2>
-                        <h2 class="tx-completed" {% if transcription_status != 'completed' %}hidden{% endif %}>
+                        <h2 id="display-completed" {% if transcription_status != 'completed' %}hidden{% endif %}>
                             <span class="fas fa-check"></span>
                             Completed
                         </h2>
-                        <h2 class="tx-edit" {% if transcription_status != "not_started" %}hidden{% endif %}>
+                        <h2 id="display-notstarted" {% if transcription_status != "not_started" %}hidden{% endif %}>
                             <span class="fas fa-edit"></span>
                             Not started
                         </h2>
-                        <h2 class="tx-edit" {% if transcription_status != "in_progress" %}hidden{% endif %}>
+                        <h2 id="display-inprogress" {% if transcription_status != "in_progress" %}hidden{% endif %}>
                             <span class="fas fa-edit"></span>
                             In progress
                         </h2>
-                        <span class="tx-edit-conflict" hidden>
+                        <span id="display-conflict" hidden>
                             <span class="fas fa-exclamation-triangle"></span>
                             Another user is transcribing this page
                         </span>
@@ -389,22 +399,30 @@
                         {% csrf_token %}
                         <input type="hidden" name="supersedes" value="{{ transcription.pk|default:'' }}" />
 
-                        <span>
-                            {% if transcription_status == 'not_started' %}
-                                Transcribe this page.
-                            {% else %}
-                                <h2>Registered Contributors: <span class="font-weight-normal">{{ registered_contributors }}</span></h2>
-                                {% if transcription_status == 'in_progress' %}
+                        <div class="row justify-content-sm-between px-3">
+                            <span id="transcription-status-message">
+                                <h2 id="message-contributors" {% if transcription_status == 'not_started' %}hidden{% endif %}>
+                                    Registered Contributors: <span id="message-contributors-num" class="font-weight-normal">{{ registered_contributors }}</span>
+                                </h2>
+                                <span id="message-notstarted" {% if transcription_status != 'not_started' %}hidden{% endif %}>
+                                    Transcribe this page.
+                                </span>
+                                <span id="message-inprogress" {% if transcription_status != 'in_progress' %}hidden{% endif %}>
                                     Someone started this transcription. Can you finish it?
-                                {% elif transcription_status == 'submitted' %}
+                                </span>
+                                <span id="message-submitted" {% if transcription_status != 'submitted' %}hidden{% endif %}>
                                     Check this transcription thoroughly. Accept if correct!
-                                {% elif transcription_status == 'completed' %}
+                                </span>
+                                <span id="message-completed" {% if transcription_status != 'completed' %}hidden{% endif %}>
                                     This transcription is finished! You can read and add tags.
-                                {% else %}
-                                    Transcription
-                                {% endif %}
-                            {% endif %}
-                        </span>
+                                </span>
+                            </span>
+                            <div class="align-items-center align-self-end btn-group">
+                                <a class="font-weight-bold" data-toggle="modal" data-target="#tutorial-popup" role="button">
+                                    <u>Quick Tips</u>
+                                </a>
+                            </div>
+                        </div>
 
                         {% spaceless %}
                             <div id="loading-container" class="pb-2">
@@ -412,7 +430,7 @@
                                     <span class="sr-only">Loading...</span>
                                 </div>
                             </div>
-                            <textarea readonly class="form-control w-100 rounded flex-grow-1 d-print-none" name="text" id="transcription-input" placeholder="{% if transcription_status == 'not_started' or transcription_status == 'in_progress' %}Go ahead, start typing. You got this!{% else %}Nothing to transcribe{% endif %}" aria-label="Transcription input">
+                            <textarea readonly class="form-control rounded flex-grow-1 d-print-none" name="text" id="transcription-input" placeholder="{% if transcription_status == 'not_started' or transcription_status == 'in_progress' %}Go ahead, start typing. You got this!{% else %}Nothing to transcribe{% endif %}" aria-label="Transcription input">
                                 {{ transcription.text }}
                             </textarea>
 
@@ -426,7 +444,7 @@
                                             Nothing to transcribe
                                         </label>
 
-                                        <a tabindex="0" class="btn btn-link d-inline py-0" role="button" data-toggle="popover" data-placement="top" data-trigger="focus click hover" title="Help" data-html="true" data-content="If it looks like there’s nothing to transcribe, use this button and then Submit. Not sure? Check these tips: {% filter force_escape %}<a href="{% url 'how-to-transcribe' %}">how to transcribe</a>{% endfilter %}">
+                                        <a tabindex="0" class="btn btn-link d-inline py-0" role="button" data-toggle="popover" data-placement="top" data-trigger="focus click hover" title="Nothing to transcribe?" data-html="true" data-content="If there is no text to transcribe, check this box and click &quot;Submit&quot;. Learn more about what to transcribe and what to skip in &quot;How To.&quot;">
                                             <span class="fas fa-question-circle" aria-label="Open Help"></span>
                                         </a>
                                     </div>
@@ -452,26 +470,22 @@
                                     {% endif %}
                                 {% endif %}
                             </div>
-                            {% if transcription.ocr_originated %}
-                                <div class="mb-3 text-center font-weight-bold">This transcription was started with OCR <a class="btn btn-link d-inline p-0" data-trigger="focus click hover" title="What is OCR?" data-toggle="modal" data-target="#ocr-help-modal">
-                                    <span class="fas fa-question-circle" aria-label="Open Help"></span>
-                                </a></div>
-                            {% endif %}
                         {% endspaceless %}
                     </form>
+
                 </div>
                 <div id="tag-editor" class="flex-shrink-1">
                     <h2 id="tag-label" class="border-top pt-3 pb-2"><a
                         data-toggle="collapse" href="#tag-form" role="button" aria-expanded="false"
                         aria-controls="tag-form"><i class="fas fa-plus-square"></i> <span
-                            class="text-dark">Tags ({{ tags|length }})</span></a></h2>
+                            id="tag-count-text" class="text-dark">Tags (<span id="tag-count">{{ tags|length }}</span>)</span></a></h2>
                     <form id="tag-form" class="ajax-submission collapse" method="post" action="{% url 'submit-tags' asset_pk=asset.pk %}">
                         {% csrf_token %}
                         <div class="d-print-none">
                             {% if user.is_authenticated %}
                                 <div class="form-row">
                                     <div class="col input-group">
-                                        <input type="text" id="new-tag-input" class="form-control" placeholder="Add a new tag…" aria-label="Add a new tag" pattern="[- _À-ž'\w]{1,50}">
+                                        <input type="text" id="new-tag-input" class="form-control" placeholder="Add a new tag…" aria-label="Add a new tag" pattern="[\- _À-ž'\w]{1,50}">
                                         <div class="input-group-append">
                                             <button id="new-tag-button" class="btn btn-outline-primary" type="button" title="Add tags to the page">Add</button>
                                         </div>
@@ -505,26 +519,15 @@
                                 </li>
                             {% endfor %}
                         </ul>
-
-                        <div class="form-row mt-2 authenticated-only d-print-none" hidden>
-                            <button id="save-tags-button" type="submit" class="btn btn-primary mx-auto" title="Save tags that you’ve added to the page">
-                                Save Tags
-                            </button>
-                        </div>
                     </form>
                 </div>
             </div>
+            {% if guides %}
+                <button id="open-guide" class="btn btn-primary" type="button" onclick="openOffcanvas()">How-To Guide</button>
+                {% include "fragments/_how-to-guide.html" %}
+            {% endif %}
         </div>
         <div id="help-container" class="mt-1 d-print-none">
-            {% if transcription_status == "not_started" or transcription_status == "in_progress" %}
-                <div id="ocr-section" class="row align-items-center pl-3 pb-4">
-                    <span class="pr-2">Is this page typed?</span>
-                    <a role="button" data-placement="top" data-trigger="click" title="Transcribe with OCR" data-toggle="modal" data-target="#ocr-transcription-modal" id="ocr-transcription-link" class="btn btn-primary mx-1" disabled>Transcribe with OCR</a>
-                    <a tabindex="0" class="btn btn-link d-inline p-0" role="button" data-placement="top" data-trigger="focus click hover" title="What is OCR?"  data-toggle="modal" data-target="#ocr-help-modal">
-                        <span class="fas fa-question-circle" aria-label="Open Help"></span>
-                    </a>
-                </div>
-            {% endif %}
             <div class="row p-3 bg-light justify-content-sm-between">
                 <div class="d-flex align-items-center pl-1">Share this item: {% share_buttons current_asset_url asset.item.title %}</div>
                 <div class="btn-group align-items-center align-self-end">
@@ -534,29 +537,10 @@
                         Quick Tips
                     </button>
 
-                    <a class="btn btn-primary mx-1" href="{% url 'contact' %}">
+                    <a class="btn btn-primary mx-1" href="https://ask.loc.gov/crowd" target="_blank" rel=noopener>
                         Contact us
                     </a>
 
-                    <div class="collapse" id="instruction-window">
-                        <button type="button" class="close pull-right" aria-label="Close" data-toggle="collapse" data-target="#instruction-window">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                        <div>
-                            {% if SIMPLE_CONTENT_BLOCKS %}
-                                {% simple_content_block "classic_quicktips" %}
-                            {% else %}
-                                <ul>
-                                    <li>Transcribe original spelling, punctuation, word order, and any page numbers or catalog marks.</li>
-                                    <li>Preserve line breaks except when a word breaks over a line or page. Then transcribe it on the line or page where it starts.</li>
-                                    <li>Use brackets [ ] around deleted, illegible or partially legible text, and square brackets and asterisks around text in margins [ * * ].</li>
-                                    <li>Transcribe any words or letters you can't identify as [?].</li>
-                                    <li>Include insertions where you would read them in the text.</li>
-                                </ul>
-                                Find more detailed instructions in the <a href="{% url 'help-center' %}">Help Center</a>
-                            {% endif %}
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -721,6 +705,54 @@
         </div>
     </div>
     <div class="print-transcription-image d-none d-print-block"><img class="img-fluid" alt="Scanned image of the current content page" src="{% asset_media_url asset %}"></div>
+    {% if cards %}
+        <div id="tutorial-popup" class="modal" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header border-bottom-0">
+                        <h4>Quick Tips</h4>
+                        <button type="button" class="close text-primary" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">x</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="card-carousel" class="carousel slide" data-interval="false">
+                            <div class="carousel-inner">
+                                {% for card in cards %}
+                                    <div class="carousel-item pb-4 {% if forloop.first %} active {% endif %}">
+                                        {% if not forloop.first %}
+                                            <a id="previous-card" href="#card-carousel" role="button" data-slide="prev">
+                                                <strong><u><&nbsp;Back</u></strong>
+                                            </a>
+                                        {% endif %}
+                                        <div class="position-static d-flex flex-column justify-content-around">
+                                            {% if card.image %}
+                                                <img src="{{ card.image.url }}"{% if card.image_alt_text %} alt="{{ card.image_alt_text }}"{% endif %}>
+                                            {% endif %}
+                                            {% if card.display_heading %}
+                                                <h5>{{ card.display_heading }}</h5>
+                                            {% endif %}
+                                            <p>{{ card.body_text|safe }}</p>
+                                        </div>
+                                        {% if not forloop.last %}
+                                            <a id="next-card" href="#card-carousel" data-slide="next">
+                                                <strong><u>Next&nbsp;></u></strong>
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            <ol class="carousel-indicators d-none d-lg-flex">
+                                {% for card in cards %}
+                                    <li data-target="#card-carousel" data-slide-to="{{ forloop.counter0 }}" {% if forloop.first %}class="active" {% endif %}></li>
+                                {% endfor %}
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
 {% endblock main_content %}
 
 {% block body_scripts %}
@@ -730,14 +762,15 @@
     <script src="{% static 'js/contribute.js' %}"></script>
     <script src="{% static 'js/asset-reservation.js' %}"></script>
     <script>
-        if (
-            typeof(Storage) !== "undefined" &&
-            !(window.screen.width < 1024 || window.screen.height < 768)
-        ) {
-            for(var i in localStorage)
-            {
-                if ($('#' + i).hasClass("alert")) {
-                    $('#' + i).attr("hidden", true);
+        if (typeof(Storage) !== "undefined") {
+            if (!(window.screen.width < 1024 || window.screen.height < 768)) {
+                for(var i in localStorage)
+                {
+                    if (i.startsWith("banner-")) {
+                        if ($('#' + i).hasClass("alert")) {
+                            $('#' + i).attr("hidden", true);
+                        }
+                    }
                 }
             }
         }
@@ -751,7 +784,7 @@
         var seadragonViewer = OpenSeadragon({
             id: "asset-image",
             prefixUrl:
-            "{% static 'openseadragon/build/openseadragon/images/' %}",
+                "{% static 'openseadragon/build/openseadragon/images/' %}",
             tileSources: {
                 type: "image",
                 url: "{% asset_media_url asset %}?canvas"
@@ -887,15 +920,25 @@
         let contributeContainer = document.getElementById("contribute-container");
         let ocrSection = document.getElementById("ocr-section");
         let editorColumn = document.getElementById("editor-column");
-        let helpContainer = document.getElementById("help-container");
+        let viewerColumn = document.getElementById("viewer-column");
         let layoutColumns = ["#viewer-column", "#editor-column"];
+        let verticalKey = 'transcription-split-sizes-vertical';
+        let horizontalKey = 'transcription-split-sizes-horizontal';
 
-        let sizes = localStorage.getItem('transcription-split-sizes');
+        let sizesVertical = localStorage.getItem(verticalKey);
 
-        if (sizes) {
-            sizes = JSON.parse(sizes);
+        if (sizesVertical) {
+            sizesVertical = JSON.parse(sizesVertical);
         } else {
-            sizes = [50, 50]; // default sizes
+            sizesVertical = [50, 50];
+        }
+
+        let sizesHorizontal = localStorage.getItem(horizontalKey);
+
+        if (sizesHorizontal) {
+            sizesHorizontal = JSON.parse(sizesHorizontal);
+        } else {
+            sizesHorizontal = [50, 50];
         }
 
         let splitDirection = localStorage.getItem("transcription-split-direction");
@@ -907,7 +950,15 @@
         }
 
         function saveSizes(sizes){
-            localStorage.setItem('transcription-split-sizes', JSON.stringify(sizes));
+            let sizeKey;
+            if(splitDirection == "h"){
+                sizeKey = horizontalKey;
+                sizesHorizontal = sizes;
+            } else {
+                sizeKey = verticalKey;
+                sizesVertical = sizes;
+            }
+            localStorage.setItem(sizeKey, JSON.stringify(sizes));
         }
 
         function saveDirection(direction){
@@ -919,11 +970,13 @@
             saveDirection(splitDirection);
             contributeContainer.classList.remove("flex-row");
             contributeContainer.classList.add("flex-column");
+            viewerColumn.classList.remove("h-100");
             if(ocrSection != null){
                 editorColumn.prepend(ocrSection);
             }
+
             return Split(layoutColumns, {
-                sizes: sizes,
+                sizes: sizesVertical,
                 minSize: 100,
                 gutterSize: 8,
                 direction: 'vertical',
@@ -945,12 +998,13 @@
             saveDirection(splitDirection);
             contributeContainer.classList.remove("flex-column");
             contributeContainer.classList.add("flex-row");
+            viewerColumn.classList.add("h-100");
             if(ocrSection != null){
-                helpContainer.prepend(ocrSection);
+                viewerColumn.append(ocrSection);
             }
             return Split(layoutColumns, {
-                sizes: sizes,
-                minSize: 300,
+                sizes: sizesHorizontal,
+                minSize: 100,
                 gutterSize: 8,
                 elementStyle: function(dimension, size, gutterSize) {
                     return {
@@ -965,16 +1019,6 @@
                 onDragEnd: saveSizes,
             });
         }
-        function toggleSplit(){
-            if(pageSplit != null){
-                pageSplit.destroy();
-            }
-            if(splitDirection === "v"){
-                pageSplit = horizontalSplit();
-            }else{
-                pageSplit = verticalSplit();
-            }
-        }
 
         document.getElementById("viewer-layout-horizontal").addEventListener('click', function(){
             if(splitDirection != "h"){
@@ -984,7 +1028,7 @@
                 pageSplit = horizontalSplit();
                 setTimeout(function(){
                     // Some quirk in the viewer makes this
-                    // sometimes not working depending on
+                    // sometimes not work depending on
                     // the rotation, unless it's delayed.
                     // Less than 10ms didn't reliable work.
                     seadragonViewer.viewport.zoomTo(1);
@@ -1094,6 +1138,57 @@
 
         thresholdRange.addEventListener('input', function(){
             thresholdNumber.value = thresholdRange.value;
+        });
+    </script>
+    <script>
+        function openOffcanvas() {
+            var guide = document.getElementById("guide-sidebar");
+            guide.style.width = "450px";
+            guide.style.borderWidth = "0 0 thick thick";
+            guide.style.borderStyle = "solid";
+            guide.style.borderColor = "#0076ad";
+            document.getElementById("open-guide").style.display = "none";
+            document.addEventListener('keydown', function(e) {
+                if (e.key == "Escape") {
+                    closeOffcanvas();
+                }
+            });
+
+        }
+        function closeOffcanvas() {
+            document.getElementById("guide-sidebar").style.width = "0%";
+            document.getElementById("guide-sidebar").style.border = "none";
+            document.getElementById("open-guide").style.display = "block";
+        }
+
+        function showPane(elementId) {
+            document.getElementById(elementId).classList.add('show', 'active');
+            document.getElementById('guide-nav').classList.remove('show', 'active');
+        }
+        function hidePane(elementId) {
+            document.getElementById(elementId).classList.remove('show', 'active');
+            document.getElementById('guide-nav').classList.add('show', 'active');
+        }
+        $("#guide-carousel").carousel({
+            interval: false,
+            wrap: false
+        }).on('slide.bs.carousel', function (e) {
+            if (e.to == 0) {
+                $("#guide-bars").addClass("d-none");
+            }
+            else {
+                $("#guide-bars").removeClass("d-none");
+            }
+        });
+    </script>
+    <script>
+        $("#tutorial-popup").on("shown.bs.modal", function() {
+            var $carouselItems = $("#card-carousel .carousel-item");
+            var heights = $carouselItems.map(function() {
+                return $(this).height();
+            });
+            var maxHeight = Math.max.apply(this, heights);
+            $carouselItems.height(maxHeight);
         });
     </script>
 {% endblock body_scripts %}

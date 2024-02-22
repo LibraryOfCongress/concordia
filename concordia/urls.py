@@ -144,7 +144,6 @@ urlpatterns = [
     ),
     path("questions/", views.simple_page, name="questions"),
     path("contact/", views.ContactUsView.as_view(), name="contact"),
-    path("act/", views.action_app, name="action-app"),
     path(
         "campaigns-topics/",
         views.CampaignTopicListView.as_view(),
@@ -241,8 +240,23 @@ urlpatterns = [
     path("error/404/", page_not_found, {"exception": Http404()}),
     path("error/429/", views.ratelimit_view),
     path("error/403/", permission_denied, {"exception": HttpResponseForbidden()}),
+    path("tinymce/", include("tinymce.urls")),
     path("", include("django_prometheus_metrics.urls")),
     path("robots.txt", include("robots.urls")),
+    path(
+        "maintenance-mode/off/", views.maintenance_mode_off, name="maintenance_mode_off"
+    ),
+    path("maintenance-mode/on/", views.maintenance_mode_on, name="maintenance_mode_on"),
+    path(
+        "maintenance-mode/frontend/available",
+        views.maintenance_mode_frontend_available,
+        name="maintenance_mode_frontend_available",
+    ),
+    path(
+        "maintenance-mode/frontend/unavailable",
+        views.maintenance_mode_frontend_unavailable,
+        name="maintenance_mode_frontend_unavailable",
+    ),
 ]
 
 if settings.DEBUG:

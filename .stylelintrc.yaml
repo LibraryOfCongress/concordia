@@ -1,6 +1,6 @@
 extends:
     - stylelint-config-recommended
-    - stylelint-config-prettier
+    - stylelint-config-standard-scss
 
 plugins:
     - stylelint-value-no-unknown-custom-properties
@@ -9,3 +9,5 @@ rules:
     no-descending-specificity: null
     at-rule-no-unknown: null
     csstools/value-no-unknown-custom-properties: true
+    scss/dollar-variable-empty-line-before: null
+    property-no-vendor-prefix: null
