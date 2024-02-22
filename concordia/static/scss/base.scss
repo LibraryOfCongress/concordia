@@ -478,6 +478,10 @@ $card-progress-height: 12px;
         #{$card-img-height} - #{$card-btn-height - $card-progress-height}
     );
     z-index: 3;
+    .view-transcriptions--item-detail & {
+        top: 0;
+    }
+
 }
 
 .concordia-object-card .card-actions .btn {
