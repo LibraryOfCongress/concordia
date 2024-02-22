@@ -107,15 +107,6 @@ class ProjectAdminForm(SanitizedDescriptionAdminForm):
         }
 
 
-class SimpleContentBlockAdminForm(forms.ModelForm):
-    def clean_body(self):
-        return nh3.clean(
-            self.cleaned_data["body"],
-            tags=BLOCK_ALLOWED_TAGS,
-            attributes=ALLOWED_ATTRIBUTES,
-        )
-
-
 class CardAdminForm(forms.ModelForm):
     class Meta:
         model = Card
