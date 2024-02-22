@@ -746,7 +746,7 @@ class SimplePage(models.Model):
 
     title = models.CharField(max_length=200)
 
-    body = models.TextField()
+    body = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return f"SimplePage: {self.path}"
