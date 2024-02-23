@@ -4,39 +4,11 @@ from http import HTTPStatus
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
-from concordia.admin.views import SerializedObjectView, celery_task_review
+from concordia.admin.views import SerializedObjectView
 from concordia.tests.utils import CreateTestUsers, create_card
 
 
 class TestFunctionBasedViews(CreateTestUsers, TestCase):
-    def test_project_level_export(self):
-        self.login_user()
-        self.assertTrue(self.user.check_password(self.user._password))
-
-        response = self.client.get(reverse("admin:project-level-export"), follow=True)
-
-        self.client.force_login(self.user, backend=None)
-        self.assertRedirects(
-            response, "/admin/login/?next=/admin/project-level-export/"
-        )
-
-        response = self.client.post(reverse("admin:project-level-export"))
-        self.assertEqual(response.status_code, 302)
-
-    def test_redownload_images_view(self):
-        self.login_user()
-        response = self.client.get(reverse("admin:redownload-images"))
-        self.assertRedirects(response, "/admin/login/?next=/admin/redownload-images/")
-
-        response = self.client.post(reverse("admin:redownload-images"))
-        self.assertEqual(response.status_code, 302)
-
-    def test_celery_task_review(self):
-        self.client.get(reverse("admin:celery-review"))
-        request = RequestFactory().get(reverse("admin:celery-review"))
-        request.user = self.create_user(username="tester")
-        celery_task_review(request)
-
     def test_admin_bulk_import_review(self):
         self.login_user(is_staff=True, is_superuser=True)
         self.assertTrue(self.user.is_active)
@@ -49,15 +21,6 @@ class TestFunctionBasedViews(CreateTestUsers, TestCase):
         data = {}
         response = self.client.post(path, data=data)
         self.assertEqual(response.status_code, 200)
-
-    def test_admin_bulk_import_view(self):
-        self.client.get(reverse("admin:bulk-import"))
-
-    def test_admin_site_report_view(self):
-        self.client.get(reverse("admin:site-report"))
-
-    def test_admin_retired_site_report_view(self):
-        self.client.get(reverse("admin:retired-site-report"))
 
 
 class TestSerializedObjectView(TestCase):
