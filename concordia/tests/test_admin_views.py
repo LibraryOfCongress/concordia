@@ -4,28 +4,51 @@ from http import HTTPStatus
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
-from concordia.admin.views import (
-    SerializedObjectView,
-)
+from concordia.admin.views import SerializedObjectView, celery_task_review
 from concordia.tests.utils import CreateTestUsers, create_card
 
 
 class TestFunctionBasedViews(CreateTestUsers, TestCase):
-    def setUp(self):
-        self.factory = RequestFactory()
-        self.user = self.create_user(username="tester")
-
     def test_project_level_export(self):
-        self.client.get(reverse("admin:project-level-export"))
+        self.login_user()
+        self.assertTrue(self.user.check_password(self.user._password))
+
+        response = self.client.get(reverse("admin:project-level-export"), follow=True)
+
+        self.client.force_login(self.user, backend=None)
+        self.assertRedirects(
+            response, "/admin/login/?next=/admin/project-level-export/"
+        )
+
+        response = self.client.post(reverse("admin:project-level-export"))
+        self.assertEqual(response.status_code, 302)
 
     def test_redownload_images_view(self):
-        self.client.get(reverse("admin:redownload-images"))
+        self.login_user()
+        response = self.client.get(reverse("admin:redownload-images"))
+        self.assertRedirects(response, "/admin/login/?next=/admin/redownload-images/")
+
+        response = self.client.post(reverse("admin:redownload-images"))
+        self.assertEqual(response.status_code, 302)
 
     def test_celery_task_review(self):
         self.client.get(reverse("admin:celery-review"))
+        request = RequestFactory().get(reverse("admin:celery-review"))
+        request.user = self.create_user(username="tester")
+        celery_task_review(request)
 
     def test_admin_bulk_import_review(self):
-        self.client.get(reverse("admin:bulk-review"))
+        self.login_user(is_staff=True, is_superuser=True)
+        self.assertTrue(self.user.is_active)
+        self.assertTrue(self.user.is_staff)
+        self.assertTrue(self.user.is_superuser)
+        path = reverse("admin:bulk-review")
+        response = self.client.get(path)
+        self.assertEqual(response.status_code, 200)
+
+        data = {}
+        response = self.client.post(path, data=data)
+        self.assertEqual(response.status_code, 200)
 
     def test_admin_bulk_import_view(self):
         self.client.get(reverse("admin:bulk-import"))
