@@ -188,7 +188,7 @@
                     <a class="text-dark" href="{{ campaign_url }}">
                         <div class="aspect-ratio-box">
                             <div class="aspect-ratio-box-inner-wrapper">
-                                <img src="{{ MEDIA_URL }}{{ campaign.thumbnail_image }}" class="img-fluid" alt="" loading="lazy">
+                                <img src="{{ MEDIA_URL }}{{ campaign.thumbnail_image }}" class="img-fluid" alt="{{ campaign.image_alt_text }}" loading="lazy">
                             </div>
                         </div>
                         <span class="d-block h4 mt-2">{{ campaign.title }}</span>

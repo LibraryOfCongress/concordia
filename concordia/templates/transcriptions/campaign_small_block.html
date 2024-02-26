@@ -4,7 +4,7 @@
     <a href="{% url 'transcriptions:campaign-detail' campaign.slug %}">
         <div class="aspect-ratio-box">
             <div class="aspect-ratio-box-inner-wrapper">
-                <img src="{{ MEDIA_URL }}{{ campaign.thumbnail_image }}" class="img-fluid" alt="" loading="lazy">
+                <img src="{{ MEDIA_URL }}{{ campaign.thumbnail_image }}" class="img-fluid" alt="{{ campaign.alt_image_text}}" loading="lazy">
             </div>
         </div>
         <span class="d-block h4 mt-2 small-campaign-title">{{ campaign.title }}</span>

@@ -36,7 +36,7 @@
                     <h3 class="mb-3"><a href="{{ campaign.get_absolute_url }}">{{ campaign.title }}</a></h3>
                     <div class="row">
                         <a class="col-md-5 order-md-2" href="{{ campaign.get_absolute_url }}">
-                            <p class="mb-2 text-center"><img src="{{ MEDIA_URL }}{{ campaign.thumbnail_image }}" class="img-fluid" alt="{{ campaign.title }} image"></p>
+                            <p class="mb-2 text-center"><img src="{{ MEDIA_URL }}{{ campaign.thumbnail_image }}" class="img-fluid" alt="{% if campaign.image_alt_text %}{{ campaign.image_alt_text }}{% else %}{{ campaign.title }} image{% endif %}"></p>
                         </a>
                         <div class="col-md">
                             <p>{{ campaign.short_description|safe }}</p>
