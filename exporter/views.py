@@ -28,6 +28,7 @@ logger = getLogger(__name__)
 
 
 def get_latest_transcription_data(asset_qs):
+    logger.info("Getting latest transcription data for %s assets.", asset_qs.count())
     latest_trans_subquery = (
         Transcription.objects.filter(asset=OuterRef("pk"))
         .order_by("-pk")
@@ -192,6 +193,7 @@ class ExportCampaignToCSV(TemplateView):
 
     @method_decorator(staff_member_required)
     def get(self, request, *args, **kwargs):
+        logger.info("Exporting %s to csv", self.kwargs["campaign_slug"])
         asset_qs = Asset.objects.filter(
             item__project__campaign__slug=self.kwargs["campaign_slug"]
         )
