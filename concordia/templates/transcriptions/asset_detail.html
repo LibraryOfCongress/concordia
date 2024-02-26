@@ -1143,7 +1143,7 @@
     <script>
         function openOffcanvas() {
             var guide = document.getElementById("guide-sidebar");
-            guide.style.width = "450px";
+            guide.classList.remove("offscreen");
             guide.style.borderWidth = "0 0 thick thick";
             guide.style.borderStyle = "solid";
             guide.style.borderColor = "#0076ad";
@@ -1156,8 +1156,10 @@
 
         }
         function closeOffcanvas() {
-            document.getElementById("guide-sidebar").style.width = "0%";
-            document.getElementById("guide-sidebar").style.border = "none";
+            var guide = document.getElementById("guide-sidebar");
+            guide.classList.add("offscreen");
+
+            guide.style.border = "none";
             document.getElementById("open-guide").style.display = "block";
         }
 
