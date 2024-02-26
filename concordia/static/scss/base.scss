@@ -1100,14 +1100,17 @@ $card-progress-height: 12px;
 
 .sidebar {
     height: 580px; /* 100% Full-height */
-    width: 0; /* 0 width - change this with JavaScript */
+    width: 450px;
     position: absolute; /* Stay in place */
     z-index: 1; /* Stay on top */
     top: 129px;
     right: 0;
     overflow-x: hidden; /* Disable horizontal scroll */
-    transition: 0.5s; /* 0.5 second transition effect to slide in the sidebar */
+    transition: 0.3s;
     background-color: $white;
+}
+.sidebar.offscreen {
+    transform: translateX(100%);
 }
 
 .sidebar h3 {
