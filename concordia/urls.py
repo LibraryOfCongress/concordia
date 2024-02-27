@@ -113,6 +113,21 @@ urlpatterns = [
     # End of help-center patterns
     path("get-started/", views.simple_page, name="welcome-guide"),
     path("get-started/how-to-transcribe/", views.simple_page, name="how-to-transcribe"),
+    path(
+        "get-started/transcription-things-to-avoid/",
+        views.simple_page,
+        name="transcription-things-to-avoid",
+    ),
+    path(
+        "get-started/transcription-printed-text-images/",
+        views.simple_page,
+        name="transcription-printed-text-images",
+    ),
+    path(
+        "get-started/transcription-unusual-text/",
+        views.simple_page,
+        name="transcription-unusual-text",
+    ),
     path("get-started/how-to-review/", views.simple_page, name="how-to-review"),
     path("get-started/how-to-tag/", views.simple_page, name="how-to-tag"),
     path(

@@ -190,7 +190,7 @@ def simple_page(request, path=None):
     if guides.count() > 0:
         guides = guides[:1]
     elif page.title == "How to transcribe":
-        guides = Guide.objects.filter(title__startswith="Transcription: ").order_by(
+        guides = Guide.objects.filter(title="Transcription: Basic rules").order_by(
             "order"
         )
     if guides.count() > 0:
