@@ -6,6 +6,7 @@ from concordia.admin.filters import (
     CampaignProjectListFilter,
     NullableTimestampFilter,
 )
+from concordia.models import Campaign
 
 from .models import ImportItem, ImportItemAsset, ImportJob
 from .tasks import download_asset_task
@@ -59,17 +60,23 @@ class ImportJobAssetProjectListFilter(CampaignProjectListFilter):
     project_ref = "import_item__job__project_id"
 
 
-class ImportJobCampaignListFilter(CampaignListFilter):
+class ImportCampaignListFilter(CampaignListFilter):
+    def lookups(self, request, model_admin):
+        queryset = Campaign.objects.exclude(status=Campaign.Status.RETIRED)
+        return queryset.values_list("id", "title").order_by("title")
+
+
+class ImportJobCampaignListFilter(ImportCampaignListFilter):
     parameter_name = "project__campaign__id__exact"
     status_filter_parameter = "project__campaign__status"
 
 
-class ImportItemCampaignListFilter(CampaignListFilter):
+class ImportItemCampaignListFilter(ImportCampaignListFilter):
     parameter_name = "job__project__campaign__id__exact"
     status_filter_parameter = "job__project__campaign__status"
 
 
-class ImportItemAssetCampaignListFilter(CampaignListFilter):
+class ImportItemAssetCampaignListFilter(ImportCampaignListFilter):
     parameter_name = "import_item__job__project__campaign__id__exact"
     status_filter_parameter = "import_item__job__project__campaign__status"
 
