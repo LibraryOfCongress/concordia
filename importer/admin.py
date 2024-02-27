@@ -67,17 +67,17 @@ class ImportCampaignListFilter(CampaignListFilter):
 
 
 class ImportJobCampaignListFilter(ImportCampaignListFilter):
-    parameter_name = "project__campaign__id__exact"
+    parameter_name = "project__campaign"
     status_filter_parameter = "project__campaign__status"
 
 
 class ImportItemCampaignListFilter(ImportCampaignListFilter):
-    parameter_name = "job__project__campaign__id__exact"
+    parameter_name = "job__project__campaign"
     status_filter_parameter = "job__project__campaign__status"
 
 
 class ImportItemAssetCampaignListFilter(ImportCampaignListFilter):
-    parameter_name = "import_item__job__project__campaign__id__exact"
+    parameter_name = "import_item__job__project__campaign"
     status_filter_parameter = "import_item__job__project__campaign__status"
 
 
