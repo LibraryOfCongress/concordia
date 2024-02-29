@@ -258,10 +258,10 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
     card_family = models.ForeignKey(
         CardFamily, on_delete=models.CASCADE, blank=True, null=True
     )
-    image_alt_text = models.TextField(blank=True, null=True)
     thumbnail_image = models.ImageField(
         upload_to="campaign-thumbnails", blank=True, null=True
     )
+    image_alt_text = models.TextField(blank=True, null=True)
 
     launch_date = models.DateField(null=True, blank=True)
     completed_date = models.DateField(null=True, blank=True)

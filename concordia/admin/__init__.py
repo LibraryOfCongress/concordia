@@ -197,6 +197,25 @@ class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         "completed_date",
     )
     list_display_links = ("title",)
+    fields = (
+        "published",
+        "unlisted",
+        "status",
+        "next_transcription_campaign",
+        "next_review_campaign",
+        "ordering",
+        "display_on_homepage",
+        "title",
+        "slug",
+        "card_family",
+        "thumbnail_image",
+        "image_alt_text",
+        "launch_date",
+        "completed_date",
+        "description",
+        "short_description",
+        "metadata",
+    )
     prepopulated_fields = {"slug": ("title",)}
     raw_id_fields = ("card_family",)
     search_fields = ["title", "description"]
