@@ -187,7 +187,7 @@ def simple_page(request, path=None):
     }
 
     guide = Guide.objects.get(title__iexact=page.title)
-    html = "".join(page.body, guide.body)
+    html = "".join((page.body, guide.body))
     ctx["add_navigation"] = True
     ctx["body"] = md.convert(html)
 
