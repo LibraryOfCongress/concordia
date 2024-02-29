@@ -112,7 +112,11 @@ urlpatterns = [
     path("help-center/<slug:page_slug>/", views.HelpCenterRedirectView.as_view()),
     # End of help-center patterns
     path("get-started/", views.simple_page, name="welcome-guide"),
-    path("get-started/how-to-transcribe/", views.simple_page, name="how-to-transcribe"),
+    path(
+        "get-started/how-to-transcribe/",
+        views.simple_page,
+        name="transcription-basic-rules",
+    ),
     path(
         "get-started/transcription-things-to-avoid/",
         views.simple_page,

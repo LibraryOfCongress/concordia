@@ -186,18 +186,9 @@ def simple_page(request, path=None):
         "breadcrumbs": breadcrumbs,
     }
 
-    guides = Guide.objects.filter(title__iexact=page.title)
-    if guides.count() > 0:
-        guides = guides[:1]
-    elif page.title == "How to transcribe":
-        guides = Guide.objects.filter(title="Transcription: Basic rules").order_by(
-            "order"
-        )
-    if guides.count() > 0:
-        html = "".join([page.body] + list(guides.values_list("body", flat=True)))
-        ctx["add_navigation"] = True
-    else:
-        html = page.body
+    guide = Guide.objects.get(title__iexact=page.title)
+    html = "".join(page.body, guide.body)
+    ctx["add_navigation"] = True
     ctx["body"] = md.convert(html)
 
     resp = render(request, "static-page.html", ctx)
