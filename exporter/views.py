@@ -9,6 +9,7 @@ import boto3
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.postgres.aggregates.general import StringAgg
+from django.core.exceptions import SynchronousOnlyOperation
 from django.db.models import OuterRef, Subquery
 from django.http import HttpResponse, HttpResponseRedirect
 from django.utils.decorators import method_decorator
@@ -28,7 +29,6 @@ logger = getLogger(__name__)
 
 
 def get_latest_transcription_data(asset_qs):
-    logger.info("Getting latest transcription data for %s assets.", asset_qs.count())
     latest_trans_subquery = (
         Transcription.objects.filter(asset=OuterRef("pk"))
         .order_by("-pk")
@@ -40,6 +40,7 @@ def get_latest_transcription_data(asset_qs):
 
 
 def get_tag_values(asset_qs):
+    logger.info("Getting tag values for %s assets.", asset_qs.count())
     assets = asset_qs.annotate(
         tag_values=StringAgg("userassettagcollection__tags__value", "; ")
     )
@@ -193,7 +194,6 @@ class ExportCampaignToCSV(TemplateView):
 
     @method_decorator(staff_member_required)
     def get(self, request, *args, **kwargs):
-        logger.info("Exporting %s to csv", self.kwargs["campaign_slug"])
         asset_qs = Asset.objects.filter(
             item__project__campaign__slug=self.kwargs["campaign_slug"]
         )
@@ -229,9 +229,13 @@ class ExportCampaignToCSV(TemplateView):
             },
         )
 
-        return export_to_csv_response(
-            "%s.csv" % self.kwargs["campaign_slug"], headers, data
-        )
+        logger.info("Exporting %s to csv", self.kwargs["campaign_slug"])
+        try:
+            return export_to_csv_response(
+                "%s.csv" % self.kwargs["campaign_slug"], headers, data
+            )
+        except SynchronousOnlyOperation as e:
+            logger.info("Failed to export csv, error was: %s", e)
 
 
 class ExportItemToBagIt(TemplateView):
