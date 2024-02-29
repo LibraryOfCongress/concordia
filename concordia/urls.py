@@ -194,10 +194,6 @@ urlpatterns = [
         name="generate-ocr-transcription",
     ),
     path("assets/<int:asset_pk>/tags/submit/", views.submit_tags, name="submit-tags"),
-    path(
-        "transcribe/", views.TranscribeListView.as_view(), name="transcribe-asset-list"
-    ),
-    path("review/", views.ReviewListView.as_view(), name="review-asset-list"),
     path("account/ajax-status/", views.ajax_session_status, name="ajax-session-status"),
     path("account/ajax-messages/", views.ajax_messages, name="ajax-messages"),
     path(
