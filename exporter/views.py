@@ -6,10 +6,10 @@ from logging import getLogger
 
 import bagit
 import boto3
+from asgiref.sync import sync_to_async
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.postgres.aggregates.general import StringAgg
-from django.core.exceptions import SynchronousOnlyOperation
 from django.db.models import OuterRef, Subquery
 from django.http import HttpResponse, HttpResponseRedirect
 from django.utils.decorators import method_decorator
@@ -234,8 +234,12 @@ class ExportCampaignToCSV(TemplateView):
             return export_to_csv_response(
                 "%s.csv" % self.kwargs["campaign_slug"], headers, data
             )
-        except SynchronousOnlyOperation as e:
-            logger.info("Failed to export csv, error was: %s", e)
+        except Exception:
+            logger.info("Attemping to convert function to async")
+            export_csv_async = sync_to_async(export_to_csv_response)
+            return export_csv_async(
+                "%s.csv" % self.kwargs["campaign_slug"], headers, data
+            )
 
 
 class ExportItemToBagIt(TemplateView):
