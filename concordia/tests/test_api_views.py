@@ -10,7 +10,6 @@ from concordia.models import (
     Item,
     Topic,
     Transcription,
-    TranscriptionStatus,
     User,
 )
 from concordia.utils import get_anonymous_user
@@ -172,30 +171,6 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
                         "submitted_by": latest_trans.user_id,
                     },
                 )
-
-    def test_asset_list(self):
-        resp, data = self.get_api_list_response(reverse("asset-list"))
-
-        self.assertAssetsHaveLatestTranscriptions(data["objects"])
-
-    def test_transcribable_asset_list(self):
-        resp, data = self.get_api_list_response(reverse("transcribe-asset-list"))
-
-        self.assertAssetStatuses(
-            data["objects"],
-            [TranscriptionStatus.NOT_STARTED, TranscriptionStatus.IN_PROGRESS],
-        )
-
-        self.assertAssetsHaveLatestTranscriptions(data["objects"])
-
-    def test_reviewable_asset_list(self):
-        resp, data = self.get_api_list_response(reverse("review-asset-list"))
-
-        self.assertAssetStatuses(data["objects"], [TranscriptionStatus.SUBMITTED])
-
-        self.assertGreater(len(data["objects"]), 0)
-
-        self.assertAssetsHaveLatestTranscriptions(data["objects"])
 
     def test_topic_list(self):
         resp, data = self.get_api_list_response(reverse("topic-list"))

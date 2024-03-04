@@ -35,7 +35,6 @@ from django.db.models import (
     Count,
     IntegerField,
     Max,
-    OuterRef,
     Q,
     Subquery,
     Sum,
@@ -186,18 +185,12 @@ def simple_page(request, path=None):
         "breadcrumbs": breadcrumbs,
     }
 
-    guides = Guide.objects.filter(title__iexact=page.title)
-    if guides.count() > 0:
-        guides = guides[:1]
-    elif page.title == "How to transcribe":
-        guides = Guide.objects.filter(title__startswith="Transcription: ").order_by(
-            "order"
-        )
-    if guides.count() > 0:
-        html = "".join([page.body] + list(guides.values_list("body", flat=True)))
-        ctx["add_navigation"] = True
-    else:
+    try:
+        guide = Guide.objects.get(title__iexact=page.title)
+        html = "".join((page.body, guide.body))
+    except Guide.DoesNotExist:
         html = page.body
+    ctx["add_navigation"] = True
     ctx["body"] = md.convert(html)
 
     resp = render(request, "static-page.html", ctx)
@@ -2257,200 +2250,6 @@ def redirect_to_next_transcribable_topic_asset(request, *, topic_slug):
     return redirect_to_next_asset(
         potential_assets, "transcribe", request, project_slug, user
     )
-
-
-class AssetListView(APIListView):
-    context_object_name = "assets"
-    paginate_by = 50
-    queryset = Asset.objects.published()
-
-    def get_queryset(self, *args, **kwargs):
-        qs = super().get_queryset()
-
-        pks = self.request.GET.getlist("pk")
-
-        if pks:
-            try:
-                qs = qs.filter(pk__in=pks)
-            except (ValueError, TypeError) as e:
-                raise Http404 from e
-
-        latest_transcription_qs = (
-            Transcription.objects.filter(asset=OuterRef("pk"))
-            .order_by("-pk")
-            .values_list("pk", flat=True)
-        )
-
-        qs = qs.annotate(latest_transcription_pk=Subquery(latest_transcription_qs[:1]))
-
-        return qs.prefetch_related("item", "item__project", "item__project__campaign")
-
-    def get_ordering(self):
-        order_field = self.request.GET.get("order_by", "pk")
-        if order_field.lstrip("-") not in ("pk", "difficulty"):
-            raise ValueError
-        return order_field
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-
-        assets = ctx["assets"]
-        asset_pks = [i.pk for i in assets]
-
-        transcriptions = Transcription.objects.all()
-        latest_transcriptions = {
-            asset_id: {"id": transcription_id, "submitted_by": user_id, "text": text}
-            for transcription_id, asset_id, user_id, text in transcriptions.filter(
-                pk__in=[i.latest_transcription_pk for i in assets]
-            ).values_list("id", "asset_id", "user_id", "text")
-        }
-
-        adjacent_asset_qs = Asset.objects.filter(
-            published=True, item=OuterRef("item")
-        ).values("sequence")
-
-        adjacent_seq_qs = (
-            Asset.objects.filter(pk__in=asset_pks, published=True)
-            .annotate(
-                next_sequence=Subquery(
-                    adjacent_asset_qs.filter(
-                        sequence__gt=OuterRef("sequence")
-                    ).order_by("sequence")[:1]
-                ),
-                previous_sequence=Subquery(
-                    adjacent_asset_qs.filter(
-                        sequence__lt=OuterRef("sequence")
-                    ).order_by("-sequence")[:1]
-                ),
-            )
-            .values_list("pk", "previous_sequence", "next_sequence")
-        )
-
-        adjacent_seqs = {
-            pk: (prev_seq, next_seq) for pk, prev_seq, next_seq in adjacent_seq_qs
-        }
-
-        for asset in assets:
-            asset.latest_transcription = latest_transcriptions.get(asset.pk, None)
-
-            asset.previous_sequence, asset.next_sequence = adjacent_seqs.get(
-                asset.id, (None, None)
-            )
-
-        return ctx
-
-    def serialize_object(self, obj):
-        # Since we're doing this a lot, let's avoid some repetitive lookups:
-        item = obj.item
-        project = item.project
-        campaign = project.campaign
-
-        image_url, thumbnail_url = get_image_urls_from_asset(obj)
-
-        metadata = {
-            "id": obj.pk,
-            "status": obj.transcription_status,
-            "url": obj.get_absolute_url(),
-            "thumbnailUrl": thumbnail_url,
-            "imageUrl": image_url,
-            "title": obj.title,
-            "difficulty": obj.difficulty,
-            "year": obj.year,
-            "sequence": obj.sequence,
-            "resource_url": obj.resource_url,
-            "latest_transcription": obj.latest_transcription,
-            "item": {
-                "id": item.pk,
-                "item_id": item.item_id,
-                "title": item.title,
-                "url": item.get_absolute_url(),
-            },
-            "project": {
-                "id": project.pk,
-                "slug": project.slug,
-                "title": project.title,
-                "url": project.get_absolute_url(),
-            },
-            "campaign": {
-                "id": campaign.pk,
-                "title": campaign.title,
-                "url": campaign.get_absolute_url(),
-            },
-        }
-
-        if project.topics:
-            metadata["topics"] = []
-
-            for topic in project.topics.all():
-                new_topic = {}
-                new_topic["id"] = topic.pk
-                new_topic["title"] = topic.title
-                new_topic["url"] = topic.get_absolute_url()
-                metadata["topics"].append(new_topic)
-
-        # FIXME: we want to rework how this is done after deprecating Asset.media_url
-        if obj.previous_sequence:
-            metadata["previous_thumbnail"] = re.sub(
-                r"[/]\d+[.]jpg", f"/{obj.previous_sequence}.jpg", image_url
-            )
-        if obj.next_sequence:
-            metadata["next_thumbnail"] = re.sub(
-                r"[/]\d+[.]jpg", f"/{obj.next_sequence}.jpg", image_url
-            )
-
-        return metadata
-
-
-class TranscribeListView(AssetListView):
-    template_name = "transcriptions/transcribe_list.html"
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx["campaigns"] = Campaign.objects.published().listed().order_by("title")
-        return ctx
-
-    def get_queryset(self):
-        asset_qs = super().get_queryset()
-
-        asset_qs = asset_qs.filter(
-            Q(transcription_status=TranscriptionStatus.NOT_STARTED)
-            | Q(transcription_status=TranscriptionStatus.IN_PROGRESS)
-        )
-
-        campaign_filter = self.request.GET.get("campaign_filter")
-        if campaign_filter:
-            asset_qs = asset_qs.filter(item__project__campaign__pk=campaign_filter)
-
-        order_field = self.get_ordering()
-        if order_field:
-            asset_qs.order_by(order_field)
-
-        return asset_qs
-
-
-class ReviewListView(AssetListView):
-    template_name = "transcriptions/review_list.html"
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx["campaigns"] = Campaign.objects.published().listed().order_by("title")
-        return ctx
-
-    def get_queryset(self):
-        asset_qs = super().get_queryset()
-
-        asset_qs = asset_qs.filter(transcription_status=TranscriptionStatus.SUBMITTED)
-
-        campaign_filter = self.request.GET.get("campaign_filter")
-
-        if campaign_filter:
-            asset_qs = asset_qs.filter(item__project__campaign__pk=campaign_filter)
-
-        order_field = self.get_ordering()
-        if order_field:
-            asset_qs.order_by(order_field)
-
-        return asset_qs
 
 
 class EmailReconfirmationView(TemplateView):
