@@ -6,6 +6,7 @@ from logging import getLogger
 
 import bagit
 import boto3
+from asgiref.sync import sync_to_async
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.postgres.aggregates.general import StringAgg
@@ -28,7 +29,6 @@ logger = getLogger(__name__)
 
 
 def get_latest_transcription_data(asset_qs):
-    logger.info("Getting latest transcription data for %s assets.", asset_qs.count())
     latest_trans_subquery = (
         Transcription.objects.filter(asset=OuterRef("pk"))
         .order_by("-pk")
@@ -40,6 +40,7 @@ def get_latest_transcription_data(asset_qs):
 
 
 def get_tag_values(asset_qs):
+    logger.info("Getting tag values for %s assets.", asset_qs.count())
     assets = asset_qs.annotate(
         tag_values=StringAgg("userassettagcollection__tags__value", "; ")
     )
@@ -193,7 +194,6 @@ class ExportCampaignToCSV(TemplateView):
 
     @method_decorator(staff_member_required)
     def get(self, request, *args, **kwargs):
-        logger.info("Exporting %s to csv", self.kwargs["campaign_slug"])
         asset_qs = Asset.objects.filter(
             item__project__campaign__slug=self.kwargs["campaign_slug"]
         )
@@ -229,9 +229,17 @@ class ExportCampaignToCSV(TemplateView):
             },
         )
 
-        return export_to_csv_response(
-            "%s.csv" % self.kwargs["campaign_slug"], headers, data
-        )
+        logger.info("Exporting %s to csv", self.kwargs["campaign_slug"])
+        try:
+            return export_to_csv_response(
+                "%s.csv" % self.kwargs["campaign_slug"], headers, data
+            )
+        except Exception:
+            logger.info("Attemping to convert function to async")
+            export_csv_async = sync_to_async(export_to_csv_response)
+            return export_csv_async(
+                "%s.csv" % self.kwargs["campaign_slug"], headers, data
+            )
 
 
 class ExportItemToBagIt(TemplateView):

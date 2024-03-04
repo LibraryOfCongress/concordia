@@ -28,7 +28,7 @@ class Command(BaseCommand):
             # Help pages
             reverse("help-center"),
             reverse("welcome-guide"),
-            reverse("how-to-transcribe"),
+            reverse("transcription-basic-rules"),
             reverse("how-to-review"),
             reverse("how-to-tag"),
             reverse("for-educators"),
