@@ -1,3 +1,4 @@
+import asyncio
 import os
 import re
 import shutil
@@ -229,17 +230,19 @@ class ExportCampaignToCSV(TemplateView):
             },
         )
 
+        if asyncio.iscoroutinefunction(export_to_csv_response):
+            logger.info("export_to_csv_response is asynchronous")
+            if asyncio.iscoroutinefunction(flatten_queryset):
+                logger.info("flatten_queryset is asynchronous")
+            else:
+                logger.info("flatten_queryset is synchronous. Attempting to convert")
+                data = sync_to_async(data)
+        else:
+            logger.info("export_to_csv_response is synchronous")
         logger.info("Exporting %s to csv", self.kwargs["campaign_slug"])
-        try:
-            return export_to_csv_response(
-                "%s.csv" % self.kwargs["campaign_slug"], headers, data
-            )
-        except Exception:
-            logger.info("Attemping to convert function to async")
-            export_csv_async = sync_to_async(export_to_csv_response)
-            return export_csv_async(
-                "%s.csv" % self.kwargs["campaign_slug"], headers, data
-            )
+        return export_to_csv_response(
+            "%s.csv" % self.kwargs["campaign_slug"], headers, data
+        )
 
 
 class ExportItemToBagIt(TemplateView):
