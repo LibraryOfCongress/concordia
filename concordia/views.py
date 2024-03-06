@@ -687,7 +687,6 @@ class AccountDeletionView(LoginRequiredMixin, FormView):
         self.send_deletion_email(email)
         if request:
             logout(request)
-        return redirect("homepage")
 
     def send_deletion_email(self, email):
         context = {}
