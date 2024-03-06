@@ -243,6 +243,11 @@ urlpatterns = [
         name="email-reconfirmation",
     ),
     path(
+        "account/delete/",
+        views.AccountDeletionView.as_view(),
+        name="account-deletion",
+    ),
+    path(
         ".well-known/change-password",  # https://wicg.github.io/change-password-url/
         RedirectView.as_view(pattern_name="password_change"),
     ),

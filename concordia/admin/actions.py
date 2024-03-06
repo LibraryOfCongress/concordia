@@ -14,8 +14,12 @@ def anonymize_action(modeladmin, request, queryset):
     count = queryset.count()
     for user_account in queryset:
         user_account.username = "Anonymized %s" % uuid.uuid4()
+        user_account.first_name = ""
+        user_account.last_name = ""
         user_account.email = ""
         user_account.set_unusable_password()
+        user_account.is_staff = False
+        user_account.is_superuser = False
         user_account.is_active = False
         user_account.save()
 

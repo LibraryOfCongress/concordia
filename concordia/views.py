@@ -3,6 +3,7 @@ import json
 import os
 import random
 import re
+import uuid
 from functools import wraps
 from logging import getLogger
 from smtplib import SMTPException
@@ -15,6 +16,7 @@ from captcha.helpers import captcha_image_url
 from captcha.models import CaptchaStore
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import (
@@ -63,6 +65,7 @@ from weasyprint import HTML
 
 from concordia.api_views import APIDetailView, APIListView
 from concordia.forms import (
+    AccountDeletionForm,
     ActivateAndSetPasswordForm,
     AllowInactivePasswordResetForm,
     ContactUsForm,
@@ -642,6 +645,74 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
             logger.exception(
                 "Unable to send email reconfirmation to %s",
                 user.get_email_for_reconfirmation(),
+            )
+
+
+@method_decorator(never_cache, name="dispatch")
+class AccountDeletionView(LoginRequiredMixin, FormView):
+    template_name = "account/account_deletion.html"
+    form_class = AccountDeletionForm
+    success_url = reverse_lazy("homepage")
+    email_body_template = "emails/delete_account_body.txt"
+    email_subject_template = "emails/delete_account_subject.txt"
+
+    def get_form_kwargs(self):
+        # We expose the request object to the form so we can use it
+        # to log the user out after deletion
+        kwargs = super().get_form_kwargs()
+        kwargs["request"] = self.request
+        return kwargs
+
+    def form_valid(self, form):
+        self.delete_user(form.request.user, form.request)
+        return super().form_valid(form)
+
+    def delete_user(self, user, request=None):
+        logger.info("Deletion request for %s", user)
+        email = user.email
+        if user.transcription_set.exists():
+            logger.info("Anonymizing %s", user)
+            user.username = "Anonymized %s" % uuid.uuid4()
+            user.first_name = ""
+            user.last_name = ""
+            user.email = ""
+            user.set_unusable_password()
+            user.is_staff = False
+            user.is_superuser = False
+            user.is_active = False
+            user.save()
+        else:
+            logger.info("Deleting %s", user)
+            user.delete()
+        self.send_deletion_email(email)
+        if request:
+            logout(request)
+
+    def send_deletion_email(self, email):
+        context = {}
+        subject = render_to_string(
+            template_name=self.email_subject_template,
+            context=context,
+            request=self.request,
+        )
+        # Ensure subject is a single line
+        subject = "".join(subject.splitlines())
+        message = render_to_string(
+            template_name=self.email_body_template,
+            context=context,
+            request=self.request,
+        )
+        try:
+            send_mail(
+                subject,
+                message=message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[email],
+            )
+        except SMTPException:
+            logger.exception(
+                "Unable to send account deletion email to %s",
+                email,
             )
 
 

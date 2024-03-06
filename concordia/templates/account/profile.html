@@ -91,6 +91,13 @@
                             </div>
                         </form>
                     </div>
+                    <div class="col-12 col-md-10 py-3 mt-4 change-options">
+                        <div class="row justify-content-start">
+                            <div class="btn-row col-md-10">
+                                <a class="btn btn-primary rounded-0" href="{% url 'account-deletion' %}">Delete Account</a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="row tab-pane fade{% if active_tab == 'contributions' %} show active{% endif %}" id="contributions" role="tabpanel">
