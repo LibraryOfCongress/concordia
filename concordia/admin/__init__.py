@@ -19,7 +19,7 @@ from django.utils.decorators import method_decorator
 from django.utils.html import format_html
 from django.views.decorators.csrf import csrf_protect
 from tabular_export.admin import ensure_filename, export_to_excel_action
-from tabular_export.core import export_to_csv_response, flatten_queryset
+from tabular_export.core import flatten_queryset
 
 from exporter import views as exporter_views
 from importer.tasks import import_items_into_project_from_url
@@ -95,6 +95,7 @@ from .forms import (
     ProjectAdminForm,
     SanitizedDescriptionAdminForm,
 )
+from .views import export_to_csv_response
 
 logger = logging.getLogger(__name__)
 
@@ -113,8 +114,7 @@ def export_to_csv_action(
     headers, rows = flatten_queryset(
         queryset, field_names=field_names, extra_verbose_names=extra_verbose_names
     )
-    data = list(rows)
-    return export_to_csv_response(filename, headers, data)
+    return export_to_csv_response(filename, headers, rows)
 
 
 class ConcordiaUserAdmin(UserAdmin):
@@ -745,13 +745,6 @@ class TagAdmin(admin.ModelAdmin):
             },
         )
 
-        logger.info("Forcing queryset eval")
-        # The below line of code is a workaround for an undocumented async error:
-        # https://code.djangoproject.com/ticket/32798
-        # It should probably be removed, but only *after*
-        # the project has been upgraded to django 4.
-        data = list(data)
-        logger.info("Exporting %s tags to csv", queryset.count())
         return export_to_csv_response("tags.csv", headers, data)
 
 

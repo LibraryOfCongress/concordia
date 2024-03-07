@@ -1,3 +1,4 @@
+import logging
 import re
 import tempfile
 import time
@@ -16,7 +17,8 @@ from django.shortcuts import render
 from django.utils.text import slugify
 from django.views import View
 from django.views.decorators.cache import never_cache
-from tabular_export.core import export_to_csv_response, flatten_queryset
+from tabular_export.core import export_to_csv_response as _export_to_csv_response
+from tabular_export.core import flatten_queryset
 
 from concordia.models import Asset, Item, Transcription, TranscriptionStatus
 from exporter.views import do_bagit_export
@@ -30,6 +32,8 @@ from importer.utils.excel import slurp_excel
 
 from ..models import Campaign, Project, SiteReport
 from .forms import AdminProjectBulkImportForm, AdminRedownloadImagesForm
+
+logger = logging.getLogger(__name__)
 
 
 @never_cache
@@ -569,6 +573,15 @@ def admin_bulk_import_view(request):
     context["form"] = form
 
     return render(request, "admin/bulk_import.html", context)
+
+
+def export_to_csv_response(filename, headers, rows):
+    # This is a workaround for an async issue in Django 3
+    # Please see https://staff.loc.gov/tasks/browse/CONCD-723
+    logger.info("Forcing queryset eval")
+    data = list(rows)
+    logger.info("Exporting to csv response")
+    return _export_to_csv_response(filename, headers, data)
 
 
 @never_cache
