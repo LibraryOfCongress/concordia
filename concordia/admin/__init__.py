@@ -18,7 +18,7 @@ from django.urls import path, reverse
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html
 from django.views.decorators.csrf import csrf_protect
-from tabular_export.admin import export_to_csv_action, export_to_excel_action
+from tabular_export.admin import ensure_filename, export_to_excel_action
 from tabular_export.core import export_to_csv_response, flatten_queryset
 
 from exporter import views as exporter_views
@@ -97,6 +97,24 @@ from .forms import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+@ensure_filename("csv")
+def export_to_csv_action(
+    modeladmin,
+    request,
+    queryset,
+    filename=None,
+    field_names=None,
+    extra_verbose_names=None,
+):
+    # This function is part of a workaround
+    # Please see https://staff.loc.gov/tasks/browse/CONCD-723
+    headers, rows = flatten_queryset(
+        queryset, field_names=field_names, extra_verbose_names=extra_verbose_names
+    )
+    data = list(rows)
+    return export_to_csv_response(filename, headers, data)
 
 
 class ConcordiaUserAdmin(UserAdmin):
