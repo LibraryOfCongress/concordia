@@ -27,7 +27,7 @@
                 <h2>Delete your account?</h2>
             </div>
             <div class="d-flex">
-                <p>This cannot be undone!</p>
+                <p>By clicking the button below, all of your account information will be permanently removed from our system. This cannot be undone!</p>
             </div>
             <form class="form" action="{% url 'account-deletion' %}" method="POST" enctype="multipart/form-data">
                 {% csrf_token %}
