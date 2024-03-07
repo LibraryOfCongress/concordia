@@ -1,4 +1,3 @@
-import asyncio
 import os
 import re
 import shutil
@@ -7,7 +6,6 @@ from logging import getLogger
 
 import bagit
 import boto3
-from asgiref.sync import sync_to_async
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.postgres.aggregates.general import StringAgg
@@ -41,7 +39,6 @@ def get_latest_transcription_data(asset_qs):
 
 
 def get_tag_values(asset_qs):
-    logger.info("Getting tag values for %s assets.", asset_qs.count())
     assets = asset_qs.annotate(
         tag_values=StringAgg("userassettagcollection__tags__value", "; ")
     )
@@ -230,15 +227,12 @@ class ExportCampaignToCSV(TemplateView):
             },
         )
 
-        if asyncio.iscoroutinefunction(export_to_csv_response):
-            logger.info("export_to_csv_response is asynchronous")
-            if asyncio.iscoroutinefunction(flatten_queryset):
-                logger.info("flatten_queryset is asynchronous")
-            else:
-                logger.info("flatten_queryset is synchronous. Attempting to convert")
-                data = sync_to_async(data)
-        else:
-            logger.info("export_to_csv_response is synchronous")
+        logger.info("Forcing queryset eval")
+        # The below line of code is a workaround for an undocumented async error:
+        # https://code.djangoproject.com/ticket/32798
+        # It should probably be removed, but only *after*
+        # the project has been upgraded to django 4.
+        data = list(data)
         logger.info("Exporting %s to csv", self.kwargs["campaign_slug"])
         return export_to_csv_response(
             "%s.csv" % self.kwargs["campaign_slug"], headers, data
