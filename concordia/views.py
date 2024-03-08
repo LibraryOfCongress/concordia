@@ -51,6 +51,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse, reverse_lazy
 from django.utils.decorators import method_decorator
 from django.utils.http import http_date
+from django.utils.text import slugify
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.cache import cache_control, never_cache
@@ -188,12 +189,22 @@ def simple_page(request, path=None):
         "breadcrumbs": breadcrumbs,
     }
 
+    guides = Guide.objects
     try:
-        guide = Guide.objects.get(title__iexact=page.title)
+        guide = guides.get(title__iexact=page.title)
         html = "".join((page.body, guide.body))
         ctx["add_navigation"] = True
     except Guide.DoesNotExist:
         html = page.body
+        if page.title == "Get started":
+            ctx["add_navigation"] = True
+    if "add_navigation" in ctx:
+        links = [
+            ("Get started", "welcome-guide"),
+        ]
+        for guide in guides.all():
+            links.append((guide.title, slugify(guide.title)))
+        ctx["toc"] = links
     ctx["body"] = md.convert(html)
 
     resp = render(request, "static-page.html", ctx)
