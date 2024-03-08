@@ -1,4 +1,4 @@
-/* global jQuery displayMessage displayHtmlMessage buildErrorMessage */
+/* global jQuery displayMessage displayHtmlMessage buildErrorMessage Sentry */
 /* exported attemptToReserveAsset */
 
 function attemptToReserveAsset(reservationURL, findANewPageURL, actionType) {
@@ -18,7 +18,7 @@ function attemptToReserveAsset(reservationURL, findANewPageURL, actionType) {
             // If the asset was successfully reserved, continue reserving it
             window.setTimeout(
                 attemptToReserveAsset,
-                60000,
+                60_000,
                 reservationURL,
                 findANewPageURL,
                 actionType,
@@ -40,12 +40,24 @@ function attemptToReserveAsset(reservationURL, findANewPageURL, actionType) {
                             '">Find a new page to review</a>',
                         'transcription-reservation',
                     );
+                    Sentry.captureException(errorThrown, function (scope) {
+                        scope.setTransactionName(
+                            '409 error when attempting to reserve asset at ' +
+                                reservationURL,
+                        );
+                    });
                 }
             } else if (jqXHR.status == 408) {
                 $transcriptionEditor
                     .data('hasReservation', false)
                     .trigger('update-ui-state');
                 jQuery('#asset-reservation-failure-modal').modal();
+                Sentry.captureException(errorThrown, function (scope) {
+                    scope.setTransactionName(
+                        '408 error when attempting to reserve asset at ' +
+                            reservationURL,
+                    );
+                });
             } else {
                 displayMessage(
                     'error',
@@ -53,6 +65,12 @@ function attemptToReserveAsset(reservationURL, findANewPageURL, actionType) {
                         buildErrorMessage(jqXHR, textStatus, errorThrown),
                     'transcription-reservation',
                 );
+                Sentry.captureException(errorThrown, function (scope) {
+                    scope.setTransactionName(
+                        'Error when attempting to reserve asset at ' +
+                            reservationURL,
+                    );
+                });
             }
         });
 
