@@ -26,7 +26,9 @@ logger = logging.getLogger(__name__)
 @receiver(user_logged_in)
 def clear_reservation_token(sender, user, request, **kwargs):
     try:
+        token = request.session["reservation_token"]
         del request.session["reservation_token"]
+        logger.info("Clearing reservation token %s for %s on login", token, user)
     except KeyError:
         pass
     logger.info("Successful user login with username %s", user)
@@ -141,6 +143,12 @@ def send_asset_update(*, instance, **kwargs):
 
 @receiver(reservation_obtained)
 def send_asset_reservation_obtained(sender, **kwargs):
+    logger.info(
+        "Reservation obtained by %s for asset %s with token %s",
+        sender,
+        kwargs["asset_pk"],
+        kwargs["reservation_token"],
+    )
     send_asset_reservation_message(
         sender=sender,
         message_type="asset_reservation_obtained",
@@ -151,6 +159,12 @@ def send_asset_reservation_obtained(sender, **kwargs):
 
 @receiver(reservation_released)
 def send_asset_reservation_released(sender, **kwargs):
+    logger.info(
+        "Reservation released by %s for asset %s with token %s",
+        sender,
+        kwargs["asset_pk"],
+        kwargs["reservation_token"],
+    )
     send_asset_reservation_message(
         sender=sender,
         message_type="asset_reservation_released",
