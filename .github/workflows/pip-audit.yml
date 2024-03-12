@@ -1,0 +1,25 @@
+name: pip-audit
+
+on:
+    workflow_dispatch:
+    push:
+        branches: [release]
+    pull_request:
+        branches: [main]
+
+jobs:
+    pip-audit:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-python@v5
+              with:
+                  python-version: '3.10'
+
+            - name: 'Generate requirements.txt'
+              run: |
+                  pipx run pipfile-requirements Pipfile.lock > requirements.txt
+
+            - uses: pypa/gh-action-pip-audit@v1.0.8
+              with:
+                  inputs: requirements.txt

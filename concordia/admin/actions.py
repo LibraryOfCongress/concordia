@@ -14,12 +14,18 @@ def anonymize_action(modeladmin, request, queryset):
     count = queryset.count()
     for user_account in queryset:
         user_account.username = "Anonymized %s" % uuid.uuid4()
+        user_account.first_name = ""
+        user_account.last_name = ""
         user_account.email = ""
         user_account.set_unusable_password()
+        user_account.is_staff = False
+        user_account.is_superuser = False
         user_account.is_active = False
         user_account.save()
 
-    messages.info(request, f"Anonymized and disabled {count} user accounts")
+    messages.info(
+        request, f"Anonymized and disabled {count} user accounts", fail_silently=True
+    )
 
 
 @admin.action(permissions=["change"], description="Publish selected items and assets")
@@ -33,7 +39,9 @@ def publish_item_action(modeladmin, request, queryset):
         published=True
     )
 
-    messages.info(request, f"Published {count} items and {asset_count} assets")
+    messages.info(
+        request, f"Published {count} items and {asset_count} assets", fail_silently=True
+    )
 
 
 @admin.action(permissions=["change"], description="Unpublish selected items and assets")
@@ -47,7 +55,11 @@ def unpublish_item_action(modeladmin, request, queryset):
         published=False
     )
 
-    messages.info(request, f"Unpublished {count} items and {asset_count} assets")
+    messages.info(
+        request,
+        f"Unpublished {count} items and {asset_count} assets",
+        fail_silently=True,
+    )
 
 
 @admin.action(permissions=["change"], description="Publish selected")
@@ -57,7 +69,7 @@ def publish_action(modeladmin, request, queryset):
     """
 
     count = queryset.filter(published=False).update(published=True)
-    messages.info(request, f"Published {count} objects")
+    messages.info(request, f"Published {count} objects", fail_silently=True)
 
 
 @admin.action(permissions=["change"], description="Unpublish selected")
@@ -67,7 +79,7 @@ def unpublish_action(modeladmin, request, queryset):
     """
 
     count = queryset.filter(published=True).update(published=False)
-    messages.info(request, f"Unpublished {count} objects")
+    messages.info(request, f"Unpublished {count} objects", fail_silently=True)
 
 
 @admin.action(permissions=["reopen"], description="Change status to Completed")
@@ -89,7 +101,9 @@ def change_status_to_completed(modeladmin, request, queryset):
         latest_transcription.validate_unique()
         latest_transcription.save()
 
-    messages.info(request, f"Changed status of {count} assets to Complete")
+    messages.info(
+        request, f"Changed status of {count} assets to Complete", fail_silently=True
+    )
 
 
 def _change_status(request, assets, submit=True):
@@ -135,7 +149,9 @@ def change_status_to_needs_review(modeladmin, request, queryset):
     queryset = queryset.exclude(transcription_status=TranscriptionStatus.SUBMITTED)
     count = _change_status(request, queryset)
 
-    messages.info(request, f"Changed status of {count} assets to Needs Review")
+    messages.info(
+        request, f"Changed status of {count} assets to Needs Review", fail_silently=True
+    )
 
 
 @admin.action(permissions=["reopen"], description="Change status to In Progress")
@@ -143,4 +159,6 @@ def change_status_to_in_progress(modeladmin, request, queryset):
     queryset = queryset.exclude(transcription_status=TranscriptionStatus.IN_PROGRESS)
     count = _change_status(request, queryset, submit=False)
 
-    messages.info(request, f"Changed status of {count} assets to In Progress")
+    messages.info(
+        request, f"Changed status of {count} assets to In Progress", fail_silently=True
+    )

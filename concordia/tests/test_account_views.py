@@ -1,6 +1,7 @@
 """
 Tests for user account-related views
 """
+
 from django.core import mail
 from django.test import TestCase, override_settings
 from django.urls import reverse

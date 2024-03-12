@@ -13,6 +13,18 @@
                 <li><a href="{% url 'admin:retired-site-report' %}">Retired Site Report</a></li>
                 <li><a href="{% url 'admin:redownload-images' %}">Redownload Images</a></li>
                 <li><a href="{% url 'admin:project-level-export' %}">Project Level Export</a></li>
+                {% if user.is_superuser %}
+                    {% if maintenance_mode %}
+                        <li><a href="{% url 'maintenance_mode_off' %}">Disable Maintenance Mode</a></li>
+                    {% else %}
+                        <li><a href="{% url 'maintenance_mode_on' %}">Enable Maintenance Mode</a></li>
+                    {% endif %}
+                    {% if maintenance_mode_frontend_available %}
+                        <li><a href="{% url 'maintenance_mode_frontend_unavailable' %}">Disable Front-end During Maintenance Mode</a></li>
+                    {% else %}
+                        <li><a href="{% url 'maintenance_mode_frontend_available' %}">Enable Front-end During Maintenance Mode</a></li>
+                    {% endif %}
+                {% endif %}
             </ul>
         </div>
         <div class="module" id="recent-actions-module">

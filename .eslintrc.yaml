@@ -17,7 +17,7 @@ rules:
     'unicorn/prefer-ternary': off
 env:
     browser: true
-    es6: true
+    es2024: true
 parserOptions:
     sourceType: script
-    ecmaVersion": '2018'
+    ecmaVersion: latest

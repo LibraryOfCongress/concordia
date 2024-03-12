@@ -18,11 +18,8 @@ from django.urls import path, reverse
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html
 from django.views.decorators.csrf import csrf_protect
-from django_admin_multiple_choice_list_filter.list_filters import (
-    MultipleChoiceListFilter,
-)
-from tabular_export.admin import export_to_csv_action, export_to_excel_action
-from tabular_export.core import export_to_csv_response, flatten_queryset
+from tabular_export.admin import ensure_filename, export_to_excel_action
+from tabular_export.core import flatten_queryset
 
 from exporter import views as exporter_views
 from importer.tasks import import_items_into_project_from_url
@@ -33,17 +30,20 @@ from ..models import (
     Banner,
     Campaign,
     CampaignRetirementProgress,
+    Card,
+    CardFamily,
     CarouselSlide,
+    Guide,
     Item,
     Project,
     Resource,
     ResourceFile,
-    SimpleContentBlock,
     SimplePage,
     SiteReport,
     Tag,
     Topic,
     Transcription,
+    TutorialCard,
     UserAssetTagCollection,
     UserProfileActivity,
 )
@@ -63,10 +63,11 @@ from .filters import (
     AcceptedFilter,
     AssetCampaignListFilter,
     AssetCampaignStatusListFilter,
-    AssetProjectListFilter2,
+    AssetProjectListFilter,
+    CardCampaignListFilter,
     ItemCampaignListFilter,
     ItemCampaignStatusListFilter,
-    ItemProjectListFilter2,
+    ItemProjectListFilter,
     OcrGeneratedFilter,
     OcrOriginatedFilter,
     ProjectCampaignListFilter,
@@ -88,32 +89,42 @@ from .filters import (
 )
 from .forms import (
     AdminItemImportForm,
-    BleachedDescriptionAdminForm,
-    SimpleContentBlockAdminForm,
+    CampaignAdminForm,
+    CardAdminForm,
+    GuideAdminForm,
+    ProjectAdminForm,
+    SanitizedDescriptionAdminForm,
 )
-
-
-class ProjectListFilter(MultipleChoiceListFilter):
-    title = "Project"
-
-    def lookups(self, request, model_admin):
-        choices = Project.objects.values_list("pk", "title")
-        return tuple(choices)
-
+from .views import export_to_csv_response
 
 logger = logging.getLogger(__name__)
 
 
-class AssetProjectListFilter(ProjectListFilter):
-    parameter_name = "item__project__in"
-
-
-class ItemProjectListFilter(ProjectListFilter):
-    parameter_name = "project__in"
+@ensure_filename("csv")
+def export_to_csv_action(
+    modeladmin,
+    request,
+    queryset,
+    filename=None,
+    field_names=None,
+    extra_verbose_names=None,
+):
+    # This function is part of a workaround
+    # Please see https://staff.loc.gov/tasks/browse/CONCD-723
+    headers, rows = flatten_queryset(
+        queryset, field_names=field_names, extra_verbose_names=extra_verbose_names
+    )
+    return export_to_csv_response(filename, headers, rows)
 
 
 class ConcordiaUserAdmin(UserAdmin):
-    list_display = UserAdmin.list_display + ("date_joined", "transcription_count")
+    list_display = (
+        "username",
+        "email",
+        "is_staff",
+        "date_joined",
+        "transcription_count",
+    )
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -182,7 +193,7 @@ class CustomListDisplayFieldsMixin:
 
 @admin.register(Campaign)
 class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
-    form = BleachedDescriptionAdminForm
+    form = CampaignAdminForm
 
     list_display = (
         "title",
@@ -204,9 +215,36 @@ class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         "completed_date",
     )
     list_display_links = ("title",)
+    fields = (
+        "published",
+        "unlisted",
+        "status",
+        "next_transcription_campaign",
+        "next_review_campaign",
+        "ordering",
+        "display_on_homepage",
+        "title",
+        "slug",
+        "card_family",
+        "thumbnail_image",
+        "image_alt_text",
+        "launch_date",
+        "completed_date",
+        "description",
+        "short_description",
+        "metadata",
+    )
     prepopulated_fields = {"slug": ("title",)}
+    raw_id_fields = ("card_family",)
     search_fields = ["title", "description"]
-    list_filter = ("published", "display_on_homepage", "unlisted", "status")
+    list_filter = (
+        "published",
+        "display_on_homepage",
+        "unlisted",
+        "status",
+        "next_transcription_campaign",
+        "next_review_campaign",
+    )
 
     actions = (publish_action, unpublish_action)
 
@@ -242,12 +280,24 @@ class CampaignAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         return custom_urls + urls
 
     @method_decorator(csrf_protect)
-    @method_decorator(permission_required("concordia.retire_campaign"))
-    @method_decorator(permission_required("concordia.delete_project"))
-    @method_decorator(permission_required("concordia.delete_item"))
-    @method_decorator(permission_required("concordia.delete_asset"))
-    @method_decorator(permission_required("concordia.delete_transcription"))
-    @method_decorator(permission_required("concordia.delete_import_item_asset"))
+    @method_decorator(
+        permission_required("concordia.retire_campaign", raise_exception=True)
+    )
+    @method_decorator(
+        permission_required("concordia.delete_project", raise_exception=True)
+    )
+    @method_decorator(
+        permission_required("concordia.delete_item", raise_exception=True)
+    )
+    @method_decorator(
+        permission_required("concordia.delete_asset", raise_exception=True)
+    )
+    @method_decorator(
+        permission_required("concordia.delete_transcription", raise_exception=True)
+    )
+    @method_decorator(
+        permission_required("concordia.delete_import_item_asset", raise_exception=True)
+    )
     def retire(self, request, campaign_slug):
         try:
             campaign = Campaign.objects.filter(slug=campaign_slug)[0]
@@ -350,9 +400,6 @@ class ResourceFileAdmin(admin.ModelAdmin):
         return obj.resource.url.split("?")[0]
 
     def get_fields(self, request, obj=None):
-        # We want don't want to display the resource field except during
-        # creation, since uploading a new file will leave behind the original
-        # as an orphan.
         if obj:
             return (
                 "name",
@@ -365,7 +412,7 @@ class ResourceFileAdmin(admin.ModelAdmin):
 
 @admin.register(Topic)
 class TopicAdmin(admin.ModelAdmin):
-    form = BleachedDescriptionAdminForm
+    form = SanitizedDescriptionAdminForm
 
     list_display = (
         "id",
@@ -383,7 +430,7 @@ class TopicAdmin(admin.ModelAdmin):
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
-    form = BleachedDescriptionAdminForm
+    form = ProjectAdminForm
 
     # todo: add foreignKey link for campaign
     list_display = ("id", "title", "slug", "campaign", "published", "ordering")
@@ -422,12 +469,22 @@ class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
 
         return custom_urls + urls
 
-    @method_decorator(permission_required("concordia.add_campaign"))
-    @method_decorator(permission_required("concordia.change_campaign"))
-    @method_decorator(permission_required("concordia.add_project"))
-    @method_decorator(permission_required("concordia.change_project"))
-    @method_decorator(permission_required("concordia.add_item"))
-    @method_decorator(permission_required("concordia.change_item"))
+    @method_decorator(
+        permission_required("concordia.add_campaign", raise_exception=True)
+    )
+    @method_decorator(
+        permission_required("concordia.change_campaign", raise_exception=True)
+    )
+    @method_decorator(
+        permission_required("concordia.add_project", raise_exception=True)
+    )
+    @method_decorator(
+        permission_required("concordia.change_project", raise_exception=True)
+    )
+    @method_decorator(permission_required("concordia.add_item", raise_exception=True))
+    @method_decorator(
+        permission_required("concordia.change_item", raise_exception=True)
+    )
     def item_import_view(self, request, object_id):
         project = get_object_or_404(Project, pk=object_id)
 
@@ -440,6 +497,8 @@ class ProjectAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
                 import_job = import_items_into_project_from_url(
                     request.user, project, import_url
                 )
+            else:
+                import_job = None
         else:
             form = AdminItemImportForm()
             import_job = None
@@ -490,13 +549,13 @@ class ItemAdmin(admin.ModelAdmin):
         "project__topics",
         ItemCampaignStatusListFilter,
         ItemCampaignListFilter,
-        ItemProjectListFilter2,
+        ItemProjectListFilter,
     )
 
     actions = (publish_item_action, unpublish_item_action)
 
     def lookup_allowed(self, key, value):
-        if key in ("project__campaign__id__exact"):
+        if key in ("project__campaign__id__exact",):
             return True
         else:
             return super().lookup_allowed(key, value)
@@ -583,7 +642,7 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         "item__project__topics",
         AssetCampaignStatusListFilter,
         AssetCampaignListFilter,
-        AssetProjectListFilter2,
+        AssetProjectListFilter,
         "media_type",
     )
     actions = (
@@ -626,14 +685,12 @@ class AssetAdmin(admin.ModelAdmin, CustomListDisplayFieldsMixin):
         return self.readonly_fields
 
     def change_view(self, request, object_id, extra_context=None, **kwargs):
-        if object_id:
-            if extra_context is None:
-                extra_context = {}
-            extra_context["transcriptions"] = (
-                Transcription.objects.filter(asset__pk=object_id)
-                .select_related("user", "reviewed_by")
-                .order_by("-pk")
-            )
+        extra_context = extra_context or {}
+        extra_context["transcriptions"] = (
+            Transcription.objects.filter(asset__pk=object_id)
+            .select_related("user", "reviewed_by")
+            .order_by("-pk")
+        )
         return super().change_view(
             request, object_id, extra_context=extra_context, **kwargs
         )
@@ -716,6 +773,7 @@ class TranscriptionAdmin(admin.ModelAdmin):
         "updated_on",
         "accepted",
         "rejected",
+        "reviewed_by",
     )
     list_display_links = ("id", "asset")
 
@@ -763,7 +821,7 @@ class TranscriptionAdmin(admin.ModelAdmin):
     )
 
     def lookup_allowed(self, key, value):
-        if key in ("asset__item__project__campaign__id__exact"):
+        if key in ("asset__item__project__campaign__id__exact",):
             return True
         else:
             return super().lookup_allowed(key, value)
@@ -785,19 +843,6 @@ class TranscriptionAdmin(admin.ModelAdmin):
     actions = (export_to_csv, export_to_excel)
 
 
-@admin.register(SimpleContentBlock)
-class SimpleContentBlockAdmin(admin.ModelAdmin):
-    form = SimpleContentBlockAdminForm
-
-    list_display = ("slug", "created_on", "updated_on")
-    readonly_fields = ("created_on", "updated_on")
-
-    fieldsets = (
-        (None, {"fields": ("created_on", "updated_on", "slug")}),
-        ("Body", {"classes": ("markdown-preview",), "fields": ("body",)}),
-    )
-
-
 @admin.register(CarouselSlide)
 class CarouselSlideAdmin(admin.ModelAdmin):
     list_display = ("headline", "published", "ordering")
@@ -817,7 +862,43 @@ class SimplePageAdmin(admin.ModelAdmin):
 
 @admin.register(SiteReport)
 class SiteReportAdmin(admin.ModelAdmin):
-    list_display = ("created_on", "report_name", "campaign", "topic")
+    list_display = ("created_on", "report_type")
+    readonly_fields = ("created_on", "report_type")
+    fieldsets = (
+        ("Summary", {"fields": ("created_on", "report_type")}),
+        (
+            "Data",
+            {
+                "fields": (
+                    "report_name",
+                    "campaign",
+                    "topic",
+                    "assets_total",
+                    "assets_published",
+                    "assets_not_started",
+                    "assets_in_progress",
+                    "assets_waiting_review",
+                    "assets_completed",
+                    "assets_unpublished",
+                    "items_published",
+                    "items_unpublished",
+                    "projects_published",
+                    "projects_unpublished",
+                    "anonymous_transcriptions",
+                    "transcriptions_saved",
+                    "daily_review_actions",
+                    "distinct_tags",
+                    "tag_uses",
+                    "campaigns_published",
+                    "campaigns_unpublished",
+                    "users_registered",
+                    "users_activated",
+                    "registered_contributors",
+                    "daily_active_users",
+                )
+            },
+        ),
+    )
 
     list_filter = (
         "report_name",
@@ -825,6 +906,17 @@ class SiteReportAdmin(admin.ModelAdmin):
         SiteReportCampaignListFilter,
         "topic",
     )
+
+    @admin.display(description="Report type")
+    def report_type(self, obj):
+        if obj.report_name:
+            return f"Report name: {obj.report_name}"
+        elif obj.campaign:
+            return f"Campaign: {obj.campaign}"
+        elif obj.topic:
+            return f"Topic: {obj.topic}"
+        else:
+            return f"SiteReport: <{obj.id}>"
 
     def export_to_csv(self, request, queryset):
         return export_to_csv_action(
@@ -837,25 +929,6 @@ class SiteReportAdmin(admin.ModelAdmin):
         )
 
     actions = (export_to_csv, export_to_excel)
-
-    FIELDNAME_SORT_KEYS = [
-        "created",
-        "user",
-        "campaign",
-        "topic",
-        "project",
-        "item",
-        "asset",
-        "transcription",
-        "tag",
-    ]
-
-    def fieldname_sort_key(self, key):
-        for i, prefix in enumerate(self.FIELDNAME_SORT_KEYS):
-            if prefix in key:
-                return (i, key)
-        else:
-            return (1024, key)
 
 
 @admin.register(UserProfileActivity)
@@ -938,3 +1011,30 @@ class CampaignRetirementProgressAdmin(admin.ModelAdmin):
         total = obj.project_total + obj.item_total + obj.asset_total
         removed = obj.projects_removed + obj.items_removed + obj.assets_removed
         return "{}%".format(round(removed / total * 100, 2))
+
+
+@admin.register(Card)
+class CardAdmin(admin.ModelAdmin):
+    form = CardAdminForm
+    fields = ("title", "display_heading", "body_text", "image", "image_alt_text")
+    list_display = ["title", "display_heading", "created_on", "updated_on"]
+    list_filter = (CardCampaignListFilter, "updated_on")
+
+
+class TutorialInline(admin.TabularInline):
+    model = TutorialCard
+    extra = 1
+    raw_id_fields = ("card",)
+
+
+@admin.register(CardFamily)
+class CardFamilyAdmin(admin.ModelAdmin):
+    inlines = (TutorialInline,)
+
+    class Media:
+        js = ("admin/custom-inline.js",)
+
+
+@admin.register(Guide)
+class GuideAdmin(admin.ModelAdmin):
+    form = GuideAdminForm

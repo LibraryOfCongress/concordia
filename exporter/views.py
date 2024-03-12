@@ -227,6 +227,13 @@ class ExportCampaignToCSV(TemplateView):
             },
         )
 
+        logger.info("Forcing queryset eval")
+        # The below line of code is a workaround for an undocumented async error:
+        # https://code.djangoproject.com/ticket/32798
+        # It should probably be removed, but only *after*
+        # the project has been upgraded to django 4.
+        data = list(data)
+        logger.info("Exporting %s to csv", self.kwargs["campaign_slug"])
         return export_to_csv_response(
             "%s.csv" % self.kwargs["campaign_slug"], headers, data
         )

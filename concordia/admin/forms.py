@@ -1,7 +1,26 @@
-import bleach
+import nh3
 from django import forms
+from tinymce.widgets import TinyMCE
 
-FRAGMENT_ALLOWED_TAGS = {"br", "kbd", "span"} | bleach.sanitizer.ALLOWED_TAGS
+from ..models import Campaign, Card, Guide, Project
+
+FRAGMENT_ALLOWED_TAGS = {
+    "a",
+    "abbr",
+    "acronym",
+    "b",
+    "blockquote",
+    "br",
+    "code",
+    "em",
+    "i",
+    "kbd",
+    "li",
+    "ol",
+    "span",
+    "strong",
+    "ul",
+}
 
 BLOCK_ALLOWED_TAGS = FRAGMENT_ALLOWED_TAGS | {
     "div",
@@ -17,11 +36,12 @@ BLOCK_ALLOWED_TAGS = FRAGMENT_ALLOWED_TAGS | {
 }
 
 ALLOWED_ATTRIBUTES = {
-    **bleach.sanitizer.ALLOWED_ATTRIBUTES,
-    "a": ["class", "id", "href", "title"],
-    "div": ["class", "id"],
-    "span": ["class", "id"],
-    "p": ["class", "id"],
+    "a": {"class", "id", "href", "title"},
+    "abbr": {"title"},
+    "acronym": {"title"},
+    "div": {"class", "id"},
+    "span": {"class", "id"},
+    "p": {"class", "id"},
 }
 
 
@@ -49,26 +69,57 @@ class AdminRedownloadImagesForm(forms.Form):
     )
 
 
-class BleachedDescriptionAdminForm(forms.ModelForm):
+class SanitizedDescriptionAdminForm(forms.ModelForm):
+    class Meta:
+        model = Campaign
+        fields = "__all__"
+
     def clean_description(self):
-        return bleach.clean(
+        return nh3.clean(
             self.cleaned_data["description"],
             tags=BLOCK_ALLOWED_TAGS,
             attributes=ALLOWED_ATTRIBUTES,
         )
 
     def clean_short_description(self):
-        return bleach.clean(
+        return nh3.clean(
             self.cleaned_data["short_description"],
             tags=FRAGMENT_ALLOWED_TAGS,
             attributes=ALLOWED_ATTRIBUTES,
         )
 
 
-class SimpleContentBlockAdminForm(forms.ModelForm):
-    def clean_body(self):
-        return bleach.clean(
-            self.cleaned_data["body"],
-            tags=BLOCK_ALLOWED_TAGS,
-            attributes=ALLOWED_ATTRIBUTES,
-        )
+class CampaignAdminForm(SanitizedDescriptionAdminForm):
+    class Meta(SanitizedDescriptionAdminForm.Meta):
+        model = Campaign
+        widgets = {
+            "short_description": TinyMCE(),
+            "description": TinyMCE(),
+        }
+        fields = "__all__"
+
+
+class ProjectAdminForm(SanitizedDescriptionAdminForm):
+    class Meta(SanitizedDescriptionAdminForm.Meta):
+        model = Project
+        widgets = {
+            "description": TinyMCE(),
+        }
+
+
+class CardAdminForm(forms.ModelForm):
+    class Meta:
+        model = Card
+        widgets = {
+            "body_text": TinyMCE(),
+        }
+        fields = "__all__"
+
+
+class GuideAdminForm(forms.ModelForm):
+    class Meta:
+        model = Guide
+        widgets = {
+            "body": TinyMCE(),
+        }
+        fields = "__all__"

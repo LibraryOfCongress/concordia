@@ -174,6 +174,62 @@ class UnlistedPublicationQuerySet(PublicationQuerySet):
     def unlisted(self):
         return self.filter(unlisted=True)
 
+    def active(self):
+        return self.filter(status=Campaign.Status.ACTIVE)
+
+    def completed(self):
+        return self.filter(status=Campaign.Status.COMPLETED)
+
+    def retired(self):
+        return self.filter(status=Campaign.Status.RETIRED)
+
+    def get_next_transcription_campaigns(self):
+        return self.filter(next_transcription_campaign=True)
+
+    def get_next_review_campaigns(self):
+        return self.filter(next_review_campaign=True)
+
+
+class Card(models.Model):
+    image_alt_text = models.TextField(blank=True)
+    image = models.ImageField(upload_to="card_images", blank=True, null=True)
+    title = models.CharField(max_length=80)
+    body_text = models.TextField(blank=True)
+    created_on = models.DateTimeField(editable=False, auto_now_add=True)
+    updated_on = models.DateTimeField(editable=False, auto_now=True, null=True)
+    display_heading = models.CharField(max_length=80, blank=True, null=True)
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        ordering = ("title",)
+
+
+class CardFamily(models.Model):
+    slug = models.SlugField(max_length=80, unique=True, allow_unicode=True)
+    default = models.BooleanField(default=False)
+    cards = models.ManyToManyField(Card, through="TutorialCard")
+
+    class Meta:
+        verbose_name_plural = "card families"
+
+    def __str__(self):
+        return self.slug
+
+
+def on_cardfamily_save(sender, instance, **kwargs):
+    # Only one tutorial/ list of cards should be marked as "default".
+    # If the flag is set on a tutorial, it needs to be cleared from
+    # any other existing tutorials.
+    if instance.default:
+        CardFamily.objects.filter(default=True).exclude(pk=instance.pk).update(
+            default=False
+        )
+
+
+post_save.connect(on_cardfamily_save, sender=CardFamily)
+
 
 class Campaign(MetricsModelMixin("campaign"), models.Model):
     class Status(models.IntegerChoices):
@@ -186,6 +242,10 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
     published = models.BooleanField(default=False, blank=True, db_index=True)
     unlisted = models.BooleanField(default=False, blank=True, db_index=True)
     status = models.IntegerField(choices=Status.choices, default=Status.ACTIVE)
+    next_transcription_campaign = models.BooleanField(
+        default=False, blank=True, db_index=True
+    )
+    next_review_campaign = models.BooleanField(default=False, blank=True, db_index=True)
 
     ordering = models.IntegerField(
         default=0, help_text="Sort order override: lower values will be listed first"
@@ -195,13 +255,18 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
     title = models.CharField(max_length=80)
     slug = models.SlugField(max_length=80, unique=True, allow_unicode=True)
 
+    card_family = models.ForeignKey(
+        CardFamily, on_delete=models.CASCADE, blank=True, null=True
+    )
+    thumbnail_image = models.ImageField(
+        upload_to="campaign-thumbnails", blank=True, null=True
+    )
+    image_alt_text = models.TextField(blank=True, null=True)
+
     launch_date = models.DateField(null=True, blank=True)
     completed_date = models.DateField(null=True, blank=True)
 
     description = models.TextField(blank=True)
-    thumbnail_image = models.ImageField(
-        upload_to="campaign-thumbnails", blank=True, null=True
-    )
     short_description = models.TextField(blank=True)
 
     metadata = JSONField(default=metadata_default, blank=True, null=True)
@@ -484,8 +549,18 @@ class Asset(MetricsModelMixin("asset"), models.Model):
     def latest_transcription(self):
         return self.transcription_set.order_by("-pk").first()
 
-    def get_ocr_transcript(self):
-        return pytesseract.image_to_string(Image.open(self.storage_image))
+    def get_ocr_transcript(self, language=None):
+        if language and language not in settings.PYTESSERACT_ALLOWED_LANGUAGES:
+            logger.warning(
+                "OCR language '%s' not in settings.PYTESSERACT_ALLOWED_LANGUAGES. "
+                "Allowed languages: %s",
+                language,
+                settings.PYTESSERACT_ALLOWED_LANGUAGES,
+            )
+            language = None
+        return pytesseract.image_to_string(
+            Image.open(self.storage_image), lang=language
+        )
 
     def get_contributor_count(self):
         transcriptions = Transcription.objects.filter(asset=self)
@@ -660,22 +735,6 @@ class AssetTranscriptionReservation(models.Model):
     tombstoned = models.BooleanField(default=False, blank=True, null=True)
 
 
-class SimpleContentBlock(models.Model):
-    created_on = models.DateTimeField(editable=False, auto_now_add=True)
-    updated_on = models.DateTimeField(editable=False, auto_now=True)
-
-    slug = models.SlugField(
-        unique=True,
-        max_length=255,
-        help_text="Label that templates use to retrieve this block",
-    )
-
-    body = models.TextField()
-
-    def __str__(self):
-        return f"SimpleContentBlock: {self.slug}"
-
-
 class SimplePage(models.Model):
     created_on = models.DateTimeField(editable=False, auto_now_add=True)
     updated_on = models.DateTimeField(editable=False, auto_now=True)
@@ -688,7 +747,7 @@ class SimplePage(models.Model):
 
     title = models.CharField(max_length=200)
 
-    body = models.TextField()
+    body = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return f"SimplePage: {self.path}"
@@ -762,7 +821,7 @@ class SiteReport(models.Model):
         TOTAL = "Active and completed campaigns", "Active and completed campaigns"
         RETIRED_TOTAL = "Retired campaigns", "Retired campaigns"
 
-    created_on = models.DateTimeField(editable=False, auto_now_add=True)
+    created_on = models.DateTimeField(auto_now_add=True)
     report_name = models.CharField(
         max_length=80, blank=True, default="", choices=ReportName.choices
     )
@@ -880,28 +939,21 @@ class CampaignRetirementProgress(models.Model):
         return f"Removal progress for {self.campaign}"
 
 
-class Card(models.Model):
-    image = models.ImageField(upload_to="card_images", blank=True, null=True)
-    title = models.CharField(max_length=80)
-    body_text = models.TextField(blank=True)
-
-    class Meta:
-        abstract = True
-
-
-class CardFamily(models.Model):
-    slug = models.SlugField(max_length=80, unique=True, allow_unicode=True)
-    default = models.BooleanField(default=False)
-    cards = models.ManyToManyField(Card, through="TutorialCard")
-
-    class Meta:
-        abstract = True
-
-
 class TutorialCard(models.Model):
     card = models.ForeignKey(Card, on_delete=models.CASCADE)
     tutorial = models.ForeignKey(CardFamily, on_delete=models.CASCADE)
     order = models.IntegerField(default=0)
 
     class Meta:
-        abstract = True
+        verbose_name_plural = "cards"
+
+
+class Guide(models.Model):
+    title = models.CharField(max_length=80)
+    body = models.TextField(blank=True)
+    order = models.IntegerField(default=1)
+    link_text = models.CharField(max_length=80, blank=True, null=True)
+    link_url = models.CharField(max_length=255, blank=True, null=True)
+
+    def __str__(self):
+        return self.title

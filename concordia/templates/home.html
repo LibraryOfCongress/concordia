@@ -20,10 +20,6 @@
                         <a class="btn {{ banner.btn_class }}" href="{{ banner.link }}"{% if banner.open_in_new_window_tab %} target="_blank"{% endif %}>
                             {{ banner.text }}
                         </a>
-                    {% else %}
-                        <a class="btn btn-success" href="https://www.research.net/r/btp-volunteer-survey" target="_blank">
-                            Let us know what motivates you to volunteer! Take a short survey to help us improve our program
-                        </a>
                     {% endif %}
                     <button type="button" class="btn btn-dark" id="no-interface-banner">Don't display this again</button>
                     <button type="button" class="close" data-dismiss="alert" aria-label="Close">
@@ -48,7 +44,7 @@
                 </a>
             </li>
             <li class="col-sm px-4 mb-4">
-                <a class="text-dark" href="{% url 'how-to-transcribe' %}">
+                <a class="text-dark" href="{% url 'transcription-basic-rules' %}">
                     <img class="img-fluid" src="{% static 'img/homepage-pencil.svg' %}" alt="" width="200" height="200" loading="lazy">
                     <h3 class="mt-3 text-uppercase">Transcribe</h3>
                     <p id="homepage-activity-transcribe-help" class="m-0">No account needed! Type what you see on the page.</p>
@@ -175,10 +171,10 @@
             <h2 class="col-md-auto text-center text-nowrap px-5 py-3 m-0">Surprise me!</h2>
             <ul class="col-md-auto row list-unstyled m-0">
                 <li class="col text-center text-bold px-5 py-3">
-                    <a href="/campaigns/musical-theater/next-transcribable-asset"><span class="d-block text-dark font-weight-bold">Jump into</span> <span class="d-block text-nowrap h2">a transcription</span></a>
+                    <a href="{% url 'redirect-to-next-transcribable-asset' %}"><span class="d-block text-dark font-weight-bold">Jump into</span> <span class="d-block text-nowrap h2">a transcription</span></a>
                 </li>
                 <li class="col text-center text-bold px-5 py-3">
-                    <a href="/campaigns/clara-barton-angel-of-the-battlefield/next-reviewable-asset"><span class="d-block text-dark font-weight-bold">Jump into</span> <span class="d-block text-nowrap h2">a review</span></a>
+                    <a href="{% url 'redirect-to-next-reviewable-asset' %}"><span class="d-block text-dark font-weight-bold">Jump into</span> <span class="d-block text-nowrap h2">a review</span></a>
                 </li>
             </ul>
         </div>
@@ -192,7 +188,7 @@
                     <a class="text-dark" href="{{ campaign_url }}">
                         <div class="aspect-ratio-box">
                             <div class="aspect-ratio-box-inner-wrapper">
-                                <img src="{{ MEDIA_URL }}{{ campaign.thumbnail_image }}" class="img-fluid" alt="" loading="lazy">
+                                <img src="{{ MEDIA_URL }}{{ campaign.thumbnail_image }}" class="img-fluid" alt="{{ campaign.image_alt_text }}" loading="lazy">
                             </div>
                         </div>
                         <span class="d-block h4 mt-2">{{ campaign.title }}</span>
@@ -208,20 +204,25 @@
 
 {% block body_scripts %}
     <script type="text/javascript">
-        if (
-            typeof(Storage) !== "undefined"
-        ) {
-            for(var i in localStorage)
-            {
-                if (i.startsWith("banner-")) {
-                    if ($('#' + i).hasClass("alert")) {
-                        $('#' + i).attr("hidden", true);
-                    }
+        var storage = window.localStorage;
+        var storageAvailable;
+        try {
+            const x = "__storage_test__";
+            storage.setItem(x, x);
+            storage.removeItem(x);
+            storageAvailable = true;
+        } catch (e) {
+            storageAvailable = false;
+        }
+        if (storageAvailable) {
+            for(var i in storage) {
+                if (i.startsWith("banner-") && $('#' + i).hasClass("alert")) {
+                    $('#' + i).attr("hidden", true);
                 }
             }
         }
         $("#no-interface-banner").click(function(event) {
-            localStorage.setItem(event.target.parentElement.id, true);
+            storage.setItem(event.target.parentElement.id, true);
             $('#' + event.target.parentElement.id).attr("hidden", true);
         });
     </script>

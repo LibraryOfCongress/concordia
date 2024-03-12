@@ -109,6 +109,12 @@ class UserProfileForm(forms.Form):
         return data
 
 
+class AccountDeletionForm(forms.Form):
+    def __init__(self, *, request, **kwargs):
+        self.request = request
+        super().__init__(**kwargs)
+
+
 class ContactUsForm(forms.Form):
     referrer = forms.CharField(
         label="Referring Page", widget=forms.HiddenInput(), required=False

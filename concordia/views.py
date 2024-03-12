@@ -1,7 +1,9 @@
 import datetime
 import json
 import os
+import random
 import re
+import uuid
 from functools import wraps
 from logging import getLogger
 from smtplib import SMTPException
@@ -14,6 +16,7 @@ from captcha.helpers import captcha_image_url
 from captcha.models import CaptchaStore
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import (
@@ -24,6 +27,7 @@ from django.contrib.auth.views import (
 from django.contrib.messages import get_messages
 from django.contrib.sites.shortcuts import get_current_site
 from django.core import signing
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.mail import EmailMultiAlternatives, send_mail
 from django.core.paginator import Paginator
@@ -33,7 +37,6 @@ from django.db.models import (
     Count,
     IntegerField,
     Max,
-    OuterRef,
     Q,
     Subquery,
     Sum,
@@ -48,6 +51,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse, reverse_lazy
 from django.utils.decorators import method_decorator
 from django.utils.http import http_date
+from django.utils.text import slugify
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.cache import cache_control, never_cache
@@ -55,14 +59,14 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.views.decorators.vary import vary_on_headers
 from django.views.generic import FormView, ListView, RedirectView, TemplateView
+from django_ratelimit.decorators import ratelimit
 from django_registration.backends.activation.views import RegistrationView
-from ratelimit.decorators import ratelimit
-from ratelimit.mixins import RatelimitMixin
-from ratelimit.utils import is_ratelimited
+from maintenance_mode.core import set_maintenance_mode
 from weasyprint import HTML
 
 from concordia.api_views import APIDetailView, APIListView
 from concordia.forms import (
+    AccountDeletionForm,
     ActivateAndSetPasswordForm,
     AllowInactivePasswordResetForm,
     ContactUsForm,
@@ -77,8 +81,10 @@ from concordia.models import (
     AssetTranscriptionReservation,
     Banner,
     Campaign,
+    CardFamily,
     CarouselSlide,
     ConcordiaUser,
+    Guide,
     Item,
     Project,
     SimplePage,
@@ -87,6 +93,7 @@ from concordia.models import (
     Topic,
     Transcription,
     TranscriptionStatus,
+    TutorialCard,
     UserAssetTagCollection,
     UserProfileActivity,
 )
@@ -163,7 +170,6 @@ def simple_page(request, path=None):
     page = get_object_or_404(SimplePage, path=path)
 
     md = markdown.Markdown(extensions=["meta"])
-    html = md.convert(page.body)
 
     breadcrumbs = []
     path_components = request.path.strip("/").split("/")
@@ -178,11 +184,28 @@ def simple_page(request, path=None):
         language_code = "es"
 
     ctx = {
-        "body": html,
         "language_code": language_code,
         "title": page.title,
         "breadcrumbs": breadcrumbs,
     }
+
+    guides = Guide.objects
+    try:
+        guide = guides.get(title__iexact=page.title)
+        html = "".join((page.body, guide.body))
+        ctx["add_navigation"] = True
+    except Guide.DoesNotExist:
+        html = page.body
+        if page.title == "Get started":
+            ctx["add_navigation"] = True
+    if "add_navigation" in ctx:
+        links = [
+            ("Get started", "welcome-guide"),
+        ]
+        for guide in guides.all():
+            links.append((guide.title, slugify(guide.title)))
+        ctx["toc"] = links
+    ctx["body"] = md.convert(html)
 
     resp = render(request, "static-page.html", ctx)
     resp["Created"] = http_date(page.created_on.timestamp())
@@ -251,7 +274,7 @@ class ConcordiaPasswordResetRequestView(PasswordResetView):
     form_class = AllowInactivePasswordResetForm
 
 
-def registration_rate(self, group, request):
+def registration_rate(group, request):
     registration_form = UserRegistrationForm(request.POST)
     if registration_form.is_valid():
         return None
@@ -260,34 +283,36 @@ def registration_rate(self, group, request):
 
 
 @method_decorator(never_cache, name="dispatch")
-class ConcordiaRegistrationView(RatelimitMixin, RegistrationView):
+@method_decorator(
+    ratelimit(
+        group="registration",
+        key="header:cf-connecting-ip",
+        rate=registration_rate,
+        method="POST",
+        block=settings.RATELIMIT_BLOCK,
+    ),
+    name="post",
+)
+class ConcordiaRegistrationView(RegistrationView):
     form_class = UserRegistrationForm
-    ratelimit_group = "registration"
-    ratelimit_key = "header:cf-connecting-ip"
-    ratelimit_rate = registration_rate
-    ratelimit_method = "POST"
-    ratelimit_block = settings.RATELIMIT_BLOCK
 
 
 @method_decorator(never_cache, name="dispatch")
-class ConcordiaLoginView(RatelimitMixin, LoginView):
-    ratelimit_group = "login"
-    ratelimit_key = "post:username"
-    ratelimit_rate = "3/15m"
-    ratelimit_method = "POST"
-    ratelimit_block = False
+@method_decorator(
+    ratelimit(
+        group="login", key="post:username", rate="3/15m", method="POST", block=False
+    ),
+    name="post",
+)
+class ConcordiaLoginView(LoginView):
     form_class = UserLoginForm
 
     def post(self, request, *args, **kwargs):
         form = self.get_form()
 
-        blocked = is_ratelimited(
-            request,
-            group=self.ratelimit_group,
-            key=self.ratelimit_key,
-            method=self.ratelimit_method,
-            rate=self.ratelimit_rate,
-        )
+        # This is set by the ratelimit decorator
+        # True if the request exceeds the rate limit
+        blocked = request.limited
         recent_captcha = (
             time() - request.session.get("captcha_validation_time", 0)
         ) < 86400
@@ -422,7 +447,10 @@ def _get_pages(request):
             latest_activity__day=date.day,
         )
     # CONCD-189 only show pages from the last 6 months
-    SIX_MONTHS_AGO = datetime.datetime.today() - datetime.timedelta(days=6 * 30)
+    # This should be an aware datetime, not a date. A date is cast
+    # to a naive datetime when it's compared to a datetime
+    # field, as is being done here
+    SIX_MONTHS_AGO = now() - datetime.timedelta(days=6 * 30)
     assets = assets.filter(latest_activity__gte=SIX_MONTHS_AGO)
     order_by = request.GET.get("order_by", "date-descending")
     if order_by == "date-ascending":
@@ -628,6 +656,74 @@ class AccountProfileView(LoginRequiredMixin, FormView, ListView):
             logger.exception(
                 "Unable to send email reconfirmation to %s",
                 user.get_email_for_reconfirmation(),
+            )
+
+
+@method_decorator(never_cache, name="dispatch")
+class AccountDeletionView(LoginRequiredMixin, FormView):
+    template_name = "account/account_deletion.html"
+    form_class = AccountDeletionForm
+    success_url = reverse_lazy("homepage")
+    email_body_template = "emails/delete_account_body.txt"
+    email_subject_template = "emails/delete_account_subject.txt"
+
+    def get_form_kwargs(self):
+        # We expose the request object to the form so we can use it
+        # to log the user out after deletion
+        kwargs = super().get_form_kwargs()
+        kwargs["request"] = self.request
+        return kwargs
+
+    def form_valid(self, form):
+        self.delete_user(form.request.user, form.request)
+        return super().form_valid(form)
+
+    def delete_user(self, user, request=None):
+        logger.info("Deletion request for %s", user)
+        email = user.email
+        if user.transcription_set.exists():
+            logger.info("Anonymizing %s", user)
+            user.username = "Anonymized %s" % uuid.uuid4()
+            user.first_name = ""
+            user.last_name = ""
+            user.email = ""
+            user.set_unusable_password()
+            user.is_staff = False
+            user.is_superuser = False
+            user.is_active = False
+            user.save()
+        else:
+            logger.info("Deleting %s", user)
+            user.delete()
+        self.send_deletion_email(email)
+        if request:
+            logout(request)
+
+    def send_deletion_email(self, email):
+        context = {}
+        subject = render_to_string(
+            template_name=self.email_subject_template,
+            context=context,
+            request=self.request,
+        )
+        # Ensure subject is a single line
+        subject = "".join(subject.splitlines())
+        message = render_to_string(
+            template_name=self.email_body_template,
+            context=context,
+            request=self.request,
+        )
+        try:
+            send_mail(
+                subject,
+                message=message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[email],
+            )
+        except SMTPException:
+            logger.exception(
+                "Unable to send account deletion email to %s",
+                email,
             )
 
 
@@ -1282,6 +1378,19 @@ class AssetDetailView(APIDetailView):
 
         ctx["registered_contributors"] = asset.get_contributor_count()
 
+        if project.campaign.card_family:
+            card_family = project.campaign.card_family
+        else:
+            card_family = CardFamily.objects.filter(default=True).first()
+        if card_family is not None:
+            unordered_cards = TutorialCard.objects.filter(tutorial=card_family)
+            ordered_cards = unordered_cards.order_by("order")
+            ctx["cards"] = [tutorial_card.card for tutorial_card in ordered_cards]
+
+        guides = Guide.objects.order_by("order").values("title", "body")
+        if guides.count() > 0:
+            ctx["guides"] = guides
+
         return ctx
 
 
@@ -1362,10 +1471,11 @@ def generate_ocr_transcription(request, *, asset_pk):
         user = request.user
 
     supersedes_pk = request.POST.get("supersedes")
+    language = request.POST.get("language")
     superseded = get_transcription_superseded(asset, supersedes_pk)
     if superseded and isinstance(superseded, HttpResponse):
         return superseded
-    transcription_text = asset.get_ocr_transcript()
+    transcription_text = asset.get_ocr_transcript(language)
     transcription = Transcription(
         asset=asset,
         user=user,
@@ -1386,6 +1496,7 @@ def generate_ocr_transcription(request, *, asset_pk):
             "asset": {
                 "id": transcription.asset.id,
                 "status": transcription.asset.transcription_status,
+                "contributors": transcription.asset.get_contributor_count(),
             },
         },
         status=201,
@@ -1447,6 +1558,7 @@ def save_transcription(request, *, asset_pk):
             "asset": {
                 "id": transcription.asset.id,
                 "status": transcription.asset.transcription_status,
+                "contributors": transcription.asset.get_contributor_count(),
             },
         },
         status=201,
@@ -1497,6 +1609,7 @@ def submit_transcription(request, *, pk):
             "asset": {
                 "id": transcription.asset.id,
                 "status": transcription.asset.transcription_status,
+                "contributors": transcription.asset.get_contributor_count(),
             },
         },
         status=200,
@@ -1553,6 +1666,7 @@ def review_transcription(request, *, pk):
             "asset": {
                 "id": transcription.asset.id,
                 "status": transcription.asset.transcription_status,
+                "contributors": transcription.asset.get_contributor_count(),
             },
         },
         status=200,
@@ -2002,12 +2116,21 @@ def filter_and_order_reviewable_assets(
 @never_cache
 @atomic
 def redirect_to_next_reviewable_asset(request):
-    campaign = Campaign.objects.published().listed().order_by("ordering")[0]
+    campaign_ids = list(
+        Campaign.objects.active()
+        .listed()
+        .published()
+        .get_next_review_campaigns()
+        .values_list("id", flat=True)
+    )
+    try:
+        campaign_id = random.choice(campaign_ids)  # nosec
+        campaign = Campaign.objects.get(id=campaign_id)
+    except IndexError:
+        campaign = Campaign.objects.active().listed().published().latest("launch_date")
     project_slug = request.GET.get("project", "")
     item_id = request.GET.get("item", "")
     asset_id = request.GET.get("asset", 0)
-
-    # FIXME: ensure the project belongs to the campaign
 
     if not request.user.is_authenticated:
         user = get_anonymous_user()
@@ -2031,11 +2154,10 @@ def redirect_to_next_reviewable_asset(request):
     )
 
 
-def find_transcribable_assets(campaign_counter, project_slug, item_id, asset_id):
-    campaigns = Campaign.objects.published().listed().order_by("ordering")
+def find_transcribable_assets(campaign, project_slug, item_id, asset_id):
     potential_assets = Asset.objects.select_for_update(skip_locked=True, of=("self",))
     potential_assets = potential_assets.filter(
-        item__project__campaign=campaigns[campaign_counter],
+        item__project__campaign=campaign,
         item__project__published=True,
         item__published=True,
         published=True,
@@ -2052,27 +2174,37 @@ def find_transcribable_assets(campaign_counter, project_slug, item_id, asset_id)
 @never_cache
 @atomic
 def redirect_to_next_transcribable_asset(request):
-    # Campaign is not specified, but project / item / asset may be
+    campaign_ids = list(
+        Campaign.objects.active()
+        .listed()
+        .published()
+        .get_next_transcription_campaigns()
+        .values_list("id", flat=True)
+    )
+    try:
+        campaign_id = random.choice(campaign_ids)  # nosec
+        campaign = Campaign.objects.get(id=campaign_id)
+    except IndexError:
+        campaign = Campaign.objects.active().listed().published().latest("launch_date")
+    project_slug = request.GET.get("project", "")
+    item_id = request.GET.get("item", "")
+    asset_id = request.GET.get("asset", 0)
+
     if not request.user.is_authenticated:
         user = get_anonymous_user()
     else:
         user = request.user
 
-    project_slug = request.GET.get("project", "")
-    item_id = request.GET.get("item", "")
-    asset_id = request.GET.get("asset", 0)
-
-    # FIXME: if the project is specified, select the campaign
-    # to which it belongs
-
-    potential_assets = None
-    campaign_counter = 0
-
-    while not potential_assets:
-        potential_assets = find_transcribable_assets(
-            campaign_counter, project_slug, item_id, asset_id
-        )
-        campaign_counter = campaign_counter + 1
+    potential_assets = Asset.objects.select_for_update(skip_locked=True, of=("self",))
+    potential_assets = potential_assets.filter(
+        item__project__campaign=campaign,
+        item__project__published=True,
+        item__published=True,
+        published=True,
+    )
+    potential_assets = filter_and_order_transcribable_assets(
+        potential_assets, project_slug, item_id, asset_id
+    )
 
     return redirect_to_next_asset(
         potential_assets, "transcribe", request, project_slug, user
@@ -2202,200 +2334,6 @@ def redirect_to_next_transcribable_topic_asset(request, *, topic_slug):
     )
 
 
-class AssetListView(APIListView):
-    context_object_name = "assets"
-    paginate_by = 50
-    queryset = Asset.objects.published()
-
-    def get_queryset(self, *args, **kwargs):
-        qs = super().get_queryset()
-
-        pks = self.request.GET.getlist("pk")
-
-        if pks:
-            try:
-                qs = qs.filter(pk__in=pks)
-            except (ValueError, TypeError) as e:
-                raise Http404 from e
-
-        latest_transcription_qs = (
-            Transcription.objects.filter(asset=OuterRef("pk"))
-            .order_by("-pk")
-            .values_list("pk", flat=True)
-        )
-
-        qs = qs.annotate(latest_transcription_pk=Subquery(latest_transcription_qs[:1]))
-
-        return qs.prefetch_related("item", "item__project", "item__project__campaign")
-
-    def get_ordering(self):
-        order_field = self.request.GET.get("order_by", "pk")
-        if order_field.lstrip("-") not in ("pk", "difficulty"):
-            raise ValueError
-        return order_field
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-
-        assets = ctx["assets"]
-        asset_pks = [i.pk for i in assets]
-
-        transcriptions = Transcription.objects.all()
-        latest_transcriptions = {
-            asset_id: {"id": transcription_id, "submitted_by": user_id, "text": text}
-            for transcription_id, asset_id, user_id, text in transcriptions.filter(
-                pk__in=[i.latest_transcription_pk for i in assets]
-            ).values_list("id", "asset_id", "user_id", "text")
-        }
-
-        adjacent_asset_qs = Asset.objects.filter(
-            published=True, item=OuterRef("item")
-        ).values("sequence")
-
-        adjacent_seq_qs = (
-            Asset.objects.filter(pk__in=asset_pks, published=True)
-            .annotate(
-                next_sequence=Subquery(
-                    adjacent_asset_qs.filter(
-                        sequence__gt=OuterRef("sequence")
-                    ).order_by("sequence")[:1]
-                ),
-                previous_sequence=Subquery(
-                    adjacent_asset_qs.filter(
-                        sequence__lt=OuterRef("sequence")
-                    ).order_by("-sequence")[:1]
-                ),
-            )
-            .values_list("pk", "previous_sequence", "next_sequence")
-        )
-
-        adjacent_seqs = {
-            pk: (prev_seq, next_seq) for pk, prev_seq, next_seq in adjacent_seq_qs
-        }
-
-        for asset in assets:
-            asset.latest_transcription = latest_transcriptions.get(asset.pk, None)
-
-            asset.previous_sequence, asset.next_sequence = adjacent_seqs.get(
-                asset.id, (None, None)
-            )
-
-        return ctx
-
-    def serialize_object(self, obj):
-        # Since we're doing this a lot, let's avoid some repetitive lookups:
-        item = obj.item
-        project = item.project
-        campaign = project.campaign
-
-        image_url, thumbnail_url = get_image_urls_from_asset(obj)
-
-        metadata = {
-            "id": obj.pk,
-            "status": obj.transcription_status,
-            "url": obj.get_absolute_url(),
-            "thumbnailUrl": thumbnail_url,
-            "imageUrl": image_url,
-            "title": obj.title,
-            "difficulty": obj.difficulty,
-            "year": obj.year,
-            "sequence": obj.sequence,
-            "resource_url": obj.resource_url,
-            "latest_transcription": obj.latest_transcription,
-            "item": {
-                "id": item.pk,
-                "item_id": item.item_id,
-                "title": item.title,
-                "url": item.get_absolute_url(),
-            },
-            "project": {
-                "id": project.pk,
-                "slug": project.slug,
-                "title": project.title,
-                "url": project.get_absolute_url(),
-            },
-            "campaign": {
-                "id": campaign.pk,
-                "title": campaign.title,
-                "url": campaign.get_absolute_url(),
-            },
-        }
-
-        if project.topics:
-            metadata["topics"] = []
-
-            for topic in project.topics.all():
-                new_topic = {}
-                new_topic["id"] = topic.pk
-                new_topic["title"] = topic.title
-                new_topic["url"] = topic.get_absolute_url()
-                metadata["topics"].append(new_topic)
-
-        # FIXME: we want to rework how this is done after deprecating Asset.media_url
-        if obj.previous_sequence:
-            metadata["previous_thumbnail"] = re.sub(
-                r"[/]\d+[.]jpg", f"/{obj.previous_sequence}.jpg", image_url
-            )
-        if obj.next_sequence:
-            metadata["next_thumbnail"] = re.sub(
-                r"[/]\d+[.]jpg", f"/{obj.next_sequence}.jpg", image_url
-            )
-
-        return metadata
-
-
-class TranscribeListView(AssetListView):
-    template_name = "transcriptions/transcribe_list.html"
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx["campaigns"] = Campaign.objects.published().listed().order_by("title")
-        return ctx
-
-    def get_queryset(self):
-        asset_qs = super().get_queryset()
-
-        asset_qs = asset_qs.filter(
-            Q(transcription_status=TranscriptionStatus.NOT_STARTED)
-            | Q(transcription_status=TranscriptionStatus.IN_PROGRESS)
-        )
-
-        campaign_filter = self.request.GET.get("campaign_filter")
-        if campaign_filter:
-            asset_qs = asset_qs.filter(item__project__campaign__pk=campaign_filter)
-
-        order_field = self.get_ordering()
-        if order_field:
-            asset_qs.order_by(order_field)
-
-        return asset_qs
-
-
-class ReviewListView(AssetListView):
-    template_name = "transcriptions/review_list.html"
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx["campaigns"] = Campaign.objects.published().listed().order_by("title")
-        return ctx
-
-    def get_queryset(self):
-        asset_qs = super().get_queryset()
-
-        asset_qs = asset_qs.filter(transcription_status=TranscriptionStatus.SUBMITTED)
-
-        campaign_filter = self.request.GET.get("campaign_filter")
-
-        if campaign_filter:
-            asset_qs = asset_qs.filter(item__project__campaign__pk=campaign_filter)
-
-        order_field = self.get_ordering()
-        if order_field:
-            asset_qs.order_by(order_field)
-
-        return asset_qs
-
-
 class EmailReconfirmationView(TemplateView):
     success_url = reverse_lazy("user-profile")
     template_name = "account/email_reconfirmation_failed.html"
@@ -2490,3 +2428,58 @@ class HelpCenterSpanishRedirectView(RedirectView):
 
 
 # End of help-center views
+
+# Maintenance mode views
+
+
+def maintenance_mode_off(request):
+    """
+    Deactivate maintenance-mode and redirect to site root.
+    Only superusers are allowed to use this view.
+    """
+    if request.user.is_superuser:
+        set_maintenance_mode(False)
+
+    # Added cache busting to make sure maintenance mode banner is
+    # always displayed/removed
+    return HttpResponseRedirect("/?t={}".format(int(time())))
+
+
+def maintenance_mode_on(request):
+    """
+    Activate maintenance-mode and redirect to site root.
+    Only superusers are allowed to use this view.
+    """
+    if request.user.is_superuser:
+        set_maintenance_mode(True)
+
+    # Added cache busting to make sure maintenance mode banner is
+    # always displayed/removed
+    return HttpResponseRedirect("/?t={}".format(int(time())))
+
+
+def maintenance_mode_frontend_available(request):
+    """
+    Allow staff and superusers to use the front-end
+    while maintenance mode is active
+    Only superusers are allowed to use this view.
+    """
+    if request.user.is_superuser:
+        cache.set("maintenance_mode_frontend_available", True, None)
+
+    return HttpResponseRedirect("/?t={}".format(int(time())))
+
+
+def maintenance_mode_frontend_unavailable(request):
+    """
+    Disallow all use of the front-end while maintenance
+    mode is active
+    Only superusers are allowed to use this view.
+    """
+    if request.user.is_superuser:
+        cache.set("maintenance_mode_frontend_available", False, None)
+
+    return HttpResponseRedirect("/?t={}".format(int(time())))
+
+
+# End of maintenance mode views

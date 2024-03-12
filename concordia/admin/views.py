@@ -1,18 +1,24 @@
+import logging
 import re
 import tempfile
 import time
+from http import HTTPStatus
 
 from bittersweet.models import validated_get_or_create
 from celery import Celery
+from django.apps import apps
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import permission_required
 from django.core.exceptions import ValidationError
 from django.db.models import OuterRef, Subquery
+from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils.text import slugify
+from django.views import View
 from django.views.decorators.cache import never_cache
-from tabular_export.core import export_to_csv_response, flatten_queryset
+from tabular_export.core import export_to_csv_response as _export_to_csv_response
+from tabular_export.core import flatten_queryset
 
 from concordia.models import Asset, Item, Transcription, TranscriptionStatus
 from exporter.views import do_bagit_export
@@ -26,6 +32,8 @@ from importer.utils.excel import slurp_excel
 
 from ..models import Campaign, Project, SiteReport
 from .forms import AdminProjectBulkImportForm, AdminRedownloadImagesForm
+
+logger = logging.getLogger(__name__)
 
 
 @never_cache
@@ -567,6 +575,15 @@ def admin_bulk_import_view(request):
     return render(request, "admin/bulk_import.html", context)
 
 
+def export_to_csv_response(filename, headers, rows):
+    # This is a workaround for an async issue in Django 3
+    # Please see https://staff.loc.gov/tasks/browse/CONCD-723
+    logger.info("Forcing queryset eval")
+    data = list(rows)
+    logger.info("Exporting to csv response")
+    return _export_to_csv_response(filename, headers, data)
+
+
 @never_cache
 @staff_member_required
 def admin_site_report_view(request):
@@ -611,3 +628,18 @@ def admin_retired_site_report_view(request):
     data.append(row)
 
     return export_to_csv_response("retired-site-report.csv", headers, data)
+
+
+class SerializedObjectView(View):
+    def get(self, request, *args, **kwargs):
+        model_name = request.GET.get("model_name")
+        object_id = request.GET.get("object_id")
+        field_name = request.GET.get("field_name")
+
+        model = apps.get_model(app_label="concordia", model_name=model_name)
+        try:
+            instance = model.objects.get(pk=object_id)
+            value = getattr(instance, field_name)
+            return JsonResponse({field_name: value})
+        except model.DoesNotExist:
+            return JsonResponse({"status": "false"}, status=HTTPStatus.NOT_FOUND)

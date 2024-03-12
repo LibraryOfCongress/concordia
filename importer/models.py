@@ -1,6 +1,7 @@
 """
 See the module-level docstring for implementation details
 """
+
 from django.core.validators import MinValueValidator
 from django.db import models
 

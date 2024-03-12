@@ -75,7 +75,7 @@ jobs:
                   libjpeg-dev libopenjp2-7-dev libwebp-dev zlib1g-dev libpq-dev
 
             - name: Install node and npm
-              uses: actions/setup-node@v3
+              uses: actions/setup-node@v4
               with:
                   node-version: '18'
 
@@ -83,7 +83,7 @@ jobs:
               uses: actions/checkout@v4
 
             - name: Set up Python 3.10
-              uses: actions/setup-python@v4
+              uses: actions/setup-python@v5
               with:
                   python-version: '3.10'
                   architecture: 'x64'
@@ -106,8 +106,14 @@ jobs:
                   touch ./logs/concordia-celery.log
                   npm install
                   npx gulp build
+                  chromepath=$(npx @puppeteer/browsers install chrome@stable)
+                  chromepath=${chromepath#* }
+                  chromepath=${chromepath%/chrome}
+                  OLDPATH=$PATH
+                  PATH=$PATH:$chromepath
                   pipenv run ./manage.py collectstatic --no-input
                   pipenv run coverage run ./manage.py test
+                  PATH=$OLDPATH
               env:
                   PGPASSWORD: postgres
                   # The hostname used to communicate with the PostgreSQL service container

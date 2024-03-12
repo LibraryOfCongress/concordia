@@ -58,7 +58,6 @@ STATICFILES_DIRS = [
 NPM_FILE_PATTERNS = {
     "redom": ["dist/*"],
     "split.js": ["dist/*"],
-    "array-sort-by": ["dist/*"],
     "urijs": ["src/*"],
     "openseadragon": ["build/*"],
     "openseadragon-filtering": ["openseadragon-filtering.js"],
@@ -109,9 +108,11 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.sites",
-    "django.contrib.staticfiles",
+    # Replaces "django.contrib.staticfiles",
+    "concordia.apps.ConcordiaStaticFilesConfig",
     "bootstrap4",
     "bittersweet",
+    "maintenance_mode",
     "concordia.apps.ConcordiaAppConfig",
     "exporter",
     "importer",
@@ -122,6 +123,7 @@ INSTALLED_APPS = [
     "flags",
     "channels",
     "django_admin_multiple_choice_list_filter",
+    "tinymce",
 ]
 
 MIDDLEWARE = [
@@ -135,8 +137,8 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "ratelimit.middleware.RatelimitMiddleware",
-    "flags.middleware.FlagConditionsMiddleware",
+    "django_ratelimit.middleware.RatelimitMiddleware",
+    "concordia.middleware.MaintenanceModeMiddleware",
 ]
 
 RATELIMIT_VIEW = "concordia.views.ratelimit_view"
@@ -156,9 +158,11 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "django.template.context_processors.media",
+                "maintenance_mode.context_processors.maintenance_mode",
                 # Concordia
                 "concordia.context_processors.system_configuration",
                 "concordia.context_processors.site_navigation",
+                "concordia.context_processors.maintenance_mode_frontend_available",
             ],
             "libraries": {
                 "staticfiles": "django.templatetags.static",
@@ -336,10 +340,6 @@ sentry_sdk.init(
     integrations=[DjangoIntegration()],
 )
 
-# When the MAINTENANCE_MODE setting is true, this template will be used to
-# generate a 503 response:
-MAINTENANCE_MODE_TEMPLATE = "maintenance-mode.html"
-
 # Names of special django.auth Groups
 COMMUNITY_MANAGER_GROUP_NAME = "Community Managers"
 NEWSLETTER_GROUP_NAME = "Newsletter"
@@ -369,7 +369,6 @@ DEFAULT_PAGE_TTL = 5 * 60
 # Feature flags
 FLAGS = {
     "ADVERTISE_ACTIVITY_UI": [],
-    "SIMPLE_CONTENT_BLOCKS": [],
     "CAROUSEL_CMS": [],
     "SEND_WELCOME_EMAIL": [],
     "SHOW_BANNER": [],
@@ -388,3 +387,24 @@ CHANNEL_LAYERS = {
         },
     }
 }
+
+SECURE_REFERRER_POLICY = "origin"
+TINYMCE_COMPRESSOR = False
+TINYMCE_DEFAULT_CONFIG = {
+    "selector": "textarea.tinymce",
+    "referrer_policy": "origin",
+    "skin": "oxide-dark",
+    "content_css": "dark",
+    "plugins": "link lists searchreplace wordcount",
+    "browser_spellcheck": "true",
+    "toolbar1": "bold italic | numlist bullist | link | searchreplace wordcount",
+}
+TINYMCE_JS_URL = "https://cdn.tiny.cloud/1/rf486i5f1ww9m8191oolczn7f0ry61mzdtfwbu7maiiiv2kv/tinymce/6/tinymce.min.js"
+
+PYTESSERACT_ALLOWED_LANGUAGES = ["eng"]
+
+PYLENIUM_CONFIG = os.path.join(SITE_ROOT_DIR, "pylenium.json")
+
+MAINTENANCE_MODE_STATE_BACKEND = "maintenance_mode.backends.CacheBackend"
+MAINTENANCE_MODE_IGNORE_ADMIN_SITE = True
+MAINTENANCE_MODE_IGNORE_URLS = ("/healthz*", "/metrics*", "/maintenance-mode*")

@@ -112,7 +112,26 @@ urlpatterns = [
     path("help-center/<slug:page_slug>/", views.HelpCenterRedirectView.as_view()),
     # End of help-center patterns
     path("get-started/", views.simple_page, name="welcome-guide"),
-    path("get-started/how-to-transcribe/", views.simple_page, name="how-to-transcribe"),
+    path(
+        "get-started/how-to-transcribe/",
+        views.simple_page,
+        name="transcription-basic-rules",
+    ),
+    path(
+        "get-started/transcription-things-to-avoid/",
+        views.simple_page,
+        name="transcription-things-to-avoid",
+    ),
+    path(
+        "get-started/transcription-printed-text-images/",
+        views.simple_page,
+        name="transcription-printed-text-images",
+    ),
+    path(
+        "get-started/transcription-unusual-text/",
+        views.simple_page,
+        name="transcription-unusual-text",
+    ),
     path("get-started/how-to-review/", views.simple_page, name="how-to-review"),
     path("get-started/how-to-tag/", views.simple_page, name="how-to-tag"),
     path(
@@ -194,11 +213,6 @@ urlpatterns = [
         name="generate-ocr-transcription",
     ),
     path("assets/<int:asset_pk>/tags/submit/", views.submit_tags, name="submit-tags"),
-    path("assets/", views.AssetListView.as_view(), name="asset-list"),
-    path(
-        "transcribe/", views.TranscribeListView.as_view(), name="transcribe-asset-list"
-    ),
-    path("review/", views.ReviewListView.as_view(), name="review-asset-list"),
     path("account/ajax-status/", views.ajax_session_status, name="ajax-session-status"),
     path("account/ajax-messages/", views.ajax_messages, name="ajax-messages"),
     path(
@@ -229,6 +243,11 @@ urlpatterns = [
         name="email-reconfirmation",
     ),
     path(
+        "account/delete/",
+        views.AccountDeletionView.as_view(),
+        name="account-deletion",
+    ),
+    path(
         ".well-known/change-password",  # https://wicg.github.io/change-password-url/
         RedirectView.as_view(pattern_name="password_change"),
     ),
@@ -240,8 +259,23 @@ urlpatterns = [
     path("error/404/", page_not_found, {"exception": Http404()}),
     path("error/429/", views.ratelimit_view),
     path("error/403/", permission_denied, {"exception": HttpResponseForbidden()}),
+    path("tinymce/", include("tinymce.urls")),
     path("", include("django_prometheus_metrics.urls")),
     path("robots.txt", include("robots.urls")),
+    path(
+        "maintenance-mode/off/", views.maintenance_mode_off, name="maintenance_mode_off"
+    ),
+    path("maintenance-mode/on/", views.maintenance_mode_on, name="maintenance_mode_on"),
+    path(
+        "maintenance-mode/frontend/available",
+        views.maintenance_mode_frontend_available,
+        name="maintenance_mode_frontend_available",
+    ),
+    path(
+        "maintenance-mode/frontend/unavailable",
+        views.maintenance_mode_frontend_unavailable,
+        name="maintenance_mode_frontend_unavailable",
+    ),
 ]
 
 if settings.DEBUG:

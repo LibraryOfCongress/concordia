@@ -15,14 +15,14 @@ repos:
       hooks:
           - id: djhtml
     - repo: https://github.com/ambv/black
-      rev: 23.10.0
+      rev: 24.1.0
       hooks:
           - id: black
     - repo: https://github.com/pre-commit/pre-commit-hooks
       rev: v4.5.0
       hooks:
           - id: check-added-large-files
-            args: ['--maxkb=128']
+            args: ['--maxkb=256']
           - id: check-ast
           - id: check-byte-order-marker
           - id: check-case-conflict
@@ -54,23 +54,23 @@ repos:
           - id: prettier
             files: \.(css|less|scss|ts|tsx|graphql|gql|json|js|jsx|md|yaml|yml)$
     - repo: https://github.com/pre-commit/mirrors-eslint
-      rev: v8.51.0
+      rev: v8.56.0
       hooks:
           - id: eslint
             additional_dependencies:
                 - eslint-plugin-prettier@^4.2.1
-                - eslint-plugin-unicorn@^26.0.0
-                - eslint@^7.17.0
+                - eslint-plugin-unicorn@^50.0.1
+                - eslint@^8.56.0
                 - prettier@^2.7.1
     - repo: https://github.com/awebdeveloper/pre-commit-stylelint
       rev: 0.0.2
       hooks:
           - id: stylelint
             additional_dependencies:
-                - 'stylelint@^13.8.0'
-                - 'stylelint-config-prettier@^8.0.2'
-                - 'stylelint-config-recommended@^3.0.0'
-                - 'stylelint-value-no-unknown-custom-properties@^4.0.0'
+                - 'stylelint@^16.2.0'
+                - 'stylelint-config-recommended@^14.0.0'
+                - 'stylelint-value-no-unknown-custom-properties@^6.0.1'
+                - 'stylelint-config-standard-scss@^13.0.0'
     - repo: https://github.com/aws-cloudformation/cfn-python-lint
       rev: v0.82.2
       hooks:

@@ -106,7 +106,7 @@ for performance:
                                      aria-labelledby="topnav-help-dropdown-toggle">
                                     <a class="dropdown-item" href="{% url 'welcome-guide' %}"
                                        rel="nofollow">Get Started</a>
-                                    <a class="dropdown-item" href="{% url 'how-to-transcribe' %}" rel="nofollow">Transcribe</a>
+                                    <a class="dropdown-item" href="{% url 'transcription-basic-rules' %}" rel="nofollow">Transcribe</a>
                                     <a class="dropdown-item" href="{% url 'how-to-review' %}"
                                        rel="nofollow">Review</a>
                                     <a class="dropdown-item" href="{% url 'how-to-tag' %}"
@@ -175,6 +175,12 @@ because it's not worth dealing with IE11 compatibility {% endcomment %}
                         </div>
                     </div>
                 {% endblock messages-container %}
+
+                {% if maintenance_mode %}
+                    <div class="alert mx-3 my-2 text-center" role="alert" style="background-color: red;">
+                        <h2>Maintenance mode is active!</h2>
+                    </div>
+                {% endif %}
 
                 {% block main_content %}{% endblock main_content %}
             </main>
@@ -282,6 +288,35 @@ because it's not worth dealing with IE11 compatibility {% endcomment %}
                 }
             } else {
                 _satellite.pageBottom();
+            }
+        </script>
+
+        <script>
+            function clearCache() {
+                for(var i in localStorage) {
+                    if (i.startsWith("campaign-")) {
+                        localStorage.removeItem(i);
+                    }
+                }
+            }
+            if (typeof(Storage) !== "undefined") {
+                {% if campaign %}
+                    const keyName = "campaign-{{ campaign.slug }}";
+                    if (keyName) {
+                        const campaign = localStorage.getItem(keyName);
+                        if (!campaign) {
+                            {% if not user.is_authenticated %}
+                                clearCache();
+                            {% endif %}
+                            {% if asset %}
+                                $('#tutorial-popup').modal('show');
+                                localStorage.setItem(keyName, "true");
+                            {% endif %}
+                        }
+                    }
+                {% elif not user.is_authenticated %}
+                    clearCache();
+                {% endif %}
             }
         </script>
     </body>

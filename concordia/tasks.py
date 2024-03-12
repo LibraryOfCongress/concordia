@@ -10,7 +10,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.management import call_command
 from django.db import transaction
-from django.db.models import Count, F, OuterRef, Q, Subquery
+from django.db.models import Count, F, Q
 from django.utils import timezone
 from more_itertools.more import chunked
 
@@ -37,10 +37,12 @@ from .celery import app as celery_app
 
 logger = getLogger(__name__)
 
+ONE_DAY = datetime.timedelta(days=1)
+
 
 @celery_app.task
 def expire_inactive_asset_reservations():
-    timestamp = datetime.datetime.now()
+    timestamp = timezone.now()
 
     # Clear old reservations, with a grace period:
     cutoff = timestamp - (
@@ -64,7 +66,7 @@ def expire_inactive_asset_reservations():
 
 @celery_app.task
 def tombstone_old_active_asset_reservations():
-    timestamp = datetime.datetime.now()
+    timestamp = timezone.now()
 
     cutoff = timestamp - (
         datetime.timedelta(hours=settings.TRANSCRIPTION_RESERVATION_TOMBSTONE_HOURS)
@@ -81,7 +83,7 @@ def tombstone_old_active_asset_reservations():
 
 @celery_app.task
 def delete_old_tombstoned_reservations():
-    timestamp = datetime.datetime.now()
+    timestamp = timezone.now()
 
     cutoff = timestamp - (
         datetime.timedelta(
@@ -427,43 +429,145 @@ def retired_total_report():
     total_site_report.save()
 
 
-ONE_DAY = datetime.timedelta(days=1)
+def site_reports_for_date(date):
+    start = date - ONE_DAY
+    return SiteReport.objects.filter(created_on__gte=start, created_on__lte=date)
 
 
-def _backfill_by_date(day):
-    start = day - ONE_DAY
-    q_accepted = Q(transcription__accepted__gte=start, transcription__accepted__lte=day)
-    q_rejected = Q(transcription__rejected__gte=start, transcription__rejected__lte=day)
-    assets = Asset.objects.filter(q_accepted | q_rejected)
-    site_reports = SiteReport.objects.filter(created_on__gte=start, created_on__lte=day)
-    topic_assets = assets.filter(item__project__topics=OuterRef("topic__pk"))
-    subquery = Subquery(
-        topic_assets.annotate(cnt=Count("transcription")).values("cnt")[:1]
+def assets_for_date(date):
+    start = date - ONE_DAY
+    q_accepted = Q(
+        transcription__accepted__gte=start, transcription__accepted__lte=date
     )
-    site_reports.filter(topic__isnull=False).update(daily_review_actions=subquery)
-    campaign_assets = assets.filter(item__project__campaign=OuterRef("campaign__pk"))
-    subquery = Subquery(
-        campaign_assets.annotate(cnt=Count("transcription")).values("cnt")[:1]
+    q_rejected = Q(
+        transcription__rejected__gte=start, transcription__rejected__lte=date
     )
-    site_reports.filter(campaign__isnull=False).update(daily_review_actions=subquery)
-    site_reports.filter(topic__isnull=True, campaign__isnull=True).update(
-        daily_review_actions=Subquery(
-            assets.annotate(cnt=Count("transcription")).values("cnt")[:1]
-        )
+    return Asset.objects.filter(q_accepted | q_rejected)
+
+
+@celery_app.task(ignore_result=True)
+def backfill_total(date, days):
+    logger.info(
+        "STARTING: Backfilling daily data for %s on %s",
+        SiteReport.ReportName.TOTAL,
+        date,
     )
-
-
-def _backfill_data(start, days=0):
-    for n in range(days - 1):
-        day = start - datetime.timedelta(days=n)
-        _backfill_by_date(day)
-
-
-@celery_app.task
-def backfill_daily_data():
-    _backfill_data(
-        timezone.make_aware(datetime.datetime(year=2023, month=9, day=17)), 10
+    site_report = site_reports_for_date(date).filter(
+        report_name=SiteReport.ReportName.TOTAL
+    )[0]
+    logger.info(
+        "STARTING: Backfilling daily data for report %s (%s)", site_report.id, date
     )
+    daily_review_actions = assets_for_date(date).count()
+    logger.debug(
+        "%s daily review actions for report %s (%s)",
+        daily_review_actions,
+        site_report.id,
+        date,
+    )
+    site_report.daily_review_actions = daily_review_actions
+    site_report.save()
+    logger.info(
+        "FINISHED: Backfilling daily data for %s on %s",
+        SiteReport.ReportName.TOTAL,
+        date,
+    )
+    logger.info("FINISHED: Backfilling daily data for all reports on %s", date)
+
+    if days > 0:
+        return backfill_topics.delay(date - ONE_DAY, days - 1)
+    else:
+        logger.info("Backfilling daily data complete")
+
+
+@celery_app.task(ignore_result=True)
+def backfill_next_campaign_report(date, days, site_report_ids):
+    try:
+        site_report_id = site_report_ids.pop()
+    except IndexError:
+        logger.info("FINISHED: Backfilling daily data for campaigns on %s", date)
+        backfill_total.delay(date, days)
+        return
+    site_report = SiteReport.objects.get(id=site_report_id)
+    logger.info(
+        "STARTING: Backfilling daily data for report %s (%s)", site_report.id, date
+    )
+    daily_review_actions = (
+        assets_for_date(date)
+        .filter(item__project__campaign=site_report.campaign)
+        .count()
+    )
+    logger.debug(
+        "%s daily review actions for report %s (%s)",
+        daily_review_actions,
+        site_report.id,
+        date,
+    )
+    site_report.daily_review_actions = daily_review_actions
+    site_report.save()
+    logger.info(
+        "FINISHED: Backfilling daily data for report %s (%s)", site_report.id, date
+    )
+    return backfill_next_campaign_report.delay(date, days, site_report_ids)
+
+
+@celery_app.task(ignore_result=True)
+def backfill_campaigns(date, days):
+    site_report_ids = list(
+        site_reports_for_date(date)
+        .filter(campaign__isnull=False)
+        .values_list("id", flat=True)
+    )
+    logger.info("STARTING: Backfilling daily data for campaigns on %s", date)
+    return backfill_next_campaign_report.delay(date, days, site_report_ids)
+
+
+@celery_app.task(ignore_result=True)
+def backfill_next_topic_report(date, days, site_report_ids):
+    try:
+        site_report_id = site_report_ids.pop()
+    except IndexError:
+        logger.info("FINISHED: Backfilling daily data for topics on %s", date)
+        backfill_campaigns.delay(date, days)
+        return
+    site_report = SiteReport.objects.get(id=site_report_id)
+    logger.info(
+        "STARTING: Backfilling daily data for report %s (%s)", site_report.id, date
+    )
+    daily_review_actions = (
+        assets_for_date(date).filter(item__project__topics=site_report.topic).count()
+    )
+    logger.debug(
+        "%s daily review actions for report %s (%s)",
+        daily_review_actions,
+        site_report.id,
+        date,
+    )
+    site_report.daily_review_actions = daily_review_actions
+    site_report.save()
+    logger.info(
+        "FINISHED: Backfilling daily data for report %s (%s)", site_report.id, date
+    )
+    return backfill_next_topic_report.delay(date, days, site_report_ids)
+
+
+@celery_app.task(ignore_result=True)
+def backfill_topics(date, days):
+    site_report_ids = list(
+        site_reports_for_date(date)
+        .filter(topic__isnull=False)
+        .values_list("id", flat=True)
+    )
+    logger.info("STARTING: Backfilling daily data for topics on %s", date)
+    return backfill_next_topic_report.delay(date, days, site_report_ids)
+
+
+@celery_app.task(ignore_result=True)
+def backfill_daily_data(start, days):
+    date = timezone.make_aware(datetime.datetime(**start))
+    logger.info("Backfilling daily data for the %s days before %s", days, date)
+    logger.info("STARTED: Backfilling daily data for all reports on %s", date)
+    return backfill_topics.delay(date, days - 1)
 
 
 @celery_app.task

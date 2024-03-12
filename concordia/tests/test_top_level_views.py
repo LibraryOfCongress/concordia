@@ -5,7 +5,7 @@ Tests for for the top-level & “CMS” views
 from django.test import TestCase
 from django.urls import reverse
 
-from concordia.models import SimplePage
+from concordia.models import Guide, SimplePage
 
 from .utils import CacheControlAssertions, CreateTestUsers, JSONAssertMixin
 
@@ -110,6 +110,7 @@ class TopLevelViewTests(
         self.assertEqual(resp.context["body"], f"<p>{s.body}</p>")
 
     def test_nested_simple_page(self):
+        Guide.objects.create(title="How to Tag")
         l1 = SimplePage.objects.create(
             title="Get Started",
             body="not the real body",
