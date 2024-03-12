@@ -49,6 +49,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.template import loader
 from django.template.loader import render_to_string
 from django.urls import reverse, reverse_lazy
+from django.urls.exceptions import NoReverseMatch
 from django.utils.decorators import method_decorator
 from django.utils.http import http_date
 from django.utils.text import slugify
@@ -203,7 +204,11 @@ def simple_page(request, path=None):
             ("Get started", "welcome-guide"),
         ]
         for guide in guides.all():
-            links.append((guide.title, slugify(guide.title)))
+            try:
+                url = reverse(slugify(guide.title))
+            except NoReverseMatch:
+                url = None
+            links.append((guide.title, url))
         ctx["toc"] = links
     ctx["body"] = md.convert(html)
 
