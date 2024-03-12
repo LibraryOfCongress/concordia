@@ -25,9 +25,11 @@
                                 <div class="nav flex-column help-center">
                                     <h4>Instructions</h4>
                                     {% for link in toc %}
-                                        <a class="nav-link{% if title|lower == link.0|lower %} active{% endif %}" href="{% url link.1 %}">
-                                            {{ link.0 }}
-                                        </a>
+                                        {% if link.1 %}
+                                            <a class="nav-link{% if title|lower == link.0|lower %} active{% endif %}" href="{{ link.1 }}">
+                                                {{ link.0 }}
+                                            </a>
+                                        {% endif %}
                                     {% endfor %}
                                     <span lang="es">
                                         <a class="nav-link" href="/help-center/how-to-transcribe-esp/">Instrucciones en español</a>
