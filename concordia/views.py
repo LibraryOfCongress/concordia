@@ -1959,10 +1959,16 @@ def reserve_asset(request, *, asset_pk):
                     )
                 if not is_it_already_mine:
                     is_someone_else_active = True
-                    logger.debug(
-                        "Someone else has this active reservation %s",
-                        reservation.reservation_token,
-                    )
+                    if reservation.reservation_token[44:] == reservation_token[44:]:
+                        logger.info(
+                            "I should have reservation %s, but my token doesn't match.",
+                            reservation_token,
+                        )
+                    else:
+                        logger.info(
+                            "Someone else has this active reservation %s",
+                            reservation.reservation_token,
+                        )
 
         if am_i_tombstoned:
             return HttpResponse(status=408)  # Request Timed Out
