@@ -26,7 +26,13 @@ def request_accepts_json(request):
 
 def get_or_create_reservation_token(request):
     if "reservation_token" not in request.session:
-        request.session["reservation_token"] = token_hex(25)
+        request.session["reservation_token"] = token_hex(22)
+        user = request.user
+        if user is not None:
+            uid = user.id
+            if uid is None:
+                uid = get_anonymous_user().id
+            request.session["reservation_token"] += str(uid).zfill(6)
     return request.session["reservation_token"]
 
 
