@@ -49,10 +49,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.template import loader
 from django.template.loader import render_to_string
 from django.urls import reverse, reverse_lazy
-from django.urls.exceptions import NoReverseMatch
 from django.utils.decorators import method_decorator
 from django.utils.http import http_date
-from django.utils.text import slugify
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.cache import cache_control, never_cache
@@ -156,7 +154,7 @@ def healthz(request):
 
 
 @default_cache_control
-def simple_page(request, path=None):
+def simple_page(request, path=None, slug=None):
     """
     Basic content management using Markdown managed in the SimplePage model
 
@@ -205,10 +203,12 @@ def simple_page(request, path=None):
         ]
         for guide in guides.all():
             try:
-                url = reverse(slugify(guide.title))
-            except NoReverseMatch:
+                simple_page = SimplePage.objects.get(title__iexact=guide.title)
+                url = simple_page.path
+            except SimplePage.DoesNotExist:
                 url = None
-            links.append((guide.title, url))
+            if url is not None:
+                links.append((guide.title, url))
         ctx["toc"] = links
     ctx["body"] = md.convert(html)
 
