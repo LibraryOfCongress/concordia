@@ -190,7 +190,7 @@ def simple_page(request, path=None):
         "breadcrumbs": breadcrumbs,
     }
 
-    guides = Guide.objects
+    guides = Guide.objects.order_by("order")
     try:
         guide = guides.get(title__iexact=page.title)
         html = "".join((page.body, guide.body))
