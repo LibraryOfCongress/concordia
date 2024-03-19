@@ -199,7 +199,7 @@ def simple_page(request, path=None, slug=None):
             ctx["add_navigation"] = True
     if "add_navigation" in ctx:
         links = [
-            ("Get started", "welcome-guide"),
+            ("Get started", reverse("welcome-guide")),
         ]
         for guide in guides.all():
             try:
