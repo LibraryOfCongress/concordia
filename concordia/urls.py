@@ -123,17 +123,13 @@ urlpatterns = [
         name="transcription-things-to-avoid",
     ),
     path(
-        "get-started/transcription-printed-text-images/",
-        views.simple_page,
-        name="transcription-printed-text-images",
-    ),
-    path(
         "get-started/transcription-unusual-text/",
         views.simple_page,
         name="transcription-unusual-text",
     ),
     path("get-started/how-to-review/", views.simple_page, name="how-to-review"),
     path("get-started/how-to-tag/", views.simple_page, name="how-to-tag"),
+    path("get-started/<uslug:slug>/", views.simple_page, name="simple-page"),
     path(
         "get-started-esp/",
         views.simple_page,
