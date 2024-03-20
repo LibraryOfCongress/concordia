@@ -264,8 +264,8 @@ pipenv run ./manage.py print_frontend_test_urls | xargs npx axe-cli --show-error
 ### Static Image Compression
 
 When you update any of the files under `concordia/static/img`, please use an
-optimizer such as [ImageOptim](https://imageoptim.com) to losslessly compress
-JPEG, PNG, SVG, etc. files.
+optimizer such as [ImageOptim](https://imageoptim.com) or [Caesium](https://caesium.app/)
+to **losslessly** compress JPEG, PNG, SVG, etc. files.
 
 ```bash
 brew cask install imageoptim
