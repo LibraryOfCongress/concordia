@@ -1141,13 +1141,18 @@
         });
     </script>
     <script>
+        var openGuide = document.getElementById("open-guide");
+        var rect = document.getElementById("transcription-input").getBoundingClientRect();
+        var top = rect.top;
+        openGuide.style.top = rect.top - 179 + "px";
+
         function openOffcanvas() {
             var guide = document.getElementById("guide-sidebar");
             guide.classList.remove("offscreen");
             guide.style.borderWidth = "0 0 thick thick";
             guide.style.borderStyle = "solid";
             guide.style.borderColor = "#0076ad";
-            document.getElementById("open-guide").style.display = "none";
+            openGuide.style.display = "none";
             document.addEventListener('keydown', function(e) {
                 if (e.key == "Escape") {
                     closeOffcanvas();
