@@ -189,6 +189,7 @@ def simple_page(request, path=None, slug=None):
     }
 
     guides = Guide.objects.order_by("order")
+    links = []
     try:
         guide = guides.get(title__iexact=page.title)
         html = "".join((page.body, guide.body))
@@ -197,10 +198,8 @@ def simple_page(request, path=None, slug=None):
         html = page.body
         if page.title == "Get started":
             ctx["add_navigation"] = True
+            links.append("Get started", reverse("welcome-guide"))
     if "add_navigation" in ctx:
-        links = [
-            ("Get started", reverse("welcome-guide")),
-        ]
         for guide in guides.all():
             try:
                 simple_page = SimplePage.objects.get(title__iexact=guide.title)
