@@ -491,17 +491,13 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         # Acquire the reservation: 1 acquire
         # + 1 reservation check
         # + 1 session if not anonymous and using a database:
+        expected_update_queries = 2
         if not anonymous and settings.SESSION_ENGINE.endswith("db"):
-            expected_acquire_queries = 3
-        else:
-            expected_acquire_queries = 2
-
-        # Release the reservation:
-        # 1 release + 1 session if not anonymous and using a database:
-        if not anonymous and settings.SESSION_ENGINE.endswith("db"):
-            expected_release_queries = 2
-        else:
-            expected_release_queries = 1
+            expected_update_queries += 1
+        expected_acquire_queries = expected_update_queries
+        if not anonymous:
+            # + 1 get user ID from request
+            expected_acquire_queries += 1
 
         with self.assertNumQueries(expected_acquire_queries):
             resp = self.client.post(reverse("reserve-asset", args=(asset.pk,)))
@@ -513,7 +509,7 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
 
         # Confirm that an update did not change the pk when it updated the timestamp:
 
-        with self.assertNumQueries(expected_acquire_queries):
+        with self.assertNumQueries(expected_update_queries):
             resp = self.client.post(reverse("reserve-asset", args=(asset.pk,)))
         data = self.assertValidJSON(resp, expected_status=200)
         self.assertEqual(1, AssetTranscriptionReservation.objects.count())
@@ -526,6 +522,11 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         self.assertLess(reservation.created_on, updated_reservation.updated_on)
 
         # Release the reservation now that we're done:
+        # 1 release + 1 session if not anonymous and using a database:
+        if not anonymous and settings.SESSION_ENGINE.endswith("db"):
+            expected_release_queries = 2
+        else:
+            expected_release_queries = 1
 
         with self.assertNumQueries(expected_release_queries):
             resp = self.client.post(
@@ -559,8 +560,8 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         self.client.logout()
         self.login_user()
 
-        # 1 session check + 1 acquire
-        with self.assertNumQueries(2 if settings.SESSION_ENGINE.endswith("db") else 1):
+        # 1 session check + 1 acquire + get user ID from request
+        with self.assertNumQueries(3 if settings.SESSION_ENGINE.endswith("db") else 2):
             resp = self.client.post(reverse("reserve-asset", args=(asset.pk,)))
         self.assertEqual(409, resp.status_code)
         self.assertEqual(1, AssetTranscriptionReservation.objects.count())
@@ -586,11 +587,11 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
 
         self.login_user()
 
-        # 1 session check + 1 reservation check + 1 acquire
+        # 1 reservation check + 1 acquire + 1 get user ID from request
+        expected_queries = 3
         if settings.SESSION_ENGINE.endswith("db"):
-            expected_queries = 3
-        else:
-            expected_queries = 2
+            # 1 session check
+            expected_queries += 1
 
         with self.assertNumQueries(expected_queries):
             resp = self.client.post(reverse("reserve-asset", args=(asset.pk,)))
