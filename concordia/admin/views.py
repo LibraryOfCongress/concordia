@@ -200,7 +200,7 @@ def project_level_export(request):
 
     else:
         context["projects"] = []
-        for campaigns in Campaign.objects.all():
+        for campaigns in Campaign.objects.exclude(status=Campaign.Status.RETIRED):
             all_campaigns.append(campaigns)
         form = AdminProjectBulkImportForm()
 
