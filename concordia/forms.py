@@ -45,8 +45,12 @@ class ActivateAndSetPasswordForm(SetPasswordForm):
 class UserRegistrationForm(RegistrationForm):
     newsletterOptIn = forms.BooleanField(
         label="Newsletter",
+        initial=True,
         required=False,
-        help_text="Email me about campaign updates, upcoming events, and new features.",
+        help_text=(
+            "Email me 2-3 times a month about campaign updates, upcoming "
+            "events, and new features."
+        ),
     )
 
     class Meta(RegistrationForm.Meta):
