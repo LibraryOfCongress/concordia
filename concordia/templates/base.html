@@ -279,6 +279,18 @@ because it's not worth dealing with IE11 compatibility {% endcomment %}
 
         {% include "fragments/common-scripts.html" %}
 
+        <script type="text/javascript">
+            function setTutorialHeight() {
+                var $carouselItems = $("#card-carousel .carousel-item");
+                var heights = $carouselItems.map(function() {
+                    return $(this).height();
+                });
+                var maxHeight = Math.max.apply(this, heights);
+                $carouselItems.height(maxHeight);
+            }
+        </script>
+
+
         {% block body_scripts %}{% endblock body_scripts %}
 
         <script type="text/javascript">
@@ -309,6 +321,7 @@ because it's not worth dealing with IE11 compatibility {% endcomment %}
                                 clearCache();
                             {% endif %}
                             {% if asset %}
+                                setTutorialHeight();
                                 $('#tutorial-popup').modal('show');
                                 localStorage.setItem(keyName, "true");
                             {% endif %}

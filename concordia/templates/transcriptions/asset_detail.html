@@ -430,9 +430,15 @@
                                     <span class="sr-only">Loading...</span>
                                 </div>
                             </div>
-                            <textarea readonly class="form-control rounded flex-grow-1 d-print-none" name="text" id="transcription-input" placeholder="{% if transcription_status == 'not_started' or transcription_status == 'in_progress' %}Go ahead, start typing. You got this!{% else %}Nothing to transcribe{% endif %}" aria-label="Transcription input">
-                                {{ transcription.text }}
-                            </textarea>
+                            <div class="d-flex flex-column flex-grow-1" id="transcription-input-container">
+                                <textarea readonly class="form-control rounded flex-grow-1 d-print-none" name="text" id="transcription-input" placeholder="{% if transcription_status == 'not_started' or transcription_status == 'in_progress' %}Go ahead, start typing. You got this!{% else %}Nothing to transcribe{% endif %}" aria-label="Transcription input">
+                                    {{ transcription.text }}
+                                </textarea>
+                                {% if guides %}
+                                    <button id="open-guide" class="btn btn-primary" type="button" onclick="openOffcanvas()">How-To Guide</button>
+                                    {% include "fragments/_how-to-guide.html" %}
+                                {% endif %}
+                            </div>
 
                             <div class="print-transcription-text" aria-hidden="true" style="display: none;">{{ transcription.text }}</div>
 
@@ -522,10 +528,6 @@
                     </form>
                 </div>
             </div>
-            {% if guides %}
-                <button id="open-guide" class="btn btn-primary" type="button" onclick="openOffcanvas()">How-To Guide</button>
-                {% include "fragments/_how-to-guide.html" %}
-            {% endif %}
         </div>
         <div id="help-container" class="mt-1 d-print-none">
             <div class="row p-3 bg-light justify-content-sm-between">
@@ -1143,7 +1145,7 @@
             guide.style.borderWidth = "0 0 thick thick";
             guide.style.borderStyle = "solid";
             guide.style.borderColor = "#0076ad";
-            document.getElementById("open-guide").style.display = "none";
+            openGuide.style.display = "none";
             document.addEventListener('keydown', function(e) {
                 if (e.key == "Escape") {
                     closeOffcanvas();
@@ -1181,12 +1183,7 @@
     </script>
     <script>
         $("#tutorial-popup").on("shown.bs.modal", function() {
-            var $carouselItems = $("#card-carousel .carousel-item");
-            var heights = $carouselItems.map(function() {
-                return $(this).height();
-            });
-            var maxHeight = Math.max.apply(this, heights);
-            $carouselItems.height(maxHeight);
+            setTutorialHeight();
         });
     </script>
 {% endblock body_scripts %}
