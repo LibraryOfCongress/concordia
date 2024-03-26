@@ -83,6 +83,7 @@ from .filters import (
     TranscriptionCampaignListFilter,
     TranscriptionCampaignStatusListFilter,
     TranscriptionProjectListFilter,
+    UserAssetTagCollectionCampaignListFilter,
     UserAssetTagCollectionCampaignStatusListFilter,
     UserProfileActivityCampaignListFilter,
     UserProfileActivityCampaignStatusListFilter,
@@ -756,7 +757,7 @@ class UserAssetTagCollectionAdmin(admin.ModelAdmin):
     search_fields = ["asset__title", "asset__campaign__title", "asset__project__title"]
     list_filter = (
         UserAssetTagCollectionCampaignStatusListFilter,
-        "asset__item__project__campaign",
+        UserAssetTagCollectionCampaignListFilter,
         "asset__item__project",
         "user__is_staff",
     )
