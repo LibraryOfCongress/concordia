@@ -56,7 +56,7 @@ class CampaignListFilter(admin.SimpleListFilter):
     template = "admin/long_name_filter.html"
 
     def lookups(self, request, model_admin):
-        queryset = Campaign.objects.all()
+        queryset = Campaign.objects.exclude(status=Campaign.Status.RETIRED)
         if self.status_filter_parameter in request.GET:
             queryset = queryset.filter(status=request.GET[self.status_filter_parameter])
         return queryset.values_list("id", "title").order_by("title")
@@ -185,6 +185,11 @@ class TagCampaignListFilter(CampaignListFilter):
 
 
 class TranscriptionCampaignListFilter(CampaignListFilter):
+    parameter_name = "asset__item__project__campaign__id__exact"
+    status_filter_parameter = "asset__item__project__campaign__status"
+
+
+class UserAssetTagCollectionCampaignListFilter(CampaignListFilter):
     parameter_name = "asset__item__project__campaign__id__exact"
     status_filter_parameter = "asset__item__project__campaign__status"
 
