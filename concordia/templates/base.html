@@ -286,7 +286,11 @@ because it's not worth dealing with IE11 compatibility {% endcomment %}
                     return $(this).height();
                 });
                 var maxHeight = Math.max.apply(this, heights);
-                $carouselItems.height(maxHeight);
+                if (maxHeight > 0) {
+                    $carouselItems.height(maxHeight);
+                } else {
+                    $carouselItems.height("541.2px");
+                }
             }
         </script>
 
