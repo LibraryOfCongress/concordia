@@ -283,7 +283,11 @@ because it's not worth dealing with IE11 compatibility {% endcomment %}
             function setTutorialHeight() {
                 var $carouselItems = $("#card-carousel .carousel-item");
                 var heights = $carouselItems.map(function() {
-                    return $(this).height();
+                    var height = $(this).height();
+                    if (height <= 0) {
+                        height = $(this).children[0].offsetHeight + 48;
+                    }
+                    return height;
                 });
                 var maxHeight = Math.max.apply(this, heights);
                 $carouselItems.height(maxHeight);
