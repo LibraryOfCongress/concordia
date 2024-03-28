@@ -34,7 +34,7 @@ def get_or_create_reservation_token(request):
                 # We should probably call get_anonymous_user,
                 # but I'm going to avoid doing so since it would
                 # incur yet *another* database query
-                uid = 8
+                uid = get_anonymous_user().id
             request.session["reservation_token"] += str(uid).zfill(6)
     return request.session["reservation_token"]
 
