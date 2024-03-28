@@ -285,7 +285,12 @@ because it's not worth dealing with IE11 compatibility {% endcomment %}
                 var heights = $carouselItems.map(function() {
                     var height = $(this).height();
                     if (height <= 0) {
-                        height = $(this).children[0].offsetHeight + 48;
+                        var firstChild = $(this).children[0];
+                        if (firstChild) {
+                            height = firstChild.offsetHeight + 48;
+                        } else {
+                            return 517.195;
+                        }
                     }
                     return height;
                 });
