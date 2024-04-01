@@ -272,7 +272,7 @@ ul.nav-secondary {
     flex: initial !important;
 }
 
-#transcription-input {
+#transcription-input-container {
     width: 99% !important;
 }
 
@@ -482,7 +482,6 @@ $card-progress-height: 12px;
     .view-transcriptions--item-detail & {
         top: 0;
     }
-
 }
 
 .concordia-object-card .card-actions .btn {
@@ -1086,7 +1085,6 @@ $card-progress-height: 12px;
     position: absolute;
     border-radius: 0;
     right: 0;
-    top: 129px;
     font-size: 0.75rem;
     margin-right: -55px;
     margin-top: 39px;
