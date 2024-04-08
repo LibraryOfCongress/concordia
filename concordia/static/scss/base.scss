@@ -1125,6 +1125,11 @@ $card-progress-height: 12px;
     text-decoration: underline;
 }
 
+.guide-body {
+    max-height: 462.2px;
+    overflow: scroll;
+}
+
 .guide-body h3 {
     font-size: 1rem;
     font-weight: bold;
