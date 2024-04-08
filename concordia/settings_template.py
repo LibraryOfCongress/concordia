@@ -355,7 +355,7 @@ BOOTSTRAP4 = {"required_css_class": "form-group-required", "set_placeholder": Fa
 # Transcription-related settings
 
 #: Number of seconds an asset reservation is valid for
-TRANSCRIPTION_RESERVATION_SECONDS = 5 * 60
+TRANSCRIPTION_RESERVATION_SECONDS = 15 * 60
 
 #: Number of hours until an asset reservation is tombstoned
 TRANSCRIPTION_RESERVATION_TOMBSTONE_HOURS = 72
