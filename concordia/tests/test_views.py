@@ -575,8 +575,8 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         )
         stale_reservation.full_clean()
         stale_reservation.save()
-        # Backdate the object as if it happened 15 minutes ago:
-        old_timestamp = now() - timedelta(minutes=15)
+        # Backdate the object as if it happened 31 minutes ago:
+        old_timestamp = now() - timedelta(minutes=31)
         AssetTranscriptionReservation.objects.update(
             created_on=old_timestamp, updated_on=old_timestamp
         )
