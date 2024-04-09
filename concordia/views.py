@@ -1332,6 +1332,12 @@ class AssetDetailView(APIDetailView):
             or transcription_status == TranscriptionStatus.IN_PROGRESS
         ):
             ctx["activity_mode"] = "transcribe"
+            if transcription is not None:
+                ctx["disable_ocr"] = transcription.turn_off_ocr()
+            else:
+                ctx["disable_ocr"] = asset.turn_off_ocr()
+        else:
+            ctx["disable_ocr"] = True
         if transcription_status == TranscriptionStatus.SUBMITTED:
             ctx["activity_mode"] = "review"
 
