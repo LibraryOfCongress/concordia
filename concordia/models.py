@@ -272,7 +272,7 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
     metadata = JSONField(default=metadata_default, blank=True, null=True)
 
     disable_ocr = models.BooleanField(
-        default=False, help_text="Turn OCR off for this descendants of this campaign"
+        default=False, help_text="Turn OCR off for all assets of this campaign"
     )
 
     class Meta:
@@ -403,7 +403,7 @@ class Project(MetricsModelMixin("project"), models.Model):
     topics = models.ManyToManyField(Topic)
 
     disable_ocr = models.BooleanField(
-        default=False, help_text="Turn OCR off for this descendants of this project"
+        default=False, help_text="Turn OCR off for all assets of this project"
     )
 
     class Meta:
@@ -446,7 +446,7 @@ class Item(MetricsModelMixin("item"), models.Model):
     thumbnail_url = models.URLField(max_length=255, blank=True, null=True)
 
     disable_ocr = models.BooleanField(
-        default=False, help_text="Turn OCR off for this children of this item"
+        default=False, help_text="Turn OCR off for all assets of this item"
     )
 
     class Meta:
