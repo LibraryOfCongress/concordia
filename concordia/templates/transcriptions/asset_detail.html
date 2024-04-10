@@ -679,7 +679,7 @@
         </div>
         <div id="ocr-transcription-modal" class="modal" tabindex="-1" role="dialog">
             <div class="modal-dialog modal-dialog-centered" role="document">
-                <div class="modal-content">
+                <div class="modal-content" id="ocr-confirmation-modal">
                     <div class="modal-header">
                         <h5 class="modal-title">Are you sure?</h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -692,16 +692,34 @@
                     <div class="modal-footer">
                         <button type="button" class="btn btn-primary" data-dismiss="modal">Cancel</button>
                         {% if transcription_status == "not_started" or transcription_status == "in_progress" %}
+                            <input type="hidden" name="supersedes" value="{{ transcription.pk|default:'' }}" />
+                            <button id="select-language-button" class="btn btn-link underline-link font-weight-bold" onclick="selectLanguage()">Yes, Select Language</button>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="modal-content" id="language-selection-modal">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Select language</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Select the language the transcription is in from the list below.</p>
+                        <select id="language" name="language" size="7">
+                            {% for language in languages %}
+                                <option value="{{ language.0 }}"{% if language.0 == "eng" %} selected="selected"{% endif %}>
+                                    {{ language.1}}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-dismiss="modal">Cancel</button>
+                        {% if transcription_status == "not_started" or transcription_status == "in_progress" %}
                             <form id="ocr-transcription-form" class="ajax-submission" method="post" action="{% url 'generate-ocr-transcription' asset_pk=asset.pk %}" data-lock-element="#transcription-editor">
                                 <input type="hidden" name="supersedes" value="{{ transcription.pk|default:'' }}" />
-                                <button id="ocr-transcription-button" class="btn btn-link underline-link font-weight-bold" disabled>Yes, replace the text</button>
-                                <select id="language" name="language">
-                                    {% for language in languages %}
-                                        <option value="{{ language.0 }}"{% if language.0 == "eng" %} selected="selected"{% endif %}>
-                                            {{ language.1}}
-                                        </option>
-                                    {% endfor %}
-                                </select>
+                                <button id="ocr-transcription-button" class="btn btn-link underline-link font-weight-bold" disabled>Replace Text</button>
                             </form>
                         {% endif %}
                     </div>
@@ -1192,5 +1210,9 @@
         $("#tutorial-popup").on("shown.bs.modal", function() {
             setTutorialHeight();
         });
+        function selectLanguage() {
+            document.getElementById("ocr-confirmation-modal").style.display = "none";
+            document.getElementById("language-selection-modal").style.display = "block";
+        }
     </script>
 {% endblock body_scripts %}
