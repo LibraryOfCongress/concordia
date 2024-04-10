@@ -23,6 +23,22 @@ class AssetTestCase(CreateTestUsers, TestCase):
     def test_get_contributor_count(self):
         self.assertEqual(self.asset.get_contributor_count(), 2)
 
+    def test_turn_off_ocr(self):
+        self.assertFalse(self.asset.turn_off_ocr())
+        self.asset.disable_ocr = True
+        self.asset.save()
+        self.assertTrue(self.asset.turn_off_ocr())
+
+        self.assertFalse(self.asset.item.turn_off_ocr())
+        self.asset.item.disable_ocr = True
+        self.asset.item.save()
+        self.assertTrue(self.asset.item.turn_off_ocr())
+
+        self.assertFalse(self.asset.item.project.turn_off_ocr())
+        self.asset.item.project.disable_ocr = True
+        self.asset.item.project.save()
+        self.assertTrue(self.asset.item.project.turn_off_ocr())
+
 
 class TranscriptionManagerTestCase(CreateTestUsers, TestCase):
     def test_recent_review_actions(self):

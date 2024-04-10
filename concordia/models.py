@@ -271,6 +271,10 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
 
     metadata = JSONField(default=metadata_default, blank=True, null=True)
 
+    disable_ocr = models.BooleanField(
+        default=False, help_text="Turn OCR off for all assets of this campaign"
+    )
+
     class Meta:
         indexes = [
             models.Index(fields=["published", "unlisted"]),
@@ -398,6 +402,10 @@ class Project(MetricsModelMixin("project"), models.Model):
 
     topics = models.ManyToManyField(Topic)
 
+    disable_ocr = models.BooleanField(
+        default=False, help_text="Turn OCR off for all assets of this project"
+    )
+
     class Meta:
         unique_together = (("slug", "campaign"),)
         ordering = ["title"]
@@ -411,6 +419,9 @@ class Project(MetricsModelMixin("project"), models.Model):
             "transcriptions:project-detail",
             kwargs={"campaign_slug": self.campaign.slug, "slug": self.slug},
         )
+
+    def turn_off_ocr(self):
+        return self.disable_ocr or self.campaign.disable_ocr
 
 
 class Item(MetricsModelMixin("item"), models.Model):
@@ -434,6 +445,10 @@ class Item(MetricsModelMixin("item"), models.Model):
     )
     thumbnail_url = models.URLField(max_length=255, blank=True, null=True)
 
+    disable_ocr = models.BooleanField(
+        default=False, help_text="Turn OCR off for all assets of this item"
+    )
+
     class Meta:
         unique_together = (("item_id", "project"),)
         indexes = [models.Index(fields=["project", "published"])]
@@ -450,6 +465,9 @@ class Item(MetricsModelMixin("item"), models.Model):
                 "item_id": self.item_id,
             },
         )
+
+    def turn_off_ocr(self):
+        return self.disable_ocr or self.project.turn_off_ocr()
 
 
 class AssetQuerySet(PublicationQuerySet):
@@ -515,6 +533,10 @@ class Asset(MetricsModelMixin("asset"), models.Model):
 
     storage_image = models.ImageField(upload_to=get_storage_path, max_length=255)
 
+    disable_ocr = models.BooleanField(
+        default=False, help_text="Turn OCR off for this asset"
+    )
+
     class Meta:
         unique_together = (("slug", "item"),)
         indexes = [
@@ -572,6 +594,9 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         transcriber_ids = transcriptions.values_list("user", flat=True).distinct()
         user_ids = list(set(list(reviewer_ids) + list(transcriber_ids)))
         return len(user_ids)
+
+    def turn_off_ocr(self):
+        return self.disable_ocr or self.item.turn_off_ocr()
 
 
 class Tag(MetricsModelMixin("tag"), models.Model):
@@ -733,6 +758,12 @@ class AssetTranscriptionReservation(models.Model):
     created_on = models.DateTimeField(editable=False, auto_now_add=True)
     updated_on = models.DateTimeField(auto_now=True)
     tombstoned = models.BooleanField(default=False, blank=True, null=True)
+
+    def get_token(self):
+        return self.reservation_token[:44]
+
+    def get_user(self):
+        return self.reservation_token[44:]
 
 
 class SimplePage(models.Model):
