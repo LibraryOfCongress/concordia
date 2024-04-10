@@ -990,6 +990,12 @@ $card-progress-height: 12px;
 
 #language-selection-modal {
     display: none;
+    margin-left: 40px;
+    max-width: 400px;
+}
+
+#language-selection-modal .modal-footer {
+    justify-content: center;
 }
 
 /*
