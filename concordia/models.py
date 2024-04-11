@@ -13,7 +13,7 @@ from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models import Count, ExpressionWrapper, F, JSONField, Q
 from django.db.models.functions import Round
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_save
 from django.urls import reverse
 from django.utils import timezone
 from django_prometheus_metrics.models import MetricsModelMixin
@@ -290,6 +290,29 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
         return reverse("transcriptions:campaign-detail", args=(self.slug,))
 
 
+def on_campaign_changed(sender, instance, **kwargs):
+    try:
+        obj = sender.objects.get(pk=instance.pk)
+    except sender.DoesNotExist:
+        # Object is new, so field hasn't actually changed.
+        pass
+    else:
+        if not obj.disable_ocr == instance.disable_ocr:
+            # Field has changed
+            Project.objects.filter(campaign=instance).exclude(
+                disable_ocr=instance.disable_ocr
+            ).update(disable_ocr=instance.disable_ocr)
+            Item.objects.filter(project__campaign=instance).exclude(
+                disable_ocr=instance.disable_ocr
+            ).update(disable_ocr=instance.disable_ocr)
+            Asset.objects.filter(item__project__campaign=instance).exclude(
+                disable_ocr=instance.disable_ocr
+            ).update(disable_ocr=instance.disable_ocr)
+
+
+pre_save.connect(on_campaign_changed, sender=Campaign)
+
+
 class Topic(models.Model):
     objects = UnlistedPublicationQuerySet.as_manager()
 
@@ -424,6 +447,26 @@ class Project(MetricsModelMixin("project"), models.Model):
         return self.disable_ocr or self.campaign.disable_ocr
 
 
+def on_project_changed(sender, instance, **kwargs):
+    try:
+        obj = sender.objects.get(pk=instance.pk)
+    except sender.DoesNotExist:
+        # Object is new, so field hasn't actually changed.
+        pass
+    else:
+        if not obj.disable_ocr == instance.disable_ocr:
+            # Field has changed
+            Item.objects.filter(project=instance).exclude(
+                disable_ocr=instance.disable_ocr
+            ).update(disable_ocr=instance.disable_ocr)
+            Asset.objects.filter(item__project=instance).exclude(
+                disable_ocr=instance.disable_ocr
+            ).update(disable_ocr=instance.disable_ocr)
+
+
+pre_save.connect(on_project_changed, sender=Project)
+
+
 class Item(MetricsModelMixin("item"), models.Model):
     objects = PublicationQuerySet.as_manager()
 
@@ -468,6 +511,23 @@ class Item(MetricsModelMixin("item"), models.Model):
 
     def turn_off_ocr(self):
         return self.disable_ocr or self.project.turn_off_ocr()
+
+
+def on_item_changed(sender, instance, **kwargs):
+    try:
+        obj = sender.objects.get(pk=instance.pk)
+    except sender.DoesNotExist:
+        # Object is new, so field hasn't actually changed.
+        pass
+    else:
+        if not obj.disable_ocr == instance.disable_ocr:
+            # Field has changed
+            Asset.objects.filter(item=instance).exclude(
+                disable_ocr=instance.disable_ocr
+            ).update(disable_ocr=instance.disable_ocr)
+
+
+pre_save.connect(on_item_changed, sender=Item)
 
 
 class AssetQuerySet(PublicationQuerySet):
