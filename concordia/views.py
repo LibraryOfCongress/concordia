@@ -122,6 +122,7 @@ MESSAGE_LEVEL_NAMES = dict(
 )
 
 LANGUAGE_CODES = {
+    "eng": "English (default)",
     "afr": "Afrikaans",
     "amh": "Amharic",
     "ara": "Arabic",
@@ -144,7 +145,6 @@ LANGUAGE_CODES = {
     "deu": "German",
     "dzo": "Dzongkha",
     "ell": "Greek, Modern (1453-)",
-    "eng": "English",
     "enm": "English, Middle (1100-1500)",
     "epo": "Esperanto",
     "est": "Estonian",

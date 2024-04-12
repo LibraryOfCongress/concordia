@@ -679,7 +679,7 @@
         </div>
         <div id="ocr-transcription-modal" class="modal" tabindex="-1" role="dialog">
             <div class="modal-dialog modal-dialog-centered" role="document">
-                <div class="modal-content" id="ocr-confirmation-modal">
+                <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">Are you sure?</h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -693,11 +693,17 @@
                         <button type="button" class="btn btn-primary" data-dismiss="modal">Cancel</button>
                         {% if transcription_status == "not_started" or transcription_status == "in_progress" %}
                             <input type="hidden" name="supersedes" value="{{ transcription.pk|default:'' }}" />
-                            <button id="select-language-button" class="btn btn-link underline-link font-weight-bold" onclick="selectLanguage()">Yes, Select Language</button>
+                            <a tabindex="0" class="btn btn-link d-inline p-0" role="button" data-placement="top"  id="select-language-button" onclick="selectLanguage()">
+                                <span class="underline-link font-weight-bold">Yes, Select Language</span>
+                            </a>
                         {% endif %}
                     </div>
                 </div>
-                <div class="modal-content" id="language-selection-modal">
+            </div>
+        </div>
+        <div id="language-selection-modal" class="modal" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">Select language</h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -1211,8 +1217,13 @@
             setTutorialHeight();
         });
         function selectLanguage() {
-            document.getElementById("ocr-confirmation-modal").style.display = "none";
-            document.getElementById("language-selection-modal").style.display = "block";
+            $("#ocr-transcription-modal").modal("hide");
+            $("#language-selection-modal").modal("show");
         }
+        const dialog = document.querySelector(".example-dialog");
+        dialog.addEventListener("close", (event) => {
+            $("#language-selection-modal").modal("hide");
+            $("#ocr-confirmation-modal").modal("show");
+        });
     </script>
 {% endblock body_scripts %}
