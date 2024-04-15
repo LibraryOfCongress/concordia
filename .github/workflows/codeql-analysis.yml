@@ -15,8 +15,26 @@ on:
     workflow_dispatch:
     push:
         branches: [release]
+        paths-ignore:
+            - docs/**
+            - README.md
+            - .github/**
+            - cloudformation/**
+            - db_scripts/**
+            - jenkins/**
+            - kibana-proxy/**
+            - postgresql/**
     pull_request:
         branches: [main]
+        paths-ignore:
+            - docs/**
+            - README.md
+            - .github/**
+            - cloudformation/**
+            - db_scripts/**
+            - jenkins/**
+            - kibana-proxy/**
+            - postgresql/**
     schedule:
         - cron: '20 23 * * 2'
 
