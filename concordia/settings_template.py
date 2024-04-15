@@ -82,7 +82,6 @@ NPM_FILE_PATTERNS = {
 TEMPLATE_DEBUG = False
 TIME_ZONE = "America/New_York"
 USE_I18N = True
-USE_L10N = True
 USE_TZ = True
 WSGI_APPLICATION = "concordia.wsgi.application"
 
@@ -312,7 +311,14 @@ ANONYMOUS_CAPTCHA_VALIDATION_INTERVAL = 86400
 CAPTCHA_IMAGE_SIZE = [150, 100]
 CAPTCHA_FONT_SIZE = 40
 
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 WHITENOISE_ROOT = os.path.join(SITE_ROOT_DIR, "static")
 
 PASSWORD_RESET_TIMEOUT = 604800
