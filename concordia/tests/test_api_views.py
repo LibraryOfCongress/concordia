@@ -147,7 +147,7 @@ class ConcordiaViewTests(JSONAssertMixin, TestCase):
     def assertAssetStatuses(self, asset_list, expected_statuses):
         asset_pks = [i["id"] for i in asset_list]
 
-        self.assertQuerysetEqual(
+        self.assertQuerySetEqual(
             Asset.objects.filter(pk__in=asset_pks).exclude(
                 transcription_status__in=expected_statuses
             ),
