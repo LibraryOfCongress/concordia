@@ -479,6 +479,7 @@ $card-progress-height: 12px;
         #{$card-img-height} - #{$card-btn-height - $card-progress-height}
     );
     z-index: 3;
+
     .view-transcriptions--item-detail & {
         top: 0;
     }
@@ -1121,6 +1122,7 @@ $card-progress-height: 12px;
     transition: 0.3s;
     background-color: $white;
 }
+
 .sidebar.offscreen {
     transform: translateX(100%);
 }
