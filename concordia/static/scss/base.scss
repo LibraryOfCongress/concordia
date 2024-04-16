@@ -989,13 +989,17 @@ $card-progress-height: 12px;
     }
 }
 
+#ocr-transcription-modal .modal-dialog {
+    max-width: 419px;
+}
+
 #language-selection-modal {
     display: none;
     margin-left: 40px;
 }
 
 #language-selection-modal .modal-dialog {
-    max-width: 400px;
+    max-width: 428px;
 }
 
 #language-selection-modal .modal-footer {
