@@ -78,7 +78,7 @@ def get_original_asset_id(download_url):
             logger.error(
                 "Couldn't find a matching asset ID in download URL %s", download_url
             )
-            raise AssertionError(
+            raise ValueError(
                 f"Couldn't find a matching asset ID in download URL {download_url}"
             )
         else:
