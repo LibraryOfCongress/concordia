@@ -13,7 +13,6 @@ from django.db.models import OuterRef, Subquery
 from django.http import HttpResponse, HttpResponseRedirect
 from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
-from tabular_export.core import export_to_csv_response, flatten_queryset
 
 from concordia.models import (
     Asset,
@@ -23,6 +22,8 @@ from concordia.models import (
     Transcription,
     TranscriptionStatus,
 )
+
+from .tabular_export.core import export_to_csv_response, flatten_queryset
 
 logger = getLogger(__name__)
 

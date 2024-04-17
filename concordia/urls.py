@@ -7,6 +7,7 @@ from django.views.defaults import page_not_found, permission_denied, server_erro
 from django.views.generic import RedirectView
 
 from exporter import views as exporter_views
+from prometheus_metrics.views import MetricsView
 
 from . import converters, views
 
@@ -246,7 +247,7 @@ urlpatterns = [
     path("error/429/", views.ratelimit_view),
     path("error/403/", permission_denied, {"exception": HttpResponseForbidden()}),
     path("tinymce/", include("tinymce.urls")),
-    path("", include("django_prometheus_metrics.urls")),
+    path("metrics", MetricsView.as_view(), name="prometheus-django-metrics"),
     path("robots.txt", include("robots.urls")),
     path(
         "maintenance-mode/off/", views.maintenance_mode_off, name="maintenance_mode_off"
