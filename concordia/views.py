@@ -1398,6 +1398,8 @@ class AssetDetailView(APIDetailView):
         if guides.count() > 0:
             ctx["guides"] = guides
 
+        ctx["languages"] = list(settings.LANGUAGE_CODES.items())
+
         return ctx
 
 
@@ -1478,7 +1480,7 @@ def generate_ocr_transcription(request, *, asset_pk):
         user = request.user
 
     supersedes_pk = request.POST.get("supersedes")
-    language = request.POST.get("language")
+    language = request.POST.get("language", None)
     superseded = get_transcription_superseded(asset, supersedes_pk)
     if superseded and isinstance(superseded, HttpResponse):
         return superseded

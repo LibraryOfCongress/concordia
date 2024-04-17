@@ -8,6 +8,7 @@ from django.urls import reverse
 from pylenium.config import PyleniumConfig
 from pylenium.driver import Pylenium
 
+from .axe import Axe
 from .utils import CreateTestUsers
 
 logger = getLogger(__name__)
@@ -29,6 +30,7 @@ class SeleniumTests(CreateTestUsers, StaticLiveServerTestCase):
             config = PyleniumConfig()
 
         cls.py = Pylenium(config)
+        cls.axe = Axe(cls.py)
 
     @classmethod
     def tearDownClass(cls):
@@ -40,12 +42,19 @@ class SeleniumTests(CreateTestUsers, StaticLiveServerTestCase):
 
     def test_login(self):
         self.py.visit(self.reverse("registration_login"))
+        violations = self.axe.violations()
+        self.assertEqual(len(violations), 0, self.axe.report(violations))
+
         self.py.get("[name='username']").type(token_hex(8))
         self.py.get("[name='password']").type(token_hex(24))
         self.py.get("button#login").click()
         self.assertTrue(
             self.py.should().have_url(f"{self.live_server_url}/account/login/")
         )
+
+        violations = self.axe.violations()
+        self.assertEqual(len(violations), 0, self.axe.report(violations))
+
         self.assertTrue(
             self.py.get("form#login-form")
             .should()
@@ -57,4 +66,6 @@ class SeleniumTests(CreateTestUsers, StaticLiveServerTestCase):
         self.py.get("[name='username']").type(user.username)
         self.py.get("[name='password']").type(user._password)
         self.py.get("button#login").click()
-        self.assertTrue(self.py.should().have_url(f"{self.live_server_url}/"))
+
+        violations = self.axe.violations()
+        self.assertEqual(len(violations), 0, self.axe.report(violations))
