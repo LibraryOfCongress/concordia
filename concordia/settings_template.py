@@ -115,7 +115,7 @@ INSTALLED_APPS = [
     "exporter",
     "importer",
     "captcha",
-    "django_prometheus_metrics.apps.DjangoPrometheusConfig",
+    "prometheus_metrics.apps.PrometheusMetricsConfig",
     "robots",
     "django_celery_beat",
     "flags",
@@ -126,7 +126,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    "django_prometheus_metrics.middleware.PrometheusBeforeMiddleware",
+    "prometheus_metrics.middleware.PrometheusBeforeMiddleware",
     "django.middleware.security.SecurityMiddleware",
     # WhiteNoise serves static files efficiently:
     "whitenoise.middleware.WhiteNoiseMiddleware",

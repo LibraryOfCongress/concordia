@@ -17,8 +17,9 @@ from django.db.models.functions import Round
 from django.db.models.signals import post_save
 from django.urls import reverse
 from django.utils import timezone
-from django_prometheus_metrics.models import MetricsModelMixin
 from PIL import Image
+
+from prometheus_metrics.models import MetricsModelMixin
 
 logger = getLogger(__name__)
 
