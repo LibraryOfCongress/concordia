@@ -110,19 +110,20 @@ INSTALLED_APPS = [
     # Replaces "django.contrib.staticfiles",
     "concordia.apps.ConcordiaStaticFilesConfig",
     "bootstrap4",
-    "bittersweet",
+    "bittersweet.apps.BittersweetAppConfig",
     "maintenance_mode",
     "concordia.apps.ConcordiaAppConfig",
     "exporter",
     "importer",
     "captcha",
-    "django_prometheus_metrics",
+    "django_prometheus_metrics.apps.DjangoPrometheusConfig",
     "robots",
     "django_celery_beat",
     "flags",
     "channels",
     "django_admin_multiple_choice_list_filter",
     "tinymce",
+    "passwords.apps.PasswordsAppConfig",
 ]
 
 MIDDLEWARE = [
