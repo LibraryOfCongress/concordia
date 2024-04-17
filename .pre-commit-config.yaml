@@ -4,7 +4,7 @@ repos:
       rev: 1.15.0
       hooks:
           - id: django-upgrade
-            args: [--target-version, '3.2']
+            args: [--target-version, '4.2']
     - repo: https://github.com/charliermarsh/ruff-pre-commit
       rev: v0.1.0
       hooks:

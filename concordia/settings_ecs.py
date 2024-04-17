@@ -3,7 +3,12 @@ import os
 
 from .secrets import get_secret
 from .settings_template import *  # NOQA ignore=F405
-from .settings_template import CONCORDIA_ENVIRONMENT, DATABASES, INSTALLED_APPS
+from .settings_template import (
+    CONCORDIA_ENVIRONMENT,
+    DATABASES,
+    INSTALLED_APPS,
+    STORAGES,
+)
 
 if os.getenv("AWS"):
     ENV_NAME = os.getenv("ENV_NAME")
@@ -44,7 +49,12 @@ CELERY_RESULT_BACKEND = CELERY_BROKER_URL
 S3_BUCKET_NAME = os.getenv("S3_BUCKET_NAME")
 EXPORT_S3_BUCKET_NAME = os.getenv("EXPORT_S3_BUCKET_NAME")
 
-DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+STORAGES = {
+    **STORAGES,
+    "default": {
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+    },
+}
 AWS_STORAGE_BUCKET_NAME = S3_BUCKET_NAME
 AWS_DEFAULT_ACL = None  # Don't set an ACL on the files, inherit the bucket ACLs
 

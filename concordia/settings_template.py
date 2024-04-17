@@ -82,7 +82,6 @@ NPM_FILE_PATTERNS = {
 TEMPLATE_DEBUG = False
 TIME_ZONE = "America/New_York"
 USE_I18N = True
-USE_L10N = True
 USE_TZ = True
 WSGI_APPLICATION = "concordia.wsgi.application"
 
@@ -111,13 +110,12 @@ INSTALLED_APPS = [
     # Replaces "django.contrib.staticfiles",
     "concordia.apps.ConcordiaStaticFilesConfig",
     "bootstrap4",
-    "bittersweet",
     "maintenance_mode",
     "concordia.apps.ConcordiaAppConfig",
     "exporter",
     "importer",
     "captcha",
-    "django_prometheus_metrics",
+    "prometheus_metrics.apps.PrometheusMetricsConfig",
     "robots",
     "django_celery_beat",
     "flags",
@@ -127,7 +125,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    "django_prometheus_metrics.middleware.PrometheusBeforeMiddleware",
+    "prometheus_metrics.middleware.PrometheusBeforeMiddleware",
     "django.middleware.security.SecurityMiddleware",
     # WhiteNoise serves static files efficiently:
     "whitenoise.middleware.WhiteNoiseMiddleware",
@@ -312,7 +310,14 @@ ANONYMOUS_CAPTCHA_VALIDATION_INTERVAL = 86400
 CAPTCHA_IMAGE_SIZE = [150, 100]
 CAPTCHA_FONT_SIZE = 40
 
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 WHITENOISE_ROOT = os.path.join(SITE_ROOT_DIR, "static")
 
 PASSWORD_RESET_TIMEOUT = 604800

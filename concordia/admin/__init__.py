@@ -18,10 +18,10 @@ from django.urls import path, reverse
 from django.utils.decorators import method_decorator
 from django.utils.html import format_html
 from django.views.decorators.csrf import csrf_protect
-from tabular_export.admin import ensure_filename, export_to_excel_action
-from tabular_export.core import flatten_queryset
 
 from exporter import views as exporter_views
+from exporter.tabular_export.admin import ensure_filename, export_to_excel_action
+from exporter.tabular_export.core import flatten_queryset
 from importer.tasks import import_items_into_project_from_url
 
 from ..models import (

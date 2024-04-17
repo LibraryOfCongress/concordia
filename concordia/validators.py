@@ -1,12 +1,15 @@
 from django.conf import settings
 from django.utils.translation import gettext_lazy as _
-from passwords.validators import ComplexityValidator
+
+from .passwords.validators import ComplexityValidator
 
 
 class DjangoPasswordsValidator(object):
     """
     Wrapper for the django-passwords complexity validator which is compatible
     with the Django 1.9+ password validation API
+    Because django-passwords is not compatible with Django 4+, the validator
+    has been integrated into the concordia.passwords module instead.
     """
 
     message = _("Must be more complex (%s)")
