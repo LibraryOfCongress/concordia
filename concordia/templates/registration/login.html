@@ -10,10 +10,10 @@
 {% block title %}Login{% endblock title %}
 
 {% block main_content %}
-    <div class="container" role="dialog">
+    <div class="container" role="dialog" aria-labelledby="dialog-title">
         <div class="row">
             <div class="col-8 col-md-6 col-lg-4 mx-auto my-3">
-                <h2 class="text-center">Welcome back!</h2>
+                <h2 id="dialog-title" class="text-center">Welcome back!</h2>
 
                 <form id="login-form" method="post" action="{% url 'login' %}" class="col-10 my-3 mx-auto">
                     {% csrf_token %}

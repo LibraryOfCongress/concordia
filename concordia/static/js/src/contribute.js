@@ -197,6 +197,7 @@ function setupPage() {
     var $ocrSection = $('#ocr-section');
     var $ocrForm = $('#ocr-transcription-form');
     var $ocrModal = $('#ocr-transcription-modal');
+    var $languageModal = $('#language-selection-modal');
     var $ocrLoading = $('#ocr-loading');
 
     let firstEditorUpdate = true;
@@ -424,7 +425,7 @@ function setupPage() {
                             $('#help-container').html(
                                 $(data).find('#help-container').html(),
                             );
-                            $('#ocr-transcription-modal').html(
+                            $ocrModal.html(
                                 $(data).find('#ocr-transcription-modal').html(),
                             );
                             reserveAssetForEditing();
@@ -596,7 +597,7 @@ function setupPage() {
     if ($ocrForm) {
         $ocrForm
             .on('submit', function () {
-                $ocrModal.modal('hide');
+                $languageModal.modal('hide');
                 $ocrLoading.removeAttr('hidden');
             })
             .on('form-submit-success', function (event, extra) {
