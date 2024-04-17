@@ -110,7 +110,6 @@ INSTALLED_APPS = [
     # Replaces "django.contrib.staticfiles",
     "concordia.apps.ConcordiaStaticFilesConfig",
     "bootstrap4",
-    "bittersweet.apps.BittersweetAppConfig",
     "maintenance_mode",
     "concordia.apps.ConcordiaAppConfig",
     "exporter",
