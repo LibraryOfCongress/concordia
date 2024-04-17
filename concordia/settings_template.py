@@ -512,3 +512,7 @@ PYLENIUM_CONFIG = os.path.join(SITE_ROOT_DIR, "pylenium.json")
 MAINTENANCE_MODE_STATE_BACKEND = "maintenance_mode.backends.CacheBackend"
 MAINTENANCE_MODE_IGNORE_ADMIN_SITE = True
 MAINTENANCE_MODE_IGNORE_URLS = ("/healthz*", "/metrics*", "/maintenance-mode*")
+
+DEFAULT_AXE_SCRIPT = os.path.join(
+    SITE_ROOT_DIR, "node_modules", "axe-core", "axe.min.js"
+)
