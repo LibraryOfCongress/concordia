@@ -122,7 +122,6 @@ INSTALLED_APPS = [
     "channels",
     "django_admin_multiple_choice_list_filter",
     "tinymce",
-    "passwords.apps.PasswordsAppConfig",
 ]
 
 MIDDLEWARE = [
