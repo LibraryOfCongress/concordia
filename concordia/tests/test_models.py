@@ -1,9 +1,7 @@
 from datetime import timedelta
 
-import pytesseract
 from django.test import TestCase
 from django.utils import timezone
-from PIL import Image
 
 from concordia.models import Campaign, Transcription, UserProfileActivity
 from concordia.utils import get_anonymous_user
@@ -23,10 +21,11 @@ class AssetTestCase(CreateTestUsers, TestCase):
         )
 
     def get_ocr_transcript(self):
-        image = Image.open("concordia/tests/data/test-european.jpg")
+        self.asset.storage_image = "tests/test-european.jpg"
+        self.asset.save()
         phrase = "marrón rápido salta sobre el perro"
-        self.assertFalse(phrase in pytesseract.image_to_string(image))
-        self.assertTrue(phrase in pytesseract.image_to_string(image, lang="spa"))
+        self.assertFalse(phrase in self.asset.get_ocr_transcript())
+        self.assertTrue(phrase in self.asset.get_ocr_transcript(language="spa"))
 
     def test_get_contributor_count(self):
         self.assertEqual(self.asset.get_contributor_count(), 2)
