@@ -3,6 +3,7 @@ Tests for the core application features
 """
 
 from datetime import date, timedelta
+from unittest.mock import patch
 
 from captcha.models import CaptchaStore
 from django.conf import settings
@@ -388,12 +389,13 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
 
         self.assertEqual(response.status_code, 200)
 
-    def test_generate_ocr_transcription(self):
+    @patch.object(Asset, "get_ocr_transcript")
+    def test_generate_ocr_transcription(self, mock):
         self.login_user()
         asset1 = create_asset(storage_image="tests/test-european.jpg")
         url = reverse("generate-ocr-transcription", kwargs={"asset_pk": asset1.pk})
-        response = self.client.post(url)
-        self.assertNotIn("marrón rápido salta sobre el perro", response.json()["text"])
+        self.client.post(url)
+        self.assertTrue(mock.called)
 
         asset2 = create_asset(
             item=asset1.item,
@@ -401,8 +403,8 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
             storage_image="tests/test-european.jpg",
         )
         url = reverse("generate-ocr-transcription", kwargs={"asset_pk": asset2.pk})
-        response = self.client.post(url, data={"language": "spa"})
-        self.assertIn("marrón rápido salta sobre el perro", response.json()["text"])
+        self.client.post(url, data={"language": "spa"})
+        mock.assert_called_with("spa")
 
     def test_project_detail_view(self):
         """
