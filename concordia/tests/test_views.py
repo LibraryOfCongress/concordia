@@ -388,6 +388,22 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
 
         self.assertEqual(response.status_code, 200)
 
+    def test_generate_ocr_transcription(self):
+        self.login_user()
+        asset1 = create_asset(storage_image="tests/test-european.jpg")
+        url = reverse("generate-ocr-transcription", kwargs={"asset_pk": asset1.pk})
+        response = self.client.post(url)
+        self.assertNotIn("marrón rápido salta sobre el perro", response.json()["text"])
+
+        asset2 = create_asset(
+            item=asset1.item,
+            slug="test-asset-2",
+            storage_image="tests/test-european.jpg",
+        )
+        url = reverse("generate-ocr-transcription", kwargs={"asset_pk": asset2.pk})
+        response = self.client.post(url, data={"language": "spa"})
+        self.assertIn("marrón rápido salta sobre el perro", response.json()["text"])
+
     def test_project_detail_view(self):
         """
         Test GET on route /campaigns/<slug-value> (campaign)
