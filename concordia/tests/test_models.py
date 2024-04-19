@@ -20,6 +20,13 @@ class AssetTestCase(CreateTestUsers, TestCase):
             reviewed_by=anon,
         )
 
+    def get_ocr_transcript(self):
+        self.asset.storage_image = "tests/test-european.jpg"
+        self.asset.save()
+        phrase = "marrón rápido salta sobre el perro"
+        self.assertFalse(phrase in self.asset.get_ocr_transcript())
+        self.assertTrue(phrase in self.asset.get_ocr_transcript(language="spa"))
+
     def test_get_contributor_count(self):
         self.assertEqual(self.asset.get_contributor_count(), 2)
 
