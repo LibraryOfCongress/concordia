@@ -80,7 +80,8 @@ function clean() {
     );
 }
 
-var build = gulp.parallel(styles, scripts);
+//var build = gulp.parallel(styles, scripts);
+var build = scripts;
 
 exports.build = build;
 exports.clean = clean;
