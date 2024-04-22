@@ -1,4 +1,6 @@
 /* eslint-env node */
+/* eslint-disable unicorn/prefer-module */
+/* eslint-disable unicorn/prefer-node-protocol */
 
 let child_process = require('child_process');
 let gulp = require('gulp');
@@ -6,15 +8,27 @@ let log = require('fancy-log');
 let rename = require('gulp-rename');
 let sass = require('gulp-sass')(require('node-sass'));
 let sourcemaps = require('gulp-sourcemaps');
+let Transform = require('stream').Transform;
 
 let paths = {
     styles: ['*/static/scss/**/*.scss'],
     scripts: ['*/static/js/src/**/*.js'],
 };
 
+function debug() {
+    var transformStream = new Transform({objectMode: true});
+    transformStream._transform = function (file, encoding, callback) {
+        console.log('Path is:', file.path);
+        callback(undefined, file);
+    };
+
+    return transformStream;
+}
+
 function styles() {
     return gulp
         .src(paths.styles)
+        .pipe(debug())
         .pipe(sourcemaps.init())
         .pipe(sass({outputStyle: 'expanded'}).on('error', sass.logError))
         .pipe(
@@ -32,6 +46,7 @@ function styles() {
 function scripts() {
     return gulp
         .src(paths.scripts)
+        .pipe(debug())
         .pipe(
             rename(function (path) {
                 path.dirname = path.dirname.replace(
