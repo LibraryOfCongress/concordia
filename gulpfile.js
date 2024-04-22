@@ -44,18 +44,20 @@ function styles() {
 }
 
 function scripts() {
-    return gulp
-        .src(paths.scripts)
-        .pipe(debug())
-        .pipe(
+    return (
+        gulp
+            .src(paths.scripts)
+            .pipe(debug())
+            /*.pipe(
             rename(function (path) {
                 path.dirname = path.dirname.replace(
                     /^[^/]+\/static\/js\/src/,
                     'js',
                 );
             }),
-        )
-        .pipe(gulp.dest('static/'));
+        )*/
+            .pipe(gulp.dest('static/'))
+    );
 }
 
 function watch() {
