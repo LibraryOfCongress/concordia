@@ -47,7 +47,7 @@ COPY . /app
 
 RUN pipenv install --system --dev --deploy && rm -rf ~/.cache/
 
-RUN npm install --silent --global npm@9 && /usr/local/bin/npm install --silent --omit=dev && npx gulp build
+RUN pipenv run npm install --silent --global npm@9 && /usr/local/bin/npm install --silent --omit=dev && pipenv run npx gulp build
 
 EXPOSE 80
 
