@@ -47,15 +47,17 @@ COPY . /app
 
 RUN which python
 
+RUN pipenv run which python
+
 RUN npm install --global npm@9
 
 RUN /usr/local/bin/npm install --omit=dev
 
 RUN npx gulp --version
 
-RUN npx gulp build
-
 RUN pipenv install --system --dev --deploy && rm -rf ~/.cache/
+
+RUN npx gulp build
 
 EXPOSE 80
 
