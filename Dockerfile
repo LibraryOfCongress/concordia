@@ -45,7 +45,7 @@ RUN pip install --no-cache-dir pipenv
 WORKDIR /app
 COPY . /app
 
-RUN run npm install --global npm@9
+RUN npm install --global npm@9
 
 RUN /usr/local/bin/npm install --omit=dev
 
