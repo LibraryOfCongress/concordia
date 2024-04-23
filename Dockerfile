@@ -59,6 +59,8 @@ RUN ls -la /app/venv-1/
 
 RUN ls -la /app/venv-1/bin/
 
+RUN ls -la /opt/hostedtoolcache/Python/3.10.14/x64/bin/
+
 RUN pipenv install --system --dev --deploy && rm -rf ~/.cache/
 
 RUN npx gulp build
