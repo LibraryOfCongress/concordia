@@ -2,7 +2,7 @@
 from setuptools import find_packages, setup
 
 VERSION = __import__("concordia").get_version()
-INSTALL_REQUIREMENTS = ["boto3", "Django>=3.2"]
+INSTALL_REQUIREMENTS = ["boto3", "Django>=4.2"]
 SCRIPTS = ["manage.py"]
 DESCRIPTION = "Transcription crowdsourcing"
 CLASSIFIERS = """\

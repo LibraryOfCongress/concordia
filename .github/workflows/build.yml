@@ -57,7 +57,7 @@ jobs:
             - name: Display Python version
               run: python -c "import sys; print(sys.version)"
 
-            - name: Initialize install Python Dependencies
+            - name: Install Python Dependencies
               run: |
                   python3 -m pip install --upgrade pip
                   pip3 install -U packaging
