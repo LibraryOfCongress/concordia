@@ -55,6 +55,10 @@ RUN /usr/local/bin/npm install --omit=dev
 
 RUN npx gulp --version
 
+RUN ls -la /app/venv-1/
+
+RUN ls -la /app/venv-1/bin/
+
 RUN pipenv install --system --dev --deploy && rm -rf ~/.cache/
 
 RUN npx gulp build
