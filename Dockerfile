@@ -47,7 +47,7 @@ COPY . /app
 
 RUN which python
 
-RUN pipenv run which python
+#RUN pipenv run which python
 
 RUN npm install --global npm@9
 
@@ -59,11 +59,11 @@ RUN npx gulp --version
 
 #RUN ls -la /app/venv-1/bin/
 
-RUN ls -la /opt/hostedtoolcache/Python/3.10.14/x64/bin/
-
-RUN pipenv install --system --dev --deploy && rm -rf ~/.cache/
+# RUN ls -la /opt/hostedtoolcache/Python/3.10.14/x64/bin/
 
 RUN npx gulp build
+
+RUN pipenv install --system --dev --deploy && rm -rf ~/.cache/
 
 EXPOSE 80
 
