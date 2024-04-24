@@ -62,7 +62,7 @@ jobs:
                   pip3 install -U packaging
                   pip3 install -U setuptools
                   pipx run pipfile-requirements Pipfile.lock > requirements.txt
-                  pip3 install requirements.txt
+                  pip3 install -r requirements.txt
                   rm requirements.txt
 
                   #pipenv install --dev --system --deploy
