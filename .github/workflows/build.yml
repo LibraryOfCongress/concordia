@@ -34,6 +34,9 @@ jobs:
         steps:
             - name: Install system packages
               run: |
+                  # Workaround from https://github.com/orgs/community/discussions/120966#discussioncomment-9211925
+                  # Can be removed once that situation is resolved.
+                  sudo rm /etc/apt/sources.list.d/microsoft-prod.list
                   sudo apt-get update -qy && sudo apt-get dist-upgrade -qy && sudo apt-get install -qy \
                   libmemcached-dev libz-dev libfreetype6-dev libtiff-dev \
                   libjpeg-dev libopenjp2-7-dev libwebp-dev zlib1g-dev libpq-dev
@@ -56,15 +59,6 @@ jobs:
 
             - name: Display Python version
               run: python -c "import sys; print(sys.version)"
-
-            - name: Install Python Dependencies
-              run: |
-                  python3 -m pip install --upgrade pip
-                  pip3 install -U packaging
-                  pip3 install -U setuptools
-                  pip3 install -U pipenv
-                  pipenv install --dev --system --deploy
-                  python3 setup.py build
 
             - name: build containers
               run: |
