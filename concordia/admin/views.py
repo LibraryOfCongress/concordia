@@ -24,10 +24,7 @@ from concordia.models import (
     TranscriptionStatus,
     validated_get_or_create,
 )
-from exporter.tabular_export.core import (
-    export_to_csv_response as _export_to_csv_response,
-)
-from exporter.tabular_export.core import flatten_queryset
+from exporter.tabular_export.core import export_to_csv_response, flatten_queryset
 from exporter.views import do_bagit_export
 from importer.models import ImportItem, ImportItemAsset, ImportJob
 from importer.tasks import (
@@ -580,15 +577,6 @@ def admin_bulk_import_view(request):
     context["form"] = form
 
     return render(request, "admin/bulk_import.html", context)
-
-
-def export_to_csv_response(filename, headers, rows):
-    # This is a workaround for an async issue in Django 3
-    # Please see https://staff.loc.gov/tasks/browse/CONCD-723
-    logger.info("Forcing queryset eval")
-    data = list(rows)
-    logger.info("Exporting to csv response")
-    return _export_to_csv_response(filename, headers, data)
 
 
 @never_cache
