@@ -480,7 +480,7 @@ $card-progress-height: 12px;
     );
     z-index: 3;
 
-    .view-transcriptions--item-detail & {
+    .view-transcriptions-item-detail & {
         top: 0;
     }
 }
@@ -987,6 +987,10 @@ $card-progress-height: 12px;
         border: none;
         padding: 0;
     }
+}
+
+#ocr-transcription-link {
+    pointer-events: auto;
 }
 
 #ocr-transcription-modal .modal-dialog {
