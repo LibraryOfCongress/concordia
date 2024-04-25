@@ -20,8 +20,8 @@ from django.utils.html import format_html
 from django.views.decorators.csrf import csrf_protect
 
 from exporter import views as exporter_views
-from exporter.tabular_export.admin import ensure_filename, export_to_excel_action
-from exporter.tabular_export.core import flatten_queryset
+from exporter.tabular_export.admin import export_to_csv_action, export_to_excel_action
+from exporter.tabular_export.core import export_to_csv_response, flatten_queryset
 from importer.tasks import import_items_into_project_from_url
 
 from ..models import (
@@ -96,26 +96,8 @@ from .forms import (
     ProjectAdminForm,
     SanitizedDescriptionAdminForm,
 )
-from .views import export_to_csv_response
 
 logger = logging.getLogger(__name__)
-
-
-@ensure_filename("csv")
-def export_to_csv_action(
-    modeladmin,
-    request,
-    queryset,
-    filename=None,
-    field_names=None,
-    extra_verbose_names=None,
-):
-    # This function is part of a workaround
-    # Please see https://staff.loc.gov/tasks/browse/CONCD-723
-    headers, rows = flatten_queryset(
-        queryset, field_names=field_names, extra_verbose_names=extra_verbose_names
-    )
-    return export_to_csv_response(filename, headers, rows)
 
 
 class ConcordiaUserAdmin(UserAdmin):
