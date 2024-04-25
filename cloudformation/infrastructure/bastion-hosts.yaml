@@ -86,10 +86,10 @@ Resources:
                     echo "Running userdata for ${EnvironmentName}"
                     echo "export ENV_NAME=${EnvironmentName}" >> /home/ec2-user/.bash_profile
                     source /home/ec2-user/.bash_profile
-                    yum -y update
-                    yum -y install git
+                    dnf -y upgrade
+                    dnf -y install git
                     aws s3 cp s3://crowd-deployment/database-dumps/concordia.latest.dmp concordia.dmp
-                    amazon-linux-extras install -y postgresql12
+                    dnf install postgresql15.x86_64
 
             Tags:
                 - Key: Name
@@ -130,10 +130,10 @@ Resources:
                     echo "Running userdata for ${EnvironmentName}"
                     echo "export ENV_NAME=${EnvironmentName}" >> /home/ec2-user/.bash_profile
                     source /home/ec2-user/.bash_profile
-                    yum -y update
-                    yum -y install git
+                    dnf -y update
+                    dnf -y install git
                     aws s3 cp s3://crowd-deployment/database-dumps/concordia.latest.dmp concordia.dmp
-                    amazon-linux-extras install -y postgresql12
+                    dnf install postgresql15.x86_64
 
             Tags:
                 - Key: Name
