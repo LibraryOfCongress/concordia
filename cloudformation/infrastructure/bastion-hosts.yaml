@@ -89,7 +89,7 @@ Resources:
                     dnf -y upgrade
                     dnf -y install git
                     aws s3 cp s3://crowd-deployment/database-dumps/concordia.latest.dmp concordia.dmp
-                    dnf install postgresql15.x86_64
+                    dnf -y install postgresql15.x86_64
 
             Tags:
                 - Key: Name
@@ -133,7 +133,7 @@ Resources:
                     dnf -y update
                     dnf -y install git
                     aws s3 cp s3://crowd-deployment/database-dumps/concordia.latest.dmp concordia.dmp
-                    dnf install postgresql15.x86_64
+                    dnf -y install postgresql15.x86_64
 
             Tags:
                 - Key: Name
