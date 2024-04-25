@@ -993,6 +993,10 @@ $card-progress-height: 12px;
     pointer-events: auto;
 }
 
+#ocr-transcription-link.disabled {
+    cursor: default;
+}
+
 #ocr-transcription-modal .modal-dialog {
     max-width: 419px;
 }
