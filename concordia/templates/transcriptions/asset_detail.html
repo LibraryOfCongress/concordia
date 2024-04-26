@@ -692,7 +692,7 @@
                         </button>
                     </div>
                     <div class="modal-body">
-                        <div class="bg-light px-3">
+                        <div class="bg-light p-3">
                             <h5 class="modal-title mb-3">Are you sure?</h5>
                             <p>Clicking "Transcribe with OCR" will remove all existing transcription text and replace it with automatically generated text. We recommend saving existing text in a separate document if you may want to revisit it.</p>
                         </div>
@@ -719,10 +719,10 @@
                     </div>
                     <form id="ocr-transcription-form" class="ajax-submission" method="post" action="{% url 'generate-ocr-transcription' asset_pk=asset.pk %}" data-lock-element="#transcription-editor">
                         <div class="modal-body">
-                            <div class="bg-light pb-4">
+                            <div class="bg-light p-3">
                                 <h5 class="modal-title mb-3">Select language</h5>
                                 <p>Select the language the transcription is in from the list below.</p>
-                                <div class="text-center">
+                                <div class="text-center pb-1">
                                     <select id="language" name="language" size="7">
                                         {% for language in languages %}
                                             <option value="{{ language.0 }}"{% if language.0 == "eng" %} selected="selected"{% endif %}>
