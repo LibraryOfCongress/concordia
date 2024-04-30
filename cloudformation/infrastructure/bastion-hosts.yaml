@@ -98,12 +98,10 @@ Resources:
                     while true; do
                       dnf -y install --assumeyes postgresql15.x86_64 && break
                     done
-                    aws s3 cp s3://crowd-deployment/database-dumps/concordia.latest.dmp concordia.dmp
                     while true; do
                       dnf -y install --assumeyes docker.x86_64 && break
                     done
                     aws s3 cp s3://crowd-deployment/database-dumps/concordia.latest.dmp concordia.dmp
-
             Tags:
                 - Key: Name
                   Value: !Sub ${EnvironmentName}-BastionHost-1
@@ -152,10 +150,10 @@ Resources:
                     while true; do
                       dnf -y install --assumeyes postgresql15.x86_64 && break
                     done
-                    aws s3 cp s3://crowd-deployment/database-dumps/concordia.latest.dmp concordia.dmp
                     while true; do
                       dnf -y install --assumeyes docker.x86_64 && break
                     done
+                    aws s3 cp s3://crowd-deployment/database-dumps/concordia.latest.dmp concordia.dmp
             Tags:
                 - Key: Name
                   Value: !Sub ${EnvironmentName}-BastionHost-2
