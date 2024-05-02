@@ -1232,10 +1232,5 @@
             $("#ocr-transcription-modal").modal("hide");
             $("#language-selection-modal").modal("show");
         }
-        const dialog = document.querySelector(".example-dialog");
-        dialog.addEventListener("close", (event) => {
-            $("#language-selection-modal").modal("hide");
-            $("#ocr-confirmation-modal").modal("show");
-        });
     </script>
 {% endblock body_scripts %}
