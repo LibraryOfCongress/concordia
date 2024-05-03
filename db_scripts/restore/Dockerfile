@@ -6,5 +6,5 @@ FROM public.ecr.aws/amazonlinux/amazonlinux:2023
 RUN curl -fsO --output-dir /etc/pki/ca-trust/source/anchors/ http://crl.loc.gov/LOC-ROOT-CA-1.crt && update-ca-trust
 
 RUN dnf -y upgrade-minimal && dnf -y install postgresql15.x86_64
-
+COPY restore.sh .
 CMD ["./restore.sh"]
