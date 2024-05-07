@@ -761,11 +761,6 @@
                             <div class="carousel-inner">
                                 {% for card in cards %}
                                     <div class="carousel-item pb-4 {% if forloop.first %} active {% endif %}">
-                                        {% if not forloop.first %}
-                                            <a id="previous-card" href="#card-carousel" role="button" data-slide="prev">
-                                                <strong><u><&nbsp;Back</u></strong>
-                                            </a>
-                                        {% endif %}
                                         <div class="position-static d-flex flex-column justify-content-around">
                                             {% if card.image %}
                                                 <img src="{{ card.image.url }}"{% if card.image_alt_text %} alt="{{ card.image_alt_text }}"{% endif %}>
@@ -775,19 +770,20 @@
                                             {% endif %}
                                             <p>{{ card.body_text|safe }}</p>
                                         </div>
-                                        {% if not forloop.last %}
-                                            <a id="next-card" href="#card-carousel" data-slide="next">
-                                                <strong><u>Next&nbsp;></u></strong>
-                                            </a>
-                                        {% endif %}
                                     </div>
                                 {% endfor %}
                             </div>
+                            <a id="previous-card" href="#card-carousel" role="button" data-slide="prev">
+                                <strong><u><&nbsp;Back</u></strong>
+                            </a>
                             <ol class="carousel-indicators d-none d-lg-flex">
                                 {% for card in cards %}
                                     <li data-target="#card-carousel" data-slide-to="{{ forloop.counter0 }}" {% if forloop.first %}class="active" {% endif %}></li>
                                 {% endfor %}
                             </ol>
+                            <a id="next-card" href="#card-carousel" data-slide="next">
+                                <strong><u>Next&nbsp;></u></strong>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -1221,6 +1217,19 @@
             }
             else {
                 $("#guide-bars").removeClass("d-none");
+            }
+        });
+        $("#previous-card").hide();
+        $("#card-carousel").on("slid.bs.carousel", function () {
+            if ($("#card-carousel .carousel-item:first").hasClass("active")) {
+                $("#previous-card").hide();
+                $("#next-card").show();
+            } else if ($("#card-carousel .carousel-item:last").hasClass("active")) {
+                $("#previous-card").show();
+                $("#next-card").hide();
+            } else {
+                $("#previous-card").show();
+                $("#next-card").show();
             }
         });
     </script>
