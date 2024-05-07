@@ -54,6 +54,7 @@ faker = "*"
 pillow = "*"
 prometheus-client = "*"
 xlsxwriter = "*"
+blinker = "<1.8.0"
 
 [dev-packages]
 invoke = "*"
