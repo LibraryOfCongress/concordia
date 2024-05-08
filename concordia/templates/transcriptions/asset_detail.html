@@ -424,7 +424,7 @@
                                 </span>
                             </span>
                             <div class="align-items-center align-self-end btn-group">
-                                <a class="font-weight-bold" data-toggle="modal" data-target="#tutorial-popup" role="button">
+                                <a class="font-weight-bold" id="quick-tips" data-toggle="modal" data-target="#tutorial-popup" role="button">
                                     <u>Quick Tips</u>
                                 </a>
                             </div>
@@ -1241,5 +1241,28 @@
             $("#ocr-transcription-modal").modal("hide");
             $("#language-selection-modal").modal("show");
         }
+    </script>
+    <script>
+        function trackQuickTipsInteraction(element, interactionType) {
+            if ('loc_ux_tracking' in window) {
+                let loc_ux_tracking = window['loc_ux_tracking'];
+                data = [
+                    element,
+                    'Quick Tips',
+                    'click',
+                    interactionType
+                ];
+                console.log(...data)
+                loc_ux_tracking.trackUserInteractionEvent(...data);
+            }
+        }
+        $("#quick-tips").on("click", function(event) { trackQuickTipsInteraction($(this), "open")});
+        $("#tutorial-popup .close").on("click", function(event) { trackQuickTipsInteraction($(this), "close")});
+        $("#previous-card").on("click", function(event){ trackQuickTipsInteraction($(this), "previous-card")});
+        $("#next-card").on("click", function(event){ trackQuickTipsInteraction($(this), "next-card")});
+        $(".carousel-indicators li").on("click", function(event){
+            let index = [...this.parentElement.children].indexOf(this)
+            trackQuickTipsInteraction($(this), `carousel indicator ${index}`)
+        });
     </script>
 {% endblock body_scripts %}
