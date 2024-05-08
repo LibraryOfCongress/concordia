@@ -5,6 +5,6 @@ FROM public.ecr.aws/amazonlinux/amazonlinux:2023
 # https://staff.loc.gov/wikis/display/SE/Configuring+HTTPS+clients+for+the+HTTPS+tampering+proxy.
 RUN curl -fsO --output-dir /etc/pki/ca-trust/source/anchors/ http://crl.loc.gov/LOC-ROOT-CA-1.crt && update-ca-trust
 
-RUN RUN dnf -y upgrade-minimal && dnf -y install postgresql15.x86_64 && dnf -y install awscli-2.noarch
+RUN dnf -y upgrade-minimal && dnf -y install postgresql15.x86_64 && dnf -y install awscli-2.noarch
 COPY dump.sh .
 CMD ["./dump.sh"]
