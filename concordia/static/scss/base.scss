@@ -1181,6 +1181,10 @@ $card-progress-height: 12px;
     font-size: $font-size-base * 0.875;
 }
 
+#guide-carousel .container {
+    padding-right: 0;
+}
+
 /*
  * Campaign Resources Panel
  */
