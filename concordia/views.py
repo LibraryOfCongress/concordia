@@ -188,8 +188,9 @@ def simple_page(request, path=None, slug=None):
         "breadcrumbs": breadcrumbs,
     }
 
-    if page.guide is not None:
-        html = "".join((page.body, page.guide.body))
+    guide = page.guide_set.all().first()
+    if guide is not None:
+        html = "".join((page.body, guide.body))
         ctx["add_navigation"] = True
     else:
         html = page.body

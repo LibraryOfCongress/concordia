@@ -840,7 +840,7 @@ class SimplePageAdmin(admin.ModelAdmin):
 
     fieldsets = (
         (None, {"fields": ("created_on", "updated_on", "path", "title")}),
-        ("Body", {"classes": ("markdown-preview",), "fields": ("guide", "body")}),
+        ("Body", {"classes": ("markdown-preview",), "fields": ("body",)}),
     )
 
 

@@ -768,20 +768,6 @@ class AssetTranscriptionReservation(models.Model):
         return self.reservation_token[44:]
 
 
-class Guide(models.Model):
-    title = models.CharField(max_length=80)
-    body = models.TextField(blank=True)
-    order = models.IntegerField(default=1)
-    link_text = models.CharField(max_length=80, blank=True, null=True)
-    link_url = models.CharField(max_length=255, blank=True, null=True)
-
-    def __str__(self):
-        return self.title
-
-    def get_url(self):
-        return self.simplepage_set.all().first().path
-
-
 class SimplePage(models.Model):
     created_on = models.DateTimeField(editable=False, auto_now_add=True)
     updated_on = models.DateTimeField(editable=False, auto_now=True)
@@ -793,8 +779,6 @@ class SimplePage(models.Model):
     )
 
     title = models.CharField(max_length=200)
-
-    guide = models.ForeignKey(Guide, on_delete=models.SET_NULL, blank=True, null=True)
 
     body = models.TextField(blank=True, null=True)
 
@@ -995,6 +979,20 @@ class TutorialCard(models.Model):
 
     class Meta:
         verbose_name_plural = "cards"
+
+
+class Guide(models.Model):
+    title = models.CharField(max_length=80)
+    page = models.ForeignKey(
+        SimplePage, on_delete=models.SET_NULL, blank=True, null=True
+    )
+    body = models.TextField(blank=True)
+    order = models.IntegerField(default=1)
+    link_text = models.CharField(max_length=80, blank=True, null=True)
+    link_url = models.CharField(max_length=255, blank=True, null=True)
+
+    def __str__(self):
+        return self.title
 
 
 def validated_get_or_create(klass, **kwargs):

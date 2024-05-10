@@ -25,7 +25,7 @@
                                 <div class="nav flex-column help-center">
                                     <h4>Instructions</h4>
                                     {% for guide in guides %}
-                                        <a class="nav-link{% if guide.get_url == request.path %} active{% endif %}" href="{{ guide.get_url }}">
+                                        <a class="nav-link{% if guide.page.path == request.path %} active{% endif %}" href="{{ guide.page.path }}">
                                             {{ guide.title }}
                                         </a>
                                     {% endfor %}
