@@ -188,27 +188,14 @@ def simple_page(request, path=None, slug=None):
         "breadcrumbs": breadcrumbs,
     }
 
-    guides = Guide.objects.order_by("order")
-    links = []
-    try:
-        guide = guides.get(title__iexact=page.title)
+    guide = page.guide_set.all().first()
+    if guide is not None:
         html = "".join((page.body, guide.body))
         ctx["add_navigation"] = True
-    except Guide.DoesNotExist:
+    else:
         html = page.body
-        if page.title == "Get started":
-            ctx["add_navigation"] = True
-            links.append("Get started", reverse("welcome-guide"))
     if "add_navigation" in ctx:
-        for guide in guides.all():
-            try:
-                simple_page = SimplePage.objects.get(title__iexact=guide.title)
-                url = simple_page.path
-            except SimplePage.DoesNotExist:
-                url = None
-            if url is not None:
-                links.append((guide.title, url))
-        ctx["toc"] = links
+        ctx["guides"] = Guide.objects.order_by("order")
     ctx["body"] = md.convert(html)
 
     resp = render(request, "static-page.html", ctx)

@@ -983,6 +983,9 @@ class TutorialCard(models.Model):
 
 class Guide(models.Model):
     title = models.CharField(max_length=80)
+    page = models.ForeignKey(
+        SimplePage, on_delete=models.SET_NULL, blank=True, null=True
+    )
     body = models.TextField(blank=True)
     order = models.IntegerField(default=1)
     link_text = models.CharField(max_length=80, blank=True, null=True)
