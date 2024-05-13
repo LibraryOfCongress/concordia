@@ -1243,26 +1243,40 @@
         }
     </script>
     <script>
-        function trackQuickTipsInteraction(element, interactionType) {
+        function trackUIInteraction(element, category, action, label){
             if ('loc_ux_tracking' in window) {
                 let loc_ux_tracking = window['loc_ux_tracking'];
                 data = [
                     element,
-                    'Quick Tips',
-                    'click',
-                    interactionType
+                    category,
+                    action,
+                    label
                 ];
-                console.log(...data)
                 loc_ux_tracking.trackUserInteractionEvent(...data);
             }
         }
-        $("#quick-tips").on("click", function(event) { trackQuickTipsInteraction($(this), "open")});
-        $("#tutorial-popup .close").on("click", function(event) { trackQuickTipsInteraction($(this), "close")});
-        $("#previous-card").on("click", function(event){ trackQuickTipsInteraction($(this), "previous-card")});
-        $("#next-card").on("click", function(event){ trackQuickTipsInteraction($(this), "next-card")});
+        function trackQuickTipsInteraction(element, label) {
+            trackUIInteraction(element, 'Quick Tips', 'click', label);
+        }
+        function trackHowToInteraction(element, label){
+            trackUIInteraction(element, 'How To Guide' , 'click', label);
+        }
+        $("#quick-tips").on("click", function(event) { trackQuickTipsInteraction($(this), "Open")});
+        $("#tutorial-popup .close").on("click", function(event) { trackQuickTipsInteraction($(this), "Close")});
+        $("#previous-card").on("click", function(event){ trackQuickTipsInteraction($(this), "Back")});
+        $("#next-card").on("click", function(event){ trackQuickTipsInteraction($(this), "Next")});
         $(".carousel-indicators li").on("click", function(event){
             let index = [...this.parentElement.children].indexOf(this)
-            trackQuickTipsInteraction($(this), `carousel indicator ${index}`)
+            trackQuickTipsInteraction($(this), `Carousel ${index}`)
+        });
+        $("#open-guide").on("click", function(event) { trackHowToInteraction($(this), "Open")});
+        $("#close-guide").on("click", function(event) { trackHowToInteraction($(this), "Close")});
+        $("#previous-guide").on("click", function(event) { trackHowToInteraction($(this), "Back")});
+        $("#next-guide").on("click", function(event) { trackHowToInteraction($(this), "Next")});
+        $("#guide-bars").on("click", function(event) { trackHowToInteraction($(this), "Hamburger Menu")});
+        $("#guide-sidebar .nav-link").on("click", function(event) {
+            let label = $(this).text().trim();
+            trackHowToInteraction($(this), label);
         });
     </script>
 {% endblock body_scripts %}
