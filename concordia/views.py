@@ -1055,7 +1055,6 @@ class CampaignDetailView(APIDetailView):
                 projects = projects.exclude(
                     item__asset__transcription__user=self.request.user.id
                 )
-                ctx["filter_assets"] = True
             projects = projects.annotate(
                 **{
                     f"{key}_count": Count(
@@ -1186,6 +1185,7 @@ class ProjectDetailView(APIListView):
             project_assets = project_assets.exclude(
                 transcription__user=self.request.user.id
             )
+            ctx["filter_assets"] = True
 
         calculate_asset_stats(project_assets, ctx)
 
@@ -1233,6 +1233,12 @@ class ItemDetailView(APIListView):
             )
             return redirect(campaign)
 
+    def _get_assets(self):
+        assets = self.item.asset_set.published()
+        if self.kwargs.get("filter_by_reviewable", False):
+            assets = assets.exclude(transcription__user=self.request.user.id)
+        return assets
+
     def get_queryset(self):
         self.item = get_object_or_404(
             Item.objects.published().select_related("project__campaign"),
@@ -1241,7 +1247,7 @@ class ItemDetailView(APIListView):
             item_id=self.kwargs["item_id"],
         )
 
-        asset_qs = self.item.asset_set.published().order_by("sequence")
+        asset_qs = self._get_assets().order_by("sequence")
         asset_qs = asset_qs.select_related(
             "item__project__campaign", "item__project", "item"
         )
@@ -1269,7 +1275,7 @@ class ItemDetailView(APIListView):
             }
         )
 
-        item_assets = self.item.asset_set.published()
+        item_assets = self._get_assets()
 
         calculate_asset_stats(item_assets, ctx)
 
@@ -1287,6 +1293,17 @@ class ItemDetailView(APIListView):
 
         data["item"] = self.serialize_object(context["item"])
         return data
+
+
+@method_decorator(user_cache_control, name="dispatch")
+class AssetListView(ItemDetailView):
+    def get_queryset(self):
+        self.kwargs["filter_by_reviewable"] = True
+        return super().get_queryset()
+
+    def get_context_data(self, **kwargs):
+        self.kwargs["filter_by_reviewable"] = True
+        return super().get_context_data(**kwargs)
 
 
 @method_decorator(never_cache, name="dispatch")
