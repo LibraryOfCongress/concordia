@@ -1055,6 +1055,7 @@ class CampaignDetailView(APIDetailView):
                 projects = projects.exclude(
                     item__asset__transcription__user=self.request.user.id
                 )
+                ctx["filter_assets"] = True
             projects = projects.annotate(
                 **{
                     f"{key}_count": Count(
@@ -1118,7 +1119,8 @@ class CampaignDetailView(APIDetailView):
 @method_decorator(user_cache_control, name="dispatch")
 class ProjectListView(CampaignDetailView):
     def get_context_data(self, **kwargs):
-        kwargs["filter_by_reviewable"] = True
+        if self.request.user.is_authenticated and self.request.user.is_staff:
+            kwargs["filter_by_reviewable"] = True
 
         return super().get_context_data(**kwargs)
 
