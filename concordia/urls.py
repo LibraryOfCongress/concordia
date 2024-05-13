@@ -23,6 +23,11 @@ tx_urlpatterns = (
             name="completed-campaign-list",
         ),
         path(
+            "<uslug:slug>/reviewable/",
+            views.ProjectListView.as_view(),
+            name="project-list",
+        ),
+        path(
             "<uslug:slug>/", views.CampaignDetailView.as_view(), name="campaign-detail"
         ),
         path(
@@ -71,6 +76,11 @@ tx_urlpatterns = (
             "<uslug:campaign_slug>/next-reviewable-asset/",
             views.redirect_to_next_reviewable_campaign_asset,
             name="redirect-to-next-reviewable-campaign-asset",
+        ),
+        path(
+            "<uslug:campaign_slug>/<uslug:slug>/reviewable/",
+            views.ItemListView.as_view(),
+            name="project-detail",
         ),
         path(
             "<uslug:campaign_slug>/<uslug:slug>/",
