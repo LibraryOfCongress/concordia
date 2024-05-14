@@ -1276,6 +1276,8 @@ class ItemDetailView(APIListView):
         )
 
         item_assets = self._get_assets()
+        if self.kwargs.get("filter_by_reviewable", False):
+            ctx["filter_assets"] = True
 
         calculate_asset_stats(item_assets, ctx)
 
