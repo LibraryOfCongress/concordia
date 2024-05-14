@@ -12,21 +12,21 @@ from .utils import CreateTestUsers, create_asset, create_item, create_transcript
 
 class TestAssetConsumer(CreateTestUsers, TestCase):
     """
-    Normally defining self.communicator would be in setUp
-    and self.communicator.disconnect would be called in tearDown
+    Normally defining communicator would be in setUp
+    and communicator.disconnect would be called in tearDown
     Asynchronous code doesn't seem to work well with those methods
     so those lines are in each test.
     """
 
     async def test_asset_update(self):
-        self.communicator = WebsocketCommunicator(
+        communicator = WebsocketCommunicator(
             AssetConsumer.as_asgi(), "ws/asset/asset_updates/"
         )
-        connected, subprotocol = await self.communicator.connect()
+        connected, subprotocol = await communicator.connect()
         self.assertTrue(connected)
 
         asset = await sync_to_async(create_asset)()
-        response = await self.communicator.receive_json_from()
+        response = await communicator.receive_json_from()
         message = response["message"]
         self.assertEqual(message["type"], "asset_update")
         self.assertEqual(message["asset_pk"], asset.pk)
@@ -34,28 +34,28 @@ class TestAssetConsumer(CreateTestUsers, TestCase):
         self.assertEqual(message["latest_transcription"], None)
 
         await sync_to_async(create_item)(item_id="item-2", project=asset.item.project)
-        response = await self.communicator.receive_nothing()
+        response = await communicator.receive_nothing()
         self.assertTrue(response)
 
         user = await sync_to_async(self.create_test_user)()
         transcription = await sync_to_async(create_transcription)(
             asset=asset, user=user
         )
-        response = await self.communicator.receive_json_from()
+        response = await communicator.receive_json_from()
         message = response["message"]
         self.assertEqual(message["type"], "asset_update")
         self.assertEqual(message["asset_pk"], asset.pk)
         self.assertEqual(message["status"], "in_progress")
         self.assertEqual(message["latest_transcription"]["id"], transcription.pk)
 
-        await self.communicator.disconnect()
+        await communicator.disconnect()
 
     async def test_asset_reservation_obtained(self):
         asset = await sync_to_async(create_asset)()
-        self.communicator = WebsocketCommunicator(
+        communicator = WebsocketCommunicator(
             AssetConsumer.as_asgi(), "ws/asset/asset_updates/"
         )
-        connected, subprotocol = await self.communicator.connect()
+        connected, subprotocol = await communicator.connect()
         self.assertTrue(connected)
 
         request_factory = RequestFactory()
@@ -64,10 +64,12 @@ class TestAssetConsumer(CreateTestUsers, TestCase):
         token = get_or_create_reservation_token(request)
         await sync_to_async(obtain_reservation)(asset.pk, token)
 
-        response = await self.communicator.receive_json_from()
+        response = await communicator.receive_json_from()
         message = response["message"]
         self.assertEqual(message["type"], "asset_reservation_obtained")
         self.assertEqual(message["asset_pk"], asset.pk)
+
+        await communicator.disconnect()
 
     async def test_asset_reservation_released(self):
         asset = await sync_to_async(create_asset)()
@@ -75,17 +77,18 @@ class TestAssetConsumer(CreateTestUsers, TestCase):
             reverse("reserve-asset", kwargs={"asset_pk": asset.pk})
         )
 
-        self.communicator = WebsocketCommunicator(
+        communicator = WebsocketCommunicator(
             AssetConsumer.as_asgi(), "ws/asset/asset_updates/"
         )
-        connected, subprotocol = await self.communicator.connect()
+        connected, subprotocol = await communicator.connect()
         self.assertTrue(connected)
 
         await self.async_client.post(
             reverse("reserve-asset", kwargs={"asset_pk": asset.pk}),
             {"release": "release"},
         )
-        response = await self.communicator.receive_json_from()
+        response = await communicator.receive_json_from()
         message = response["message"]
         self.assertEqual(message["type"], "asset_reservation_released")
         self.assertEqual(message["asset_pk"], asset.pk)
+        await communicator.disconnect()
