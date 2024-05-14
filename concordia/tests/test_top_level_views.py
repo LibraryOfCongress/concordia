@@ -116,9 +116,8 @@ class TopLevelViewTests(
         )
         self.assertEqual(resp.context["body"], f"<p>{s.body}</p>")
 
-        request = RequestFactory().get(reverse("welcome-guide"))
-        request.path = reverse("welcome-guide")
-        resp = simple_page(request)
+        request = RequestFactory().get("/")
+        resp = simple_page(request, path=reverse("welcome-guide"))
         self.assertEqual(200, resp.status_code)
 
         resp = self.client.get(reverse("welcome-guide-spanish"))
