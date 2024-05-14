@@ -5,9 +5,8 @@ Originally from https://github.com/acdha/django-bittersweet
 """
 
 from django.http import QueryDict
-from django.template import Library, Node, TemplateSyntaxError, Variable
+from django.template import Library, Node, Variable
 from django.utils.html import escape
-from django.utils.translation import gettext_lazy as _
 
 register = Library()
 
@@ -108,15 +107,7 @@ class QueryStringAlterer(Node):
 
     @classmethod
     def qs_alter_tag(cls, parser, token):
-        try:
-            bits = token.split_contents()
-        except ValueError as err:
-            raise TemplateSyntaxError(
-                _(
-                    "qs_alter requires at least two arguments: the initial query string"
-                    " and at least one alteration"
-                )
-            ) from err
+        bits = token.split_contents()
 
         if bits[-2] == "as":
             as_variable = bits[-1]
