@@ -245,11 +245,14 @@ class CreateTestUsers(object):
         """
         Create a user and log the user in
         """
-
-        if not hasattr(self, "user"):
+        if not hasattr(self, "user") or self.user is None:
             self.user = self.create_test_user(username, **kwargs)
 
         self.client.login(username=self.user.username, password=self.user._password)
+
+    def logout_user(self):
+        self.client.logout()
+        self.user = None
 
     @classmethod
     def create_user(cls, username, is_active=True, **kwargs):

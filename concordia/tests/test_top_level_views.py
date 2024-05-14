@@ -2,10 +2,11 @@
 Tests for for the top-level & “CMS” views
 """
 
-from django.test import TestCase
+from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
 from concordia.models import Guide, SimplePage
+from concordia.views import simple_page
 
 from .utils import CacheControlAssertions, CreateTestUsers, JSONAssertMixin
 
@@ -101,6 +102,12 @@ class TopLevelViewTests(
             path=reverse("welcome-guide"),
         )
 
+        s2 = SimplePage.objects.create(
+            title="Get Started Spanish 123",
+            body="not the real spanish body",
+            path=reverse("welcome-guide-spanish"),
+        )
+
         resp = self.client.get(reverse("welcome-guide"))
         self.assertEqual(200, resp.status_code)
         self.assertEqual(s.title, resp.context["title"])
@@ -108,6 +115,20 @@ class TopLevelViewTests(
             [(reverse("welcome-guide"), s.title)], resp.context["breadcrumbs"]
         )
         self.assertEqual(resp.context["body"], f"<p>{s.body}</p>")
+
+        request = RequestFactory().get(reverse("welcome-guide"))
+        request.path = reverse("welcome-guide")
+        resp = simple_page(request)
+        self.assertEqual(200, resp.status_code)
+
+        resp = self.client.get(reverse("welcome-guide-spanish"))
+        self.assertEqual(200, resp.status_code)
+        self.assertEqual(s2.title, resp.context["title"])
+        self.assertEqual("es", resp.context["language_code"])
+        self.assertEqual(
+            [(reverse("welcome-guide-spanish"), s2.title)], resp.context["breadcrumbs"]
+        )
+        self.assertEqual(resp.context["body"], f"<p>{s2.body}</p>")
 
     def test_nested_simple_page(self):
         Guide.objects.create(title="How to Tag")

@@ -2494,7 +2494,6 @@ class HelpCenterRedirectView(RedirectView):
 
 class HelpCenterSpanishRedirectView(RedirectView):
     def get_redirect_url(self, *args, **kwargs):
-        print("spanish")
         path = kwargs["page_slug"]
         return "/get-started-esp/" + path + "-esp/"
 
