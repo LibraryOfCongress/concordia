@@ -23,6 +23,11 @@ tx_urlpatterns = (
             name="completed-campaign-list",
         ),
         path(
+            "<uslug:slug>/reviewable/",
+            views.FilteredCampaignDetailView.as_view(),
+            name="filtered-campaign-detail",
+        ),
+        path(
             "<uslug:slug>/", views.CampaignDetailView.as_view(), name="campaign-detail"
         ),
         path(
@@ -54,6 +59,11 @@ tx_urlpatterns = (
             name="campaign-report",
         ),
         path(
+            "<uslug:campaign_slug>/<uslug:project_slug>/<item_id:item_id>/reviewable/",
+            views.FilteredItemDetailView.as_view(),
+            name="filtered-item-detail",
+        ),
+        path(
             (
                 "<uslug:campaign_slug>/<uslug:project_slug>/"
                 "<item_id:item_id>/<uslug:slug>/"
@@ -71,6 +81,11 @@ tx_urlpatterns = (
             "<uslug:campaign_slug>/next-reviewable-asset/",
             views.redirect_to_next_reviewable_campaign_asset,
             name="redirect-to-next-reviewable-campaign-asset",
+        ),
+        path(
+            "<uslug:campaign_slug>/<uslug:slug>/reviewable/",
+            views.FilteredProjectDetailView.as_view(),
+            name="filtered-project-detail",
         ),
         path(
             "<uslug:campaign_slug>/<uslug:slug>/",
