@@ -1050,11 +1050,13 @@ class CampaignDetailView(APIDetailView):
             projects = (
                 ctx["campaign"].project_set.published().order_by("ordering", "title")
             )
+            ctx["filters"] = filters = {}
             filter_by_reviewable = kwargs.get("filter_by_reviewable", False)
             if filter_by_reviewable:
                 projects = projects.exclude(
                     item__asset__transcription__user=self.request.user.id
                 )
+                ctx["filter_assets"] = True
             projects = projects.annotate(
                 **{
                     f"{key}_count": Count(
@@ -1069,7 +1071,6 @@ class CampaignDetailView(APIDetailView):
                 }
             )
 
-            ctx["filters"] = filters = {}
             status = self.request.GET.get("transcription_status")
             if status in TranscriptionStatus.CHOICE_MAP:
                 projects = projects.exclude(**{f"{status}_count": 0})
