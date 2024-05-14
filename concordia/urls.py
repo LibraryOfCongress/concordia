@@ -24,8 +24,8 @@ tx_urlpatterns = (
         ),
         path(
             "<uslug:slug>/reviewable/",
-            views.ProjectListView.as_view(),
-            name="project-list",
+            views.FilteredCampaignDetailView.as_view(),
+            name="filtered-campaign-detail",
         ),
         path(
             "<uslug:slug>/", views.CampaignDetailView.as_view(), name="campaign-detail"
@@ -60,8 +60,8 @@ tx_urlpatterns = (
         ),
         path(
             "<uslug:campaign_slug>/<uslug:project_slug>/<item_id:item_id>/reviewable/",
-            views.AssetListView.as_view(),
-            name="asset-list",
+            views.FilteredItemDetailView.as_view(),
+            name="filtered-item-detail",
         ),
         path(
             (
@@ -84,8 +84,8 @@ tx_urlpatterns = (
         ),
         path(
             "<uslug:campaign_slug>/<uslug:slug>/reviewable/",
-            views.ItemListView.as_view(),
-            name="item-list",
+            views.FilteredProjectDetailView.as_view(),
+            name="filtered-project-detail",
         ),
         path(
             "<uslug:campaign_slug>/<uslug:slug>/",

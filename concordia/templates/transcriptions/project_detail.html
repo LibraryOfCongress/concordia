@@ -42,7 +42,7 @@
                 <div class="mt-4">
                     <input type="radio" onclick="window.location='{% url 'transcriptions:project-detail' campaign.slug project.slug %}'" {% if not filter_assets %}checked{% endif %}>
                     <label>Show all</label>
-                    <input type="radio" onclick="window.location='{% url 'transcriptions:item-list' campaign.slug project.slug %}'" {% if filter_assets %}checked{% endif %}>
+                    <input type="radio" onclick="window.location='{% url 'transcriptions:filtered-project-detail' campaign.slug project.slug %}'" {% if filter_assets %}checked{% endif %}>
                     <label>Show only reviewable by me</label>
                 </div>
             {% endif %}

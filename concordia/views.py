@@ -1116,7 +1116,7 @@ class CampaignDetailView(APIDetailView):
 
 
 @method_decorator(user_cache_control, name="dispatch")
-class ProjectListView(CampaignDetailView):
+class FilteredCampaignDetailView(CampaignDetailView):
     def get_context_data(self, **kwargs):
         if self.request.user.is_authenticated and self.request.user.is_staff:
             kwargs["filter_by_reviewable"] = True
@@ -1200,7 +1200,7 @@ class ProjectDetailView(APIListView):
 
 
 @method_decorator(user_cache_control, name="dispatch")
-class ItemListView(ProjectDetailView):
+class FilteredProjectDetailView(ProjectDetailView):
     def get_queryset(self):
         return super().get_queryset(filter_by_reviewable=True)
 
@@ -1298,7 +1298,7 @@ class ItemDetailView(APIListView):
 
 
 @method_decorator(user_cache_control, name="dispatch")
-class AssetListView(ItemDetailView):
+class FilteredItemDetailView(ItemDetailView):
     def get_queryset(self):
         self.kwargs["filter_by_reviewable"] = True
         return super().get_queryset()

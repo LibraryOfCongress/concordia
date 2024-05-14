@@ -46,7 +46,7 @@
             <div class="mt-4">
                 <input type="radio" {% if filter_assets %}onclick="window.location='{% url 'transcriptions:item-detail' campaign.slug project.slug item.id %}'"{% else %}checked{% endif %}>
                 <label>Show all</label>
-                <input type="radio" {% if filter_assets %}checked{% else %}onclick="window.location='{% url 'transcriptions:asset-list' campaign.slug project.slug item.id %}'"{% endif %}>
+                <input type="radio" {% if filter_assets %}checked{% else %}onclick="window.location='{% url 'transcriptions:filtered-item-detail' campaign.slug project.slug item.id %}'"{% endif %}>
                 <label>Show only reviewable by me</label>
             </div>
         {% endif %}
