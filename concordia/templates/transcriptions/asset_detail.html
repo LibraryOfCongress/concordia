@@ -1243,26 +1243,14 @@
         }
     </script>
     <script>
-        function trackUIInteraction(element, category, action, label){
-            if ('loc_ux_tracking' in window) {
-                let loc_ux_tracking = window['loc_ux_tracking'];
-                data = [
-                    element,
-                    category,
-                    action,
-                    label
-                ];
-                loc_ux_tracking.trackUserInteractionEvent(...data);
-            }
-        }
         function trackQuickTipsInteraction(element, label) {
             trackUIInteraction(element, 'Quick Tips', 'click', label);
         }
         function trackHowToInteraction(element, label){
             trackUIInteraction(element, 'How To Guide' , 'click', label);
         }
+
         $("#quick-tips").on("click", function(event) { trackQuickTipsInteraction($(this), "Open")});
-        $("#tutorial-popup .close").on("click", function(event) { trackQuickTipsInteraction($(this), "Close")});
         $("#previous-card").on("click", function(event){ trackQuickTipsInteraction($(this), "Back")});
         $("#next-card").on("click", function(event){ trackQuickTipsInteraction($(this), "Next")});
         $(".carousel-indicators li").on("click", function(event){
@@ -1277,6 +1265,16 @@
         $("#guide-sidebar .nav-link").on("click", function(event) {
             let label = $(this).text().trim();
             trackHowToInteraction($(this), label);
+        });
+        $("#tutorial-popup").on("hidden.bs.modal", function(){
+            // We're tracking whenever the popup closes, so we don't separately track the close button being clicked
+            trackUIInteraction($(this), 'Quick Tips', 'click', "Close");
+        });
+        $("#tutorial-popup").on("shown-on-load", function(){
+            // We set a timeout to make sure the analytics code is loaded before trying to track
+            setTimeout(function(){
+                trackUIInteraction($(this), 'Quick Tips', 'load', 'Open');
+            }, 1000);
         });
     </script>
 {% endblock body_scripts %}
