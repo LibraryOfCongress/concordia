@@ -56,17 +56,8 @@ def redownload_images_view(request):
             context["assets_to_download"] = assets_to_download = []
 
             rows = slurp_excel(request.FILES["spreadsheet_file"])
-            required_fields = [
-                "download_url",
-            ]
-            for idx, row in enumerate(rows):
-                missing_fields = [i for i in required_fields if i not in row]
-                if missing_fields:
-                    messages.warning(
-                        request, f"Skipping row {idx}: missing fields {missing_fields}"
-                    )
-                    continue
 
+            for idx, row in enumerate(rows):
                 download_url = row["download_url"]
                 # optional real_file_url data
                 real_file_url = row["real_file_url"]
