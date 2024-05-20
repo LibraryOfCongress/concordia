@@ -39,6 +39,7 @@ from .utils import (
     JSONAssertMixin,
     create_asset,
     create_campaign,
+    create_guide,
     create_item,
     create_project,
     create_topic,
@@ -375,6 +376,9 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         )
         self.transcription.save()
 
+        title = "Transcription: Basic Rules"
+        create_guide(title=title)
+
         response = self.client.get(
             reverse(
                 "transcriptions:asset-detail",
@@ -386,8 +390,9 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
                 },
             )
         )
-
         self.assertEqual(response.status_code, 200)
+        self.assertIn("guides", response.context)
+        self.assertEqual(title, response.context["guides"][0]["title"])
 
     @patch.object(Asset, "get_ocr_transcript")
     def test_generate_ocr_transcription(self, mock):
