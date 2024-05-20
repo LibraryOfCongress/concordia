@@ -9,6 +9,7 @@ from concordia.models import (
     Campaign,
     Card,
     CardFamily,
+    Guide,
     Item,
     MediaType,
     Project,
@@ -230,6 +231,13 @@ def create_card_family(*, do_save=True, **kwargs):
     if do_save:
         card_family.save()
     return card_family
+
+
+def create_guide(*, do_save=True, **kwargs):
+    guide = Guide(**kwargs)
+    if do_save:
+        guide.save()
+    return guide
 
 
 class JSONAssertMixin(object):

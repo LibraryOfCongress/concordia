@@ -40,6 +40,7 @@ from .utils import (
     create_asset,
     create_campaign,
     create_card_family,
+    create_guide,
     create_item,
     create_project,
     create_topic,
@@ -378,6 +379,8 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
 
         asset.item.project.campaign.card_family = create_card_family()
         asset.item.project.campaign.save()
+        title = "Transcription: Basic Rules"
+        create_guide(title=title)
 
         response = self.client.get(
             reverse(
@@ -390,9 +393,10 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
                 },
             )
         )
-
         self.assertEqual(response.status_code, 200)
         self.assertIn("cards", response.context)
+        self.assertIn("guides", response.context)
+        self.assertEqual(title, response.context["guides"][0]["title"])
 
     @patch.object(Asset, "get_ocr_transcript")
     def test_generate_ocr_transcription(self, mock):
