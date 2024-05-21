@@ -39,6 +39,7 @@ from .utils import (
     JSONAssertMixin,
     create_asset,
     create_campaign,
+    create_card_family,
     create_guide,
     create_item,
     create_project,
@@ -376,6 +377,8 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         )
         self.transcription.save()
 
+        asset.item.project.campaign.card_family = create_card_family()
+        asset.item.project.campaign.save()
         title = "Transcription: Basic Rules"
         create_guide(title=title)
 
@@ -391,6 +394,7 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
             )
         )
         self.assertEqual(response.status_code, 200)
+        self.assertIn("cards", response.context)
         self.assertIn("guides", response.context)
         self.assertEqual(title, response.context["guides"][0]["title"])
 
