@@ -310,7 +310,7 @@ class TestSerializedObjectView(TestCase):
     def test_dne(self):
         request = self.factory.get(
             "/admin/card/",
-            {"model_name": "Card", "object_id": 2, "field_name": "title"},
+            {"model_name": "Card", "object_id": 3, "field_name": "title"},
         )
         response = SerializedObjectView.as_view()(request)
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
