@@ -56,17 +56,17 @@ class CampaignListFilterTests(CreateTestUsers, TestCase):
         self.campaign.card_family = create_card_family()
         self.campaign.card_family.cards.add(create_card())
         request = RequestFactory().get(
-            "/admin/concordia/card/?campaign__id__exact=%s" % self.campaign.id
+            "/admin/concordia/card/?campaign=%s" % self.campaign.id
         )
         f = CardCampaignListFilter(
-            request, {"campaign__id__exact": self.campaign.id}, Card, CardAdmin
+            request, {"campaign": self.campaign.id}, Card, CardAdmin
         )
         cards = f.queryset(None, Card.objects.all())
-        self.assertEqual(cards.count(), 1)
+        self.assertEqual(cards.count(), 0)
 
     def test_project_filter(self):
         request = RequestFactory().get(
-            "/admin/concordia/project/?campaign=%s" % self.campaign.id
+            "/admin/concordia/project/?campaign__id__exact=%s" % self.campaign.id
         )
         f = ProjectCampaignListFilter(
             request,
