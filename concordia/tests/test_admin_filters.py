@@ -1,18 +1,19 @@
 from django.test import RequestFactory, TestCase
 from django.utils import timezone
 
-from concordia.admin import ItemAdmin, ProjectAdmin, TranscriptionAdmin
+from concordia.admin import ItemAdmin, ProjectAdmin, SiteReportAdmin, TranscriptionAdmin
 from concordia.admin.filters import (
     ItemProjectListFilter,
     OcrGeneratedFilter,
     ProjectCampaignListFilter,
     ProjectCampaignStatusListFilter,
+    SiteReportCampaignListFilter,
     SubmittedFilter,
 )
-from concordia.models import Campaign, Item, Project, Transcription
+from concordia.admin_site import ConcordiaAdminSite
+from concordia.models import Campaign, Item, Project, SiteReport, Transcription
 from concordia.tests.utils import (
     CreateTestUsers,
-    create_campaign,
     create_item,
     create_project,
     create_site_report,
@@ -69,6 +70,20 @@ class CampaignListFilterTests(CreateTestUsers, TestCase):
         projects = f.queryset(None, Project.objects.all())
         self.assertEqual(projects.count(), 1)
 
+    def test_site_report_filter(self):
+        create_site_report(campaign=self.campaign)
+        request = RequestFactory().get(
+            "/admin/concordia/sitereport/?campaign__id__exact=%s" % self.campaign.id
+        )
+        f = SiteReportCampaignListFilter(
+            request,
+            {"campaign__id__exact": self.campaign.id},
+            SiteReport,
+            SiteReportAdmin(SiteReport, ConcordiaAdminSite),
+        )
+        site_reports = f.queryset(None, SiteReport.objects.all())
+        self.assertEqual(site_reports.count(), 1)
+
 
 class ItemFilterTests(CreateTestUsers, TestCase):
     def setUp(self):
@@ -112,15 +127,6 @@ class ProjectFilterTests(TestCase):
         )
         projects = f.queryset(None, Project.objects.all())
         self.assertEqual(projects.count(), 1)
-
-
-class SiteReportCampaignListFilterTests(TestCase):
-    def setUp(self):
-        create_campaign()
-        create_site_report()
-
-    def test_lookups(self):
-        pass
 
 
 class TranscriptionFilterTests(CreateTestUsers, TestCase):

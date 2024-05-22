@@ -63,8 +63,8 @@ def create_campaign(
     return campaign
 
 
-def create_site_report(do_save=True):
-    site_report = SiteReport()
+def create_site_report(*, do_save=True, **kwargs):
+    site_report = SiteReport(**kwargs)
     if do_save:
         site_report.save()
     return site_report
