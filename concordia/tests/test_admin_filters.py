@@ -1,8 +1,15 @@
 from django.test import RequestFactory, TestCase
 from django.utils import timezone
 
-from concordia.admin import ItemAdmin, ProjectAdmin, SiteReportAdmin, TranscriptionAdmin
+from concordia.admin import (
+    CardAdmin,
+    ItemAdmin,
+    ProjectAdmin,
+    SiteReportAdmin,
+    TranscriptionAdmin,
+)
 from concordia.admin.filters import (
+    CardCampaignListFilter,
     ItemProjectListFilter,
     OcrGeneratedFilter,
     ProjectCampaignListFilter,
@@ -11,9 +18,11 @@ from concordia.admin.filters import (
     SubmittedFilter,
 )
 from concordia.admin_site import ConcordiaAdminSite
-from concordia.models import Campaign, Item, Project, SiteReport, Transcription
+from concordia.models import Campaign, Card, Item, Project, SiteReport, Transcription
 from concordia.tests.utils import (
     CreateTestUsers,
+    create_card,
+    create_card_family,
     create_item,
     create_project,
     create_site_report,
@@ -49,6 +58,22 @@ class NullableTimestampFilterTest(CreateTestUsers, TestCase):
 class CampaignListFilterTests(CreateTestUsers, TestCase):
     def setUp(self):
         self.campaign = create_project().campaign
+
+    def test_card_filter(self):
+        request = RequestFactory().get(
+            "/admin/concordia/card/?campaign=%s" % self.campaign.id
+        )
+        f = CardCampaignListFilter(
+            request, {"campaign": self.campaign.id}, Card, CardAdmin
+        )
+        cards = f.queryset(None, Card.objects.all())
+        self.assertEqual(cards.count(), 0)
+
+        self.campaign.card_family = create_card_family()
+        self.campaign.card_family.cards.add(create_card())
+        self.campaign.save()
+        cards = f.queryset(None, Card.objects.all())
+        self.assertEqual(cards.count(), 1)
 
     def test_project_filter(self):
         request = RequestFactory().get(
