@@ -76,15 +76,32 @@ class CampaignListFilterTests(CreateTestUsers, TestCase):
         request = RequestFactory().get(
             "/admin/concordia/sitereport/?%s=%s" % (param, self.campaign.id)
         )
-        site_report_admin = SiteReportAdmin(SiteReport, ConcordiaAdminSite)
+        site_report_admin = SiteReportAdmin(SiteReport, ConcordiaAdminSite())
         f = SiteReportCampaignListFilter(
             request,
-            {"campaign__id__exact": self.campaign.id},
+            {param: self.campaign.id},
             SiteReport,
             site_report_admin,
         )
         self.assertTrue(f.has_output())
+
         self.assertIn(param, f.expected_parameters())
+
+        self.login_user()
+        request.user = self.user
+        changelist = site_report_admin.get_changelist_instance(request)
+        choices = list(f.choices(changelist))
+        self.assertEqual(choices[0]["display"], "All")
+
+        self.assertEqual(choices[1]["display"], "Test Campaign")
+
+        self.assertEqual(choices[-1]["display"], "-")
+
+        f.include_empty_choice = False
+        self.assertFalse(f.has_output())
+
+        choices = list(f.choices(changelist))
+        self.assertEqual(choices[-1]["display"], "Test Campaign")
 
 
 class ItemFilterTests(CreateTestUsers, TestCase):
