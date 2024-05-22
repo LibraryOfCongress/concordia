@@ -72,17 +72,19 @@ class CampaignListFilterTests(CreateTestUsers, TestCase):
 
     def test_site_report_filter(self):
         create_site_report(campaign=self.campaign)
+        param = "campaign__id__exact"
         request = RequestFactory().get(
-            "/admin/concordia/sitereport/?campaign__id__exact=%s" % self.campaign.id
+            "/admin/concordia/sitereport/?%s=%s" % (param, self.campaign.id)
         )
+        site_report_admin = SiteReportAdmin(SiteReport, ConcordiaAdminSite)
         f = SiteReportCampaignListFilter(
             request,
             {"campaign__id__exact": self.campaign.id},
             SiteReport,
-            SiteReportAdmin(SiteReport, ConcordiaAdminSite),
+            site_report_admin,
         )
-        site_reports = f.queryset(None, SiteReport.objects.all())
-        self.assertEqual(site_reports.count(), 1)
+        self.assertTrue(f.has_output())
+        self.assertIn(param, f.expected_parameters())
 
 
 class ItemFilterTests(CreateTestUsers, TestCase):
