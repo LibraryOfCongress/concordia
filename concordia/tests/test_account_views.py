@@ -107,6 +107,10 @@ class ConcordiaViewTests(
 
     def test_email_reconfirmation(self):
         self.login_user()
+        # Confirm the user doesn't have a reconfirmation key
+        concordia_user = ConcordiaUser.objects.get(id=self.user.id)
+        with self.assertRaises(ValueError):
+            concordia_user.get_email_reconfirmation_key()
 
         with self.settings(REQUIRE_EMAIL_RECONFIRMATION=True):
             email_data = {"email": "change@example.com"}
