@@ -1,7 +1,3 @@
-"""
-Tests for the core application features
-"""
-
 from datetime import date, timedelta
 from unittest.mock import patch
 
@@ -32,7 +28,13 @@ from concordia.tasks import (
     tombstone_old_active_asset_reservations,
 )
 from concordia.utils import get_anonymous_user, get_or_create_reservation_token
-from concordia.views import AccountProfileView, CompletedCampaignListView
+from concordia.views import (
+    AccountProfileView,
+    CompletedCampaignListView,
+    ConcordiaLoginView,
+    ratelimit_view,
+    registration_rate,
+)
 
 from .utils import (
     CreateTestUsers,
@@ -1513,3 +1515,39 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
             ),
             in_progress_asset_in_item.get_absolute_url(),
         )
+
+
+class RateLimitTests(TestCase):
+    def setUp(self):
+        self.request_factory = RequestFactory()
+
+    def test_registration_rate(self):
+        request = self.request_factory.get("/")
+        self.assertEqual(registration_rate(None, request), "10/h")
+        with patch("concordia.views.UserRegistrationForm", autospec=True):
+            # This causes the form to test as valid even though there's no data
+            self.assertIsNone(registration_rate(None, request))
+
+    def test_ratelimit_view(self):
+        request = self.request_factory.post("/")
+        exception = Exception()
+        response = ratelimit_view(request, exception)
+        self.assertEqual(response.status_code, 429)
+        self.assertNotEqual(response["Retry-After"], 0)
+
+
+class CaptchaTests(TestCase):
+    def setUp(self):
+        self.request_factory = RequestFactory()
+
+    def test_ConcordiaLoginView(self):
+        request = self.request_factory.post("/")
+        request.session = {}
+        view = setup_view(ConcordiaLoginView(), request)
+        response = view.post(request)
+        self.assertNotContains(response, "captcha")
+
+        request.limited = True
+        view = setup_view(ConcordiaLoginView(), request)
+        response = view.post(request)
+        self.assertContains(response, "captcha")
