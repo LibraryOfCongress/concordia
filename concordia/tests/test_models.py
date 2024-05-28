@@ -6,7 +6,22 @@ from django.utils import timezone
 from concordia.models import Campaign, Transcription, UserProfileActivity
 from concordia.utils import get_anonymous_user
 
-from .utils import CreateTestUsers, create_asset, create_campaign, create_transcription
+from .utils import (
+    CreateTestUsers,
+    create_asset,
+    create_banner,
+    create_campaign,
+    create_campaign_retirement_progress,
+    create_card,
+    create_card_family,
+    create_carousel_slide,
+    create_resource,
+    create_resource_file,
+    create_tag,
+    create_tag_collection,
+    create_transcription,
+    create_user_profile_activity,
+)
 
 
 class AssetTestCase(CreateTestUsers, TestCase):
@@ -83,8 +98,12 @@ class UserProfileActivityTestCase(TestCase):
     def test_total_actions(self):
         self.assertEqual(self.user_profile_activity.total_actions(), 339)
 
+    def test_str(self):
+        activity = create_user_profile_activity()
+        self.assertEqual(f"{activity.user} - {activity.campaign}", str(activity))
 
-class CampaignTest(TestCase):
+
+class CampaignTestCase(TestCase):
     def test_queryset(self):
         campaign = create_campaign(unlisted=True)
         self.assertIn(campaign, Campaign.objects.unlisted())
@@ -96,3 +115,74 @@ class CampaignTest(TestCase):
         campaign.status = Campaign.Status.RETIRED
         campaign.save()
         self.assertIn(campaign, Campaign.objects.retired())
+
+
+class CardTestCase(TestCase):
+    def test_str(self):
+        card = create_card()
+        self.assertEqual(card.title, str(card))
+
+
+class CardFamilyTestCase(TestCase):
+    def test_str(self):
+        family = create_card_family()
+        self.assertEqual(family.slug, str(family))
+
+
+class ResourceTestCase(TestCase):
+    def setUp(self):
+        self.resource = create_resource()
+
+    def test_str(self):
+        self.assertEqual(self.resource.title, str(self.resource))
+
+
+class ResourceFileTestCase(TestCase):
+    def test_str(self):
+        resource_file = create_resource_file()
+        self.assertEqual(resource_file.name, str(resource_file))
+
+
+class TagTestCase(TestCase):
+    def test_str(self):
+        tag = create_tag()
+        self.assertEqual(tag.value, str(tag))
+
+
+class UserAssetTagCollectionTestCase(TestCase):
+    def test_str(self):
+        tag_collection = create_tag_collection()
+        self.assertEqual(
+            "{} - {}".format(tag_collection.asset, tag_collection.user),
+            str(tag_collection),
+        )
+
+
+class BannerTestCase(TestCase):
+    def setUp(self):
+        self.banner = create_banner()
+
+    def test_str(self):
+        self.assertEqual(f"Banner: {self.banner.slug}", str(self.banner))
+
+    def test_alert_class(self):
+        self.assertEqual(
+            self.banner.alert_class(), "alert-" + self.banner.alert_status.lower()
+        )
+
+    def test_btn_class(self):
+        self.assertEqual(
+            self.banner.btn_class(), "btn-" + self.banner.alert_status.lower()
+        )
+
+
+class CarouselSlideTestCase(TestCase):
+    def test_str(self):
+        slide = create_carousel_slide()
+        self.assertEqual(f"CarouselSlide: {slide.headline}", str(slide))
+
+
+class CampaignRetirementProgressTestCase(TestCase):
+    def test_str(self):
+        progress = create_campaign_retirement_progress()
+        self.assertEqual(f"Removal progress for {progress.campaign}", str(progress))
