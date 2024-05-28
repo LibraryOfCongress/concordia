@@ -88,3 +88,11 @@ class CampaignTest(TestCase):
     def test_queryset(self):
         campaign = create_campaign(unlisted=True)
         self.assertIn(campaign, Campaign.objects.unlisted())
+
+        campaign.status = Campaign.Status.COMPLETED
+        campaign.save()
+        self.assertIn(campaign, Campaign.objects.completed())
+
+        campaign.status = Campaign.Status.RETIRED
+        campaign.save()
+        self.assertIn(campaign, Campaign.objects.retired())
