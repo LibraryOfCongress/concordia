@@ -28,6 +28,7 @@ def clear_reservation_token(sender, user, request, **kwargs):
     try:
         token = request.session["reservation_token"]
         del request.session["reservation_token"]
+        request.session.save()
         logger.info("Clearing reservation token %s for %s on login", token, user)
     except KeyError:
         pass
