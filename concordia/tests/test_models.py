@@ -6,7 +6,7 @@ from django.utils import timezone
 from concordia.models import Campaign, Transcription, UserProfileActivity
 from concordia.utils import get_anonymous_user
 
-from .utils import CreateTestUsers, create_asset, create_transcription
+from .utils import CreateTestUsers, create_asset, create_campaign, create_transcription
 
 
 class AssetTestCase(CreateTestUsers, TestCase):
@@ -82,3 +82,9 @@ class UserProfileActivityTestCase(TestCase):
 
     def test_total_actions(self):
         self.assertEqual(self.user_profile_activity.total_actions(), 339)
+
+
+class CampaignTest(TestCase):
+    def test_queryset(self):
+        campaign = create_campaign(unlisted=True)
+        self.assertIn(campaign, Campaign.objects.unlisted())
