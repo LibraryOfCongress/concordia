@@ -1,19 +1,26 @@
 from django.test import RequestFactory, TestCase
 from django.utils import timezone
 
-from concordia.admin import CardAdmin, ItemAdmin, ProjectAdmin, TranscriptionAdmin
+from concordia.admin import (
+    CardAdmin,
+    ItemAdmin,
+    ProjectAdmin,
+    SiteReportAdmin,
+    TranscriptionAdmin,
+)
 from concordia.admin.filters import (
     CardCampaignListFilter,
     ItemProjectListFilter,
     OcrGeneratedFilter,
     ProjectCampaignListFilter,
     ProjectCampaignStatusListFilter,
+    SiteReportCampaignListFilter,
     SubmittedFilter,
 )
-from concordia.models import Campaign, Card, Item, Project, Transcription
+from concordia.admin_site import ConcordiaAdminSite
+from concordia.models import Campaign, Card, Item, Project, SiteReport, Transcription
 from concordia.tests.utils import (
     CreateTestUsers,
-    create_campaign,
     create_card,
     create_card_family,
     create_item,
@@ -88,6 +95,39 @@ class CampaignListFilterTests(CreateTestUsers, TestCase):
         projects = f.queryset(None, Project.objects.all())
         self.assertEqual(projects.count(), 1)
 
+    def test_site_report_filter(self):
+        create_site_report(campaign=self.campaign)
+        param = "campaign__id__exact"
+        request = RequestFactory().get(
+            "/admin/concordia/sitereport/?%s=%s" % (param, self.campaign.id)
+        )
+        site_report_admin = SiteReportAdmin(SiteReport, ConcordiaAdminSite())
+        f = SiteReportCampaignListFilter(
+            request,
+            {param: self.campaign.id},
+            SiteReport,
+            site_report_admin,
+        )
+        self.assertTrue(f.has_output())
+
+        self.assertIn(param, f.expected_parameters())
+
+        self.login_user()
+        request.user = self.user
+        changelist = site_report_admin.get_changelist_instance(request)
+        choices = list(f.choices(changelist))
+        self.assertEqual(choices[0]["display"], "All")
+
+        self.assertEqual(choices[1]["display"], "Test Campaign")
+
+        self.assertEqual(choices[-1]["display"], "-")
+
+        f.include_empty_choice = False
+        self.assertFalse(f.has_output())
+
+        choices = list(f.choices(changelist))
+        self.assertEqual(choices[-1]["display"], "Test Campaign")
+
 
 class ItemFilterTests(CreateTestUsers, TestCase):
     def setUp(self):
@@ -131,15 +171,6 @@ class ProjectFilterTests(TestCase):
         )
         projects = f.queryset(None, Project.objects.all())
         self.assertEqual(projects.count(), 1)
-
-
-class SiteReportCampaignListFilterTests(TestCase):
-    def setUp(self):
-        create_campaign()
-        create_site_report()
-
-    def test_lookups(self):
-        pass
 
 
 class TranscriptionFilterTests(CreateTestUsers, TestCase):
