@@ -8,7 +8,12 @@ from django.urls import reverse
 from concordia.models import Guide, SimplePage
 from concordia.views import simple_page
 
-from .utils import CacheControlAssertions, CreateTestUsers, JSONAssertMixin
+from .utils import (
+    CacheControlAssertions,
+    CreateTestUsers,
+    JSONAssertMixin,
+    create_guide,
+)
 
 
 class TopLevelViewTests(
@@ -42,7 +47,9 @@ class TopLevelViewTests(
     def test_contact_us_with_referrer(self):
         test_http_referrer = "http://foo/bar"
 
-        response = self.client.get(reverse("contact"), HTTP_REFERER=test_http_referrer)
+        response = self.client.get(
+            reverse("contact"), headers={"referer": test_http_referrer}
+        )
 
         self.assertEqual(response.status_code, 200)
         self.assertUncacheable(response)
@@ -153,3 +160,7 @@ class TopLevelViewTests(
         self.assertHTMLEqual(
             resp.context["body"], "<p>This is <em>not</em> the real page</p>"
         )
+
+        create_guide(page=l1)
+        resp = self.client.get(reverse("welcome-guide"))
+        self.assertEqual(200, resp.status_code)
