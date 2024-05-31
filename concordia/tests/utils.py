@@ -6,17 +6,25 @@ from django.utils.text import slugify
 
 from concordia.models import (
     Asset,
+    Banner,
     Campaign,
+    CampaignRetirementProgress,
     Card,
+    CardFamily,
+    CarouselSlide,
+    Guide,
     Item,
     MediaType,
     Project,
+    Resource,
+    ResourceFile,
     SiteReport,
     Tag,
     Topic,
     Transcription,
     User,
     UserAssetTagCollection,
+    UserProfileActivity,
 )
 
 
@@ -61,8 +69,8 @@ def create_campaign(
     return campaign
 
 
-def create_site_report(do_save=True):
-    site_report = SiteReport()
+def create_site_report(*, do_save=True, **kwargs):
+    site_report = SiteReport(**kwargs)
     if do_save:
         site_report.save()
     return site_report
@@ -217,11 +225,86 @@ def create_tag_collection(*, tag=None, asset=None, user=None, **kwargs):
     return tag_collection
 
 
+def create_banner(*, slug="Test Banner", do_save=True, **kwargs):
+    banner = Banner(slug=slug, **kwargs)
+    if do_save:
+        banner.save()
+    return banner
+
+
 def create_card(*, title="Test Card", do_save=True, **kwargs):
     card = Card(title=title, **kwargs)
     if do_save:
         card.save()
     return card
+
+
+def create_card_family(*, do_save=True, **kwargs):
+    card_family = CardFamily(**kwargs)
+    if do_save:
+        card_family.save()
+    return card_family
+
+
+def create_carousel_slide(*, headline="Test Headline", do_save=True, **kwargs):
+    slide = CarouselSlide(**kwargs)
+    if do_save:
+        slide.save()
+    return slide
+
+
+def create_guide(*, do_save=True, **kwargs):
+    guide = Guide(**kwargs)
+    if do_save:
+        guide.save()
+    return guide
+
+
+def create_resource(*, title="Test Resource", do_save=True, **kwargs):
+    resource = Resource(title=title, **kwargs)
+    if do_save:
+        resource.save()
+    return resource
+
+
+def create_resource_file(
+    *, name="Test Resource File", resource="file.pdf", do_save=True, **kwargs
+):
+    resource_file = ResourceFile(name=name, resource=resource, **kwargs)
+    if do_save:
+        resource_file.save()
+    return resource_file
+
+
+def create_user_profile_activity(
+    *,
+    campaign=None,
+    user=None,
+    do_save=True,
+    **kwargs,
+):
+    if campaign is None:
+        campaign = create_campaign()
+    if user is None:
+        user = CreateTestUsers.create_user("profile-user")
+    activity = UserProfileActivity(campaign=campaign, user=user)
+    if do_save:
+        activity.save()
+    return activity
+
+
+def create_campaign_retirement_progress(
+    *,
+    campaign=None,
+    do_save=True,
+    **kwargs,
+):
+    if campaign is None:
+        campaign = create_campaign()
+    progress = CampaignRetirementProgress(campaign=campaign)
+    if do_save:
+        progress.save()
+    return progress
 
 
 class JSONAssertMixin(object):
@@ -245,11 +328,14 @@ class CreateTestUsers(object):
         """
         Create a user and log the user in
         """
-
-        if not hasattr(self, "user"):
+        if not hasattr(self, "user") or self.user is None:
             self.user = self.create_test_user(username, **kwargs)
 
         self.client.login(username=self.user.username, password=self.user._password)
+
+    def logout_user(self):
+        self.client.logout()
+        self.user = None
 
     @classmethod
     def create_user(cls, username, is_active=True, **kwargs):

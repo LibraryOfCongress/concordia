@@ -17,7 +17,7 @@ Parameters:
 Mappings:
     AWSRegionToAMI:
         us-east-1:
-            AMI: ami-0cabc39acf991f4f1
+            AMI: ami-04e5276ebb8451442
 
     EnvironmentMapping:
         IamInstanceProfileName:
@@ -86,11 +86,22 @@ Resources:
                     echo "Running userdata for ${EnvironmentName}"
                     echo "export ENV_NAME=${EnvironmentName}" >> /home/ec2-user/.bash_profile
                     source /home/ec2-user/.bash_profile
-                    yum -y update
-                    yum -y install git
+                    # TODO while true is a workaround for AL2023 Consistently Failing to boot
+                    #  · Issue #3741· philips-labs/terraform-aws-github-runner
+                    # https://github.com/amazonlinux/amazon-linux-2023/issues/397
+                    while true; do
+                      dnf -y upgrade-minimal --assumeyes && break
+                    done
+                    while true; do
+                      dnf -y install --assumeyes git && break
+                    done
+                    while true; do
+                      dnf -y install --assumeyes postgresql15.x86_64 && break
+                    done
+                    while true; do
+                      dnf -y install --assumeyes docker.x86_64 && break
+                    done
                     aws s3 cp s3://crowd-deployment/database-dumps/concordia.latest.dmp concordia.dmp
-                    amazon-linux-extras install -y postgresql12
-
             Tags:
                 - Key: Name
                   Value: !Sub ${EnvironmentName}-BastionHost-1
@@ -130,11 +141,19 @@ Resources:
                     echo "Running userdata for ${EnvironmentName}"
                     echo "export ENV_NAME=${EnvironmentName}" >> /home/ec2-user/.bash_profile
                     source /home/ec2-user/.bash_profile
-                    yum -y update
-                    yum -y install git
+                    while true; do
+                      dnf -y upgrade-minimal --assumeyes && break
+                    done
+                    while true; do
+                      dnf -y install --assumeyes git && break
+                    done
+                    while true; do
+                      dnf -y install --assumeyes postgresql15.x86_64 && break
+                    done
+                    while true; do
+                      dnf -y install --assumeyes docker.x86_64 && break
+                    done
                     aws s3 cp s3://crowd-deployment/database-dumps/concordia.latest.dmp concordia.dmp
-                    amazon-linux-extras install -y postgresql12
-
             Tags:
                 - Key: Name
                   Value: !Sub ${EnvironmentName}-BastionHost-2

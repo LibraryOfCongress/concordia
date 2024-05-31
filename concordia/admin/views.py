@@ -4,7 +4,6 @@ import tempfile
 import time
 from http import HTTPStatus
 
-from bittersweet.models import validated_get_or_create
 from celery import Celery
 from django.apps import apps
 from django.contrib import messages
@@ -17,10 +16,15 @@ from django.shortcuts import render
 from django.utils.text import slugify
 from django.views import View
 from django.views.decorators.cache import never_cache
-from tabular_export.core import export_to_csv_response as _export_to_csv_response
-from tabular_export.core import flatten_queryset
 
-from concordia.models import Asset, Item, Transcription, TranscriptionStatus
+from concordia.models import (
+    Asset,
+    Item,
+    Transcription,
+    TranscriptionStatus,
+    validated_get_or_create,
+)
+from exporter.tabular_export.core import export_to_csv_response, flatten_queryset
 from exporter.views import do_bagit_export
 from importer.models import ImportItem, ImportItemAsset, ImportJob
 from importer.tasks import (
@@ -52,17 +56,8 @@ def redownload_images_view(request):
             context["assets_to_download"] = assets_to_download = []
 
             rows = slurp_excel(request.FILES["spreadsheet_file"])
-            required_fields = [
-                "download_url",
-            ]
-            for idx, row in enumerate(rows):
-                missing_fields = [i for i in required_fields if i not in row]
-                if missing_fields:
-                    messages.warning(
-                        request, f"Skipping row {idx}: missing fields {missing_fields}"
-                    )
-                    continue
 
+            for idx, row in enumerate(rows):
                 download_url = row["download_url"]
                 # optional real_file_url data
                 real_file_url = row["real_file_url"]
@@ -573,15 +568,6 @@ def admin_bulk_import_view(request):
     context["form"] = form
 
     return render(request, "admin/bulk_import.html", context)
-
-
-def export_to_csv_response(filename, headers, rows):
-    # This is a workaround for an async issue in Django 3
-    # Please see https://staff.loc.gov/tasks/browse/CONCD-723
-    logger.info("Forcing queryset eval")
-    data = list(rows)
-    logger.info("Exporting to csv response")
-    return _export_to_csv_response(filename, headers, data)
 
 
 @never_cache

@@ -332,6 +332,7 @@ because it's not worth dealing with IE11 compatibility {% endcomment %}
                             {% if asset %}
                                 setTutorialHeight();
                                 $('#tutorial-popup').modal('show');
+                                $('#tutorial-popup').trigger('shown-on-load');
                                 localStorage.setItem(keyName, "true");
                             {% endif %}
                         }

@@ -45,4 +45,4 @@ We're excited that you want to be part of Concordia! Here are two ways to contri
 -   Explain how it would serve Concordia via a user story
 -   Keep the scope as narrow as possible, to make it easier to implement.
 
-If you use or build on our code, we'd love to hear from you! Contact us here or at [crowd@loc.gov](mailto:crowd@loc.gov).
+If you use or build on our code, we'd love to hear from you! [Contact us here at ask.loc.gov](https://ask.loc.gov/).

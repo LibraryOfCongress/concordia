@@ -479,9 +479,12 @@ $card-progress-height: 12px;
         #{$card-img-height} - #{$card-btn-height - $card-progress-height}
     );
     z-index: 3;
+
+    /* stylelint-disable selector-class-pattern */
     .view-transcriptions--item-detail & {
         top: 0;
     }
+    /* stylelint-enable selector-class-pattern */
 }
 
 .concordia-object-card .card-actions .btn {
@@ -988,6 +991,31 @@ $card-progress-height: 12px;
     }
 }
 
+#ocr-transcription-link {
+    pointer-events: auto;
+}
+
+#ocr-transcription-link.disabled {
+    cursor: default;
+}
+
+#ocr-transcription-modal .modal-dialog {
+    max-width: 419px;
+}
+
+#language-selection-modal {
+    display: none;
+    margin-left: 40px;
+}
+
+#language-selection-modal .modal-dialog {
+    max-width: 428px;
+}
+
+#language-selection-modal .modal-footer {
+    justify-content: center;
+}
+
 /*
  * Tag input on the asset detail page
  */
@@ -1088,6 +1116,8 @@ $card-progress-height: 12px;
     font-size: 0.75rem;
     margin-right: -55px;
     margin-top: 39px;
+    max-height: 32px;
+    white-space: nowrap;
     width: 110px;
 }
 
@@ -1108,6 +1138,7 @@ $card-progress-height: 12px;
     transition: 0.3s;
     background-color: $white;
 }
+
 .sidebar.offscreen {
     transform: translateX(100%);
 }
@@ -1123,6 +1154,11 @@ $card-progress-height: 12px;
 .sidebar .nav-item a {
     font-size: $font-size-base * 1.25;
     text-decoration: underline;
+}
+
+.guide-body {
+    max-height: 462.2px;
+    overflow: scroll;
 }
 
 .guide-body h3 {
@@ -1145,6 +1181,10 @@ $card-progress-height: 12px;
 
 .sidebar .close {
     font-size: $font-size-base * 0.875;
+}
+
+#guide-carousel .container {
+    padding-right: 0;
 }
 
 /*

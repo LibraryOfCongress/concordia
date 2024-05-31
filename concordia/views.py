@@ -136,6 +136,21 @@ def default_cache_control(view_function):
     return inner
 
 
+def user_cache_control(view_function):
+    """
+    Decorator for views that vary by user
+    Only applicable if the user is authenticated
+    """
+
+    @vary_on_headers("Accept-Encoding", "Cookie")
+    @cache_control(public=True, max_age=settings.DEFAULT_PAGE_TTL)
+    @wraps(view_function)
+    def inner(*args, **kwargs):
+        return view_function(*args, **kwargs)
+
+    return inner
+
+
 @never_cache
 def healthz(request):
     status = {
@@ -188,27 +203,14 @@ def simple_page(request, path=None, slug=None):
         "breadcrumbs": breadcrumbs,
     }
 
-    guides = Guide.objects.order_by("order")
-    links = []
-    try:
-        guide = guides.get(title__iexact=page.title)
+    guide = page.guide_set.all().first()
+    if guide is not None:
         html = "".join((page.body, guide.body))
         ctx["add_navigation"] = True
-    except Guide.DoesNotExist:
+    else:
         html = page.body
-        if page.title == "Get started":
-            ctx["add_navigation"] = True
-            links.append("Get started", reverse("welcome-guide"))
     if "add_navigation" in ctx:
-        for guide in guides.all():
-            try:
-                simple_page = SimplePage.objects.get(title__iexact=guide.title)
-                url = simple_page.path
-            except SimplePage.DoesNotExist:
-                url = None
-            if url is not None:
-                links.append((guide.title, url))
-        ctx["toc"] = links
+        ctx["guides"] = Guide.objects.order_by("order")
     ctx["body"] = md.convert(html)
 
     resp = render(request, "static-page.html", ctx)
@@ -1046,25 +1048,29 @@ class CampaignDetailView(APIDetailView):
             ctx["contributor_count"] = latest_report.registered_contributors
         else:
             projects = (
-                ctx["campaign"]
-                .project_set.published()
-                .annotate(
-                    **{
-                        f"{key}_count": Count(
-                            "item__asset",
-                            filter=Q(
-                                item__published=True,
-                                item__asset__published=True,
-                                item__asset__transcription_status=key,
-                            ),
-                        )
-                        for key in TranscriptionStatus.CHOICE_MAP
-                    }
+                ctx["campaign"].project_set.published().order_by("ordering", "title")
+            )
+            ctx["filters"] = filters = {}
+            filter_by_reviewable = kwargs.get("filter_by_reviewable", False)
+            if filter_by_reviewable:
+                projects = projects.exclude(
+                    item__asset__transcription__user=self.request.user.id
                 )
-                .order_by("ordering", "title")
+                ctx["filter_assets"] = True
+            projects = projects.annotate(
+                **{
+                    f"{key}_count": Count(
+                        "item__asset",
+                        filter=Q(
+                            item__published=True,
+                            item__asset__published=True,
+                            item__asset__transcription_status=key,
+                        ),
+                    )
+                    for key in TranscriptionStatus.CHOICE_MAP
+                }
             )
 
-            ctx["filters"] = filters = {}
             status = self.request.GET.get("transcription_status")
             if status in TranscriptionStatus.CHOICE_MAP:
                 projects = projects.exclude(**{f"{status}_count": 0})
@@ -1082,6 +1088,10 @@ class CampaignDetailView(APIDetailView):
                 item__published=True,
                 published=True,
             )
+            if filter_by_reviewable:
+                campaign_assets = campaign_assets.exclude(
+                    transcription__user=self.request.user.id
+                )
 
             calculate_asset_stats(campaign_assets, ctx)
 
@@ -1106,6 +1116,15 @@ class CampaignDetailView(APIDetailView):
         return super().get_template_names()
 
 
+@method_decorator(user_cache_control, name="dispatch")
+class FilteredCampaignDetailView(CampaignDetailView):
+    def get_context_data(self, **kwargs):
+        if self.request.user.is_authenticated and self.request.user.is_staff:
+            kwargs["filter_by_reviewable"] = True
+
+        return super().get_context_data(**kwargs)
+
+
 @method_decorator(default_cache_control, name="dispatch")
 class ProjectDetailView(APIListView):
     template_name = "transcriptions/project_detail.html"
@@ -1121,7 +1140,7 @@ class ProjectDetailView(APIListView):
             )
             return redirect(campaign)
 
-    def get_queryset(self):
+    def get_queryset(self, filter_by_reviewable=False):
         self.project = get_object_or_404(
             Project.objects.published().select_related("campaign"),
             slug=self.kwargs["slug"],
@@ -1129,6 +1148,8 @@ class ProjectDetailView(APIListView):
         )
 
         item_qs = self.project.item_set.published().order_by("item_id")
+        if filter_by_reviewable:
+            item_qs = item_qs.exclude(asset__transcription__user=self.request.user.id)
         item_qs = item_qs.annotate(
             **{
                 f"{key}_count": Count(
@@ -1160,6 +1181,12 @@ class ProjectDetailView(APIListView):
         project_assets = Asset.objects.filter(
             item__project=project, published=True, item__published=True
         )
+        filter_by_reviewable = kws.get("filter_by_reviewable", False)
+        if filter_by_reviewable:
+            project_assets = project_assets.exclude(
+                transcription__user=self.request.user.id
+            )
+            ctx["filter_assets"] = True
 
         calculate_asset_stats(project_assets, ctx)
 
@@ -1171,6 +1198,17 @@ class ProjectDetailView(APIListView):
         data = super().serialize_context(context)
         data["project"] = self.serialize_object(context["project"])
         return data
+
+
+@method_decorator(user_cache_control, name="dispatch")
+class FilteredProjectDetailView(ProjectDetailView):
+    def get_queryset(self):
+        return super().get_queryset(filter_by_reviewable=True)
+
+    def get_context_data(self, **kws):
+        kws["filter_by_reviewable"] = True
+
+        return super().get_context_data(**kws)
 
 
 @method_decorator(default_cache_control, name="dispatch")
@@ -1196,6 +1234,12 @@ class ItemDetailView(APIListView):
             )
             return redirect(campaign)
 
+    def _get_assets(self):
+        assets = self.item.asset_set.published()
+        if self.kwargs.get("filter_by_reviewable", False):
+            assets = assets.exclude(transcription__user=self.request.user.id)
+        return assets
+
     def get_queryset(self):
         self.item = get_object_or_404(
             Item.objects.published().select_related("project__campaign"),
@@ -1204,7 +1248,7 @@ class ItemDetailView(APIListView):
             item_id=self.kwargs["item_id"],
         )
 
-        asset_qs = self.item.asset_set.published().order_by("sequence")
+        asset_qs = self._get_assets().order_by("sequence")
         asset_qs = asset_qs.select_related(
             "item__project__campaign", "item__project", "item"
         )
@@ -1232,7 +1276,9 @@ class ItemDetailView(APIListView):
             }
         )
 
-        item_assets = self.item.asset_set.published()
+        item_assets = self._get_assets()
+        if self.kwargs.get("filter_by_reviewable", False):
+            ctx["filter_assets"] = True
 
         calculate_asset_stats(item_assets, ctx)
 
@@ -1250,6 +1296,17 @@ class ItemDetailView(APIListView):
 
         data["item"] = self.serialize_object(context["item"])
         return data
+
+
+@method_decorator(user_cache_control, name="dispatch")
+class FilteredItemDetailView(ItemDetailView):
+    def get_queryset(self):
+        self.kwargs["filter_by_reviewable"] = True
+        return super().get_queryset()
+
+    def get_context_data(self, **kwargs):
+        self.kwargs["filter_by_reviewable"] = True
+        return super().get_context_data(**kwargs)
 
 
 @method_decorator(never_cache, name="dispatch")
@@ -1332,6 +1389,9 @@ class AssetDetailView(APIDetailView):
             or transcription_status == TranscriptionStatus.IN_PROGRESS
         ):
             ctx["activity_mode"] = "transcribe"
+            ctx["disable_ocr"] = asset.turn_off_ocr()
+        else:
+            ctx["disable_ocr"] = True
         if transcription_status == TranscriptionStatus.SUBMITTED:
             ctx["activity_mode"] = "review"
 
@@ -1394,6 +1454,8 @@ class AssetDetailView(APIDetailView):
         guides = Guide.objects.order_by("order").values("title", "body")
         if guides.count() > 0:
             ctx["guides"] = guides
+
+        ctx["languages"] = list(settings.LANGUAGE_CODES.items())
 
         return ctx
 
@@ -1475,7 +1537,7 @@ def generate_ocr_transcription(request, *, asset_pk):
         user = request.user
 
     supersedes_pk = request.POST.get("supersedes")
-    language = request.POST.get("language")
+    language = request.POST.get("language", None)
     superseded = get_transcription_superseded(asset, supersedes_pk)
     if superseded and isinstance(superseded, HttpResponse):
         return superseded
@@ -2432,7 +2494,6 @@ class HelpCenterRedirectView(RedirectView):
 
 class HelpCenterSpanishRedirectView(RedirectView):
     def get_redirect_url(self, *args, **kwargs):
-        print("spanish")
         path = kwargs["page_slug"]
         return "/get-started-esp/" + path + "-esp/"
 

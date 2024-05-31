@@ -1,5 +1,5 @@
 /* global $ Cookies screenfull Sentry */
-/* exported displayMessage displayHtmlMessage buildErrorMessage */
+/* exported displayMessage displayHtmlMessage buildErrorMessage trackUIInteraction */
 
 (function () {
     /*
@@ -124,7 +124,7 @@ $(function () {
             Sentry.captureException(error);
         }
 
-        if (Date.now() - warningLastShown > 7 * 86400) {
+        if (Date.now() - warningLastShown > 7 * 86_400) {
             displayHtmlMessage('danger', theMessage).on(
                 'closed.bs.alert',
                 function () {
@@ -180,22 +180,22 @@ $.ajax({
     $('.authenticated-only').removeAttr('hidden');
     if (data.links) {
         var $accountMenu = $('#topnav-account-dropdown .dropdown-menu');
-        data.links.forEach(function (link) {
+        for (const link of data.links) {
             $('<a>')
                 .addClass('dropdown-item')
                 .attr('href', link.url)
                 .text(link.title)
                 .prependTo($accountMenu);
-        });
+        }
     }
 });
 
 $.ajax({url: '/account/ajax-messages/', method: 'GET', dataType: 'json'}).done(
     function (data) {
         if (data.messages) {
-            data.messages.forEach(function (message) {
+            for (const message of data.messages) {
                 displayMessage(message.level, message.message);
-            });
+            }
         }
     },
 );
@@ -297,3 +297,11 @@ $twitterShareButton.on('click', function () {
     trackShareInteraction($twitterShareButton, 'Twitter Share');
     return true;
 });
+
+function trackUIInteraction(element, category, action, label) {
+    if ('loc_ux_tracking' in window) {
+        let loc_ux_tracking = window['loc_ux_tracking'];
+        let data = [element, category, action, label];
+        loc_ux_tracking.trackUserInteractionEvent(...data);
+    }
+}

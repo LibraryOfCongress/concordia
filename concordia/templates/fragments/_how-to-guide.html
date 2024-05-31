@@ -13,7 +13,7 @@
             <div class="carousel-item active" id="guide-nav">
                 <ul class="nav flex-column">
                     <li class="nav-item toc-title">
-                        <a class="nav-link" data-target="#guide-carousel" data-slide-to="1" href="#">About this Campaign</a>
+                        <a class="nav-link" data-target="#guide-carousel" data-slide-to="1" href="#">About This Campaign</a>
                     </li>
                     {% for guide in guides %}
                         <li class="nav-item toc-title">
@@ -26,30 +26,32 @@
             </div>
             <div class="carousel-item container">
                 <div class="border-bottom justify-content-center mb-3 py-1 row">
-                    <h3>About this Campaign</h3>
+                    <h3>About This Campaign</h3>
                     <a class="font-weight-bold ml-3 pt-2" id="next-guide" href="#guide-carousel" data-slide="next">></a>
                 </div>
-                {% if campaign.description %}
-                    <h4>About this campaign</h4>
-                    <p>{{ campaign.description|safe }}</p>
-                {% endif %}
-                {% if asset.item.project.description %}
-                    <h4>About this project</h4>
-                    <p>{{ asset.item.project.description|safe }}</p>
-                {% endif %}
-                {% if campaign.resource_set.related_links %}
-                    <h5 class="pt-3">Helpful Links</h5>
-                    <p>
-                        <ul>
-                            {% for resource in campaign.resource_set.related_links %}
-                                <li class="mb-3">
-                                    <a href="{{ resource.resource_url }}" target="_blank" rel=noopener>
-                                        {{ resource.title }}{% if 'loc.gov' not in resource.resource_url %} <i class="fa fa-external-link-alt"></i>{% endif %}
-                                    </a>
-                                </li>
-                            {% endfor %}
-                        </ul>
-                {% endif %}
+                <div class="guide-body">
+                    {% if campaign.description %}
+                        <h4>About this campaign</h4>
+                        <p>{{ campaign.description|safe }}</p>
+                    {% endif %}
+                    {% if asset.item.project.description %}
+                        <h4>About this project</h4>
+                        <p>{{ asset.item.project.description|safe }}</p>
+                    {% endif %}
+                    {% if campaign.resource_set.related_links %}
+                        <h5 class="pt-3">Helpful Links</h5>
+                        <p>
+                            <ul>
+                                {% for resource in campaign.resource_set.related_links %}
+                                    <li class="mb-3">
+                                        <a href="{{ resource.resource_url }}" target="_blank" rel=noopener>
+                                            {{ resource.title }}{% if 'loc.gov' not in resource.resource_url %} <i class="fa fa-external-link-alt"></i>{% endif %}
+                                        </a>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                    {% endif %}
+                </div>
             </div>
             {% for guide in guides %}
                 <div class="carousel-item container" id="pane-{{ forloop.counter }}">

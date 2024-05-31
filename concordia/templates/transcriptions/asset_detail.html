@@ -223,6 +223,8 @@
                                 <p>OCR does not work on handwriting. It only works for printed or typed text, meaning text created by a typewriter, printing press, or other mechanical means. OCR will do best on consistent and clear images of modern typefaces.</p>
                                 <h6>Do I still need to review pages started with OCR?</h6>
                                 <p>Yes! OCR is imperfect. It may not work well for some or all parts of a typed page, but it can be a great starting point. If you start a page with OCR, you should read the text closely before submitting. If you are reviewing a OCR-ed page, you also still need to review.</p>
+                                <h6>Who can use "Transcribe with OCR"?</h6>
+                                <p><a href="{% url 'registration_register' %}">Register for an account</a> and <a href="{% url 'registration_login' %}?next={{ request.path }}">log in</a> to use this feature.</p>
                                 <h6>Why does <span class="font-italic">By the People</span> have this feature?</h6>
                                 <p>We always want to use volunteer time effectively. When the Library of Congress digitizes a large group of printed pages, it will usually OCR them. The materials in By the People campaigns are not good candidates for applying OCR at scale, either because they are handwritten, a mixed collection of handwritten and print materials, or printed on paper or in a typeface that does not produce accurate OCR results. However, OCR can still be a useful starting point for some typed pages. Use it if it if you like it or skip it if you don’t!</p>
                             </div>
@@ -358,13 +360,17 @@
                     </div>
                 </div>
                 <div id="asset-image" class="h-100 bg-dark d-print-none w-100"></div>
-                {% if transcription_status == "not_started" or transcription_status == "in_progress" %}
+                {% if not disable_ocr %}
                     <div id="ocr-section" class="row pl-3 pb-4 bg-white print-none">
                         <div class="d-flex flex-row align-items-center align-content-end ml-auto mr-3 mt-1">
                             <a tabindex="0" class="btn btn-link d-inline p-0" role="button" data-placement="top" data-trigger="focus click hover" title="When to use OCR"  data-toggle="modal" data-target="#ocr-help-modal">
                                 <span class="underline-link font-weight-bold">What is OCR</span> <span class="fas fa-question-circle" aria-label="When to use OCR"></span>
                             </a>
-                            <a role="button" data-placement="top" data-trigger="click" title="Transcribe with OCR" data-toggle="modal" data-target="#ocr-transcription-modal" id="ocr-transcription-link" class="btn btn-primary mx-1" disabled>Transcribe with OCR</a>
+                            {% if user.is_authenticated %}
+                                <a role="button" data-placement="top" data-trigger="click" title="Transcribe with OCR" data-toggle="modal" data-target="#ocr-transcription-modal" id="ocr-transcription-link" class="btn btn-primary mx-1" disabled>Transcribe with OCR</a>
+                            {% else %}
+                                <a role="button" data-placement="top" title='Log in to use "Transcribe with OCR"' id="ocr-transcription-link" class="btn btn-primary mx-1 disabled" disabled>Transcribe with OCR</a>
+                            {% endif %}
                         </div>
                     </div>
                 {% endif %}
@@ -418,7 +424,7 @@
                                 </span>
                             </span>
                             <div class="align-items-center align-self-end btn-group">
-                                <a class="font-weight-bold" data-toggle="modal" data-target="#tutorial-popup" role="button">
+                                <a class="font-weight-bold" id="quick-tips" data-toggle="modal" data-target="#tutorial-popup" role="button">
                                     <u>Quick Tips</u>
                                 </a>
                             </div>
@@ -681,23 +687,60 @@
             <div class="modal-dialog modal-dialog-centered" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">Are you sure?</h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
+                            <span aria-hidden="true" class="text-primary">&times;</span>
                         </button>
                     </div>
                     <div class="modal-body">
-                        <p>Clicking "Transcribe with OCR" will remove all existing transcription text and replace it with automatically generated text. We recommend saving existing text in a separate document if you may want to revisit it.</p>
+                        <div class="bg-light p-3">
+                            <h5 class="modal-title mb-3">Are you sure?</h5>
+                            <p>Clicking "Transcribe with OCR" will remove all existing transcription text and replace it with automatically generated text. We recommend saving existing text in a separate document if you may want to revisit it.</p>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-primary" data-dismiss="modal">Cancel</button>
                         {% if transcription_status == "not_started" or transcription_status == "in_progress" %}
-                            <form id="ocr-transcription-form" class="ajax-submission" method="post" action="{% url 'generate-ocr-transcription' asset_pk=asset.pk %}" data-lock-element="#transcription-editor">
-                                <input type="hidden" name="supersedes" value="{{ transcription.pk|default:'' }}" />
-                                <button id="ocr-transcription-button" class="btn btn-link underline-link font-weight-bold" disabled>Yes, replace the text</button>
-                            </form>
+                            <input type="hidden" name="supersedes" value="{{ transcription.pk|default:'' }}" />
+                            <a tabindex="0" class="btn btn-link d-inline p-0" role="button" data-placement="top"  id="select-language-button" onclick="selectLanguage()">
+                                <span class="underline-link font-weight-bold">Yes, Select Language</span>
+                            </a>
                         {% endif %}
                     </div>
+                </div>
+            </div>
+        </div>
+        <div id="language-selection-modal" class="modal" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true" class="text-primary">&times;</span>
+                        </button>
+                    </div>
+                    <form id="ocr-transcription-form" class="ajax-submission" method="post" action="{% url 'generate-ocr-transcription' asset_pk=asset.pk %}" data-lock-element="#transcription-editor">
+                        <div class="modal-body">
+                            <div class="bg-light p-3">
+                                <h5 class="modal-title mb-3">Select language</h5>
+                                <p>Select the language the transcription is in from the list below.</p>
+                                <div class="text-center pb-1">
+                                    <select id="language" name="language" size="7">
+                                        {% for language in languages %}
+                                            <option value="{{ language.0 }}"{% if language.0 == "eng" %} selected="selected"{% endif %}>
+                                                {{ language.1 }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary" data-dismiss="modal">Cancel</button>
+                            {% if transcription_status == "not_started" or transcription_status == "in_progress" %}
+                                <input type="hidden" name="supersedes" value="{{ transcription.pk|default:'' }}" />
+                                <button id="ocr-transcription-button" class="btn btn-link underline-link font-weight-bold" disabled>Replace Text</button>
+                            {% endif %}
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -718,11 +761,6 @@
                             <div class="carousel-inner">
                                 {% for card in cards %}
                                     <div class="carousel-item pb-4 {% if forloop.first %} active {% endif %}">
-                                        {% if not forloop.first %}
-                                            <a id="previous-card" href="#card-carousel" role="button" data-slide="prev">
-                                                <strong><u><&nbsp;Back</u></strong>
-                                            </a>
-                                        {% endif %}
                                         <div class="position-static d-flex flex-column justify-content-around">
                                             {% if card.image %}
                                                 <img src="{{ card.image.url }}"{% if card.image_alt_text %} alt="{{ card.image_alt_text }}"{% endif %}>
@@ -732,19 +770,20 @@
                                             {% endif %}
                                             <p>{{ card.body_text|safe }}</p>
                                         </div>
-                                        {% if not forloop.last %}
-                                            <a id="next-card" href="#card-carousel" data-slide="next">
-                                                <strong><u>Next&nbsp;></u></strong>
-                                            </a>
-                                        {% endif %}
                                     </div>
                                 {% endfor %}
                             </div>
+                            <a id="previous-card" href="#card-carousel" role="button" data-slide="prev">
+                                <strong><u><&nbsp;Back</u></strong>
+                            </a>
                             <ol class="carousel-indicators d-none d-lg-flex">
                                 {% for card in cards %}
                                     <li data-target="#card-carousel" data-slide-to="{{ forloop.counter0 }}" {% if forloop.first %}class="active" {% endif %}></li>
                                 {% endfor %}
                             </ol>
+                            <a id="next-card" href="#card-carousel" data-slide="next">
+                                <strong><u>Next&nbsp;></u></strong>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -803,9 +842,9 @@
             crossOriginPolicy: "Anonymous"
         });
 
-        // We need to define our own fullscreen function rather than using OpenSeadragon's
-        // because the built-in fullscreen function overwrites the DOM with the viewer,
-        // breaking our extra controls, such as the image filters.
+                                                      // We need to define our own fullscreen function rather than using OpenSeadragon's
+                                                      // because the built-in fullscreen function overwrites the DOM with the viewer,
+                                                      // breaking our extra controls, such as the image filters.
         if (screenfull.isEnabled) {
             let fullscreenButton = document.querySelector("#viewer-fullscreen");
             fullscreenButton.addEventListener('click', function(event) {
@@ -819,14 +858,14 @@
             });
         }
 
-        // The buttons configured as controls for the viewer don't properly get focus
-        // when clicked. This mostly isn't a problem, but causes odd-looking behavior
-        // when one of the extra buttons in the control bar is clicked (and therefore
-        // focused) first--clicking the control button leaves the focus on the extra
-        // button.
-        // TODO: Attempting to add focus to the clicked button here doesn't consistently
-        // work for unknown reasons, so it just removes focus from the extra buttons
-        // for now
+                                                                                          // The buttons configured as controls for the viewer don't properly get focus
+                                                                                          // when clicked. This mostly isn't a problem, but causes odd-looking behavior
+                                                                                          // when one of the extra buttons in the control bar is clicked (and therefore
+                                                                                          // focused) first--clicking the control button leaves the focus on the extra
+                                                                                          // button.
+                                                                                          // TODO: Attempting to add focus to the clicked button here doesn't consistently
+                                                                                          // work for unknown reasons, so it just removes focus from the extra buttons
+                                                                                          // for now
         let viewerControlButtons = document.querySelectorAll('.viewer-control-button');
         viewerControlButtons.forEach(function(node){
             node.addEventListener('click', function(event){
@@ -838,9 +877,9 @@
             })
         });
 
-        /*
-         * Image filter handling
-        */
+                                                                                          /*
+                                                                                          * Image filter handling
+                                                                                          */
 
         let availableFilters = [
             {
@@ -895,18 +934,18 @@
             if(form){
                 form.addEventListener('change', updateFilters);
                 form.addEventListener('reset', function(){
-                    // We use setTimeout to push the updateFilters
-                    // call to the next event cycle in order to
-                    // call it after the form is reset, instead
-                    // of before, which is when this listener
-                    // triggers
+                                                                                          // We use setTimeout to push the updateFilters
+                                                                                          // call to the next event cycle in order to
+                                                                                          // call it after the form is reset, instead
+                                                                                          // of before, which is when this listener
+                                                                                          // triggers
                     setTimeout(updateFilters);
                 });
             }
             input = document.getElementById(filterData.inputId)
             if(input){
-                // We use debounce here so that updateFilters is only called once,
-                // after the user stops typing or scrolling with their mousewheel
+                                                                                          // We use debounce here so that updateFilters is only called once,
+                                                                                          // after the user stops typing or scrolling with their mousewheel
                 input.addEventListener('keyup', debounce(() => updateFilters()));
                 input.addEventListener('wheel', debounce(() => updateFilters()));
             }
@@ -1025,10 +1064,10 @@
                 }
                 pageSplit = horizontalSplit();
                 setTimeout(function(){
-                    // Some quirk in the viewer makes this
-                    // sometimes not work depending on
-                    // the rotation, unless it's delayed.
-                    // Less than 10ms didn't reliable work.
+                                                // Some quirk in the viewer makes this
+                                                // sometimes not work depending on
+                                                // the rotation, unless it's delayed.
+                                                // Less than 10ms didn't reliable work.
                     seadragonViewer.viewport.zoomTo(1);
                 }, 10);
             }
@@ -1083,16 +1122,16 @@
         }
         window.addEventListener('beforeunload', function(event){
             if(formChanged){
-                // Some browsers ignore this value and always display a built-in message instead
+                                                                                  // Some browsers ignore this value and always display a built-in message instead
                 return event.returnValue = "The transcription you've started has not been saved.";
             }
         });
     </script>
 
     <script>
-        /*
-         * Image filter form handling
-        */
+                                                                              /*
+                                                                              * Image filter form handling
+                                                                              */
         function stepUp(id){
             let input = document.getElementById(id);
             input.stepUp();
@@ -1145,7 +1184,7 @@
             guide.style.borderWidth = "0 0 thick thick";
             guide.style.borderStyle = "solid";
             guide.style.borderColor = "#0076ad";
-            openGuide.style.display = "none";
+            document.getElementById("open-guide").style.display = "none";
             document.addEventListener('keydown', function(e) {
                 if (e.key == "Escape") {
                     closeOffcanvas();
@@ -1180,10 +1219,62 @@
                 $("#guide-bars").removeClass("d-none");
             }
         });
+        $("#previous-card").hide();
+        $("#card-carousel").on("slid.bs.carousel", function () {
+            if ($("#card-carousel .carousel-item:first").hasClass("active")) {
+                $("#previous-card").hide();
+                $("#next-card").show();
+            } else if ($("#card-carousel .carousel-item:last").hasClass("active")) {
+                $("#previous-card").show();
+                $("#next-card").hide();
+            } else {
+                $("#previous-card").show();
+                $("#next-card").show();
+            }
+        });
     </script>
     <script>
         $("#tutorial-popup").on("shown.bs.modal", function() {
             setTutorialHeight();
+        });
+        function selectLanguage() {
+            $("#ocr-transcription-modal").modal("hide");
+            $("#language-selection-modal").modal("show");
+        }
+    </script>
+    <script>
+        function trackQuickTipsInteraction(element, label) {
+            trackUIInteraction(element, 'Quick Tips', 'click', label);
+        }
+        function trackHowToInteraction(element, label){
+            trackUIInteraction(element, 'How To Guide' , 'click', label);
+        }
+
+        $("#quick-tips").on("click", function(event) { trackQuickTipsInteraction($(this), "Open")});
+        $("#previous-card").on("click", function(event){ trackQuickTipsInteraction($(this), "Back")});
+        $("#next-card").on("click", function(event){ trackQuickTipsInteraction($(this), "Next")});
+        $(".carousel-indicators li").on("click", function(event){
+            let index = [...this.parentElement.children].indexOf(this)
+            trackQuickTipsInteraction($(this), `Carousel ${index}`)
+        });
+        $("#open-guide").on("click", function(event) { trackHowToInteraction($(this), "Open")});
+        $("#close-guide").on("click", function(event) { trackHowToInteraction($(this), "Close")});
+        $("#previous-guide").on("click", function(event) { trackHowToInteraction($(this), "Back")});
+        $("#next-guide").on("click", function(event) { trackHowToInteraction($(this), "Next")});
+        $("#guide-bars").on("click", function(event) { trackHowToInteraction($(this), "Hamburger Menu")});
+        $("#guide-sidebar .nav-link").on("click", function(event) {
+            let label = $(this).text().trim();
+            trackHowToInteraction($(this), label);
+        });
+        $("#tutorial-popup").on("hidden.bs.modal", function(){
+            // We're tracking whenever the popup closes, so we don't separately track the close button being clicked
+            trackUIInteraction($(this), 'Quick Tips', 'click', "Close");
+        });
+        $("#tutorial-popup").on("shown-on-load", function(){
+            // We set a timeout to make sure the analytics code is loaded before trying to track
+            setTimeout(function(){
+                trackUIInteraction($(this), 'Quick Tips', 'load', 'Open');
+            }, 1000);
         });
     </script>
 {% endblock body_scripts %}

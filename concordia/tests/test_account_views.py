@@ -107,6 +107,10 @@ class ConcordiaViewTests(
 
     def test_email_reconfirmation(self):
         self.login_user()
+        # Confirm the user doesn't have a reconfirmation key
+        concordia_user = ConcordiaUser.objects.get(id=self.user.id)
+        with self.assertRaises(ValueError):
+            concordia_user.get_email_reconfirmation_key()
 
         with self.settings(REQUIRE_EMAIL_RECONFIRMATION=True):
             email_data = {"email": "change@example.com"}
@@ -156,3 +160,54 @@ class ConcordiaViewTests(
             self.assertEqual(len(mail.outbox), 0)
             updated_user = User.objects.get(id=self.user.id)
             self.assertEqual(updated_user.email, email_data["email"])
+
+    def test_AccountLetterView(self):
+        self.login_user()
+
+        response = self.client.get(reverse("user-letter"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response["Content-Disposition"], "attachment; filename=letter.pdf"
+        )
+        self.assertEqual(response["Content-Type"], "application/pdf")
+
+    def test_get_pages(self):
+        self.login_user()
+        url = reverse("get_pages")
+
+        response = self.client.get(url, kwargs={"activity": "transcribed"})
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get(
+            url, kwargs={"activity": "reviewed", "order_by": "date-ascending"}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertUncacheable(response)
+
+        response = self.client.get(url, kwargs={"campaign_slug": "slug"})
+        self.assertEqual(response.status_code, 200)
+        self.assertUncacheable(response)
+
+        response = self.client.get(url, kwargs={"status": ["completed"], "campaign": 1})
+        self.assertEqual(response.status_code, 200)
+        self.assertUncacheable(response)
+
+        response = self.client.get(url, kwargs={"status": ["in_progress", "submitted"]})
+        self.assertEqual(response.status_code, 200)
+        self.assertUncacheable(response)
+
+        response = self.client.get(
+            url, kwargs={"start": "1900-01-01", "end": "1999-12-31"}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertUncacheable(response)
+
+        response = self.client.get(url, kwargs={"end": "1999-12-31"})
+        self.assertEqual(response.status_code, 200)
+        self.assertUncacheable(response)
+
+        response = self.client.get(
+            url, kwargs={"start": "1900-01-01", "end": "1999-12-31"}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertUncacheable(response)

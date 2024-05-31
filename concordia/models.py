@@ -1,6 +1,7 @@
 import datetime
 import os.path
 import time
+from itertools import chain
 from logging import getLogger
 
 import pytesseract
@@ -16,8 +17,9 @@ from django.db.models.functions import Round
 from django.db.models.signals import post_save
 from django.urls import reverse
 from django.utils import timezone
-from django_prometheus_metrics.models import MetricsModelMixin
 from PIL import Image
+
+from prometheus_metrics.models import MetricsModelMixin
 
 logger = getLogger(__name__)
 
@@ -271,6 +273,10 @@ class Campaign(MetricsModelMixin("campaign"), models.Model):
 
     metadata = JSONField(default=metadata_default, blank=True, null=True)
 
+    disable_ocr = models.BooleanField(
+        default=False, help_text="Turn OCR off for all assets of this campaign"
+    )
+
     class Meta:
         indexes = [
             models.Index(fields=["published", "unlisted"]),
@@ -398,6 +404,10 @@ class Project(MetricsModelMixin("project"), models.Model):
 
     topics = models.ManyToManyField(Topic)
 
+    disable_ocr = models.BooleanField(
+        default=False, help_text="Turn OCR off for all assets of this project"
+    )
+
     class Meta:
         unique_together = (("slug", "campaign"),)
         ordering = ["title"]
@@ -411,6 +421,9 @@ class Project(MetricsModelMixin("project"), models.Model):
             "transcriptions:project-detail",
             kwargs={"campaign_slug": self.campaign.slug, "slug": self.slug},
         )
+
+    def turn_off_ocr(self):
+        return self.disable_ocr or self.campaign.disable_ocr
 
 
 class Item(MetricsModelMixin("item"), models.Model):
@@ -434,6 +447,10 @@ class Item(MetricsModelMixin("item"), models.Model):
     )
     thumbnail_url = models.URLField(max_length=255, blank=True, null=True)
 
+    disable_ocr = models.BooleanField(
+        default=False, help_text="Turn OCR off for all assets of this item"
+    )
+
     class Meta:
         unique_together = (("item_id", "project"),)
         indexes = [models.Index(fields=["project", "published"])]
@@ -450,6 +467,9 @@ class Item(MetricsModelMixin("item"), models.Model):
                 "item_id": self.item_id,
             },
         )
+
+    def turn_off_ocr(self):
+        return self.disable_ocr or self.project.turn_off_ocr()
 
 
 class AssetQuerySet(PublicationQuerySet):
@@ -515,6 +535,10 @@ class Asset(MetricsModelMixin("asset"), models.Model):
 
     storage_image = models.ImageField(upload_to=get_storage_path, max_length=255)
 
+    disable_ocr = models.BooleanField(
+        default=False, help_text="Turn OCR off for this asset"
+    )
+
     class Meta:
         unique_together = (("slug", "item"),)
         indexes = [
@@ -572,6 +596,9 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         transcriber_ids = transcriptions.values_list("user", flat=True).distinct()
         user_ids = list(set(list(reviewer_ids) + list(transcriber_ids)))
         return len(user_ids)
+
+    def turn_off_ocr(self):
+        return self.disable_ocr or self.item.turn_off_ocr()
 
 
 class Tag(MetricsModelMixin("tag"), models.Model):
@@ -733,6 +760,12 @@ class AssetTranscriptionReservation(models.Model):
     created_on = models.DateTimeField(editable=False, auto_now_add=True)
     updated_on = models.DateTimeField(auto_now=True)
     tombstoned = models.BooleanField(default=False, blank=True, null=True)
+
+    def get_token(self):
+        return self.reservation_token[:44]
+
+    def get_user(self):
+        return self.reservation_token[44:]
 
 
 class SimplePage(models.Model):
@@ -950,6 +983,9 @@ class TutorialCard(models.Model):
 
 class Guide(models.Model):
     title = models.CharField(max_length=80)
+    page = models.ForeignKey(
+        SimplePage, on_delete=models.SET_NULL, blank=True, null=True
+    )
     body = models.TextField(blank=True)
     order = models.IntegerField(default=1)
     link_text = models.CharField(max_length=80, blank=True, null=True)
@@ -957,3 +993,35 @@ class Guide(models.Model):
 
     def __str__(self):
         return self.title
+
+
+def validated_get_or_create(klass, **kwargs):
+    """
+    Similar to :meth:`~django.db.models.query.QuerySet.get_or_create` but uses
+    the methodical get/save including a full_clean() call to avoid problems with
+    models which have validation requirements which are not completely enforced
+    by the underlying database.
+
+    For example, with a django-model-translation we always want to go through
+    the setattr route rather than inserting into the database so translated
+    fields will be mapped according to the active language. This avoids normally
+    impossible situations such as creating a record where `title` is defined but
+    `title_en` is not.
+
+    Originally from https://github.com/acdha/django-bittersweet
+    """
+
+    defaults = kwargs.pop("defaults", {})
+
+    try:
+        obj = klass.objects.get(**kwargs)
+        return obj, False
+    except klass.DoesNotExist:
+        obj = klass()
+
+        for k, v in chain(kwargs.items(), defaults.items()):
+            setattr(obj, k, v)
+
+        obj.full_clean()
+        obj.save()
+        return obj, True

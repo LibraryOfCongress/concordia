@@ -121,6 +121,14 @@
                 <div class="col-12 col-lg mt-4">
                     <h3>Filter pages:</h2>
                 </div>
+                {% if user.is_authenticated and user.is_staff %}
+                    <div class="mt-4">
+                        <input type="radio" {% if filter_assets %}onclick="window.location='?{{ sublevel_querystring }}'"{% else %}checked{% endif %}>
+                        <label>Show all</label>
+                        <input type="radio" {% if filter_assets %}checked{% else %}onclick="window.location='{% url 'transcriptions:filtered-campaign-detail' campaign.slug %}?{{ sublevel_querystring }}&show=reviewable'"{% endif %}>
+                        <label>Show only reviewable by me</label>
+                    </div>
+                {% endif %}
             </div>
             <div class="row">
                 <div class="col-12 col-lg text-center">

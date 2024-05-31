@@ -13,7 +13,6 @@ from django.db.models import OuterRef, Subquery
 from django.http import HttpResponse, HttpResponseRedirect
 from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
-from tabular_export.core import export_to_csv_response, flatten_queryset
 
 from concordia.models import (
     Asset,
@@ -23,6 +22,8 @@ from concordia.models import (
     Transcription,
     TranscriptionStatus,
 )
+
+from .tabular_export.core import export_to_csv_response, flatten_queryset
 
 logger = getLogger(__name__)
 
@@ -68,18 +69,23 @@ def get_original_asset_id(download_url):
     """
     download_url = download_url.replace("https", "http")
     if download_url.startswith("http://tile.loc.gov/"):
-        pattern = r"/service:([A-Za-z0-9:.\-\_]+)/|/master/([A-Za-z0-9/]+)([0-9.]+)"
+        pattern = (
+            r"/service:([A-Za-z0-9:.\-\_]+)/"
+            + r"|/master/([A-Za-z0-9/]+)([0-9.]+)"
+            + r"|/public:music:([A-Za-z0-9:.\-\_]+)/"
+        )
         asset_id = re.search(pattern, download_url)
         if not asset_id:
             logger.error(
                 "Couldn't find a matching asset ID in download URL %s", download_url
             )
-            raise AssertionError
+            raise ValueError(
+                f"Couldn't find a matching asset ID in download URL {download_url}"
+            )
         else:
-            if asset_id.group(1):
-                matching_asset_id = asset_id.group(1)
-            else:
-                matching_asset_id = asset_id.group(2)
+            for matching_asset_id in asset_id.groups():
+                if matching_asset_id:
+                    break
             logger.debug(
                 "Found asset ID %s in download URL %s", matching_asset_id, download_url
             )
@@ -227,12 +233,6 @@ class ExportCampaignToCSV(TemplateView):
             },
         )
 
-        logger.info("Forcing queryset eval")
-        # The below line of code is a workaround for an undocumented async error:
-        # https://code.djangoproject.com/ticket/32798
-        # It should probably be removed, but only *after*
-        # the project has been upgraded to django 4.
-        data = list(data)
         logger.info("Exporting %s to csv", self.kwargs["campaign_slug"])
         return export_to_csv_response(
             "%s.csv" % self.kwargs["campaign_slug"], headers, data

@@ -7,6 +7,7 @@ from django.views.defaults import page_not_found, permission_denied, server_erro
 from django.views.generic import RedirectView
 
 from exporter import views as exporter_views
+from prometheus_metrics.views import MetricsView
 
 from . import converters, views
 
@@ -20,6 +21,11 @@ tx_urlpatterns = (
             "completed/",
             views.CompletedCampaignListView.as_view(),
             name="completed-campaign-list",
+        ),
+        path(
+            "<uslug:slug>/reviewable/",
+            views.FilteredCampaignDetailView.as_view(),
+            name="filtered-campaign-detail",
         ),
         path(
             "<uslug:slug>/", views.CampaignDetailView.as_view(), name="campaign-detail"
@@ -53,6 +59,11 @@ tx_urlpatterns = (
             name="campaign-report",
         ),
         path(
+            "<uslug:campaign_slug>/<uslug:project_slug>/<item_id:item_id>/reviewable/",
+            views.FilteredItemDetailView.as_view(),
+            name="filtered-item-detail",
+        ),
+        path(
             (
                 "<uslug:campaign_slug>/<uslug:project_slug>/"
                 "<item_id:item_id>/<uslug:slug>/"
@@ -70,6 +81,11 @@ tx_urlpatterns = (
             "<uslug:campaign_slug>/next-reviewable-asset/",
             views.redirect_to_next_reviewable_campaign_asset,
             name="redirect-to-next-reviewable-campaign-asset",
+        ),
+        path(
+            "<uslug:campaign_slug>/<uslug:slug>/reviewable/",
+            views.FilteredProjectDetailView.as_view(),
+            name="filtered-project-detail",
         ),
         path(
             "<uslug:campaign_slug>/<uslug:slug>/",
@@ -246,7 +262,7 @@ urlpatterns = [
     path("error/429/", views.ratelimit_view),
     path("error/403/", permission_denied, {"exception": HttpResponseForbidden()}),
     path("tinymce/", include("tinymce.urls")),
-    path("", include("django_prometheus_metrics.urls")),
+    path("metrics", MetricsView.as_view(), name="prometheus-django-metrics"),
     path("robots.txt", include("robots.urls")),
     path(
         "maintenance-mode/off/", views.maintenance_mode_off, name="maintenance_mode_off"

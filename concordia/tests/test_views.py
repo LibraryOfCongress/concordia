@@ -1,8 +1,5 @@
-"""
-Tests for the core application features
-"""
-
 from datetime import date, timedelta
+from unittest.mock import patch
 
 from captcha.models import CaptchaStore
 from django.conf import settings
@@ -31,13 +28,21 @@ from concordia.tasks import (
     tombstone_old_active_asset_reservations,
 )
 from concordia.utils import get_anonymous_user, get_or_create_reservation_token
-from concordia.views import AccountProfileView, CompletedCampaignListView
+from concordia.views import (
+    AccountProfileView,
+    CompletedCampaignListView,
+    ConcordiaLoginView,
+    ratelimit_view,
+    registration_rate,
+)
 
 from .utils import (
     CreateTestUsers,
     JSONAssertMixin,
     create_asset,
     create_campaign,
+    create_card_family,
+    create_guide,
     create_item,
     create_project,
     create_topic,
@@ -374,6 +379,11 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
         )
         self.transcription.save()
 
+        asset.item.project.campaign.card_family = create_card_family()
+        asset.item.project.campaign.save()
+        title = "Transcription: Basic Rules"
+        create_guide(title=title)
+
         response = self.client.get(
             reverse(
                 "transcriptions:asset-detail",
@@ -385,8 +395,27 @@ class ConcordiaViewTests(CreateTestUsers, JSONAssertMixin, TestCase):
                 },
             )
         )
-
         self.assertEqual(response.status_code, 200)
+        self.assertIn("cards", response.context)
+        self.assertIn("guides", response.context)
+        self.assertEqual(title, response.context["guides"][0]["title"])
+
+    @patch.object(Asset, "get_ocr_transcript")
+    def test_generate_ocr_transcription(self, mock):
+        self.login_user()
+        asset1 = create_asset(storage_image="tests/test-european.jpg")
+        url = reverse("generate-ocr-transcription", kwargs={"asset_pk": asset1.pk})
+        self.client.post(url)
+        self.assertTrue(mock.called)
+
+        asset2 = create_asset(
+            item=asset1.item,
+            slug="test-asset-2",
+            storage_image="tests/test-european.jpg",
+        )
+        url = reverse("generate-ocr-transcription", kwargs={"asset_pk": asset2.pk})
+        self.client.post(url, data={"language": "spa"})
+        mock.assert_called_with("spa")
 
     def test_project_detail_view(self):
         """
@@ -575,8 +604,8 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         )
         stale_reservation.full_clean()
         stale_reservation.save()
-        # Backdate the object as if it happened 15 minutes ago:
-        old_timestamp = now() - timedelta(minutes=15)
+        # Backdate the object as if it happened 31 minutes ago:
+        old_timestamp = now() - timedelta(minutes=31)
         AssetTranscriptionReservation.objects.update(
             created_on=old_timestamp, updated_on=old_timestamp
         )
@@ -1486,3 +1515,39 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
             ),
             in_progress_asset_in_item.get_absolute_url(),
         )
+
+
+class RateLimitTests(TestCase):
+    def setUp(self):
+        self.request_factory = RequestFactory()
+
+    def test_registration_rate(self):
+        request = self.request_factory.get("/")
+        self.assertEqual(registration_rate(None, request), "10/h")
+        with patch("concordia.views.UserRegistrationForm", autospec=True):
+            # This causes the form to test as valid even though there's no data
+            self.assertIsNone(registration_rate(None, request))
+
+    def test_ratelimit_view(self):
+        request = self.request_factory.post("/")
+        exception = Exception()
+        response = ratelimit_view(request, exception)
+        self.assertEqual(response.status_code, 429)
+        self.assertNotEqual(response["Retry-After"], 0)
+
+
+class CaptchaTests(TestCase):
+    def setUp(self):
+        self.request_factory = RequestFactory()
+
+    def test_ConcordiaLoginView(self):
+        request = self.request_factory.post("/")
+        request.session = {}
+        view = setup_view(ConcordiaLoginView(), request)
+        response = view.post(request)
+        self.assertNotContains(response, "captcha")
+
+        request.limited = True
+        view = setup_view(ConcordiaLoginView(), request)
+        response = view.post(request)
+        self.assertContains(response, "captcha")

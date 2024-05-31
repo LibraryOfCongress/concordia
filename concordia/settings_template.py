@@ -82,7 +82,6 @@ NPM_FILE_PATTERNS = {
 TEMPLATE_DEBUG = False
 TIME_ZONE = "America/New_York"
 USE_I18N = True
-USE_L10N = True
 USE_TZ = True
 WSGI_APPLICATION = "concordia.wsgi.application"
 
@@ -111,13 +110,12 @@ INSTALLED_APPS = [
     # Replaces "django.contrib.staticfiles",
     "concordia.apps.ConcordiaStaticFilesConfig",
     "bootstrap4",
-    "bittersweet",
     "maintenance_mode",
     "concordia.apps.ConcordiaAppConfig",
     "exporter",
     "importer",
     "captcha",
-    "django_prometheus_metrics",
+    "prometheus_metrics.apps.PrometheusMetricsConfig",
     "robots",
     "django_celery_beat",
     "flags",
@@ -127,7 +125,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    "django_prometheus_metrics.middleware.PrometheusBeforeMiddleware",
+    "prometheus_metrics.middleware.PrometheusBeforeMiddleware",
     "django.middleware.security.SecurityMiddleware",
     # WhiteNoise serves static files efficiently:
     "whitenoise.middleware.WhiteNoiseMiddleware",
@@ -212,6 +210,8 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_IMPORTS = ("importer.tasks",)
 
 CELERY_BROKER_HEARTBEAT = 0
+CELERY_BROKER_CONNECTION_RETRY = True
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 CELERY_BROKER_TRANSPORT_OPTIONS = {
     "confirm_publish": True,
     "max_retries": 3,
@@ -312,7 +312,14 @@ ANONYMOUS_CAPTCHA_VALIDATION_INTERVAL = 86400
 CAPTCHA_IMAGE_SIZE = [150, 100]
 CAPTCHA_FONT_SIZE = 40
 
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 WHITENOISE_ROOT = os.path.join(SITE_ROOT_DIR, "static")
 
 PASSWORD_RESET_TIMEOUT = 604800
@@ -355,7 +362,7 @@ BOOTSTRAP4 = {"required_css_class": "form-group-required", "set_placeholder": Fa
 # Transcription-related settings
 
 #: Number of seconds an asset reservation is valid for
-TRANSCRIPTION_RESERVATION_SECONDS = 5 * 60
+TRANSCRIPTION_RESERVATION_SECONDS = 15 * 60
 
 #: Number of hours until an asset reservation is tombstoned
 TRANSCRIPTION_RESERVATION_TOMBSTONE_HOURS = 72
@@ -401,10 +408,118 @@ TINYMCE_DEFAULT_CONFIG = {
 }
 TINYMCE_JS_URL = "https://cdn.tiny.cloud/1/rf486i5f1ww9m8191oolczn7f0ry61mzdtfwbu7maiiiv2kv/tinymce/6/tinymce.min.js"
 
-PYTESSERACT_ALLOWED_LANGUAGES = ["eng"]
+LANGUAGE_CODES = {
+    "eng": "English (default)",
+    "afr": "Afrikaans",
+    "sqi": "Albanian",
+    "amh": "Amharic",
+    "ara": "Arabic",
+    "asm": "Assamese",
+    "aze": "Azerbaijani",
+    "aze_cyrl": "Azerbaijani - Cyrillic",
+    "eus": "Basque",
+    "bel": "Belarusian",
+    "ben": "Bengali",
+    "bos": "Bosnian",
+    "bul": "Bulgarian",
+    "mya": "Burmese",
+    "cat": "Catalan; Valencian",
+    "ceb": "Cebuano",
+    "khm": "Central Khmer",
+    "chr": "Cherokee",
+    "chi_sim": "Chinese - Simplified",
+    "chi_tra": "Chinese - Traditional",
+    "hrv": "Croatian",
+    "ces": "Czech",
+    "dan": "Danish",
+    "nld": "Dutch; Flemish",
+    "dzo": "Dzongkha",
+    "enm": "English, Middle (1100-1500)",
+    "epo": "Esperanto",
+    "est": "Estonian",
+    "kat": "Georgian",
+    "kat_old": "Georgian - Old",
+    "deu": "German",
+    "ell": "Greek, Modern (1453-)",
+    "fin": "Finnish",
+    "fra": "French",
+    "frm": "French, Middle (ca. 1400-1600)",
+    "glg": "Galician",
+    "frk": "German Fraktur",
+    "grc": "Greek, Ancient (-1453)",
+    "guj": "Gujarati",
+    "hat": "Haitian; Haitian Creole",
+    "heb": "Hebrew",
+    "hin": "Hindi",
+    "hun": "Hungarian",
+    "isl": "Icelandic",
+    "ind": "Indonesian",
+    "iku": "Inuktitut",
+    "gle": "Irish",
+    "ita": "Italian",
+    "ita_old": "Italian - Old",
+    "jpn": "Japanese",
+    "jav": "Javanese",
+    "kan": "Kannada",
+    "kaz": "Kazakh",
+    "kir": "Kirghiz; Kyrgyz",
+    "kor": "Korean",
+    "kur": "Kurdish",
+    "lao": "Lao",
+    "lat": "Latin",
+    "lav": "Latvian",
+    "lit": "Lithuanian",
+    "mkd": "Macedonian",
+    "mal": "Malayalam",
+    "mar": "Marathi",
+    "msa": "Malay",
+    "mlt": "Maltese",
+    "nep": "Nepali",
+    "nor": "Norwegian",
+    "ori": "Oriya",
+    "pan": "Panjabi; Punjabi",
+    "fas": "Persian",
+    "pol": "Polish",
+    "por": "Portuguese",
+    "pus": "Pushto; Pashto",
+    "ron": "Romanian; Moldavian; Moldovan",
+    "rus": "Russian",
+    "san": "Sanskrit",
+    "srp": "Serbian",
+    "srp_latn": "Serbian - Latin",
+    "sin": "Sinhala; Sinhalese",
+    "slk": "Slovak",
+    "slv": "Slovenian",
+    "spa": "Spanish; Castilian",
+    "spa_old": "Spanish; Castilian - Old",
+    "swa": "Swahili",
+    "swe": "Swedish",
+    "syr": "Syriac",
+    "tgl": "Tagalog",
+    "tgk": "Tajik",
+    "tam": "Tamil",
+    "tel": "Telugu",
+    "tha": "Thai",
+    "bod": "Tibetan",
+    "tir": "Tigrinya",
+    "tur": "Turkish",
+    "uig": "Uighur; Uyghur",
+    "ukr": "Ukrainian",
+    "urd": "Urdu",
+    "uzb": "Uzbek",
+    "uzb_cyrl": "Uzbek - Cyrillic",
+    "vie": "Vietnamese",
+    "cym": "Welsh",
+    "yid": "Yiddish",
+}
+PYTESSERACT_ALLOWED_LANGUAGES = LANGUAGE_CODES.keys()
 
 PYLENIUM_CONFIG = os.path.join(SITE_ROOT_DIR, "pylenium.json")
 
 MAINTENANCE_MODE_STATE_BACKEND = "maintenance_mode.backends.CacheBackend"
 MAINTENANCE_MODE_IGNORE_ADMIN_SITE = True
 MAINTENANCE_MODE_IGNORE_URLS = ("/healthz*", "/metrics*", "/maintenance-mode*")
+
+DEFAULT_AXE_SCRIPT = os.path.join(
+    SITE_ROOT_DIR, "node_modules", "axe-core", "axe.min.js"
+)
