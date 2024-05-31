@@ -60,6 +60,11 @@ class CampaignListFilterTests(CreateTestUsers, TestCase):
         self.campaign = create_project().campaign
 
     def test_card_filter(self):
+        request = RequestFactory().get("/admin/concordia/card/?campaign=")
+        f = CardCampaignListFilter(request, {}, Card, CardAdmin)
+        cards = f.queryset(None, Card.objects.all())
+        self.assertEqual(cards.count(), 0)
+
         request = RequestFactory().get(
             "/admin/concordia/card/?campaign=%s" % self.campaign.id
         )
