@@ -8,6 +8,7 @@ import requests
 from celery import chord
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.core.mail import EmailMultiAlternatives
 from django.core.management import call_command
 from django.db import transaction
 from django.db.models import Count, F, Q
@@ -15,6 +16,8 @@ from django.utils import timezone
 from more_itertools.more import chunked
 
 from concordia.models import (
+    ONE_DAY,
+    ONE_DAY_AGO,
     Asset,
     AssetTranscriptionReservation,
     Campaign,
@@ -36,8 +39,6 @@ from concordia.utils import get_anonymous_user
 from .celery import app as celery_app
 
 logger = getLogger(__name__)
-
-ONE_DAY = datetime.timedelta(days=1)
 
 
 @celery_app.task
@@ -102,7 +103,6 @@ def delete_old_tombstoned_reservations():
 
 
 def _recent_transcriptions():
-    ONE_DAY_AGO = timezone.now() - datetime.timedelta(days=1)
     return Transcription.objects.filter(
         Q(accepted__gte=ONE_DAY_AGO)
         | Q(created_on__gte=ONE_DAY_AGO)
@@ -1041,7 +1041,47 @@ def fix_storage_images(campaign_slug=None, asset_start_id=None):
         logger.debug("%s / %s (%s%%)", count, full_count, str(count / full_count * 100))
 
 
+def transcribing_too_quickly(start):
+    return Transcription.objects.transcribing_too_quickly(start)
+
+
+def reviewing_too_quickly(start):
+    return Transcription.objects.reviewing_too_quickly(start)
+
+
 @celery_app.task(ignore_result=True)
 def clear_sessions():
     # This clears expired Django sessions in the database
     call_command("clearsessions")
+
+
+def unusual_activity():
+    TWO_DAYS = datetime.timedelta(days=2)
+    TWO_DAYS_AGO = timezone.now() - TWO_DAYS
+    text_body_message = ""
+    html_body_message = ""
+    transcriptions = transcribing_too_quickly(TWO_DAYS_AGO)
+    if len(transcriptions) > 0:
+        for transcription in transcriptions[:5]:
+            text_body_message += "\nUser %s submitted both %s and %s." % transcription
+            html_body_message += "\nUser %s submitted both %s and %s." % transcription
+    else:
+        text_body_message = "No transcriptions fell within the window."
+        html_body_message = "No transcriptions fell within the window."
+    reviews = reviewing_too_quickly(TWO_DAYS_AGO)
+    if len(reviews) > 0:
+        for review in reviews[:5]:
+            text_body_message += "\nUser %s reviewed both %s and %s." % review
+            html_body_message += "\nUser %s reviewed both %s and %s." % review
+    else:
+        text_body_message += "No reviews fell within the window."
+        html_body_message += "No reviews fell within the window."
+    message = EmailMultiAlternatives(
+        subject="Unusual User Activity Report",
+        body=text_body_message,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=settings.DEFAULT_TO_EMAIL,
+        reply_to=[settings.DEFAULT_FROM_EMAIL],
+    )
+    message.attach_alternative(html_body_message, "text/html")
+    message.send()
