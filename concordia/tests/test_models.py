@@ -24,6 +24,7 @@ from .utils import (
     create_carousel_slide,
     create_resource,
     create_resource_file,
+    create_simple_page,
     create_tag,
     create_tag_collection,
     create_transcription,
@@ -202,3 +203,9 @@ class CampaignRetirementProgressTestCase(TestCase):
     def test_str(self):
         progress = create_campaign_retirement_progress()
         self.assertEqual(f"Removal progress for {progress.campaign}", str(progress))
+
+
+class SimplePageTestCase(TestCase):
+    def test_str(self):
+        simple_page = create_simple_page()
+        self.assertEqual(f"SimplePage: {simple_page.path}", str(simple_page))

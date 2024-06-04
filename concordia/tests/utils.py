@@ -18,6 +18,7 @@ from concordia.models import (
     Project,
     Resource,
     ResourceFile,
+    SimplePage,
     SiteReport,
     Tag,
     Topic,
@@ -67,6 +68,13 @@ def create_campaign(
     if do_save:
         campaign.save()
     return campaign
+
+
+def create_simple_page(*, do_save=True, **kwargs):
+    simple_page = SimplePage(**kwargs)
+    if do_save:
+        simple_page.save()
+    return simple_page
 
 
 def create_site_report(*, do_save=True, **kwargs):
