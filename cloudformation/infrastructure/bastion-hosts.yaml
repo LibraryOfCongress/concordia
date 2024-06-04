@@ -90,7 +90,7 @@ Resources:
                     #  · Issue #3741· philips-labs/terraform-aws-github-runner
                     # https://github.com/amazonlinux/amazon-linux-2023/issues/397
                     while true; do
-                      dnf -y upgrade-minimal --assumeyes && break
+                      dnf -y upgrade --releasever=latest && break
                     done
                     while true; do
                       dnf -y install --assumeyes git && break
@@ -142,7 +142,7 @@ Resources:
                     echo "export ENV_NAME=${EnvironmentName}" >> /home/ec2-user/.bash_profile
                     source /home/ec2-user/.bash_profile
                     while true; do
-                      dnf -y upgrade-minimal --assumeyes && break
+                      dnf -y upgrade --releasever=latest && break
                     done
                     while true; do
                       dnf -y install --assumeyes git && break
