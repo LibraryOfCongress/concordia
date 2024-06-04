@@ -1,9 +1,16 @@
 from datetime import timedelta
+from unittest import mock
 
+from django.db.models.signals import post_save
 from django.test import TestCase
 from django.utils import timezone
 
-from concordia.models import Campaign, Transcription, UserProfileActivity
+from concordia.models import (
+    Campaign,
+    CardFamily,
+    Transcription,
+    UserProfileActivity,
+)
 from concordia.utils import get_anonymous_user
 
 from .utils import (
@@ -124,9 +131,18 @@ class CardTestCase(TestCase):
 
 
 class CardFamilyTestCase(TestCase):
+    def setUp(self):
+        self.family1 = create_card_family(default=True)
+
     def test_str(self):
-        family = create_card_family()
-        self.assertEqual(family.slug, str(family))
+        self.assertEqual(self.family1.slug, str(self.family1))
+
+    def test_on_cardfamily_save(self):
+        with mock.patch("concordia.models.on_cardfamily_save") as mocked_handler:
+            post_save.connect(mocked_handler, sender=CardFamily)
+            self.family1.save()
+            self.assertTrue(mocked_handler.called)
+            self.assertEqual(mocked_handler.call_count, 1)
 
 
 class ResourceTestCase(TestCase):

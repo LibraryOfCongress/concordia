@@ -239,8 +239,8 @@ def create_card(*, title="Test Card", do_save=True, **kwargs):
     return card
 
 
-def create_card_family(*, do_save=True, **kwargs):
-    card_family = CardFamily(**kwargs)
+def create_card_family(*, slug="test-card-family", do_save=True, **kwargs):
+    card_family = CardFamily(slug=slug, **kwargs)
     if do_save:
         card_family.save()
     return card_family
