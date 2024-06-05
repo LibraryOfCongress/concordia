@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import date, timedelta
 from unittest import mock
 
 from django.db.models.signals import post_save
@@ -8,8 +8,10 @@ from django.utils import timezone
 from concordia.models import (
     Campaign,
     CardFamily,
+    Resource,
     Transcription,
     UserProfileActivity,
+    resource_file_upload_path,
     validated_get_or_create,
 )
 from concordia.utils import get_anonymous_user
@@ -155,11 +157,59 @@ class ResourceTestCase(TestCase):
     def test_str(self):
         self.assertEqual(self.resource.title, str(self.resource))
 
+    def test_queryset(self):
+        self.assertEqual(Resource.objects.related_links().count(), 1)
+        create_resource(
+            resource_type=Resource.ResourceType.COMPLETED_TRANSCRIPTION_LINK
+        )
+        self.assertEqual(Resource.objects.completed_transcription_links().count(), 1)
+
 
 class ResourceFileTestCase(TestCase):
+    def setUp(self):
+        self.resource_file = create_resource_file()
+
     def test_str(self):
-        resource_file = create_resource_file()
-        self.assertEqual(resource_file.name, str(resource_file))
+        self.assertEqual(self.resource_file.name, str(self.resource_file))
+
+    def test_delete(self):
+        with (
+            mock.patch.object(self.resource_file.resource, "delete") as delete_mock,
+            mock.patch.object(
+                self.resource_file.resource, "storage", autospec=True
+            ) as storage_mock,
+        ):
+            storage_mock.exists.return_value = True
+            self.resource_file.delete()
+            self.assertTrue(delete_mock.called)
+
+        resource_file2 = create_resource_file()
+        with (
+            mock.patch.object(resource_file2.resource, "delete") as delete_mock,
+            mock.patch.object(
+                resource_file2.resource, "storage", autospec=True
+            ) as storage_mock,
+        ):
+            storage_mock.exists.return_value = False
+            resource_file2.delete()
+            self.assertFalse(delete_mock.called)
+
+    def test_resource_file_upload_path(self):
+        current_year = date.today().year
+
+        path = resource_file_upload_path(self.resource_file, "SHOULDNTBEUSED.PDF")
+        self.assertEqual(path, "file.pdf")
+
+        self.resource_file.path = None
+
+        path = resource_file_upload_path(self.resource_file, "TEST.PDF")
+        self.assertEqual(path, f"cm-uploads/resources/{current_year}/test.pdf")
+
+        path = resource_file_upload_path(self.resource_file, "TEST%%s.PDF")
+        self.assertEqual(path, f"cm-uploads/resources/{current_year}/test%s.pdf")
+
+        path = resource_file_upload_path(self.resource_file, "%%YTEST.PDF")
+        self.assertEqual(path, f"cm-uploads/resources/{current_year}/%ytest.pdf")
 
 
 class TagTestCase(TestCase):
