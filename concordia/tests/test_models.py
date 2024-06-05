@@ -10,6 +10,7 @@ from concordia.models import (
     CardFamily,
     Transcription,
     UserProfileActivity,
+    validated_get_or_create,
 )
 from concordia.utils import get_anonymous_user
 
@@ -216,3 +217,16 @@ class SimplePageTestCase(TestCase):
     def test_str(self):
         simple_page = create_simple_page()
         self.assertEqual(f"SimplePage: {simple_page.path}", str(simple_page))
+
+
+class ValidatedGetOrCreateTestCase(TestCase):
+    def test_validated_get_or_create(self):
+        kwargs = {
+            "title": "Test Campaign",
+            "slug": "test-campaign",
+        }
+        campaign, created = validated_get_or_create(Campaign, **kwargs)
+        self.assertTrue(created)
+        campaign, created = validated_get_or_create(Campaign, **kwargs)
+        self.assertFalse(created)
+        self.assertEqual(campaign.title, kwargs["title"])
