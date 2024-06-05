@@ -22,6 +22,7 @@ from .utils import (
     create_card,
     create_card_family,
     create_carousel_slide,
+    create_guide,
     create_resource,
     create_resource_file,
     create_simple_page,
@@ -203,6 +204,12 @@ class CampaignRetirementProgressTestCase(TestCase):
     def test_str(self):
         progress = create_campaign_retirement_progress()
         self.assertEqual(f"Removal progress for {progress.campaign}", str(progress))
+
+
+class GuideTestCase(TestCase):
+    def test_str(self):
+        guide = create_guide()
+        self.assertEqual(guide.title, str(guide))
 
 
 class SimplePageTestCase(TestCase):
