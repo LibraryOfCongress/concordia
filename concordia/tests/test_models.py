@@ -1,9 +1,17 @@
 from datetime import timedelta
+from unittest import mock
 
+from django.db.models.signals import post_save
 from django.test import TestCase
 from django.utils import timezone
 
-from concordia.models import Campaign, Transcription, UserProfileActivity
+from concordia.models import (
+    Campaign,
+    CardFamily,
+    Transcription,
+    UserProfileActivity,
+    validated_get_or_create,
+)
 from concordia.utils import get_anonymous_user
 
 from .utils import (
@@ -15,8 +23,10 @@ from .utils import (
     create_card,
     create_card_family,
     create_carousel_slide,
+    create_guide,
     create_resource,
     create_resource_file,
+    create_simple_page,
     create_tag,
     create_tag_collection,
     create_transcription,
@@ -124,9 +134,18 @@ class CardTestCase(TestCase):
 
 
 class CardFamilyTestCase(TestCase):
+    def setUp(self):
+        self.family1 = create_card_family(default=True)
+
     def test_str(self):
-        family = create_card_family()
-        self.assertEqual(family.slug, str(family))
+        self.assertEqual(self.family1.slug, str(self.family1))
+
+    def test_on_cardfamily_save(self):
+        with mock.patch("concordia.models.on_cardfamily_save") as mocked_handler:
+            post_save.connect(mocked_handler, sender=CardFamily)
+            self.family1.save()
+            self.assertTrue(mocked_handler.called)
+            self.assertEqual(mocked_handler.call_count, 1)
 
 
 class ResourceTestCase(TestCase):
@@ -186,3 +205,28 @@ class CampaignRetirementProgressTestCase(TestCase):
     def test_str(self):
         progress = create_campaign_retirement_progress()
         self.assertEqual(f"Removal progress for {progress.campaign}", str(progress))
+
+
+class GuideTestCase(TestCase):
+    def test_str(self):
+        guide = create_guide()
+        self.assertEqual(guide.title, str(guide))
+
+
+class SimplePageTestCase(TestCase):
+    def test_str(self):
+        simple_page = create_simple_page()
+        self.assertEqual(f"SimplePage: {simple_page.path}", str(simple_page))
+
+
+class ValidatedGetOrCreateTestCase(TestCase):
+    def test_validated_get_or_create(self):
+        kwargs = {
+            "title": "Test Campaign",
+            "slug": "test-campaign",
+        }
+        campaign, created = validated_get_or_create(Campaign, **kwargs)
+        self.assertTrue(created)
+        campaign, created = validated_get_or_create(Campaign, **kwargs)
+        self.assertFalse(created)
+        self.assertEqual(campaign.title, kwargs["title"])
