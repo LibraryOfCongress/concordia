@@ -1,6 +1,43 @@
-from django.test import TestCase
+from unittest import mock
 
-from ..tasks import get_item_id_from_item_url, normalize_collection_url
+import requests
+from django.test import TestCase, override_settings
+
+from ..tasks import (
+    get_collection_items,
+    get_item_id_from_item_url,
+    normalize_collection_url,
+)
+
+
+class GetCollectionItemsTests(TestCase):
+    @mock.patch.object(requests.Session, "get")
+    @override_settings(
+        CACHES={
+            "default": {
+                "BACKEND": "django.core.cache.backends.dummy.DummyCache",
+            }
+        }
+    )
+    def test_get_collection_items(self, mock_get):
+        class MockResponse:
+            def json(self):
+                return {
+                    "results": [
+                        {
+                            "id": None,
+                            "image_url": None,
+                            "original_format": {},
+                            "url": "https://www.loc.gov/item/mss859430021/",
+                        }
+                    ],
+                    "pagination": {},
+                }
+
+        mock_get.return_value = MockResponse()
+        mock_get.return_value.url = "https://www.loc.gov/collections/example/"
+        items = get_collection_items("https://www.loc.gov/collections/example/")
+        self.assertEqual(len(items), 0)
 
 
 class GetItemIdFromItemURLTests(TestCase):
