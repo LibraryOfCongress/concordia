@@ -12,6 +12,7 @@ from django.core.mail import EmailMultiAlternatives
 from django.core.management import call_command
 from django.db import transaction
 from django.db.models import Count, F, Q
+from django.urls import reverse
 from django.utils import timezone
 from more_itertools.more import chunked
 
@@ -1055,24 +1056,88 @@ def clear_sessions():
     call_command("clearsessions")
 
 
-def unusual_activity():
-    TWO_DAYS = datetime.timedelta(days=2)
-    TWO_DAYS_AGO = timezone.now() - TWO_DAYS
+def get_user_transcriptions(user_id, param):
+    """
+    Returns a link to the transcription list, filtered by user
+    """
+    return "<a href='https://crowd.loc.gov%s?%s=%s'>%s</a>" % (
+        reverse("admin:concordia_transcription_changelist"),
+        param,
+        user_id,
+        user_id,
+    )
+
+
+def get_transcription_url(transcription_id):
+    """
+    Returns a link to a transcription in the django admin
+    """
+    return "<a href='https://crowd.loc.gov%s'>%s</a>" % (
+        reverse("admin:concordia_transcription_change", args=[transcription_id]),
+        transcription_id,
+    )
+
+
+def organize_by_user(transcriptions):
+    transcriptions_by_user = {}
+    for transcription in transcriptions:
+        user = transcription[0]
+        if user not in transcriptions_by_user:
+            transcriptions_by_user[user] = []
+        transcriptions_by_user[user].append(transcription[1:])
+    return transcriptions_by_user
+
+
+def unusual_activity(days=1):
+    """
+    Locate pages that were improperly transcribed or reviewed.
+    """
+    WINDOW = timezone.now() - datetime.timedelta(days=days)
     text_body_message = ""
     html_body_message = ""
-    transcriptions = transcribing_too_quickly(TWO_DAYS_AGO)
+    transcriptions = transcribing_too_quickly(WINDOW)
     if len(transcriptions) > 0:
-        for transcription in transcriptions[:5]:
-            text_body_message += "\nUser %s submitted both %s and %s." % transcription
-            html_body_message += "\nUser %s submitted both %s and %s." % transcription
+        transcriptions_by_user = organize_by_user(transcriptions)
+        for user in transcriptions_by_user:
+            transcriptions = transcriptions_by_user[user]
+            text_body_message += (
+                "User %s submitted the following pairs of reservations:\n" % user
+            )
+            html_body_message += (
+                "User %s submitted the following pairs of reservations:\n"
+                % get_user_transcriptions(user, "user")
+            )
+            html_body_message += "<ul>"
+            for transcription in transcriptions:
+                text_body_message += "* %s and %s\n" % transcription
+                html_body_message += "<li>%s and %s</li>" % (
+                    get_transcription_url(transcription[0]),
+                    get_transcription_url(transcription[1]),
+                )
+            html_body_message += "</ul>"
     else:
-        text_body_message = "No transcriptions fell within the window."
-        html_body_message = "No transcriptions fell within the window."
-    reviews = reviewing_too_quickly(TWO_DAYS_AGO)
+        text_body_message = "No transcriptions fell within the window.\n"
+        html_body_message = "No transcriptions fell within the window.\n"
+    reviews = reviewing_too_quickly(WINDOW)
     if len(reviews) > 0:
-        for review in reviews[:5]:
-            text_body_message += "\nUser %s reviewed both %s and %s." % review
-            html_body_message += "\nUser %s reviewed both %s and %s." % review
+        reviews_by_user = organize_by_user(reviews)
+        for user in reviews_by_user:
+            reviews = reviews_by_user[user]
+            text_body_message += (
+                "User %s reviewed the following pairs of reservations:\n" % user
+            )
+            html_body_message += (
+                "User %s reviewed the following pairs of reservations:\n"
+                % get_user_transcriptions(user, "reviewed_by")
+            )
+            html_body_message += "<ul>"
+            for review in reviews:
+                text_body_message += "* %s and %s\n" % review
+                html_body_message += "<li>%s and %s</li>" % (
+                    get_transcription_url(review[0]),
+                    get_transcription_url(review[1]),
+                )
+            html_body_message += "</ul>"
     else:
         text_body_message += "No reviews fell within the window."
         html_body_message += "No reviews fell within the window."
