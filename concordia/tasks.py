@@ -1088,6 +1088,7 @@ def organize_by_user(transcriptions):
     return transcriptions_by_user
 
 
+@celery_app.task
 def unusual_activity(days=1):
     """
     Locate pages that were improperly transcribed or reviewed.
