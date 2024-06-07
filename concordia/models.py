@@ -11,7 +11,7 @@ from django.core import signing
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
-from django.db import models
+from django.db import connection, models
 from django.db.models import Count, ExpressionWrapper, F, JSONField, Q
 from django.db.models.functions import Round
 from django.db.models.signals import post_save
@@ -26,6 +26,10 @@ logger = getLogger(__name__)
 metadata_default = dict
 
 User._meta.get_field("email").__dict__["_unique"] = True
+
+ONE_DAY = datetime.timedelta(days=1)
+ONE_DAY_AGO = timezone.now() - ONE_DAY
+WINDOW = 60
 
 
 def resource_file_upload_path(instance, filename):
@@ -636,6 +640,36 @@ class TranscriptionManager(models.Manager):
     def recent_review_actions(self, days=1):
         START = timezone.now() - datetime.timedelta(days=days)
         return self.review_actions(START)
+
+    def reviewing_too_quickly(self, start=ONE_DAY_AGO):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """SELECT t1.reviewed_by_id, t1.id, t2.id
+                FROM concordia_transcription t1
+                JOIN concordia_transcription t2
+                ON t1.id < t2.id
+                AND t1.reviewed_by_id = t2.reviewed_by_id
+                AND t1.accepted >= %s
+                AND t2.accepted >= %s
+                AND ABS(EXTRACT(EPOCH FROM (t1.updated_on - t2.updated_on))) < %s""",
+                [start, start, WINDOW],
+            )
+            return cursor.fetchall()
+
+    def transcribing_too_quickly(self, start=ONE_DAY_AGO):
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """SELECT t1.user_id, t1.id, t2.id
+                FROM concordia_transcription t1
+                JOIN concordia_transcription t2
+                ON t1.id < t2.id
+                AND t1.user_id = t2.user_id
+                AND t1.submitted >= %s
+                AND t2.submitted >= %s
+                AND ABS(EXTRACT(EPOCH FROM (t1.created_on - t2.created_on))) < %s""",
+                [start, start, WINDOW],
+            )
+            return cursor.fetchall()
 
 
 class Transcription(MetricsModelMixin("transcription"), models.Model):
