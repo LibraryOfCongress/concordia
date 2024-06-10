@@ -121,11 +121,6 @@ Resources:
                   IpProtocol: tcp
                   FromPort: 6379
                   ToPort: 6379
-                - Description: 'Memcached service access from container hosts'
-                  SourceSecurityGroupId: !Ref 'ECSHostSecurityGroup'
-                  IpProtocol: tcp
-                  FromPort: 11211
-                  ToPort: 11211
             SecurityGroupEgress:
                 - Description: 'Explicit outbound access'
                   IpProtocol: '-1'
