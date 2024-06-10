@@ -66,8 +66,6 @@ Resources:
                 SecurityGroup: 'sg-04de21574623caca7'
                 RedisAddress: !GetAtt ElastiCache.Outputs.RedisAddress
                 RedisPort: !GetAtt ElastiCache.Outputs.RedisPort
-                MemcachedAddress: !GetAtt ElastiCache.Outputs.MemcachedAddress
-                MemcachedPort: !GetAtt ElastiCache.Outputs.MemcachedPort
                 DatabaseEndpoint: !GetAtt RDS.Outputs.DatabaseHostName
                 Priority: !Ref Priority
                 DataLoadStackName: !GetAtt DataLoadHost.Outputs.StackName
