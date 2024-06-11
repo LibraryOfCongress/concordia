@@ -1,15 +1,19 @@
 from datetime import date, timedelta
+from secrets import token_hex
 from unittest import mock
 
+from django.core.exceptions import ValidationError
 from django.db.models.signals import post_save
 from django.test import TestCase
 from django.utils import timezone
 
 from concordia.models import (
+    AssetTranscriptionReservation,
     Campaign,
     CardFamily,
     Resource,
     Transcription,
+    TranscriptionStatus,
     UserProfileActivity,
     resource_file_upload_path,
     validated_get_or_create,
@@ -87,12 +91,81 @@ class TranscriptionManagerTestCase(CreateTestUsers, TestCase):
     def test_recent_review_actions(self):
         transcriptions = Transcription.objects
         self.assertEqual(transcriptions.recent_review_actions().count(), 0)
+
         self.transcription1.accepted = timezone.now()
         self.transcription1.save()
         self.assertEqual(transcriptions.recent_review_actions().count(), 1)
+
         self.transcription2.rejected = timezone.now()
         self.transcription2.save()
         self.assertEqual(transcriptions.recent_review_actions().count(), 2)
+
+    def test_review_actions(self):
+        start = timezone.now() - timedelta(days=5)
+        end = timezone.now() - timedelta(days=1)
+        self.assertEqual(Transcription.objects.review_actions(start, end).count(), 1)
+
+
+class TranscriptionTestCase(CreateTestUsers, TestCase):
+    def setUp(self):
+        self.user = self.create_user("test-user-1")
+        self.user2 = self.create_user("test-user-2")
+        self.asset = create_asset()
+        self.transcription1 = create_transcription(
+            user=self.user,
+            asset=self.asset,
+            rejected=timezone.now() - timedelta(days=2),
+        )
+        self.transcription2 = create_transcription(asset=self.asset, user=self.user2)
+
+    def test_clean(self):
+        bad_transcription = Transcription(asset=self.asset, user=self.user)
+        bad_transcription.clean()
+
+        bad_transcription2 = Transcription(
+            asset=self.asset,
+            user=self.user,
+            reviewed_by=self.user,
+            accepted=timezone.now(),
+        )
+        with self.assertRaises(ValidationError):
+            bad_transcription2.clean()
+
+        bad_transcription3 = Transcription(
+            asset=self.asset,
+            user=self.user,
+            reviewed_by=self.user2,
+            accepted=timezone.now(),
+            rejected=timezone.now(),
+        )
+        with self.assertRaises(ValidationError):
+            bad_transcription3.clean()
+
+    def test_status(self):
+        transcription = create_transcription(user=self.user, asset=self.asset)
+        self.assertEqual(
+            transcription.status,
+            TranscriptionStatus.CHOICE_MAP[TranscriptionStatus.IN_PROGRESS],
+        )
+
+        transcription2 = create_transcription(
+            asset=transcription.asset, user=self.user, submitted=timezone.now()
+        )
+        self.assertEqual(
+            transcription2.status,
+            TranscriptionStatus.CHOICE_MAP[TranscriptionStatus.SUBMITTED],
+        )
+
+        transcription3 = create_transcription(
+            asset=transcription.asset,
+            user=self.user,
+            reviewed_by=self.user2,
+            accepted=timezone.now(),
+        )
+        self.assertEqual(
+            transcription3.status,
+            TranscriptionStatus.CHOICE_MAP[TranscriptionStatus.COMPLETED],
+        )
 
     def test_reviewing_too_quickly(self):
         transcriptions = Transcription.objects.reviewing_too_quickly()
@@ -125,6 +198,24 @@ class TranscriptionManagerTestCase(CreateTestUsers, TestCase):
         transcriptions = Transcription.objects.transcribing_too_quickly()
         self.assertEqual(len(transcriptions), 1)
         self.assertIn(transcription3.id, [n[2] for n in transcriptions])
+
+
+class AssetTranscriptionReservationTest(CreateTestUsers, TestCase):
+    def setUp(self):
+        self.asset = create_asset()
+        self.user = self.create_user("test-user")
+        self.uid = str(self.user.id).zfill(6)
+        self.token = token_hex(22)
+        self.reservation_token = self.token + self.uid
+        self.reservation = AssetTranscriptionReservation.objects.create(
+            asset=self.asset, reservation_token=self.reservation_token
+        )
+
+    def test_get_token(self):
+        self.assertEqual(self.reservation.get_token(), self.token)
+
+    def test_get_user(self):
+        self.assertEqual(self.reservation.get_user(), self.uid)
 
 
 class UserProfileActivityTestCase(TestCase):
