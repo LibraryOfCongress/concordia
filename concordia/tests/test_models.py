@@ -111,21 +111,27 @@ class TranscriptionTestCase(CreateTestUsers, TestCase):
         self.user = self.create_user("test-user-1")
         self.user2 = self.create_user("test-user-2")
         self.asset = create_asset()
+        self.transcription1 = create_transcription(
+            user=self.user,
+            asset=self.asset,
+            rejected=timezone.now() - timedelta(days=2),
+        )
+        self.transcription2 = create_transcription(asset=self.asset, user=self.user2)
 
     def test_clean(self):
-        transcription = Transcription(asset=self.asset, user=self.user)
-        transcription.clean()
+        bad_transcription = Transcription(asset=self.asset, user=self.user)
+        bad_transcription.clean()
 
-        transcription2 = Transcription(
+        bad_transcription2 = Transcription(
             asset=self.asset,
             user=self.user,
             reviewed_by=self.user,
             accepted=timezone.now(),
         )
         with self.assertRaises(ValidationError):
-            transcription2.clean()
+            bad_transcription2.clean()
 
-        transcription3 = Transcription(
+        bad_transcription3 = Transcription(
             asset=self.asset,
             user=self.user,
             reviewed_by=self.user2,
@@ -133,7 +139,7 @@ class TranscriptionTestCase(CreateTestUsers, TestCase):
             rejected=timezone.now(),
         )
         with self.assertRaises(ValidationError):
-            transcription3.clean()
+            bad_transcription3.clean()
 
     def test_status(self):
         transcription = create_transcription(user=self.user, asset=self.asset)
@@ -160,24 +166,6 @@ class TranscriptionTestCase(CreateTestUsers, TestCase):
             transcription3.status,
             TranscriptionStatus.CHOICE_MAP[TranscriptionStatus.COMPLETED],
         )
-
-
-class AssetTranscriptionReservationTest(CreateTestUsers, TestCase):
-    def setUp(self):
-        self.asset = create_asset()
-        self.user = self.create_user("test-user")
-        self.uid = str(self.user.id).zfill(6)
-        self.token = token_hex(22)
-        self.reservation_token = self.token + self.uid
-        self.reservation = AssetTranscriptionReservation.objects.create(
-            asset=self.asset, reservation_token=self.reservation_token
-        )
-
-    def test_get_token(self):
-        self.assertEqual(self.reservation.get_token(), self.token)
-
-    def test_get_user(self):
-        self.assertEqual(self.reservation.get_user(), self.uid)
 
     def test_reviewing_too_quickly(self):
         transcriptions = Transcription.objects.reviewing_too_quickly()
@@ -210,6 +198,24 @@ class AssetTranscriptionReservationTest(CreateTestUsers, TestCase):
         transcriptions = Transcription.objects.transcribing_too_quickly()
         self.assertEqual(len(transcriptions), 1)
         self.assertIn(transcription3.id, [n[2] for n in transcriptions])
+
+
+class AssetTranscriptionReservationTest(CreateTestUsers, TestCase):
+    def setUp(self):
+        self.asset = create_asset()
+        self.user = self.create_user("test-user")
+        self.uid = str(self.user.id).zfill(6)
+        self.token = token_hex(22)
+        self.reservation_token = self.token + self.uid
+        self.reservation = AssetTranscriptionReservation.objects.create(
+            asset=self.asset, reservation_token=self.reservation_token
+        )
+
+    def test_get_token(self):
+        self.assertEqual(self.reservation.get_token(), self.token)
+
+    def test_get_user(self):
+        self.assertEqual(self.reservation.get_user(), self.uid)
 
 
 class UserProfileActivityTestCase(TestCase):
