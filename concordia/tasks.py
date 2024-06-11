@@ -8,13 +8,17 @@ import requests
 from celery import chord
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.core.mail import EmailMultiAlternatives
 from django.core.management import call_command
 from django.db import transaction
 from django.db.models import Count, F, Q
+from django.urls import reverse
 from django.utils import timezone
 from more_itertools.more import chunked
 
 from concordia.models import (
+    ONE_DAY,
+    ONE_DAY_AGO,
     Asset,
     AssetTranscriptionReservation,
     Campaign,
@@ -36,8 +40,6 @@ from concordia.utils import get_anonymous_user
 from .celery import app as celery_app
 
 logger = getLogger(__name__)
-
-ONE_DAY = datetime.timedelta(days=1)
 
 
 @celery_app.task
@@ -102,7 +104,6 @@ def delete_old_tombstoned_reservations():
 
 
 def _recent_transcriptions():
-    ONE_DAY_AGO = timezone.now() - datetime.timedelta(days=1)
     return Transcription.objects.filter(
         Q(accepted__gte=ONE_DAY_AGO)
         | Q(created_on__gte=ONE_DAY_AGO)
@@ -1041,7 +1042,112 @@ def fix_storage_images(campaign_slug=None, asset_start_id=None):
         logger.debug("%s / %s (%s%%)", count, full_count, str(count / full_count * 100))
 
 
+def transcribing_too_quickly(start):
+    return Transcription.objects.transcribing_too_quickly(start)
+
+
+def reviewing_too_quickly(start):
+    return Transcription.objects.reviewing_too_quickly(start)
+
+
 @celery_app.task(ignore_result=True)
 def clear_sessions():
     # This clears expired Django sessions in the database
     call_command("clearsessions")
+
+
+def get_user_transcriptions(user_id, param):
+    """
+    Returns a link to the transcription list, filtered by user
+    """
+    return "<a href='https://crowd.loc.gov%s?%s=%s'>%s</a>" % (
+        reverse("admin:concordia_transcription_changelist"),
+        param,
+        user_id,
+        user_id,
+    )
+
+
+def get_transcription_url(transcription_id):
+    """
+    Returns a link to a transcription in the django admin
+    """
+    return "<a href='https://crowd.loc.gov%s'>%s</a>" % (
+        reverse("admin:concordia_transcription_change", args=[transcription_id]),
+        transcription_id,
+    )
+
+
+def organize_by_user(transcriptions):
+    transcriptions_by_user = {}
+    for transcription in transcriptions:
+        user = transcription[0]
+        if user not in transcriptions_by_user:
+            transcriptions_by_user[user] = []
+        transcriptions_by_user[user].append(transcription[1:])
+    return transcriptions_by_user
+
+
+@celery_app.task
+def unusual_activity(days=1):
+    """
+    Locate pages that were improperly transcribed or reviewed.
+    """
+    WINDOW = timezone.now() - datetime.timedelta(days=days)
+    text_body_message = ""
+    html_body_message = ""
+    transcriptions = transcribing_too_quickly(WINDOW)
+    if len(transcriptions) > 0:
+        transcriptions_by_user = organize_by_user(transcriptions)
+        for user in transcriptions_by_user:
+            transcriptions = transcriptions_by_user[user]
+            text_body_message += (
+                "User %s submitted the following pairs of reservations:\n" % user
+            )
+            html_body_message += (
+                "User %s submitted the following pairs of reservations:\n"
+                % get_user_transcriptions(user, "user")
+            )
+            html_body_message += "<ul>"
+            for transcription in transcriptions:
+                text_body_message += "* %s and %s\n" % transcription
+                html_body_message += "<li>%s and %s</li>" % (
+                    get_transcription_url(transcription[0]),
+                    get_transcription_url(transcription[1]),
+                )
+            html_body_message += "</ul>"
+    else:
+        text_body_message = "No transcriptions fell within the window.\n"
+        html_body_message = "No transcriptions fell within the window.\n"
+    reviews = reviewing_too_quickly(WINDOW)
+    if len(reviews) > 0:
+        reviews_by_user = organize_by_user(reviews)
+        for user in reviews_by_user:
+            reviews = reviews_by_user[user]
+            text_body_message += (
+                "User %s reviewed the following pairs of reservations:\n" % user
+            )
+            html_body_message += (
+                "User %s reviewed the following pairs of reservations:\n"
+                % get_user_transcriptions(user, "reviewed_by")
+            )
+            html_body_message += "<ul>"
+            for review in reviews:
+                text_body_message += "* %s and %s\n" % review
+                html_body_message += "<li>%s and %s</li>" % (
+                    get_transcription_url(review[0]),
+                    get_transcription_url(review[1]),
+                )
+            html_body_message += "</ul>"
+    else:
+        text_body_message += "No reviews fell within the window."
+        html_body_message += "No reviews fell within the window."
+    message = EmailMultiAlternatives(
+        subject="Unusual User Activity Report",
+        body=text_body_message,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=settings.DEFAULT_TO_EMAIL,
+        reply_to=[settings.DEFAULT_FROM_EMAIL],
+    )
+    message.attach_alternative(html_body_message, "text/html")
+    message.send()

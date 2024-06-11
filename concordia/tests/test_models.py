@@ -179,6 +179,38 @@ class AssetTranscriptionReservationTest(CreateTestUsers, TestCase):
     def test_get_user(self):
         self.assertEqual(self.reservation.get_user(), self.uid)
 
+    def test_reviewing_too_quickly(self):
+        transcriptions = Transcription.objects.reviewing_too_quickly()
+        self.assertEqual(len(transcriptions), 0)
+
+        self.transcription1.accepted = timezone.now()
+        self.transcription1.reviewed_by = self.create_user(username="tester2")
+        self.transcription1.save()
+        transcription3 = create_transcription(
+            asset=self.transcription1.asset,
+            user=self.transcription1.user,
+            reviewed_by=self.transcription1.reviewed_by,
+            accepted=self.transcription1.accepted,
+        )
+        transcriptions = Transcription.objects.reviewing_too_quickly()
+        self.assertEqual(len(transcriptions), 1)
+        self.assertIn(transcription3.id, [n[2] for n in transcriptions])
+
+    def test_transcribing_too_quickly(self):
+        transcriptions = Transcription.objects.transcribing_too_quickly()
+        self.assertEqual(len(transcriptions), 0)
+
+        self.transcription1.submitted = timezone.now()
+        self.transcription1.save()
+        transcription3 = create_transcription(
+            asset=self.transcription1.asset,
+            user=self.transcription1.user,
+            submitted=self.transcription1.submitted,
+        )
+        transcriptions = Transcription.objects.transcribing_too_quickly()
+        self.assertEqual(len(transcriptions), 1)
+        self.assertIn(transcription3.id, [n[2] for n in transcriptions])
+
 
 class UserProfileActivityTestCase(TestCase):
     def setUp(self):

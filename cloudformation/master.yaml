@@ -214,8 +214,6 @@ Resources:
                 ConcordiaVersion: !Ref ConcordiaVersion
                 RedisAddress: !GetAtt ElastiCache.Outputs.RedisAddress
                 RedisPort: !GetAtt ElastiCache.Outputs.RedisPort
-                MemcachedAddress: !GetAtt ElastiCache.Outputs.MemcachedAddress
-                MemcachedPort: !GetAtt ElastiCache.Outputs.MemcachedPort
                 CanonicalHostName: !Ref CanonicalHostName
                 DatabaseEndpoint: !GetAtt RDS.Outputs.DatabaseHostName
                 FullEnvironmentName: !Ref FullEnvironmentName
