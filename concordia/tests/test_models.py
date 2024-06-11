@@ -51,11 +51,14 @@ class AssetTestCase(CreateTestUsers, TestCase):
             reviewed_by=anon,
         )
 
-    def get_ocr_transcript(self):
+    def test_get_ocr_transcript(self):
         self.asset.storage_image = "tests/test-european.jpg"
         self.asset.save()
         phrase = "marrón rápido salta sobre el perro"
         self.assertFalse(phrase in self.asset.get_ocr_transcript())
+        self.assertFalse(
+            phrase in self.asset.get_ocr_transcript(language="bad-language-code")
+        )
         self.assertTrue(phrase in self.asset.get_ocr_transcript(language="spa"))
 
     def test_get_contributor_count(self):
@@ -76,6 +79,12 @@ class AssetTestCase(CreateTestUsers, TestCase):
         self.asset.item.project.disable_ocr = True
         self.asset.item.project.save()
         self.assertTrue(self.asset.item.project.turn_off_ocr())
+
+    def test_get_storage_path(self):
+        self.assertEqual(
+            self.asset.get_storage_path(filename=self.asset.storage_image),
+            "test-campaign/test-project/testitem.0123456789/1.jpg",
+        )
 
 
 class TranscriptionManagerTestCase(CreateTestUsers, TestCase):
