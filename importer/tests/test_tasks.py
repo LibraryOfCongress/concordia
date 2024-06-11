@@ -7,8 +7,40 @@ from ..tasks import (
     get_collection_items,
     get_item_id_from_item_url,
     get_item_info_from_result,
+    import_item_count_from_url,
     normalize_collection_url,
 )
+
+
+class ImportItemCountFromUrlTests(TestCase):
+    def mocked_requests_get(*args, **kwargs):
+        class MockResponse:
+            def json(self):
+                item_data = {
+                    "resources": [
+                        {"files": []},
+                    ]
+                }
+                return item_data
+
+            def raise_for_status(self):
+                pass
+
+        return MockResponse()
+
+    @mock.patch("requests.get", side_effect=mocked_requests_get)
+    @override_settings(
+        CACHES={
+            "default": {
+                "BACKEND": "django.core.cache.backends.dummy.DummyCache",
+            }
+        }
+    )
+    def test_import_item_count_from_url(self, mock_get):
+        self.assertEqual(import_item_count_from_url(None), ("None - Asset Count: 0", 0))
+
+    def test_unhandled_exception_importing(self):
+        self.assertRaises(Exception, import_item_count_from_url)
 
 
 class GetCollectionItemsTests(TestCase):
@@ -69,37 +101,6 @@ class GetCollectionItemsTests(TestCase):
 
         mock_get.return_value = MockResponse()
         mock_get.return_value.url = "https://www.loc.gov/collections/example/"
-        items = get_collection_items("https://www.loc.gov/collections/example/")
-        self.assertEqual(len(items), 0)
-
-    @mock.patch("importer.tasks.requests_retry_session")
-    @mock.patch.object(requests.Session, "get")
-    @override_settings(
-        CACHES={
-            "default": {
-                "BACKEND": "django.core.cache.backends.dummy.DummyCache",
-            }
-        }
-    )
-    def no_results(self, mock_get, mock_session):
-        class MockResponse:
-            def json(self):
-                return {
-                    "results": [
-                        {
-                            "id": None,
-                            "image_url": None,
-                            "original_format": {},
-                            "url": "https://www.loc.gov/item/mss859430021/",
-                        },
-                    ],
-                    "pagination": {
-                        "next": False,
-                    },
-                }
-
-        mock_get.return_value = None
-        mock_session.get.return_value = MockResponse()
         items = get_collection_items("https://www.loc.gov/collections/example/")
         self.assertEqual(len(items), 0)
 
