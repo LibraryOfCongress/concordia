@@ -1,4 +1,5 @@
 from io import StringIO
+from unittest import mock
 
 from django.core.management import call_command
 from django.test import TestCase
@@ -15,6 +16,15 @@ class EnsureInitialSiteConfigurationTests(TestCase):
         call_command(
             "ensure_initial_site_configuration", site_domain="crowd.loc.gov", stdout=out
         )
+        with mock.patch(
+            "django.contrib.sites.models.Site.objects.update"
+        ) as update_mock:
+            update_mock.return_value = 0
+            call_command(
+                "ensure_initial_site_configuration",
+                site_domain="crowd.loc.gov",
+                stdout=out,
+            )
 
 
 class ImportSiteReportsTests(TestCase):
