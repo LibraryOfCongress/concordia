@@ -2209,6 +2209,11 @@ def redirect_to_next_reviewable_asset(request):
         .get_next_review_campaigns()
         .values_list("id", flat=True)
     )
+    try:
+        campaign_id = random.choice(campaign_ids)  # nosec
+        campaign = Campaign.objects.get(id=campaign_id)
+    except IndexError:
+        campaign = Campaign.objects.active().listed().published().latest("launch_date")
     project_slug = request.GET.get("project", "")
     item_id = request.GET.get("item", "")
     asset_id = request.GET.get("asset", 0)
@@ -2218,48 +2223,24 @@ def redirect_to_next_reviewable_asset(request):
     else:
         user = request.user
 
-    potential_assets = None
-    if campaign_ids:
-        random.shuffle(campaign_ids)  # nosec
-    else:
-        logger.info("No configured reviewable campaigns")
+    potential_assets = Asset.objects.select_for_update(skip_locked=True, of=("self",))
+    potential_assets = potential_assets.filter(
+        item__project__campaign=campaign,
+        item__project__published=True,
+        item__published=True,
+        published=True,
+    )
 
-    for campaign_id in campaign_ids:
-        try:
-            campaign = Campaign.objects.get(id=campaign_id)
-        except IndexError:
-            logger.error("Next transcription campaign %s not found", campaign_id)
-            continue
-        potential_assets = find_reviewable_assets(
-            campaign, project_slug, item_id, asset_id, user
-        )
-        if potential_assets.exists():
-            break
-        else:
-            logger.info("No reviewable assets found in %s", campaign)
-
-    if not potential_assets:
-        for campaign in (
-            Campaign.objects.active()
-            .listed()
-            .published()
-            .exclude(id__in=campaign_ids)
-            .order_by("launch_date")
-        ):
-            potential_assets = find_reviewable_assets(
-                campaign, project_slug, item_id, asset_id, user
-            )
-            if potential_assets.exists():
-                break
-            else:
-                logger.info("No reviewable assets found in %s", campaign)
+    potential_assets = filter_and_order_reviewable_assets(
+        potential_assets, project_slug, item_id, asset_id, request.user.pk
+    )
 
     return redirect_to_next_asset(
         potential_assets, "review", request, project_slug, user
     )
 
 
-def find_transcribable_assets(campaign, project_slug, item_id, asset_id):
+def find_transcribable_assets(campaign, project_slug=None, item_id=None, asset_id=None):
     potential_assets = Asset.objects.select_for_update(skip_locked=True, of=("self",))
     potential_assets = potential_assets.filter(
         item__project__campaign=campaign,
@@ -2286,6 +2267,11 @@ def redirect_to_next_transcribable_asset(request):
         .get_next_transcription_campaigns()
         .values_list("id", flat=True)
     )
+    try:
+        campaign_id = random.choice(campaign_ids)  # nosec
+        campaign = Campaign.objects.get(id=campaign_id)
+    except IndexError:
+        campaign = Campaign.objects.active().listed().published().latest("launch_date")
     project_slug = request.GET.get("project", "")
     item_id = request.GET.get("item", "")
     asset_id = request.GET.get("asset", 0)
@@ -2295,41 +2281,16 @@ def redirect_to_next_transcribable_asset(request):
     else:
         user = request.user
 
-    potential_assets = None
-    if campaign_ids:
-        random.shuffle(campaign_ids)  # nosec
-    else:
-        logger.info("No configured reviewable campaigns")
-
-    for campaign_id in campaign_ids:
-        try:
-            campaign = Campaign.objects.get(id=campaign_id)
-        except IndexError:
-            logger.error("Next transcription campaign %s not found", campaign_id)
-            continue
-        potential_assets = find_transcribable_assets(
-            campaign, project_slug, item_id, asset_id
-        )
-        if potential_assets.exists():
-            break
-        else:
-            logger.info("No reviewable assets found in %s", campaign)
-
-    if not potential_assets:
-        for campaign in (
-            Campaign.objects.active()
-            .listed()
-            .published()
-            .exclude(id__in=campaign_ids)
-            .order_by("-launch_date")
-        ):
-            potential_assets = find_transcribable_assets(
-                campaign, project_slug, item_id, asset_id
-            )
-            if potential_assets.exists():
-                break
-            else:
-                logger.info("No reviewable assets found in %s", campaign)
+    potential_assets = Asset.objects.select_for_update(skip_locked=True, of=("self",))
+    potential_assets = potential_assets.filter(
+        item__project__campaign=campaign,
+        item__project__published=True,
+        item__published=True,
+        published=True,
+    )
+    potential_assets = filter_and_order_transcribable_assets(
+        potential_assets, project_slug, item_id, asset_id
+    )
 
     return redirect_to_next_asset(
         potential_assets, "transcribe", request, project_slug, user
