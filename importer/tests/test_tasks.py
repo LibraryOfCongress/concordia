@@ -1,9 +1,11 @@
+import concurrent.futures
 from unittest import mock
 
 import requests
 from django.test import TestCase, override_settings
 
 from ..tasks import (
+    fetch_all_urls,
     get_collection_items,
     get_item_id_from_item_url,
     get_item_info_from_result,
@@ -103,6 +105,20 @@ class GetCollectionItemsTests(TestCase):
         mock_get.return_value.url = "https://www.loc.gov/collections/example/"
         items = get_collection_items("https://www.loc.gov/collections/example/")
         self.assertEqual(len(items), 0)
+
+
+class FetchAllUrlsTests(TestCase):
+    @mock.patch.object(concurrent.futures.ThreadPoolExecutor, "map")
+    def test_fetch_all_urls(self, mock_map):
+        output = "https://www.loc.gov/item/mss859430021/ - Asset Count: 0"
+        mock_map.return_value = ((output, 0),)
+        finals, totals = fetch_all_urls(
+            [
+                "https://www.loc.gov/item/mss859430021/",
+            ]
+        )
+        self.assertEqual(finals, [output])
+        self.assertEqual(totals, 0)
 
 
 class GetItemIdFromItemURLTests(TestCase):
