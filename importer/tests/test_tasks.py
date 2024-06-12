@@ -4,12 +4,15 @@ from unittest import mock
 import requests
 from django.test import TestCase, override_settings
 
+from concordia.tests.utils import CreateTestUsers, create_project
+
 from ..tasks import (
     fetch_all_urls,
     get_collection_items,
     get_item_id_from_item_url,
     get_item_info_from_result,
     import_item_count_from_url,
+    import_items_into_project_from_url,
     normalize_collection_url,
 )
 
@@ -119,6 +122,32 @@ class FetchAllUrlsTests(TestCase):
         )
         self.assertEqual(finals, [output])
         self.assertEqual(totals, 0)
+
+
+class ImportItemsIntoProjectFromUrlTests(CreateTestUsers, TestCase):
+    def setUp(self):
+        self.login_user()
+        self.project = create_project()
+
+    def test_no_match(self):
+        with self.assertRaises(ValueError):
+            import_items_into_project_from_url(
+                None, None, "https://www.loc.gov/resource/mss859430021/"
+            )
+
+    def test_item(self):
+        import_job = import_items_into_project_from_url(
+            self.user, self.project, "https://www.loc.gov/item/mss859430021/"
+        )
+        self.assertEqual(import_job.project, self.project)
+
+    def test_other_url_type(self):
+        import_job = import_items_into_project_from_url(
+            self.user,
+            self.project,
+            "https://www.loc.gov/collections/branch-rickey-papers/",
+        )
+        self.assertEqual(import_job.project, self.project)
 
 
 class GetItemIdFromItemURLTests(TestCase):
