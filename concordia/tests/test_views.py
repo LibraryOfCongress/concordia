@@ -1215,12 +1215,13 @@ class TransactionalViewTests(CreateTestUsers, JSONAssertMixin, TransactionTestCa
         self.assertRedirects(resp, expected_url=asset1.get_absolute_url())
 
     def test_find_next_reviewable_no_campaign(self):
+        user = self.create_user("test-user")
         anon = get_anonymous_user()
 
         asset1 = create_asset(slug="test-asset-1")
         asset2 = create_asset(item=asset1.item, slug="test-asset-2")
 
-        t1 = Transcription(asset=asset1, user=anon, text="test", submitted=now())
+        t1 = Transcription(asset=asset1, user=user, text="test", submitted=now())
         t1.full_clean()
         t1.save()
 
