@@ -4,17 +4,19 @@ from unittest import mock
 import requests
 from django.test import TestCase, override_settings
 
-from concordia.tests.utils import CreateTestUsers, create_project
+from concordia.tests.utils import CreateTestUsers, create_asset, create_project
 
 from ..tasks import (
     fetch_all_urls,
     get_collection_items,
     get_item_id_from_item_url,
     get_item_info_from_result,
+    import_collection,
     import_collection_task,
     import_item_count_from_url,
     import_items_into_project_from_url,
     normalize_collection_url,
+    redownload_image_task,
 )
 from .utils import create_import_job
 
@@ -158,9 +160,33 @@ class ImportCollectionTaskTests(CreateTestUsers, TestCase):
 
     @mock.patch("importer.tasks.import_collection")
     def test_import_collection_task(self, mock_import):
+
         import_job = create_import_job(created_by=self.user)
         import_collection_task(import_job.pk)
         self.assertTrue(mock_import.called)
+
+
+class ImportCollectionTests(CreateTestUsers, TestCase):
+    def setUp(self):
+        self.login_user()
+
+    @mock.patch("importer.tasks.get_collection_items")
+    @mock.patch("importer.tasks.create_item_import_task")
+    def test_import_collection(self, mock_task, mock_get):
+        magic_mock = mock.MagicMock()
+        magic_mock.request = mock.MagicMock()
+        magic_mock.request.id = 1
+        import_job = create_import_job(created_by=self.user)
+        mock_get.return_value = ((None, None),)
+        import_collection(magic_mock, import_job)
+        self.assertTrue(mock_get.called)
+
+
+class RedownloadImageTaskTests(TestCase):
+    @mock.patch("importer.tasks.download_asset")
+    def test_redownload_image_task(self, mock_download):
+        redownload_image_task(create_asset().pk)
+        self.assertTrue(mock_download.called)
 
 
 class GetItemIdFromItemURLTests(TestCase):
