@@ -11,10 +11,12 @@ from ..tasks import (
     get_collection_items,
     get_item_id_from_item_url,
     get_item_info_from_result,
+    import_collection_task,
     import_item_count_from_url,
     import_items_into_project_from_url,
     normalize_collection_url,
 )
+from .utils import create_import_job
 
 
 class ImportItemCountFromUrlTests(TestCase):
@@ -148,6 +150,17 @@ class ImportItemsIntoProjectFromUrlTests(CreateTestUsers, TestCase):
             "https://www.loc.gov/collections/branch-rickey-papers/",
         )
         self.assertEqual(import_job.project, self.project)
+
+
+class ImportCollectionTaskTests(CreateTestUsers, TestCase):
+    def setUp(self):
+        self.login_user()
+
+    @mock.patch("importer.tasks.import_collection")
+    def test_import_collection_task(self, mock_import):
+        import_job = create_import_job(created_by=self.user)
+        import_collection_task(import_job.pk)
+        self.assertTrue(mock_import.called)
 
 
 class GetItemIdFromItemURLTests(TestCase):
