@@ -26,7 +26,7 @@ RUN apt-get update -qy && apt-get dist-upgrade -qy && apt-get install -o Dpkg::O
     # Weasyprint requirements
     libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0 \
     # Tesseract
-    tesseract-ocr \
+    tesseract-ocr tesseract-ocr-all \
     nodejs node-gyp npm && apt-get -qy autoremove && apt-get -qy autoclean
 
 RUN locale-gen en_US.UTF-8
