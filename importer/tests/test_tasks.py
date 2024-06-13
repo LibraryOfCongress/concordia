@@ -11,7 +11,6 @@ from ..tasks import (
     get_collection_items,
     get_item_id_from_item_url,
     get_item_info_from_result,
-    import_collection,
     import_collection_task,
     import_item_count_from_url,
     import_items_into_project_from_url,
@@ -154,31 +153,18 @@ class ImportItemsIntoProjectFromUrlTests(CreateTestUsers, TestCase):
         self.assertEqual(import_job.project, self.project)
 
 
-class ImportCollectionTaskTests(CreateTestUsers, TestCase):
-    def setUp(self):
-        self.login_user()
-
-    @mock.patch("importer.tasks.import_collection")
-    def test_import_collection_task(self, mock_import):
-
-        import_job = create_import_job(created_by=self.user)
-        import_collection_task(import_job.pk)
-        self.assertTrue(mock_import.called)
-
-
 class ImportCollectionTests(CreateTestUsers, TestCase):
     def setUp(self):
         self.login_user()
 
     @mock.patch("importer.tasks.get_collection_items")
-    @mock.patch("importer.tasks.create_item_import_task")
-    def test_import_collection(self, mock_task, mock_get):
+    def test_import_collection(self, mock_get):
         magic_mock = mock.MagicMock()
         magic_mock.request = mock.MagicMock()
         magic_mock.request.id = 1
         import_job = create_import_job(created_by=self.user)
         mock_get.return_value = ((None, None),)
-        import_collection(magic_mock, import_job)
+        import_collection_task(import_job.pk)
         self.assertTrue(mock_get.called)
 
 
