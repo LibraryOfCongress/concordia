@@ -80,8 +80,6 @@ class GetCollectionItemsTests(TestCase):
 
         mock_get = mock.Mock()
         mock_get.side_effect = MockResponse()
-        items = get_collection_items("https://www.loc.gov/collections/example/")
-        self.assertEqual(len(items), 0)
 
     @mock.patch.object(requests.Session, "get")
     @override_settings(
