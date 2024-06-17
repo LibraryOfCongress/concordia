@@ -497,6 +497,7 @@ function setupPage() {
         $tagForm = $('#tag-form'),
         $currentTagList = $tagEditor.find('#current-tags'),
         $newTagInput = $('#new-tag-input');
+
     const characterError =
         'Tags must be between 1-50 characters and may contain only letters, numbers, dashes, underscores, apostrophes, and spaces';
     const duplicateError =
@@ -506,6 +507,9 @@ function setupPage() {
         $newTagInput.get(0).setCustomValidity(''); // Resets custom validation
         const $form = $newTagInput.closest('form');
         $form.removeClass('was-validated');
+        $newTagInput.val(
+            $newTagInput.val().replace('‘', "'").replace('’', "'"),
+        );
         if (!$newTagInput.get(0).checkValidity()) {
             $form.find('.invalid-feedback').html(characterError);
             $form.addClass('was-validated');
