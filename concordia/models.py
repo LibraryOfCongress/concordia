@@ -561,6 +561,8 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         # This ensures all 'required' fields really are required
         # even when creating objects programmatically. Particularly,
         # we want to make sure we don't end up with an empty storage_image
+        if not self.campaign:
+            self.campaign = self.item.project.campaign
         self.full_clean()
         super().save(*args, **kwargs)
 
