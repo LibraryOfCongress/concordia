@@ -2185,6 +2185,20 @@ def filter_and_order_reviewable_assets(
     return potential_assets
 
 
+def find_reviewable_assets(campaign, project_slug, item_id, asset_id, user):
+    potential_assets = Asset.objects.select_for_update(skip_locked=True, of=("self",))
+    potential_assets = potential_assets.filter(
+        item__project__campaign=campaign,
+        item__project__published=True,
+        item__published=True,
+        published=True,
+    )
+
+    return filter_and_order_reviewable_assets(
+        potential_assets, project_slug, item_id, asset_id, user.pk
+    )
+
+
 @never_cache
 @atomic
 def redirect_to_next_reviewable_asset(request):
@@ -2226,7 +2240,7 @@ def redirect_to_next_reviewable_asset(request):
     )
 
 
-def find_transcribable_assets(campaign, project_slug, item_id, asset_id):
+def find_transcribable_assets(campaign, project_slug=None, item_id=None, asset_id=None):
     potential_assets = Asset.objects.select_for_update(skip_locked=True, of=("self",))
     potential_assets = potential_assets.filter(
         item__project__campaign=campaign,
