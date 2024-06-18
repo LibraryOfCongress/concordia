@@ -502,6 +502,7 @@ class Asset(MetricsModelMixin("asset"), models.Model):
     objects = AssetQuerySet.as_manager()
 
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
 
     published = models.BooleanField(default=False, blank=True, db_index=True)
 
@@ -560,6 +561,8 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         # This ensures all 'required' fields really are required
         # even when creating objects programmatically. Particularly,
         # we want to make sure we don't end up with an empty storage_image
+        if not self.campaign:
+            self.campaign = self.item.project.campaign
         self.full_clean()
         super().save(*args, **kwargs)
 
