@@ -185,6 +185,7 @@ def create_asset(
         item = create_item(published=published)
     asset = Asset(
         item=item,
+        campaign=item.project.campaign,
         title=title,
         slug=slug,
         media_type=media_type,

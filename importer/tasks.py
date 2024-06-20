@@ -429,6 +429,7 @@ def import_item(self, import_item):
         asset_title = f"{import_item.item.item_id}-{idx}"
         item_asset = Asset(
             item=import_item.item,
+            campagin=import_item.item.project.campaign,
             title=asset_title,
             slug=slugify(asset_title, allow_unicode=True),
             sequence=idx,
