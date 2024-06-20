@@ -2265,21 +2265,21 @@ def redirect_to_next_reviewable_asset(request):
         return redirect("homepage")
 
 
-def find_transcribable_assets(campaign, project_slug=None, item_id=None, asset_id=None):
-    potential_assets = Asset.objects.select_for_update(skip_locked=True, of=("self",))
-    potential_assets = potential_assets.filter(
-        item__project__campaign=campaign,
-        item__project__published=True,
-        item__published=True,
-        published=True,
+def find_transcribable_asset(campaign):
+    return (
+        Asset.objects.select_for_update(skip_locked=True, of=("self",))
+        .filter(
+            campaign=campaign,
+            published=True,
+            transcription_status=TranscriptionStatus.NOT_STARTED,
+        )
+        .exclude(
+            pk__in=Subquery(AssetTranscriptionReservation.objects.values("asset_id"))
+        )
+        .select_related("item", "item__project")
+        .order_by("sequence")
+        .first()
     )
-    # FIXME: if project is specified, the campaign can only be
-    # that project's campaign
-    potential_assets = filter_and_order_transcribable_assets(
-        potential_assets, project_slug, item_id, asset_id
-    )
-
-    return potential_assets
 
 
 @never_cache
@@ -2292,34 +2292,57 @@ def redirect_to_next_transcribable_asset(request):
         .get_next_transcription_campaigns()
         .values_list("id", flat=True)
     )
-    try:
-        campaign_id = random.choice(campaign_ids)  # nosec
-        campaign = Campaign.objects.get(id=campaign_id)
-    except IndexError:
-        campaign = Campaign.objects.active().listed().published().latest("launch_date")
-    project_slug = request.GET.get("project", "")
-    item_id = request.GET.get("item", "")
-    asset_id = request.GET.get("asset", 0)
 
-    if not request.user.is_authenticated:
-        user = get_anonymous_user()
+    asset = None
+    if campaign_ids:
+        random.shuffle(campaign_ids)  # nosec
     else:
-        user = request.user
+        logger.info("No configured reviewable campaigns")
 
-    potential_assets = Asset.objects.select_for_update(skip_locked=True, of=("self",))
-    potential_assets = potential_assets.filter(
-        item__project__campaign=campaign,
-        item__project__published=True,
-        item__published=True,
-        published=True,
-    )
-    potential_assets = filter_and_order_transcribable_assets(
-        potential_assets, project_slug, item_id, asset_id
-    )
+    for campaign_id in campaign_ids:
+        try:
+            campaign = Campaign.objects.get(id=campaign_id)
+        except IndexError:
+            logger.error("Next transcribable campaign %s not found", campaign_id)
+            continue
+        asset = find_transcribable_asset(campaign)
+        if asset:
+            break
+        else:
+            logger.info("No transcribable assets found in %s", campaign)
 
-    return redirect_to_next_asset(
-        potential_assets, "transcribe", request, project_slug, user
-    )
+    if not asset:
+        for campaign in (
+            Campaign.objects.active()
+            .listed()
+            .published()
+            .exclude(id__in=campaign_ids)
+            .order_by("-launch_date")
+        ):
+            asset = find_transcribable_asset(campaign)
+            if asset:
+                break
+            else:
+                logger.info("No transcribable assets found in %s", campaign)
+
+    if asset:
+        reservation_token = get_or_create_reservation_token(request)
+        res = AssetTranscriptionReservation(
+            asset=asset, reservation_token=reservation_token
+        )
+        res.full_clean()
+        res.save()
+        return redirect(
+            "transcriptions:asset-detail",
+            asset.item.project.campaign.slug,
+            asset.item.project.slug,
+            asset.item.item_id,
+            asset.slug,
+        )
+    else:
+        messages.info(request, "There are no remaining pages to transcribe")
+
+        return redirect("homepage")
 
 
 @never_cache
