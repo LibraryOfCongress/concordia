@@ -1142,6 +1142,12 @@ def unusual_activity(days=1):
     else:
         text_body_message += "No reviews fell within the window."
         html_body_message += "No reviews fell within the window."
+    total = len(transcriptions) + len(reviews)
+    if total > 0:
+        logger.debug("Found %s incidents of unusual activity.", total)
+    else:
+        logger.debug("Found no incidents of unusual activity.")
+    logger.debug("Emailing report to %s.", settings.DEFAULT_TO_EMAIL)
     message = EmailMultiAlternatives(
         subject="Unusual User Activity Report",
         body=text_body_message,
