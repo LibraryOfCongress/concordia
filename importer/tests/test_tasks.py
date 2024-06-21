@@ -91,21 +91,6 @@ class GetCollectionItemsTests(TestCase):
         }
     )
     def test_cache_miss(self, mock_get):
-        class MockResponse:
-            def json(self):
-                url = "https://www.loc.gov/item/%s/" % "mss859430021"
-                return {
-                    "results": [
-                        {
-                            "id": 1,
-                            "image_url": "https://www.loc.gov/resource/mss85943.000212/",
-                            "original_format": {"item"},
-                            "url": url,
-                        },
-                    ],
-                    "pagination": {},
-                }
-
         mock_get.return_value = MockResponse()
         mock_get.return_value.url = "https://www.loc.gov/collections/example/"
         items = get_collection_items("https://www.loc.gov/collections/example/")
