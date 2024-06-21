@@ -2,6 +2,7 @@ import concurrent.futures
 from unittest import mock
 
 import requests
+from django.core.cache.backends.base import BaseCache
 from django.test import TestCase, override_settings
 
 from concordia.tests.utils import CreateTestUsers, create_asset, create_project
@@ -18,6 +19,35 @@ from ..tasks import (
     redownload_image_task,
 )
 from .utils import create_import_job
+
+
+class MockResponse:
+    def __init__(self, original_format="item"):
+        self.original_format = original_format
+
+    def json(self):
+        url = "https://www.loc.gov/item/%s/" % "mss859430021"
+        return {
+            "results": [
+                {
+                    "id": 1,
+                    "image_url": "https://www.loc.gov/resource/mss85943.000212/",
+                    "original_format": {self.original_format},
+                    "url": url,
+                },
+            ],
+            "pagination": {},
+        }
+
+
+class MockCache(BaseCache):
+    def __init__(self, host, *args, **kwargs):
+        params = {}
+        super().__init__(params, **kwargs)
+
+    def get(self, key, default=None, version=None):
+        resp = MockResponse()
+        return resp
 
 
 class ImportItemCountFromUrlTests(TestCase):
@@ -60,26 +90,37 @@ class GetCollectionItemsTests(TestCase):
             }
         }
     )
-    def test_results(self, mock_get):
+    def test_cache_miss(self, mock_get):
         class MockResponse:
             def json(self):
-                data = {
+                url = "https://www.loc.gov/item/%s/" % "mss859430021"
+                return {
                     "results": [
                         {
                             "id": 1,
                             "image_url": "https://www.loc.gov/resource/mss85943.000212/",
                             "original_format": {"item"},
-                            "url": "https://www.loc.gov/item/mss859430021/",
+                            "url": url,
                         },
                     ],
-                    "pagination": {
-                        "next": False,
-                    },
+                    "pagination": {},
                 }
-                return data
 
-        mock_get = mock.Mock()
-        mock_get.side_effect = MockResponse()
+        mock_get.return_value = MockResponse()
+        mock_get.return_value.url = "https://www.loc.gov/collections/example/"
+        items = get_collection_items("https://www.loc.gov/collections/example/")
+        self.assertEqual(len(items), 1)
+
+    @override_settings(
+        CACHES={
+            "default": {
+                "BACKEND": "importer.tests.test_tasks.MockCache",
+            }
+        }
+    )
+    def test_cache_hit(self):
+        items = get_collection_items("https://www.loc.gov/collections/example/")
+        self.assertEqual(len(items), 1)
 
     @mock.patch.object(requests.Session, "get")
     @override_settings(
@@ -90,22 +131,7 @@ class GetCollectionItemsTests(TestCase):
         }
     )
     def test_ignored_format(self, mock_get):
-        class MockResponse:
-            def json(self):
-                return {
-                    "results": [
-                        {
-                            "id": 1,
-                            "original_format": {
-                                "collection",
-                            },
-                            "url": "https://www.loc.gov/item/mss859430021/",
-                        },
-                    ],
-                    "pagination": {},
-                }
-
-        mock_get.return_value = MockResponse()
+        mock_get.return_value = MockResponse(original_format="collection")
         mock_get.return_value.url = "https://www.loc.gov/collections/example/"
         items = get_collection_items("https://www.loc.gov/collections/example/")
         self.assertEqual(len(items), 0)
