@@ -1144,16 +1144,26 @@ def unusual_activity(days=1):
         html_body_message += "No reviews fell within the window."
     total = len(transcriptions) + len(reviews)
     if total > 0:
-        logger.debug("Found %s incidents of unusual activity.", total)
+        logger.info("Found %s incidents of unusual activity.", total)
     else:
-        logger.debug("Found no incidents of unusual activity.")
-    logger.debug("Emailing report to %s.", settings.DEFAULT_TO_EMAIL)
+        logger.info("Found no incidents of unusual activity.")
+    if settings.DEFAULT_TO_EMAIL:
+        to_email = settings.DEFAULT_TO_EMAIL
+    else:
+        to_email = [
+            "rsar@loc.gov",
+        ]
+    logger.info("Emailing report to %s.", to_email)
     message = EmailMultiAlternatives(
         subject="Unusual User Activity Report",
         body=text_body_message,
         from_email=settings.DEFAULT_FROM_EMAIL,
-        to=settings.DEFAULT_TO_EMAIL,
+        to=to_email,
         reply_to=[settings.DEFAULT_FROM_EMAIL],
     )
     message.attach_alternative(html_body_message, "text/html")
-    message.send()
+    sent = message.send()
+    if sent:
+        logger.info("Sent report to %s.", to_email)
+    else:
+        logger.debug("Report not sent.")
