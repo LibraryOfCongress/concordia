@@ -1148,21 +1148,21 @@ def unusual_activity(days=1):
         logger.info("Found %s incidents of unusual activity.", total)
     else:
         logger.info("Found no incidents of unusual activity.")
+    to_email = ["rsar@loc.gov"]
     if settings.DEFAULT_TO_EMAIL:
-        to_email = settings.DEFAULT_TO_EMAIL
-    else:
-        to_email = ("rsar@loc.gov",)
-    logger.info("Emailing report to %s.", to_email)
+        to_email.append(settings.DEFAULT_TO_EMAIL)
+    email_addresses = ", ".join(to_email)
+    logger.info("Emailing report to %s.", email_addresses)
     message = EmailMultiAlternatives(
         subject="Unusual User Activity Report",
         body=text_body_message,
         from_email=settings.DEFAULT_FROM_EMAIL,
-        to=[to_email],
+        to=to_email,
         reply_to=[settings.DEFAULT_FROM_EMAIL],
     )
     message.attach_alternative(html_body_message, "text/html")
     sent = message.send()
     if sent:
-        logger.info("Sent report to %s.", to_email)
+        logger.info("Sent report to %s.", email_addresses)
     else:
         logger.debug("Report not sent.")
