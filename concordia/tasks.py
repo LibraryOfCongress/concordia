@@ -1093,6 +1093,7 @@ def unusual_activity(days=1):
     """
     Locate pages that were improperly transcribed or reviewed.
     """
+    logger.info("Unusual Activity task started")
     WINDOW = timezone.now() - datetime.timedelta(days=days)
     text_body_message = ""
     html_body_message = ""
@@ -1150,15 +1151,13 @@ def unusual_activity(days=1):
     if settings.DEFAULT_TO_EMAIL:
         to_email = settings.DEFAULT_TO_EMAIL
     else:
-        to_email = [
-            "rsar@loc.gov",
-        ]
+        to_email = ("rsar@loc.gov",)
     logger.info("Emailing report to %s.", to_email)
     message = EmailMultiAlternatives(
         subject="Unusual User Activity Report",
         body=text_body_message,
         from_email=settings.DEFAULT_FROM_EMAIL,
-        to=to_email,
+        to=[to_email],
         reply_to=[settings.DEFAULT_FROM_EMAIL],
     )
     message.attach_alternative(html_body_message, "text/html")
