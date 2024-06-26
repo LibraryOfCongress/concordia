@@ -1081,12 +1081,13 @@ def get_transcription_url(transcription_id):
 def organize_by_user(transcriptions):
     transcriptions_by_user = {}
     for transcription in transcriptions:
-        user = transcription[0]
+        user_id = transcription[0]
+        user = User.objects.get(user_id)
         # omit staff and superuser accounts
         if not user.is_superuser and not user.is_staff:
-            if user not in transcriptions_by_user:
-                transcriptions_by_user[user] = []
-            transcriptions_by_user[user].append(transcription[1:])
+            if user_id not in transcriptions_by_user:
+                transcriptions_by_user[user_id] = []
+            transcriptions_by_user[user_id].append(transcription[1:])
     return transcriptions_by_user
 
 
@@ -1095,7 +1096,6 @@ def unusual_activity(days=1):
     """
     Locate pages that were improperly transcribed or reviewed.
     """
-    logger.info("Unusual Activity task started")
     WINDOW = timezone.now() - datetime.timedelta(days=days)
     text_body_message = ""
     html_body_message = ""
@@ -1145,16 +1145,9 @@ def unusual_activity(days=1):
     else:
         text_body_message += "No reviews fell within the window."
         html_body_message += "No reviews fell within the window."
-    total = len(transcriptions) + len(reviews)
-    if total > 0:
-        logger.info("Found %s incidents of unusual activity.", total)
-    else:
-        logger.info("Found no incidents of unusual activity.")
     to_email = ["rsar@loc.gov"]
     if settings.DEFAULT_TO_EMAIL:
         to_email.append(settings.DEFAULT_TO_EMAIL)
-    email_addresses = ", ".join(to_email)
-    logger.info("Emailing report to %s.", email_addresses)
     message = EmailMultiAlternatives(
         subject="Unusual User Activity Report",
         body=text_body_message,
@@ -1163,8 +1156,4 @@ def unusual_activity(days=1):
         reply_to=[settings.DEFAULT_FROM_EMAIL],
     )
     message.attach_alternative(html_body_message, "text/html")
-    sent = message.send()
-    if sent:
-        logger.info("Sent report to %s.", email_addresses)
-    else:
-        logger.debug("Report not sent.")
+    message.send()
