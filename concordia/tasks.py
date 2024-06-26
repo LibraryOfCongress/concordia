@@ -1082,9 +1082,11 @@ def organize_by_user(transcriptions):
     transcriptions_by_user = {}
     for transcription in transcriptions:
         user = transcription[0]
-        if user not in transcriptions_by_user:
-            transcriptions_by_user[user] = []
-        transcriptions_by_user[user].append(transcription[1:])
+        # omit staff and superuser accounts
+        if not user.is_superuser and not user.is_staff:
+            if user not in transcriptions_by_user:
+                transcriptions_by_user[user] = []
+            transcriptions_by_user[user].append(transcription[1:])
     return transcriptions_by_user
 
 
