@@ -107,6 +107,7 @@ class GetCollectionItemsTests(TestCase):
         items = get_collection_items("https://www.loc.gov/collections/example/")
         self.assertEqual(len(items), 1)
 
+    @mock.patch("importer.tasks.get_item_info_from_result")
     @mock.patch.object(requests.Session, "get")
     @override_settings(
         CACHES={
@@ -115,11 +116,12 @@ class GetCollectionItemsTests(TestCase):
             }
         }
     )
-    def test_ignored_format(self, mock_get):
+    def test_ignored_format(self, mock_get, mock_get_info):
         mock_get.return_value = MockResponse(original_format="collection")
         mock_get.return_value.url = "https://www.loc.gov/collections/example/"
         items = get_collection_items("https://www.loc.gov/collections/example/")
-        self.assertEqual(len(items), 0)
+        self.assertEqual(len(items), 1)
+        self.assertTrue(mock_get_info.called)
 
 
 class FetchAllUrlsTests(TestCase):
