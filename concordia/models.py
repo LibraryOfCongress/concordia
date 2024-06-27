@@ -654,7 +654,9 @@ class TranscriptionManager(models.Manager):
                 AND t1.reviewed_by_id = t2.reviewed_by_id
                 AND t1.accepted >= %s
                 AND t2.accepted >= %s
-                AND ABS(EXTRACT(EPOCH FROM (t1.updated_on - t2.updated_on))) < %s""",
+                AND ABS(EXTRACT(EPOCH FROM (t1.updated_on - t2.updated_on))) < %s
+                JOIN auth_user u on t1.reviewed_by_id = u.id
+                WHERE u.is_superuser = FALSE and u.is_staff = False""",
                 [start, start, WINDOW],
             )
             return cursor.fetchall()
@@ -669,7 +671,9 @@ class TranscriptionManager(models.Manager):
                 AND t1.user_id = t2.user_id
                 AND t1.submitted >= %s
                 AND t2.submitted >= %s
-                AND ABS(EXTRACT(EPOCH FROM (t1.created_on - t2.created_on))) < %s""",
+                AND ABS(EXTRACT(EPOCH FROM (t1.created_on - t2.created_on))) < %s
+                JOIN auth_user u on t1.user_id = u.id
+                WHERE u.is_superuser = FALSE and u.is_staff = False""",
                 [start, start, WINDOW],
             )
             return cursor.fetchall()
