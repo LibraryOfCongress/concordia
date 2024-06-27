@@ -589,6 +589,7 @@ class Asset(MetricsModelMixin("asset"), models.Model):
                 settings.PYTESSERACT_ALLOWED_LANGUAGES,
             )
             language = None
+
         return pytesseract.image_to_string(
             Image.open(self.storage_image), lang=language
         )
@@ -606,6 +607,78 @@ class Asset(MetricsModelMixin("asset"), models.Model):
 
     def turn_off_ocr(self):
         return self.disable_ocr or self.item.turn_off_ocr()
+
+    def rollback_transcription(self, user):
+        transcriptions = (
+            self.transcription_set.exclude(rolled_forward=True)
+            .exclude(source_of__rolled_forward=True)
+            .exclude(rolled_back=True)
+            .order_by("-pk")
+        )
+        if not transcriptions:
+            raise ValueError(
+                "Can not rollback transcription on an asset "
+                "with no non-rollback transcriptions"
+            )
+
+        latest_transcription = self.latest_transcription()
+        transcription_to_rollback_to = None
+        for transcription in transcriptions:
+            if (
+                latest_transcription != transcription
+                and latest_transcription.source != transcription
+            ):
+                if latest_transcription.rolled_back is not True or (
+                    latest_transcription.rolled_back
+                    and latest_transcription.supersedes != transcription
+                ):
+                    transcription_to_rollback_to = transcription
+                    break
+
+        if not transcription_to_rollback_to:
+            raise ValueError(
+                "Can not rollback transcription on an asset with "
+                "no non-rollback transcriptions"
+            )
+
+        kwargs = {
+            "asset": self,
+            "user": user,
+            "supersedes": latest_transcription,
+            "text": transcription_to_rollback_to.text,
+            "rolled_back": True,
+            "source": transcription_to_rollback_to,
+        }
+        new_transcription = Transcription(**kwargs)
+        new_transcription.full_clean()
+        new_transcription.save()
+        return new_transcription
+
+    def rollforward_transcription(self, user):
+        latest_transcription = self.latest_transcription()
+        if not latest_transcription.rolled_back:
+            raise AttributeError(
+                "Can not rollforward transcription on an asset if the "
+                "latest transcription is not a rollback transcription"
+            )
+        if not latest_transcription.supersedes:
+            raise AttributeError(
+                "Can not rollforward transcription on an asset if the "
+                "latest transcription did not supersede a previous transcription"
+            )
+        transcription_to_rollforward = latest_transcription.supersedes
+        kwargs = {
+            "asset": self,
+            "user": user,
+            "supersedes": latest_transcription,
+            "text": transcription_to_rollforward.text,
+            "rolled_forward": True,
+            "source": transcription_to_rollforward,
+        }
+        new_transcription = Transcription(**kwargs)
+        new_transcription.full_clean()
+        new_transcription.save()
+        return new_transcription
 
 
 class Tag(MetricsModelMixin("tag"), models.Model):
@@ -719,6 +792,23 @@ class Transcription(MetricsModelMixin("transcription"), models.Model):
     ocr_originated = models.BooleanField(
         default=False,
         help_text="Flags transcription as originated from an OCR transcription",
+    )
+
+    rolled_back = models.BooleanField(
+        default=False,
+        help_text="Flags transcription as being the result of a rollback (undo)",
+    )
+    rolled_forward = models.BooleanField(
+        default=False,
+        help_text="Flags transcription as being the result of a rollforward (redo)",
+    )
+    source = models.ForeignKey(
+        "self",
+        blank=True,
+        null=True,
+        on_delete=models.CASCADE,
+        help_text="The transcription source for the roll back or roll forward",
+        related_name="source_of",
     )
 
     objects = TranscriptionManager()

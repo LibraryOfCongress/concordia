@@ -1572,6 +1572,77 @@ def generate_ocr_transcription(request, *, asset_pk):
 @require_POST
 @validate_anonymous_captcha
 @atomic
+@ratelimit(key="header:cf-connecting-ip", rate="1/m", block=settings.RATELIMIT_BLOCK)
+def rollback_transcription(request, *, asset_pk):
+    asset = get_object_or_404(Asset, pk=asset_pk)
+
+    if request.user.is_anonymous:
+        user = get_anonymous_user()
+    else:
+        user = request.user
+
+    try:
+        transcription = asset.rollback_transcription(user)
+    except ValueError:
+        raise
+        return JsonResponse(
+            {"error": "No previous transcription available"}, status=400
+        )
+
+    return JsonResponse(
+        {
+            "id": transcription.pk,
+            "sent": time(),
+            "submissionUrl": reverse("submit-transcription", args=(transcription.pk,)),
+            "text": transcription.text,
+            "asset": {
+                "id": transcription.asset.id,
+                "status": transcription.asset.transcription_status,
+                "contributors": transcription.asset.get_contributor_count(),
+            },
+            "message": "Successfully rolled back transcription to previous version",
+        },
+        status=201,
+    )
+
+
+@require_POST
+@validate_anonymous_captcha
+@atomic
+@ratelimit(key="header:cf-connecting-ip", rate="1/m", block=settings.RATELIMIT_BLOCK)
+def rollforward_transcription(request, *, asset_pk):
+    asset = get_object_or_404(Asset, pk=asset_pk)
+
+    if request.user.is_anonymous:
+        user = get_anonymous_user()
+    else:
+        user = request.user
+
+    try:
+        transcription = asset.rollforward_transcription(user)
+    except AttributeError:
+        return JsonResponse({"error": "No transcription to redo to"}, status=400)
+
+    return JsonResponse(
+        {
+            "id": transcription.pk,
+            "sent": time(),
+            "submissionUrl": reverse("submit-transcription", args=(transcription.pk,)),
+            "text": transcription.text,
+            "asset": {
+                "id": transcription.asset.id,
+                "status": transcription.asset.transcription_status,
+                "contributors": transcription.asset.get_contributor_count(),
+            },
+            "message": "Successfully rolled forward transcription to next version",
+        },
+        status=201,
+    )
+
+
+@require_POST
+@validate_anonymous_captcha
+@atomic
 def save_transcription(request, *, asset_pk):
     asset = get_object_or_404(Asset, pk=asset_pk)
     logger.info("Saving transcription for %s (%s)", asset, asset.id)
