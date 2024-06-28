@@ -1135,7 +1135,7 @@ $card-progress-height: 12px;
     z-index: 1; /* Stay on top */
     top: 129px;
     right: 0;
-    overflow: hidden; /* Disable scrolling */
+    overflow: hidden auto; /* Disable horizontal scrolling */
     transition: 0.3s;
     background-color: $white;
 }
