@@ -1,0 +1,16 @@
+{% for user, transcriptions in transcriptions_by_user.items %}
+    User {{ user }} submitted the following pairs of reservations:
+    {% for transcription in transcriptions %}
+      * {{ transcription.0 }} and {{ transcription.1 }}
+    {% endfor %}
+{% empty %}
+    No transcriptions fell within the window.
+{% endfor %}
+{% for user, reviews in reviews_by_user.items %}
+    User {{ user }} reviewed the following pairs of reservations:
+    {% for review in reviews %}
+        * {{ review.0 }} and {{ review.1 }}
+    {% endfor %}
+{% empty %}
+    No reviews fell within the window.
+{% endfor %}
