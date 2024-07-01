@@ -1,24 +1,28 @@
 {% for user, transcriptions in transcriptions_by_user.items %}
-    User <a href="{% url 'admin:concordia_transcription_changelist' %}?user={{ user }}">{{ user }}</a> submitted the following pairs of reservations:
-    <ul>
-        {% for transcription in transcriptions %}
-            <li>
-                <a href="{% url 'admin:concordia_transcription_change' transcription.0 %}">{{ transcription.0 }}</a> and <a href="{% url 'admin:concordia_transcription_change' transcription.1 %}">{{ transcription.1 }}</a>
-            </li>
-        {% endfor %}
-    </ul>
+    {% for transcription in transcriptions %}
+        {% if forloop.first %}
+            User <a href="{% url 'admin:concordia_transcription_changelist' %}?user={{ user }}">{{ transcription.0 }}</a> submitted the following pairs of reservations:
+            <ul>
+        {% endif %}
+        <li>
+            <a href="{% url 'admin:concordia_transcription_change' transcription.1 %}">{{ transcription.1 }}</a> and <a href="{% url 'admin:concordia_transcription_change' transcription.2 %}">{{ transcription.2 }}</a>
+        </li>
+        {% if forloop.last %}</ul>{% endif %}
+    {% endfor %}
 {% empty %}
     No transcriptions fell within the window.
 {% endfor %}
 {% for user, reviews in reviews_by_user.items %}
-    User <a href="{% url 'admin:concordia_transcription_changelist' %}?user={{ user }}">{{ user }}</a> reviewed the following pairs of reservations:
-    <ul>
-        {% for review in reviews %}
-            <li>
-                <a href="{% url 'admin:concordia_transcription_change' review.0 %}">{{ review.0 }}</a> and <a href="{% url 'admin:concordia_transcription_change' review.1 %}">{{ review.1 }}</a>
-            </li>
-        {% endfor %}
-    </ul>
+    {% for review in reviews %}
+        {% if forloop.first %}
+            User <a href="{% url 'admin:concordia_transcription_changelist' %}?user={{ user }}">{{ review.0 }}</a> reviewed the following pairs of reservations:
+            <ul>
+        {% endif %}}
+        <li>
+            <a href="{% url 'admin:concordia_transcription_change' review.1 %}">{{ review.1 }}</a> and <a href="{% url 'admin:concordia_transcription_change' review.2 %}">{{ review.2 }}</a>
+        </li>
+        {% if forloop.last %}</ul>{% endif %}
+    {% endfor %}
 {% empty %}
     No reviews fell within the window.
 {% endfor %}

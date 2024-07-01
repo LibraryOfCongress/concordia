@@ -647,7 +647,7 @@ class TranscriptionManager(models.Manager):
     def reviewing_too_quickly(self, start=ONE_DAY_AGO):
         with connection.cursor() as cursor:
             cursor.execute(
-                """SELECT t1.reviewed_by_id, t1.id, t2.id
+                """SELECT u.id, u.username, t1.id, t2.id
                 FROM concordia_transcription t1
                 JOIN concordia_transcription t2
                 ON t1.id < t2.id
@@ -664,7 +664,7 @@ class TranscriptionManager(models.Manager):
     def transcribing_too_quickly(self, start=ONE_DAY_AGO):
         with connection.cursor() as cursor:
             cursor.execute(
-                """SELECT t1.user_id, t1.id, t2.id
+                """SELECT u.id, u.username, t1.id, t2.id
                 FROM concordia_transcription t1
                 JOIN concordia_transcription t2
                 ON t1.id < t2.id
