@@ -1,29 +1,13 @@
 <strong>{{ title }}</strong>
-{% for user, transcriptions in transcriptions_by_user.items %}
-    {% for transcription in transcriptions %}
-        {% if forloop.first %}
-            User <a href="{% url 'admin:concordia_transcription_changelist' %}?user={{ user }}">{{ transcription.0 }}</a> submitted the following pairs of reservations:
-            <ul>
-        {% endif %}
-        <li>
-            <a href="{% url 'admin:concordia_transcription_change' transcription.1 %}">{{ transcription.1 }}</a> and <a href="{% url 'admin:concordia_transcription_change' transcription.2 %}">{{ transcription.2 }}</a>
-        </li>
-        {% if forloop.last %}</ul>{% endif %}
-    {% endfor %}
+Incidents of two or more transcriptions submitted within a single minute:
+{% for row in transcriptions %}
+    <a href="{% url 'admin:concordia_transcription_changelist' %}?user={{ row.0 }}">{{ row.1 }}</a> | {{ row.3 }}
 {% empty %}
     No transcriptions fell within the window.
 {% endfor %}
-{% for user, reviews in reviews_by_user.items %}
-    {% for review in reviews %}
-        {% if forloop.first %}
-            User <a href="{% url 'admin:concordia_transcription_changelist' %}?user={{ user }}">{{ review.0 }}</a> reviewed the following pairs of reservations:
-            <ul>
-        {% endif %}}
-        <li>
-            <a href="{% url 'admin:concordia_transcription_change' review.1 %}">{{ review.1 }}</a> and <a href="{% url 'admin:concordia_transcription_change' review.2 %}">{{ review.2 }}</a>
-        </li>
-        {% if forloop.last %}</ul>{% endif %}
-    {% endfor %}
+Incidents of two or more transcriptions reviewed within a single minute:
+{% for row in reviews %}
+    <a href="{% url 'admin:concordia_transcription_changelist' %}?user={{ row.0 }}">{{ row.1 }}</a> | {{ row.3 }}
 {% empty %}
     No reviews fell within the window.
 {% endfor %}

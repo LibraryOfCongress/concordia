@@ -1,17 +1,13 @@
 {{ title }}
-{% for user, transcriptions in transcriptions_by_user.items %}
-    User {{ user }} submitted the following pairs of reservations:
-    {% for transcription in transcriptions %}
-      * {{ transcription.1 }} and {{ transcription.2 }}
-    {% endfor %}
+Incidents of two or more transcriptions submitted within a single minute:
+{% for row in transcriptions %}
+    * {{ row.1 }} | {{ row.2 }}
 {% empty %}
     No transcriptions fell within the window.
 {% endfor %}
-{% for user, reviews in reviews_by_user.items %}
-    User {{ user }} reviewed the following pairs of reservations:
-    {% for review in reviews %}
-        * {{ review.1 }} and {{ review.2 }}
-    {% endfor %}
+Incidents of two or more transcriptions reviewed within a single minute:
+{% for row in reviews_by %}
+    {{ row.1 }} | {{ row.2 }}
 {% empty %}
     No reviews fell within the window.
 {% endfor %}

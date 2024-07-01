@@ -1056,16 +1056,6 @@ def clear_sessions():
     call_command("clearsessions")
 
 
-def organize_by_user(transcriptions):
-    transcriptions_by_user = {}
-    for transcription in transcriptions:
-        user_id = transcription[0]
-        if user_id not in transcriptions_by_user:
-            transcriptions_by_user[user_id] = []
-        transcriptions_by_user[user_id].append(transcription[1:])
-    return transcriptions_by_user
-
-
 @celery_app.task
 def unusual_activity(days=1):
     """
@@ -1076,13 +1066,9 @@ def unusual_activity(days=1):
     context = {
         "title": "Unusual User Activity Report for "
         + now.strftime("%b %d %Y, %I:%M %p"),
+        "transcriptions": transcribing_too_quickly(WINDOW),
+        "reviews": reviewing_too_quickly(WINDOW),
     }
-    transcriptions = transcribing_too_quickly(WINDOW)
-    if len(transcriptions) > 0:
-        context["transcriptions_by_user"] = organize_by_user(transcriptions)
-    reviews = reviewing_too_quickly(WINDOW)
-    if len(reviews) > 0:
-        context["reviews_by_user"] = organize_by_user(reviews)
 
     text_body_template = loader.get_template("emails/unusual_activity.txt")
     text_body_message = text_body_template.render(context)
