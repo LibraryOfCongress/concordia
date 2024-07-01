@@ -1,13 +1,31 @@
 <strong>{{ title }}</strong>
 Incidents of two or more transcriptions submitted within a single minute:
-{% for row in transcriptions %}
-    <a href="{% url 'admin:concordia_transcription_changelist' %}?user={{ row.0 }}">{{ row.1 }}</a> | {{ row.3 }}
-{% empty %}
-    No transcriptions fell within the window.
-{% endfor %}
+<table>
+    {% for row in transcriptions %}
+        <tr>
+            <td>
+                <a href="{% url 'admin:concordia_transcription_changelist' %}?user={{ row.0 }}">
+                    {{ row.1 }}
+                </a>
+            </td>
+            <td>{{ row.2 }}</td>
+        </tr>
+    {% empty %}
+        <tr><td>No transcriptions fell within the window.</td></tr>
+    {% endfor %}
+</table>
 Incidents of two or more transcriptions reviewed within a single minute:
-{% for row in reviews %}
-    <a href="{% url 'admin:concordia_transcription_changelist' %}?user={{ row.0 }}">{{ row.1 }}</a> | {{ row.3 }}
-{% empty %}
-    No reviews fell within the window.
-{% endfor %}
+<table>
+    {% for row in reviews %}
+        <tr>
+            <td>
+                <a href="{% url 'admin:concordia_transcription_changelist' %}?user={{ row.0 }}">
+                    {{ row.1 }}
+                </a>
+            </td>
+            <td>{{ row.2 }}</td>
+        </tr>
+    {% empty %}
+        <tr><td>No reviews fell within the window.</td></tr>
+    {% endfor %}
+</table>
