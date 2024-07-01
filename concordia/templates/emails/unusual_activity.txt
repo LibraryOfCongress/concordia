@@ -1,3 +1,4 @@
+{{ title }}
 {% for user, transcriptions in transcriptions_by_user.items %}
     User {{ user }} submitted the following pairs of reservations:
     {% for transcription in transcriptions %}

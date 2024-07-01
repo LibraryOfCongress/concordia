@@ -1071,8 +1071,12 @@ def unusual_activity(days=1):
     """
     Locate pages that were improperly transcribed or reviewed.
     """
-    WINDOW = timezone.now() - datetime.timedelta(days=days)
-    context = {}
+    now = timezone.now()
+    WINDOW = now - datetime.timedelta(days=days)
+    context = {
+        "title": "Unusual User Activity Report for "
+        + now.strftime("%b %d %Y, %I:%M %p"),
+    }
     transcriptions = transcribing_too_quickly(WINDOW)
     if len(transcriptions) > 0:
         context["transcriptions_by_user"] = organize_by_user(transcriptions)
@@ -1090,7 +1094,7 @@ def unusual_activity(days=1):
     if settings.DEFAULT_TO_EMAIL:
         to_email.append(settings.DEFAULT_TO_EMAIL)
     message = EmailMultiAlternatives(
-        subject="Unusual User Activity Report",
+        subject=context["title"],
         body=text_body_message,
         from_email=settings.DEFAULT_FROM_EMAIL,
         to=to_email,
