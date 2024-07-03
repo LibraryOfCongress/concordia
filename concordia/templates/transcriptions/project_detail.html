@@ -38,7 +38,7 @@
             <div class="col-12 col-lg mt-4">
                 <h3>Filter pages:</h2>
             </div>
-            {% if user.is_authenticated and user.is_staff %}
+            {% if user.is_authenticated and user.is_staff and show_radio %}
                 <div class="mt-4">
                     <input type="radio" onclick="window.location='{% url 'transcriptions:project-detail' campaign.slug project.slug %}'" {% if not filter_assets %}checked{% endif %}>
                     <label>Show all</label>

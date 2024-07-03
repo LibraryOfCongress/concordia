@@ -42,7 +42,7 @@
                 <h3>Filter pages:</h2>
             </div>
         </div>
-        {% if user.is_authenticated and user.is_staff %}
+        {% if user.is_authenticated and user.is_staff and show_radio %}
             <div class="mt-4">
                 <input type="radio" {% if filter_assets %}onclick="window.location='{% url 'transcriptions:item-detail' campaign.slug project.slug item.id %}'"{% else %}checked{% endif %}>
                 <label>Show all</label>
