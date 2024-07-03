@@ -647,7 +647,7 @@ class TranscriptionManager(models.Manager):
     def reviewing_too_quickly(self, start=ONE_DAY_AGO):
         with connection.cursor() as cursor:
             cursor.execute(
-                """SELECT t1.reviewed_by_id, t1.id, t2.id
+                """SELECT u.id, u.username, COUNT(*)
                 FROM concordia_transcription t1
                 JOIN concordia_transcription t2
                 ON t1.id < t2.id
@@ -656,7 +656,8 @@ class TranscriptionManager(models.Manager):
                 AND t2.accepted >= %s
                 AND ABS(EXTRACT(EPOCH FROM (t1.updated_on - t2.updated_on))) < %s
                 JOIN auth_user u on t1.reviewed_by_id = u.id
-                WHERE u.is_superuser = FALSE and u.is_staff = False""",
+                WHERE u.is_superuser = FALSE and u.is_staff = False
+                GROUP BY u.id, u.username""",
                 [start, start, WINDOW],
             )
             return cursor.fetchall()
@@ -664,7 +665,7 @@ class TranscriptionManager(models.Manager):
     def transcribing_too_quickly(self, start=ONE_DAY_AGO):
         with connection.cursor() as cursor:
             cursor.execute(
-                """SELECT t1.user_id, t1.id, t2.id
+                """SELECT u.id, u.username, COUNT(*)
                 FROM concordia_transcription t1
                 JOIN concordia_transcription t2
                 ON t1.id < t2.id
@@ -673,7 +674,8 @@ class TranscriptionManager(models.Manager):
                 AND t2.submitted >= %s
                 AND ABS(EXTRACT(EPOCH FROM (t1.created_on - t2.created_on))) < %s
                 JOIN auth_user u on t1.user_id = u.id
-                WHERE u.is_superuser = FALSE and u.is_staff = False""",
+                WHERE u.is_superuser = FALSE and u.is_staff = False
+                GROUP BY u.id, u.username""",
                 [start, start, WINDOW],
             )
             return cursor.fetchall()
