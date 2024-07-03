@@ -1241,6 +1241,10 @@
             $("#ocr-transcription-modal").modal("hide");
             $("#language-selection-modal").modal("show");
         }
+        var mainContentHeight = $("#contribute-main-content").height()
+        if (mainContentHeight < 710) {
+            $(".sidebar").height(mainContentHeight - 130);
+        }
     </script>
     <script>
         function trackQuickTipsInteraction(element, label) {

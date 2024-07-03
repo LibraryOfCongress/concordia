@@ -22,7 +22,7 @@ def set_field_values(apps, schema_editor):
         asset.campaign = asset.item.project.campaign
         updated.append(asset)
         # To avoid running out of memory, we only
-        # keep 1000 assets in memory at a time
+        # keep 10,000 assets in memory at a time
         if len(updated) >= 10000:
             Asset.objects.bulk_update(updated, ["campaign"])
             updated = []

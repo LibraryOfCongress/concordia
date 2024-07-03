@@ -739,6 +739,7 @@ $card-progress-height: 12px;
  */
 
 #contribute-main-content {
+    overflow: hidden;
     position: relative;
 }
 
@@ -1134,7 +1135,7 @@ $card-progress-height: 12px;
     z-index: 1; /* Stay on top */
     top: 129px;
     right: 0;
-    overflow-x: hidden; /* Disable horizontal scroll */
+    overflow: hidden auto; /* Disable horizontal scrolling */
     transition: 0.3s;
     background-color: $white;
 }

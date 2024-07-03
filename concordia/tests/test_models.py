@@ -191,7 +191,7 @@ class TranscriptionTestCase(CreateTestUsers, TestCase):
         )
         transcriptions = Transcription.objects.reviewing_too_quickly()
         self.assertEqual(len(transcriptions), 1)
-        self.assertIn(transcription3.id, [n[2] for n in transcriptions])
+        self.assertEqual(transcriptions[0][0], transcription3.reviewed_by.id)
 
     def test_transcribing_too_quickly(self):
         transcriptions = Transcription.objects.transcribing_too_quickly()
@@ -206,7 +206,7 @@ class TranscriptionTestCase(CreateTestUsers, TestCase):
         )
         transcriptions = Transcription.objects.transcribing_too_quickly()
         self.assertEqual(len(transcriptions), 1)
-        self.assertIn(transcription3.id, [n[2] for n in transcriptions])
+        self.assertEqual(transcriptions[0][0], transcription3.user.id)
 
 
 class AssetTranscriptionReservationTest(CreateTestUsers, TestCase):
