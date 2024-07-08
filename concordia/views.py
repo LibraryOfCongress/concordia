@@ -1457,6 +1457,9 @@ class AssetDetailView(APIDetailView):
 
         ctx["languages"] = list(settings.LANGUAGE_CODES.items())
 
+        ctx["undo_available"] = asset.can_rollback()[0] if transcription else False
+        ctx["redo_available"] = asset.can_rollforward()[0] if transcription else False
+
         return ctx
 
 
@@ -1564,6 +1567,8 @@ def generate_ocr_transcription(request, *, asset_pk):
                 "status": transcription.asset.transcription_status,
                 "contributors": transcription.asset.get_contributor_count(),
             },
+            "undo_available": asset.can_rollback()[0],
+            "redo_available": asset.can_rollforward()[0],
         },
         status=201,
     )
@@ -1583,8 +1588,8 @@ def rollback_transcription(request, *, asset_pk):
 
     try:
         transcription = asset.rollback_transcription(user)
-    except ValueError:
-        raise
+    except ValueError as e:
+        logger.exception("No previous transcription available for rollback", exc_info=e)
         return JsonResponse(
             {"error": "No previous transcription available"}, status=400
         )
@@ -1601,6 +1606,8 @@ def rollback_transcription(request, *, asset_pk):
                 "contributors": transcription.asset.get_contributor_count(),
             },
             "message": "Successfully rolled back transcription to previous version",
+            "undo_available": transcription.asset.can_rollback()[0],
+            "redo_available": transcription.asset.can_rollforward()[0],
         },
         status=201,
     )
@@ -1620,7 +1627,8 @@ def rollforward_transcription(request, *, asset_pk):
 
     try:
         transcription = asset.rollforward_transcription(user)
-    except AttributeError:
+    except AttributeError as e:
+        logger.exception("No transcription available for rollforward", exc_info=e)
         return JsonResponse({"error": "No transcription to redo to"}, status=400)
 
     return JsonResponse(
@@ -1635,6 +1643,8 @@ def rollforward_transcription(request, *, asset_pk):
                 "contributors": transcription.asset.get_contributor_count(),
             },
             "message": "Successfully rolled forward transcription to next version",
+            "undo_available": transcription.asset.can_rollback()[0],
+            "redo_available": transcription.asset.can_rollforward()[0],
         },
         status=201,
     )
@@ -1697,6 +1707,8 @@ def save_transcription(request, *, asset_pk):
                 "status": transcription.asset.transcription_status,
                 "contributors": transcription.asset.get_contributor_count(),
             },
+            "undo_available": transcription.asset.can_rollback()[0],
+            "redo_available": transcription.asset.can_rollforward()[0],
         },
         status=201,
     )
@@ -1748,6 +1760,8 @@ def submit_transcription(request, *, pk):
                 "status": transcription.asset.transcription_status,
                 "contributors": transcription.asset.get_contributor_count(),
             },
+            "undo_available": False,
+            "redo_available": False,
         },
         status=200,
     )

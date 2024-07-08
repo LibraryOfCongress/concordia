@@ -589,7 +589,6 @@ class Asset(MetricsModelMixin("asset"), models.Model):
                 settings.PYTESSERACT_ALLOWED_LANGUAGES,
             )
             language = None
-
         return pytesseract.image_to_string(
             Image.open(self.storage_image), lang=language
         )
@@ -608,43 +607,60 @@ class Asset(MetricsModelMixin("asset"), models.Model):
     def turn_off_ocr(self):
         return self.disable_ocr or self.item.turn_off_ocr()
 
-    def rollback_transcription(self, user):
+    def can_rollback(self):
+        original_latest_transcription = latest_transcription = (
+            self.latest_transcription()
+        )
+        while latest_transcription.source:
+            latest_transcription = latest_transcription.source
+
         transcriptions = (
             self.transcription_set.exclude(rolled_forward=True)
             .exclude(source_of__rolled_forward=True)
             .exclude(rolled_back=True)
+            .exclude(pk__gte=latest_transcription.pk)
             .order_by("-pk")
         )
         if not transcriptions:
-            raise ValueError(
-                "Can not rollback transcription on an asset "
-                "with no non-rollback transcriptions"
+            return (
+                False,
+                (
+                    "Can not rollback transcription on an asset "
+                    "with no non-rollback transcriptions"
+                ),
             )
 
-        latest_transcription = self.latest_transcription()
         transcription_to_rollback_to = None
         for transcription in transcriptions:
             if (
-                latest_transcription != transcription
-                and latest_transcription.source != transcription
+                latest_transcription.rolled_back is False
+                or latest_transcription.supersedes != transcription
             ):
-                if latest_transcription.rolled_back is not True or (
-                    latest_transcription.rolled_back
-                    and latest_transcription.supersedes != transcription
-                ):
-                    transcription_to_rollback_to = transcription
-                    break
+                transcription_to_rollback_to = transcription
+                break
 
         if not transcription_to_rollback_to:
-            raise ValueError(
-                "Can not rollback transcription on an asset with "
-                "no non-rollback transcriptions"
+            return (
+                False,
+                (
+                    "Can not rollback transcription on an asset with "
+                    "no non-rollback transcriptions"
+                ),
             )
+
+        return True, transcription_to_rollback_to, original_latest_transcription
+
+    def rollback_transcription(self, user):
+        results = self.can_rollback()
+        if results[0] is not True:
+            raise ValueError(results[1])
+        transcription_to_rollback_to = results[1]
+        original_latest_transcription = results[2]
 
         kwargs = {
             "asset": self,
             "user": user,
-            "supersedes": latest_transcription,
+            "supersedes": original_latest_transcription,
             "text": transcription_to_rollback_to.text,
             "rolled_back": True,
             "source": transcription_to_rollback_to,
@@ -654,23 +670,83 @@ class Asset(MetricsModelMixin("asset"), models.Model):
         new_transcription.save()
         return new_transcription
 
+    def can_rollforward(self):
+        # original_latest_transcription holds the actual latest transcription
+        # latest_transcription holds the most recent transcription. If it's a rolled
+        # forward transcription, we use it to find the most recent non-rolled-forward
+        # transcription
+
+        original_latest_transcription = latest_transcription = (
+            self.latest_transcription()
+        )
+
+        if latest_transcription.rolled_forward:
+
+            # We need to find the latest transcription that wasn't rolled forward
+            rolled_forward_count = 0
+            try:
+                while latest_transcription.rolled_forward:
+                    latest_transcription = latest_transcription.supersedes
+                    rolled_forward_count += 1
+            except AttributeError:
+                return (
+                    False,
+                    (
+                        "Can not rollforward transcription on an asset with no "
+                        "non-rollforward transcriptions"
+                    ),
+                )
+            # latest_transcription is now the most recent non-rolled-forward
+            # transcription, but we need to go back fruther based on the number
+            # of rolled-forward transcriptions we've seen to get to the actual
+            # rollback transcription we need to rollforward from
+            try:
+                while rolled_forward_count >= 1:
+                    latest_transcription = latest_transcription.supersedes
+                    rolled_forward_count -= 1
+            except AttributeError:
+                return (
+                    False,
+                    (
+                        "More rollforward transcription exist than non-roll-forward "
+                        "transcriptions, which shouldn't be possible. Possibly "
+                        "incorrectly modified transcriptions for this asset."
+                    ),
+                )
+
+        if latest_transcription.rolled_back:
+            transcription_to_rollforward = latest_transcription.supersedes
+        else:
+            return (
+                False,
+                (
+                    "Can not rollforward transcription on an asset if the latest "
+                    "non-rollforward transcription is not a rollback transcription"
+                ),
+            )
+
+        if not transcription_to_rollforward:
+            return (
+                False,
+                (
+                    "Can not rollforward transcription on an asset if the latest "
+                    "non-transcription did not supersede a previous transcription"
+                ),
+            )
+
+        return True, transcription_to_rollforward, original_latest_transcription
+
     def rollforward_transcription(self, user):
-        latest_transcription = self.latest_transcription()
-        if not latest_transcription.rolled_back:
-            raise AttributeError(
-                "Can not rollforward transcription on an asset if the "
-                "latest transcription is not a rollback transcription"
-            )
-        if not latest_transcription.supersedes:
-            raise AttributeError(
-                "Can not rollforward transcription on an asset if the "
-                "latest transcription did not supersede a previous transcription"
-            )
-        transcription_to_rollforward = latest_transcription.supersedes
+        results = self.can_rollforward()
+        if results[0] is not True:
+            raise ValueError(results[1])
+        transcription_to_rollforward = results[1]
+        original_latest_transcription = results[2]
+
         kwargs = {
             "asset": self,
             "user": user,
-            "supersedes": latest_transcription,
+            "supersedes": original_latest_transcription,
             "text": transcription_to_rollforward.text,
             "rolled_forward": True,
             "source": transcription_to_rollforward,

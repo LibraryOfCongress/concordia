@@ -829,6 +829,11 @@ $card-progress-height: 12px;
     resize: none;
 }
 
+.btn-outline-primary.disabled,
+.btn-outline-primary:disabled {
+    opacity: 0.2;
+}
+
 /* Help Center */
 
 .help-center-card {
