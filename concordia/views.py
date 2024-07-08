@@ -856,6 +856,7 @@ def calculate_asset_stats(asset_qs, ctx):
 
     ctx["transcription_status_counts"] = labeled_status_counts = []
 
+    ctx["show_radio"] = False
     for status_key, status_label in TranscriptionStatus.CHOICES:
         value = status_counts_by_key.get(status_key, 0)
         if value:
@@ -866,6 +867,8 @@ def calculate_asset_stats(asset_qs, ctx):
         ctx[f"{status_key}_percent"] = pct
         ctx[f"{status_key}_count"] = value
         labeled_status_counts.append((status_key, status_label, value))
+        if status_key == "submitted" and value > 0:
+            ctx["show_radio"] = True
 
 
 def annotate_children_with_progress_stats(children):

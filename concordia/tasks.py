@@ -8,6 +8,7 @@ import requests
 from celery import chord
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.contrib.sites.models import Site
 from django.core.mail import EmailMultiAlternatives
 from django.core.management import call_command
 from django.db import transaction
@@ -1063,9 +1064,11 @@ def unusual_activity(days=1):
     """
     now = timezone.now()
     WINDOW = now - datetime.timedelta(days=days)
+    site = Site.objects.get_current()
     context = {
         "title": "Unusual User Activity Report for "
         + now.strftime("%b %d %Y, %I:%M %p"),
+        "domain": "https://" + site.domain,
         "transcriptions": transcribing_too_quickly(WINDOW),
         "reviews": reviewing_too_quickly(WINDOW),
     }
