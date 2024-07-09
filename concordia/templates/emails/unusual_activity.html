@@ -1,6 +1,12 @@
+<style type="text/css">
+
+    table, td { border: 1px solid black; border-collapse: collapse; }
+    td { padding: 7px; }
+
+</style>
 <h4>{{ title }}</h4>
 Incidents of two or more transcriptions submitted within a single minute:
-<table style="border: 1px solid black; border-collapse: collapse;">
+<table>
     {% for row in transcriptions %}
         <tr>
             <td>
@@ -16,7 +22,7 @@ Incidents of two or more transcriptions submitted within a single minute:
 </table>
 <br/>
 Incidents of two or more transcriptions reviewed within a single minute:
-<table style="border: 1px solid black; border-collapse: collapse;">
+<table>
     {% for row in reviews %}
         <tr>
             <td>
