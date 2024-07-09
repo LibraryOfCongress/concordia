@@ -1,6 +1,6 @@
 <h4>{{ title }}</h4>
 Incidents of two or more transcriptions submitted within a single minute:
-<table>
+<table style="border: 1px solid black; border-collapse: collapse;">
     {% for row in transcriptions %}
         <tr>
             <td>
@@ -14,8 +14,9 @@ Incidents of two or more transcriptions submitted within a single minute:
         <tr><td>No transcriptions fell within the window.</td></tr>
     {% endfor %}
 </table>
+<br/>
 Incidents of two or more transcriptions reviewed within a single minute:
-<table>
+<table style="border: 1px solid black; border-collapse: collapse;">
     {% for row in reviews %}
         <tr>
             <td>
